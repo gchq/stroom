@@ -563,8 +563,9 @@ public class AskStroomAiPresenter
             if (hasNewMessages) {
                 final long nowMs = System.currentTimeMillis();
                 for (final AiChatMessage msg : response.getNewMessages()) {
-                    // Skip USER_MESSAGE — we already rendered it inline in onSendMessage.
-                    if (msg.getMessageType() != AiMessageType.USER_MESSAGE) {
+                    // Skip the user's own messages, as they were rendered inline in onSendMessage.
+                    if (msg.getMessageType() != AiMessageType.USER_MESSAGE
+                        && msg.getMessageType() != AiMessageType.STEER_MESSAGE) {
                         appendMessage(msg, nowMs);
                     }
                     // Track the highest seen message ID.
@@ -682,6 +683,10 @@ public class AskStroomAiPresenter
                 break;
             case ERROR:
                 appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
+                        timeMs, nowMs, false, messageId, false);
+                break;
+            case STEER_MESSAGE:
+                appendMessageHtml(hb, "ai-message ai-message--user ai-message--steer", "> " + msg.getMessage(),
                         timeMs, nowMs, false, messageId, false);
                 break;
             case WARNING:

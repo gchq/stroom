@@ -18,6 +18,8 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
@@ -32,6 +34,7 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -88,6 +91,16 @@ class McpAgentChat {
             "uri", "url", "path", "resource", "mcpServer", "index", "name", "id");
 
     /**
+     * Put before a message the user sent while the model was working, so the model knows when it was said.
+     */
+    static final String STEER_PREFIX = "[Sent by the user while you were working] ";
+
+    /**
+     * How many times the model may be asked again because the user sent a message just as it finished.
+     */
+    private static final int MAX_STEER_FOLLOW_UPS = 3;
+
+    /**
      * Given to the model instead of running a tool that could change something while the user is away.
      */
     static final String UNATTENDED_REFUSAL = "Not run: the user is away, and this tool could change something, "
@@ -117,7 +130,9 @@ class McpAgentChat {
                       final AtomicBoolean cancelled,
                       final TaskContext taskContext,
                       final int attempt,
-                      final StringBuilder debugLog) {
+                      final StringBuilder debugLog,
+                      final int steerAfterMessageId) {
+        final SteerFeed steerFeed = new SteerFeed(chatId, steerAfterMessageId);
         final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>();
         if (modelDoc == null || modelDoc.isToolsEnabled()) {
             tools.putAll(builtInTools.toolMap());
@@ -127,7 +142,12 @@ class McpAgentChat {
         final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
         if (tools.isEmpty()) {
             LOGGER.debug(() -> "chat: no tools available for chatId=" + chatId + ", making a plain call");
-            return chatModel.chat(conversation);
+            ChatResponse response = chatModel.chat(conversation);
+            // If the user added something while the model worked, answer again with it.
+            for (int i = 0; i < MAX_STEER_FOLLOW_UPS && steerFeed.addTo(conversation, response.aiMessage()); i++) {
+                response = chatModel.chat(conversation);
+            }
+            return response;
         }
 
         final List<ToolSpecification> toolSpecifications = List.copyOf(tools.keySet());
@@ -140,6 +160,10 @@ class McpAgentChat {
         for (int iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
             if (cancelled.get() || taskContext.isTerminated()) {
                 throw new TaskTerminatedException();
+            }
+            // Pick up anything the user has added since the last model call.
+            if (iteration > 1) {
+                conversation.addAll(steerFeed.poll());
             }
 
             final boolean offerTools = iteration < MAX_ITERATIONS;
@@ -156,6 +180,10 @@ class McpAgentChat {
 
             final AiMessage aiMessage = response.aiMessage();
             if (!aiMessage.hasToolExecutionRequests()) {
+                // If the user added something while the model worked, carry on with it.
+                if (iteration < MAX_ITERATIONS && steerFeed.addTo(conversation, aiMessage)) {
+                    continue;
+                }
                 return response;
             }
 
@@ -398,5 +426,50 @@ class McpAgentChat {
                 .append("**Result:**\n```\n")
                 .append(truncate(NullSafe.string(result), DEBUG_RESULT_LIMIT))
                 .append("\n```\n\n");
+    }
+
+    /**
+     * Reads the messages the user sends to steer a run while it works.
+     */
+    private final class SteerFeed {
+
+        private final int chatId;
+        private int lastMessageId;
+
+        private SteerFeed(final int chatId, final int lastMessageId) {
+            this.chatId = chatId;
+            this.lastMessageId = lastMessageId;
+        }
+
+        /**
+         * @return Messages the user has sent since the last time, for the model.
+         */
+        List<UserMessage> poll() {
+            final List<UserMessage> steers = new ArrayList<>();
+            for (final AiChatMessage message : aiService.getMessagesSince(chatId, lastMessageId)) {
+                lastMessageId = Math.max(lastMessageId, message.getId());
+                if (message.getMessageType() == AiMessageType.STEER_MESSAGE) {
+                    LOGGER.debug(() -> "Picked up a steering message for chatId=" + chatId);
+                    steers.add(UserMessage.from(STEER_PREFIX + message.getMessage()));
+                }
+            }
+            return steers;
+        }
+
+        /**
+         * Adds the model's answer and the user's new messages to the conversation, if there are any new
+         * messages.
+         *
+         * @return True if there were new messages, so the model should be asked again.
+         */
+        boolean addTo(final List<ChatMessage> conversation, final AiMessage answer) {
+            final List<UserMessage> steers = poll();
+            if (steers.isEmpty()) {
+                return false;
+            }
+            conversation.add(answer);
+            conversation.addAll(steers);
+            return true;
+        }
     }
 }
