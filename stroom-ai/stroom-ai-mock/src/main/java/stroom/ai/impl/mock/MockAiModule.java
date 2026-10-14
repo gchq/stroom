@@ -23,6 +23,7 @@ import stroom.ai.impl.AiProviderImpl;
 import stroom.ai.impl.OpenAIModelStoreImpl;
 import stroom.ai.impl.TableSummariserImpl;
 import stroom.query.language.functions.AiProvider;
+import stroom.ai.impl.tools.BuiltInToolsModule;
 
 import com.google.inject.AbstractModule;
 
@@ -36,6 +37,9 @@ public class MockAiModule extends AbstractModule {
 
         // Backs the ai() StroomQL function, see ExpressionContextFactory.
         bind(AiProvider.class).to(AiProviderImpl.class);
+
+        // Built-in chat tools, so anything wiring the AI impl can resolve them.
+        install(new BuiltInToolsModule());
 
         // OpenAI Model
         bind(OpenAIModelStore.class).to(OpenAIModelStoreImpl.class);

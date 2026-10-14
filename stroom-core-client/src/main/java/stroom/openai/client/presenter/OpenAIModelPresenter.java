@@ -35,6 +35,7 @@ import javax.inject.Provider;
 public class OpenAIModelPresenter extends DocTabPresenter<LinkTabPanelView, OpenAIModelDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData MCP_TOOL_SERVERS = new TabDataImpl("MCP Tool Servers");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
@@ -43,11 +44,13 @@ public class OpenAIModelPresenter extends DocTabPresenter<LinkTabPanelView, Open
             final EventBus eventBus,
             final LinkTabPanelView view,
             final Provider<OpenAIModelSettingsPresenter> modelSettingsPresenterProvider,
+            final Provider<OpenAIModelMcpToolServersPresenter> mcpToolServersPresenterProvider,
             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
             final DocumentUserPermissionsTabProvider<OpenAIModelDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(modelSettingsPresenterProvider::get));
+        addTab(MCP_TOOL_SERVERS, new DocTabProvider<>(mcpToolServersPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,

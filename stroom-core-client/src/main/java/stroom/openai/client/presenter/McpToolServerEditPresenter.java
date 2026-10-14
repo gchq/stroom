@@ -1,0 +1,219 @@
+/*
+ * Copyright 2016-2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.openai.client.presenter;
+
+import stroom.alert.client.event.AlertEvent;
+import stroom.credentials.client.presenter.CredentialClient;
+import stroom.credentials.client.presenter.CredentialListModel;
+import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialType;
+import stroom.http.client.presenter.HttpClientConfigPresenter;
+import stroom.item.client.SelectionBox;
+import stroom.openai.client.presenter.McpToolServerEditPresenter.McpToolServerEditView;
+import stroom.openai.shared.McpAuthMode;
+import stroom.openai.shared.McpToolServerConfig;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.http.HttpClientConfig;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupType;
+
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
+
+public class McpToolServerEditPresenter
+        extends MyPresenterWidget<McpToolServerEditView>
+        implements McpToolServerEditUiHandlers {
+
+    private final EventBus eventBus;
+    private final CredentialClient credentialClient;
+    private final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider;
+
+    private HttpClientConfig httpClientConfiguration;
+    private boolean readOnly;
+
+    @Inject
+    public McpToolServerEditPresenter(
+            final EventBus eventBus,
+            final McpToolServerEditView view,
+            final CredentialClient credentialClient,
+            final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider) {
+        super(eventBus, view);
+        this.eventBus = eventBus;
+        this.credentialClient = credentialClient;
+        this.httpClientConfigPresenterProvider = httpClientConfigPresenterProvider;
+        view.setUiHandlers(this);
+        view.getAuthModeSelectionBox().addItems(McpAuthMode.values());
+    }
+
+    public void show(final McpToolServerConfig config,
+                     final boolean readOnly,
+                     final Consumer<McpToolServerConfig> consumer) {
+        this.readOnly = readOnly;
+        read(config);
+        getView().onReadOnly(readOnly);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Edit MCP Tool Server")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final McpToolServerConfig written = write();
+                        final String error = validate(written);
+                        if (error != null) {
+                            AlertEvent.fireError(McpToolServerEditPresenter.this, error, null);
+                            e.reset();
+                        } else {
+                            consumer.accept(written);
+                            e.hide();
+                        }
+                    } else {
+                        consumer.accept(config);
+                        e.hide();
+                    }
+                })
+                .fire();
+    }
+
+    private String validate(final McpToolServerConfig config) {
+        if (NullSafe.isBlankString(config.getName())) {
+            return "A name is required.";
+        }
+        if (NullSafe.isBlankString(config.getEndpoint())) {
+            return "An endpoint URL is required.";
+        }
+        final String endpoint = config.getEndpoint().toLowerCase();
+        if (!endpoint.startsWith("http://") && !endpoint.startsWith("https://")) {
+            return "The endpoint URL must start with http:// or https://";
+        }
+        if (usesCredential(config.getAuthMode()) && NullSafe.isBlankString(config.getCredentialName())) {
+            return "A credential is required for authentication mode '"
+                   + config.getAuthMode().getDisplayValue() + "'.";
+        }
+        return null;
+    }
+
+    private static boolean usesCredential(final McpAuthMode authMode) {
+        return authMode == McpAuthMode.BEARER_TOKEN
+               || authMode == McpAuthMode.API_KEY
+               || authMode == McpAuthMode.BASIC;
+    }
+
+    @Override
+    public void onAuthModeChange() {
+        updateCredentialModel(getView().getAuthModeSelectionBox().getValue());
+        getView().setApiKeyFieldsVisible(getView().getAuthModeSelectionBox().getValue() == McpAuthMode.API_KEY);
+    }
+
+    @Override
+    public void onSetHttpClientConfiguration() {
+        httpClientConfigPresenterProvider.get().show(httpClientConfiguration, readOnly, updated -> {
+            if (!Objects.equals(httpClientConfiguration, updated)) {
+                httpClientConfiguration = updated;
+            }
+        });
+    }
+
+    private void updateCredentialModel(final McpAuthMode authMode) {
+        final Set<CredentialType> types = authMode == McpAuthMode.BASIC
+                ? Set.of(CredentialType.USERNAME_PASSWORD)
+                : Set.of(CredentialType.ACCESS_TOKEN);
+        final CredentialListModel model = new CredentialListModel(eventBus, credentialClient, types);
+        model.setTaskMonitorFactory(this);
+        getView().getCredentialSelectionBox().setModel(model);
+        getView().setCredentialEnabled(!readOnly && usesCredential(authMode));
+    }
+
+    private void read(final McpToolServerConfig config) {
+        final McpToolServerConfig c = config != null
+                ? config
+                : McpToolServerConfig.builder().build();
+        getView().setEnabled(c.isEnabled());
+        getView().setName(c.getName());
+        getView().setEndpoint(c.getEndpoint());
+        getView().getAuthModeSelectionBox().setValue(c.getAuthMode());
+        updateCredentialModel(c.getAuthMode());
+        if (NullSafe.isNonBlankString(c.getCredentialName())) {
+            credentialClient.getCredentialByName(c.getCredentialName(),
+                    credential -> getView().getCredentialSelectionBox().setValue(credential), this);
+        } else {
+            getView().getCredentialSelectionBox().setValue(null);
+        }
+        getView().setApiKeyHeaderName(NullSafe.nonBlankStringElse(
+                c.getApiKeyHeaderName(), McpToolServerConfig.DEFAULT_API_KEY_HEADER_NAME));
+        getView().setApiKeyValuePrefix(c.getApiKeyValuePrefix());
+        getView().setApiKeyFieldsVisible(c.getAuthMode() == McpAuthMode.API_KEY);
+        this.httpClientConfiguration = c.getHttpClientConfiguration();
+    }
+
+    private McpToolServerConfig write() {
+        return McpToolServerConfig.builder()
+                .enabled(getView().isEnabled())
+                .name(NullSafe.trim(getView().getName()))
+                .endpoint(NullSafe.trim(getView().getEndpoint()))
+                .authMode(getView().getAuthModeSelectionBox().getValue())
+                .credentialName(NullSafe.get(
+                        getView().getCredentialSelectionBox().getValue(), Credential::getName))
+                .apiKeyHeaderName(NullSafe.trim(getView().getApiKeyHeaderName()))
+                .apiKeyValuePrefix(getView().getApiKeyValuePrefix())
+                .httpClientConfiguration(httpClientConfiguration)
+                .build();
+    }
+
+    public interface McpToolServerEditView
+            extends View, HasUiHandlers<McpToolServerEditUiHandlers> {
+
+        void focus();
+
+        void onReadOnly(boolean readOnly);
+
+        boolean isEnabled();
+
+        void setEnabled(boolean enabled);
+
+        String getName();
+
+        void setName(String name);
+
+        String getEndpoint();
+
+        void setEndpoint(String endpoint);
+
+        SelectionBox<McpAuthMode> getAuthModeSelectionBox();
+
+        SelectionBox<Credential> getCredentialSelectionBox();
+
+        void setCredentialEnabled(boolean enabled);
+
+        String getApiKeyHeaderName();
+
+        void setApiKeyHeaderName(String apiKeyHeaderName);
+
+        String getApiKeyValuePrefix();
+
+        void setApiKeyValuePrefix(String apiKeyValuePrefix);
+
+        void setApiKeyFieldsVisible(boolean visible);
+    }
+}

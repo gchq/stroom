@@ -130,6 +130,8 @@ public class AskStroomAIService {
     private final ConcurrentHashMap<Integer, AtomicBoolean> cancellationFlags = new ConcurrentHashMap<>();
     private final TaskContextFactory taskContextFactory;
     private final TableSummariserImpl tableSummariser;
+    private final McpToolServerFactory mcpToolServerFactory;
+    private final McpAgentChat mcpAgentChat;
 
     @Inject
     public AskStroomAIService(final AiService aiService,
@@ -143,7 +145,10 @@ public class AskStroomAIService {
                               final Provider<GlobalConfig> globalConfigProvider,
                               final Provider<TableAnalysisConfig> tableAnalysisConfigProvider,
                               final TaskContextFactory taskContextFactory,
-                              final TableSummariserImpl tableSummariser) {
+                              final TableSummariserImpl tableSummariser,
+                              final TaskContextFactory taskContextFactory,
+                              final McpToolServerFactory mcpToolServerFactory,
+                              final McpAgentChat mcpAgentChat) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -156,6 +161,8 @@ public class AskStroomAIService {
         this.tableAnalysisConfigProvider = tableAnalysisConfigProvider;
         this.taskContextFactory = taskContextFactory;
         this.tableSummariser = tableSummariser;
+        this.mcpToolServerFactory = mcpToolServerFactory;
+        this.mcpAgentChat = mcpAgentChat;
     }
 
     /**
@@ -540,7 +547,11 @@ public class AskStroomAIService {
         final AtomicBoolean cancelled = new AtomicBoolean(false);
         registerCancellation(chatId, cancelled);
 
-        try {
+        try (final McpToolset toolset = mcpToolServerFactory.createToolset(modelDoc)) {
+            if (!toolset.isEmpty()) {
+                LOGGER.debug(() -> "processQuestion: MCP tool servers active for chatId=" + chatId);
+            }
+
             // Wait for any DOWNLOADING attachments to become READY.
             LOGGER.logDurationIfDebugEnabled(
                     () -> waitForAttachments(chatId, workingMessageId),
@@ -628,7 +639,8 @@ public class AskStroomAIService {
 
                 try {
                     final ChatResponse chatResponse = processUnified(
-                            chatModel, chatId, messages, currentAttempt);
+                            chatModel, chatId, messages, currentAttempt, toolset, workingMessageId,
+                            cancelled, debugLog);
                     final String responseText = chatResponse.aiMessage().text();
 
                     // Capture successful attempt.
@@ -843,11 +855,20 @@ public class AskStroomAIService {
     /**
      * Sends the pre-built message list to the LLM and returns the full ChatResponse
      * so callers can access both the response text and any thinking/reasoning content.
+     * <p>
+     * Runs via {@link McpAgentChat}: the model is offered the built-in tools plus any MCP tools/resources
+     * from its configured tool servers, tool calls are executed and fed back, and the loop repeats until
+     * the model answers without calling a tool, the iteration cap is hit, or the task is stopped. With no
+     * tools it is a single plain call.
      */
     private ChatResponse processUnified(final ChatModel chatModel,
                                         final int chatId,
                                         final List<ChatMessage> messages,
-                                        final int attempt) {
+                                        final int attempt,
+                                        final McpToolset toolset,
+                                        final int workingMessageId,
+                                        final AtomicBoolean cancelled,
+                                        final StringBuilder debugLog) {
         return taskContextFactory.contextResult(
                 "AI data analysis",
                 taskContext -> {
@@ -861,13 +882,10 @@ public class AskStroomAIService {
                                        + " messages to LLM for chatId=" + chatId
                                        + " (attempt " + attempt + ")");
 
-                    final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
-                            () -> chatModel.chat(messages),
-                            r -> "processUnified chatId=" + chatId
-                                 + " attempt=" + attempt
-                                 + " responseLength=" + r.aiMessage().text().length());
-                    LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
-                    return response;
+                    // The agent loop offers the built-in tools plus any MCP tools; with no tools at all
+                    // it degrades to a single plain call.
+                    return mcpAgentChat.chat(chatModel, chatId, messages, toolset,
+                            workingMessageId, cancelled, taskContext, attempt, debugLog);
                 }).get();
     }
 
