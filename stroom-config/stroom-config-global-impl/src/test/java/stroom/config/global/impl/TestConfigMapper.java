@@ -44,10 +44,10 @@ import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
-import stroom.dashboard.impl.db.VisualisationAssetDbConfig;
-import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.DocStoreConfig;
+import stroom.document.asset.impl.DocumentAssetConfig;
+import stroom.document.asset.impl.db.DocumentAssetDbConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
@@ -72,6 +72,7 @@ import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
+import stroom.sqlstore.impl.SqlStoreConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.config.PropertyUtil.Prop;
@@ -989,6 +990,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                 @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
+                @JsonProperty(PROP_NAME_SQL_STORE) final SqlStoreConfig sqlStoreConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
                 @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
                 @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
@@ -996,8 +998,8 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
                 @JsonProperty(PROP_NAME_UI) final UiConfig uiConfig,
                 @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
-                @JsonProperty(PROP_NAME_VISUALISATION_ASSET) final VisualisationAssetConfig visualisationAssetConfig,
-                @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB) final VisualisationAssetDbConfig visualisationAssetDbConfig,
+                @JsonProperty(PROP_NAME_DOCUMENT_ASSET) final DocumentAssetConfig documentAssetConfig,
+                @JsonProperty(PROP_NAME_DOCUMENT_ASSET_DB) final DocumentAssetDbConfig documentAssetDbConfig,
                 @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig,
                 @JsonProperty("stringProp") final String stringProp,
                 @JsonProperty("stringListProp") final List<String> stringListProp,
@@ -1059,14 +1061,15 @@ class TestConfigMapper {
                     sessionCookieConfig,
                     sessionConfig,
                     solrConfig,
+                    sqlStoreConfig,
                     planBConfig,
                     statisticsConfig,
                     storedQueryConfig,
                     pathConfig,
                     uiConfig,
                     uiUri,
-                    visualisationAssetConfig,
-                    visualisationAssetDbConfig,
+                    documentAssetConfig,
+                    documentAssetDbConfig,
                     volumeConfig);
 
             this.stringProp = stringProp;

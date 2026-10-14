@@ -30,6 +30,7 @@ dependencies {
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.dropwizard.lifecycle
     implementation libs.guava
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.jose4j
     implementation libs.jakarta.servlet.api

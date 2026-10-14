@@ -23,6 +23,7 @@ dependencies {
 
     implementation libs.dropwizard.client
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
 
     testImplementation libs.bundles.common.test.implementation

@@ -50,6 +50,15 @@ class TestJq extends AbstractFunctionTest<Jq> {
                         ValString.create(json),
                         ValString.create(".arr[1]")),
                 TestCase.of(
+                        // Field access on a key needing quoting (hyphens) uses
+                        // ."key" — the form FloorMapQueryBuilder generates for
+                        // e.g. tm-world-to-map. A bare "key" without the dot
+                        // would be a jq string literal, not a lookup.
+                        "Quoted hyphenated field",
+                        ValString.create("[1,0,0,1,50,60]"),
+                        ValString.create("{\"tm-world-to-map\":[1,0,0,1,50,60]}"),
+                        ValString.create(".\"tm-world-to-map\"")),
+                TestCase.of(
                         "Filter",
                         // The values of all the matched elements are concatenated.
                         ValString.create("23"),

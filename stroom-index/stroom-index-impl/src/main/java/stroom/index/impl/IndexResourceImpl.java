@@ -39,6 +39,7 @@ import stroom.util.rest.RestUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Selection;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -49,6 +50,11 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @AutoLogged
 class IndexResourceImpl implements IndexResource {
@@ -175,5 +181,21 @@ class IndexResourceImpl implements IndexResource {
     @Override
     public Boolean deleteField(final DeleteField deleteField) {
         return indexFieldServiceProvider.get().deleteField(deleteField);
+    }
+
+    @Override
+    public Boolean reset(final String uuid) {
+        final FindIndexShardCriteria criteria = FindIndexShardCriteria.builder()
+                .indexUuidSet(new Selection<>(false, Collections.singleton(uuid)))
+                .build();
+        final ResultPage<IndexShard> shards = indexShardServiceProvider.get().find(criteria);
+        final Set<String> nodeNames = shards.stream()
+                .map(IndexShard::getNodeName)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        for (final String nodeName : nodeNames) {
+            deleteIndexShards(nodeName, criteria);
+        }
+        return Boolean.TRUE;
     }
 }

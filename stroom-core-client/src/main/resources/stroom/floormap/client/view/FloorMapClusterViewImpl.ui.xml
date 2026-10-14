@@ -1,0 +1,52 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:view="urn:import:stroom.widget.dropdowntree.client.view">
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <!-- Search and filters on one line: all three narrow the same list, so
+             none of them outranks the others. The search box takes the slack
+             because what is typed into it is the only unbounded value here.
+
+             The row layout is the feature's own class rather than the usual
+             "dock-container-horizontal form" pair: .form sets
+             flex-direction: column and, being on the same element, wins. -->
+        <g:FlowPanel styleName="dock-min form-padding stroom-floormap-cluster-filters">
+            <form:FormGroup identity="clusterSearch" label="Search"
+                            addStyleNames="stroom-floormap-cluster-filters__search">
+                <view:QuickFilter ui:field="quickFilter"/>
+            </form:FormGroup>
+            <!-- Both dropdowns are hidden by the view unless the cluster's
+                 members actually differ; they start out hidden so a dialog whose
+                 first cluster offers neither never flashes them. -->
+            <form:FormGroup ui:field="areaFilterGroup" identity="clusterArea" label="Area"
+                            addStyleNames="stroom-floormap-cluster-filters__filter"
+                            visible="false">
+                <l:SelectionBox ui:field="areaFilter" addStyleNames="w-100"/>
+            </form:FormGroup>
+            <form:FormGroup ui:field="groupFilterGroup" identity="clusterGroup" label="Group"
+                            addStyleNames="stroom-floormap-cluster-filters__filter"
+                            visible="false">
+                <l:SelectionBox ui:field="groupFilter" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <g:SimplePanel ui:field="data" styleName="dock-max overflow-hidden"/>
+    </g:FlowPanel>
+</ui:UiBinder>

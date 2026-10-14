@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.gin.editors;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.aws.s3.client.presenter.S3ConfigPresenter;
 import stroom.datagen.client.presenter.DataGenPresenter;
+import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.folder.client.FolderPresenter;
@@ -41,8 +42,8 @@ import stroom.script.client.presenter.ScriptPresenter;
 import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 import stroom.search.solr.client.presenter.SolrIndexPresenter;
-import stroom.visualisation.client.presenter.VisualisationAssetsPresenter;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
+import stroom.visualisation.shared.VisualisationDoc;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 
 import com.google.gwt.inject.client.GinModules;
@@ -114,7 +115,7 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     /// @return A Visualisation's 'Assets' tab on its own (the asset tree, its editor and its
     /// toolbar's 'Add file' menu with 'Upload File').
-    VisualisationAssetsPresenter getVisualisationAssetsPresenter();
+    DocumentAssetPresenter<VisualisationDoc> getVisualisationAssetsPresenter();
 
     // Code documents
 

@@ -156,6 +156,8 @@ public class QueryResultTablePresenter
     private boolean tableIsVisible = true;
     private boolean annotationChanged;
 
+    private TableResult currentTableResult;
+
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
                                      final RestFactory restFactory,
@@ -610,6 +612,7 @@ public class QueryResultTablePresenter
             if (componentResult != null) {
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
+                this.currentTableResult = tableResult;
 
                 // Get result columns.
                 List<Column> columns = NullSafe.list(tableResult.getColumns());
@@ -963,6 +966,10 @@ public class QueryResultTablePresenter
         this.queryResultVisPresenter = queryResultVisPresenter;
     }
 
+    public void setEmptyText(final String text) {
+        dataGrid.setEmptyText(text);
+    }
+
     public void setCurrentSelectionFilter(final ExpressionOperator currentSelectionFilter) {
         this.currentSelectionFilter = currentSelectionFilter;
     }
@@ -1035,6 +1042,10 @@ public class QueryResultTablePresenter
     @Override
     public FilterCellManager getFilterCellManager() {
         return columnsManager;
+    }
+
+    public TableResult getCurrentTableResult() {
+        return currentTableResult;
     }
 
     private void fireColumnAndDataUpdate() {

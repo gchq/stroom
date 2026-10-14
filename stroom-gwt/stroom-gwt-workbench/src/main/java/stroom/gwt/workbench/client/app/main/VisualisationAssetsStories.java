@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
+import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -28,14 +29,13 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.visualisation.client.presenter.VisualisationAssetsPresenter;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories of `App/Main/VisualisationAssets`, showing Stroom's real [VisualisationAssetsPresenter]
+/// Stories of `App/Main/VisualisationAssets`, showing Stroom's real [DocumentAssetPresenter]
 /// (a Visualisation's 'Assets' tab: the asset tree with its toolbar) and its 'Add File' upload
 /// dialog with fake REST replies.
 ///
@@ -154,7 +154,7 @@ public final class VisualisationAssetsStories {
         harness.add(frame);
         // After start-up, as its editor reads the user's preferences
         harness.afterStartUp(() -> {
-            final VisualisationAssetsPresenter presenter = harness.unbindOnCleanUp(
+            final DocumentAssetPresenter<VisualisationDoc> presenter = harness.unbindOnCleanUp(
                     injector.getVisualisationAssetsPresenter());
             for (final Widget toolbar : presenter.getDocumentButtons()) {
                 toolbar.getElement().getStyle().setProperty("flex", "0 0 auto");
