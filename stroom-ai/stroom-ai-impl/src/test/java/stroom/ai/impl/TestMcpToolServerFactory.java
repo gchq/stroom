@@ -70,7 +70,8 @@ class TestMcpToolServerFactory {
     private final UserIdentityFactory userIdentityFactory = Mockito.mock(UserIdentityFactory.class);
 
     private final McpToolServerFactory factory = new McpToolServerFactory(
-            () -> storedSecrets, null, null, () -> securityContext, () -> userIdentityFactory, new McpClientCache());
+            () -> storedSecrets, null, null, () -> securityContext, () -> userIdentityFactory, new McpClientCache(),
+            () -> null, AiConfig::new);
 
     @Test
     void noneMode() {

@@ -45,6 +45,7 @@ import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AnswerAiApprovalRequest;
+import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
@@ -184,6 +185,7 @@ public class AskStroomAIService {
     private final WorkspaceStore workspaceStore;
     private final AiWorkspaceDao workspaceDao;
     private final ContextAssembler contextAssembler;
+    private final Provider<McpElicitations> mcpElicitationsProvider;
     private final ContextUsageTracker usageTracker;
     private final ChatCompactor chatCompactor;
     private final AiMemoryService memoryService;
@@ -223,8 +225,10 @@ public class AskStroomAIService {
                               final AiAuditLog auditLog,
                               final AiDao aiDao,
                               final Provider<AiConfig> aiConfigProvider,
-                              final SecurityContext securityContext) {
+                              final SecurityContext securityContext,
+                              final Provider<McpElicitations> mcpElicitationsProvider) {
         this.aiService = aiService;
+        this.mcpElicitationsProvider = mcpElicitationsProvider;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
         this.queryService = queryService;
@@ -380,6 +384,17 @@ public class AskStroomAIService {
         }
         return memoryService.answerApproval(chatId, request.getMessageId(), request.isApproved())
                == ApprovalStatus.APPROVED;
+    }
+
+    /**
+     * Answers a form an MCP tool asked the user to fill in.
+     */
+    public Boolean answerElicitation(final AnswerAiElicitationRequest request) {
+        final int chatId = NullSafe.getOrElse(request.getAiChat(), AiChat::getId, 0);
+        aiService.verifyOwnership(chatId);
+        mcpElicitationsProvider.get().answer(chatId, request.getMessageId(), request.getAction(),
+                request.getAnswer());
+        return true;
     }
 
     /**
@@ -586,6 +601,13 @@ public class AskStroomAIService {
         final AiChatRun active = runDao.getActive(chatId).orElse(null);
         if (active == null || active.getStatus() == AiChatRunStatus.STOPPING) {
             return false;
+        }
+        if (active.getStatus() == AiChatRunStatus.WAITING_FOR_USER
+            && active.getStopReason() == AiChatRunStopReason.NEEDS_INPUT) {
+            // A tool is waiting for the user to fill in a form, holding the run's thread. The run picks the
+            // message up once the tool has its answer.
+            aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, message);
+            return true;
         }
         if (active.getStatus() == AiChatRunStatus.WAITING_FOR_USER) {
             // A message sent instead of answering a request for approval denies the calls, with the message as

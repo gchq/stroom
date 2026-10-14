@@ -212,7 +212,8 @@ class TestWorkspaceStore {
 
     @Test
     void testNoRetention() {
-        aiConfig = new AiConfig(null, null, null, null, null, null, null, StroomDuration.ZERO, null, null, null, null);
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, StroomDuration.ZERO, null, null, null,
+                null, null, null);
         final int fileId = workspaceStore.createFile(chat.getId(), AiAttachmentType.TOOL_OUTPUT, "/outputs/f.txt",
                 null, "x\n");
 

@@ -72,7 +72,8 @@ class TestAskStroomAIService {
     private AskStroomAIService service() {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, () -> null, null, null,
                 null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null, compactor, null,
-                toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext);
+                toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext,
+                () -> null);
     }
 
     @Test
@@ -84,6 +85,21 @@ class TestAskStroomAIService {
         Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
         Mockito.verify(aiService, Mockito.never())
                 .storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.STEER_MESSAGE), Mockito.anyString());
+    }
+
+    @Test
+    void testAskStroomAi_aMessageWhileAToolWaitsForAFormIsKeptForLater() {
+        final AiChatRun waitingForForm = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_INPUT, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(waitingForForm));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "use ACME"));
+
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, "use ACME");
+        // Nothing is denied, and the run is not carried on, as the tool's thread is still working on it.
+        Mockito.verifyNoInteractions(toolApprovalService);
+        Mockito.verify(runManager, Mockito.never()).continueRun(Mockito.anyInt(), Mockito.any());
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
     }
 
     @Test
