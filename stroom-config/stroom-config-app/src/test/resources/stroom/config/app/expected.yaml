@@ -23,6 +23,11 @@ appConfig:
       maximumSize: 1000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
+    compaction:
+      digestMaxResultRows: 20
+      replyReserveTokens: 4096
+      thresholdPercent: 80
+      turnsKeptInFull: 2
     db:
       connection:
         jdbcDriverClassName: null

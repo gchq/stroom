@@ -49,9 +49,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// Builds what the model is sent for a question: the system prompt, any summary of earlier conversation, the
-/// conversation history (with attached tables, and a short record of the tools used for each earlier answer),
-/// and the question.
+/// Builds what the model is sent for a question: the system prompt, the earlier conversation (compacted turns as
+/// digests or a summary, later turns in full, with attached tables and a short record of the tools used for each
+/// answer), and the question.
 ///
 /// This is the one place the model's view of a chat is built, so that anything else that needs to know what the
 /// model is sent (e.g. how much of its context window a chat uses) sees the same thing.
@@ -61,6 +61,7 @@ public class ContextAssembler {
 
     public static final String PART_SYSTEM_PROMPT = "System prompt";
     public static final String PART_TOOL_DEFINITIONS = "Tool definitions";
+    public static final String PART_EARLIER_TURNS = "Earlier turns (compacted)";
     public static final String PART_CONVERSATION = "Conversation";
     public static final String PART_ATTACHMENTS = "Attached tables";
     public static final String PART_TOOL_RESULTS = "Tool calls and results";
@@ -69,9 +70,18 @@ public class ContextAssembler {
     static final int TOOL_LOG_ARGS_LIMIT = 200;
     static final int TOOL_LOG_RESULT_LIMIT = 200;
 
+    static final String EARLIER_TURNS_INTRO = """
+            Earlier turns of this conversation have been compacted to save space: each is shown below as a short \
+            digest (or, for the oldest, a summary). Everything is still stored. If you need exact detail from an \
+            earlier turn, read it again with read_turn, or find it with search_history. Never guess a figure from \
+            an earlier turn; read it again or re-run the query. If a workspace file a digest refers to has gone, \
+            re-run the query or ask the user to attach the data again.""";
+    static final String EARLIER_TURNS_ACK = "Understood. I'll read earlier turns again if I need exact detail.";
+
     private static final SimpleTokenCountEstimator ESTIMATOR = new SimpleTokenCountEstimator();
 
     private final Provider<AskStroomAiConfig> defaultConfigProvider;
+    private final Provider<AiConfig> aiConfigProvider;
     private final WorkspaceStore workspaceStore;
     private final AiService aiService;
     private final AiDao aiDao;
@@ -80,12 +90,14 @@ public class ContextAssembler {
 
     @Inject
     ContextAssembler(final Provider<AskStroomAiConfig> defaultConfigProvider,
+                     final Provider<AiConfig> aiConfigProvider,
                      final WorkspaceStore workspaceStore,
                      final AiService aiService,
                      final AiDao aiDao,
                      final AiWorkspaceDao workspaceDao,
                      final ContextUsageTracker usageTracker) {
         this.defaultConfigProvider = defaultConfigProvider;
+        this.aiConfigProvider = aiConfigProvider;
         this.workspaceStore = workspaceStore;
         this.aiService = aiService;
         this.aiDao = aiDao;
@@ -119,6 +131,166 @@ public class ContextAssembler {
     }
 
     /**
+     * @param history All the messages in the chat, in order.
+     * @return The chat's latest compaction that is still in use, or {@link CompactionRecord#NONE}.
+     */
+    public static CompactionRecord currentCompaction(final List<AiChatMessage> history) {
+        for (final AiChatMessage message : history.reversed()) {
+            if (message.getMessageType() == AiMessageType.COMPACTION_SUMMARY) {
+                final CompactionRecord record = readCompaction(message);
+                if (record != null && !record.stale()) {
+                    return record;
+                }
+            }
+        }
+        return CompactionRecord.NONE;
+    }
+
+    /**
+     * @return The compaction held by a COMPACTION_SUMMARY message, or null if it cannot be read.
+     */
+    static CompactionRecord readCompaction(final AiChatMessage message) {
+        try {
+            return JsonUtil.readValue(message.getMessage(), CompactionRecord.class);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read compaction message " + message.getId(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Builds the messages to send to the model to answer the question.
+     *
+     * @param request       The question.
+     * @param chatId        The chat.
+     * @param attachmentMap The chat's attached tables that are ready, by id.
+     * @param history       All the messages in the chat, in order, ending with the question.
+     * @param compaction    Which earlier turns the model sees as digests or a summary.
+     * @return The messages, in order.
+     */
+    public List<ChatMessage> assemble(final AskStroomAiRequest request,
+                                      final int chatId,
+                                      final Map<Integer, AiChatAttachment> attachmentMap,
+                                      final List<AiChatMessage> history,
+                                      final CompactionRecord compaction) {
+        final List<ChatMessage> messages = new ArrayList<>();
+        final List<AiChatMessage> relevantHistory = selectHistoryForModel(history);
+        final Map<Integer, List<AiChatMessage>> toolMessagesByTurn = toolMessagesByTurn(history);
+
+        messages.add(new SystemMessage(systemPrompt()));
+
+        final String earlierTurns = earlierTurns(history, relevantHistory, compaction);
+        if (earlierTurns != null) {
+            messages.add(new UserMessage(earlierTurns));
+            messages.add(new AiMessage(EARLIER_TURNS_ACK));
+        }
+
+        // The last message is the question, which is added from the request.
+        for (int i = 0; i < relevantHistory.size() - 1; i++) {
+            final AiChatMessage msg = relevantHistory.get(i);
+            if (msg.getMessageType() == AiMessageType.ATTACHMENT) {
+                // Attached tables are always kept, as the user attached them to be used.
+                final UserMessage attachmentMessage = attachmentMessage(msg, attachmentMap);
+                if (attachmentMessage != null) {
+                    messages.add(attachmentMessage);
+                }
+            } else if (!compaction.covers(msg.getTurnId())) {
+                switch (msg.getMessageType()) {
+                    case USER_MESSAGE -> {
+                        // Say which tools were used for the answer, so the model knows what it has already
+                        // looked at.
+                        final String toolLog = toolLog(toolMessagesByTurn.get(msg.getTurnId()));
+                        messages.add(new UserMessage(toolLog != null
+                                ? msg.getMessage() + "\n\n[" + toolLog + "]"
+                                : msg.getMessage()));
+                    }
+                    case STEER_MESSAGE -> messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + msg.getMessage()));
+                    case AI_RESPONSE -> messages.add(new AiMessage(msg.getMessage()));
+                    default -> LOGGER.debug(() -> "Not sending message of type " + msg.getMessageType());
+                }
+            }
+        }
+
+        messages.add(new UserMessage(request.getMessage()));
+        return messages;
+    }
+
+    /**
+     * @return The text standing in for the compacted turns, or null if no turns are compacted.
+     */
+    private String earlierTurns(final List<AiChatMessage> history,
+                                final List<AiChatMessage> relevantHistory,
+                                final CompactionRecord compaction) {
+        if (compaction.digestsUpToTurnId() <= 0) {
+            return null;
+        }
+        final Map<Integer, String> digests = TurnDigests.digests(history, digestMaxRows());
+        final StringBuilder sb = new StringBuilder(EARLIER_TURNS_INTRO).append("\n\n");
+        if (compaction.summaryUpToTurnId() > 0) {
+            sb.append("Summary of the turns up to turn ").append(compaction.summaryUpToTurnId()).append(":\n")
+                    .append(NullSafe.nonBlankStringElse(compaction.summary(),
+                            "(No summary: these turns were dropped to save space. Use search_history to find "
+                            + "anything from them.)"))
+                    .append("\n\n");
+        }
+        relevantHistory.stream()
+                .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE)
+                .mapToInt(AiChatMessage::getTurnId)
+                .filter(turnId -> turnId > compaction.summaryUpToTurnId() && compaction.covers(turnId))
+                .forEach(turnId -> sb.append(digests.get(turnId)).append("\n\n"));
+        return sb.toString().strip();
+    }
+
+    private UserMessage attachmentMessage(final AiChatMessage msg,
+                                          final Map<Integer, AiChatAttachment> attachmentMap) {
+        final Integer attachmentId = msg.getAttachmentId();
+        final AiChatAttachment attachment = attachmentId != null
+                ? attachmentMap.get(attachmentId)
+                : null;
+        if (attachment == null) {
+            return null;
+        }
+        final Path mdFile = workspaceStore.localFile(attachment.getId());
+        if (!Files.exists(mdFile)) {
+            return null;
+        }
+        try {
+            final String markdown = Files.readString(mdFile, StandardCharsets.UTF_8);
+            final StringBuilder tagged = new StringBuilder()
+                    .append("[Attached Table: ")
+                    .append(NullSafe.nonBlankStringElse(attachment.getDescription(),
+                            "Attachment " + attachment.getId()));
+            if (attachment.getRowCount() != null) {
+                tagged.append(" (").append(attachment.getRowCount()).append(" rows)");
+            }
+            if (attachment.isTruncated()) {
+                tagged.append(" TRUNCATED");
+            }
+            tagged.append("]\n").append(markdown);
+            return new UserMessage(tagged.toString());
+        } catch (final IOException e) {
+            LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
+            return null;
+        }
+    }
+
+    /**
+     * Estimates how many tokens a request would use, corrected by how far off the estimate was for the chat's
+     * last measured model call.
+     *
+     * @param chatId   The chat.
+     * @param messages The messages that would be sent.
+     * @return The estimate, including the tool definitions offered in the chat's last call.
+     */
+    public long estimateTokens(final int chatId, final List<ChatMessage> messages) {
+        final long estimate = ESTIMATOR.estimateTokenCountInMessages(messages)
+                              + usageTracker.getToolDefinitionTokens(chatId);
+        return usageTracker.getCorrection(chatId)
+                .map(factor -> Math.round(estimate * factor))
+                .orElse(estimate);
+    }
+
+    /**
      * Estimates how much of the model's context window the chat would use if a question were asked now, using
      * the same rules as {@link #assemble}, and corrected by how far off the estimate was for the chat's last
      * measured model call.
@@ -128,33 +300,36 @@ public class ContextAssembler {
      */
     public AiContextUsage estimateUsage(final int chatId) {
         final List<AiChatMessage> history = aiService.getMessages(chatId);
+        final CompactionRecord compaction = currentCompaction(history);
+        final List<AiChatMessage> relevantHistory = selectHistoryForModel(history);
         final Map<String, Long> parts = new LinkedHashMap<>();
         parts.put(PART_SYSTEM_PROMPT, (long) ESTIMATOR.estimateTokenCountInText(systemPrompt()));
         parts.put(PART_TOOL_DEFINITIONS, (long) usageTracker.getToolDefinitionTokens(chatId));
+        parts.put(PART_EARLIER_TURNS, (long) ESTIMATOR.estimateTokenCountInText(
+                NullSafe.string(earlierTurns(history, relevantHistory, compaction))));
 
+        final Map<Integer, List<AiChatMessage>> toolMessagesByTurn = toolMessagesByTurn(history);
         long conversation = 0;
         long attachments = 0;
-        for (final AiChatMessage message : selectHistoryForModel(history)) {
+        for (final AiChatMessage message : relevantHistory) {
             if (message.getMessageType() == AiMessageType.ATTACHMENT && message.getAttachmentId() != null) {
                 attachments += workspaceDao.getSize(message.getAttachmentId()) / 4;
-            } else {
+            } else if (!compaction.covers(message.getTurnId())) {
                 conversation += tokens(message);
+                if (message.getMessageType() == AiMessageType.USER_MESSAGE) {
+                    conversation += ESTIMATOR.estimateTokenCountInText(
+                            NullSafe.string(toolLog(toolMessagesByTurn.get(message.getTurnId()))));
+                }
             }
         }
         parts.put(PART_CONVERSATION, conversation);
         parts.put(PART_ATTACHMENTS, attachments);
 
-        // Tool calls: in full for the latest turn (if a run is working on it), and as a short log for earlier ones.
+        // The tool calls of the latest turn are sent in full while a run works on it.
         final int latestTurn = history.stream().mapToInt(AiChatMessage::getTurnId).max().orElse(0);
-        long toolResults = 0;
-        for (final Map.Entry<Integer, List<AiChatMessage>> entry : toolMessagesByTurn(history).entrySet()) {
-            if (entry.getKey() == latestTurn) {
-                toolResults += entry.getValue().stream().mapToLong(ContextAssembler::tokens).sum();
-            } else {
-                toolResults += ESTIMATOR.estimateTokenCountInText(NullSafe.string(toolLog(entry.getValue())));
-            }
-        }
-        parts.put(PART_TOOL_RESULTS, toolResults);
+        parts.put(PART_TOOL_RESULTS, NullSafe.list(toolMessagesByTurn.get(latestTurn)).stream()
+                .mapToLong(ContextAssembler::tokens)
+                .sum());
 
         final long estimate = parts.values().stream().mapToLong(Long::longValue).sum();
         final Optional<Double> correction = usageTracker.getCorrection(chatId);
@@ -173,110 +348,17 @@ public class ContextAssembler {
                 AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT);
     }
 
+    private int digestMaxRows() {
+        return NullSafe.getOrElse(aiConfigProvider.get(),
+                AiConfig::getCompaction,
+                AiCompactionConfig::getDigestMaxResultRows,
+                AiCompactionConfig.DEFAULT_DIGEST_MAX_RESULT_ROWS);
+    }
+
     private static long tokens(final AiChatMessage message) {
         return message.getTokenCount() != null
                 ? message.getTokenCount()
                 : ESTIMATOR.estimateTokenCountInText(NullSafe.string(message.getMessage()));
-    }
-
-    /**
-     * Builds the list of ChatMessages for a unified LLM call. Includes system prompt,
-     * optional context summary (from prior trimming), filtered conversation history
-     * with inline attachment data, and the current user message.
-     *
-     * @param maxHistory     maximum number of history messages to include (from the end)
-     * @param contextSummary optional summary of earlier messages that were trimmed
-     */
-    public List<ChatMessage> assemble(final AskStroomAiRequest request,
-                                      final int chatId,
-                                      final Map<Integer, AiChatAttachment> attachmentMap,
-                                      final List<AiChatMessage> relevantHistory,
-                                      final int maxHistory,
-                                      final String contextSummary) {
-        final List<ChatMessage> messages = new ArrayList<>();
-        final Map<Integer, List<AiChatMessage>> toolMessagesByTurn = toolMessagesByTurn(chatId);
-
-        // System message.
-        messages.add(new SystemMessage(NullSafe.getOrElse(
-                defaultConfigProvider.get(),
-                AskStroomAiConfig::getChatSystemPrompt,
-                AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT)));
-
-        // If we have a summary of earlier (trimmed) conversation, inject it.
-        if (contextSummary != null && !contextSummary.isBlank()) {
-            messages.add(new UserMessage(
-                    "[Prior conversation summary]: " + contextSummary));
-            messages.add(new AiMessage(
-                    "Understood, I'll keep the prior context in mind."));
-        }
-
-        // Add history messages (skip the current user message which was just stored).
-        final int startIdx = Math.max(0, relevantHistory.size() - maxHistory - 1);
-        for (int i = startIdx; i < relevantHistory.size() - 1; i++) {
-            final AiChatMessage msg = relevantHistory.get(i);
-            switch (msg.getMessageType()) {
-                case ATTACHMENT -> {
-                    // Read the attachment's markdown file and inject it as a UserMessage
-                    // tagged with the source description.
-                    final Integer attachmentId = msg.getAttachmentId();
-                    final AiChatAttachment attachment = attachmentId != null
-                            ? attachmentMap.get(attachmentId)
-                            : null;
-                    if (attachment != null) {
-                        final Path mdFile = workspaceStore.localFile(attachment.getId());
-                        if (Files.exists(mdFile)) {
-                            try {
-                                final String markdown = Files.readString(mdFile, StandardCharsets.UTF_8);
-                                final String description = NullSafe.getOrElse(
-                                        attachment, AiChatAttachment::getDescription,
-                                        "Attachment " + attachment.getId());
-                                final StringBuilder tagged = new StringBuilder();
-                                tagged
-                                        .append("[Attached Table: ")
-                                        .append(description);
-                                if (attachment.getRowCount() != null) {
-                                    tagged
-                                            .append(" (")
-                                            .append(attachment.getRowCount())
-                                            .append(" rows)");
-                                }
-                                if (attachment.isTruncated()) {
-                                    tagged
-                                            .append(" TRUNCATED");
-                                }
-                                tagged
-                                        .append("]\n")
-                                        .append(markdown);
-                                messages.add(new UserMessage(tagged.toString()));
-                            } catch (final IOException e) {
-                                LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
-                            }
-                        }
-                    }
-                }
-                case USER_MESSAGE -> messages.add(new UserMessage(msg.getMessage()));
-                case STEER_MESSAGE -> messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + msg.getMessage()));
-                case AI_RESPONSE -> {
-                    // Say which tools were used for the answer, so the model knows what it has already looked at.
-                    final String toolLog = toolLog(toolMessagesByTurn.get(msg.getTurnId()));
-                    if (toolLog != null) {
-                        messages.add(new SystemMessage(toolLog));
-                    }
-                    messages.add(new AiMessage(msg.getMessage()));
-                }
-                default -> LOGGER.debug(() -> "Not sending message of type " + msg.getMessageType());
-            }
-        }
-
-        // Add the current user message.
-        messages.add(new UserMessage(request.getMessage()));
-
-        return messages;
-    }
-
-
-    private Map<Integer, List<AiChatMessage>> toolMessagesByTurn(final int chatId) {
-        return toolMessagesByTurn(aiService.getMessages(chatId));
     }
 
     private static Map<Integer, List<AiChatMessage>> toolMessagesByTurn(final List<AiChatMessage> history) {
@@ -313,27 +395,20 @@ public class ContextAssembler {
         if (calls.isEmpty()) {
             return null;
         }
-        final StringBuilder sb = new StringBuilder("Tools used for the next answer:");
+        final StringBuilder sb = new StringBuilder("Tools you used to answer this:");
         for (final ToolCallRecord call : calls) {
             sb.append("\n- ").append(call.tool()).append('(')
-                    .append(shorten(NullSafe.string(call.arguments()), TOOL_LOG_ARGS_LIMIT)).append(')');
+                    .append(TurnDigests.oneLine(call.arguments(), TOOL_LOG_ARGS_LIMIT)).append(')');
             final ToolResultRecord result = results.get(call.callId());
             if (result != null) {
                 sb.append(" -> ");
                 if (result.path() != null) {
                     sb.append("result saved to ").append(result.path());
                 } else {
-                    sb.append(shorten(NullSafe.string(result.text()), TOOL_LOG_RESULT_LIMIT));
+                    sb.append(TurnDigests.oneLine(result.text(), TOOL_LOG_RESULT_LIMIT));
                 }
             }
         }
         return sb.toString();
-    }
-
-    private static String shorten(final String text, final int limit) {
-        final String oneLine = text.replace('\n', ' ').strip();
-        return oneLine.length() > limit
-                ? oneLine.substring(0, limit - 1) + "…"
-                : oneLine;
     }
 }

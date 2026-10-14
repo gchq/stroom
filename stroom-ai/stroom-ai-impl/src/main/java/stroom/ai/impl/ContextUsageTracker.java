@@ -94,6 +94,20 @@ public class ContextUsageTracker {
                            + "), " + outputTokens + " output tokens");
     }
 
+    /// Estimates how many tokens a request would use, corrected by how far off the estimate was for the chat's
+    /// last measured call.
+    ///
+    /// @param chatId   The chat.
+    /// @param messages The messages to send.
+    /// @param tools    The tool definitions to offer, or null.
+    /// @return The estimate.
+    public long estimate(final int chatId, final List<ChatMessage> messages, final List<ToolSpecification> tools) {
+        final long estimate = ESTIMATOR.estimateTokenCountInMessages(messages) + estimateTools(tools);
+        return getCorrection(chatId)
+                .map(factor -> Math.round(estimate * factor))
+                .orElse(estimate);
+    }
+
     /// @param chatId The chat.
     /// @return What to multiply the chat's estimates by to correct them, if a call has been measured on this node.
     public Optional<Double> getCorrection(final int chatId) {

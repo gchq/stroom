@@ -43,7 +43,7 @@ class TestContextAssembler {
                                 90_000, 50)));
 
         assertThat(ContextAssembler.toolLog(toolMessages)).isEqualTo("""
-                Tools used for the next answer:
+                Tools you used to answer this:
                 - stroom__find_documents({"name":"fw"}) -> Found 2 feeds
                 - run_stroomql({"query":"from x"}) -> result saved to /outputs/turn-1/call-3.txt""");
     }
@@ -73,7 +73,7 @@ class TestContextAssembler {
         final stroom.ai.impl.AiWorkspaceDao workspaceDao = Mockito.mock(stroom.ai.impl.AiWorkspaceDao.class);
         final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
         final ContextAssembler assembler = new ContextAssembler(
-                () -> null, null, aiService, aiDao, workspaceDao, tracker);
+                () -> null, AiConfig::new, null, aiService, aiDao, workspaceDao, tracker);
         Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
                 new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "table", 1, null),
                 new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, 100),
@@ -92,7 +92,8 @@ class TestContextAssembler {
                 .containsEntry(ContextAssembler.PART_CONVERSATION, 350L)
                 .containsEntry(ContextAssembler.PART_ATTACHMENTS, 1_000L)
                 .containsEntry(ContextAssembler.PART_TOOL_DEFINITIONS, 300L)
-                .containsEntry(ContextAssembler.PART_TOOL_RESULTS, 0L);
+                .containsEntry(ContextAssembler.PART_TOOL_RESULTS, 0L)
+                .containsEntry(ContextAssembler.PART_EARLIER_TURNS, 0L);
         assertThat(usage.isEstimated()).isTrue();
         assertThat(usage.getContextWindowTokens()).isEqualTo(10_000);
         final long sum = usage.getParts().values().stream().mapToLong(Long::longValue).sum();

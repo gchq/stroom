@@ -18,6 +18,10 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.workspace.WorkspaceStore;
+import stroom.ai.shared.AiAttachmentType;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.task.api.TaskContext;
 
@@ -25,6 +29,7 @@ import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -39,11 +44,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestMcpAgentChat {
 
@@ -51,15 +58,15 @@ class TestMcpAgentChat {
     private final TaskContext taskContext = Mockito.mock(TaskContext.class);
     private final BuiltInTools builtInTools = Mockito.mock(BuiltInTools.class);
     private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
-    private final stroom.ai.impl.workspace.WorkspaceStore workspaceStore =
-            Mockito.mock(stroom.ai.impl.workspace.WorkspaceStore.class);
+    private final WorkspaceStore workspaceStore =
+            Mockito.mock(WorkspaceStore.class);
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
             Mockito.mock(ContextUsageTracker.class));
 
     {
         // Stored messages get an id and turn, as the DAO would give them.
         Mockito.when(aiService.storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString()))
-                .thenAnswer(invocation -> new stroom.ai.shared.AiChatMessage(1000, invocation.getArgument(0), 0L,
+                .thenAnswer(invocation -> new AiChatMessage(1000, invocation.getArgument(0), 0L,
                         invocation.getArgument(1), null, invocation.getArgument(2), 500, null));
     }
 
@@ -76,7 +83,7 @@ class TestMcpAgentChat {
         final McpToolset toolset = toolset(Mockito.mock(McpSyncClient.class), searchTool());
 
         final ChatResponse response = agentChat.chat(new StubChatModel(), null, 1, messages, toolset, 99,
-                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0);
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
 
         // The stub model answers without calling a tool, so we just get its plain response back.
         assertThat(response.aiMessage().text()).contains("[Stub Response]");
@@ -104,7 +111,7 @@ class TestMcpAgentChat {
 
         final StringBuilder debugLog = new StringBuilder();
         final ChatResponse response = agentChat.chat(model, null, 7, messages, toolset, 99,
-                new AtomicBoolean(false), taskContext, 2, debugLog, 0);
+                new AtomicBoolean(false), taskContext, 2, debugLog, 0, ContextBudget.UNKNOWN);
 
         assertThat(response.aiMessage().text()).isEqualTo("There were 42 errors today.");
 
@@ -161,7 +168,8 @@ class TestMcpAgentChat {
                         .build())),
                 AiMessage.from("done"));
         final StringBuilder debugLog = new StringBuilder();
-        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1, debugLog, 0);
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1, debugLog, 0,
+                ContextBudget.UNKNOWN);
 
         assertThat(debugLog.toString()).contains("built-in result");
     }
@@ -174,7 +182,7 @@ class TestMcpAgentChat {
         final StubToolCallingModel model = new StubToolCallingModel(AiMessage.from("an answer"));
 
         agentChat.chat(model, modelDoc, 1, messages, toolset, 99,
-                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0);
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
 
         assertThat(model.requests).singleElement()
                 .satisfies(request -> assertThat(request.toolSpecifications()).isNullOrEmpty());
@@ -213,7 +221,8 @@ class TestMcpAgentChat {
                         .build())),
                 AiMessage.from("done"));
         final StringBuilder debugLog = new StringBuilder();
-        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1, debugLog, 0);
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1, debugLog, 0,
+                ContextBudget.UNKNOWN);
 
         // The server is not trusted, so the tool is not known to be read-only, and is not run.
         Mockito.verify(client, Mockito.never()).callTool(Mockito.any());
@@ -248,7 +257,7 @@ class TestMcpAgentChat {
                         .build())),
                 AiMessage.from("done"));
         agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
-                new StringBuilder(), 0);
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
 
         Mockito.verify(client).callTool(Mockito.any());
     }
@@ -261,7 +270,7 @@ class TestMcpAgentChat {
         final McpToolset toolset = toolset(client, searchTool());
         // The user sends a message while the tool runs.
         Mockito.when(aiService.getMessagesSince(7, 100)).thenReturn(List.of(
-                new stroom.ai.shared.AiChatMessage(101, 7, 0L, stroom.ai.shared.AiMessageType.STEER_MESSAGE,
+                new AiChatMessage(101, 7, 0L, AiMessageType.STEER_MESSAGE,
                         null, "only count firewall errors", 1, null)));
         Mockito.when(aiService.getMessagesSince(7, 101)).thenReturn(List.of());
 
@@ -273,7 +282,7 @@ class TestMcpAgentChat {
                         .build())),
                 AiMessage.from("There were 3 firewall errors."));
         agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
-                new StringBuilder(), 100);
+                new StringBuilder(), 100, ContextBudget.UNKNOWN);
 
         // The second model call includes the user's message.
         assertThat(model.requests).hasSize(2);
@@ -289,7 +298,7 @@ class TestMcpAgentChat {
     void steeringMessageSentAsTheModelFinishesGetsAnAnswer() {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of());
         Mockito.when(aiService.getMessagesSince(7, 100)).thenReturn(List.of(
-                new stroom.ai.shared.AiChatMessage(101, 7, 0L, stroom.ai.shared.AiMessageType.STEER_MESSAGE,
+                new AiChatMessage(101, 7, 0L, AiMessageType.STEER_MESSAGE,
                         null, "and yesterday?", 1, null)));
         Mockito.when(aiService.getMessagesSince(7, 101)).thenReturn(List.of());
         final StubToolCallingModel model = new StubToolCallingModel(
@@ -297,7 +306,7 @@ class TestMcpAgentChat {
                 AiMessage.from("Today 5, yesterday 2."));
 
         final ChatResponse response = agentChat.chat(model, null, 7, messages, McpToolset.EMPTY, 99,
-                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 100);
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 100, ContextBudget.UNKNOWN);
 
         assertThat(response.aiMessage().text()).isEqualTo("Today 5, yesterday 2.");
         assertThat(model.requests).hasSize(2);
@@ -318,15 +327,15 @@ class TestMcpAgentChat {
                 AiMessage.from("42."));
 
         agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
-                new StringBuilder(), 0);
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
 
         final ArgumentCaptor<String> call = ArgumentCaptor.forClass(String.class);
-        Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(stroom.ai.shared.AiMessageType.TOOL_CALL),
+        Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.TOOL_CALL),
                 call.capture());
         assertThat(call.getValue()).contains("\"tool\":\"test__search\"").contains("errors").contains("Counting.");
         final ArgumentCaptor<String> result = ArgumentCaptor.forClass(String.class);
         Mockito.verify(aiService).storeMessage(Mockito.eq(7),
-                Mockito.eq(stroom.ai.shared.AiMessageType.TOOL_RESULT), result.capture());
+                Mockito.eq(AiMessageType.TOOL_RESULT), result.capture());
         assertThat(result.getValue()).contains("\"text\":\"42 errors\"").contains("\"error\":false");
         Mockito.verifyNoInteractions(workspaceStore);
     }
@@ -347,19 +356,95 @@ class TestMcpAgentChat {
                 AiMessage.from("done"));
 
         agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
-                new StringBuilder(), 0);
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
 
         final String path = ToolOutputs.outputPath(500, 1000);
-        Mockito.verify(workspaceStore).createFile(7, stroom.ai.shared.AiAttachmentType.TOOL_OUTPUT, path, 1000,
+        Mockito.verify(workspaceStore).createFile(7, AiAttachmentType.TOOL_OUTPUT, path, 1000,
                 bigOutput.strip());
         // The second model call was given the stub, not the whole output.
         assertThat(model.requests.get(1).messages().getLast())
-                .isInstanceOf(dev.langchain4j.data.message.ToolExecutionResultMessage.class)
-                .extracting(m -> ((dev.langchain4j.data.message.ToolExecutionResultMessage) m).text())
+                .isInstanceOf(ToolExecutionResultMessage.class)
+                .extracting(m -> ((ToolExecutionResultMessage) m).text())
                 .asString()
                 .contains("too large to show in full")
                 .contains(path)
                 .hasSizeLessThan(ToolOutputs.MAX_INLINE_CHARS);
+    }
+
+    @Test
+    void shortenToolResultsKeepsTheLatestAndShortOnes() {
+        final List<ChatMessage> conversation = new ArrayList<>(List.of(
+                UserMessage.from("q"),
+                ToolExecutionResultMessage.from("1", "t", "x".repeat(1_000)),
+                ToolExecutionResultMessage.from("2", "t", "short"),
+                ToolExecutionResultMessage.from("3", "t", "y".repeat(1_000)),
+                ToolExecutionResultMessage.from("4", "t", "z".repeat(1_000))));
+
+        assertThat(McpAgentChat.shortenToolResults(conversation, 2)).isEqualTo(1);
+        assertThat(((ToolExecutionResultMessage) conversation.get(1)).text())
+                .isEqualTo(McpAgentChat.SHORTENED_RESULT);
+        assertThat(((ToolExecutionResultMessage) conversation.get(1)).id())
+                .isEqualTo("1");
+        assertThat(((ToolExecutionResultMessage) conversation.get(2)).text())
+                .isEqualTo("short");
+        assertThat(((ToolExecutionResultMessage) conversation.get(3)).text())
+                .startsWith("y");
+
+        assertThat(McpAgentChat.shortenToolResults(conversation, 0)).isEqualTo(2);
+        assertThat(McpAgentChat.shortenToolResults(conversation, 0)).isZero();
+    }
+
+    @Test
+    void contextOverflowShortensToolResultsAndRetriesOnce() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("r".repeat(1_000)))).build());
+        final McpToolset toolset = toolset(client, searchTool());
+        final List<ChatRequest> requests = new ArrayList<>();
+        final ChatModel model = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest chatRequest) {
+                requests.add(chatRequest);
+                return switch (requests.size()) {
+                    case 1, 2 -> ChatResponse.builder().aiMessage(AiMessage.from(List.of(
+                            ToolExecutionRequest.builder()
+                                    .id("call-" + requests.size())
+                                    .name("test__search")
+                                    .arguments("{}")
+                                    .build()))).build();
+                    case 3 -> throw new RuntimeException("This model's maximum context length is 10 tokens");
+                    default -> ChatResponse.builder().aiMessage(AiMessage.from("done")).build();
+                };
+            }
+        };
+
+        final ChatResponse response = agentChat.chat(model, null, 7, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(response.aiMessage().text()).isEqualTo("done");
+        assertThat(requests).hasSize(4);
+        // The retry was sent with the earlier result shortened and the latest kept.
+        final List<ChatMessage> retried = requests.get(3).messages();
+        assertThat(retried.stream()
+                .filter(m -> m instanceof ToolExecutionResultMessage)
+                .map(m -> ((ToolExecutionResultMessage) m).text())
+                .toList())
+                .containsExactly(McpAgentChat.SHORTENED_RESULT, "r".repeat(1_000));
+    }
+
+    @Test
+    void contextOverflowWithNothingToShortenIsThrown() {
+        final ChatModel model = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest chatRequest) {
+                throw new RuntimeException("context_length_exceeded");
+            }
+        };
+
+        assertThatThrownBy(() -> agentChat.chat(model, null, 7, messages,
+                        McpToolset.EMPTY, 99, new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0,
+                        ContextBudget.UNKNOWN))
+                .hasMessageContaining("context_length_exceeded");
     }
 
     private static Tool searchTool() {
@@ -383,7 +468,7 @@ class TestMcpAgentChat {
     private static final class StubToolCallingModel implements ChatModel {
 
         private final List<AiMessage> turns;
-        private final List<ChatRequest> requests = new java.util.ArrayList<>();
+        private final List<ChatRequest> requests = new ArrayList<>();
         private int turn;
 
         private StubToolCallingModel(final AiMessage... turns) {
