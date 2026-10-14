@@ -46,6 +46,8 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    elicitationTimeout: "PT10M"
+    maxElicitationsPerNode: 5
     maxRunDuration: "PT2H"
     maxRunsPerNode: 20
     maxRunsPerUser: 3

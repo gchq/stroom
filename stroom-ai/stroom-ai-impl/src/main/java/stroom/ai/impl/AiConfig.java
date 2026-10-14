@@ -40,6 +40,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     static final StroomDuration DEFAULT_WORKSPACE_FILE_RETENTION = StroomDuration.ofDays(7);
     static final StroomDuration DEFAULT_CHAT_RETENTION = StroomDuration.ofDays(90);
     static final int DEFAULT_TOOL_GROUP_THRESHOLD = 24;
+    static final StroomDuration DEFAULT_ELICITATION_TIMEOUT = StroomDuration.ofMinutes(10);
+    static final int DEFAULT_MAX_ELICITATIONS_PER_NODE = 5;
 
     private final AiDbConfig dbConfig;
     private final CacheConfig chatResponseCache;
@@ -53,6 +55,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final AiWorkspaceConfig workspace;
     private final boolean allowApproveEverything;
     private final int toolGroupThreshold;
+    private final StroomDuration elicitationTimeout;
+    private final int maxElicitationsPerNode;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -70,6 +74,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         workspace = new AiWorkspaceConfig();
         allowApproveEverything = false;
         toolGroupThreshold = DEFAULT_TOOL_GROUP_THRESHOLD;
+        elicitationTimeout = DEFAULT_ELICITATION_TIMEOUT;
+        maxElicitationsPerNode = DEFAULT_MAX_ELICITATIONS_PER_NODE;
     }
 
     @SuppressWarnings("unused")
@@ -85,7 +91,9 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("chatRetention") final StroomDuration chatRetention,
                     @JsonProperty("workspace") final AiWorkspaceConfig workspace,
                     @JsonProperty("allowApproveEverything") final Boolean allowApproveEverything,
-                    @JsonProperty("toolGroupThreshold") final Integer toolGroupThreshold) {
+                    @JsonProperty("toolGroupThreshold") final Integer toolGroupThreshold,
+                    @JsonProperty("elicitationTimeout") final StroomDuration elicitationTimeout,
+                    @JsonProperty("maxElicitationsPerNode") final Integer maxElicitationsPerNode) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -99,6 +107,9 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.workspace = Objects.requireNonNullElseGet(workspace, AiWorkspaceConfig::new);
         this.allowApproveEverything = Objects.requireNonNullElse(allowApproveEverything, false);
         this.toolGroupThreshold = Objects.requireNonNullElse(toolGroupThreshold, DEFAULT_TOOL_GROUP_THRESHOLD);
+        this.elicitationTimeout = Objects.requireNonNullElse(elicitationTimeout, DEFAULT_ELICITATION_TIMEOUT);
+        this.maxElicitationsPerNode = Objects.requireNonNullElse(maxElicitationsPerNode,
+                DEFAULT_MAX_ELICITATIONS_PER_NODE);
     }
 
     @Override
@@ -191,6 +202,20 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         return toolGroupThreshold;
     }
 
+    @JsonPropertyDescription("How long a form an MCP tool asks the user to fill in (MCP elicitation) waits for an " +
+                             "answer before it is cancelled. The tool call, and its thread, wait for it.")
+    @JsonProperty("elicitationTimeout")
+    public StroomDuration getElicitationTimeout() {
+        return elicitationTimeout;
+    }
+
+    @JsonPropertyDescription("The most forms from MCP tools (MCP elicitation) that may wait for an answer on a " +
+                             "node at once. Each holds a thread, so more are declined.")
+    @JsonProperty("maxElicitationsPerNode")
+    public int getMaxElicitationsPerNode() {
+        return maxElicitationsPerNode;
+    }
+
     @Override
     public String toString() {
         return "AiConfig{" +
@@ -206,6 +231,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", workspace=" + workspace +
                ", allowApproveEverything=" + allowApproveEverything +
                ", toolGroupThreshold=" + toolGroupThreshold +
+               ", elicitationTimeout=" + elicitationTimeout +
+               ", maxElicitationsPerNode=" + maxElicitationsPerNode +
                '}';
     }
 }

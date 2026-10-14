@@ -27,6 +27,7 @@ import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AnswerAiApprovalRequest;
+import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
@@ -668,6 +669,31 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     @Override
     public AiChatStatusResponse getChatStatuses(final long sinceVersion) {
         return askStroomAIServiceProvider.get().getChatStatuses(sinceVersion);
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean answerElicitation(final AnswerAiElicitationRequest request) {
+        final int chatId = NullSafe.getOrElse(request, AnswerAiElicitationRequest::getAiChat, AiChat::getId, 0);
+        // The answer itself is not logged, as it may hold anything the server asked for.
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "answerElicitation"))
+                .withDescription("Answer (" + request.getAction() + ") form " + request.getMessageId()
+                                 + " from an MCP tool in AI chat " + chatId)
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AiElicitation")
+                                        .withId(String.valueOf(request.getMessageId()))
+                                        .addData(Data.builder()
+                                                .withName("Action")
+                                                .withValue(request.getAction())
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().answerElicitation(request))
+                .getResultAndLog();
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
