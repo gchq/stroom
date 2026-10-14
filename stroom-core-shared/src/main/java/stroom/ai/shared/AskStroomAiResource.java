@@ -62,6 +62,15 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) AskStroomAiRequest request);
 
     @POST
+    @Path("/editMessage")
+    @Operation(
+            summary = "Edit one of the user's earlier questions (or ask it again unchanged). The question and " +
+                      "everything after it are removed from the chat, and the new text is answered",
+            operationId = "editMessage")
+    AskStroomAiResponse editMessage(
+            @Parameter(description = "request", required = true) EditAiMessageRequest request);
+
+    @POST
     @Path("/getDefaultConfig")
     @Operation(
             summary = "Get the default config to use for asking questions",

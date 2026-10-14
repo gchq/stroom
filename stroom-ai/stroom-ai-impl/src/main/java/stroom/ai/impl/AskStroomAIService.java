@@ -39,6 +39,7 @@ import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
+import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.GetAttachmentDataRequest;
@@ -62,6 +63,7 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -91,6 +93,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -120,6 +123,12 @@ public class AskStroomAIService {
     static final String CANCELLED_MESSAGE = "Analysis was cancelled before a response was produced.";
 
     /**
+     * How long an edit waits for the chat's run to stop.
+     */
+    static final Duration STOP_WAIT = Duration.ofSeconds(30);
+    private static final Duration STOP_POLL_INTERVAL = Duration.ofMillis(200);
+
+    /**
      * Polling interval (ms) when waiting for attachments.
      */
     private static final long ATTACHMENT_POLL_INTERVAL_MS = 1_000;
@@ -140,6 +149,7 @@ public class AskStroomAIService {
     private final McpClientCache mcpClientCache;
     private final AiChatRunManager runManager;
     private final AiChatRunDao runDao;
+    private Duration stopWait = STOP_WAIT;
     private final McpAgentChat mcpAgentChat;
 
     @Inject
@@ -219,6 +229,79 @@ public class AskStroomAIService {
 
         // The answer (if there is a question) is delivered by polling.
         return new AskStroomAiResponse(null);
+    }
+
+    /**
+     * Edits one of the user's earlier questions, or asks it again unchanged. The question and everything after
+     * it are removed from the chat and the new text is answered in a new run. A run that is working on the chat
+     * is stopped first.
+     *
+     * @param request The chat, config, question and new text (null to ask it again unchanged).
+     * @return An empty response; the answer is delivered by polling.
+     */
+    public AskStroomAiResponse editMessage(final EditAiMessageRequest request) {
+        final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
+        aiService.verifyOwnership(chatId);
+        final List<AiChatMessage> messages = aiService.getMessages(chatId);
+        final AiChatMessage question = messages.stream()
+                .filter(msg -> msg.getId() == request.getMessageId())
+                .filter(msg -> msg.getMessageType() == AiMessageType.USER_MESSAGE)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Only your own questions in this chat can be edited."));
+        final String newText = NullSafe.nonBlankStringElse(request.getMessage(), question.getMessage());
+
+        stopAndWait(chatId, AiChatRunStopReason.EDITED);
+
+        // Only what is there now is removed: anything added once the new run has started belongs to it.
+        final List<AiChatMessage> toRemove = messages.stream()
+                .filter(msg -> msg.getId() >= question.getId())
+                .toList();
+        final AskStroomAiRequest edited = new AskStroomAiRequest(request.getAiChat(), request.getConfig(), null,
+                newText);
+        // The removal is done by the new run, so that nothing else can start in the chat while it happens.
+        runManager.start(chatId, run -> {
+            removeMessages(toRemove);
+            aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, newText);
+            answerQuestion(chatId, edited);
+        });
+        return new AskStroomAiResponse(null);
+    }
+
+    /**
+     * Sets how long an edit waits for the chat's run to stop. For testing.
+     */
+    void setStopWait(final Duration stopWait) {
+        this.stopWait = stopWait;
+    }
+
+    /**
+     * Stops the chat's active run, if it has one, and waits for it to stop.
+     *
+     * @throws AiChatRunManager.AiChatBusyException if it does not stop in time.
+     */
+    private void stopAndWait(final int chatId, final AiChatRunStopReason reason) {
+        if (runDao.getActive(chatId).isEmpty()) {
+            return;
+        }
+        runManager.stop(chatId, reason);
+        final long deadline = System.currentTimeMillis() + stopWait.toMillis();
+        while (runDao.getActive(chatId).isPresent()) {
+            if (System.currentTimeMillis() > deadline) {
+                throw new AiChatRunManager.AiChatBusyException(chatId);
+            }
+            ThreadUtil.sleepIgnoringInterrupts(STOP_POLL_INTERVAL.toMillis());
+        }
+    }
+
+    private void removeMessages(final List<AiChatMessage> messages) {
+        for (final AiChatMessage message : messages.reversed()) {
+            if (message.getAttachmentId() != null) {
+                aiService.deleteAttachment(message.getAttachmentId());
+                attachmentFileStore.deleteAttachmentFile(message.getAttachmentId());
+            } else {
+                aiService.deleteMessage(message.getId());
+            }
+        }
     }
 
     /**

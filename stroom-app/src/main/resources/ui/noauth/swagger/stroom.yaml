@@ -449,6 +449,28 @@ paths:
       summary: Download the chat history for a conversation as a Markdown file
       tags:
       - AI
+  /ai/v1/editMessage:
+    post:
+      operationId: editMessage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditAiMessageRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: "Edit one of the user's earlier questions (or ask it again unchanged).\
+        \ The question and everything after it are removed from the chat, and the\
+        \ new text is answered"
+      tags:
+      - AI
   /ai/v1/getAttachmentData:
     post:
       operationId: getAttachmentData
@@ -13836,6 +13858,18 @@ components:
           $ref: "#/components/schemas/SimpleDuration"
         enabled:
           type: boolean
+    EditAiMessageRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        config:
+          $ref: "#/components/schemas/AskStroomAiConfig"
+        message:
+          type: string
+        messageId:
+          type: integer
+          format: int32
     ElasticClusterDoc:
       type: object
       properties:

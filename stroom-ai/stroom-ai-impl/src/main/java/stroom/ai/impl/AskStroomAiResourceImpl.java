@@ -28,6 +28,7 @@ import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
+import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.GetAttachmentDataRequest;
@@ -468,6 +469,39 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                         .build())
                 .withSimpleLoggedResult(() ->
                         askStroomAIServiceProvider.get().cancelProcessing(chatId))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AskStroomAiResponse editMessage(final EditAiMessageRequest request) {
+        final int chatId = NullSafe.getOrElse(request, EditAiMessageRequest::getAiChat, AiChat::getId, 0);
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "editMessage"))
+                .withDescription("Edit message " + request.getMessageId() + " in AI chat " + chatId)
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AiChat")
+                                        .withId(String.valueOf(chatId))
+                                        .addData(Data.builder()
+                                                .withName("Action")
+                                                .withValue(request.getMessage() == null
+                                                        ? "RetryMessage"
+                                                        : "EditMessage")
+                                                .build())
+                                        .addData(Data.builder()
+                                                .withName("MessageId")
+                                                .withValue(String.valueOf(request.getMessageId()))
+                                                .build())
+                                        .addData(Data.builder()
+                                                .withName("NewMessage")
+                                                .withValue(NullSafe.string(request.getMessage()))
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().editMessage(request))
                 .getResultAndLog();
     }
 

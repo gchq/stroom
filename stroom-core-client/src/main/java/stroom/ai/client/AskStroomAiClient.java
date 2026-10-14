@@ -26,6 +26,7 @@ import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.DownloadChatHistoryRequest;
+import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.dispatch.client.RestErrorHandler;
@@ -119,6 +120,19 @@ public class AskStroomAiClient {
                 .create(RESOURCE)
                 .method(res -> res.askStroomAi(
                         request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    void editMessage(final EditAiMessageRequest request,
+                     final Consumer<AskStroomAiResponse> consumer,
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.editMessage(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)

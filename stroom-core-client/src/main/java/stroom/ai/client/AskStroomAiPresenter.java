@@ -30,6 +30,7 @@ import stroom.ai.shared.AskStroomAiConfig.DockType;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
+import stroom.ai.shared.EditAiMessageRequest;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
@@ -96,6 +97,7 @@ public class AskStroomAiPresenter
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
     private static final String RUN_STATUS_ID = "ai-run-status";
     private static final String RESUME_RUN_ATTRIBUTE = "data-resume-run";
+    private static final String RETRY_TURN_ATTRIBUTE = "data-retry-turn-id";
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
@@ -170,6 +172,13 @@ public class AskStroomAiPresenter
                     if (NullSafe.isNonBlankString(attachmentIdStr)) {
                         final String desc = button.getAttribute("data-attachment-desc");
                         onViewAttachmentData(Integer.parseInt(attachmentIdStr), desc);
+                        return;
+                    }
+
+                    // Capture retry click events.
+                    final String retryTurnIdStr = button.getAttribute(RETRY_TURN_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(retryTurnIdStr)) {
+                        onRetry(Integer.parseInt(retryTurnIdStr));
                         return;
                     }
 
@@ -454,6 +463,50 @@ public class AskStroomAiPresenter
         }, getView()));
     }
 
+    /**
+     * Asks a question again, unchanged. The question's answer and everything after it are replaced.
+     *
+     * @param turnId The id of the question.
+     */
+    private void onRetry(final int turnId) {
+        if (currentChat == null) {
+            return;
+        }
+        getView().setSendButtonLoadingState(true);
+        askStroomAiClient.getConfig(config -> {
+            final EditAiMessageRequest request = new EditAiMessageRequest(currentChat, config, turnId, null);
+            askStroomAiClient.editMessage(request, response -> {
+                // The question and everything after it are replaced by the new answer, which keeps the question
+                // where it is in the conversation.
+                removeMessageElementsFrom(turnId, true);
+                startPolling();
+            }, error -> showError(error, "Unable to ask again", () ->
+                    getView().setSendButtonLoadingState(false)), getView());
+        }, getView());
+    }
+
+    /**
+     * Removes the elements of the messages from one onwards.
+     *
+     * @param fromMessageId The first message to remove.
+     * @param keepFirst     True to keep the first message itself, i.e. only remove those after it.
+     */
+    private void removeMessageElementsFrom(final int fromMessageId, final boolean keepFirst) {
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        Element child = markdownContainer.getFirstChildElement();
+        while (child != null) {
+            final Element next = child.getNextSiblingElement();
+            final String idStr = child.getAttribute(MESSAGE_ID_ATTRIBUTE);
+            if (NullSafe.isNonBlankString(idStr)) {
+                final int id = Integer.parseInt(idStr);
+                if (id > fromMessageId || (id == fromMessageId && !keepFirst)) {
+                    child.removeFromParent();
+                }
+            }
+            child = next;
+        }
+    }
+
     private void onResumeRun() {
         if (currentChat == null) {
             return;
@@ -679,7 +732,7 @@ public class AskStroomAiPresenter
                 break;
             case AI_RESPONSE:
                 appendMessageHtml(hb, "ai-message ai-message--assistant", msg.getMessage(),
-                        timeMs, nowMs, true, messageId, false);
+                        timeMs, nowMs, true, messageId, false, msg.getTurnId());
                 break;
             case ERROR:
                 appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
@@ -731,6 +784,22 @@ public class AskStroomAiPresenter
                                    final boolean showCopy,
                                    final int messageId,
                                    final boolean deletable) {
+        appendMessageHtml(hb, cssClass, markdownText, timeMs, nowMs, showCopy, messageId, deletable, 0);
+    }
+
+    /**
+     * As {@link #appendMessageHtml(HtmlBuilder, String, String, long, long, boolean, int, boolean)}, with a
+     * button to ask the question again if a turn is given.
+     */
+    private void appendMessageHtml(final HtmlBuilder hb,
+                                   final String cssClass,
+                                   final String markdownText,
+                                   final long timeMs,
+                                   final long nowMs,
+                                   final boolean showCopy,
+                                   final int messageId,
+                                   final boolean deletable,
+                                   final int retryTurnId) {
         final SafeHtml markdownHtml = markdownConverter.convertUntrustedMarkdownToHtml(markdownText);
 
         hb.div(wrapper -> {
@@ -745,6 +814,15 @@ public class AskStroomAiPresenter
                             iconButtonClassName("ai-message-delete"),
                             Attribute.title("Delete message"),
                             new Attribute("data-delete-message-id", String.valueOf(messageId)));
+                }
+
+                // Add a button to ask the question again.
+                if (retryTurnId > 0) {
+                    button(footer,
+                            SvgImage.REFRESH,
+                            iconButtonClassName("ai-message-retry"),
+                            Attribute.title("Ask again"),
+                            new Attribute(RETRY_TURN_ATTRIBUTE, String.valueOf(retryTurnId)));
                 }
 
                 // Add copy button.
