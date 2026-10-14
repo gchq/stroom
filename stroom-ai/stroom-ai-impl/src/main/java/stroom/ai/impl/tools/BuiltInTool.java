@@ -42,6 +42,18 @@ public interface BuiltInTool {
     String execute(ToolExecutionRequest request);
 
     /**
+     * Runs the tool for a chat. Tools that work on the chat itself (e.g. its history) override this; others
+     * need not.
+     *
+     * @param request the model's call
+     * @param chatId  the chat the call is made in
+     * @return the result to feed back to the model
+     */
+    default String execute(final ToolExecutionRequest request, final int chatId) {
+        return execute(request);
+    }
+
+    /**
      * @return True if the tool only reads or works things out, and cannot change anything. Only read-only tools
      * may be used while the user is away (an unattended run). Defaults to true; override for any tool that
      * changes something.

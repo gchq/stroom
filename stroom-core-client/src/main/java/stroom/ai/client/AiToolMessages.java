@@ -98,4 +98,46 @@ final class AiToolMessages {
                 : "").append("\n~~~");
         return sb.toString();
     }
+
+    /**
+     * @return A one-line description of a compaction of the chat.
+     */
+    static String compactionTitle(final String json) {
+        final String count = getString(json, "messageCount");
+        final String before = getString(json, "tokensBefore");
+        final String after = getString(json, "tokensAfter");
+        final String title = "Earlier messages compacted" + (count != null
+                ? ": " + count + " messages"
+                : "");
+        return getBoolean(json, "stale")
+                ? title + " (no longer used, as a message it covered has changed)"
+                : before != null && after != null
+                        ? title + ", about " + kilo(before) + " → " + kilo(after) + " tokens"
+                        : title;
+    }
+
+    /**
+     * @return Markdown showing what a compaction of the chat did.
+     */
+    static String compactionMarkdown(final String json) {
+        final String summary = getString(json, "summary");
+        final StringBuilder sb = new StringBuilder("The model now sees earlier turns as short digests");
+        if (summary != null) {
+            sb.append(", and the oldest as this summary:\n\n").append(summary);
+        } else {
+            sb.append(". Everything is still stored, and the model can read any earlier turn again.");
+        }
+        return sb.toString();
+    }
+
+    private static String kilo(final String tokens) {
+        try {
+            final long value = Long.parseLong(tokens);
+            return value >= 1000
+                    ? (value / 1000) + "k"
+                    : String.valueOf(value);
+        } catch (final NumberFormatException e) {
+            return tokens;
+        }
+    }
 }

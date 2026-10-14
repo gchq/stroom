@@ -51,4 +51,22 @@ abstract class AbstractBuiltInTool implements BuiltInTool {
             return null;
         }
     }
+
+    /**
+     * @return the value of the named whole-number argument, or null if it was absent or not a whole number.
+     */
+    protected Integer intArg(final ToolExecutionRequest request, final String name) {
+        final String value = stringArg(request, name);
+        if (value == null) {
+            return null;
+        }
+        try {
+            final double number = Double.parseDouble(value);
+            return number == Math.rint(number) && Math.abs(number) <= Integer.MAX_VALUE
+                    ? (int) number
+                    : null;
+        } catch (final NumberFormatException e) {
+            return null;
+        }
+    }
 }
