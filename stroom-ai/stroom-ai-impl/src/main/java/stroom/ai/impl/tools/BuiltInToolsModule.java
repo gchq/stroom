@@ -35,6 +35,13 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(GetUtcTimeOffsetTool.class)
                 .addBinding(ReadTurnTool.class)
                 .addBinding(SearchHistoryTool.class)
-                .addBinding(MemoryTool.class);
+                .addBinding(MemoryTool.class)
+                .addBinding(LsTool.class)
+                .addBinding(ReadFileTool.class)
+                .addBinding(GrepTool.class)
+                .addBinding(WcTool.class)
+                .addBinding(WriteFileTool.class)
+                .addBinding(StrReplaceTool.class)
+                .addBinding(DeleteFileTool.class);
     }
 }

@@ -270,7 +270,7 @@ class McpAgentChat {
 
                 // A large result is saved to the workspace and the model is given a stub, so it does not fill the
                 // model's context.
-                final String path = ToolOutputs.isLarge(result)
+                final String path = ToolOutputs.isLarge(result) && !builtInTools.boundsItsOutput(toolRequest.name())
                         ? saveOutput(chatId, callMessage, result)
                         : null;
                 final String forModel = path != null
