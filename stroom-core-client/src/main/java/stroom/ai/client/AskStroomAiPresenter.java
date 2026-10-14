@@ -742,6 +742,19 @@ public class AskStroomAiPresenter
                 appendMessageHtml(hb, "ai-message ai-message--user ai-message--steer", "> " + msg.getMessage(),
                         timeMs, nowMs, false, messageId, false);
                 break;
+            case TOOL_CALL:
+                appendDetailsElement(hb, "ai-message ai-message--tool",
+                        SvgImage.CODE, "Called " + AiToolMessages.getString(msg.getMessage(), "tool"),
+                        AiToolMessages.callMarkdown(msg.getMessage()), timeMs, nowMs);
+                break;
+            case TOOL_RESULT:
+                appendDetailsElement(hb, "ai-message ai-message--tool",
+                        AiToolMessages.getBoolean(msg.getMessage(), "error")
+                                ? SvgImage.ERROR
+                                : SvgImage.OK,
+                        "Result of " + AiToolMessages.getString(msg.getMessage(), "tool"),
+                        AiToolMessages.resultMarkdown(msg.getMessage()), timeMs, nowMs);
+                break;
             case WARNING:
                 appendMessageHtml(hb, "ai-message ai-message--warning", msg.getMessage(),
                         timeMs, nowMs, false, messageId, false);

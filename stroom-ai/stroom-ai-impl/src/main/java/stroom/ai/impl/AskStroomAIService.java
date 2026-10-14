@@ -154,6 +154,7 @@ public class AskStroomAIService {
     private final AiChatRunDao runDao;
     private final WorkspaceStore workspaceStore;
     private final AiWorkspaceDao workspaceDao;
+    private final ContextAssembler contextAssembler;
     private Duration stopWait = STOP_WAIT;
     private final McpAgentChat mcpAgentChat;
 
@@ -176,7 +177,8 @@ public class AskStroomAIService {
                               final AiChatRunManager runManager,
                               final AiChatRunDao runDao,
                               final WorkspaceStore workspaceStore,
-                              final AiWorkspaceDao workspaceDao) {
+                              final AiWorkspaceDao workspaceDao,
+                              final ContextAssembler contextAssembler) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -195,6 +197,7 @@ public class AskStroomAIService {
         this.runDao = runDao;
         this.workspaceStore = workspaceStore;
         this.workspaceDao = workspaceDao;
+        this.contextAssembler = contextAssembler;
         this.mcpAgentChat = mcpAgentChat;
     }
 
@@ -831,7 +834,7 @@ public class AskStroomAIService {
                 final int currentMaxHistory = maxHistory;
                 final String currentSummary = contextSummary;
 
-                final List<ChatMessage> messages = buildUnifiedMessages(
+                final List<ChatMessage> messages = contextAssembler.assemble(
                         request, chatId, attachmentMap, relevantHistory,
                         currentMaxHistory, currentSummary);
 
@@ -1021,92 +1024,6 @@ public class AskStroomAIService {
                 .toList();
     }
 
-    /**
-     * Builds the list of ChatMessages for a unified LLM call. Includes system prompt,
-     * optional context summary (from prior trimming), filtered conversation history
-     * with inline attachment data, and the current user message.
-     *
-     * @param maxHistory     maximum number of history messages to include (from the end)
-     * @param contextSummary optional summary of earlier messages that were trimmed
-     */
-    private List<ChatMessage> buildUnifiedMessages(final AskStroomAiRequest request,
-                                                   final int chatId,
-                                                   final Map<Integer, AiChatAttachment> attachmentMap,
-                                                   final List<AiChatMessage> relevantHistory,
-                                                   final int maxHistory,
-                                                   final String contextSummary) {
-        final List<ChatMessage> messages = new ArrayList<>();
-
-        // System message.
-        messages.add(new SystemMessage(NullSafe.getOrElse(
-                defaultConfigProvider.get(),
-                AskStroomAiConfig::getChatSystemPrompt,
-                AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT)));
-
-        // If we have a summary of earlier (trimmed) conversation, inject it.
-        if (contextSummary != null && !contextSummary.isBlank()) {
-            messages.add(new UserMessage(
-                    "[Prior conversation summary]: " + contextSummary));
-            messages.add(new AiMessage(
-                    "Understood, I'll keep the prior context in mind."));
-        }
-
-        // Add history messages (skip the current user message which was just stored).
-        final int startIdx = Math.max(0, relevantHistory.size() - maxHistory - 1);
-        for (int i = startIdx; i < relevantHistory.size() - 1; i++) {
-            final AiChatMessage msg = relevantHistory.get(i);
-            switch (msg.getMessageType()) {
-                case ATTACHMENT -> {
-                    // Read the attachment's markdown file and inject it as a UserMessage
-                    // tagged with the source description.
-                    final Integer attachmentId = msg.getAttachmentId();
-                    final AiChatAttachment attachment = attachmentId != null
-                            ? attachmentMap.get(attachmentId)
-                            : null;
-                    if (attachment != null) {
-                        final Path mdFile = workspaceStore.localFile(attachment.getId());
-                        if (Files.exists(mdFile)) {
-                            try {
-                                final String markdown = Files.readString(mdFile, StandardCharsets.UTF_8);
-                                final String description = NullSafe.getOrElse(
-                                        attachment, AiChatAttachment::getDescription,
-                                        "Attachment " + attachment.getId());
-                                final StringBuilder tagged = new StringBuilder();
-                                tagged
-                                        .append("[Attached Table: ")
-                                        .append(description);
-                                if (attachment.getRowCount() != null) {
-                                    tagged
-                                            .append(" (")
-                                            .append(attachment.getRowCount())
-                                            .append(" rows)");
-                                }
-                                if (attachment.isTruncated()) {
-                                    tagged
-                                            .append(" TRUNCATED");
-                                }
-                                tagged
-                                        .append("]\n")
-                                        .append(markdown);
-                                messages.add(new UserMessage(tagged.toString()));
-                            } catch (final IOException e) {
-                                LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
-                            }
-                        }
-                    }
-                }
-                case USER_MESSAGE -> messages.add(new UserMessage(msg.getMessage()));
-                case STEER_MESSAGE -> messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + msg.getMessage()));
-                case AI_RESPONSE -> messages.add(new AiMessage(msg.getMessage()));
-                default -> LOGGER.debug(() -> "Not sending message of type " + msg.getMessageType());
-            }
-        }
-
-        // Add the current user message.
-        messages.add(new UserMessage(request.getMessage()));
-
-        return messages;
-    }
 
     /**
      * Sends the pre-built message list to the LLM and returns the full ChatResponse

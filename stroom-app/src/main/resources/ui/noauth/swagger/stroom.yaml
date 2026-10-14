@@ -10786,6 +10786,8 @@ components:
           - THINKING
           - WARNING
           - STEER_MESSAGE
+          - TOOL_CALL
+          - TOOL_RESULT
         tokenCount:
           type: integer
           format: int32

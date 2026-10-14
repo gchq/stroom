@@ -39,7 +39,16 @@ public enum AiMessageType implements HasPrimitiveValue {
      * A message the user sent while an agent run was working on their question, to steer it. It belongs to the
      * question's turn, and the run picks it up at its next safe point.
      */
-    STEER_MESSAGE(11);
+    STEER_MESSAGE(11),
+    /**
+     * A tool the model called, as JSON (see {@code ToolCallRecord}).
+     */
+    TOOL_CALL(12),
+    /**
+     * The result of a tool call, as JSON (see {@code ToolResultRecord}). Large results are saved to a workspace
+     * file and only a short stub is held here.
+     */
+    TOOL_RESULT(13);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());
