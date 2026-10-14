@@ -486,6 +486,27 @@ class TestMcpAgentChat {
         Mockito.verify(runManager, Mockito.never()).markTainted(Mockito.anyInt());
     }
 
+    @Test
+    void largeOutputOfAToolThatBoundsItsOutputIsNotSaved() {
+        final String bigOutput = "line\n".repeat(5_000);
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent(bigOutput))).build());
+        Mockito.when(builtInTools.boundsItsOutput("test__search")).thenReturn(true);
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("call-1")
+                        .name("test__search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, toolset(client, searchTool()), 99, new AtomicBoolean(false),
+                taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verifyNoInteractions(workspaceStore);
+    }
+
     private static Tool searchTool() {
         return Tool.builder()
                 .name("search")

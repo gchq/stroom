@@ -225,7 +225,7 @@ public class ChatWorkspace {
     }
 
     /// @throws WorkspaceException if the path is not a file in a writable area.
-    static void checkWritable(final WorkspacePath path) {
+    public void checkWritable(final WorkspacePath path) {
         rejectMemories(path);
         if (!path.isFile()) {
             throw new WorkspaceException(path + " is not a file path. Write to a file, e.g. /outputs/result.csv.");
