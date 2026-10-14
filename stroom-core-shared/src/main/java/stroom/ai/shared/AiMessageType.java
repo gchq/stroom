@@ -77,7 +77,13 @@ public enum AiMessageType implements HasPrimitiveValue {
      * The model's reasoning so far, while it is still thinking. Updated in place, and removed once the reasoning
      * is stored as a {@link #THINKING} message. Never sent to the model.
      */
-    STREAMING_THINKING(19);
+    STREAMING_THINKING(19),
+    /**
+     * A form an MCP tool asked the user to fill in while it ran (MCP elicitation), as JSON (see
+     * {@code ElicitationRecord}): the server's message and form, and once answered, the answer. The answer goes to
+     * the MCP server, never to the model, so these messages are never sent to the model.
+     */
+    ELICITATION(20);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());

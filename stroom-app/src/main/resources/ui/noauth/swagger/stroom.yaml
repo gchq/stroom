@@ -330,6 +330,27 @@ paths:
       summary: Approve or reject something the agent asked the user's approval for
       tags:
       - AI
+  /ai/v1/answerElicitation:
+    post:
+      operationId: answerAiElicitation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswerAiElicitationRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Answer a form an MCP tool asked the user to fill in. The answer goes\
+        \ to the MCP server, never to the model"
+      tags:
+      - AI
   /ai/v1/askStroomAi:
     post:
       operationId: askStroomAi
@@ -11037,6 +11058,7 @@ components:
           - APPROVAL_REQUEST
           - STREAMING_ANSWER
           - STREAMING_THINKING
+          - ELICITATION
         tokenCount:
           type: integer
           format: int32
@@ -11116,6 +11138,7 @@ components:
           - EDITED
           - NEEDS_APPROVAL
           - APPROVAL_EXPIRED
+          - NEEDS_INPUT
         unattended:
           type: boolean
     AiChatStatus:
@@ -11562,6 +11585,20 @@ components:
           - ONCE
           - CHAT
           - SERVER_READ_ONLY
+    AnswerAiElicitationRequest:
+      type: object
+      properties:
+        action:
+          type: string
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        answer:
+          type: object
+          additionalProperties:
+            type: string
+        messageId:
+          type: integer
+          format: int32
     AnyBoolean:
       type: object
       allOf:

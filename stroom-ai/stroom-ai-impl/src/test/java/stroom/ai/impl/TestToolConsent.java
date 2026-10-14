@@ -132,7 +132,7 @@ class TestToolConsent {
         // Not allowed by the administrator.
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
 
-        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null);
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null, null, null);
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.RUN);
         // Never untrusted, destructive or open-world tools (S4).
         tool(info(false, false, null, null, null));
@@ -145,7 +145,7 @@ class TestToolConsent {
 
     @Test
     void testWhileTheUserIsAwayOnlyTrustedReadOnlyToolsRun() {
-        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null);
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null, null, null);
         Mockito.when(aiDao.isApproveEverything(1)).thenReturn(true);
         Mockito.when(approvalDao.find(1, "s", "t"))
                 .thenReturn(Optional.of(new Approval(9, "s", "t", "hash", AiToolApprovalDecision.ALLOW)));
