@@ -16,7 +16,6 @@
 
 package stroom.ai.impl;
 
-import stroom.ai.impl.McpToolset.McpServerConnection;
 import stroom.credentials.api.HttpConfigResolver;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
@@ -35,6 +34,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.SsrfGuard;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpTlsConfig;
 import stroom.util.shared.time.SimpleDuration;
@@ -61,6 +61,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -99,25 +100,45 @@ public class McpToolServerFactory {
     private final PathCreator pathCreator;
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<UserIdentityFactory> userIdentityFactoryProvider;
+    private final McpClientCache mcpClientCache;
 
     @Inject
     McpToolServerFactory(final Provider<StoredSecrets> storedSecretsProvider,
                          final HttpConfigResolver httpConfigResolver,
                          final PathCreator pathCreator,
                          final Provider<SecurityContext> securityContextProvider,
-                         final Provider<UserIdentityFactory> userIdentityFactoryProvider) {
+                         final Provider<UserIdentityFactory> userIdentityFactoryProvider,
+                         final McpClientCache mcpClientCache) {
         this.storedSecretsProvider = storedSecretsProvider;
         this.httpConfigResolver = httpConfigResolver;
         this.pathCreator = pathCreator;
         this.securityContextProvider = securityContextProvider;
         this.userIdentityFactoryProvider = userIdentityFactoryProvider;
+        this.mcpClientCache = mcpClientCache;
     }
 
     /**
-     * @return a toolset for every enabled MCP tool server on the model, or {@link McpToolset#EMPTY} if
-     * there are none. The caller must {@link McpToolset#close() close} the returned toolset.
+     * Connects to every enabled MCP tool server on the model, for one question that is not part of a chat.
+     * A server that cannot be reached is left out and reported in {@link McpToolset#getWarnings()}.
+     *
+     * @return a toolset owning its connections, or {@link McpToolset#EMPTY} if there are no servers. The
+     * caller must {@link McpToolset#close() close} the returned toolset.
      */
     public McpToolset createToolset(final OpenAIModelDoc modelDoc) {
+        return createToolset(modelDoc, null);
+    }
+
+    /**
+     * Gets connections to every enabled MCP tool server on the model for a question in a chat. Connections
+     * are reused from earlier questions in the chat where possible (see {@link McpClientCache}). A server that
+     * cannot be reached is left out and reported in {@link McpToolset#getWarnings()}.
+     *
+     * @param modelDoc The model, with its tool servers.
+     * @param chatId   The chat, or null to make connections just for this question.
+     * @return the toolset, or {@link McpToolset#EMPTY} if there are no servers. The caller must
+     * {@link McpToolset#close() close} the returned toolset.
+     */
+    public McpToolset createToolset(final OpenAIModelDoc modelDoc, final Integer chatId) {
         final List<McpToolServerConfig> servers = NullSafe.list(modelDoc.getMcpToolServers()).stream()
                 .filter(McpToolServerConfig::isEnabled)
                 .filter(s -> NullSafe.isNonBlankString(s.getEndpoint()))
@@ -126,27 +147,38 @@ public class McpToolServerFactory {
             return McpToolset.EMPTY;
         }
 
+        final UserIdentity userIdentity = securityContextProvider.get().getUserIdentity();
+        final String userUuid = NullSafe.get(securityContextProvider.get().getUserRef(), UserRef::getUuid);
         final List<McpServerConnection> connections = new ArrayList<>();
-        try {
-            for (final McpToolServerConfig server : servers) {
-                connections.add(connect(server));
+        final List<String> warnings = new ArrayList<>();
+        for (final McpToolServerConfig server : servers) {
+            try {
+                final McpServerConnection connection = chatId == null
+                        ? connect(server, userIdentity)
+                        : mcpClientCache.get(chatId, userUuid, server, () -> connect(server, userIdentity));
+                connection.use(userIdentity);
+                connections.add(connection);
+            } catch (final RuntimeException e) {
+                // One server being down must not stop the question being answered with the others.
+                LOGGER.debug(() -> "Leaving out MCP tool server '" + server.getName() + "'", e);
+                warnings.add(NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
             }
-            return new McpToolset(connections);
-
-        } catch (final RuntimeException e) {
-            // Do not leak connections if one server fails to start.
-            new McpToolset(connections).close();
-            throw e;
         }
+        return new McpToolset(connections, warnings, chatId == null);
     }
 
-    private McpServerConnection connect(final McpToolServerConfig server) {
+    private McpServerConnection connect(final McpToolServerConfig server, final UserIdentity userIdentity) {
         final String endpoint = server.getEndpoint().trim();
         final String label = NullSafe.nonBlankStringElse(server.getName(), endpoint);
 
         // Reject cloud-metadata / wildcard targets. Loopback and private addresses are allowed, since a
         // self-hosted MCP server legitimately lives there.
-        SsrfGuard.rejectMetadataAndWildcard(endpoint);
+        try {
+            SsrfGuard.rejectMetadataAndWildcard(endpoint);
+        } catch (final IllegalArgumentException e) {
+            throw new IllegalArgumentException("MCP tool server '" + label + "' is not allowed - "
+                                               + e.getMessage(), e);
+        }
 
         final HttpClientConfig httpClientConfig = Objects.requireNonNullElseGet(
                 server.getHttpClientConfiguration(),
@@ -158,7 +190,8 @@ public class McpToolServerFactory {
         if (!isHttps(endpoint)) {
             warnIfTlsConfigured(httpClientConfig, label);
         }
-        final Supplier<Map<String, String>> authHeaders = authHeadersSupplier(server, label);
+        final AtomicReference<UserIdentity> userIdentityRef = new AtomicReference<>(userIdentity);
+        final Supplier<Map<String, String>> authHeaders = authHeadersSupplier(server, label, userIdentityRef);
 
         final HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport.builder(endpoint)
                 .connectTimeout(timeout)
@@ -178,10 +211,14 @@ public class McpToolServerFactory {
                         authHeaders.get().forEach(requestBuilder::setHeader))
                 .build();
 
+        // The connection is made after the client, but the client needs to tell it when the tools change.
+        final AtomicReference<McpServerConnection> connectionRef = new AtomicReference<>();
         final McpSyncClient client = McpClient.sync(transport)
                 .clientInfo(new Implementation(CLIENT_NAME, CLIENT_NAME, clientVersion()))
                 .requestTimeout(timeout)
                 .initializationTimeout(timeout)
+                .toolsChangeConsumer(tools -> NullSafe.consume(connectionRef.get(),
+                        McpServerConnection::invalidateTools))
                 .build();
         try {
             client.initialize();
@@ -192,7 +229,9 @@ public class McpToolServerFactory {
                                        + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()), e);
         }
         LOGGER.debug(() -> "Connected to MCP tool server '" + label + "' at " + endpoint);
-        return new McpServerConnection(label, server, client);
+        final McpServerConnection connection = new McpServerConnection(label, server, client, userIdentityRef);
+        connectionRef.set(connection);
+        return connection;
     }
 
     private static void closeQuietly(final McpSyncClient client, final String label) {
@@ -216,23 +255,26 @@ public class McpToolServerFactory {
      * @return The authentication headers to send to the server, as they stand now.
      */
     Map<String, String> buildAuthHeaders(final McpToolServerConfig server, final String label) {
-        return authHeadersSupplier(server, label).get();
+        return authHeadersSupplier(server, label,
+                new AtomicReference<>(securityContextProvider.get().getUserIdentity())).get();
     }
 
     /**
      * Resolves the server's credentials now, so that a missing or wrong credential is reported straight
      * away, and returns a supplier of the headers to add to each request.
      */
-    private Supplier<Map<String, String>> authHeadersSupplier(final McpToolServerConfig server, final String label) {
+    private Supplier<Map<String, String>> authHeadersSupplier(final McpToolServerConfig server,
+                                                              final String label,
+                                                              final AtomicReference<UserIdentity> userIdentity) {
         if (server.getAuthMode() == McpAuthMode.STROOM_SESSION_TOKEN) {
-            final UserIdentity userIdentity = securityContextProvider.get().getUserIdentity();
-            if (userIdentity == null) {
+            if (userIdentity.get() == null) {
                 throw new RuntimeException("MCP tool server '" + label
                                            + "': there is no authenticated Stroom user to pass a token through for");
             }
-            // Check there is a token now, then ask for a current one on every request.
-            sessionAuthHeaders(userIdentity, label);
-            return () -> sessionAuthHeaders(userIdentity, label);
+            // Check there is a token now, then ask for a current one on every request, for whichever user is
+            // using the connection at the time.
+            sessionAuthHeaders(userIdentity.get(), label);
+            return () -> sessionAuthHeaders(userIdentity.get(), label);
         }
 
         final Map<String, String> headers = new LinkedHashMap<>();

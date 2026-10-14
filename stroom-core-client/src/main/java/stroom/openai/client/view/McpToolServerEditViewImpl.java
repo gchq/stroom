@@ -59,6 +59,10 @@ public class McpToolServerEditViewImpl
     @UiField
     TextBox apiKeyValuePrefix;
     @UiField
+    TextBox allowedTools;
+    @UiField
+    TextBox deniedTools;
+    @UiField
     stroom.widget.button.client.Button setHttpClientConfig;
 
     @Inject
@@ -85,6 +89,8 @@ public class McpToolServerEditViewImpl
         credential.setEnabled(!readOnly);
         apiKeyHeaderName.setEnabled(!readOnly);
         apiKeyValuePrefix.setEnabled(!readOnly);
+        allowedTools.setEnabled(!readOnly);
+        deniedTools.setEnabled(!readOnly);
         setHttpClientConfig.setEnabled(!readOnly);
     }
 
@@ -151,6 +157,26 @@ public class McpToolServerEditViewImpl
     @Override
     public void setApiKeyValuePrefix(final String apiKeyValuePrefix) {
         this.apiKeyValuePrefix.setValue(apiKeyValuePrefix);
+    }
+
+    @Override
+    public String getAllowedTools() {
+        return allowedTools.getValue();
+    }
+
+    @Override
+    public void setAllowedTools(final String allowedTools) {
+        this.allowedTools.setValue(allowedTools);
+    }
+
+    @Override
+    public String getDeniedTools() {
+        return deniedTools.getValue();
+    }
+
+    @Override
+    public void setDeniedTools(final String deniedTools) {
+        this.deniedTools.setValue(deniedTools);
     }
 
     @Override

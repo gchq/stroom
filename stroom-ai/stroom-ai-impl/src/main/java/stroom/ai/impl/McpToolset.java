@@ -16,7 +16,6 @@
 
 package stroom.ai.impl;
 
-import stroom.openai.shared.McpToolServerConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -27,29 +26,35 @@ import dev.langchain4j.service.tool.ToolExecutor;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.ListResourcesResult;
-import io.modelcontextprotocol.spec.McpSchema.ListToolsResult;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.Resource;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
 
 /**
- * The MCP clients built for a single "Ask Stroom AI" question, one per enabled tool server. The toolset
- * offers each server's tools to the agent loop, plus two tools for listing and reading MCP resources when
- * any server has resources. Closing the toolset closes every client (and its HTTP connection); a
- * per-client failure to close is logged and does not stop the others closing.
+ * The MCP servers available to a single "Ask Stroom AI" question. The toolset offers each server's tools to
+ * the agent loop, each name prefixed with its server (see {@link McpToolNames}) and filtered by the server's
+ * allowed and denied tools, plus two tools for listing and reading MCP resources when any server has them.
+ * <p>
+ * A server that cannot be reached, or whose tools cannot be listed, is left out rather than failing the
+ * question; the reason is recorded in {@link #getWarnings()}.
+ * <p>
+ * Closing the toolset closes the connections it owns. Connections taken from {@link McpClientCache} are left
+ * open for the chat's next question.
  */
 public final class McpToolset implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(McpToolset.class);
 
-    public static final McpToolset EMPTY = new McpToolset(List.of());
+    public static final McpToolset EMPTY = new McpToolset(List.of(), List.of(), true);
 
     static final String LIST_RESOURCES_TOOL = "list_resources";
     static final String GET_RESOURCE_TOOL = "get_resource";
@@ -57,9 +62,15 @@ public final class McpToolset implements AutoCloseable {
     private static final String URI_ARG = "uri";
 
     private final List<McpServerConnection> connections;
+    private final List<String> warnings;
+    private final boolean ownsConnections;
 
-    McpToolset(final List<McpServerConnection> connections) {
+    McpToolset(final List<McpServerConnection> connections,
+               final List<String> warnings,
+               final boolean ownsConnections) {
         this.connections = List.copyOf(connections);
+        this.warnings = Collections.synchronizedList(new ArrayList<>(warnings));
+        this.ownsConnections = ownsConnections;
     }
 
     /**
@@ -67,6 +78,15 @@ public final class McpToolset implements AutoCloseable {
      */
     public boolean isEmpty() {
         return connections.isEmpty();
+    }
+
+    /**
+     * @return Why servers, or their tools, have been left out of this question, one line each.
+     */
+    public List<String> getWarnings() {
+        synchronized (warnings) {
+            return List.copyOf(warnings);
+        }
     }
 
     /**
@@ -83,11 +103,34 @@ public final class McpToolset implements AutoCloseable {
      */
     public Map<ToolSpecification, ToolExecutor> tools() {
         final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>();
+        final Set<String> usedNames = new HashSet<>();
         boolean anyResources = false;
         for (final McpServerConnection connection : connections) {
-            for (final Tool tool : listTools(connection.client())) {
-                tools.put(McpToolAdapter.toToolSpecification(tool),
-                        (request, memoryId) -> callTool(connection, tool.name(), request.arguments()));
+            final List<Tool> serverTools;
+            try {
+                serverTools = connection.tools();
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> "Unable to list tools of MCP server '" + connection.label() + "'", e);
+                warnings.add("The tools of MCP tool server '" + connection.label() + "' could not be listed - "
+                             + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
+                continue;
+            }
+            final McpToolFilter filter = McpToolFilter.forServer(connection.config());
+            for (final Tool tool : serverTools) {
+                if (filter.isAllowed(tool.name())) {
+                    final String name = McpToolNames.prefixedName(
+                            connection.toolNamePrefix(), tool.name(), usedNames);
+                    usedNames.add(name);
+                    final ToolSpecification specification = McpToolAdapter.toToolSpecification(tool)
+                            .toBuilder()
+                            .name(name)
+                            .build();
+                    tools.put(specification, (request, memoryId) ->
+                            callTool(connection, tool.name(), request.arguments()));
+                } else {
+                    LOGGER.debug(() -> "Tool '" + tool.name() + "' of MCP server '" + connection.label()
+                                       + "' is not allowed");
+                }
             }
             anyResources = anyResources || hasResources(connection.client());
         }
@@ -95,19 +138,6 @@ public final class McpToolset implements AutoCloseable {
             tools.put(listResourcesSpecification(), (request, memoryId) -> listResources(request.arguments()));
             tools.put(getResourceSpecification(), (request, memoryId) -> getResource(request.arguments()));
         }
-        return tools;
-    }
-
-    private static List<Tool> listTools(final McpSyncClient client) {
-        final List<Tool> tools = new ArrayList<>();
-        String cursor = null;
-        do {
-            final ListToolsResult result = cursor == null
-                    ? client.listTools()
-                    : client.listTools(cursor);
-            tools.addAll(NullSafe.list(result.tools()));
-            cursor = result.nextCursor();
-        } while (NullSafe.isNonBlankString(cursor));
         return tools;
     }
 
@@ -147,11 +177,12 @@ public final class McpToolset implements AutoCloseable {
                         .append("\n\n");
             }
         }
-        return sb.isEmpty()
-                ? "No MCP server with resources" + (serverName != null
-                ? " called '" + serverName + "'"
-                : "")
-                : sb.toString().strip();
+        if (sb.isEmpty()) {
+            return serverName != null
+                    ? "No MCP server with resources called '" + serverName + "'"
+                    : "No MCP server with resources";
+        }
+        return sb.toString().strip();
     }
 
     private String getResource(final String argumentsJson) {
@@ -209,27 +240,8 @@ public final class McpToolset implements AutoCloseable {
 
     @Override
     public void close() {
-        for (final McpServerConnection connection : connections) {
-            try {
-                connection.client().close();
-            } catch (final Exception e) {
-                LOGGER.warn(() -> "Failed to close MCP client '" + connection.label() + "'", e);
-            }
-        }
-    }
-
-    /**
-     * A connected MCP tool server.
-     *
-     * @param label  The name used for the server in messages and in the resource tools.
-     * @param config The server's configuration.
-     * @param client The connected client.
-     */
-    record McpServerConnection(String label, McpToolServerConfig config, McpSyncClient client) {
-
-        McpServerConnection {
-            Objects.requireNonNull(label);
-            Objects.requireNonNull(client);
+        if (ownsConnections) {
+            connections.forEach(McpServerConnection::close);
         }
     }
 }
