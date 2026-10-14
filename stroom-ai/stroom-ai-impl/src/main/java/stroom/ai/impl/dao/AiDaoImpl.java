@@ -26,6 +26,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatHistoryFields;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMemoryScope;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.db.util.ExpressionMapper;
@@ -59,6 +60,7 @@ import static stroom.ai.impl.db.jooq.tables.AiChatAttachment.AI_CHAT_ATTACHMENT;
 import static stroom.ai.impl.db.jooq.tables.AiChatFileChunk.AI_CHAT_FILE_CHUNK;
 import static stroom.ai.impl.db.jooq.tables.AiChatMessage.AI_CHAT_MESSAGE;
 import static stroom.ai.impl.db.jooq.tables.AiChatRun.AI_CHAT_RUN;
+import static stroom.ai.impl.db.jooq.tables.AiMemory.AI_MEMORY;
 
 public class AiDaoImpl implements AiDao {
 
@@ -181,6 +183,11 @@ public class AiDaoImpl implements AiDao {
             // Delete messages.
             context.deleteFrom(AI_CHAT_MESSAGE)
                     .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                    .execute();
+            // Delete the chat's memory.
+            context.deleteFrom(AI_MEMORY)
+                    .where(AI_MEMORY.SCOPE.eq(AiMemoryScope.CHAT.getPrimitiveValue()))
+                    .and(AI_MEMORY.SCOPE_KEY.eq(String.valueOf(chatId)))
                     .execute();
             // Delete attachments and their stored content.
             deleteChunksOfChat(context, chatId);

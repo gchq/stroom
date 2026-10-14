@@ -168,7 +168,7 @@ public class AiChatRunManager {
             });
             final LocalRun localRun = new LocalRun(run.getId(), userUuid, task,
                     new AtomicLong(System.currentTimeMillis()), new AtomicBoolean(false),
-                    new AtomicBoolean(false), new AtomicBoolean(false));
+                    new AtomicBoolean(false), new AtomicBoolean(false), new AtomicBoolean(false));
             localRuns.put(chatId, localRun);
             ensureHeartbeat();
 
@@ -326,6 +326,25 @@ public class AiChatRunManager {
     public boolean isUnattended(final int chatId) {
         final LocalRun localRun = localRuns.get(chatId);
         return localRun != null && localRun.unattended().get();
+    }
+
+    /// Records that the chat's run has read something that could hold instructions planted by someone else (tool
+    /// output, workspace files or Stroom data), so changes it makes that outlive the chat need the user's approval.
+    ///
+    /// @param chatId The chat.
+    public void markTainted(final int chatId) {
+        final LocalRun localRun = localRuns.get(chatId);
+        if (localRun != null && !localRun.tainted().getAndSet(true)) {
+            LOGGER.debug(() -> "The run of chatId=" + chatId + " is now tainted");
+        }
+    }
+
+    /// @param chatId The chat.
+    /// @return True if the chat's run has read something that could hold planted instructions, or if the chat has
+    /// no run on this node (so nothing is known about what was read).
+    public boolean isTainted(final int chatId) {
+        final LocalRun localRun = localRuns.get(chatId);
+        return localRun == null || localRun.tainted().get();
     }
 
     /// Adds to the tokens and tool calls used by the chat's run on this node, if it has one.
@@ -488,7 +507,8 @@ public class AiChatRunManager {
                             AtomicLong startTimeMs,
                             AtomicBoolean working,
                             AtomicBoolean stopRequested,
-                            AtomicBoolean unattended) {
+                            AtomicBoolean unattended,
+                            AtomicBoolean tainted) {
 
         void requestStop() {
             stopRequested.set(true);

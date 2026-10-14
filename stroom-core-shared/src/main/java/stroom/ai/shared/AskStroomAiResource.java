@@ -88,6 +88,14 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) UndoAiCompactionRequest request);
 
     @POST
+    @Path("/answerApproval")
+    @Operation(
+            summary = "Approve or reject something the agent asked the user's approval for",
+            operationId = "answerAiApproval")
+    Boolean answerApproval(
+            @Parameter(description = "request", required = true) AnswerAiApprovalRequest request);
+
+    @POST
     @Path("/getDefaultConfig")
     @Operation(
             summary = "Get the default config to use for asking questions",
