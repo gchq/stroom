@@ -20,6 +20,7 @@ import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.CorePresenter;
+import stroom.data.client.event.AskStroomAiBadgeEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.view.MainToolbar;
@@ -48,6 +49,7 @@ import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -152,6 +154,24 @@ public class MainPresenter
         registerHandler(eventBus.addHandler(ShowAskStroomAiEvent.getType(), event -> {
             showingAi = event.isShow();
             getView().getMainToolBar().getShowAi().setState(showingAi);
+        }));
+        registerHandler(eventBus.addHandler(AskStroomAiBadgeEvent.getType(), event -> {
+            // Show a badge on the Ask Stroom AI button when a chat needs the user, is working, or has unread
+            // messages.
+            final Widget showAi = getView().getMainToolBar().getShowAi();
+            showAi.setStyleName("ai-badge--needs-you", event.getNeedsYou() > 0);
+            showAi.setStyleName("ai-badge--busy", event.getNeedsYou() == 0 && event.getBusy() > 0);
+            showAi.setStyleName("ai-badge--unread", event.getNeedsYou() == 0 && event.getBusy() == 0
+                                                     && event.getUnread() > 0);
+            final StringBuilder title = new StringBuilder("Ask Stroom AI");
+            if (event.getNeedsYou() > 0) {
+                title.append(" (").append(event.getNeedsYou()).append(" need you)");
+            } else if (event.getBusy() > 0) {
+                title.append(" (").append(event.getBusy()).append(" working)");
+            } else if (event.getUnread() > 0) {
+                title.append(" (").append(event.getUnread()).append(" unread)");
+            }
+            showAi.setTitle(title.toString());
         }));
 
         refreshTimer = new Timer() {

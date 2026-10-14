@@ -26,6 +26,8 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatHistoryFields;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatRunStatus;
+import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiMemoryScope;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
@@ -47,13 +49,18 @@ import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.InsertSetMoreStep;
 import org.jooq.Record;
+import org.jooq.Record4;
 import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static stroom.ai.impl.db.jooq.tables.AiChat.AI_CHAT;
 import static stroom.ai.impl.db.jooq.tables.AiChatAttachment.AI_CHAT_ATTACHMENT;
@@ -627,5 +634,103 @@ public class AiDaoImpl implements AiDao {
                         .orderBy(AI_CHAT_MESSAGE.ID.asc())
                         .fetch())
                 .map(RECORD_TO_AI_CHAT_MESSAGE::apply);
+    }
+
+    /// Messages that count towards a chat being unread: what the agent says, and what it asks the user.
+    private static final List<Integer> UNREAD_TYPES = Stream.of(
+                    AiMessageType.AI_RESPONSE,
+                    AiMessageType.ERROR,
+                    AiMessageType.APPROVAL_REQUEST,
+                    AiMessageType.MEMORY_UPDATE)
+            .map(type -> (int) type.getPrimitiveValue())
+            .toList();
+
+    @Override
+    public void markRead(final int chatId, final int messageId) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.LAST_READ_MESSAGE_ID, DSL.greatest(DSL.coalesce(AI_CHAT.LAST_READ_MESSAGE_ID, 0),
+                        DSL.val(messageId)))
+                .set(AI_CHAT.LAST_OPENED_MS, System.currentTimeMillis())
+                .where(AI_CHAT.ID.eq(chatId))
+                .execute());
+    }
+
+    @Override
+    public List<AiChatStatus> getChatStatuses(final String userUuid, final int limit) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> {
+            final List<Record> chats = context
+                    .select(AI_CHAT.ID, AI_CHAT.TITLE, AI_CHAT.UPDATE_TIME_MS, AI_CHAT.LAST_READ_MESSAGE_ID,
+                            AI_CHAT.AUTO_APPROVE)
+                    .from(AI_CHAT)
+                    .where(AI_CHAT.USER_UUID.eq(userUuid))
+                    .orderBy(AI_CHAT.UPDATE_TIME_MS.desc())
+                    .limit(limit)
+                    .fetch()
+                    .stream()
+                    .map(r -> (Record) r)
+                    .toList();
+            final List<Integer> ids = chats.stream().map(r -> r.get(AI_CHAT.ID)).toList();
+            final Map<Integer, Byte> runStatuses = new HashMap<>();
+            context.select(AI_CHAT_RUN.FK_AI_CHAT_ID, AI_CHAT_RUN.STATUS)
+                    .from(AI_CHAT_RUN)
+                    .where(AI_CHAT_RUN.ID.in(DSL.select(DSL.max(AI_CHAT_RUN.ID))
+                            .from(AI_CHAT_RUN)
+                            .where(AI_CHAT_RUN.FK_AI_CHAT_ID.in(ids))
+                            .groupBy(AI_CHAT_RUN.FK_AI_CHAT_ID)))
+                    .fetch()
+                    .forEach(r -> runStatuses.put(r.value1(), r.value2()));
+            final Map<Integer, Integer> lastMessages = new HashMap<>();
+            context.select(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, DSL.max(AI_CHAT_MESSAGE.ID))
+                    .from(AI_CHAT_MESSAGE)
+                    .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.in(ids))
+                    .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.in(UNREAD_TYPES))
+                    .groupBy(AI_CHAT_MESSAGE.FK_AI_CHAT_ID)
+                    .fetch()
+                    .forEach(r -> lastMessages.put(r.value1(), r.value2()));
+            return chats.stream()
+                    .map(r -> {
+                        final int id = r.get(AI_CHAT.ID);
+                        final int lastRead = Objects.requireNonNullElse(r.get(AI_CHAT.LAST_READ_MESSAGE_ID), 0);
+                        final Byte runStatus = runStatuses.get(id);
+                        return new AiChatStatus(
+                                id,
+                                r.get(AI_CHAT.TITLE),
+                                r.get(AI_CHAT.UPDATE_TIME_MS),
+                                runStatus == null
+                                        ? null
+                                        : AiChatRunStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(runStatus),
+                                lastMessages.getOrDefault(id, 0) > lastRead,
+                                Boolean.TRUE.equals(r.get(AI_CHAT.AUTO_APPROVE)));
+                    })
+                    .toList();
+        });
+    }
+
+    @Override
+    public long getStatusVersion(final String userUuid) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> {
+            final Record4<Long, Long, Integer, Integer> chats = context
+                    .select(DSL.max(AI_CHAT.UPDATE_TIME_MS),
+                            DSL.max(AI_CHAT.LAST_OPENED_MS),
+                            DSL.max(AI_CHAT.LAST_READ_MESSAGE_ID),
+                            DSL.count())
+                    .from(AI_CHAT)
+                    .where(AI_CHAT.USER_UUID.eq(userUuid))
+                    .fetchOne();
+            final Long runs = context
+                    .select(DSL.max(AI_CHAT_RUN.UPDATE_TIME_MS))
+                    .from(AI_CHAT_RUN)
+                    .where(AI_CHAT_RUN.USER_UUID.eq(userUuid))
+                    .fetchOne(0, Long.class);
+            // Changes when anything that a status shows changes: a chat updated, read, added or deleted, or a run
+            // changed.
+            long version = 17;
+            for (final Object part : Arrays.asList(chats.value1(), chats.value2(), chats.value3(), chats.value4(),
+                    runs)) {
+                version = version * 1_000_003L + Objects.hashCode(part);
+            }
+            return version;
+        });
     }
 }
