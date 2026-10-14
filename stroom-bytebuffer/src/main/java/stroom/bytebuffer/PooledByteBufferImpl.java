@@ -77,7 +77,7 @@ class PooledByteBufferImpl implements PooledByteBuffer {
         // A named resource rather than `try (this)`, which crashes the Checkstyle parser.
         // Try-with-resources (not try/finally) so a close() failure is suppressed onto the
         // consumer's exception instead of replacing it.
-        try (final PooledByteBuffer self = this) {
+        try (final PooledByteBuffer ignored = this) {
             byteBufferConsumer.accept(getByteBuffer());
         }
     }
