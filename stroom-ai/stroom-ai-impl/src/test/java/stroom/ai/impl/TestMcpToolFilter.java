@@ -16,6 +16,8 @@
 
 package stroom.ai.impl;
 
+import stroom.openai.shared.McpToolPolicy;
+import stroom.openai.shared.McpToolPolicyRule;
 import stroom.openai.shared.McpToolServerConfig;
 
 import org.junit.jupiter.api.Test;
@@ -75,5 +77,23 @@ class TestMcpToolFilter {
 
         assertThat(filter.isAllowed("find_documents")).isTrue();
         assertThat(filter.isAllowed("reprocess_streams")).isFalse();
+    }
+
+    @Test
+    void testDenyPolicy() {
+        final McpToolFilter filter = McpToolFilter.forServer(McpToolServerConfig.builder()
+                .toolPolicies(List.of(
+                        new McpToolPolicyRule("reprocess_streams", McpToolPolicy.ASK_ALWAYS),
+                        new McpToolPolicyRule("reprocess_*", McpToolPolicy.DENY),
+                        new McpToolPolicyRule("*", McpToolPolicy.ALLOW)))
+                .build());
+
+        // The first matching rule applies.
+        assertThat(filter.policyFor("reprocess_streams")).isEqualTo(McpToolPolicy.ASK_ALWAYS);
+        assertThat(filter.isAllowed("reprocess_streams")).isTrue();
+        assertThat(filter.policyFor("reprocess_all")).isEqualTo(McpToolPolicy.DENY);
+        assertThat(filter.isAllowed("reprocess_all")).isFalse();
+        assertThat(filter.policyFor("find_documents")).isEqualTo(McpToolPolicy.ALLOW);
+        assertThat(McpToolFilter.forServer(null).policyFor("x")).isNull();
     }
 }
