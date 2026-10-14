@@ -57,6 +57,10 @@ public interface AiWorkspaceDao {
     /// @return The chunk's compressed data, if there is such a chunk.
     Optional<byte[]> getChunkData(int fileId, int seq);
 
+    /// @param fileId The file's id.
+    /// @return The file's uncompressed size, or 0 if it is not known.
+    long getSize(int fileId);
+
     /// @param chatId The chat.
     /// @return The uncompressed size of all the files in the chat's workspace.
     long getTotalSize(int chatId);

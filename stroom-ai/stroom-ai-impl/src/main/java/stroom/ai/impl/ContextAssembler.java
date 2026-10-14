@@ -17,9 +17,12 @@
 package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
+import stroom.ai.api.SimpleTokenCountEstimator;
+import stroom.ai.impl.AiDao.ChatUsage;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
@@ -41,8 +44,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /// Builds what the model is sent for a question: the system prompt, any summary of earlier conversation, the
 /// conversation history (with attached tables, and a short record of the tools used for each earlier answer),
@@ -54,21 +59,124 @@ public class ContextAssembler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContextAssembler.class);
 
+    public static final String PART_SYSTEM_PROMPT = "System prompt";
+    public static final String PART_TOOL_DEFINITIONS = "Tool definitions";
+    public static final String PART_CONVERSATION = "Conversation";
+    public static final String PART_ATTACHMENTS = "Attached tables";
+    public static final String PART_TOOL_RESULTS = "Tool calls and results";
+
     /// How much of a tool call's arguments, and of its result, the record of an earlier answer's tools shows.
     static final int TOOL_LOG_ARGS_LIMIT = 200;
     static final int TOOL_LOG_RESULT_LIMIT = 200;
 
+    private static final SimpleTokenCountEstimator ESTIMATOR = new SimpleTokenCountEstimator();
+
     private final Provider<AskStroomAiConfig> defaultConfigProvider;
     private final WorkspaceStore workspaceStore;
     private final AiService aiService;
+    private final AiDao aiDao;
+    private final AiWorkspaceDao workspaceDao;
+    private final ContextUsageTracker usageTracker;
 
     @Inject
     ContextAssembler(final Provider<AskStroomAiConfig> defaultConfigProvider,
                      final WorkspaceStore workspaceStore,
-                     final AiService aiService) {
+                     final AiService aiService,
+                     final AiDao aiDao,
+                     final AiWorkspaceDao workspaceDao,
+                     final ContextUsageTracker usageTracker) {
         this.defaultConfigProvider = defaultConfigProvider;
         this.workspaceStore = workspaceStore;
         this.aiService = aiService;
+        this.aiDao = aiDao;
+        this.workspaceDao = workspaceDao;
+        this.usageTracker = usageTracker;
+    }
+
+    /**
+     * Selects the stored messages that are sent to the model as conversation history: questions, answers and
+     * attachments, up to and including the last question (the one being answered). ERROR rows are left out, as
+     * the model would read them as its own earlier replies. Anything after the last question (e.g. a partial
+     * answer from an attempt that was stopped) is left out too, so the question can be answered again.
+     *
+     * @param history All the messages in the chat, in order.
+     * @return The messages to send, in the same order.
+     */
+    public static List<AiChatMessage> selectHistoryForModel(final List<AiChatMessage> history) {
+        int end = history.size();
+        while (end > 0 && history.get(end - 1).getMessageType() != AiMessageType.USER_MESSAGE) {
+            end--;
+        }
+        final List<AiChatMessage> upToQuestion = end == 0
+                ? history
+                : history.subList(0, end);
+        return upToQuestion.stream()
+                .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
+                             || m.getMessageType() == AiMessageType.STEER_MESSAGE
+                             || m.getMessageType() == AiMessageType.AI_RESPONSE
+                             || m.getMessageType() == AiMessageType.ATTACHMENT)
+                .toList();
+    }
+
+    /**
+     * Estimates how much of the model's context window the chat would use if a question were asked now, using
+     * the same rules as {@link #assemble}, and corrected by how far off the estimate was for the chat's last
+     * measured model call.
+     *
+     * @param chatId The chat.
+     * @return The estimate, with where the tokens go.
+     */
+    public AiContextUsage estimateUsage(final int chatId) {
+        final List<AiChatMessage> history = aiService.getMessages(chatId);
+        final Map<String, Long> parts = new LinkedHashMap<>();
+        parts.put(PART_SYSTEM_PROMPT, (long) ESTIMATOR.estimateTokenCountInText(systemPrompt()));
+        parts.put(PART_TOOL_DEFINITIONS, (long) usageTracker.getToolDefinitionTokens(chatId));
+
+        long conversation = 0;
+        long attachments = 0;
+        for (final AiChatMessage message : selectHistoryForModel(history)) {
+            if (message.getMessageType() == AiMessageType.ATTACHMENT && message.getAttachmentId() != null) {
+                attachments += workspaceDao.getSize(message.getAttachmentId()) / 4;
+            } else {
+                conversation += tokens(message);
+            }
+        }
+        parts.put(PART_CONVERSATION, conversation);
+        parts.put(PART_ATTACHMENTS, attachments);
+
+        // Tool calls: in full for the latest turn (if a run is working on it), and as a short log for earlier ones.
+        final int latestTurn = history.stream().mapToInt(AiChatMessage::getTurnId).max().orElse(0);
+        long toolResults = 0;
+        for (final Map.Entry<Integer, List<AiChatMessage>> entry : toolMessagesByTurn(history).entrySet()) {
+            if (entry.getKey() == latestTurn) {
+                toolResults += entry.getValue().stream().mapToLong(ContextAssembler::tokens).sum();
+            } else {
+                toolResults += ESTIMATOR.estimateTokenCountInText(NullSafe.string(toolLog(entry.getValue())));
+            }
+        }
+        parts.put(PART_TOOL_RESULTS, toolResults);
+
+        final long estimate = parts.values().stream().mapToLong(Long::longValue).sum();
+        final Optional<Double> correction = usageTracker.getCorrection(chatId);
+        final long used = correction
+                .map(factor -> Math.round(estimate * factor))
+                .orElse(estimate);
+        final int contextWindow = NullSafe.getOrElse(
+                aiDao.getUsage(chatId), ChatUsage::contextWindowTokens, 0);
+        return new AiContextUsage(contextWindow, used, correction.isEmpty(), parts);
+    }
+
+    private String systemPrompt() {
+        return NullSafe.getOrElse(
+                defaultConfigProvider.get(),
+                AskStroomAiConfig::getChatSystemPrompt,
+                AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT);
+    }
+
+    private static long tokens(final AiChatMessage message) {
+        return message.getTokenCount() != null
+                ? message.getTokenCount()
+                : ESTIMATOR.estimateTokenCountInText(NullSafe.string(message.getMessage()));
     }
 
     /**
@@ -168,8 +276,12 @@ public class ContextAssembler {
 
 
     private Map<Integer, List<AiChatMessage>> toolMessagesByTurn(final int chatId) {
-        final Map<Integer, List<AiChatMessage>> byTurn = new HashMap<>();
-        for (final AiChatMessage message : aiService.getMessages(chatId)) {
+        return toolMessagesByTurn(aiService.getMessages(chatId));
+    }
+
+    private static Map<Integer, List<AiChatMessage>> toolMessagesByTurn(final List<AiChatMessage> history) {
+        final Map<Integer, List<AiChatMessage>> byTurn = new LinkedHashMap<>();
+        for (final AiChatMessage message : history) {
             if (message.getMessageType() == AiMessageType.TOOL_CALL
                 || message.getMessageType() == AiMessageType.TOOL_RESULT) {
                 byTurn.computeIfAbsent(message.getTurnId(), k -> new ArrayList<>()).add(message);

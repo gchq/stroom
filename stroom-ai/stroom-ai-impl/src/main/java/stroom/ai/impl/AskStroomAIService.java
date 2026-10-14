@@ -34,6 +34,7 @@ import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
+import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
@@ -155,6 +156,7 @@ public class AskStroomAIService {
     private final WorkspaceStore workspaceStore;
     private final AiWorkspaceDao workspaceDao;
     private final ContextAssembler contextAssembler;
+    private final ContextUsageTracker usageTracker;
     private Duration stopWait = STOP_WAIT;
     private final McpAgentChat mcpAgentChat;
 
@@ -178,7 +180,8 @@ public class AskStroomAIService {
                               final AiChatRunDao runDao,
                               final WorkspaceStore workspaceStore,
                               final AiWorkspaceDao workspaceDao,
-                              final ContextAssembler contextAssembler) {
+                              final ContextAssembler contextAssembler,
+                              final ContextUsageTracker usageTracker) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -198,6 +201,7 @@ public class AskStroomAIService {
         this.workspaceStore = workspaceStore;
         this.workspaceDao = workspaceDao;
         this.contextAssembler = contextAssembler;
+        this.usageTracker = usageTracker;
         this.mcpAgentChat = mcpAgentChat;
     }
 
@@ -1009,19 +1013,7 @@ public class AskStroomAIService {
      * @return The messages to send, in the same order.
      */
     static List<AiChatMessage> selectHistoryForModel(final List<AiChatMessage> history) {
-        int end = history.size();
-        while (end > 0 && history.get(end - 1).getMessageType() != AiMessageType.USER_MESSAGE) {
-            end--;
-        }
-        final List<AiChatMessage> upToQuestion = end == 0
-                ? history
-                : history.subList(0, end);
-        return upToQuestion.stream()
-                .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
-                             || m.getMessageType() == AiMessageType.STEER_MESSAGE
-                             || m.getMessageType() == AiMessageType.AI_RESPONSE
-                             || m.getMessageType() == AiMessageType.ATTACHMENT)
-                .toList();
+        return ContextAssembler.selectHistoryForModel(history);
     }
 
 
@@ -1600,6 +1592,7 @@ public class AskStroomAIService {
 
         aiService.deleteChat(chatId); // CASCADE deletes DB records
         mcpClientCache.evictChat(chatId);
+        usageTracker.forget(chatId);
         attachmentFileStore.deleteAttachmentFiles(attachmentIds); // cleanup attachment files
     }
 
@@ -1677,7 +1670,11 @@ public class AskStroomAIService {
                 .noneMatch(a -> a.getStatus() == AiAttachmentStatus.PENDING
                                 || a.getStatus() == AiAttachmentStatus.DOWNLOADING);
         final boolean complete = !runActive && attachmentsComplete;
-        return new AiChatPollResponse(newMessages, attachments, workingMessage, complete, run);
+        // The context usage only changes when there are new messages or a run is working.
+        final AiContextUsage contextUsage = !newMessages.isEmpty() || runActive || request.getLastSeenMessageId() == 0
+                ? contextAssembler.estimateUsage(chatId)
+                : null;
+        return new AiChatPollResponse(newMessages, attachments, workingMessage, complete, run, contextUsage);
     }
 
     // ---------------------------------------------------------------------

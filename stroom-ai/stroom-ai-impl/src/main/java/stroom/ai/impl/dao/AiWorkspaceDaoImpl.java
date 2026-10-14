@@ -128,6 +128,17 @@ public class AiWorkspaceDaoImpl implements AiWorkspaceDao {
     }
 
     @Override
+    public long getSize(final int fileId) {
+        final Long size = JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT_ATTACHMENT.SIZE_BYTES)
+                .from(AI_CHAT_ATTACHMENT)
+                .where(AI_CHAT_ATTACHMENT.ID.eq(fileId))
+                .fetchOptional(AI_CHAT_ATTACHMENT.SIZE_BYTES)
+                .orElse(null));
+        return Objects.requireNonNullElse(size, 0L);
+    }
+
+    @Override
     public long getTotalSize(final int chatId) {
         final Long total = JooqUtil.contextResult(aiDbConnProvider, context -> context
                 .select(DSL.sum(AI_CHAT_ATTACHMENT.SIZE_BYTES))

@@ -123,6 +123,14 @@ public interface AiChatRunDao {
     /// @return How many of the user's runs are being worked on (RUNNING or STOPPING), across the cluster.
     int countWorking(String userUuid);
 
+    /// Adds to the tokens and tool calls a run has used.
+    ///
+    /// @param runId         The run's id.
+    /// @param inputTokens   Input tokens to add.
+    /// @param outputTokens  Output tokens to add.
+    /// @param toolCalls     Tool calls to add.
+    void addUsage(int runId, long inputTokens, long outputTokens, int toolCalls);
+
     /// Deletes all of a chat's runs, e.g. because the chat is being deleted.
     ///
     /// @param chatId The chat.

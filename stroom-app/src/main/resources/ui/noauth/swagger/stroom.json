@@ -15600,6 +15600,9 @@
           "complete" : {
             "type" : "boolean"
           },
+          "contextUsage" : {
+            "$ref" : "#/components/schemas/AiContextUsage"
+          },
           "newMessages" : {
             "type" : "array",
             "items" : {
@@ -15646,6 +15649,33 @@
           },
           "unattended" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "AiContextUsage" : {
+        "type" : "object",
+        "properties" : {
+          "contextWindowTokens" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "estimated" : {
+            "type" : "boolean"
+          },
+          "parts" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "percentUsed" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "usedTokens" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
