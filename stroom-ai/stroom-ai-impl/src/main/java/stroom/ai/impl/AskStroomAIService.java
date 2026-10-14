@@ -55,7 +55,6 @@ import stroom.query.impl.QueryService;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
-import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -96,7 +95,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -131,8 +129,9 @@ public class AskStroomAIService {
     private final Provider<TableAnalysisConfig> tableAnalysisConfigProvider;
     private final ConcurrentHashMap<Integer, AtomicBoolean> cancellationFlags = new ConcurrentHashMap<>();
     private final TaskContextFactory taskContextFactory;
-    private final SecurityContext securityContext;
     private final TableSummariserImpl tableSummariser;
+    private final McpToolServerFactory mcpToolServerFactory;
+    private final McpAgentChat mcpAgentChat;
 
     @Inject
     public AskStroomAIService(final AiService aiService,
@@ -147,7 +146,9 @@ public class AskStroomAIService {
                               final Provider<TableAnalysisConfig> tableAnalysisConfigProvider,
                               final TaskContextFactory taskContextFactory,
                               final TableSummariserImpl tableSummariser,
-                              final SecurityContext securityContext) {
+                              final TaskContextFactory taskContextFactory,
+                              final McpToolServerFactory mcpToolServerFactory,
+                              final McpAgentChat mcpAgentChat) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -160,7 +161,8 @@ public class AskStroomAIService {
         this.tableAnalysisConfigProvider = tableAnalysisConfigProvider;
         this.taskContextFactory = taskContextFactory;
         this.tableSummariser = tableSummariser;
-        this.securityContext = securityContext;
+        this.mcpToolServerFactory = mcpToolServerFactory;
+        this.mcpAgentChat = mcpAgentChat;
     }
 
     /**
@@ -545,7 +547,11 @@ public class AskStroomAIService {
         final AtomicBoolean cancelled = new AtomicBoolean(false);
         registerCancellation(chatId, cancelled);
 
-        try {
+        try (final McpToolset toolset = mcpToolServerFactory.createToolset(modelDoc)) {
+            if (!toolset.isEmpty()) {
+                LOGGER.debug(() -> "processQuestion: MCP tool servers active for chatId=" + chatId);
+            }
+
             // Wait for any DOWNLOADING attachments to become READY.
             LOGGER.logDurationIfDebugEnabled(
                     () -> waitForAttachments(chatId, workingMessageId),
@@ -633,7 +639,8 @@ public class AskStroomAIService {
 
                 try {
                     final ChatResponse chatResponse = processUnified(
-                            chatModel, chatId, messages, currentAttempt);
+                            chatModel, chatId, messages, currentAttempt, toolset, workingMessageId,
+                            cancelled, debugLog);
                     final String responseText = chatResponse.aiMessage().text();
 
                     // Capture successful attempt.
@@ -848,11 +855,20 @@ public class AskStroomAIService {
     /**
      * Sends the pre-built message list to the LLM and returns the full ChatResponse
      * so callers can access both the response text and any thinking/reasoning content.
+     * <p>
+     * Runs via {@link McpAgentChat}: the model is offered the built-in tools plus any MCP tools/resources
+     * from its configured tool servers, tool calls are executed and fed back, and the loop repeats until
+     * the model answers without calling a tool, the iteration cap is hit, or the task is stopped. With no
+     * tools it is a single plain call.
      */
     private ChatResponse processUnified(final ChatModel chatModel,
                                         final int chatId,
                                         final List<ChatMessage> messages,
-                                        final int attempt) {
+                                        final int attempt,
+                                        final McpToolset toolset,
+                                        final int workingMessageId,
+                                        final AtomicBoolean cancelled,
+                                        final StringBuilder debugLog) {
         return taskContextFactory.contextResult(
                 "AI data analysis",
                 taskContext -> {
@@ -866,13 +882,10 @@ public class AskStroomAIService {
                                        + " messages to LLM for chatId=" + chatId
                                        + " (attempt " + attempt + ")");
 
-                    final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
-                            () -> chatModel.chat(messages),
-                            r -> "processUnified chatId=" + chatId
-                                 + " attempt=" + attempt
-                                 + " responseLength=" + r.aiMessage().text().length());
-                    LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
-                    return response;
+                    // The agent loop offers the built-in tools plus any MCP tools; with no tools at all
+                    // it degrades to a single plain call.
+                    return mcpAgentChat.chat(chatModel, chatId, messages, toolset,
+                            workingMessageId, cancelled, taskContext, attempt, debugLog);
                 }).get();
     }
 
@@ -1313,17 +1326,18 @@ public class AskStroomAIService {
     }
 
     private OpenAIModelDoc getModelDoc(final AskStroomAiConfig config) {
-        NullSafe.requireNonNull(config, AskStroomAiConfig::getModelRef, () -> "No model specified");
-
+        if (config == null || config.getModelRef() == null) {
+            throw new RuntimeException("No model specified");
+        }
         final DocRef docRef = config.getModelRef();
         if (!OpenAIModelDoc.TYPE.equals(docRef.getType())) {
             throw new RuntimeException("Default OpenAI API doc ref is incorrect");
         }
 
-        // User only needs Use perm on the model doc (and Use on any Credential in the model)
-        final OpenAIModelDoc openAIModelDoc = securityContext.useAsReadResult(() ->
-                openAIModelStore.readDocument(docRef));
-        Objects.requireNonNull(openAIModelDoc, "Default OpenAI API doc cannot be found");
+        final OpenAIModelDoc openAIModelDoc = openAIModelStore.readDocument(docRef);
+        if (openAIModelDoc == null) {
+            throw new RuntimeException("Default OpenAI API doc cannot be found");
+        }
         return openAIModelDoc;
     }
 

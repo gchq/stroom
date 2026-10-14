@@ -19,6 +19,7 @@ package stroom.ai.impl;
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.api.TableSummariser;
+import stroom.ai.impl.tools.BuiltInToolsModule;
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.language.functions.AiProvider;
@@ -37,6 +38,9 @@ public class AiModule extends AbstractModule {
 
         // Backs the ai() StroomQL function, see ExpressionContextFactory.
         bind(AiProvider.class).to(AiProviderImpl.class);
+
+        // Built-in chat tools (get_current_date, ...).
+        install(new BuiltInToolsModule());
 
         // OpenAI Model
         DocumentStoreBinder.create(binder())
