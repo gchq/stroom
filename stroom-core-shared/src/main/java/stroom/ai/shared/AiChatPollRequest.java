@@ -28,13 +28,32 @@ public class AiChatPollRequest {
 
     @JsonProperty
     private final int lastSeenMessageId;
+    @JsonProperty
+    private final boolean markRead;
 
+    /**
+     * @param lastSeenMessageId The id of the last message the client has.
+     * @param markRead          True if the chat is being shown, so its messages count as read.
+     */
     @JsonCreator
-    public AiChatPollRequest(@JsonProperty("lastSeenMessageId") final Integer lastSeenMessageId) {
+    public AiChatPollRequest(@JsonProperty("lastSeenMessageId") final Integer lastSeenMessageId,
+                             @JsonProperty("markRead") final Boolean markRead) {
         this.lastSeenMessageId = Objects.requireNonNullElse(lastSeenMessageId, 0);
+        this.markRead = Objects.requireNonNullElse(markRead, false);
+    }
+
+    public AiChatPollRequest(final Integer lastSeenMessageId) {
+        this(lastSeenMessageId, false);
     }
 
     public int getLastSeenMessageId() {
         return lastSeenMessageId;
+    }
+
+    /**
+     * @return True if the chat is being shown, so its messages count as read.
+     */
+    public boolean isMarkRead() {
+        return markRead;
     }
 }

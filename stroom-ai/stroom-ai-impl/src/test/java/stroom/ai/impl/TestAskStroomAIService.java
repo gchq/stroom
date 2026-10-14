@@ -22,6 +22,8 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
+import stroom.ai.shared.AiChatStatus;
+import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiRequest;
@@ -37,7 +39,9 @@ import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.UserRef;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -58,11 +62,12 @@ class TestAskStroomAIService {
     private final ChatCompactor compactor = Mockito.mock(ChatCompactor.class);
     private final ToolApprovalService toolApprovalService = Mockito.mock(ToolApprovalService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
+    private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
 
     private AskStroomAIService service() {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, () -> null, null, null,
                 null, null, null, null, null, runManager, runDao, null, null, null, null, compactor, null,
-                toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new);
+                toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext);
     }
 
     @Test
@@ -372,6 +377,25 @@ class TestAskStroomAIService {
                 JsonUtil.writeValueAsString(new ToolApprovalRequest(ToolApprovalRequest.KIND,
                         ToolApprovalRequest.Status.PENDING, "r", List.of(call), true, false), false),
                 10, null);
+    }
+
+    @Test
+    void testChatStatusesAreOnlySentWhenChanged() {
+        Mockito.when(securityContext.getUserRef()).thenReturn(UserRef.builder().uuid("u").build());
+        Mockito.when(aiDao.getStatusVersion("u")).thenReturn(42L);
+        Mockito.when(aiDao.getChatStatuses("u", AskStroomAIService.MAX_CHAT_STATUSES)).thenReturn(List.of(
+                new AiChatStatus(1, "chat", 0L, AiChatRunStatus.WAITING_FOR_USER, true, false)));
+
+        final AiChatStatusResponse first = service().getChatStatuses(0);
+        final AiChatStatusResponse unchanged = service().getChatStatuses(42);
+
+        assertThat(first.getVersion()).isEqualTo(42);
+        assertThat(first.getStatuses()).singleElement().satisfies(status -> {
+            assertThat(status.isNeedsYou()).isTrue();
+            assertThat(status.isUnread()).isTrue();
+            assertThat(status.isBusy()).isFalse();
+        });
+        assertThat(unchanged.getStatuses()).isNull();
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final String text) {

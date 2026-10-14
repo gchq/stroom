@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -102,6 +103,14 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             operationId = "setAiApproveEverything")
     Boolean setApproveEverything(
             @Parameter(description = "request", required = true) SetAiApproveEverythingRequest request);
+
+    @GET
+    @Path("/getChatStatuses/{sinceVersion}")
+    @Operation(
+            summary = "Get the statuses of the user's chats, for the switcher and badges, or nothing if none has "
+                      + "changed since the given version",
+            operationId = "getAiChatStatuses")
+    AiChatStatusResponse getChatStatuses(@PathParam("sinceVersion") long sinceVersion);
 
     @POST
     @Path("/getDefaultConfig")
