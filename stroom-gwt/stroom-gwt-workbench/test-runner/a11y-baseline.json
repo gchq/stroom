@@ -526,6 +526,15 @@
   "widgets-display-logo--default": [
     "button-name"
   ],
+  "widgets-editors-viewers-aceeditorfeatures--autocomplete": [
+    "label"
+  ],
+  "widgets-editors-viewers-aceeditorfeatures--search-box": [
+    "color-contrast"
+  ],
+  "widgets-editors-viewers-aceeditorthemes--chrome": [
+    "color-contrast"
+  ],
   "widgets-editors-viewers-markdowneditor--blank-writable": [
     "frame-title"
   ],
