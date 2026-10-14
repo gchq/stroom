@@ -384,7 +384,7 @@ class TestAskStroomAIService {
         Mockito.when(securityContext.getUserRef()).thenReturn(UserRef.builder().uuid("u").build());
         Mockito.when(aiDao.getStatusVersion("u")).thenReturn(42L);
         Mockito.when(aiDao.getChatStatuses("u", AskStroomAIService.MAX_CHAT_STATUSES)).thenReturn(List.of(
-                new AiChatStatus(1, "chat", 0L, AiChatRunStatus.WAITING_FOR_USER, true, false)));
+                new AiChatStatus(1, "chat", 0L, AiChatRunStatus.WAITING_FOR_USER, true, false, 0L)));
 
         final AiChatStatusResponse first = service().getChatStatuses(0);
         final AiChatStatusResponse unchanged = service().getChatStatuses(42);
