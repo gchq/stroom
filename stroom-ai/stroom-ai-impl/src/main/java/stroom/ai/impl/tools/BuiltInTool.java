@@ -61,4 +61,14 @@ public interface BuiltInTool {
     default boolean isReadOnly() {
         return true;
     }
+
+    /**
+     * @return True if what the tool returns could hold instructions planted by someone other than the user (e.g.
+     * tool output, workspace files or Stroom data). Once a run has used such a tool, changes it makes that outlive
+     * the chat need the user's approval. Defaults to true; override only for tools whose output is known to be
+     * safe.
+     */
+    default boolean readsUntrustedContent() {
+        return true;
+    }
 }

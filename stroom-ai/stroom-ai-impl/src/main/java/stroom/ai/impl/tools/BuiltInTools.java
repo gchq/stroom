@@ -41,15 +41,20 @@ public class BuiltInTools {
 
     private final Map<ToolSpecification, ToolExecutor> toolMap;
     private final Set<String> readOnlyToolNames;
+    private final Set<String> trustedToolNames;
 
     @Inject
     BuiltInTools(final Set<BuiltInTool> tools) {
         final Map<ToolSpecification, ToolExecutor> map = new LinkedHashMap<>();
         final Set<String> readOnly = new HashSet<>();
+        final Set<String> trusted = new HashSet<>();
         for (final BuiltInTool tool : tools) {
             final ToolSpecification specification = tool.specification();
             if (tool.isReadOnly()) {
                 readOnly.add(specification.name());
+            }
+            if (!tool.readsUntrustedContent()) {
+                trusted.add(specification.name());
             }
             map.put(specification, (request, memoryId) -> {
                 try {
@@ -65,6 +70,7 @@ public class BuiltInTools {
         }
         toolMap = Map.copyOf(map);
         readOnlyToolNames = Set.copyOf(readOnly);
+        trustedToolNames = Set.copyOf(trusted);
         LOGGER.debug(() -> "Registered " + toolMap.size() + " built-in tool(s): "
                            + toolMap.keySet().stream().map(ToolSpecification::name).sorted().toList());
     }
@@ -83,6 +89,15 @@ public class BuiltInTools {
      */
     public boolean isReadOnly(final String toolName) {
         return readOnlyToolNames.contains(toolName);
+    }
+
+    /**
+     * @param toolName A tool name.
+     * @return True if what the tool returns could hold instructions planted by someone other than the user. True
+     * for any tool that is not a built-in tool.
+     */
+    public boolean readsUntrustedContent(final String toolName) {
+        return !trustedToolNames.contains(toolName);
     }
 
     public boolean isEmpty() {

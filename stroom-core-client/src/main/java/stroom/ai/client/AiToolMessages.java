@@ -140,4 +140,81 @@ final class AiToolMessages {
             return tokens;
         }
     }
+
+    /**
+     * @return Markdown showing a change to memory, as before and after.
+     */
+    static String memoryChangeMarkdown(final String json) {
+        final String before = getString(json, "before");
+        final String after = getString(json, "after");
+        final StringBuilder sb = new StringBuilder();
+        if (before != null) {
+            sb.append(after != null
+                    ? "Before:"
+                    : "Deleted:").append("\n\n~~~\n").append(before).append("\n~~~\n\n");
+        }
+        if (after != null) {
+            sb.append(before != null
+                    ? "After:"
+                    : "Created:").append("\n\n~~~\n").append(after).append("\n~~~\n");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @return Markdown describing a request for the user's approval.
+     */
+    static String approvalMarkdown(final String json) {
+        final String status = getString(json, "status");
+        final StringBuilder sb = new StringBuilder("**The agent wants to change your memory** (`")
+                .append(getString(json, "path"))
+                .append("`), which is loaded into all your chats.");
+        final String reason = getString(json, "reason");
+        if (reason != null) {
+            sb.append(" ").append(reason);
+        }
+        sb.append("\n\n").append(memoryChangeMarkdown(json));
+        if (status != null && !"PENDING".equals(status)) {
+            sb.append("\n").append(approvalStatusText(status));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @return True if the request is still waiting for an answer.
+     */
+    static boolean isPendingApproval(final String json) {
+        return "PENDING".equals(getString(json, "status"));
+    }
+
+    /**
+     * @return The JSON of a request for approval, with its status changed.
+     */
+    static String withStatus(final String json, final String status) {
+        try {
+            final JSONObject object = JSONParser.parseStrict(json).isObject();
+            if (object == null) {
+                return json;
+            }
+            object.put("status", new JSONString(status));
+            return object.toString();
+        } catch (final RuntimeException e) {
+            return json;
+        }
+    }
+
+    private static String approvalStatusText(final String status) {
+        switch (status) {
+            case "APPROVED":
+                return "*Approved.*";
+            case "REJECTED":
+                return "*Rejected.*";
+            case "EXPIRED":
+                return "*Not made: the request expired.*";
+            case "FAILED":
+                return "*Not made: the memory had changed since the request was made.*";
+            default:
+                return "*" + status + "*";
+        }
+    }
 }

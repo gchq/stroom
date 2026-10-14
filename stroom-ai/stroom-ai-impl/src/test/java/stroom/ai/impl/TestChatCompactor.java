@@ -46,7 +46,7 @@ class TestChatCompactor {
     private final AiService aiService = Mockito.mock(AiService.class);
     private final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
     private final ContextAssembler assembler = new ContextAssembler(
-            () -> null, AiConfig::new, null, aiService, null, null, tracker);
+            () -> null, AiConfig::new, null, aiService, null, null, tracker, null);
     private final ChatCompactor compactor = new ChatCompactor(aiService, assembler, AiConfig::new, () -> null);
 
     {
