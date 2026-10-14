@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.dao;
 
+import stroom.ai.impl.AiChatRunDao;
 import stroom.ai.impl.AiDao;
 
 import com.google.inject.AbstractModule;
@@ -26,5 +27,6 @@ public class AiDaoModule extends AbstractModule {
     protected void configure() {
         super.configure();
         bind(AiDao.class).to(AiDaoImpl.class);
+        bind(AiChatRunDao.class).to(AiChatRunDaoImpl.class);
     }
 }

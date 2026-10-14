@@ -18,7 +18,6 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
-import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
@@ -513,11 +512,10 @@ public class AskStroomAiPresenter
             // Show what the server is currently doing, and take the line away when it is done.
             updateWorkingMessage(response.getWorkingMessage());
 
-            // Keep polling while this client is waiting on a request, while data is still coming
-            // down, or while messages are still arriving. A WORKING message on its own is not reason
-            // enough: one can be left behind by a server that stopped mid-question, and polling for
-            // that would never end.
-            if (requestInFlight || hasNewMessages || isDownloading(response.getAttachments())) {
+            // Keep polling while this client is waiting on a request, while the chat's agent run is
+            // still active or data is still coming down (the server reports both as not complete), or
+            // while messages are still arriving.
+            if (requestInFlight || !response.isComplete() || hasNewMessages) {
                 // If the conversation is still in-flight, schedule another poll after 1s.
                 new com.google.gwt.user.client.Timer() {
                     @Override
@@ -822,21 +820,6 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * @return True if any attachment is still being fetched, so there is more to come.
-     */
-    private boolean isDownloading(final java.util.List<AiChatAttachment> attachments) {
-        if (attachments != null) {
-            for (final AiChatAttachment attachment : attachments) {
-                if (attachment.getStatus() == AiAttachmentStatus.PENDING
-                    || attachment.getStatus() == AiAttachmentStatus.DOWNLOADING) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
      * Update existing attachment status elements in the DOM with current status.
      */
     private void updateAttachmentStatuses(final java.util.List<AiChatAttachment> attachments) {
@@ -1038,8 +1021,15 @@ public class AskStroomAiPresenter
 
             // Fetch attachment statuses to update status elements rendered above.
             // For historical chats, attachments are already in their final state (READY/ERROR).
-            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, response ->
-                    updateAttachmentStatuses(response.getAttachments()), error -> { /* ignore */ }, this);
+            // Also picks up an agent run that is still working on a question, e.g. after the page was
+            // refreshed, and carries on following it.
+            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, response -> {
+                updateAttachmentStatuses(response.getAttachments());
+                if (!response.isComplete() && currentChat != null && currentChat.getId() == chat.getId()) {
+                    getView().setSendButtonLoadingState(true);
+                    startPolling();
+                }
+            }, error -> { /* ignore */ }, this);
         }, this);
     }
 

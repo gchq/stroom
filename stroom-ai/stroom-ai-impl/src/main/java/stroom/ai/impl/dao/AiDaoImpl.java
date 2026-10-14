@@ -57,6 +57,7 @@ import java.util.function.Function;
 import static stroom.ai.impl.db.jooq.tables.AiChat.AI_CHAT;
 import static stroom.ai.impl.db.jooq.tables.AiChatAttachment.AI_CHAT_ATTACHMENT;
 import static stroom.ai.impl.db.jooq.tables.AiChatMessage.AI_CHAT_MESSAGE;
+import static stroom.ai.impl.db.jooq.tables.AiChatRun.AI_CHAT_RUN;
 
 public class AiDaoImpl implements AiDao {
 
@@ -183,6 +184,10 @@ public class AiDaoImpl implements AiDao {
             // Delete attachments.
             context.deleteFrom(AI_CHAT_ATTACHMENT)
                     .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))
+                    .execute();
+            // Delete agent runs.
+            context.deleteFrom(AI_CHAT_RUN)
+                    .where(AI_CHAT_RUN.FK_AI_CHAT_ID.eq(chatId))
                     .execute();
             // Delete the chat.
             context.deleteFrom(AI_CHAT)
