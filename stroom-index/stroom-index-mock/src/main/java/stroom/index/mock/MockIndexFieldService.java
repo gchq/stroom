@@ -130,7 +130,7 @@ public class MockIndexFieldService implements IndexFieldService {
                 PageRequest.oneRow(),
                 null,
                 docRef,
-                StringExpressionUtil.equalsCaseSensitive(fieldName),
+                StringExpressionUtil.equalTo(fieldName),
                 null);
         final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
         if (!resultPage.isEmpty()) {

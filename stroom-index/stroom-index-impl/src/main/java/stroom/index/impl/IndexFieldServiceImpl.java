@@ -166,7 +166,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
                     PageRequest.oneRow(),
                     FindFieldCriteria.DEFAULT_SORT_LIST,
                     docRef,
-                    StringExpressionUtil.equalsCaseSensitive(fieldName),
+                    StringExpressionUtil.equalTo(fieldName),
                     null);
             final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
             if (!resultPage.isEmpty()) {
