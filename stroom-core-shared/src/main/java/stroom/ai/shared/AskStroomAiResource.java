@@ -106,6 +106,15 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) SetAiApproveEverythingRequest request);
 
     @POST
+    @Path("/answerElicitation")
+    @Operation(
+            summary = "Answer a form an MCP tool asked the user to fill in. The answer goes to the MCP server, "
+                      + "never to the model",
+            operationId = "answerAiElicitation")
+    Boolean answerElicitation(
+            @Parameter(description = "request", required = true) AnswerAiElicitationRequest request);
+
+    @POST
     @Path("/listMemory/{chatId}")
     @Operation(
             summary = "List the memory a chat can see, and the changes the agent has made to memory in it",

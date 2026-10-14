@@ -25,6 +25,7 @@ import stroom.db.util.JooqUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 
@@ -230,12 +231,21 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
         return statuses;
     }
 
+    /// @return The condition for runs that a node is working on, so send heartbeats: those active, except those
+    /// waiting for the user with no thread, but including those whose tool is waiting for a form to be filled in
+    /// (which keep their thread).
+    private static Condition sendsHeartbeats() {
+        return AI_CHAT_RUN.STATUS.in(HEARTBEAT_STATUSES)
+                .or(AI_CHAT_RUN.STATUS.eq(AiChatRunStatus.WAITING_FOR_USER.getPrimitiveValue())
+                        .and(AI_CHAT_RUN.STOP_REASON.eq(AiChatRunStopReason.NEEDS_INPUT.getPrimitiveValue())));
+    }
+
     @Override
     public List<AiChatRun> interruptStale(final long staleBeforeMs) {
         final List<AiChatRun> stale = JooqUtil.contextResult(aiDbConnProvider, context -> context
                         .select()
                         .from(AI_CHAT_RUN)
-                        .where(AI_CHAT_RUN.STATUS.in(HEARTBEAT_STATUSES))
+                        .where(sendsHeartbeats())
                         .and(AI_CHAT_RUN.HEARTBEAT_MS.lt(staleBeforeMs))
                         .fetch())
                 .map(RECORD_TO_RUN::apply);
@@ -251,7 +261,7 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
                     .set(AI_CHAT_RUN.UPDATE_TIME_MS, now)
                     .set(AI_CHAT_RUN.VERSION, AI_CHAT_RUN.VERSION.plus(1))
                     .where(AI_CHAT_RUN.ID.eq(run.getId()))
-                    .and(AI_CHAT_RUN.STATUS.in(HEARTBEAT_STATUSES))
+                    .and(sendsHeartbeats())
                     .and(AI_CHAT_RUN.HEARTBEAT_MS.lt(staleBeforeMs))
                     .execute());
             if (count == 1) {

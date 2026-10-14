@@ -42,6 +42,7 @@ import stroom.util.shared.time.SimpleDuration;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.spec.McpSchema.ClientCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.Implementation;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -94,12 +95,16 @@ public class McpToolServerFactory {
             .build();
 
     private static final String CLIENT_NAME = "Stroom";
+    // How much longer than a form's timeout a tool call may take, so the form expires first.
+    private static final Duration FORM_TIMEOUT_MARGIN = Duration.ofMinutes(1);
 
     private final Provider<StoredSecrets> storedSecretsProvider;
     private final HttpConfigResolver httpConfigResolver;
     private final PathCreator pathCreator;
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<UserIdentityFactory> userIdentityFactoryProvider;
+    private final Provider<McpElicitations> elicitationsProvider;
+    private final Provider<AiConfig> aiConfigProvider;
     private final McpClientCache mcpClientCache;
 
     @Inject
@@ -108,8 +113,12 @@ public class McpToolServerFactory {
                          final PathCreator pathCreator,
                          final Provider<SecurityContext> securityContextProvider,
                          final Provider<UserIdentityFactory> userIdentityFactoryProvider,
-                         final McpClientCache mcpClientCache) {
+                         final McpClientCache mcpClientCache,
+                         final Provider<McpElicitations> elicitationsProvider,
+                         final Provider<AiConfig> aiConfigProvider) {
         this.storedSecretsProvider = storedSecretsProvider;
+        this.elicitationsProvider = elicitationsProvider;
+        this.aiConfigProvider = aiConfigProvider;
         this.httpConfigResolver = httpConfigResolver;
         this.pathCreator = pathCreator;
         this.securityContextProvider = securityContextProvider;
@@ -154,8 +163,8 @@ public class McpToolServerFactory {
         for (final McpToolServerConfig server : servers) {
             try {
                 final McpServerConnection connection = chatId == null
-                        ? connect(server, userIdentity)
-                        : mcpClientCache.get(chatId, userUuid, server, () -> connect(server, userIdentity));
+                        ? connect(server, userIdentity, null)
+                        : mcpClientCache.get(chatId, userUuid, server, () -> connect(server, userIdentity, chatId));
                 connection.use(userIdentity);
                 connections.add(connection);
             } catch (final RuntimeException e) {
@@ -167,7 +176,13 @@ public class McpToolServerFactory {
         return new McpToolset(connections, warnings, chatId == null);
     }
 
-    private McpServerConnection connect(final McpToolServerConfig server, final UserIdentity userIdentity) {
+    /**
+     * @param chatId The chat the connection is for, or null. Only a chat's connection can show the user the
+     *               forms its server asks them to fill in (MCP elicitation).
+     */
+    private McpServerConnection connect(final McpToolServerConfig server,
+                                        final UserIdentity userIdentity,
+                                        final Integer chatId) {
         final String endpoint = server.getEndpoint().trim();
         final String label = NullSafe.nonBlankStringElse(server.getName(), endpoint);
 
@@ -213,13 +228,24 @@ public class McpToolServerFactory {
 
         // The connection is made after the client, but the client needs to tell it when the tools change.
         final AtomicReference<McpServerConnection> connectionRef = new AtomicReference<>();
-        final McpSyncClient client = McpClient.sync(transport)
+        final McpClient.SyncSpec spec = McpClient.sync(transport)
                 .clientInfo(new Implementation(CLIENT_NAME, CLIENT_NAME, clientVersion()))
                 .requestTimeout(timeout)
                 .initializationTimeout(timeout)
                 .toolsChangeConsumer(tools -> NullSafe.consume(connectionRef.get(),
-                        McpServerConnection::invalidateTools))
-                .build();
+                        McpServerConnection::invalidateTools));
+        if (chatId != null) {
+            // A tool call waits while the user fills in a form, so it must not time out first.
+            final Duration formTimeout = NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getElicitationTimeout,
+                    AiConfig.DEFAULT_ELICITATION_TIMEOUT).getDuration().plus(FORM_TIMEOUT_MARGIN);
+            final McpElicitations elicitations = elicitationsProvider.get();
+            spec.capabilities(ClientCapabilities.builder().elicitation().build())
+                    .requestTimeout(timeout.compareTo(formTimeout) > 0
+                            ? timeout
+                            : formTimeout)
+                    .elicitation(request -> elicitations.handle(chatId, label, request));
+        }
+        final McpSyncClient client = spec.build();
         try {
             client.initialize();
         } catch (final RuntimeException e) {

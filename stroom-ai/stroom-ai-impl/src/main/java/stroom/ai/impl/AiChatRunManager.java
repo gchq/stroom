@@ -173,8 +173,10 @@ public class AiChatRunManager {
     public AiChatRun continueRun(final int chatId, final Consumer<AiChatRun> work) {
         final String userUuid = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
         synchronized (queue) {
+            // A run waiting for a form to be filled in still has its thread, so it is not carried on.
             final AiChatRun run = runDao.getActive(chatId)
-                    .filter(active -> active.getStatus() == AiChatRunStatus.WAITING_FOR_USER)
+                    .filter(active -> active.getStatus() == AiChatRunStatus.WAITING_FOR_USER
+                                      && active.getStopReason() != AiChatRunStopReason.NEEDS_INPUT)
                     .orElseThrow(() -> new AiChatBusyException(chatId));
             final AiChatRunStatus status = hasFreeSlot(userUuid)
                     ? AiChatRunStatus.RUNNING

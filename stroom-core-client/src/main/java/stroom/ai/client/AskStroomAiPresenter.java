@@ -156,6 +156,7 @@ public class AskStroomAiPresenter
     private static final String DAY_DIVIDER_CLASS = "ai-day-divider";
     private static final String PENDING_MESSAGE_ID = "pending";
     private static final String UNDO_COMPACTION_ATTRIBUTE = "data-undo-compaction";
+    private static final String ELICITATION_ATTRIBUTE = "data-elicitation-id";
     private static final int DEFAULT_COMPACT_AT_PERCENT = 80;
     private static final int WARN_BELOW_COMPACT_AT_PERCENT = 10;
     private static final String COMPACT_COMMAND = "/compact";
@@ -164,6 +165,7 @@ public class AskStroomAiPresenter
                     "Compact the conversation now, optionally saying what the summary should keep"));
     private static final String LIVE_ANSWER_ID = "ai-live-answer";
     private static final int STREAMING_POLL_MS = 500;
+    private static final long KEEP_POLLING_AFTER_ANSWER_MS = 15_000;
     private static final int BOTTOM_TOLERANCE_PX = 40;
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
@@ -174,6 +176,7 @@ public class AskStroomAiPresenter
     private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
     private final Provider<AiMemoryPresenter> memoryPresenterProvider;
     private final Provider<AiToolApprovalsPresenter> toolApprovalsPresenterProvider;
+    private final Provider<McpElicitationPresenter> elicitationPresenterProvider;
     private final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider;
     private final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider;
     private final ContentManager contentManager;
@@ -203,6 +206,9 @@ public class AskStroomAiPresenter
     private boolean requestInFlight;
     private boolean polling;
     private boolean pollAgain;
+    // Until when to keep polling even though the run is waiting for the user, as the user has just answered and
+    // the run may not have carried on yet.
+    private long keepPollingUntilMs;
     // The rendered messages, by id, e.g. to edit a question or redraw an answered card.
     private final Map<Integer, AiChatMessage> renderedMessages = new HashMap<>();
     // Each turn's reasoning and tool calls, grouped above its answer.
@@ -226,6 +232,7 @@ public class AskStroomAiPresenter
                                 final Provider<DownloadChatPresenter> downloadChatPresenterProvider,
                                 final Provider<AiMemoryPresenter> memoryPresenterProvider,
                                 final Provider<AiToolApprovalsPresenter> toolApprovalsPresenterProvider,
+                                final Provider<McpElicitationPresenter> elicitationPresenterProvider,
                                 final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
                                 final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider,
                                 final ContentManager contentManager,
@@ -239,6 +246,7 @@ public class AskStroomAiPresenter
         this.downloadChatPresenterProvider = downloadChatPresenterProvider;
         this.memoryPresenterProvider = memoryPresenterProvider;
         this.toolApprovalsPresenterProvider = toolApprovalsPresenterProvider;
+        this.elicitationPresenterProvider = elicitationPresenterProvider;
         this.aiAttachmentDataPresenterProvider = aiAttachmentDataPresenterProvider;
         this.askStroomAiTabPresenterProvider = askStroomAiTabPresenterProvider;
         this.contentManager = contentManager;
@@ -287,6 +295,13 @@ public class AskStroomAiPresenter
                     final String retryTurnIdStr = button.getAttribute(RETRY_TURN_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(retryTurnIdStr)) {
                         onRetry(Integer.parseInt(retryTurnIdStr));
+                        return;
+                    }
+
+                    // Answering a form from an MCP tool.
+                    final String elicitationStr = button.getAttribute(ELICITATION_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(elicitationStr)) {
+                        onRespondToForm(Integer.parseInt(elicitationStr));
                         return;
                     }
 
@@ -863,6 +878,69 @@ public class AskStroomAiPresenter
     }
 
     /**
+     * Renders a form an MCP tool asked the user to fill in: what the server said, as plain text, and while it
+     * waits, a Respond… button; once answered, what became of it.
+     */
+    private void appendElicitationCard(final HtmlBuilder hb,
+                                       final AiChatMessage msg,
+                                       final long timeMs,
+                                       final long nowMs) {
+        final String json = msg.getMessage();
+        final String status = NullSafe.string(AiToolMessages.getString(json, "status"));
+        final String server = AiToolMessages.getString(json, "server");
+        final boolean pending = "PENDING".equals(status);
+        hb.div(card -> {
+            card.div(title -> title.append(pending
+                    ? server + " needs your input"
+                    : "A form from " + server), Attribute.className("ai-approval-title"));
+            card.div(text -> text.append(NullSafe.string(AiToolMessages.getString(json, "message"))),
+                    Attribute.className("ai-elicitation-message"));
+            card.div(footer -> {
+                if (pending) {
+                    footer.elem("Respond…", BUTTON,
+                            Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
+                            new Attribute(ELICITATION_ATTRIBUTE, String.valueOf(msg.getId())));
+                } else {
+                    footer.span(text -> text.append(elicitationStatusText(status)),
+                            Attribute.className("ai-approval-reason"));
+                }
+                timestamp(footer, timeMs, nowMs);
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className("ai-message ai-message--approval" + (pending
+                ? " ai-message--needs-you"
+                : "")));
+    }
+
+    private static String elicitationStatusText(final String status) {
+        switch (status) {
+            case "ACCEPTED":
+                return "You answered it.";
+            case "DECLINED":
+                return "You declined it.";
+            case "CANCELLED":
+                return "Not answered, as the run was stopped.";
+            case "EXPIRED":
+                return "Not answered in time.";
+            default:
+                return status;
+        }
+    }
+
+    private void onRespondToForm(final int messageId) {
+        final AiChatMessage msg = renderedMessages.get(messageId);
+        if (msg == null || currentChat == null) {
+            return;
+        }
+        elicitationPresenterProvider.get().show(currentChat, msg, status -> {
+            appendMessage(new AiChatMessage(msg.getId(), msg.getChatId(), msg.getCreateTimeMs(),
+                    msg.getMessageType(), msg.getAttachmentId(), AiToolMessages.withStatus(msg.getMessage(), status),
+                    msg.getTurnId(), msg.getTokenCount()), System.currentTimeMillis());
+            // The tool carries on with the answer.
+            pollAfterAnswer();
+        });
+    }
+
+    /**
      * Renders a compaction as a divider in the conversation, which opens to show what the model now sees in
      * place of the earlier messages, with a button to undo it.
      */
@@ -1282,7 +1360,7 @@ public class AskStroomAiPresenter
                     request.getMessageType(), request.getAttachmentId(), json, request.getTurnId(),
                     request.getTokenCount()), System.currentTimeMillis());
             // The run carries on once everything is answered.
-            startPolling();
+            pollAfterAnswer();
         }, error -> showError(error, "Unable to answer the request", () -> {
         }), getView());
     }
@@ -1427,6 +1505,15 @@ public class AskStroomAiPresenter
     }
 
     /**
+     * Polls now the user has answered something the run was waiting for, and keeps polling while the run carries
+     * on, even if it still shows as waiting for a moment.
+     */
+    private void pollAfterAnswer() {
+        keepPollingUntilMs = System.currentTimeMillis() + KEEP_POLLING_AFTER_ANSWER_MS;
+        startPolling();
+    }
+
+    /**
      * Poll for new messages since lastSeenMessageId. Renders any new messages
      * with type-aware formatting and updates the lastSeenMessageId.
      */
@@ -1492,7 +1579,8 @@ public class AskStroomAiPresenter
             // A run waiting for the user (e.g. to approve something) does nothing until they answer, which starts
             // polling again, so there is no need to keep asking.
             final boolean waitingForUser = response.getRun() != null
-                                           && response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER;
+                                           && response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER
+                                           && System.currentTimeMillis() > keepPollingUntilMs;
             final boolean again = pollAgain;
             pollAgain = false;
             if (!waitingForUser && (again || requestInFlight || !response.isComplete() || hasNewMessages)) {
@@ -1796,6 +1884,9 @@ public class AskStroomAiPresenter
             case COMPACTION_SUMMARY:
                 appendCompactionDivider(hb, msg, timeMs, nowMs);
                 break;
+            case ELICITATION:
+                appendElicitationCard(hb, msg, timeMs, nowMs);
+                break;
             case WARNING:
                 appendMessageHtml(hb, "ai-message ai-message--warning", msg.getMessage(),
                         timeMs, nowMs, true, messageId, false);
@@ -1965,8 +2056,8 @@ public class AskStroomAiPresenter
         hb.div(card -> {
             card.div(title -> title.append(pending
                     ? "The agent wants to use " + (calls.size() == 1
-                    ? "a tool"
-                    : calls.size() + " tools") + " that need your approval"
+                    ? "a tool that needs"
+                    : calls.size() + " tools that need") + " your approval"
                     : "Tool calls the agent asked to use"), Attribute.className("ai-approval-title"));
             if (pending && reason != null) {
                 card.div(text -> text.append(reason), Attribute.className("ai-approval-reason"));
