@@ -45,4 +45,9 @@ class GetCurrentDateTool implements BuiltInTool {
     public String execute(final ToolExecutionRequest request) {
         return LocalDate.now(ZoneOffset.UTC).toString();
     }
+
+    @Override
+    public boolean readsUntrustedContent() {
+        return false;
+    }
 }

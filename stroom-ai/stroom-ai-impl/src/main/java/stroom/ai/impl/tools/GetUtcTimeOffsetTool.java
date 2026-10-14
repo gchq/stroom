@@ -74,4 +74,9 @@ class GetUtcTimeOffsetTool extends AbstractBuiltInTool {
                 : offset.getId();
         return zone.getId() + " is currently " + offsetText + " from UTC.";
     }
+
+    @Override
+    public boolean readsUntrustedContent() {
+        return false;
+    }
 }

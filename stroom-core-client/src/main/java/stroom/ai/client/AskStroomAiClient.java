@@ -21,6 +21,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
+import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
@@ -133,6 +134,19 @@ public class AskStroomAiClient {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.editMessage(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    void answerApproval(final AnswerAiApprovalRequest request,
+                        final Consumer<Boolean> consumer,
+                        final RestErrorHandler errorHandler,
+                        final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.answerApproval(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)

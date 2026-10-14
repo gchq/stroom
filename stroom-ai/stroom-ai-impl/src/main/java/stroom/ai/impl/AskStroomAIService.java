@@ -22,6 +22,8 @@ import stroom.ai.api.TableSource;
 import stroom.ai.api.TableSummaryProgressListener;
 import stroom.ai.api.TableSummaryRequest;
 import stroom.ai.impl.ChatCompactor.CompactionMode;
+import stroom.ai.impl.memory.AiMemoryService;
+import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAttachmentDataPage;
@@ -37,6 +39,7 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
@@ -164,6 +167,7 @@ public class AskStroomAIService {
     private final ContextAssembler contextAssembler;
     private final ContextUsageTracker usageTracker;
     private final ChatCompactor chatCompactor;
+    private final AiMemoryService memoryService;
     private Duration stopWait = STOP_WAIT;
     private final McpAgentChat mcpAgentChat;
 
@@ -189,7 +193,8 @@ public class AskStroomAIService {
                               final AiWorkspaceDao workspaceDao,
                               final ContextAssembler contextAssembler,
                               final ContextUsageTracker usageTracker,
-                              final ChatCompactor chatCompactor) {
+                              final ChatCompactor chatCompactor,
+                              final AiMemoryService memoryService) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -211,6 +216,7 @@ public class AskStroomAIService {
         this.contextAssembler = contextAssembler;
         this.usageTracker = usageTracker;
         this.chatCompactor = chatCompactor;
+        this.memoryService = memoryService;
         this.mcpAgentChat = mcpAgentChat;
     }
 
@@ -314,6 +320,19 @@ public class AskStroomAIService {
             }
         });
         return new AskStroomAiResponse(null);
+    }
+
+    /**
+     * Answers something the agent asked the user's approval for.
+     *
+     * @param request The chat, the request being answered, and the answer.
+     * @return True if what was asked for has been done.
+     */
+    public Boolean answerApproval(final AnswerAiApprovalRequest request) {
+        final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
+        aiService.verifyOwnership(chatId);
+        return memoryService.answerApproval(chatId, request.getMessageId(), request.isApproved())
+               == ApprovalStatus.APPROVED;
     }
 
     /**

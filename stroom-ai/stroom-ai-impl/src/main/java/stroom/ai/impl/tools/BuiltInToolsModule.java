@@ -34,6 +34,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(GetCurrentDateTimeTool.class)
                 .addBinding(GetUtcTimeOffsetTool.class)
                 .addBinding(ReadTurnTool.class)
-                .addBinding(SearchHistoryTool.class);
+                .addBinding(SearchHistoryTool.class)
+                .addBinding(MemoryTool.class);
     }
 }

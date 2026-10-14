@@ -46,4 +46,9 @@ class GetCurrentDateTimeTool implements BuiltInTool {
     public String execute(final ToolExecutionRequest request) {
         return Instant.now().truncatedTo(ChronoUnit.SECONDS).toString();
     }
+
+    @Override
+    public boolean readsUntrustedContent() {
+        return false;
+    }
 }
