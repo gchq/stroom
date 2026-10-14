@@ -157,6 +157,17 @@ class TestAiDaoImpl {
     }
 
     @Test
+    void testRecordModel_keepsTheTokenTotals() {
+        final AiChat chat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        aiDao.recordUsage(chat.getId(), "model1", 128_000, 1_000, 50);
+
+        aiDao.recordModel(chat.getId(), "model2", 8_000);
+
+        assertThat(aiDao.getUsage(chat.getId())).isEqualTo(
+                new stroom.ai.impl.AiDao.ChatUsage("model2", 8_000, 1_000, 1_000, 50));
+    }
+
+    @Test
     void testGetUsage_unknownChat() {
         assertThat(aiDao.getUsage(-1)).isEqualTo(new stroom.ai.impl.AiDao.ChatUsage(null, null, null, 0, 0));
     }

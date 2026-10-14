@@ -569,6 +569,18 @@ public class AiDaoImpl implements AiDao {
     }
 
     @Override
+    public void recordModel(final int chatId, final String modelDocUuid, final int contextWindowTokens) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.MODEL_DOC_UUID, modelDocUuid)
+                .set(AI_CHAT.CONTEXT_WINDOW_TOKENS, contextWindowTokens > 0
+                        ? contextWindowTokens
+                        : null)
+                .where(AI_CHAT.ID.eq(chatId))
+                .execute());
+    }
+
+    @Override
     public ChatUsage getUsage(final int chatId) {
         return JooqUtil.contextResult(aiDbConnProvider, context -> context
                         .select(AI_CHAT.MODEL_DOC_UUID,

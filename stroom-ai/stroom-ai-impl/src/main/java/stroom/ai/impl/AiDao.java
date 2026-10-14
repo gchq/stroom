@@ -104,6 +104,15 @@ public interface AiDao {
     void recordUsage(int chatId, String modelDocUuid, int contextWindowTokens, long inputTokens, long outputTokens);
 
     /**
+     * Records the model a chat used, and its context window, when the model did not report the tokens it used.
+     *
+     * @param chatId              The chat.
+     * @param modelDocUuid        The model used.
+     * @param contextWindowTokens The model's context window, or 0 if not known.
+     */
+    void recordModel(int chatId, String modelDocUuid, int contextWindowTokens);
+
+    /**
      * @param chatId The chat.
      * @return What has been recorded about the chat's token use.
      */
