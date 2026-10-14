@@ -59,6 +59,9 @@ dependencies {
 
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-dictionary:stroom-dictionary-api')
+    testImplementation project(':stroom-explorer:stroom-collection-api')
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

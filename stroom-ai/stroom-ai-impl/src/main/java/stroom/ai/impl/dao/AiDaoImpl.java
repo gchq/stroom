@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.dao;
 
+import stroom.ai.api.SimpleTokenCountEstimator;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.jooq.tables.records.AiChatMessageRecord;
@@ -36,13 +37,16 @@ import stroom.query.common.v2.SimpleStringExpressionParser;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.InsertSetMoreStep;
 import org.jooq.Record;
+import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +61,7 @@ import static stroom.ai.impl.db.jooq.tables.AiChatMessage.AI_CHAT_MESSAGE;
 public class AiDaoImpl implements AiDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AiDaoImpl.class);
+    private static final SimpleTokenCountEstimator TOKEN_COUNT_ESTIMATOR = new SimpleTokenCountEstimator();
 
     private static final Function<Record, AiChat> RECORD_TO_AI_CHAT = record ->
             new AiChat(
@@ -74,7 +79,9 @@ public class AiDaoImpl implements AiDao {
                     AiMessageType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
                             record.get(AI_CHAT_MESSAGE.MESSAGE_TYPE).byteValue()),
                     record.get(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID),
-                    record.get(AI_CHAT_MESSAGE.MESSAGE));
+                    record.get(AI_CHAT_MESSAGE.MESSAGE),
+                    record.get(AI_CHAT_MESSAGE.TURN_ID),
+                    record.get(AI_CHAT_MESSAGE.TOKEN_COUNT));
 
     private final AiDbConnProvider aiDbConnProvider;
     private final ExpressionMapper expressionMapper;
@@ -188,29 +195,7 @@ public class AiDaoImpl implements AiDao {
     public AiChatMessage storeMessage(final int chatId,
                                       final AiMessageType messageType,
                                       final String message) {
-        final long now = System.currentTimeMillis();
-        return JooqUtil.transactionResult(aiDbConnProvider, context -> {
-            final Integer id = context
-                    .insertInto(AI_CHAT_MESSAGE)
-                    .set(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, chatId)
-                    .set(AI_CHAT_MESSAGE.CREATE_TIME_MS, now)
-                    .set(AI_CHAT_MESSAGE.MESSAGE_TYPE, (int) messageType.getPrimitiveValue())
-                    .set(AI_CHAT_MESSAGE.MESSAGE, message)
-                    .returning(AI_CHAT_MESSAGE.ID)
-                    .fetchOne(AI_CHAT_MESSAGE.ID);
-
-            // Check we didn't get null.
-            Objects.requireNonNull(id, "Null chat message id");
-
-            // Also update the parent chat's update_time_ms.
-            context
-                    .update(AI_CHAT)
-                    .set(AI_CHAT.UPDATE_TIME_MS, now)
-                    .where(AI_CHAT.ID.eq(chatId))
-                    .execute();
-
-            return new AiChatMessage(id, chatId, now, messageType, null, message);
-        });
+        return storeMessage(chatId, messageType, null, message);
     }
 
     @Override
@@ -219,13 +204,24 @@ public class AiDaoImpl implements AiDao {
                                       final Integer attachmentId,
                                       final String message) {
         final long now = System.currentTimeMillis();
+        // The column is not nullable, and errors can come from exceptions without a message.
+        final String text = NullSafe.string(message);
+        final int tokenCount = TOKEN_COUNT_ESTIMATOR.estimateTokenCountInText(text);
         return JooqUtil.transactionResult(aiDbConnProvider, context -> {
+            // A question starts a new turn, everything else belongs to the latest question in the chat.
+            final boolean startsTurn = messageType == AiMessageType.USER_MESSAGE;
+            final int turnId = startsTurn
+                    ? 0
+                    : getLatestTurnId(context, chatId);
+
             InsertSetMoreStep<AiChatMessageRecord> insert = context
                     .insertInto(AI_CHAT_MESSAGE)
                     .set(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, chatId)
                     .set(AI_CHAT_MESSAGE.CREATE_TIME_MS, now)
                     .set(AI_CHAT_MESSAGE.MESSAGE_TYPE, (int) messageType.getPrimitiveValue())
-                    .set(AI_CHAT_MESSAGE.MESSAGE, message);
+                    .set(AI_CHAT_MESSAGE.MESSAGE, text)
+                    .set(AI_CHAT_MESSAGE.TURN_ID, turnId)
+                    .set(AI_CHAT_MESSAGE.TOKEN_COUNT, tokenCount);
 
             if (attachmentId != null) {
                 insert = insert.set(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID, attachmentId);
@@ -237,14 +233,38 @@ public class AiDaoImpl implements AiDao {
 
             Objects.requireNonNull(id, "Null chat message id");
 
+            final int finalTurnId;
+            if (startsTurn) {
+                context
+                        .update(AI_CHAT_MESSAGE)
+                        .set(AI_CHAT_MESSAGE.TURN_ID, id)
+                        .where(AI_CHAT_MESSAGE.ID.eq(id))
+                        .execute();
+                finalTurnId = id;
+            } else {
+                finalTurnId = turnId;
+            }
+
+            // Also update the parent chat's update_time_ms.
             context
                     .update(AI_CHAT)
                     .set(AI_CHAT.UPDATE_TIME_MS, now)
                     .where(AI_CHAT.ID.eq(chatId))
                     .execute();
 
-            return new AiChatMessage(id, chatId, now, messageType, attachmentId, message);
+            return new AiChatMessage(
+                    id, chatId, now, messageType, attachmentId, text, finalTurnId, tokenCount);
         });
+    }
+
+    private int getLatestTurnId(final DSLContext context, final int chatId) {
+        final Integer latest = context
+                .select(DSL.max(AI_CHAT_MESSAGE.ID))
+                .from(AI_CHAT_MESSAGE)
+                .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.eq((int) AiMessageType.USER_MESSAGE.getPrimitiveValue()))
+                .fetchOne(0, Integer.class);
+        return Objects.requireNonNullElse(latest, 0);
     }
 
     @Override
@@ -253,7 +273,7 @@ public class AiDaoImpl implements AiDao {
                         .select()
                         .from(AI_CHAT_MESSAGE)
                         .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
-                        .orderBy(AI_CHAT_MESSAGE.CREATE_TIME_MS.asc())
+                        .orderBy(AI_CHAT_MESSAGE.ID.asc())
                         .fetch())
                 .map(RECORD_TO_AI_CHAT_MESSAGE::apply);
     }
@@ -265,7 +285,7 @@ public class AiDaoImpl implements AiDao {
                         .from(AI_CHAT_MESSAGE)
                         .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
                         .and(AI_CHAT_MESSAGE.ID.gt(lastSeenMessageId))
-                        .orderBy(AI_CHAT_MESSAGE.CREATE_TIME_MS.asc())
+                        .orderBy(AI_CHAT_MESSAGE.ID.asc())
                         .fetch())
                 .map(RECORD_TO_AI_CHAT_MESSAGE::apply);
     }
