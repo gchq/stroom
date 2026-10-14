@@ -173,4 +173,24 @@ public class MockAiDao implements AiDao {
     public List<Integer> getChatIds(final String userUuid) {
         return List.of();
     }
+
+    @Override
+    public boolean compareAndSetMessageText(final int messageId, final String expected, final String message) {
+        return false;
+    }
+
+    @Override
+    public boolean isApproveEverything(final int chatId) {
+        return false;
+    }
+
+    @Override
+    public void setApproveEverything(final int chatId, final boolean enabled) {
+        // Not supported by the mock.
+    }
+
+    @Override
+    public List<AiChatMessage> getMessagesOfTypeBefore(final AiMessageType messageType, final long before) {
+        return List.of();
+    }
 }

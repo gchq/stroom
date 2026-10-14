@@ -35,6 +35,7 @@ import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
+import stroom.ai.shared.SetAiApproveEverythingRequest;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
@@ -609,10 +610,49 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                                                 .withName("MessageId")
                                                 .withValue(String.valueOf(request.getMessageId()))
                                                 .build())
+                                        .addData(Data.builder()
+                                                .withName("Scope")
+                                                .withValue(String.valueOf(request.getScope()))
+                                                .build())
+                                        .addData(Data.builder()
+                                                .withName("Calls")
+                                                .withValue(request.getCallIds() == null
+                                                        ? "all"
+                                                        : String.join(",", request.getCallIds()))
+                                                .build())
+                                        .addData(Data.builder()
+                                                .withName("Reason")
+                                                .withValue(NullSafe.string(request.getReason()))
+                                                .build())
                                         .build())
                                 .build())
                         .build())
                 .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().answerApproval(request))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean setApproveEverything(final SetAiApproveEverythingRequest request) {
+        final int chatId = NullSafe.getOrElse(request, SetAiApproveEverythingRequest::getAiChat, AiChat::getId, 0);
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "setApproveEverything"))
+                .withDescription((request.isEnabled()
+                        ? "Turn on"
+                        : "Turn off") + " 'approve everything' for AI chat " + chatId)
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AiChat")
+                                        .withId(String.valueOf(chatId))
+                                        .addData(Data.builder()
+                                                .withName("ApproveEverything")
+                                                .withValue(String.valueOf(request.isEnabled()))
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().setApproveEverything(request))
                 .getResultAndLog();
     }
 

@@ -25,7 +25,9 @@ import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.util.json.JsonUtil;
 
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -171,6 +173,33 @@ class TestContextAssembler {
                 .contains("Profile of Firewall events")
                 .doesNotContain("| fw2 |");
         assertThat(withoutTools).contains("| fw2 |").doesNotContain("Profile of");
+    }
+
+    @Test
+    void testCurrentTurnIsReplayed() {
+        final List<AiChatMessage> history = List.of(
+                message(1, AiMessageType.USER_MESSAGE, "earlier"),
+                message(2, AiMessageType.AI_RESPONSE, "earlier answer"),
+                message(10, AiMessageType.USER_MESSAGE, "q"),
+                message(11, AiMessageType.TOOL_CALL, new ToolCallRecord("a", "t", "{}", null)),
+                message(12, AiMessageType.TOOL_RESULT, new ToolResultRecord("a", "t", false, "r1", null, 2, 1)),
+                message(13, AiMessageType.STEER_MESSAGE, "also b"),
+                // Waiting for approval: left to the agent loop.
+                message(14, AiMessageType.TOOL_CALL, new ToolCallRecord("b", "t", "{}", null)));
+
+        final List<ChatMessage> replay = ContextAssembler.currentTurn(history);
+
+        assertThat(replay).hasSize(3);
+        assertThat(((AiMessage) replay.get(0)).toolExecutionRequests().getFirst().id()).isEqualTo("a");
+        assertThat(((ToolExecutionResultMessage) replay.get(1)).text()).isEqualTo("r1");
+        assertThat(((UserMessage) replay.get(2)).singleText()).isEqualTo(McpAgentChat.STEER_PREFIX + "also b");
+        assertThat(ContextAssembler.currentTurn(List.of())).isEmpty();
+    }
+
+    private static AiChatMessage message(final int id, final AiMessageType type, final String text) {
+        return new AiChatMessage(id, 1, 0L, type, null, text, id < 10
+                ? 1
+                : 10, null);
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final Object record) {

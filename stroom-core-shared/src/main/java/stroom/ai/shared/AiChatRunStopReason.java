@@ -34,7 +34,8 @@ public enum AiChatRunStopReason implements HasPrimitiveValue, HasDisplayValue {
     TERMINATED(6, "Stopped by an administrator"),
     ACCOUNT_DISABLED(7, "Stopped because the account was disabled"),
     EDITED(8, "Stopped because an earlier message was edited"),
-    NEEDS_APPROVAL(9, "Waiting for your approval");
+    NEEDS_APPROVAL(9, "Waiting for your approval"),
+    APPROVAL_EXPIRED(10, "Stopped because a request for your approval was not answered in time");
 
     public static final PrimitiveValueConverter<AiChatRunStopReason> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiChatRunStopReason.class, AiChatRunStopReason.values());

@@ -50,6 +50,14 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
             .map(AiChatRunStatus::getPrimitiveValue)
             .toList();
 
+    /// Runs in these statuses are being worked on by a node, so stop sending heartbeats if their node is lost. A run
+    /// waiting for the user has no node working on it, so is never stale.
+    private static final List<Byte> HEARTBEAT_STATUSES = Arrays.stream(AiChatRunStatus.values())
+            .filter(AiChatRunStatus::isActive)
+            .filter(status -> status != AiChatRunStatus.WAITING_FOR_USER)
+            .map(AiChatRunStatus::getPrimitiveValue)
+            .toList();
+
     private static final Function<Record, AiChatRun> RECORD_TO_RUN = record ->
             new AiChatRun(
                     record.get(AI_CHAT_RUN.ID),
@@ -227,7 +235,7 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
         final List<AiChatRun> stale = JooqUtil.contextResult(aiDbConnProvider, context -> context
                         .select()
                         .from(AI_CHAT_RUN)
-                        .where(AI_CHAT_RUN.STATUS.in(ACTIVE_STATUSES))
+                        .where(AI_CHAT_RUN.STATUS.in(HEARTBEAT_STATUSES))
                         .and(AI_CHAT_RUN.HEARTBEAT_MS.lt(staleBeforeMs))
                         .fetch())
                 .map(RECORD_TO_RUN::apply);
@@ -243,7 +251,7 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
                     .set(AI_CHAT_RUN.UPDATE_TIME_MS, now)
                     .set(AI_CHAT_RUN.VERSION, AI_CHAT_RUN.VERSION.plus(1))
                     .where(AI_CHAT_RUN.ID.eq(run.getId()))
-                    .and(AI_CHAT_RUN.STATUS.in(ACTIVE_STATUSES))
+                    .and(AI_CHAT_RUN.STATUS.in(HEARTBEAT_STATUSES))
                     .and(AI_CHAT_RUN.HEARTBEAT_MS.lt(staleBeforeMs))
                     .execute());
             if (count == 1) {
