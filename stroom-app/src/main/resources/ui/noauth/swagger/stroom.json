@@ -15546,8 +15546,46 @@
               "$ref" : "#/components/schemas/AiChatMessage"
             }
           },
+          "run" : {
+            "$ref" : "#/components/schemas/AiChatRun"
+          },
           "workingMessage" : {
             "$ref" : "#/components/schemas/AiChatMessage"
+          }
+        }
+      },
+      "AiChatRun" : {
+        "type" : "object",
+        "properties" : {
+          "chatId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "endTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "errorMessage" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "startTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "QUEUED", "RUNNING", "WAITING_FOR_USER", "STOPPING", "STOPPED", "INTERRUPTED", "FAILED", "DONE" ]
+          },
+          "stopReason" : {
+            "type" : "string",
+            "enum" : [ "USER", "SIGN_OUT", "SESSION_EXPIRED", "TOKEN_EXPIRED", "RUN_LIMIT", "NODE_LOST", "TERMINATED", "ACCOUNT_DISABLED", "EDITED", "NEEDS_APPROVAL" ]
+          },
+          "unattended" : {
+            "type" : "boolean"
           }
         }
       },
