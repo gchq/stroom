@@ -23,16 +23,31 @@ import stroom.ai.shared.AiAttachmentType;
 import stroom.db.util.JooqUtil;
 
 import jakarta.inject.Inject;
+import org.jooq.Field;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static stroom.ai.impl.db.jooq.tables.AiChat.AI_CHAT;
 import static stroom.ai.impl.db.jooq.tables.AiChatAttachment.AI_CHAT_ATTACHMENT;
 import static stroom.ai.impl.db.jooq.tables.AiChatFileChunk.AI_CHAT_FILE_CHUNK;
+import static stroom.ai.impl.db.jooq.tables.AiChatMessage.AI_CHAT_MESSAGE;
 
 public class AiWorkspaceDaoImpl implements AiWorkspaceDao {
+
+    private static final List<Field<?>> FILE_INFO_FIELDS = List.of(
+            AI_CHAT_ATTACHMENT.ID,
+            AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID,
+            AI_CHAT_ATTACHMENT.PATH,
+            AI_CHAT_ATTACHMENT.STATUS,
+            AI_CHAT_ATTACHMENT.SOURCE_DOC_UUID,
+            AI_CHAT_ATTACHMENT.EXPIRE_TIME_MS,
+            AI_CHAT_ATTACHMENT.ERROR_MESSAGE,
+            AI_CHAT_ATTACHMENT.SIZE_BYTES);
 
     private final AiDbConnProvider aiDbConnProvider;
 
@@ -151,25 +166,66 @@ public class AiWorkspaceDaoImpl implements AiWorkspaceDao {
     @Override
     public Optional<FileInfo> getFileInfo(final int fileId) {
         return JooqUtil.contextResult(aiDbConnProvider, context -> context
-                        .select(AI_CHAT_ATTACHMENT.ID,
-                                AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID,
-                                AI_CHAT_ATTACHMENT.PATH,
-                                AI_CHAT_ATTACHMENT.STATUS,
-                                AI_CHAT_ATTACHMENT.SOURCE_DOC_UUID,
-                                AI_CHAT_ATTACHMENT.EXPIRE_TIME_MS,
-                                AI_CHAT_ATTACHMENT.ERROR_MESSAGE)
+                        .select(FILE_INFO_FIELDS)
                         .from(AI_CHAT_ATTACHMENT)
                         .where(AI_CHAT_ATTACHMENT.ID.eq(fileId))
                         .fetchOptional())
-                .map(record -> new FileInfo(
-                        record.value1(),
-                        record.value2(),
-                        record.value3(),
-                        AiAttachmentStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
-                                record.value4().byteValue()),
-                        record.value5(),
-                        record.value6(),
-                        record.value7()));
+                .map(AiWorkspaceDaoImpl::toFileInfo);
+    }
+
+    @Override
+    public List<FileInfo> listFiles(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select(FILE_INFO_FIELDS)
+                        .from(AI_CHAT_ATTACHMENT)
+                        .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))
+                        .and(AI_CHAT_ATTACHMENT.PATH.isNotNull())
+                        .orderBy(AI_CHAT_ATTACHMENT.PATH)
+                        .fetch())
+                .map(AiWorkspaceDaoImpl::toFileInfo);
+    }
+
+    @Override
+    public void deleteFile(final int fileId) {
+        JooqUtil.transaction(aiDbConnProvider, context -> {
+            context.deleteFrom(AI_CHAT_FILE_CHUNK)
+                    .where(AI_CHAT_FILE_CHUNK.FK_ATTACHMENT_ID.eq(fileId))
+                    .execute();
+            // A message may refer to the file (e.g. the tool call that made it).
+            context.update(AI_CHAT_MESSAGE)
+                    .setNull(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID)
+                    .where(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID.eq(fileId))
+                    .execute();
+            context.deleteFrom(AI_CHAT_ATTACHMENT)
+                    .where(AI_CHAT_ATTACHMENT.ID.eq(fileId))
+                    .execute();
+        });
+    }
+
+    @Override
+    public long getTotalSizeForUser(final String userUuid) {
+        final BigDecimal total = JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(DSL.sum(AI_CHAT_ATTACHMENT.SIZE_BYTES))
+                .from(AI_CHAT_ATTACHMENT)
+                .join(AI_CHAT).on(AI_CHAT.ID.eq(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID))
+                .where(AI_CHAT.USER_UUID.eq(userUuid))
+                .fetchOne(0, BigDecimal.class));
+        return total == null
+                ? 0
+                : total.longValue();
+    }
+
+    private static FileInfo toFileInfo(final Record record) {
+        return new FileInfo(
+                record.get(AI_CHAT_ATTACHMENT.ID),
+                record.get(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID),
+                record.get(AI_CHAT_ATTACHMENT.PATH),
+                AiAttachmentStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                        record.get(AI_CHAT_ATTACHMENT.STATUS).byteValue()),
+                record.get(AI_CHAT_ATTACHMENT.SOURCE_DOC_UUID),
+                record.get(AI_CHAT_ATTACHMENT.EXPIRE_TIME_MS),
+                record.get(AI_CHAT_ATTACHMENT.ERROR_MESSAGE),
+                Objects.requireNonNullElse(record.get(AI_CHAT_ATTACHMENT.SIZE_BYTES), 0L));
     }
 
     @Override
