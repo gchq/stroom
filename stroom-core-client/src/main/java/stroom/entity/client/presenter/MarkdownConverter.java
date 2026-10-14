@@ -24,6 +24,7 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -115,6 +116,30 @@ public class MarkdownConverter {
         }
     }
 
+    /// Converts markdown from an untrusted source (e.g. an AI model) into sanitised html, surrounded by a
+    /// container div.
+    ///
+    /// The html is built in an inert document, so nothing in it can run or load while it is being processed. It is
+    /// then sanitised with [HtmlSanitisePolicy]: scripts, event handlers, unsafe links and styling are removed, and
+    /// remote images are replaced with links so that nothing is fetched from a server without the user choosing to.
+    ///
+    /// @param rawMarkdown The untrusted markdown.
+    /// @return The sanitised html, or empty html if the markdown is blank.
+    public SafeHtml convertUntrustedMarkdownToHtml(final String rawMarkdown) {
+        if (NullSafe.isBlankString(rawMarkdown)) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        } else {
+            final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
+            final Element container = nativeParseInert(nativeMakeHtml(rawMarkdown));
+            UntrustedHtmlSanitiser.sanitise(container);
+            final String sanitisedHtml = container.getInnerHTML();
+            final SafeHtml markdownSafeHtml = SafeHtmlUtils.fromTrustedString(sanitisedHtml);
+            htmlBuilder.div(builder -> builder.append(markdownSafeHtml),
+                    Attribute.className(getMarkdownContainerClasses()));
+            return htmlBuilder.toSafeHtml();
+        }
+    }
+
     public ThemeType geCurrentThemeType() {
         return userPreferencesManager.geCurrentThemeType();
     }
@@ -129,6 +154,11 @@ public class MarkdownConverter {
         });
 
         return converter;
+    }-*/;
+
+    private native String nativeMakeHtml(final String rawMarkdown) /*-{
+        var converter = this.@stroom.entity.client.presenter.MarkdownConverter::showdownConverter;
+        return converter.makeHtml(rawMarkdown);
     }-*/;
 
     public native String nativeConvertMarkdownToHtml(final String rawMarkdown) /*-{
@@ -149,6 +179,17 @@ public class MarkdownConverter {
             markdownAsHtml = markdownDiv.innerHTML;
         }
         return markdownAsHtml;
+    }-*/;
+
+    private native Element nativeParseInert(final String html) /*-{
+        // A document made by DOMParser has no browsing context, so nothing in it runs or loads.
+        var doc = new $wnd.DOMParser().parseFromString("<!DOCTYPE html><html><body></body></html>", "text/html");
+        var container = doc.body;
+        container.innerHTML = html;
+        if (/language-/.test(html)) {
+            $wnd.Prism.highlightAllUnder(container);
+        }
+        return container;
     }-*/;
 
     /**
