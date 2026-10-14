@@ -87,6 +87,23 @@ public interface AiDao {
     List<AiChatAttachment> getAttachmentsByChatId(int chatId);
 
     /**
+     * Records the tokens used by a model call in the chat.
+     *
+     * @param chatId              The chat.
+     * @param modelDocUuid        The model used.
+     * @param contextWindowTokens The model's context window, or 0 if not known.
+     * @param inputTokens         The input tokens the model reported for the call.
+     * @param outputTokens        The output tokens the model reported for the call.
+     */
+    void recordUsage(int chatId, String modelDocUuid, int contextWindowTokens, long inputTokens, long outputTokens);
+
+    /**
+     * @param chatId The chat.
+     * @return What has been recorded about the chat's token use.
+     */
+    ChatUsage getUsage(int chatId);
+
+    /**
      * Records that a browser has just checked on the chat. To save writes, the time is only stored when the last
      * one stored is older than the given interval.
      *
@@ -100,4 +117,21 @@ public interface AiDao {
      * @return When a browser last checked on any of the user's chats, or null if never.
      */
     Long getLastPollMs(String userUuid);
+
+    /**
+     * What has been recorded about a chat's token use.
+     *
+     * @param modelDocUuid        The model last used, or null.
+     * @param contextWindowTokens The model's context window, or null if not known.
+     * @param lastInputTokens     The input tokens the model reported for the last call, or null.
+     * @param totalInputTokens    All the input tokens used by the chat.
+     * @param totalOutputTokens   All the output tokens used by the chat.
+     */
+    record ChatUsage(String modelDocUuid,
+                     Integer contextWindowTokens,
+                     Integer lastInputTokens,
+                     long totalInputTokens,
+                     long totalOutputTokens) {
+
+    }
 }

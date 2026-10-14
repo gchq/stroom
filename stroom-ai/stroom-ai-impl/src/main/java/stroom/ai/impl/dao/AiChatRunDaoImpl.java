@@ -301,6 +301,17 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
     }
 
     @Override
+    public void addUsage(final int runId, final long inputTokens, final long outputTokens, final int toolCalls) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT_RUN)
+                .set(AI_CHAT_RUN.INPUT_TOKENS, AI_CHAT_RUN.INPUT_TOKENS.plus(inputTokens))
+                .set(AI_CHAT_RUN.OUTPUT_TOKENS, AI_CHAT_RUN.OUTPUT_TOKENS.plus(outputTokens))
+                .set(AI_CHAT_RUN.TOOL_CALL_COUNT, AI_CHAT_RUN.TOOL_CALL_COUNT.plus(toolCalls))
+                .where(AI_CHAT_RUN.ID.eq(runId))
+                .execute());
+    }
+
+    @Override
     public void deleteByChat(final int chatId) {
         JooqUtil.context(aiDbConnProvider, context -> context
                 .deleteFrom(AI_CHAT_RUN)

@@ -114,16 +114,19 @@ class McpAgentChat {
     private final BuiltInTools builtInTools;
     private final AiChatRunManager runManager;
     private final WorkspaceStore workspaceStore;
+    private final ContextUsageTracker usageTracker;
 
     @Inject
     McpAgentChat(final AiService aiService,
                  final BuiltInTools builtInTools,
                  final AiChatRunManager runManager,
-                 final WorkspaceStore workspaceStore) {
+                 final WorkspaceStore workspaceStore,
+                 final ContextUsageTracker usageTracker) {
         this.aiService = aiService;
         this.builtInTools = builtInTools;
         this.runManager = runManager;
         this.workspaceStore = workspaceStore;
+        this.usageTracker = usageTracker;
     }
 
     ChatResponse chat(final ChatModel chatModel,
@@ -147,10 +150,11 @@ class McpAgentChat {
         final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
         if (tools.isEmpty()) {
             LOGGER.debug(() -> "chat: no tools available for chatId=" + chatId + ", making a plain call");
-            ChatResponse response = chatModel.chat(conversation);
+            ChatResponse response = call(chatModel, ChatRequest.builder().messages(conversation).build(),
+                    chatId, modelDoc);
             // If the user added something while the model worked, answer again with it.
             for (int i = 0; i < MAX_STEER_FOLLOW_UPS && steerFeed.addTo(conversation, response.aiMessage()); i++) {
-                response = chatModel.chat(conversation);
+                response = call(chatModel, ChatRequest.builder().messages(conversation).build(), chatId, modelDoc);
             }
             return response;
         }
@@ -179,7 +183,7 @@ class McpAgentChat {
 
             final int currentIteration = iteration;
             response = LOGGER.logDurationIfDebugEnabled(
-                    () -> chatModel.chat(requestBuilder.build()),
+                    () -> call(chatModel, requestBuilder.build(), chatId, modelDoc),
                     r -> "chat chatId=" + chatId + " iteration=" + currentIteration
                          + " toolCalls=" + r.aiMessage().toolExecutionRequests().size());
 
@@ -228,6 +232,7 @@ class McpAgentChat {
                     refused = false;
                 }
                 final long durationMs = System.currentTimeMillis() - startMs;
+                runManager.addUsage(chatId, 0, 0, 1);
                 LOGGER.trace(() -> "Tool '" + toolRequest.name() + "' result:\n" + result);
                 appendDebugToolCall(debugLog, t + 1, toolRequest, result);
 
@@ -249,8 +254,20 @@ class McpAgentChat {
         // Loop cap hit. Make one final call with no tools so the model has to answer in words.
         LOGGER.info(() -> "chat: hit the tool iteration cap for chatId=" + chatId);
         if (response != null && response.aiMessage().hasToolExecutionRequests()) {
-            return chatModel.chat(ChatRequest.builder().messages(conversation).build());
+            return call(chatModel, ChatRequest.builder().messages(conversation).build(), chatId, modelDoc);
         }
+        return response;
+    }
+
+    /**
+     * Calls the model, recording the tokens it reports using.
+     */
+    private ChatResponse call(final ChatModel chatModel,
+                              final ChatRequest request,
+                              final int chatId,
+                              final OpenAIModelDoc modelDoc) {
+        final ChatResponse response = chatModel.chat(request);
+        usageTracker.record(chatId, modelDoc, request.messages(), request.toolSpecifications(), response);
         return response;
     }
 

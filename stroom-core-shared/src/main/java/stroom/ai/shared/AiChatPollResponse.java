@@ -44,18 +44,25 @@ public class AiChatPollResponse {
      */
     @JsonProperty
     private final AiChatRun run;
+    /**
+     * How much of the model's context window the chat uses, or null if it has not changed since the last poll.
+     */
+    @JsonProperty
+    private final AiContextUsage contextUsage;
 
     @JsonCreator
     public AiChatPollResponse(@JsonProperty("newMessages") final List<AiChatMessage> newMessages,
                               @JsonProperty("attachments") final List<AiChatAttachment> attachments,
                               @JsonProperty("workingMessage") final AiChatMessage workingMessage,
                               @JsonProperty("complete") final Boolean complete,
-                              @JsonProperty("run") final AiChatRun run) {
+                              @JsonProperty("run") final AiChatRun run,
+                              @JsonProperty("contextUsage") final AiContextUsage contextUsage) {
         this.newMessages = newMessages;
         this.attachments = attachments;
         this.workingMessage = workingMessage;
         this.complete = Objects.requireNonNullElse(complete, false);
         this.run = run;
+        this.contextUsage = contextUsage;
     }
 
     public List<AiChatMessage> getNewMessages() {
@@ -79,5 +86,9 @@ public class AiChatPollResponse {
 
     public AiChatRun getRun() {
         return run;
+    }
+
+    public AiContextUsage getContextUsage() {
+        return contextUsage;
     }
 }
