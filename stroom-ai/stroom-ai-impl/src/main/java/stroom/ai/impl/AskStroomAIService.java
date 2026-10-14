@@ -21,6 +21,8 @@ import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.api.TableSource;
 import stroom.ai.api.TableSummaryProgressListener;
 import stroom.ai.api.TableSummaryRequest;
+import stroom.ai.impl.workspace.TableProfiler;
+import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAttachmentDataPage;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
@@ -87,6 +89,7 @@ import jakarta.inject.Singleton;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
@@ -149,6 +152,8 @@ public class AskStroomAIService {
     private final McpClientCache mcpClientCache;
     private final AiChatRunManager runManager;
     private final AiChatRunDao runDao;
+    private final WorkspaceStore workspaceStore;
+    private final AiWorkspaceDao workspaceDao;
     private Duration stopWait = STOP_WAIT;
     private final McpAgentChat mcpAgentChat;
 
@@ -169,7 +174,9 @@ public class AskStroomAIService {
                               final McpClientCache mcpClientCache,
                               final McpAgentChat mcpAgentChat,
                               final AiChatRunManager runManager,
-                              final AiChatRunDao runDao) {
+                              final AiChatRunDao runDao,
+                              final WorkspaceStore workspaceStore,
+                              final AiWorkspaceDao workspaceDao) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -186,6 +193,8 @@ public class AskStroomAIService {
         this.mcpClientCache = mcpClientCache;
         this.runManager = runManager;
         this.runDao = runDao;
+        this.workspaceStore = workspaceStore;
+        this.workspaceDao = workspaceDao;
         this.mcpAgentChat = mcpAgentChat;
     }
 
@@ -296,12 +305,23 @@ public class AskStroomAIService {
     private void removeMessages(final List<AiChatMessage> messages) {
         for (final AiChatMessage message : messages.reversed()) {
             if (message.getAttachmentId() != null) {
-                aiService.deleteAttachment(message.getAttachmentId());
-                attachmentFileStore.deleteAttachmentFile(message.getAttachmentId());
+                deleteAttachment(message.getChatId(), message.getAttachmentId());
             } else {
                 aiService.deleteMessage(message.getId());
             }
         }
+    }
+
+    /**
+     * Deletes an attachment (with the message that refers to it), its profile, and their local files.
+     */
+    private void deleteAttachment(final int chatId, final int attachmentId) {
+        workspaceDao.findFile(chatId, profilePath(attachmentId)).ifPresent(profileId -> {
+            aiService.deleteAttachment(profileId);
+            attachmentFileStore.deleteAttachmentFile(profileId);
+        });
+        aiService.deleteAttachment(attachmentId);
+        attachmentFileStore.deleteAttachmentFile(attachmentId);
     }
 
     /**
@@ -428,7 +448,7 @@ public class AskStroomAIService {
 
         if (context instanceof final GeneralTableContext generalTableContext) {
             // Synchronous — data is already in memory, just convert to markdown.
-            processGeneralAttachment(attachment.getId(), generalTableContext,
+            processGeneralAttachment(attachment.getId(), chatId, generalTableContext,
                     getTableAnalysisConfig(config));
         } else {
             // Async download for Dashboard/Query contexts.
@@ -441,6 +461,7 @@ public class AskStroomAIService {
      * in the attachment file store and marks the attachment as READY.
      */
     private void processGeneralAttachment(final int attachmentId,
+                                          final int chatId,
                                           final GeneralTableContext generalTableContext,
                                           final TableAnalysisConfig tableAnalysisConfig) {
         LOGGER.debug(() -> "processGeneralAttachment: attachmentId=" + attachmentId
@@ -491,6 +512,7 @@ public class AskStroomAIService {
                                        + (truncated
                     ? ", truncated to limit"
                     : "") + ")";
+            storeAttachment(chatId, attachmentId, mdFile, description);
             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
                     rowCount, description, null, truncated);
         } catch (final Exception e) {
@@ -499,6 +521,39 @@ public class AskStroomAIService {
                     null, null, e.getMessage(), false);
             attachmentFileStore.deleteAttachmentFile(attachmentId);
         }
+    }
+
+    /**
+     * Stores an attachment's table in the chat's workspace, so it can be read on any node, along with a profile of
+     * it made in code. Done before the attachment is marked as ready.
+     */
+    private void storeAttachment(final int chatId,
+                                 final int attachmentId,
+                                 final Path tableFile,
+                                 final String description) {
+        workspaceStore.persist(attachmentId, attachmentPath(attachmentId), tableFile);
+        try (final Reader reader = Files.newBufferedReader(tableFile, StandardCharsets.UTF_8)) {
+            final String profile = TableProfiler.profile(reader, description);
+            workspaceStore.createFile(chatId, AiAttachmentType.WORKSPACE_FILE, profilePath(attachmentId), null,
+                    profile);
+        } catch (final IOException | RuntimeException e) {
+            // The table is still usable without its profile.
+            LOGGER.warn(() -> "Unable to profile attachment " + attachmentId + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * @return The path of an attached table in its chat's workspace.
+     */
+    static String attachmentPath(final int attachmentId) {
+        return "/attachments/" + attachmentId + ".md";
+    }
+
+    /**
+     * @return The path of the profile of an attached table in its chat's workspace.
+     */
+    static String profilePath(final int attachmentId) {
+        return "/attachments/" + attachmentId + ".profile.md";
     }
 
     /**
@@ -592,6 +647,7 @@ public class AskStroomAIService {
                             info(taskContext, () -> "Async download finished: attachmentId=" + attachmentId
                                                     + " rows=" + reportedRowCount + " cols=" + colCount
                                                     + " truncated=" + truncated);
+                            storeAttachment(chatId, attachmentId, targetFile, description);
                             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
                                     reportedRowCount, description, null, truncated);
                         } finally {
@@ -734,6 +790,7 @@ public class AskStroomAIService {
             final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
             final List<AiChatAttachment> readyAttachments = attachments.stream()
                     .filter(a -> a.getStatus() == AiAttachmentStatus.READY)
+                    .filter(a -> a.getAttachmentType() == null || a.getAttachmentType().isTableContext())
                     .toList();
 
             LOGGER.debug(() -> "processQuestion: chatId=" + chatId
@@ -1007,7 +1064,7 @@ public class AskStroomAIService {
                             ? attachmentMap.get(attachmentId)
                             : null;
                     if (attachment != null) {
-                        final Path mdFile = attachmentFileStore.getAttachmentFile(attachment.getId());
+                        final Path mdFile = workspaceStore.localFile(attachment.getId());
                         if (Files.exists(mdFile)) {
                             try {
                                 final String markdown = Files.readString(mdFile, StandardCharsets.UTF_8);
@@ -1186,7 +1243,7 @@ public class AskStroomAIService {
                 .stream()
                 .map(attachment -> new TableSource(
                         "attachment " + attachment.getId() + " for chatId=" + chatId,
-                        attachmentFileStore.getAttachmentFile(attachment.getId()),
+                        workspaceStore.localFile(attachment.getId()),
                         attachment.isTruncated()))
                 .toList();
 
@@ -1642,11 +1699,7 @@ public class AskStroomAIService {
 
         // If this is an ATTACHMENT message, delete the attachment record + file.
         if (targetMessage.getAttachmentId() != null) {
-            final int attachmentId = targetMessage.getAttachmentId();
-            // Delete DB records (message + attachment) in a transaction.
-            aiService.deleteAttachment(attachmentId);
-            // Clean up the attachment file on disk.
-            attachmentFileStore.deleteAttachmentFile(attachmentId);
+            deleteAttachment(chatId, targetMessage.getAttachmentId());
         } else {
             // Simple message deletion.
             aiService.deleteMessage(messageId);
@@ -1793,7 +1846,7 @@ public class AskStroomAIService {
                     "Attachment " + attachmentId + " does not belong to chat " + chatId);
         }
 
-        final Path mdFile = attachmentFileStore.getAttachmentFile(attachmentId);
+        final Path mdFile = workspaceStore.localFile(attachmentId);
         if (!Files.exists(mdFile)) {
             return new AiAttachmentDataPage(
                     Collections.emptyList(), Collections.emptyList(), 0, 0);
@@ -1964,7 +2017,7 @@ public class AskStroomAIService {
     private void writeAttachmentAsMarkdownTable(final BufferedWriter writer,
                                                 final int attachmentId,
                                                 final String description) throws IOException {
-        final Path mdFile = attachmentFileStore.getAttachmentFile(attachmentId);
+        final Path mdFile = workspaceStore.localFile(attachmentId);
         if (!Files.exists(mdFile)) {
             LOGGER.debug(() -> "writeAttachmentAsMarkdownTable: file not found for attachmentId="
                                + attachmentId + " (may have been cleaned up)");
