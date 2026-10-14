@@ -67,7 +67,7 @@ public class S3EventPollManager {
                         // poll is processed in full.
                         s3EventService.poll(() ->
                                 shouldStopPolling(null, taskContext));
-                    } while (shouldStopPolling(endTime, taskContext));
+                    } while (!shouldStopPolling(endTime, taskContext));
                 });
 
         runnable.run();
