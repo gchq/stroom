@@ -552,6 +552,27 @@ paths:
       summary: Get an AI chat conversation by ID
       tags:
       - AI
+  /ai/v1/getChatStatuses/{sinceVersion}:
+    get:
+      operationId: getAiChatStatuses
+      parameters:
+      - in: path
+        name: sinceVersion
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChatStatusResponse"
+          description: default response
+      summary: "Get the statuses of the user's chats, for the switcher and badges,\
+        \ or nothing if none has changed since the given version"
+      tags:
+      - AI
   /ai/v1/getDefaultConfig:
     post:
       operationId: getDefaultConfig
@@ -10875,6 +10896,8 @@ components:
         lastSeenMessageId:
           type: integer
           format: int32
+        markRead:
+          type: boolean
     AiChatPollResponse:
       type: object
       properties:
@@ -10938,6 +10961,46 @@ components:
           - APPROVAL_EXPIRED
         unattended:
           type: boolean
+    AiChatStatus:
+      type: object
+      properties:
+        approveEverything:
+          type: boolean
+        busy:
+          type: boolean
+        chatId:
+          type: integer
+          format: int32
+        needsYou:
+          type: boolean
+        runStatus:
+          type: string
+          enum:
+          - QUEUED
+          - RUNNING
+          - WAITING_FOR_USER
+          - STOPPING
+          - STOPPED
+          - INTERRUPTED
+          - FAILED
+          - DONE
+        title:
+          type: string
+        unread:
+          type: boolean
+        updateTimeMs:
+          type: integer
+          format: int64
+    AiChatStatusResponse:
+      type: object
+      properties:
+        statuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiChatStatus"
+        version:
+          type: integer
+          format: int64
     AiContextUsage:
       type: object
       properties:

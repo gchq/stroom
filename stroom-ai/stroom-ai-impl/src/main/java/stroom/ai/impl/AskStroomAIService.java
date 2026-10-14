@@ -38,6 +38,7 @@ import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
+import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AnswerAiApprovalRequest;
@@ -72,6 +73,7 @@ import stroom.query.impl.QueryService;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -85,6 +87,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
@@ -120,7 +123,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-
 /**
  * Answers "Ask Stroom AI" questions. Each question is answered by an agent run (see {@link AiChatRunManager}),
  * which is stopped through the run manager.
@@ -128,6 +130,7 @@ import java.util.stream.Collectors;
 @Singleton
 public class AskStroomAIService {
 
+    static final int MAX_CHAT_STATUSES = 100;
     static final String NOTHING_TO_COMPACT = "There is nothing to compact yet: the latest turns are always kept "
                                              + "in full.";
 
@@ -176,6 +179,7 @@ public class AskStroomAIService {
     private final AiAuditLog auditLog;
     private final AiDao aiDao;
     private final Provider<AiConfig> aiConfigProvider;
+    private final SecurityContext securityContext;
     private Duration stopWait = STOP_WAIT;
     private final McpAgentChat mcpAgentChat;
 
@@ -206,7 +210,8 @@ public class AskStroomAIService {
                               final ToolApprovalService toolApprovalService,
                               final AiAuditLog auditLog,
                               final AiDao aiDao,
-                              final Provider<AiConfig> aiConfigProvider) {
+                              final Provider<AiConfig> aiConfigProvider,
+                              final SecurityContext securityContext) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -233,6 +238,7 @@ public class AskStroomAIService {
         this.auditLog = auditLog;
         this.aiDao = aiDao;
         this.aiConfigProvider = aiConfigProvider;
+        this.securityContext = securityContext;
         this.mcpAgentChat = mcpAgentChat;
     }
 
@@ -1739,7 +1745,31 @@ public class AskStroomAIService {
         final AiContextUsage contextUsage = !newMessages.isEmpty() || runActive || request.getLastSeenMessageId() == 0
                 ? contextAssembler.estimateUsage(chatId)
                 : null;
+        // The user has now seen the chat's messages, if it is being shown.
+        if (request.isMarkRead()) {
+            final int lastSeen = newMessages.stream()
+                    .mapToInt(AiChatMessage::getId)
+                    .max()
+                    .orElse(request.getLastSeenMessageId());
+            aiDao.markRead(chatId, lastSeen);
+        }
         return new AiChatPollResponse(newMessages, attachments, workingMessage, complete, run, contextUsage);
+    }
+
+    /**
+     * @param sinceVersion The version of the statuses the client last had, or 0.
+     * @return The statuses of the user's chats, or none if nothing has changed since that version.
+     */
+    public AiChatStatusResponse getChatStatuses(final long sinceVersion) {
+        final String userUuid = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
+        if (userUuid == null) {
+            return new AiChatStatusResponse(0L, List.of());
+        }
+        final long version = aiDao.getStatusVersion(userUuid);
+        if (version == sinceVersion) {
+            return new AiChatStatusResponse(version, null);
+        }
+        return new AiChatStatusResponse(version, aiDao.getChatStatuses(userUuid, MAX_CHAT_STATUSES));
     }
 
     // ---------------------------------------------------------------------
