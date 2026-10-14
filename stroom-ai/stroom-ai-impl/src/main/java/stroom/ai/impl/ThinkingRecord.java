@@ -16,24 +16,12 @@
 
 package stroom.ai.impl;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 /// The model's reasoning for one call, as stored (as JSON) in a THINKING message. Older THINKING messages hold
 /// the reasoning as plain text.
 ///
 /// @param text       The reasoning, as the model gave it.
 /// @param durationMs How long the model spent thinking, or 0 if not known.
-@JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder(alphabetic = true)
-public record ThinkingRecord(@JsonProperty("text") String text,
-                             @JsonProperty("durationMs") long durationMs) {
+public record ThinkingRecord(String text,
+                             long durationMs) {
 
-    @JsonCreator
-    public ThinkingRecord {
-        // Explicit constructor for Jackson.
-    }
 }
