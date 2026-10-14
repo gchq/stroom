@@ -81,7 +81,10 @@ import stroom.widget.util.client.Size;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.TextAreaElement;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
@@ -98,6 +101,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -141,6 +145,13 @@ public class AskStroomAiPresenter
     private static final String APPROVAL_ID_ATTRIBUTE = "data-approval-id";
     private static final String APPROVAL_ANSWER_ATTRIBUTE = "data-approval-answer";
     private static final String APPROVAL_SCOPE_ATTRIBUTE = "data-approval-scope";
+    private static final String EDIT_MESSAGE_ATTRIBUTE = "data-edit-message-id";
+    private static final String EDIT_SEND_ATTRIBUTE = "data-edit-send";
+    private static final String EDIT_CANCEL_ATTRIBUTE = "data-edit-cancel";
+    private static final String COPY_TEXT_ATTRIBUTE = "data-copy-text";
+    private static final String DAY_DIVIDER_CLASS = "ai-day-divider";
+    private static final String PENDING_MESSAGE_ID = "pending";
+    private static final int BOTTOM_TOLERANCE_PX = 40;
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
@@ -174,6 +185,13 @@ public class AskStroomAiPresenter
      */
     private boolean requestInFlight;
     private boolean polling;
+    private boolean pollAgain;
+    // The rendered messages, by id, e.g. to edit a question or redraw an answered card.
+    private final Map<Integer, AiChatMessage> renderedMessages = new HashMap<>();
+    // The day of the last message added, for day dividers.
+    private String lastRenderedDay;
+    // True while the conversation is scrolled to the bottom, so new messages scroll into view.
+    private boolean followBottom = true;
 
     @Inject
     public AskStroomAiPresenter(final EventBus eventBus,
@@ -244,6 +262,37 @@ public class AskStroomAiPresenter
                     final String retryTurnIdStr = button.getAttribute(RETRY_TURN_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(retryTurnIdStr)) {
                         onRetry(Integer.parseInt(retryTurnIdStr));
+                        return;
+                    }
+
+                    // Editing a question.
+                    final String editIdStr = button.getAttribute(EDIT_MESSAGE_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(editIdStr)) {
+                        onEditMessage(Integer.parseInt(editIdStr));
+                        return;
+                    }
+                    final String editSendStr = button.getAttribute(EDIT_SEND_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(editSendStr)) {
+                        onSendEdit(Integer.parseInt(editSendStr));
+                        return;
+                    }
+                    final String editCancelStr = button.getAttribute(EDIT_CANCEL_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(editCancelStr)) {
+                        onCancelEdit(Integer.parseInt(editCancelStr));
+                        return;
+                    }
+
+                    // Copy an answer's text as shown.
+                    if (NullSafe.isNonBlankString(button.getAttribute(COPY_TEXT_ATTRIBUTE))) {
+                        final Element message = ElementUtil.findParent(button, element ->
+                                element.hasClassName("ai-message"), 6);
+                        final Element content = message != null
+                                ? ElementUtil.findChild(message, "ai-message-content")
+                                : null;
+                        if (content != null) {
+                            ClipboardUtil.copy(content.getInnerText());
+                            flashCopied(button);
+                        }
                         return;
                     }
 
@@ -362,6 +411,9 @@ public class AskStroomAiPresenter
                 if (event.isShow()) {
                     if (shownAs == null) {
                         showAs(dockBehaviour, dockSize);
+                        if (currentChat == null) {
+                            restoreLastChat();
+                        }
                     }
                 } else if (shownAs != null) {
                     hideShown();
@@ -395,6 +447,24 @@ public class AskStroomAiPresenter
             showAsDialog();
         }
         getView().focus();
+    }
+
+    /**
+     * Opens the chat the user last looked at, so after a page refresh things are as they were left.
+     */
+    private void restoreLastChat() {
+        askStroomAiClient.getChatStatuses(0, response -> {
+            if (currentChat != null || response.getStatuses() == null || response.getStatuses().isEmpty()) {
+                return;
+            }
+            AiChatStatus last = response.getStatuses().get(0);
+            for (final AiChatStatus status : response.getStatuses()) {
+                if (status.getLastOpenedMs() > last.getLastOpenedMs()) {
+                    last = status;
+                }
+            }
+            loadChat(new AiChat(last.getChatId(), 0L, last.getUpdateTimeMs(), null, last.getTitle()));
+        }, SILENT);
     }
 
     /**
@@ -713,11 +783,8 @@ public class AskStroomAiPresenter
         getView().setEmptyState(false);
         getView().clearContextIndicator();
 
-        final long nowMs = System.currentTimeMillis();
-        final HtmlBuilder hb = new HtmlBuilder();
-        appendMessageHtml(hb, "ai-message ai-message--user", "> " + message,
-                nowMs, nowMs, false, 0, false);
-        appendToContainer(hb);
+        followBottom = true;
+        appendPendingQuestion(message);
 
         // Scroll markdown container to bottom, so the user's message is displayed
         final SimplePanel markdownContainer = getView().getMarkdownContainer();
@@ -745,6 +812,123 @@ public class AskStroomAiPresenter
             // when the request returns.
             startPolling();
         }, getView()));
+    }
+
+    /**
+     * Shows that a copy button has copied, for a moment.
+     */
+    private static void flashCopied(final Element button) {
+        final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
+        if (copyLabel == null) {
+            return;
+        }
+        final String label = copyLabel.getInnerText();
+        copyLabel.setInnerText("Copied");
+        new Timer() {
+            @Override
+            public void run() {
+                copyLabel.setInnerText(label);
+            }
+        }.schedule(2000);
+    }
+
+    /**
+     * Turns a question into an editor, to change it and ask it again.
+     */
+    private void onEditMessage(final int messageId) {
+        final AiChatMessage msg = renderedMessages.get(messageId);
+        final Element element = findMessageElement(getView().getMarkdownContainer().getElement(),
+                String.valueOf(messageId));
+        if (msg == null || element == null) {
+            return;
+        }
+        final HtmlBuilder hb = new HtmlBuilder();
+        hb.div(editor -> {
+            editor.elem(textArea -> textArea.append(msg.getMessage()),
+                    SafeHtmlUtils.fromSafeConstant("textarea"),
+                    Attribute.className("ai-edit-text allow-focus"));
+            editor.div(buttons -> {
+                buttons.elem("Send", BUTTON,
+                        Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
+                        new Attribute(EDIT_SEND_ATTRIBUTE, String.valueOf(messageId)));
+                buttons.elem("Cancel", BUTTON,
+                        Attribute.className("allow-focus ai-approval-button"),
+                        new Attribute(EDIT_CANCEL_ATTRIBUTE, String.valueOf(messageId)));
+            }, Attribute.className("ai-edit-buttons"));
+        }, Attribute.className("ai-message ai-message--user ai-message--editing"));
+        final Element editor = parseHtml(hb).getFirstChildElement();
+        editor.setAttribute(MESSAGE_ID_ATTRIBUTE, String.valueOf(messageId));
+        element.getParentElement().replaceChild(editor, element);
+        final Element textArea = ElementUtil.findChild(editor, "ai-edit-text");
+        if (textArea != null) {
+            textArea.focus();
+        }
+    }
+
+    private void onCancelEdit(final int messageId) {
+        final AiChatMessage msg = renderedMessages.get(messageId);
+        if (msg != null) {
+            appendMessage(msg, System.currentTimeMillis());
+        }
+    }
+
+    /**
+     * Asks an edited question, once the user has confirmed that what came after it will go.
+     */
+    private void onSendEdit(final int messageId) {
+        final Element editor = findMessageElement(getView().getMarkdownContainer().getElement(),
+                String.valueOf(messageId));
+        final Element textArea = editor != null
+                ? ElementUtil.findChild(editor, "ai-edit-text")
+                : null;
+        if (textArea == null || currentChat == null) {
+            return;
+        }
+        final String newText = textArea.<TextAreaElement>cast().getValue().trim();
+        if (newText.isEmpty()) {
+            return;
+        }
+        int later = 0;
+        boolean sideEffects = false;
+        for (final AiChatMessage msg : renderedMessages.values()) {
+            if (msg.getId() > messageId) {
+                if (msg.getMessageType() == AiMessageType.USER_MESSAGE
+                    || msg.getMessageType() == AiMessageType.AI_RESPONSE) {
+                    later++;
+                }
+                if (msg.getMessageType() == AiMessageType.TOOL_CALL
+                    || msg.getMessageType() == AiMessageType.MEMORY_UPDATE) {
+                    sideEffects = true;
+                }
+            }
+        }
+        final String warning = (later == 0
+                ? "Editing will ask this question again."
+                : "Editing will remove " + later + " later message" + (later == 1
+                        ? ""
+                        : "s") + " and ask this question again.")
+                               + (sideEffects
+                ? " Changes the agent has made with tools, or to your memory, will not be undone."
+                : "");
+        ConfirmEvent.fire(this, warning, ok -> {
+            if (ok && currentChat != null) {
+                askStroomAiClient.getConfig(config -> {
+                    final EditAiMessageRequest request = new EditAiMessageRequest(currentChat, config, messageId,
+                            newText);
+                    getView().setSendButtonLoadingState(true);
+                    askStroomAiClient.editMessage(request, response -> {
+                        // The question and what follows are replaced; the new question is shown now, until
+                        // polling brings the stored one.
+                        removeMessageElementsFrom(messageId, false);
+                        followBottom = true;
+                        appendPendingQuestion(newText);
+                        scrollToBottom();
+                        startPolling();
+                    }, error -> showError(error, "Unable to edit the question", () ->
+                            getView().setSendButtonLoadingState(false)), getView());
+                }, getView());
+            }
+        });
     }
 
     /**
@@ -817,13 +1001,27 @@ public class AskStroomAiPresenter
         while (child != null) {
             final Element next = child.getNextSiblingElement();
             final String idStr = child.getAttribute(MESSAGE_ID_ATTRIBUTE);
-            if (NullSafe.isNonBlankString(idStr)) {
+            if (PENDING_MESSAGE_ID.equals(idStr)) {
+                // A question not yet stored comes after everything else, so goes too.
+                child.removeFromParent();
+            } else if (NullSafe.isNonBlankString(idStr)) {
                 final int id = Integer.parseInt(idStr);
                 if (id > fromMessageId || (id == fromMessageId && !keepFirst)) {
                     child.removeFromParent();
+                    renderedMessages.remove(id);
                 }
             }
             child = next;
+        }
+        // Don't leave a day divider with nothing after it.
+        Element last = markdownContainer.getLastChild() != null
+                ? markdownContainer.getLastChild().cast()
+                : null;
+        while (last != null && last.hasClassName(DAY_DIVIDER_CLASS)) {
+            final Element previous = last.getPreviousSiblingElement();
+            last.removeFromParent();
+            lastRenderedDay = null;
+            last = previous;
         }
     }
 
@@ -911,8 +1109,13 @@ public class AskStroomAiPresenter
      * with type-aware formatting and updates the lastSeenMessageId.
      */
     private void startPolling() {
-        if (!polling) {
+        if (polling) {
+            // A poll is under way, and may have been answered before what is being waited for happened (e.g.
+            // the run was made), so poll again when it returns rather than stopping.
+            pollAgain = true;
+        } else {
             polling = true;
+            pollAgain = false;
             pollForNewMessages();
         }
     }
@@ -936,11 +1139,8 @@ public class AskStroomAiPresenter
             if (hasNewMessages) {
                 final long nowMs = System.currentTimeMillis();
                 for (final AiChatMessage msg : response.getNewMessages()) {
-                    // Skip the user's own messages, as they were rendered inline in onSendMessage.
-                    if (msg.getMessageType() != AiMessageType.USER_MESSAGE
-                        && msg.getMessageType() != AiMessageType.STEER_MESSAGE) {
-                        appendMessage(msg, nowMs);
-                    }
+                    // The user's own messages replace the pending copy shown when they were sent.
+                    appendMessage(msg, nowMs);
                     // Track the highest seen message ID.
                     lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
                 }
@@ -963,7 +1163,9 @@ public class AskStroomAiPresenter
             // polling again, so there is no need to keep asking.
             final boolean waitingForUser = response.getRun() != null
                                            && response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER;
-            if (!waitingForUser && (requestInFlight || !response.isComplete() || hasNewMessages)) {
+            final boolean again = pollAgain;
+            pollAgain = false;
+            if (!waitingForUser && (again || requestInFlight || !response.isComplete() || hasNewMessages)) {
                 // Poll often while the run works and the user is looking, less often when they are not.
                 new com.google.gwt.user.client.Timer() {
                     @Override
@@ -998,10 +1200,27 @@ public class AskStroomAiPresenter
     }
 
     /**
+     * Shows a question the user has just sent, until the stored message comes back from polling and takes its
+     * place.
+     */
+    private void appendPendingQuestion(final String question) {
+        final long nowMs = System.currentTimeMillis();
+        final HtmlBuilder hb = new HtmlBuilder();
+        appendMessageHtml(hb, "ai-message ai-message--user", question, nowMs, nowMs, false, 0, false);
+        final Element element = parseHtml(hb).getFirstChildElement();
+        element.setAttribute(MESSAGE_ID_ATTRIBUTE, PENDING_MESSAGE_ID);
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        appendDayDivider(markdownContainer, nowMs, nowMs);
+        markdownContainer.appendChild(element);
+        scrollToBottom();
+    }
+
+    /**
      * Renders a message as its own element, tagged with its id. If an element for the message is already shown,
      * it is replaced where it stands, otherwise the new element is added to the end of the conversation.
      */
     private void appendMessage(final AiChatMessage msg, final long nowMs) {
+        renderedMessages.put(msg.getId(), msg);
         final HtmlBuilder hb = new HtmlBuilder();
         renderMessage(hb, msg, nowMs);
         final Element holder = parseHtml(hb);
@@ -1011,13 +1230,87 @@ public class AskStroomAiPresenter
         }
         final String messageId = String.valueOf(msg.getId());
         messageElement.setAttribute(MESSAGE_ID_ATTRIBUTE, messageId);
+        decorateCodeBlocks(messageElement);
 
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
-        final Element existing = findMessageElement(markdownContainer, messageId);
+        Element existing = findMessageElement(markdownContainer, messageId);
+        if (existing == null && (msg.getMessageType() == AiMessageType.USER_MESSAGE
+                                 || msg.getMessageType() == AiMessageType.STEER_MESSAGE)) {
+            existing = findMessageElement(markdownContainer, PENDING_MESSAGE_ID);
+        }
         if (existing != null) {
             markdownContainer.replaceChild(messageElement, existing);
         } else {
+            appendDayDivider(markdownContainer, msg.getCreateTimeMs(), nowMs);
             markdownContainer.appendChild(messageElement);
+        }
+    }
+
+    /**
+     * Adds a divider saying which day the following messages are from, when the day changes.
+     */
+    private void appendDayDivider(final Element markdownContainer, final long timeMs, final long nowMs) {
+        if (timeMs <= 0) {
+            return;
+        }
+        final DateTimeFormat dayFormat = DateTimeFormat.getFormat("yyyyMMdd");
+        final String day = dayFormat.format(new Date(timeMs));
+        if (day.equals(lastRenderedDay)) {
+            return;
+        }
+        lastRenderedDay = day;
+        final String label;
+        if (day.equals(dayFormat.format(new Date(nowMs)))) {
+            label = "Today";
+        } else if (day.equals(dayFormat.format(new Date(nowMs - 24L * 60 * 60 * 1000)))) {
+            label = "Yesterday";
+        } else {
+            label = DateTimeFormat.getFormat("EEEE d MMMM yyyy").format(new Date(timeMs));
+        }
+        final Element divider = Document.get().createDivElement();
+        divider.setClassName(DAY_DIVIDER_CLASS);
+        divider.setInnerText(label);
+        markdownContainer.appendChild(divider);
+    }
+
+    /**
+     * @return The language of a code element, from its "language-xxx" class, or an empty string.
+     */
+    private static String codeLanguage(final Element code) {
+        if (code != null) {
+            for (final String className : code.getClassName().split(" ")) {
+                if (className.startsWith("language-")) {
+                    return className.substring("language-".length());
+                }
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Gives each code block a header with its language and a button to copy it.
+     */
+    private static void decorateCodeBlocks(final Element messageElement) {
+        final NodeList<Element> blocks = messageElement.getElementsByTagName("pre");
+        for (int i = 0; i < blocks.getLength(); i++) {
+            final Element pre = blocks.getItem(i);
+            if (pre.getPreviousSiblingElement() != null
+                && pre.getPreviousSiblingElement().hasClassName("ai-code-header")) {
+                continue;
+            }
+            final String language = codeLanguage(pre.getFirstChildElement());
+            final HtmlBuilder hb = new HtmlBuilder();
+            hb.div(header -> {
+                header.span(label -> label.append(language), Attribute.className("ai-code-language"));
+                header.elem(button -> setCopyButtonContent(button, SvgImage.COPY, "Copy"),
+                        BUTTON,
+                        Attribute.className("ai-message-copy ai-code-copy"),
+                        Attribute.title("Copy the code"),
+                        new Attribute("data", pre.getInnerText()));
+            }, Attribute.className("ai-code-header"));
+            final Element holder = Document.get().createDivElement();
+            holder.setInnerHTML(hb.toSafeHtml().asString());
+            pre.getParentElement().insertBefore(holder.getFirstChildElement(), pre);
         }
     }
 
@@ -1038,7 +1331,54 @@ public class AskStroomAiPresenter
         return holder;
     }
 
+    /**
+     * Clears the conversation shown, and what is known about it.
+     */
+    private void clearRenderedMessages() {
+        getView().clearMessages();
+        renderedMessages.clear();
+        lastRenderedDay = null;
+        followBottom = true;
+        getView().setJumpToLatestVisible(false);
+    }
+
+    /**
+     * @return True if the conversation is scrolled to (or near) the bottom.
+     */
+    private boolean isAtBottom() {
+        final Element container = getView().getMarkdownContainer().getElement();
+        return container.getScrollHeight() - container.getScrollTop() - container.getClientHeight()
+               <= BOTTOM_TOLERANCE_PX;
+    }
+
+    /**
+     * Scrolls to the latest message if the user was following the conversation, or else offers to jump to it,
+     * so new messages never pull the view away from what the user is reading.
+     */
     private void scrollToBottom() {
+        if (followBottom) {
+            scrollToLatest();
+        } else {
+            getView().setJumpToLatestVisible(true);
+        }
+    }
+
+    @Override
+    public void onConversationScrolled() {
+        followBottom = isAtBottom();
+        if (followBottom) {
+            getView().setJumpToLatestVisible(false);
+        }
+    }
+
+    @Override
+    public void onJumpToLatest() {
+        followBottom = true;
+        scrollToLatest();
+    }
+
+    private void scrollToLatest() {
+        getView().setJumpToLatestVisible(false);
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
         markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
     }
@@ -1053,20 +1393,20 @@ public class AskStroomAiPresenter
                                   || msg.getMessageType() == AiMessageType.ATTACHMENT;
         switch (msg.getMessageType()) {
             case USER_MESSAGE:
-                appendMessageHtml(hb, "ai-message ai-message--user", "> " + msg.getMessage(),
-                        timeMs, nowMs, false, messageId, deletable);
+                appendMessageHtml(hb, "ai-message ai-message--user", msg.getMessage(),
+                        timeMs, nowMs, true, messageId, deletable, 0, true);
                 break;
             case AI_RESPONSE:
                 appendMessageHtml(hb, "ai-message ai-message--assistant", msg.getMessage(),
-                        timeMs, nowMs, true, messageId, false, msg.getTurnId());
+                        timeMs, nowMs, true, messageId, false, msg.getTurnId(), false);
                 break;
             case ERROR:
                 appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
-                        timeMs, nowMs, false, messageId, false);
+                        timeMs, nowMs, true, messageId, false);
                 break;
             case STEER_MESSAGE:
-                appendMessageHtml(hb, "ai-message ai-message--user ai-message--steer", "> " + msg.getMessage(),
-                        timeMs, nowMs, false, messageId, false);
+                appendMessageHtml(hb, "ai-message ai-message--user ai-message--steer", msg.getMessage(),
+                        timeMs, nowMs, true, messageId, false);
                 break;
             case TOOL_CALL:
                 appendDetailsElement(hb, "ai-message ai-message--tool",
@@ -1100,7 +1440,7 @@ public class AskStroomAiPresenter
                 break;
             case WARNING:
                 appendMessageHtml(hb, "ai-message ai-message--warning", msg.getMessage(),
-                        timeMs, nowMs, false, messageId, false);
+                        timeMs, nowMs, true, messageId, false);
                 break;
             case WORKING:
                 appendWorkingMessage(hb, msg, timeMs, nowMs);
@@ -1140,7 +1480,7 @@ public class AskStroomAiPresenter
                                    final boolean showCopy,
                                    final int messageId,
                                    final boolean deletable) {
-        appendMessageHtml(hb, cssClass, markdownText, timeMs, nowMs, showCopy, messageId, deletable, 0);
+        appendMessageHtml(hb, cssClass, markdownText, timeMs, nowMs, showCopy, messageId, deletable, 0, false);
     }
 
     /**
@@ -1155,13 +1495,30 @@ public class AskStroomAiPresenter
                                    final boolean showCopy,
                                    final int messageId,
                                    final boolean deletable,
-                                   final int retryTurnId) {
+                                   final int retryTurnId,
+                                   final boolean editable) {
         final SafeHtml markdownHtml = markdownConverter.convertUntrustedMarkdownToHtml(markdownText);
+        final boolean assistant = cssClass.contains("ai-message--assistant");
 
         hb.div(wrapper -> {
-            wrapper.append(markdownHtml);
-            // Add message footer (timestamp + optional copy/delete buttons).
+            if (assistant) {
+                wrapper.div(avatar -> {
+                    icon(avatar, SvgImage.AI);
+                    avatar.append("Stroom AI");
+                }, Attribute.className("ai-message-avatar"));
+            }
+            wrapper.div(content -> content.append(markdownHtml), Attribute.className("ai-message-content"));
+            // Add message footer (timestamp and buttons), shown when the message is hovered over.
             wrapper.div(footer -> {
+
+                // Add a button to edit the question.
+                if (editable && messageId > 0) {
+                    button(footer,
+                            SvgImage.EDIT,
+                            iconButtonClassName("ai-message-edit"),
+                            Attribute.title("Edit"),
+                            new Attribute(EDIT_MESSAGE_ATTRIBUTE, String.valueOf(messageId)));
+                }
 
                 // Add delete button.
                 if (deletable && messageId > 0) {
@@ -1181,13 +1538,22 @@ public class AskStroomAiPresenter
                             new Attribute(RETRY_TURN_ATTRIBUTE, String.valueOf(retryTurnId)));
                 }
 
-                // Add copy button.
+                // Add copy buttons: the original markdown, and for answers the text as shown.
                 if (showCopy) {
                     footer.elem(button ->
                                     setCopyButtonContent(button, SvgImage.COPY, "Copy"),
                             BUTTON,
                             Attribute.className("ai-message-copy"),
+                            Attribute.title("Copy the markdown"),
                             new Attribute("data", markdownText));
+                    if (assistant) {
+                        footer.elem(button ->
+                                        setCopyButtonContent(button, SvgImage.COPY, "Copy as text"),
+                                BUTTON,
+                                Attribute.className("ai-message-copy"),
+                                Attribute.title("Copy the text as shown"),
+                                new Attribute(COPY_TEXT_ATTRIBUTE, "true"));
+                    }
                 }
 
                 // Add timestamp.
@@ -1462,7 +1828,7 @@ public class AskStroomAiPresenter
             titleGenerated = false;
             lastSeenMessageId = 0;
             data = null;
-            getView().clearMessages();
+            clearRenderedMessages();
             getView().setEmptyState(true);
             getView().clearContextIndicator();
             setChatTitle(chat.getTitle());
@@ -1550,7 +1916,7 @@ public class AskStroomAiPresenter
         titleGenerated = true;
         lastSeenMessageId = 0;
         data = null;
-        getView().clearMessages();
+        clearRenderedMessages();
         getView().clearContextIndicator();
         setChatTitle(chat.getTitle());
 
@@ -1651,6 +2017,13 @@ public class AskStroomAiPresenter
         void setContextIndicator(SvgImage icon, String text);
 
         void clearContextIndicator();
+
+        /**
+         * Shows or hides the button that scrolls to the latest message.
+         *
+         * @param visible True to show it.
+         */
+        void setJumpToLatestVisible(boolean visible);
 
         /**
          * @param tab True if the chat is shown in a content tab, so the tab/panel button moves it back.

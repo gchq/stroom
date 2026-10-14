@@ -180,6 +180,7 @@ class TestAiDaoImpl {
         assertThat(statuses.getFirst().getRunStatus()).isNull();
 
         aiDao.markRead(older.getId(), answer.getId());
+        assertThat(aiDao.getChatStatuses("user1", 10).getFirst().getLastOpenedMs()).isPositive();
 
         assertThat(aiDao.getChatStatuses("user1", 10).getFirst().isUnread()).isFalse();
         // Reading changes the version, so the client hears about it.

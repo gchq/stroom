@@ -122,19 +122,138 @@
     word-wrap: break-word;
 }
 
+/* The user's own messages are bubbles on the right, as in most chat tools. */
 .ai-message--user {
     background: var(--page__background-color);
+    border: 1px solid var(--control__border-color);
+    border-radius: 12px 12px 4px 12px;
+    width: fit-content;
+    max-width: 85%;
+    margin-left: auto;
 }
 
-.ai-message--user blockquote {
-    border-left: 3px solid var(--control__border-color--focused);
-    margin: 0;
-    padding-left: 8px;
-    word-wrap: break-word;
+.ai-message--user > .ai-message-content > :first-child,
+.ai-message--assistant > .ai-message-content > :first-child {
+    margin-top: 0;
+}
+
+.ai-message--user > .ai-message-content > :last-child,
+.ai-message--assistant > .ai-message-content > :last-child {
+    margin-bottom: 0;
+}
+
+.ai-message--steer {
+    border-style: dashed;
 }
 
 .ai-message--assistant {
-    /* default background — inherits from container */
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.ai-message-avatar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--control__text-color--disabled);
+    margin-bottom: 4px;
+}
+
+.ai-message-avatar .svgIcon,
+.ai-message-avatar svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ---- Editing a question ---- */
+
+.ai-message--editing {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.ai-edit-text {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 4em;
+    resize: vertical;
+    font: inherit;
+    color: inherit;
+    background: var(--control__background-color);
+    border: 1px solid var(--control__border-color--focused);
+    border-radius: 4px;
+    padding: 4px 6px;
+}
+
+.ai-edit-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+/* ---- Day dividers ---- */
+
+.ai-day-divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 4px;
+    font-size: 0.75em;
+    color: var(--control__text-color--disabled);
+}
+
+.ai-day-divider::before,
+.ai-day-divider::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--control__border-color);
+}
+
+/* ---- Code blocks ---- */
+
+.ai-code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 6px;
+    margin-top: 8px;
+    font-size: 0.8em;
+    border: 1px solid var(--control__border-color);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    background: var(--page__background-color);
+}
+
+.ai-code-header + pre {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.ai-code-language {
+    color: var(--control__text-color--disabled);
+}
+
+/* ---- Jump to the latest message ---- */
+
+.askStroomAiViewImpl-jumpToLatestBar {
+    display: flex;
+    justify-content: center;
+    padding: 2px 0;
+}
+
+.askStroomAiViewImpl-jumpToLatest {
+    cursor: pointer;
+    font-size: 0.85em;
+    padding: 2px 10px;
+    border-radius: 12px;
+    color: var(--control__text-color);
+    background: var(--control__background-color);
+    border: 1px solid var(--control__border-color--focused);
 }
 
 .ai-message--error {
@@ -326,6 +445,21 @@
 
 .ai-message:hover > .ai-message-footer .ai-message-delete {
     opacity: 1;
+}
+
+/* Message actions show when the message is hovered over or focused, to keep the conversation uncluttered. */
+.ai-message > .ai-message-footer > button {
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.ai-message:hover > .ai-message-footer > button,
+.ai-message:focus-within > .ai-message-footer > button {
+    opacity: 1;
+}
+
+.ai-message-footer {
+    margin-top: 4px;
 }
 
 .ai-message-delete .face {

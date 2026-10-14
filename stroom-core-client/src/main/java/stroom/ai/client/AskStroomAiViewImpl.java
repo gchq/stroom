@@ -26,10 +26,12 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -63,6 +65,10 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     SimplePanel markdownPreview;
     @UiField
+    FlowPanel jumpToLatestBar;
+    @UiField
+    Button jumpToLatest;
+    @UiField
     TextArea message;
     @UiField
     InlineSvgButton run;
@@ -76,6 +82,12 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @Inject
     public AskStroomAiViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        jumpToLatestBar.setVisible(false);
+        markdownPreview.addDomHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onConversationScrolled();
+            }
+        }, ScrollEvent.getType());
 
         newChat.setText("New Conversation");
         newChat.setTitle("New Conversation");
@@ -177,6 +189,18 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
                 sendMessage();
             }
         }
+    }
+
+    @UiHandler("jumpToLatest")
+    public void onJumpToLatest(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onJumpToLatest();
+        }
+    }
+
+    @Override
+    public void setJumpToLatestVisible(final boolean visible) {
+        jumpToLatestBar.setVisible(visible);
     }
 
     @UiHandler("newChat")
