@@ -40,4 +40,13 @@ public interface BuiltInTool {
      * than throwing - it is fed back to the model, which can correct itself.
      */
     String execute(ToolExecutionRequest request);
+
+    /**
+     * @return True if the tool only reads or works things out, and cannot change anything. Only read-only tools
+     * may be used while the user is away (an unattended run). Defaults to true; override for any tool that
+     * changes something.
+     */
+    default boolean isReadOnly() {
+        return true;
+    }
 }

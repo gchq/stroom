@@ -134,4 +134,14 @@ public class MockAiDao implements AiDao {
     public List<AiChatAttachment> getAttachmentsByChatId(final int chatId) {
         return List.of();
     }
+
+    @Override
+    public void recordPoll(final int chatId, final long minIntervalMs) {
+        // Presence is not tracked by the mock.
+    }
+
+    @Override
+    public Long getLastPollMs(final String userUuid) {
+        return null;
+    }
 }

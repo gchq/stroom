@@ -87,14 +87,25 @@ class McpAgentChat {
             "query", "q", "question", "prompt", "text", "search",
             "uri", "url", "path", "resource", "mcpServer", "index", "name", "id");
 
+    /**
+     * Given to the model instead of running a tool that could change something while the user is away.
+     */
+    static final String UNATTENDED_REFUSAL = "Not run: the user is away, and this tool could change something, "
+                                             + "so it needs them to be here. Carry on with read-only tools, and "
+                                             + "tell the user what you wanted to do so they can do it when they "
+                                             + "are back.";
+
     private final AiService aiService;
     private final BuiltInTools builtInTools;
+    private final AiChatRunManager runManager;
 
     @Inject
     McpAgentChat(final AiService aiService,
-                 final BuiltInTools builtInTools) {
+                 final BuiltInTools builtInTools,
+                 final AiChatRunManager runManager) {
         this.aiService = aiService;
         this.builtInTools = builtInTools;
+        this.runManager = runManager;
     }
 
     ChatResponse chat(final ChatModel chatModel,
@@ -165,7 +176,17 @@ class McpAgentChat {
                 taskContext.info(() -> progress);
                 aiService.updateMessageText(workingMessageId, progress + "…");
 
-                final String result = execute(tools, toolRequest, toolRequest.name(), chatId);
+                final String result;
+                if (runManager.isUnattended(chatId)
+                    && !builtInTools.isReadOnly(toolRequest.name())
+                    && !toolset.isReadOnly(toolRequest.name())) {
+                    // The user has gone, so only read-only tools may run.
+                    LOGGER.info(() -> "Not running tool '" + toolRequest.name() + "' for chatId=" + chatId
+                                      + " as the run is unattended");
+                    result = UNATTENDED_REFUSAL;
+                } else {
+                    result = execute(tools, toolRequest, toolRequest.name(), chatId);
+                }
                 LOGGER.trace(() -> "Tool '" + toolRequest.name() + "' result:\n" + result);
                 appendDebugToolCall(debugLog, t + 1, toolRequest, result);
                 conversation.add(ToolExecutionResultMessage.from(toolRequest, result));

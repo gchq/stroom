@@ -23,9 +23,11 @@ import stroom.ai.impl.tools.BuiltInToolsModule;
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.language.functions.AiProvider;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
+import jakarta.servlet.http.HttpSessionListener;
 
 public class AiModule extends AbstractModule {
 
@@ -49,5 +51,9 @@ public class AiModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(OpenAIModelResourceImpl.class)
                 .bind(AskStroomAiResourceImpl.class);
+
+        // Stops agent runs when the session that started them ends.
+        GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
+                .addBinding(AiChatRunSessionListener.class);
     }
 }

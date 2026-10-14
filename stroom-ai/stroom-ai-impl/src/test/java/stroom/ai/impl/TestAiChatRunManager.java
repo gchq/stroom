@@ -23,10 +23,13 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserService;
+import stroom.security.shared.User;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.shared.UserRef;
+import stroom.util.time.StroomDuration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +52,9 @@ class TestAiChatRunManager {
     private final NodeInfo nodeInfo = Mockito.mock(NodeInfo.class);
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final AiService aiService = Mockito.mock(AiService.class);
+    private final AiDao aiDao = Mockito.mock(AiDao.class);
+    private final UserService userService = Mockito.mock(UserService.class);
+    private AiConfig aiConfig = new AiConfig();
     private final AiChatRun run = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
     private AiChatRunManager runManager;
 
@@ -68,8 +74,10 @@ class TestAiChatRunManager {
                 return Runnable::run;
             }
         };
+        Mockito.when(securityContext.asProcessingUserResult(any()))
+                .thenAnswer(invocation -> ((java.util.function.Supplier<?>) invocation.getArgument(0)).get());
         runManager = new AiChatRunManager(runDao, new SimpleTaskContextFactory(), executorProvider, nodeInfo,
-                securityContext, aiService);
+                securityContext, aiService, aiDao, userService, () -> aiConfig);
     }
 
     @Test
@@ -95,7 +103,7 @@ class TestAiChatRunManager {
                 5, 1, AiChatRunStatus.STOPPING, AiChatRunStopReason.USER, 0L, null, false, null)));
 
         runManager.execute(run, r -> {
-        });
+        }, () -> false);
 
         Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.STOPPED),
                 eq(AiChatRunStopReason.USER), isNull());
@@ -151,6 +159,129 @@ class TestAiChatRunManager {
     }
 
     @Test
+    void testExecute_taskTerminatedButWorkReturnedNormally() {
+        // E.g. the session ended, its task was terminated, and the question code returned early.
+        Mockito.when(runDao.get(5)).thenReturn(Optional.of(run));
+
+        runManager.execute(run, r -> {
+        }, () -> true);
+
+        Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.STOPPED),
+                eq(AiChatRunStopReason.TERMINATED), isNull());
+        Mockito.verify(runDao, Mockito.never()).compareAndSetStatus(eq(5), anyCollection(),
+                eq(AiChatRunStatus.DONE), any(), any());
+    }
+
+    @Test
+    void testStop_runNotBeingWorkedOnStopsAtOnce() {
+        final AiChatRun waiting = new AiChatRun(6, 1, AiChatRunStatus.WAITING_FOR_USER, null, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(waiting));
+
+        runManager.stop(1, AiChatRunStopReason.USER);
+
+        Mockito.verify(runDao).compareAndSetStatus(eq(6), anyCollection(), eq(AiChatRunStatus.STOPPED),
+                eq(AiChatRunStopReason.USER), isNull());
+    }
+
+    @Test
+    void testStopForSession() {
+        final String hash = AiChatRunManager.sessionIdHash("session-1");
+        Mockito.when(runDao.getActiveBySession(hash)).thenReturn(java.util.List.of(run));
+
+        runManager.stopForSession("session-1", AiChatRunStopReason.SIGN_OUT);
+
+        Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.STOPPING),
+                eq(AiChatRunStopReason.SIGN_OUT), isNull());
+        // Runs whose tasks were terminated before this was told get the right reason.
+        Mockito.verify(runDao).correctStopReason(eq(hash), eq(AiChatRunStopReason.TERMINATED),
+                eq(AiChatRunStopReason.SIGN_OUT), Mockito.anyLong());
+    }
+
+    @Test
+    void testSessionIdHash() {
+        assertThat(AiChatRunManager.sessionIdHash(null)).isNull();
+        assertThat(AiChatRunManager.sessionIdHash("abc"))
+                .hasSize(64)
+                .isEqualTo(AiChatRunManager.sessionIdHash("abc"))
+                .isNotEqualTo(AiChatRunManager.sessionIdHash("abd"))
+                .doesNotContain("abc");
+    }
+
+    @Test
+    void testTick_stopsRunsPastTheTimeLimit() {
+        aiConfig = new AiConfig(null, null, StroomDuration.ZERO, null);
+        startAndTick(true);
+
+        Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.STOPPING),
+                eq(AiChatRunStopReason.RUN_LIMIT), isNull());
+    }
+
+    @Test
+    void testTick_stopsRunsOfDisabledUsers() {
+        final User user = Mockito.mock(User.class);
+        Mockito.when(user.isEnabled()).thenReturn(false);
+        Mockito.when(userService.loadByUuid("user1")).thenReturn(Optional.of(user));
+        startAndTick(true);
+
+        Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.STOPPING),
+                eq(AiChatRunStopReason.ACCOUNT_DISABLED), isNull());
+    }
+
+    @Test
+    void testTick_marksRunsUnattendedWhenTheUserHasGone() {
+        enabledUser();
+        // The browser last checked in well over the unattended time ago.
+        Mockito.when(aiDao.getLastPollMs("user1")).thenReturn(System.currentTimeMillis() - 3_600_000L);
+        final AtomicBoolean unattended = new AtomicBoolean();
+
+        Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.RUNNING, "node1", null))
+                .thenReturn(Optional.of(run));
+        Mockito.when(runDao.get(5)).thenReturn(Optional.of(run));
+        runManager.start(1, r -> {
+            runManager.tick();
+            unattended.set(runManager.isUnattended(1));
+        });
+
+        assertThat(unattended).isTrue();
+        Mockito.verify(runDao).setUnattended(5, true);
+    }
+
+    @Test
+    void testTick_attendedRun() {
+        enabledUser();
+        Mockito.when(aiDao.getLastPollMs("user1")).thenReturn(System.currentTimeMillis());
+        final AtomicBoolean unattended = new AtomicBoolean(true);
+
+        Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.RUNNING, "node1", null))
+                .thenReturn(Optional.of(run));
+        Mockito.when(runDao.get(5)).thenReturn(Optional.of(run));
+        runManager.start(1, r -> {
+            runManager.tick();
+            unattended.set(runManager.isUnattended(1));
+        });
+
+        assertThat(unattended).isFalse();
+        Mockito.verify(runDao, Mockito.never()).setUnattended(eq(5), Mockito.anyBoolean());
+        Mockito.verify(runDao, Mockito.never()).compareAndSetStatus(eq(5), anyCollection(),
+                eq(AiChatRunStatus.STOPPING), any(), any());
+    }
+
+    private void enabledUser() {
+        final User user = Mockito.mock(User.class);
+        Mockito.when(user.isEnabled()).thenReturn(true);
+        Mockito.when(userService.loadByUuid("user1")).thenReturn(Optional.of(user));
+    }
+
+    private void startAndTick(final boolean running) {
+        Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.RUNNING, "node1", null))
+                .thenReturn(Optional.of(run));
+        Mockito.when(runDao.get(5)).thenReturn(Optional.of(running
+                ? run
+                : new AiChatRun(5, 1, AiChatRunStatus.DONE, null, 0L, 1L, false, null)));
+        runManager.start(1, r -> runManager.tick());
+    }
+
+    @Test
     void testIsResumable() {
         assertThat(AiChatRunManager.isResumable(null)).isFalse();
         for (final AiChatRunStatus status : AiChatRunStatus.values()) {
@@ -176,7 +307,7 @@ class TestAiChatRunManager {
     void testExecute_failure() {
         runManager.execute(run, r -> {
             throw new RuntimeException("model unavailable");
-        });
+        }, () -> false);
 
         Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.FAILED),
                 isNull(), eq("model unavailable"));
@@ -186,7 +317,7 @@ class TestAiChatRunManager {
     void testExecute_terminated() {
         runManager.execute(run, r -> {
             throw new TaskTerminatedException();
-        });
+        }, () -> false);
 
         Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.STOPPED),
                 eq(AiChatRunStopReason.TERMINATED), isNull());

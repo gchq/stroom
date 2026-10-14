@@ -475,4 +475,24 @@ public class AiDaoImpl implements AiDao {
                         .fetch())
                 .map(RECORD_TO_ATTACHMENT::apply);
     }
+
+    @Override
+    public void recordPoll(final int chatId, final long minIntervalMs) {
+        final long now = System.currentTimeMillis();
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.LAST_POLL_MS, now)
+                .where(AI_CHAT.ID.eq(chatId))
+                .and(AI_CHAT.LAST_POLL_MS.isNull().or(AI_CHAT.LAST_POLL_MS.lt(now - minIntervalMs)))
+                .execute());
+    }
+
+    @Override
+    public Long getLastPollMs(final String userUuid) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(DSL.max(AI_CHAT.LAST_POLL_MS))
+                .from(AI_CHAT)
+                .where(AI_CHAT.USER_UUID.eq(userUuid))
+                .fetchOne(0, Long.class));
+    }
 }
