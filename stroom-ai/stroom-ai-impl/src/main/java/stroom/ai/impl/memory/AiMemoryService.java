@@ -37,6 +37,8 @@ import jakarta.inject.Inject;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -310,6 +312,126 @@ public class AiMemoryService {
         }
         LOGGER.info(() -> "Change to " + change.path() + " in chatId=" + chatId + ": " + status);
         return status;
+    }
+
+    /// @param chatId The chat.
+    /// @return The memory the chat can see: the user's, then the chat's.
+    public List<AiMemory> listAll(final int chatId) {
+        final String owner = owner(chatId);
+        final List<AiMemory> all = new ArrayList<>(memoryDao.list(owner, AiMemoryScope.USER, ""));
+        all.addAll(memoryDao.list(owner, AiMemoryScope.CHAT, String.valueOf(chatId)));
+        return all;
+    }
+
+    /// @param chatId The chat.
+    /// @return The changes the agent has made to the user's memory in the chat, latest first.
+    public List<AiChatMessage> listChanges(final int chatId) {
+        final List<AiChatMessage> changes = new ArrayList<>(aiService.getMessages(chatId).stream()
+                .filter(message -> message.getMessageType() == AiMessageType.MEMORY_UPDATE)
+                .toList());
+        Collections.reverse(changes);
+        return changes;
+    }
+
+    /// Saves memory the user has written or edited themselves, which needs no approval.
+    ///
+    /// @param chatId  The chat.
+    /// @param path    The memory's path.
+    /// @param content The new content.
+    /// @param version The version the user edited, or null to create the memory.
+    /// @return The memory as saved.
+    /// @throws RuntimeException If the path is not valid, the memory has changed since the user opened it, or
+    ///                          it would be over the size limits.
+    public AiMemory saveByUser(final int chatId, final String path, final String content, final Integer version) {
+        final MemoryPath memoryPath = MemoryPath.parse(path)
+                .orElseThrow(() -> new IllegalArgumentException(invalidPath(path)));
+        if (content == null) {
+            throw new IllegalArgumentException("There is no content to save.");
+        }
+        final AiMemory current = get(chatId, memoryPath).orElse(null);
+        if (!Objects.equals(version, NullSafe.get(current, AiMemory::getVersion))) {
+            throw new RuntimeException(memoryPath.path() + " has changed since you opened it. Open it again.");
+        }
+        final String limitError = checkLimits(chatId, memoryPath, current, content);
+        if (limitError != null) {
+            throw new RuntimeException(limitError.replaceFirst("^Error: ", ""));
+        }
+        final MemoryChange change = new MemoryChange(MemoryChange.KIND,
+                current == null
+                        ? Operation.CREATE
+                        : Operation.UPDATE,
+                memoryPath.path(), version, NullSafe.get(current, AiMemory::getContent), content, null, null);
+        if (!apply(chatId, change)) {
+            throw new RuntimeException(memoryPath.path() + " has changed since you opened it. Open it again.");
+        }
+        return get(chatId, memoryPath).orElseThrow();
+    }
+
+    /// Deletes a piece of memory, or all memory in a folder, for the user.
+    ///
+    /// @param chatId  The chat.
+    /// @param path    The memory's path, or a folder (`/memories/` or `/memories/session/`) to delete all in it.
+    /// @param version The version the user last saw, or null when deleting a folder.
+    /// @throws RuntimeException If the memory has changed since the user saw it.
+    public void deleteByUser(final int chatId, final String path, final Integer version) {
+        if (MemoryPath.USER_PREFIX.equals(path) || MemoryPath.CHAT_PREFIX.equals(path)) {
+            final AiMemoryScope scope = MemoryPath.USER_PREFIX.equals(path)
+                    ? AiMemoryScope.USER
+                    : AiMemoryScope.CHAT;
+            final String scopeKey = scope == AiMemoryScope.USER
+                    ? ""
+                    : String.valueOf(chatId);
+            for (final AiMemory memory : memoryDao.list(owner(chatId), scope, scopeKey)) {
+                memoryDao.delete(memory.getId(), memory.getVersion());
+            }
+            return;
+        }
+        final MemoryPath memoryPath = MemoryPath.parse(path)
+                .orElseThrow(() -> new IllegalArgumentException(invalidPath(path)));
+        final AiMemory current = get(chatId, memoryPath)
+                .orElseThrow(() -> new RuntimeException("There is no memory at " + memoryPath.path() + "."));
+        if (!Objects.equals(version, current.getVersion()) || !memoryDao.delete(current.getId(), version)) {
+            throw new RuntimeException(memoryPath.path() + " has changed since you opened it. Open it again.");
+        }
+    }
+
+    /// Undoes a change the agent made to memory, if the memory has not changed since.
+    ///
+    /// @param chatId    The chat.
+    /// @param messageId The MEMORY_UPDATE message recording the change.
+    /// @throws RuntimeException If the change has already been undone, or the memory has changed since.
+    public void undoChange(final int chatId, final int messageId) {
+        final AiChatMessage message = aiService.getMessages(chatId).stream()
+                .filter(m -> m.getId() == messageId && m.getMessageType() == AiMessageType.MEMORY_UPDATE)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("There is no change to memory " + messageId
+                                                        + " in this chat."));
+        final MemoryChange change = readChange(message.getMessage())
+                .orElseThrow(() -> new RuntimeException("Message " + messageId + " is not a change to memory."));
+        if (change.isUndone()) {
+            throw new RuntimeException("This change has already been undone.");
+        }
+        final MemoryPath path = MemoryPath.parse(change.path()).orElseThrow();
+        final AiMemory current = get(chatId, path).orElse(null);
+        if (!Objects.equals(NullSafe.get(current, AiMemory::getContent), change.after())) {
+            throw new RuntimeException(path.path() + " has changed since, so this change can't be undone. "
+                                       + "Edit it instead.");
+        }
+        final MemoryChange reverse = new MemoryChange(MemoryChange.KIND,
+                change.before() == null
+                        ? Operation.DELETE
+                        : current == null
+                                ? Operation.CREATE
+                                : Operation.UPDATE,
+                path.path(), NullSafe.get(current, AiMemory::getVersion), change.after(), change.before(), null,
+                null);
+        if (!apply(chatId, reverse)) {
+            throw new RuntimeException(path.path() + " has changed since, so this change can't be undone.");
+        }
+        // Only one undo counts, e.g. if it is undone from two browser tabs at once.
+        aiDao.compareAndSetMessageText(messageId, message.getMessage(),
+                JsonUtil.writeValueAsString(change.withUndone(), false));
+        LOGGER.info(() -> "Change to " + path.path() + " in chatId=" + chatId + " undone");
     }
 
     /// @param chatId The chat.

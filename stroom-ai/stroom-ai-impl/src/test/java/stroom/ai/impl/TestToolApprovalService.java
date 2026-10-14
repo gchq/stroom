@@ -28,6 +28,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiToolApproval;
 import stroom.ai.shared.AiToolApprovalDecision;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.collection.api.CollectionService;
@@ -162,6 +163,30 @@ class TestToolApprovalService {
         // They go with the chat.
         aiDao.deleteChat(chat.getId());
         assertThat(approvalDao.list(chat.getId())).isEmpty();
+    }
+
+    @Test
+    void testListRemoveAndReset() {
+        final AiChat other = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        approvalDao.save("user1", chat.getId(), "server", "a", "hash-a", AiToolApprovalDecision.ALLOW, "user1");
+        approvalDao.save("user1", chat.getId(), "server", "b", "hash-b", AiToolApprovalDecision.DENY, "user1");
+        approvalDao.save("user1", other.getId(), "server", "a", "hash-a", AiToolApprovalDecision.ALLOW, "user1");
+
+        final List<AiToolApproval> approvals = service.list(chat.getId());
+        assertThat(approvals).extracting(AiToolApproval::getToolName, AiToolApproval::getDecision)
+                .containsExactly(tuple("a", AiToolApprovalDecision.ALLOW), tuple("b", AiToolApprovalDecision.DENY));
+
+        // Another chat's decision can't be removed through this one.
+        final int otherId = service.list(other.getId()).getFirst().getId();
+        assertThat(service.remove(chat.getId(), otherId)).isFalse();
+        assertThat(service.list(other.getId())).hasSize(1);
+
+        assertThat(service.remove(chat.getId(), approvals.getFirst().getId())).isTrue();
+        assertThat(service.list(chat.getId())).extracting(AiToolApproval::getToolName).containsExactly("b");
+
+        assertThat(service.reset(chat.getId())).isEqualTo(1);
+        assertThat(service.list(chat.getId())).isEmpty();
+        assertThat(service.list(other.getId())).hasSize(1);
     }
 
     @Test

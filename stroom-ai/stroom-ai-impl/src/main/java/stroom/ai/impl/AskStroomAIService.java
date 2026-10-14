@@ -40,7 +40,10 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
+import stroom.ai.shared.AiMemory;
+import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
@@ -48,15 +51,18 @@ import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.DeleteAiMemoryRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
+import stroom.ai.shared.SaveAiMemoryRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.ai.shared.UndoAiCompactionRequest;
+import stroom.ai.shared.UndoAiMemoryChangeRequest;
 import stroom.config.global.api.GlobalConfig;
 import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -374,6 +380,71 @@ public class AskStroomAIService {
         }
         return memoryService.answerApproval(chatId, request.getMessageId(), request.isApproved())
                == ApprovalStatus.APPROVED;
+    }
+
+    /**
+     * @param chatId The chat.
+     * @return The memory the chat can see, and the changes the agent has made to memory in it.
+     */
+    public AiMemoryListResponse listMemory(final int chatId) {
+        aiService.verifyOwnership(chatId);
+        return new AiMemoryListResponse(memoryService.listAll(chatId), memoryService.listChanges(chatId));
+    }
+
+    /**
+     * Saves a piece of memory the user has written or edited.
+     */
+    public AiMemory saveMemory(final SaveAiMemoryRequest request) {
+        final int chatId = NullSafe.getOrElse(request.getAiChat(), AiChat::getId, 0);
+        aiService.verifyOwnership(chatId);
+        return memoryService.saveByUser(chatId, request.getPath(), request.getContent(), request.getVersion());
+    }
+
+    /**
+     * Deletes a piece of memory, or all memory in a folder.
+     */
+    public Boolean deleteMemory(final DeleteAiMemoryRequest request) {
+        final int chatId = NullSafe.getOrElse(request.getAiChat(), AiChat::getId, 0);
+        aiService.verifyOwnership(chatId);
+        memoryService.deleteByUser(chatId, request.getPath(), request.getVersion());
+        return true;
+    }
+
+    /**
+     * Undoes a change the agent made to memory.
+     */
+    public Boolean undoMemoryChange(final UndoAiMemoryChangeRequest request) {
+        final int chatId = NullSafe.getOrElse(request.getAiChat(), AiChat::getId, 0);
+        aiService.verifyOwnership(chatId);
+        memoryService.undoChange(chatId, request.getMessageId());
+        return true;
+    }
+
+    /**
+     * @param chatId The chat.
+     * @return The decisions the user has made about tools in the chat, and whether 'approve everything' is on.
+     */
+    public AiToolApprovalsResponse listToolApprovals(final int chatId) {
+        aiService.verifyOwnership(chatId);
+        return new AiToolApprovalsResponse(toolApprovalService.list(chatId), aiDao.isApproveEverything(chatId),
+                NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::isAllowApproveEverything, false));
+    }
+
+    /**
+     * Removes a decision the user made about a tool in a chat.
+     */
+    public Boolean removeToolApproval(final int chatId, final int approvalId) {
+        aiService.verifyOwnership(chatId);
+        return toolApprovalService.remove(chatId, approvalId);
+    }
+
+    /**
+     * Removes every decision the user made about tools in a chat.
+     */
+    public Boolean resetToolApprovals(final int chatId) {
+        aiService.verifyOwnership(chatId);
+        toolApprovalService.reset(chatId);
+        return true;
     }
 
     /**
