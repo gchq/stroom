@@ -83,9 +83,10 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @POST
     @Path("/undoCompaction")
     @Operation(
-            summary = "Undo a chat's latest compaction, so the model sees the turns it covered as they were",
+            summary = "Undo a chat's latest compaction, so the model sees the turns it covered as they were. Returns "
+                      + "how much of the context window the chat now uses",
             operationId = "undoCompaction")
-    Boolean undoCompaction(
+    AiContextUsage undoCompaction(
             @Parameter(description = "request", required = true) UndoAiCompactionRequest request);
 
     @POST

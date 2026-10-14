@@ -59,4 +59,18 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
      * Called when the user scrolls the conversation, to stop or start following new messages.
      */
     void onConversationScrolled();
+
+    /**
+     * Shows how the chat's context window is used, with a way to compact it, below or above an element.
+     *
+     * @param target The context meter.
+     */
+    void onShowContextMeter(Element target);
+
+    /**
+     * Called as the user types, e.g. to suggest commands when they start with "/".
+     *
+     * @param text What is in the input box.
+     */
+    void onInputChanged(String text);
 }
