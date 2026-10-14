@@ -44,6 +44,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final StroomDuration unattendedAfter;
     private final int maxRunsPerUser;
     private final int maxRunsPerNode;
+    private final AiCompactionConfig compaction;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -55,6 +56,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         unattendedAfter = DEFAULT_UNATTENDED_AFTER;
         maxRunsPerUser = DEFAULT_MAX_RUNS_PER_USER;
         maxRunsPerNode = DEFAULT_MAX_RUNS_PER_NODE;
+        compaction = new AiCompactionConfig();
     }
 
     @SuppressWarnings("unused")
@@ -64,13 +66,15 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("maxRunDuration") final StroomDuration maxRunDuration,
                     @JsonProperty("unattendedAfter") final StroomDuration unattendedAfter,
                     @JsonProperty("maxRunsPerUser") final Integer maxRunsPerUser,
-                    @JsonProperty("maxRunsPerNode") final Integer maxRunsPerNode) {
+                    @JsonProperty("maxRunsPerNode") final Integer maxRunsPerNode,
+                    @JsonProperty("compaction") final AiCompactionConfig compaction) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
         this.unattendedAfter = Objects.requireNonNullElse(unattendedAfter, DEFAULT_UNATTENDED_AFTER);
         this.maxRunsPerUser = Objects.requireNonNullElse(maxRunsPerUser, DEFAULT_MAX_RUNS_PER_USER);
         this.maxRunsPerNode = Objects.requireNonNullElse(maxRunsPerNode, DEFAULT_MAX_RUNS_PER_NODE);
+        this.compaction = Objects.requireNonNullElseGet(compaction, AiCompactionConfig::new);
     }
 
     @Override
@@ -119,6 +123,11 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         return maxRunsPerNode;
     }
 
+    @JsonProperty("compaction")
+    public AiCompactionConfig getCompaction() {
+        return compaction;
+    }
+
     @Override
     public String toString() {
         return "AiConfig{" +
@@ -128,6 +137,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", unattendedAfter=" + unattendedAfter +
                ", maxRunsPerUser=" + maxRunsPerUser +
                ", maxRunsPerNode=" + maxRunsPerNode +
+               ", compaction=" + compaction +
                '}';
     }
 }

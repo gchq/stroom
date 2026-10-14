@@ -48,7 +48,17 @@ public enum AiMessageType implements HasPrimitiveValue {
      * The result of a tool call, as JSON (see {@code ToolResultRecord}). Large results are saved to a workspace
      * file and only a short stub is held here.
      */
-    TOOL_RESULT(13);
+    TOOL_RESULT(13),
+    /**
+     * A short record of a finished turn, built in code (question, tools used and their small results exactly,
+     * files created, and the start of the answer), used in place of the turn once it has been compacted.
+     */
+    TURN_DIGEST(14),
+    /**
+     * A record of the chat being compacted, as JSON (see {@code CompactionRecord}): which turns the model now
+     * sees as digests, and any summary of the oldest of them.
+     */
+    COMPACTION_SUMMARY(15);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());

@@ -98,6 +98,21 @@ class McpAgentChat {
     static final String STEER_PREFIX = "[Sent by the user while you were working] ";
 
     /**
+     * How many of the latest tool results are kept as they are when the conversation is getting too large.
+     */
+    static final int RECENT_RESULTS_KEPT = 2;
+    /**
+     * Tool results shorter than this are never shortened.
+     */
+    static final int SHORTENED_MIN_CHARS = 300;
+    /**
+     * Put in place of a tool result that has been shortened.
+     */
+    static final String SHORTENED_RESULT = "[This result has been removed to save space in the context window. "
+                                           + "It is stored: call read_turn (with no turn id, for this turn) to "
+                                           + "read it again if you need it.]";
+
+    /**
      * How many times the model may be asked again because the user sent a message just as it finished.
      */
     private static final int MAX_STEER_FOLLOW_UPS = 3;
@@ -139,7 +154,8 @@ class McpAgentChat {
                       final TaskContext taskContext,
                       final int attempt,
                       final StringBuilder debugLog,
-                      final int steerAfterMessageId) {
+                      final int steerAfterMessageId,
+                      final ContextBudget budget) {
         final SteerFeed steerFeed = new SteerFeed(chatId, steerAfterMessageId);
         final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>();
         if (modelDoc == null || modelDoc.isToolsEnabled()) {
@@ -150,11 +166,10 @@ class McpAgentChat {
         final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
         if (tools.isEmpty()) {
             LOGGER.debug(() -> "chat: no tools available for chatId=" + chatId + ", making a plain call");
-            ChatResponse response = call(chatModel, ChatRequest.builder().messages(conversation).build(),
-                    chatId, modelDoc);
+            ChatResponse response = call(chatModel, conversation, null, chatId, modelDoc, budget);
             // If the user added something while the model worked, answer again with it.
             for (int i = 0; i < MAX_STEER_FOLLOW_UPS && steerFeed.addTo(conversation, response.aiMessage()); i++) {
-                response = call(chatModel, ChatRequest.builder().messages(conversation).build(), chatId, modelDoc);
+                response = call(chatModel, conversation, null, chatId, modelDoc, budget);
             }
             return response;
         }
@@ -175,15 +190,13 @@ class McpAgentChat {
                 conversation.addAll(steerFeed.poll());
             }
 
-            final boolean offerTools = iteration < MAX_ITERATIONS;
-            final ChatRequest.Builder requestBuilder = ChatRequest.builder().messages(conversation);
-            if (offerTools) {
-                requestBuilder.toolSpecifications(toolSpecifications);
-            }
+            final List<ToolSpecification> offered = iteration < MAX_ITERATIONS
+                    ? toolSpecifications
+                    : null;
 
             final int currentIteration = iteration;
             response = LOGGER.logDurationIfDebugEnabled(
-                    () -> call(chatModel, requestBuilder.build(), chatId, modelDoc),
+                    () -> call(chatModel, conversation, offered, chatId, modelDoc, budget),
                     r -> "chat chatId=" + chatId + " iteration=" + currentIteration
                          + " toolCalls=" + r.aiMessage().toolExecutionRequests().size());
 
@@ -254,21 +267,83 @@ class McpAgentChat {
         // Loop cap hit. Make one final call with no tools so the model has to answer in words.
         LOGGER.info(() -> "chat: hit the tool iteration cap for chatId=" + chatId);
         if (response != null && response.aiMessage().hasToolExecutionRequests()) {
-            return call(chatModel, ChatRequest.builder().messages(conversation).build(), chatId, modelDoc);
+            return call(chatModel, conversation, null, chatId, modelDoc, budget);
         }
         return response;
     }
 
     /**
-     * Calls the model, recording the tokens it reports using.
+     * Calls the model, recording the tokens it reports using. If the conversation is getting too large for the
+     * model's context window, earlier tool results in it are shortened first (they are all stored, and the model
+     * can read them again with read_turn). If the model says the request is too large anyway, they are all
+     * shortened and the call is made once more.
+     *
+     * @param tools The tools to offer, or null for none.
      */
     private ChatResponse call(final ChatModel chatModel,
-                              final ChatRequest request,
+                              final List<ChatMessage> conversation,
+                              final List<ToolSpecification> tools,
                               final int chatId,
-                              final OpenAIModelDoc modelDoc) {
+                              final OpenAIModelDoc modelDoc,
+                              final ContextBudget budget) {
+        if (budget.isOver(usageTracker.estimate(chatId, conversation, tools))) {
+            final int shortened = shortenToolResults(conversation, RECENT_RESULTS_KEPT);
+            LOGGER.debug(() -> "Shortened " + shortened + " tool result(s) of chatId=" + chatId
+                               + " to keep within the context window");
+        }
+        try {
+            return callOnce(chatModel, conversation, tools, chatId, modelDoc);
+        } catch (final RuntimeException e) {
+            if (!ChatCompactor.isContextOverflowError(e) || shortenToolResults(conversation, 1) == 0) {
+                throw e;
+            }
+            LOGGER.info(() -> "The request for chatId=" + chatId + " was too large; shortened earlier tool "
+                              + "results and trying again");
+            return callOnce(chatModel, conversation, tools, chatId, modelDoc);
+        }
+    }
+
+    private ChatResponse callOnce(final ChatModel chatModel,
+                                  final List<ChatMessage> conversation,
+                                  final List<ToolSpecification> tools,
+                                  final int chatId,
+                                  final OpenAIModelDoc modelDoc) {
+        final ChatRequest.Builder builder = ChatRequest.builder().messages(List.copyOf(conversation));
+        if (tools != null) {
+            builder.toolSpecifications(tools);
+        }
+        final ChatRequest request = builder.build();
         final ChatResponse response = chatModel.chat(request);
         usageTracker.record(chatId, modelDoc, request.messages(), request.toolSpecifications(), response);
         return response;
+    }
+
+    /**
+     * Replaces the text of the tool results in the conversation, except the latest ones, with a note saying
+     * how to read them again. Short results are left as they are.
+     *
+     * @param conversation The conversation, changed in place.
+     * @param keep         How many of the latest tool results to leave as they are.
+     * @return How many results were shortened.
+     */
+    static int shortenToolResults(final List<ChatMessage> conversation, final int keep) {
+        final List<Integer> resultIndexes = new ArrayList<>();
+        for (int i = 0; i < conversation.size(); i++) {
+            if (conversation.get(i) instanceof ToolExecutionResultMessage) {
+                resultIndexes.add(i);
+            }
+        }
+        int shortened = 0;
+        for (int i = 0; i < resultIndexes.size() - keep; i++) {
+            final int index = resultIndexes.get(i);
+            final ToolExecutionResultMessage result = (ToolExecutionResultMessage) conversation.get(index);
+            if (NullSafe.string(result.text()).length() > SHORTENED_MIN_CHARS) {
+                conversation.set(index, ToolExecutionResultMessage.from(result.id(), result.toolName(),
+                        SHORTENED_RESULT));
+                shortened++;
+            }
+        }
+        return shortened;
     }
 
     /**
