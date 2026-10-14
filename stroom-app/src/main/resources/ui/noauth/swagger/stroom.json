@@ -15506,7 +15506,7 @@
         "properties" : {
           "attachmentType" : {
             "type" : "string",
-            "enum" : [ "DASHBOARD", "QUERY", "GENERAL" ]
+            "enum" : [ "DASHBOARD", "QUERY", "GENERAL", "TOOL_OUTPUT", "WORKSPACE_FILE" ]
           },
           "chatId" : {
             "type" : "integer",
