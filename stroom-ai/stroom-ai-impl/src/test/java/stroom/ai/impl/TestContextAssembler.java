@@ -123,7 +123,7 @@ class TestContextAssembler {
                 new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 2, null));
         Mockito.when(workspaceDao.getFileInfo(50)).thenReturn(java.util.Optional.of(new AiWorkspaceDao.FileInfo(
                 50, 1, "/attachments/50.md", AiAttachmentStatus.UNAVAILABLE, null, null,
-                "it reached its retention age")));
+                "it reached its retention age", 0L)));
 
         final List<ChatMessage> messages = assembler.assemble(new AskStroomAiRequest(null, null, null, "q"), 1,
                 java.util.Map.of(), history, CompactionRecord.NONE);

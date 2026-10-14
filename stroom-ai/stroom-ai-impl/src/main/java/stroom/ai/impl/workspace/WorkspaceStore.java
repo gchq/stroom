@@ -44,6 +44,7 @@ import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -122,6 +123,13 @@ public class WorkspaceStore {
         }
     }
 
+    /// Deletes this node's local copy of a file, e.g. because the file has been deleted.
+    ///
+    /// @param fileId The file.
+    public void deleteLocalCopy(final int fileId) {
+        fileStore.deleteAttachmentFile(fileId);
+    }
+
     /// Removes a file's content, here and on this node's disk, keeping its record and the reason.
     ///
     /// @param fileId The file.
@@ -155,6 +163,43 @@ public class WorkspaceStore {
         }
         persist(fileId, path, localFile);
         return fileId;
+    }
+
+    /// Creates a file in a chat's workspace from content already in a file.
+    ///
+    /// @param chatId          The chat.
+    /// @param type            The type of file.
+    /// @param path            Its path in the workspace.
+    /// @param sourceMessageId The tool call message that made it, or null.
+    /// @param sourceDocUuid   The UUID of the document its content came from, or null.
+    /// @param content         A file holding the content, which is copied.
+    /// @return The new file's id.
+    public int createFile(final int chatId,
+                          final AiAttachmentType type,
+                          final String path,
+                          final Integer sourceMessageId,
+                          final String sourceDocUuid,
+                          final Path content) {
+        final int fileId = workspaceDao.createFile(chatId, type, path, sourceMessageId);
+        replaceContent(fileId, path, sourceDocUuid, content);
+        return fileId;
+    }
+
+    /// Replaces a file's content, and starts its retention again.
+    ///
+    /// @param fileId        The file.
+    /// @param path          Its path in the workspace.
+    /// @param sourceDocUuid The UUID of the document its content came from, or null.
+    /// @param content       A file holding the new content, which is copied.
+    public void replaceContent(final int fileId, final String path, final String sourceDocUuid, final Path content) {
+        final Path localFile = fileStore.createAttachmentFile(fileId);
+        try {
+            Files.copy(content, localFile, StandardCopyOption.REPLACE_EXISTING);
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Unable to write workspace file " + path, e);
+        }
+        persist(fileId, path, localFile);
+        setRetention(fileId, sourceDocUuid);
     }
 
     /// Stores the content of a local file in the database, so that the file can be read on any node.
@@ -203,7 +248,15 @@ public class WorkspaceStore {
     public Path localFile(final int fileId) {
         checkAvailable(fileId);
         final Path localFile = fileStore.getAttachmentFile(fileId);
-        if (Files.exists(localFile)) {
+        // Never follow a link someone has put in place of a local copy; rebuild it instead.
+        if (Files.isSymbolicLink(localFile)) {
+            LOGGER.warn(() -> "Replacing symbolic link " + localFile + " with the stored content");
+            try {
+                Files.delete(localFile);
+            } catch (final IOException e) {
+                throw new UncheckedIOException("Unable to remove " + localFile, e);
+            }
+        } else if (Files.exists(localFile, LinkOption.NOFOLLOW_LINKS)) {
             return localFile;
         }
         final List<ChunkInfo> chunks = workspaceDao.getChunkInfo(fileId);
