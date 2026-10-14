@@ -237,7 +237,7 @@ public class QuickFilterTooltipUtil {
                                 "and " + qualifiers.get(0) + " field values that start with 'def'")
                         .row(
 
-                                "\"" + qualifiers.get(0) + ":ab c\" "
+                                qualifiers.get(0) + ":\"ab c\" "
                                 + qualifiers.get(1) + ":/(def|xyz)",
                                 "Matches " + qualifiers.get(0) + " field values which contain 'ab c' and "
                                 + qualifiers.get(1) + " field values which matches " +
