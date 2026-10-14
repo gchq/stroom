@@ -484,7 +484,11 @@ public class ContextAssembler {
                 .orElse(estimate);
         final int contextWindow = NullSafe.getOrElse(
                 aiDao.getUsage(chatId), ChatUsage::contextWindowTokens, 0);
-        return new AiContextUsage(contextWindow, used, correction.isEmpty(), parts);
+        final int compactAtPercent = NullSafe.getOrElse(aiConfigProvider.get(),
+                AiConfig::getCompaction,
+                AiCompactionConfig::getThresholdPercent,
+                0);
+        return new AiContextUsage(contextWindow, used, correction.isEmpty(), parts, compactAtPercent);
     }
 
     private String systemPrompt() {
