@@ -40,6 +40,8 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     maxRunDuration: "PT2H"
+    maxRunsPerNode: 20
+    maxRunsPerUser: 3
     unattendedAfter: "PT10M"
   analytics:
     db:

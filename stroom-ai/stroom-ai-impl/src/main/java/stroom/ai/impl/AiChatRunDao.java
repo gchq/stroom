@@ -119,6 +119,10 @@ public interface AiChatRunDao {
     /// @param unattended True if the run is unattended.
     void setUnattended(int runId, boolean unattended);
 
+    /// @param userUuid A user.
+    /// @return How many of the user's runs are being worked on (RUNNING or STOPPING), across the cluster.
+    int countWorking(String userUuid);
+
     /// Deletes all of a chat's runs, e.g. because the chat is being deleted.
     ///
     /// @param chatId The chat.
