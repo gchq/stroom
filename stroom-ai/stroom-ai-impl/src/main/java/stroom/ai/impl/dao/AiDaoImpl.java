@@ -56,6 +56,7 @@ import java.util.function.Function;
 
 import static stroom.ai.impl.db.jooq.tables.AiChat.AI_CHAT;
 import static stroom.ai.impl.db.jooq.tables.AiChatAttachment.AI_CHAT_ATTACHMENT;
+import static stroom.ai.impl.db.jooq.tables.AiChatFileChunk.AI_CHAT_FILE_CHUNK;
 import static stroom.ai.impl.db.jooq.tables.AiChatMessage.AI_CHAT_MESSAGE;
 import static stroom.ai.impl.db.jooq.tables.AiChatRun.AI_CHAT_RUN;
 
@@ -181,7 +182,8 @@ public class AiDaoImpl implements AiDao {
             context.deleteFrom(AI_CHAT_MESSAGE)
                     .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
                     .execute();
-            // Delete attachments.
+            // Delete attachments and their stored content.
+            deleteChunksOfChat(context, chatId);
             context.deleteFrom(AI_CHAT_ATTACHMENT)
                     .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))
                     .execute();
@@ -347,6 +349,10 @@ public class AiDaoImpl implements AiDao {
             context.deleteFrom(AI_CHAT_MESSAGE)
                     .where(AI_CHAT_MESSAGE.FK_ATTACHMENT_ID.eq(attachmentId))
                     .execute();
+            // Delete the attachment's stored content.
+            context.deleteFrom(AI_CHAT_FILE_CHUNK)
+                    .where(AI_CHAT_FILE_CHUNK.FK_ATTACHMENT_ID.eq(attachmentId))
+                    .execute();
             // Delete the attachment itself.
             context.deleteFrom(AI_CHAT_ATTACHMENT)
                     .where(AI_CHAT_ATTACHMENT.ID.eq(attachmentId))
@@ -366,6 +372,8 @@ public class AiDaoImpl implements AiDao {
             context.deleteFrom(AI_CHAT_MESSAGE)
                     .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
                     .execute();
+            // Delete the stored content of all attachments.
+            deleteChunksOfChat(context, chatId);
             // Delete all attachments.
             context.deleteFrom(AI_CHAT_ATTACHMENT)
                     .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))
@@ -494,5 +502,14 @@ public class AiDaoImpl implements AiDao {
                 .from(AI_CHAT)
                 .where(AI_CHAT.USER_UUID.eq(userUuid))
                 .fetchOne(0, Long.class));
+    }
+
+    private static void deleteChunksOfChat(final DSLContext context, final int chatId) {
+        context.deleteFrom(AI_CHAT_FILE_CHUNK)
+                .where(AI_CHAT_FILE_CHUNK.FK_ATTACHMENT_ID.in(context
+                        .select(AI_CHAT_ATTACHMENT.ID)
+                        .from(AI_CHAT_ATTACHMENT)
+                        .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))))
+                .execute();
     }
 }

@@ -10711,6 +10711,8 @@ components:
           - DASHBOARD
           - QUERY
           - GENERAL
+          - TOOL_OUTPUT
+          - WORKSPACE_FILE
         chatId:
           type: integer
           format: int32
