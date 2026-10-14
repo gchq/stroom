@@ -75,6 +75,7 @@ public class TestAskStroomAi {
                 1000,
                 null,
                 null,
+                null,
                 null);
         final ChatModel chatModel = aiService.getChatModel(modelDoc);
 

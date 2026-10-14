@@ -21,6 +21,7 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,10 +30,14 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
 import java.util.Objects;
 
 @Description(
-        "Defines the settings required to connect to an OpenAI-compatible API and interact with a model.")
+        "Defines the settings required to connect to an OpenAI-compatible API and interact with a model.\n\n" +
+        "May also define one or more HTTP MCP (Model Context Protocol) tool servers that the "
+        + "\"Ask Stroom AI\" chat agent can use to call external tools and read external resources "
+        + "(for example to query Elasticsearch) while answering a question.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -49,7 +54,8 @@ import java.util.Objects;
         "maxContextWindowTokens",
         "reasoningEffort",
         "embeddingModelDimensions",
-        "httpClientConfiguration"
+        "httpClientConfiguration",
+        "mcpToolServers"
 })
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelDoc extends AbstractDoc {
@@ -77,6 +83,8 @@ public class OpenAIModelDoc extends AbstractDoc {
     private final int embeddingModelDimensions;
     @JsonProperty
     private final HttpClientConfig httpClientConfiguration;
+    @JsonProperty
+    private final List<McpToolServerConfig> mcpToolServers;
 
     @JsonCreator
     public OpenAIModelDoc(
@@ -94,7 +102,8 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("maxContextWindowTokens") final Integer maxContextWindowTokens,
             @JsonProperty("reasoningEffort") final String reasoningEffort,
             @JsonProperty("embeddingModelDimensions") final Integer embeddingModelDimensions,
-            @JsonProperty("httpClientConfiguration") HttpClientConfig httpClientConfiguration) {
+            @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration,
+            @JsonProperty("mcpToolServers") final List<McpToolServerConfig> mcpToolServers) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.baseUrl = baseUrl;
@@ -106,6 +115,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.embeddingModelDimensions =
                 Objects.requireNonNullElse(embeddingModelDimensions, DEFAULT_EMBEDDING_MODEL_DIMENSIONS);
         this.httpClientConfiguration = httpClientConfiguration;
+        this.mcpToolServers = mcpToolServers;
     }
 
     /**
@@ -147,6 +157,13 @@ public class OpenAIModelDoc extends AbstractDoc {
         return httpClientConfiguration;
     }
 
+    /**
+     * @return The configured HTTP MCP tool servers, never null.
+     */
+    public List<McpToolServerConfig> getMcpToolServers() {
+        return NullSafe.list(mcpToolServers);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -163,7 +180,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                Objects.equals(modelId, that.modelId) &&
                Objects.equals(reasoningEffort, that.reasoningEffort) &&
                Objects.equals(embeddingModelDimensions, that.embeddingModelDimensions) &&
-               Objects.equals(httpClientConfiguration, that.httpClientConfiguration);
+               Objects.equals(httpClientConfiguration, that.httpClientConfiguration) &&
+               Objects.equals(getMcpToolServers(), that.getMcpToolServers());
     }
 
     @Override
@@ -176,7 +194,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                 maxContextWindowTokens,
                 reasoningEffort,
                 embeddingModelDimensions,
-                httpClientConfiguration);
+                httpClientConfiguration,
+                getMcpToolServers());
     }
 
     @Override
@@ -189,6 +208,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                ", reasoningEffort='" + reasoningEffort + '\'' +
                ", embeddingModelDimensions=" + embeddingModelDimensions +
                ", httpClientConfiguration=" + httpClientConfiguration +
+               ", mcpToolServers=" + mcpToolServers +
                '}';
     }
 
@@ -210,6 +230,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         private String reasoningEffort;
         private int embeddingModelDimensions = DEFAULT_EMBEDDING_MODEL_DIMENSIONS;
         private HttpClientConfig httpClientConfiguration;
+        private List<McpToolServerConfig> mcpToolServers;
 
         private Builder() {
         }
@@ -224,6 +245,7 @@ public class OpenAIModelDoc extends AbstractDoc {
             this.reasoningEffort = openAIModelDoc.reasoningEffort;
             this.embeddingModelDimensions = openAIModelDoc.embeddingModelDimensions;
             this.httpClientConfiguration = openAIModelDoc.httpClientConfiguration;
+            this.mcpToolServers = openAIModelDoc.mcpToolServers;
         }
 
         public Builder description(final String description) {
@@ -266,6 +288,11 @@ public class OpenAIModelDoc extends AbstractDoc {
             return self();
         }
 
+        public Builder mcpToolServers(final List<McpToolServerConfig> mcpToolServers) {
+            this.mcpToolServers = mcpToolServers;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -287,7 +314,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                     maxContextWindowTokens,
                     reasoningEffort,
                     embeddingModelDimensions,
-                    httpClientConfiguration);
+                    httpClientConfiguration,
+                    mcpToolServers);
         }
     }
 }

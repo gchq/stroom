@@ -17,6 +17,8 @@
 package stroom.openai.client.gin;
 
 import stroom.openai.client.OpenAIModelPlugin;
+import stroom.openai.client.presenter.McpToolServerEditPresenter;
+import stroom.openai.client.presenter.OpenAIModelMcpToolServersPresenter;
 import stroom.openai.client.presenter.OpenAIModelPresenter;
 import stroom.openai.client.presenter.OpenAIModelSettingsPresenter;
 
@@ -28,4 +30,8 @@ public interface OpenAIModelGinjector {
     AsyncProvider<OpenAIModelPresenter> getOpenAIModelPresenter();
 
     AsyncProvider<OpenAIModelSettingsPresenter> getOpenAIModelSettingsPresenter();
+
+    AsyncProvider<OpenAIModelMcpToolServersPresenter> getOpenAIModelMcpToolServersPresenter();
+
+    AsyncProvider<McpToolServerEditPresenter> getMcpToolServerEditPresenter();
 }
