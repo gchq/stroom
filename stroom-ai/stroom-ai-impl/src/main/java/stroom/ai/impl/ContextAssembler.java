@@ -1,0 +1,227 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl;
+
+import stroom.ai.api.AiService;
+import stroom.ai.impl.workspace.WorkspaceStore;
+import stroom.ai.shared.AiChatAttachment;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AskStroomAiConfig;
+import stroom.ai.shared.AskStroomAiRequest;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
+
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/// Builds what the model is sent for a question: the system prompt, any summary of earlier conversation, the
+/// conversation history (with attached tables, and a short record of the tools used for each earlier answer),
+/// and the question.
+///
+/// This is the one place the model's view of a chat is built, so that anything else that needs to know what the
+/// model is sent (e.g. how much of its context window a chat uses) sees the same thing.
+public class ContextAssembler {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContextAssembler.class);
+
+    /// How much of a tool call's arguments, and of its result, the record of an earlier answer's tools shows.
+    static final int TOOL_LOG_ARGS_LIMIT = 200;
+    static final int TOOL_LOG_RESULT_LIMIT = 200;
+
+    private final Provider<AskStroomAiConfig> defaultConfigProvider;
+    private final WorkspaceStore workspaceStore;
+    private final AiService aiService;
+
+    @Inject
+    ContextAssembler(final Provider<AskStroomAiConfig> defaultConfigProvider,
+                     final WorkspaceStore workspaceStore,
+                     final AiService aiService) {
+        this.defaultConfigProvider = defaultConfigProvider;
+        this.workspaceStore = workspaceStore;
+        this.aiService = aiService;
+    }
+
+    /**
+     * Builds the list of ChatMessages for a unified LLM call. Includes system prompt,
+     * optional context summary (from prior trimming), filtered conversation history
+     * with inline attachment data, and the current user message.
+     *
+     * @param maxHistory     maximum number of history messages to include (from the end)
+     * @param contextSummary optional summary of earlier messages that were trimmed
+     */
+    public List<ChatMessage> assemble(final AskStroomAiRequest request,
+                                      final int chatId,
+                                      final Map<Integer, AiChatAttachment> attachmentMap,
+                                      final List<AiChatMessage> relevantHistory,
+                                      final int maxHistory,
+                                      final String contextSummary) {
+        final List<ChatMessage> messages = new ArrayList<>();
+        final Map<Integer, List<AiChatMessage>> toolMessagesByTurn = toolMessagesByTurn(chatId);
+
+        // System message.
+        messages.add(new SystemMessage(NullSafe.getOrElse(
+                defaultConfigProvider.get(),
+                AskStroomAiConfig::getChatSystemPrompt,
+                AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT)));
+
+        // If we have a summary of earlier (trimmed) conversation, inject it.
+        if (contextSummary != null && !contextSummary.isBlank()) {
+            messages.add(new UserMessage(
+                    "[Prior conversation summary]: " + contextSummary));
+            messages.add(new AiMessage(
+                    "Understood, I'll keep the prior context in mind."));
+        }
+
+        // Add history messages (skip the current user message which was just stored).
+        final int startIdx = Math.max(0, relevantHistory.size() - maxHistory - 1);
+        for (int i = startIdx; i < relevantHistory.size() - 1; i++) {
+            final AiChatMessage msg = relevantHistory.get(i);
+            switch (msg.getMessageType()) {
+                case ATTACHMENT -> {
+                    // Read the attachment's markdown file and inject it as a UserMessage
+                    // tagged with the source description.
+                    final Integer attachmentId = msg.getAttachmentId();
+                    final AiChatAttachment attachment = attachmentId != null
+                            ? attachmentMap.get(attachmentId)
+                            : null;
+                    if (attachment != null) {
+                        final Path mdFile = workspaceStore.localFile(attachment.getId());
+                        if (Files.exists(mdFile)) {
+                            try {
+                                final String markdown = Files.readString(mdFile, StandardCharsets.UTF_8);
+                                final String description = NullSafe.getOrElse(
+                                        attachment, AiChatAttachment::getDescription,
+                                        "Attachment " + attachment.getId());
+                                final StringBuilder tagged = new StringBuilder();
+                                tagged
+                                        .append("[Attached Table: ")
+                                        .append(description);
+                                if (attachment.getRowCount() != null) {
+                                    tagged
+                                            .append(" (")
+                                            .append(attachment.getRowCount())
+                                            .append(" rows)");
+                                }
+                                if (attachment.isTruncated()) {
+                                    tagged
+                                            .append(" TRUNCATED");
+                                }
+                                tagged
+                                        .append("]\n")
+                                        .append(markdown);
+                                messages.add(new UserMessage(tagged.toString()));
+                            } catch (final IOException e) {
+                                LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
+                            }
+                        }
+                    }
+                }
+                case USER_MESSAGE -> messages.add(new UserMessage(msg.getMessage()));
+                case STEER_MESSAGE -> messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + msg.getMessage()));
+                case AI_RESPONSE -> {
+                    // Say which tools were used for the answer, so the model knows what it has already looked at.
+                    final String toolLog = toolLog(toolMessagesByTurn.get(msg.getTurnId()));
+                    if (toolLog != null) {
+                        messages.add(new SystemMessage(toolLog));
+                    }
+                    messages.add(new AiMessage(msg.getMessage()));
+                }
+                default -> LOGGER.debug(() -> "Not sending message of type " + msg.getMessageType());
+            }
+        }
+
+        // Add the current user message.
+        messages.add(new UserMessage(request.getMessage()));
+
+        return messages;
+    }
+
+
+    private Map<Integer, List<AiChatMessage>> toolMessagesByTurn(final int chatId) {
+        final Map<Integer, List<AiChatMessage>> byTurn = new HashMap<>();
+        for (final AiChatMessage message : aiService.getMessages(chatId)) {
+            if (message.getMessageType() == AiMessageType.TOOL_CALL
+                || message.getMessageType() == AiMessageType.TOOL_RESULT) {
+                byTurn.computeIfAbsent(message.getTurnId(), k -> new ArrayList<>()).add(message);
+            }
+        }
+        return byTurn;
+    }
+
+    /// @param toolMessages The TOOL_CALL and TOOL_RESULT messages of a turn, in order, or null.
+    /// @return A short record of the tools used in the turn, one line per call, or null if none were.
+    static String toolLog(final List<AiChatMessage> toolMessages) {
+        if (NullSafe.isEmptyCollection(toolMessages)) {
+            return null;
+        }
+        final Map<String, ToolResultRecord> results = new HashMap<>();
+        final List<ToolCallRecord> calls = new ArrayList<>();
+        for (final AiChatMessage message : toolMessages) {
+            try {
+                if (message.getMessageType() == AiMessageType.TOOL_CALL) {
+                    calls.add(JsonUtil.readValue(message.getMessage(), ToolCallRecord.class));
+                } else {
+                    final ToolResultRecord result = JsonUtil.readValue(message.getMessage(), ToolResultRecord.class);
+                    results.put(result.callId(), result);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> "Unable to read tool message " + message.getId(), e);
+            }
+        }
+        if (calls.isEmpty()) {
+            return null;
+        }
+        final StringBuilder sb = new StringBuilder("Tools used for the next answer:");
+        for (final ToolCallRecord call : calls) {
+            sb.append("\n- ").append(call.tool()).append('(')
+                    .append(shorten(NullSafe.string(call.arguments()), TOOL_LOG_ARGS_LIMIT)).append(')');
+            final ToolResultRecord result = results.get(call.callId());
+            if (result != null) {
+                sb.append(" -> ");
+                if (result.path() != null) {
+                    sb.append("result saved to ").append(result.path());
+                } else {
+                    sb.append(shorten(NullSafe.string(result.text()), TOOL_LOG_RESULT_LIMIT));
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String shorten(final String text, final int limit) {
+        final String oneLine = text.replace('\n', ' ').strip();
+        return oneLine.length() > limit
+                ? oneLine.substring(0, limit - 1) + "…"
+                : oneLine;
+    }
+}
