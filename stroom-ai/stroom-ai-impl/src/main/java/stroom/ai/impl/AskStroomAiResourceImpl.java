@@ -471,6 +471,29 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                 .getResultAndLog();
     }
 
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AskStroomAiResponse resumeRun(final AskStroomAiRequest request) {
+        final int chatId = NullSafe.getOrElse(request, AskStroomAiRequest::getAiChat, AiChat::getId, 0);
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "resumeRun"))
+                .withDescription("Resume AI processing for chat " + chatId)
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AiChat")
+                                        .withId(String.valueOf(chatId))
+                                        .addData(Data.builder()
+                                                .withName("Action")
+                                                .withValue("ResumeRun")
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().resumeRun(request))
+                .getResultAndLog();
+    }
+
     private OtherObject chatObject(final int chatId) {
         return OtherObject.builder()
                 .withType("AiChat")

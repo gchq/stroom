@@ -28,9 +28,12 @@ import jakarta.inject.Inject;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -188,6 +191,66 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
                 .and(AI_CHAT_RUN.STATUS.in(expectedValues))
                 .execute());
         return count == 1;
+    }
+
+    @Override
+    public void heartbeat(final Collection<Integer> runIds) {
+        if (runIds.isEmpty()) {
+            return;
+        }
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT_RUN)
+                .set(AI_CHAT_RUN.HEARTBEAT_MS, System.currentTimeMillis())
+                .where(AI_CHAT_RUN.ID.in(runIds))
+                .and(AI_CHAT_RUN.STATUS.in(ACTIVE_STATUSES))
+                .execute());
+    }
+
+    @Override
+    public Map<Integer, AiChatRunStatus> getStatuses(final Collection<Integer> runIds) {
+        if (runIds.isEmpty()) {
+            return Map.of();
+        }
+        final Map<Integer, AiChatRunStatus> statuses = new HashMap<>();
+        JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select(AI_CHAT_RUN.ID, AI_CHAT_RUN.STATUS)
+                        .from(AI_CHAT_RUN)
+                        .where(AI_CHAT_RUN.ID.in(runIds))
+                        .fetch())
+                .forEach(record -> statuses.put(record.value1(),
+                        AiChatRunStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.value2())));
+        return statuses;
+    }
+
+    @Override
+    public List<AiChatRun> interruptStale(final long staleBeforeMs) {
+        final List<AiChatRun> stale = JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT_RUN)
+                        .where(AI_CHAT_RUN.STATUS.in(ACTIVE_STATUSES))
+                        .and(AI_CHAT_RUN.HEARTBEAT_MS.lt(staleBeforeMs))
+                        .fetch())
+                .map(RECORD_TO_RUN::apply);
+        final List<AiChatRun> interrupted = new ArrayList<>();
+        final long now = System.currentTimeMillis();
+        for (final AiChatRun run : stale) {
+            // Only if it is still stale, in case its node has just sent a heartbeat.
+            final int count = JooqUtil.contextResult(aiDbConnProvider, context -> context
+                    .update(AI_CHAT_RUN)
+                    .set(AI_CHAT_RUN.STATUS, AiChatRunStatus.INTERRUPTED.getPrimitiveValue())
+                    .set(AI_CHAT_RUN.STOP_REASON, AiChatRunStopReason.NODE_LOST.getPrimitiveValue())
+                    .set(AI_CHAT_RUN.END_TIME_MS, now)
+                    .set(AI_CHAT_RUN.UPDATE_TIME_MS, now)
+                    .set(AI_CHAT_RUN.VERSION, AI_CHAT_RUN.VERSION.plus(1))
+                    .where(AI_CHAT_RUN.ID.eq(run.getId()))
+                    .and(AI_CHAT_RUN.STATUS.in(ACTIVE_STATUSES))
+                    .and(AI_CHAT_RUN.HEARTBEAT_MS.lt(staleBeforeMs))
+                    .execute());
+            if (count == 1) {
+                interrupted.add(run);
+            }
+        }
+        return interrupted;
     }
 
     @Override

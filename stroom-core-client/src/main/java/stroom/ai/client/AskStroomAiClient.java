@@ -125,6 +125,19 @@ public class AskStroomAiClient {
                 .exec();
     }
 
+    void resumeRun(final AskStroomAiRequest request,
+                   final Consumer<AskStroomAiResponse> consumer,
+                   final RestErrorHandler errorHandler,
+                   final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.resumeRun(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
     void createChat(final Consumer<AiChat> consumer,
                     final TaskMonitorFactory taskMonitorFactory) {
         restFactory

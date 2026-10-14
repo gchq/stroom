@@ -139,6 +139,31 @@ class TestAiChatRunDaoImpl {
     }
 
     @Test
+    void testHeartbeatAndInterruptStale() throws InterruptedException {
+        final AiChatRun alive = runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "node1", null);
+        final AiChat otherChat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChatRun lost = runDao.create(otherChat.getId(), "user1", AiChatRunStatus.RUNNING, "node2", null);
+
+        Thread.sleep(5);
+        final long cutOff = System.currentTimeMillis();
+        Thread.sleep(5);
+        runDao.heartbeat(List.of(alive.getId()));
+
+        final List<AiChatRun> interrupted = runDao.interruptStale(cutOff);
+
+        assertThat(interrupted).extracting(AiChatRun::getId).containsExactly(lost.getId());
+        final AiChatRun lostNow = runDao.get(lost.getId()).orElseThrow();
+        assertThat(lostNow.getStatus()).isEqualTo(AiChatRunStatus.INTERRUPTED);
+        assertThat(lostNow.getStopReason()).isEqualTo(AiChatRunStopReason.NODE_LOST);
+        assertThat(runDao.getStatuses(List.of(alive.getId(), lost.getId(), 999_999)))
+                .containsEntry(alive.getId(), AiChatRunStatus.RUNNING)
+                .containsEntry(lost.getId(), AiChatRunStatus.INTERRUPTED)
+                .hasSize(2);
+        // Nothing is stale now.
+        assertThat(runDao.interruptStale(cutOff)).isEmpty();
+    }
+
+    @Test
     void testDeletingChatDeletesRuns() {
         runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "node1", null);
 

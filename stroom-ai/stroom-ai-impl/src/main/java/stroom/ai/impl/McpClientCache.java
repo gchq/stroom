@@ -91,7 +91,7 @@ public class McpClientCache {
     /// Closes and forgets the connections that have not been used for the idle timeout.
     void closeIdle() {
         final long oldestAllowedMs = System.currentTimeMillis() - idleTimeout.toMillis();
-        closeWhere(entry -> entry.getValue().lastUsedMs() < oldestAllowedMs);
+        closeWhere(entry -> entry.getValue().lastUsedMs() <= oldestAllowedMs);
     }
 
     /// @return The number of connections held.

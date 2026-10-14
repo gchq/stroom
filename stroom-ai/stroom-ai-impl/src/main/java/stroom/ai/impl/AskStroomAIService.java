@@ -30,6 +30,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatRun;
+import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
@@ -96,7 +97,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -104,14 +104,19 @@ import java.util.stream.Collectors;
 
 
 /**
- * Singleton because cancellation is tracked in {@link #cancellationFlags}, which is state shared
- * between the request processing a question and the request asking to stop it. Without a single
- * instance the stop request looks up an empty map and does nothing.
+ * Answers "Ask Stroom AI" questions. Each question is answered by an agent run (see {@link AiChatRunManager}),
+ * which is stopped through the run manager.
  */
 @Singleton
 public class AskStroomAIService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskStroomAIService.class);
+
+    /**
+     * Returned by processQuestion when it is stopped before any answer was produced. Not stored as an
+     * answer, as the run's status says that it was stopped.
+     */
+    static final String CANCELLED_MESSAGE = "Analysis was cancelled before a response was produced.";
 
     /**
      * Polling interval (ms) when waiting for attachments.
@@ -128,7 +133,6 @@ public class AskStroomAIService {
     private final Provider<AskStroomAiConfig> defaultConfigProvider;
     private final Provider<GlobalConfig> globalConfigProvider;
     private final Provider<TableAnalysisConfig> tableAnalysisConfigProvider;
-    private final ConcurrentHashMap<Integer, AtomicBoolean> cancellationFlags = new ConcurrentHashMap<>();
     private final TaskContextFactory taskContextFactory;
     private final TableSummariserImpl tableSummariser;
     private final McpToolServerFactory mcpToolServerFactory;
@@ -216,6 +220,46 @@ public class AskStroomAIService {
     }
 
     /**
+     * Resumes a chat whose last run stopped before finishing (stopped, interrupted or failed), by answering its
+     * last question again in a new run. The model is told that an earlier attempt did not finish and that
+     * anything it did may already have happened.
+     *
+     * @param request The chat and config. Any message or context in the request is ignored.
+     * @return An empty response; the answer is delivered by polling.
+     */
+    public AskStroomAiResponse resumeRun(final AskStroomAiRequest request) {
+        final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
+        aiService.verifyOwnership(chatId);
+        final AiChatRun previous = runDao.getLatest(chatId).orElse(null);
+        if (!AiChatRunManager.isResumable(previous)) {
+            throw new RuntimeException("There is nothing to resume in this chat.");
+        }
+        final List<AiChatMessage> messages = aiService.getMessages(chatId);
+        final AiChatMessage question = messages.reversed().stream()
+                .filter(msg -> msg.getMessageType() == AiMessageType.USER_MESSAGE)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("There is no question to resume in this chat."));
+
+        final AskStroomAiRequest resumed = new AskStroomAiRequest(
+                request.getAiChat(), request.getConfig(), null, resumeNote(previous) + question.getMessage());
+        runManager.start(chatId, run -> answerQuestion(chatId, resumed));
+        return new AskStroomAiResponse(null);
+    }
+
+    /**
+     * @return A note to put before a question that is being answered again, saying why the earlier attempt
+     * did not finish.
+     */
+    static String resumeNote(final AiChatRun previous) {
+        final String how = previous.getStopReason() != null
+                ? previous.getStopReason().getDisplayValue().toLowerCase()
+                : previous.getStatus().getDisplayValue().toLowerCase();
+        return "(An earlier attempt to answer this did not finish: " + how + ". Anything it did, such as changes "
+               + "made with tools, may already have happened, so check the current state before repeating an "
+               + "action.)\n\n";
+    }
+
+    /**
      * Works out the answer to the question in the request and stores it, or the error, in the chat.
      */
     private void answerQuestion(final int chatId, final AskStroomAiRequest request) {
@@ -223,7 +267,7 @@ public class AskStroomAIService {
         try {
             responseText = processQuestion(request);
 
-            if (responseText != null) {
+            if (responseText != null && !CANCELLED_MESSAGE.equals(responseText)) {
                 aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText);
                 final String rt = responseText;
                 LOGGER.debug(() -> "Response stored for chatId=" + chatId
@@ -562,8 +606,7 @@ public class AskStroomAIService {
 
         // Registered for the whole question rather than just for batch analysis, so that a stop issued
         // while waiting for attachments, or between retries, is seen at all.
-        final AtomicBoolean cancelled = new AtomicBoolean(false);
-        registerCancellation(chatId, cancelled);
+        final AtomicBoolean cancelled = runManager.stopFlag(chatId);
 
         // A model with tools turned off (e.g. one that cannot call tools) gets a plain chat.
         try (final McpToolset toolset = modelDoc.isToolsEnabled()
@@ -613,7 +656,7 @@ public class AskStroomAIService {
             for (int attempt = 1; ; attempt++) {
                 if (cancelled.get()) {
                     LOGGER.info(() -> "processQuestion: cancelled before attempt for chatId=" + chatId);
-                    return "Analysis was cancelled before a response was produced.";
+                    return CANCELLED_MESSAGE;
                 }
 
                 final int currentAttempt = attempt;
@@ -700,7 +743,7 @@ public class AskStroomAIService {
                     // stop caught between attempts, rather than surfacing a raw error to the user.
                     if (e instanceof TaskTerminatedException || cancelled.get()) {
                         LOGGER.info(() -> "processQuestion: terminated/cancelled for chatId=" + chatId);
-                        return "Analysis was cancelled before a response was produced.";
+                        return CANCELLED_MESSAGE;
                     }
 
                     if (!isContextOverflowError(e)) {
@@ -776,7 +819,6 @@ public class AskStroomAIService {
                 }
             }
         } finally {
-            deregisterCancellation(chatId);
             // Always clean up the WORKING message when processing is done.
             try {
                 aiService.deleteMessage(workingMessageId);
@@ -788,13 +830,22 @@ public class AskStroomAIService {
 
     /**
      * Selects the stored messages that are sent to the model as conversation history: questions, answers and
-     * attachments. ERROR rows are left out, as the model would read them as its own earlier replies.
+     * attachments, up to and including the last question (the one being answered). ERROR rows are left out, as
+     * the model would read them as its own earlier replies. Anything after the last question (e.g. a partial
+     * answer from an attempt that was stopped) is left out too, so the question can be answered again.
      *
      * @param history All the messages in the chat, in order.
      * @return The messages to send, in the same order.
      */
     static List<AiChatMessage> selectHistoryForModel(final List<AiChatMessage> history) {
-        return history.stream()
+        int end = history.size();
+        while (end > 0 && history.get(end - 1).getMessageType() != AiMessageType.USER_MESSAGE) {
+            end--;
+        }
+        final List<AiChatMessage> upToQuestion = end == 0
+                ? history
+                : history.subList(0, end);
+        return upToQuestion.stream()
                 .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
                              || m.getMessageType() == AiMessageType.AI_RESPONSE
                              || m.getMessageType() == AiMessageType.ATTACHMENT)
@@ -1009,10 +1060,8 @@ public class AskStroomAIService {
                                           final int chatId,
                                           final int workingMessageId,
                                           final StringBuilder debugLog) {
-        // Shares the flag registered for the whole question, so a stop issued before batch analysis
-        // started is not lost.
-        final AtomicBoolean cancelled = cancellationFlags.computeIfAbsent(
-                chatId, k -> new AtomicBoolean(false));
+        // Shares the run's stop flag, so a stop issued before batch analysis started is not lost.
+        final AtomicBoolean cancelled = runManager.stopFlag(chatId);
 
         // Either signal means stop: the explicit user stop, or the task being terminated.
         final BooleanSupplier stopRequested = () -> cancelled.get() || taskContext.isTerminated();
@@ -1280,8 +1329,7 @@ public class AskStroomAIService {
 
         LOGGER.debug(() -> "waitForAttachments: chatId=" + chatId + " timeoutMs=" + timeoutMs);
 
-        // Look up the cancellation flag (may be null if not yet registered for this chat).
-        final AtomicBoolean cancelled = cancellationFlags.get(chatId);
+        final AtomicBoolean cancelled = runManager.stopFlag(chatId);
 
         while (System.currentTimeMillis() < deadline) {
             // Respect cancellation — exit immediately if the user has cancelled.
@@ -1426,9 +1474,6 @@ public class AskStroomAIService {
     // Cancellation methods
     // ---------------------------------------------------------------------
 
-    void registerCancellation(final int chatId, final AtomicBoolean flag) {
-        cancellationFlags.put(chatId, flag);
-    }
 
     /**
      * Signals cancellation for an in-progress batch analysis.
@@ -1436,18 +1481,9 @@ public class AskStroomAIService {
      */
     public boolean cancelProcessing(final int chatId) {
         aiService.verifyOwnership(chatId);
-        final AtomicBoolean flag = cancellationFlags.get(chatId);
-        LOGGER.debug(() -> "cancelProcessing: chatId=" + chatId + " flagFound=" + (flag != null));
-        if (flag != null) {
-            flag.set(true);
-            return true;
-        }
-        return false;
+        return runManager.stop(chatId, AiChatRunStopReason.USER);
     }
 
-    void deregisterCancellation(final int chatId) {
-        cancellationFlags.remove(chatId);
-    }
 
     // ---------------------------------------------------------------------
     // Chat management methods
@@ -1542,7 +1578,13 @@ public class AskStroomAIService {
 
         // The conversation is complete when no run is active and all attachments have finished
         // downloading.
-        final AiChatRun run = runDao.getLatest(chatId).orElse(null);
+        AiChatRun run = runDao.getLatest(chatId).orElse(null);
+        if (run != null && run.isActive() && !runDao.interruptStale(
+                System.currentTimeMillis() - AiChatRunManager.STALE_AFTER.toMillis()).isEmpty()) {
+            // The node working on a run has stopped, possibly this chat's.
+            aiService.deleteWorkingMessages(chatId);
+            run = runDao.getLatest(chatId).orElse(null);
+        }
         final boolean runActive = run != null && run.isActive();
         final boolean attachmentsComplete = attachments.stream()
                 .noneMatch(a -> a.getStatus() == AiAttachmentStatus.PENDING
