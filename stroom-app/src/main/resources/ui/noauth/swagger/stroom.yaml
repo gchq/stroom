@@ -627,6 +627,27 @@ paths:
       summary: Get the default config to use for asking questions
       tags:
       - AI
+  /ai/v1/getMcpPrompt:
+    post:
+      operationId: getAiMcpPrompt
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetAiMcpPromptRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiMcpPromptText"
+          description: default response
+      summary: "Get an MCP server's prompt, filled in, for the user to check before\
+        \ sending it"
+      tags:
+      - AI
   /ai/v1/getMessages/{chatId}:
     post:
       operationId: getMessages
@@ -667,6 +688,28 @@ paths:
                 $ref: "#/components/schemas/ResultPageAiChat"
           description: default response
       summary: List all AI chat conversations for the current user
+      tags:
+      - AI
+  /ai/v1/listMcpPrompts:
+    post:
+      operationId: listAiMcpPrompts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAiConfig"
+        description: config
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiMcpPrompt"
+          description: default response
+      summary: "List the prompts the model's MCP servers offer, as slash commands"
       tags:
       - AI
   /ai/v1/listMemory/{chatId}:
@@ -11206,6 +11249,35 @@ components:
         usedTokens:
           type: integer
           format: int64
+    AiMcpPrompt:
+      type: object
+      properties:
+        arguments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiMcpPromptArgument"
+        command:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        server:
+          type: string
+    AiMcpPromptArgument:
+      type: object
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        required:
+          type: boolean
+    AiMcpPromptText:
+      type: object
+      properties:
+        text:
+          type: string
     AiMemory:
       type: object
       properties:
@@ -16310,6 +16382,19 @@ components:
               type: array
               items:
                 type: string
+    GetAiMcpPromptRequest:
+      type: object
+      properties:
+        arguments:
+          type: object
+          additionalProperties:
+            type: string
+        config:
+          $ref: "#/components/schemas/AskStroomAiConfig"
+        name:
+          type: string
+        server:
+          type: string
     GetAnalyticShardDataRequest:
       type: object
       properties:

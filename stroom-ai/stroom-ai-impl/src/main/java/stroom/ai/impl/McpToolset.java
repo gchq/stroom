@@ -28,10 +28,16 @@ import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.service.tool.ToolExecutor;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.GetPromptRequest;
+import io.modelcontextprotocol.spec.McpSchema.GetPromptResult;
+import io.modelcontextprotocol.spec.McpSchema.ListPromptsResult;
 import io.modelcontextprotocol.spec.McpSchema.ListResourcesResult;
+import io.modelcontextprotocol.spec.McpSchema.Prompt;
+import io.modelcontextprotocol.spec.McpSchema.PromptMessage;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.Resource;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
+import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 
@@ -44,6 +50,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * The MCP servers available to a single "Ask Stroom AI" question. The toolset offers each server's tools to
@@ -238,6 +245,58 @@ public final class McpToolset implements AutoCloseable {
         return resources;
     }
 
+    /**
+     * Lists the prompts every server offers. A server whose prompts cannot be listed is left out.
+     *
+     * @return Each server's prompts, in the order the servers are configured.
+     */
+    public List<ServerPrompt> prompts() {
+        final List<ServerPrompt> prompts = new ArrayList<>();
+        for (final McpServerConnection connection : connections) {
+            final ServerCapabilities capabilities = connection.client().getServerCapabilities();
+            if (capabilities == null || capabilities.prompts() == null) {
+                continue;
+            }
+            try {
+                String cursor = null;
+                do {
+                    final ListPromptsResult result = cursor == null
+                            ? connection.client().listPrompts()
+                            : connection.client().listPrompts(cursor);
+                    NullSafe.list(result.prompts()).forEach(prompt ->
+                            prompts.add(new ServerPrompt(connection.label(), prompt)));
+                    cursor = result.nextCursor();
+                } while (NullSafe.isNonBlankString(cursor));
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> "Unable to list the prompts of MCP server '" + connection.label() + "'", e);
+            }
+        }
+        return prompts;
+    }
+
+    /**
+     * Gets a prompt from a server, filled in with arguments.
+     *
+     * @param server    The server's name.
+     * @param name      The prompt's name.
+     * @param arguments The prompt's arguments.
+     * @return The prompt's text: the text of its messages, separated by blank lines.
+     */
+    public String getPrompt(final String server, final String name, final Map<String, String> arguments) {
+        final McpServerConnection connection = connections.stream()
+                .filter(candidate -> candidate.label().equals(server))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("There is no MCP tool server '" + server + "'."));
+        final GetPromptResult result = connection.client().getPrompt(
+                new GetPromptRequest(name, new LinkedHashMap<>(NullSafe.map(arguments))));
+        return NullSafe.list(result.messages()).stream()
+                .map(PromptMessage::content)
+                .map(content -> content instanceof final TextContent text
+                        ? text.text()
+                        : "[" + content.type() + " content left out]")
+                .collect(Collectors.joining("\n\n"));
+    }
+
     private static boolean hasResources(final McpSyncClient client) {
         final ServerCapabilities capabilities = client.getServerCapabilities();
         return capabilities != null && capabilities.resources() != null;
@@ -327,5 +386,19 @@ public final class McpToolset implements AutoCloseable {
         if (ownsConnections) {
             connections.forEach(McpServerConnection::close);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * A prompt a server offers.
+     *
+     * @param server The server's name.
+     * @param prompt The prompt.
+     */
+    public record ServerPrompt(String server, Prompt prompt) {
+
     }
 }

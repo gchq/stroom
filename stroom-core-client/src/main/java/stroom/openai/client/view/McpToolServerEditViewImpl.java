@@ -29,6 +29,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -49,6 +50,8 @@ public class McpToolServerEditViewImpl
     TextBox endpoint;
     @UiField
     SelectionBox<McpAuthMode> authMode;
+    @UiField
+    Label authModeWarning;
     @UiField
     SelectionBox<Credential> credential;
     @UiField
@@ -217,6 +220,12 @@ public class McpToolServerEditViewImpl
     @Override
     public void setDeniedTools(final String deniedTools) {
         this.deniedTools.setValue(deniedTools);
+    }
+
+    @Override
+    public void setAuthModeWarning(final String warning) {
+        authModeWarning.setText(warning);
+        authModeWarning.setVisible(warning != null);
     }
 
     @Override

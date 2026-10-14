@@ -214,6 +214,14 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     }
 
     @Override
+    public void setMessage(final String text) {
+        message.setText(text);
+        message.setFocus(true);
+        message.setCursorPos(text.length());
+        run.setEnabled(!text.isEmpty());
+    }
+
+    @Override
     public void setCommandSuggestions(final List<AiSlashCommand> commands) {
         commandSuggestions.clear();
         commandSuggestions.setVisible(commands != null && !commands.isEmpty());
