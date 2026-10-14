@@ -280,13 +280,12 @@ class TestPathwaysProcessor {
     @Test
     void anUnreadableItemIsSetAsideAndTheRestStillApply() throws IOException {
         writeItem(1, 1_000L, 1);
-        corruptItem(1, 2_000L);
+        final Path bad = corruptItem(1, 2_000L);
         writeItem(1, 3_000L, 1);
 
         runPass();
 
         assertThat(itemsIn(1)).as("the readable items were applied and removed").isEmpty();
-        final Path bad = shardDir(1).resolve(QueueItem.newName(2_000L));
         assertThat(bad).as("the bad item is kept, not destroyed").isDirectory();
         assertThat(bad.resolve(PlanBConstants.FAILED_FILE_NAME))
                 .as("and the attempt is counted against it; enough of them and it stops being offered")
@@ -491,11 +490,14 @@ class TestPathwaysProcessor {
 
     // A directory that looks like an item but holds no LMDB environment, so opening it fails the way
     // a truncated or half-copied item would.
-    private void corruptItem(final int shard, final long orderKey) throws IOException {
+    // The item is named here and the name handed back: QueueItem.newName puts a fresh uuid in every
+    // name it makes, so asking for it a second time gives a different directory.
+    private Path corruptItem(final int shard, final long orderKey) throws IOException {
         final Path dir = Files.createDirectories(shardDir(shard).resolve(QueueItem.newName(orderKey)));
         Files.writeString(dir.resolve(PlanBConstants.DATA_FILE_NAME), "not an lmdb file");
         // Finished as far as anything can tell from outside, which is what makes it worth offering.
         Files.writeString(dir.resolve(PlanBConstants.VERSION_FILE_NAME), Instant.now().toString());
+        return dir;
     }
 
     // Through ShardQueue, so this cannot drift from where the code under test reads.
