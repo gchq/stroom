@@ -144,4 +144,18 @@ public class MockAiDao implements AiDao {
     public Long getLastPollMs(final String userUuid) {
         return null;
     }
+
+    @Override
+    public void recordUsage(final int chatId,
+                            final String modelDocUuid,
+                            final int contextWindowTokens,
+                            final long inputTokens,
+                            final long outputTokens) {
+        // Usage is not tracked by the mock.
+    }
+
+    @Override
+    public ChatUsage getUsage(final int chatId) {
+        return new ChatUsage(null, null, null, 0, 0);
+    }
 }

@@ -53,7 +53,8 @@ class TestMcpAgentChat {
     private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
     private final stroom.ai.impl.workspace.WorkspaceStore workspaceStore =
             Mockito.mock(stroom.ai.impl.workspace.WorkspaceStore.class);
-    private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore);
+    private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
+            Mockito.mock(ContextUsageTracker.class));
 
     {
         // Stored messages get an id and turn, as the DAO would give them.
