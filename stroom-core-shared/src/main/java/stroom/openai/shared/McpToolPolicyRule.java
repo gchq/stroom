@@ -1,0 +1,77 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.openai.shared;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
+
+/**
+ * Sets the {@link McpToolPolicy} for the tools of an MCP tool server whose names match a pattern.
+ */
+@JsonPropertyOrder({"toolPattern", "policy"})
+@JsonInclude(Include.NON_NULL)
+public class McpToolPolicyRule {
+
+    @JsonPropertyDescription("The tool names the rule applies to. '*' matches any characters. Matched against " +
+                             "the tool's own name, ignoring case.")
+    @JsonProperty
+    private final String toolPattern;
+
+    @JsonPropertyDescription("What to do when the agent wants to call a matching tool.")
+    @JsonProperty
+    private final McpToolPolicy policy;
+
+    @JsonCreator
+    public McpToolPolicyRule(@JsonProperty("toolPattern") final String toolPattern,
+                             @JsonProperty("policy") final McpToolPolicy policy) {
+        this.toolPattern = toolPattern;
+        this.policy = Objects.requireNonNullElse(policy, McpToolPolicy.ASK);
+    }
+
+    public String getToolPattern() {
+        return toolPattern;
+    }
+
+    public McpToolPolicy getPolicy() {
+        return policy;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final McpToolPolicyRule that = (McpToolPolicyRule) o;
+        return Objects.equals(toolPattern, that.toolPattern) && policy == that.policy;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(toolPattern, policy);
+    }
+
+    @Override
+    public String toString() {
+        return toolPattern + " = " + policy;
+    }
+}
