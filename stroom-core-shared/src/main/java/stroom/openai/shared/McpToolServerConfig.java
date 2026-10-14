@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -88,6 +89,16 @@ public class McpToolServerConfig {
     @JsonProperty
     private final HttpClientConfig httpClientConfiguration;
 
+    @JsonPropertyDescription("Patterns for the tools of this server that may be offered to the model. '*' matches " +
+                             "any characters. If empty, all tools are allowed (apart from denied ones).")
+    @JsonProperty
+    private final List<String> allowedTools;
+
+    @JsonPropertyDescription("Patterns for the tools of this server that must never be offered to the model. " +
+                             "'*' matches any characters. Takes precedence over the allowed tools.")
+    @JsonProperty
+    private final List<String> deniedTools;
+
     @JsonCreator
     public McpToolServerConfig(
             @JsonProperty("enabled") final Boolean enabled,
@@ -97,7 +108,9 @@ public class McpToolServerConfig {
             @JsonProperty("credentialName") final String credentialName,
             @JsonProperty("apiKeyHeaderName") final String apiKeyHeaderName,
             @JsonProperty("apiKeyValuePrefix") final String apiKeyValuePrefix,
-            @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration) {
+            @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration,
+            @JsonProperty("allowedTools") final List<String> allowedTools,
+            @JsonProperty("deniedTools") final List<String> deniedTools) {
         this.enabled = Objects.requireNonNullElse(enabled, true);
         this.name = name;
         this.endpoint = endpoint;
@@ -106,6 +119,8 @@ public class McpToolServerConfig {
         this.apiKeyHeaderName = apiKeyHeaderName;
         this.apiKeyValuePrefix = apiKeyValuePrefix;
         this.httpClientConfiguration = httpClientConfiguration;
+        this.allowedTools = allowedTools;
+        this.deniedTools = deniedTools;
     }
 
     public boolean isEnabled() {
@@ -140,6 +155,20 @@ public class McpToolServerConfig {
         return httpClientConfiguration;
     }
 
+    /**
+     * @return Patterns for the tools that may be offered to the model, or null/empty for all of them.
+     */
+    public List<String> getAllowedTools() {
+        return allowedTools;
+    }
+
+    /**
+     * @return Patterns for the tools that must never be offered to the model, or null/empty for none.
+     */
+    public List<String> getDeniedTools() {
+        return deniedTools;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -156,7 +185,9 @@ public class McpToolServerConfig {
                Objects.equals(credentialName, that.credentialName) &&
                Objects.equals(apiKeyHeaderName, that.apiKeyHeaderName) &&
                Objects.equals(apiKeyValuePrefix, that.apiKeyValuePrefix) &&
-               Objects.equals(httpClientConfiguration, that.httpClientConfiguration);
+               Objects.equals(httpClientConfiguration, that.httpClientConfiguration) &&
+               Objects.equals(allowedTools, that.allowedTools) &&
+               Objects.equals(deniedTools, that.deniedTools);
     }
 
     @Override
@@ -168,7 +199,9 @@ public class McpToolServerConfig {
                 credentialName,
                 apiKeyHeaderName,
                 apiKeyValuePrefix,
-                httpClientConfiguration);
+                httpClientConfiguration,
+                allowedTools,
+                deniedTools);
     }
 
     @Override
@@ -181,6 +214,8 @@ public class McpToolServerConfig {
                ", credentialName='" + credentialName + '\'' +
                ", apiKeyHeaderName='" + apiKeyHeaderName + '\'' +
                ", httpClientConfiguration=" + httpClientConfiguration +
+               ", allowedTools=" + allowedTools +
+               ", deniedTools=" + deniedTools +
                '}';
     }
 
@@ -202,6 +237,8 @@ public class McpToolServerConfig {
         private String apiKeyHeaderName;
         private String apiKeyValuePrefix;
         private HttpClientConfig httpClientConfiguration;
+        private List<String> allowedTools;
+        private List<String> deniedTools;
 
         private Builder() {
         }
@@ -215,6 +252,8 @@ public class McpToolServerConfig {
             this.apiKeyHeaderName = config.apiKeyHeaderName;
             this.apiKeyValuePrefix = config.apiKeyValuePrefix;
             this.httpClientConfiguration = config.httpClientConfiguration;
+            this.allowedTools = config.allowedTools;
+            this.deniedTools = config.deniedTools;
         }
 
         public Builder enabled(final boolean enabled) {
@@ -257,6 +296,16 @@ public class McpToolServerConfig {
             return self();
         }
 
+        public Builder allowedTools(final List<String> allowedTools) {
+            this.allowedTools = allowedTools;
+            return self();
+        }
+
+        public Builder deniedTools(final List<String> deniedTools) {
+            this.deniedTools = deniedTools;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -271,7 +320,9 @@ public class McpToolServerConfig {
                     credentialName,
                     apiKeyHeaderName,
                     apiKeyValuePrefix,
-                    httpClientConfiguration);
+                    httpClientConfiguration,
+                    allowedTools,
+                    deniedTools);
         }
     }
 }

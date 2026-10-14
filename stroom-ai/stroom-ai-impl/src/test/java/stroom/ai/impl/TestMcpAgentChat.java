@@ -85,7 +85,7 @@ class TestMcpAgentChat {
                 AiMessage.from("I need to check today's error count.",
                         List.of(ToolExecutionRequest.builder()
                                 .id("1")
-                                .name("search")
+                                .name("test__search")
                                 .arguments("{\"query\":\"level:ERROR AND @timestamp>now-1d\"}")
                                 .build())),
                 AiMessage.from("There were 42 errors today."));
@@ -110,9 +110,48 @@ class TestMcpAgentChat {
                 .contains("Attempt 2 — Tool Use")
                 .contains("Model rationale:")
                 .contains("check today's error count")
-                .contains("`search`")
+                .contains("`test__search`")
                 .contains("level:ERROR AND @timestamp>now-1d")
                 .contains("42 errors");
+    }
+
+    @Test
+    void unavailableServersAreMentionedToTheModel() {
+        final List<ChatMessage> conversation = McpAgentChat.withUnavailableServersNote(messages,
+                List.of("MCP tool server 'elastic' could not be reached"));
+
+        assertThat(conversation).hasSize(3);
+        assertThat(conversation.get(1)).isInstanceOf(SystemMessage.class);
+        assertThat(((SystemMessage) conversation.get(1)).text())
+                .contains("unavailable")
+                .contains("'elastic' could not be reached");
+        assertThat(McpAgentChat.withUnavailableServersNote(messages, List.of())).isEqualTo(messages);
+    }
+
+    @Test
+    void mcpToolCannotReplaceABuiltInTool() {
+        final dev.langchain4j.agent.tool.ToolSpecification builtIn = dev.langchain4j.agent.tool.ToolSpecification
+                .builder()
+                .name("list_resources")
+                .description("built in")
+                .build();
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(builtIn, (request, memoryId) -> "built-in result"));
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.getServerCapabilities()).thenReturn(
+                io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.builder().resources(false, false).build());
+        final McpToolset toolset = toolset(client, searchTool());
+
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("list_resources")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("done"));
+        final StringBuilder debugLog = new StringBuilder();
+        agentChat.chat(model, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1, debugLog);
+
+        assertThat(debugLog.toString()).contains("built-in result");
     }
 
     private static Tool searchTool() {
@@ -127,7 +166,7 @@ class TestMcpAgentChat {
 
     private static McpToolset toolset(final McpSyncClient client, final Tool... tools) {
         Mockito.when(client.listTools()).thenReturn(new ListToolsResult(List.of(tools), null));
-        return new McpToolset(List.of(new McpToolset.McpServerConnection("test", null, client)));
+        return new McpToolset(List.of(new McpServerConnection("test", null, client, null)), List.of(), true);
     }
 
     /**
