@@ -16,6 +16,8 @@
 
 package stroom.ai.impl;
 
+import stroom.openai.shared.McpToolPolicy;
+import stroom.openai.shared.McpToolPolicyRule;
 import stroom.openai.shared.McpToolServerConfig;
 import stroom.util.shared.NullSafe;
 
@@ -23,24 +25,31 @@ import java.util.List;
 import java.util.Locale;
 
 /// Decides which of an MCP server's tools may be offered to the model, from the server's allowed and denied
-/// tool patterns. Patterns are matched against the tool's own name (not the prefixed name the model sees),
-/// ignoring case, and `*` matches any run of characters. A denied pattern always wins.
+/// tool patterns and its `DENY` tool policies. Patterns are matched against the tool's own name (not the prefixed
+/// name the model sees), ignoring case, and `*` matches any run of characters. A denied pattern always wins, and
+/// so does a tool policy rule of `DENY` when it is the first rule to match the tool.
 final class McpToolFilter {
 
     private final List<String> allowed;
     private final List<String> denied;
+    private final List<McpToolPolicyRule> policies;
 
-    private McpToolFilter(final List<String> allowed, final List<String> denied) {
+    private McpToolFilter(final List<String> allowed,
+                          final List<String> denied,
+                          final List<McpToolPolicyRule> policies) {
         this.allowed = clean(allowed);
         this.denied = clean(denied);
+        this.policies = NullSafe.list(policies).stream()
+                .filter(rule -> NullSafe.isNonBlankString(rule.getToolPattern()))
+                .toList();
     }
 
     /// @param server The server's configuration.
     /// @return A filter for the server's tools.
     static McpToolFilter forServer(final McpToolServerConfig server) {
         return server == null
-                ? new McpToolFilter(List.of(), List.of())
-                : new McpToolFilter(server.getAllowedTools(), server.getDeniedTools());
+                ? new McpToolFilter(List.of(), List.of(), List.of())
+                : new McpToolFilter(server.getAllowedTools(), server.getDeniedTools(), server.getToolPolicies());
     }
 
     /// @param toolName The tool's name, as given by its server.
@@ -52,7 +61,20 @@ final class McpToolFilter {
         if (denied.stream().anyMatch(pattern -> matches(pattern, toolName))) {
             return false;
         }
+        if (policyFor(toolName) == McpToolPolicy.DENY) {
+            return false;
+        }
         return allowed.isEmpty() || allowed.stream().anyMatch(pattern -> matches(pattern, toolName));
+    }
+
+    /// @param toolName The tool's name, as given by its server.
+    /// @return The policy of the first rule that matches the tool, or null if none does.
+    McpToolPolicy policyFor(final String toolName) {
+        return policies.stream()
+                .filter(rule -> matches(rule.getToolPattern().strip(), toolName))
+                .map(McpToolPolicyRule::getPolicy)
+                .findFirst()
+                .orElse(null);
     }
 
     /// @param pattern A tool name pattern, where `*` matches any run of characters.

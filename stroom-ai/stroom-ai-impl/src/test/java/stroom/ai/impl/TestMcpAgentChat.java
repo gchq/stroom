@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.task.api.TaskContext;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -63,7 +64,7 @@ class TestMcpAgentChat {
     void chatWithToolsAnswersWithoutCallingATool() {
         final McpToolset toolset = toolset(Mockito.mock(McpSyncClient.class), searchTool());
 
-        final ChatResponse response = agentChat.chat(new StubChatModel(), 1, messages, toolset, 99,
+        final ChatResponse response = agentChat.chat(new StubChatModel(), null, 1, messages, toolset, 99,
                 new AtomicBoolean(false), taskContext, 1, new StringBuilder());
 
         // The stub model answers without calling a tool, so we just get its plain response back.
@@ -91,7 +92,7 @@ class TestMcpAgentChat {
                 AiMessage.from("There were 42 errors today."));
 
         final StringBuilder debugLog = new StringBuilder();
-        final ChatResponse response = agentChat.chat(model, 7, messages, toolset, 99,
+        final ChatResponse response = agentChat.chat(model, null, 7, messages, toolset, 99,
                 new AtomicBoolean(false), taskContext, 2, debugLog);
 
         assertThat(response.aiMessage().text()).isEqualTo("There were 42 errors today.");
@@ -149,9 +150,42 @@ class TestMcpAgentChat {
                         .build())),
                 AiMessage.from("done"));
         final StringBuilder debugLog = new StringBuilder();
-        agentChat.chat(model, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1, debugLog);
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1, debugLog);
 
         assertThat(debugLog.toString()).contains("built-in result");
+    }
+
+    @Test
+    void toolsTurnedOffGivesAPlainCall() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        final McpToolset toolset = toolset(client, searchTool());
+        final OpenAIModelDoc modelDoc = OpenAIModelDoc.builder().uuid("u").name("m").toolsEnabled(false).build();
+        final StubToolCallingModel model = new StubToolCallingModel(AiMessage.from("an answer"));
+
+        agentChat.chat(model, modelDoc, 1, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder());
+
+        assertThat(model.requests).singleElement()
+                .satisfies(request -> assertThat(request.toolSpecifications()).isNullOrEmpty());
+        Mockito.verify(client, Mockito.never()).listTools();
+    }
+
+    @Test
+    void toolsPastTheBudgetAreLeftOut() {
+        final Map<dev.langchain4j.agent.tool.ToolSpecification, dev.langchain4j.service.tool.ToolExecutor> tools =
+                new java.util.LinkedHashMap<>();
+        for (int i = 1; i <= 5; i++) {
+            tools.put(dev.langchain4j.agent.tool.ToolSpecification.builder().name("t" + i).build(),
+                    (request, memoryId) -> "");
+        }
+
+        McpAgentChat.limitTools(tools, 3, 1);
+        assertThat(tools.keySet()).extracting(dev.langchain4j.agent.tool.ToolSpecification::name)
+                .containsExactly("t1", "t2", "t3");
+
+        // 0 means no limit.
+        McpAgentChat.limitTools(tools, 0, 1);
+        assertThat(tools).hasSize(3);
     }
 
     private static Tool searchTool() {
@@ -175,6 +209,7 @@ class TestMcpAgentChat {
     private static final class StubToolCallingModel implements ChatModel {
 
         private final List<AiMessage> turns;
+        private final List<ChatRequest> requests = new java.util.ArrayList<>();
         private int turn;
 
         private StubToolCallingModel(final AiMessage... turns) {
@@ -183,6 +218,7 @@ class TestMcpAgentChat {
 
         @Override
         public ChatResponse doChat(final ChatRequest chatRequest) {
+            requests.add(chatRequest);
             final AiMessage aiMessage = turns.get(Math.min(turn++, turns.size() - 1));
             return ChatResponse.builder().aiMessage(aiMessage).build();
         }

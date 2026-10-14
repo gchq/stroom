@@ -55,7 +55,9 @@ import java.util.Objects;
         "reasoningEffort",
         "embeddingModelDimensions",
         "httpClientConfiguration",
-        "mcpToolServers"
+        "mcpToolServers",
+        "toolsEnabled",
+        "maxToolDefinitions"
 })
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelDoc extends AbstractDoc {
@@ -85,6 +87,10 @@ public class OpenAIModelDoc extends AbstractDoc {
     private final HttpClientConfig httpClientConfiguration;
     @JsonProperty
     private final List<McpToolServerConfig> mcpToolServers;
+    @JsonProperty
+    private final boolean toolsEnabled;
+    @JsonProperty
+    private final int maxToolDefinitions;
 
     @JsonCreator
     public OpenAIModelDoc(
@@ -103,7 +109,9 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("reasoningEffort") final String reasoningEffort,
             @JsonProperty("embeddingModelDimensions") final Integer embeddingModelDimensions,
             @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration,
-            @JsonProperty("mcpToolServers") final List<McpToolServerConfig> mcpToolServers) {
+            @JsonProperty("mcpToolServers") final List<McpToolServerConfig> mcpToolServers,
+            @JsonProperty("toolsEnabled") final Boolean toolsEnabled,
+            @JsonProperty("maxToolDefinitions") final Integer maxToolDefinitions) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.baseUrl = baseUrl;
@@ -116,6 +124,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                 Objects.requireNonNullElse(embeddingModelDimensions, DEFAULT_EMBEDDING_MODEL_DIMENSIONS);
         this.httpClientConfiguration = httpClientConfiguration;
         this.mcpToolServers = mcpToolServers;
+        this.toolsEnabled = Objects.requireNonNullElse(toolsEnabled, true);
+        this.maxToolDefinitions = Math.max(0, Objects.requireNonNullElse(maxToolDefinitions, 0));
     }
 
     /**
@@ -164,6 +174,22 @@ public class OpenAIModelDoc extends AbstractDoc {
         return NullSafe.list(mcpToolServers);
     }
 
+    /**
+     * @return Whether the model may be offered tools (built-in and MCP). Turn off for models that do not
+     * support tool calling, e.g. some small local models.
+     */
+    public boolean isToolsEnabled() {
+        return toolsEnabled;
+    }
+
+    /**
+     * @return The most tool definitions to offer the model in one request, or 0 for no limit. Tools past the
+     * limit are left out, built-in tools first.
+     */
+    public int getMaxToolDefinitions() {
+        return maxToolDefinitions;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -181,7 +207,9 @@ public class OpenAIModelDoc extends AbstractDoc {
                Objects.equals(reasoningEffort, that.reasoningEffort) &&
                Objects.equals(embeddingModelDimensions, that.embeddingModelDimensions) &&
                Objects.equals(httpClientConfiguration, that.httpClientConfiguration) &&
-               Objects.equals(getMcpToolServers(), that.getMcpToolServers());
+               Objects.equals(getMcpToolServers(), that.getMcpToolServers()) &&
+               toolsEnabled == that.toolsEnabled &&
+               maxToolDefinitions == that.maxToolDefinitions;
     }
 
     @Override
@@ -195,7 +223,9 @@ public class OpenAIModelDoc extends AbstractDoc {
                 reasoningEffort,
                 embeddingModelDimensions,
                 httpClientConfiguration,
-                getMcpToolServers());
+                getMcpToolServers(),
+                toolsEnabled,
+                maxToolDefinitions);
     }
 
     @Override
@@ -209,6 +239,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                ", embeddingModelDimensions=" + embeddingModelDimensions +
                ", httpClientConfiguration=" + httpClientConfiguration +
                ", mcpToolServers=" + mcpToolServers +
+               ", toolsEnabled=" + toolsEnabled +
+               ", maxToolDefinitions=" + maxToolDefinitions +
                '}';
     }
 
@@ -231,6 +263,8 @@ public class OpenAIModelDoc extends AbstractDoc {
         private int embeddingModelDimensions = DEFAULT_EMBEDDING_MODEL_DIMENSIONS;
         private HttpClientConfig httpClientConfiguration;
         private List<McpToolServerConfig> mcpToolServers;
+        private boolean toolsEnabled = true;
+        private int maxToolDefinitions;
 
         private Builder() {
         }
@@ -246,6 +280,8 @@ public class OpenAIModelDoc extends AbstractDoc {
             this.embeddingModelDimensions = openAIModelDoc.embeddingModelDimensions;
             this.httpClientConfiguration = openAIModelDoc.httpClientConfiguration;
             this.mcpToolServers = openAIModelDoc.mcpToolServers;
+            this.toolsEnabled = openAIModelDoc.toolsEnabled;
+            this.maxToolDefinitions = openAIModelDoc.maxToolDefinitions;
         }
 
         public Builder description(final String description) {
@@ -293,6 +329,16 @@ public class OpenAIModelDoc extends AbstractDoc {
             return self();
         }
 
+        public Builder toolsEnabled(final boolean toolsEnabled) {
+            this.toolsEnabled = toolsEnabled;
+            return self();
+        }
+
+        public Builder maxToolDefinitions(final int maxToolDefinitions) {
+            this.maxToolDefinitions = maxToolDefinitions;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -315,7 +361,9 @@ public class OpenAIModelDoc extends AbstractDoc {
                     reasoningEffort,
                     embeddingModelDimensions,
                     httpClientConfiguration,
-                    mcpToolServers);
+                    mcpToolServers,
+                    toolsEnabled,
+                    maxToolDefinitions);
         }
     }
 }

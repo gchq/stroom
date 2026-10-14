@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
@@ -97,6 +98,7 @@ class McpAgentChat {
     }
 
     ChatResponse chat(final ChatModel chatModel,
+                      final OpenAIModelDoc modelDoc,
                       final int chatId,
                       final List<ChatMessage> messages,
                       final McpToolset toolset,
@@ -105,8 +107,12 @@ class McpAgentChat {
                       final TaskContext taskContext,
                       final int attempt,
                       final StringBuilder debugLog) {
-        final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>(builtInTools.toolMap());
-        addMcpTools(tools, toolset);
+        final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>();
+        if (modelDoc == null || modelDoc.isToolsEnabled()) {
+            tools.putAll(builtInTools.toolMap());
+            addMcpTools(tools, toolset);
+            limitTools(tools, NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getMaxToolDefinitions, 0), chatId);
+        }
         final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
         if (tools.isEmpty()) {
             LOGGER.debug(() -> "chat: no tools available for chatId=" + chatId + ", making a plain call");
@@ -193,6 +199,24 @@ class McpAgentChat {
                                   + "tool and will not be offered");
             }
         });
+    }
+
+    /**
+     * Leaves out the tools past the model's tool budget, keeping the built-in tools (which come first).
+     */
+    static void limitTools(final Map<ToolSpecification, ToolExecutor> tools,
+                           final int maxToolDefinitions,
+                           final int chatId) {
+        if (maxToolDefinitions <= 0 || tools.size() <= maxToolDefinitions) {
+            return;
+        }
+        final int total = tools.size();
+        final List<ToolSpecification> excess = tools.keySet().stream()
+                .skip(maxToolDefinitions)
+                .toList();
+        excess.forEach(tools::remove);
+        LOGGER.info(() -> "chat: chatId=" + chatId + " offering " + maxToolDefinitions + " of " + total
+                          + " tools, as that is the model's limit");
     }
 
     /**

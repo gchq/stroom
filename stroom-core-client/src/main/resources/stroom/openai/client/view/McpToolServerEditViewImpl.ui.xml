@@ -59,6 +59,16 @@
             <g:TextBox ui:field="deniedTools" width="400px"
                        title="Patterns for the tools that must never be offered to the model."/>
         </form:FormGroup>
+        <form:FormGroup identity="mcpToolServerTrusted"
+                        helpText="Whether this server is trusted. The MCP tool annotations (e.g. read-only) of an untrusted server are ignored, so all of its tools ask the user before running, unless a tool policy says otherwise.">
+            <tickbox:CustomCheckBox ui:field="trusted" label="Trusted"/>
+        </form:FormGroup>
+        <form:FormGroup identity="mcpToolServerToolPolicies"
+                        label="Tool policies"
+                        helpText="One rule per line, 'pattern = policy', e.g. 'find_* = Allow' or 'reprocess_* = Ask every time'. Policies: Allow, Ask, Ask every time, Deny. '*' matches any characters. The first rule that matches a tool applies.">
+            <g:TextArea ui:field="toolPolicies" width="400px" visibleLines="4"
+                        title="Tool policy rules, one per line: pattern = policy"/>
+        </form:FormGroup>
         <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px"
                   addStyleNames="allow-focus"/>
     </g:FlowPanel>

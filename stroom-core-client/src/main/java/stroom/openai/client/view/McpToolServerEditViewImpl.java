@@ -29,6 +29,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -63,6 +64,10 @@ public class McpToolServerEditViewImpl
     @UiField
     TextBox deniedTools;
     @UiField
+    CustomCheckBox trusted;
+    @UiField
+    TextArea toolPolicies;
+    @UiField
     stroom.widget.button.client.Button setHttpClientConfig;
 
     @Inject
@@ -91,6 +96,8 @@ public class McpToolServerEditViewImpl
         apiKeyValuePrefix.setEnabled(!readOnly);
         allowedTools.setEnabled(!readOnly);
         deniedTools.setEnabled(!readOnly);
+        trusted.setEnabled(!readOnly);
+        toolPolicies.setEnabled(!readOnly);
         setHttpClientConfig.setEnabled(!readOnly);
     }
 
@@ -157,6 +164,26 @@ public class McpToolServerEditViewImpl
     @Override
     public void setApiKeyValuePrefix(final String apiKeyValuePrefix) {
         this.apiKeyValuePrefix.setValue(apiKeyValuePrefix);
+    }
+
+    @Override
+    public boolean isTrusted() {
+        return trusted.getValue();
+    }
+
+    @Override
+    public void setTrusted(final boolean trusted) {
+        this.trusted.setValue(trusted);
+    }
+
+    @Override
+    public String getToolPolicies() {
+        return toolPolicies.getValue();
+    }
+
+    @Override
+    public void setToolPolicies(final String toolPolicies) {
+        this.toolPolicies.setValue(toolPolicies);
     }
 
     @Override

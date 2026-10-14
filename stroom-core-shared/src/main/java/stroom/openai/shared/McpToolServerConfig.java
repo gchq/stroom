@@ -99,6 +99,17 @@ public class McpToolServerConfig {
     @JsonProperty
     private final List<String> deniedTools;
 
+    @JsonPropertyDescription("Whether an admin trusts this server. The MCP tool annotations (e.g. readOnlyHint) of " +
+                             "an untrusted server are ignored, so all of its tools ask the user before running, " +
+                             "unless a tool policy says otherwise.")
+    @JsonProperty
+    private final boolean trusted;
+
+    @JsonPropertyDescription("Rules setting what happens when the agent wants to call this server's tools. The " +
+                             "first rule whose pattern matches the tool's name applies.")
+    @JsonProperty
+    private final List<McpToolPolicyRule> toolPolicies;
+
     @JsonCreator
     public McpToolServerConfig(
             @JsonProperty("enabled") final Boolean enabled,
@@ -110,7 +121,9 @@ public class McpToolServerConfig {
             @JsonProperty("apiKeyValuePrefix") final String apiKeyValuePrefix,
             @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration,
             @JsonProperty("allowedTools") final List<String> allowedTools,
-            @JsonProperty("deniedTools") final List<String> deniedTools) {
+            @JsonProperty("deniedTools") final List<String> deniedTools,
+            @JsonProperty("trusted") final Boolean trusted,
+            @JsonProperty("toolPolicies") final List<McpToolPolicyRule> toolPolicies) {
         this.enabled = Objects.requireNonNullElse(enabled, true);
         this.name = name;
         this.endpoint = endpoint;
@@ -121,6 +134,8 @@ public class McpToolServerConfig {
         this.httpClientConfiguration = httpClientConfiguration;
         this.allowedTools = allowedTools;
         this.deniedTools = deniedTools;
+        this.trusted = Objects.requireNonNullElse(trusted, false);
+        this.toolPolicies = toolPolicies;
     }
 
     public boolean isEnabled() {
@@ -169,6 +184,20 @@ public class McpToolServerConfig {
         return deniedTools;
     }
 
+    /**
+     * @return Whether an admin trusts this server, so its tools' MCP annotations are believed.
+     */
+    public boolean isTrusted() {
+        return trusted;
+    }
+
+    /**
+     * @return The tool policy rules, in the order they are checked, or null/empty for none.
+     */
+    public List<McpToolPolicyRule> getToolPolicies() {
+        return toolPolicies;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -187,7 +216,9 @@ public class McpToolServerConfig {
                Objects.equals(apiKeyValuePrefix, that.apiKeyValuePrefix) &&
                Objects.equals(httpClientConfiguration, that.httpClientConfiguration) &&
                Objects.equals(allowedTools, that.allowedTools) &&
-               Objects.equals(deniedTools, that.deniedTools);
+               Objects.equals(deniedTools, that.deniedTools) &&
+               trusted == that.trusted &&
+               Objects.equals(toolPolicies, that.toolPolicies);
     }
 
     @Override
@@ -201,7 +232,9 @@ public class McpToolServerConfig {
                 apiKeyValuePrefix,
                 httpClientConfiguration,
                 allowedTools,
-                deniedTools);
+                deniedTools,
+                trusted,
+                toolPolicies);
     }
 
     @Override
@@ -216,6 +249,8 @@ public class McpToolServerConfig {
                ", httpClientConfiguration=" + httpClientConfiguration +
                ", allowedTools=" + allowedTools +
                ", deniedTools=" + deniedTools +
+               ", trusted=" + trusted +
+               ", toolPolicies=" + toolPolicies +
                '}';
     }
 
@@ -239,6 +274,8 @@ public class McpToolServerConfig {
         private HttpClientConfig httpClientConfiguration;
         private List<String> allowedTools;
         private List<String> deniedTools;
+        private boolean trusted;
+        private List<McpToolPolicyRule> toolPolicies;
 
         private Builder() {
         }
@@ -254,6 +291,8 @@ public class McpToolServerConfig {
             this.httpClientConfiguration = config.httpClientConfiguration;
             this.allowedTools = config.allowedTools;
             this.deniedTools = config.deniedTools;
+            this.trusted = config.trusted;
+            this.toolPolicies = config.toolPolicies;
         }
 
         public Builder enabled(final boolean enabled) {
@@ -306,6 +345,16 @@ public class McpToolServerConfig {
             return self();
         }
 
+        public Builder trusted(final boolean trusted) {
+            this.trusted = trusted;
+            return self();
+        }
+
+        public Builder toolPolicies(final List<McpToolPolicyRule> toolPolicies) {
+            this.toolPolicies = toolPolicies;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -322,7 +371,9 @@ public class McpToolServerConfig {
                     apiKeyValuePrefix,
                     httpClientConfiguration,
                     allowedTools,
-                    deniedTools);
+                    deniedTools,
+                    trusted,
+                    toolPolicies);
         }
     }
 }
