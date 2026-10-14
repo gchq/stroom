@@ -29,6 +29,7 @@ import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
+import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
@@ -132,6 +133,8 @@ public class AskStroomAIService {
     private final TableSummariserImpl tableSummariser;
     private final McpToolServerFactory mcpToolServerFactory;
     private final McpClientCache mcpClientCache;
+    private final AiChatRunManager runManager;
+    private final AiChatRunDao runDao;
     private final McpAgentChat mcpAgentChat;
 
     @Inject
@@ -149,7 +152,9 @@ public class AskStroomAIService {
                               final TableSummariserImpl tableSummariser,
                               final McpToolServerFactory mcpToolServerFactory,
                               final McpClientCache mcpClientCache,
-                              final McpAgentChat mcpAgentChat) {
+                              final McpAgentChat mcpAgentChat,
+                              final AiChatRunManager runManager,
+                              final AiChatRunDao runDao) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -164,6 +169,8 @@ public class AskStroomAIService {
         this.tableSummariser = tableSummariser;
         this.mcpToolServerFactory = mcpToolServerFactory;
         this.mcpClientCache = mcpClientCache;
+        this.runManager = runManager;
+        this.runDao = runDao;
         this.mcpAgentChat = mcpAgentChat;
     }
 
@@ -195,39 +202,48 @@ public class AskStroomAIService {
             }
         }
 
-        // Stage 2: If a user message is present, process the question.
+        // Stage 2: If a user message is present, start a run to answer it in the background. The client
+        // follows its progress by polling, so the request returns straight away.
         if (request.getMessage() != null) {
-            aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, request.getMessage());
-
-            String responseText;
-            try {
-                responseText = processQuestion(request);
-
-                if (responseText != null) {
-                    aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText);
-                    final String rt = responseText;
-                    LOGGER.debug(() -> "Response stored for chatId=" + chatId
-                                       + " responseLength=" + rt.length());
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
-                if (isTimeoutError(e)) {
-                    responseText = "The AI model took too long to respond and the request "
-                                   + "timed out. This can happen with complex questions, large "
-                                   + "context, or reasoning models. You can increase the timeout "
-                                   + "in the OpenAI Model document's HTTP Client Configuration "
-                                   + "settings (timeout field).";
-                } else {
-                    responseText = e.getMessage();
-                }
-                aiService.storeMessage(chatId, AiMessageType.ERROR, responseText);
-            }
-
-            return new AskStroomAiResponse(responseText);
+            runManager.start(chatId, run -> {
+                aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, request.getMessage());
+                answerQuestion(chatId, request);
+            });
         }
 
-        // Context-only request (attachment created, no question yet).
+        // The answer (if there is a question) is delivered by polling.
         return new AskStroomAiResponse(null);
+    }
+
+    /**
+     * Works out the answer to the question in the request and stores it, or the error, in the chat.
+     */
+    private void answerQuestion(final int chatId, final AskStroomAiRequest request) {
+        String responseText;
+        try {
+            responseText = processQuestion(request);
+
+            if (responseText != null) {
+                aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText);
+                final String rt = responseText;
+                LOGGER.debug(() -> "Response stored for chatId=" + chatId
+                                   + " responseLength=" + rt.length());
+            }
+        } catch (final TaskTerminatedException e) {
+            throw e;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            if (isTimeoutError(e)) {
+                responseText = "The AI model took too long to respond and the request "
+                               + "timed out. This can happen with complex questions, large "
+                               + "context, or reasoning models. You can increase the timeout "
+                               + "in the OpenAI Model document's HTTP Client Configuration "
+                               + "settings (timeout field).";
+            } else {
+                responseText = e.getMessage();
+            }
+            aiService.storeMessage(chatId, AiMessageType.ERROR, responseText);
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -1524,15 +1540,15 @@ public class AskStroomAIService {
                 .filter(msg -> msg.getMessageType() != AiMessageType.WORKING)
                 .toList();
 
-        // The conversation is complete when nothing is working on it and all attachments have
-        // finished downloading. Asking whether a WORKING message is in place says that; asking
-        // whether one happens to be among the new messages does not, as a client that has already
-        // seen it would be told the work had finished.
+        // The conversation is complete when no run is active and all attachments have finished
+        // downloading.
+        final AiChatRun run = runDao.getLatest(chatId).orElse(null);
+        final boolean runActive = run != null && run.isActive();
         final boolean attachmentsComplete = attachments.stream()
                 .noneMatch(a -> a.getStatus() == AiAttachmentStatus.PENDING
                                 || a.getStatus() == AiAttachmentStatus.DOWNLOADING);
-        final boolean complete = workingMessage == null && attachmentsComplete;
-        return new AiChatPollResponse(newMessages, attachments, workingMessage, complete);
+        final boolean complete = !runActive && attachmentsComplete;
+        return new AiChatPollResponse(newMessages, attachments, workingMessage, complete, run);
     }
 
     // ---------------------------------------------------------------------
