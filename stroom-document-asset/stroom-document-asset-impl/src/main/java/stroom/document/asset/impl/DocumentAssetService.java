@@ -505,6 +505,35 @@ public class DocumentAssetService {
         }
     }
 
+    /// Copies the live assets of a document into a document that has just been created as a copy
+    /// of it, for a document store's `copyDocument`.
+    ///
+    /// [#copyAssetsToDoc] cannot serve that purpose: it requires EDIT on the destination, but the
+    /// explorer only grants permissions on a copy after the store's `copyDocument` has returned,
+    /// so for anyone but an administrator the check failed - leaving a half-made copy behind. Here
+    /// the caller needs only VIEW on the source, which is what copying the document itself needs,
+    /// and nothing is checked on the destination.
+    ///
+    /// Only call this with a destination the calling store has itself just created.
+    ///
+    /// @param fromDocRef The document being copied. Must not be null.
+    /// @param newDocRef  The copy the calling store has just created. Must not be null.
+    /// @throws IOException         If something goes wrong.
+    /// @throws PermissionException If the user doesn't have VIEW permission on the source.
+    public void copyAssetsToNewDoc(final DocRef fromDocRef,
+                                   final DocRef newDocRef)
+        throws IOException, PermissionException {
+
+        LOGGER.debug("Copying assets from {} to new document {}", fromDocRef, newDocRef);
+
+        if (securityContext.hasDocumentPermission(fromDocRef, DocumentPermission.VIEW)) {
+            dao.copyLiveAssets(fromDocRef.getUuid(), newDocRef.getUuid());
+        } else {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to copy the source document");
+        }
+    }
+
     /**
      * Deletes the assets associated with a document.
      * Called when the document is deleted.

@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocInitialisationHandler;
@@ -240,6 +241,13 @@ public class FloorMapInitPresenter
                                      final TaskMonitorFactory tmf) {
         final DocRef factsDocRef = factsStorePresenter.getSelectedEntityReference();
         final DocRef eventsDocRef = eventsStorePresenter.getSelectedEntityReference();
+        if (factsDocRef == null || eventsDocRef == null) {
+            // The OK button stays disabled until both are chosen, but OK is reachable by other
+            // routes than the button, so the dialog must not save a map with no stores whatever
+            // the route. Reset, or the dialog is left with both buttons dead.
+            AlertEvent.fireWarn(this, "Choose both a Facts Store and an Events Store.", e::reset);
+            return;
+        }
 
         // No state-type check: the picker is restricted to FloorMapEventStoreDoc, and that type
         // always carries TEMPORAL_STATE - its constructor sets it regardless of what it is given.

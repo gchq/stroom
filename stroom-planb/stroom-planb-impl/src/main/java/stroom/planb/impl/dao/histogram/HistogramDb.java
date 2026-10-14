@@ -156,6 +156,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                     zoneId,
                     temporalIndex);
 
+            TemporalKeySerdeFactory.checkNotTerminatedString(settings.getKeySchema().getKeyType(), "histogram");
             final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
                     doc,
                     settings.getKeySchema().getKeyType(),

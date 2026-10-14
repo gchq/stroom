@@ -261,6 +261,20 @@ class TestFloorMapGroup {
                 .isEqualTo("#123456");
     }
 
+    /// Regression test: a hand-edited group colour was drawn into the canvas SVG unchecked, so any
+    /// paint value - a `url(...)` reference, say - reached it. It is now held to the same rule as
+    /// every other colour on the canvas.
+    @Test
+    void testColourOrDefaultReplacesAnInvalidColour() {
+        for (final String invalid : List.of("url(#x)", "red", "#12345g", "123456", "#12", "#1234567890")) {
+            assertThat(new FloorMapGroup("g1", "A", invalid, null).findColourOrDefault())
+                    .as("colour %s", invalid)
+                    .isEqualTo(FloorMapGroup.DEFAULT_COLOUR);
+        }
+        assertThat(new FloorMapGroup("g1", "A", "#ABC", null).findColourOrDefault())
+                .isEqualTo("#ABC");
+    }
+
     // ------------------------------------------------------------------------
     // Equality — the document's dirty check diffs whole documents
     // ------------------------------------------------------------------------

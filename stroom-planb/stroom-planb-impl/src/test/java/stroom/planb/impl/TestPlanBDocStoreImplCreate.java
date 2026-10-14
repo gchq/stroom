@@ -17,6 +17,7 @@
 package stroom.planb.impl;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.memory.MemoryPersistence;
@@ -26,6 +27,9 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.util.shared.EntityServiceException;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,7 +50,8 @@ class TestPlanBDocStoreImplCreate {
                 new StoreFactoryImpl(new MemoryPersistence(), null, securityContext, null, () -> null),
                 new PlanBDocSerialiser(new Serialiser2FactoryImpl()),
                 securityContext,
-                () -> null);
+                () -> null,
+                new PlanBStoreNames(securityContext, () -> Mockito.mock(DocFinder.class), Set.of(PlanBDoc.TYPE)));
     }
 
     @Test

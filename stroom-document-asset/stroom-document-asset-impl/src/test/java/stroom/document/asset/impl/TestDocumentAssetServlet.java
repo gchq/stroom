@@ -16,6 +16,10 @@
 
 package stroom.document.asset.impl;
 
+import stroom.docref.DocRef;
+import stroom.floormap.shared.FloorMapDoc;
+import stroom.visualisation.shared.VisualisationDoc;
+
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -75,7 +79,7 @@ class TestDocumentAssetServlet {
 
     @Test
     void anSvgIsServedAsADownloadAndCannotExecute() {
-        final Map<String, String> headers = setSecurityHeaders(DocumentAssetServlet.SVG_MIMETYPE);
+        final Map<String, String> headers = setSecurityHeaders(DocumentAssetServlet.SVG_MIMETYPE, true);
 
         // Navigating to an SVG asset makes it a document, where its own <script> elements run against
         // the Stroom origin with the viewing user's session. Downloading instead of rendering stops it
@@ -97,8 +101,8 @@ class TestDocumentAssetServlet {
     }
 
     @Test
-    void nonSvgAssetKeepsRenderingButLosesCapabilitiesNoAssetNeeds() {
-        final Map<String, String> headers = setSecurityHeaders("text/html");
+    void nonSvgVisualisationAssetKeepsRenderingButLosesCapabilitiesNoAssetNeeds() {
+        final Map<String, String> headers = setSecurityHeaders("text/html", true);
 
         // Visualisations serve an executable index.html from this store, so an HTML asset must not be
         // turned into a download.
@@ -125,12 +129,111 @@ class TestDocumentAssetServlet {
     void everyMimetypeInTheDefaultMapGetsAPolicy() {
         // Nothing this servlet serves should come back without a content security policy, whatever
         // extension it was uploaded with.
-        for (final String mimetype : MIMETYPES.values()) {
-            assertThat(setSecurityHeaders(mimetype))
-                    .as("policy for %s", mimetype)
+        for (final boolean visualisation : new boolean[]{true, false}) {
+            for (final String mimetype : MIMETYPES.values()) {
+                assertThat(setSecurityHeaders(mimetype, visualisation))
+                        .as("policy for %s, visualisation owner %s", mimetype, visualisation)
+                        .containsKey("Content-Security-Policy");
+            }
+            assertThat(setSecurityHeaders(DEFAULT_MIMETYPE, visualisation))
                     .containsKey("Content-Security-Policy");
         }
-        assertThat(setSecurityHeaders(DEFAULT_MIMETYPE)).containsKey("Content-Security-Policy");
+    }
+
+    /**
+     * Regression test: a mimetype with parameters was compared verbatim against
+     * {@code image/svg+xml}, so {@code image/svg+xml; charset=utf-8} got the renderable policy.
+     */
+    @Test
+    void anSvgWithMimetypeParametersIsStillInert() {
+        final Map<String, String> headers = setSecurityHeaders("image/SVG+xml; charset=utf-8", true);
+
+        assertThat(headers).containsEntry("Content-Disposition", "attachment");
+        assertThat(headers).containsEntry("Content-Security-Policy",
+                DocumentAssetServlet.CONTENT_SECURITY_POLICY_INERT);
+    }
+
+    /**
+     * Regression test: generic XML can carry XHTML-namespaced script and render as a document, but was
+     * served with the scriptable policy even for a visualisation.
+     */
+    @Test
+    void xmlIsInertEvenForAVisualisation() {
+        for (final String mimetype : new String[]{
+                "application/xml",
+                "text/xml",
+                "application/xhtml+xml",
+                "application/xml;charset=UTF-8"}) {
+            final Map<String, String> headers = setSecurityHeaders(mimetype, true);
+
+            assertThat(headers)
+                    .as("headers for %s", mimetype)
+                    .containsEntry("Content-Disposition", "attachment")
+                    .containsEntry("Content-Security-Policy", DocumentAssetServlet.CONTENT_SECURITY_POLICY_INERT);
+        }
+    }
+
+    /**
+     * Regression test: assets of any document type were served with the scriptable policy, so anyone
+     * with EDIT on a Floor Map could upload {@code x.html} and have it run on the Stroom origin with the
+     * session of a VIEW user sent the link.
+     */
+    @Test
+    void htmlAndScriptOwnedByANonVisualisationAreInertDownloads() {
+        for (final String mimetype : new String[]{
+                "text/html",
+                "text/javascript",
+                "text/css",
+                "text/plain",
+                "application/xml",
+                DocumentAssetServlet.SVG_MIMETYPE,
+                DEFAULT_MIMETYPE}) {
+            final Map<String, String> headers = setSecurityHeaders(mimetype, false);
+
+            assertThat(headers)
+                    .as("headers for %s", mimetype)
+                    .containsEntry("Content-Disposition", "attachment")
+                    .containsEntry("Content-Security-Policy", DocumentAssetServlet.CONTENT_SECURITY_POLICY_INERT)
+                    .containsEntry("X-Content-Type-Options", "nosniff");
+        }
+    }
+
+    /**
+     * A Floor Map's raster images are still viewable in a browser tab, but cannot do anything there.
+     */
+    @Test
+    void rasterImagesOwnedByANonVisualisationRenderButAreInert() {
+        for (final String mimetype : new String[]{"image/png", "image/jpeg", "image/gif", "image/webp"}) {
+            final Map<String, String> headers = setSecurityHeaders(mimetype, false);
+
+            assertThat(headers)
+                    .as("headers for %s", mimetype)
+                    .doesNotContainKey("Content-Disposition")
+                    .containsEntry("Content-Security-Policy", DocumentAssetServlet.CONTENT_SECURITY_POLICY_INERT);
+        }
+    }
+
+    @Test
+    void onlyAVisualisationMayServeExecutableContent() {
+        assertThat(DocumentAssetServlet.mayServeExecutableContent(
+                new DocRef(VisualisationDoc.TYPE, "uuid1")))
+                .isTrue();
+        assertThat(DocumentAssetServlet.mayServeExecutableContent(
+                new DocRef(FloorMapDoc.TYPE, "uuid2")))
+                .isFalse();
+        assertThat(DocumentAssetServlet.mayServeExecutableContent(
+                new DocRef("SomeFutureType", "uuid3")))
+                .isFalse();
+    }
+
+    @Test
+    void baseMimetypeDropsParametersAndCase() {
+        assertThat(DocumentAssetServlet.baseMimetype("image/SVG+XML; charset=utf-8"))
+                .isEqualTo("image/svg+xml");
+        assertThat(DocumentAssetServlet.baseMimetype(" text/html "))
+                .isEqualTo("text/html");
+        assertThat(DocumentAssetServlet.baseMimetype(null))
+                .isEmpty();
     }
 
     // --------------------------------------------------------------------------------
@@ -144,10 +247,11 @@ class TestDocumentAssetServlet {
     /**
      * Calls the servlet's header logic against a response that records what it was given.
      *
-     * @param mimetype The mimetype the asset is being served with.
+     * @param mimetype      The mimetype the asset is being served with.
+     * @param visualisation Whether the owning document is a Visualisation.
      * @return The headers that were set, keyed on header name.
      */
-    private Map<String, String> setSecurityHeaders(final String mimetype) {
+    private Map<String, String> setSecurityHeaders(final String mimetype, final boolean visualisation) {
         final Map<String, String> headers = new HashMap<>();
         final HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
         Mockito.doAnswer(invocation -> {
@@ -155,7 +259,7 @@ class TestDocumentAssetServlet {
             return null;
         }).when(response).setHeader(Mockito.anyString(), Mockito.anyString());
 
-        DocumentAssetServlet.setSecurityHeaders(response, mimetype);
+        DocumentAssetServlet.setSecurityHeaders(response, mimetype, visualisation);
         return headers;
     }
 }

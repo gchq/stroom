@@ -33,6 +33,10 @@ public class ResizableOkCancelContent extends Composite implements DialogButtons
     private static final Binder binder = GWT.create(Binder.class);
     private final HideRequestUiHandlers uiHandlers;
 
+    /// Whether the presenter allows OK, as set by [#setEnabled(DialogAction, boolean)]. Kept apart
+    /// from the button's own state, which [#setEnabled(boolean)] toggles around every hide request.
+    private boolean okAllowed = true;
+
     @UiField
     Button ok;
     @UiField
@@ -49,6 +53,7 @@ public class ResizableOkCancelContent extends Composite implements DialogButtons
 
     public void setContent(final Widget widget) {
         content.setWidget(widget);
+        okAllowed = true;
         ok.setEnabled(true);
         cancel.setEnabled(true);
     }
@@ -60,6 +65,11 @@ public class ResizableOkCancelContent extends Composite implements DialogButtons
 
     @Override
     public void onDialogAction(final DialogAction action) {
+        // Ctrl+Enter reaches here without going through the button, so a disabled OK has to be
+        // honoured here as well as on the button itself.
+        if (action == DialogAction.OK && !okAllowed) {
+            return;
+        }
         setEnabled(false);
         if (action == DialogAction.OK) {
             ok.setLoading(true);
@@ -85,13 +95,14 @@ public class ResizableOkCancelContent extends Composite implements DialogButtons
 
     @Override
     public void setEnabled(final boolean enabled) {
-        ok.setEnabled(enabled);
+        ok.setEnabled(enabled && okAllowed);
         cancel.setEnabled(enabled);
     }
 
     @Override
     public void setEnabled(final DialogAction action, final boolean enabled) {
         if (DialogAction.OK.equals(action)) {
+            okAllowed = enabled;
             ok.setEnabled(enabled);
         } else if (DialogAction.CANCEL.equals(action)) {
             cancel.setEnabled(enabled);

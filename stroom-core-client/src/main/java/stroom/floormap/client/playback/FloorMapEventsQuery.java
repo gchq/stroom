@@ -82,8 +82,7 @@ public final class FloorMapEventsQuery {
     ///
     /// Existing documents keep whatever alias their stored query text uses, so a map written
     /// before this change still needs its query edited by hand — one word — or it stays on the
-    /// fallback. Matching by a fixed name at all is the weakness; see
-    /// `docs/task-floormap-events-column-mapping.md`.
+    /// fallback. Matching by a fixed name at all is the weakness.
     public static final String EVENT_TYPE_COLUMN = FloorMapEventRole.TYPE.getDefaultColumn();
 
     /// Result column holding the event status.

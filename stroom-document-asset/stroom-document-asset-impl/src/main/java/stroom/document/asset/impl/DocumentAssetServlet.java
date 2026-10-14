@@ -28,6 +28,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.PermissionException;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import com.google.common.util.concurrent.Striped;
 import jakarta.inject.Inject;
@@ -75,15 +76,17 @@ import java.util.concurrent.locks.Lock;
  * <p>
  * <b>Residual risk.</b> Anything served from here that a browser treats as a document runs on the
  * Stroom origin with the viewing user's session - cookie, REST API, localStorage and the parent DOM.
- * Uploaded HTML and JS are therefore executable <i>by design</i>: a visualisation's {@code index.html}
- * is the document inside the dashboard's visualisation iframe and has to run its own scripts to
- * implement the {@code visualisationManager} postMessage contract. {@link #setSecurityHeaders} closes
- * the accidental case (an SVG reached by top-level navigation) and removes capabilities no asset needs,
- * but it cannot close the deliberate one, because a same-origin frame can simply call back into its
- * parent. So a user who can edit a document can upload content that executes with any viewing user's
- * session. Preconditions are edit permission on the document plus VIEW for the victim, which makes it
- * an authenticated-insider vector rather than an anonymous one - but shared visualisations and shared
- * floor maps are exactly the case where one user authors content that others open.
+ * Uploaded HTML and JS owned by a <i>Visualisation</i> are therefore executable <i>by design</i>: a
+ * visualisation's {@code index.html} is the document inside the dashboard's visualisation iframe and
+ * has to run its own scripts to implement the {@code visualisationManager} postMessage contract.
+ * Assets owned by any other document type (a Floor Map's background images and icons, for one) have
+ * no such need, so {@link #setSecurityHeaders} serves them all inert. For visualisations it closes
+ * the accidental case (an SVG or XML file reached by top-level navigation) and removes capabilities
+ * no asset needs, but it cannot close the deliberate one, because a same-origin frame can simply call
+ * back into its parent. So a user who can edit a Visualisation can upload content that executes with
+ * any viewing user's session. Preconditions are edit permission on the Visualisation plus VIEW for
+ * the victim, which makes it an authenticated-insider vector rather than an anonymous one - but
+ * shared visualisations are exactly the case where one user authors content that others open.
  * </p>
  * <p>
  * Genuinely closing it needs the asset store to stop being same-origin, or the frame to be sandboxed.
@@ -175,6 +178,23 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
     static final String SVG_MIMETYPE = "image/svg+xml";
 
     /**
+     * Generic XML mimetypes. An XML document can carry XHTML-namespaced {@code <script>} elements that
+     * run when it is rendered, so it is treated like an SVG.
+     */
+    private static final Set<String> XML_MIMETYPES = Set.of("application/xml", "text/xml");
+
+    /**
+     * Suffix shared by every XML-based mimetype, e.g. {@code image/svg+xml}, {@code application/xhtml+xml}.
+     */
+    private static final String XML_MIMETYPE_SUFFIX = "+xml";
+
+    /**
+     * Prefix of the mimetypes that can be rendered directly without any risk of script execution,
+     * once the scriptable {@code image/svg+xml} is excluded.
+     */
+    private static final String IMAGE_MIMETYPE_PREFIX = "image/";
+
+    /**
      * Policy for assets that no browser should ever execute. An SVG served as a document can run
      * its own {@code <script>} elements against the Stroom origin, so scripting is denied outright
      * and the response is sandboxed into an opaque origin. Inline styles stay allowed because SVGs
@@ -184,8 +204,8 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
     static final String CONTENT_SECURITY_POLICY_INERT = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
 
     /**
-     * Policy for every other asset. Visualisations legitimately serve executable HTML from this
-     * store, so scripting cannot be denied here. What is denied is the set of capabilities no asset
+     * Policy for every other asset of a Visualisation. Visualisations legitimately serve executable
+     * HTML from this store, so scripting cannot be denied here. What is denied is the set of capabilities no asset
      * needs: plugins, form submission, and - the valuable one - re-pointing the document base, which
      * would otherwise let an asset resolve its own relative URLs against another origin.
      */
@@ -413,6 +433,7 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
                 final String etagValid = request.getHeader(ETAG_VALID_HEADER);
 
                 final String mimetype = getMimetype(path, mimetypes, defaultMimetype);
+                final boolean ownerMayServeExecutableContent = mayServeExecutableContent(docRef);
 
                 if (etagValid != null && (etagValid.equals(eTag))) {
                     response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
@@ -421,14 +442,14 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
                     // A client updates the headers it has cached from a revalidation response, so these
                     // have to be sent here too. Omitting them lets an entry cached before this code
                     // existed carry on being served without them.
-                    setSecurityHeaders(response, mimetype);
+                    setSecurityHeaders(response, mimetype, ownerMayServeExecutableContent);
                 } else {
                     try (final InputStream dataStream = getInputStreamForAsset(docId, path)) {
                         response.setContentType(mimetype);
                         response.setStatus(HttpServletResponse.SC_OK);
                         response.setHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE_2S);
                         response.setHeader(ETAG_HEADER, eTag);
-                        setSecurityHeaders(response, mimetype);
+                        setSecurityHeaders(response, mimetype, ownerMayServeExecutableContent);
                         try (final ServletOutputStream responseStream = response.getOutputStream()) {
                             dataStream.transferTo(responseStream);
                         }
@@ -509,6 +530,51 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
     }
 
     /**
+     * Whether assets owned by the given document may be served in a form the browser will execute.
+     * <p>
+     * Only a Visualisation needs that: its {@code index.html} runs inside the dashboard's
+     * visualisation frame. Every other owner (a Floor Map, say) uses its assets as images and data,
+     * so allowing script there would only let anyone with EDIT on the document plant script that runs
+     * on the Stroom origin with the session of whoever is sent the link.
+     * </p>
+     *
+     * @param ownerDocRef The document that owns the asset. Must not be null.
+     * @return True only for a Visualisation.
+     */
+    static boolean mayServeExecutableContent(final DocRef ownerDocRef) {
+        return VisualisationDoc.TYPE.equals(ownerDocRef.getType());
+    }
+
+    /**
+     * Reduces a mimetype to its lower-cased base type, dropping any parameters, so that
+     * {@code image/SVG+XML; charset=utf-8} is recognised as {@code image/svg+xml}.
+     *
+     * @param mimetype The mimetype, possibly with parameters. May be null.
+     * @return The bare, lower-cased type; empty if the input was null.
+     */
+    static String baseMimetype(final String mimetype) {
+        if (mimetype == null) {
+            return "";
+        }
+        final int paramIndex = mimetype.indexOf(';');
+        final String base = paramIndex == -1
+                ? mimetype
+                : mimetype.substring(0, paramIndex);
+        return base.trim().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Whether the mimetype is XML-based markup that can carry script when rendered as a document:
+     * SVG, XHTML and generic XML.
+     *
+     * @param baseMimetype A mimetype already reduced by {@link #baseMimetype(String)}. Must not be null.
+     */
+    private static boolean isScriptableMarkup(final String baseMimetype) {
+        return XML_MIMETYPES.contains(baseMimetype)
+               || baseMimetype.endsWith(XML_MIMETYPE_SUFFIX);
+    }
+
+    /**
      * Adds the headers that stop an asset being executed as a document on the Stroom origin.
      * <p>
      * Anything this servlet serves that a browser treats as a document runs with the viewing user's
@@ -517,22 +583,40 @@ public class DocumentAssetServlet extends HttpServlet implements IsServlet {
      * narrower policy is set here. {@code setHeader} replaces rather than appends, and this servlet
      * runs after the filter, so these values win for asset responses.
      * </p>
+     * <p>
+     * An asset is served inert - the {@link #CONTENT_SECURITY_POLICY_INERT} policy, which denies script
+     * and sandboxes the response - unless its owner may serve executable content (see
+     * {@link #mayServeExecutableContent}) and it is not scriptable XML markup. An inert asset that is
+     * not a plain raster image is also sent as an attachment, so navigating to it downloads it rather
+     * than rendering it. Browsers ignore that header for subresource loads, so an {@code <img>} or an
+     * SVG {@code <image>} referencing the asset is unaffected.
+     * </p>
      *
-     * @param response The response to add the headers to. Must not be null.
-     * @param mimetype The mimetype the asset is being served with. Must not be null.
+     * @param response                       The response to add the headers to. Must not be null.
+     * @param mimetype                       The mimetype the asset is being served with. May carry
+     *                                       parameters, e.g. {@code ; charset=utf-8}.
+     * @param ownerMayServeExecutableContent Whether the owning document may serve executable content,
+     *                                       from {@link #mayServeExecutableContent}.
      */
-    static void setSecurityHeaders(final HttpServletResponse response, final String mimetype) {
+    static void setSecurityHeaders(final HttpServletResponse response,
+                                   final String mimetype,
+                                   final boolean ownerMayServeExecutableContent) {
         response.setHeader(CONTENT_TYPE_OPTIONS_HEADER, CONTENT_TYPE_OPTIONS_NOSNIFF);
 
-        if (SVG_MIMETYPE.equals(mimetype)) {
-            // Force a download rather than a render. Browsers ignore this header for subresource
-            // loads, so an <img> or an SVG <image> referencing the asset is unaffected - those render
-            // in the SVG image context, where scripts never run. It only bites where the asset would
-            // have become a document, which is the case we are closing.
-            response.setHeader(CONTENT_DISPOSITION_HEADER, CONTENT_DISPOSITION_ATTACHMENT);
-            response.setHeader(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_INERT);
-        } else {
+        final String baseMimetype = baseMimetype(mimetype);
+        final boolean scriptableMarkup = isScriptableMarkup(baseMimetype);
+
+        if (ownerMayServeExecutableContent && !scriptableMarkup) {
             response.setHeader(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_ASSET);
+        } else {
+            final boolean rasterImage = baseMimetype.startsWith(IMAGE_MIMETYPE_PREFIX) && !scriptableMarkup;
+            if (!rasterImage) {
+                // Force a download rather than a render. It only bites where the asset would have
+                // become a document, which is the case we are closing.
+                response.setHeader(CONTENT_DISPOSITION_HEADER, CONTENT_DISPOSITION_ATTACHMENT);
+            }
+            // A backstop should the response become a document regardless.
+            response.setHeader(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_INERT);
         }
     }
 

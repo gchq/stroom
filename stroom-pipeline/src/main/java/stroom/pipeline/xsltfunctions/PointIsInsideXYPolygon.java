@@ -29,12 +29,10 @@ import net.sf.saxon.value.NumericValue;
 import java.util.ArrayList;
 import java.util.List;
 
-// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
-// Rewritten for FloorMap area tracking (commit subject "Area tracking"); a net reduction of
-// ~58 lines against upstream. The containment algorithm here is the server-side half of
+// The containment algorithm here is the server-side half of
 // stroom.floormap.shared.FloorMapGeometry and must stay in step with it - the client paints
 // areas with fill-rule="evenodd" and this must agree, or what looks filled does not test as
-// inside. Do not take upstream's version without re-checking FloorMapGeometry.
+// inside.
 class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
 
     @Override

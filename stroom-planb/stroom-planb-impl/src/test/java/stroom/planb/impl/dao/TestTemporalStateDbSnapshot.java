@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * {@link TemporalStateDb#searchSnapshot} — the explicit point-in-time read behind the FloorMap
@@ -159,6 +160,27 @@ class TestTemporalStateDbSnapshot {
 
             assertThat(keysOf(results))
                     .containsExactlyInAnyOrder("door1", "door10", "door11", "door2", "door");
+        }
+    }
+
+    /**
+     * Regression test: the prefix-free precondition was documented but not checked, so a snapshot
+     * over a store with ordinary string keys silently skipped every key that extended another.
+     */
+    @Test
+    void refusesAStoreWhoseKeysAreNotPrefixFree(@TempDir final Path tempDir) {
+        final PlanBDoc stringKeyed = doc().copy()
+                .settings(new TemporalStateSettings.Builder()
+                        .maxStoreSize(ByteSize.ofGibibytes(1).getBytes())
+                        .keySchema(new TemporalStateKeySchema.Builder()
+                                .keyType(KeyType.STRING)
+                                .build())
+                        .build())
+                .build();
+        try (final TemporalStateDb db = TemporalStateDb.create(tempDir, BYTE_BUFFERS, stringKeyed, false)) {
+            assertThatThrownBy(() -> snapshot(db, T0, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining(KeyType.TERMINATED_STRING.getDisplayValue());
         }
     }
 

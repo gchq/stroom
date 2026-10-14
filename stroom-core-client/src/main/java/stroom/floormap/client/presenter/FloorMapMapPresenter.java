@@ -256,6 +256,13 @@ public class FloorMapMapPresenter
         }
     };
 
+    /// Whether the Map is the content on screen: this document's tab is fronted and the Map is its
+    /// selected inner tab. Kept by [#onContentTabVisible].
+    ///
+    /// Starts `true` because this presenter is created lazily, when the Map tab is first shown,
+    /// and the Map is the tab a floor map opens on.
+    private boolean mapOnScreen = true;
+
     /// The snapshot rows last handed to [#parseFacts], so an unchanged one is skipped.
     ///
     /// The guard is on the **rows**, not on the parsed facts: [Row] implements
@@ -737,8 +744,12 @@ public class FloorMapMapPresenter
         }
         onTimeChange(selectedTime);
         // The Map may already be the tab on screen, in which case no visibility change is coming
-        // to start this. Restarting an already-running timer is harmless.
-        factsCadenceTimer.scheduleRepeating(FACTS_CADENCE_HEARTBEAT_MS);
+        // to start this. Restarting an already-running timer is harmless. But a read also happens
+        // after a save made from another tab, and starting the timer then would poll the server
+        // every minute for a map nobody can see; the next visibility change starts it instead.
+        if (mapOnScreen) {
+            factsCadenceTimer.scheduleRepeating(FACTS_CADENCE_HEARTBEAT_MS);
+        }
     }
 
     /// {@inheritDoc}
@@ -1785,6 +1796,7 @@ public class FloorMapMapPresenter
     ///
     /// @param visible whether this document's tab is now the fronted one
     public void onContentTabVisible(final boolean visible) {
+        mapOnScreen = visible;
         if (visible) {
             refresh();
             factsCadenceTimer.scheduleRepeating(FACTS_CADENCE_HEARTBEAT_MS);
