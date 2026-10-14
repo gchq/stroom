@@ -54,13 +54,9 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     InlineSvgButton newChat;
     @UiField
-    InlineSvgButton chatHistory;
+    InlineSvgButton tabToggle;
     @UiField
-    InlineSvgButton download;
-    @UiField
-    InlineSvgButton deleteAll;
-    @UiField
-    InlineSvgButton configure;
+    InlineSvgButton menu;
     @UiField
     Label emptyPrompt;
 
@@ -86,25 +82,13 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         newChat.setSvg(SvgImage.ADD);
         newChat.setEnabled(true);
 
-        chatHistory.setText("Conversation History");
-        chatHistory.setTitle("Conversation History");
-        chatHistory.setSvg(SvgImage.HISTORY);
-        chatHistory.setEnabled(true);
+        setTabMode(false);
+        tabToggle.setEnabled(true);
 
-        download.setText("Download");
-        download.setTitle("Download");
-        download.setSvg(SvgImage.DOWN);
-        download.setEnabled(false);
-
-        deleteAll.setText("Delete All Messages");
-        deleteAll.setTitle("Delete All Messages");
-        deleteAll.setSvg(SvgImage.DELETE);
-        deleteAll.setEnabled(false);
-
-        configure.setText("Configure");
-        configure.setTitle("Configure");
-        configure.setSvg(SvgImage.SETTINGS);
-        configure.setEnabled(true);
+        menu.setText("More");
+        menu.setTitle("More");
+        menu.setSvg(SvgImage.ELLIPSES_VERTICAL);
+        menu.setEnabled(true);
 
         message.getElement().setAttribute("placeholder", "How can I help?");
 
@@ -186,13 +170,6 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         }
     }
 
-    @UiHandler("configure")
-    public void onConfigure(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onChangeConfig();
-        }
-    }
-
     @UiHandler("newChat")
     public void onNewChat(final ClickEvent event) {
         if (getUiHandlers() != null) {
@@ -200,25 +177,30 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         }
     }
 
-    @UiHandler("chatHistory")
-    public void onChatHistory(final ClickEvent event) {
+    @UiHandler("tabToggle")
+    public void onTabToggle(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onShowHistory();
+            getUiHandlers().onToggleTab();
         }
     }
 
-    @UiHandler("download")
-    public void onDownload(final ClickEvent event) {
+    @UiHandler("menu")
+    public void onMenu(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDownloadChat();
+            getUiHandlers().onShowMenu(menu.getElement());
         }
     }
 
-    @UiHandler("deleteAll")
-    public void onDeleteAll(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onDeleteAllMessages();
-        }
+    @Override
+    public void setTabMode(final boolean tab) {
+        final String text = tab
+                ? "Move Back to the Panel"
+                : "Open in a Tab";
+        tabToggle.setText(text);
+        tabToggle.setTitle(text);
+        tabToggle.setSvg(tab
+                ? SvgImage.MINIMISE
+                : SvgImage.MAXIMISE);
     }
 
     public void setTitle(final String title) {
@@ -252,16 +234,6 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public void clearContextIndicator() {
         contextIndicator.setText("");
         contextIndicator.setVisible(false);
-    }
-
-    @Override
-    public void setDownloadEnabled(final boolean enabled) {
-        download.setEnabled(enabled);
-    }
-
-    @Override
-    public void setDeleteAllEnabled(final boolean enabled) {
-        deleteAll.setEnabled(enabled);
     }
 
     private void sendMessage() {

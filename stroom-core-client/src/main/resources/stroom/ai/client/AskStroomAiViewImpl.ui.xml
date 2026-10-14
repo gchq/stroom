@@ -11,13 +11,9 @@
             <g:FlowPanel styleName="dock-min askStroomAiViewImpl-buttons">
                 <p:InlineSvgButton ui:field="newChat" text="New Conversation"
                                    addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="chatHistory" text="Conversation History"
+                <p:InlineSvgButton ui:field="tabToggle" text="Open in a Tab"
                                    addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="download" text="Download"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="deleteAll" text="Delete All Messages"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="configure" text="Configure"
+                <p:InlineSvgButton ui:field="menu" text="More"
                                    addStyleNames="allow-focus navigation-menu-button"/>
             </g:FlowPanel>
         </g:FlowPanel>

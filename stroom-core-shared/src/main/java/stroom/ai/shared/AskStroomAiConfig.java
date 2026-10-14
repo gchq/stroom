@@ -124,7 +124,10 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
             @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final Long attachmentDownloadTimeoutMs,
             @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL) final Boolean enableDebugDetail) {
         this.modelRef = modelRef;
-        this.dockType = dockType;
+        // FLOAT is no longer offered; a saved FLOAT falls back to DOCK.
+        this.dockType = dockType == DockType.FLOAT
+                ? DockType.DOCK
+                : dockType;
         this.dockLocation = dockLocation;
         this.dockSize = dockSize;
         this.tableAnalysis = tableAnalysis;
@@ -323,6 +326,9 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
     public enum DockType implements HasDisplayValue {
         DIALOG("Dialog"),
         TAB("Tab"),
+        /**
+         * No longer offered. A saved value is treated as {@link #DOCK}.
+         */
         FLOAT("Float"),
         DOCK("Dock");
 
