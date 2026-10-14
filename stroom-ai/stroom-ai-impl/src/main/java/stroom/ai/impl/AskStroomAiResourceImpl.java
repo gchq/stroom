@@ -23,6 +23,9 @@ import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
+import stroom.ai.shared.AiMemory;
+import stroom.ai.shared.AiMemoryListResponse;
+import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
@@ -31,14 +34,17 @@ import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.DeleteAiMemoryRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
+import stroom.ai.shared.SaveAiMemoryRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
 import stroom.ai.shared.UndoAiCompactionRequest;
+import stroom.ai.shared.UndoAiMemoryChangeRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
@@ -662,6 +668,118 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     @Override
     public AiChatStatusResponse getChatStatuses(final long sinceVersion) {
         return askStroomAIServiceProvider.get().getChatStatuses(sinceVersion);
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AiMemoryListResponse listMemory(final int chatId) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "listMemory"))
+                .withDescription("View the AI memory of chat " + chatId)
+                .withDefaultEventAction(ViewEventAction.builder()
+                        .addObject(chatObject(chatId))
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().listMemory(chatId))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AiMemory saveMemory(final SaveAiMemoryRequest request) {
+        final int chatId = NullSafe.getOrElse(request, SaveAiMemoryRequest::getAiChat, AiChat::getId, 0);
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "saveMemory"))
+                .withDescription("Save AI memory " + request.getPath() + " from chat " + chatId)
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(memoryObject(request.getPath()))
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().saveMemory(request))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean deleteMemory(final DeleteAiMemoryRequest request) {
+        final int chatId = NullSafe.getOrElse(request, DeleteAiMemoryRequest::getAiChat, AiChat::getId, 0);
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "deleteMemory"))
+                .withDescription("Delete AI memory " + request.getPath() + " from chat " + chatId)
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addObject(memoryObject(request.getPath()))
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().deleteMemory(request))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean undoMemoryChange(final UndoAiMemoryChangeRequest request) {
+        final int chatId = NullSafe.getOrElse(request, UndoAiMemoryChangeRequest::getAiChat, AiChat::getId, 0);
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "undoMemoryChange"))
+                .withDescription("Undo AI memory change " + request.getMessageId() + " in chat " + chatId)
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AiMemoryChange")
+                                        .withId(String.valueOf(request.getMessageId()))
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().undoMemoryChange(request))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AiToolApprovalsResponse listToolApprovals(final int chatId) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "listToolApprovals"))
+                .withDescription("View the tool approvals of AI chat " + chatId)
+                .withDefaultEventAction(ViewEventAction.builder()
+                        .addObject(chatObject(chatId))
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().listToolApprovals(chatId))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean removeToolApproval(final int chatId, final int approvalId) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "removeToolApproval"))
+                .withDescription("Remove tool approval " + approvalId + " from AI chat " + chatId)
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("AiToolApproval")
+                                .withId(String.valueOf(approvalId))
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() ->
+                        askStroomAIServiceProvider.get().removeToolApproval(chatId, approvalId))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean resetToolApprovals(final int chatId) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "resetToolApprovals"))
+                .withDescription("Remove all tool approvals from AI chat " + chatId)
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addObject(chatObject(chatId))
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().resetToolApprovals(chatId))
+                .getResultAndLog();
+    }
+
+    private static OtherObject memoryObject(final String path) {
+        return OtherObject.builder()
+                .withType("AiMemory")
+                .withName(path)
+                .build();
     }
 
     private OtherObject chatObject(final int chatId) {

@@ -25,6 +25,12 @@ import stroom.ai.client.AiConfigGeneralViewImpl;
 import stroom.ai.client.AiConfigTableAnalysisPresenter;
 import stroom.ai.client.AiConfigTableAnalysisPresenter.AiConfigTableAnalysisView;
 import stroom.ai.client.AiConfigTableAnalysisViewImpl;
+import stroom.ai.client.AiMemoryPresenter;
+import stroom.ai.client.AiMemoryPresenter.AiMemoryView;
+import stroom.ai.client.AiMemoryViewImpl;
+import stroom.ai.client.AiToolApprovalsPresenter;
+import stroom.ai.client.AiToolApprovalsPresenter.AiToolApprovalsView;
+import stroom.ai.client.AiToolApprovalsViewImpl;
 import stroom.ai.client.AskStroomAiConfigPresenter;
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiConfigViewImpl;
@@ -73,5 +79,13 @@ public class AskStroomAIModule extends AbstractPresenterModule {
                 DownloadChatPresenter.class,
                 DownloadChatView.class,
                 DownloadChatViewImpl.class);
+        bindPresenterWidget(
+                AiMemoryPresenter.class,
+                AiMemoryView.class,
+                AiMemoryViewImpl.class);
+        bindPresenterWidget(
+                AiToolApprovalsPresenter.class,
+                AiToolApprovalsView.class,
+                AiToolApprovalsViewImpl.class);
     }
 }

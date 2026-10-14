@@ -254,6 +254,100 @@ class TestAiMemoryService {
     }
 
     @Test
+    void testSaveByUser_createsAndUpdatesWithTheVersionSeen() {
+        final AiMemory created = service.saveByUser(chatId, "/memories/prefs.md", "Times in UTC.", null);
+        assertThat(created.getVersion()).isEqualTo(1);
+
+        final AiMemory updated = service.saveByUser(chatId, "/memories/prefs.md", "Times in BST.", 1);
+        assertThat(updated.getContent()).isEqualTo("Times in BST.");
+        assertThat(updated.getVersion()).isEqualTo(2);
+
+        // An edit of an older version would lose a change made since.
+        assertThatThrownBy(() -> service.saveByUser(chatId, "/memories/prefs.md", "Stale", 1))
+                .hasMessageContaining("has changed since you opened it");
+        assertThatThrownBy(() -> service.saveByUser(chatId, "/memories/new.md", "x", 3))
+                .hasMessageContaining("has changed since you opened it");
+        // The user's own edits need no approval, even in a tainted chat.
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(),
+                Mockito.eq(AiMessageType.APPROVAL_REQUEST), Mockito.anyString());
+    }
+
+    @Test
+    void testSaveByUser_invalidPathAndLimits() {
+        assertThatThrownBy(() -> service.saveByUser(chatId, "/etc/passwd", "x", null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.saveByUser(chatId, "/memories/big.md",
+                "x".repeat(AiMemoryService.USER_MAX_BYTES + 1), null))
+                .hasMessageContaining("user memory may be at most");
+    }
+
+    @Test
+    void testDeleteByUser_oneOrAFolder() {
+        service.saveByUser(chatId, "/memories/a.md", "a", null);
+        service.saveByUser(chatId, "/memories/b.md", "b", null);
+        service.saveByUser(chatId, "/memories/session/plan.md", "plan", null);
+
+        assertThatThrownBy(() -> service.deleteByUser(chatId, "/memories/a.md", 2))
+                .hasMessageContaining("has changed since you opened it");
+        service.deleteByUser(chatId, "/memories/a.md", 1);
+        assertThat(service.listAll(chatId)).extracting(AiMemory::getName).containsExactly("b.md", "plan.md");
+
+        // Clearing the user's memory leaves the chat's.
+        service.deleteByUser(chatId, "/memories/", null);
+        assertThat(service.listAll(chatId)).extracting(AiMemory::getName).containsExactly("plan.md");
+    }
+
+    @Test
+    void testUndoChange_putsBackWhatWasThereOnce() {
+        service.saveByUser(chatId, "/memories/prefs.md", "Times in UTC.", null);
+        final MemoryChange change = new MemoryChange(MemoryChange.KIND, MemoryChange.Operation.UPDATE,
+                "/memories/prefs.md", 1, "Times in UTC.", "Times in BST.", null, null);
+        assertThat(service.apply(chatId, change)).isTrue();
+        final AiChatMessage message = aiDao.storeMessage(chatId, AiMessageType.MEMORY_UPDATE,
+                JsonUtil.writeValueAsString(change, false));
+
+        service.undoChange(chatId, message.getId());
+
+        assertThat(service.listAll(chatId)).singleElement()
+                .extracting(AiMemory::getContent)
+                .isEqualTo("Times in UTC.");
+        assertThat(service.listChanges(chatId)).singleElement()
+                .satisfies(m -> assertThat(AiMemoryService.readChange(m.getMessage()).orElseThrow().isUndone())
+                        .isTrue());
+        assertThatThrownBy(() -> service.undoChange(chatId, message.getId()))
+                .hasMessageContaining("already been undone");
+    }
+
+    @Test
+    void testUndoChange_ofACreateDeletesIt() {
+        final MemoryChange change = new MemoryChange(MemoryChange.KIND, MemoryChange.Operation.CREATE,
+                "/memories/prefs.md", null, null, "Planted instructions", null, null);
+        assertThat(service.apply(chatId, change)).isTrue();
+        final AiChatMessage message = aiDao.storeMessage(chatId, AiMessageType.MEMORY_UPDATE,
+                JsonUtil.writeValueAsString(change, false));
+
+        service.undoChange(chatId, message.getId());
+
+        assertThat(service.listAll(chatId)).isEmpty();
+    }
+
+    @Test
+    void testUndoChange_notIfChangedSince() {
+        final MemoryChange change = new MemoryChange(MemoryChange.KIND, MemoryChange.Operation.CREATE,
+                "/memories/prefs.md", null, null, "Times in UTC.", null, null);
+        assertThat(service.apply(chatId, change)).isTrue();
+        final AiChatMessage message = aiDao.storeMessage(chatId, AiMessageType.MEMORY_UPDATE,
+                JsonUtil.writeValueAsString(change, false));
+        service.saveByUser(chatId, "/memories/prefs.md", "Edited by the user", 1);
+
+        assertThatThrownBy(() -> service.undoChange(chatId, message.getId()))
+                .hasMessageContaining("has changed since");
+        assertThat(service.listAll(chatId)).singleElement()
+                .extracting(AiMemory::getContent)
+                .isEqualTo("Edited by the user");
+    }
+
+    @Test
     void testPreload() {
         service.write(chatId, "/memories/prefs.md", "Times in UTC.", null);
         service.write(chatId, "/memories/session/plan.md", "1. look", null);
