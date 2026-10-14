@@ -70,7 +70,7 @@ class TestMcpToolServerFactory {
     private final UserIdentityFactory userIdentityFactory = Mockito.mock(UserIdentityFactory.class);
 
     private final McpToolServerFactory factory = new McpToolServerFactory(
-            () -> storedSecrets, null, null, () -> securityContext, () -> userIdentityFactory);
+            () -> storedSecrets, null, null, () -> securityContext, () -> userIdentityFactory, new McpClientCache());
 
     @Test
     void noneMode() {
@@ -144,8 +144,12 @@ class TestMcpToolServerFactory {
                         .endpoint("http://169.254.169.254/latest/meta-data/")
                         .build()))
                 .build();
-        assertThatThrownBy(() -> factory.createToolset(doc))
-                .isInstanceOf(IllegalArgumentException.class);
+        try (final McpToolset toolset = factory.createToolset(doc)) {
+            assertThat(toolset.isEmpty()).isTrue();
+            assertThat(toolset.getWarnings())
+                    .singleElement(org.assertj.core.api.InstanceOfAssertFactories.STRING)
+                    .contains("'ssrf' is not allowed");
+        }
     }
 
     private Map<String, String> headers(final McpToolServerConfig server) {
@@ -168,11 +172,12 @@ class TestMcpToolServerFactory {
 
             try (final McpToolset toolset = factory.createToolset(doc)) {
                 final Map<ToolSpecification, ToolExecutor> tools = toolset.tools();
+                // Tool names are prefixed with their server's name.
                 assertThat(tools.keySet())
                         .extracting(ToolSpecification::name)
-                        .containsExactly("echo");
+                        .containsExactly("s__echo");
 
-                final String result = execute(tools, "echo", "{\"text\":\"hello\"}");
+                final String result = execute(tools, "s__echo", "{\"text\":\"hello\"}");
                 assertThat(result).isEqualTo("hello (auth: Bearer secret-token)");
             }
             // Every request carried the credential.
@@ -197,7 +202,7 @@ class TestMcpToolServerFactory {
                 // Requests are sent from the HTTP client's threads, where there is no security context, so
                 // the identity must have been captured when the toolset was built.
                 Mockito.when(securityContext.getUserIdentity()).thenReturn(null);
-                execute(toolset.tools(), "echo", "{\"text\":\"hi\"}");
+                execute(toolset.tools(), "s__echo", "{\"text\":\"hi\"}");
             }
             assertThat(server.authorizationHeaders())
                     .contains("Bearer jwt-2")
@@ -224,7 +229,7 @@ class TestMcpToolServerFactory {
                 final Map<ToolSpecification, ToolExecutor> tools = toolset.tools();
                 assertThat(tools.keySet())
                         .extracting(ToolSpecification::name)
-                        .containsExactly("echo", McpToolset.LIST_RESOURCES_TOOL, McpToolset.GET_RESOURCE_TOOL);
+                        .containsExactly("s__echo", McpToolset.LIST_RESOURCES_TOOL, McpToolset.GET_RESOURCE_TOOL);
 
                 assertThat(execute(tools, McpToolset.LIST_RESOURCES_TOOL, "{}"))
                         .contains("stroom://guide/xslt")
@@ -237,12 +242,70 @@ class TestMcpToolServerFactory {
     }
 
     @Test
-    void unreachableServerIsReported() {
-        final OpenAIModelDoc doc = modelDoc("http://127.0.0.1:1/mcp", McpAuthMode.NONE, null);
+    void unreachableServerIsLeftOutAndReported() throws Exception {
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool()), List.of())) {
+            final OpenAIModelDoc doc = OpenAIModelDoc.builder()
+                    .uuid("u")
+                    .name("m")
+                    .mcpToolServers(List.of(
+                            serverConfig("down", "http://127.0.0.1:1/mcp", McpAuthMode.NONE, null),
+                            serverConfig("up", server.endpoint(), McpAuthMode.NONE, null)))
+                    .build();
 
-        assertThatThrownBy(() -> factory.createToolset(doc))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("could not be reached");
+            try (final McpToolset toolset = factory.createToolset(doc)) {
+                // The server that is up is still used.
+                assertThat(toolset.tools().keySet())
+                        .extracting(ToolSpecification::name)
+                        .containsExactly("up__echo");
+                assertThat(toolset.getWarnings())
+                        .singleElement(org.assertj.core.api.InstanceOfAssertFactories.STRING)
+                        .contains("'down' could not be reached");
+            }
+        }
+    }
+
+    @Test
+    void allowedAndDeniedToolsAreApplied() throws Exception {
+        final Tool other = Tool.builder().name("delete_all").inputSchema(Map.of()).build();
+        final SyncToolSpecification otherSpec = new SyncToolSpecification(other,
+                (exchange, request) -> CallToolResult.builder().addTextContent("deleted").build());
+
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool(), otherSpec), List.of())) {
+            final OpenAIModelDoc doc = OpenAIModelDoc.builder()
+                    .uuid("u")
+                    .name("m")
+                    .mcpToolServers(List.of(serverConfig("s", server.endpoint(), McpAuthMode.NONE, null)
+                            .copy()
+                            .deniedTools(List.of("delete_*"))
+                            .build()))
+                    .build();
+
+            try (final McpToolset toolset = factory.createToolset(doc)) {
+                assertThat(toolset.tools().keySet())
+                        .extracting(ToolSpecification::name)
+                        .containsExactly("s__echo");
+            }
+        }
+    }
+
+    @Test
+    void connectionsAreReusedWithinAChat() throws Exception {
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool()), List.of())) {
+            final OpenAIModelDoc doc = modelDoc(server.endpoint(), McpAuthMode.NONE, null);
+
+            final McpToolset first = factory.createToolset(doc, 1);
+            first.tools();
+            first.close();
+            final int requestsAfterFirst = server.authorizationHeaders().size();
+
+            final McpToolset second = factory.createToolset(doc, 1);
+            second.tools();
+            second.close();
+
+            // The same connection is used, and its tool list is cached, so no more requests were made.
+            assertThat(second.getConnections().getFirst()).isSameAs(first.getConnections().getFirst());
+            assertThat(server.authorizationHeaders()).hasSize(requestsAfterFirst);
+        }
     }
 
     private static SyncToolSpecification echoTool() {
@@ -277,13 +340,20 @@ class TestMcpToolServerFactory {
         return OpenAIModelDoc.builder()
                 .uuid("u")
                 .name("m")
-                .mcpToolServers(List.of(McpToolServerConfig.builder()
-                        .enabled(true)
-                        .name("s")
-                        .endpoint(endpoint)
-                        .authMode(authMode)
-                        .credentialName(credentialName)
-                        .build()))
+                .mcpToolServers(List.of(serverConfig("s", endpoint, authMode, credentialName)))
+                .build();
+    }
+
+    private static McpToolServerConfig serverConfig(final String name,
+                                                    final String endpoint,
+                                                    final McpAuthMode authMode,
+                                                    final String credentialName) {
+        return McpToolServerConfig.builder()
+                .enabled(true)
+                .name(name)
+                .endpoint(endpoint)
+                .authMode(authMode)
+                .credentialName(credentialName)
                 .build();
     }
 }

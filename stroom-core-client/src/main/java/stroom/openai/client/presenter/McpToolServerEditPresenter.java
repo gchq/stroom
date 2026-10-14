@@ -38,6 +38,8 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -164,6 +166,8 @@ public class McpToolServerEditPresenter
                 c.getApiKeyHeaderName(), McpToolServerConfig.DEFAULT_API_KEY_HEADER_NAME));
         getView().setApiKeyValuePrefix(c.getApiKeyValuePrefix());
         getView().setApiKeyFieldsVisible(c.getAuthMode() == McpAuthMode.API_KEY);
+        getView().setAllowedTools(joinPatterns(c.getAllowedTools()));
+        getView().setDeniedTools(joinPatterns(c.getDeniedTools()));
         this.httpClientConfiguration = c.getHttpClientConfiguration();
     }
 
@@ -178,7 +182,34 @@ public class McpToolServerEditPresenter
                 .apiKeyHeaderName(NullSafe.trim(getView().getApiKeyHeaderName()))
                 .apiKeyValuePrefix(getView().getApiKeyValuePrefix())
                 .httpClientConfiguration(httpClientConfiguration)
+                .allowedTools(splitPatterns(getView().getAllowedTools()))
+                .deniedTools(splitPatterns(getView().getDeniedTools()))
                 .build();
+    }
+
+    /**
+     * @param text Tool name patterns separated by commas, spaces or new lines.
+     * @return The patterns, or null if there are none.
+     */
+    static List<String> splitPatterns(final String text) {
+        if (NullSafe.isBlankString(text)) {
+            return null;
+        }
+        final List<String> patterns = new ArrayList<>();
+        for (final String part : text.split("[,\\s]+")) {
+            if (!part.isEmpty()) {
+                patterns.add(part);
+            }
+        }
+        return patterns.isEmpty()
+                ? null
+                : patterns;
+    }
+
+    static String joinPatterns(final List<String> patterns) {
+        return NullSafe.isEmptyCollection(patterns)
+                ? ""
+                : String.join(", ", patterns);
     }
 
     public interface McpToolServerEditView
@@ -215,5 +246,13 @@ public class McpToolServerEditPresenter
         void setApiKeyValuePrefix(String apiKeyValuePrefix);
 
         void setApiKeyFieldsVisible(boolean visible);
+
+        String getAllowedTools();
+
+        void setAllowedTools(String allowedTools);
+
+        String getDeniedTools();
+
+        void setDeniedTools(String deniedTools);
     }
 }

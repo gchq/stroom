@@ -10726,6 +10726,13 @@ components:
           - ATTACHMENT
           - DEBUG_DETAIL
           - THINKING
+          - WARNING
+        tokenCount:
+          type: integer
+          format: int32
+        turnId:
+          type: integer
+          format: int32
     AiChatPollRequest:
       type: object
       properties:
@@ -17057,6 +17064,10 @@ components:
     McpToolServerConfig:
       type: object
       properties:
+        allowedTools:
+          type: array
+          items:
+            type: string
         apiKeyHeaderName:
           type: string
         apiKeyValuePrefix:
@@ -17071,6 +17082,10 @@ components:
           - STROOM_SESSION_TOKEN
         credentialName:
           type: string
+        deniedTools:
+          type: array
+          items:
+            type: string
         enabled:
           type: boolean
         endpoint:

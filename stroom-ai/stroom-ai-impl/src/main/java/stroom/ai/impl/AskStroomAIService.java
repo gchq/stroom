@@ -131,6 +131,7 @@ public class AskStroomAIService {
     private final TaskContextFactory taskContextFactory;
     private final TableSummariserImpl tableSummariser;
     private final McpToolServerFactory mcpToolServerFactory;
+    private final McpClientCache mcpClientCache;
     private final McpAgentChat mcpAgentChat;
 
     @Inject
@@ -147,6 +148,7 @@ public class AskStroomAIService {
                               final TaskContextFactory taskContextFactory,
                               final TableSummariserImpl tableSummariser,
                               final McpToolServerFactory mcpToolServerFactory,
+                              final McpClientCache mcpClientCache,
                               final McpAgentChat mcpAgentChat) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
@@ -161,6 +163,7 @@ public class AskStroomAIService {
         this.taskContextFactory = taskContextFactory;
         this.tableSummariser = tableSummariser;
         this.mcpToolServerFactory = mcpToolServerFactory;
+        this.mcpClientCache = mcpClientCache;
         this.mcpAgentChat = mcpAgentChat;
     }
 
@@ -546,10 +549,13 @@ public class AskStroomAIService {
         final AtomicBoolean cancelled = new AtomicBoolean(false);
         registerCancellation(chatId, cancelled);
 
-        try (final McpToolset toolset = mcpToolServerFactory.createToolset(modelDoc)) {
+        try (final McpToolset toolset = mcpToolServerFactory.createToolset(modelDoc, chatId)) {
             if (!toolset.isEmpty()) {
                 LOGGER.debug(() -> "processQuestion: MCP tool servers active for chatId=" + chatId);
             }
+            // Servers that could not be reached are left out, and the user is told why.
+            toolset.getWarnings().forEach(warning ->
+                    aiService.storeMessage(chatId, AiMessageType.WARNING, warning));
 
             // Wait for any DOWNLOADING attachments to become READY.
             LOGGER.logDurationIfDebugEnabled(
@@ -1449,6 +1455,7 @@ public class AskStroomAIService {
         LOGGER.debug(() -> "deleteChat: chatId=" + chatId + " attachments=" + attachmentIds.size());
 
         aiService.deleteChat(chatId); // CASCADE deletes DB records
+        mcpClientCache.evictChat(chatId);
         attachmentFileStore.deleteAttachmentFiles(attachmentIds); // cleanup attachment files
     }
 
@@ -1716,6 +1723,9 @@ public class AskStroomAIService {
                         break;
                     case ERROR:
                         label = "**Error**";
+                        break;
+                    case WARNING:
+                        label = "**Warning**";
                         break;
                     case ATTACHMENT:
                         if (!includeDataContexts || msg.getAttachmentId() == null) {

@@ -616,6 +616,10 @@ public class AskStroomAiPresenter
                 appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
                         timeMs, nowMs, false, messageId, false);
                 break;
+            case WARNING:
+                appendMessageHtml(hb, "ai-message ai-message--warning", msg.getMessage(),
+                        timeMs, nowMs, false, messageId, false);
+                break;
             case WORKING:
                 appendWorkingMessage(hb, msg, timeMs, nowMs);
                 break;

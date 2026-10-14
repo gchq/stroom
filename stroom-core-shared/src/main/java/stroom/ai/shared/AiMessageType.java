@@ -29,7 +29,12 @@ public enum AiMessageType implements HasPrimitiveValue {
     TABLE_DATA(6),
     ATTACHMENT(7),
     DEBUG_DETAIL(8),
-    THINKING(9);
+    THINKING(9),
+    /**
+     * Something went wrong that did not stop the question being answered, e.g. an MCP tool server that
+     * could not be reached. Shown to the user but not sent to the model.
+     */
+    WARNING(10);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());
