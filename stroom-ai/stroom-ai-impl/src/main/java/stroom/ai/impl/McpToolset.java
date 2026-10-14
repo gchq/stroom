@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.openai.shared.McpToolGroupRule;
 import stroom.openai.shared.McpToolPolicy;
 import stroom.openai.shared.McpToolServerConfig;
 import stroom.util.logging.LambdaLogger;
@@ -60,6 +61,8 @@ public final class McpToolset implements AutoCloseable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(McpToolset.class);
 
     public static final McpToolset EMPTY = new McpToolset(List.of(), List.of(), true);
+    // The tool metadata key a server can use to say which group a tool is in.
+    static final String META_GROUP = "group";
 
     static final String LIST_RESOURCES_TOOL = "list_resources";
     static final String GET_RESOURCE_TOOL = "get_resource";
@@ -71,6 +74,8 @@ public final class McpToolset implements AutoCloseable {
     private final boolean ownsConnections;
     private final Set<String> readOnlyToolNames = ConcurrentHashMap.newKeySet();
     private final Map<String, McpToolInfo> toolInfos = new ConcurrentHashMap<>();
+    // The group each tool is declared to be in, by an admin's rule or by its server.
+    private final Map<String, String> declaredGroups = new ConcurrentHashMap<>();
 
     McpToolset(final List<McpServerConnection> connections,
                final List<String> warnings,
@@ -138,6 +143,7 @@ public final class McpToolset implements AutoCloseable {
                         readOnlyToolNames.add(name);
                     }
                     toolInfos.put(name, toolInfo(connection, tool, name, filter.policyFor(tool.name())));
+                    NullSafe.consume(declaredGroup(filter, tool), group -> declaredGroups.put(name, group));
                 } else {
                     LOGGER.debug(() -> "Tool '" + tool.name() + "' of MCP server '" + connection.label()
                                        + "' is not allowed");
@@ -170,6 +176,26 @@ public final class McpToolset implements AutoCloseable {
      */
     public Optional<McpToolInfo> toolInfo(final String toolName) {
         return Optional.ofNullable(toolInfos.get(toolName));
+    }
+
+    /**
+     * @param toolName The name of a tool offered by {@link #tools()}.
+     * @return The group an admin's rule, or the tool's server (as {@code _meta.group}), puts the tool in, which
+     * may be {@link McpToolGroupRule#ALWAYS_OFFERED}; or empty if neither does.
+     */
+    public Optional<String> declaredGroup(final String toolName) {
+        return Optional.ofNullable(declaredGroups.get(toolName));
+    }
+
+    private static String declaredGroup(final McpToolFilter filter, final Tool tool) {
+        final String ruleGroup = filter.groupFor(tool.name());
+        if (ruleGroup != null) {
+            return ruleGroup;
+        }
+        final Object metaGroup = NullSafe.get(tool.meta(), meta -> meta.get(META_GROUP));
+        return metaGroup instanceof final String group && !group.isBlank()
+                ? group.strip()
+                : null;
     }
 
     private static McpToolInfo toolInfo(final McpServerConnection connection,

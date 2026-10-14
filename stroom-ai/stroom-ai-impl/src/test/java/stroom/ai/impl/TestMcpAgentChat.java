@@ -27,6 +27,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -65,7 +66,8 @@ class TestMcpAgentChat {
     private final ToolConsent toolConsent = Mockito.mock(ToolConsent.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
-            Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService));
+            Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService),
+            new ToolGroups.Activations(), AiConfig::new);
 
     {
         // Tool calls run unless a test says otherwise.
@@ -267,6 +269,49 @@ class TestMcpAgentChat {
         assertThat(notUsed.requests).isEmpty();
         Mockito.verify(aiService).storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.THINKING),
                 Mockito.contains("streamed thoughts"));
+    }
+
+    @Test
+    void aGroupOfToolsIsOfferedOnceTheModelTurnsItOn() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder()
+                        .content(List.of(new TextContent("created")))
+                        .isError(false)
+                        .build());
+        final McpToolset toolset = toolset(client, namedTool("pipeline_create"), namedTool("pipeline_step"),
+                namedTool("index_create"), namedTool("index_status"));
+        final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, 2);
+        final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
+                Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService),
+                new ToolGroups.Activations(), () -> config);
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("activate_pipeline")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("2")
+                        .name("test__pipeline_create")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("Created it."));
+
+        final ChatResponse response = groupingChat.chat(model, null, 7, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(response.aiMessage().text()).isEqualTo("Created it.");
+        assertThat(model.requests.get(0).toolSpecifications()).extracting(ToolSpecification::name)
+                .contains("activate_pipeline", "activate_index")
+                .doesNotContain("test__pipeline_create");
+        assertThat(model.requests.get(1).toolSpecifications()).extracting(ToolSpecification::name)
+                .contains("test__pipeline_create", "test__pipeline_step", "activate_index")
+                .doesNotContain("activate_pipeline");
+        // Turning a group on changes nothing, so the user is not asked.
+        Mockito.verify(toolConsent, Mockito.never()).decide(Mockito.anyInt(), Mockito.eq("activate_pipeline"),
+                Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+        Mockito.verify(client).callTool(Mockito.any(CallToolRequest.class));
     }
 
     @Test
@@ -654,6 +699,14 @@ class TestMcpAgentChat {
                 taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
 
         Mockito.verifyNoInteractions(workspaceStore);
+    }
+
+    private static Tool namedTool(final String name) {
+        return Tool.builder()
+                .name(name)
+                .description("does " + name)
+                .inputSchema(Map.of("type", "object"))
+                .build();
     }
 
     private static Tool searchTool() {

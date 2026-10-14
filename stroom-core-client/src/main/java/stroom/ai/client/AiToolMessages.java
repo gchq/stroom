@@ -104,6 +104,9 @@ final class AiToolMessages {
         if (tool == null) {
             return "Called a tool";
         }
+        if (tool.startsWith("activate_")) {
+            return "Turned on the " + tool.substring("activate_".length()) + " tools";
+        }
         switch (tool) {
             case "ls":
                 return "Listed " + (path != null

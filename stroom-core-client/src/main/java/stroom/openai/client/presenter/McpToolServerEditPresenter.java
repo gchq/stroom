@@ -25,6 +25,7 @@ import stroom.http.client.presenter.HttpClientConfigPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.openai.client.presenter.McpToolServerEditPresenter.McpToolServerEditView;
 import stroom.openai.shared.McpAuthMode;
+import stroom.openai.shared.McpToolGroupRule;
 import stroom.openai.shared.McpToolPolicy;
 import stroom.openai.shared.McpToolPolicyRule;
 import stroom.openai.shared.McpToolServerConfig;
@@ -179,6 +180,7 @@ public class McpToolServerEditPresenter
         getView().setDeniedTools(joinPatterns(c.getDeniedTools()));
         getView().setTrusted(c.isTrusted());
         getView().setToolPolicies(formatPolicies(c.getToolPolicies()));
+        getView().setToolGroups(formatGroups(c.getToolGroups()));
         this.httpClientConfiguration = c.getHttpClientConfiguration();
     }
 
@@ -197,6 +199,7 @@ public class McpToolServerEditPresenter
                 .deniedTools(splitPatterns(getView().getDeniedTools()))
                 .trusted(getView().isTrusted())
                 .toolPolicies(parsePolicies(getView().getToolPolicies()))
+                .toolGroups(parseGroups(getView().getToolGroups()))
                 .build();
     }
 
@@ -245,6 +248,54 @@ public class McpToolServerEditPresenter
                 sb.append("\n");
             }
             sb.append(rule.getToolPattern()).append(" = ").append(rule.getPolicy().getDisplayValue());
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @param text Tool group rules, one per line, each 'pattern = group'. A group of '-' means always offered.
+     * @return The rules, or null if there are none.
+     * @throws IllegalArgumentException if a line cannot be understood.
+     */
+    static List<McpToolGroupRule> parseGroups(final String text) {
+        if (NullSafe.isBlankString(text)) {
+            return null;
+        }
+        final List<McpToolGroupRule> rules = new ArrayList<>();
+        for (final String rawLine : text.split("\\n")) {
+            final String line = rawLine.trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+            final int idx = line.indexOf('=');
+            final String pattern = idx > 0
+                    ? line.substring(0, idx).trim()
+                    : "";
+            final String group = idx > 0
+                    ? line.substring(idx + 1).trim()
+                    : "";
+            if (pattern.isEmpty() || group.isEmpty()) {
+                throw new IllegalArgumentException("The tool group rule '" + line + "' is not understood. Each "
+                                                   + "line must be 'pattern = group', where the group is a name, "
+                                                   + "or '-' to always offer the tools.");
+            }
+            rules.add(new McpToolGroupRule(pattern, group));
+        }
+        return rules.isEmpty()
+                ? null
+                : rules;
+    }
+
+    static String formatGroups(final List<McpToolGroupRule> rules) {
+        if (NullSafe.isEmptyCollection(rules)) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder();
+        for (final McpToolGroupRule rule : rules) {
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            sb.append(rule.getToolPattern()).append(" = ").append(rule.getGroup());
         }
         return sb.toString();
     }
@@ -333,5 +384,9 @@ public class McpToolServerEditPresenter
         String getToolPolicies();
 
         void setToolPolicies(String toolPolicies);
+
+        String getToolGroups();
+
+        void setToolGroups(String toolGroups);
     }
 }
