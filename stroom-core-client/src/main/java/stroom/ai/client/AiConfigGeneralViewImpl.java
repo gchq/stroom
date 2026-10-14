@@ -62,6 +62,7 @@ public class AiConfigGeneralViewImpl
         // Only DIALOG and DOCK modes are supported.
         dockTypeSelectionBox.addItem(DockType.DIALOG);
         dockTypeSelectionBox.addItem(DockType.DOCK);
+        dockTypeSelectionBox.addItem(DockType.TAB);
         dockTypeSelectionBox.setValue(DockType.DIALOG);
 
         dockLocationSelectionBox.addItem(DockLocation.RIGHT);
