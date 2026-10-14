@@ -23,6 +23,8 @@ import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
+import stroom.ai.shared.AiMcpPrompt;
+import stroom.ai.shared.AiMcpPromptText;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiToolApprovalsResponse;
@@ -37,6 +39,7 @@ import stroom.ai.shared.DeleteAiMemoryRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
+import stroom.ai.shared.GetAiMcpPromptRequest;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.SaveAiMemoryRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
@@ -288,6 +291,38 @@ public class AskStroomAiClient {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.setApproveEverything(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /**
+     * Lists the prompts the model's MCP servers offer, as slash commands.
+     */
+    void listMcpPrompts(final AskStroomAiConfig config,
+                        final Consumer<List<AiMcpPrompt>> consumer,
+                        final RestErrorHandler errorHandler,
+                        final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.listMcpPrompts(config))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /**
+     * Gets an MCP server's prompt, filled in.
+     */
+    void getMcpPrompt(final GetAiMcpPromptRequest request,
+                      final Consumer<AiMcpPromptText> consumer,
+                      final RestErrorHandler errorHandler,
+                      final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.getMcpPrompt(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)

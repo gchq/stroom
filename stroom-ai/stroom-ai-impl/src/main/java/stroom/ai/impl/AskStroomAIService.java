@@ -40,6 +40,8 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
+import stroom.ai.shared.AiMcpPrompt;
+import stroom.ai.shared.AiMcpPromptText;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiMessageType;
@@ -57,6 +59,7 @@ import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
+import stroom.ai.shared.GetAiMcpPromptRequest;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.SaveAiMemoryRequest;
@@ -384,6 +387,30 @@ public class AskStroomAIService {
         }
         return memoryService.answerApproval(chatId, request.getMessageId(), request.isApproved())
                == ApprovalStatus.APPROVED;
+    }
+
+    /**
+     * @param config The user's settings, for the model whose MCP servers to ask.
+     * @return The prompts the model's MCP servers offer, as slash commands. Servers that can't be reached are left
+     * out.
+     */
+    public List<AiMcpPrompt> listMcpPrompts(final AskStroomAiConfig config) {
+        final OpenAIModelDoc modelDoc = getModelDoc(config);
+        try (final McpToolset toolset = mcpToolServerFactory.createToolset(modelDoc)) {
+            return McpPrompts.commands(toolset.prompts());
+        }
+    }
+
+    /**
+     * @return An MCP server's prompt, filled in, for the user to check before sending it. It is never sent to the
+     * model without the user sending it.
+     */
+    public AiMcpPromptText getMcpPrompt(final GetAiMcpPromptRequest request) {
+        final OpenAIModelDoc modelDoc = getModelDoc(request.getConfig());
+        try (final McpToolset toolset = mcpToolServerFactory.createToolset(modelDoc)) {
+            return new AiMcpPromptText(toolset.getPrompt(request.getServer(), request.getName(),
+                    request.getArguments()));
+        }
     }
 
     /**

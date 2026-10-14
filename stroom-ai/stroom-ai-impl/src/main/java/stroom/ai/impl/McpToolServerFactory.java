@@ -27,6 +27,8 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.cert.SSLConfig;
 import stroom.util.http.HttpTlsConfiguration;
 import stroom.util.io.PathCreator;
@@ -105,6 +107,7 @@ public class McpToolServerFactory {
     private final Provider<UserIdentityFactory> userIdentityFactoryProvider;
     private final Provider<McpElicitations> elicitationsProvider;
     private final Provider<AiConfig> aiConfigProvider;
+    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final McpClientCache mcpClientCache;
 
     @Inject
@@ -115,8 +118,10 @@ public class McpToolServerFactory {
                          final Provider<UserIdentityFactory> userIdentityFactoryProvider,
                          final McpClientCache mcpClientCache,
                          final Provider<McpElicitations> elicitationsProvider,
-                         final Provider<AiConfig> aiConfigProvider) {
+                         final Provider<AiConfig> aiConfigProvider,
+                         final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
         this.storedSecretsProvider = storedSecretsProvider;
+        this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.elicitationsProvider = elicitationsProvider;
         this.aiConfigProvider = aiConfigProvider;
         this.httpConfigResolver = httpConfigResolver;
@@ -293,6 +298,14 @@ public class McpToolServerFactory {
                                                               final String label,
                                                               final AtomicReference<UserIdentity> userIdentity) {
         if (server.getAuthMode() == McpAuthMode.STROOM_SESSION_TOKEN) {
+            // Only an external identity provider gives Stroom a token another server can check (U3).
+            if (NullSafe.get(openIdConfigurationProvider.get(), OpenIdConfiguration::getIdentityProviderType)
+                != IdpType.EXTERNAL_IDP) {
+                throw new RuntimeException("The tools of MCP tool server '" + label + "' are unavailable: passing "
+                                           + "your sign-in through to it needs Stroom to use an external "
+                                           + "identity provider. Ask an administrator. Built-in tools still "
+                                           + "work.");
+            }
             if (userIdentity.get() == null) {
                 throw new RuntimeException("MCP tool server '" + label
                                            + "': there is no authenticated Stroom user to pass a token through for");
