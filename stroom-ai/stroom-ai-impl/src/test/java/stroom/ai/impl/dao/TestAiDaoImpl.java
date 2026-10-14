@@ -21,6 +21,7 @@ import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiMessageType;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
@@ -158,5 +159,33 @@ class TestAiDaoImpl {
     @Test
     void testGetUsage_unknownChat() {
         assertThat(aiDao.getUsage(-1)).isEqualTo(new stroom.ai.impl.AiDao.ChatUsage(null, null, null, 0, 0));
+    }
+
+    @Test
+    void testChatStatusesAndReading() {
+        final AiChat older = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChat newer = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        aiDao.createChat(UserRef.builder().uuid("user2").build());
+        aiDao.storeMessage(older.getId(), AiMessageType.USER_MESSAGE, "q");
+        final AiChatMessage answer = aiDao.storeMessage(older.getId(), AiMessageType.AI_RESPONSE, "a");
+        final long version = aiDao.getStatusVersion("user1");
+
+        final List<AiChatStatus> statuses = aiDao.getChatStatuses("user1", 10);
+
+        // Only the user's own chats, most recently changed first.
+        assertThat(statuses).extracting(AiChatStatus::getChatId)
+                .containsExactly(older.getId(), newer.getId());
+        assertThat(statuses.getFirst().isUnread()).isTrue();
+        assertThat(statuses.getLast().isUnread()).isFalse();
+        assertThat(statuses.getFirst().getRunStatus()).isNull();
+
+        aiDao.markRead(older.getId(), answer.getId());
+
+        assertThat(aiDao.getChatStatuses("user1", 10).getFirst().isUnread()).isFalse();
+        // Reading changes the version, so the client hears about it.
+        assertThat(aiDao.getStatusVersion("user1")).isNotEqualTo(version);
+        // Marking an earlier message read does not go backwards.
+        aiDao.markRead(older.getId(), 1);
+        assertThat(aiDao.getChatStatuses("user1", 10).getFirst().isUnread()).isFalse();
     }
 }

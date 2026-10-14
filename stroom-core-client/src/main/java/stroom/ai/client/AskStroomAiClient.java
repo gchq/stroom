@@ -21,6 +21,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
+import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
@@ -271,14 +272,29 @@ public class AskStroomAiClient {
 
     void pollMessages(final int chatId,
                       final int lastSeenMessageId,
+                      final boolean markRead,
                       final Consumer<AiChatPollResponse> consumer,
                       final RestErrorHandler errorHandler,
                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
-                .method(res -> res.pollMessages(chatId, new AiChatPollRequest(lastSeenMessageId)))
+                .method(res -> res.pollMessages(chatId, new AiChatPollRequest(lastSeenMessageId, markRead)))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    void getChatStatuses(final long sinceVersion,
+                         final Consumer<AiChatStatusResponse> consumer,
+                         final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.getChatStatuses(sinceVersion))
+                .onSuccess(consumer)
+                .onFailure(error -> {
+                    // Badges are only a convenience, so a failure is ignored until the next check.
+                })
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

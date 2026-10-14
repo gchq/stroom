@@ -90,6 +90,15 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         menu.setSvg(SvgImage.ELLIPSES_VERTICAL);
         menu.setEnabled(true);
 
+        // The title opens the chat switcher.
+        chatTitle.addStyleName("askStroomAiViewImpl-switcher");
+        chatTitle.setTitle("Switch Conversation");
+        chatTitle.addClickHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onShowSwitcher(chatTitle.getElement());
+            }
+        });
+
         message.getElement().setAttribute("placeholder", "How can I help?");
 
         run.setText(SEND_BUTTON_NORMAL_TEXT);

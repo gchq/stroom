@@ -21,6 +21,7 @@ import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.util.shared.ResultPage;
@@ -142,6 +143,24 @@ public interface AiDao {
      * @return The messages of that type, in any chat, made before the time.
      */
     List<AiChatMessage> getMessagesOfTypeBefore(AiMessageType messageType, long before);
+
+    /**
+     * Records that the user has seen the chat's messages up to one.
+     */
+    void markRead(int chatId, int messageId);
+
+    /**
+     * @param userUuid A user.
+     * @param limit    The most to return.
+     * @return The statuses of the user's chats, most recently changed first.
+     */
+    List<AiChatStatus> getChatStatuses(String userUuid, int limit);
+
+    /**
+     * @param userUuid A user.
+     * @return A number that changes whenever the status of any of the user's chats might have.
+     */
+    long getStatusVersion(String userUuid);
 
     /**
      * @param timeMs A time.

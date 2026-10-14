@@ -24,6 +24,7 @@ import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
+import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -41,6 +42,7 @@ import stroom.alert.client.event.PromptEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.LocationManager;
+import stroom.data.client.event.AskStroomAiBadgeEvent;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.dispatch.client.ExportFileCompleteUtil;
@@ -53,11 +55,15 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.Task;
+import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
+import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
+import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -78,6 +84,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
@@ -90,6 +97,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +108,23 @@ public class AskStroomAiPresenter
         extends MyPresenter<AskStroomAiView, AskStroomAiProxy>
         implements AskStroomAiUiHandlers, ShowAskStroomAiEvent.Handler, AskStroomAiEvent.Handler {
 
+    private static final int ACTIVE_POLL_MS = 1_000;
+    private static final int HIDDEN_POLL_MS = 5_000;
+    private static final int STATUS_POLL_MS = 15_000;
+    private static final int HIDDEN_STATUS_POLL_MS = 60_000;
+    private static final int MAX_SWITCHER_CHATS = 15;
+    // For background checks, which should not show a spinner.
+    private static final TaskMonitorFactory SILENT = () -> new TaskMonitor() {
+        @Override
+        public void onStart(final Task task) {
+            // Silent.
+        }
+
+        @Override
+        public void onEnd(final Task task) {
+            // Silent.
+        }
+    };
     private static final DockBehaviour DEFAULT_DOCK_BEHAVIOUR = new DockBehaviour(DockType.DOCK, DockLocation.RIGHT);
     private static final int DEFAULT_DOCK_WIDTH = 350;
     private static final int DEFAULT_DOCK_HEIGHT = 250;
@@ -135,6 +160,10 @@ public class AskStroomAiPresenter
     private boolean titleGenerated;
     private int lastSeenMessageId;
 
+    // The statuses of the user's chats, for the switcher and badges.
+    private List<AiChatStatus> chatStatuses = new ArrayList<>();
+    private long statusVersion;
+    private Timer statusTimer;
     // How the chat is shown: DOCK, DIALOG or TAB, or null if hidden.
     private DockType shownAs;
     private boolean docked;
@@ -186,6 +215,14 @@ public class AskStroomAiPresenter
     @Override
     protected void onBind() {
         super.onBind();
+        // Keep the badges and the switcher up to date, while the page is open.
+        statusTimer = new Timer() {
+            @Override
+            public void run() {
+                checkChatStatuses();
+            }
+        };
+        statusTimer.schedule(0);
         registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event ->
                 writeModel()));
 
@@ -402,10 +439,6 @@ public class AskStroomAiPresenter
                         .enabled(hasChat)
                         .command(this::onRename))
                 .withIconMenuItem(item -> item
-                        .icon(SvgImage.HISTORY)
-                        .text("Conversation History…")
-                        .command(this::onShowHistory))
-                .withIconMenuItem(item -> item
                         .icon(SvgImage.COLLAPSE_UP)
                         .text("Compact Context…")
                         .enabled(hasChat)
@@ -430,6 +463,121 @@ public class AskStroomAiPresenter
                 .items(items)
                 .popupPosition(new PopupPosition(new Rect(target).grow(3), PopupLocation.BELOW))
                 .fire(this);
+    }
+
+    /**
+     * @return True if the user is looking at the chat: it is shown, and the browser tab is not hidden.
+     */
+    private boolean isLooking() {
+        return shownAs != null && !DocumentVisibility.isHidden();
+    }
+
+    /**
+     * Checks on the user's chats, for the switcher and the badge on the toolbar button, then checks again later
+     * (less often when the browser tab is hidden). The server sends nothing if nothing has changed.
+     */
+    private void checkChatStatuses() {
+        askStroomAiClient.getChatStatuses(statusVersion, response -> {
+            statusVersion = response.getVersion();
+            if (response.getStatuses() != null) {
+                chatStatuses = new ArrayList<>(response.getStatuses());
+                fireBadge();
+            }
+            statusTimer.schedule(DocumentVisibility.isHidden()
+                    ? HIDDEN_STATUS_POLL_MS
+                    : STATUS_POLL_MS);
+        }, SILENT);
+    }
+
+    private void fireBadge() {
+        int needsYou = 0;
+        int busy = 0;
+        int unread = 0;
+        for (final AiChatStatus status : chatStatuses) {
+            if (status.isNeedsYou()) {
+                needsYou++;
+            } else if (status.isBusy()) {
+                busy++;
+            } else if (status.isUnread()
+                       && (currentChat == null || currentChat.getId() != status.getChatId() || !isLooking())) {
+                unread++;
+            }
+        }
+        AskStroomAiBadgeEvent.fire(this, needsYou, busy, unread);
+    }
+
+    @Override
+    public void onShowSwitcher(final Element target) {
+        final List<Item> items = new ArrayList<>();
+        int priority = 0;
+        for (final AiChatStatus status : chatStatuses) {
+            if (items.size() >= MAX_SWITCHER_CHATS) {
+                break;
+            }
+            final boolean current = currentChat != null && currentChat.getId() == status.getChatId();
+            items.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(switcherIcon(status))
+                    .highlight(current)
+                    .text(NullSafe.nonBlankStringElse(status.getTitle(), "New conversation") + switcherNote(status))
+                    .command(() -> loadChat(new AiChat(status.getChatId(), 0L, status.getUpdateTimeMs(), null,
+                            status.getTitle())))
+                    .build());
+        }
+        if (!items.isEmpty()) {
+            items.add(new Separator(priority++));
+        }
+        items.add(new IconMenuItem.Builder()
+                .priority(priority++)
+                .icon(SvgImage.ADD)
+                .text("New Conversation")
+                .command(this::onNewChat)
+                .build());
+        items.add(new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.HISTORY)
+                .text("All Conversations…")
+                .command(this::onShowHistory)
+                .build());
+        ShowMenuEvent.builder()
+                .items(items)
+                .popupPosition(new PopupPosition(new Rect(target).grow(3), PopupLocation.BELOW))
+                .fire(this);
+    }
+
+    private static SvgImage switcherIcon(final AiChatStatus status) {
+        if (status.isNeedsYou()) {
+            return SvgImage.ALERT;
+        } else if (status.isBusy()) {
+            return SvgImage.SPINNER_SPINNING;
+        } else if (status.getRunStatus() == AiChatRunStatus.FAILED) {
+            return SvgImage.ERROR;
+        } else if (status.getRunStatus() == AiChatRunStatus.INTERRUPTED
+                   || status.getRunStatus() == AiChatRunStatus.STOPPED) {
+            return SvgImage.PAUSE;
+        } else if (status.isUnread()) {
+            return SvgImage.DOT;
+        }
+        return SvgImage.AI;
+    }
+
+    private static String switcherNote(final AiChatStatus status) {
+        if (status.isNeedsYou()) {
+            return " - needs you";
+        } else if (status.getRunStatus() == AiChatRunStatus.QUEUED) {
+            return " - queued";
+        } else if (status.isBusy()) {
+            return " - working";
+        } else if (status.getRunStatus() == AiChatRunStatus.FAILED) {
+            return " - failed";
+        } else if (status.getRunStatus() == AiChatRunStatus.INTERRUPTED) {
+            return " - interrupted";
+        } else if (status.isUnread()) {
+            return " - unread";
+        }
+        return status.isApproveEverything()
+                ? " - approving everything"
+                : "";
     }
 
     private void onRename() {
@@ -775,7 +923,7 @@ public class AskStroomAiPresenter
             return;
         }
         final int chatId = currentChat.getId();
-        askStroomAiClient.pollMessages(chatId, lastSeenMessageId, response -> {
+        askStroomAiClient.pollMessages(chatId, lastSeenMessageId, isLooking(), response -> {
             if (currentChat == null || currentChat.getId() != chatId) {
                 // The user has moved to another chat since this poll was sent. Rendering the reply
                 // now would put one chat's messages into another's.
@@ -811,14 +959,20 @@ public class AskStroomAiPresenter
             // Keep polling while this client is waiting on a request, while the chat's agent run is
             // still active or data is still coming down (the server reports both as not complete), or
             // while messages are still arriving.
-            if (requestInFlight || !response.isComplete() || hasNewMessages) {
-                // If the conversation is still in-flight, schedule another poll after 1s.
+            // A run waiting for the user (e.g. to approve something) does nothing until they answer, which starts
+            // polling again, so there is no need to keep asking.
+            final boolean waitingForUser = response.getRun() != null
+                                           && response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER;
+            if (!waitingForUser && (requestInFlight || !response.isComplete() || hasNewMessages)) {
+                // Poll often while the run works and the user is looking, less often when they are not.
                 new com.google.gwt.user.client.Timer() {
                     @Override
                     public void run() {
                         pollForNewMessages();
                     }
-                }.schedule(1000);
+                }.schedule(isLooking()
+                        ? ACTIVE_POLL_MS
+                        : HIDDEN_POLL_MS);
             } else {
                 polling = false;
                 getView().setSendButtonLoadingState(false);
@@ -1420,7 +1574,7 @@ public class AskStroomAiPresenter
             // For historical chats, attachments are already in their final state (READY/ERROR).
             // Also picks up an agent run that is still working on a question, e.g. after the page was
             // refreshed, and carries on following it.
-            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, response -> {
+            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, isLooking(), response -> {
                 updateAttachmentStatuses(response.getAttachments());
                 updateRunStatus(response.getRun());
                 if (!response.isComplete() && currentChat != null && currentChat.getId() == chat.getId()) {

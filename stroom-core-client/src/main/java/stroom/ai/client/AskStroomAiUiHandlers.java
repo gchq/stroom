@@ -42,4 +42,11 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
      * @param target The element to show it below.
      */
     void onShowMenu(Element target);
+
+    /**
+     * Shows the chat switcher (the user's chats, with where each has got to) below an element.
+     *
+     * @param target The element to show it below.
+     */
+    void onShowSwitcher(Element target);
 }

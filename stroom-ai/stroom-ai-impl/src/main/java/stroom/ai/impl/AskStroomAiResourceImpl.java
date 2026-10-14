@@ -21,6 +21,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
+import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
@@ -654,6 +655,12 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                         .build())
                 .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().setApproveEverything(request))
                 .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.UNLOGGED) // Polled for badges, and only reads the user's own chats.
+    @Override
+    public AiChatStatusResponse getChatStatuses(final long sinceVersion) {
+        return askStroomAIServiceProvider.get().getChatStatuses(sinceVersion);
     }
 
     private OtherObject chatObject(final int chatId) {

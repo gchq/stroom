@@ -22,6 +22,7 @@ import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.util.shared.ResultPage;
@@ -192,5 +193,20 @@ public class MockAiDao implements AiDao {
     @Override
     public List<AiChatMessage> getMessagesOfTypeBefore(final AiMessageType messageType, final long before) {
         return List.of();
+    }
+
+    @Override
+    public void markRead(final int chatId, final int messageId) {
+        // Not tracked by the mock.
+    }
+
+    @Override
+    public List<AiChatStatus> getChatStatuses(final String userUuid, final int limit) {
+        return List.of();
+    }
+
+    @Override
+    public long getStatusVersion(final String userUuid) {
+        return 0;
     }
 }
