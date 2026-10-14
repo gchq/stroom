@@ -29,6 +29,7 @@ import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -104,10 +106,11 @@ class McpAgentChat {
                       final int attempt,
                       final StringBuilder debugLog) {
         final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>(builtInTools.toolMap());
-        tools.putAll(mcpTools(toolset));
+        addMcpTools(tools, toolset);
+        final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
         if (tools.isEmpty()) {
             LOGGER.debug(() -> "chat: no tools available for chatId=" + chatId + ", making a plain call");
-            return chatModel.chat(messages);
+            return chatModel.chat(conversation);
         }
 
         final List<ToolSpecification> toolSpecifications = List.copyOf(tools.keySet());
@@ -116,7 +119,6 @@ class McpAgentChat {
                                    .map(ToolSpecification::name)
                                    .collect(Collectors.joining(", ")));
 
-        final List<ChatMessage> conversation = new ArrayList<>(messages);
         ChatResponse response = null;
         for (int iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
             if (cancelled.get() || taskContext.isTerminated()) {
@@ -173,12 +175,39 @@ class McpAgentChat {
     }
 
     /**
-     * The MCP tools/resources for this chat, or an empty map when the model has no MCP tool servers.
+     * Adds the MCP tools/resources for this chat. Built-in tools win if a name is already taken, so a server
+     * cannot replace one of Stroom's own tools.
      */
-    private Map<ToolSpecification, ToolExecutor> mcpTools(final McpToolset toolset) {
-        return toolset.isEmpty()
-                ? Map.of()
-                : toolset.tools();
+    private void addMcpTools(final Map<ToolSpecification, ToolExecutor> tools, final McpToolset toolset) {
+        if (toolset.isEmpty()) {
+            return;
+        }
+        final Set<String> names = tools.keySet().stream()
+                .map(ToolSpecification::name)
+                .collect(Collectors.toSet());
+        toolset.tools().forEach((specification, executor) -> {
+            if (names.add(specification.name())) {
+                tools.put(specification, executor);
+            } else {
+                LOGGER.warn(() -> "MCP tool '" + specification.name() + "' has the same name as a built-in "
+                                  + "tool and will not be offered");
+            }
+        });
+    }
+
+    /**
+     * @return The conversation, with a note telling the model about any MCP servers that are unavailable, so
+     * it does not assume their tools exist.
+     */
+    static List<ChatMessage> withUnavailableServersNote(final List<ChatMessage> messages,
+                                                        final List<String> warnings) {
+        final List<ChatMessage> conversation = new ArrayList<>(messages);
+        if (!warnings.isEmpty()) {
+            final String note = "Note: some MCP tool servers are unavailable for this question, so their tools "
+                                + "cannot be used:\n- " + String.join("\n- ", warnings);
+            conversation.add(Math.min(1, conversation.size()), SystemMessage.from(note));
+        }
+        return conversation;
     }
 
     private String execute(final Map<ToolSpecification, ToolExecutor> tools,

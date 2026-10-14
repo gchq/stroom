@@ -15507,7 +15507,15 @@
           },
           "messageType" : {
             "type" : "string",
-            "enum" : [ "USER_MESSAGE", "AI_RESPONSE", "WORKING", "ERROR", "DASHBOARD_DATA", "QUERY_DATA", "TABLE_DATA", "ATTACHMENT", "DEBUG_DETAIL", "THINKING" ]
+            "enum" : [ "USER_MESSAGE", "AI_RESPONSE", "WORKING", "ERROR", "DASHBOARD_DATA", "QUERY_DATA", "TABLE_DATA", "ATTACHMENT", "DEBUG_DETAIL", "THINKING", "WARNING" ]
+          },
+          "tokenCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "turnId" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -23368,6 +23376,48 @@
         },
         "required" : [ "type" ]
       },
+      "McpToolServerConfig" : {
+        "type" : "object",
+        "properties" : {
+          "allowedTools" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "apiKeyHeaderName" : {
+            "type" : "string"
+          },
+          "apiKeyValuePrefix" : {
+            "type" : "string"
+          },
+          "authMode" : {
+            "type" : "string",
+            "enum" : [ "NONE", "BEARER_TOKEN", "API_KEY", "BASIC", "STROOM_SESSION_TOKEN" ]
+          },
+          "credentialName" : {
+            "type" : "string"
+          },
+          "deniedTools" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "endpoint" : {
+            "type" : "string"
+          },
+          "httpClientConfiguration" : {
+            "$ref" : "#/components/schemas/HttpClientConfig"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
       "Message" : {
         "type" : "object",
         "properties" : {
@@ -23980,6 +24030,12 @@
           "maxContextWindowTokens" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "mcpToolServers" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/McpToolServerConfig"
+            }
           },
           "modelId" : {
             "type" : "string"
