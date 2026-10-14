@@ -49,6 +49,12 @@ public class AiChatPollResponse {
      */
     @JsonProperty
     private final AiContextUsage contextUsage;
+    /**
+     * The answer and reasoning the model is writing now, as STREAMING_ANSWER and STREAMING_THINKING messages, or
+     * an empty list. Reported on every poll, as they are updated in place.
+     */
+    @JsonProperty
+    private final List<AiChatMessage> streamingMessages;
 
     @JsonCreator
     public AiChatPollResponse(@JsonProperty("newMessages") final List<AiChatMessage> newMessages,
@@ -56,13 +62,15 @@ public class AiChatPollResponse {
                               @JsonProperty("workingMessage") final AiChatMessage workingMessage,
                               @JsonProperty("complete") final Boolean complete,
                               @JsonProperty("run") final AiChatRun run,
-                              @JsonProperty("contextUsage") final AiContextUsage contextUsage) {
+                              @JsonProperty("contextUsage") final AiContextUsage contextUsage,
+                              @JsonProperty("streamingMessages") final List<AiChatMessage> streamingMessages) {
         this.newMessages = newMessages;
         this.attachments = attachments;
         this.workingMessage = workingMessage;
         this.complete = Objects.requireNonNullElse(complete, false);
         this.run = run;
         this.contextUsage = contextUsage;
+        this.streamingMessages = streamingMessages;
     }
 
     public List<AiChatMessage> getNewMessages() {
@@ -90,5 +98,12 @@ public class AiChatPollResponse {
 
     public AiContextUsage getContextUsage() {
         return contextUsage;
+    }
+
+    /**
+     * @return The answer and reasoning being written now, or null/empty if none.
+     */
+    public List<AiChatMessage> getStreamingMessages() {
+        return streamingMessages;
     }
 }

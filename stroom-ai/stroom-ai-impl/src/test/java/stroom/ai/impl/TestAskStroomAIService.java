@@ -19,6 +19,8 @@ package stroom.ai.impl;
 import stroom.ai.api.AiService;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatPollRequest;
+import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
@@ -63,10 +65,11 @@ class TestAskStroomAIService {
     private final ToolApprovalService toolApprovalService = Mockito.mock(ToolApprovalService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+    private final ContextAssembler contextAssembler = Mockito.mock(ContextAssembler.class);
 
     private AskStroomAIService service() {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, () -> null, null, null,
-                null, null, null, null, null, runManager, runDao, null, null, null, null, compactor, null,
+                null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null, compactor, null,
                 toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext);
     }
 
@@ -396,6 +399,38 @@ class TestAskStroomAIService {
             assertThat(status.isBusy()).isFalse();
         });
         assertThat(unchanged.getStatuses()).isNull();
+    }
+
+    @Test
+    void testPollMessages_streamedTextIsReportedAsItStandsNotAsNewMessages() {
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        Mockito.when(runDao.getLatest(1)).thenReturn(Optional.of(running));
+        Mockito.when(runDao.interruptStale(Mockito.anyLong())).thenReturn(List.of());
+        Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of());
+        Mockito.when(aiService.getWorkingMessage(1)).thenReturn(Optional.empty());
+        final AiChatMessage streamed = message(7, AiMessageType.STREAMING_ANSWER, "The answer so");
+        Mockito.when(aiService.getMessagesSince(1, 2)).thenReturn(List.of(
+                message(3, AiMessageType.TOOL_CALL, "{}"),
+                streamed));
+        Mockito.when(aiService.getStreamingMessages(1)).thenReturn(List.of(streamed));
+
+        final AiChatPollResponse response = service().pollMessages(1, new AiChatPollRequest(2, false));
+
+        assertThat(response.getNewMessages()).extracting(AiChatMessage::getId).containsExactly(3);
+        assertThat(response.getStreamingMessages()).containsExactly(streamed);
+    }
+
+    @Test
+    void testPollMessages_nothingIsStreamedWithoutAnActiveRun() {
+        Mockito.when(runDao.getLatest(1)).thenReturn(Optional.empty());
+        Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of());
+        Mockito.when(aiService.getWorkingMessage(1)).thenReturn(Optional.empty());
+        Mockito.when(aiService.getMessagesSince(1, 2)).thenReturn(List.of());
+
+        final AiChatPollResponse response = service().pollMessages(1, new AiChatPollRequest(2, false));
+
+        assertThat(response.getStreamingMessages()).isEmpty();
+        Mockito.verify(aiService, Mockito.never()).getStreamingMessages(1);
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final String text) {
