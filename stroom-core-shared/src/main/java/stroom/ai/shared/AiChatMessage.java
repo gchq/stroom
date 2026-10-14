@@ -40,6 +40,10 @@ public class AiChatMessage {
     private final Integer attachmentId;
     @JsonProperty
     private final String message;
+    @JsonProperty
+    private final int turnId;
+    @JsonProperty
+    private final Integer tokenCount;
 
     @JsonCreator
     public AiChatMessage(@JsonProperty("id") final Integer id,
@@ -47,13 +51,17 @@ public class AiChatMessage {
                          @JsonProperty("createTimeMs") final Long createTimeMs,
                          @JsonProperty("messageType") final AiMessageType messageType,
                          @JsonProperty("attachmentId") final Integer attachmentId,
-                         @JsonProperty("message") final String message) {
+                         @JsonProperty("message") final String message,
+                         @JsonProperty("turnId") final Integer turnId,
+                         @JsonProperty("tokenCount") final Integer tokenCount) {
         this.id = Objects.requireNonNullElse(id, 0);
         this.chatId = Objects.requireNonNullElse(chatId, 0);
         this.createTimeMs = Objects.requireNonNullElse(createTimeMs, 0L);
         this.messageType = messageType;
         this.attachmentId = attachmentId;
         this.message = message;
+        this.turnId = Objects.requireNonNullElse(turnId, 0);
+        this.tokenCount = tokenCount;
     }
 
     public int getId() {
@@ -80,6 +88,21 @@ public class AiChatMessage {
         return message;
     }
 
+    /**
+     * @return The id of the USER_MESSAGE that started the turn this message belongs to, or 0 if the message
+     * came before any question (e.g. an attachment).
+     */
+    public int getTurnId() {
+        return turnId;
+    }
+
+    /**
+     * @return An estimate of the number of tokens in the message, or null if not known.
+     */
+    public Integer getTokenCount() {
+        return tokenCount;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -91,12 +114,14 @@ public class AiChatMessage {
                && createTimeMs == that.createTimeMs
                && messageType == that.messageType
                && Objects.equals(attachmentId, that.attachmentId)
-               && Objects.equals(message, that.message);
+               && turnId == that.turnId
+               && Objects.equals(message, that.message)
+               && Objects.equals(tokenCount, that.tokenCount);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, chatId, createTimeMs, messageType, attachmentId, message);
+        return Objects.hash(id, chatId, createTimeMs, messageType, attachmentId, message, turnId, tokenCount);
     }
 
     @Override
@@ -108,6 +133,8 @@ public class AiChatMessage {
                ", messageType=" + messageType +
                ", attachmentId=" + attachmentId +
                ", message='" + message + '\'' +
+               ", turnId=" + turnId +
+               ", tokenCount=" + tokenCount +
                '}';
     }
 }
