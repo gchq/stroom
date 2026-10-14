@@ -55,17 +55,20 @@ public class PathwaysModule extends AbstractModule {
                 .bind(TracesResourceImpl.class)
                 .bind(TracesDocResourceImpl.class);
 
+        // Both keep data on a shared file store, so both have to say which documents are live: the
+        // cleaner trashes every uuid it finds on that store and is not told about.
         GuiceUtil.buildMultiBinder(binder(), SharedFileStoreDocStore.class)
-                .addBinding(TracesDocStoreImpl.class);
+                .addBinding(TracesDocStoreImpl.class)
+                .addBinding(PathwaysStoreImpl.class);
 
         // A trace store accumulates spans in a holding shard and moves them on to the archive
         // buckets that queries read.
         GuiceUtil.buildMapBinder(binder(), StateType.class, MergeStrategy.class)
                 .addBinding(StateType.TRACE, HoldingAreaMergeStrategy.class);
 
-        // A pathways document's work does not arrive as batches: the traces handed over to it sit in
-        // a queue of its own, and a narrowing simply falls due. Both are said through the strategy, so
-        // the merge works a pathways shard on the same terms as any other.
+        // A pathways document's shards are worked like any other's: the traces handed over to it wait
+        // in the same queue folder as every other store type's work and are found the same way, and
+        // the narrowing it needs once a day is said through the same hook retention uses.
         GuiceUtil.buildMapBinder(binder(), StateType.class, MergeStrategy.class)
                 .addBinding(StateType.PATHWAYS, PathwaysProcessor.class);
 

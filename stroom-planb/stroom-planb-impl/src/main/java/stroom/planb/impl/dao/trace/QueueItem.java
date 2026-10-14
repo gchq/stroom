@@ -95,9 +95,12 @@ public final class QueueItem {
         return NAME_FORMAT.formatted(orderKey, UUID.randomUUID());
     }
 
-    /** The name a part-written item is built under, so that only a finished one matches {@link #isItem}. */
+    /**
+     * The name a part-written item is built under. The same suffix every other part-written directory
+     * on the shared store uses, so the one sweep that tidies abandoned ones covers these too.
+     */
     public static String tmpName(final String name) {
-        return PlanBConstants.TMP_DIR_PREFIX + name;
+        return name + PlanBConstants.TMP_DIR_SUFFIX;
     }
 
     /**

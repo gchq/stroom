@@ -138,7 +138,9 @@ public class PlanBModule extends AbstractModule {
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PlanBSharedFileStoreMergeRunnable.class, builder -> builder
                         .name("Plan B Shared FS Merge")
-                        .description("Distributed merge of Plan B batches on the shared file store")
+                        .description("Works the shards of every document on a shared file store: "
+                                     + "applies the work waiting in their queues, and does whatever "
+                                     + "each store type needs doing periodically")
                         .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression())
                         .advanced(true));
 

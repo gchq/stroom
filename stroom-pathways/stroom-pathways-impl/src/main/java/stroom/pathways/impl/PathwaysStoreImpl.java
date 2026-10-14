@@ -25,6 +25,7 @@ import stroom.docstore.api.StoreFactory;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.TracesDoc;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
@@ -42,12 +43,16 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @Singleton
 public class PathwaysStoreImpl
         extends AbstractDocumentStore<PathwaysDoc>
-        implements PathwaysStore {
+        implements PathwaysStore, SharedFileStoreDocStore {
 
     private static final LambdaLogger LOGGER =
             LambdaLoggerFactory.getLogger(PathwaysStoreImpl.class);
@@ -158,7 +163,7 @@ public class PathwaysStoreImpl
             LOGGER.warn(() -> "Not a usable shared file store path: " + settings.getSharedPath());
             return false;
         }
-        return directoryExists(sharedRoot.resolve(PathwaysShardStore.SHARDS_DIR_NAME)
+        return directoryExists(sharedRoot.resolve(PlanBConstants.SHARDS_DIR_NAME)
                        .resolve(doc.getUuid()))
                || directoryExists(sharedRoot.resolve(PlanBConstants.QUEUE_DIR_NAME)
                        .resolve(doc.getUuid()));
@@ -196,5 +201,33 @@ public class PathwaysStoreImpl
                 // Ignore lock deletion failures to avoid failing the document delete itself.
             }
         }
+    }
+
+    // -------------------------------------------------------------------------
+
+    /**
+     * Every pathways document's shared path, whoever is asking.
+     *
+     * <p>Deliberately unchecked — {@link stroom.planb.impl.fs.SharedFileStoreCleaner} trashes whatever
+     * is missing from this answer, so filtering by what the caller may see would delete live data.
+     * For the same reason it throws rather than skipping a listed document it cannot read: a run that
+     * cannot tell a live document from an orphan has to be abandoned, not guessed at. A document
+     * deleted between the list and the read costs one housekeeping run, and is an orphan by the next.
+     */
+    @Override
+    public Map<Path, Set<String>> getLiveSharedPathData() {
+        final Map<Path, Set<String>> result = new HashMap<>();
+        for (final DocRef docRef : getStore().list()) {
+            final PathwaysDoc doc = getStore().readDocument(docRef);
+            if (doc == null) {
+                throw new EntityServiceException("Could not read listed pathways document " + docRef);
+            }
+            final SharedFileStoreSettings settings = doc.getSharedFileStore();
+            if (settings != null && NullSafe.isNonBlankString(settings.getSharedPath())) {
+                result.computeIfAbsent(Path.of(settings.getSharedPath()), k -> new HashSet<>())
+                        .add(doc.getUuid());
+            }
+        }
+        return result;
     }
 }

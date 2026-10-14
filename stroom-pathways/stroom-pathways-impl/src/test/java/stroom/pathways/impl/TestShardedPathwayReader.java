@@ -302,7 +302,7 @@ class TestShardedPathwayReader {
 
     private Path sharedShardDir(final String name) {
         return Path.of(doc.getSharedFileStore().getSharedPath())
-                .resolve(PathwaysShardStore.SHARDS_DIR_NAME)
+                .resolve(PlanBConstants.SHARDS_DIR_NAME)
                 .resolve(doc.getUuid())
                 .resolve(PlanBConstants.formatShardIndex(shardOf(name)));
     }

@@ -38,8 +38,8 @@ class TestSharedFileStoreTrash {
 
     @Test
     void movesEveryStageIntoOneEntry() throws IOException {
-        writeStageData(PlanBConstants.HOLDING_DIR_NAME, "0000/data.mdb");
-        writeStageData(PlanBConstants.PROCESSING_DIR_NAME, "0000/12_99/data.mdb");
+        writeStageData(PlanBConstants.SHARDS_DIR_NAME, "0000/data.mdb");
+        writeStageData(PlanBConstants.QUEUE_DIR_NAME, "0000/12_99/data.mdb");
         writeStageData(PlanBConstants.ARCHIVE_DIR_NAME, "0000/2026-08-26/data.mdb");
 
         SharedFileStoreTrash.trashDoc(sharedRoot, UUID);
@@ -51,8 +51,8 @@ class TestSharedFileStoreTrash {
         final List<Path> entries = trashEntries();
         assertThat(entries).hasSize(1);
         assertThat(entries.getFirst().getFileName().toString()).startsWith(UUID + "-");
-        assertThat(entries.getFirst().resolve(PlanBConstants.HOLDING_DIR_NAME + "/0000/data.mdb")).exists();
-        assertThat(entries.getFirst().resolve(PlanBConstants.PROCESSING_DIR_NAME + "/0000/12_99/data.mdb"))
+        assertThat(entries.getFirst().resolve(PlanBConstants.SHARDS_DIR_NAME + "/0000/data.mdb")).exists();
+        assertThat(entries.getFirst().resolve(PlanBConstants.QUEUE_DIR_NAME + "/0000/12_99/data.mdb"))
                 .exists();
         assertThat(entries.getFirst()
                 .resolve(PlanBConstants.ARCHIVE_DIR_NAME + "/0000/2026-08-26/data.mdb")).exists();
@@ -67,8 +67,8 @@ class TestSharedFileStoreTrash {
         final List<Path> entries = trashEntries();
         assertThat(entries).hasSize(1);
         assertThat(entries.getFirst().resolve(PlanBConstants.ARCHIVE_DIR_NAME)).exists();
-        assertThat(entries.getFirst().resolve(PlanBConstants.HOLDING_DIR_NAME)).doesNotExist();
-        assertThat(entries.getFirst().resolve(PlanBConstants.PROCESSING_DIR_NAME)).doesNotExist();
+        assertThat(entries.getFirst().resolve(PlanBConstants.SHARDS_DIR_NAME)).doesNotExist();
+        assertThat(entries.getFirst().resolve(PlanBConstants.QUEUE_DIR_NAME)).doesNotExist();
     }
 
     @Test
@@ -80,9 +80,9 @@ class TestSharedFileStoreTrash {
 
     @Test
     void leavesOtherDocsAlone() throws IOException {
-        writeStageData(PlanBConstants.HOLDING_DIR_NAME, "0000/data.mdb");
+        writeStageData(PlanBConstants.SHARDS_DIR_NAME, "0000/data.mdb");
         final Path otherDoc = sharedRoot
-                .resolve(PlanBConstants.HOLDING_DIR_NAME)
+                .resolve(PlanBConstants.SHARDS_DIR_NAME)
                 .resolve("doc-uuid-2")
                 .resolve("0000");
         Files.createDirectories(otherDoc);

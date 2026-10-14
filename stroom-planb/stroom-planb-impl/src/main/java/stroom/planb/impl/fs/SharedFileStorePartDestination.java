@@ -45,9 +45,9 @@ public class SharedFileStorePartDestination implements PartDestination {
 
     @Override
     public boolean transfer(final WrittenPart part, final Meta meta) {
-        // <sharedPath>/processing/<docUuid>/<shardIndex>/<metaId>_<ts>/
+        // <sharedPath>/queue/<docUuid>/<shardIndex>/<metaId>_<ts>/
         final Path processingTarget = SharedFileStore.rootOf(part.doc())
-                .resolve(PlanBConstants.PROCESSING_DIR_NAME)
+                .resolve(PlanBConstants.QUEUE_DIR_NAME)
                 .resolve(part.doc().getUuid())
                 .resolve(PlanBConstants.formatShardIndex(part.shardIndex()))
                 .resolve(meta.getId() + "_" + System.currentTimeMillis());

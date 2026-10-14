@@ -377,11 +377,11 @@ class TestSharedFileStoreTraceRoundTrip {
     }
 
     private Path processingDir(final PlanBDocument doc) {
-        return sharedRootDir.resolve(PlanBConstants.PROCESSING_DIR_NAME).resolve(doc.getUuid());
+        return sharedRootDir.resolve(PlanBConstants.QUEUE_DIR_NAME).resolve(doc.getUuid());
     }
 
     private Path holdingDir(final PlanBDocument doc) {
-        return sharedRootDir.resolve(PlanBConstants.HOLDING_DIR_NAME).resolve(doc.getUuid());
+        return sharedRootDir.resolve(PlanBConstants.SHARDS_DIR_NAME).resolve(doc.getUuid());
     }
 
     private PlanBDoc doc() {

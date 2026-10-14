@@ -30,6 +30,7 @@ import stroom.planb.impl.dao.trace.QueueItemWriter;
 import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.data.value.SpanKV;
 import stroom.planb.impl.fs.MergeContext;
+import stroom.planb.impl.fs.MergeResult;
 import stroom.planb.impl.fs.OperationMarker;
 import stroom.planb.impl.fs.ShardQueue;
 import stroom.planb.impl.serde.trace.HexStringUtil;
@@ -50,14 +51,18 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -281,11 +286,11 @@ class TestPathwaysProcessor {
         runPass();
 
         assertThat(itemsIn(1)).as("the readable items were applied and removed").isEmpty();
-        final Path quarantine = shardDir(1).resolve(ShardQueue.QUARANTINE_DIR_NAME);
-        assertThat(quarantine).isDirectory();
-        try (final Stream<Path> stream = Files.list(quarantine)) {
-            assertThat(stream.toList()).as("the bad item is kept, not destroyed").hasSize(1);
-        }
+        final Path bad = shardDir(1).resolve(QueueItem.newName(2_000L));
+        assertThat(bad).as("the bad item is kept, not destroyed").isDirectory();
+        assertThat(bad.resolve(PlanBConstants.FAILED_FILE_NAME))
+                .as("and the attempt is counted against it; enough of them and it stops being offered")
+                .exists();
     }
 
     @Test
@@ -365,9 +370,11 @@ class TestPathwaysProcessor {
                 .name("Unconfigured")
                 .build();
 
-        assertThat(processor.shardsWithOwnWork(unconfigured))
-                .as("nothing was ever written for it, so there is nothing to lock a shard for")
-                .isEmpty();
+        for (int shard = 0; shard < SHARD_COUNT; shard++) {
+            assertThat(processor.maintenanceDue(unconfigured, shard))
+                    .as("nothing was ever written for it, so there is nothing to lock a shard for")
+                    .isFalse();
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -383,13 +390,56 @@ class TestPathwaysProcessor {
      * nothing uses.
      */
     private void runPass() {
-        processor.shardsWithOwnWork(pathwaysDoc).forEach(shardIndex ->
-                securityContext.asProcessingUser(() ->
-                        clusterLockService.tryLock(processor.lockName(pathwaysDoc, shardIndex),
-                                () -> processor.mergeShard(
-                                        new MergeContext(pathwaysDoc, shardIndex,
-                                                processor.lockName(pathwaysDoc, shardIndex), false),
-                                        List.of()))));
+        final Set<Integer> shards = new LinkedHashSet<>();
+        for (int shard = 0; shard < SHARD_COUNT; shard++) {
+            if (!itemsIn(shard).isEmpty()) {
+                shards.add(shard);
+            }
+        }
+        for (int shard = 0; shard < SHARD_COUNT; shard++) {
+            if (processor.maintenanceDue(pathwaysDoc, shard)) {
+                shards.add(shard);
+            }
+        }
+
+        for (final int shardIndex : shards) {
+            final List<Path> queueDirs = itemsIn(shardIndex);
+            final String lockName = processor.lockName(pathwaysDoc, shardIndex);
+            // Asked again under the lock, as the merge does, so the answer the work acts on is the
+            // one that was true when the shard was held.
+            final boolean maintenanceDue = processor.maintenanceDue(pathwaysDoc, shardIndex);
+            securityContext.asProcessingUser(() -> clusterLockService.tryLock(lockName, () -> {
+                final MergeResult result = processor.mergeShard(
+                        new MergeContext(pathwaysDoc, shardIndex, lockName, maintenanceDue),
+                        queueDirs);
+                // What the merge does with the answer: delete what went in, count the attempt
+                // against what did not.
+                result.appliedQueueDirs().forEach(TestPathwaysProcessor::deleteDir);
+                result.failures().keySet().forEach(TestPathwaysProcessor::countFailedAttempt);
+            }));
+        }
+    }
+
+    private static void deleteDir(final Path dir) {
+        try (final Stream<Path> paths = Files.walk(dir)) {
+            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static void countFailedAttempt(final Path dir) {
+        try {
+            Files.writeString(dir.resolve(PlanBConstants.FAILED_FILE_NAME), "1");
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private void writeItem(final int shard, final long orderKey, final String traceIdHex)
@@ -444,6 +494,8 @@ class TestPathwaysProcessor {
     private void corruptItem(final int shard, final long orderKey) throws IOException {
         final Path dir = Files.createDirectories(shardDir(shard).resolve(QueueItem.newName(orderKey)));
         Files.writeString(dir.resolve(PlanBConstants.DATA_FILE_NAME), "not an lmdb file");
+        // Finished as far as anything can tell from outside, which is what makes it worth offering.
+        Files.writeString(dir.resolve(PlanBConstants.VERSION_FILE_NAME), Instant.now().toString());
     }
 
     // Through ShardQueue, so this cannot drift from where the code under test reads.
@@ -451,13 +503,20 @@ class TestPathwaysProcessor {
         return ShardQueue.of(pathwaysDoc.getSharedFileStore(), pathwaysDoc.getUuid(), shard).dir();
     }
 
-    private List<Path> itemsIn(final int shard) throws IOException {
+    // What the merge would hand to the strategy: finished, not yet merged, oldest first.
+    private List<Path> itemsIn(final int shard) {
         final Path dir = shardDir(shard);
         if (!Files.isDirectory(dir)) {
             return List.of();
         }
         try (final Stream<Path> stream = Files.list(dir)) {
-            return stream.filter(QueueItem::isItem).sorted(QueueItem.BY_ORDER_KEY).toList();
+            return stream
+                    .filter(p -> Files.exists(p.resolve(PlanBConstants.VERSION_FILE_NAME)))
+                    .filter(p -> !Files.exists(p.resolve(PlanBConstants.FAILED_FILE_NAME)))
+                    .sorted(Comparator.comparing(p -> p.getFileName().toString()))
+                    .toList();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

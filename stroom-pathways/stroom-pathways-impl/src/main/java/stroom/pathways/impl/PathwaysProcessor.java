@@ -31,7 +31,6 @@ import stroom.planb.impl.fs.MergeContext;
 import stroom.planb.impl.fs.MergeResult;
 import stroom.planb.impl.fs.MergeStrategy;
 import stroom.planb.impl.fs.OperationMarker;
-import stroom.planb.impl.fs.ShardQueue;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.SharedFileStoreSettings;
@@ -56,7 +55,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
@@ -78,7 +76,7 @@ public class PathwaysProcessor implements MergeStrategy {
      * <p>Bounded both ways because either bound alone can be wrong: a few enormous items outlast a
      * count bound, and a flood of tiny ones outlasts nothing. Kept well under the minute at which
      * {@code DbClusterLock} warns about a long hold, which also narrows the window in which a lease
-     * lost mid-batch can matter.
+     * lost part way through a hold can matter.
      *
      * <p>Both numbers are guesses until a run against real traffic replaces them.
      */
@@ -99,14 +97,14 @@ public class PathwaysProcessor implements MergeStrategy {
     private final ByteBufferFactory byteBufferFactory;
 
     private final Meter tracesApplied;
-    private final Counter itemsQuarantined;
+    private final Counter itemsFailed;
 
     /**
      * What the last pass saw, so the gauges can report it without listing the shared filesystem
      * themselves. At most one cycle stale, which is fine for a backlog, and it keeps a metrics scrape
      * off the shared mount and out of the permission checks that reading a document needs.
      */
-    private final Map<String, Backlog> backlogByDoc = new ConcurrentHashMap<>();
+    private final Map<String, Backlog> backlogByShard = new ConcurrentHashMap<>();
 
     @Inject
     public PathwaysProcessor(final MutationLog mutationLog,
@@ -129,32 +127,35 @@ public class PathwaysProcessor implements MergeStrategy {
                 .addNamePart("tracesApplied")
                 .meter()
                 .createAndRegister();
-        this.itemsQuarantined = metrics.registrationBuilder(getClass())
-                .addNamePart("itemsQuarantined")
+        this.itemsFailed = metrics.registrationBuilder(getClass())
+                .addNamePart("itemsFailed")
                 .counter()
                 .createAndRegister();
         metrics.registrationBuilder(getClass())
                 .addNamePart("queueDepth")
                 .addNamePart(Metrics.COUNT)
-                .gauge(() -> backlogByDoc.values().stream().mapToLong(Backlog::items).sum())
+                .gauge(() -> backlogByShard.values().stream().mapToLong(Backlog::items).sum())
                 .register();
         metrics.registrationBuilder(getClass())
                 .addNamePart("oldestItem")
                 .addNamePart(Metrics.AGE_MS)
-                .gauge(() -> backlogByDoc.values().stream().mapToLong(Backlog::oldestAgeMs).max().orElse(0))
+                .gauge(() -> backlogByShard.values().stream().mapToLong(Backlog::oldestAgeMs).max().orElse(0))
                 .register();
     }
 
     /**
-     * What Plan B's merge asks for when it reaches a pathways document: the shards with traces to
-     * apply or a narrowing falling due, and what to do with each.
-     *
-     * <p>A pathways document has no batches waiting for it — nothing writes to a processing folder on
-     * its behalf — so everything it has to do arrives this way.
+     * Whether this shard's model is due a narrowing — the only work a pathways document has that does
+     * not arrive as an item. A shard that has gone quiet still has to be opened for it, because
+     * narrowing is exactly what a model nobody is exercising any more needs: its paths should be
+     * falling away.
      */
     @Override
-    public Set<Integer> shardsWithOwnWork(final PlanBDocument doc) {
-        return shardsWithWork((PathwaysDoc) doc);
+    public boolean maintenanceDue(final PlanBDocument doc, final int shardIndex) {
+        final PathwaysDoc pathwaysDoc = (PathwaysDoc) doc;
+        final SharedFileStoreSettings settings = pathwaysDoc.getSharedFileStore();
+        return settings != null
+               && NullSafe.isNonBlankString(settings.getSharedPath())
+               && narrowingDue(shardStore.sharedDocDir(pathwaysDoc), shardIndex, Instant.now());
     }
 
     /**
@@ -170,81 +171,62 @@ public class PathwaysProcessor implements MergeStrategy {
      * Applies this shard's queued traces to its model, narrows the model if that is due, and
      * publishes it — inside the cluster lock the caller is holding.
      *
-     * @param batchDirs always empty. A pathways document has no batches: nothing writes to a
-     *                  processing folder on its behalf, and what it has to do is found by
-     *                  {@link #shardsWithOwnWork}.
-     * @return nothing merged and nothing failed. The queue items that went in are deleted here
-     * instead, because they can only go once the model that consumed them is safely published.
+     * @param queueDirs the traces handed over to this shard, oldest first. Empty where the shard was
+     *                  opened only because its narrowing fell due.
+     * @return what went in, so the caller can delete it now the model holding it is published, and
+     * what failed, so the attempt is counted against it. What is left out is offered again.
      */
     @Override
-    public MergeResult mergeShard(final MergeContext ctx, final List<Path> batchDirs) {
+    public MergeResult mergeShard(final MergeContext ctx, final List<Path> queueDirs) {
         final PathwaysDoc doc = (PathwaysDoc) ctx.doc();
-        final SharedFileStoreSettings settings = doc.getSharedFileStore();
-        if (settings != null && NullSafe.isNonBlankString(settings.getSharedPath())) {
-            // Looked at again now the lock is held rather than carried from before it: items arrive
-            // while a pass runs, and on a cluster another node may have narrowed this shard since.
-            drain(doc, ctx.shardIndex(), queued(doc, settings, ctx.shardIndex(), Instant.now()));
+        // Asked again once the lock was held, so this is not what was decided before it: on a cluster
+        // another node may have narrowed this shard and stamped the marker since.
+        final boolean narrowNow = ctx.maintenanceDue();
+
+        recordBacklog(doc, ctx.shardIndex(), queueDirs);
+
+        final List<Path> applied = new ArrayList<>();
+        final Map<Path, Exception> failures = new LinkedHashMap<>();
+        try {
+            shardStore.withShard(doc, ctx.shardIndex(),
+                    localDir -> work(doc, queueDirs, narrowNow, localDir, applied, failures));
+        } catch (final IOException e) {
+            // The model could not be taken down or put back, so nothing here was committed. Saying
+            // nothing was applied is the whole point: every item is offered again next cycle rather
+            // than being deleted here.
+            LOGGER.error(() -> LogUtil.message("Could not work shard {} of {}, leaving {} item(s): {}",
+                    ctx.shardIndex(), doc.getName(), queueDirs.size(), e.getMessage()), e);
+            return MergeResult.none();
         }
-        return MergeResult.none();
-    }
 
-    // The shards of one pathways document with traces queued or a narrowing falling due.
-    private Set<Integer> shardsWithWork(final PathwaysDoc doc) {
-        final SharedFileStoreSettings settings = doc.getSharedFileStore();
-        if (settings == null || NullSafe.isBlankString(settings.getSharedPath())) {
-            // Nothing has been configured, so nothing was ever written for it.
-            return Set.of();
+        if (narrowNow) {
+            // Stamped after the shard is safely back, and whether or not the narrowing changed
+            // anything — the work was done either way, and a model already as narrow as its window
+            // does not need looking at again today.
+            shardStore.sharedDocDir(doc)
+                    .ifPresent(dir -> NARROWED_MARKER.recordRun(dir, ctx.shardIndex()));
         }
-
-        final Survey survey = survey(doc, settings);
-        // What was waiting when the document was looked at, not what is left now. A shard that turns
-        // out to be held elsewhere still counts, because its items are still queued.
-        backlogByDoc.put(doc.getUuid(), survey.backlog());
-        return survey.shards().keySet();
+        // What went in, so the caller can mark those merged and delete them now the model holding
+        // them is published. What is left out is offered again next cycle.
+        return new MergeResult(applied, failures);
     }
 
-    // One shard's queue and whether its model is due a narrowing, as they stand right now.
-    private Queued queued(final PathwaysDoc doc,
-                          final SharedFileStoreSettings settings,
-                          final int shardIndex,
-                          final Instant now) {
-        final ShardQueue queue = ShardQueue.of(settings, doc.getUuid(), shardIndex);
-        return new Queued(queue,
-                queue.itemsOldestFirst().size(),
-                narrowingDue(shardStore.sharedDocDir(doc), shardIndex, now));
-    }
-
-    // One look at every shard's queue folder: which have items, how many, and how far behind the
-    // document is as a whole. Done before any lock is taken, because looking is the only way to know
-    // a shard has work and a contended tryLock costs a warning and a query against cluster_lock to
-    // report who holds it — taking the lock only where there is work is most of the difference
-    // between quiet logs and sixty a minute.
-    private Survey survey(final PathwaysDoc doc, final SharedFileStoreSettings settings) {
-        final Map<Integer, Queued> shards = new LinkedHashMap<>();
-        long items = 0;
-        long oldestAgeMs = 0;
-        final Instant now = Instant.now();
-        final Optional<Path> docDir = shardStore.sharedDocDir(doc);
-        for (int shard = 0; shard < ShardQueue.shardCount(settings); shard++) {
-            if (Thread.currentThread().isInterrupted()) {
-                LOGGER.debug("Interrupted, looking at no more shards this pass");
-                break;
-            }
-            final ShardQueue queue = ShardQueue.of(settings, doc.getUuid(), shard);
-            final List<Path> waiting = queue.itemsOldestFirst();
-            // A shard that has gone quiet still has to be opened, because narrowing is exactly what a
-            // model nobody is exercising any more needs: its paths should be falling away.
-            final boolean narrowingDue = narrowingDue(docDir, shard, now);
-            if (!waiting.isEmpty() || narrowingDue) {
-                shards.put(shard, new Queued(queue, waiting.size(), narrowingDue));
-                items += waiting.size();
-                if (!waiting.isEmpty()) {
-                    oldestAgeMs = Math.max(oldestAgeMs,
-                            now.toEpochMilli() - QueueItem.orderKeyOf(waiting.getFirst()));
-                }
+    // What was waiting for this shard when it was opened, for the gauges. Kept per shard rather than
+    // summed, because a shard another node is working is not reported here at all and its last known
+    // depth is a better answer than nothing.
+    private void recordBacklog(final PathwaysDoc doc, final int shardIndex, final List<Path> queueDirs) {
+        long oldestAgeMs = 0L;
+        if (!queueDirs.isEmpty()) {
+            try {
+                oldestAgeMs = System.currentTimeMillis() - QueueItem.orderKeyOf(queueDirs.get(0));
+            } catch (final RuntimeException e) {
+                // Something in the folder this pass is about to work is not named like an item.
+                // Worth saying, but not worth giving up the shard for: a gauge is not the work.
+                LOGGER.warn(() -> "Could not read the age of " + queueDirs.get(0) + ": " + e.getMessage());
             }
         }
-        return new Survey(shards, new Backlog(items, oldestAgeMs));
+        backlogByShard.put(doc.getUuid() + "/" + shardIndex,
+                new Backlog(queueDirs.size(), oldestAgeMs));
     }
 
     // Whether this shard has been narrowed today. A shard that never has, or whose marker cannot be
@@ -268,50 +250,19 @@ public class PathwaysProcessor implements MergeStrategy {
         return "pathways-" + pathwaysDocUuid + "-";
     }
 
-    // Applies what this hold has time for into a local copy of the shard's model, pushes the model
-    // back, then deletes exactly what went into it.
-    private void drain(final PathwaysDoc doc,
-                       final int shardIndex,
-                       final Queued shard) {
-        // Asked again now the lock is held. Whether a shard was due was worked out before locking,
-        // and on a cluster every node works that out for itself — so by the time this one has the
-        // shard, another may have narrowed it and stamped the marker a second ago.
-        final boolean narrowNow = shard.narrowingDue()
-                                  && narrowingDue(shardStore.sharedDocDir(doc), shardIndex, Instant.now());
-
-        final List<Path> applied = new ArrayList<>();
-        try {
-            shardStore.withShard(doc, shardIndex,
-                    localDir -> work(doc, shard.queue(), shard.items(), narrowNow, localDir, applied));
-        } catch (final IOException e) {
-            // The model could not be taken down or put back, so nothing here was committed. Leaving
-            // the items queued is the whole point: they are applied again by whoever gets the shard
-            // next, rather than being dropped on the floor here.
-            LOGGER.error(() -> LogUtil.message("Could not work shard {} of {}, leaving {} item(s) queued: {}",
-                    shardIndex, doc.getName(), applied.size(), e.getMessage()), e);
-            return;
-        }
-        shard.queue().delete(applied);
-        if (narrowNow) {
-            // Stamped after the shard is safely back, and whether or not the narrowing changed
-            // anything — the work was done either way, and a model already as narrow as its window
-            // does not need looking at again today.
-            shardStore.sharedDocDir(doc).ifPresent(dir -> NARROWED_MARKER.recordRun(dir, shardIndex));
-        }
-    }
-
-    // Everything this hold does to the shard, in the order it happens: the queued traces widen the
-    // model, and then the narrowing takes back whatever has fallen outside the window — so a night's
-    // widenings and the narrowing that answers them land in the history in the order they happened.
+    // Everything this hold does to the shard, in the order it happens: the waiting traces widen the
+    // model, and then the narrowing takes back whatever has fallen outside the window — so a run of
+    // widenings and the narrowing that answers them land in the history in that order.
     private boolean work(final PathwaysDoc doc,
-                         final ShardQueue queue,
-                         final int queued,
+                         final List<Path> queueDirs,
                          final boolean narrowNow,
                          final Path localDir,
-                         final List<Path> applied) {
-        // Only where there is something to apply. A shard opened because its narrowing is due has an
-        // empty queue, and applying nothing still opens the document's feed — see below.
-        boolean changed = queued > 0 && applyBatch(doc, queue, localDir, applied);
+                         final List<Path> applied,
+                         final Map<Path, Exception> failures) {
+        // A shard opened only because its narrowing is due has nothing waiting, and applying nothing
+        // still opens the document's feed.
+        boolean changed = !queueDirs.isEmpty()
+                          && applyQueuedTraces(doc, queueDirs, localDir, applied, failures);
         if (narrowNow) {
             changed = narrow(doc, localDir) || changed;
         }
@@ -336,10 +287,11 @@ public class PathwaysProcessor implements MergeStrategy {
     // Fills `applied` with the items that went in, so the caller can delete exactly those once the
     // model is safely back on the shared store. Returns whether the local model changed, which is what
     // decides whether it is worth pushing.
-    private boolean applyBatch(final PathwaysDoc doc,
-                               final ShardQueue queue,
+    private boolean applyQueuedTraces(final PathwaysDoc doc,
+                               final List<Path> queueDirs,
                                final Path localDir,
-                               final List<Path> applied) {
+                               final List<Path> applied,
+                               final Map<Path, Exception> failures) {
         final Instant deadline = Instant.now().plus(MAX_TIME_PER_HOLD);
         final Counts counts = new Counts();
 
@@ -350,13 +302,13 @@ public class PathwaysProcessor implements MergeStrategy {
                             pathwaySerde,
                             new IgnoredAttributes(doc.getIgnoredAttributes()),
                             new IgnoredSpans(doc.getIgnoredSpanNames()));
-                    for (final Path item : queue.itemsOldestFirst()) {
+                    for (final Path item : queueDirs) {
                         if (Thread.currentThread().isInterrupted()) {
                             // The lock's heartbeat interrupts us when it cannot renew. Carrying on
                             // regardless is how two nodes end up working one shard, so stop and leave
-                            // the rest queued.
-                            LOGGER.warn(() -> "Interrupted part way through " + queue
-                                              + ", leaving the rest queued");
+                            // the rest for next time.
+                            LOGGER.warn(() -> "Interrupted part way through shard "
+                                              + localDir + ", leaving the rest");
                             break;
                         }
                         if (applied.size() >= MAX_ITEMS_PER_HOLD || Instant.now().isAfter(deadline)) {
@@ -367,14 +319,16 @@ public class PathwaysProcessor implements MergeStrategy {
                                     messageReceiver, counts)) {
                                 applied.add(item);
                             } else {
-                                // Deleting is irreversible and nothing here applied, so the item is
-                                // set aside where it can still be looked at.
-                                itemsQuarantined.inc();
-                                queue.quarantine(item, "it holds a trace with no root span");
+                                // Nothing here applied and deleting is irreversible, so it is handed
+                                // back as a failure: the attempt is counted against it, and once it
+                                // has failed enough times it stops being offered.
+                                itemsFailed.inc();
+                                failures.put(item, new IllegalStateException(
+                                        "The item holds a trace with no root span"));
                             }
                         } catch (final Exception e) {
-                            itemsQuarantined.inc();
-                            queue.quarantine(item, e);
+                            itemsFailed.inc();
+                            failures.put(item, e);
                         }
                     }
                     // Once the hold's traces are in, before the commit that ends it.
@@ -389,10 +343,10 @@ public class PathwaysProcessor implements MergeStrategy {
 
         final int itemCount = applied.size();
         final long traceCount = counts.traces;
-        LOGGER.debug(() -> LogUtil.message("Applied {} item(s) holding {} trace(s) from {}",
-                itemCount, traceCount, queue));
+        LOGGER.debug(() -> LogUtil.message("Applied {} item(s) holding {} trace(s) into {}",
+                itemCount, traceCount, localDir));
 
-        // Only worth copying the model back up if a trace actually landed in it. A batch of traces
+        // Only worth copying the model back up if a trace actually landed in it. Traces
         // this shard had already seen changes nothing, and pushing then would move the whole file to
         // say so.
         return counts.changed;
@@ -452,7 +406,7 @@ public class PathwaysProcessor implements MergeStrategy {
     // --------------------------------------------------------------------------------
 
 
-    /** Mutable across the lambdas that walk a batch. */
+    /** Mutable across the lambdas that walk the waiting traces. */
     private static final class Counts {
 
         private long traces;
@@ -463,27 +417,8 @@ public class PathwaysProcessor implements MergeStrategy {
     // --------------------------------------------------------------------------------
 
 
-    /** What one look at a document's queue folders found. */
-    private record Survey(Map<Integer, Queued> shards, Backlog backlog) {
-
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /** One shard's queue, how deep it was when it was looked at, and whether it is due a narrowing. */
-    private record Queued(ShardQueue queue, int items, boolean narrowingDue) {
-
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /** What one document had waiting at the start of a pass. */
+    /** What was waiting for one shard when it was opened. */
     private record Backlog(long items, long oldestAgeMs) {
 
-        private static final Backlog NONE = new Backlog(0, 0);
     }
 }

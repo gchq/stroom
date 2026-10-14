@@ -166,20 +166,20 @@ class TestSharedFileStoreRetention {
     }
 
     // -----------------------------------------------------------------------
-    // deleteExpiredArchiveShards
+    // HoldingAreaMergeStrategy.deleteExpiredArchiveShards
     // -----------------------------------------------------------------------
 
     @Test
     void deletesArchiveBucket_pastRetention() throws IOException {
         final Path bucket = archiveBucket(Instant.now().minusSeconds(7L * 24 * 3600));
-        SharedFileStoreMergeProcessor.deleteExpiredArchiveShards(ctx(sharedDoc()));
+        HoldingAreaMergeStrategy.deleteExpiredArchiveShards(ctx(sharedDoc()));
         assertThat(bucket).doesNotExist();
     }
 
     @Test
     void keepsArchiveBucket_withinRetention() throws IOException {
         final Path bucket = archiveBucket(Instant.now());
-        SharedFileStoreMergeProcessor.deleteExpiredArchiveShards(ctx(sharedDoc()));
+        HoldingAreaMergeStrategy.deleteExpiredArchiveShards(ctx(sharedDoc()));
         assertThat(bucket).exists();
     }
 
@@ -192,7 +192,7 @@ class TestSharedFileStoreRetention {
     void deletesDayBucket_afterGranularityChangedToHour() throws IOException {
         final Path dayBucket = archiveBucket(
                 BucketGranularity.DAY, Instant.now().minusSeconds(7L * 24 * 3600));
-        SharedFileStoreMergeProcessor.deleteExpiredArchiveShards(
+        HoldingAreaMergeStrategy.deleteExpiredArchiveShards(
                 ctx(sharedDoc(BucketGranularity.HOUR)));
         assertThat(dayBucket).doesNotExist();
     }
@@ -202,7 +202,7 @@ class TestSharedFileStoreRetention {
     void deletesWeekBucket_afterGranularityChangedToDay() throws IOException {
         final Path weekBucket = archiveBucket(
                 BucketGranularity.WEEK, Instant.now().minusSeconds(30L * 24 * 3600));
-        SharedFileStoreMergeProcessor.deleteExpiredArchiveShards(
+        HoldingAreaMergeStrategy.deleteExpiredArchiveShards(
                 ctx(sharedDoc(BucketGranularity.DAY)));
         assertThat(weekBucket).doesNotExist();
     }
@@ -212,7 +212,7 @@ class TestSharedFileStoreRetention {
     // -----------------------------------------------------------------------
 
     private boolean due(final PlanBDoc doc) {
-        return SharedFileStoreMergeProcessor.retentionDue(doc, SHARD_INDEX);
+        return HoldingAreaMergeStrategy.retentionDue(doc, SHARD_INDEX);
     }
 
     private MergeContext ctx(final PlanBDoc doc) {

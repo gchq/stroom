@@ -157,7 +157,7 @@ class TestPathwaysStoreSharedFileStoreGuard {
         // "Could not tell" must not read as "no data": unlocking the settings on an unreachable mount
         // is how a model gets orphaned by a change that looked safe.
         final Path unreadable = Files.createDirectories(tempDir.resolve("unreadable"));
-        Files.createDirectories(unreadable.resolve(PathwaysShardStore.SHARDS_DIR_NAME));
+        Files.createDirectories(unreadable.resolve(PlanBConstants.SHARDS_DIR_NAME));
 
         // Running as root defeats permission removal, so there would be nothing to observe.
         Assumptions.assumeThat(System.getProperty("user.name")).isNotEqualTo("root");
@@ -173,7 +173,7 @@ class TestPathwaysStoreSharedFileStoreGuard {
     }
 
     private void givenAModel() throws IOException {
-        Files.createDirectories(shared.resolve(PathwaysShardStore.SHARDS_DIR_NAME).resolve(UUID));
+        Files.createDirectories(shared.resolve(PlanBConstants.SHARDS_DIR_NAME).resolve(UUID));
     }
 
     private static PathwaysDoc doc(final int shardCount, final Path sharedPath) {

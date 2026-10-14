@@ -25,25 +25,28 @@ public final class PlanBConstants {
     public static final String STAGING_DIR_NAME = "staging";
     public static final String UNZIP_DIR_NAME = "unzip";
     public static final String MERGING_DIR_NAME = "merging";
+    /**
+     * Where a document's live shards are: the local ones this node works, and the ones on a shared
+     * store that every node works in turn. One name because they are one thing — the environment a
+     * document's data is read from and merged into.
+     */
     public static final String SHARDS_DIR_NAME = "shards";
-    public static final String HOLDING_DIR_NAME = "holding";
     public static final String SNAPSHOTS_DIR_NAME = "snapshots";
     public static final String ARCHIVE_CACHE_DIR_NAME = "archive_cache";
     public static final String ARCHIVE_LOCAL_DIR_NAME = "archive_local";
-    public static final String PROCESSING_DIR_NAME = "processing";
     public static final String TRASH_DIR_NAME = "trash";
     public static final String ARCHIVE_DIR_NAME = "archive";
 
     /**
-     * Where one document's hand-over queue lives on the shared store, beside its {@code shards}.
-     *
-     * <p>Deliberately not in {@link #STAGE_DIR_NAMES}: those are the trees the cleaner sweeps for
-     * orphans, and an item waiting here is not an orphan.
+     * Where the work waiting for a document's shards lives on the shared store: what was written from
+     * a stream, or the traces handed over to a pathways document. One name because they are one thing —
+     * a directory holding a store, dropped in a per-document, per-shard folder, consumed under that
+     * shard's lock and deleted once consumed.
      */
     public static final String QUEUE_DIR_NAME = "queue";
 
     public static final List<String> STAGE_DIR_NAMES = List.of(
-            HOLDING_DIR_NAME, PROCESSING_DIR_NAME, ARCHIVE_DIR_NAME);
+            SHARDS_DIR_NAME, QUEUE_DIR_NAME, ARCHIVE_DIR_NAME);
 
     public static final String TMP_DIR_SUFFIX = ".tmp";
     public static final String TMP_DIR_PREFIX = ".tmp_";

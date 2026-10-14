@@ -25,8 +25,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -104,30 +106,8 @@ public class QueueItemWriter {
         final Path tmpDir = targetDir.resolve(QueueItem.tmpName(name));
         final Path itemDir = targetDir.resolve(name);
         try {
-            Files.createDirectories(localDir);
-
-            try (final TraceDb item = TraceDb.create(
-                    localDir,
-                    byteBuffers,
-                    byteBufferFactory,
-                    QueueItem.doc(),
-                    false,
-                    QueueItem.HAS_SECONDARY_INDEXES)) {
-                source.copyTracesTo(item, traceIds);
-                QueueItem.writeInfo(item.getEnv(), orderKey, sourceUuid);
-            }
-
-            // An artefact of having had the environment open, and never valid anywhere else: a stale
-            // one mapped by another process is what makes a shared lock.mdb dangerous.
-            Files.deleteIfExists(localDir.resolve(PlanBConstants.LOCK_FILE_NAME));
-
-            Files.createDirectories(tmpDir);
-            Files.copy(localDir.resolve(PlanBConstants.DATA_FILE_NAME),
-                    tmpDir.resolve(PlanBConstants.DATA_FILE_NAME));
-
-            // Last, and atomic: until this succeeds nothing matches QueueItem.isItem, so a failure
-            // above leaves a temporary directory to be tidied rather than a batch half handed over.
-            SharedFileStore.moveWithAtomicFallback(tmpDir, itemDir);
+            build(source, traceIds, localDir, orderKey, sourceUuid);
+            publish(localDir, tmpDir, itemDir);
             return Optional.of(itemDir);
 
         } catch (final IOException | RuntimeException e) {
@@ -136,6 +116,46 @@ public class QueueItemWriter {
         } finally {
             deleteQuietly(localDir);
         }
+    }
+
+    private void build(final TraceDb source,
+                       final Collection<byte[]> traceIds,
+                       final Path localDir,
+                       final long orderKey,
+                       final String sourceUuid) throws IOException {
+        Files.createDirectories(localDir);
+
+        try (final TraceDb item = TraceDb.create(
+                localDir,
+                byteBuffers,
+                byteBufferFactory,
+                QueueItem.doc(),
+                false,
+                QueueItem.HAS_SECONDARY_INDEXES)) {
+            source.copyTracesTo(item, traceIds);
+            QueueItem.writeInfo(item.getEnv(), orderKey, sourceUuid);
+        }
+
+        // An artefact of having had the environment open, and never valid anywhere else: a stale
+        // one mapped by another process is what makes a shared lock.mdb dangerous.
+        Files.deleteIfExists(localDir.resolve(PlanBConstants.LOCK_FILE_NAME));
+    }
+
+    private static void publish(final Path localDir,
+                                final Path tmpDir,
+                                final Path itemDir) throws IOException {
+        Files.createDirectories(tmpDir);
+        Files.copy(localDir.resolve(PlanBConstants.DATA_FILE_NAME),
+                tmpDir.resolve(PlanBConstants.DATA_FILE_NAME));
+
+        // What says the directory is finished, and the only thing the merge looks for. Written while
+        // the directory is still temporary, so it is there the moment the move makes it visible.
+        Files.writeString(tmpDir.resolve(PlanBConstants.VERSION_FILE_NAME),
+                Instant.now().toString(), StandardCharsets.UTF_8);
+
+        // Last, and atomic: a failure above leaves a temporary directory to be tidied rather than an
+        // item half handed over.
+        SharedFileStore.moveWithAtomicFallback(tmpDir, itemDir);
     }
 
     private static void deleteQuietly(final Path dir) {

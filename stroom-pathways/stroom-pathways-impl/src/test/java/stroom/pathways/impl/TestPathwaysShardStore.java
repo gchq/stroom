@@ -307,7 +307,7 @@ class TestPathwaysShardStore {
     // -----------------------------------------------------------------------
 
     private Path sharedShardDir() {
-        return shared.resolve(PathwaysShardStore.SHARDS_DIR_NAME)
+        return shared.resolve(PlanBConstants.SHARDS_DIR_NAME)
                 .resolve(doc.getUuid())
                 .resolve(PlanBConstants.formatShardIndex(SHARD));
     }

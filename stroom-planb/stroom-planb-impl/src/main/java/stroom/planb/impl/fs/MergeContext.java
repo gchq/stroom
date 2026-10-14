@@ -23,12 +23,12 @@ import stroom.planb.shared.PlanBDocument;
  * the cluster lock.
  *
  * <p>Carries no paths: where a store type keeps its data on the shared file store is its own
- * business. {@code retentionDue} is decided once by the processor rather than by each user of it,
- * because retention over the holding shard and over the archive buckets share one schedule and one
- * {@code .retention.last} marker.
+ * business. {@code maintenanceDue} is what the strategy said before the lock was taken — see
+ * {@link MergeStrategy#maintenanceDue}, which also says why it is worth asking again now the lock
+ * is held.
  */
 public record MergeContext(PlanBDocument doc,
                            int shardIndex,
                            String lockName,
-                           boolean retentionDue) {
+                           boolean maintenanceDue) {
 }

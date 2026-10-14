@@ -413,7 +413,7 @@ class TestSharedFileStorePublisher {
 
     private Path sharedHoldingDocDir() {
         return sharedRoot
-                .resolve(PlanBConstants.HOLDING_DIR_NAME)
+                .resolve(PlanBConstants.SHARDS_DIR_NAME)
                 .resolve(doc.getUuid());
     }
 

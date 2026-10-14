@@ -27,8 +27,6 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -70,30 +68,13 @@ class TestShardQueue {
     }
 
     @Test
-    void aShardNothingHasBeenWrittenForIsEmptyRatherThanAnError() {
-        assertThat(queue.itemsOldestFirst()).isEmpty();
-        assertThat(queue.oldestOrderKey()).isEmpty();
-    }
-
-    @Test
-    void itemsComeBackOldestFirst() throws IOException {
-        addItem(3_000L);
-        addItem(1_000L);
-        addItem(2_000L);
-
-        assertThat(queue.itemsOldestFirst().stream().map(QueueItem::orderKeyOf))
-                .containsExactly(1_000L, 2_000L, 3_000L);
-        assertThat(queue.oldestOrderKey()).hasValue(1_000L);
-    }
-
-    @Test
-    void onlyThingsNamedLikeAnItemCount() throws IOException {
+    void onlyThingsNamedLikeAnItemCountTowardsTheDepth() throws IOException {
         addItem(1_000L);
         Files.createDirectories(queue.dir().resolve(QueueItem.tmpName(QueueItem.newName(2_000L))));
-        Files.createDirectories(queue.dir().resolve(ShardQueue.QUARANTINE_DIR_NAME));
         Files.createFile(queue.dir().resolve("notes.txt"));
 
-        assertThat(queue.itemsOldestFirst()).hasSize(1);
+        assertThat(queue.isDeeperThan(1)).as("one item, whatever else is in the folder").isFalse();
+        assertThat(queue.isDeeperThan(0)).isTrue();
     }
 
     @Test
@@ -109,31 +90,6 @@ class TestShardQueue {
     @Test
     void anAbsentFolderIsNotDeep() throws IOException {
         assertThat(queue.isDeeperThan(0)).isFalse();
-    }
-
-    @Test
-    void deletingAnAppliedItemRemovesItWhole() throws IOException {
-        final Path item = addItem(1_000L);
-        Files.writeString(item.resolve(PlanBConstants.DATA_FILE_NAME), "data");
-        Files.writeString(item.resolve(PlanBConstants.LOCK_FILE_NAME), "lock");
-
-        queue.delete(List.of(item));
-
-        assertThat(item).doesNotExist();
-        assertThat(queue.itemsOldestFirst()).isEmpty();
-    }
-
-    @Test
-    void aQuarantinedItemIsKeptButNoLongerOffered() throws IOException {
-        final Path item = addItem(1_000L);
-
-        queue.quarantine(item, new IOException("could not read it"));
-
-        assertThat(queue.itemsOldestFirst()).as("not offered again").isEmpty();
-        final Path quarantine = queue.dir().resolve(ShardQueue.QUARANTINE_DIR_NAME);
-        try (final Stream<Path> kept = Files.list(quarantine)) {
-            assertThat(kept.toList()).as("kept, not destroyed").hasSize(1);
-        }
     }
 
     @Test

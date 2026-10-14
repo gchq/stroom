@@ -68,9 +68,6 @@ public class PathwaysShardStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PathwaysShardStore.class);
 
-    /** Where a Pathways document's model lives, beside the {@code queue} its traces arrive in. */
-    public static final String SHARDS_DIR_NAME = "shards";
-
     // Holds the copy that is pushed. Sits inside the working copy so it is cleaned up along with it.
     private static final String COMPACTED_DIR_NAME = "compacted";
 
@@ -97,6 +94,29 @@ public class PathwaysShardStore {
     }
 
     /**
+     * Where a document's shards live on the shared file store.
+     *
+     * <p>Public because not everything kept beside a shard is kept by this: a marker saying when some
+     * once-a-day work was last done for a shard sits here too, read and written by whoever does that
+     * work.
+     *
+     * @return the directory holding every shard of the document, or nothing where it names no shared
+     * file store.
+     */
+    public Optional<Path> sharedDocDir(final PathwaysDoc doc) {
+        final SharedFileStoreSettings settings = NullSafe.get(doc, PathwaysDoc::getSharedFileStore);
+        return settings == null || NullSafe.isBlankString(settings.getSharedPath())
+                ? Optional.empty()
+                : Optional.of(sharedDocDir(settings, doc.getUuid()));
+    }
+
+    private static Path sharedDocDir(final SharedFileStoreSettings settings, final String docUuid) {
+        return Path.of(settings.getSharedPath())
+                .resolve(PlanBConstants.SHARDS_DIR_NAME)
+                .resolve(PathSegmentUtil.requireSafeSegment(docUuid));
+    }
+
+    /**
      * Copies the shard down, runs {@code work} against the local copy, and copies it back up if
      * {@code work} says it changed anything.
      *
@@ -120,9 +140,7 @@ public class PathwaysShardStore {
         if (settings == null) {
             throw new IOException("Pathways document " + doc.getName() + " names no shared file store");
         }
-        final Path sharedDocDir = Path.of(settings.getSharedPath())
-                .resolve(SHARDS_DIR_NAME)
-                .resolve(PathSegmentUtil.requireSafeSegment(doc.getUuid()));
+        final Path sharedDocDir = sharedDocDir(settings, doc.getUuid());
 
         final Path localDir = localRoot
                 .resolve(PathSegmentUtil.requireSafeSegment(doc.getUuid())
@@ -173,9 +191,7 @@ public class PathwaysShardStore {
         if (settings == null) {
             return Optional.empty();
         }
-        final Path sharedShardDir = Path.of(settings.getSharedPath())
-                .resolve(SHARDS_DIR_NAME)
-                .resolve(PathSegmentUtil.requireSafeSegment(doc.getUuid()))
+        final Path sharedShardDir = sharedDocDir(settings, doc.getUuid())
                 .resolve(PlanBConstants.formatShardIndex(shardIndex));
         final String shardKey = doc.getUuid() + "_" + PlanBConstants.formatShardIndex(shardIndex);
 

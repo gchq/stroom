@@ -68,7 +68,7 @@ class TestSharedFileStoreCleaner {
 
     @Test
     void liveDocIsKept() throws IOException {
-        final Path holding = expiredStageDir(PlanBConstants.HOLDING_DIR_NAME, LIVE_UUID);
+        final Path holding = expiredStageDir(PlanBConstants.SHARDS_DIR_NAME, LIVE_UUID);
 
         cleanerWithLive(LIVE_UUID).exec();
 
@@ -79,7 +79,7 @@ class TestSharedFileStoreCleaner {
     void recentActivityInAnyStageKeepsEveryStage() throws IOException {
         final Path archive = expiredStageDir(PlanBConstants.ARCHIVE_DIR_NAME, DEAD_UUID);
         // Left at its real modification time, so it is inside the grace period.
-        final Path processing = stageDir(PlanBConstants.PROCESSING_DIR_NAME, DEAD_UUID);
+        final Path processing = stageDir(PlanBConstants.QUEUE_DIR_NAME, DEAD_UUID);
 
         cleanerWithLive(LIVE_UUID).exec();
 
@@ -89,7 +89,7 @@ class TestSharedFileStoreCleaner {
 
     @Test
     void strayFileIsNotTreatedAsADoc() throws IOException {
-        final Path holdingDir = sharedRoot.resolve(PlanBConstants.HOLDING_DIR_NAME);
+        final Path holdingDir = sharedRoot.resolve(PlanBConstants.SHARDS_DIR_NAME);
         Files.createDirectories(holdingDir);
         final Path strayFile = holdingDir.resolve("README.txt");
         Files.writeString(strayFile, "not a doc");
@@ -130,7 +130,7 @@ class TestSharedFileStoreCleaner {
         final Path trashEntry = sharedRoot
                 .resolve(PlanBConstants.TRASH_DIR_NAME)
                 .resolve(DEAD_UUID + "-1")
-                .resolve(PlanBConstants.HOLDING_DIR_NAME);
+                .resolve(PlanBConstants.SHARDS_DIR_NAME);
         Files.createDirectories(trashEntry);
 
         new SharedFileStoreCleaner(Set.of(() -> Map.of(sharedRoot, Set.of()))).exec();
@@ -159,7 +159,7 @@ class TestSharedFileStoreCleaner {
 
     @Test
     void startupDeletesAnOldTmpBatchDir() throws IOException {
-        final Path tmpBatch = batchDir(LIVE_UUID, "12_99" + PlanBConstants.TMP_DIR_SUFFIX);
+        final Path tmpBatch = queueDir(LIVE_UUID, "12_99" + PlanBConstants.TMP_DIR_SUFFIX);
         Files.setLastModifiedTime(tmpBatch, FileTime.from(Instant.now().minus(Duration.ofMinutes(10))));
 
         cleanerWithLive(LIVE_UUID).startup();
@@ -169,8 +169,8 @@ class TestSharedFileStoreCleaner {
 
     @Test
     void startupKeepsARecentTmpBatchDirAndCompletedBatches() throws IOException {
-        final Path recentTmp = batchDir(LIVE_UUID, "12_99" + PlanBConstants.TMP_DIR_SUFFIX);
-        final Path complete = batchDir(LIVE_UUID, "13_99");
+        final Path recentTmp = queueDir(LIVE_UUID, "12_99" + PlanBConstants.TMP_DIR_SUFFIX);
+        final Path complete = queueDir(LIVE_UUID, "13_99");
         Files.setLastModifiedTime(complete, FileTime.from(Instant.now().minus(Duration.ofHours(2))));
 
         cleanerWithLive(LIVE_UUID).startup();
@@ -181,7 +181,7 @@ class TestSharedFileStoreCleaner {
 
     @Test
     void startupDoesNothingWhenADocStoreCannotEnumerate() throws IOException {
-        final Path tmpBatch = batchDir(LIVE_UUID, "12_99" + PlanBConstants.TMP_DIR_SUFFIX);
+        final Path tmpBatch = queueDir(LIVE_UUID, "12_99" + PlanBConstants.TMP_DIR_SUFFIX);
         Files.setLastModifiedTime(tmpBatch, FileTime.from(Instant.now().minus(Duration.ofMinutes(10))));
 
         new SharedFileStoreCleaner(Set.of(() -> {
@@ -211,9 +211,9 @@ class TestSharedFileStoreCleaner {
         return dir;
     }
 
-    private Path batchDir(final String uuid, final String batchName) throws IOException {
+    private Path queueDir(final String uuid, final String batchName) throws IOException {
         final Path dir = sharedRoot
-                .resolve(PlanBConstants.PROCESSING_DIR_NAME)
+                .resolve(PlanBConstants.QUEUE_DIR_NAME)
                 .resolve(uuid)
                 .resolve("0000")
                 .resolve(batchName);
