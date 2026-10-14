@@ -16,27 +16,15 @@
 
 package stroom.ai.impl;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 /// A tool call made by the model, as stored (as JSON) in a TOOL_CALL message.
 ///
 /// @param callId    The model's id for the call.
 /// @param tool      The tool's name, as the model saw it.
 /// @param arguments The arguments, as JSON.
 /// @param rationale What the model said alongside the call, if anything.
-@JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder(alphabetic = true)
-public record ToolCallRecord(@JsonProperty("callId") String callId,
-                             @JsonProperty("tool") String tool,
-                             @JsonProperty("arguments") String arguments,
-                             @JsonProperty("rationale") String rationale) {
+public record ToolCallRecord(String callId,
+                             String tool,
+                             String arguments,
+                             String rationale) {
 
-    @JsonCreator
-    public ToolCallRecord {
-        // Explicit constructor for Jackson.
-    }
 }

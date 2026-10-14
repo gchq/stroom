@@ -16,12 +16,6 @@
 
 package stroom.ai.impl;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.List;
 
 /// Tool calls waiting for the user's approval, as stored (as JSON) in an APPROVAL_REQUEST message. Only the agent
@@ -33,18 +27,15 @@ import java.util.List;
 /// @param calls               The calls.
 /// @param allowForChat        True if the calls may be allowed for the rest of the chat.
 /// @param allowServerReadOnly True if the server's read-only tools may be allowed for the rest of the chat.
-@JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder(alphabetic = true)
-public record ToolApprovalRequest(@JsonProperty("kind") String kind,
-                                  @JsonProperty("status") Status status,
-                                  @JsonProperty("reason") String reason,
-                                  @JsonProperty("calls") List<PendingCall> calls,
-                                  @JsonProperty("allowForChat") boolean allowForChat,
-                                  @JsonProperty("allowServerReadOnly") boolean allowServerReadOnly) {
+public record ToolApprovalRequest(String kind,
+                                  Status status,
+                                  String reason,
+                                  List<PendingCall> calls,
+                                  boolean allowForChat,
+                                  boolean allowServerReadOnly) {
 
     public static final String KIND = "TOOL";
 
-    @JsonCreator
     public ToolApprovalRequest {
         calls = calls == null
                 ? List.of()
@@ -90,20 +81,16 @@ public record ToolApprovalRequest(@JsonProperty("kind") String kind,
     /// @param serverHash The server's hash (see [McpToolInfo]), or null.
     /// @param decision   What was decided, or null if not yet.
     /// @param note       Why it was denied, given by the user, or null.
-    @JsonInclude(Include.NON_NULL)
-    @JsonPropertyOrder(alphabetic = true)
-    public record PendingCall(@JsonProperty("callId") String callId,
-                              @JsonProperty("tool") String tool,
-                              @JsonProperty("serverKey") String serverKey,
-                              @JsonProperty("serverTool") String serverTool,
-                              @JsonProperty("arguments") String arguments,
-                              @JsonProperty("risks") List<String> risks,
-                              @JsonProperty("toolHash") String toolHash,
-                              @JsonProperty("serverHash") String serverHash,
-                              @JsonProperty("decision") Decision decision,
-                              @JsonProperty("note") String note) {
-
-        @JsonCreator
+    public record PendingCall(String callId,
+                              String tool,
+                              String serverKey,
+                              String serverTool,
+                              String arguments,
+                              List<String> risks,
+                              String toolHash,
+                              String serverHash,
+                              Decision decision,
+                              String note) {
         public PendingCall {
             risks = risks == null
                     ? List.of()
