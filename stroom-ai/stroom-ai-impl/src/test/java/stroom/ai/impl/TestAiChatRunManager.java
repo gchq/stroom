@@ -209,7 +209,7 @@ class TestAiChatRunManager {
 
     @Test
     void testTick_stopsRunsPastTheTimeLimit() {
-        aiConfig = new AiConfig(null, null, StroomDuration.ZERO, null);
+        aiConfig = new AiConfig(null, null, StroomDuration.ZERO, null, null, null);
         startAndTick(true);
 
         Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.STOPPING),
@@ -279,6 +279,62 @@ class TestAiChatRunManager {
                 ? run
                 : new AiChatRun(5, 1, AiChatRunStatus.DONE, null, 0L, 1L, false, null)));
         runManager.start(1, r -> runManager.tick());
+    }
+
+    @Test
+    void testStart_queuedWhenTheUserIsAtTheLimit() {
+        aiConfig = new AiConfig(null, null, null, null, 1, 20);
+        Mockito.when(runDao.countWorking("user1")).thenReturn(1);
+        final AiChatRun queued = new AiChatRun(7, 1, AiChatRunStatus.QUEUED, null, 0L, null, false, null);
+        Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.QUEUED, "node1", null))
+                .thenReturn(Optional.of(queued));
+        final AtomicBoolean worked = new AtomicBoolean();
+
+        final AiChatRun started = runManager.start(1, r -> worked.set(true));
+
+        assertThat(started.getStatus()).isEqualTo(AiChatRunStatus.QUEUED);
+        assertThat(worked).isFalse();
+
+        // The user's other run finishes, so the queued one can start.
+        Mockito.when(runDao.countWorking("user1")).thenReturn(0);
+        Mockito.when(runDao.compareAndSetStatus(eq(7), anyCollection(), eq(AiChatRunStatus.RUNNING), isNull(),
+                isNull())).thenReturn(true);
+        runManager.startQueued();
+
+        assertThat(worked).isTrue();
+    }
+
+    @Test
+    void testStartQueued_runStoppedWhileQueuedIsDropped() {
+        aiConfig = new AiConfig(null, null, null, null, 1, 20);
+        Mockito.when(runDao.countWorking("user1")).thenReturn(1);
+        final AiChatRun queued = new AiChatRun(7, 1, AiChatRunStatus.QUEUED, null, 0L, null, false, null);
+        Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.QUEUED, "node1", null))
+                .thenReturn(Optional.of(queued));
+        final AtomicBoolean worked = new AtomicBoolean();
+        runManager.start(1, r -> worked.set(true));
+
+        Mockito.when(runDao.countWorking("user1")).thenReturn(0);
+        // Not QUEUED any more, as it was stopped.
+        Mockito.when(runDao.compareAndSetStatus(eq(7), anyCollection(), eq(AiChatRunStatus.RUNNING), isNull(),
+                isNull())).thenReturn(false);
+        runManager.startQueued();
+        runManager.startQueued();
+
+        assertThat(worked).isFalse();
+        Mockito.verify(runDao, Mockito.times(1)).compareAndSetStatus(eq(7), anyCollection(),
+                eq(AiChatRunStatus.RUNNING), isNull(), isNull());
+    }
+
+    @Test
+    void testStart_queuedWhenTheNodeIsAtTheLimit() {
+        aiConfig = new AiConfig(null, null, null, null, 3, 0);
+        final AiChatRun queued = new AiChatRun(7, 1, AiChatRunStatus.QUEUED, null, 0L, null, false, null);
+        Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.QUEUED, "node1", null))
+                .thenReturn(Optional.of(queued));
+
+        assertThat(runManager.start(1, r -> {
+        }).getStatus()).isEqualTo(AiChatRunStatus.QUEUED);
     }
 
     @Test

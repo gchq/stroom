@@ -291,6 +291,16 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
     }
 
     @Override
+    public int countWorking(final String userUuid) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .fetchCount(AI_CHAT_RUN,
+                        AI_CHAT_RUN.USER_UUID.eq(userUuid)
+                                .and(AI_CHAT_RUN.STATUS.in(
+                                        AiChatRunStatus.RUNNING.getPrimitiveValue(),
+                                        AiChatRunStatus.STOPPING.getPrimitiveValue()))));
+    }
+
+    @Override
     public void deleteByChat(final int chatId) {
         JooqUtil.context(aiDbConnProvider, context -> context
                 .deleteFrom(AI_CHAT_RUN)

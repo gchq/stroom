@@ -41,9 +41,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HexFormat;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +55,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -105,8 +109,10 @@ public class AiChatRunManager {
     private final UserService userService;
     private final Provider<AiConfig> aiConfigProvider;
 
-    /// The runs being worked on by this node, by chat id.
+    /// The runs being worked on, or queued, by this node, by chat id.
     private final Map<Integer, LocalRun> localRuns = new ConcurrentHashMap<>();
+    /// The chats with queued runs, in the order they were asked.
+    private final Deque<Integer> queue = new ArrayDeque<>();
     private volatile ScheduledExecutorService heartbeatExecutor;
 
     @Inject
@@ -144,28 +150,84 @@ public class AiChatRunManager {
                 final HasSessionId hasSessionId
                 ? hasSessionId.getSessionId()
                 : null);
-        final AiChatRun run = runDao.createIfNoneActive(
-                        chatId, userUuid, AiChatRunStatus.RUNNING, nodeInfo.getThisNodeName(), sessionIdHash)
-                .orElseThrow(() -> new AiChatBusyException(chatId));
-        LOGGER.debug(() -> "Started run " + run.getId() + " for chat " + chatId);
-        // The user is here, as they have just asked a question.
-        aiDao.recordPoll(chatId, 0);
-        localRuns.put(chatId, new LocalRun(run.getId(), userUuid, System.currentTimeMillis(),
-                new AtomicBoolean(false), new AtomicBoolean(false)));
-        ensureHeartbeat();
+        synchronized (queue) {
+            final AiChatRunStatus status = hasFreeSlot(userUuid)
+                    ? AiChatRunStatus.RUNNING
+                    : AiChatRunStatus.QUEUED;
+            final AiChatRun run = runDao.createIfNoneActive(
+                            chatId, userUuid, status, nodeInfo.getThisNodeName(), sessionIdHash)
+                    .orElseThrow(() -> new AiChatBusyException(chatId));
+            LOGGER.debug(() -> "Created " + status + " run " + run.getId() + " for chat " + chatId);
+            // The user is here, as they have just asked a question.
+            aiDao.recordPoll(chatId, 0);
 
-        final Runnable task = taskContextFactory.context(TASK_NAME, taskContext -> {
-            taskContext.info(() -> "Chat " + chatId + ", run " + run.getId());
-            execute(run, work, taskContext::isTerminated);
-        });
+            // The task is made now, so that it runs as the user asking, whenever it starts.
+            final Runnable task = taskContextFactory.context(TASK_NAME, taskContext -> {
+                taskContext.info(() -> "Chat " + chatId + ", run " + run.getId());
+                execute(run, work, taskContext::isTerminated);
+            });
+            final LocalRun localRun = new LocalRun(run.getId(), userUuid, task,
+                    new AtomicLong(System.currentTimeMillis()), new AtomicBoolean(false),
+                    new AtomicBoolean(false), new AtomicBoolean(false));
+            localRuns.put(chatId, localRun);
+            ensureHeartbeat();
+
+            if (status == AiChatRunStatus.RUNNING) {
+                submit(chatId, localRun);
+            } else {
+                // Started when a slot is free, see startQueued.
+                queue.add(chatId);
+            }
+            return run;
+        }
+    }
+
+    /// @return True if another run may start working now for the user, without going over the user's or this
+    /// node's limit. Runs waiting for the user do not count.
+    private boolean hasFreeSlot(final String userUuid) {
+        final AiConfig aiConfig = aiConfigProvider.get();
+        final long workingOnNode = localRuns.values().stream()
+                .filter(localRun -> localRun.working().get())
+                .count();
+        return workingOnNode < aiConfig.getMaxRunsPerNode()
+               && (userUuid == null || runDao.countWorking(userUuid) < aiConfig.getMaxRunsPerUser());
+    }
+
+    private void submit(final int chatId, final LocalRun localRun) {
+        localRun.working().set(true);
+        localRun.startTimeMs().set(System.currentTimeMillis());
         try {
-            executorProvider.get().execute(task);
+            executorProvider.get().execute(localRun.task());
         } catch (final RuntimeException e) {
-            localRuns.remove(chatId);
-            runDao.compareAndSetStatus(run.getId(), ACTIVE, AiChatRunStatus.FAILED, null, e.getMessage());
+            localRuns.remove(chatId, localRun);
+            runDao.compareAndSetStatus(localRun.runId(), ACTIVE, AiChatRunStatus.FAILED, null, e.getMessage());
             throw e;
         }
-        return run;
+    }
+
+    /// Starts queued runs, in the order they were asked for, while there are free slots. Package-private for
+    /// testing.
+    void startQueued() {
+        synchronized (queue) {
+            final Iterator<Integer> iterator = queue.iterator();
+            while (iterator.hasNext()) {
+                final int chatId = iterator.next();
+                final LocalRun localRun = localRuns.get(chatId);
+                if (localRun == null) {
+                    iterator.remove();
+                } else if (hasFreeSlot(localRun.userUuid())) {
+                    iterator.remove();
+                    if (runDao.compareAndSetStatus(localRun.runId(), List.of(AiChatRunStatus.QUEUED),
+                            AiChatRunStatus.RUNNING, null, null)) {
+                        LOGGER.debug(() -> "Starting queued run " + localRun.runId() + " of chat " + chatId);
+                        submit(chatId, localRun);
+                    } else {
+                        // Stopped while it was queued.
+                        localRuns.remove(chatId, localRun);
+                    }
+                }
+            }
+        }
     }
 
     /// Runs the work and records how the run ended. Package-private for testing.
@@ -191,6 +253,8 @@ public class AiChatRunManager {
                     NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
         } finally {
             localRuns.remove(run.getChatId(), localRuns.get(run.getChatId()));
+            // A slot has come free.
+            startQueued();
         }
     }
 
@@ -323,6 +387,8 @@ public class AiChatRunManager {
                 }
             });
             runs.forEach(this::checkLimits);
+            // Slots may have come free on other nodes.
+            startQueued();
 
             for (final AiChatRun interrupted : runDao.interruptStale(
                     System.currentTimeMillis() - STALE_AFTER.toMillis())) {
@@ -346,7 +412,7 @@ public class AiChatRunManager {
             return;
         }
 
-        if (now - localRun.startTimeMs() > aiConfig.getMaxRunDuration().toMillis()) {
+        if (now - localRun.startTimeMs().get() > aiConfig.getMaxRunDuration().toMillis()) {
             LOGGER.info(() -> "Run " + localRun.runId() + " of chat " + chatId + " has reached the time limit");
             stopRun(run, AiChatRunStopReason.RUN_LIMIT);
             return;
@@ -394,16 +460,20 @@ public class AiChatRunManager {
         }
     }
 
-    /// A run being worked on by this node.
+    /// A run being worked on, or queued, by this node.
     ///
     /// @param runId         The run's id.
     /// @param userUuid      The user it runs as.
-    /// @param startTimeMs   When it started.
+    /// @param task          The task that works on it, as the user.
+    /// @param startTimeMs   When it started being worked on.
+    /// @param working       Set while a thread is working on it (it is not queued).
     /// @param stopRequested Set when the run is asked to stop.
     /// @param unattended    Set while the user has gone.
     private record LocalRun(int runId,
                             String userUuid,
-                            long startTimeMs,
+                            Runnable task,
+                            AtomicLong startTimeMs,
+                            AtomicBoolean working,
                             AtomicBoolean stopRequested,
                             AtomicBoolean unattended) {
 
