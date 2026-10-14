@@ -28,7 +28,7 @@
                 <l:SelectionBox ui:field="permissionVisibility"/>
             </form:FormGroup>
             <form:FormGroup label="Users and Groups"
-                            addStyleNames="form-label-padding max"
+                            addStyleNames="form-group--indented max"
                             screenReaderText="Filtered by Permission Visibility. Select one to edit its permissions.">
                 <form:HelpHTML>
                     <p>Shows users/groups, optionally filtered based on the value of the

@@ -305,22 +305,26 @@
 
 .stroom-theme-dark .cf-lime {
     background-color: var(--lime-900);
-    color: var(--lime-50);
+    /* Black, as the light tint is under 4.5:1 on this bright 900 shade */
+    color: var(--black);
 }
 
 .stroom-theme-dark .cf-yellow {
     background-color: var(--yellow-900);
-    color: var(--yellow-50);
+    /* Black, as the light tint is under 4.5:1 on this bright 900 shade */
+    color: var(--black);
 }
 
 .stroom-theme-dark .cf-amber {
     background-color: var(--amber-900);
-    color: var(--amber-50);
+    /* Black, as the light tint is under 4.5:1 on this bright 900 shade */
+    color: var(--black);
 }
 
 .stroom-theme-dark .cf-orange {
     background-color: var(--orange-900);
-    color: var(--orange-50);
+    /* Black, as the light tint is under 4.5:1 on this bright 900 shade */
+    color: var(--black);
 }
 
 .stroom-theme-dark .cf-deep-orange {
@@ -346,29 +350,31 @@
 /**
  DARK MODE TEXT COLOURS
 **/
+/* Each is 4.5:1 on the page, striped and hovered rows and dialogs: the 500 shade where that passes,
+   otherwise the darkest lighter shade that does */
 .stroom-theme-dark .cf-text.cf-red {
     background-color: transparent;
-    color: var(--red-500);
+    color: var(--red-300);
 }
 
 .stroom-theme-dark .cf-text.cf-pink {
     background-color: transparent;
-    color: var(--pink-500);
+    color: var(--pink-300);
 }
 
 .stroom-theme-dark .cf-text.cf-purple {
     background-color: transparent;
-    color: var(--purple-500);
+    color: var(--purple-200);
 }
 
 .stroom-theme-dark .cf-text.cf-deep-purple {
     background-color: transparent;
-    color: var(--deep-purple-500);
+    color: var(--deep-purple-200);
 }
 
 .stroom-theme-dark .cf-text.cf-indigo {
     background-color: transparent;
-    color: var(--indigo-500);
+    color: var(--indigo-200);
 }
 
 .stroom-theme-dark .cf-text.cf-blue {
@@ -388,7 +394,7 @@
 
 .stroom-theme-dark .cf-text.cf-teal {
     background-color: transparent;
-    color: var(--teal-500);
+    color: var(--teal-400);
 }
 
 .stroom-theme-dark .cf-text.cf-green {
@@ -428,7 +434,7 @@
 
 .stroom-theme-dark .cf-text.cf-brown {
     background-color: transparent;
-    color: var(--brown-500);
+    color: var(--brown-300);
 }
 
 .stroom-theme-dark .cf-text.cf-grey {
@@ -438,7 +444,7 @@
 
 .stroom-theme-dark .cf-text.cf-blue-grey {
     background-color: transparent;
-    color: var(--blue-grey-500);
+    color: var(--blue-grey-400);
 }
 
 

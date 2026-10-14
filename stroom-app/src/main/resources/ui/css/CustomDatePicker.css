@@ -107,15 +107,20 @@ td:hover .customDatePickerDayIsValue {
     gap: 4px;
     padding: 0 2px;
 }
+/* The year's and month's Previous and Next buttons, a toolbar beside each select box, spaced as the
+   row is */
+.customDatePickerYear > .toolbar,
+.customDatePickerMonth > .toolbar {
+    margin: 0;
+    gap: 4px;
+}
 .customDatePickerYear .toolbar-button,
 .customDatePickerMonth .toolbar-button {
     width: 26px;
     height: 26px;
 }
-.customDatePickerPreviousButton svg,
-.customDatePickerNextButton svg,
-.customDatePickerPreviousYearButton svg,
-.customDatePickerNextYearButton svg {
+.customDatePickerYear .toolbar-button__icon,
+.customDatePickerMonth .toolbar-button__icon {
     color: var(--navigation__text-color);
     width: 10px;
     height: 10px;

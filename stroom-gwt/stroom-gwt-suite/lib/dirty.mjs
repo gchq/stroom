@@ -105,8 +105,8 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
     for (const group of document.querySelectorAll('.form-group')) {
       if (!(group.offsetWidth > 0) || inDialog(group)) continue;
       const ownTick = group.querySelector('.SimpleTickBox');
-      // An inline tick's group has no `.form-group-label`: the tick box carries its own.
-      const label = norm(group.querySelector('.form-group-label')?.textContent)
+      // An inline tick's group has no `.form-group__label`: the tick box carries its own.
+      const label = norm(group.querySelector('.form-group__label')?.textContent)
         || norm(ownTick?.querySelector('.form-label')?.textContent);
       // ONLY a labelled FormGroup field. Not every box on a document editor belongs to the
       // document: the Feed's Data tab is a stream browser, and its filter and pager boxes have no
@@ -201,7 +201,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
         .find((e) => e.offsetWidth > 100 && e.offsetHeight > 40
           && (inDialogScope ? (top && top.contains(e)) : !e.closest('.dialog-popup, .resizableDialog-popup')));
       if (solo) {
-        const tab = norm([...document.querySelectorAll('.linkTab-selected .linkTab-label, .curveTab-selected .curveTab-label')]
+        const tab = norm([...document.querySelectorAll('.tab-bar--link .tab-bar__tab[aria-selected="true"] .tab-bar__label, .tab-bar--curved .tab-bar__tab[aria-selected="true"] .tab-bar__label')]
           .find((e) => e.offsetWidth > 0)?.textContent) || 'the editor';
         const r = solo.getBoundingClientRect();
         out.push({ label: tab, kind: 'ace', value: aceText(solo), x: r.x + r.width * 0.3, y: r.y + Math.min(r.height / 2, 60) });

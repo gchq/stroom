@@ -40,20 +40,26 @@ the component's classes (some names also match related classes), to help priorit
 
 | Component | Old classes | New | Pattern | Replace / retrofit | Uses | Status | Known gaps |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Toolbars | `ButtonPanel`, `SvgButton`, `InlineSvgButton`, `InlineSvgToggleButton`, `SvgToggleButton`, `BaseSvgButton` | `Toolbar`, `ToolbarRow`, `ToolbarSeparator`, `ToolbarButton`, `ToolbarToggleButton`, `ButtonGroupFocus`, `FocusTooltip` | toolbar | replaced | ~100 | done | `SvgButton.create(Preset)` stays until `SvgPresets` goes; some toolbars unnamed; text/icon display preference (later); not tried with a screen reader |
+| Toolbars | `ButtonPanel`, `SvgButton`, `InlineSvgButton`, `InlineSvgToggleButton`, `SvgToggleButton`, `BaseSvgButton`, `TableExpandButton`, `TableCollapseButton`, `HelpButton`, `Preset`, `SvgPresets` | `Toolbar`, `ToolbarRow`, `ToolbarSeparator`, `ToolbarButton`, `ToolbarToggleButton`, `ButtonGroupFocus`, `FocusTooltip`, `GroupLevelButtons` | toolbar | replaced | ~100 | done: every icon button is made in a toolbar (`toolbar.button`, `toolbar.toggle`, `toolbar.refresh` or a `<b:Toolbar>` child); the old button classes, `ButtonPanel`, `PagerView.addButton` and `Preset`/`SvgPresets` are deleted | buttons are 22px with a 2px gap, under 2.5.8's 24px (most of the `target-size` baseline entries); some toolbars unnamed; text/icon display preference (later); not tried with a screen reader |
 | Floating action button | `FabButton` | — | button | retrofit | ~8 | in part (one tab stop) | BEM pass not done (`stroom-button-fab`, `face`) |
-| Refresh button | `RefreshButton` | (rebuilt on `ToolbarButton`) | button | retrofit | pagers | done | — |
-| Split panes | `ThinSplitLayoutPanel`, `MySplitLayoutPanel` | `SplitPane` | window splitter | replaced | ~43 (37 thin, 6 wide) | done: every view uses `SplitPane` (User Groups first, then by area, ending with the main screen's explorer and docked AI chat); the old panels, their CSS, their stories and the comparison stories are deleted | 2.5.8 where splitters meet in a T at a centre (accepted, see below); theme colours to revisit (line contrast relies on `--grey-600`); not tried with a screen reader or touch device; `ReadingOrder` deleted (no views need it now); views that call `onResize()` to force a relayout need checking (e.g. stepping) |
-| Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (tied to `ContentTabPanePresenter`, document plugins) | every document | investigated, decisions below | one tab stop with Left/Right already (roving `tabindex`, shared with link tabs); no roles, selected state or panel link; no Home/End or wrap; Escape closes the focused tab and drops focus to the body; A/D/H/L also move; focus drawn as the hover tint; close cross is an unnamed `div`; sidebar toggle has no name |
-| Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | investigated, decisions below | one tab stop with Left/Right already; no roles; separators read as "\|"; focus drawn as the hover underline; the light theme's widget stories draw the bar on a blue canvas, not the shell's white |
+| Refresh button | `RefreshButton` | (a `ToolbarButton`, made by `Toolbar.refresh`) | button | retrofit | pagers, data navigators, visualisations | done (a visualisation's pause button is in a toolbar of its own) | — |
+| Split panes | `ThinSplitLayoutPanel`, `MySplitLayoutPanel` | `SplitPane` | window splitter | replaced | ~43 (37 thin, 6 wide) | done: every view uses `SplitPane` (User Groups first, then by area, ending with the main screen's explorer and docked AI chat); the old panels, their CSS, their stories and the comparison stories are deleted | 2.5.8 where splitters meet in a T at a centre (accepted, see below); theme colours to revisit (the line is drawn in `--border-color`, as other borders are: 1.3:1 dark, 1:1 light, under the 3:1 of 1.4.11); not tried with a screen reader or touch device; `ReadingOrder` deleted (no views need it now); views that call `onResize()` to force a relayout need checking (e.g. stepping) |
+| Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (in `AbstractTabBar`, shared with link tabs) | every document | in part: tab list, keys (and the tab menu from the keyboard), focus ring, panel link, sidebar toggle name and BEM CSS (`tab-bar.css`) done | left: link tabs are about 16px tall, under 2.5.8's 24px (baselined for the Data Retention impact stories, where one sits above a toolbar); link tab bars have no tab list name; a tab panel holding nothing focusable isn't a tab stop; a document tab's name is cut at 50 characters (with "..."), so a screen reader hears the shortened name; a tab's loading spinner isn't announced |
+| Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | in part: as document tabs (shared `AbstractTabBar`) | as document tabs |
 | Data grids | `MyDataGrid`, `MyCellTable`, `PagerViewImpl` | — | grid | probably retrofit (GWT cell table, many features) | ~78 (+14 cell tables, ~86 pagers) | not started | one tab stop with arrows inside; header and cell semantics; sortable headers are `role="button"` |
 | Explorer tree | explorer tree (cell tree, `explorerCell`), `EntityTreePresenter`, pickers | — | tree | ? | ~66 | not started | tree roles and keyboard |
 | Menus | `Menu`, `MenuPresenter`, menu items | — | menu / menubar | retrofit | ~19 places show menus | in part (items have `role="menuitem"`; `MenuRequest` lets widgets ask for one) | menu buttons don't say they open a menu (`ISSUES.md`) |
 | Dialogs and popups | popup support, `ResizableDialog` | — | dialog | ? | ~142 | ? | focus is restored on close (`CurrentFocus`); trapping, naming and Escape to check |
-| Quick filter | `QuickFilter` | — | search field | retrofit | ~83 | not started | help button below 24px (`target-size` baseline entries) |
-| Form controls | `SelectionBox`, `CustomDatePicker`, `TickBox`, `ValueSpinner`, text inputs | — | combobox, grid (date), checkbox, spinbutton | ? | many (`SelectionBox` ~211, `TickBox` ~154, `ValueSpinner` ~58, dates ~16) | not started | controls with no accessible name (`ISSUES.md`, `label` baseline entries) |
+| Quick filter | `QuickFilter` | — | search field | retrofit | ~83 | in part: Clear and syntax help are a toolbar (`quickFilter-toolbar`, one tab stop), in the form help icon's colour, Clear with its own icon (`CLEAR_OUTLINE`) | buttons below 24px (`target-size` baseline entries); not a `role="search"` or `type="search"` field; its syntax help is its own popup, not the shared `help-popup`; BEM pass not done (`quickFilter-…` classes) |
+| Form groups | `FormGroup`, `FormLabel`, `HelpButton` | `FormGroupHelpButton` | — | retrofit | most forms | done: its own help button (out of the tab order, F1 shows the same help), BEM names (`form-group__label-row`, `__label`, `__help`, `__description`, `__feedback`, …) in `form.css`, help popup `help-popup` | the disabled description's contrast (baselined, `ISSUES.md`) |
+| Password box | `PasswordTextBox` and a copied show/hide overlay | `PasswordBox` | text field with a toggle button | replaced | 9 fields | done: one control for every password field, its show/hide button in a toolbar and named for what it does, with a live region | — |
+| Selection box | `SelectionBox`, `BaseSelectionBox` | — | combobox | ? | ~211 | not started | no accessible name in places (`label` baseline entries); combobox roles and keys to check |
+| Tick box | `TickBox`, `CustomCheckBox` | — | checkbox | ? | ~154 | not started | no accessible name in places, e.g. in grid rows (jobs and nodes screens; `label` baseline entries) |
+| Value spinner | `ValueSpinner` | — | spinbutton | ? | ~58 | not started | no accessible name in places (`label` baseline entries) |
+| Date and time | `DateTimeBox`, `TimeBox`, `CustomDatePicker`, `DefaultMonthSelector`, `SvgIconBox` | — | text field, grid (calendar) | ? | ~16 | in part: the calendar's previous and next buttons are named "Year" and "Month" toolbars, one tab stop each | the calendar icon is a clickable `div` (`SvgIconBox`); the calendar grid's keys and names; no accessible name in places (`label` baseline entries) |
+| Text inputs | `TextBox`, `TextArea`, `LineColInput` | — | text field | retrofit | many | not started | no accessible name in places (`label` baseline entries) |
 | Code editor | Ace (`EditorPresenter`, `EditorViewImpl`) | — | — | retrofit around Ace | ~34 | not started | keyboard trap: Tab indents (`ISSUES.md`); Ace sources need human approval to change |
-| Layout panels | `DockLayoutPanel` and friends | (grid/flex, `SplitPane`) | — | replace as screens are touched | few direct (most via split panels) | not started | DOM order differs from layout (`ReadingOrder` stopgap) |
+| Layout panels | `DockLayoutPanel` and friends | (grid/flex, `SplitPane`) | — | replace as screens are touched | few direct (most via split panels) | not started | DOM order can differ from layout where a panel places its children (`ReadingOrder` is deleted, as no split panel is left) |
 | Content focus | tab pane | `ContentFocus` | — | added | all tabs | done (#5405) | — |
 
 ## Tab decisions
@@ -63,11 +69,14 @@ Agreed for both tab bars (document and link tabs), following the WAI-ARIA tabs p
 - **Roles.** `role="tablist"` with a name, `role="tab"` with `aria-selected` and `aria-controls`,
   and `role="tabpanel"` on the content.
 - **Keys.** One tab stop on the selected tab (as now); Left and Right move between tabs and wrap at
-  the ends; Home and End go to the first and last. Document tabs keep manual activation (arrows
-  move focus, Enter or Space selects, as selecting can load a document); link tabs select as the
-  arrows move. A/D/H/L no longer move between tabs.
+  the ends; Home and End go to the first and last. Arrows move the focus, and Enter or Space
+  selects, on both bars: selecting a tab can load a document, and many link tabs load too (the
+  data viewer's tabs fetch from the server; document sub-tabs build their content on first view).
+  A/D/H/L no longer move between tabs.
 - **Closing.** Delete closes the focused closable tab (Escape no longer does); Alt+W stays. Focus
   moves to the newly selected tab, not to the page.
+- **Menu.** The context menu key or Shift+F10 opens the focused tab's menu (Close Others and so
+  on), below the tab, as a right click does; Escape gives the focus back to the tab.
 - **Focus.** Shown only for keyboard focus (`:focus-visible`), as a 2px rounded ring in
   `--splitter__focus-color` (6.9:1 dark, 5.8:1 light against the shell): inside the edge of a
   document tab (the selected bar stays below it), and around a link tab's label, 4px past the text
@@ -105,10 +114,12 @@ Agreed for both tab bars (document and link tabs), following the WAI-ARIA tabs p
 ## Order
 
 1. Tab bars, both kinds: they shape the focus order of nearly every screen.
-2. Data grids.
-3. Explorer tree.
-4. Menus, dialogs, quick filter, form controls, code editor, as their briefs are ready.
-5. Then page-level focus-order stories, once the components that make up a page are rolled out.
+2. Form controls (selection box, tick box, value spinner, date and time, text inputs): most of the
+   `label` baseline entries, and the controls that grids hold in their cells.
+3. Data grids.
+4. Explorer tree.
+5. Menus, dialogs, quick filter, code editor, as their briefs are ready.
+6. Then page-level focus-order stories, once the components that make up a page are rolled out.
 
 Components that use each other (e.g. tabs inside split panes, grids using `ButtonGroupFocus`)
 merge dependency first; the dependent worktree rebases onto it.

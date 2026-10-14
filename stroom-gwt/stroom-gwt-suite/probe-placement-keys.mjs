@@ -43,7 +43,7 @@ await gwt.openDocByName(page, dashboard, 'Dashboard');
 await page.waitForTimeout(3_000);
 
 const glass = async () => (await page.locator('.flexLayout-glassVisible').count()) > 0;
-const tabs = () => page.locator('.linkTab-label').evaluateAll((es) => es.filter((e) => e.offsetWidth > 0).length);
+const tabs = () => page.locator('.tab-bar--link .tab-bar__label').evaluateAll((es) => es.filter((e) => e.offsetWidth > 0).length);
 
 // Duplicate the first component tab from its own Settings menu, then press the key.
 const duplicateThenPress = async (key) => {

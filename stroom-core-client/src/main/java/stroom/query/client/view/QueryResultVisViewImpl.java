@@ -20,6 +20,7 @@ import stroom.dashboard.client.vis.VisFrame;
 import stroom.data.grid.client.MessagePanelImpl;
 import stroom.data.pager.client.RefreshButton;
 import stroom.query.client.presenter.QueryResultVisPresenter.QueryResultVisView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
@@ -47,8 +48,10 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
         visContainer = new SimplePanel();
         visContainer.setStyleName("queryVis-innerLayout");
 
-        refreshButton = new RefreshButton();
-        refreshButton.addStyleName("dashboardVis-refresh");
+        // Its pause and resume button, over its top right corner. The presenter sets what it does.
+        final Toolbar toolbar = new Toolbar("Visualisation");
+        toolbar.addStyleName("dashboardVis-refresh");
+        refreshButton = toolbar.refresh(null);
         refreshButton.setAllowPause(true);
 
         widget = new FlowPanel() {
@@ -76,7 +79,7 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
         };
         widget.setStyleName("queryVis-outerLayout"); //("dashboardVis-outerLayout");
         widget.add(visContainer);
-        widget.add(refreshButton);
+        widget.add(toolbar);
         widget.add(messagePanel);
     }
 

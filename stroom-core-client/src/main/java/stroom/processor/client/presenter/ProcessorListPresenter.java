@@ -19,6 +19,7 @@ package stroom.processor.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.info.client.SvgCell;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -52,8 +53,7 @@ import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.UserRef;
@@ -302,14 +302,14 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void addIconColumn() {
-        dataGrid.addColumn(new Column<ProcessorListRow, Preset>(new SvgCell()) {
+        dataGrid.addColumn(new Column<ProcessorListRow, CellIcon>(new SvgCell()) {
             @Override
-            public Preset getValue(final ProcessorListRow row) {
-                Preset icon = null;
+            public CellIcon getValue(final ProcessorListRow row) {
+                CellIcon icon = null;
                 if (row instanceof ProcessorFilterRow) {
-                    icon = SvgPresets.FILTER.enabled(true);
+                    icon = CellIcon.of(SvgImage.FILTER, "Filter");
                 } else if (row instanceof ProcessorRow) {
-                    icon = SvgPresets.PROCESS.enabled(true);
+                    icon = CellIcon.of(SvgImage.PROCESS, "Process");
                 }
                 return icon;
             }

@@ -12833,6 +12833,7 @@ components:
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
+          - CLEAR_OUTLINE
           - CLIPBOARD
           - CLOSE
           - CODE
@@ -17078,6 +17079,7 @@ components:
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
+          - CLEAR_OUTLINE
           - CLIPBOARD
           - CLOSE
           - CODE

@@ -56,41 +56,6 @@
     width: 100%;
 }
 
-.LoginView .LoginViewFormPanel .passwordTextBoxOuter {
-    position: relative;
-}
-
-.LoginView .LoginViewFormPanel .passwordTextBoxOuter svg {
-    color: #7a7a7a;
-}
-
-.LoginView .LoginViewFormPanel .passwordTextBox {
-    width: 100%;
-}
-
-.LoginView .LoginViewFormPanel .passwordTextBox {
-    padding-right: 1.6rem;
-}
-
-.LoginView .LoginViewFormPanel .passwordTextBoxOverlay {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    padding: 4px;
-    gap: 4px;
-}
-
-.LoginView .LoginViewFormPanel .passwordTextBoxOverlay .toolbar-button__icon {
-    color: var(--text-color);
-}
-
-.LoginView .LoginViewFormPanel .showPassword {
-
-}
-
 .LoginView .LoginViewFormPanel .feedback {
     display: block;
     width: 100%;
@@ -107,7 +72,7 @@
     font-size: .7rem;
     text-align: center;
     cursor: pointer;
-    color: #1890ff;
+    color: var(--link__text-color);
     transition: color .3s;
 }
 
@@ -145,7 +110,7 @@
     border-radius: 4rem;
 }
 
-.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewForm .form-group-label {
+.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewForm .form-group__label {
     font-size: var(--font-size-15);
 }
 

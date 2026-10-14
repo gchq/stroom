@@ -24,8 +24,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserAccessPresenter;
 import stroom.security.shared.AppPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -39,7 +38,7 @@ import javax.inject.Singleton;
 public class UserAccessPlugin extends MonitoringPlugin<UserAccessPresenter> {
 
     public static final String SCREEN_NAME = "User Access";
-    public static final Preset ICON = SvgPresets.SHIELD;
+    public static final SvgImage ICON = SvgImage.SHIELD;
 
     @Inject
     public UserAccessPlugin(final EventBus eventBus,

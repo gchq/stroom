@@ -34,7 +34,6 @@ import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
-import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.client.DataGridUtil;
@@ -42,7 +41,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -174,7 +173,7 @@ public class UserListPresenter
         // Icon
         if (mode == Mode.USERS_AND_GROUPS) {
             dataGrid.addColumn(
-                    DataGridUtil.svgPresetColumnBuilder(false, (User user) ->
+                    DataGridUtil.cellIconColumnBuilder(false, (User user) ->
                                     UserAndGroupHelper.mapUserTypeToIcon(user))
                             .withSorting(UserFields.FIELD_IS_GROUP)
                             .enabledWhen(User::isEnabled)
@@ -188,7 +187,7 @@ public class UserListPresenter
                     (ColumnSizeConstants.ICON_COL * 2) + 20);
         } else {
             dataGrid.addColumn(
-                    DataGridUtil.svgPresetColumnBuilder(false, (User user) ->
+                    DataGridUtil.cellIconColumnBuilder(false, (User user) ->
                                     UserAndGroupHelper.mapUserTypeToIcon(user))
                             .enabledWhen(User::isEnabled)
                             .centerAligned()
@@ -470,8 +469,11 @@ public class UserListPresenter
         return dataGrid;
     }
 
-    public ButtonView addButton(final Preset preset) {
-        return pagerView.addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return pagerView.getToolbar();
     }
 
     public void setAdditionalTerm(final ExpressionTerm additionalTerm) {

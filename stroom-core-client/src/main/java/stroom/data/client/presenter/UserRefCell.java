@@ -16,13 +16,13 @@
 
 package stroom.data.client.presenter;
 
+import stroom.cell.info.client.CellIcon;
 import stroom.data.grid.client.EventCell;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUserEvent;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
@@ -167,12 +167,12 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
 
                 if (showIcon) {
                     final String title = userRef.getType(CaseType.SENTENCE) + " " + cellPlainText;
-                    final Preset icon = userRef.isGroup()
+                    final SvgImage icon = userRef.isGroup()
                             ? UserTabPlugin.GROUP_ICON
                             : UserTabPlugin.USER_ICON;
                     final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
                             title,
-                            icon.getSvgImage(),
+                            icon,
                             ICON_CLASS_NAME,
                             IconColour.BLUE.getClassName(),
                             "userRefLinkIcon");

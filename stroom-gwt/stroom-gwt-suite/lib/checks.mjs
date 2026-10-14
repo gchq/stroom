@@ -259,7 +259,7 @@ export function readFeedback(page) {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const texts = [...scope.querySelectorAll('.feedback, .invalid-feedback')]
+    const texts = [...scope.querySelectorAll('.feedback, .form-group__feedback')]
       .filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent)).filter(Boolean);
     const invalid = scope.querySelectorAll('.invalid').length;
     return { texts, invalid };

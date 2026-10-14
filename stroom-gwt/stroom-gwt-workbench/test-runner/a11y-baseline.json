@@ -1,12 +1,10 @@
 {
   "app-ai-askaichatpanel--attachment-ready": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-ai-askaichatpanel--stop-while-working": [
     "button-name",
-    "nested-interactive",
-    "target-size"
+    "nested-interactive"
   ],
   "app-ai-askstroomaidialog--default": [
     "button-name"
@@ -18,25 +16,13 @@
     "button-name"
   ],
   "app-annotations-decoratecomment--decorates-links": [
-    "color-contrast",
     "label"
   ],
   "app-annotations-decoratecomment--links-invoke-handlers": [
-    "color-contrast",
     "label"
   ],
   "app-dashboard-queryresultvis--pause-button-reports-up": [
-    "frame-title",
-    "target-size"
-  ],
-  "app-dashboard-tablefiltersettings--column-tickboxes": [
-    "target-size"
-  ],
-  "app-dictionary-dictionaryeditor--add-import-from-toolbar": [
-    "target-size"
-  ],
-  "app-dictionary-dictionaryeditor--default": [
-    "target-size"
+    "frame-title"
   ],
   "app-editors-analyticruleeditor--default": [
     "target-size"
@@ -50,12 +36,8 @@
   "app-editors-dashboardeditor--dock-onto-middle-panel": [
     "label"
   ],
-  "app-editors-dashboardeditor--duplicate-to-dashboard": [
-    "target-size"
-  ],
   "app-editors-dashboardeditor--embedded-query-settings-fields": [
-    "label",
-    "target-size"
+    "label"
   ],
   "app-editors-dashboardeditor--inner-split-dock": [
     "label"
@@ -75,14 +57,8 @@
   "app-editors-dashboardeditor--splitter-keeps-third-panel": [
     "label"
   ],
-  "app-editors-dashboardeditor--table-column-values-filter": [
-    "target-size"
-  ],
   "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [
     "color-contrast"
-  ],
-  "app-editors-dashboardeditor--table-filter-drives-query": [
-    "target-size"
   ],
   "app-editors-dashboardeditor--vis-dynamic-controls": [
     "frame-title"
@@ -91,8 +67,7 @@
     "frame-title"
   ],
   "app-editors-dashboardeditor--vis-refetches-on-column-filter": [
-    "frame-title",
-    "target-size"
+    "frame-title"
   ],
   "app-editors-documentationeditor--default": [
     "frame-title"
@@ -102,24 +77,6 @@
   ],
   "app-editors-documentationeditor--read-only": [
     "frame-title"
-  ],
-  "app-editors-foldereditor--folder": [
-    "target-size"
-  ],
-  "app-editors-gitrepoeditor--credential-list-loads-on-open-not-mount": [
-    "target-size"
-  ],
-  "app-editors-pathwayseditor--default": [
-    "target-size"
-  ],
-  "app-editors-pathwayseditor--edit-constraints": [
-    "target-size"
-  ],
-  "app-editors-pathwayseditor--graph": [
-    "target-size"
-  ],
-  "app-editors-pathwayseditor--view-traces": [
-    "target-size"
   ],
   "app-editors-planbeditor--edit-enables-save": [
     "color-contrast"
@@ -157,27 +114,6 @@
   "app-editors-planbeditor--unset-schema-fields-show-their-java-defaults": [
     "color-contrast"
   ],
-  "app-editors-queryeditor--add-to-annotation": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--annotation-batch": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--annotation-change-forces-new-search": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--annotation-statuses-load-on-menu-open": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--annotations": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--ask-ai-button": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--change-assigned-to": [
-    "target-size"
-  ],
   "app-editors-queryeditor--column-filter-menu": [
     "target-size"
   ],
@@ -206,9 +142,6 @@
     "target-size"
   ],
   "app-editors-queryeditor--default": [
-    "target-size"
-  ],
-  "app-editors-queryeditor--download": [
     "target-size"
   ],
   "app-editors-queryeditor--format-menu": [
@@ -254,8 +187,7 @@
     "target-size"
   ],
   "app-editors-queryeditor--visualisation-data-latch": [
-    "frame-title",
-    "target-size"
+    "frame-title"
   ],
   "app-editors-reporteditor--default": [
     "target-size"
@@ -281,261 +213,138 @@
   "app-idp-authenticationerror--with-config-message": [
     "link-in-text-block"
   ],
-  "app-idp-changepassword--default": [
-    "color-contrast"
-  ],
-  "app-idp-changepassword--force-sign-in": [
-    "color-contrast"
-  ],
-  "app-idp-changepassword--mismatch": [
-    "color-contrast"
-  ],
-  "app-idp-changepassword--policy-failure": [
-    "color-contrast"
-  ],
-  "app-idp-changepassword--strength-while-typing": [
-    "color-contrast"
-  ],
-  "app-idp-changepassword--weak-password": [
-    "color-contrast"
-  ],
-  "app-idp-resetpassword--missing-password": [
-    "color-contrast"
-  ],
-  "app-idp-signinflow--forced-password-change": [
-    "color-contrast"
-  ],
-  "app-index-indexeditor--dense-vector-field": [
-    "target-size"
-  ],
-  "app-index-indexeditor--fields-editable": [
-    "target-size"
-  ],
-  "app-index-indexeditor--fields-read-only": [
-    "target-size"
-  ],
-  "app-index-indexeditor--new-field-without-name": [
-    "target-size"
-  ],
-  "app-main-accountsscreen--accounts": [
-    "target-size"
-  ],
-  "app-main-accountsscreen--initial-sort-is-sent": [
-    "target-size"
-  ],
-  "app-main-accountsscreen--locked-account": [
-    "target-size"
-  ],
-  "app-main-accountsscreen--user-id-command-link": [
-    "target-size"
-  ],
-  "app-main-accountsscreen--user-id-plain-without-target": [
-    "target-size"
-  ],
-  "app-main-activity-chooser--default": [
-    "target-size"
-  ],
-  "app-main-activity-chooser--open-with-selection": [
-    "target-size"
-  ],
   "app-main-annotationeditor--annotation-editable": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--annotation-read-only": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--editor": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--entry-actions": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--failed-comment-change-keeps-dialog-usable": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--grouped-history": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--history-rich-prose": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--labels-and-tabs": [
-    "color-contrast",
-    "label",
-    "target-size"
-  ],
-  "app-main-annotationeditor--link-annotation": [
-    "target-size"
-  ],
-  "app-main-annotationeditor--link-to-editable": [
-    "target-size"
-  ],
-  "app-main-annotationeditor--link-to-read-only": [
-    "target-size"
+    "label"
   ],
   "app-main-annotationeditor--read-only": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--status-setting-block": [
-    "color-contrast",
     "label"
   ],
-  "app-main-annotationtagscreen--permissions": [
-    "target-size"
-  ],
-  "app-main-apikeysscreen--api-keys": [
-    "target-size"
-  ],
-  "app-main-apppermissionsscreen--action-menu-and-filter": [
-    "target-size"
-  ],
-  "app-main-apppermissionsscreen--app-permissions": [
-    "target-size"
-  ],
   "app-main-apppermissionsscreen--read-only-without-manage-users": [
-    "color-contrast",
-    "target-size"
+    "color-contrast"
   ],
   "app-main-appshell--activity-chooser": [
-    "button-name",
-    "target-size"
-  ],
-  "app-main-appshell--activity-chooses-on-startup": [
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--ai-docked-beside-content": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--banner": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--context-menu": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--context-menu-on-favourites-root": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--context-menu-on-system-root": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--context-menu-permissions": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--copy-document": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--create-document": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--deep-link": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--default": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--delete-after-failed-lookup-still-proceeds": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--delete-document": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--delete-with-dependants-warns": [
     "button-name",
     "scrollable-region-focusable"
   ],
   "app-main-appshell--dictionary-lifecycle": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--explorer-toggle-alerts": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--explorer-type-filter": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--export-document": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--find-shortcut": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--goto-shortcut": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--info-dialog": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--live-explorer": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--locate-only-for-explorer-tabs": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--main-menu": [
     "button-name"
   ],
   "app-main-appshell--move-document": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--multi-delete": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--opened-document-takes-focus": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--opened-screen-takes-focus": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--opens-document": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--opens-feed": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--rename-document": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--rename-to-blank-warns": [
     "button-name"
   ],
   "app-main-appshell--save-as-document": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--security-menu-both-for-administrator": [
     "button-name"
@@ -547,20 +356,16 @@
     "button-name"
   ],
   "app-main-appshell--tab-context-menu": [
-    "button-name",
-    "target-size"
+    "button-name"
+  ],
+  "app-main-appshell--tab-keyboard": [
+    "button-name"
   ],
   "app-main-appshell--toolbar-delete": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--toolbar-tab-stops": [
-    "button-name",
-    "target-size"
-  ],
-  "app-main-browseannotationsscreen--browse": [
-    "color-contrast",
-    "target-size"
+    "button-name"
   ],
   "app-main-contentstorescreen--content-store": [
     "image-alt"
@@ -571,33 +376,31 @@
   "app-main-contentstorescreen--upgrade-check-promotes-row": [
     "image-alt"
   ],
-  "app-main-contenttabpane--duplicate-dashboard-tab": [
-    "button-name"
-  ],
-  "app-main-contenttabpane--no-duplicate-for-single-instance": [
-    "button-name"
-  ],
-  "app-main-createdocumentdialog--default": [
-    "target-size"
-  ],
-  "app-main-createdocumentdialog--reveals-parent-of-a-document": [
-    "target-size"
-  ],
   "app-main-currentactivity--requires-query-info-gate": [
     "label"
   ],
   "app-main-datareceiptrulesscreen--obfuscation-warning": [
     "scrollable-region-focusable"
   ],
-  "app-main-dependenciesscreen--action-menu": [
-    "color-contrast",
+  "app-main-dataretentionscreen--expression-panel": [
     "target-size"
   ],
-  "app-main-dependenciesscreen--dependencies": [
-    "color-contrast",
+  "app-main-dataretentionscreen--impact-filter": [
     "target-size"
   ],
-  "app-main-dependenciesscreen--server-sort-and-paging": [
+  "app-main-dataretentionscreen--impact-nested": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-sorting": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-summary": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--retention": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--row-action-menu": [
     "target-size"
   ],
   "app-main-dependencyinfodialog--dependency-info": [
@@ -606,10 +409,6 @@
   "app-main-dependencyinfodialog--missing-dependency-still-renders": [
     "label"
   ],
-  "app-main-documentpermissionsscreen--filter-dialog": [
-    "color-contrast",
-    "target-size"
-  ],
   "app-main-executionschedulesscreen--batch-edit": [
     "aria-command-name"
   ],
@@ -617,8 +416,7 @@
     "aria-command-name"
   ],
   "app-main-executionschedulesscreen--batch-schedule-disabled": [
-    "aria-command-name",
-    "color-contrast"
+    "aria-command-name"
   ],
   "app-main-executionschedulesscreen--default-sort-is-name-descending": [
     "aria-command-name"
@@ -633,12 +431,10 @@
     "aria-command-name"
   ],
   "app-main-executionschedulesscreen--run-now": [
-    "aria-command-name",
-    "color-contrast"
+    "aria-command-name"
   ],
   "app-main-executionschedulesscreen--run-now-filtered-skips-disabled": [
-    "aria-command-name",
-    "color-contrast"
+    "aria-command-name"
   ],
   "app-main-executionschedulesscreen--schedules": [
     "aria-command-name"
@@ -652,12 +448,8 @@
   "app-main-executionschedulesscreen--unknown-node-is-marked": [
     "aria-command-name"
   ],
-  "app-main-finddialog--default": [
-    "target-size"
-  ],
   "app-main-findincontentdialog--default": [
-    "label",
-    "target-size"
+    "label"
   ],
   "app-main-jobsscreen--cross-navigation": [
     "label"
@@ -667,15 +459,6 @@
   ],
   "app-main-jobsscreen--job-schedule": [
     "label"
-  ],
-  "app-main-manageactivitydialog--create-activity": [
-    "target-size"
-  ],
-  "app-main-manageactivitydialog--delete-activity": [
-    "target-size"
-  ],
-  "app-main-manageactivitydialog--quick-filter": [
-    "target-size"
   ],
   "app-main-manageactivitydialog--validation-blocks-save": [
     "label",
@@ -704,9 +487,6 @@
   "app-main-pipelineeditor--processors": [
     "label"
   ],
-  "app-main-pipelineeditor--reference-remove-restore": [
-    "color-contrast"
-  ],
   "app-main-processorfilterlist--expander-tree": [
     "label"
   ],
@@ -719,115 +499,11 @@
   "app-main-processorfilterlist--info-shows-unlimited-tasks": [
     "label"
   ],
-  "app-main-propertiesscreen--no-warnings-when-all-nodes-answer": [
-    "target-size"
-  ],
-  "app-main-propertiesscreen--properties": [
-    "target-size"
-  ],
-  "app-main-recentitemsdialog--empty": [
-    "target-size"
-  ],
   "app-main-resultstoresdialog--settings": [
     "scrollable-region-focusable"
   ],
   "app-main-resultstoresdialog--stores": [
     "scrollable-region-focusable"
-  ],
-  "app-main-servertasksscreen--default-sort-is-age-descending": [
-    "target-size"
-  ],
-  "app-main-servertasksscreen--flat-list-details": [
-    "target-size"
-  ],
-  "app-main-servertasksscreen--info-actions": [
-    "target-size"
-  ],
-  "app-main-servertasksscreen--info-actions-gated-by-keys": [
-    "target-size"
-  ],
-  "app-main-servertasksscreen--info-actions-stream-and-filter": [
-    "target-size"
-  ],
-  "app-main-servertasksscreen--quick-filter": [
-    "color-contrast",
-    "target-size"
-  ],
-  "app-main-servertasksscreen--seeded-filter": [
-    "color-contrast",
-    "target-size"
-  ],
-  "app-main-servertasksscreen--task-tree": [
-    "target-size"
-  ],
-  "app-main-tracesscreen--traces": [
-    "target-size"
-  ],
-  "app-main-useraccessscreen--buttons-gated-on-selection": [
-    "target-size"
-  ],
-  "app-main-useraccessscreen--default": [
-    "target-size"
-  ],
-  "app-main-useraccessscreen--end-one-session": [
-    "target-size"
-  ],
-  "app-main-useraccessscreen--filter-is-server-side": [
-    "target-size"
-  ],
-  "app-main-useraccessscreen--multi-select-and-split-pane": [
-    "target-size"
-  ],
-  "app-main-useraccessscreen--open-user-needs-a-stroom-user": [
-    "target-size"
-  ],
-  "app-main-useraccessscreen--revoke-confirm-internal-idp": [
-    "target-size"
-  ],
-  "app-main-useraccessscreen--selection-drives-the-session-list": [
-    "target-size"
-  ],
-  "app-main-usergroupsscreen--copy-permissions": [
-    "target-size"
-  ],
-  "app-main-usergroupsscreen--edit-group": [
-    "target-size"
-  ],
-  "app-main-usergroupsscreen--membership-action-menus": [
-    "target-size"
-  ],
-  "app-main-usergroupsscreen--reading-order": [
-    "target-size"
-  ],
-  "app-main-usergroupsscreen--toolbar-tab-stops": [
-    "target-size"
-  ],
-  "app-main-usergroupsscreen--user-groups": [
-    "target-size"
-  ],
-  "app-main-usersscreen--action-menu": [
-    "target-size"
-  ],
-  "app-main-usersscreen--bulk-create": [
-    "target-size"
-  ],
-  "app-main-usersscreen--failed-restore-keeps-dialog-usable": [
-    "target-size"
-  ],
-  "app-main-usersscreen--focused-open": [
-    "target-size"
-  ],
-  "app-main-usersscreen--users": [
-    "target-size"
-  ],
-  "app-main-usertabscreen--dependencies-tab": [
-    "target-size"
-  ],
-  "app-main-usertabscreen--document-permissions-tab": [
-    "target-size"
-  ],
-  "app-main-usertabscreen--groups-tab": [
-    "target-size"
   ],
   "app-main-visualisationassets--upload-deduplicates-name": [
     "aria-required-parent",
@@ -840,46 +516,16 @@
   "app-query-queryresultstable--column-filter-row": [
     "target-size"
   ],
-  "app-query-queryresultstable--dashboard-expression-editor": [
-    "target-size"
-  ],
-  "app-security-documentpermissionstab--folder-create-document-types": [
-    "target-size"
-  ],
-  "app-security-documentpermissionstab--git-repo-is-folder-like": [
-    "target-size"
-  ],
-  "app-security-documentpermissionstab--nested-create-permissions-dialog": [
-    "target-size"
-  ],
-  "app-security-documentpermissionstab--no-descendants-button-on-document": [
-    "target-size"
-  ],
-  "widgets-aceeditor-format--formats-nested-elements": [
-    "color-contrast"
-  ],
-  "widgets-aceeditor-format--gwt-quirks": [
-    "color-contrast"
-  ],
-  "widgets-aceeditor-format--is-idempotent": [
-    "color-contrast"
-  ],
-  "widgets-aceeditor-format--leaves-non-xml-alone": [
-    "color-contrast"
-  ],
   "widgets-date-time-calendargrid--basic": [
     "aria-allowed-attr",
-    "button-name",
     "label"
   ],
   "widgets-date-time-calendargrid--no-selection": [
     "aria-allowed-attr",
-    "button-name",
     "label"
   ],
   "widgets-date-time-calendargrid--past-date": [
     "aria-allowed-attr",
-    "button-name",
     "label"
   ],
   "widgets-date-time-customdatebox--default": [
@@ -912,21 +558,6 @@
   "widgets-date-time-timepicker--hour-minute": [
     "label"
   ],
-  "widgets-dialogs-explorerdropdownpopup--default": [
-    "target-size"
-  ],
-  "widgets-dialogs-explorerdropdownpopup--type-filtered": [
-    "target-size"
-  ],
-  "widgets-display-classificationlabel--all-levels": [
-    "color-contrast"
-  ],
-  "widgets-display-classificationlabel--lower-case-input": [
-    "color-contrast"
-  ],
-  "widgets-display-classificationlabel--official": [
-    "color-contrast"
-  ],
   "widgets-display-htmlpresenter--rich-content": [
     "link-in-text-block"
   ],
@@ -948,29 +579,14 @@
   "widgets-editors-viewers-markdowneditor--read-only-preview": [
     "frame-title"
   ],
+  "widgets-inputs-formgroup--disabled": [
+    "color-contrast"
+  ],
   "widgets-inputs-linecolinput--basic": [
     "label"
   ],
   "widgets-inputs-linecolinput--disabled": [
     "label"
-  ],
-  "widgets-inputs-quickfilter--filters-a-list": [
-    "target-size"
-  ],
-  "widgets-inputs-quickfilter--no-debounce": [
-    "target-size"
-  ],
-  "widgets-inputs-quickfilter--with-help": [
-    "target-size"
-  ],
-  "widgets-inputs-quickfilter--with-label": [
-    "target-size"
-  ],
-  "widgets-inputs-quickfilterpanel--default": [
-    "target-size"
-  ],
-  "widgets-inputs-quickfilterpanel--dialog-variant": [
-    "target-size"
   ],
   "widgets-inputs-textinput--disabled-and-readonly": [
     "label"
@@ -1006,124 +622,94 @@
     "label"
   ],
   "widgets-popuppositioner-popup-contract--arrow-left-closes-only-the-current-level": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--click-inside-a-portalled-child-keeps-the-parent-open": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--closing-a-menu-closes-its-descendants": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--closing-a-portalled-parent-closes-its-child": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--escape-closes": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--escape-closes-the-innermost-popup-only": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--escape-closes-the-whole-menu-hierarchy": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--every-registered-partner-is-exempt": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--inside-click-keeps-it-open": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--menu-paints-exactly-one-border": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--nested-real-widgets-route-escape-to-the-innermost": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--never-covers-its-trigger": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--no-shield-behind-any-popup": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--non-partner-mousedown-does-auto-hide": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--outside-click-closes-the-whole-chain": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--outside-click-reaches-target": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--parent-item-click-toggles-its-submenu": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--placed-on-its-requested-side": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--positioner-flips-and-clamps": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--quick-filter-help-uses-gwts-own-offset": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--registry-does-not-leak": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--submenu-anchor-is-clipped-to-its-menu": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--submenu-first-item-aligns-with-its-parent-row": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--submenu-opens-clear-of-its-parent": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--trigger-click-closes-and-stays-closed": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-query-expressionbuilder--add-term-starts-with-no-field": [
     "label"
   ],
   "widgets-query-expressionbuilder--async-field-source-fetches-only-when-needed": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-query-expressionbuilder--clicking-the-dropdown-arrow-opens-the-picker": [
     "label"
   ],
   "widgets-query-expressionbuilder--dynamic-fields-always-show-picker-chrome": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-query-expressionbuilder--static-fields-have-no-picker-chrome": [
     "label"
-  ],
-  "widgets-selectors-docselectionbox--node-flags-forwarded": [
-    "target-size"
   ],
   "widgets-selectors-docselectionbox--warning-and-disabled": [
     "nested-interactive",
@@ -1149,29 +735,12 @@
     "label"
   ],
   "widgets-selectors-selectionbox--model-backed-always-shows-filter-and-pager": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-selectors-selectionbox--popup-uses-gwt-markup": [
     "label"
   ],
   "widgets-selectors-selectionbox--short-list-has-no-pager": [
     "label"
-  ],
-  "widgets-tabs-curvetabbar--with-sidebar-toggle": [
-    "button-name"
-  ],
-  "widgets-tree-explorertree--basic": [
-    "target-size"
-  ],
-  "widgets-tree-explorertree--filtered": [
-    "color-contrast",
-    "target-size"
-  ],
-  "widgets-tree-explorertree--multi-select": [
-    "target-size"
-  ],
-  "widgets-tree-explorertree--with-alerts": [
-    "target-size"
   ]
 }

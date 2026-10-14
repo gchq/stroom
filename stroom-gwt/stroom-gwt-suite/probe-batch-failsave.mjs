@@ -53,7 +53,7 @@ const press = async (name) => {
 // The System folder's Processors tab
 await page.locator('.explorerCell', { hasText: 'System' }).first().dblclick();
 await page.waitForTimeout(2_500);
-await page.locator('.linkTab-label', { hasText: 'Processors' }).first().click({ force: true });
+await page.locator('.tab-bar--link .tab-bar__label', { hasText: 'Processors' }).first().click({ force: true });
 await page.waitForTimeout(2_000);
 await page.locator('[title="Batch Edit Current Processors"]').first().click();
 await page.waitForTimeout(1_500);

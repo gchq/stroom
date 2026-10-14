@@ -39,7 +39,7 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
 
     private final Widget widget;
 
-    @UiField(provided = true)
+    @UiField
     ToolbarButton close;
     @UiField
     SimplePanel content;
@@ -53,12 +53,6 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     @Inject
     public TextViewImpl(final Binder binder, final ClassificationLabel classification) {
         this.classification = classification;
-
-        close = new ToolbarButton();
-        close.setSvg(SvgImage.CLOSE);
-//        close.getElement().addClassName("navigation-header-button add");
-        close.setTitle("Close");
-        close.setEnabled(true);
 
         widget = binder.createAndBindUi(this);
         spinner.setVisible(false);

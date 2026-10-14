@@ -17,9 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.IconColour;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -73,18 +71,8 @@ public class IconMenuItem extends MenuItem {
         protected IconColour iconColour;
         protected boolean highlight;
 
-        public B icon(final Preset svgPreset) {
-            this.enabledIcon = NullSafe.get(svgPreset, Preset::getSvgImage);
-            return self();
-        }
-
         public B icon(final SvgImage icon) {
             this.enabledIcon = icon;
-            return self();
-        }
-
-        public B disabledIcon(final Preset svgPreset) {
-            this.disabledIcon = NullSafe.get(svgPreset, Preset::getSvgImage);
             return self();
         }
 

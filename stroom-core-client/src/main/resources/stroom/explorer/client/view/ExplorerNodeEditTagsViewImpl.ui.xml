@@ -23,11 +23,13 @@
                 <g:FlowPanel styleName="editNodeTagsAddTagsInputPanel flex-row dock-max form">
                     <g:TextBox ui:field="textBox"
                                addStyleNames="editNodeTagsAddTagsInput form-control lower-case-input dock-max"/>
-                    <b:ButtonPanel ui:field="clearButtonPanel"
-                                   addStyleNames="align-center dock-min"/>
-                </g:FlowPanel>
-                <b:ButtonPanel ui:field="inputButtonPanel"
+                    <b:Toolbar ui:field="clearButtonPanel"
+                               name="Clear tags"
                                addStyleNames="align-center dock-min"/>
+                </g:FlowPanel>
+                <b:Toolbar ui:field="inputButtonPanel"
+                           name="Add tags"
+                           addStyleNames="align-center dock-min"/>
             </g:FlowPanel>
         </form:FormGroup>
 
@@ -46,8 +48,9 @@
                            addStyleNames="form-control dock-max max"/>
             </form:FormGroup>
 
-            <b:ButtonPanel ui:field="nodeTagsButtonPanel"
-                           addStyleNames="form dock-min flex-column dock-min justify-content-center"/>
+            <b:Toolbar ui:field="nodeTagsButtonPanel"
+                       name="Move tags"
+                       addStyleNames="form dock-min flex-column dock-min justify-content-center"/>
 
             <form:FormGroup identity="editNodeTagsNodeTags"
                             ui:field="nodeTagsFormGroup"

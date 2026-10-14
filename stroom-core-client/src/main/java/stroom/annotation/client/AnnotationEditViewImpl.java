@@ -45,6 +45,9 @@ import java.util.List;
 
 public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiHandlers> implements AnnotationEditView {
 
+    /// Shows that a field has no value ("None", "Nobody") in the muted text colour.
+    static final String EMPTY_VALUE_STYLE = "annotationLabel--empty";
+
     private final Widget widget;
 
     private boolean readOnly;
@@ -145,10 +148,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setStatus(final AnnotationTag status) {
         if (status == null) {
             this.status.setText("None");
-            this.status.getElement().getStyle().setOpacity(0.5);
+            this.status.addStyleName(EMPTY_VALUE_STYLE);
         } else {
             this.status.setText(status.getName());
-            this.status.getElement().getStyle().setOpacity(1);
+            this.status.removeStyleName(EMPTY_VALUE_STYLE);
         }
     }
 
@@ -156,10 +159,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setAssignedTo(final UserRef assignedTo) {
         if (assignedTo == null) {
             this.assignedTo.setText("Nobody");
-            this.assignedTo.getElement().getStyle().setOpacity(0.5);
+            this.assignedTo.addStyleName(EMPTY_VALUE_STYLE);
         } else {
             this.assignedTo.setText(assignedTo.toDisplayString());
-            this.assignedTo.getElement().getStyle().setOpacity(1);
+            this.assignedTo.removeStyleName(EMPTY_VALUE_STYLE);
         }
     }
 
@@ -167,14 +170,14 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setLabels(final List<AnnotationTag> labels) {
         if (labels == null || labels.isEmpty()) {
             this.labels.setText("None");
-            this.labels.getElement().getStyle().setOpacity(0.5);
+            this.labels.addStyleName(EMPTY_VALUE_STYLE);
         } else {
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             for (final AnnotationTag annotationTag : labels) {
                 htmlBuilder.div(div -> Lozenge.append(div, annotationTag), Attribute.className("lozengeOuter"));
             }
             this.labels.setHTML(htmlBuilder.toSafeHtml());
-            this.labels.getElement().getStyle().setOpacity(1);
+            this.labels.removeStyleName(EMPTY_VALUE_STYLE);
         }
     }
 
@@ -182,14 +185,14 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setCollections(final List<AnnotationTag> collections) {
         if (collections == null || collections.isEmpty()) {
             this.collections.setText("None");
-            this.collections.getElement().getStyle().setOpacity(0.5);
+            this.collections.addStyleName(EMPTY_VALUE_STYLE);
         } else {
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             for (final AnnotationTag annotationTag : collections) {
                 htmlBuilder.div(div -> Lozenge.append(div, annotationTag), Attribute.className("lozengeOuter"));
             }
             this.collections.setHTML(htmlBuilder.toSafeHtml());
-            this.collections.getElement().getStyle().setOpacity(1);
+            this.collections.removeStyleName(EMPTY_VALUE_STYLE);
         }
     }
 
@@ -197,10 +200,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setRetentionPeriod(final String retentionPeriod) {
         if (retentionPeriod == null || retentionPeriod.trim().isEmpty()) {
             this.retentionPeriod.setText("None");
-            this.retentionPeriod.getElement().getStyle().setOpacity(0.5);
+            this.retentionPeriod.addStyleName(EMPTY_VALUE_STYLE);
         } else {
             this.retentionPeriod.setText(retentionPeriod);
-            this.retentionPeriod.getElement().getStyle().setOpacity(1);
+            this.retentionPeriod.removeStyleName(EMPTY_VALUE_STYLE);
         }
     }
 

@@ -22,10 +22,9 @@ import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.HashAlgorithm;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
@@ -79,7 +78,7 @@ public class EditApiKeyViewImpl
     TextArea apiKeyTextArea;
 
     @UiField
-    ButtonPanel apiKeyButtonPanel;
+    Toolbar apiKeyButtonPanel;
     @UiField
     Label copyToClipboardLabel;
 
@@ -101,11 +100,8 @@ public class EditApiKeyViewImpl
         apiKeyTextArea.setEnabled(false);
         prefixTextBox.setEnabled(false);
         expiresOnDateBox.setUtc(userPreferencesManager.isUtc());
-        final ButtonView copyApiKeyToClipboardBtn = apiKeyButtonPanel.addButton(SvgPresets.COPY.title(
-                "Copy API Key to clipboard"));
-        copyApiKeyToClipboardBtn.setEnabled(true);
         // When the copy btn is clicked show a label to give feedback to user, but then remove it after a time
-        copyApiKeyToClipboardBtn.addClickHandler(event -> {
+        apiKeyButtonPanel.button(SvgImage.COPY, "Copy API Key to clipboard", () -> {
             ClipboardUtil.copy(apiKeyTextArea.getText());
             copyToClipboardLabel.setText("API Key copied to clipboard");
             final Timer timer = new Timer() {

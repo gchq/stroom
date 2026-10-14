@@ -453,7 +453,7 @@ its own; a group is `role="toolbar"` (named) only with two or more visible butto
 and Home/End jump; the keys are the arrows only, not `KeyBinding`'s letters (A/D/H/L), which would
 swallow key sequences such as `g u`. Buttons inside a widget that owns its keys (e.g. the quick
 filter's) are exempt. `FocusWidget.onAttach` turns a `tabIndex` of -1 back into 0, so the roving
-tab index must be set after attach (or use -2, as `HelpButton` does).
+tab index must be set after attach (or use -2, as a form group's help button does).
 
 Measured (`ButtonRuns` and `TabStops` in the workbench's `a11y` package; stories
 `Widgets/Buttons/ButtonGroup` and the `ToolbarTabStops` stories of `App/Main/AppShell`,
@@ -555,6 +555,83 @@ templates, are `ToolbarButton` and `ToolbarToggleButton`), with `.icon-button`, 
 `.navigation-menu-button`); nothing in the app emits those names. Every screenshot is unchanged.
 `SvgButton.create(Preset)` stays, deprecated (it makes a `ToolbarButton`), until `SvgPresets` goes;
 `FabButton` (`stroom-button-fab`, `face`) is left for a BEM pass of its own.
+Phase 4: `SvgButton` is deleted, with the unused `SubStreamNavigator` and `DataNavigator` templates.
+Every button it made is now made in the `Toolbar` it sits in (a button is never made on its own):
+the XML schema's validation indicator in the document's toolbar, the data receipt rules' Save and
+Show Warnings in theirs (now a `Toolbar`), and the drop down's warning in a one-button `Toolbar` in
+its template. `MarkdownEditPresenter` makes its toolbar (Edit, Help) when it is first shown, and
+`setAddButtonsFirst(Consumer<Toolbar>)` replaces `setInsertedButtons`, so the annotation's Save is made
+in that toolbar, before Edit. A `Toolbar` nested in a document's toolbar sits as a nested
+`ButtonPanel` does (`.toolbar > .toolbar` beside the transitional `.toolbar > .button-container`).
+Then the buttons made on their own beside a toolbar in the same presenter were made in it: the
+document's Save and Save As (`DocTabPresenter.createToolbar`), the pipeline's stepping toggle, the
+query's Create Rule and Create Report, the dashboard's design buttons, stepping's Terminate and log
+pane toggle (hidden rather than removed), the visualisation assets' buttons and the query text
+view's Close; and the templates' loose buttons are in a `<b:Toolbar>` (query buttons, navigation,
+the query toolbar's errors, a property's copy name). Every screenshot is unchanged.
+Then every list's buttons: `PagerView` and `PagerViewWithHeading` hold a `Toolbar` (`getToolbar()`,
+named after the list with `setName`), and about 100 list presenters make their buttons in it with
+`getToolbar().button(icon, name, handler)` in place of `addButton(Preset)` and a click handler
+registered in `onBind`. The list presenters' own `add(Preset)`/`addButton(Preset)` pass-throughs are
+`getToolbar()`, as are the views' (`QueryView`'s left and right `ButtonPanel`s are its expression and
+messages toolbars; `PathwayTreeView`, both `EditExpressionView`s, `QueryFavouritesView` and the
+global property editor's value icons), and `PagerView.addButton(Preset)` is gone. A menu a button
+opens (a dashboard table's Add Column, the annotation menu) is placed against the button rather
+than whatever was clicked inside it (`AnnotationManager.showAnnotationMenu(Element, …)`). Every
+screenshot is unchanged. Still made on their own: the button widgets built on `ToolbarButton`
+(`RefreshButton` (the visualisations' own), table expand and collapse, the quick filter's and date
+picker's buttons), which `PagerView.addButton(ButtonView)` still adds. The pathway
+tree's New, Edit and Remove buttons have never had a click handler, so do nothing.
+`ButtonPanel` is deleted, with its `button-container` rules: the last two were empty, holding a place
+in their rows (the data view's and query text view's), so are plain panels. Its stories
+(`Widgets/Buttons/ButtonGroup`) are of `Toolbar`, which has `setVertical` for a column of buttons.
+A form group's help button isn't a toolbar button: it is one button beside a label, out of the tab
+order (F1 in the field shows the same help). `HelpButton` is replaced by the form package's own
+`FormGroupHelpButton`, styled by `form-group__help` and `form-group__help-icon`, so the form groups
+are no longer counted as button runs (`UserGroupsScreen`'s `ToolbarTabStops`). Nothing else used
+`HelpButton`, so its standalone stories (`Widgets/Overlays/HelpButton`) and popup contract case are
+gone; the `FormGroup help` case checks the same popup, heading included.
+The form styles are in `form.css` (imported after Bootstrap, which also styles `.form-group`), with
+the form group's parts named BEM style: `form-group__label-row`, `__label`, `__help`,
+`__help-icon`, `__description-row`, `__description` and `__feedback` (no longer Bootstrap's
+`invalid-feedback`, so its styles are its own), and the `form-group--indented` and
+`form-group--inline-tick` modifiers. The help popup is `help-popup`.
+The quick filter's Clear and syntax help buttons are made in a toolbar (`quickFilter-toolbar`, placed
+over the end of the box) as regular toolbar buttons, so they are one tab stop with the arrow keys
+between them. Its help icon is the same size and colour everywhere (it was smaller, in the
+navigation colour, inside a form group), and Clear sits a toolbar gap from the help button (it
+overlapped it by a pixel).
+`RefreshButton` is a `ToolbarButton` itself (it was a `Composite` holding one), so it is one of its
+toolbar's buttons like any other: declared in the pagers' and data navigators' toolbars as before, or
+made by `Toolbar.refresh(onClick)`. Presenters set what it does with `setOnClick`. A visualisation's
+pause and resume button, which was on its own, is in a toolbar of its own ("Visualisation",
+`dashboardVis-refresh`, placed where the button was). The pagers, navigators and visualisations look
+as they did.
+A grouped table's Expand and Collapse are regular toolbar buttons, made by `GroupLevelButtons` (in
+the dashboard table's and query result table's pager toolbars, and in a "Group levels" toolbar on
+the traces screen, which made them one tab stop where they were two). The screen keeps the group
+selection; the helper works out the next level and names and enables the buttons for it.
+`TableExpandButton`, `TableCollapseButton` and `PagerView.addButton(ButtonView)` are gone.
+The date picker's Previous and Next year and month buttons are two toolbars ("Year" and "Month"),
+one beside each select box, with names ("Previous year", "Next month" and so on) where they had none.
+They were out of the tab order; each toolbar is now one tab stop, with the arrow keys between its two
+buttons, so the calendar can be stepped a month or a year at a time from the keyboard. It looks as it
+did.
+Password fields are a `PasswordBox` (`stroom.widget.form.client`, styled by `password-box.css`): a
+box with a show/hide button over its end, in a toolbar, as every password field in the app now is
+(login, change and current password, the three credential secrets, and the global property's and
+Elastic cluster's secret values, which had no show/hide). Six views each had their own copy of the
+overlay and its click handler; they are gone, with the overlay rules in `Login.css` and
+`ChangePassword.css`. The button is named for what pressing it does ("Show password", then "Hide
+password", which its tooltip shows too), and a polite live region in the box tells a screen reader
+"Your password is shown" or "hidden", as the focus stays on the button. Validation marks the input
+itself (`getInput()`), and the change password screen's length badge sits beside the button
+(`setBadge`).
+`Preset` and `SvgPresets` (72 shared icon, title and enabled constants) are deleted. A table cell's
+icon is a `CellIcon` (`SvgCell`, `InfoColumn`, `ActionCell`, `ActionMenuCell` and the `DataGridUtil`
+column builders), made where it is used with its own name; each keeps the icon, name and enabled
+state its preset gave it (e.g. a rule's Delete icon starts disabled). Menu items and the security
+plugins' icons are a plain `SvgImage`, as only the image was used.
 
 ### Opening a screen leaves the focus behind (#5405)
 
@@ -620,6 +697,9 @@ width". For 2.5.7, a splitter's menu (right click, long press, context menu key)
 either side or restores them, and Alt+M maximises the pane holding the focus (a visible collapse
 button was tried and dropped, as it sat over pane content). Known gap (2.5.8): a 7px splitter has
 no room where another meets it in a T at its centre, as in User Groups' 50/50 split.
+
+Since then, the line is drawn in the border colour again (`--border-color`), as other borders are,
+to be revisited with the theme colours; keyboard focus stays at least 3:1.
 
 Since then, every view uses `SplitPane` (the main screen's explorer and docked AI chat among them),
 and the old panels, their CSS, their stories and the comparison stories are deleted. The `Drag`
@@ -725,6 +805,22 @@ small window, so part of them is off screen and can't be reached: e.g. the proce
 Content, Recent Items, Batch Change Permissions and Change Permissions (800 x 800), the volume group
 editors and the stream viewer (1400 wide), the Edit Account dialog (737 high) and the index field
 editors. Dialogs aren't limited to the window's size, and long forms rely on scrolling inside them.
+
+### Text too faint on the dark theme's page colour
+
+**Confirmed** (`workbenchTest`'s accessibility check, dark theme). The workbench now shows stories
+on the theme's page colour (`--page__background-color`), which Stroom's panels and dialogs are drawn
+on, instead of the near-black app background, and two stories' text then falls below the WCAG AA
+contrast ratio (`color-contrast`) (a third, `CopyText`'s inserted text, was the story's own colour, a
+token that doesn't exist, and is fixed):
+
+* the Traces screen's histogram hint and timeline header text (`.histogram-hint`,
+  `.timeline-header` spans; `app-main-tracesscreen--traces`);
+* a disabled form group's description (`.form-group__description`, faded to 80% and in the
+  disabled colour; `widgets-inputs-formgroup--disabled`). WCAG exempts text that is part of a
+  disabled control, so this one may be acceptable.
+
+They are in `test-runner/a11y-baseline.json` until they are fixed.
 
 ## Copy-paste mistakes and typos
 

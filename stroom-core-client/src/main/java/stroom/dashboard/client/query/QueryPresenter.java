@@ -63,8 +63,6 @@ import stroom.query.shared.ResultStoreResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
@@ -72,6 +70,7 @@ import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ErrorMessages;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -79,7 +78,6 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -186,23 +184,29 @@ public class QueryPresenter
             }
         });
 
-        addTermButton = view.addButtonLeft(SvgPresets.ADD);
+        addTermButton = view.getExpressionToolbar().button(SvgImage.ADD, "Add", this::addTerm);
         addTermButton.setTitle("Add Term");
-        addOperatorButton = view.addButtonLeft(SvgPresets.OPERATOR);
+        addOperatorButton = view.getExpressionToolbar().button(SvgImage.OPERATOR, "Add Operator",
+                this::addOperator);
         addOperatorButton.setTitle("Add Operator");
-        copyButton = view.addButtonLeft(SvgPresets.COPY.enabled(false));
-        disableItemButton = view.addButtonLeft(SvgPresets.DISABLE);
-        deleteItemButton = view.addButtonLeft(SvgPresets.DELETE);
-        historyButton = view.addButtonLeft(SvgPresets.HISTORY.enabled(true));
-        favouriteButton = view.addButtonLeft(SvgPresets.FAVOURITES.enabled(true));
-        downloadQueryButton = view.addButtonLeft(SvgPresets.DOWNLOAD);
+        copyButton = view.getExpressionToolbar().button(SvgImage.COPY, "Copy", this::copy);
+        copyButton.setEnabled(false);
+        disableItemButton = view.getExpressionToolbar().button(SvgImage.DISABLE, "Disable", this::disable);
+        disableItemButton.setEnabled(false);
+        deleteItemButton = view.getExpressionToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteItemButton.setEnabled(false);
+        historyButton = view.getExpressionToolbar().button(SvgImage.HISTORY, "History", this::onHistory);
+        favouriteButton = view.getExpressionToolbar().button(SvgImage.FAVOURITES, "Favourites", this::onFavourite);
+        downloadQueryButton = view.getExpressionToolbar().button(SvgImage.DOWNLOAD, "Download",
+                this::downloadQuery);
+        downloadQueryButton.setEnabled(false);
 
         if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            processButton = view.addButtonLeft(SvgPresets.PROCESS.enabled(true));
+            processButton = view.getExpressionToolbar().button(SvgImage.PROCESS, "Process", this::choosePipeline);
         }
 
-        errorsButton = new ToolbarButton();
-        view.addButtonRight(errorsButton);
+        // Its icon and name are set by the messages it shows
+        errorsButton = view.getMessagesToolbar().button(SvgImage.ERROR, "Show Errors", this::showErrors);
         setErrorsVisible(false);
 
         searchModel = new SearchModel(
@@ -213,6 +217,21 @@ public class QueryPresenter
                 resultStoreModel);
         searchModel.addSearchErrorListener(this);
         searchModel.addSearchStateListener(this);
+    }
+
+    private void onHistory() {
+        historyPresenter.show(QueryPresenter.this,
+                getDashboardContext().getDashboardDocRef().getUuid());
+    }
+
+    private void onFavourite() {
+        final ExpressionOperator root = expressionPresenter.write();
+        favouritesPresenter.show(
+                QueryPresenter.this,
+                getDashboardContext().getDashboardDocRef().getUuid(),
+                getQuerySettings().getDataSource(),
+                root);
+
     }
 
     @Override
@@ -226,64 +245,9 @@ public class QueryPresenter
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
-        registerHandler(addTermButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                addTerm();
-            }
-        }));
-        registerHandler(addOperatorButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                addOperator();
-            }
-        }));
-        registerHandler(copyButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                copy();
-            }
-        }));
-        registerHandler(disableItemButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                disable();
-            }
-        }));
-        registerHandler(deleteItemButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                delete();
-            }
-        }));
-        registerHandler(historyButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                historyPresenter.show(QueryPresenter.this,
-                        getDashboardContext().getDashboardDocRef().getUuid());
-            }
-        }));
-        registerHandler(favouriteButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                final ExpressionOperator root = expressionPresenter.write();
-                favouritesPresenter.show(
-                        QueryPresenter.this,
-                        getDashboardContext().getDashboardDocRef().getUuid(),
-                        getQuerySettings().getDataSource(),
-                        root);
-
-            }
-        }));
-        if (processButton != null) {
-            registerHandler(processButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    choosePipeline();
-                }
-            }));
-        }
-        registerHandler(errorsButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                showErrors();
-            }
-        }));
         registerHandler(indexLoader.addChangeDataHandler(event ->
                 loadedDataSource(indexLoader.getLoadedDataSourceRef())));
 
-        registerHandler(downloadQueryButton.addClickHandler(event -> downloadQuery()));
 
         registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
             // If a user is even attempting to close the browser or browser tab then destroy the query.
@@ -931,11 +895,15 @@ public class QueryPresenter
 
     public interface QueryView extends View, SearchStateListener {
 
-        ButtonView addButtonLeft(Preset preset);
+        /// The toolbar for the expression's buttons, e.g. Add Term.
+        ///
+        /// @return The toolbar.
+        Toolbar getExpressionToolbar();
 
-        ButtonView addButtonRight(Preset preset);
-
-        void addButtonRight(final ButtonView button);
+        /// The toolbar for the query's messages button, apart from the expression's buttons.
+        ///
+        /// @return The toolbar.
+        Toolbar getMessagesToolbar();
 
         void setExpressionView(View view);
 

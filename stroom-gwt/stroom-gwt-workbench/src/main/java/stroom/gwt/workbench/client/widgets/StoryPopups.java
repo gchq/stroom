@@ -71,7 +71,7 @@ public final class StoryPopups {
         return eventBus;
     }
 
-    /// Shows help popups as Stroom does: `HelpButton` fires `ShowHelpEvent` on Stroom's static
+    /// Shows help popups as Stroom does: a `FormGroup`'s help button fires `ShowHelpEvent` on Stroom's static
     /// event bus, which Stroom's `HelpManager` handles.
     ///
     /// @return This, for chaining.

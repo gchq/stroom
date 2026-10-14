@@ -17,6 +17,7 @@
 package stroom.widget.dropdowntree.client.view;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
@@ -79,30 +80,25 @@ public class QuickFilter extends FlowPanel
         textBox.addStyleName("allow-focus");
         textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
-        clearButton = new ToolbarButton();
-        clearButton.setSvg(SvgImage.CLEAR);
-        clearButton.setTitle("Clear Filter");
-        clearButton.addStyleName("clear");
-
-        helpButton = new ToolbarButton();
-        helpButton.setSvg(SvgImage.HELP_OUTLINE);
-        helpButton.setTitle("Quick Filter Syntax Help");
-        helpButton.addStyleName("help-button info");
+        // The filter's buttons, at the end of its box
+        final Toolbar toolbar = new Toolbar("Quick filter");
+        toolbar.addStyleName("quickFilter-toolbar");
+        clearButton = toolbar.button(SvgImage.CLEAR_OUTLINE, "Clear Filter", this::onClear);
+        helpButton = toolbar.button(SvgImage.HELP_OUTLINE, "Quick Filter Syntax Help", this::showHelpPopup);
 
         add(textBox);
-        add(clearButton);
-        add(helpButton);
+        add(toolbar);
 
         textBox.addValueChangeHandler(event -> onValueChange());
         textBox.addKeyDownHandler(this::onKeyDown);
-        helpButton.addClickHandler(event -> showHelpPopup());
-        clearButton.addClickHandler(event -> {
-            clear();
-            // The button hides itself once the text is empty, which would leave focus nowhere
-            textBox.setFocus(true);
-        });
 
         enableButtons();
+    }
+
+    private void onClear() {
+        clear();
+        // The button hides itself once the text is empty, which would leave focus nowhere
+        textBox.setFocus(true);
     }
 
     private void showHelpPopup() {
@@ -129,10 +125,10 @@ public class QuickFilter extends FlowPanel
             });
             popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
 
-                // Position it below the filter
+                // Position it below the filter, clear of its buttons
                 popup.setPopupPosition(
                         getAbsoluteLeft() + 4,
-                        getAbsoluteTop() + 26);
+                        getAbsoluteTop() + getOffsetHeight());
             });
             this.helpPopup = popup;
         }

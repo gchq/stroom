@@ -28,7 +28,7 @@ import java.util.List;
 /// the row (e.g. a query's time range and Execute button, at its end), are each their own.
 public interface HasToolbar {
 
-    /// @return Groups of buttons (e.g. a [stroom.widget.button.client.ButtonPanel]) to add to the
+    /// @return Groups of buttons (e.g. a [stroom.widget.button.client.Toolbar]) to add to the
     /// document's toolbar, after its own buttons.
     default List<Widget> getDocumentButtons() {
         return Collections.emptyList();

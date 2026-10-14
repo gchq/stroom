@@ -123,12 +123,9 @@ public final class UserGroupsScreenStories {
                     play.waitFor(() -> play.expect(play.querySelector("[inert]")).toBeNull());
                     play.findByText("Members of group \"Administrators\":");
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
-                            "User Groups: - Click for help: 0 tab stops",
                             "Quick Filter Syntax Help: 1 tab stop",
                             "Create Group, Edit group 'Administrators', Delete group 'Administrators': 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
-                            "Group \"Administrators\" is a member of: - Click for help: 0 tab stops",
-                            "Members of group \"Administrators\": - Click for help: 0 tab stops",
                             "Quick Filter Syntax Help: 1 tab stop",
                             "Quick Filter Syntax Help: 1 tab stop",
                             "Add, Remove: 1 tab stop",
@@ -177,7 +174,7 @@ public final class UserGroupsScreenStories {
                     play.expect(master.getByText("Display Name").closest("th"))
                             .toHaveClass("dataGridSortedHeaderAscending");
                     // Create, Edit, Delete in the master grid's pager toolbar
-                    final Query edit = play.within(play.getByTitle("Create Group").closest(".button-container"))
+                    final Query edit = play.within(play.getByTitle("Create Group").closest(".toolbar"))
                             .querySelectorAll("button").nth(1);
                     play.expect(edit).toHaveAttribute("title", "No Selection");
                     play.expect(edit).toHaveAttribute("aria-disabled", "true");

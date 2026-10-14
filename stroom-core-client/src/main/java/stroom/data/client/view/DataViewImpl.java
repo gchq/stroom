@@ -19,9 +19,9 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
 import stroom.widget.util.client.DisabledState;
 
@@ -49,11 +49,9 @@ public class DataViewImpl extends ViewImpl implements DataView {
     @UiField
     SimplePanel navigatorContainer;
     @UiField
-    LayerContainer layerContainer;
+    LayerContainerImpl layerContainer;
     @UiField
     SimplePanel progressBarPanel;
-    @UiField
-    ButtonPanel buttonPanel;
     @UiField
     SpinnerLarge spinner;
 
@@ -63,6 +61,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
     @Inject
     public DataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        tabBar.setTabPanel(layerContainer.getElement());
         spinner.setVisible(false);
         layerContainer.setFade(true);
         sourceLinkLabel.setText("View Source");

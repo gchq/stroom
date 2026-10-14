@@ -845,7 +845,7 @@ Also:
   (e.g. `getByRole("textbox", "Amount")`). A group's plain help text is also in the page, hidden,
   as its control's description (`aria-describedby`, with `aria-keyshortcuts="F1"`), so a help
   popup's text appears twice: find it in the popup with
-  `screen.findByText(text, ".help-button-tooltip *")`, and check the control with
+  `screen.findByText(text, ".help-popup *")`, and check the control with
   `toHaveAccessibleDescription(...)`. Clicking a help button leaves the focus where it was.
   `screenReaderText` (if set) is the description instead.
   `required="true"` marks the control `aria-required`.

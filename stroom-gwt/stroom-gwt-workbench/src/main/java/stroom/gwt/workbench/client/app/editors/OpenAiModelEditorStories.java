@@ -144,7 +144,7 @@ public final class OpenAiModelEditorStories {
                     // The help is a popup on the page's body (the help is also in the page, hidden,
                     // as the field's description)
                     play.expect(screen.findByText(TextMatch.containing("The base URL of an OpenAI-compatible API"),
-                                    ".help-button-tooltip *"))
+                                    ".help-popup *"))
                             .toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 })

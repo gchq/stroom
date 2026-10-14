@@ -26,8 +26,8 @@
 /**
  * The sub-tabs of the open document editor.
  *
- * Two things about the markup matter. A `.linkTab` contains the label AND a hidden width-reserving
- * copy of it (`.linkTabBar-hiddenText`), so reading the tab's own `textContent` gives
+ * Two things about the markup matter. A link tab contains the label AND a hidden width-reserving
+ * copy of it (`.tab-bar__sizer`), so reading the tab's own `textContent` gives
  * "DocumentationDocumentation" — the label element is the one to read. And the same bar holds the
  * application's CONTENT tabs (`Welcome`, and the document itself), which are not sub-tabs at all:
  * clicking either navigates away from the editor being photographed.
@@ -35,7 +35,7 @@
 export async function readEditorTabs(page, docLabel) {
   const all = await page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    return [...document.querySelectorAll('.linkTab-label, .curveTab-label')]
+    return [...document.querySelectorAll('.tab-bar__label')]
       .filter((e) => e.offsetWidth > 0 && e.offsetHeight > 0)
       .map((e) => norm(e.textContent))
       .filter(Boolean);
@@ -46,13 +46,13 @@ export async function readEditorTabs(page, docLabel) {
 /**
  * Click a sub-tab by its label.
  *
- * Matched on the label, CLICKED on the tab: `.linkTab-hotspot` overlays the label and takes the
- * pointer, so a click aimed at `.linkTab-label` is intercepted rather than delivered.
+ * Matched on the label, CLICKED on the tab: `.tab-bar__hotspot` overlays the label and takes the
+ * pointer, so a click aimed at `.tab-bar--link .tab-bar__label` is intercepted rather than delivered.
  */
 export async function clickEditorTab(page, name, { timeout = 10_000, nth = 0 } = {}) {
   const tabs = page
-    .locator('.linkTab, .curveTab')
-    .filter({ has: page.locator(`.linkTab-label:text-is("${name}"), .curveTab-label:text-is("${name}")`) });
+    .locator('.tab-bar__tab')
+    .filter({ has: page.locator(`.tab-bar__label:text-is("${name}")`) });
   // `nth` because a label is not unique: a dashboard can hold two components both called `Table`, and
   // addressing them by name alone silently reaches the first one twice.
   const tab = tabs.nth(nth);

@@ -24,6 +24,7 @@
 @import url("toolbar.css");
 @import url("focus-tooltip.css");
 @import url("split-pane.css");
+@import url("tab-bar.css");
 @import url("stroom-annotation.css");
 @import url("stroom-dashboard.css");
 @import url("editor.css");
@@ -45,6 +46,7 @@
 @import url("ScheduleBox.css");
 @import url("SelectionBox.css");
 @import url("QuickFilter.css");
+@import url("password-box.css");
 @import url("ExpressionItemBox.css");
 @import url("CommandLinkCell.css");
 @import url("TermEditor.css");
@@ -59,6 +61,7 @@
 @import url("SvgCell.css");
 @import url("CellList.css");
 @import url("codeeditor.css");
+@import url("form.css");
 @import url("components.css");
 @import url("dashboard.css");
 @import url("xsdbrowser.css");

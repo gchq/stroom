@@ -39,7 +39,7 @@ final class CellRendererWidgets {
     }
 
     /// A box for a cell: a `div` of the given width with `padding: 2px 6px` and a
-    /// `1px solid var(--panel__border-color,#555)` border.
+    /// `1px solid var(--border-color)` border.
     ///
     /// @param widget  The cell's widget.
     /// @param widthPx The width of the box in pixels.
@@ -49,7 +49,7 @@ final class CellRendererWidgets {
         final Style style = box.getElement().getStyle();
         style.setProperty("width", widthPx + "px");
         style.setProperty("padding", "2px 6px");
-        style.setProperty("border", "1px solid var(--panel__border-color,#555)");
+        style.setProperty("border", "1px solid var(--border-color)");
         style.setProperty("boxSizing", "border-box");
         // Stroom's cells don't ellipsise their text, so the box clips a long name as a grid's fixed
         // width cell would

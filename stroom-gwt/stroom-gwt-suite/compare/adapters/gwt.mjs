@@ -18,11 +18,15 @@ import { waitForMenu } from '../lib/settle.mjs';
 
 // GWT UI adapter — how to locate/drive the classic Stroom UI.
 //
-// Internal-IdP sign-in (`LoginViewImpl.ui.xml`): TextBox `.userNameTextBox`, PasswordTextBox
-// `.passwordTextBox`, "Sign In" button (`.LoginViewSignInButton`). On first login Stroom forces a
-// password change via an OK/Cancel popup (`ChangePasswordViewImpl.ui.xml`): new password
-// `.passwordTextBox`, confirm `.confirmPasswordTextBox`, then the popup "OK" button. GWT renders
-// addStyleNames as stable CSS classes.
+// Internal-IdP sign-in (`LoginViewImpl.ui.xml`): TextBox `.userNameTextBox`, PasswordBox (its input
+// `.password-box__input`), "Sign In" button (`.LoginViewSignInButton`). On first login Stroom forces a
+// password change via an OK/Cancel popup (`ChangePasswordViewImpl.ui.xml`): two PasswordBoxes, told
+// apart by their placeholders (new password "Enter Password", confirm "Confirm Password"), then the
+// popup "OK" button. GWT renders addStyleNames as stable CSS classes.
+// The change password popup's two password boxes' inputs
+const NEW_PASSWORD = 'input.password-box__input[placeholder="Enter Password"]';
+const CONFIRM_PASSWORD = 'input.password-box__input[placeholder="Confirm Password"]';
+
 export const gwt = {
   name: 'gwt',
 
@@ -34,7 +38,7 @@ export const gwt = {
   async signIn(page, { user, pass }) {
     await this.waitForSignIn(page);
     await page.locator('input.userNameTextBox, input[type=text]').first().fill(user);
-    await page.locator('input.passwordTextBox, input[type=password]').first().fill(pass);
+    await page.locator('input.password-box__input, input[type=password]').first().fill(pass);
     await page.getByRole('button', { name: /sign in/i }).click();
   },
 
@@ -45,9 +49,9 @@ export const gwt = {
    */
   async changePasswordIfPresent(page, { newPass }) {
     // The change-password OK/Cancel dialog (`.dialog-popup` inside `.gwt-PopupPanelGlass`). Scoping
-    // to it disambiguates the new-password `.passwordTextBox` from the login field of the same class
-    // sitting behind the modal glass.
-    const popup = page.locator('.dialog-popup').filter({ has: page.locator('input.confirmPasswordTextBox') });
+    // to it disambiguates the new-password box from the login field of the same class sitting
+    // behind the modal glass.
+    const popup = page.locator('.dialog-popup').filter({ has: page.locator(CONFIRM_PASSWORD) });
     const appeared = await popup
       .first()
       .waitFor({ state: 'visible', timeout: 8_000 })
@@ -55,8 +59,8 @@ export const gwt = {
       .catch(() => false);
     if (!appeared) return false;
     if (!newPass) throw new Error('Password change is required but NEWPASS is not set.');
-    await popup.locator('input.passwordTextBox').fill(newPass);
-    await popup.locator('input.confirmPasswordTextBox').fill(newPass);
+    await popup.locator(NEW_PASSWORD).fill(newPass);
+    await popup.locator(CONFIRM_PASSWORD).fill(newPass);
     // OK/Cancel are GWT div-buttons (`.Button__text`, no role) — click by text within the popup.
     await popup.getByText('OK', { exact: true }).first().click();
     return true;
@@ -101,7 +105,7 @@ export const gwt = {
    */
   async assertSignedIn(page, creds = {}) {
     const seen = await page.evaluate(() => ({
-      signInForm: !!document.querySelector('input.userNameTextBox, input.passwordTextBox'),
+      signInForm: !!document.querySelector('input.userNameTextBox, input.password-box__input'),
       app: !!document.querySelector('.explorerCell, .navigationTree, button[title="Main Menu"]'),
       url: window.location.href,
     }));

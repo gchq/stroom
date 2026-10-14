@@ -18,6 +18,7 @@ package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
@@ -58,15 +59,14 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.datasource.QueryField;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -342,7 +342,7 @@ public abstract class AbstractMetaListPresenter
         });
     }
 
-    protected Preset getInfoCellState(final MetaRow metaRow) {
+    protected CellIcon getInfoCellState(final MetaRow metaRow) {
         if (metaRow == null || metaRow.getMeta() == null || metaRow.getMeta().getStatus() == null) {
             return null;
         }
@@ -353,9 +353,9 @@ public abstract class AbstractMetaListPresenter
             // Be default the screen only shows unlocked streams so have no icon for those
             return null;
         } else if (Status.DELETED.equals(status)) {
-            return SvgPresets.DELETED.title("Deleted Stream");
+            return CellIcon.of(SvgImage.DELETE, "Deleted Stream");
         } else if (Status.LOCKED.equals(status)) {
-            return SvgPresets.LOCKED_AMBER.title("Locked Stream");
+            return CellIcon.of(SvgImage.LOCKED, "Locked Stream");
         } else {
             throw new RuntimeException("Unknown status " + status);
         }
@@ -974,8 +974,11 @@ public abstract class AbstractMetaListPresenter
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
 
-    public ButtonView add(final Preset preset) {
-        return getView().addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return getView().getToolbar();
     }
 
     public FindMetaCriteria getCriteria() {

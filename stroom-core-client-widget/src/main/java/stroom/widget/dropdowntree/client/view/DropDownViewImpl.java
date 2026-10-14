@@ -16,9 +16,8 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -46,8 +45,8 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
 //    FlowPanel container;
     @UiField
     Label label;
-    @UiField(provided = true)
-    SvgButton warningButton;
+    @UiField
+    ToolbarButton warningButton;
     @UiField
     SimplePanel ellipsesBtnPanel;
 
@@ -56,10 +55,6 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
 
     @Inject
     public DropDownViewImpl(final Binder binder) {
-        warningButton = SvgButton.create(SvgPresets.ALERT.title("Show Warnings"));
-        warningButton.setVisible(false);
-        warningButton.addStyleName("dropDownView-warning");
-
         widget = binder.createAndBindUi(this);
         widget.addDomHandler(event -> {
             if (MouseUtil.isPrimary(event)) {

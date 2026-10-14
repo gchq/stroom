@@ -41,7 +41,7 @@ import stroom.visualisation.shared.VisualisationAssetUpdateNewFile;
 import stroom.visualisation.shared.VisualisationAssetUpdateRename;
 import stroom.visualisation.shared.VisualisationAssets;
 import stroom.visualisation.shared.VisualisationDoc;
-import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -107,29 +107,31 @@ public class VisualisationAssetsPresenter
     /**
      * Button to revert any changes and go back to live version
      */
-    // The tab's buttons, made when first asked for
-    private ButtonPanel toolbar;
-    private final ToolbarButton revertButton = new ToolbarButton();
+    // The tab's buttons, for its document's toolbar
+    private final Toolbar toolbar = new Toolbar("Asset actions");
+    private final ToolbarButton revertButton =
+            toolbar.button(SvgImage.REFRESH, "Revert changes", this::onRevertButtonClick);
 
     /**
      * Button to add stuff to the tree
      */
-    private final ToolbarButton addButton = new ToolbarButton();
+    private final ToolbarButton addButton = toolbar.button(SvgImage.ADD, "Add file", this::showAddMenu);
 
     /**
      * Button to delete stuff from the tree
      */
-    private final ToolbarButton deleteButton = new ToolbarButton();
+    private final ToolbarButton deleteButton =
+            toolbar.button(SvgImage.DELETE, "Delete", this::onDeleteButtonClick);
 
     /**
      * Button to edit stuff from the tree
      */
-    private final ToolbarButton editButton = new ToolbarButton();
+    private final ToolbarButton editButton = toolbar.button(SvgImage.EDIT, "Rename", this::onEditFilename);
 
     /**
      * Button to view stuff
      */
-    private final ToolbarButton viewButton = new ToolbarButton();
+    private final ToolbarButton viewButton = toolbar.button(SvgImage.EYE, "View in browser", this::onViewAsset);
 
     /**
      * Dialog that appears when user wants to upload a file
@@ -257,43 +259,9 @@ public class VisualisationAssetsPresenter
         return nonClashingLabel;
     }
 
-    /// The tab's buttons, for its document's toolbar. They are made, and their clicks handled, once:
-    /// this is asked each time the tab is shown.
+    /// The tab's buttons, for its document's toolbar. This is asked each time the tab is shown.
     @Override
     public List<Widget> getDocumentButtons() {
-        if (toolbar == null) {
-            revertButton.setSvg(SvgImage.REFRESH);
-            revertButton.setTitle("Revert changes");
-            revertButton.setVisible(true);
-            revertButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onRevertButtonClick());
-
-            addButton.setSvg(SvgImage.ADD);
-            addButton.setTitle("Add file");
-            addButton.setVisible(true);
-
-            deleteButton.setSvg(SvgImage.DELETE);
-            deleteButton.setTitle("Delete");
-            deleteButton.setVisible(true);
-            deleteButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onDeleteButtonClick());
-
-            editButton.setSvg(SvgImage.EDIT);
-            editButton.setTitle("Rename");
-            editButton.setVisible(true);
-            editButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onEditFilename());
-
-            viewButton.setSvg(SvgImage.EYE);
-            viewButton.setTitle("View in browser");
-            viewButton.setVisible(true);
-            viewButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onViewAsset());
-
-            toolbar = new ButtonPanel();
-            toolbar.addButton(revertButton);
-            toolbar.addButton(addButton);
-            toolbar.addButton(deleteButton);
-            toolbar.addButton(editButton);
-            toolbar.addButton(viewButton);
-        }
-
         // Ensure state is set correctly
         updateState();
 
@@ -338,15 +306,16 @@ public class VisualisationAssetsPresenter
                 .enabled(true)
                 .build());
 
-        addButton.addClickHandler(event -> {
-            final Rect relativeRect = new Rect(addButton.getElement()).grow(3);
-            final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
-            ShowMenuEvent.builder()
-                    .items(menuItems)
-                    .popupPosition(position)
-                    .allowCloseOnMoveLeft()
-                    .fire(this);
-        });
+    }
+
+    private void showAddMenu() {
+        final Rect relativeRect = new Rect(addButton.getElement()).grow(3);
+        final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
+        ShowMenuEvent.builder()
+                .items(menuItems)
+                .popupPosition(position)
+                .allowCloseOnMoveLeft()
+                .fire(this);
     }
 
     /**

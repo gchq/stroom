@@ -19,14 +19,14 @@ package stroom.cache.client.presenter;
 import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
+import stroom.cell.info.client.CellIcon;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.PropertyPath;
@@ -85,7 +85,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
         // Clear.
         addIconButtonColumn(
                 dataGrid,
-                SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
+                CellIcon.of(SvgImage.DELETE, "Clear and rebuild cache"),
                 (row, nativeEvent) -> {
                     restFactory
                             .create(CACHE_RESOURCE)
@@ -135,10 +135,10 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     private void addIconButtonColumn(final MyDataGrid<CacheIdentity> dataGrid,
-                                     final Preset svgPreset,
+                                     final CellIcon cellIcon,
                                      final BiConsumer<String, NativeEvent> action) {
         final ActionCell<String> cell = new stroom.cell.info.client.ActionCell<String>(
-                svgPreset, action);
+                cellIcon, action);
 
         final Column<CacheIdentity, String> col =
                 new Column<CacheIdentity, String>(cell) {

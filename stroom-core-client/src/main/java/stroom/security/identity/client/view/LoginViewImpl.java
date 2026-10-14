@@ -20,9 +20,9 @@ import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.client.presenter.LoginUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
-import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.PasswordBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -32,7 +32,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -54,9 +53,7 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     @UiField
     FormGroup passwordGroup;
     @UiField
-    PasswordTextBox password;
-    @UiField
-    ToolbarButton showPassword;
+    PasswordBox password;
     @UiField
     Label passwordFeedback;
     @UiField
@@ -73,11 +70,7 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
 
         userName.getElement().setAttribute("placeholder", "Enter User Name");
 
-        showPassword.setSvg(SvgImage.EYE);
-        showPassword.setTitle("Show Password");
-        showPassword.setEnabled(true);
-
-        password.getElement().setAttribute("placeholder", "Enter Password");
+        password.setPlaceholder("Enter Password");
 
         setAllowPasswordResets(false);
     }
@@ -115,14 +108,14 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
         }
 
         if (password.getValue().length() == 0) {
-            FieldValidity.setInvalid(password, passwordFeedback, "Password is required");
+            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is required");
             valid = false;
         } else {
-            FieldValidity.setValid(password, passwordFeedback);
+            FieldValidity.setValid(password.getInput(), passwordFeedback);
         }
 
         if (!valid) {
-            FieldValidity.focusFirstInvalid(userName, password);
+            FieldValidity.focusFirstInvalid(userName, password.getInput());
         }
 
         return valid;
@@ -165,20 +158,6 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
         getUiHandlers().signIn();
     }
 
-    @UiHandler("showPassword")
-    public void onShowPassword(final ClickEvent e) {
-        final String type = password.getElement().getAttribute("type");
-        if (type == null || "password".equals(type)) {
-            password.getElement().setAttribute("type", "text");
-            showPassword.setSvg(SvgImage.EYE_OFF);
-            showPassword.setTitle("Hide Password");
-        } else {
-            password.getElement().setAttribute("type", "password");
-            showPassword.setSvg(SvgImage.EYE);
-            showPassword.setTitle("Show Password");
-        }
-    }
-
     @UiHandler("signInButton")
     public void onSignInButton(final ClickEvent e) {
         signIn();
@@ -189,9 +168,7 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
         getUiHandlers().emailResetPassword();
     }
 
-
     // --------------------------------------------------------------------------------
-
 
     public interface Binder extends UiBinder<Widget, LoginViewImpl> {
 

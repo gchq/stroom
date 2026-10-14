@@ -347,7 +347,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     @Override
     public void setSelectedTabColour(final String colour) {
         if (colour != null && !colour.isBlank()) {
-            DynamicStyles.put(SafeHtmlUtils.fromTrustedString(".curveTab-selected"),
+            DynamicStyles.put(SafeHtmlUtils.fromTrustedString(".tab-bar--curved .tab-bar__tab[aria-selected=\"true\"]"),
                     SafeStylesUtils.fromTrustedNameAndValue("border-bottom-color", colour));
         }
     }

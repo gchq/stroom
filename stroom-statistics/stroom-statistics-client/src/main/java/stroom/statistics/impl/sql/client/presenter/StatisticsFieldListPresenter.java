@@ -24,10 +24,9 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -65,9 +64,12 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
 
         this.statisticsFieldEditPresenter = statisticsFieldEditPresenter;
 
-        newButton = view.addButton(SvgPresets.NEW_ITEM);
-        editButton = view.addButton(SvgPresets.EDIT);
-        removeButton = view.addButton(SvgPresets.REMOVE);
+        view.getToolbar().setName("Field actions");
+        newButton = view.getToolbar().button(SvgImage.ADD, "New", this::onAdd);
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", this::onEdit);
+        editButton.setEnabled(false);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
@@ -76,21 +78,6 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(newButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAdd();
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onEdit();
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onRemove();
-            }
-        }));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {

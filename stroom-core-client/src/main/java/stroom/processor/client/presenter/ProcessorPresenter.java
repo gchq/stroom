@@ -39,8 +39,6 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.security.shared.DocPermissionResource;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.CountDownAndRun;
 import stroom.util.shared.NullSafe;
@@ -49,7 +47,6 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.Selection;
 
@@ -157,40 +154,26 @@ public class ProcessorPresenter
     private void createButtons() {
         if (removeButton == null) {
             if (allowCreate) {
-                addButton = processorListPresenter.getView().addButton(SvgPresets.ADD);
-                addButton.setTitle("Add Processor");
-                registerHandler(addButton.addClickHandler(event -> {
-                    if (allowUpdate) {
-                        addProcessor();
-                    }
-                }));
+                processorListPresenter.getView().getToolbar().setName("Processor actions");
+                addButton = processorListPresenter.getView().getToolbar().button(SvgImage.ADD, "Add Processor",
+                        this::onAdd);
             }
 
-            editButton = processorListPresenter.getView().addButton(SvgPresets.EDIT);
-            editButton.setTitle("Edit Processor");
-            registerHandler(editButton.addClickHandler(event -> {
-                if (allowUpdate) {
-                    editProcessor();
-                }
-            }));
+            editButton = processorListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit Processor",
+                    this::onEdit);
+            editButton.setEnabled(false);
 
             if (allowCreate) {
-                duplicateButton = processorListPresenter.getView().addButton(SvgPresets.COPY);
-                duplicateButton.setTitle("Duplicate Processor");
-                registerHandler(duplicateButton.addClickHandler(event -> {
-                    if (allowUpdate) {
-                        duplicateProcessor();
-                    }
-                }));
+                duplicateButton = processorListPresenter.getView().getToolbar().button(
+                        SvgImage.COPY,
+                        "Duplicate Processor",
+                        this::onDuplicate);
+                duplicateButton.setEnabled(false);
             }
 
-            removeButton = processorListPresenter.getView().addButton(SvgPresets.DELETE);
-            removeButton.setTitle("Delete Processor");
-            registerHandler(removeButton.addClickHandler(event -> {
-                if (allowUpdate) {
-                    removeProcessor();
-                }
-            }));
+            removeButton = processorListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete Processor",
+                    this::onRemove);
+            removeButton.setEnabled(false);
 
 //            if (isAdmin) {
 //                permissionsButton = processorListPresenter.getView().addButton(SvgPresets.LOCKED_AMBER);
@@ -202,37 +185,18 @@ public class ProcessorPresenter
 //                }));
 //            }
 
-            filterButton = processorListPresenter.getView().addButton(new Preset(
-                    SvgImage.FILTER,
-                    "Filter Processors",
-                    true));
-            registerHandler(filterButton.addClickHandler(e -> {
-                if (MouseUtil.isPrimary(e)) {
-                    onFilter();
-                }
-            }));
+            filterButton = processorListPresenter.getView().getToolbar().button(SvgImage.FILTER, "Filter Processors",
+                    this::onFilter);
 
             if (allowUpdate) {
-                batchEditButton = processorListPresenter.getView().addButton(new Preset(
+                batchEditButton = processorListPresenter.getView().getToolbar().button(
                         SvgImage.GENERATE,
                         "Batch Edit Current Processors",
-                        true));
-                registerHandler(batchEditButton.addClickHandler(e -> {
-                    if (MouseUtil.isPrimary(e)) {
-                        onBatchEdit();
-                    }
-                }));
+                        this::onBatchEdit);
             }
 
-            showTasksButton = processorListPresenter.getView().addButton(new Preset(
-                    SvgImage.JOBS,
-                    "Show Tasks",
-                    true));
-            registerHandler(showTasksButton.addClickHandler(e -> {
-                if (MouseUtil.isPrimary(e)) {
-                    showTasksTab();
-                }
-            }));
+            showTasksButton = processorListPresenter.getView().getToolbar().button(SvgImage.JOBS, "Show Tasks",
+                    this::showTasksTab);
 
             enableButtons(false);
         }
@@ -316,6 +280,30 @@ public class ProcessorPresenter
 //        }
         if (showTasksButton != null) {
             showTasksButton.setEnabled(enabled && onlyOneRowSelected);
+        }
+    }
+
+    private void onAdd() {
+        if (allowUpdate) {
+            addProcessor();
+        }
+    }
+
+    private void onEdit() {
+        if (allowUpdate) {
+            editProcessor();
+        }
+    }
+
+    private void onDuplicate() {
+        if (allowUpdate) {
+            duplicateProcessor();
+        }
+    }
+
+    private void onRemove() {
+        if (allowUpdate) {
+            removeProcessor();
         }
     }
 

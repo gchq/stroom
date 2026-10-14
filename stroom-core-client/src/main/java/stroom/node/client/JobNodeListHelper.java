@@ -19,6 +19,7 @@ package stroom.node.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.ActionCell;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -39,8 +40,6 @@ import stroom.job.shared.JobNodeUtil;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -48,6 +47,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.scheduler.Schedule;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
@@ -318,12 +318,11 @@ public class JobNodeListHelper {
                         : "Disabled");
     }
 
-    public static Preset buildRunIconPreset(final JobNodeAndInfo jobNodeAndInfo) {
+    public static CellIcon buildRunIcon(final JobNodeAndInfo jobNodeAndInfo) {
         if (jobNodeAndInfo != null
             && jobNodeAndInfo.getJobType() != JobType.DISTRIBUTED
             && jobNodeAndInfo.getJobType() != JobType.UNKNOWN) {
-            return SvgPresets.RUN
-                    .title("Execute job on node " + jobNodeAndInfo.getNodeName() + " now.");
+            return CellIcon.of(SvgImage.PLAY, "Execute job on node " + jobNodeAndInfo.getNodeName() + " now.");
         }
         return null;
     }
@@ -342,14 +341,14 @@ public class JobNodeListHelper {
         }
     }
 
-    public ToolbarToggleButton buildJobFilterButton() {
-        final ToolbarToggleButton showEnabledToggleBtn = new ToolbarToggleButton();
-        showEnabledToggleBtn.setSvg(SvgImage.FILTER);
-        showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_OFF);
-        showEnabledToggleBtn.setOff();
-
-        showEnabledToggleBtn.addClickHandler(event -> {
-            if (showEnabledToggleBtn.isOn()) {
+    /// Adds the button that filters the list to the enabled jobs, starting off.
+    ///
+    /// @param toolbar The list's toolbar, to add the button to.
+    /// @return The button, whose state the list reads when it fetches its rows.
+    public ToolbarToggleButton addJobFilterButton(final Toolbar toolbar) {
+        final ToolbarToggleButton showEnabledToggleBtn = toolbar.toggle(SvgImage.FILTER, FILTER_BTN_TITLE_OFF, null);
+        showEnabledToggleBtn.setOnToggle(showEnabled -> {
+            if (showEnabled) {
                 showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_ON);
             } else {
                 showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_OFF);

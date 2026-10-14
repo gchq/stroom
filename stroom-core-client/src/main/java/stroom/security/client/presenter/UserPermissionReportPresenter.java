@@ -29,7 +29,6 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.QuickFilterExpressionParser;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -41,7 +40,6 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.web.bindery.event.shared.EventBus;
@@ -107,18 +105,21 @@ public class UserPermissionReportPresenter
         permissionVisibility.setValue(PermissionShowLevel.SHOW_EXPLICIT);
         documentPermissionsListPresenter.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
 
-        docEdit = documentPermissionsListPresenter.getView().addButton(new Preset(
+        documentPermissionsListPresenter.getView().getToolbar().setName("Document permission actions");
+        docEdit = documentPermissionsListPresenter.getView().getToolbar().button(
                 SvgImage.EDIT,
                 "Edit Permissions For Selected Document",
-                false));
-        docFilter = documentPermissionsListPresenter.getView().addButton(new Preset(
+                this::onEdit);
+        docEdit.setEnabled(false);
+        docFilter = documentPermissionsListPresenter.getView().getToolbar().button(
                 SvgImage.FILTER,
                 "Filter Documents To Apply Permissions Changes On",
-                true));
-        batchEdit = documentPermissionsListPresenter.getView().addButton(new Preset(
+                this::onFilter);
+        batchEdit = documentPermissionsListPresenter.getView().getToolbar().button(
                 SvgImage.GENERATE,
                 "Batch Edit Permissions For Filtered Documents",
-                false));
+                this::onBatchEdit);
+        batchEdit.setEnabled(false);
 
 
         documentPermissionsListPresenter.setCurrentResultHandler(resultPage -> {
@@ -131,24 +132,9 @@ public class UserPermissionReportPresenter
     protected void onBind() {
         super.onBind();
 
-        registerHandler(docEdit.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onEdit();
-            }
-        }));
         registerHandler(permissionVisibility.addValueChangeHandler(e -> {
             documentPermissionsListPresenter.getCriteriaBuilder().showLevel(permissionVisibility.getValue());
             documentPermissionsListPresenter.refresh();
-        }));
-        registerHandler(docFilter.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onFilter();
-            }
-        }));
-        registerHandler(batchEdit.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onBatchEdit();
-            }
         }));
         registerHandler(documentPermissionsListPresenter.getSelectionModel().addSelectionHandler(e -> {
             final FindResultWithPermissions selected = documentPermissionsListPresenter.getSelectionModel()

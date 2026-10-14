@@ -17,7 +17,6 @@
 package stroom.widget.form.client;
 
 import stroom.util.shared.NullSafe;
-import stroom.widget.help.client.HelpButton;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
@@ -91,10 +90,9 @@ import java.util.Set;
  */
 public class FormGroup extends Composite implements HasWidgets {
 
-    public static final String CLASS_NAME_FORM_GROUP_HELP = "form-group-help";
-    public static final String STYLE_FORM_GROUP_DESCRIPTION_CONTAINER = "form-group-description-container";
-    public static final String STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED =
-            STYLE_FORM_GROUP_DESCRIPTION_CONTAINER + "--disabled";
+    public static final String STYLE_FORM_GROUP_DESCRIPTION_ROW = "form-group__description-row";
+    public static final String STYLE_FORM_GROUP_DESCRIPTION_ROW_DISABLED =
+            STYLE_FORM_GROUP_DESCRIPTION_ROW + "--disabled";
     // A group with no label of its own whose tick box has one: the help goes beside that label
     public static final String STYLE_FORM_GROUP_INLINE_TICK = "form-group--inline-tick";
 
@@ -118,7 +116,7 @@ public class FormGroup extends Composite implements HasWidgets {
 
     private final FlowPanel formGroupPanel = new FlowPanel();
     private final FormLabel formLabel = new FormLabel();
-    private final HelpButton helpButton = HelpButton.create();
+    private final FormGroupHelpButton helpButton = new FormGroupHelpButton();
     private final FlowPanel labelPanel = new FlowPanel();
     private final FlowPanel descriptionPanel = new FlowPanel();
     private final Label feedbackLabel = new Label();
@@ -157,20 +155,15 @@ public class FormGroup extends Composite implements HasWidgets {
     private boolean disabled = false;
 
     public FormGroup() {
-        feedbackLabel.setStyleName("invalid-feedback");
+        feedbackLabel.setStyleName("form-group__feedback");
         helpDescription.getElement().setId(DOM.createUniqueId());
         // So that a group of several controls can be labelled by it
         formLabel.getElement().setId(DOM.createUniqueId());
         helpDescription.setVisible(false);
         formGroupPanel.addStyleName("form-group");
-        labelPanel.addStyleName("form-group-label-container");
-        formLabel.addStyleName("form-group-label");
-        descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_CONTAINER);
-        helpButton.addStyleName("form-group-help");
-
-        // Don't want the user to have to tab over each help btn when you can
-        // call up the help with F1
-        helpButton.preventTabFocus();
+        labelPanel.addStyleName("form-group__label-row");
+        formLabel.addStyleName("form-group__label");
+        descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_ROW);
         updateLabelPanel();
 
         initWidget(formGroupPanel);
@@ -466,9 +459,9 @@ public class FormGroup extends Composite implements HasWidgets {
         this.disabled = disabled;
         formLabel.setDisabled(disabled);
         if (disabled) {
-            descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED);
+            descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_ROW_DISABLED);
         } else {
-            descriptionPanel.removeStyleName(STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED);
+            descriptionPanel.removeStyleName(STYLE_FORM_GROUP_DESCRIPTION_ROW_DISABLED);
         }
     }
 
@@ -605,7 +598,7 @@ public class FormGroup extends Composite implements HasWidgets {
                                             "Class: " + descriptionHTML.getClass().getName());
         }
         this.descriptionHTML = descriptionHTML;
-        this.descriptionHTML.setStyleName("form-group-description");
+        this.descriptionHTML.setStyleName("form-group__description");
         updateDescriptionPanel();
     }
 
@@ -615,7 +608,6 @@ public class FormGroup extends Composite implements HasWidgets {
                                             "Class: " + helpHTML.getClass().getName());
         }
         this.helpHTML = helpHTML;
-        this.helpHTML.setStyleName(CLASS_NAME_FORM_GROUP_HELP);
 
         updateHelpButton();
 //        // helpText trumps helpHTML

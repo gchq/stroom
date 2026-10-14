@@ -10,6 +10,7 @@ _book
 .gradle/
 .project
 .classpath
+.claude
 classes/
 generated/
 libs/

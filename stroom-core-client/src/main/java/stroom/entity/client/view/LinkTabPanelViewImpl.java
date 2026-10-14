@@ -18,6 +18,7 @@ package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.widget.tab.client.presenter.TabBar;
+import stroom.widget.tab.client.view.LayerContainerImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -37,11 +38,12 @@ public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
     @UiField
     TabBar tabBar;
     @UiField
-    LayerContainer layerContainer;
+    LayerContainerImpl layerContainer;
 
     @Inject
     public LinkTabPanelViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        tabBar.setTabPanel(layerContainer.getElement());
     }
 
     @Override

@@ -61,7 +61,7 @@
 .annotationId {
     font-size: var(--font-size-24);
     padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
-    opacity: 0.4;
+    color: var(--text-color--muted);
 }
 
 .annotationTitle {
@@ -78,6 +78,11 @@
     background: transparent !important;
     cursor: pointer;
     flex-grow: 1;
+}
+
+/* A read-only value is already greyed (the read-only text colour), so isn't faded as well */
+.annotationTextBox[readonly] {
+    opacity: 1;
 }
 
 .annotationTextBox:focus {
@@ -142,6 +147,11 @@
 
 .annotationLabel {
     flex-grow: 1;
+}
+
+/* A field with no value ("None", "Nobody") */
+.annotationLabel--empty {
+    color: var(--text-color--muted);
 }
 
 .annotationCommentContainer {
@@ -226,7 +236,7 @@
 .annotationHistoryCommentBorder {
     flex-grow: 1;
     border: 1px solid var(--border-color);
-    background-color: var(--control__background-color);
+    background-color: var(--content-box__background-color);
     border-radius: 5px;
 }
 

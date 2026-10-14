@@ -9,7 +9,7 @@
     <split:SplitPane vertical="true" thin="true" sizes="*, 300px" names="Permissions, Details"
                      addStyleNames="max">
         <form:FormGroup ui:field="appPermissionsFormGroup"
-                        addStyleNames="form-label-padding">
+                        addStyleNames="form-group--indented">
             <form:HelpHTML>
                 <p>Lists all available application level permissions.</p>
                 <p>Ticked items are explicitly held by the user/group.</p>
@@ -20,7 +20,7 @@
         </form:FormGroup>
         <form:FormGroup ui:field="detailsFormGroup"
                         helpText="Explains how the user/group has obtained the selected permission."
-                        addStyleNames="form-label-padding">
+                        addStyleNames="form-group--indented">
             <g:SimplePanel styleName="max form-padding permissionDetails">
                 <g:HTML ui:field="details" styleName="max"/>
             </g:SimplePanel>

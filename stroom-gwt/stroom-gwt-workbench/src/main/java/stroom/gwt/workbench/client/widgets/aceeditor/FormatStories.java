@@ -117,7 +117,7 @@ public final class FormatStories {
     }
 
     /// The cases, in a monospaced column, with a `<div>` per case holding its name (bold), its
-    /// input (a faded `<pre>`) and its output (a `<pre>`).
+    /// input (a `<pre>` in the muted text colour) and its output (a `<pre>`).
     private static Widget cases(final Case... cases) {
         final FlowPanel panel = new FlowPanel();
         final Style style = panel.getElement().getStyle();
@@ -131,19 +131,19 @@ public final class FormatStories {
             final Label name = new Label(aCase.name());
             name.getElement().getStyle().setProperty("fontWeight", "700");
             casePanel.add(name);
-            casePanel.getElement().appendChild(pre(aCase.input(), "0.6"));
+            casePanel.getElement().appendChild(pre(aCase.input(), "var(--text-color--muted)"));
             casePanel.getElement().appendChild(pre(aCase.output(), null));
             panel.add(casePanel);
         }
         return panel;
     }
 
-    private static PreElement pre(final String text, final String opacity) {
+    private static PreElement pre(final String text, final String colour) {
         final PreElement pre = Document.get().createPreElement();
         pre.setInnerText(text);
         pre.getStyle().setProperty("margin", "0");
-        if (opacity != null) {
-            pre.getStyle().setProperty("opacity", opacity);
+        if (colour != null) {
+            pre.getStyle().setProperty("color", colour);
         }
         return pre;
     }

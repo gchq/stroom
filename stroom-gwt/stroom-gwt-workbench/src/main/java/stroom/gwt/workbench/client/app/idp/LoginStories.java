@@ -47,7 +47,7 @@ public final class LoginStories {
 
     private static final int LOGIN_DELAY_MILLIS = 600;
     // Text in a help popup (the help is also in the page, hidden, as its field's description)
-    private static final String HELP_POPUP_TEXT = ".help-button-tooltip *";
+    private static final String HELP_POPUP_TEXT = ".help-popup *";
     private static final String USER_NAME_HELP = "Enter your Stroom account user name. This is the name you "
                                                  + "were given when your account was created.";
     private static final String PASSWORD_HELP_RESETS = "Enter your Stroom account password. If you have "

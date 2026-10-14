@@ -32,7 +32,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
@@ -87,9 +87,12 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         dataProvider = new ListDataProvider<>();
         dataProvider.setCompleteList(list);
 
-        addButton = view.addButton(SvgPresets.ADD);
-        editButton = view.addButton(SvgPresets.EDIT);
-        removeButton = view.addButton(SvgPresets.DELETE);
+        view.getToolbar().setName("Notification actions");
+        addButton = view.getToolbar().button(SvgImage.ADD, "Add", this::add);
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        editButton.setEnabled(false);
+        removeButton = view.getToolbar().button(SvgImage.DELETE, "Delete", this::remove);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
@@ -97,9 +100,6 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     @Override
     protected void onBind() {
-        registerHandler(addButton.addClickHandler(ignored -> add()));
-        registerHandler(editButton.addClickHandler(ignored -> edit()));
-        registerHandler(removeButton.addClickHandler(ignored -> remove()));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             // A read only document can't be edited, so double clicking does nothing

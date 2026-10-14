@@ -48,7 +48,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -225,25 +224,17 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         setDefaultTab(defaultTab);
 
-        steppingModeButton = new ToolbarToggleButton();
-        steppingModeButton.setSvg(SvgImage.STEP);
-        steppingModeButton.setTitle("Enter Stepping Mode");
-        steppingModeButton.setState(false);
+        steppingModeButton = toolbar.toggle(SvgImage.STEP, "Enter Stepping Mode", this::onSteppingModeToggled);
         steppingModeButton.setVisible(false);
-        toolbar.add(steppingModeButton);
+    }
 
-        registerHandler(steppingModeButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-
-                if (steppingModeButton.getState()) {
-                    steppingModeButton.setTitle("Exit Stepping Mode");
-                } else {
-                    steppingModeButton.setTitle("Enter Stepping Mode");
-                }
-
-                showSteppingMode(steppingModeButton.getState());
-            }
-        }));
+    private void onSteppingModeToggled(final boolean steppingMode) {
+        if (steppingMode) {
+            steppingModeButton.setTitle("Exit Stepping Mode");
+        } else {
+            steppingModeButton.setTitle("Enter Stepping Mode");
+        }
+        showSteppingMode(steppingMode);
     }
 
     public void beginStepping(final StepType stepType, final StepLocation stepLocation,

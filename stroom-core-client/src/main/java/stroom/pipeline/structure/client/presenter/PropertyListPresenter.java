@@ -34,7 +34,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
@@ -45,7 +45,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -111,7 +110,10 @@ public class PropertyListPresenter
         this.restFactory = restFactory;
         this.documentPluginRegistry = documentPluginRegistry;
 
-        editButton = view.addButton(SvgPresets.EDIT);
+        view.getToolbar().setName("Property actions");
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit",
+                () -> onEdit(selectionModel.getSelected(), readOnly));
+        editButton.setEnabled(false);
 
         addColumns();
         enableButtons();
@@ -122,11 +124,6 @@ public class PropertyListPresenter
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                onEdit(selectionModel.getSelected(), readOnly);
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
                 onEdit(selectionModel.getSelected(), readOnly);
             }
         }));

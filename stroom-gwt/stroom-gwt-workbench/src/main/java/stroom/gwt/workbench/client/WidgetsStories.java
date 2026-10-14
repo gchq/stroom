@@ -82,7 +82,6 @@ import stroom.gwt.workbench.client.widgets.layout.SplitPaneResizingStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneStories;
 import stroom.gwt.workbench.client.widgets.menu.MenuItemWidgetStories;
 import stroom.gwt.workbench.client.widgets.menu.MenuPanelStories;
-import stroom.gwt.workbench.client.widgets.overlays.HelpButtonStories;
 import stroom.gwt.workbench.client.widgets.overlays.TooltipStories;
 import stroom.gwt.workbench.client.widgets.overlays.TooltipWidgetStories;
 import stroom.gwt.workbench.client.widgets.popover.InfoPopoverCellStories;
@@ -264,8 +263,6 @@ public final class WidgetsStories {
         TickBoxStories.addTo(registry);
         // Widgets/Inputs/ValueSpinner
         ValueSpinnerStories.addTo(registry);
-        // Widgets/Overlays/HelpButton
-        HelpButtonStories.addTo(registry);
         // Widgets/Overlays/Tooltip
         TooltipStories.addTo(registry);
         // Widgets/Overlays/TooltipWidget

@@ -28,17 +28,23 @@
     gap: 2px;
 }
 
+/* A column of buttons (Toolbar.setVertical); ButtonGroupFocus says so with aria-orientation */
+.toolbar[aria-orientation="vertical"] {
+    flex-direction: column;
+}
+
 /* A toolbar's icon button (ToolbarButton, ToolbarToggleButton). Its hover, pressed and focus fill
    and border are drawn by ::before, under its icon; its states come from aria-pressed and
-   aria-disabled. It uses the icon button colours of the theme. */
+   aria-disabled. It uses the icon button colours of the theme. It is 24px, the smallest target
+   WCAG 2.5.8 (Target Size, Minimum) allows. */
 .toolbar-button {
     position: relative;
     display: flex;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     margin: 0;
     padding: 0;
     border: none;
@@ -65,6 +71,25 @@
     border: thin solid var(--icon-button__border-color--on);
 }
 
+/* Pressed with the mouse (:active), and still held with the pointer moved off it, when letting go
+   won't click it; a button that is on darkens its fill instead */
+.toolbar-button:not([aria-disabled="true"]):not([aria-pressed="true"]):active::before {
+    background-color: var(--icon-button__background-color--active);
+    border: none;
+}
+
+.toolbar-button:not([aria-disabled="true"]):not([aria-pressed="true"]):active:not(:hover)::before {
+    background-color: var(--icon-button__background-color--active-outside);
+}
+
+.toolbar-button[aria-pressed="true"]:not([aria-disabled="true"]):active::before {
+    background-image: linear-gradient(rgba(0, 0, 0, .2), rgba(0, 0, 0, .2));
+}
+
+.toolbar-button[aria-pressed="true"]:not([aria-disabled="true"]):active:not(:hover)::before {
+    background-image: linear-gradient(rgba(0, 0, 0, .1), rgba(0, 0, 0, .1));
+}
+
 .toolbar-button[aria-disabled="true"] {
     opacity: var(--disabled-opacity);
     cursor: default;
@@ -81,11 +106,13 @@
     border: thin solid var(--icon-button__border-color--on);
 }
 
-.toolbar-button:focus-visible {
+/* Keyboard focus, but not the focus a mouse press gives (ToolbarButton marks it data-pointer-focus,
+   as it focuses itself from code, which the browser treats as keyboard focus) */
+.toolbar-button:focus-visible:not([data-pointer-focus]) {
     box-shadow: var(--focus-shadow);
 }
 
-.toolbar-button:focus-visible::before {
+.toolbar-button:focus-visible:not([data-pointer-focus])::before {
     border: thin solid var(--focus-border) !important;
 }
 
@@ -124,7 +151,7 @@
     border-radius: .2rem;
 }
 
-.toolbar--header .toolbar-button:focus-visible {
+.toolbar--header .toolbar-button:focus-visible:not([data-pointer-focus]) {
     border-color: var(--focus-border);
 }
 
@@ -148,11 +175,11 @@
     color: var(--control__text-color);
 }
 
-/* For now, a group of buttons (a ButtonPanel) that a document's tab adds to its document's
-   toolbar (HasToolbar.getDocumentButtons) sits in it as its own buttons would: 4px from the button
-   before it, as two toolbars side by side were. Remove this when those groups are made of
-   ToolbarButtons added to the toolbar itself. */
-.toolbar > .button-container {
+/* For now, a toolbar that a document's tab adds to its document's toolbar
+   (HasToolbar.getDocumentButtons) sits in it as its own buttons would: 4px from the button before
+   it, as two toolbars side by side were. Remove this when those buttons are made in the toolbar
+   itself. */
+.toolbar > .toolbar {
     margin: 0 0 0 2px;
 }
 

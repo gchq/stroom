@@ -126,7 +126,7 @@ export async function fillField(page, label, text) {
       .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quickFilter-textBox'));
     const want = wanted === null ? null : (Array.isArray(wanted) ? wanted : [wanted]);
     const el = want
-      ? boxes.find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group-label')?.textContent)))
+      ? boxes.find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)))
       : boxes.find((e) => !n(e.value));
     if (!el) return null;
     const r = el.getBoundingClientRect();
@@ -152,7 +152,7 @@ export async function clickTickBox(page, label) {
     const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const group = [...scope.querySelectorAll('.form-group')]
-      .find((g) => n(g.querySelector('.form-group-label')?.textContent) === wanted);
+      .find((g) => n(g.querySelector('.form-group__label')?.textContent) === wanted);
     const own = [...scope.querySelectorAll('.SimpleTickBox')]
       .find((t) => t.offsetWidth > 0 && n(t.querySelector('.form-label')?.textContent) === wanted);
     const tick = group?.querySelector('.SimpleTickBox, .tickBox') ?? own;
@@ -176,7 +176,7 @@ export async function readTick(page, label) {
     const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const group = [...scope.querySelectorAll('.form-group')]
-      .find((g) => n(g.querySelector('.form-group-label')?.textContent) === wanted);
+      .find((g) => n(g.querySelector('.form-group__label')?.textContent) === wanted);
     const own = [...scope.querySelectorAll('.SimpleTickBox')]
       .find((t) => t.offsetWidth > 0 && n(t.querySelector('.form-label')?.textContent) === wanted);
     const tick = group?.querySelector('.SimpleTickBox, .tickBox') ?? own;
@@ -526,7 +526,7 @@ export function readField(page, label) {
     const want = Array.isArray(wanted) ? wanted : [wanted];
     const el = [...scope.querySelectorAll('input[type="text"], input:not([type]), textarea')]
       .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quickFilter-textBox'))
-      .find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group-label')?.textContent)));
+      .find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)));
     return el ? String(el.value ?? '') : null;
   }, [label]).catch(() => null);
 }
@@ -948,7 +948,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
  */
 export async function chooseInSelectionBox(page, label, item, settle) {
   const scope = page.locator('.dialog-popup, .resizableDialog-popup').last();
-  const group = scope.locator('.form-group').filter({ has: page.locator('.form-group-label', { hasText: label }) }).first();
+  const group = scope.locator('.form-group').filter({ has: page.locator('.form-group__label', { hasText: label }) }).first();
   await group.locator('.SelectionBox .svgIconBox-icon-outer').first().click({ timeout: 5_000 });
   await settle(600);
   const at = await page.evaluate((wanted) => {
@@ -1118,7 +1118,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     if (!(await dialogCaptions(page)).some((c) => /alert/i.test(c))) return null;
     return (await readTopDialogBody(page))?.text ?? 'an Alert with no text';
   };
-  const tabs = () => page.evaluate(() => [...document.querySelectorAll('.curveTab')]
+  const tabs = () => page.evaluate(() => [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')]
     .filter((e) => e.offsetWidth > 0).map((e) => e.innerText.replace(/\s+/g, ' ').trim())).catch(() => []);
   const closeTab = async (re) => {
     const tab = page.locator('.curveTab').filter({ hasText: re }).first();
@@ -1129,7 +1129,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     if (await page.locator('.curveTab').filter({ hasText: re }).count()) throw new Error(`the tab ${re} would not close`);
   };
   const toTab = async (re) => {
-    const tab = page.locator('.curveTab').filter({ hasText: re }).first();
+    const tab = page.locator('.tab-bar--curved .tab-bar__tab').filter({ hasText: re }).first();
     await tab.click({ timeout: 5_000 });
     await settle(800);
   };

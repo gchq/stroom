@@ -32,226 +32,6 @@
     padding: 5px;
 }
 
-.button-container {
-    display: flex;
-    margin: 2px;
-    gap: 2px;
-}
-
-/* A column of buttons (ButtonPanel.setVertical); ButtonGroupFocus says so with aria-orientation */
-.button-container[aria-orientation="vertical"] {
-    flex-direction: column;
-}
-
-.basicTabSelector {
-    position: absolute;
-    left: 0;
-    top: 0;
-    cursor: pointer;
-    display: flex;
-    height: 34px;
-    border: none;
-    border-radius: .25rem;
-    border: 1px solid transparent;
-    background-color: transparent;
-    color: var(--control__text-color);
-    padding: 1px;
-}
-
-.basicTabSelector-arrows {
-    display: flex;
-}
-
-.basicTabSelector-arrows svg {
-    width: 11px;
-    height: 9px;
-}
-
-.basicTabSelector-text {
-    font-size: var(--font-size-7);
-    white-space: nowrap;
-    margin-left: 2px;
-    margin-top: 6px;
-    -moz-user-select: none;
-}
-
-.curveTabBar {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-.curveTab {
-    position: absolute;
-    left: 0;
-    top: 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    height: 34px;
-    border-bottom: solid 3px transparent;
-    border-top: solid 3px transparent;
-    background-color: var(--curve-tab__background-color);
-    color: var(--control__text-color);
-}
-
-.curveTab:hover {
-    background: var(--curve-tab__background-color--hover);
-}
-
-.curveTab-selected {
-    border-bottom: solid 3px var(--blue-300);
-}
-
-.curveTab-selected:hover {
-    background: var(--curve-tab__background-color--hover);
-}
-
-.curveTab-keyboardSelected:focus {
-    background: var(--curve-tab__background-color--hover);
-}
-
-/* Tab content */
-.curveTab .curveTab-icon {
-    position: relative;
-    width: 18px;
-    height: 18px;
-    -moz-user-select: none;
-    margin: 0 5px 0 5px;
-}
-
-.curveTab .curveTab-icon svg {
-    width: 18px;
-    height: 18px;
-}
-
-.curveTab .curveTab-face {
-	border: none;
-	outline: none;
-	background: none;
-	cursor: pointer;
-	text-decoration: none;
-	min-width: 16px;
-	min-height: 16px;
-	margin: auto;
-	padding: 0;
-	overflow: hidden;
-	position: relative;
-	color: #5398ff;
-	font-size: var(--font-size-16);
-	opacity: 1;
-}
-
-.curveTab .curveTab-text {
-    position: relative;
-    white-space: nowrap;
-    padding: 1px 1px 1px 1px;
-    -moz-user-select: none;
-    opacity: 0.8;
-}
-
-.curveTab-selected .curveTab-text {
-	opacity: 1;
-}
-
-/* Close button */
-.curveTab .curveTab-close-wrapper {
-    position: relative;
-    width: 22px;
-    height: 22px;
-}
-
-.curveTab .curveTab-spinner {
-    position: absolute;
-    transition: opacity 0.2s ease-in-out;
-    -webkit-transition: opacity 0.2s ease-in-out;
-    -moz-transition: opacity 0.2s ease-in-out;
-    -o-transition: opacity 0.2s ease-in-out;
-}
-
-.curveTab .curveTab-spinner svg {
-    color: var(--curve-tab__svg-color);
-	opacity: 0.8;
-}
-
-.curveTab .curveTab-close {
-    position: absolute;
-    opacity: 0;
-    top: 2px;
-    left: -1px;
-}
-
-.curveTab:hover .curveTab-spinner {
-	opacity: 0;
-}
-
-.curveTab:hover .curveTab-close,
-.curveTab-keyboardSelected:focus .curveTab-close {
-	opacity: 1;
-}
-
-/* The close cross replaces the spinner while the tab has keyboard focus, as it does on hover */
-.curveTab-keyboardSelected:focus .curveTab-spinner {
-	opacity: 0;
-}
-
-.curveTab .curveTab-close svg {
-    width: 17px;
-    height: 17px;
-    cursor: pointer;
-    margin: 0px 6px 0 4px;
-    z-index: 0;
-    color: var(--curve-tab__svg-color);
-    opacity: 0.8;
-}
-
-.curveTab .curveTab-closeActive svg {
-    opacity: 1;
-}
-
-.curveTabSelector {
-    position: absolute;
-    left: 0;
-    top: 0;
-    cursor: pointer;
-    display: flex;
-    height: 34px;
-    border: var(--curve-tab__border);
-    border-radius: var(--curve-tab__border-radius);
-    background-color: var(--curve-tab__background-color);
-    color: var(--control__text-color);
-    padding: 10px;
-    align-items: center;
-}
-
-.curveTabSelector:hover {
-    background: var(--curve-tab__background-color--hover);
-    border: var(--curve-tab__border--hover);
-}
-
-.curveTabSelector-keyboardSelected:focus {
-    border-color: var(--focus-border);
-    box-shadow: var(--focus-shadow);
-}
-
-/* Content. */
-.curveTabSelector .curveTabSelector-arrows {
-    display: flex;
-}
-
-.curveTabSelector .curveTabSelector-arrows svg {
-    width: 14px;
-    height: 11px;
-}
-
-.curveTabSelector .curveTabSelector-text {
-    font-size: var(--font-size-11);
-    white-space: nowrap;
-    margin-left: 0.25em;
-    margin-top: 1em;
-    -moz-user-select: none;
-}
-
 .layerContainer-container {
 	width: 100%;
 	height: 100%;
@@ -273,116 +53,6 @@
 
 .layerContainer-layer--visible {
     opacity: 1;
-}
-
-.linkTabBar {
-    position: relative;
-	white-space: nowrap;
-	padding-top: 1px;
-}
-
-.dialog-content .linkTabBar {
-    margin-bottom: var(--control__gap--vertical);
-}
-
-.linkTabBar-hiddenText {
-    display: inline;
-    opacity: 0;
-}
-
-.linkTabBar .linkTabBar-separator {
-	position: absolute;
-	top: 0;
-	padding-left: 5px;
-	padding-right: 5px;
-}
-
-
-.linkTab {
-	position: absolute;
-	left: 0;
-	top: 0;
-    opacity: 0.8;
-    transition: opacity 0.5s linear;
-    -webkit-transition: opacity 0.5s linear;
-    -moz-transition: opacity 0.5s linear;
-    -o-transition: opacity 0.5s linear;
-    color: var(--link-tab__text-color);
-}
-
-.multiple-tabs .linkTab,
-.dashboard__designMode .linkTab{
-    cursor: pointer;
-}
-
-.linkTab-selected {
-    opacity: 1;
-}
-
-.linkTab-keyboardSelected {
-    opacity: 1;
-}
-
-.multiple-tabs .linkTab-keyboardSelected:focus,
-.dashboard__designMode .linkTab-keyboardSelected:focus {
-    opacity: 1;
-    color: var(--link-tab__text-color--focussed);
-    text-decoration: underline;
-}
-
-.multiple-tabs .linkTab:hover,
-.dashboard__designMode .linkTab:hover {
-    opacity: 1;
-    text-decoration: underline;
-}
-
-.linkTab-background {
-	cursor: pointer;
-	white-space: nowrap;
-	font-weight: 600;
-	opacity: 0;
-}
-
-.linkTab-label {
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 100%;
-	cursor: pointer;
-	text-decoration: inherit;
-	white-space: nowrap;
-}
-
-.linkTab-selected .linkTab-label {
-	font-weight: 600;
-}
-
-.linkTab .linkTab-hotspot {
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: 0;
-	bottom: 0;
-	margin: 0;
-	padding: 0;
-	border-width: 1px;
-	border-color: black;
-	border-style: solid;
-	background-color: red;
-	opacity: 0;
-
-	transition: opacity .2s;
-	-webkit-transition: opacity .2s;
-	-moz-transition: opacity .2s;
-	-o-transition: opacity .2s;
-}
-
-.multiple-tabs .linkTab .linkTab-hotspot {
-	cursor: pointer;
-}
-
-.linkTab .linkTab-hotspotVisible {
-	opacity: .3 !important;
 }
 
 .info-tooltip {
@@ -416,7 +86,7 @@
 	width: 100%;
 	height: 100%;
 	border: 1px solid var(--control__border-color);
-	background: var(--control__background-color);
+	background: var(--content-box__background-color);
 	color: var(--control__text-color);
 	padding: 5px;
   	-webkit-user-select: text;
@@ -520,6 +190,11 @@
     cursor: pointer;
 }
 
+/* Holds the warning button, which is placed in the drop down, so takes no room of its own */
+.dropDownView-warningToolbar {
+    margin: 0;
+}
+
 .dropDownView-warning {
     position: absolute;
     display: flex;
@@ -549,7 +224,7 @@
 
 .tabBarContainer {
     display: flex;
-    border-bottom: 1px solid var(--splitter__background-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .curveTabLayoutViewImpl-layout {
@@ -628,7 +303,7 @@
 }
 
 .pipelineStructureViewImpl-property-default {
-    opacity: 0.5;
+    color: var(--text-color--muted);
 }
 
 
@@ -777,7 +452,11 @@
     font-weight: 500;
     text-align: center;
     vertical-align: middle;
-    background-color: #888888;
+    /* The colour configured for the classification (ClassificationLabel sets it) */
+    background-color: var(--classification-label__background-color, #888888);
+    /* Black or white text, whichever is 4.5:1 on that colour: white below a CIE lightness of 49.4,
+       where the two contrast equally */
+    color: lab(from var(--classification-label__background-color, #888888) clamp(0, (49.4 - l) * 1000, 100) 0 0);
     overflow: hidden;
     white-space: nowrap;
 }
@@ -1055,6 +734,11 @@
 }
 
 .copyNameIcon {
+}
+
+/* Holds the copy name button, which sits beside the name as if on its own */
+.globalPropertyEditViewImpl-nameActions {
+    margin: 0;
 }
 
 .copyNameIcon svg {
@@ -1678,7 +1362,7 @@ button.main-menu svg {
 }
 
 .form-control-background {
-  background-color: var(--control__background-color);
+  background-color: var(--content-box__background-color);
 }
 
 .form-control {
@@ -1713,175 +1397,6 @@ button.main-menu svg {
 
 .form-control.length-indicator-padding {
   padding-right: 4.5rem;
-}
-
-.form {
-    display: flex;
-    gap: var(--control__gap--vertical);
-    flex-direction: column;
-    overflow: auto;
-}
-
-.form-padding {
-    padding: var(--control__gap--vertical) var(--control__gap--horizontal);
-}
-
-.form-group {
-    display: flex;
-    margin-bottom: 0;
-    flex-direction: column;
-}
-
-.form-group > div:has(> label) {
-    display: flex;
-}
-
-
-.form-group:not(:first-child) {
-    margin-top: 0.3em;
-}
-
-.dashboard-panel > .form-group label.form-group-label:not(:empty) {
-    margin-top: 0.3em;
-    margin-left: 0.2em;
-}
-
-/* The invalid-feedback divs add a 0.25em margin-top even when empty so removing it pending
-   us doing something with client side validation */
-.form-group .invalid-feedback {
-    margin-top: 0;
-}
-
-.form-group-label-container .form-label {
-    margin-bottom: 0;
-}
-
-.form-group-label-container {
-    display: flex;
-    flex-direction: row;
-    gap: var(--control__gap--horizontal);
-    align-items: center;
-    margin-bottom: 0.2rem;
-}
-
-/* A tick box that carries its own label: its help goes on the same line, right after that label,
-   and anything else in the group (description, feedback, help text) goes on the lines below */
-.form-group--inline-tick {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    column-gap: var(--control__gap--horizontal);
-}
-
-.form-group--inline-tick > * {
-    flex-basis: 100%;
-    order: 2;
-}
-
-.form-group--inline-tick > .SimpleTickBox {
-    flex-basis: auto;
-    order: 0;
-}
-
-.form-group--inline-tick > .form-group-label-container {
-    flex-basis: auto;
-    order: 1;
-    margin-bottom: 0;
-}
-
-.form-group-label-container:has(> label.form-group-label:empty) {
-    margin-bottom: 0em;
-}
-
-.form-group-description-container {
-    display: flex;
-    flex-direction: row;
-    gap: var(--control__gap--horizontal);
-    align-items: center;
-    margin-bottom: 0.2rem;
-}
-
-.form-group-description {
-    font-size: 92%;
-    opacity: 80%;
-}
-
-.form-group-description p {
-    /* Reduce the default <p> margin down from 11px */
-    margin-bottom: 4px;
-}
-
-.form-group .help-button {
-    margin-bottom: 0rem;
-}
-
-/* The help button is a little taller than the label text. Let it overlap the label row rather than
-   make the row taller, so that adding help to a field doesn't make every form longer. Equal negative
-   margins keep it centred on the label without counting towards the row's height. */
-.form-group-label-container > .help-button {
-    margin-block: -50px;
-}
-
-.form-label-padding .form-group-label,
-.form-label-padding .help-button {
-    margin-top: var(--control__gap--vertical);
-}
-
-.form-label-padding .form-group-label {
-    margin-left: var(--control__gap--horizontal);
-}
-
-.form-group-description-container--disabled,
-.form-label--disabled {
-    color: var(--text-color--disabled);
-}
-
-.form-group-description-container--disabled code {
-    color: var(--code-color--disabled);
-}
-
-.help-button-tooltip {
-    /* width: 500px; */
-    max-width: 700px;
-    border-width: 2px;
-    border-color: var(--heading-color);
-    border-style: solid;
-    border-radius: 6px;
-}
-
-.markdown.help-button-tooltip .popupContent {
-    margin: 5px;
-    font-weight: 400;
-}
-
-.markdown.help-button-tooltip .popupContent div,
-.markdown.help-button-tooltip .popupContent span,
-.markdown.help-button-tooltip .popupContent p,
-.markdown.help-button-tooltip .popupContent b,
-.markdown.help-button-tooltip .popupContent i {
-    font-weight: 400;
-    /* Make it a wee bit smaller than normal text in stroom which is size-13 */
-    font-size: var(--font-size-12);
-    line-height: 1.3em;
-}
-
-.markdown.help-button-tooltip .popupContent h4 {
-    font-weight: 500;
-    /* Make it a wee bit smaller than normal text in stroom which is size-13 */
-    font-size: var(--font-size-13);
-    line-height: 1.6em;
-}
-
-.form-group .help-button .toolbar-button {
-    width: 18px;
-    height: 18px;
-}
-
-.form-group .help-button svg {
-    width: 16px;
-    height: 16px;
-    /* margin-bottom: 0.6em; */
-    color: var(--navigation-icon-button__color);
 }
 
 .form-heading {
@@ -2279,7 +1794,7 @@ button.main-menu svg {
     display: flex;
     font-size: .7rem;
     flex-grow: 1;
-    opacity: .5;
+    color: var(--text-color--muted);
     user-select: text;
 }
 
@@ -2288,8 +1803,18 @@ button.main-menu svg {
     font-size: .6rem;
     font-family: monospace;
     flex-grow: 0;
-    opacity: .5;
+    color: var(--text-color--muted);
     user-select: text;
+}
+
+/* On a selected row, secondary text takes the row's text colour: muted grey wouldn't show on it */
+.cellTableSelectedRow .findCell-tags,
+.cellTableSelectedRow .findCell-path,
+.cellTableSelectedRow .findCell-uuid,
+.dataGridSelectedRow .findCell-tags,
+.dataGridSelectedRow .findCell-path,
+.dataGridSelectedRow .findCell-uuid {
+    color: inherit;
 }
 
 .pipelineElementChooser-iconCell {
@@ -2404,6 +1929,16 @@ button.main-menu svg {
 .duration-picker {
     display: flex;
     width: 200px;
+    /* Room for a focused field's focus ring, so it doesn't run into the field beside it */
+    gap: 8px;
+}
+
+/* The days of the week, one tick box under another, with room for a focused one's focus ring */
+.days {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
 }
 
 .editNodeTagsAllTagsFrmGrp,
@@ -2411,7 +1946,7 @@ button.main-menu svg {
     flex-basis: 200px;
 }
 
-.editNodeTagsAddTagsInputPanel .button-container {
+.editNodeTagsAddTagsInputPanel .toolbar {
     position: absolute;
     margin-top: 7px;
     right: 50px;
@@ -2482,7 +2017,7 @@ button.main-menu svg {
 
 .ScheduledProcessingViewImpl,
 .DuplicateManagementViewImpl {
-    border-top: 1px solid var(--splitter__background-color);
+    border-top: 1px solid var(--border-color);
 }
 
 .documentPermissionChangeControls {
@@ -2505,7 +2040,7 @@ button.main-menu svg {
 }
 
 /* Add a smidge of a gap between the split and the next form group */
-.DictionarySettingViewImpl-words > .form-group-label-container {
+.DictionarySettingViewImpl-words > .form-group__label-row {
     margin-top: 0.5em;
 }
 
@@ -2677,7 +2212,7 @@ button.main-menu svg {
     flex-direction: column;
 }
 .credentials-manager-dialog .credentials-manager {
-    background-color: var(--control__background-color);
+    background-color: var(--content-box__background-color);
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;
 }

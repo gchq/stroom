@@ -101,7 +101,7 @@ public final class ExpressionBuilderStories {
                     play.click(play.getByText(TextMatch.containing("UserId"), ".expressionItemBox-label"));
                     play.expect(play.querySelector(FIELD_PICKER)).toBeNull();
                 })
-                // The toolbar is made of real buttons (Stroom's SvgButton, an ToolbarButton)
+                // The toolbar is made of real buttons (ToolbarButton)
                 .story("ToolbarIsRealButtons", context -> editor(context, populatedExpression(), false))
                 .withPlay(ExpressionBuilderStories::playToolbar)
                 // The default (a simple field list model): a short field list has no picker chrome
@@ -368,7 +368,7 @@ public final class ExpressionBuilderStories {
         final Style style = frame.getElement().getStyle();
         style.setProperty("width", "760px");
         style.setProperty("height", "420px");
-        style.setProperty("border", "1px solid var(--panel__border-color, #ccc)");
+        style.setProperty("border", "1px solid var(--border-color)");
         editor.setSize("100%", "100%");
         frame.add(editor);
         return frame;

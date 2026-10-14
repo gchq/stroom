@@ -29,8 +29,9 @@
 
 import { CHECKS as BUTTONS } from './buttons.mjs';
 import { CHECKS as SPLIT_PANE } from './split-pane.mjs';
+import { CHECKS as TABS } from './tabs.mjs';
 
-const FILES = { 'buttons.mjs': BUTTONS, 'split-pane.mjs': SPLIT_PANE };
+const FILES = { 'buttons.mjs': BUTTONS, 'split-pane.mjs': SPLIT_PANE, 'tabs.mjs': TABS };
 
 // Merges each file's checks, refusing a story id found in two files
 export function mergeChecks(files) {

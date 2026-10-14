@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-/// Stories for [ToolbarButton] (and its subclass `SvgButton`), Stroom's icon-only button.
+/// Stories for [ToolbarButton], Stroom's icon-only button.
 public final class IconButtonStories {
 
     // Arg names

@@ -65,7 +65,7 @@
             <g:FlowPanel styleName="max dock-container-vertical">
                 <g:TextArea ui:field="apiKeyTextArea" addStyleNames="w-100"/>
                 <g:FlowPanel styleName="max dock-container-horizontal align-center">
-                    <b:ButtonPanel ui:field="apiKeyButtonPanel"/>
+                    <b:Toolbar ui:field="apiKeyButtonPanel" name="API key actions"/>
                     <g:Label ui:field="copyToClipboardLabel"/>
                 </g:FlowPanel>
             </g:FlowPanel>

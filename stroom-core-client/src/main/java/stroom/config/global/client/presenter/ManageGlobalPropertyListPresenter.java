@@ -26,11 +26,10 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
-import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.PageRequest;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -61,7 +60,7 @@ public class ManageGlobalPropertyListPresenter
     private static final String NODES_UNAVAILABLE_SHORT_MSG = "[Error]";
     private static final String MULTIPLE_VALUES_MSG = "[Multiple values]";
     private static final String MULTIPLE_SOURCES_MSG = "[Multiple]";
-    private static final String ERROR_CSS_COLOUR = "red";
+    private static final String ERROR_CSS_COLOUR = "var(--text-color--red)";
 
     // This is the delay between getting the list of props and hitting all the other nodes
     // to get their specific values.  Too low and we pepper the nodes for each key press of the filter.
@@ -399,8 +398,11 @@ public class ManageGlobalPropertyListPresenter
                 750);
     }
 
-    public ButtonView addButton(final Preset preset) {
-        return getView().addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return getView().getToolbar();
     }
 
     @Override

@@ -27,7 +27,7 @@
         <form:FormGroup identity="elasticClusterSettingsAPIKeySecret" label="API key secret"
                         helpText="Secret of the Elasticsearch API key used to authenticate. Only used when 'Use authentication' is ticked and an API key ID is also set."
                         screenReaderText="Used with the API key ID when authentication is on.">
-            <g:PasswordTextBox ui:field="apiKeySecret" width="400px"/>
+            <form:PasswordBox ui:field="apiKeySecret" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticClusterSettingsConnectionTimeout" label="Connection timeout (ms)"
                         helpText="Time in milliseconds to wait for a connection to Elasticsearch. Default is 3000 (3 seconds)."
