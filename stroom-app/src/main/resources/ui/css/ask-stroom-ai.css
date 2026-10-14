@@ -343,3 +343,14 @@
 .ai-attachment-status-icon .face {
     color: var(--icon-colour__green);
 }
+
+/* The chat in a content tab (tab mode). */
+.askStroomAiTab {
+    width: 100%;
+    height: 100%;
+}
+
+.askStroomAiTab > .askStroomAiViewImpl {
+    width: 100%;
+    height: 100%;
+}

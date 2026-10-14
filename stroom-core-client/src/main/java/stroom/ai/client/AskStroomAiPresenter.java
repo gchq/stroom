@@ -31,11 +31,15 @@ import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.ai.shared.AskStroomAiConfig.DockType;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.alert.client.event.PromptEvent;
+import stroom.content.client.event.RefreshContentTabEvent;
+import stroom.core.client.ContentManager;
 import stroom.core.client.LocationManager;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
@@ -52,14 +56,20 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuBuilder;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.Scheduler;
@@ -81,6 +91,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -113,6 +124,8 @@ public class AskStroomAiPresenter
     private final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider;
     private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
     private final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider;
+    private final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider;
+    private final ContentManager contentManager;
     private final LocationManager locationManager;
     private final DateTimeFormatter dateTimeFormatter;
     private AskStroomAiContext data;
@@ -122,8 +135,10 @@ public class AskStroomAiPresenter
     private boolean titleGenerated;
     private int lastSeenMessageId;
 
-    private boolean showing;
+    // How the chat is shown: DOCK, DIALOG or TAB, or null if hidden.
+    private DockType shownAs;
     private boolean docked;
+    private AskStroomAiTabPresenter tabPresenter;
     /**
      * True while a request is with the server. Polling continues for as long as this is set, since a
      * poll can otherwise outrun the work and conclude it has finished before it has started.
@@ -142,6 +157,8 @@ public class AskStroomAiPresenter
                                 final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider,
                                 final Provider<DownloadChatPresenter> downloadChatPresenterProvider,
                                 final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
+                                final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider,
+                                final ContentManager contentManager,
                                 final LocationManager locationManager,
                                 final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view, askStroomAiProxy);
@@ -151,6 +168,8 @@ public class AskStroomAiPresenter
         this.aiChatHistoryPresenterProvider = aiChatHistoryPresenterProvider;
         this.downloadChatPresenterProvider = downloadChatPresenterProvider;
         this.aiAttachmentDataPresenterProvider = aiAttachmentDataPresenterProvider;
+        this.askStroomAiTabPresenterProvider = askStroomAiTabPresenterProvider;
+        this.contentManager = contentManager;
         this.locationManager = locationManager;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -304,47 +323,172 @@ public class AskStroomAiPresenter
         getDockSize(dockSize -> {
             getDockBehaviourFromPrefs(dockBehaviour -> {
                 if (event.isShow()) {
-                    if (!showing) {
-                        showing = true;
-
-                        if (dockBehaviour.getDockType() == DockType.DOCK) {
-                            // Dock mode: fire DockEvent to attach to main layout.
-                            DockEvent.fire(this, this, dockBehaviour, dockSize);
-                            docked = true;
-                        } else {
-                            // Dialog mode: show as popup.
-                            ShowPopupEvent.builder(this)
-                                    .popupType(PopupType.CLOSE_DIALOG)
-                                    .popupSize(PopupSize.resizable(700, 500))
-                                    .caption("Ask Stroom AI")
-                                    .onHideRequest(e -> {
-                                        ShowAskStroomAiEvent.fire(this, false);
-                                    })
-                                    .onHide(e -> {
-                                        showing = false;
-                                    })
-                                    .fire();
-                        }
+                    if (shownAs == null) {
+                        showAs(dockBehaviour, dockSize);
                     }
-                } else {
-                    if (showing) {
-                        showing = false;
-                        if (dockBehaviour.getDockType() == DockType.DOCK) {
-                            // Dock mode: fire DockEvent to detach to main layout.
-                            docked = false;
-                            DockEvent.fireUndock(this, this);
-                        } else {
-                            // Dialog mode: hide popup.
-                            HidePopupEvent.builder(this).fire();
-                        }
-                    }
+                } else if (shownAs != null) {
+                    hideShown();
                 }
             });
         });
     }
 
+    /**
+     * Shows the chat in the panel (docked), in a dialog or in a content tab.
+     */
+    private void showAs(final DockBehaviour dockBehaviour, final Size dockSize) {
+        final DockType dockType = dockBehaviour.getDockType();
+        getView().setTabMode(dockType == DockType.TAB);
+        if (dockType == DockType.DOCK) {
+            shownAs = DockType.DOCK;
+            docked = true;
+            DockEvent.fire(this, this, dockBehaviour, dockSize);
+        } else if (dockType == DockType.TAB) {
+            shownAs = DockType.TAB;
+            final AskStroomAiTabPresenter tab = tabPresenter();
+            tab.setChatTitle(NullSafe.get(currentChat, AiChat::getTitle));
+            tab.setContent(getView().asWidget());
+            contentManager.open(closeEvent -> {
+                // Closed by the user.
+                shownAs = null;
+                closeEvent.getCallback().closeTab(true);
+                ShowAskStroomAiEvent.fire(this, false);
+            }, tab, tab);
+        } else {
+            showAsDialog();
+        }
+        getView().focus();
+    }
+
+    /**
+     * Hides the chat from wherever it is shown. Runs and polling belong to the chat, so carry on.
+     */
+    private void hideShown() {
+        final DockType was = shownAs;
+        shownAs = null;
+        if (was == DockType.DOCK) {
+            docked = false;
+            DockEvent.fireUndock(this, this);
+        } else if (was == DockType.TAB) {
+            contentManager.forceClose(tabPresenter(), true);
+        } else if (was != null) {
+            HidePopupEvent.builder(this).fire();
+        }
+    }
+
+    private AskStroomAiTabPresenter tabPresenter() {
+        if (tabPresenter == null) {
+            tabPresenter = askStroomAiTabPresenterProvider.get();
+        }
+        return tabPresenter;
+    }
+
     @Override
-    public void onChangeConfig() {
+    public void onToggleTab() {
+        getDockBehaviourFromPrefs(dockBehaviour -> onDockBehaviourChange(new DockBehaviour(
+                dockBehaviour.getDockType() == DockType.TAB
+                        ? DockType.DOCK
+                        : DockType.TAB,
+                dockBehaviour.getDockLocation())));
+    }
+
+    @Override
+    public void onShowMenu(final Element target) {
+        final boolean hasChat = currentChat != null;
+        final List<Item> items = MenuBuilder.builder()
+                .withIconMenuItem(item -> item
+                        .icon(SvgImage.EDIT)
+                        .text("Rename…")
+                        .enabled(hasChat)
+                        .command(this::onRename))
+                .withIconMenuItem(item -> item
+                        .icon(SvgImage.HISTORY)
+                        .text("Conversation History…")
+                        .command(this::onShowHistory))
+                .withIconMenuItem(item -> item
+                        .icon(SvgImage.COLLAPSE_UP)
+                        .text("Compact Context…")
+                        .enabled(hasChat)
+                        .command(this::onCompact))
+                .withIconMenuItem(item -> item
+                        .icon(SvgImage.DOWNLOAD)
+                        .text("Download History…")
+                        .enabled(hasChat)
+                        .command(this::onDownloadChat))
+                .withIconMenuItem(item -> item
+                        .icon(SvgImage.DELETE)
+                        .text("Delete All Messages")
+                        .enabled(hasChat)
+                        .command(this::onDeleteAllMessages))
+                .withSeparator()
+                .withIconMenuItem(item -> item
+                        .icon(SvgImage.SETTINGS)
+                        .text("Settings…")
+                        .command(this::onChangeConfig))
+                .build();
+        ShowMenuEvent.builder()
+                .items(items)
+                .popupPosition(new PopupPosition(new Rect(target).grow(3), PopupLocation.BELOW))
+                .fire(this);
+    }
+
+    private void onRename() {
+        if (currentChat == null) {
+            return;
+        }
+        PromptEvent.fire(this, "Name for this conversation", currentChat.getTitle(), title -> {
+            if (title != null && !title.isBlank() && currentChat != null) {
+                setChatTitle(title.strip());
+                titleGenerated = true;
+                askStroomAiClient.updateChatTitle(currentChat.getId(), title.strip(), success -> {
+                    // Nothing more to do.
+                }, this);
+            }
+        });
+    }
+
+    /**
+     * Compacts the chat now: earlier turns are replaced, in what the model sees, by digests and a summary.
+     */
+    private void onCompact() {
+        if (currentChat == null) {
+            return;
+        }
+        PromptEvent.fire(this, "Compact this conversation now? Earlier messages are kept, but the model will see "
+                               + "them as a summary. Optionally, say what the summary should focus on:", "",
+                focus -> {
+                    if (focus != null && currentChat != null) {
+                        compact(focus.isBlank()
+                                ? null
+                                : focus.strip());
+                    }
+                });
+    }
+
+    private void compact(final String focus) {
+        askStroomAiClient.getConfig(config -> askStroomAiClient.compactChat(
+                new CompactAiChatRequest(currentChat, config, focus),
+                response -> startPolling(),
+                error -> showError(error, "Unable to compact the conversation", null),
+                getView()), getView());
+    }
+
+    /**
+     * Sets the chat's title, where it is shown.
+     */
+    private void setChatTitle(final String title) {
+        getView().setTitle(title);
+        if (currentChat != null) {
+            currentChat = new AiChat(currentChat.getId(), currentChat.getCreateTimeMs(),
+                    currentChat.getUpdateTimeMs(), currentChat.getUserUuid(), title);
+        }
+        if (shownAs == DockType.TAB) {
+            tabPresenter().setChatTitle(title);
+            RefreshContentTabEvent.fire(this, tabPresenter());
+        }
+    }
+
+    private void onChangeConfig() {
         askStroomAiClient.getConfig(config -> {
             getDockBehaviourFromPrefs(dockBehaviour -> {
                 final AskStroomAiConfigPresenter askStroomAiConfigPresenter = askStroomAiConfigPresenterProvider.get();
@@ -376,10 +520,9 @@ public class AskStroomAiPresenter
     void onDockBehaviourChange(final DockBehaviour dockBehaviour) {
         getDockSize(dockSize -> {
             getDockBehaviourFromPrefs(currentDockBehaviour -> {
-                // Idempotency: if the behaviour hasn't changed, nothing to do.
-                // This handles the duplicate call that occurs when a live-preview change
-                // (radio button) is followed by the user clicking OK, which calls the
-                // consumer again with the same value.
+                // Idempotency: if the behaviour hasn't changed, nothing to do. This handles the duplicate call that
+                // occurs when a live-preview change (radio button) is followed by the user clicking OK, which calls
+                // the consumer again with the same value.
                 if (dockBehaviour.equals(currentDockBehaviour)) {
                     return;
                 }
@@ -387,41 +530,13 @@ public class AskStroomAiPresenter
                 // Persist to user preferences.
                 saveDockBehaviourToPrefs(dockBehaviour);
 
-                if (showing) {
-                    final boolean wasDocked = docked;
-                    final boolean wantsDock = dockBehaviour.getDockType() == DockType.DOCK;
-
-                    if (wasDocked && wantsDock) {
-                        // Location change while docked: defer so any in-flight settings-dialog
-                        // hide sequence completes first, then undock and re-dock.
-                        Scheduler.get().scheduleDeferred(() -> {
-                            DockEvent.fireUndock(this, this);
-                            DockEvent.fire(this, this, dockBehaviour, dockSize);
-                            getView().focus();
-                        });
-
-                    } else if (wasDocked) {
-                        // DOCK → DIALOG: defer so settings dialog closes first.
-                        Scheduler.get().scheduleDeferred(() -> {
-                            DockEvent.fireUndock(this, this);
-                            docked = false;
-                            showing = false;
-                            showAsDialog();
-                        });
-
-                    } else if (wantsDock) {
-                        // DIALOG → DOCK: use HidePopupEvent (not HidePopupRequestEvent) for a
-                        // direct programmatic dismiss that doesn't re-enter onHideRequest.
-                        // HidePopupEvent fires synchronously and calls onHide (showing=false),
-                        // then the deferred re-enables showing, sets docked, and fires DockEvent.
-                        HidePopupEvent.builder(this).fire();
-                        Scheduler.get().scheduleDeferred(() -> {
-                            showing = true;
-                            docked = true;
-                            DockEvent.fire(this, this, dockBehaviour, dockSize);
-                            getView().focus();
-                        });
-                    }
+                if (shownAs != null) {
+                    // Close the old view and open the new one on the same chat. Deferred so any in-flight settings
+                    // dialog hide sequence completes first.
+                    Scheduler.get().scheduleDeferred(() -> {
+                        hideShown();
+                        Scheduler.get().scheduleDeferred(() -> showAs(dockBehaviour, dockSize));
+                    });
                 }
             });
         });
@@ -1196,20 +1311,16 @@ public class AskStroomAiPresenter
             getView().clearMessages();
             getView().setEmptyState(true);
             getView().clearContextIndicator();
-            getView().setTitle(chat.getTitle());
-            getView().setDownloadEnabled(true);
-            getView().setDeleteAllEnabled(true);
+            setChatTitle(chat.getTitle());
             getView().focus();
         }, this);
     }
 
-    @Override
-    public void onShowHistory() {
+    private void onShowHistory() {
         aiChatHistoryPresenterProvider.get().show(this::loadChat);
     }
 
-    @Override
-    public void onDownloadChat() {
+    private void onDownloadChat() {
         if (currentChat == null) {
             return;
         }
@@ -1257,8 +1368,7 @@ public class AskStroomAiPresenter
                 });
     }
 
-    @Override
-    public void onDeleteAllMessages() {
+    private void onDeleteAllMessages() {
         if (currentChat == null) {
             return;
         }
@@ -1288,9 +1398,7 @@ public class AskStroomAiPresenter
         data = null;
         getView().clearMessages();
         getView().clearContextIndicator();
-        getView().setTitle(chat.getTitle());
-        getView().setDownloadEnabled(true);
-        getView().setDeleteAllEnabled(true);
+        setChatTitle(chat.getTitle());
 
         // Load messages for the selected chat.
         askStroomAiClient.getMessages(chat.getId(), messages -> {
@@ -1334,7 +1442,7 @@ public class AskStroomAiPresenter
                 currentChat = chat;
                 titleGenerated = false;
                 lastSeenMessageId = 0;
-                getView().setTitle(chat.getTitle());
+                setChatTitle(chat.getTitle());
                 then.run();
             }, this);
         }
@@ -1357,7 +1465,7 @@ public class AskStroomAiPresenter
             title = userMessage.substring(0, MAX_TITLE_LENGTH) + "…";
         }
 
-        getView().setTitle(title);
+        setChatTitle(title);
         askStroomAiClient.updateChatTitle(currentChat.getId(), title, success -> {
             // Title persisted successfully — nothing more to do.
         }, this);
@@ -1390,9 +1498,10 @@ public class AskStroomAiPresenter
 
         void clearContextIndicator();
 
-        void setDownloadEnabled(boolean enabled);
-
-        void setDeleteAllEnabled(boolean enabled);
+        /**
+         * @param tab True if the chat is shown in a content tab, so the tab/panel button moves it back.
+         */
+        void setTabMode(boolean tab);
     }
 
     // ---- Dock preference helpers ----
@@ -1400,7 +1509,9 @@ public class AskStroomAiPresenter
     private void getDockBehaviourFromPrefs(final Consumer<DockBehaviour> consumer) {
         askStroomAiClient.getConfig(currentConfig -> {
             if (currentConfig != null) {
-                final DockType type = currentConfig.getDockType();
+                final DockType type = currentConfig.getDockType() == DockType.FLOAT
+                        ? DockType.DOCK
+                        : currentConfig.getDockType();
                 final DockLocation location = currentConfig.getDockLocation();
                 consumer.accept(new DockBehaviour(type, location));
             } else {
@@ -1448,7 +1559,7 @@ public class AskStroomAiPresenter
     }
 
     private void showAsDialog() {
-        showing = true;
+        shownAs = DockType.DIALOG;
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(PopupSize.resizable(700, 500))
@@ -1458,7 +1569,11 @@ public class AskStroomAiPresenter
                     // Notify MainPresenter so the toolbar toggle button is reset.
                     ShowAskStroomAiEvent.fire(this, false);
                 })
-                .onHide(e -> showing = false)
+                .onHide(e -> {
+                    if (shownAs == DockType.DIALOG) {
+                        shownAs = null;
+                    }
+                })
                 .fire();
     }
 
