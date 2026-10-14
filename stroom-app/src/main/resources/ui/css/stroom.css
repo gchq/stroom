@@ -910,18 +910,21 @@ textarea.clipboardCopy {
     text-transform: uppercase;
 }
 
-/* TODO AT - not sure if these need to be done here or somewhere else */
+/* Keyboard focus on a field (text areas too, which once showed none) */
 select:focus-visible,
-input:focus-visible {
+input:focus-visible,
+textarea:focus-visible {
   border: thin solid var(--focus-border) !important;
   box-shadow: var(--focus-shadow);
 }
 select.invalid:focus-visible,
-input.invalid:focus-visible {
+input.invalid:focus-visible,
+textarea.invalid:focus-visible {
   box-shadow: var(--focus-shadow--invalid);
 }
 select.invalid,
-input.invalid {
+input.invalid,
+textarea.invalid {
   border: thin solid var(--focus-border--invalid) !important;
 }
 

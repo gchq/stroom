@@ -121,6 +121,11 @@
     opacity: 0.8;
 }
 
+/* A tab with no icon: room before its label, as an icon's margin gives a tab that has one */
+.tab-bar--curved .tab-bar__label:first-child {
+    padding-left: 8px;
+}
+
 .tab-bar--curved .tab-bar__tab[aria-selected="true"] .tab-bar__label {
     opacity: 1;
 }

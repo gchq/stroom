@@ -17,14 +17,16 @@
     --bootstrap-warning: rgb(var(--bootstrap-warning-rgb));
     --bootstrap-success: rgb(var(--bootstrap-success-rgb));
 
-    --focus-border: var(--blue-800);
-    --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
+    /* Keyboard focus, as in the light theme: the control's border in a light colour (well over 3:1
+       on the dark surfaces) and a crisp 4px band of it at 30% around the control */
+    --focus-border: var(--blue-300);
+    --focus-shadow: 0 0 0 4px rgba(100, 181, 246, .3); /* blue-300 */
     --focus-border--valid: var(--valid);
-    --focus-shadow--valid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--valid-rgb), .6); /* --bootstrap-success*/
+    --focus-shadow--valid: 0 0 0 4px rgba(var(--valid-rgb), .3);
     --focus-border--invalid: var(--invalid);
-    --focus-shadow--invalid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--invalid-rgb), .6); /* --bootstrap-error*/
-    --focus-border--secondary: var(--pink-500);
-    --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
+    --focus-shadow--invalid: 0 0 0 4px rgba(var(--invalid-rgb), .3);
+    --focus-border--secondary: var(--pink-300);
+    --focus-shadow--secondary: 0 0 0 4px rgba(240, 98, 146, .3); /* pink-300 */
 
     /* Main body text colour in the app */
     --text-color: #dce4e5;
@@ -89,7 +91,8 @@
     --icon-button__background-color--on: var(--blue-500);
     --icon-button__border-color--on: var(--black);
     --icon-button__color--on: var(--app__background);
-    --icon-button__background-color--hover: rgb(55, 58, 67);
+    /* A faint white, so it shows on whatever surface the button is on */
+    --icon-button__background-color--hover: rgba(255, 255, 255, .07);
     --icon-button__border-color--hover: rgb(29, 31, 35);
     --icon-button__color: var(--blue-300);
     --navigation-icon-button__color: var(--navigation__text-color);
@@ -184,7 +187,8 @@
     --curve-tab__border: thin solid transparent;
     --curve-tab__border--hover: thin solid transparent;
     --curve-tab__background-color--selected: #3a3e47;
-    --curve-tab__background-color--hover: rgba(var(--blue-300-rgb), .2);
+    /* The neutral hover of toolbar buttons, leaving blue to the selected bar and the focus ring */
+    --curve-tab__background-color--hover: var(--icon-button__background-color--hover);
     --curve-tab__box-shadow--selected: 0 0 1px 1px rgb(0 0 0 / 100%);
     --curve-tab__border-radius: .2rem;
 
