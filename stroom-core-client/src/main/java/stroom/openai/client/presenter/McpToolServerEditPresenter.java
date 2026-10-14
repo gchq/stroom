@@ -25,6 +25,8 @@ import stroom.http.client.presenter.HttpClientConfigPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.openai.client.presenter.McpToolServerEditPresenter.McpToolServerEditView;
 import stroom.openai.shared.McpAuthMode;
+import stroom.openai.shared.McpToolPolicy;
+import stroom.openai.shared.McpToolPolicyRule;
 import stroom.openai.shared.McpToolServerConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
@@ -81,7 +83,14 @@ public class McpToolServerEditPresenter
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final McpToolServerConfig written = write();
+                        final McpToolServerConfig written;
+                        try {
+                            written = write();
+                        } catch (final IllegalArgumentException ex) {
+                            AlertEvent.fireError(McpToolServerEditPresenter.this, ex.getMessage(), null);
+                            e.reset();
+                            return;
+                        }
                         final String error = validate(written);
                         if (error != null) {
                             AlertEvent.fireError(McpToolServerEditPresenter.this, error, null);
@@ -168,6 +177,8 @@ public class McpToolServerEditPresenter
         getView().setApiKeyFieldsVisible(c.getAuthMode() == McpAuthMode.API_KEY);
         getView().setAllowedTools(joinPatterns(c.getAllowedTools()));
         getView().setDeniedTools(joinPatterns(c.getDeniedTools()));
+        getView().setTrusted(c.isTrusted());
+        getView().setToolPolicies(formatPolicies(c.getToolPolicies()));
         this.httpClientConfiguration = c.getHttpClientConfiguration();
     }
 
@@ -184,7 +195,67 @@ public class McpToolServerEditPresenter
                 .httpClientConfiguration(httpClientConfiguration)
                 .allowedTools(splitPatterns(getView().getAllowedTools()))
                 .deniedTools(splitPatterns(getView().getDeniedTools()))
+                .trusted(getView().isTrusted())
+                .toolPolicies(parsePolicies(getView().getToolPolicies()))
                 .build();
+    }
+
+    /**
+     * @param text Tool policy rules, one per line, each 'pattern = policy'. The policy can be given by its
+     *             display name (e.g. 'Ask every time') or its constant name (e.g. 'ASK_ALWAYS'), in any case.
+     * @return The rules, or null if there are none.
+     * @throws IllegalArgumentException if a line cannot be understood.
+     */
+    static List<McpToolPolicyRule> parsePolicies(final String text) {
+        if (NullSafe.isBlankString(text)) {
+            return null;
+        }
+        final List<McpToolPolicyRule> rules = new ArrayList<>();
+        for (final String rawLine : text.split("\\n")) {
+            final String line = rawLine.trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+            final int idx = line.indexOf('=');
+            final String pattern = idx > 0
+                    ? line.substring(0, idx).trim()
+                    : "";
+            final McpToolPolicy policy = idx > 0
+                    ? parsePolicy(line.substring(idx + 1).trim())
+                    : null;
+            if (pattern.isEmpty() || policy == null) {
+                throw new IllegalArgumentException("The tool policy '" + line + "' is not understood. Each line "
+                                                   + "must be 'pattern = policy', where the policy is Allow, Ask, "
+                                                   + "Ask every time or Deny.");
+            }
+            rules.add(new McpToolPolicyRule(pattern, policy));
+        }
+        return rules.isEmpty()
+                ? null
+                : rules;
+    }
+
+    static String formatPolicies(final List<McpToolPolicyRule> rules) {
+        if (NullSafe.isEmptyCollection(rules)) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder();
+        for (final McpToolPolicyRule rule : rules) {
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            sb.append(rule.getToolPattern()).append(" = ").append(rule.getPolicy().getDisplayValue());
+        }
+        return sb.toString();
+    }
+
+    private static McpToolPolicy parsePolicy(final String text) {
+        for (final McpToolPolicy policy : McpToolPolicy.values()) {
+            if (policy.getDisplayValue().equalsIgnoreCase(text) || policy.name().equalsIgnoreCase(text)) {
+                return policy;
+            }
+        }
+        return null;
     }
 
     /**
@@ -254,5 +325,13 @@ public class McpToolServerEditPresenter
         String getDeniedTools();
 
         void setDeniedTools(String deniedTools);
+
+        boolean isTrusted();
+
+        void setTrusted(boolean trusted);
+
+        String getToolPolicies();
+
+        void setToolPolicies(String toolPolicies);
     }
 }

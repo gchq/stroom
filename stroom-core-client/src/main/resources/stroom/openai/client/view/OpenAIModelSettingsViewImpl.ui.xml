@@ -4,7 +4,8 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:l="urn:import:stroom.item.client">
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="openAIModelBaseUrl"
                         label="Base URL (optional)"
@@ -40,6 +41,16 @@
                         helpText="Specify the number of dimensions to use for embedding models. Lucene has a max of 1024 but Elastic can handle 4096. Set to zero to disable and allow models to use their default.">
             <v:ValueSpinner ui:field="embeddingModelDimensions" width="80px"
                             title="Number of dimensions to use for embedding models."/>
+        </form:FormGroup>
+        <form:FormGroup identity="openAIToolsEnabled"
+                        helpText="Whether 'Ask Stroom AI' may offer this model tools (built-in and MCP). Turn off for models that do not support tool calling, e.g. some small local models.">
+            <tickbox:CustomCheckBox ui:field="toolsEnabled" label="Tools enabled"/>
+        </form:FormGroup>
+        <form:FormGroup identity="openAIMaxToolDefinitions"
+                        label="Maximum tools per request"
+                        helpText="The most tool definitions to offer the model in one request. Tools past the limit are left out, built-in tools first. Set to zero for no limit.">
+            <v:ValueSpinner ui:field="maxToolDefinitions" width="80px"
+                            title="The most tool definitions to offer the model in one request. Zero for no limit."/>
         </form:FormGroup>
         <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px"
                   addStyleNames="allow-focus"/>

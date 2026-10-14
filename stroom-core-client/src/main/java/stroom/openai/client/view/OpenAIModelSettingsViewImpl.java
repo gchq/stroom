@@ -23,6 +23,7 @@ import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSe
 import stroom.openai.client.presenter.OpenAIModelSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -57,6 +58,10 @@ public class OpenAIModelSettingsViewImpl
     ValueSpinner embeddingModelDimensions;
     @UiField
     Button setHttpClientConfig;
+    @UiField
+    CustomCheckBox toolsEnabled;
+    @UiField
+    ValueSpinner maxToolDefinitions;
 
     @Inject
     public OpenAIModelSettingsViewImpl(final Binder binder) {
@@ -67,6 +72,8 @@ public class OpenAIModelSettingsViewImpl
         maxContextWindowTokens.setMax(Integer.MAX_VALUE);
         embeddingModelDimensions.setMin(0L);
         embeddingModelDimensions.setMax(Integer.MAX_VALUE);
+        maxToolDefinitions.setMin(0L);
+        maxToolDefinitions.setMax(Integer.MAX_VALUE);
     }
 
     @Override
@@ -130,6 +137,26 @@ public class OpenAIModelSettingsViewImpl
     }
 
     @Override
+    public boolean isToolsEnabled() {
+        return toolsEnabled.getValue();
+    }
+
+    @Override
+    public void setToolsEnabled(final boolean toolsEnabled) {
+        this.toolsEnabled.setValue(toolsEnabled);
+    }
+
+    @Override
+    public int getMaxToolDefinitions() {
+        return maxToolDefinitions.getIntValue();
+    }
+
+    @Override
+    public void setMaxToolDefinitions(final int maxToolDefinitions) {
+        this.maxToolDefinitions.setValue(maxToolDefinitions);
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         baseUrl.setEnabled(!readOnly);
         apiKey.setEnabled(!readOnly);
@@ -137,6 +164,8 @@ public class OpenAIModelSettingsViewImpl
         maxContextWindowTokens.setEnabled(!readOnly);
         reasoningEffort.setEnabled(!readOnly);
         embeddingModelDimensions.setEnabled(!readOnly);
+        toolsEnabled.setEnabled(!readOnly);
+        maxToolDefinitions.setEnabled(!readOnly);
     }
 
     private void fireChange() {
@@ -172,6 +201,16 @@ public class OpenAIModelSettingsViewImpl
 
     @UiHandler("embeddingModelDimensions")
     public void onEmbeddingModelDimensionsValueChange(final ValueChangeEvent<Long> event) {
+        fireChange();
+    }
+
+    @UiHandler("toolsEnabled")
+    public void onToolsEnabledValueChange(final ValueChangeEvent<Boolean> event) {
+        fireChange();
+    }
+
+    @UiHandler("maxToolDefinitions")
+    public void onMaxToolDefinitionsValueChange(final ValueChangeEvent<Long> event) {
         fireChange();
     }
 
