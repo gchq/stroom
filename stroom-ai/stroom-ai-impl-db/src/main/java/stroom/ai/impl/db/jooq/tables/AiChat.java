@@ -17,13 +17,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -57,7 +58,7 @@ public class AiChat extends TableImpl<AiChatRecord> {
     /**
      * The column <code>stroom.ai_chat.id</code>.
      */
-    public final TableField<AiChatRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<AiChatRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.ai_chat.version</code>.
@@ -93,6 +94,51 @@ public class AiChat extends TableImpl<AiChatRecord> {
      * The column <code>stroom.ai_chat.title</code>.
      */
     public final TableField<AiChatRecord, String> TITLE = createField(DSL.name("title"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.ai_chat.model_doc_uuid</code>.
+     */
+    public final TableField<AiChatRecord, String> MODEL_DOC_UUID = createField(DSL.name("model_doc_uuid"), SQLDataType.VARCHAR(255), this, "");
+
+    /**
+     * The column <code>stroom.ai_chat.context_window_tokens</code>.
+     */
+    public final TableField<AiChatRecord, Integer> CONTEXT_WINDOW_TOKENS = createField(DSL.name("context_window_tokens"), SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>stroom.ai_chat.last_input_tokens</code>.
+     */
+    public final TableField<AiChatRecord, Integer> LAST_INPUT_TOKENS = createField(DSL.name("last_input_tokens"), SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>stroom.ai_chat.total_input_tokens</code>.
+     */
+    public final TableField<AiChatRecord, Long> TOTAL_INPUT_TOKENS = createField(DSL.name("total_input_tokens"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BIGINT)), this, "");
+
+    /**
+     * The column <code>stroom.ai_chat.total_output_tokens</code>.
+     */
+    public final TableField<AiChatRecord, Long> TOTAL_OUTPUT_TOKENS = createField(DSL.name("total_output_tokens"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BIGINT)), this, "");
+
+    /**
+     * The column <code>stroom.ai_chat.last_opened_ms</code>.
+     */
+    public final TableField<AiChatRecord, Long> LAST_OPENED_MS = createField(DSL.name("last_opened_ms"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.ai_chat.last_read_message_id</code>.
+     */
+    public final TableField<AiChatRecord, Integer> LAST_READ_MESSAGE_ID = createField(DSL.name("last_read_message_id"), SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>stroom.ai_chat.last_poll_ms</code>.
+     */
+    public final TableField<AiChatRecord, Long> LAST_POLL_MS = createField(DSL.name("last_poll_ms"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.ai_chat.auto_approve</code>.
+     */
+    public final TableField<AiChatRecord, Boolean> AUTO_APPROVE = createField(DSL.name("auto_approve"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
     private AiChat(Name alias, Table<AiChatRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -130,7 +176,7 @@ public class AiChat extends TableImpl<AiChatRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.AI_CHAT_IDX_AI_CHAT_USER_UUID);
+        return Arrays.asList(Indexes.AI_CHAT_IDX_AI_CHAT_USER_UUID_UPDATE_TIME);
     }
 
     @Override
@@ -192,7 +238,7 @@ public class AiChat extends TableImpl<AiChatRecord> {
      */
     @Override
     public AiChat where(Condition condition) {
-        return new AiChat(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new AiChat(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -259,7 +305,7 @@ public class AiChat extends TableImpl<AiChatRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public AiChat whereExists(Select<?> select) {
+    public AiChat whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -267,7 +313,7 @@ public class AiChat extends TableImpl<AiChatRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public AiChat whereNotExists(Select<?> select) {
+    public AiChat whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

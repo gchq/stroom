@@ -18,13 +18,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -58,7 +59,7 @@ public class AiChatMessage extends TableImpl<AiChatMessageRecord> {
     /**
      * The column <code>stroom.ai_chat_message.id</code>.
      */
-    public final TableField<AiChatMessageRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<AiChatMessageRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.ai_chat_message.fk_ai_chat_id</code>.
@@ -84,6 +85,16 @@ public class AiChatMessage extends TableImpl<AiChatMessageRecord> {
      * The column <code>stroom.ai_chat_message.message</code>.
      */
     public final TableField<AiChatMessageRecord, String> MESSAGE = createField(DSL.name("message"), SQLDataType.CLOB.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.ai_chat_message.turn_id</code>.
+     */
+    public final TableField<AiChatMessageRecord, Integer> TURN_ID = createField(DSL.name("turn_id"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.inline("0", SQLDataType.INTEGER)), this, "");
+
+    /**
+     * The column <code>stroom.ai_chat_message.token_count</code>.
+     */
+    public final TableField<AiChatMessageRecord, Integer> TOKEN_COUNT = createField(DSL.name("token_count"), SQLDataType.INTEGER, this, "");
 
     private AiChatMessage(Name alias, Table<AiChatMessageRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -121,7 +132,7 @@ public class AiChatMessage extends TableImpl<AiChatMessageRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.AI_CHAT_MESSAGE_IDX_AI_CHAT_MESSAGE_CHAT_ID);
+        return Arrays.asList(Indexes.AI_CHAT_MESSAGE_IDX_AI_CHAT_MESSAGE_CHAT_ID_ID, Indexes.AI_CHAT_MESSAGE_IDX_AI_CHAT_MESSAGE_CHAT_ID_TYPE_ID);
     }
 
     @Override
@@ -183,7 +194,7 @@ public class AiChatMessage extends TableImpl<AiChatMessageRecord> {
      */
     @Override
     public AiChatMessage where(Condition condition) {
-        return new AiChatMessage(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new AiChatMessage(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -250,7 +261,7 @@ public class AiChatMessage extends TableImpl<AiChatMessageRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public AiChatMessage whereExists(Select<?> select) {
+    public AiChatMessage whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -258,7 +269,7 @@ public class AiChatMessage extends TableImpl<AiChatMessageRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public AiChatMessage whereNotExists(Select<?> select) {
+    public AiChatMessage whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

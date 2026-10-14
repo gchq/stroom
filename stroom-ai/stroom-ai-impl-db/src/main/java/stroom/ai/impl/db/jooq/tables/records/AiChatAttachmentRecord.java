@@ -172,6 +172,76 @@ public class AiChatAttachmentRecord extends UpdatableRecordImpl<AiChatAttachment
         return (String) get(10);
     }
 
+    /**
+     * Setter for <code>stroom.ai_chat_attachment.path</code>.
+     */
+    public void setPath(String value) {
+        set(11, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat_attachment.path</code>.
+     */
+    public String getPath() {
+        return (String) get(11);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat_attachment.size_bytes</code>.
+     */
+    public void setSizeBytes(Long value) {
+        set(12, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat_attachment.size_bytes</code>.
+     */
+    public Long getSizeBytes() {
+        return (Long) get(12);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat_attachment.fk_source_message_id</code>.
+     */
+    public void setFkSourceMessageId(Integer value) {
+        set(13, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat_attachment.fk_source_message_id</code>.
+     */
+    public Integer getFkSourceMessageId() {
+        return (Integer) get(13);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat_attachment.source_doc_uuid</code>.
+     */
+    public void setSourceDocUuid(String value) {
+        set(14, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat_attachment.source_doc_uuid</code>.
+     */
+    public String getSourceDocUuid() {
+        return (String) get(14);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat_attachment.expire_time_ms</code>.
+     */
+    public void setExpireTimeMs(Long value) {
+        set(15, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat_attachment.expire_time_ms</code>.
+     */
+    public Long getExpireTimeMs() {
+        return (Long) get(15);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -195,7 +265,7 @@ public class AiChatAttachmentRecord extends UpdatableRecordImpl<AiChatAttachment
     /**
      * Create a detached, initialised AiChatAttachmentRecord
      */
-    public AiChatAttachmentRecord(Integer id, Integer fkAiChatId, Long createTimeMs, Long updateTimeMs, Integer status, Integer attachmentType, String description, String contextJson, Integer rowCount, Boolean truncated, String errorMessage) {
+    public AiChatAttachmentRecord(Integer id, Integer fkAiChatId, Long createTimeMs, Long updateTimeMs, Integer status, Integer attachmentType, String description, String contextJson, Integer rowCount, Boolean truncated, String errorMessage, String path, Long sizeBytes, Integer fkSourceMessageId, String sourceDocUuid, Long expireTimeMs) {
         super(AiChatAttachment.AI_CHAT_ATTACHMENT);
 
         setId(id);
@@ -209,6 +279,11 @@ public class AiChatAttachmentRecord extends UpdatableRecordImpl<AiChatAttachment
         setRowCount(rowCount);
         setTruncated(truncated);
         setErrorMessage(errorMessage);
+        setPath(path);
+        setSizeBytes(sizeBytes);
+        setFkSourceMessageId(fkSourceMessageId);
+        setSourceDocUuid(sourceDocUuid);
+        setExpireTimeMs(expireTimeMs);
         resetTouchedOnNotNull();
     }
 }
