@@ -62,9 +62,6 @@
   "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [
     "color-contrast"
   ],
-  "app-editors-dashboardeditor--table-filter-drives-query": [
-    "target-size"
-  ],
   "app-editors-dashboardeditor--vis-dynamic-controls": [
     "frame-title"
   ],
@@ -730,8 +727,7 @@
     "label"
   ],
   "widgets-popuppositioner-popup-contract--never-covers-its-trigger": [
-    "label",
-    "target-size"
+    "label"
   ],
   "widgets-popuppositioner-popup-contract--no-shield-behind-any-popup": [
     "label"
