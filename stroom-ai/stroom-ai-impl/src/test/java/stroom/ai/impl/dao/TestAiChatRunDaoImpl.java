@@ -210,6 +210,24 @@ class TestAiChatRunDaoImpl {
     }
 
     @Test
+    void testCountWorking() {
+        runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "n", null);
+        final AiChat chat2 = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        runDao.create(chat2.getId(), "user1", AiChatRunStatus.STOPPING, "n", null);
+        final AiChat chat3 = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        // Queued and waiting runs are not being worked on.
+        runDao.create(chat3.getId(), "user1", AiChatRunStatus.QUEUED, "n", null);
+        final AiChat chat4 = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        runDao.create(chat4.getId(), "user1", AiChatRunStatus.WAITING_FOR_USER, "n", null);
+        final AiChat otherUsersChat = aiDao.createChat(UserRef.builder().uuid("user2").build());
+        runDao.create(otherUsersChat.getId(), "user2", AiChatRunStatus.RUNNING, "n", null);
+
+        assertThat(runDao.countWorking("user1")).isEqualTo(2);
+        assertThat(runDao.countWorking("user2")).isEqualTo(1);
+        assertThat(runDao.countWorking("user3")).isZero();
+    }
+
+    @Test
     void testDeletingChatDeletesRuns() {
         runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "node1", null);
 
