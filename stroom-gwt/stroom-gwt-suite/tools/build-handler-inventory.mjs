@@ -223,6 +223,11 @@ for (const f of files) {
     // buttons this way, and the SvgPresets pattern above cannot see them.
     const inline = new RegExp(`${field}\\s*=\\s*[^;]*?new\\s+Preset\\s*\\(\\s*[A-Za-z0-9_.]+\\s*,\\s*"([^"]*)"`).exec(src);
     if (inline) return inline[1];
+    // `x = toolbar.button(SvgImage.DOWNLOAD, "Download Dictionary words", null)` and `.toggle(…)`:
+    // the keyboard Toolbar (2026-10-12) names a button by its second argument, which it sets as the
+    // title. Every icon button built since then is made this way.
+    const onToolbar = new RegExp(`${field}\\s*=\\s*[^;]*?\\.(?:button|toggle)\\s*\\(\\s*SvgImage\\s*\\.\\s*[A-Z0-9_]+\\s*,\\s*"([^"]*)"`).exec(src);
+    if (onToolbar) return onToolbar[1];
     // A view's @UiField: the ui.xml declares its title, text, or inner text.
     const fromXml = uiXml.get(name)?.get(field);
     if (fromXml) return fromXml;
@@ -250,7 +255,11 @@ for (const f of files) {
       // a handler on `getApplySelectionButton()`, declared on another presenter's view interface
       // and implemented in two ViewImpls. Accept a global ui.xml match only when every declaration
       // of that field agrees on the label — an ambiguous name stays unlabelled.
-      const global = uiFieldLabels.get(asField);
+      // Not for a receiver with a known SET of labels (a RefreshButton's, below): another view's
+      // `refreshButton` field is not this one. Since the keyboard Toolbar (2026-10-12) only the
+      // stepper's ui.xml declares one, so it became the unique global match and every
+      // `getRefreshButton()` in the application was named "Refresh Current Step".
+      const global = labelsOf(asField) ? null : uiFieldLabels.get(asField);
       if (global && global.size === 1) return [...global][0];
       if (new RegExp(`\\b${asField}\\b`).test(src) && asField !== field) {
         const asPreset = new RegExp(`${asField}\\s*=\\s*[^;]*?new\\s+Preset\\s*\\(\\s*[A-Za-z0-9_.]+\\s*,\\s*"([^"]*)"`).exec(src);
@@ -318,6 +327,13 @@ for (const f of files) {
     const chain = src.slice(Math.max(chainStart, m.index - 700), m.index + 400);
     const text = /\.text\(\s*"([^"]*)"\s*\)/.exec(chain)?.[1] ?? null;
     handlers.push({ class: name, classKind, kind: 'command', receiver: 'menu item', label: text, line: lineOf(src, m.index) });
+  }
+  // A keyboard Toolbar button's own click: `toolbar.button(SvgImage.X, "Name", () -> …)`, or a
+  // toggle's `onToggle`. The handler is the third argument rather than an `addClickHandler`, so
+  // without this the explorer's seven buttons left the inventory when they moved to the Toolbar
+  // (2026-10-12). A `null` third argument is a button whose handler is added the usual way.
+  for (const m of src.matchAll(/\.(button|toggle)\s*\(\s*SvgImage\s*\.\s*[A-Z0-9_]+\s*,\s*"([^"]+)"\s*,(?!\s*null\s*\))/g)) {
+    handlers.push({ class: name, classKind, kind: 'click', receiver: `toolbar ${m[1]}`, label: m[2], line: lineOf(src, m.index), via: 'Toolbar' });
   }
   // A dialog's OK / Cancel: `onHideRequest(e -> { if (e.isOk()) … })`.
   for (const m of src.matchAll(/\.onHideRequest\s*\(/g)) {
@@ -449,6 +465,9 @@ const statesOn = new Map();
 const menuClicked = new Map();
 /** every affordance label the walk clicked ANYWHERE, attributed or not. */
 const anyClicked = new Map();
+/** First / Backward / Forward / Last presses: the owners of the screen each was on, and whether it showed a grid. */
+const PAGING_LABELS = new Set(['First', 'Backward', 'Forward', 'Last']);
+const pagingPresses = new Map();
 /** presenter -> the FIELD LABELS the walk pressed Enter in, under it. */
 const enterOn = new Map();
 /** presenter -> the FIELD LABELS the walk TYPED INTO under it (the illegal-value driver). */
@@ -581,7 +600,10 @@ const cycleProved = new Set();
     for (const r of results) {
       const held = (re) => (r.phases ?? []).some((p) => p.ok && re.test(p.what));
       // The create, or for the edit-and-revert shape the change, is what drove the OK.
-      const made = held(/^create /) || held(/^change it to /);
+      // Or a phase the cycle names as the proof of a dialog (`provedBy`): a stream's Confirm Delete is
+      // neither a create nor a change, and is the OK the cycle is for.
+      const made = held(/^create /) || held(/^change it to /)
+        || Object.values(r.provedBy ?? {}).some((re) => held(new RegExp(re)));
       if (!made || !(r.writes ?? []).length) continue;
       for (const c of r.okPresenters ?? []) {
         // A document cycle drives NameDocumentPresenter only in its rename, which a feed's has not.
@@ -649,6 +671,10 @@ if (existsSync(CRAWLS)) {
       // clicked solely on an unattributed node was invisible to the label-only join, and 59
       // labelled widget and view handlers whose labels the walk HAD clicked stayed unexercised.
       rec(anyClicked, '*', a.label);
+      if (PAGING_LABELS.has(a.label)) {
+        pagingPresses.set(a.label, [...(pagingPresses.get(a.label) ?? []),
+          { owners: new Set(owners), grid: (node?.gridRows ?? []).some((n) => n > 0) }]);
+      }
       // An OK pressed in a dialog, under the dialog's caption. Its owners are the dialog node's AND
       // its opener's: a dialog shown by one class from another's screen (`QueryTableColumnsManager`
       // shows `RulesPresenter`'s Settings) is attributed to the dialog's presenter, not the opener.
@@ -808,9 +834,20 @@ const EXERCISABLE_NOW = new Set(['click', 'command', 'ok', 'cancel', 'hide', 'se
  *                the popup menu's `.menuItem-outer > .menuItem-text`; the application's menu is a
  *                popup, and this GWTP view is only ever built by injection. 4 handlers.
  */
-const NOT_IN_APP = new Map([['MenubarItem', 'no .menuItem > .background exists in the application (probe-mouse.mjs)']]);
+const NOT_IN_APP = new Map([['MenubarItem', 'no .menuItem > .background exists in the application (probe-mouse.mjs)'],
+  // NavButtons  no view, ui.xml or class uses it: its own two files are the only ones naming it
+  //             (2026-10-13). Its Backward and Forward had been credited by a press on the Pager or
+  //             the item navigator, which share the labels.
+  ['NavButtons', 'no view or ui.xml uses NavButtons']]);
 // `key` is deliberately NOT in that set: a key handler the Enter probe did not reach stays
 // `needs-key`, which is what B3 still owes. Joining one is `hit`'s business, not this list's.
+// The screens the data viewer's item navigator is on, the way any handler's owners are worked out.
+const navigatorOwners = (() => {
+  const owners = closureOf('ItemNavigatorViewImpl');
+  for (const o of [...owners]) { const p = partnerOf(o); if (p) for (const c of closureOf(p)) owners.add(c); }
+  for (const o of [...owners]) for (const parent of embeddedBy.get(o) ?? []) owners.add(parent);
+  return owners;
+})();
 for (const h of handlers) {
   const owners = closureOf(h.class);
   for (const o of [...owners]) { const p = partnerOf(o); if (p) for (const c of closureOf(p)) owners.add(c); }
@@ -843,7 +880,19 @@ for (const h of handlers) {
   let hit = null;
   // `Pager`'s range editor, driven as one gesture: its click, key and focus/blur handlers all ride on
   // it, so they join by the receiver the gesture reached rather than by a label or a node.
-  if (h.class === 'Pager' && ['click', 'key', 'dom'].includes(h.kind) && rangeProven.has(reduceReceiver(h.receiver))) {
+  if (h.kind === 'click' && PAGING_LABELS.has(h.label) && ['Pager', 'ItemNavigatorViewImpl'].includes(h.class)) {
+    // Paging buttons by SCREEN. A grid's Pager and the data viewer's item navigator both say First,
+    // Backward, Forward and Last, so a label cannot say which was pressed. The screen can: a press
+    // on a screen with a grid and no navigator is the Pager's, one on the navigator's screen with no
+    // grid is the navigator's, and one on a screen with both is nobody's, because either could
+    // have taken it.
+    const presses = pagingPresses.get(h.label) ?? [];
+    const onNavigator = (p) => [...p.owners].some((o) => navigatorOwners.has(o));
+    const proof = h.class === 'Pager'
+      ? presses.filter((p) => p.grid && !onNavigator(p))
+      : presses.filter((p) => !p.grid && onNavigator(p));
+    hit = proof.length ? { outcomes: new Set(['changed']), n: proof.length, join: 'screen' } : null;
+  } else if (h.class === 'Pager' && ['click', 'key', 'dom'].includes(h.kind) && rangeProven.has(reduceReceiver(h.receiver))) {
     hit = { outcomes: new Set(['changed']), n: 1, join: 'range' };
   } else if (h.class === 'Pager' && h.kind === 'click' && reduceReceiver(h.receiver) === 'refresh'
     && (h.labels ?? []).some((l) => everClicked.has(l))) {

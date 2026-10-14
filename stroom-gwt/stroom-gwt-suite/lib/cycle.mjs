@@ -35,7 +35,7 @@
 //     writes anything it did not declare fails on that alone.
 
 import { readTopDialogBody } from './alerts.mjs';
-import { setAce } from './fills.mjs';
+import { setAce, tab as toLinkTab } from './fills.mjs';
 
 // NOTE: a button's doubled text is undoubled browser-side, inside `clickButton`.
 
@@ -93,9 +93,15 @@ export async function clickButton(page, label) {
       return /^(\S+)( \1)+$/.test(s) ? s.split(' ')[0] : s; };
     const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
-    const el = [...scope.querySelectorAll('button, [role=button], .Button')].find((b) => b.offsetWidth > 0 && !b.disabled
+    const matches = [...scope.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0 && !b.disabled
       && !b.classList.contains('disabled')
+      // A toolbar button (ToolbarButton, 2026-10-12) disables with aria-disabled and stays focusable.
+      && b.getAttribute('aria-disabled') !== 'true'
       && (un(b.textContent) === wanted || n(b.getAttribute('title')) === wanted || n(b.getAttribute('aria-label')) === wanted));
+    // The screen's button before the explorer's: the explorer's New and Delete come first on the page
+    // and are enabled whenever something is selected in the tree, which an earlier cycle leaves so.
+    // Pressing its New opened the explorer's menu where Annotation Labels' New was meant.
+    const el = matches.find((b) => !b.closest('.navigation')) ?? matches[0];
     if (!el) return null;
     const r = el.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -421,6 +427,14 @@ export async function runCycle(page, spec, { guard, settle, log = () => {} }) {
       if (stale.length) throw new Error(`"${spec.seed}" is STILL there after the edit (${stale.length} row(s)) — the edit added a row instead of changing one`);
       return 'the edit survived a reload';
     });
+
+    // Anything more the spec does to the thing it made, while it exists: a volume group's volume is
+    // made and deleted inside the new group's own dialog. Each step compensates for itself.
+    // Not stopped by a failure: a step that undoes an earlier one must still run when that one failed
+    // half way, or the thing would be left holding what the step made.
+    for (const [what, fn] of spec.steps ?? []) {
+      await phase(what, () => fn({ page, settle, pick, has, name: (!spec.editToggle && spec.edited) || spec.seed }));
+    }
   } finally {
     // ── Compensation. Runs whatever happened above, and its failure is the finding. ──
     if (created) {
@@ -562,9 +576,16 @@ export async function runEditCycle(page, spec, { guard, settle, log = () => {} }
     await settle(400);
     // An opener can be several presses: Ask Stroom AI's config is its pane's Configure button, and the
     // pane opens from the top bar's Ask Stroom AI.
-    for (const opener of [spec.opener ?? 'Edit'].flat()) {
-      if (!(await clickButton(page, opener))) throw new Error(`"${opener}" would not take a click`);
-      await settle(1200);
+    // The pane STAYS open across the cycle's own steps, and pressing Ask Stroom AI again would close it,
+    // so when the last press is already on screen it is the only one made.
+    const openers = [spec.opener ?? 'Edit'].flat();
+    const last = openers[openers.length - 1];
+    if (openers.length > 1 && await clickButton(page, last)) await settle(1200);
+    else {
+      for (const opener of openers) {
+        if (!(await clickButton(page, opener))) throw new Error(`"${opener}" would not take a click`);
+        await settle(1200);
+      }
     }
     if (!(await dialogCaptions(page)).length) throw new Error('no dialog opened');
   };
@@ -706,7 +727,7 @@ export function morePages(page) {
     const un = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const btns = [...document.querySelectorAll('button, [role=button], .Button')].filter((b) => b.offsetWidth > 0);
     return btns.some((b) => /^(Forward|Next|Last)$/i.test(un(b.getAttribute('title')) || un(b.textContent))
-      && !b.disabled && !b.classList.contains('disabled'));
+      && !b.disabled && !b.classList.contains('disabled') && b.getAttribute('aria-disabled') !== 'true');
   }).catch(() => false);
 }
 
@@ -1099,6 +1120,14 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
   };
   const tabs = () => page.evaluate(() => [...document.querySelectorAll('.curveTab')]
     .filter((e) => e.offsetWidth > 0).map((e) => e.innerText.replace(/\s+/g, ' ').trim())).catch(() => []);
+  const closeTab = async (re) => {
+    const tab = page.locator('.curveTab').filter({ hasText: re }).first();
+    if (!(await tab.count())) return;
+    await tab.locator('.curveTab-close').first().click({ timeout: 5_000 });
+    await settle(800);
+    // A tab left open would be read again as it was, which proves nothing about the server.
+    if (await page.locator('.curveTab').filter({ hasText: re }).count()) throw new Error(`the tab ${re} would not close`);
+  };
   const toTab = async (re) => {
     const tab = page.locator('.curveTab').filter({ hasText: re }).first();
     await tab.click({ timeout: 5_000 });
@@ -1203,6 +1232,71 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       }
       return `"${row.AssignedTo}" after re-running the query`;
     });
+
+    // A comment, then Edit Comment on it. Both are history entries on an annotation the cycle deletes
+    // anyway, so they need no compensation of their own.
+    const comment = `${title} comment`;
+    const edited = `${comment} (edited)`;
+    /** The editor's history as text, read from a freshly opened editor so it is the server's. */
+    const history = async () => {
+      await closeTab(new RegExp(`#${id} `));
+      await runQuery(annotationsQuery);
+      await annotate('Edit Annotation');
+      await toTab(new RegExp(`#${id} `));
+      return page.locator('.annotationHistoryText').filter({ visible: true }).first().inputValue({ timeout: 5_000 });
+    };
+    if (spec.comment && await phase('add a comment', async () => {
+      if (!(await tabs()).some((t) => t.startsWith(`#${id} `))) {
+        await runQuery(annotationsQuery);
+        await annotate('Edit Annotation');
+      }
+      await toTab(new RegExp(`#${id} `));
+      if (!(await fillField(page, 'Add a comment', comment))) throw new Error('no "Add a comment" box in the editor');
+      // The ui.xml says "Create"; the presenter relabels it "Comment" (setButtonText).
+      if (!(await clickButton(page, 'Comment'))) throw new Error('no Comment button under the comment box');
+      await settle(1500);
+      const said = await alertText();
+      if (said) throw new Error(`the comment was refused: "${String(said).slice(0, 300)}"`);
+      if (!(await history()).includes(comment)) throw new Error(`"${comment}" is not in the history after reopening the editor`);
+      return `"${comment}" in the history after reopening the editor`;
+    })) {
+      await phase('change the comment (Edit Comment)', async () => {
+        // A MOUSEDOWN on the entry opens its Edit Entry / Delete Entry menu (showEntryEditMenu);
+        // COMMENT is entry type 4.
+        const box = await page.evaluate(() => {
+          const el = [...document.querySelectorAll('[entryType="4"]')].find((e) => e.offsetWidth > 0);
+          if (!el) return null;
+          el.scrollIntoView({ block: 'center' });
+          const r = el.getBoundingClientRect();
+          return { x: r.x + Math.min(r.width / 2, 60), y: r.y + Math.min(r.height / 2, 10) };
+        });
+        if (!box) throw new Error('no comment entry in the history');
+        await page.mouse.move(box.x, box.y);
+        await page.mouse.down();
+        await page.mouse.up();
+        await settle(600);
+        if (!(await clickMenuItem(page, 'Edit Entry'))) throw new Error('no "Edit Entry" in the entry\'s menu');
+        await settle(1200);
+        // The dialog's text is an Ace editor (CommentEditPresenter's editorPresenter), whose textarea
+        // is only Ace's input catcher; and the query's own Ace editor is on the page behind it.
+        const ace = (value) => page.evaluate((v) => {
+          const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+          const el = popups[popups.length - 1]?.querySelector('.ace_editor');
+          const ed = el && (window.ace?.edit ? window.ace.edit(el) : el.env?.editor);
+          if (!ed) return null;
+          if (v !== null) ed.setValue(v, -1);
+          return ed.getValue();
+        }, value);
+        const opened = await ace(null);
+        if (opened === null) throw new Error('no editor in "Edit Comment"');
+        if (opened !== comment) throw new Error(`"Edit Comment" opened on ${JSON.stringify(opened)}, not ${JSON.stringify(comment)}`);
+        await ace(edited);
+        await okAndCheck('Edit Comment');
+        const now = await history();
+        if (!now.includes(edited)) throw new Error(`"${edited}" is not in the history after reopening the editor`);
+        return `"${edited}" in the history after reopening the editor`;
+      });
+    }
   } finally {
     if (created) {
       const gone = await phase('delete it again (compensation)', async () => {
@@ -1237,5 +1331,373 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     rec.undeclared = (guard?.violations ?? []).map((v) => `${v.method} ${v.path}`);
     rec.ok = rec.phases.every((p) => p.ok) && !rec.leaked && !rec.undeclared.length;
   }
+  return rec;
+}
+
+/**
+ * A stream's status, round trip: Delete it from a feed's Data tab, then Restore it.
+ *
+ * Both go through `SelectionSummaryPresenter`'s OK ("Confirm Delete", "Confirm Restore"), which is
+ * the handler this proves, and Restore puts the stream back to Unlocked, a live stream's status. The
+ * Data tab's filter shows only Unlocked streams, so to find the deleted stream again the cycle
+ * disables the filter's "Status = Unlocked" term (the filter lives in the page, not on the server,
+ * and a reload puts it back).
+ *
+ * `spec`: `{ name, feed, row }`, `row` being text the stream's row holds. The feed should have one
+ * stream nothing else uses.
+ */
+export async function runStreamCycle(page, spec, { guard, settle, log = () => {} }) {
+  const { openDoc } = spec.helpers;
+  const rec = { name: spec.name, kind: 'stream', phases: [], leaked: false, writes: [], undeclared: [] };
+  const phase = async (what, fn) => {
+    const t = Date.now();
+    try {
+      const why = await fn();
+      rec.phases.push({ what, ok: true, why, ms: Date.now() - t });
+      log(`    ✓ ${what}${why ? ` — ${why}` : ''}`);
+      return true;
+    } catch (e) {
+      rec.phases.push({ what, ok: false, why: String(e?.message ?? e).slice(0, 1200), ms: Date.now() - t });
+      log(`    ✗ ${what} — ${String(e?.message ?? e).slice(0, 1000)}`);
+      return false;
+    }
+  };
+  /** A toolbar button OUTSIDE the explorer: its own Delete is first on the page, on the selected feed. */
+  const press = async (title) => {
+    const box = await page.evaluate((t) => {
+      const b = [...document.querySelectorAll('button')].find((e) => e.offsetWidth > 0 && e.title === t
+        && !e.closest('.navigation') && !e.disabled && e.getAttribute('aria-disabled') !== 'true');
+      if (!b) return null;
+      const r = b.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    }, title);
+    if (!box) throw new Error(`no enabled "${title}" button on the Data tab`);
+    await page.mouse.click(box.x, box.y);
+    await settle(1200);
+  };
+  const captions = () => dialogCaptions(page);
+  /** OK the dialog captioned `caption`, which must be the one on top. */
+  const okIn = async (caption) => {
+    const top = (await captions()).at(-1);
+    if (top !== caption) throw new Error(`expected "${caption}" on top, found [${(await captions()).join(', ')}]`);
+    if (!(await clickButton(page, 'OK'))) throw new Error(`no OK in "${caption}"`);
+    await settle(1500);
+  };
+  /** The info Alert the update ends with, read and closed: "Deleted 1 record". */
+  const said = async () => {
+    const top = (await captions()).at(-1);
+    if (!top) throw new Error('no dialog after the summary\'s OK: the update said nothing');
+    const text = (await readTopDialogBody(page))?.text ?? '';
+    await clickButton(page, 'OK');
+    await settle(1500);
+    return text;
+  };
+  const open = async () => {
+    await closeAnyDialogs(page, settle);
+    // Its tab, when it is still open (the explorer, filtered to it once already, may not show it again).
+    const tab = page.locator('.curveTab').filter({ hasText: spec.feed }).first();
+    if (await tab.count()) await tab.click({ timeout: 5_000 });
+    else await openDoc(spec.feed, 'Feed');
+    await settle(1000);
+    await toLinkTab(page, 'Data');
+    await settle(2500);
+  };
+  const shown = async () => (await readRows(page)).some((r) => r.includes(spec.row));
+  /** TICK the row: a stream grid's batch buttons follow its tick boxes, not the row selection. */
+  const tick = async () => {
+    const box = await page.evaluate((text) => {
+      const row = [...document.querySelectorAll('.dataGridWidget tbody tr, [role=grid] [role=row]')]
+        .find((r) => r.offsetWidth > 0 && r.textContent.includes(text) && !r.closest('.navigation'));
+      const t = row?.querySelector('.tickBox');
+      if (!t) return null;
+      t.scrollIntoView({ block: 'center' });
+      const r = t.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    }, spec.row);
+    if (!box) throw new Error(`no tick box on the row holding "${spec.row}"`);
+    await page.mouse.click(box.x, box.y);
+    await settle(600);
+  };
+
+  let deleted = false;
+  try {
+    if (!await phase(`open ${spec.feed}'s Data tab`, async () => {
+      await open();
+      const rows = await readRows(page);
+      if (!(await shown())) throw new Error(`no row holding "${spec.row}": [${rows.join(' / ')}]`);
+      return `${rows.length} row(s)`;
+    })) return rec;
+
+    const allowedBefore = (guard.allowed ?? []).length;
+    const done = await phase('delete the stream (Confirm Delete)', async () => {
+      await tick();
+      await press('Delete');
+      await okIn('Confirm');
+      await okIn('Confirm Delete');
+      const text = await said();
+      if (!/^Deleted 1 record$/.test(text)) throw new Error(`the update said "${text}", not "Deleted 1 record"`);
+      return `"${text}"`;
+    });
+    deleted = done || (guard.allowed ?? []).length > allowedBefore;
+    if (!done) return rec;
+
+    await phase('read it gone from the Unlocked list', async () => {
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: 60_000 });
+      await settle(2500);
+      await open();
+      if (await shown()) throw new Error(`the row holding "${spec.row}" is still listed after a reload`);
+      return 'not listed after a reload';
+    });
+  } finally {
+    if (deleted) {
+      const back = await phase('restore it (Confirm Restore, compensation)', async () => {
+        await open();
+        if (!(await clickButton(page, 'Filter'))) throw new Error('no Filter button');
+        await settle(1200);
+        const dlg = page.locator('.dialog-popup, .resizableDialog-popup').last();
+        await dlg.getByText('Status = Unlocked', { exact: true }).click({ timeout: 5_000 });
+        await settle(400);
+        if (!(await clickButton(page, 'Disable'))) throw new Error('no Disable for the Status term');
+        await settle(400);
+        await okIn('Filter Streams');
+        // "You are setting advanced filters! ..."
+        if ((await captions()).at(-1) === 'Confirm') await okIn('Confirm');
+        await settle(1500);
+        if (!(await shown())) throw new Error(`the deleted row holding "${spec.row}" is not listed with the Status term off`);
+        await tick();
+        await press('Restore');
+        await okIn('Confirm');
+        await okIn('Confirm Restore');
+        const text = await said();
+        if (!/^Restored 1 record$/.test(text)) throw new Error(`the update said "${text}", not "Restored 1 record"`);
+        return `"${text}"`;
+      });
+      const listed = back && await phase('read it back in the Unlocked list', async () => {
+        await page.reload({ waitUntil: 'domcontentloaded', timeout: 60_000 });
+        await settle(2500);
+        await open();
+        if (!(await shown())) throw new Error(`the row holding "${spec.row}" is not listed after the restore`);
+        return 'listed again after a reload';
+      });
+      if (!listed) {
+        rec.leaked = `${spec.name}: the ${spec.feed} stream may still be Deleted — restore it from its Data tab`;
+        log(`    ! LEAKED — ${rec.leaked}`);
+      }
+    }
+    await closeAnyDialogs(page, settle);
+    rec.writes = (guard?.allowed ?? []).map((w) => `${w.method} ${w.path}`);
+    rec.undeclared = (guard?.violations ?? []).map((v) => `${v.method} ${v.path}`);
+  }
+  rec.ok = rec.phases.every((p) => p.ok) && !rec.leaked && !rec.undeclared.length;
+  rec.verdict = rec.ok ? 'pass' : 'fail';
+  return rec;
+}
+
+/**
+ * Steps for a volume group cycle: add a volume to the group the cycle made, read it back from the
+ * group's reopened dialog, then delete it and read it gone. The group is new and no feed or index
+ * uses it, so Stroom writes nothing to the volume; `path` should be a scratch directory.
+ *
+ * `fields` are any other boxes the Add Volume dialog needs filled (an index volume's "Node").
+ */
+export function volumeSteps({ path, fields = {} }) {
+  /** The top dialog's grid rows as text. */
+  const dialogRows = (page) => page.evaluate(() => {
+    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const top = popups[popups.length - 1];
+    return top ? [...top.querySelectorAll('tbody tr, [role=row]')].filter((r) => r.offsetWidth > 0)
+      .map((r) => r.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean) : [];
+  });
+  const openGroup = async ({ page, settle, pick, name }) => {
+    await closeAnyDialogs(page, settle);
+    if (!(await pick(name))) throw new Error(`could not select "${name}"`);
+    await settle(400);
+    if (!(await clickButton(page, 'Edit'))) throw new Error('no Edit for the group');
+    await settle(1500);
+    if (!(await dialogCaptions(page)).length) throw new Error('the group\'s dialog did not open');
+  };
+  /** Cancel the group's dialog: what the volume buttons did is already on the server. */
+  const closeGroup = async (page, settle) => {
+    if (!(await clickButton(page, 'Cancel'))) throw new Error('no Cancel in the group\'s dialog');
+    await settle(1200);
+  };
+  const listed = async (ctx) => {
+    await openGroup(ctx);
+    const rows = await dialogRows(ctx.page);
+    await closeGroup(ctx.page, ctx.settle);
+    return rows.some((r) => r.includes(path));
+  };
+  return [
+    [`add a volume at the scratch path (Add Volume)`, async (ctx) => {
+      const { page, settle } = ctx;
+      await openGroup(ctx);
+      if (!(await clickButton(page, 'New'))) throw new Error('no New in the group\'s dialog');
+      await settle(1500);
+      const top = (await dialogCaptions(page)).at(-1);
+      if (top !== 'Add Volume') throw new Error(`expected "Add Volume", found [${(await dialogCaptions(page)).join(', ')}]`);
+      // `{ choose }` is a selection box (an index volume's Node), anything else is typed.
+      for (const [label, value] of Object.entries(fields)) {
+        if (value?.choose) await chooseInSelectionBox(page, label, value.choose, settle);
+        else if (!(await fillField(page, label, value))) throw new Error(`no "${label}" box in Add Volume`);
+      }
+      if (!(await fillField(page, 'Path', path))) throw new Error('no "Path" box in Add Volume');
+      if (!(await clickButton(page, 'OK'))) throw new Error('no OK in Add Volume');
+      await settle(2000);
+      // A path that does not exist yet is a warning to confirm, not an error.
+      if ((await dialogCaptions(page)).at(-1) === 'Confirm') {
+        const said = (await readTopDialogBody(page))?.text ?? '';
+        await clickButton(page, 'OK');
+        await settle(2000);
+        ctx.warned = said;
+      }
+      const now = await dialogCaptions(page);
+      if (now.includes('Add Volume') || now.some((c) => /alert/i.test(c))) {
+        const said = (await readTopDialogBody(page))?.text ?? '';
+        throw new Error(`Add Volume did not close: [${now.join(', ')}] ${said.slice(0, 300)}`);
+      }
+      await closeGroup(page, settle);
+      if (!(await listed(ctx))) throw new Error(`"${path}" is not in the group's volumes after reopening it`);
+      return `"${path}" in the group's volumes after reopening it`;
+    }],
+    [`delete the volume again (compensation)`, async (ctx) => {
+      const { page, settle } = ctx;
+      await openGroup(ctx);
+      const box = await page.evaluate((p) => {
+        const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+        const row = [...popups[popups.length - 1].querySelectorAll('tbody tr, [role=row]')]
+          .find((r) => r.offsetWidth > 0 && r.textContent.includes(p));
+        const cell = row && [...row.querySelectorAll('td, [role=gridcell]')].find((c) => c.textContent.trim());
+        if (!cell) return null;
+        const r = cell.getBoundingClientRect();
+        return { x: r.x + Math.min(r.width / 2, 40), y: r.y + r.height / 2 };
+      }, path);
+      if (!box) { await closeGroup(page, settle); return 'no volume at the scratch path to delete'; }
+      await page.mouse.click(box.x, box.y);
+      await settle(600);
+      if (!(await clickButton(page, 'Delete'))) throw new Error('no enabled Delete for the volume');
+      await settle(800);
+      // "Are you sure you want to delete the selected volume?"
+      if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the confirm');
+      await settle(1500);
+      await closeGroup(page, settle);
+      if (await listed(ctx)) throw new Error(`"${path}" is STILL in the group's volumes — the group cannot be deleted while it holds one`);
+      return 'gone after reopening the group';
+    }],
+  ];
+}
+
+/**
+ * A processor filter's Enabled, round trip, through Batch Change All Filtered Processors: Disable it
+ * from a pipeline's Processors tab, read it unticked after a reload, then Enable it and read it
+ * ticked again. `BatchProcessorFilterEditPresenter`'s OK is what this proves.
+ *
+ * `spec`: `{ name, pipeline }`, a pipeline with ONE enabled filter, so the batch is that filter
+ * alone and putting it back is exact.
+ */
+export async function runProcessorBatchCycle(page, spec, { guard, settle, log = () => {} }) {
+  const { openDoc } = spec.helpers;
+  const rec = { name: spec.name, kind: 'processor-batch', phases: [], leaked: false, writes: [], undeclared: [] };
+  const phase = async (what, fn) => {
+    const t = Date.now();
+    try {
+      const why = await fn();
+      rec.phases.push({ what, ok: true, why, ms: Date.now() - t });
+      log(`    ✓ ${what}${why ? ` — ${why}` : ''}`);
+      return true;
+    } catch (e) {
+      rec.phases.push({ what, ok: false, why: String(e?.message ?? e).slice(0, 1200), ms: Date.now() - t });
+      log(`    ✗ ${what} — ${String(e?.message ?? e).slice(0, 1000)}`);
+      return false;
+    }
+  };
+  const open = async () => {
+    await closeAnyDialogs(page, settle);
+    const tab = page.locator('.curveTab').filter({ hasText: spec.pipeline }).first();
+    if (await tab.count()) await tab.click({ timeout: 5_000 });
+    else await openDoc(spec.pipeline, 'Pipeline');
+    await settle(1000);
+    await toLinkTab(page, 'Processors');
+    await settle(2500);
+  };
+  /** The filter rows' Enabled: a filter row is the one with a Run As User; its tick box is the state. */
+  const enabled = () => page.evaluate(() => {
+    const g = [...document.querySelectorAll('.dataGridWidget')].find((e) => e.offsetWidth > 0);
+    if (!g) return null;
+    const heads = [...g.querySelectorAll('thead th')].map((t) => t.textContent.trim());
+    const at = (h) => heads.indexOf(h);
+    return [...g.querySelectorAll('tbody tr')].filter((r) => r.offsetWidth > 0)
+      .map((r) => [...r.querySelectorAll('td')])
+      .filter((tds) => tds[at('Run As User')]?.textContent.trim())
+      .map((tds) => tds[at('Enabled')]?.querySelector('.tickBox')?.classList.contains('tickBox-tick') ?? null);
+  });
+  /** Choose a change in the batch dialog and see it through its Confirm and its info Alert. */
+  const batch = async (change) => {
+    if (!(await clickButton(page, 'Batch Edit Current Processors'))) throw new Error('no "Batch Edit Current Processors" button');
+    await settle(2000);
+    if ((await dialogCaptions(page)).at(-1) !== 'Batch Change All Filtered Processors') {
+      throw new Error(`no batch dialog: [${(await dialogCaptions(page)).join(', ')}]`);
+    }
+    await chooseInSelectionBox(page, 'Change', change, settle);
+    if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the batch dialog');
+    await settle(1500);
+    const asked = (await readTopDialogBody(page))?.text ?? '';
+    // One filter must read as one. It read "change 2 processors" until #59: the count was the grid's
+    // row total, which holds the processor's row as well as its filter's.
+    if (!/^Are you sure you want to change this processor\?$/.test(asked)) {
+      throw new Error(`expected the Confirm for one filter, the dialog said "${asked}" — the batch is not one filter`);
+    }
+    if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the Confirm');
+    await settle(2000);
+    const said = (await readTopDialogBody(page))?.text ?? '';
+    if (said !== 'Successfully changed.') throw new Error(`the change said "${said}", not "Successfully changed."`);
+    await clickButton(page, 'OK');
+    await settle(1500);
+  };
+  const reread = async () => {
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 60_000 });
+    await settle(2500);
+    await open();
+    return enabled();
+  };
+
+  let changed = false;
+  try {
+    if (!await phase(`open ${spec.pipeline}'s Processors tab`, async () => {
+      await open();
+      const now = await enabled();
+      if (!now?.length) throw new Error('no processor filter row');
+      if (now.length !== 1) throw new Error(`${now.length} filter rows — the batch would change them all`);
+      if (now[0] !== true) throw new Error('its filter is not enabled, so disabling it proves nothing and enabling it after would change the instance');
+      return 'one filter, enabled';
+    })) return rec;
+
+    const before = (guard.allowed ?? []).length;
+    const done = await phase('change it to disabled (Batch Change All Filtered Processors)', async () => {
+      await batch('Disable');
+      const now = await reread();
+      if (now?.[0] !== false) throw new Error(`after a reload the filter reads ${JSON.stringify(now)}, not disabled`);
+      return 'disabled after a reload';
+    });
+    changed = done || (guard.allowed ?? []).length > before;
+  } finally {
+    if (changed) {
+      const back = await phase('put it back to enabled (compensation)', async () => {
+        await open();
+        await batch('Enable');
+        const now = await reread();
+        if (now?.[0] !== true) throw new Error(`after a reload the filter reads ${JSON.stringify(now)}, not enabled`);
+        return 'enabled after a reload';
+      });
+      if (!back) {
+        rec.leaked = `${spec.name}: ${spec.pipeline}'s processor filter may still be DISABLED — enable it from its Processors tab`;
+        log(`    ! LEAKED — ${rec.leaked}`);
+      }
+    }
+    await closeAnyDialogs(page, settle);
+    rec.writes = (guard?.allowed ?? []).map((w) => `${w.method} ${w.path}`);
+    rec.undeclared = (guard?.violations ?? []).map((v) => `${v.method} ${v.path}`);
+  }
+  rec.ok = rec.phases.every((p) => p.ok) && !rec.leaked && !rec.undeclared.length;
+  rec.verdict = rec.ok ? 'pass' : 'fail';
   return rec;
 }

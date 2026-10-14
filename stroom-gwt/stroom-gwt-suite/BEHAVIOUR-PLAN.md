@@ -942,3 +942,55 @@ for the three that went.
 
 Still `ok-blocked` (6): Ask Stroom AI's config (preferences), selection summary (stream delete or
 restore), data and index volume edit (a path on disk), export (next walk), Edit Comment.
+
+**Write cycles for the rest, and the toolbar merge, 2026-10-13:** `ok-blocked 6 -> 1` (Export, which
+the next walk settles); 43 cycles, all passing, none leaked; `handlers 824/1546`.
+
+* New cycles. Ask Stroom AI's config is an edit cycle whose opener is two presses (Ask Stroom AI,
+  Configure), on History Summary Prompt; it writes the user's preferences. Edit Comment joined the
+  annotation cycle: a comment, then Edit Entry on it (its text is an Ace editor in the dialog, so
+  it is read and set through Ace), each read back from a reopened editor. `runStreamCycle` deletes
+  COUNT_V3's one stream from its Data tab (Confirm Delete is `SelectionSummaryPresenter`) and
+  restores it, finding the deleted stream by disabling the filter's Status term. The volume group
+  cycles add a volume at a scratch path (`VOLUME_SCRATCH`) inside the group they made, read it back
+  and delete it (`volumeSteps`); the group is new, so nothing is written to the volume.
+  `runProcessorBatchCycle` disables RAW_STREAMING_FORK-EVENTS's one filter through Batch Change and
+  enables it again.
+* Found: Batch Change's Confirm counts the Processors grid's rows, processors and filters together,
+  while `bulkChange` changes only filters, so one filter asks to change "2 processors" (#59). Fixed
+  the same day with a server count (`bulkChange/count`, the same lookup as the change); the cycle
+  now passes only on "change this processor".
+* The merge of `Group adjacent icon buttons into keyboard toolbars` (c4b3e53fbd). The running
+  client was compiled before it and the CSS after, so every icon drew at 1792px and the Main Menu
+  could not be pressed; `gwtCompile` and a restart. Then the suite: a `ToolbarButton` disables with
+  `aria-disabled` and stays focusable, which `clickButton`, `morePages`, the dirty driver's Save,
+  the pager check and the walker's button reads did not know; `morePages` saw a disabled Forward
+  as a next page and refused two cycles as unfindable. And the explorer's New, now enabled when
+  something is selected, is first on the page: `clickButton` takes the screen's button before the
+  explorer's, after the four annotation tag cycles opened the explorer's menu.
+* The inventory after the merge: the Toolbar names a button by `toolbar.button(SvgImage.X, "Name",
+  …)`, which the miner now reads; a button whose click is that third argument is mined as a click
+  handler (the explorer's seven had left the inventory); and `getRefreshButton()` keeps
+  RefreshButton's label set rather than the stepper's `refreshButton`, which became the only global
+  ui.xml match. Pager's and NavButtons' Backward / Forward (4) stay unjoined: ItemNavigator now has
+  the same labels, and three classes are too many to join on a label.
+* `provedBy` phases now count as a cycle's proof on their own (Confirm Delete is not a create).
+  Annotation tags, like annotations, are soft deleted: the 30 `zz-cycle` tags in the table are all
+  `deleted`.
+
+**Before r14, 2026-10-13 (the user's choices):**
+
+* #59 fixed with a server count: `POST /processorFilter/v1/bulkChange/count` (`getBulkChangeCount`,
+  logged as a view) counts with the same lookup `bulkChange` uses, and the dialog confirms with it
+  (`TestProcessorFilterResourceImpl`, 4 tests; swagger regenerated). Seen live: one filter now asks
+  to "change this processor", and the batch cycle accepts only that.
+* Vintage rule `a spinner is checked for cover again just before its gesture` (since
+  `6a386799c3`, where `spinnerCovered` landed): r10's four `spinner 2` captures on the Processors
+  tab and under Batch Edit now read stale, and r13 (walked at that commit) is judged as it stands.
+* Paging buttons are joined by SCREEN. The Pager and the data viewer's item navigator both say
+  First / Backward / Forward / Last: a press on a screen with a grid and no navigator is the
+  Pager's (4 now `screen`), one on the navigator's screen with no grid is the navigator's, and one
+  on a screen with both is nobody's. Every navigator press so far was on a screen with a grid too
+  (Data, stepping), so its four are unproven until a walk records which control took the press;
+  its First and Last had been credited by the label alone. `NavButtons` is `absent`: nothing uses
+  it, and its two had been credited by the Pager's presses.
