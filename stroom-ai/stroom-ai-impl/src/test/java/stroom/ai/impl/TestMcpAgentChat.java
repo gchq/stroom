@@ -43,6 +43,7 @@ import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ class TestMcpAgentChat {
     private final ToolConsent toolConsent = Mockito.mock(ToolConsent.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
-            Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog);
+            Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService));
 
     {
         // Tool calls run unless a test says otherwise.
@@ -193,6 +194,79 @@ class TestMcpAgentChat {
         assertThat(model.requests).singleElement()
                 .satisfies(request -> assertThat(request.toolSpecifications()).isNullOrEmpty());
         Mockito.verify(client, Mockito.never()).listTools();
+    }
+
+    @Test
+    void reasoningIsStoredWithItsDurationAheadOfToolCalls() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder()
+                        .content(List.of(new TextContent("42 errors")))
+                        .isError(false)
+                        .build());
+        final McpToolset toolset = toolset(client, searchTool());
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.builder()
+                        .thinking("I should search first.")
+                        .toolExecutionRequests(List.of(ToolExecutionRequest.builder()
+                                .id("1")
+                                .name("test__search")
+                                .arguments("{}")
+                                .build()))
+                        .build(),
+                AiMessage.from("There were 42 errors today."));
+
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        final InOrder inOrder = Mockito.inOrder(aiService);
+        final ArgumentCaptor<String> thinking = ArgumentCaptor.forClass(String.class);
+        inOrder.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.THINKING), thinking.capture());
+        inOrder.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.TOOL_CALL),
+                Mockito.anyString());
+        final ThinkingRecord record = JsonUtil.readValue(thinking.getValue(), ThinkingRecord.class);
+        assertThat(record.text()).isEqualTo("I should search first.");
+        assertThat(record.durationMs()).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    void reasoningIsNotStoredWhenTurnedOffForTheModel() {
+        final OpenAIModelDoc modelDoc = OpenAIModelDoc.builder()
+                .uuid("u")
+                .name("m")
+                .toolsEnabled(false)
+                .showReasoning(false)
+                .build();
+        final StubToolCallingModel model = new StubToolCallingModel(AiMessage.builder()
+                .text("an answer")
+                .thinking("private thoughts")
+                .build());
+
+        agentChat.chat(model, modelDoc, 1, messages, toolset(Mockito.mock(McpSyncClient.class), searchTool()), 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.eq(AiMessageType.THINKING),
+                Mockito.anyString());
+    }
+
+    @Test
+    void aStreamingModelIsUsedWhenThereIsOne() {
+        final OpenAIModelDoc modelDoc = OpenAIModelDoc.builder().uuid("u").name("m").toolsEnabled(false).build();
+        Mockito.when(aiService.getStreamingChatModel(modelDoc))
+                .thenReturn(new StubStreamingChatModel(new StubToolCallingModel(AiMessage.builder()
+                        .text("a streamed answer")
+                        .thinking("streamed thoughts")
+                        .build())));
+        final StubToolCallingModel notUsed = new StubToolCallingModel(AiMessage.from("not streamed"));
+
+        final ChatResponse response = agentChat.chat(notUsed, modelDoc, 1, messages,
+                toolset(Mockito.mock(McpSyncClient.class), searchTool()), 99, new AtomicBoolean(false), taskContext,
+                1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(response.aiMessage().text()).isEqualTo("a streamed answer");
+        assertThat(notUsed.requests).isEmpty();
+        Mockito.verify(aiService).storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.THINKING),
+                Mockito.contains("streamed thoughts"));
     }
 
     @Test

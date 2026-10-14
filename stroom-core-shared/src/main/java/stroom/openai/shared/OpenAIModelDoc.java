@@ -57,7 +57,8 @@ import java.util.Objects;
         "httpClientConfiguration",
         "mcpToolServers",
         "toolsEnabled",
-        "maxToolDefinitions"
+        "maxToolDefinitions",
+        "showReasoning"
 })
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelDoc extends AbstractDoc {
@@ -91,6 +92,8 @@ public class OpenAIModelDoc extends AbstractDoc {
     private final boolean toolsEnabled;
     @JsonProperty
     private final int maxToolDefinitions;
+    @JsonProperty
+    private final boolean showReasoning;
 
     @JsonCreator
     public OpenAIModelDoc(
@@ -111,7 +114,8 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration,
             @JsonProperty("mcpToolServers") final List<McpToolServerConfig> mcpToolServers,
             @JsonProperty("toolsEnabled") final Boolean toolsEnabled,
-            @JsonProperty("maxToolDefinitions") final Integer maxToolDefinitions) {
+            @JsonProperty("maxToolDefinitions") final Integer maxToolDefinitions,
+            @JsonProperty("showReasoning") final Boolean showReasoning) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.baseUrl = baseUrl;
@@ -126,6 +130,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.mcpToolServers = mcpToolServers;
         this.toolsEnabled = Objects.requireNonNullElse(toolsEnabled, true);
         this.maxToolDefinitions = Math.max(0, Objects.requireNonNullElse(maxToolDefinitions, 0));
+        this.showReasoning = Objects.requireNonNullElse(showReasoning, true);
     }
 
     /**
@@ -190,6 +195,14 @@ public class OpenAIModelDoc extends AbstractDoc {
         return maxToolDefinitions;
     }
 
+    /**
+     * @return Whether the model's reasoning, if it returns any, is shown to users (collapsed, under the answer's
+     * activity). On by default.
+     */
+    public boolean isShowReasoning() {
+        return showReasoning;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -209,7 +222,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                Objects.equals(httpClientConfiguration, that.httpClientConfiguration) &&
                Objects.equals(getMcpToolServers(), that.getMcpToolServers()) &&
                toolsEnabled == that.toolsEnabled &&
-               maxToolDefinitions == that.maxToolDefinitions;
+               maxToolDefinitions == that.maxToolDefinitions &&
+               showReasoning == that.showReasoning;
     }
 
     @Override
@@ -225,7 +239,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                 httpClientConfiguration,
                 getMcpToolServers(),
                 toolsEnabled,
-                maxToolDefinitions);
+                maxToolDefinitions,
+                showReasoning);
     }
 
     @Override
@@ -241,6 +256,7 @@ public class OpenAIModelDoc extends AbstractDoc {
                ", mcpToolServers=" + mcpToolServers +
                ", toolsEnabled=" + toolsEnabled +
                ", maxToolDefinitions=" + maxToolDefinitions +
+               ", showReasoning=" + showReasoning +
                '}';
     }
 
@@ -265,6 +281,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         private List<McpToolServerConfig> mcpToolServers;
         private boolean toolsEnabled = true;
         private int maxToolDefinitions;
+        private boolean showReasoning = true;
 
         private Builder() {
         }
@@ -282,6 +299,7 @@ public class OpenAIModelDoc extends AbstractDoc {
             this.mcpToolServers = openAIModelDoc.mcpToolServers;
             this.toolsEnabled = openAIModelDoc.toolsEnabled;
             this.maxToolDefinitions = openAIModelDoc.maxToolDefinitions;
+            this.showReasoning = openAIModelDoc.showReasoning;
         }
 
         public Builder description(final String description) {
@@ -339,6 +357,11 @@ public class OpenAIModelDoc extends AbstractDoc {
             return self();
         }
 
+        public Builder showReasoning(final boolean showReasoning) {
+            this.showReasoning = showReasoning;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -363,7 +386,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                     httpClientConfiguration,
                     mcpToolServers,
                     toolsEnabled,
-                    maxToolDefinitions);
+                    maxToolDefinitions,
+                    showReasoning);
         }
     }
 }

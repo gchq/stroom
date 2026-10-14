@@ -123,6 +123,11 @@ public class MockAiService implements AiService {
     }
 
     @Override
+    public dev.langchain4j.model.chat.StreamingChatModel getStreamingChatModel(final OpenAIModelDoc modelDoc) {
+        return aiService.getStreamingChatModel(modelDoc);
+    }
+
+    @Override
     public synchronized EmbeddingModel getEmbeddingModel(final OpenAIModelDoc modelDoc) {
         final EmbeddingModel innerProxy = aiService.getEmbeddingModel(modelDoc);
         return new EmbeddingModel() {
@@ -225,6 +230,11 @@ public class MockAiService implements AiService {
     @Override
     public void deleteWorkingMessages(final int chatId) {
         aiService.deleteWorkingMessages(chatId);
+    }
+
+    @Override
+    public List<AiChatMessage> getStreamingMessages(final int chatId) {
+        return aiService.getStreamingMessages(chatId);
     }
 
     @Override

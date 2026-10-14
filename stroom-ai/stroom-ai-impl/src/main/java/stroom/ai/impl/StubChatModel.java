@@ -16,8 +16,10 @@
 
 package stroom.ai.impl;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -25,6 +27,8 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A ChatModel implementation that returns deterministic, structured responses
@@ -35,6 +39,13 @@ import java.util.List;
  * <p>
  * Simulates realistic latency so that progress messages, WORKING updates,
  * and attachment download status transitions are visible in the UI during testing.
+ * <p>
+ * For testing the agent loop and the UI, a question can also include directives:
+ * <ul>
+ *     <li>{@code [[think]]} - the answer comes with some reasoning.</li>
+ *     <li>{@code [[tool:NAME {json arguments}]]} - the model calls the tool first (once per question), then
+ *         answers with the start of the tool's result.</li>
+ * </ul>
  * <p>
  * Detects three call patterns:
  * <ul>
@@ -70,6 +81,11 @@ class StubChatModel implements ChatModel {
      * but high enough that a trimmed conversation will succeed.
      */
     private static final int STUB_CONTEXT_OVERFLOW_THRESHOLD = 50_000;
+
+    private static final String THINK_DIRECTIVE = "[[think]]";
+    private static final Pattern TOOL_DIRECTIVE = Pattern.compile("\\[\\[tool:([A-Za-z0-9_.-]+)\\s*(\\{.*?})?]]",
+            Pattern.DOTALL);
+    private static final int RESULT_PREVIEW_CHARS = 200;
 
     @Override
     public ChatResponse doChat(final ChatRequest chatRequest) {
@@ -142,6 +158,11 @@ class StubChatModel implements ChatModel {
 
         sleep(UNIFIED_LATENCY_MS);
 
+        final ChatResponse directed = followDirectives(chatRequest.messages(), lastUserText);
+        if (directed != null) {
+            return directed;
+        }
+
         if (attachmentNames.isEmpty()) {
             // Pure conversation — no attachments.
             return buildStubResponse("[Stub Response]\n\n"
@@ -206,6 +227,56 @@ class StubChatModel implements ChatModel {
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    /**
+     * Follows any {@code [[think]]} and {@code [[tool:...]]} directives in the question.
+     *
+     * @return The response, or null if the question has no directives.
+     */
+    private ChatResponse followDirectives(final List<ChatMessage> messages, final String question) {
+        final boolean think = question.contains(THINK_DIRECTIVE);
+        final List<ToolExecutionRequest> requests = new ArrayList<>();
+        final Matcher matcher = TOOL_DIRECTIVE.matcher(question);
+        while (matcher.find()) {
+            requests.add(ToolExecutionRequest.builder()
+                    .id("stub-call-" + (requests.size() + 1))
+                    .name(matcher.group(1))
+                    .arguments(matcher.group(2) != null
+                            ? matcher.group(2)
+                            : "{}")
+                    .build());
+        }
+        if (!think && requests.isEmpty()) {
+            return null;
+        }
+        final ChatMessage last = messages.getLast();
+        final String thinking = think
+                ? "**Planning the answer**\n\nThe question was: " + truncate(question, 100) + "\n\n"
+                  + "I will answer it directly, as this is the stub model."
+                : null;
+        if (!requests.isEmpty() && !(last instanceof ToolExecutionResultMessage)) {
+            return ChatResponse.builder()
+                    .aiMessage(AiMessage.builder()
+                            .text("Calling the tool" + (requests.size() == 1
+                                    ? ""
+                                    : "s") + " first.")
+                            .thinking(thinking)
+                            .toolExecutionRequests(requests)
+                            .build())
+                    .build();
+        }
+        final StringBuilder answer = new StringBuilder("[Stub Response]\n\nYou asked: ")
+                .append(truncate(question, 150));
+        if (last instanceof final ToolExecutionResultMessage result) {
+            answer.append("\n\nThe tool said: ").append(truncate(result.text(), RESULT_PREVIEW_CHARS));
+        }
+        return ChatResponse.builder()
+                .aiMessage(AiMessage.builder()
+                        .text(answer.toString())
+                        .thinking(thinking)
+                        .build())
+                .build();
     }
 
     private ChatResponse buildStubResponse(final String text) {
