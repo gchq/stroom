@@ -18,6 +18,7 @@ package stroom.planb.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
+import stroom.cache.api.StroomCache;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentActionHandler;
@@ -52,8 +53,16 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
     private static final Logger LOGGER = LoggerFactory.getLogger(PlanBDocCacheImpl.class);
 
     private static final String CACHE_NAME = "Plan B State Doc Cache";
+    private static final String BY_UUID_CACHE_NAME = "Plan B State Doc Cache (by uuid)";
 
     private final LoadingStroomCache<String, PlanBDocument> cache;
+    /**
+     * The same documents, held under the one thing that is certainly theirs. {@link #cache} is keyed
+     * on a document's name because that is all its callers have — a map name out of a pipeline — and
+     * two documents of different types may share one. Anything that already knows which document it
+     * means asks here instead.
+     */
+    private final StroomCache<String, PlanBDocument> byUuid;
     private final SecurityContext securityContext;
     private final DocFinder docFinder;
     private final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider;
@@ -71,6 +80,9 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
                 CACHE_NAME,
                 () -> stateConfigProvider.get().getStateDocCache(),
                 this::create);
+        byUuid = cacheManager.create(
+                BY_UUID_CACHE_NAME,
+                () -> stateConfigProvider.get().getStateDocCache());
         this.docFinder = docFinder;
         this.documentActionHandlersProvider = documentActionHandlersProvider;
         this.planBDocumentTypes = planBDocumentTypes;
@@ -129,12 +141,12 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
                 if (handler instanceof final ImportExportActionHandler ieHandler) {
                     for (final DocRef docRef : ieHandler.listDocuments()) {
                         try {
-                            // Loaded from the DocRef rather than taken from the cache, which is keyed
-                            // on the document's name alone: two documents of different types can
-                            // share a name, and the one cached first would stand in for the other
-                            // here. Nothing is saved by caching anyway — this runs once a cycle and
-                            // every document is wanted.
-                            final PlanBDocument doc = loadFromDocRef(docRef);
+                            // Held by uuid, so a document is only read from the store when it is new
+                            // or has changed. Not by name: two documents of different types can share
+                            // one, and the first cached would then stand in for the other here. The
+                            // DocRef says which document is wanted, so nothing has to be searched for.
+                            final PlanBDocument doc =
+                                    byUuid.get(docRef.getUuid(), uuid -> loadFromDocRef(docRef));
                             if (doc != null) {
                                 results.add(doc);
                             }
@@ -165,13 +177,9 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
     }
 
     @Override
-    public void remove(final String key) {
-        cache.invalidate(key);
-    }
-
-    @Override
     public void clear() {
         cache.clear();
+        byUuid.clear();
     }
 
     @Override
@@ -188,17 +196,23 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
 
         switch (eventAction) {
             case UPDATE, DELETE -> {
+                // Held under one uuid whatever it is called, and a rename does not change it.
+                if (eventDocRef.getUuid() != null) {
+                    LOGGER.debug("Removing cache entry for uuid '{}'", eventDocRef.getUuid());
+                    byUuid.invalidate(eventDocRef.getUuid());
+                }
+
                 // Evict only the specific document that changed.
                 // Fall back to clearing all if the name is not available in the event.
-                final String name = event.getDocRef().getName();
+                final String name = eventDocRef.getName();
                 if (name != null) {
                     LOGGER.debug("Removing cache entry for '{}'", name);
-                    remove(name);
+                    cache.invalidate(name);
                     // Also evict the old name on a rename so stale entries don't linger.
                     final DocRef oldDocRef = event.getOldDocRef();
                     if (oldDocRef != null && !Objects.equals(oldDocRef.getName(), name)) {
                         LOGGER.debug("Removing old cache entry for '{}'", oldDocRef.getName());
-                        remove(oldDocRef.getName());
+                        cache.invalidate(oldDocRef.getName());
                     }
                 } else {
                     LOGGER.debug("Clearing cache (no name in event)");

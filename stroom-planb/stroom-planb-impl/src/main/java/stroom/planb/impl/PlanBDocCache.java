@@ -34,6 +34,4 @@ public interface PlanBDocCache {
      *                                   {@code null}.
      */
     PlanBDocument get(String name);
-
-    void remove(String name);
 }
