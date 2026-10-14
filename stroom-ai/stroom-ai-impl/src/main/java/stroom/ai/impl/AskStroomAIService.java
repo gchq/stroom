@@ -146,7 +146,6 @@ public class AskStroomAIService {
                               final Provider<TableAnalysisConfig> tableAnalysisConfigProvider,
                               final TaskContextFactory taskContextFactory,
                               final TableSummariserImpl tableSummariser,
-                              final TaskContextFactory taskContextFactory,
                               final McpToolServerFactory mcpToolServerFactory,
                               final McpAgentChat mcpAgentChat) {
         this.aiService = aiService;
