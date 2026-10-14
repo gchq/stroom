@@ -108,14 +108,41 @@
     cursor: pointer;
 }
 
+/* A tick box choosing whether to change a field, then the field, taking the rest of the row */
+.batchExecutionScheduleEdit-row {
+    display: flex;
+    align-items: center;
+}
+
+.batchExecutionScheduleEdit-row > .SimpleTickBox {
+    flex: 0 0 50px;
+}
+
+/* Not spaced from the tick box above it, as a form group following another is */
+.batchExecutionScheduleEdit-row > .form-group:not(:first-child) {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-top: 0;
+}
+
+/* The task's details, taking the width, then its terminate button */
 .userTaskView-layout {
     position: relative;
     width: 100%;
+    display: flex;
+    border-bottom: 1px solid grey;
 }
 
-.userTaskView-layout tr > td {
-	padding: 5px 8px;
-	border-bottom: 1px solid grey;
+.userTaskView-details {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 5px 8px;
+}
+
+.userTaskView-terminateCell {
+    flex: 0 0 auto;
+    align-self: center;
+    padding: 5px 8px;
 }
 
 .userTaskView-layout .gwt-Label {
@@ -2133,8 +2160,13 @@ button.main-menu svg {
     height: 100px;
     width: 100px;
 }
-/* Padding in details table */
-.contentstore-details .contentstore-details-table th, .contentstore-details .contentstore-details-table td {
+/* The details: each name, then its value beside it */
+.contentstore-details .contentstore-details-list {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+}
+.contentstore-details .contentstore-details-list > * {
     padding: 5px;
 }
 /* Overall width of details table */

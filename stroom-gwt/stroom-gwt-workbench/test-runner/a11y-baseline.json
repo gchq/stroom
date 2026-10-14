@@ -219,6 +219,9 @@
   "app-main-annotationeditor--annotation-read-only": [
     "label"
   ],
+  "app-main-annotationeditor--comment-buttons-tab-order": [
+    "label"
+  ],
   "app-main-annotationeditor--editor": [
     "label"
   ],
@@ -317,6 +320,9 @@
     "button-name"
   ],
   "app-main-appshell--main-menu": [
+    "button-name"
+  ],
+  "app-main-appshell--main-toolbar-tab-order": [
     "button-name"
   ],
   "app-main-appshell--move-document": [

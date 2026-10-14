@@ -170,11 +170,12 @@
     min-height: 300px;
 }
 
+/* At the right, in the order they are shown (and the Tab key reaches them) */
 .annotationButtons {
     padding: var(--control__gap--vertical) 0;
     display: flex;
     gap: var(--control__gap--horizontal);
-    flex-direction: row-reverse;
+    justify-content: flex-end;
 }
 
 .annotationAssignYourself {

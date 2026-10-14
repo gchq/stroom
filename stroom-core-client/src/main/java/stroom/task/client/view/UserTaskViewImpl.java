@@ -29,7 +29,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -38,8 +37,6 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> implements UserTaskView {
 
     private final Widget widget;
-    @UiField
-    HorizontalPanel layout;
     @UiField
     Label taskName;
     @UiField
@@ -54,8 +51,6 @@ public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> imp
     @Inject
     public UserTaskViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        layout.setCellWidth(terminate, "18px");
-        layout.setCellVerticalAlignment(terminate, HorizontalPanel.ALIGN_MIDDLE);
         SvgImageUtil.setSvgAsInnerHtml(terminate, SvgImage.STOP);
     }
 
