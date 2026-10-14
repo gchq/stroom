@@ -476,7 +476,9 @@ class AuthenticationServiceImpl implements AuthenticationService {
         final AuthStateImpl authState = getAuthState(request);
         final String userId = authState != null ? authState.getSubject() : null;
         // Invalidate the whole session so the app-user identity the security filter authenticates from is
-        // cleared too, not only the IdP auth state.
+        // cleared too, not only the IdP auth state. Marked first, so that anything told the session has ended
+        // knows it was a sign out, not an expiry.
+        SessionUtil.markExplicitLogout(httpSession);
         httpSession.invalidate();
         return userId;
     }

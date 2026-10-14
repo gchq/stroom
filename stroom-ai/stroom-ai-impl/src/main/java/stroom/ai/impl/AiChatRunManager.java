@@ -21,7 +21,10 @@ import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.node.api.NodeInfo;
+import stroom.security.api.HasSessionId;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserService;
+import stroom.security.shared.User;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
@@ -31,11 +34,16 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +52,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 /// Starts and keeps track of "Ask Stroom AI" agent runs. A run answers one question in a chat. It is recorded in
@@ -51,9 +60,17 @@ import java.util.function.Consumer;
 /// straight away and the answer carries on being worked out if the user refreshes the page or closes the tab.
 /// The client follows its progress by polling.
 ///
-/// While a run is being worked on, this node updates its heartbeat every [#HEARTBEAT_INTERVAL]. The same tick
-/// passes on stop requests made through the database (so a stop works whichever node receives it), and marks as
-/// interrupted any run, on any node, whose heartbeat is older than [#STALE_AFTER], as its node must have stopped.
+/// While a run is being worked on, this node updates its heartbeat every [#HEARTBEAT_INTERVAL]. The same tick:
+///
+/// - passes on stop requests made through the database, so a stop works whichever node receives it;
+/// - marks as interrupted any run, on any node, whose heartbeat is older than [#STALE_AFTER], as its node must have
+///   stopped;
+/// - stops runs that have reached the time limit, or whose user's account has been disabled or deleted;
+/// - marks runs as unattended when no browser has checked on any of the user's chats for a while, so that they may
+///   only use read-only tools.
+///
+/// Runs are also stopped when the session that started them ends: with reason [AiChatRunStopReason#SIGN_OUT] if the
+/// user signed out, or [AiChatRunStopReason#SESSION_EXPIRED] if it expired. Either way they can be resumed.
 @Singleton
 public class AiChatRunManager {
 
@@ -63,9 +80,12 @@ public class AiChatRunManager {
     static final Duration HEARTBEAT_INTERVAL = Duration.ofSeconds(10);
     static final Duration STALE_AFTER = Duration.ofSeconds(60);
 
-    /// The statuses a run can be stopped from.
-    private static final Set<AiChatRunStatus> STOPPABLE = EnumSet.of(
-            AiChatRunStatus.QUEUED, AiChatRunStatus.RUNNING, AiChatRunStatus.WAITING_FOR_USER);
+    /// How often a browser checking on a chat is recorded, at most.
+    static final Duration PRESENCE_RECORD_INTERVAL = Duration.ofSeconds(30);
+
+    /// The statuses of runs that are not being worked on by a thread, so stop straight away.
+    private static final Set<AiChatRunStatus> STOPPABLE_AT_ONCE = EnumSet.of(
+            AiChatRunStatus.QUEUED, AiChatRunStatus.WAITING_FOR_USER);
 
     /// The statuses a run can be resumed from.
     private static final Set<AiChatRunStatus> RESUMABLE = EnumSet.of(
@@ -81,6 +101,9 @@ public class AiChatRunManager {
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
     private final AiService aiService;
+    private final AiDao aiDao;
+    private final UserService userService;
+    private final Provider<AiConfig> aiConfigProvider;
 
     /// The runs being worked on by this node, by chat id.
     private final Map<Integer, LocalRun> localRuns = new ConcurrentHashMap<>();
@@ -92,13 +115,19 @@ public class AiChatRunManager {
                      final ExecutorProvider executorProvider,
                      final NodeInfo nodeInfo,
                      final SecurityContext securityContext,
-                     final AiService aiService) {
+                     final AiService aiService,
+                     final AiDao aiDao,
+                     final UserService userService,
+                     final Provider<AiConfig> aiConfigProvider) {
         this.runDao = runDao;
         this.taskContextFactory = taskContextFactory;
         this.executorProvider = executorProvider;
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
         this.aiService = aiService;
+        this.aiDao = aiDao;
+        this.userService = userService;
+        this.aiConfigProvider = aiConfigProvider;
     }
 
     /// Starts a run in a chat, unless the chat already has one.
@@ -111,16 +140,23 @@ public class AiChatRunManager {
     /// @throws AiChatBusyException If the chat already has an active run.
     public AiChatRun start(final int chatId, final Consumer<AiChatRun> work) {
         final String userUuid = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
+        final String sessionIdHash = sessionIdHash(securityContext.getUserIdentity() instanceof
+                final HasSessionId hasSessionId
+                ? hasSessionId.getSessionId()
+                : null);
         final AiChatRun run = runDao.createIfNoneActive(
-                        chatId, userUuid, AiChatRunStatus.RUNNING, nodeInfo.getThisNodeName(), null)
+                        chatId, userUuid, AiChatRunStatus.RUNNING, nodeInfo.getThisNodeName(), sessionIdHash)
                 .orElseThrow(() -> new AiChatBusyException(chatId));
         LOGGER.debug(() -> "Started run " + run.getId() + " for chat " + chatId);
-        localRuns.put(chatId, new LocalRun(run.getId(), new AtomicBoolean(false)));
+        // The user is here, as they have just asked a question.
+        aiDao.recordPoll(chatId, 0);
+        localRuns.put(chatId, new LocalRun(run.getId(), userUuid, System.currentTimeMillis(),
+                new AtomicBoolean(false), new AtomicBoolean(false)));
         ensureHeartbeat();
 
         final Runnable task = taskContextFactory.context(TASK_NAME, taskContext -> {
             taskContext.info(() -> "Chat " + chatId + ", run " + run.getId());
-            execute(run, work);
+            execute(run, work, taskContext::isTerminated);
         });
         try {
             executorProvider.get().execute(task);
@@ -133,10 +169,19 @@ public class AiChatRunManager {
     }
 
     /// Runs the work and records how the run ended. Package-private for testing.
-    void execute(final AiChatRun run, final Consumer<AiChatRun> work) {
+    ///
+    /// @param run        The run.
+    /// @param work       The work.
+    /// @param terminated Whether the run's task has been terminated, e.g. because its session ended. The work
+    ///                   may return normally when that happens.
+    void execute(final AiChatRun run, final Consumer<AiChatRun> work, final BooleanSupplier terminated) {
         try {
             work.accept(run);
-            finish(run);
+            if (terminated.getAsBoolean()) {
+                stopped(run, AiChatRunStopReason.TERMINATED);
+            } else {
+                finish(run);
+            }
         } catch (final TaskTerminatedException e) {
             LOGGER.debug(() -> "Run " + run.getId() + " was terminated");
             stopped(run, AiChatRunStopReason.TERMINATED);
@@ -173,16 +218,72 @@ public class AiChatRunManager {
     /// @param reason Why it is being stopped.
     /// @return True if there was a run to stop.
     public boolean stop(final int chatId, final AiChatRunStopReason reason) {
-        final AiChatRun run = runDao.getActive(chatId).orElse(null);
-        if (run == null) {
-            return false;
+        return runDao.getActive(chatId)
+                .map(run -> stopRun(run, reason))
+                .orElse(false);
+    }
+
+    private boolean stopRun(final AiChatRun run, final AiChatRunStopReason reason) {
+        final boolean stopped;
+        if (run.getStatus() == AiChatRunStatus.RUNNING) {
+            // Being worked on, so ask it to stop at its next safe point.
+            stopped = runDao.compareAndSetStatus(
+                    run.getId(), List.of(AiChatRunStatus.RUNNING), AiChatRunStatus.STOPPING, reason, null);
+        } else {
+            // Nothing is working on it, so it can stop now.
+            stopped = runDao.compareAndSetStatus(
+                    run.getId(), STOPPABLE_AT_ONCE, AiChatRunStatus.STOPPED, reason, null);
         }
-        final boolean stopping = runDao.compareAndSetStatus(
-                run.getId(), STOPPABLE, AiChatRunStatus.STOPPING, reason, null);
         // If it is running on this node, tell it now rather than at the next heartbeat.
-        NullSafe.consume(localRuns.get(chatId), LocalRun::requestStop);
-        LOGGER.debug(() -> "Stop requested for run " + run.getId() + " of chat " + chatId + ": " + stopping);
-        return stopping;
+        NullSafe.consume(localRuns.get(run.getChatId()), LocalRun::requestStop);
+        LOGGER.debug(() -> "Stop requested for run " + run.getId() + " of chat " + run.getChatId()
+                           + " (" + reason + "): " + stopped);
+        return stopped;
+    }
+
+    /// Stops the runs started from an HTTP session that has ended.
+    ///
+    /// @param sessionId The session's id.
+    /// @param reason    Why it ended: [AiChatRunStopReason#SIGN_OUT] or [AiChatRunStopReason#SESSION_EXPIRED].
+    public void stopForSession(final String sessionId, final AiChatRunStopReason reason) {
+        final String hash = sessionIdHash(sessionId);
+        if (hash == null) {
+            return;
+        }
+        runDao.getActiveBySession(hash).forEach(run -> stopRun(run, reason));
+        // The session's tasks may already have been terminated, before this was told the session had ended.
+        runDao.correctStopReason(hash, AiChatRunStopReason.TERMINATED, reason,
+                System.currentTimeMillis() - STALE_AFTER.toMillis());
+    }
+
+    /// @param chatId The chat.
+    /// @return True if the chat's run on this node is unattended, i.e. its user has gone, so it may only use
+    /// read-only tools.
+    public boolean isUnattended(final int chatId) {
+        final LocalRun localRun = localRuns.get(chatId);
+        return localRun != null && localRun.unattended().get();
+    }
+
+    /// Records that a browser is checking on a chat, i.e. its user is still there.
+    ///
+    /// @param chatId The chat.
+    public void recordPresence(final int chatId) {
+        aiDao.recordPoll(chatId, PRESENCE_RECORD_INTERVAL.toMillis());
+    }
+
+    /// @param sessionId An HTTP session id, or null.
+    /// @return A hash of the id, as stored with runs (the id itself is not stored), or null if there is no id.
+    static String sessionIdHash(final String sessionId) {
+        if (sessionId == null) {
+            return null;
+        }
+        try {
+            final byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(sessionId.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /// @param chatId The chat.
@@ -221,6 +322,7 @@ public class AiChatRunManager {
                     localRun.requestStop();
                 }
             });
+            runs.forEach(this::checkLimits);
 
             for (final AiChatRun interrupted : runDao.interruptStale(
                     System.currentTimeMillis() - STALE_AFTER.toMillis())) {
@@ -232,6 +334,47 @@ public class AiChatRunManager {
         } catch (final RuntimeException e) {
             LOGGER.error("Error updating Ask Stroom AI run heartbeats", e);
         }
+    }
+
+    /// Stops a run that has reached the time limit or whose user can no longer use Stroom, and marks whether it is
+    /// unattended.
+    private void checkLimits(final int chatId, final LocalRun localRun) {
+        final AiConfig aiConfig = aiConfigProvider.get();
+        final long now = System.currentTimeMillis();
+        final AiChatRun run = runDao.get(localRun.runId()).orElse(null);
+        if (run == null || run.getStatus() != AiChatRunStatus.RUNNING) {
+            return;
+        }
+
+        if (now - localRun.startTimeMs() > aiConfig.getMaxRunDuration().toMillis()) {
+            LOGGER.info(() -> "Run " + localRun.runId() + " of chat " + chatId + " has reached the time limit");
+            stopRun(run, AiChatRunStopReason.RUN_LIMIT);
+            return;
+        }
+
+        if (!isUserAllowed(localRun.userUuid())) {
+            LOGGER.info(() -> "Stopping run " + localRun.runId() + " of chat " + chatId
+                              + " as its user is disabled or deleted");
+            stopRun(run, AiChatRunStopReason.ACCOUNT_DISABLED);
+            return;
+        }
+
+        final Long lastPollMs = aiDao.getLastPollMs(localRun.userUuid());
+        final boolean unattended = lastPollMs == null
+                                   || now - lastPollMs > aiConfig.getUnattendedAfter().toMillis();
+        if (localRun.unattended().getAndSet(unattended) != unattended) {
+            LOGGER.debug(() -> "Run " + localRun.runId() + " of chat " + chatId + " unattended: " + unattended);
+            runDao.setUnattended(localRun.runId(), unattended);
+        }
+    }
+
+    private boolean isUserAllowed(final String userUuid) {
+        if (userUuid == null) {
+            return true;
+        }
+        return securityContext.asProcessingUserResult(() -> userService.loadByUuid(userUuid)
+                .map(User::isEnabled)
+                .orElse(false));
     }
 
     private void ensureHeartbeat() {
@@ -254,8 +397,15 @@ public class AiChatRunManager {
     /// A run being worked on by this node.
     ///
     /// @param runId         The run's id.
+    /// @param userUuid      The user it runs as.
+    /// @param startTimeMs   When it started.
     /// @param stopRequested Set when the run is asked to stop.
-    private record LocalRun(int runId, AtomicBoolean stopRequested) {
+    /// @param unattended    Set while the user has gone.
+    private record LocalRun(int runId,
+                            String userUuid,
+                            long startTimeMs,
+                            AtomicBoolean stopRequested,
+                            AtomicBoolean unattended) {
 
         void requestStop() {
             stopRequested.set(true);

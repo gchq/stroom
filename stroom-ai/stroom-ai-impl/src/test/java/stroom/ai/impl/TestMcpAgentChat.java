@@ -50,7 +50,8 @@ class TestMcpAgentChat {
     private final AiService aiService = Mockito.mock(AiService.class);
     private final TaskContext taskContext = Mockito.mock(TaskContext.class);
     private final BuiltInTools builtInTools = Mockito.mock(BuiltInTools.class);
-    private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools);
+    private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
+    private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager);
 
     {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of());
@@ -186,6 +187,60 @@ class TestMcpAgentChat {
         // 0 means no limit.
         McpAgentChat.limitTools(tools, 0, 1);
         assertThat(tools).hasSize(3);
+    }
+
+    @Test
+    void unattendedRunDoesNotRunToolsThatCouldChangeSomething() {
+        Mockito.when(runManager.isUnattended(7)).thenReturn(true);
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        final McpToolset toolset = toolset(client, searchTool());
+
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("test__search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("done"));
+        final StringBuilder debugLog = new StringBuilder();
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1, debugLog);
+
+        // The server is not trusted, so the tool is not known to be read-only, and is not run.
+        Mockito.verify(client, Mockito.never()).callTool(Mockito.any());
+        assertThat(debugLog.toString()).contains("the user is away");
+    }
+
+    @Test
+    void unattendedRunStillRunsReadOnlyTools() {
+        Mockito.when(runManager.isUnattended(7)).thenReturn(true);
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("42 errors"))).build());
+        final Tool readOnlyTool = Tool.builder()
+                .name("search")
+                .inputSchema(Map.of("type", "object"))
+                .annotations(new io.modelcontextprotocol.spec.McpSchema.ToolAnnotations(
+                        null, true, false, true, false, null))
+                .build();
+        Mockito.when(client.listTools()).thenReturn(new ListToolsResult(List.of(readOnlyTool), null));
+        final stroom.openai.shared.McpToolServerConfig trusted = stroom.openai.shared.McpToolServerConfig.builder()
+                .name("test")
+                .trusted(true)
+                .build();
+        final McpToolset toolset = new McpToolset(
+                List.of(new McpServerConnection("test", trusted, client, null)), List.of(), true);
+
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("test__search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("done"));
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder());
+
+        Mockito.verify(client).callTool(Mockito.any());
     }
 
     private static Tool searchTool() {

@@ -85,5 +85,19 @@ public interface AiDao {
     Optional<AiChatAttachment> getAttachment(int attachmentId);
 
     List<AiChatAttachment> getAttachmentsByChatId(int chatId);
-}
 
+    /**
+     * Records that a browser has just checked on the chat. To save writes, the time is only stored when the last
+     * one stored is older than the given interval.
+     *
+     * @param chatId        The chat.
+     * @param minIntervalMs Only store the time if the stored one is older than this.
+     */
+    void recordPoll(int chatId, long minIntervalMs);
+
+    /**
+     * @param userUuid A user.
+     * @return When a browser last checked on any of the user's chats, or null if never.
+     */
+    Long getLastPollMs(String userUuid);
+}

@@ -28,11 +28,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
+    static final StroomDuration DEFAULT_MAX_RUN_DURATION = StroomDuration.ofHours(2);
+    static final StroomDuration DEFAULT_UNATTENDED_AFTER = StroomDuration.ofMinutes(10);
+
     private final AiDbConfig dbConfig;
     private final CacheConfig chatResponseCache;
+    private final StroomDuration maxRunDuration;
+    private final StroomDuration unattendedAfter;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -40,14 +47,20 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 .maximumSize(1000L)
                 .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
+        maxRunDuration = DEFAULT_MAX_RUN_DURATION;
+        unattendedAfter = DEFAULT_UNATTENDED_AFTER;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public AiConfig(@JsonProperty("db") final AiDbConfig dbConfig,
-                    @JsonProperty("chatResponseCache") final CacheConfig chatResponseCache) {
+                    @JsonProperty("chatResponseCache") final CacheConfig chatResponseCache,
+                    @JsonProperty("maxRunDuration") final StroomDuration maxRunDuration,
+                    @JsonProperty("unattendedAfter") final StroomDuration unattendedAfter) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
+        this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
+        this.unattendedAfter = Objects.requireNonNullElse(unattendedAfter, DEFAULT_UNATTENDED_AFTER);
     }
 
     @Override
@@ -65,11 +78,28 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         return chatResponseCache;
     }
 
+    @JsonPropertyDescription("The longest an 'Ask Stroom AI' agent run may take to answer a question. A run " +
+                             "that reaches the limit is stopped, and the user can resume it.")
+    @JsonProperty("maxRunDuration")
+    public StroomDuration getMaxRunDuration() {
+        return maxRunDuration;
+    }
+
+    @JsonPropertyDescription("How long after the user's browser last checked on any of their 'Ask Stroom AI' " +
+                             "chats an agent run is treated as unattended. An unattended run may only use " +
+                             "read-only tools; anything that could change something waits for the user.")
+    @JsonProperty("unattendedAfter")
+    public StroomDuration getUnattendedAfter() {
+        return unattendedAfter;
+    }
+
     @Override
     public String toString() {
         return "AiConfig{" +
                "dbConfig=" + dbConfig +
                ", chatResponseCache=" + chatResponseCache +
+               ", maxRunDuration=" + maxRunDuration +
+               ", unattendedAfter=" + unattendedAfter +
                '}';
     }
 }

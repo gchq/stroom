@@ -39,6 +39,8 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    maxRunDuration: "PT2H"
+    unattendedAfter: "PT10M"
   analytics:
     db:
       connection:

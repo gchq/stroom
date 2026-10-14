@@ -254,6 +254,43 @@ public class AiChatRunDaoImpl implements AiChatRunDao {
     }
 
     @Override
+    public List<AiChatRun> getActiveBySession(final String sessionIdHash) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT_RUN)
+                        .where(AI_CHAT_RUN.SESSION_ID_HASH.eq(sessionIdHash))
+                        .and(AI_CHAT_RUN.STATUS.in(ACTIVE_STATUSES))
+                        .fetch())
+                .map(RECORD_TO_RUN::apply);
+    }
+
+    @Override
+    public void correctStopReason(final String sessionIdHash,
+                                  final AiChatRunStopReason from,
+                                  final AiChatRunStopReason to,
+                                  final long endedAfterMs) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT_RUN)
+                .set(AI_CHAT_RUN.STOP_REASON, to.getPrimitiveValue())
+                .set(AI_CHAT_RUN.UPDATE_TIME_MS, System.currentTimeMillis())
+                .where(AI_CHAT_RUN.SESSION_ID_HASH.eq(sessionIdHash))
+                .and(AI_CHAT_RUN.STATUS.eq(AiChatRunStatus.STOPPED.getPrimitiveValue()))
+                .and(AI_CHAT_RUN.STOP_REASON.eq(from.getPrimitiveValue()))
+                .and(AI_CHAT_RUN.END_TIME_MS.gt(endedAfterMs))
+                .execute());
+    }
+
+    @Override
+    public void setUnattended(final int runId, final boolean unattended) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT_RUN)
+                .set(AI_CHAT_RUN.UNATTENDED, unattended)
+                .set(AI_CHAT_RUN.UPDATE_TIME_MS, System.currentTimeMillis())
+                .where(AI_CHAT_RUN.ID.eq(runId))
+                .execute());
+    }
+
+    @Override
     public void deleteByChat(final int chatId) {
         JooqUtil.context(aiDbConnProvider, context -> context
                 .deleteFrom(AI_CHAT_RUN)
