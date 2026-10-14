@@ -174,7 +174,7 @@ class TestAiRetention {
     void testNoChatRetention() {
         retention = new AiRetention(aiDao, memoryDao, workspaceDao, runDao, workspaceStore, fileStore,
                 Mockito.mock(McpClientCache.class),
-                () -> new AiConfig(null, null, null, null, null, null, null, null, StroomDuration.ZERO),
+                () -> new AiConfig(null, null, null, null, null, null, null, null, StroomDuration.ZERO, null),
                 userService, securityContext);
         aiDao.createChat(UserRef.builder().uuid("user1").build());
 

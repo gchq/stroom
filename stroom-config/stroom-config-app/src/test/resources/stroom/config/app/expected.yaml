@@ -49,6 +49,13 @@ appConfig:
     maxRunsPerNode: 20
     maxRunsPerUser: 3
     unattendedAfter: "PT10M"
+    workspace:
+      maxCharsPerRead: 20000
+      maxChatBytes: 104857600
+      maxFileBytes: 20971520
+      maxLinesPerRead: 500
+      maxUserBytes: 524288000
+      toolTimeLimit: "PT30S"
     workspaceFileRetention: "P7D"
   analytics:
     db:
