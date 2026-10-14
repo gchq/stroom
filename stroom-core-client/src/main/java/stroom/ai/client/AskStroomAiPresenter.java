@@ -151,6 +151,8 @@ public class AskStroomAiPresenter
     private static final String COPY_TEXT_ATTRIBUTE = "data-copy-text";
     private static final String DAY_DIVIDER_CLASS = "ai-day-divider";
     private static final String PENDING_MESSAGE_ID = "pending";
+    private static final String LIVE_ANSWER_ID = "ai-live-answer";
+    private static final int STREAMING_POLL_MS = 500;
     private static final int BOTTOM_TOLERANCE_PX = 40;
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
@@ -188,6 +190,8 @@ public class AskStroomAiPresenter
     private boolean pollAgain;
     // The rendered messages, by id, e.g. to edit a question or redraw an answered card.
     private final Map<Integer, AiChatMessage> renderedMessages = new HashMap<>();
+    // Each turn's reasoning and tool calls, grouped above its answer.
+    private final AiActivityGroups activityGroups = new AiActivityGroups();
     // The day of the last message added, for day dividers.
     private String lastRenderedDay;
     // True while the conversation is scrolled to the bottom, so new messages scroll into view.
@@ -1013,6 +1017,8 @@ public class AskStroomAiPresenter
             }
             child = next;
         }
+        activityGroups.removeFrom(fromMessageId, keepFirst);
+        removeLiveAnswer();
         // Don't leave a day divider with nothing after it.
         Element last = markdownContainer.getLastChild() != null
                 ? markdownContainer.getLastChild().cast()
@@ -1156,6 +1162,9 @@ public class AskStroomAiPresenter
             // Show what the server is currently doing, and take the line away when it is done.
             updateWorkingMessage(response.getWorkingMessage());
 
+            // Show the answer and reasoning as the model writes them.
+            final boolean streaming = updateStreaming(response.getStreamingMessages(), response.isComplete());
+
             // Keep polling while this client is waiting on a request, while the chat's agent run is
             // still active or data is still coming down (the server reports both as not complete), or
             // while messages are still arriving.
@@ -1172,9 +1181,11 @@ public class AskStroomAiPresenter
                     public void run() {
                         pollForNewMessages();
                     }
-                }.schedule(isLooking()
-                        ? ACTIVE_POLL_MS
-                        : HIDDEN_POLL_MS);
+                }.schedule(!isLooking()
+                        ? HIDDEN_POLL_MS
+                        : streaming
+                                ? STREAMING_POLL_MS
+                                : ACTIVE_POLL_MS);
             } else {
                 polling = false;
                 getView().setSendButtonLoadingState(false);
@@ -1233,6 +1244,24 @@ public class AskStroomAiPresenter
         decorateCodeBlocks(messageElement);
 
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        if (AiActivityGroups.isActivity(msg.getMessageType())) {
+            final Element existingEntry = activityGroups.findEntry(messageId);
+            if (existingEntry != null) {
+                existingEntry.getParentElement().replaceChild(messageElement, existingEntry);
+            } else {
+                final AiChatMessage question = renderedMessages.get(msg.getTurnId());
+                activityGroups.add(markdownContainer, msg, messageElement, question != null
+                        ? question.getCreateTimeMs()
+                        : 0);
+                keepProgressLast(markdownContainer);
+            }
+            return;
+        }
+        if (msg.getMessageType() == AiMessageType.AI_RESPONSE || msg.getMessageType() == AiMessageType.ERROR) {
+            // The answer is here, so the turn's work is done.
+            activityGroups.finish(msg.getTurnId(), msg.getCreateTimeMs());
+            removeLiveAnswer();
+        }
         Element existing = findMessageElement(markdownContainer, messageId);
         if (existing == null && (msg.getMessageType() == AiMessageType.USER_MESSAGE
                                  || msg.getMessageType() == AiMessageType.STEER_MESSAGE)) {
@@ -1337,6 +1366,7 @@ public class AskStroomAiPresenter
     private void clearRenderedMessages() {
         getView().clearMessages();
         renderedMessages.clear();
+        activityGroups.clear();
         lastRenderedDay = null;
         followBottom = true;
         getView().setJumpToLatestVisible(false);
@@ -1410,7 +1440,7 @@ public class AskStroomAiPresenter
                 break;
             case TOOL_CALL:
                 appendDetailsElement(hb, "ai-message ai-message--tool",
-                        SvgImage.CODE, "Called " + AiToolMessages.getString(msg.getMessage(), "tool"),
+                        SvgImage.CODE, AiToolMessages.toolHeading(msg.getMessage()),
                         AiToolMessages.callMarkdown(msg.getMessage()), timeMs, nowMs);
                 break;
             case TOOL_RESULT:
@@ -1447,7 +1477,8 @@ public class AskStroomAiPresenter
                 break;
             case THINKING:
                 appendDetailsElement(hb, "ai-message ai-message--thinking",
-                        SvgImage.AI, "Thinking", msg.getMessage(), timeMs, nowMs);
+                        SvgImage.AI, AiToolMessages.thinkingTitle(msg.getMessage()),
+                        AiToolMessages.thinkingBody(msg.getMessage()), timeMs, nowMs);
                 break;
             case DASHBOARD_DATA:
             case QUERY_DATA:
@@ -1626,7 +1657,7 @@ public class AskStroomAiPresenter
         hb.elem(details -> {
             details.elem(summary -> {
                 button(summary, icon, iconButtonClassName("ai-message-summary-icon"));
-                summary.append(summaryText);
+                summary.span(title -> title.append(summaryText), Attribute.className("ai-entry-title"));
             }, SUMMARY, Attribute.className("ai-message-header"));
 
             // Add markdown message.
@@ -1707,6 +1738,92 @@ public class AskStroomAiPresenter
                 timestamp(footer, timeMs, nowMs), Attribute.className("ai-message-footer"));
         }, DETAILS, Attribute.className("ai-message ai-message--working"),
             new Attribute("id", WORKING_MESSAGE_ID));
+    }
+
+    /**
+     * Shows the answer and reasoning the model is writing now. The answer shows as an answer in progress at the
+     * end of the conversation, and stays until the stored answer replaces it, as text the model writes alongside
+     * tool calls is worth seeing while they run. Reasoning shows in the turn's activity group.
+     *
+     * @param streaming The STREAMING_ANSWER and STREAMING_THINKING messages, or null.
+     * @param complete  True if nothing more is coming.
+     * @return True if anything is being streamed.
+     */
+    private boolean updateStreaming(final List<AiChatMessage> streaming, final boolean complete) {
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        boolean thinking = false;
+        boolean any = false;
+        if (streaming != null) {
+            for (final AiChatMessage msg : streaming) {
+                any = true;
+                final SafeHtml html = markdownConverter.convertUntrustedMarkdownToHtml(msg.getMessage());
+                if (msg.getMessageType() == AiMessageType.STREAMING_THINKING) {
+                    thinking = true;
+                    final AiChatMessage question = renderedMessages.get(msg.getTurnId());
+                    activityGroups.showLiveThinking(markdownContainer, msg, html, question != null
+                            ? question.getCreateTimeMs()
+                            : 0);
+                } else if (msg.getMessageType() == AiMessageType.STREAMING_ANSWER) {
+                    showLiveAnswer(markdownContainer, html);
+                }
+            }
+        }
+        if (!thinking) {
+            activityGroups.removeLiveThinking();
+        }
+        if (complete) {
+            removeLiveAnswer();
+            activityGroups.finishAll();
+        }
+        keepProgressLast(markdownContainer);
+        if (any) {
+            scrollToBottom();
+        }
+        return any;
+    }
+
+    private void showLiveAnswer(final Element markdownContainer, final SafeHtml html) {
+        Element live = Document.get().getElementById(LIVE_ANSWER_ID);
+        if (live == null) {
+            final HtmlBuilder hb = new HtmlBuilder();
+            hb.div(wrapper -> {
+                wrapper.div(avatar -> {
+                    icon(avatar, SvgImage.AI);
+                    avatar.append("Stroom AI");
+                }, Attribute.className("ai-message-avatar"));
+                wrapper.div(content -> {
+                }, Attribute.className("ai-message-content"));
+            }, Attribute.className("ai-message ai-message--assistant ai-message--streaming"),
+                    new Attribute("id", LIVE_ANSWER_ID));
+            live = parseHtml(hb).getFirstChildElement();
+            markdownContainer.appendChild(live);
+        }
+        final Element content = ElementUtil.findChild(live, "ai-message-content");
+        if (content != null) {
+            content.setInnerHTML(html.asString());
+        }
+        keepProgressLast(markdownContainer);
+    }
+
+    /**
+     * Keeps the line saying what is being done, then the answer being written, at the end of the conversation, as
+     * messages arrive above them.
+     */
+    private static void keepProgressLast(final Element markdownContainer) {
+        for (final String id : new String[]{WORKING_MESSAGE_ID, LIVE_ANSWER_ID}) {
+            final Element element = Document.get().getElementById(id);
+            if (element != null && element.getParentElement() == markdownContainer
+                && element != markdownContainer.getLastChild()) {
+                markdownContainer.appendChild(element);
+            }
+        }
+    }
+
+    private static void removeLiveAnswer() {
+        final Element live = Document.get().getElementById(LIVE_ANSWER_ID);
+        if (live != null) {
+            live.removeFromParent();
+        }
     }
 
     /**
@@ -1853,7 +1970,8 @@ public class AskStroomAiPresenter
                     if (e.isOk()) {
                         final DownloadChatHistoryRequest request = new DownloadChatHistoryRequest(
                                 currentChat.getId(),
-                                dlPresenter.isIncludeDataContexts());
+                                dlPresenter.isIncludeDataContexts(),
+                                dlPresenter.isIncludeActivity());
                         askStroomAiClient.downloadChatHistory(request,
                                 result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result),
                                 error -> showError(error, "Failed to download chat history", null),

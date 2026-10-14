@@ -67,7 +67,17 @@ public enum AiMessageType implements HasPrimitiveValue {
      * Something the agent wants to do that needs the user's approval first, as JSON (see {@code MemoryChange}
      * for a memory change). Shown to the user as a card to accept or reject.
      */
-    APPROVAL_REQUEST(17);
+    APPROVAL_REQUEST(17),
+    /**
+     * The answer so far, while the model is still writing it. Updated in place, and removed once the answer is
+     * stored as an {@link #AI_RESPONSE}. Never sent to the model.
+     */
+    STREAMING_ANSWER(18),
+    /**
+     * The model's reasoning so far, while it is still thinking. Updated in place, and removed once the reasoning
+     * is stored as a {@link #THINKING} message. Never sent to the model.
+     */
+    STREAMING_THINKING(19);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());

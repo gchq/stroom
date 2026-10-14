@@ -46,6 +46,10 @@
                         helpText="Whether 'Ask Stroom AI' may offer this model tools (built-in and MCP). Turn off for models that do not support tool calling, e.g. some small local models.">
             <tickbox:CustomCheckBox ui:field="toolsEnabled" label="Tools enabled"/>
         </form:FormGroup>
+        <form:FormGroup identity="openAIShowReasoning"
+                        helpText="Whether users see the model's reasoning, when it returns any. It is shown collapsed, with the tools used to answer a question.">
+            <tickbox:CustomCheckBox ui:field="showReasoning" label="Show reasoning"/>
+        </form:FormGroup>
         <form:FormGroup identity="openAIMaxToolDefinitions"
                         label="Maximum tools per request"
                         helpText="The most tool definitions to offer the model in one request. Tools past the limit are left out, built-in tools first. Set to zero for no limit.">

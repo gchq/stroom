@@ -61,6 +61,8 @@ public class OpenAIModelSettingsViewImpl
     @UiField
     CustomCheckBox toolsEnabled;
     @UiField
+    CustomCheckBox showReasoning;
+    @UiField
     ValueSpinner maxToolDefinitions;
 
     @Inject
@@ -147,6 +149,16 @@ public class OpenAIModelSettingsViewImpl
     }
 
     @Override
+    public boolean isShowReasoning() {
+        return showReasoning.getValue();
+    }
+
+    @Override
+    public void setShowReasoning(final boolean showReasoning) {
+        this.showReasoning.setValue(showReasoning);
+    }
+
+    @Override
     public int getMaxToolDefinitions() {
         return maxToolDefinitions.getIntValue();
     }
@@ -165,6 +177,7 @@ public class OpenAIModelSettingsViewImpl
         reasoningEffort.setEnabled(!readOnly);
         embeddingModelDimensions.setEnabled(!readOnly);
         toolsEnabled.setEnabled(!readOnly);
+        showReasoning.setEnabled(!readOnly);
         maxToolDefinitions.setEnabled(!readOnly);
     }
 
@@ -206,6 +219,11 @@ public class OpenAIModelSettingsViewImpl
 
     @UiHandler("toolsEnabled")
     public void onToolsEnabledValueChange(final ValueChangeEvent<Boolean> event) {
+        fireChange();
+    }
+
+    @UiHandler("showReasoning")
+    public void onShowReasoningValueChange(final ValueChangeEvent<Boolean> event) {
         fireChange();
     }
 

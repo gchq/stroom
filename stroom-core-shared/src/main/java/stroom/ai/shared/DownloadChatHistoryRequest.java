@@ -32,12 +32,16 @@ public class DownloadChatHistoryRequest {
     private final int chatId;
     @JsonProperty
     private final boolean includeDataContexts;
+    @JsonProperty
+    private final boolean includeActivity;
 
     @JsonCreator
     public DownloadChatHistoryRequest(@JsonProperty("chatId") final Integer chatId,
-                                      @JsonProperty("includeDataContexts") final Boolean includeDataContexts) {
+                                      @JsonProperty("includeDataContexts") final Boolean includeDataContexts,
+                                      @JsonProperty("includeActivity") final Boolean includeActivity) {
         this.chatId = Objects.requireNonNullElse(chatId, 0);
         this.includeDataContexts = Objects.requireNonNullElse(includeDataContexts, false);
+        this.includeActivity = Objects.requireNonNullElse(includeActivity, false);
     }
 
     public int getChatId() {
@@ -50,5 +54,12 @@ public class DownloadChatHistoryRequest {
      */
     public boolean isIncludeDataContexts() {
         return includeDataContexts;
+    }
+
+    /**
+     * If true, the model's reasoning, its tool calls and their results, and memory changes are included too.
+     */
+    public boolean isIncludeActivity() {
+        return includeActivity;
     }
 }

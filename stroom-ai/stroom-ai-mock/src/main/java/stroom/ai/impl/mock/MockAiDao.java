@@ -92,6 +92,11 @@ public class MockAiDao implements AiDao {
     }
 
     @Override
+    public List<AiChatMessage> getStreamingMessages(final int chatId) {
+        return List.of();
+    }
+
+    @Override
     public void updateMessageText(final int messageId, final String message) {
 
     }

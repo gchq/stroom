@@ -29,6 +29,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.http.HttpClientConfig;
 
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.scoring.ScoringModel;
 
@@ -70,6 +71,12 @@ public interface AiService {
 
     ChatModel getChatModel(OpenAIModelDoc modelDoc);
 
+    /**
+     * @param modelDoc The model.
+     * @return A model that streams its answer as it writes it, or null if it can't be streamed.
+     */
+    StreamingChatModel getStreamingChatModel(OpenAIModelDoc modelDoc);
+
     EmbeddingModel getEmbeddingModel(OpenAIModelDoc modelDoc);
 
     ScoringModel getCohereScoringModel(OpenAIModelDoc modelDoc);
@@ -104,10 +111,15 @@ public interface AiService {
     Optional<AiChatMessage> getWorkingMessage(int chatId);
 
     /**
-     * Removes every WORKING message for the chat, including any left behind by a server that stopped
-     * mid-question.
+     * Removes every WORKING message for the chat, and any answer or reasoning still being streamed, including
+     * any left behind by a server that stopped mid-question.
      */
     void deleteWorkingMessages(int chatId);
+
+    /**
+     * @return The chat's answer and reasoning being streamed by the model, oldest first, or an empty list.
+     */
+    List<AiChatMessage> getStreamingMessages(int chatId);
 
     void updateMessageText(int messageId, String message);
 

@@ -41,6 +41,7 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.service.tool.ToolExecutor;
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 /**
@@ -140,6 +142,7 @@ class McpAgentChat {
     private final ContextUsageTracker usageTracker;
     private final ToolConsent toolConsent;
     private final AiAuditLog auditLog;
+    private final ModelStreamer modelStreamer;
 
     @Inject
     McpAgentChat(final AiService aiService,
@@ -148,8 +151,10 @@ class McpAgentChat {
                  final WorkspaceStore workspaceStore,
                  final ContextUsageTracker usageTracker,
                  final ToolConsent toolConsent,
-                 final AiAuditLog auditLog) {
+                 final AiAuditLog auditLog,
+                 final ModelStreamer modelStreamer) {
         this.aiService = aiService;
+        this.modelStreamer = modelStreamer;
         this.builtInTools = builtInTools;
         this.runManager = runManager;
         this.workspaceStore = workspaceStore;
@@ -516,9 +521,48 @@ class McpAgentChat {
             builder.toolSpecifications(tools);
         }
         final ChatRequest request = builder.build();
-        final ChatResponse response = chatModel.chat(request);
+        final boolean showReasoning = modelDoc == null || modelDoc.isShowReasoning();
+        final StreamingChatModel streamingModel = modelDoc != null
+                ? aiService.getStreamingChatModel(modelDoc)
+                : null;
+        final long startMs = System.currentTimeMillis();
+        final ChatResponse response;
+        long thinkingMs = 0;
+        if (streamingModel != null) {
+            // Stream the answer, so the user can watch it being written.
+            final BooleanSupplier cancelled = ToolRunContext.current()
+                    .map(ToolRunContext::getCancelled)
+                    .orElse(() -> false);
+            final ModelStreamer.StreamedResponse streamed = modelStreamer.chat(streamingModel, request, chatId,
+                    showReasoning, cancelled);
+            response = streamed.response();
+            thinkingMs = streamed.thinkingMs();
+        } else {
+            response = chatModel.chat(request);
+        }
         usageTracker.record(chatId, modelDoc, request.messages(), request.toolSpecifications(), response);
+        if (showReasoning) {
+            storeThinking(chatId, response, thinkingMs > 0
+                    ? thinkingMs
+                    : System.currentTimeMillis() - startMs);
+        }
         return response;
+    }
+
+    /**
+     * Stores the model's reasoning for a call, if it gave any, ahead of the tool calls or answer it led to.
+     */
+    private void storeThinking(final int chatId, final ChatResponse response, final long durationMs) {
+        final String thinking = NullSafe.get(response, ChatResponse::aiMessage, AiMessage::thinking);
+        if (NullSafe.isBlankString(thinking)) {
+            return;
+        }
+        try {
+            aiService.storeMessage(chatId, AiMessageType.THINKING,
+                    JsonUtil.writeValueAsString(new ThinkingRecord(thinking, durationMs), false));
+        } catch (final RuntimeException e) {
+            LOGGER.warn(() -> "Unable to store the model's reasoning for chatId=" + chatId, e);
+        }
     }
 
     /**

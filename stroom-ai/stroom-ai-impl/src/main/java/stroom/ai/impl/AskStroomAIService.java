@@ -116,8 +116,10 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -147,6 +149,10 @@ public class AskStroomAIService {
      */
     static final Duration STOP_WAIT = Duration.ofSeconds(30);
     private static final Duration STOP_POLL_INTERVAL = Duration.ofMillis(200);
+    // Messages that are updated in place while a question is worked on, so are reported as they stand by every
+    // poll rather than as new messages.
+    private static final Set<AiMessageType> TRANSIENT_MESSAGE_TYPES = EnumSet.of(AiMessageType.WORKING,
+            AiMessageType.STREAMING_ANSWER, AiMessageType.STREAMING_THINKING);
 
     /**
      * Polling interval (ms) when waiting for attachments.
@@ -1093,9 +1099,6 @@ public class AskStroomAIService {
                         storeDebugDetail(chatId, debugLog.toString());
                     }
 
-                    // Store LLM reasoning/thinking content if present.
-                    storeThinkingContent(chatId, chatResponse);
-
                     return responseText;
 
                 } catch (final Exception e) {
@@ -1420,24 +1423,6 @@ public class AskStroomAIService {
     }
 
     /**
-     * Extracts LLM reasoning/thinking content from the ChatResponse and stores it
-     * as a THINKING message. Models that don't produce reasoning tokens will have
-     * null thinking content, which is silently ignored.
-     */
-    private void storeThinkingContent(final int chatId, final ChatResponse chatResponse) {
-        try {
-            final String thinking = chatResponse.aiMessage().thinking();
-            if (thinking != null && !thinking.isBlank()) {
-                aiService.storeMessage(chatId, AiMessageType.THINKING, thinking);
-                LOGGER.debug(() -> "Stored thinking content for chatId=" + chatId
-                                   + " length=" + thinking.length());
-            }
-        } catch (final Exception e) {
-            LOGGER.warn(() -> "Failed to store thinking content for chatId=" + chatId, e);
-        }
-    }
-
-    /**
      * Checks if the exception (or its cause chain) is a socket timeout error,
      * indicating the AI model took too long to respond.
      */
@@ -1721,10 +1706,11 @@ public class AskStroomAIService {
         // stands rather than as one of the new messages - once the client had seen it, it would never
         // be sent again, and its progress would never be seen.
         final AiChatMessage workingMessage = aiService.getWorkingMessage(chatId).orElse(null);
+        // Likewise the answer and reasoning being streamed.
         final List<AiChatMessage> newMessages = aiService
                 .getMessagesSince(chatId, request.getLastSeenMessageId())
                 .stream()
-                .filter(msg -> msg.getMessageType() != AiMessageType.WORKING)
+                .filter(msg -> !TRANSIENT_MESSAGE_TYPES.contains(msg.getMessageType()))
                 .toList();
 
         // The conversation is complete when no run is active and all attachments have finished
@@ -1753,7 +1739,11 @@ public class AskStroomAIService {
                     .orElse(request.getLastSeenMessageId());
             aiDao.markRead(chatId, lastSeen);
         }
-        return new AiChatPollResponse(newMessages, attachments, workingMessage, complete, run, contextUsage);
+        final List<AiChatMessage> streamingMessages = runActive
+                ? aiService.getStreamingMessages(chatId)
+                : List.of();
+        return new AiChatPollResponse(newMessages, attachments, workingMessage, complete, run, contextUsage,
+                streamingMessages);
     }
 
     /**
@@ -1836,6 +1826,15 @@ public class AskStroomAIService {
     // ---------------------------------------------------------------------
     // Attachment data viewing
     // ---------------------------------------------------------------------
+
+    private static String activityLabel(final AiChatMessage msg) {
+        return switch (msg.getMessageType()) {
+            case THINKING -> "**AI (thinking)**";
+            case TOOL_CALL -> "**AI (tool call)**";
+            case TOOL_RESULT -> "**Tool result**";
+            default -> "**Memory update**";
+        };
+    }
 
     /**
      * Reads the markdown attachment file for the given attachment ID,
@@ -1926,6 +1925,7 @@ public class AskStroomAIService {
         aiService.verifyOwnership(chatId);
 
         final boolean includeDataContexts = request.isIncludeDataContexts();
+        final boolean includeActivity = request.isIncludeActivity();
 
         final AiChat chat = aiService.getChat(chatId);
         final List<AiChatMessage> messages = aiService.getMessages(chatId);
@@ -1971,6 +1971,15 @@ public class AskStroomAIService {
                     case WARNING:
                         label = "**Warning**";
                         break;
+                    case THINKING:
+                    case TOOL_CALL:
+                    case TOOL_RESULT:
+                    case MEMORY_UPDATE:
+                        if (!includeActivity) {
+                            continue;
+                        }
+                        label = activityLabel(msg);
+                        break;
                     case ATTACHMENT:
                         if (!includeDataContexts || msg.getAttachmentId() == null) {
                             continue;
@@ -1978,10 +1987,9 @@ public class AskStroomAIService {
                         label = "**Data Context**";
                         break;
                     default:
-                        // WORKING, DASHBOARD_DATA, QUERY_DATA, TABLE_DATA, THINKING,
-                        // DEBUG_DETAIL are always omitted (the actual table data lives in
-                        // the attachment file store; thinking/debug detail is only for
-                        // in-UI inspection).
+                        // WORKING, DASHBOARD_DATA, QUERY_DATA, TABLE_DATA, DEBUG_DETAIL and the rest are
+                        // always omitted (the actual table data lives in the attachment file store; debug
+                        // detail is only for in-UI inspection).
                         continue;
                 }
 
@@ -1995,9 +2003,9 @@ public class AskStroomAIService {
                     // Stream the markdown from the attachment file store as a Markdown table.
                     writeAttachmentAsMarkdownTable(writer, msg.getAttachmentId(), msg.getMessage());
                 } else {
-                    final String body = msg.getMessage() != null
-                            ? msg.getMessage()
-                            : "";
+                    final String body = AiActivityExport.isActivity(msg.getMessageType())
+                            ? AiActivityExport.body(msg)
+                            : NullSafe.string(msg.getMessage());
                     writer.write(body);
                     writer.newLine();
                 }

@@ -54,6 +54,7 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.cohere.CohereScoringModel;
 import dev.langchain4j.model.cohere.CohereScoringModel.CohereScoringModelBuilder;
@@ -64,6 +65,8 @@ import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel.OpenAiChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel.OpenAiEmbeddingModelBuilder;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder;
 import dev.langchain4j.model.scoring.ScoringModel;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -438,10 +441,36 @@ public class AiServiceImpl implements AiService {
         if (NullSafe.isNonEmptyString(modelDoc.getReasoningEffort())) {
             modelBuilder.reasoningEffort(modelDoc.getReasoningEffort());
         }
+        // Only ask for the model's reasoning if it is going to be shown.
+        modelBuilder.returnThinking(modelDoc.isShowReasoning());
 
         return LOGGER.logDurationIfDebugEnabled(
                 modelBuilder::build,
                 r -> "getChatModel: built model '" + modelDoc.getModelId() + "'");
+    }
+
+    @Override
+    public StreamingChatModel getStreamingChatModel(final OpenAIModelDoc modelDoc) {
+        if (STUB_MODEL_ID.equals(modelDoc.getModelId())) {
+            return new StubStreamingChatModel(new StubChatModel());
+        }
+
+        final OpenAiStreamingChatModelBuilder modelBuilder = OpenAiStreamingChatModel.builder()
+                .modelName(modelDoc.getModelId());
+        // Need to specify HTTP 1.1 for vLLM interoperability
+        // Ref: https://github.com/langchain4j/langchain4j/issues/3682
+        modelBuilder.httpClientBuilder(getClientBuilder(modelDoc));
+        if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
+            // Reject cloud-metadata/wildcard targets to prevent SSRF, as for the non-streaming model.
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
+            modelBuilder.baseUrl(modelDoc.getBaseUrl());
+        }
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
+        if (NullSafe.isNonEmptyString(modelDoc.getReasoningEffort())) {
+            modelBuilder.reasoningEffort(modelDoc.getReasoningEffort());
+        }
+        modelBuilder.returnThinking(modelDoc.isShowReasoning());
+        return modelBuilder.build();
     }
 
     @Override
@@ -595,6 +624,12 @@ public class AiServiceImpl implements AiService {
     @Override
     public void deleteWorkingMessages(final int chatId) {
         aiDao.deleteWorkingMessages(chatId);
+    }
+
+    @Override
+    public List<AiChatMessage> getStreamingMessages(final int chatId) {
+        verifyOwnership(chatId);
+        return aiDao.getStreamingMessages(chatId);
     }
 
     @Override

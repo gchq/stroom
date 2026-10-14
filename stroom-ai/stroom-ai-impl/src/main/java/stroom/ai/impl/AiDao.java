@@ -56,11 +56,16 @@ public interface AiDao {
     Optional<AiChatMessage> getWorkingMessage(int chatId);
 
     /**
-     * Removes every WORKING message for the chat. A server that stopped mid-question leaves one
-     * behind, and a chat that appears to be working forever is one that can never be polled to a
-     * conclusion.
+     * Removes every WORKING message for the chat, and any answer or reasoning still being streamed. A server
+     * that stopped mid-question leaves them behind, and a chat that appears to be working forever is one that
+     * can never be polled to a conclusion.
      */
     void deleteWorkingMessages(int chatId);
+
+    /**
+     * @return The chat's STREAMING_ANSWER and STREAMING_THINKING messages, oldest first.
+     */
+    List<AiChatMessage> getStreamingMessages(int chatId);
 
     void updateMessageText(int messageId, String message);
 

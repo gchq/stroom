@@ -9,5 +9,10 @@
                                     identity="downloadChatIncludeDataContexts"
                                     label="Include data contexts (table/dashboard/query data attached to the conversation)"/>
         </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="includeActivity"
+                                    identity="downloadChatIncludeActivity"
+                                    label="Include thinking and tool activity"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>
