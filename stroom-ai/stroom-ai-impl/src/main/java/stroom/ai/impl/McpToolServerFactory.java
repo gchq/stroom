@@ -16,11 +16,13 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.McpToolset.McpServerConnection;
 import stroom.credentials.api.HttpConfigResolver;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.AccessTokenSecret;
 import stroom.credentials.shared.UsernamePasswordSecret;
+import stroom.openai.shared.McpAuthMode;
 import stroom.openai.shared.McpToolServerConfig;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.api.SecurityContext;
@@ -37,17 +39,16 @@ import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpTlsConfig;
 import stroom.util.shared.time.SimpleDuration;
 
-import dev.langchain4j.mcp.McpToolProvider;
-import dev.langchain4j.mcp.client.DefaultMcpClient;
-import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.mcp.client.transport.McpTransport;
-import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
-import dev.langchain4j.mcp.resourcesastools.DefaultMcpResourcesAsToolsPresenter;
+import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.spec.McpSchema.Implementation;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.net.URI;
+import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -60,20 +61,25 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 /**
- * Builds the {@link McpToolset} for an {@link OpenAIModelDoc} — one MCP client per enabled tool server,
- * wrapped in a {@link McpToolProvider} that also exposes each server's MCP resources as tools.
+ * Builds the {@link McpToolset} for an {@link OpenAIModelDoc}: one MCP Java SDK client per enabled tool
+ * server.
  * <p>
  * Connections use the MCP <em>Streamable HTTP</em> transport (JDK {@link java.net.http.HttpClient})
  * pinned to HTTP/1.1, and support both {@code http://} and {@code https://}. Of the tool server's
- * {@link HttpClientConfig} only the response timeout and redirect handling are honoured for every
- * endpoint, plus the TLS settings for {@code https://} endpoints; other settings do not map onto that
- * transport.
+ * {@link HttpClientConfig} only the timeout and redirect handling are honoured for every endpoint, plus
+ * the TLS settings for {@code https://} endpoints; other settings do not map onto that transport.
+ * <p>
+ * Authentication headers are added to every request. For the Stroom session token mode the user's
+ * identity is captured when the toolset is built, and a current token is asked for on each request, so a
+ * token that is refreshed during a long run is picked up. This is needed because requests are sent from
+ * the HTTP client's own threads, which do not carry the user's security context.
  */
 @Singleton
 public class McpToolServerFactory {
@@ -85,6 +91,8 @@ public class McpToolServerFactory {
             .time(2)
             .timeUnit(stroom.util.shared.time.TimeUnit.MINUTES)
             .build();
+
+    private static final String CLIENT_NAME = "Stroom";
 
     private final Provider<StoredSecrets> storedSecretsProvider;
     private final HttpConfigResolver httpConfigResolver;
@@ -118,34 +126,21 @@ public class McpToolServerFactory {
             return McpToolset.EMPTY;
         }
 
-        final boolean debug = LOGGER.isDebugEnabled();
-        final List<McpClient> clients = new ArrayList<>();
+        final List<McpServerConnection> connections = new ArrayList<>();
         try {
             for (final McpToolServerConfig server : servers) {
-                clients.add(createClient(server, debug));
+                connections.add(connect(server));
             }
-
-            final McpToolProvider toolProvider = McpToolProvider.builder()
-                    .mcpClients(clients)
-                    .failIfOneServerFails(false)
-                    .resourcesAsToolsPresenter(DefaultMcpResourcesAsToolsPresenter.builder().build())
-                    .build();
-            return new McpToolset(clients, toolProvider);
+            return new McpToolset(connections);
 
         } catch (final RuntimeException e) {
             // Do not leak connections if one server fails to start.
-            for (final McpClient client : clients) {
-                try {
-                    client.close();
-                } catch (final Exception closeError) {
-                    LOGGER.debug(() -> "Failed to close MCP client after a build failure", closeError);
-                }
-            }
+            new McpToolset(connections).close();
             throw e;
         }
     }
 
-    private McpClient createClient(final McpToolServerConfig server, final boolean debug) {
+    private McpServerConnection connect(final McpToolServerConfig server) {
         final String endpoint = server.getEndpoint().trim();
         final String label = NullSafe.nonBlankStringElse(server.getName(), endpoint);
 
@@ -157,54 +152,89 @@ public class McpToolServerFactory {
                 server.getHttpClientConfiguration(),
                 () -> HttpClientConfig.builder().build());
         final Duration timeout = toDuration(httpClientConfig.getTimeout());
-        final boolean secure = isHttps(endpoint);
-
-        final StreamableHttpMcpTransport.Builder transportBuilder = StreamableHttpMcpTransport.builder()
-                .url(endpoint)
-                .timeout(timeout)
-                .followRedirects(httpClientConfig.isFollowRedirects())
-                .customHeaders(buildAuthHeaders(server, label))
-                .logRequests(debug)
-                .logResponses(debug)
-                // The JDK HTTP client defaults to HTTP/2, which for a cleartext http:// URL means an
-                // HTTP/2 prior-knowledge connection that an HTTP/1.1-only server rejects. MCP servers do
-                // not require HTTP/2, so pin 1.1 for interoperability (matches the OpenAI model client).
-                .setHttpVersion1_1();
-
-        // TLS settings only apply to https:// endpoints. For http:// there is nothing to configure, and
-        // building an SSLContext there would be pointless (and its config is quietly ignored).
-        if (secure) {
-            final SSLContext sslContext = buildSslContext(httpClientConfig, label);
-            if (sslContext != null) {
-                transportBuilder.sslContext(sslContext);
-            }
-        } else {
+        final SSLContext sslContext = isHttps(endpoint)
+                ? buildSslContext(httpClientConfig, label)
+                : null;
+        if (!isHttps(endpoint)) {
             warnIfTlsConfigured(httpClientConfig, label);
         }
+        final Supplier<Map<String, String>> authHeaders = authHeadersSupplier(server, label);
 
-        final McpTransport transport = transportBuilder.build();
+        final HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport.builder(endpoint)
+                .connectTimeout(timeout)
+                .customizeClient(clientBuilder -> {
+                    // The JDK HTTP client defaults to HTTP/2, which for a cleartext http:// URL means an
+                    // HTTP/2 prior-knowledge connection that an HTTP/1.1-only server rejects. MCP servers do
+                    // not require HTTP/2, so pin 1.1 for interoperability (matches the OpenAI model client).
+                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
+                    clientBuilder.followRedirects(httpClientConfig.isFollowRedirects()
+                            ? HttpClient.Redirect.NORMAL
+                            : HttpClient.Redirect.NEVER);
+                    if (sslContext != null) {
+                        clientBuilder.sslContext(sslContext);
+                    }
+                })
+                .httpRequestCustomizer((requestBuilder, method, uri, body, context) ->
+                        authHeaders.get().forEach(requestBuilder::setHeader))
+                .build();
 
+        final McpSyncClient client = McpClient.sync(transport)
+                .clientInfo(new Implementation(CLIENT_NAME, CLIENT_NAME, clientVersion()))
+                .requestTimeout(timeout)
+                .initializationTimeout(timeout)
+                .build();
         try {
-            return DefaultMcpClient.builder()
-                    .transport(transport)
-                    .key(label)
-                    .clientName("Stroom")
-                    .initializationTimeout(timeout)
-                    .toolExecutionTimeout(timeout)
-                    .resourcesTimeout(timeout)
-                    .build();
+            client.initialize();
         } catch (final RuntimeException e) {
+            closeQuietly(client, label);
             throw new RuntimeException("MCP tool server '" + label + "' could not be reached at "
                                        + endpoint + " - "
                                        + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()), e);
         }
+        LOGGER.debug(() -> "Connected to MCP tool server '" + label + "' at " + endpoint);
+        return new McpServerConnection(label, server, client);
+    }
+
+    private static void closeQuietly(final McpSyncClient client, final String label) {
+        try {
+            client.close();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Failed to close MCP client '" + label + "'", e);
+        }
+    }
+
+    private static String clientVersion() {
+        return NullSafe.nonBlankStringElse(McpToolServerFactory.class.getPackage().getImplementationVersion(),
+                "unknown");
     }
 
     // ------------------------------------------------------------------------
     // Authentication
     // ------------------------------------------------------------------------
 
+    /**
+     * @return The authentication headers to send to the server, as they stand now.
+     */
     Map<String, String> buildAuthHeaders(final McpToolServerConfig server, final String label) {
+        return authHeadersSupplier(server, label).get();
+    }
+
+    /**
+     * Resolves the server's credentials now, so that a missing or wrong credential is reported straight
+     * away, and returns a supplier of the headers to add to each request.
+     */
+    private Supplier<Map<String, String>> authHeadersSupplier(final McpToolServerConfig server, final String label) {
+        if (server.getAuthMode() == McpAuthMode.STROOM_SESSION_TOKEN) {
+            final UserIdentity userIdentity = securityContextProvider.get().getUserIdentity();
+            if (userIdentity == null) {
+                throw new RuntimeException("MCP tool server '" + label
+                                           + "': there is no authenticated Stroom user to pass a token through for");
+            }
+            // Check there is a token now, then ask for a current one on every request.
+            sessionAuthHeaders(userIdentity, label);
+            return () -> sessionAuthHeaders(userIdentity, label);
+        }
+
         final Map<String, String> headers = new LinkedHashMap<>();
         switch (server.getAuthMode()) {
             case NONE -> {
@@ -224,21 +254,17 @@ public class McpToolServerFactory {
                 headers.put("Authorization", "Basic " + Base64.getEncoder()
                         .encodeToString(raw.getBytes(StandardCharsets.UTF_8)));
             }
-            case STROOM_SESSION_TOKEN -> headers.putAll(sessionAuthHeaders(label));
+            default -> throw new IllegalStateException("Unexpected auth mode " + server.getAuthMode());
         }
-        return headers;
+        final Map<String, String> fixedHeaders = Map.copyOf(headers);
+        return () -> fixedHeaders;
     }
 
     /**
-     * The {@code Authorization} header(s) Stroom uses for outbound calls as the current user, i.e. the
-     * OAuth2 token from the user's session passed straight through to the MCP server.
+     * The {@code Authorization} header(s) Stroom uses for outbound calls as the user, i.e. the OAuth2 token
+     * from the user's session passed straight through to the MCP server.
      */
-    private Map<String, String> sessionAuthHeaders(final String label) {
-        final UserIdentity userIdentity = securityContextProvider.get().getUserIdentity();
-        if (userIdentity == null) {
-            throw new RuntimeException("MCP tool server '" + label
-                                       + "': there is no authenticated Stroom user to pass a token through for");
-        }
+    private Map<String, String> sessionAuthHeaders(final UserIdentity userIdentity, final String label) {
         final Map<String, String> authHeaders = userIdentityFactoryProvider.get().getAuthHeaders(userIdentity);
         if (NullSafe.isEmptyMap(authHeaders)) {
             throw new RuntimeException("MCP tool server '" + label
