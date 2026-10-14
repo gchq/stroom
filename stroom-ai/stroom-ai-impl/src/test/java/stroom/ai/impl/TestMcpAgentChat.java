@@ -51,7 +51,16 @@ class TestMcpAgentChat {
     private final TaskContext taskContext = Mockito.mock(TaskContext.class);
     private final BuiltInTools builtInTools = Mockito.mock(BuiltInTools.class);
     private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
-    private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager);
+    private final stroom.ai.impl.workspace.WorkspaceStore workspaceStore =
+            Mockito.mock(stroom.ai.impl.workspace.WorkspaceStore.class);
+    private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore);
+
+    {
+        // Stored messages get an id and turn, as the DAO would give them.
+        Mockito.when(aiService.storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString()))
+                .thenAnswer(invocation -> new stroom.ai.shared.AiChatMessage(1000, invocation.getArgument(0), 0L,
+                        invocation.getArgument(1), null, invocation.getArgument(2), 500, null));
+    }
 
     {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of());
@@ -291,6 +300,65 @@ class TestMcpAgentChat {
 
         assertThat(response.aiMessage().text()).isEqualTo("Today 5, yesterday 2.");
         assertThat(model.requests).hasSize(2);
+    }
+
+    @Test
+    void toolCallsAndResultsAreRecorded() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("42 errors"))).build());
+        final McpToolset toolset = toolset(client, searchTool());
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from("Counting.", List.of(ToolExecutionRequest.builder()
+                        .id("call-1")
+                        .name("test__search")
+                        .arguments("{\"query\":\"errors\"}")
+                        .build())),
+                AiMessage.from("42."));
+
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0);
+
+        final ArgumentCaptor<String> call = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(stroom.ai.shared.AiMessageType.TOOL_CALL),
+                call.capture());
+        assertThat(call.getValue()).contains("\"tool\":\"test__search\"").contains("errors").contains("Counting.");
+        final ArgumentCaptor<String> result = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService).storeMessage(Mockito.eq(7),
+                Mockito.eq(stroom.ai.shared.AiMessageType.TOOL_RESULT), result.capture());
+        assertThat(result.getValue()).contains("\"text\":\"42 errors\"").contains("\"error\":false");
+        Mockito.verifyNoInteractions(workspaceStore);
+    }
+
+    @Test
+    void largeToolOutputIsSavedAndTheModelGetsAStub() {
+        final String bigOutput = "line\n".repeat(5_000);
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent(bigOutput))).build());
+        final McpToolset toolset = toolset(client, searchTool());
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("call-1")
+                        .name("test__search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0);
+
+        final String path = ToolOutputs.outputPath(500, 1000);
+        Mockito.verify(workspaceStore).createFile(7, stroom.ai.shared.AiAttachmentType.TOOL_OUTPUT, path, 1000,
+                bigOutput.strip());
+        // The second model call was given the stub, not the whole output.
+        assertThat(model.requests.get(1).messages().getLast())
+                .isInstanceOf(dev.langchain4j.data.message.ToolExecutionResultMessage.class)
+                .extracting(m -> ((dev.langchain4j.data.message.ToolExecutionResultMessage) m).text())
+                .asString()
+                .contains("too large to show in full")
+                .contains(path)
+                .hasSizeLessThan(ToolOutputs.MAX_INLINE_CHARS);
     }
 
     private static Tool searchTool() {

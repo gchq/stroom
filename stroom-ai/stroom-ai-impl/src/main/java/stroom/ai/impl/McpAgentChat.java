@@ -18,6 +18,8 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.workspace.WorkspaceStore;
+import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.openai.shared.OpenAIModelDoc;
@@ -111,14 +113,17 @@ class McpAgentChat {
     private final AiService aiService;
     private final BuiltInTools builtInTools;
     private final AiChatRunManager runManager;
+    private final WorkspaceStore workspaceStore;
 
     @Inject
     McpAgentChat(final AiService aiService,
                  final BuiltInTools builtInTools,
-                 final AiChatRunManager runManager) {
+                 final AiChatRunManager runManager,
+                 final WorkspaceStore workspaceStore) {
         this.aiService = aiService;
         this.builtInTools = builtInTools;
         this.runManager = runManager;
+        this.workspaceStore = workspaceStore;
     }
 
     ChatResponse chat(final ChatModel chatModel,
@@ -204,7 +209,12 @@ class McpAgentChat {
                 taskContext.info(() -> progress);
                 aiService.updateMessageText(workingMessageId, progress + "…");
 
+                final AiChatMessage callMessage = aiService.storeMessage(chatId, AiMessageType.TOOL_CALL,
+                        JsonUtil.writeValueAsString(new ToolCallRecord(toolRequest.id(), toolRequest.name(),
+                                toolRequest.arguments(), aiMessage.text()), false));
+                final long startMs = System.currentTimeMillis();
                 final String result;
+                final boolean refused;
                 if (runManager.isUnattended(chatId)
                     && !builtInTools.isReadOnly(toolRequest.name())
                     && !toolset.isReadOnly(toolRequest.name())) {
@@ -212,12 +222,27 @@ class McpAgentChat {
                     LOGGER.info(() -> "Not running tool '" + toolRequest.name() + "' for chatId=" + chatId
                                       + " as the run is unattended");
                     result = UNATTENDED_REFUSAL;
+                    refused = true;
                 } else {
                     result = execute(tools, toolRequest, toolRequest.name(), chatId);
+                    refused = false;
                 }
+                final long durationMs = System.currentTimeMillis() - startMs;
                 LOGGER.trace(() -> "Tool '" + toolRequest.name() + "' result:\n" + result);
                 appendDebugToolCall(debugLog, t + 1, toolRequest, result);
-                conversation.add(ToolExecutionResultMessage.from(toolRequest, result));
+
+                // A large result is saved to the workspace and the model is given a stub, so it does not fill the
+                // model's context.
+                final String path = ToolOutputs.isLarge(result)
+                        ? saveOutput(chatId, callMessage, result)
+                        : null;
+                final String forModel = path != null
+                        ? ToolOutputs.stub(result, path)
+                        : result;
+                aiService.storeMessage(chatId, AiMessageType.TOOL_RESULT,
+                        JsonUtil.writeValueAsString(new ToolResultRecord(toolRequest.id(), toolRequest.name(),
+                                refused || isError(result), forModel, path, result.length(), durationMs), false));
+                conversation.add(ToolExecutionResultMessage.from(toolRequest, forModel));
             }
         }
 
@@ -227,6 +252,26 @@ class McpAgentChat {
             return chatModel.chat(ChatRequest.builder().messages(conversation).build());
         }
         return response;
+    }
+
+    /**
+     * Saves a large tool output to the chat's workspace.
+     *
+     * @return The workspace path, or null if it could not be saved (the model is then given it in full).
+     */
+    private String saveOutput(final int chatId, final AiChatMessage callMessage, final String output) {
+        final String path = ToolOutputs.outputPath(callMessage.getTurnId(), callMessage.getId());
+        try {
+            workspaceStore.createFile(chatId, AiAttachmentType.TOOL_OUTPUT, path, callMessage.getId(), output);
+            return path;
+        } catch (final RuntimeException e) {
+            LOGGER.warn(() -> "Unable to save tool output to " + path + ": " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    private static boolean isError(final String result) {
+        return result != null && (result.startsWith("Error") || result.startsWith(McpToolAdapter.ERROR_PREFIX));
     }
 
     /**

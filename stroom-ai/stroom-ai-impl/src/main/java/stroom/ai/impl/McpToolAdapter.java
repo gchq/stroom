@@ -49,6 +49,9 @@ final class McpToolAdapter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(McpToolAdapter.class);
 
+    /// Put before the text of a failed tool call.
+    static final String ERROR_PREFIX = "Error: ";
+
     private McpToolAdapter() {
         // Static only.
     }
@@ -111,7 +114,7 @@ final class McpToolAdapter {
         }
         final String text = sb.toString().strip();
         return Boolean.TRUE.equals(result.isError())
-                ? "Error: " + text
+                ? ERROR_PREFIX + text
                 : text;
     }
 
