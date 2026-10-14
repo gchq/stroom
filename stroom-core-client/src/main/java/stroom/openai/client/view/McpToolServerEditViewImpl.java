@@ -68,6 +68,8 @@ public class McpToolServerEditViewImpl
     @UiField
     TextArea toolPolicies;
     @UiField
+    TextArea toolGroups;
+    @UiField
     stroom.widget.button.client.Button setHttpClientConfig;
 
     @Inject
@@ -98,6 +100,7 @@ public class McpToolServerEditViewImpl
         deniedTools.setEnabled(!readOnly);
         trusted.setEnabled(!readOnly);
         toolPolicies.setEnabled(!readOnly);
+        toolGroups.setEnabled(!readOnly);
         setHttpClientConfig.setEnabled(!readOnly);
     }
 
@@ -184,6 +187,16 @@ public class McpToolServerEditViewImpl
     @Override
     public void setToolPolicies(final String toolPolicies) {
         this.toolPolicies.setValue(toolPolicies);
+    }
+
+    @Override
+    public String getToolGroups() {
+        return toolGroups.getValue();
+    }
+
+    @Override
+    public void setToolGroups(final String toolGroups) {
+        this.toolGroups.setValue(toolGroups);
     }
 
     @Override

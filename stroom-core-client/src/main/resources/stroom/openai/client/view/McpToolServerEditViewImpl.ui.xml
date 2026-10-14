@@ -69,6 +69,12 @@
             <g:TextArea ui:field="toolPolicies" width="400px" visibleLines="4"
                         title="Tool policy rules, one per line: pattern = policy"/>
         </form:FormGroup>
+        <form:FormGroup identity="mcpToolServerToolGroups"
+                        label="Tool groups"
+                        helpText="When a model is offered many tools, they are put in groups that the model turns on when it needs them, so their definitions don't fill its context. Groups come from the server, or else from shared name prefixes. One rule per line, 'pattern = group', overrides that, e.g. 'pipeline_* = pipelines'. A group of '-' means the tools are always offered.">
+            <g:TextArea ui:field="toolGroups" width="400px" visibleLines="3"
+                        title="Tool group rules, one per line: pattern = group"/>
+        </form:FormGroup>
         <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px"
                   addStyleNames="allow-focus"/>
     </g:FlowPanel>
