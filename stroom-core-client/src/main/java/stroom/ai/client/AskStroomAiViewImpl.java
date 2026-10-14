@@ -26,6 +26,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -240,7 +241,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public void setContextIndicator(final SvgImage icon, final String text) {
         if (text != null && !text.isEmpty()) {
             contextIndicator.getElement().setInnerHTML(
-                    "<span class='svgIcon'>" + icon.getSvg() + "</span> " + text);
+                    "<span class='svgIcon'>" + icon.getSvg() + "</span> " + SafeHtmlUtils.htmlEscape(text));
             contextIndicator.setVisible(true);
         } else {
             clearContextIndicator();

@@ -603,7 +603,7 @@ public class AskStroomAiPresenter
                                    final boolean showCopy,
                                    final int messageId,
                                    final boolean deletable) {
-        final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
+        final SafeHtml markdownHtml = markdownConverter.convertUntrustedMarkdownToHtml(markdownText);
 
         hb.div(wrapper -> {
             wrapper.append(markdownHtml);
@@ -654,7 +654,7 @@ public class AskStroomAiPresenter
 
             // Add markdown message.
             details.div(contentDiv ->
-                            contentDiv.append(markdownConverter.convertMarkdownToHtml(markdownText)),
+                            contentDiv.append(markdownConverter.convertUntrustedMarkdownToHtml(markdownText)),
                     Attribute.className("ai-details-content"));
 
             // Add timestamp footer.
