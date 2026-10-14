@@ -73,7 +73,7 @@ class TestContextAssembler {
         final stroom.ai.impl.AiWorkspaceDao workspaceDao = Mockito.mock(stroom.ai.impl.AiWorkspaceDao.class);
         final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
         final ContextAssembler assembler = new ContextAssembler(
-                () -> null, AiConfig::new, null, aiService, aiDao, workspaceDao, tracker);
+                () -> null, AiConfig::new, null, aiService, aiDao, workspaceDao, tracker, null);
         Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
                 new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "table", 1, null),
                 new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, 100),

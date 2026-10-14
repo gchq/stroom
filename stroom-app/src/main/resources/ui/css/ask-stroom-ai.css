@@ -160,6 +160,29 @@
     border-left: 3px solid #ed6c02;
 }
 
+.ai-message--approval {
+    background: rgba(25, 118, 210, 0.08);
+    border-left: 3px solid #1976d2;
+}
+
+.ai-approval-button {
+    margin-right: 6px;
+    padding: 2px 10px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 4px;
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
+    cursor: pointer;
+}
+
+.ai-approval-button--approve {
+    border-color: #1976d2;
+}
+
+.ai-approval-button:hover {
+    border-color: var(--control__border-color--focused);
+}
+
 .ai-message--working summary,
 .ai-message--data summary,
 .ai-message--thinking summary,

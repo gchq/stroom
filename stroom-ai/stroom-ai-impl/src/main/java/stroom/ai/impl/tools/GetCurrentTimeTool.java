@@ -50,4 +50,9 @@ class GetCurrentTimeTool implements BuiltInTool {
                 .truncatedTo(ChronoUnit.SECONDS)
                 .format(DateTimeFormatter.ISO_OFFSET_TIME);
     }
+
+    @Override
+    public boolean readsUntrustedContent() {
+        return false;
+    }
 }
