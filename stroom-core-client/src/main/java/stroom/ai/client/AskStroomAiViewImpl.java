@@ -265,7 +265,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     }
 
     private void sendMessage() {
-        if (!message.getText().isEmpty() && !sending) {
+        // While the AI is working on a question, a message steers it rather than asking a new question.
+        if (!message.getText().isEmpty()) {
             sending = true;
             getUiHandlers().onSendMessage(getMessage());
             message.setText(null);

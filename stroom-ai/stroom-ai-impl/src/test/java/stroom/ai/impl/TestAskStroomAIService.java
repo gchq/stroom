@@ -16,19 +16,84 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.api.AiService;
+import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AskStroomAiRequest;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestAskStroomAIService {
+
+    private final AiService aiService = Mockito.mock(AiService.class);
+    private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
+    private final AiChatRunDao runDao = Mockito.mock(AiChatRunDao.class);
+    private final AiChat chat = new AiChat(1, 0L, 0L, "user1", "chat");
+
+    private AskStroomAIService service() {
+        return new AskStroomAIService(aiService, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, runManager, runDao);
+    }
+
+    @Test
+    void testAskStroomAi_startsARunWhenNoneIsActive() {
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "question"));
+
+        Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
+        Mockito.verify(aiService, Mockito.never())
+                .storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.STEER_MESSAGE), Mockito.anyString());
+    }
+
+    @Test
+    void testAskStroomAi_steersAnActiveRun() {
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running));
+        Mockito.when(aiService.storeMessage(1, AiMessageType.STEER_MESSAGE, "also check yesterday"))
+                .thenReturn(message(9, AiMessageType.STEER_MESSAGE, "also check yesterday"));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "also check yesterday"));
+
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, "also check yesterday");
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testAskStroomAi_runFinishedAsTheSteerArrived() {
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        // Active when checked, but gone once the message has been stored.
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running), Optional.empty());
+        Mockito.when(aiService.storeMessage(1, AiMessageType.STEER_MESSAGE, "late"))
+                .thenReturn(message(9, AiMessageType.STEER_MESSAGE, "late"));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "late"));
+
+        // The steer is taken back and the message is asked as a new question.
+        Mockito.verify(aiService).deleteMessage(9);
+        Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testAskStroomAi_stoppingRunIsNotSteered() {
+        final AiChatRun stopping = new AiChatRun(5, 1, AiChatRunStatus.STOPPING, null, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(stopping));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "question"));
+
+        // It is started, which fails as busy, rather than steering a run that is about to stop.
+        Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
+    }
 
     @Test
     void testSelectHistoryForModel_leavesOutErrorsAndUiOnlyMessages() {
@@ -37,6 +102,7 @@ class TestAskStroomAIService {
                 message(2, AiMessageType.USER_MESSAGE, "question"),
                 message(3, AiMessageType.THINKING, "thinking"),
                 message(4, AiMessageType.ERROR, "The AI model took too long to respond"),
+                message(41, AiMessageType.STEER_MESSAGE, "steer"),
                 message(5, AiMessageType.WORKING, "Working..."),
                 message(6, AiMessageType.DEBUG_DETAIL, "detail"),
                 message(7, AiMessageType.AI_RESPONSE, "answer"),
@@ -47,7 +113,7 @@ class TestAskStroomAIService {
         // ERROR rows must not be replayed, as the model would read them as its own replies.
         assertThat(selected)
                 .extracting(AiChatMessage::getId)
-                .containsExactly(1, 2, 7, 8);
+                .containsExactly(1, 2, 41, 7, 8);
     }
 
     @Test

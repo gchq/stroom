@@ -30,6 +30,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatRun;
+import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -207,8 +208,9 @@ public class AskStroomAIService {
         }
 
         // Stage 2: If a user message is present, start a run to answer it in the background. The client
-        // follows its progress by polling, so the request returns straight away.
-        if (request.getMessage() != null) {
+        // follows its progress by polling, so the request returns straight away. A message sent while a run is
+        // working steers that run instead.
+        if (request.getMessage() != null && !steer(chatId, request.getMessage())) {
             runManager.start(chatId, run -> {
                 aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, request.getMessage());
                 answerQuestion(chatId, request);
@@ -217,6 +219,27 @@ public class AskStroomAIService {
 
         // The answer (if there is a question) is delivered by polling.
         return new AskStroomAiResponse(null);
+    }
+
+    /**
+     * If the chat has a run working on a question, stores the message for the run to pick up at its next safe
+     * point.
+     *
+     * @return True if the message was given to a run, false if there is no run to give it to.
+     */
+    private boolean steer(final int chatId, final String message) {
+        final AiChatRun active = runDao.getActive(chatId).orElse(null);
+        if (active == null || active.getStatus() == AiChatRunStatus.STOPPING) {
+            return false;
+        }
+        final AiChatMessage steerMessage = aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, message);
+        if (runDao.getActive(chatId).isEmpty()) {
+            // The run finished as the message arrived, so it will not see it. Ask it as a question instead.
+            aiService.deleteMessage(steerMessage.getId());
+            return false;
+        }
+        LOGGER.debug(() -> "Steering run " + active.getId() + " of chat " + chatId);
+        return true;
     }
 
     /**
@@ -638,6 +661,11 @@ public class AskStroomAIService {
                     .collect(Collectors.toMap(AiChatAttachment::getId, a -> a));
             final List<AiChatMessage> history = aiService.getMessages(chatId);
             final List<AiChatMessage> relevantHistory = selectHistoryForModel(history);
+            // Messages the user sends after this are steering messages for the run to pick up.
+            final int steerAfterMessageId = history.stream()
+                    .mapToInt(AiChatMessage::getId)
+                    .max()
+                    .orElse(0);
 
             final int safetyCap = NullSafe.getOrElse(
                     defaultConfigProvider.get(),
@@ -702,7 +730,7 @@ public class AskStroomAIService {
                 try {
                     final ChatResponse chatResponse = processUnified(
                             chatModel, modelDoc, chatId, messages, currentAttempt, toolset, workingMessageId,
-                            cancelled, debugLog);
+                            cancelled, debugLog, steerAfterMessageId);
                     final String responseText = chatResponse.aiMessage().text();
 
                     // Capture successful attempt.
@@ -847,6 +875,7 @@ public class AskStroomAIService {
                 : history.subList(0, end);
         return upToQuestion.stream()
                 .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
+                             || m.getMessageType() == AiMessageType.STEER_MESSAGE
                              || m.getMessageType() == AiMessageType.AI_RESPONSE
                              || m.getMessageType() == AiMessageType.ATTACHMENT)
                 .toList();
@@ -927,6 +956,7 @@ public class AskStroomAIService {
                     }
                 }
                 case USER_MESSAGE -> messages.add(new UserMessage(msg.getMessage()));
+                case STEER_MESSAGE -> messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + msg.getMessage()));
                 case AI_RESPONSE -> messages.add(new AiMessage(msg.getMessage()));
                 default -> LOGGER.debug(() -> "Not sending message of type " + msg.getMessageType());
             }
@@ -955,7 +985,8 @@ public class AskStroomAIService {
                                         final McpToolset toolset,
                                         final int workingMessageId,
                                         final AtomicBoolean cancelled,
-                                        final StringBuilder debugLog) {
+                                        final StringBuilder debugLog,
+                                        final int steerAfterMessageId) {
         return taskContextFactory.contextResult(
                 "AI data analysis",
                 taskContext -> {
@@ -972,7 +1003,7 @@ public class AskStroomAIService {
                     // The agent loop offers the built-in tools plus any MCP tools; with no tools at all
                     // it degrades to a single plain call.
                     return mcpAgentChat.chat(chatModel, modelDoc, chatId, messages, toolset,
-                            workingMessageId, cancelled, taskContext, attempt, debugLog);
+                            workingMessageId, cancelled, taskContext, attempt, debugLog, steerAfterMessageId);
                 }).get();
     }
 
@@ -1782,6 +1813,9 @@ public class AskStroomAIService {
                 switch (msg.getMessageType()) {
                     case USER_MESSAGE:
                         label = "**You**";
+                        break;
+                    case STEER_MESSAGE:
+                        label = "**You (while it was working)**";
                         break;
                     case AI_RESPONSE:
                         label = "**AI**";

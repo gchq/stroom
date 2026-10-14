@@ -15537,7 +15537,7 @@
           },
           "messageType" : {
             "type" : "string",
-            "enum" : [ "USER_MESSAGE", "AI_RESPONSE", "WORKING", "ERROR", "DASHBOARD_DATA", "QUERY_DATA", "TABLE_DATA", "ATTACHMENT", "DEBUG_DETAIL", "THINKING", "WARNING" ]
+            "enum" : [ "USER_MESSAGE", "AI_RESPONSE", "WORKING", "ERROR", "DASHBOARD_DATA", "QUERY_DATA", "TABLE_DATA", "ATTACHMENT", "DEBUG_DETAIL", "THINKING", "WARNING", "STEER_MESSAGE" ]
           },
           "tokenCount" : {
             "type" : "integer",
