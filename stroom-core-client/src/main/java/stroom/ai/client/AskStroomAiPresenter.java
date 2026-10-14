@@ -470,15 +470,16 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * Shows a line at the end of the conversation if the chat's last run stopped before finishing, with a
-     * button to resume it, and takes it away otherwise.
+     * Shows a line at the end of the conversation if the chat's last run is queued, or stopped before
+     * finishing (with a button to resume it), and takes it away otherwise.
      */
     private void updateRunStatus(final AiChatRun run) {
         final Element existing = Document.get().getElementById(RUN_STATUS_ID);
         if (existing != null) {
             existing.removeFromParent();
         }
-        if (run == null || run.isActive() || run.getStatus() == AiChatRunStatus.DONE) {
+        if (run == null || run.getStatus() == AiChatRunStatus.DONE
+            || (run.isActive() && run.getStatus() != AiChatRunStatus.QUEUED)) {
             return;
         }
         final boolean resumable = run.getStatus() == AiChatRunStatus.STOPPED
@@ -499,6 +500,9 @@ public class AskStroomAiPresenter
     }
 
     private static String runStatusText(final AiChatRun run) {
+        if (run.getStatus() == AiChatRunStatus.QUEUED) {
+            return "Queued: waiting for one of your other questions, or other users' questions, to finish";
+        }
         final String text = run.getStopReason() != null
                 ? run.getStopReason().getDisplayValue()
                 : run.getStatus().getDisplayValue();
