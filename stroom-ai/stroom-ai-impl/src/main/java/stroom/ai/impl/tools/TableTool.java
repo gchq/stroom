@@ -56,9 +56,17 @@ class TableTool extends AbstractWorkspaceTool {
     static final String NAME = "table";
     static final int PREVIEW_ROWS = 10;
 
+    /**
+     * After this many failed queries of the same table in a run, its column is summarised instead.
+     */
+    static final int FAILURES_BEFORE_FALLBACK = 2;
+
+    private final ColumnSummariser columnSummariser;
+
     @Inject
-    TableTool(final ChatWorkspace workspace) {
+    TableTool(final ChatWorkspace workspace, final ColumnSummariser columnSummariser) {
         super(workspace);
+        this.columnSummariser = columnSummariser;
     }
 
     @Override
@@ -119,6 +127,60 @@ class TableTool extends AbstractWorkspaceTool {
     @Override
     String run(final ToolExecutionRequest request, final int chatId) {
         final WorkspacePath path = pathArg(request, PATH_ARG);
+        try {
+            return query(request, chatId, path);
+        } catch (final WorkspaceException e) {
+            return fallBack(request, chatId, path, e);
+        }
+    }
+
+    /**
+     * After a table has failed to be queried twice in a run, summarises the column the query was about instead
+     * (the automatic fallback), so the model is not left trying query after query.
+     */
+    private String fallBack(final ToolExecutionRequest request,
+                            final int chatId,
+                            final WorkspacePath path,
+                            final WorkspaceException e) {
+        final int failures = ToolRunContext.current()
+                .map(context -> context.recordFailure(NAME + ":" + path))
+                .orElse(0);
+        if (failures < FAILURES_BEFORE_FALLBACK) {
+            throw e;
+        }
+        final String column = referencedColumn(request, chatId, path);
+        if (column == null) {
+            throw new WorkspaceException(e.getMessage() + " Queries of this table have failed " + failures
+                                         + " times; consider summarise_column to summarise a column instead.");
+        }
+        return "Error: " + e.getMessage() + "\n\nQueries of this table have failed " + failures + " times, so "
+               + "here is a summary of column '" + column + "' instead:\n\n"
+               + columnSummariser.summarise(chatId, path, column, null);
+    }
+
+    private String referencedColumn(final ToolExecutionRequest request, final int chatId, final WorkspacePath path) {
+        final List<String> columns = TableEngine.run(workspace.localFile(chatId, path), Format.forPath(path),
+                new Query(List.of(), List.of(), List.of(), List.of(), false, false, List.of(), 1)).columns();
+        final Map<?, ?> args = args(request);
+        final List<String> referenced = new ArrayList<>();
+        try {
+            conditions(args.get("where")).forEach(condition -> referenced.add(condition.column()));
+            referenced.addAll(strings(args.get("groupBy"), "groupBy"));
+            referenced.addAll(strings(args.get("select"), "select"));
+        } catch (final WorkspaceException ignored) {
+            // The query itself was malformed; nothing to go on.
+        }
+        for (final String name : referenced) {
+            for (final String column : columns) {
+                if (column.equalsIgnoreCase(String.valueOf(name).strip())) {
+                    return column;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String query(final ToolExecutionRequest request, final int chatId, final WorkspacePath path) {
         final WorkspacePath out = outArg(request);
         final Map<?, ?> args = args(request);
         final Query query = new Query(

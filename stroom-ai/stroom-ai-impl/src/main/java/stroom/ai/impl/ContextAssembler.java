@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /// Builds what the model is sent for a question: the system prompt, the earlier conversation (compacted turns as
@@ -174,6 +175,27 @@ public class ContextAssembler {
                                       final Map<Integer, AiChatAttachment> attachmentMap,
                                       final List<AiChatMessage> history,
                                       final CompactionRecord compaction) {
+        return assemble(request, chatId, attachmentMap, history, compaction, false);
+    }
+
+    /**
+     * Builds the messages to send to the model to answer the question.
+     *
+     * @param request          The question.
+     * @param chatId           The chat.
+     * @param attachmentMap    The chat's attached tables that are ready, by id.
+     * @param history          All the messages in the chat, in order, ending with the question.
+     * @param compaction       Which earlier turns the model sees as digests or a summary.
+     * @param tablesAsProfiles True to give the model each attached table's profile and where it is, rather than
+     *                         the whole table, for a model with tools to query it.
+     * @return The messages, in order.
+     */
+    public List<ChatMessage> assemble(final AskStroomAiRequest request,
+                                      final int chatId,
+                                      final Map<Integer, AiChatAttachment> attachmentMap,
+                                      final List<AiChatMessage> history,
+                                      final CompactionRecord compaction,
+                                      final boolean tablesAsProfiles) {
         final List<ChatMessage> messages = new ArrayList<>();
         final List<AiChatMessage> relevantHistory = selectHistoryForModel(history);
         final Map<Integer, List<AiChatMessage>> toolMessagesByTurn = toolMessagesByTurn(history);
@@ -194,7 +216,10 @@ public class ContextAssembler {
             final AiChatMessage msg = relevantHistory.get(i);
             if (msg.getMessageType() == AiMessageType.ATTACHMENT) {
                 // Attached tables are always kept, as the user attached them to be used.
-                final UserMessage attachmentMessage = attachmentMessage(msg, attachmentMap);
+                final UserMessage attachmentMessage = tablesAsProfiles
+                        ? Objects.requireNonNullElseGet(profileMessage(chatId, msg, attachmentMap),
+                                () -> attachmentMessage(msg, attachmentMap))
+                        : attachmentMessage(msg, attachmentMap);
                 if (attachmentMessage != null) {
                     messages.add(attachmentMessage);
                 }
@@ -243,6 +268,38 @@ public class ContextAssembler {
                 .filter(turnId -> turnId > compaction.summaryUpToTurnId() && compaction.covers(turnId))
                 .forEach(turnId -> sb.append(digests.get(turnId)).append("\n\n"));
         return sb.toString().strip();
+    }
+
+    /**
+     * @return The attached table as a short stub: what it is, where the whole table is in the workspace, and its
+     * profile. Null if it has no profile (e.g. it was attached before tables were profiled).
+     */
+    private UserMessage profileMessage(final int chatId,
+                                       final AiChatMessage msg,
+                                       final Map<Integer, AiChatAttachment> attachmentMap) {
+        final AiChatAttachment attachment = NullSafe.get(msg.getAttachmentId(), attachmentMap::get);
+        if (attachment == null) {
+            return null;
+        }
+        final String tablePath = AskStroomAIService.attachmentPath(attachment.getId());
+        final Integer profileId = workspaceDao.findFile(chatId, AskStroomAIService.profilePath(attachment.getId()))
+                .orElse(null);
+        if (profileId == null) {
+            return null;
+        }
+        try {
+            final String profile = Files.readString(workspaceStore.localFile(profileId), StandardCharsets.UTF_8);
+            return new UserMessage("[Attached table: " + NullSafe.nonBlankStringElse(attachment.getDescription(),
+                    "Attachment " + attachment.getId()) + ". The whole table is the workspace file " + tablePath
+                                   + "; its profile is below. Work out figures from it with the table tool (or "
+                                   + "summarise_column for free text), not by guessing from the profile.]\n"
+                                   + profile);
+        } catch (final WorkspaceFileUnavailableException e) {
+            return unavailableNote(attachment.getDescription(), e.getMessage());
+        } catch (final IOException e) {
+            LOGGER.warn(() -> "Failed to read the profile of attachment " + attachment.getId(), e);
+            return null;
+        }
     }
 
     private UserMessage attachmentMessage(final AiChatMessage msg,
@@ -336,7 +393,12 @@ public class ContextAssembler {
         long attachments = 0;
         for (final AiChatMessage message : relevantHistory) {
             if (message.getMessageType() == AiMessageType.ATTACHMENT && message.getAttachmentId() != null) {
-                attachments += workspaceDao.getSize(message.getAttachmentId()) / 4;
+                // A model with tools is sent the table's profile rather than the table.
+                final long size = workspaceDao.findFile(chatId, AskStroomAIService.profilePath(
+                                message.getAttachmentId()))
+                        .map(workspaceDao::getSize)
+                        .orElseGet(() -> workspaceDao.getSize(message.getAttachmentId()));
+                attachments += size / 4;
             } else if (!compaction.covers(message.getTurnId())) {
                 conversation += tokens(message);
                 if (message.getMessageType() == AiMessageType.USER_MESSAGE) {

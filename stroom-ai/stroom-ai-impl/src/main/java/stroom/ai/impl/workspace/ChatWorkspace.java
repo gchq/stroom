@@ -82,7 +82,13 @@ public class ChatWorkspace {
     ///
     /// @throws ToolTimeoutException if it runs past the limit.
     public <T> T withTimeLimit(final Supplier<T> work) {
-        final Duration limit = limits().getToolTimeLimit().getDuration();
+        return withTimeLimit(limits().getToolTimeLimit().getDuration(), work);
+    }
+
+    /// Does some work within a time limit.
+    ///
+    /// @throws ToolTimeoutException if it runs past the limit.
+    public <T> T withTimeLimit(final Duration limit, final Supplier<T> work) {
         return ToolDeadline.run(limit, work);
     }
 

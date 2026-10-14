@@ -23,6 +23,7 @@ import stroom.ai.impl.workspace.WorkspacePath;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 
@@ -54,10 +55,17 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
     @Override
     public final String execute(final ToolExecutionRequest request, final int chatId) {
         try {
-            return workspace.withTimeLimit(() -> run(request, chatId));
+            return workspace.withTimeLimit(timeLimit(), () -> run(request, chatId));
         } catch (final WorkspaceException e) {
             return "Error: " + e.getMessage();
         }
+    }
+
+    /**
+     * @return How long a call may take.
+     */
+    protected Duration timeLimit() {
+        return limits().getToolTimeLimit().getDuration();
     }
 
     /**
