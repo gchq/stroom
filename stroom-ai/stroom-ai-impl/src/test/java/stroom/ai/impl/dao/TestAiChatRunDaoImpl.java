@@ -164,6 +164,23 @@ class TestAiChatRunDaoImpl {
     }
 
     @Test
+    void testInterruptStale_aToolWaitingForAFormStillNeedsHeartbeats() throws InterruptedException {
+        final AiChatRun formWait = runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "n", null);
+        runDao.compareAndSetStatus(formWait.getId(), Set.of(AiChatRunStatus.RUNNING),
+                AiChatRunStatus.WAITING_FOR_USER, AiChatRunStopReason.NEEDS_INPUT, null);
+        final AiChat otherChat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChatRun approvalWait = runDao.create(otherChat.getId(), "user1", AiChatRunStatus.RUNNING, "n", null);
+        runDao.compareAndSetStatus(approvalWait.getId(), Set.of(AiChatRunStatus.RUNNING),
+                AiChatRunStatus.WAITING_FOR_USER, AiChatRunStopReason.NEEDS_APPROVAL, null);
+        Thread.sleep(5);
+
+        // A form wait keeps its thread, so if its node has gone it is interrupted; an approval wait has no thread.
+        assertThat(runDao.interruptStale(System.currentTimeMillis()))
+                .extracting(AiChatRun::getId)
+                .containsExactly(formWait.getId());
+    }
+
+    @Test
     void testSessionRuns() {
         final AiChatRun fromSession = runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "n", "hash1");
         final AiChat otherChat = aiDao.createChat(UserRef.builder().uuid("user1").build());

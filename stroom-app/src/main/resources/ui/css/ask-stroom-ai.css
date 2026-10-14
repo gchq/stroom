@@ -904,3 +904,24 @@
 .aiToolApprovals-everything {
     margin-top: 8px;
 }
+
+/* ---- Forms from MCP tools ---- */
+
+.ai-elicitation-message {
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 4px 0 6px;
+}
+
+.aiElicitation-message {
+    white-space: pre-wrap;
+    margin-bottom: 6px;
+}
+
+.aiElicitation-form {
+    overflow: auto;
+}
+
+.aiElicitation-field {
+    margin-bottom: 10px;
+}
