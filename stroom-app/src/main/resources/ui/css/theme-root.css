@@ -40,15 +40,16 @@
     --text-color: #151515;
     --text-color--hover: #111;
     --text-color--selected: #000;
-    /* The darkest grey that still looks the same, and is 4.5:1 on white (#777 was 4.47:1) */
-    --text-color--disabled: #767676;
+    /* 4.5:1 on white and on striped rows, as it's also used for content that isn't disabled */
+    --text-color--disabled: #6e6e6e;
     --text-color--disabled--selected: #555;
     /* Secondary text (placeholders, read-only values, unassigned labels, paths): 4.5:1 on white and
        on striped rows */
     --text-color--muted: #616161;
-    --text-color--red: var(--red-600);
+    /* Red and green text are 4.5:1 on white and on striped rows */
+    --text-color--red: var(--red-700);
     --text-color--red--selected: var(--red-400);
-    --text-color--green: var(--green-600);
+    --text-color--green: var(--green-800);
     --text-color--red--dark: var(--red-900);
     --text-color--green--dark: var(--green-900);
 
@@ -57,15 +58,18 @@
     --highlight__background-color--selected: yellow;
 
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
-    --heading-color: var(--blue-700);
+    /* 4.5:1 on white and on the help popups' grey */
+    --heading-color: var(--blue-800);
     /* <code> blocks, e.g. in markdown or in FormGroup help/description */
     --code-color: var(--pink-700);
     --code-color--disabled: rgb(from var(--code-color) r g b / 0.7);
-    --border-color: #ebebeb;
+    /* Lines are a blue-grey: borders and splitters are subtle, a control's outline is 3:1 */
+    --border-color: #d0d4da;
 
-    --header__border-color: #dddddd;
-    --row__background-color--even: #f5f5f5;
-    --row__background-color--odd: #fff;
+    --header__border-color: var(--border-color);
+    /* Stripes are overlays, so a table looks right on whatever it sits on (page, dialog or box) */
+    --row__background-color--even: rgba(0, 0, 0, 0.027);
+    --row__background-color--odd: transparent;
     --row__background-color--hovered: #e6f4ff;
     --row__background-color--selected: rgba(129, 212, 250, .5);
     --row__background-color--selected--hovered: rgba(129, 212, 250, 1);
@@ -78,7 +82,7 @@
 
     --menu-separator__color: #bfbfbf;
 
-    --tooltip__background-color: var(--grey-300);
+    --tooltip__background-color: var(--grey-200);
     --tooltip__text-color: #000;
 
     --button__background-image: none;
@@ -134,7 +138,7 @@
     --link-tab__text-color: #222;
     --link-tab__text-color--focussed: #000;
 
-    --code-editor-right-bar__background-color: #efefef;
+    --code-editor-right-bar__background-color: #fbfbfb;
     --code-editor__border-color: #a1a1a1;
     --code-editor__border-color--info: #3676c6;
     --code-editor__background-color--info: #378cff;
@@ -152,8 +156,9 @@
 
     --xsdbrowser-box__background-color: white;
     --xsdbrowser-box__border-color: #404e60;
-    --xsdbrowser-title__background-color: #888;
-    --xsdbrowser-title__background-color--selected: rgb(74, 144, 228);
+    /* Dark enough for the titles' white text to be 4.5:1 */
+    --xsdbrowser-title__background-color: #6b6b6b;
+    --xsdbrowser-title__background-color--selected: var(--blue-700);
 
     --scrollbar__background-color: transparent;
     --scrollbar-corner__background-color: transparent;
@@ -199,7 +204,8 @@
     /* Controls */
     --control__background-color: #fff;
     --control__background-color--disabled: rgba(0, 0, 0, 0.1);
-    --control__border-color: rgba(0, 0, 0, 0.2);
+    /* 3:1 on white, so a field's edge identifies it (WCAG 1.4.11) */
+    --control__border-color: #858a94;
     --control__border-color--disabled: transparent;
     --control__text-color: rgba(0, 0, 0, 0.8);
     --control__text-color--disabled: #666;
@@ -212,7 +218,7 @@
     /* Dashboard */
     --dashboard-panel__background-color: var(--page__background-color);
     --dashboard-panel__grid-color: var(--border-color);
-    --dashboard-panel__grid-background-color: #f9f9f9;
+    --dashboard-panel__grid-background-color: #fbfbfb;
 
     /* ExpanderCell */
     --expander-cell-icon__background-color--hover: rgba(0, 0, 0, 0.2);
@@ -264,7 +270,8 @@
     /* Navigation pane */
     --navigation__splitter__background-color: var(--border-color);
     --navigation__splitter__line-color: var(--splitter__line-color);
-    --navigation__background-color: var(--white);
+    /* A faint grey, so the explorer sits just below the white page */
+    --navigation__background-color: #fbfbfb;
     --navigation__background-color--hovered: var(--row__background-color--hovered);
     --navigation__background-color--selected: var(--row__background-color--selected);
     --navigation__background-color--selected-hovered: var(--row__background-color--selected--hovered);
@@ -273,7 +280,7 @@
 
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--row__text-color--selected);
-    --navigation__text-color--no-match: #767676;
+    --navigation__text-color--no-match: var(--text-color--muted);
     --logo-color: var(--icon-colour__dirty-amber);
 
     /* Specific */
@@ -315,7 +322,8 @@
     --primary: var(--blue-500);
     --valid: var(--bootstrap-success);
     --invalid: var(--bootstrap-error);
-    --feedback: var(--bootstrap-error);
+    /* 4.5:1 on dialogs, including a translucent one over the sign-in page */
+    --feedback: var(--red-800);
 
     /* Visualisations */
     --vis__background-color: var(--dashboard-panel__background-color);

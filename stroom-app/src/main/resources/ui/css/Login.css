@@ -72,7 +72,7 @@
     font-size: .7rem;
     text-align: center;
     cursor: pointer;
-    color: #1890ff;
+    color: var(--link__text-color);
     transition: color .3s;
 }
 

@@ -80,6 +80,11 @@
     flex-grow: 1;
 }
 
+/* A read-only value is already greyed (the read-only text colour), so isn't faded as well */
+.annotationTextBox[readonly] {
+    opacity: 1;
+}
+
 .annotationTextBox:focus {
     opacity: 1 !important;
     border-color: var(--focus-border) !important;
