@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -277,7 +278,7 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                   ? Optional.of(val2)
+                        ? Optional.of(val2)
                         : Optional.empty());
     }
 
@@ -288,9 +289,9 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                   ? Optional.of(val2)
+                        ? Optional.of(val2)
                         : (val3 != null
-                           ? Optional.of(val3)
+                                ? Optional.of(val3)
                                 : Optional.empty()));
     }
 
@@ -304,11 +305,11 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                   ? Optional.of(val2)
+                        ? Optional.of(val2)
                         : (val3 != null
-                           ? Optional.of(val3)
+                                ? Optional.of(val3)
                                 : (val4 != null
-                                   ? Optional.of(val4)
+                                        ? Optional.of(val4)
                                         : Optional.empty())));
     }
 
@@ -920,6 +921,16 @@ public class NullSafe {
         return list != null
                 ? new ArrayList<>(list)
                 : new ArrayList<>();
+    }
+
+    /**
+     * Returns a new {@link HashMap} instance. If map is not null, the new {@link HashMap} will
+     * contain the contents of map, else it will be empty.
+     */
+    public static <M extends Map<K, V>, K, V> Map<K, V> mutableMap(final M map) {
+        return map != null
+                ? new HashMap<>(map)
+                : new HashMap<>();
     }
 
     /**
@@ -1955,7 +1966,7 @@ public class NullSafe {
         return predicate != null
                 ? predicate
                 : (defaultOutcome
-                   ? (Predicate<T>) ALWAYS_TRUE_PREDICATE
+                        ? (Predicate<T>) ALWAYS_TRUE_PREDICATE
                         : (Predicate<T>) ALWAYS_FALSE_PREDICATE);
 //        return requireNonNullElseGet(predicate, () -> ignored -> defaultOutcome);
 

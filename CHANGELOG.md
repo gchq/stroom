@@ -13,6 +13,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.7] - 2026-10-14
+
+* Feature **#5834** : Enterprise Floor Mapping
+
+* Build : Bumps org.yaml:snakeyaml from 2.6 to 2.7 in the build script.
+
+* Dependency : Bumps poi from 5.4.1 to 5.5.1.
+
+* Dependency : Bumps software.amazon.awssdk.crt:aws-crt from 0.47.0 to 0.48.5.
+
+* Dependency : Bumps jakarta.xml.bind:jakarta.xml.bind-api from 4.0.2 to 4.0.5.
+
+* Dependency : Uplift lucene from 10.3.2 to 10.5.1.
+
+* Bug : Fix pooled byte buffer resource closure.
+
+* Bug : Fix more issues with failure handling during S3 event consumption.
+
+
 ## [v7.14-beta.6] - 2026-10-13
 
 * Dependency : Uplift org.apache.commons:commons-fileupload2-jakarta-servlet6 from 2.0.0-M4 to 2.0.0-M5.
@@ -2665,7 +2684,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.7...HEAD
+[v7.14-beta.7]: https://github.com/gchq/stroom/compare/v7.14-beta.6...v7.14-beta.7
 [v7.14-beta.6]: https://github.com/gchq/stroom/compare/v7.14-beta.5...v7.14-beta.6
 [v7.14-beta.5]: https://github.com/gchq/stroom/compare/v7.14-beta.4...v7.14-beta.5
 [v7.14-beta.4]: https://github.com/gchq/stroom/compare/v7.14-beta.3...v7.14-beta.4

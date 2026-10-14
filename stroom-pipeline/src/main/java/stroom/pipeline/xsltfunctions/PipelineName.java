@@ -26,7 +26,22 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = PipelineName.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the name of the pipeline currently processing the stream.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The pipeline name, if available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class PipelineName extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "pipeline-name";
 
     private final PipelineHolder pipelineHolder;
 

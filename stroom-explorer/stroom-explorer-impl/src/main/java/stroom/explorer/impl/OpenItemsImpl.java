@@ -73,7 +73,8 @@ public class OpenItemsImpl implements OpenItems {
     }
 
     public static OpenItems create(final Collection<ExplorerNodeKey> openItems) {
-        return new OpenItemsImpl(new HashSet<>(openItems), Collections.emptySet());
+        // openItems may be null, e.g. the client omits ensureVisible when it has none
+        return new OpenItemsImpl(NullSafe.mutableSet(openItems), Collections.emptySet());
     }
 
     public static OpenItems createWithForced(final Collection<ExplorerNodeKey> openItems,

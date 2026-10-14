@@ -35,6 +35,25 @@ import org.xml.sax.SAXParseException;
 import java.io.IOException;
 import java.io.StringReader;
 
+@XsltFunctionDef(
+        name = JsonToXml.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.CONVERSION,
+        commonDescription = """
+                Converts JSON text to XML nodes for use in XPath expressions.
+                """,
+        commonReturnType = XsltDataType.SEQUENCE,
+        commonReturnDescription = "The XML representation of the JSON value.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "json",
+                                        description = "The JSON text to convert.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class JsonToXml extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "json-to-xml";
