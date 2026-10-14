@@ -161,6 +161,11 @@ public class MockAiDao implements AiDao {
     }
 
     @Override
+    public void recordModel(final int chatId, final String modelDocUuid, final int contextWindowTokens) {
+        // Usage is not tracked by the mock.
+    }
+
+    @Override
     public ChatUsage getUsage(final int chatId) {
         return new ChatUsage(null, null, null, 0, 0);
     }

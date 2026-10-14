@@ -41,6 +41,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.List;
+
 public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandlers> implements AskStroomAiView {
 
     private static final String SEND_BUTTON_NORMAL_TEXT = "Send";
@@ -67,6 +69,10 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     FlowPanel jumpToLatestBar;
     @UiField
+    FlowPanel commandSuggestions;
+    @UiField
+    Button contextMeter;
+    @UiField
     Button jumpToLatest;
     @UiField
     TextArea message;
@@ -83,6 +89,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public AskStroomAiViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         jumpToLatestBar.setVisible(false);
+        contextMeter.setVisible(false);
+        commandSuggestions.setVisible(false);
         markdownPreview.addDomHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onConversationScrolled();
@@ -178,6 +186,59 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiHandler("message")
     public void onMessageKeyUp(final KeyUpEvent event) {
         run.setEnabled(sending || !message.getText().isEmpty());
+        if (getUiHandlers() != null) {
+            getUiHandlers().onInputChanged(message.getText());
+        }
+    }
+
+    @UiHandler("contextMeter")
+    public void onContextMeter(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onShowContextMeter(contextMeter.getElement());
+        }
+    }
+
+    @Override
+    public void setContextMeter(final String text, final String title, final String level) {
+        if (text == null) {
+            contextMeter.setVisible(false);
+            return;
+        }
+        contextMeter.setText(text);
+        contextMeter.setTitle(title);
+        contextMeter.setStyleName("allow-focus askStroomAiViewImpl-contextMeter");
+        if (level != null) {
+            contextMeter.addStyleName("askStroomAiViewImpl-contextMeter--" + level);
+        }
+        contextMeter.setVisible(true);
+    }
+
+    @Override
+    public void setCommandSuggestions(final List<AiSlashCommand> commands) {
+        commandSuggestions.clear();
+        commandSuggestions.setVisible(commands != null && !commands.isEmpty());
+        if (commands == null) {
+            return;
+        }
+        for (final AiSlashCommand command : commands) {
+            final Button button = new Button();
+            button.setStyleName("allow-focus askStroomAiViewImpl-command");
+            button.setHTML(SafeHtmlUtils.htmlEscape(command.getName())
+                    + (command.getArguments().isEmpty()
+                    ? ""
+                    : " <span class=\"askStroomAiViewImpl-commandArgs\">"
+                      + SafeHtmlUtils.htmlEscape(command.getArguments()) + "</span>")
+                    + " <span class=\"askStroomAiViewImpl-commandDescription\">"
+                    + SafeHtmlUtils.htmlEscape(command.getDescription()) + "</span>");
+            button.addClickHandler(event -> {
+                message.setText(command.getName() + " ");
+                message.setFocus(true);
+                message.setCursorPos(message.getText().length());
+                setCommandSuggestions(null);
+                run.setEnabled(true);
+            });
+            commandSuggestions.add(button);
+        }
     }
 
     @UiHandler("run")

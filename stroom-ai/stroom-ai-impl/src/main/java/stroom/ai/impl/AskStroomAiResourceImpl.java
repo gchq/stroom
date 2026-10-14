@@ -22,6 +22,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatStatusResponse;
+import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
@@ -562,7 +563,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public Boolean undoCompaction(final UndoAiCompactionRequest request) {
+    public AiContextUsage undoCompaction(final UndoAiCompactionRequest request) {
         final int chatId = NullSafe.getOrElse(request, UndoAiCompactionRequest::getAiChat, AiChat::getId, 0);
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "undoCompaction"))

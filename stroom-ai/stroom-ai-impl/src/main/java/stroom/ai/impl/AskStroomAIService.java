@@ -442,7 +442,7 @@ public class AskStroomAIService {
      * @return True once undone.
      * @throws AiChatRunManager.AiChatBusyException if the chat is busy.
      */
-    public Boolean undoCompaction(final UndoAiCompactionRequest request) {
+    public AiContextUsage undoCompaction(final UndoAiCompactionRequest request) {
         final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
         aiService.verifyOwnership(chatId);
         if (runDao.getActive(chatId).isPresent()) {
@@ -454,7 +454,7 @@ public class AskStroomAIService {
             throw new RuntimeException("Only the latest compaction of a chat can be undone.");
         }
         aiService.deleteMessage(latest.getId());
-        return true;
+        return contextAssembler.estimateUsage(chatId);
     }
 
     /**

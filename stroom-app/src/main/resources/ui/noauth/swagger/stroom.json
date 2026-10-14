@@ -1051,14 +1051,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "boolean"
+                  "$ref" : "#/components/schemas/AiContextUsage"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Undo a chat's latest compaction, so the model sees the turns it covered as they were",
+        "summary" : "Undo a chat's latest compaction, so the model sees the turns it covered as they were. Returns how much of the context window the chat now uses",
         "tags" : [ "AI" ]
       }
     },
@@ -15863,6 +15863,10 @@
       "AiContextUsage" : {
         "type" : "object",
         "properties" : {
+          "compactAtPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "contextWindowTokens" : {
             "type" : "integer",
             "format" : "int32"

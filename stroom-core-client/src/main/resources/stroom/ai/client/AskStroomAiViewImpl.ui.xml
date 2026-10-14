@@ -25,6 +25,7 @@
         <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
             <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
             <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
+                <g:FlowPanel ui:field="commandSuggestions" styleName="dock-min askStroomAiViewImpl-commands"/>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-messagePane">
                     <g:Label ui:field="contextIndicator"
                              styleName="askStroomAiViewImpl-contextChip"/>
@@ -32,6 +33,7 @@
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
                     <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>
+                    <g:Button ui:field="contextMeter" styleName="allow-focus askStroomAiViewImpl-contextMeter"/>
                     <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
                     <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>
                 </g:FlowPanel>

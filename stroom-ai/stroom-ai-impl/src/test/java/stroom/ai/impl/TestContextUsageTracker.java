@@ -61,6 +61,19 @@ class TestContextUsageTracker {
     }
 
     @Test
+    void testRecord_noUsageReportedStillRecordsTheModelsWindow() {
+        final OpenAIModelDoc modelDoc = OpenAIModelDoc.builder().uuid("m1").maxContextWindowTokens(8_000).build();
+
+        tracker.record(1, modelDoc, List.of(UserMessage.from("hi")), null,
+                ChatResponse.builder().aiMessage(AiMessage.from("hello")).build());
+
+        Mockito.verify(aiDao).recordModel(1, "m1", 8_000);
+        Mockito.verify(aiDao, Mockito.never()).recordUsage(Mockito.anyInt(), Mockito.any(), Mockito.anyInt(),
+                Mockito.anyLong(), Mockito.anyLong());
+        assertThat(tracker.getCorrection(1)).isEmpty();
+    }
+
+    @Test
     void testToolDefinitionsAreCounted() {
         final List<ToolSpecification> tools = List.of(
                 ToolSpecification.builder().name("search").description("Searches for things".repeat(10)).build());

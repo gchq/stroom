@@ -78,6 +78,10 @@ public class ContextUsageTracker {
         final Integer inputTokens = NullSafe.get(usage, TokenUsage::inputTokenCount);
         if (inputTokens == null || inputTokens <= 0) {
             LOGGER.debug(() -> "No token usage reported for chatId=" + chatId);
+            // The model's context window is still worth knowing, to show how full it is from the estimate.
+            if (modelDoc != null) {
+                aiDao.recordModel(chatId, modelDoc.getUuid(), modelDoc.getMaxContextWindowTokens());
+            }
             return;
         }
         final int outputTokens = NullSafe.getOrElse(usage, TokenUsage::outputTokenCount, 0);

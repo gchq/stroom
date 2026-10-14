@@ -26,6 +26,7 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiChatStatusResponse;
+import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiRequest;
@@ -49,6 +50,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -265,7 +267,10 @@ class TestAskStroomAIService {
         assertThatThrownBy(() -> service().undoCompaction(new UndoAiCompactionRequest(chat, 4)))
                 .hasMessageContaining("Only the latest compaction");
 
-        assertThat(service().undoCompaction(new UndoAiCompactionRequest(chat, 3))).isTrue();
+        final AiContextUsage usage = new AiContextUsage(1000, 600L, true, Map.of(), 80);
+        Mockito.when(contextAssembler.estimateUsage(1)).thenReturn(usage);
+        // The new usage is returned, as undoing makes the model see more.
+        assertThat(service().undoCompaction(new UndoAiCompactionRequest(chat, 3))).isEqualTo(usage);
         Mockito.verify(aiService).deleteMessage(3);
     }
 
