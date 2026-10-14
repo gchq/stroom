@@ -22,8 +22,8 @@ import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.AiProviderImpl;
 import stroom.ai.impl.OpenAIModelStoreImpl;
 import stroom.ai.impl.TableSummariserImpl;
-import stroom.query.language.functions.AiProvider;
 import stroom.ai.impl.tools.BuiltInToolsModule;
+import stroom.query.language.functions.AiProvider;
 
 import com.google.inject.AbstractModule;
 
