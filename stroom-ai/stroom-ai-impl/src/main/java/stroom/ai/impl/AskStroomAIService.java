@@ -21,6 +21,7 @@ import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.api.TableSource;
 import stroom.ai.api.TableSummaryProgressListener;
 import stroom.ai.api.TableSummaryRequest;
+import stroom.ai.impl.ChatCompactor.CompactionMode;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAttachmentDataPage;
@@ -157,6 +158,7 @@ public class AskStroomAIService {
     private final AiWorkspaceDao workspaceDao;
     private final ContextAssembler contextAssembler;
     private final ContextUsageTracker usageTracker;
+    private final ChatCompactor chatCompactor;
     private Duration stopWait = STOP_WAIT;
     private final McpAgentChat mcpAgentChat;
 
@@ -181,7 +183,8 @@ public class AskStroomAIService {
                               final WorkspaceStore workspaceStore,
                               final AiWorkspaceDao workspaceDao,
                               final ContextAssembler contextAssembler,
-                              final ContextUsageTracker usageTracker) {
+                              final ContextUsageTracker usageTracker,
+                              final ChatCompactor chatCompactor) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -202,6 +205,7 @@ public class AskStroomAIService {
         this.workspaceDao = workspaceDao;
         this.contextAssembler = contextAssembler;
         this.usageTracker = usageTracker;
+        this.chatCompactor = chatCompactor;
         this.mcpAgentChat = mcpAgentChat;
     }
 
@@ -277,6 +281,7 @@ public class AskStroomAIService {
         // The removal is done by the new run, so that nothing else can start in the chat while it happens.
         runManager.start(chatId, run -> {
             removeMessages(toRemove);
+            chatCompactor.onTurnChanged(chatId, question.getTurnId());
             aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, newText);
             answerQuestion(chatId, edited);
         });
@@ -402,6 +407,7 @@ public class AskStroomAIService {
 
             if (responseText != null && !CANCELLED_MESSAGE.equals(responseText)) {
                 aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText);
+                chatCompactor.writeDigest(chatId);
                 final String rt = responseText;
                 LOGGER.debug(() -> "Response stored for chatId=" + chatId
                                    + " responseLength=" + rt.length());
@@ -803,31 +809,22 @@ public class AskStroomAIService {
             LOGGER.debug(() -> "processQuestion: chatId=" + chatId
                                + " readyAttachments=" + readyAttachments.size());
 
-            // Build the full relevant history (filtered and capped by safety limit).
             final Map<Integer, AiChatAttachment> attachmentMap = readyAttachments.stream()
                     .collect(Collectors.toMap(AiChatAttachment::getId, a -> a));
-            final List<AiChatMessage> history = aiService.getMessages(chatId);
-            final List<AiChatMessage> relevantHistory = selectHistoryForModel(history);
             // Messages the user sends after this are steering messages for the run to pick up.
-            final int steerAfterMessageId = history.stream()
+            final int steerAfterMessageId = aiService.getMessages(chatId).stream()
                     .mapToInt(AiChatMessage::getId)
                     .max()
                     .orElse(0);
-
-            final int safetyCap = NullSafe.getOrElse(
-                    defaultConfigProvider.get(),
-                    AskStroomAiConfig::getMaxHistorySafetyCapMessages,
-                    AskStroomAiConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
-            int maxHistory = Math.min(safetyCap, relevantHistory.size());
-            String contextSummary = null;
-            boolean wasTrimmed = false;
+            final ContextBudget budget = chatCompactor.budget(modelDoc);
 
             // Accumulate debug detail across all attempts.
             final StringBuilder debugLog = debugEnabled
                     ? new StringBuilder()
                     : null;
 
-            // Progressive-trim retry loop.
+            // If the model says the request is too large, compact the chat as far as it will go and try once
+            // more.
             for (int attempt = 1; ; attempt++) {
                 if (cancelled.get()) {
                     LOGGER.info(() -> "processQuestion: cancelled before attempt for chatId=" + chatId);
@@ -835,17 +832,15 @@ public class AskStroomAIService {
                 }
 
                 final int currentAttempt = attempt;
-                final int currentMaxHistory = maxHistory;
-                final String currentSummary = contextSummary;
-
-                final List<ChatMessage> messages = contextAssembler.assemble(
-                        request, chatId, attachmentMap, relevantHistory,
-                        currentMaxHistory, currentSummary);
+                final List<ChatMessage> messages = chatCompactor.assemble(
+                        request, chatId, attachmentMap, modelDoc, chatModel,
+                        attempt == 1
+                                ? CompactionMode.AUTO
+                                : CompactionMode.FORCE,
+                        null);
 
                 LOGGER.debug(() -> "processQuestion: attempt " + currentAttempt
-                                   + " maxHistory=" + currentMaxHistory
                                    + " messages=" + messages.size()
-                                   + " hasSummary=" + (currentSummary != null)
                                    + " chatId=" + chatId);
 
                 // Proactive check: if the context window size is configured and we
@@ -877,7 +872,7 @@ public class AskStroomAIService {
                 try {
                     final ChatResponse chatResponse = processUnified(
                             chatModel, modelDoc, chatId, messages, currentAttempt, toolset, workingMessageId,
-                            cancelled, debugLog, steerAfterMessageId);
+                            cancelled, debugLog, steerAfterMessageId, budget);
                     final String responseText = chatResponse.aiMessage().text();
 
                     // Capture successful attempt.
@@ -888,28 +883,13 @@ public class AskStroomAIService {
                                 .append(messages.size())
                                 .append(" messages) — SUCCESS\n\n")
                                 .append(formatMessagesAsDebugDetail(messages, responseText));
-                    }
-
-                    // Store debug detail.
-                    final String finalResponseText;
-                    if (wasTrimmed) {
-                        finalResponseText = responseText
-                                            + "\n\n---\n*Note: Some earlier conversation history was "
-                                            + "summarised to fit the model's context window. "
-                                            + "The most recent messages and attachments were preserved.*";
-                    } else {
-                        finalResponseText = responseText;
-                    }
-
-                    // Store the debug detail after the AI response will be stored.
-                    if (debugLog != null) {
                         storeDebugDetail(chatId, debugLog.toString());
                     }
 
                     // Store LLM reasoning/thinking content if present.
                     storeThinkingContent(chatId, chatResponse);
 
-                    return finalResponseText;
+                    return responseText;
 
                 } catch (final Exception e) {
                     // A terminated task, or a stop flipped mid-call, is a deliberate stop rather
@@ -921,7 +901,7 @@ public class AskStroomAIService {
                         return CANCELLED_MESSAGE;
                     }
 
-                    if (!isContextOverflowError(e)) {
+                    if (!ChatCompactor.isContextOverflowError(e)) {
                         throw e;
                     }
 
@@ -936,12 +916,10 @@ public class AskStroomAIService {
                                 .append("\n---\n\n");
                     }
 
-                    // Can we trim further?
-                    if (maxHistory <= 0) {
-                        // Nothing left to trim — fall back to batch if there are attachments.
+                    if (currentAttempt >= 2) {
+                        // Compacted as far as it will go - fall back to batch if there are attachments.
                         if (!readyAttachments.isEmpty()) {
-                            LOGGER.info(() -> "Context overflow with no history remaining for "
-                                              + "chatId=" + chatId
+                            LOGGER.info(() -> "Context overflow after compacting chatId=" + chatId
                                               + ", falling back to batch processing");
                             final String result = analyseWithAttachments(request, chatModel,
                                     readyAttachments, chatId, workingMessageId,
@@ -954,43 +932,12 @@ public class AskStroomAIService {
                         // No attachments and still overflowing. There is no partial answer to give
                         // here - nothing has been produced yet - so at least say what was tried.
                         throw new RuntimeException(
-                                "The question is too large for the model's context window, even with all "
-                                + "earlier conversation history removed. Try a shorter question, start a "
-                                + "new chat, or raise 'Max Context Window Tokens' on the model document. "
+                                "The question is too large for the model's context window, even with the earlier "
+                                + "conversation compacted. Try a shorter question, start a new chat, or raise "
+                                + "'Max Context Window Tokens' on the model document. "
                                 + "The model said: " + e.getMessage(), e);
                     }
-
-                    // Summarise the messages being dropped before trimming.
-                    wasTrimmed = true;
-                    final int newMaxHistory = Math.max(0, maxHistory - 2);
-                    final int oldStartIdx = Math.max(0,
-                            relevantHistory.size() - maxHistory - 1);
-                    final int newStartIdx = Math.max(0,
-                            relevantHistory.size() - newMaxHistory - 1);
-
-                    // Collect the messages being dropped in this trim step.
-                    final List<AiChatMessage> droppedMessages = new ArrayList<>();
-                    for (int i = oldStartIdx; i < newStartIdx
-                                              && i < relevantHistory.size() - 1; i++) {
-                        droppedMessages.add(relevantHistory.get(i));
-                    }
-
-                    if (!droppedMessages.isEmpty()) {
-                        LOGGER.debug(() -> "processQuestion: trimming " + droppedMessages.size()
-                                           + " messages, summarising for chatId=" + chatId);
-                        try {
-                            contextSummary = summariseDroppedMessages(
-                                    chatModel, contextSummary, droppedMessages, config);
-                        } catch (final Exception sumEx) {
-                            LOGGER.warn(() -> "Failed to summarise dropped messages, "
-                                              + "continuing without summary", sumEx);
-                            // Continue without summary — better than failing entirely.
-                        }
-                    }
-
-                    maxHistory = newMaxHistory;
-                    LOGGER.info(() -> "Context overflow for chatId=" + chatId
-                                      + ", retrying with maxHistory=" + newMaxHistory);
+                    LOGGER.info(() -> "Context overflow for chatId=" + chatId + ", compacting and retrying");
                 }
             }
         } finally {
@@ -1035,7 +982,8 @@ public class AskStroomAIService {
                                         final int workingMessageId,
                                         final AtomicBoolean cancelled,
                                         final StringBuilder debugLog,
-                                        final int steerAfterMessageId) {
+                                        final int steerAfterMessageId,
+                                        final ContextBudget budget) {
         return taskContextFactory.contextResult(
                 "AI data analysis",
                 taskContext -> {
@@ -1052,67 +1000,9 @@ public class AskStroomAIService {
                     // The agent loop offers the built-in tools plus any MCP tools; with no tools at all
                     // it degrades to a single plain call.
                     return mcpAgentChat.chat(chatModel, modelDoc, chatId, messages, toolset,
-                            workingMessageId, cancelled, taskContext, attempt, debugLog, steerAfterMessageId);
+                            workingMessageId, cancelled, taskContext, attempt, debugLog, steerAfterMessageId,
+                            budget);
                 }).get();
-    }
-
-    /**
-     * Summarises dropped conversation messages so that context is preserved
-     * even after progressive trimming. If a previous summary exists, it is
-     * included so that context accumulates across trim iterations.
-     *
-     * @param existingSummary previous summary from earlier trim iterations (may be null)
-     * @param droppedMessages the messages being dropped in this trim step
-     * @return a concise summary string
-     */
-    private String summariseDroppedMessages(final ChatModel chatModel,
-                                            final String existingSummary,
-                                            final List<AiChatMessage> droppedMessages,
-                                            final AskStroomAiConfig config) {
-        final StringBuilder input = new StringBuilder();
-        if (existingSummary != null && !existingSummary.isBlank()) {
-            input
-                    .append("Previous context summary:\n")
-                    .append(existingSummary)
-                    .append("\n\n");
-        }
-        input.append("Additional conversation to summarise:\n");
-        for (final AiChatMessage msg : droppedMessages) {
-            switch (msg.getMessageType()) {
-                case USER_MESSAGE -> input
-                        .append("User: ")
-                        .append(msg.getMessage())
-                        .append('\n');
-                case AI_RESPONSE -> input
-                        .append("Assistant: ")
-                        .append(msg.getMessage())
-                        .append('\n');
-                case ATTACHMENT -> input
-                        .append("User attached table: ")
-                        .append(msg.getMessage())
-                        .append('\n');
-                default -> input
-                        .append("System: ")
-                        .append(msg.getMessage())
-                        .append('\n');
-            }
-        }
-
-        final String systemPrompt = NullSafe.getOrElse(
-                config,
-                AskStroomAiConfig::getHistorySummaryPrompt,
-                AskStroomAiConfig.DEFAULT_HISTORY_SUMMARY_PROMPT);
-
-        final List<ChatMessage> messages = List.of(
-                new SystemMessage(systemPrompt),
-                new UserMessage(input.toString()));
-
-        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
-                () -> chatModel.chat(messages),
-                r -> "summariseDroppedMessages: responseLength="
-                     + r.aiMessage().text().length());
-        LOGGER.trace(() -> "summariseDroppedMessages response:\n" + response.aiMessage().text());
-        return response.aiMessage().text();
     }
 
     /**
@@ -1338,34 +1228,6 @@ public class AskStroomAIService {
         } catch (final Exception e) {
             LOGGER.warn(() -> "Failed to store thinking content for chatId=" + chatId, e);
         }
-    }
-
-    /**
-     * Checks whether an exception represents a context window overflow error
-     * from the LLM API. These typically come as HTTP 400 errors with messages
-     * about token limits being exceeded.
-     */
-    private boolean isContextOverflowError(final Exception e) {
-        // Check for HTTP 413 Payload Too Large.
-        if (e instanceof final HttpException httpException) {
-            if (httpException.statusCode() == 413) {
-                return true;
-            }
-        }
-
-        final String message = e.getMessage();
-        if (message == null) {
-            return false;
-        }
-        final String lowerMessage = message.toLowerCase();
-        return lowerMessage.contains("maximum context length")
-               || lowerMessage.contains("token limit")
-               || lowerMessage.contains("too many tokens")
-               || lowerMessage.contains("context_length_exceeded")
-               || lowerMessage.contains("max_tokens")
-               || lowerMessage.contains("context window")
-               || lowerMessage.contains("input is too long")
-               || lowerMessage.contains("request too large");
     }
 
     /**
@@ -1614,6 +1476,8 @@ public class AskStroomAIService {
             // Simple message deletion.
             aiService.deleteMessage(messageId);
         }
+        // The turn's digest, and any compaction covering it, no longer match it.
+        chatCompactor.onTurnChanged(chatId, targetMessage.getTurnId());
     }
 
     public void deleteAllMessages(final int chatId) {

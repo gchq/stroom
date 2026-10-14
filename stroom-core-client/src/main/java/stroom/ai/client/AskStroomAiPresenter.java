@@ -755,6 +755,14 @@ public class AskStroomAiPresenter
                         "Result of " + AiToolMessages.getString(msg.getMessage(), "tool"),
                         AiToolMessages.resultMarkdown(msg.getMessage()), timeMs, nowMs);
                 break;
+            case TURN_DIGEST:
+                // Only for the model.
+                break;
+            case COMPACTION_SUMMARY:
+                appendDetailsElement(hb, "ai-message ai-message--compaction", SvgImage.INFO,
+                        AiToolMessages.compactionTitle(msg.getMessage()),
+                        AiToolMessages.compactionMarkdown(msg.getMessage()), timeMs, nowMs);
+                break;
             case WARNING:
                 appendMessageHtml(hb, "ai-message ai-message--warning", msg.getMessage(),
                         timeMs, nowMs, false, messageId, false);

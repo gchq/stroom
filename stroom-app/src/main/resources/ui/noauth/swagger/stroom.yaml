@@ -10775,6 +10775,8 @@ components:
           - STEER_MESSAGE
           - TOOL_CALL
           - TOOL_RESULT
+          - TURN_DIGEST
+          - COMPACTION_SUMMARY
         tokenCount:
           type: integer
           format: int32

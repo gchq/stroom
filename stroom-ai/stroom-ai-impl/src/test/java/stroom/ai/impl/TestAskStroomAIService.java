@@ -44,7 +44,8 @@ class TestAskStroomAIService {
 
     private AskStroomAIService service() {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, runManager, runDao, null, null, null, null);
+                null, null, null, null, null, runManager, runDao, null, null, null, null,
+                Mockito.mock(ChatCompactor.class));
     }
 
     @Test

@@ -53,7 +53,9 @@ public class BuiltInTools {
             }
             map.put(specification, (request, memoryId) -> {
                 try {
-                    return NullSafe.string(tool.execute(request));
+                    return NullSafe.string(memoryId instanceof final Integer chatId
+                            ? tool.execute(request, chatId)
+                            : tool.execute(request));
                 } catch (final RuntimeException e) {
                     LOGGER.debug(() -> "Built-in tool '" + specification.name() + "' failed", e);
                     return "Error running built-in tool '" + specification.name() + "': "
