@@ -110,6 +110,12 @@ public class McpToolServerConfig {
     @JsonProperty
     private final List<McpToolPolicyRule> toolPolicies;
 
+    @JsonPropertyDescription("Rules putting this server's tools into groups, which the agent turns on when it " +
+                             "needs them. They override the groups the server gives. The first rule whose " +
+                             "pattern matches the tool's name applies.")
+    @JsonProperty
+    private final List<McpToolGroupRule> toolGroups;
+
     @JsonCreator
     public McpToolServerConfig(
             @JsonProperty("enabled") final Boolean enabled,
@@ -123,7 +129,8 @@ public class McpToolServerConfig {
             @JsonProperty("allowedTools") final List<String> allowedTools,
             @JsonProperty("deniedTools") final List<String> deniedTools,
             @JsonProperty("trusted") final Boolean trusted,
-            @JsonProperty("toolPolicies") final List<McpToolPolicyRule> toolPolicies) {
+            @JsonProperty("toolPolicies") final List<McpToolPolicyRule> toolPolicies,
+            @JsonProperty("toolGroups") final List<McpToolGroupRule> toolGroups) {
         this.enabled = Objects.requireNonNullElse(enabled, true);
         this.name = name;
         this.endpoint = endpoint;
@@ -136,6 +143,7 @@ public class McpToolServerConfig {
         this.deniedTools = deniedTools;
         this.trusted = Objects.requireNonNullElse(trusted, false);
         this.toolPolicies = toolPolicies;
+        this.toolGroups = toolGroups;
     }
 
     public boolean isEnabled() {
@@ -198,6 +206,13 @@ public class McpToolServerConfig {
         return toolPolicies;
     }
 
+    /**
+     * @return The tool group rules, in the order they are checked, or null/empty for none.
+     */
+    public List<McpToolGroupRule> getToolGroups() {
+        return toolGroups;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -218,7 +233,8 @@ public class McpToolServerConfig {
                Objects.equals(allowedTools, that.allowedTools) &&
                Objects.equals(deniedTools, that.deniedTools) &&
                trusted == that.trusted &&
-               Objects.equals(toolPolicies, that.toolPolicies);
+               Objects.equals(toolPolicies, that.toolPolicies) &&
+               Objects.equals(toolGroups, that.toolGroups);
     }
 
     @Override
@@ -234,7 +250,8 @@ public class McpToolServerConfig {
                 allowedTools,
                 deniedTools,
                 trusted,
-                toolPolicies);
+                toolPolicies,
+                toolGroups);
     }
 
     @Override
@@ -251,6 +268,7 @@ public class McpToolServerConfig {
                ", deniedTools=" + deniedTools +
                ", trusted=" + trusted +
                ", toolPolicies=" + toolPolicies +
+               ", toolGroups=" + toolGroups +
                '}';
     }
 
@@ -276,6 +294,7 @@ public class McpToolServerConfig {
         private List<String> deniedTools;
         private boolean trusted;
         private List<McpToolPolicyRule> toolPolicies;
+        private List<McpToolGroupRule> toolGroups;
 
         private Builder() {
         }
@@ -293,6 +312,7 @@ public class McpToolServerConfig {
             this.deniedTools = config.deniedTools;
             this.trusted = config.trusted;
             this.toolPolicies = config.toolPolicies;
+            this.toolGroups = config.toolGroups;
         }
 
         public Builder enabled(final boolean enabled) {
@@ -350,6 +370,11 @@ public class McpToolServerConfig {
             return self();
         }
 
+        public Builder toolGroups(final List<McpToolGroupRule> toolGroups) {
+            this.toolGroups = toolGroups;
+            return self();
+        }
+
         public Builder toolPolicies(final List<McpToolPolicyRule> toolPolicies) {
             this.toolPolicies = toolPolicies;
             return self();
@@ -373,7 +398,8 @@ public class McpToolServerConfig {
                     allowedTools,
                     deniedTools,
                     trusted,
-                    toolPolicies);
+                    toolPolicies,
+                    toolGroups);
         }
     }
 }

@@ -292,7 +292,7 @@ class TestDataPipelineTools {
 
         // A query that never finishes is stopped at the limit.
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, null, null, null, StroomDuration.ofMillis(800)), null);
+                new AiWorkspaceConfig(null, null, null, null, null, null, StroomDuration.ofMillis(800)), null, null);
         Mockito.when(queryService.search(Mockito.any())).thenReturn(response(new QueryKey("q"), false, null));
         assertThat(run(tool, "{\"query\":\"from x\"}")).startsWith("Error: This took too long");
     }
