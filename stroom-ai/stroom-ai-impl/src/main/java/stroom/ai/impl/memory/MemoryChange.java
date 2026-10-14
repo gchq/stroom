@@ -16,12 +16,6 @@
 
 package stroom.ai.impl.memory;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 /// A change to a piece of memory, as stored (as JSON) in a MEMORY_UPDATE message once made, or in an
 /// APPROVAL_REQUEST message while it waits for the user.
 ///
@@ -34,24 +28,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 /// @param status      For an approval request, where it has got to; null for a change already made.
 /// @param reason      For an approval request, why it needs approval.
 /// @param undone      True once the user has undone a change that was made, otherwise null.
-@JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder(alphabetic = true)
-public record MemoryChange(@JsonProperty("kind") String kind,
-                           @JsonProperty("operation") Operation operation,
-                           @JsonProperty("path") String path,
-                           @JsonProperty("baseVersion") Integer baseVersion,
-                           @JsonProperty("before") String before,
-                           @JsonProperty("after") String after,
-                           @JsonProperty("status") ApprovalStatus status,
-                           @JsonProperty("reason") String reason,
-                           @JsonProperty("undone") Boolean undone) {
+public record MemoryChange(String kind,
+                           Operation operation,
+                           String path,
+                           Integer baseVersion,
+                           String before,
+                           String after,
+                           ApprovalStatus status,
+                           String reason,
+                           Boolean undone) {
 
     public static final String KIND = "MEMORY";
-
-    @JsonCreator
-    public MemoryChange {
-        // Explicit constructor for Jackson.
-    }
 
     /// A change not undone.
     public MemoryChange(final String kind,

@@ -17,6 +17,7 @@
 package stroom.ai.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -106,6 +107,7 @@ public class AiChatStatus {
     /**
      * @return True if the chat is waiting for the user, e.g. to approve something.
      */
+    @JsonIgnore
     public boolean isNeedsYou() {
         return runStatus == AiChatRunStatus.WAITING_FOR_USER;
     }
@@ -113,6 +115,7 @@ public class AiChatStatus {
     /**
      * @return True if a run is working on, or queued for, the chat.
      */
+    @JsonIgnore
     public boolean isBusy() {
         return runStatus == AiChatRunStatus.RUNNING
                || runStatus == AiChatRunStatus.QUEUED
