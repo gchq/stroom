@@ -162,9 +162,9 @@
   Contained buttons
    */
   --button-contained__color: var(--grey-300); /* material grey 300 */
-  --button-contained__background-color: #373c47; /*var(--grey-800); /* material grey 800 */
-  --button-contained__background-color--hover: #414754; /*var(--grey-700); /* material grey 700 */
-  --button-contained__background-color--selected: #323742; /*var(--grey-900); /* material grey 900 */
+  --button-contained__background-color: #3a3e47; /*var(--grey-800); /* material grey 800 */
+  --button-contained__background-color--hover: #434751; /*var(--grey-700); /* material grey 700 */
+  --button-contained__background-color--selected: #363a43; /*var(--grey-900); /* material grey 900 */
 
   --button-contained-primary__color: var(--white);
   --button-contained-primary__background-color: var(--blue-700); /* material blue 700 */

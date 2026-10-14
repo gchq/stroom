@@ -86,7 +86,7 @@
 	width: 100%;
 	height: 100%;
 	border: 1px solid var(--control__border-color);
-	background: var(--control__background-color);
+	background: var(--content-box__background-color);
 	color: var(--control__text-color);
 	padding: 5px;
   	-webkit-user-select: text;
@@ -224,7 +224,7 @@
 
 .tabBarContainer {
     display: flex;
-    border-bottom: 1px solid var(--splitter__background-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .curveTabLayoutViewImpl-layout {
@@ -303,7 +303,7 @@
 }
 
 .pipelineStructureViewImpl-property-default {
-    opacity: 0.5;
+    color: var(--text-color--muted);
 }
 
 
@@ -452,7 +452,11 @@
     font-weight: 500;
     text-align: center;
     vertical-align: middle;
-    background-color: #888888;
+    /* The colour configured for the classification (ClassificationLabel sets it) */
+    background-color: var(--classification-label__background-color, #888888);
+    /* Black or white text, whichever is 4.5:1 on that colour: white below a CIE lightness of 49.4,
+       where the two contrast equally */
+    color: lab(from var(--classification-label__background-color, #888888) clamp(0, (49.4 - l) * 1000, 100) 0 0);
     overflow: hidden;
     white-space: nowrap;
 }
@@ -1358,7 +1362,7 @@ button.main-menu svg {
 }
 
 .form-control-background {
-  background-color: var(--control__background-color);
+  background-color: var(--content-box__background-color);
 }
 
 .form-control {
@@ -1790,7 +1794,7 @@ button.main-menu svg {
     display: flex;
     font-size: .7rem;
     flex-grow: 1;
-    opacity: .5;
+    color: var(--text-color--muted);
     user-select: text;
 }
 
@@ -1799,8 +1803,18 @@ button.main-menu svg {
     font-size: .6rem;
     font-family: monospace;
     flex-grow: 0;
-    opacity: .5;
+    color: var(--text-color--muted);
     user-select: text;
+}
+
+/* On a selected row, secondary text takes the row's text colour: muted grey wouldn't show on it */
+.cellTableSelectedRow .findCell-tags,
+.cellTableSelectedRow .findCell-path,
+.cellTableSelectedRow .findCell-uuid,
+.dataGridSelectedRow .findCell-tags,
+.dataGridSelectedRow .findCell-path,
+.dataGridSelectedRow .findCell-uuid {
+    color: inherit;
 }
 
 .pipelineElementChooser-iconCell {
@@ -1993,7 +2007,7 @@ button.main-menu svg {
 
 .ScheduledProcessingViewImpl,
 .DuplicateManagementViewImpl {
-    border-top: 1px solid var(--splitter__background-color);
+    border-top: 1px solid var(--border-color);
 }
 
 .documentPermissionChangeControls {
@@ -2188,7 +2202,7 @@ button.main-menu svg {
     flex-direction: column;
 }
 .credentials-manager-dialog .credentials-manager {
-    background-color: var(--control__background-color);
+    background-color: var(--content-box__background-color);
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;
 }

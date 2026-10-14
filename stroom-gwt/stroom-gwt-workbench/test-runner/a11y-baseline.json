@@ -18,11 +18,9 @@
     "button-name"
   ],
   "app-annotations-decoratecomment--decorates-links": [
-    "color-contrast",
     "label"
   ],
   "app-annotations-decoratecomment--links-invoke-handlers": [
-    "color-contrast",
     "label"
   ],
   "app-dashboard-queryresultvis--pause-button-reports-up": [
@@ -281,30 +279,6 @@
   "app-idp-authenticationerror--with-config-message": [
     "link-in-text-block"
   ],
-  "app-idp-changepassword--default": [
-    "color-contrast"
-  ],
-  "app-idp-changepassword--force-sign-in": [
-    "color-contrast"
-  ],
-  "app-idp-changepassword--mismatch": [
-    "color-contrast"
-  ],
-  "app-idp-changepassword--policy-failure": [
-    "color-contrast"
-  ],
-  "app-idp-changepassword--strength-while-typing": [
-    "color-contrast"
-  ],
-  "app-idp-changepassword--weak-password": [
-    "color-contrast"
-  ],
-  "app-idp-resetpassword--missing-password": [
-    "color-contrast"
-  ],
-  "app-idp-signinflow--forced-password-change": [
-    "color-contrast"
-  ],
   "app-index-indexeditor--dense-vector-field": [
     "target-size"
   ],
@@ -339,35 +313,27 @@
     "target-size"
   ],
   "app-main-annotationeditor--annotation-editable": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--annotation-read-only": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--editor": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--entry-actions": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--failed-comment-change-keeps-dialog-usable": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--grouped-history": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--history-rich-prose": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--labels-and-tabs": [
-    "color-contrast",
     "label",
     "target-size"
   ],
@@ -381,11 +347,9 @@
     "target-size"
   ],
   "app-main-annotationeditor--read-only": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationeditor--status-setting-block": [
-    "color-contrast",
     "label"
   ],
   "app-main-annotationtagscreen--permissions": [
@@ -563,7 +527,6 @@
     "target-size"
   ],
   "app-main-browseannotationsscreen--browse": [
-    "color-contrast",
     "target-size"
   ],
   "app-main-contentstorescreen--content-store": [
@@ -600,11 +563,9 @@
     "target-size"
   ],
   "app-main-dependenciesscreen--action-menu": [
-    "color-contrast",
     "target-size"
   ],
   "app-main-dependenciesscreen--dependencies": [
-    "color-contrast",
     "target-size"
   ],
   "app-main-dependenciesscreen--server-sort-and-paging": [
@@ -617,7 +578,6 @@
     "label"
   ],
   "app-main-documentpermissionsscreen--filter-dialog": [
-    "color-contrast",
     "target-size"
   ],
   "app-main-executionschedulesscreen--batch-edit": [
@@ -711,9 +671,6 @@
   "app-main-pipelineeditor--processors": [
     "label"
   ],
-  "app-main-pipelineeditor--reference-remove-restore": [
-    "color-contrast"
-  ],
   "app-main-processorfilterlist--expander-tree": [
     "label"
   ],
@@ -757,18 +714,15 @@
     "target-size"
   ],
   "app-main-servertasksscreen--quick-filter": [
-    "color-contrast",
     "target-size"
   ],
   "app-main-servertasksscreen--seeded-filter": [
-    "color-contrast",
     "target-size"
   ],
   "app-main-servertasksscreen--task-tree": [
     "target-size"
   ],
   "app-main-tracesscreen--traces": [
-    "color-contrast",
     "target-size"
   ],
   "app-main-useraccessscreen--buttons-gated-on-selection": [
@@ -865,17 +819,14 @@
   ],
   "widgets-date-time-calendargrid--basic": [
     "aria-allowed-attr",
-    "button-name",
     "label"
   ],
   "widgets-date-time-calendargrid--no-selection": [
     "aria-allowed-attr",
-    "button-name",
     "label"
   ],
   "widgets-date-time-calendargrid--past-date": [
     "aria-allowed-attr",
-    "button-name",
     "label"
   ],
   "widgets-date-time-customdatebox--default": [
@@ -913,15 +864,6 @@
   ],
   "widgets-dialogs-explorerdropdownpopup--type-filtered": [
     "target-size"
-  ],
-  "widgets-display-classificationlabel--all-levels": [
-    "color-contrast"
-  ],
-  "widgets-display-classificationlabel--lower-case-input": [
-    "color-contrast"
-  ],
-  "widgets-display-classificationlabel--official": [
-    "color-contrast"
   ],
   "widgets-display-htmlpresenter--rich-content": [
     "link-in-text-block"
@@ -1161,7 +1103,6 @@
     "target-size"
   ],
   "widgets-tree-explorertree--filtered": [
-    "color-contrast",
     "target-size"
   ],
   "widgets-tree-explorertree--multi-select": [

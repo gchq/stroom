@@ -32,7 +32,11 @@
     --text-color--selected: #fff;
     --text-color--disabled: #999;
     --text-color--disabled--selected: #ccc;
-    --text-color--red: var(--red-400);
+    /* Secondary text (placeholders, read-only values, unassigned labels, paths): 4.5:1 on inputs, the
+       lightest surface it sits on */
+    --text-color--muted: #9e9e9e;
+    /* Red text is 4.5:1 on every surface it sits on: the page, striped rows, inputs and dialogs */
+    --text-color--red: var(--red-300);
     --text-color--red--selected: var(--red-200);
     --text-color--green: var(--green-500);
     --text-color--red--dark: var(--red-900);
@@ -48,12 +52,13 @@
     /* <code> blocks, e.g. in markdown or in FormGroup help/description */
     --code-color: var(--pink-300);
     --code-color--disabled: rgb(from var(--code-color) r g b / 0.7);
-    --border-color: #353944;
+    --border-color: #363a43;
 
     --header__border-color: transparent;
-    --row__background-color--even: #15161b;
-    --row__background-color--odd: #22252c;
-    --row__background-color--hovered: rgb(45, 47, 53);
+    /* Stripes are overlays, so a table looks right on whatever it sits on (page, dialog or box) */
+    --row__background-color--even: rgba(255, 255, 255, 0.04);
+    --row__background-color--odd: transparent;
+    --row__background-color--hovered: #22262e;
     --row__background-color--selected: rgb(0, 101, 167);
     --row__background-color--selected--hovered: rgb(0,120,199);
     --row__background-color--focussed: rgba(0,120,199,.5);
@@ -65,7 +70,7 @@
 
     --menu-separator__color: rgb(255 255 255 / 20%);
 
-    --tooltip__background-color: #1a1d21;
+    --tooltip__background-color: #31353d;
     --tooltip__text-color: var(--text-color);
 
     --button__background-image: none;
@@ -73,7 +78,7 @@
     --button__border-color: #000;
     --button__text-color: var(--text-color);
     --button__background-image--active: none;
-    --button__background-color--active: #262a32;
+    --button__background-color--active: #363a43;
     --button__border-color--active: #444;
     --button__background-image--hover: none;
     --button__background-color--hover: #383d49;
@@ -119,7 +124,7 @@
     --link-tab__text-color: var(--text-color);
     --link-tab__text-color--focussed: var(--text-color--selected);
 
-    --code-editor-right-bar__background-color: #19171d;
+    --code-editor-right-bar__background-color: #16181b;
     --code-editor__border-color: #000;
     --code-editor__border-color--info: #378cff;
     --code-editor__background-color--info: #378cff;
@@ -133,8 +138,8 @@
     /*--code-editor__background-color--highlight: #d9d900;*/
 
 
-    --xsdbrowser-box__background-color: #19171d;
-    --xsdbrowser-box__border-color: #15161b;
+    --xsdbrowser-box__background-color: #16181b;
+    --xsdbrowser-box__border-color: #363a43;
     --xsdbrowser-title__background-color: #555;
     --xsdbrowser-title__background-color--selected: #1164a3;
 
@@ -151,17 +156,20 @@
      */
 
     /* Page */
-    --app__background-color: #020202;
-    --page__background-color-rgb: 34, 37, 44;
+    /* Surfaces are Material 3 tones (CIE lightness) in a blue-grey: the explorer lowest (8), then the
+       page (10.5), dialogs (13.5), row highlights (15), inputs and popups (17.5) and tooltips (22).
+       Lines are lighter: borders and splitters (24.5) and control outlines (46, 3:1 on the page) */
+    --app__background-color: #16181b;
+    --page__background-color-rgb: 26, 29, 34;
     --page__background-color: rgb(var(--page__background-color-rgb));
     --page__text-color: var(--text-color);
 
     /* Splitter */
     --splitter__background-color: var(--border-color);
     --splitter__background-color--highlight: var(--blue-300);
-    /* A split pane's splitter line is drawn in the border colour, as other borders are (its contrast
-       is to be revisited with the theme colours); its keyboard focus is at least 3:1 against the
-       panes beside it (WCAG 1.4.11) */
+    /* A splitter's line has its own token, though it matches the borders for now: no line subtle
+       enough to sit with the borders reaches 3:1, so a splitter is found by its cursor and its
+       keyboard focus, which is at least 3:1 against the panes beside it (WCAG 1.4.11) */
     --splitter__line-color: var(--border-color);
     --splitter__focus-color: var(--blue-300);
 
@@ -174,21 +182,22 @@
     --curve-tab__background-color: transparent;
     --curve-tab__border: thin solid transparent;
     --curve-tab__border--hover: thin solid transparent;
-    --curve-tab__background-color--selected: #484d52;
+    --curve-tab__background-color--selected: #3a3e47;
     --curve-tab__background-color--hover: rgba(var(--blue-300-rgb), .2);
     --curve-tab__box-shadow--selected: 0 0 1px 1px rgb(0 0 0 / 100%);
     --curve-tab__border-radius: .2rem;
 
     /* Controls */
-    --control__background-color: #15161b;
+    --control__background-color: #272b33;
     /* Barely lighter than the page, so a disabled field looks set back, not lighter (and so more
        prominent) than an enabled one */
     --control__background-color--disabled: rgba(255, 255, 255, 0.03);
-    --control__border-color: #505050;
+    /* 3:1 on the page and in dialogs, so a field's edge identifies it (WCAG 1.4.11) */
+    --control__border-color: #696d77;
     --control__border-color--disabled: transparent;
     --control__text-color: var(--text-color);
     --control__text-color--disabled: var(--text-color--disabled);
-    --control__text-color--readonly: var(--text-color--disabled);
+    --control__text-color--readonly: var(--text-color--muted);
 
     /* Form Group */
     --form-group__label-color: #eee;
@@ -196,7 +205,7 @@
     /* Dashboard */
     --dashboard-panel__background-color: var(--page__background-color);
     --dashboard-panel__grid-color: var(--border-color);
-    --dashboard-panel__grid-background-color: #19171d;
+    --dashboard-panel__grid-background-color: #16181b;
 
     /* ExpanderCell */
     --expander-cell-icon__background-color--hover: rgba(255, 255, 255, 0.2);
@@ -246,10 +255,10 @@
     --menu-item__text-color--selected--hover: var(--text-color--selected);
 
     /* Navigation pane */
-    --navigation__splitter__background-color: #353944;
-    --navigation__splitter__line-color: var(--navigation__splitter__background-color);
-    --navigation__background-color: #19171d;
-    --navigation__background-color--hovered: rgb(45, 47, 53);
+    --navigation__splitter__background-color: var(--border-color);
+    --navigation__splitter__line-color: var(--splitter__line-color);
+    --navigation__background-color: #16181b;
+    --navigation__background-color--hovered: var(--row__background-color--hovered);
     --navigation__background-color--selected: rgb(0, 101, 167);
     --navigation__background-color--selected-hovered: rgb(0,120,199);
     --navigation__background-color--focussed: rgba(0,120,199,.5);
@@ -257,7 +266,7 @@
 
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--text-color--selected);
-    --navigation__text-color--no-match: #7b7b7b;
+    --navigation__text-color--no-match: var(--text-color--muted);
     --logo-color: var(--white);
 
     /* Specific */
@@ -267,14 +276,21 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), .2);
 
     /* Dialog */
-    --dialog__background-color-rgb: var(--page__background-color-rgb);
+    /* A step above the page and below the inputs in it, so its fields still stand out */
+    --dialog__background-color-rgb: 32, 35, 42;
     --dialog__background-color: rgb(var(--dialog__background-color-rgb));
-    --dialog__border-color: #2c2f35;
+    --dialog__border-color: var(--border-color);
     --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .8);
     --dialog__border-radius: 8px;
     --popup__shadow: 0 0 10px 1px rgb(0, 0, 0, .9);
     --transparency__background-color: rgba(var(--dialog__background-color-rgb), .8);
     --transparency__backdrop-filter: saturate(2) blur(20px);
+
+    /* Popups (menus, lists) are raised to the inputs' level */
+    --popup__background-color-rgb: 39, 43, 51;
+
+    /* Boxes that hold content (grids, trees and lists in a border) take the colour of what they sit on */
+    --content-box__background-color: transparent;
 
     /* Status */
     --ok: var(--blue-500);

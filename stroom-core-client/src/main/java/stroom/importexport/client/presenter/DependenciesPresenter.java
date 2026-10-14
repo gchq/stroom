@@ -341,10 +341,10 @@ public class DependenciesPresenter
         final String commonStyles = "font-weight:bold";
         if (row.isOk()) {
             value = "OK";
-            builder.appendHtmlConstant("<span style=\"color:var(--icon-colour__green);" + commonStyles + "\">");
+            builder.appendHtmlConstant("<span style=\"color:var(--text-color--green);" + commonStyles + "\">");
         } else {
             value = "Missing";
-            builder.appendHtmlConstant("<span style=\"color:var(--icon-colour__red);" + commonStyles + "\">");
+            builder.appendHtmlConstant("<span style=\"color:var(--text-color--red);" + commonStyles + "\">");
         }
         builder.appendEscaped(value);
         builder.appendHtmlConstant("</span>");

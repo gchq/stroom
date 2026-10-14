@@ -91,7 +91,7 @@
 .DashboardViewImpl-content {
     display: flex;
     flex-grow: 1;
-	background-color: var(--control__background-color);
+	background-color: var(--content-box__background-color);
 }
 
 .fullScreenViewImpl-root {

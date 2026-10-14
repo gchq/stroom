@@ -60,7 +60,7 @@ public class ManageGlobalPropertyListPresenter
     private static final String NODES_UNAVAILABLE_SHORT_MSG = "[Error]";
     private static final String MULTIPLE_VALUES_MSG = "[Multiple values]";
     private static final String MULTIPLE_SOURCES_MSG = "[Multiple]";
-    private static final String ERROR_CSS_COLOUR = "red";
+    private static final String ERROR_CSS_COLOUR = "var(--text-color--red)";
 
     // This is the delay between getting the list of props and hitting all the other nodes
     // to get their specific values.  Too low and we pepper the nodes for each key press of the filter.

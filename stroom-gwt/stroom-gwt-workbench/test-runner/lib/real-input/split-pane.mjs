@@ -54,8 +54,8 @@ async function dragAndExpect(page, { testId = 'pane-0', dx = 0, dy = 0, grows = 
 }
 
 // The contrast of a story's first splitter's keyboard focus colour against what is either side of
-// it (WCAG 1.4.11 asks for 3:1), as [before, after]. Its line at rest is drawn in the border colour,
-// as other borders are, until the theme colours are revisited, so isn't checked here
+// it (WCAG 1.4.11 asks for 3:1), as [before, after]. Its line at rest isn't checked: no line subtle
+// enough to sit with the borders reaches 3:1, so a splitter is found by its cursor and its focus
 async function splitterContrast(page) {
   await page.evaluate(() => document.activeElement?.blur());
   await page.mouse.move(0, 0);
@@ -69,15 +69,22 @@ async function splitterContrast(page) {
       const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
       return Math.round(((light + 0.05) / (dark + 0.05)) * 100) / 100;
     };
-    // The colour shown at a point: the first background that isn't transparent
+    // The colour shown at a point: the backgrounds there, blended down to the first opaque one (a
+    // striped row is a translucent overlay on what it sits on)
     const backgroundAt = (x, y) => {
+      const layers = [];
       for (let element = document.elementFromPoint(x, y); element; element = element.parentElement) {
         const colour = rgb(getComputedStyle(element).backgroundColor);
-        if (colour.length < 4 || colour[3] > 0) {
-          return colour;
+        const alpha = colour.length < 4 ? 1 : colour[3];
+        if (alpha > 0) {
+          layers.push([...colour.slice(0, 3), alpha]);
+          if (alpha === 1) {
+            break;
+          }
         }
       }
-      return [255, 255, 255];
+      return layers.reduceRight((below, [r, g, b, alpha]) =>
+        [r, g, b].map((v, i) => v * alpha + below[i] * (1 - alpha)), [255, 255, 255]);
     };
     const variable = (name) => {
       const probe = document.createElement('div');

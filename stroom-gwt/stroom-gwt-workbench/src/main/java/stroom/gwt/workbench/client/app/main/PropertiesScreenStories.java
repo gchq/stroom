@@ -108,9 +108,10 @@ public final class PropertiesScreenStories {
                     final Play screen = play.screen();
                     play.findByText("stroom.node");
                     play.findByText(HOME_NAME);
-                    // stroom.node disagrees across the cluster: "[Multiple values]" in red
+                    // stroom.node disagrees across the cluster: "[Multiple values]" in the red text colour
+                    // (the dark theme's --text-color--red, red-300)
                     final Query multiple = play.findByText("[Multiple values]");
-                    play.expect(multiple).toHaveStyle("color", "rgb(255, 0, 0)");
+                    play.expect(multiple).toHaveStyle("color", "rgb(229, 115, 115)");
                     // Double-click stroom.path.home's row: the edit dialog
                     // GWT's grid handles the events of its cells, so the row's name is pressed rather
                     // than the row (a <tr> with no role)

@@ -1,8 +1,14 @@
 /* Customisations to standard bootstrap styles */
 /*@import "themes";*/
 
+/* Bootstrap colours pre near-black whatever the theme; it takes the text colour around it instead */
+pre {
+    color: inherit;
+}
+
 .badge-success {
-    background-color: var(--valid);
+    /* Darker than --valid, so the badge's white text is 4.5:1 */
+    background-color: var(--green-800);
 }
 
 .badge-warning {

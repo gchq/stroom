@@ -132,7 +132,7 @@
 .timeline-header span {
     position: absolute;
     font-size: 10px;
-    color: #888;
+    color: var(--text-color--muted);
     padding: 5px 0;
     transform: translate(-50%, 0%);
 }
@@ -682,6 +682,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #888;
+    color: var(--text-color--muted);
     font-size: 13px;
 }

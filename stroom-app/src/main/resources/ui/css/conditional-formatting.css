@@ -305,22 +305,26 @@
 
 .stroom-theme-dark .cf-lime {
     background-color: var(--lime-900);
-    color: var(--lime-50);
+    /* Black, as the light tint is under 4.5:1 on this bright 900 shade */
+    color: var(--black);
 }
 
 .stroom-theme-dark .cf-yellow {
     background-color: var(--yellow-900);
-    color: var(--yellow-50);
+    /* Black, as the light tint is under 4.5:1 on this bright 900 shade */
+    color: var(--black);
 }
 
 .stroom-theme-dark .cf-amber {
     background-color: var(--amber-900);
-    color: var(--amber-50);
+    /* Black, as the light tint is under 4.5:1 on this bright 900 shade */
+    color: var(--black);
 }
 
 .stroom-theme-dark .cf-orange {
     background-color: var(--orange-900);
-    color: var(--orange-50);
+    /* Black, as the light tint is under 4.5:1 on this bright 900 shade */
+    color: var(--black);
 }
 
 .stroom-theme-dark .cf-deep-orange {
