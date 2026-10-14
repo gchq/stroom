@@ -57,6 +57,7 @@ dependencies {
     implementation libs.langchain4j.open.ai
     implementation libs.jooq
     implementation libs.restygwt
+    implementation libs.zstd.jni
 
     runtimeOnly libs.mysql.connector.java
 
