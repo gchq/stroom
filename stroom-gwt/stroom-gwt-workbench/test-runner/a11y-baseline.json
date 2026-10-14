@@ -207,9 +207,6 @@
   "app-main-annotationeditor--status-setting-block": [
     "label"
   ],
-  "app-main-apppermissionsscreen--read-only-without-manage-users": [
-    "color-contrast"
-  ],
   "app-main-appshell--activity-chooser": [
     "button-name"
   ],
@@ -432,11 +429,9 @@
     "label"
   ],
   "app-main-nodesscreen--node-jobs": [
-    "color-contrast",
     "label"
   ],
   "app-main-nodesscreen--preselect-node": [
-    "color-contrast",
     "label"
   ],
   "app-main-nodesscreen--server-side-sorting": [

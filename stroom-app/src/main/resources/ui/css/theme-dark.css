@@ -33,7 +33,8 @@
     --text-color--hover: #e5eaeb;
     --text-color--selected: #fff;
     --text-color--disabled: #999;
-    --text-color--disabled--selected: #ccc;
+    /* 4.5:1 on a selected row's blue, hovered or not */
+    --text-color--disabled--selected: #e0e0e0;
     /* Secondary text (placeholders, read-only values, unassigned labels, paths): 4.5:1 on inputs, the
        lightest surface it sits on */
     --text-color--muted: #9e9e9e;
@@ -62,9 +63,10 @@
     --row__background-color--odd: transparent;
     --row__background-color--hovered: #22262e;
     --row__background-color--selected: rgb(0, 101, 167);
-    --row__background-color--selected--hovered: rgb(0,120,199);
+    /* A hovered or focused selected row darkens (as a pressed button does), keeping its text clear */
+    --row__background-color--selected--hovered: #00568f;
     --row__background-color--focussed: rgba(0,120,199,.5);
-    --row__background-color--selected--focussed: rgb(0,120,199);
+    --row__background-color--selected--focussed: #00568f;
     --row__box-shadow--focussed: inset 0 0 2px 1px #81cdff;
     --row__box-shadow--selected--focussed: inset 0 0 2px 1px #81cdff;
     --row__text-color--selected: var(--text-color--selected);
@@ -268,9 +270,9 @@
     --navigation__background-color: #16181b;
     --navigation__background-color--hovered: var(--row__background-color--hovered);
     --navigation__background-color--selected: rgb(0, 101, 167);
-    --navigation__background-color--selected-hovered: rgb(0,120,199);
+    --navigation__background-color--selected-hovered: var(--row__background-color--selected--hovered);
     --navigation__background-color--focussed: rgba(0,120,199,.5);
-    --navigation__background-color--selected--focussed: rgb(0,120,199);
+    --navigation__background-color--selected--focussed: var(--row__background-color--selected--focussed);
 
     --navigation__text-color: var(--text-color);
     --navigation__text-color--selected: var(--text-color--selected);
