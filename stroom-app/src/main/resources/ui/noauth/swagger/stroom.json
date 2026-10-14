@@ -24285,6 +24285,18 @@
         },
         "required" : [ "type" ]
       },
+      "McpToolPolicyRule" : {
+        "type" : "object",
+        "properties" : {
+          "policy" : {
+            "type" : "string",
+            "enum" : [ "ALLOW", "ASK", "ASK_ALWAYS", "DENY" ]
+          },
+          "toolPattern" : {
+            "type" : "string"
+          }
+        }
+      },
       "McpToolServerConfig" : {
         "type" : "object",
         "properties" : {
@@ -24324,6 +24336,15 @@
           },
           "name" : {
             "type" : "string"
+          },
+          "toolPolicies" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/McpToolPolicyRule"
+            }
+          },
+          "trusted" : {
+            "type" : "boolean"
           }
         }
       },
@@ -24946,6 +24967,10 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "maxToolDefinitions" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "mcpToolServers" : {
             "type" : "array",
             "items" : {
@@ -24960,6 +24985,9 @@
           },
           "reasoningEffort" : {
             "type" : "string"
+          },
+          "toolsEnabled" : {
+            "type" : "boolean"
           },
           "type" : {
             "type" : "string"

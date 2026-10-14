@@ -549,7 +549,10 @@ public class AskStroomAIService {
         final AtomicBoolean cancelled = new AtomicBoolean(false);
         registerCancellation(chatId, cancelled);
 
-        try (final McpToolset toolset = mcpToolServerFactory.createToolset(modelDoc, chatId)) {
+        // A model with tools turned off (e.g. one that cannot call tools) gets a plain chat.
+        try (final McpToolset toolset = modelDoc.isToolsEnabled()
+                ? mcpToolServerFactory.createToolset(modelDoc, chatId)
+                : McpToolset.EMPTY) {
             if (!toolset.isEmpty()) {
                 LOGGER.debug(() -> "processQuestion: MCP tool servers active for chatId=" + chatId);
             }
@@ -639,7 +642,7 @@ public class AskStroomAIService {
 
                 try {
                     final ChatResponse chatResponse = processUnified(
-                            chatModel, chatId, messages, currentAttempt, toolset, workingMessageId,
+                            chatModel, modelDoc, chatId, messages, currentAttempt, toolset, workingMessageId,
                             cancelled, debugLog);
                     final String responseText = chatResponse.aiMessage().text();
 
@@ -878,6 +881,7 @@ public class AskStroomAIService {
      * tools it is a single plain call.
      */
     private ChatResponse processUnified(final ChatModel chatModel,
+                                        final OpenAIModelDoc modelDoc,
                                         final int chatId,
                                         final List<ChatMessage> messages,
                                         final int attempt,
@@ -900,7 +904,7 @@ public class AskStroomAIService {
 
                     // The agent loop offers the built-in tools plus any MCP tools; with no tools at all
                     // it degrades to a single plain call.
-                    return mcpAgentChat.chat(chatModel, chatId, messages, toolset,
+                    return mcpAgentChat.chat(chatModel, modelDoc, chatId, messages, toolset,
                             workingMessageId, cancelled, taskContext, attempt, debugLog);
                 }).get();
     }

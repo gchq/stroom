@@ -17711,6 +17711,18 @@ components:
           type: string
       required:
       - type
+    McpToolPolicyRule:
+      type: object
+      properties:
+        policy:
+          type: string
+          enum:
+          - ALLOW
+          - ASK
+          - ASK_ALWAYS
+          - DENY
+        toolPattern:
+          type: string
     McpToolServerConfig:
       type: object
       properties:
@@ -17744,6 +17756,12 @@ components:
           $ref: "#/components/schemas/HttpClientConfig"
         name:
           type: string
+        toolPolicies:
+          type: array
+          items:
+            $ref: "#/components/schemas/McpToolPolicyRule"
+        trusted:
+          type: boolean
     Message:
       type: object
       properties:
@@ -18215,6 +18233,9 @@ components:
         maxContextWindowTokens:
           type: integer
           format: int32
+        maxToolDefinitions:
+          type: integer
+          format: int32
         mcpToolServers:
           type: array
           items:
@@ -18225,6 +18246,8 @@ components:
           type: string
         reasoningEffort:
           type: string
+        toolsEnabled:
+          type: boolean
         type:
           type: string
         updateTimeMs:
