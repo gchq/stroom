@@ -46,6 +46,7 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.service.tool.ToolExecutor;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -143,6 +144,8 @@ class McpAgentChat {
     private final ToolConsent toolConsent;
     private final AiAuditLog auditLog;
     private final ModelStreamer modelStreamer;
+    private final ToolGroups.Activations toolGroupActivations;
+    private final Provider<AiConfig> aiConfigProvider;
 
     @Inject
     McpAgentChat(final AiService aiService,
@@ -152,8 +155,12 @@ class McpAgentChat {
                  final ContextUsageTracker usageTracker,
                  final ToolConsent toolConsent,
                  final AiAuditLog auditLog,
-                 final ModelStreamer modelStreamer) {
+                 final ModelStreamer modelStreamer,
+                 final ToolGroups.Activations toolGroupActivations,
+                 final Provider<AiConfig> aiConfigProvider) {
         this.aiService = aiService;
+        this.toolGroupActivations = toolGroupActivations;
+        this.aiConfigProvider = aiConfigProvider;
         this.modelStreamer = modelStreamer;
         this.builtInTools = builtInTools;
         this.runManager = runManager;
@@ -199,12 +206,15 @@ class McpAgentChat {
                 .anyMatch(m -> UNTRUSTED_MESSAGE_TYPES.contains(m.getMessageType()))) {
             runManager.markTainted(chatId);
         }
-        final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>();
+        final Map<ToolSpecification, ToolExecutor> builtIns = new LinkedHashMap<>();
+        final Map<ToolSpecification, ToolExecutor> mcpTools = new LinkedHashMap<>();
         if (modelDoc == null || modelDoc.isToolsEnabled()) {
-            tools.putAll(builtInTools.toolMap());
-            addMcpTools(tools, toolset);
-            limitTools(tools, NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getMaxToolDefinitions, 0), chatId);
+            builtIns.putAll(builtInTools.toolMap());
+            addMcpTools(mcpTools, toolset, builtIns.keySet());
         }
+        // A large set of MCP tools is offered as groups the model turns on when it needs them.
+        final ToolGroups toolGroups = ToolGroups.of(mcpTools, toolset, toolGroupThreshold());
+        Map<ToolSpecification, ToolExecutor> tools = offeredTools(chatId, builtIns, toolGroups, modelDoc);
         final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
         if (tools.isEmpty()) {
             LOGGER.debug(() -> "chat: no tools available for chatId=" + chatId + ", making a plain call");
@@ -219,21 +229,23 @@ class McpAgentChat {
         // Carry on from calls waiting for approval when the run last stopped, now they have been answered.
         resumePending(chatId, conversation, tools, debugLog);
 
-        final List<ToolSpecification> toolSpecifications = List.copyOf(tools.keySet());
-        LOGGER.debug(() -> "chat: chatId=" + chatId + " offering " + toolSpecifications.size()
-                           + " tool(s): " + toolSpecifications.stream()
-                                   .map(ToolSpecification::name)
-                                   .collect(Collectors.joining(", ")));
 
         ChatResponse response = null;
         for (int iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
             if (cancelled.get() || taskContext.isTerminated()) {
                 throw new TaskTerminatedException();
             }
-            // Pick up anything the user has added since the last model call.
+            // Pick up anything the user has added since the last model call, and any group of tools the model has
+            // turned on.
             if (iteration > 1) {
                 conversation.addAll(steerFeed.poll());
+                tools = offeredTools(chatId, builtIns, toolGroups, modelDoc);
             }
+            final List<ToolSpecification> toolSpecifications = List.copyOf(tools.keySet());
+            LOGGER.debug(() -> "chat: chatId=" + chatId + " offering " + toolSpecifications.size()
+                               + " tool(s): " + toolSpecifications.stream()
+                                       .map(ToolSpecification::name)
+                                       .collect(Collectors.joining(", ")));
 
             final List<ToolSpecification> offered = iteration < MAX_ITERATIONS
                     ? toolSpecifications
@@ -277,8 +289,11 @@ class McpAgentChat {
                         JsonUtil.writeValueAsString(new ToolCallRecord(toolRequest.id(), toolRequest.name(),
                                 toolRequest.arguments(), aiMessage.text()), false));
                 final boolean unattended = runManager.isUnattended(chatId);
-                final ToolConsent.Verdict verdict = toolConsent.decide(chatId, toolRequest.name(), builtInTools,
-                        toolset, unattended);
+                // Turning on a group of tools changes nothing, so needs no approval.
+                final ToolConsent.Verdict verdict = ToolGroups.isActivationTool(toolRequest.name())
+                                                    && toolGroups.isGrouped()
+                        ? ToolConsent.Verdict.RUN
+                        : toolConsent.decide(chatId, toolRequest.name(), builtInTools, toolset, unattended);
                 switch (verdict.kind()) {
                     case RUN -> conversation.add(ToolExecutionResultMessage.from(toolRequest,
                             runAndRecord(chatId, callMessage, toolRequest, tools, debugLog, t + 1, unattended)));
@@ -617,11 +632,13 @@ class McpAgentChat {
      * Adds the MCP tools/resources for this chat. Built-in tools win if a name is already taken, so a server
      * cannot replace one of Stroom's own tools.
      */
-    private void addMcpTools(final Map<ToolSpecification, ToolExecutor> tools, final McpToolset toolset) {
+    private void addMcpTools(final Map<ToolSpecification, ToolExecutor> tools,
+                             final McpToolset toolset,
+                             final Set<ToolSpecification> builtIns) {
         if (toolset.isEmpty()) {
             return;
         }
-        final Set<String> names = tools.keySet().stream()
+        final Set<String> names = builtIns.stream()
                 .map(ToolSpecification::name)
                 .collect(Collectors.toSet());
         toolset.tools().forEach((specification, executor) -> {
@@ -632,6 +649,26 @@ class McpAgentChat {
                                   + "tool and will not be offered");
             }
         });
+    }
+
+    /**
+     * @return The tools to offer the model now: the built-in tools, then the MCP tools, as groups if there are
+     * many of them, within the model's tool budget.
+     */
+    private Map<ToolSpecification, ToolExecutor> offeredTools(final int chatId,
+                                                              final Map<ToolSpecification, ToolExecutor> builtIns,
+                                                              final ToolGroups toolGroups,
+                                                              final OpenAIModelDoc modelDoc) {
+        final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>(builtIns);
+        tools.putAll(toolGroups.offered(toolGroupActivations.active(chatId),
+                group -> toolGroupActivations.activate(chatId, group)));
+        limitTools(tools, NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getMaxToolDefinitions, 0), chatId);
+        return tools;
+    }
+
+    private int toolGroupThreshold() {
+        return NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getToolGroupThreshold,
+                AiConfig.DEFAULT_TOOL_GROUP_THRESHOLD);
     }
 
     /**

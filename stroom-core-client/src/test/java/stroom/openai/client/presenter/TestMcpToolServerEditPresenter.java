@@ -16,6 +16,7 @@
 
 package stroom.openai.client.presenter;
 
+import stroom.openai.shared.McpToolGroupRule;
 import stroom.openai.shared.McpToolPolicy;
 import stroom.openai.shared.McpToolPolicyRule;
 
@@ -65,6 +66,21 @@ class TestMcpToolServerEditPresenter {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> McpToolServerEditPresenter.parsePolicies("find_*"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void testParseAndFormatGroups() {
+        assertThat(McpToolServerEditPresenter.parseGroups(" ")).isNull();
+        final List<McpToolGroupRule> rules = McpToolServerEditPresenter.parseGroups(
+                "pipeline_* = pipelines\n\nwhoami = -");
+        assertThat(rules).containsExactly(
+                new McpToolGroupRule("pipeline_*", "pipelines"),
+                new McpToolGroupRule("whoami", McpToolGroupRule.ALWAYS_OFFERED));
+        assertThat(McpToolServerEditPresenter.formatGroups(rules)).isEqualTo("pipeline_* = pipelines\nwhoami = -");
+        assertThat(McpToolServerEditPresenter.formatGroups(null)).isEmpty();
+        assertThatThrownBy(() -> McpToolServerEditPresenter.parseGroups("pipeline_*"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("is not understood");
     }
 
     @Test
