@@ -76,6 +76,195 @@ final class AiToolMessages {
     }
 
     /**
+     * @param ms A duration in milliseconds.
+     * @return The duration for people, e.g. "0.3s", "6s" or "1m 42s".
+     */
+    static String duration(final long ms) {
+        if (ms < 1000) {
+            return (Math.max(1, ms / 100) / 10.0) + "s";
+        }
+        final long seconds = Math.round(ms / 1000.0);
+        if (seconds < 60) {
+            return seconds + "s";
+        }
+        return (seconds / 60) + "m " + (seconds % 60) + "s";
+    }
+
+    /**
+     * @param callJson A TOOL_CALL message's JSON.
+     * @return A short heading saying what the call does, built from the tool and its key arguments.
+     */
+    static String toolHeading(final String callJson) {
+        final String tool = getString(callJson, "tool");
+        final String arguments = getString(callJson, "arguments");
+        final String path = shorten(getString(arguments, "path"));
+        if (tool == null) {
+            return "Called a tool";
+        }
+        switch (tool) {
+            case "ls":
+                return "Listed " + (path != null
+                        ? path
+                        : "/");
+            case "read_file":
+                return "Read " + path;
+            case "grep":
+                return "Searched " + path + " for " + quoted(getString(arguments, "pattern"));
+            case "wc":
+                return "Counted " + path;
+            case "write_file":
+                return "Wrote " + path;
+            case "str_replace":
+                return "Edited " + path;
+            case "delete_file":
+                return "Deleted " + path;
+            case "jq":
+                return "Ran jq on " + path;
+            case "xpath":
+                return "Ran XPath on " + path;
+            case "table":
+                return "Ran a table query on " + path;
+            case "pipeline":
+                return "Ran a pipeline of tools";
+            case "run_stroomql":
+                return "Ran a StroomQL query";
+            case "summarise_column":
+                return "Summarised column " + quoted(getString(arguments, "column")) + " of " + path;
+            case "memory":
+                return "Memory: " + getString(arguments, "command") + (path != null
+                        ? " " + path
+                        : "");
+            case "read_turn":
+                return "Read turn " + getString(arguments, "turn") + " of the conversation";
+            case "search_history":
+                return "Searched the conversation for " + quoted(getString(arguments, "text"));
+            default:
+                // An MCP tool: its name, with the server prefix, plus its first argument.
+                final String first = firstStringArgument(arguments);
+                return "Called " + tool + (first != null
+                        ? " " + quoted(first)
+                        : "");
+        }
+    }
+
+    /**
+     * @param resultJson A TOOL_RESULT message's JSON.
+     * @return How the call went, e.g. " · 2.1s" or " · failed · 0.3s".
+     */
+    static String resultSuffix(final String resultJson) {
+        final String durationMs = getString(resultJson, "durationMs");
+        final String took = durationMs != null
+                ? " · " + duration(parseLong(durationMs))
+                : "";
+        return (getBoolean(resultJson, "error")
+                ? " · failed"
+                : "") + took;
+    }
+
+    /**
+     * @param json A THINKING message: JSON with the text and how long it took, or plain text for older messages.
+     * @return The reasoning text.
+     */
+    static String thinkingText(final String json) {
+        final String text = json != null && json.startsWith("{")
+                ? getString(json, "text")
+                : null;
+        return text != null
+                ? text
+                : json;
+    }
+
+    /**
+     * @param json A THINKING message.
+     * @return The reasoning to show under its heading: the text, less its first line if that is the heading.
+     */
+    static String thinkingBody(final String json) {
+        final String text = thinkingText(json);
+        if (text == null) {
+            return "";
+        }
+        final String trimmed = text.trim();
+        final String[] parts = trimmed.split("\n", 2);
+        final String firstLine = parts[0].trim();
+        final boolean headed = (firstLine.startsWith("**") && firstLine.endsWith("**") && firstLine.length() > 4)
+                               || firstLine.startsWith("#");
+        return headed && parts.length > 1
+                ? parts[1].trim()
+                : trimmed;
+    }
+
+    /**
+     * @param json A THINKING message.
+     * @return A heading for the reasoning: the model's own heading if it starts with one, otherwise how long it
+     * thought for.
+     */
+    static String thinkingTitle(final String json) {
+        final String text = thinkingText(json);
+        final String firstLine = text != null
+                ? text.trim().split("\n", 2)[0].trim()
+                : "";
+        if (firstLine.startsWith("**") && firstLine.endsWith("**") && firstLine.length() > 4) {
+            return firstLine.substring(2, firstLine.length() - 2);
+        }
+        if (firstLine.startsWith("#")) {
+            return firstLine.replaceFirst("^#+\\s*", "");
+        }
+        final String durationMs = json != null && json.startsWith("{")
+                ? getString(json, "durationMs")
+                : null;
+        final long ms = durationMs != null
+                ? parseLong(durationMs)
+                : 0;
+        return ms > 0
+                ? "Thought for " + duration(ms)
+                : "Thought";
+    }
+
+    private static String firstStringArgument(final String arguments) {
+        try {
+            final JSONObject object = arguments != null
+                    ? JSONParser.parseStrict(arguments).isObject()
+                    : null;
+            if (object != null) {
+                for (final String key : object.keySet()) {
+                    final JSONString string = object.get(key).isString();
+                    if (string != null) {
+                        return shorten(string.stringValue());
+                    }
+                }
+            }
+        } catch (final RuntimeException e) {
+            // Not JSON, so nothing to show.
+        }
+        return null;
+    }
+
+    private static String quoted(final String text) {
+        if (text == null) {
+            return "";
+        }
+        return "\u201c" + shorten(text) + "\u201d";
+    }
+
+    private static String shorten(final String text) {
+        if (text == null) {
+            return null;
+        }
+        final String oneLine = text.replace('\n', ' ');
+        return oneLine.length() > 40
+                ? oneLine.substring(0, 39) + "\u2026"
+                : oneLine;
+    }
+
+    private static long parseLong(final String text) {
+        try {
+            return (long) Double.parseDouble(text);
+        } catch (final RuntimeException e) {
+            return 0;
+        }
+    }
+
+    /**
      * @return Markdown showing a tool call's arguments.
      */
     static String callMarkdown(final String json) {
@@ -94,7 +283,7 @@ final class AiToolMessages {
         if (path != null) {
             sb.append("The full result was saved to the workspace file `").append(path).append("`.\n\n");
         }
-        sb.append("~~~\n").append(getString(json, "text") != null
+        sb.append("Result:\n\n~~~\n").append(getString(json, "text") != null
                 ? getString(json, "text")
                 : "").append("\n~~~");
         return sb.toString();

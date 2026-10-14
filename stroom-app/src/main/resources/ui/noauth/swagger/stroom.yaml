@@ -11117,6 +11117,8 @@ components:
           - COMPACTION_SUMMARY
           - MEMORY_UPDATE
           - APPROVAL_REQUEST
+          - STREAMING_ANSWER
+          - STREAMING_THINKING
         tokenCount:
           type: integer
           format: int32
@@ -11148,6 +11150,10 @@ components:
             $ref: "#/components/schemas/AiChatMessage"
         run:
           $ref: "#/components/schemas/AiChatRun"
+        streamingMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiChatMessage"
         workingMessage:
           $ref: "#/components/schemas/AiChatMessage"
     AiChatRun:
@@ -14335,6 +14341,8 @@ components:
         chatId:
           type: integer
           format: int32
+        includeActivity:
+          type: boolean
         includeDataContexts:
           type: boolean
     DownloadQueryResultsRequest:
@@ -18558,6 +18566,8 @@ components:
           type: string
         reasoningEffort:
           type: string
+        showReasoning:
+          type: boolean
         toolsEnabled:
           type: boolean
         type:

@@ -105,6 +105,7 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
         getView().setReasoningEffort(model.getReasoningEffort());
         getView().setEmbeddingModelDimensions(model.getEmbeddingModelDimensions());
         getView().setToolsEnabled(model.isToolsEnabled());
+        getView().setShowReasoning(model.isShowReasoning());
         getView().setMaxToolDefinitions(model.getMaxToolDefinitions());
 
         httpClientConfiguration = model.getHttpClientConfiguration();
@@ -133,6 +134,7 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
                 .reasoningEffort(getView().getReasoningEffort())
                 .embeddingModelDimensions(getView().getEmbeddingModelDimensions())
                 .toolsEnabled(getView().isToolsEnabled())
+                .showReasoning(getView().isShowReasoning())
                 .maxToolDefinitions(getView().getMaxToolDefinitions())
                 .httpClientConfiguration(httpClientConfiguration)
                 .build();
@@ -176,6 +178,10 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
         boolean isToolsEnabled();
 
         void setToolsEnabled(boolean toolsEnabled);
+
+        boolean isShowReasoning();
+
+        void setShowReasoning(boolean showReasoning);
 
         int getMaxToolDefinitions();
 
