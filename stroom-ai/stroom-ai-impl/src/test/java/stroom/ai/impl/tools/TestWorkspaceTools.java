@@ -160,7 +160,7 @@ class TestWorkspaceTools {
     @Test
     void testReadFileLimits() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, 10, 300, null, null), null);
+                new AiWorkspaceConfig(null, null, null, 10, 300, null, null), null, null);
         workspace.write(chatId, WorkspacePath.parse("/outputs/long.txt"), "x".repeat(5_000) + "\n", null);
 
         assertThat(run(new ReadFileTool(workspace), "{\"path\":\"/outputs/events.log\",\"lineCount\":100}"))
@@ -225,7 +225,7 @@ class TestWorkspaceTools {
     @Test
     void testGrepReDoSIsStopped() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, null, null, StroomDuration.ofMillis(300), null), null);
+                new AiWorkspaceConfig(null, null, null, null, null, StroomDuration.ofMillis(300), null), null, null);
         workspace.write(chatId, WorkspacePath.parse("/outputs/csv.txt"), "a,".repeat(40) + "\n", null);
 
         assertThat(run(new GrepTool(workspace), "{\"path\":\"/outputs/csv.txt\",\"pattern\":\"(.*?,){25}x\","
@@ -275,7 +275,7 @@ class TestWorkspaceTools {
     @Test
     void testQuota() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(100L, null, null, null, null, null, null), null);
+                new AiWorkspaceConfig(100L, null, null, null, null, null, null), null, null);
 
         assertThat(run(new WriteFileTool(workspace), "{\"path\":\"/outputs/big\",\"content\":\""
                                                     + "x".repeat(200) + "\"}"))

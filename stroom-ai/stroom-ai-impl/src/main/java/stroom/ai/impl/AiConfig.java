@@ -39,6 +39,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     static final int DEFAULT_MAX_RUNS_PER_NODE = 20;
     static final StroomDuration DEFAULT_WORKSPACE_FILE_RETENTION = StroomDuration.ofDays(7);
     static final StroomDuration DEFAULT_CHAT_RETENTION = StroomDuration.ofDays(90);
+    static final int DEFAULT_TOOL_GROUP_THRESHOLD = 24;
 
     private final AiDbConfig dbConfig;
     private final CacheConfig chatResponseCache;
@@ -51,6 +52,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final StroomDuration chatRetention;
     private final AiWorkspaceConfig workspace;
     private final boolean allowApproveEverything;
+    private final int toolGroupThreshold;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -67,6 +69,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         chatRetention = DEFAULT_CHAT_RETENTION;
         workspace = new AiWorkspaceConfig();
         allowApproveEverything = false;
+        toolGroupThreshold = DEFAULT_TOOL_GROUP_THRESHOLD;
     }
 
     @SuppressWarnings("unused")
@@ -81,7 +84,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("workspaceFileRetention") final StroomDuration workspaceFileRetention,
                     @JsonProperty("chatRetention") final StroomDuration chatRetention,
                     @JsonProperty("workspace") final AiWorkspaceConfig workspace,
-                    @JsonProperty("allowApproveEverything") final Boolean allowApproveEverything) {
+                    @JsonProperty("allowApproveEverything") final Boolean allowApproveEverything,
+                    @JsonProperty("toolGroupThreshold") final Integer toolGroupThreshold) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -94,6 +98,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.chatRetention = Objects.requireNonNullElse(chatRetention, DEFAULT_CHAT_RETENTION);
         this.workspace = Objects.requireNonNullElseGet(workspace, AiWorkspaceConfig::new);
         this.allowApproveEverything = Objects.requireNonNullElse(allowApproveEverything, false);
+        this.toolGroupThreshold = Objects.requireNonNullElse(toolGroupThreshold, DEFAULT_TOOL_GROUP_THRESHOLD);
     }
 
     @Override
@@ -178,6 +183,14 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         return allowApproveEverything;
     }
 
+    @JsonPropertyDescription("When the MCP tools offered to a model number more than this, they are offered as " +
+                             "groups instead, each with a tool that turns the group on, so the model's context is " +
+                             "not filled with tool definitions it does not need. 0 offers every tool at once.")
+    @JsonProperty("toolGroupThreshold")
+    public int getToolGroupThreshold() {
+        return toolGroupThreshold;
+    }
+
     @Override
     public String toString() {
         return "AiConfig{" +
@@ -192,6 +205,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", chatRetention=" + chatRetention +
                ", workspace=" + workspace +
                ", allowApproveEverything=" + allowApproveEverything +
+               ", toolGroupThreshold=" + toolGroupThreshold +
                '}';
     }
 }

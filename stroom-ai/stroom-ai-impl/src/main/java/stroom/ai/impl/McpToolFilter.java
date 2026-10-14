@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.openai.shared.McpToolGroupRule;
 import stroom.openai.shared.McpToolPolicy;
 import stroom.openai.shared.McpToolPolicyRule;
 import stroom.openai.shared.McpToolServerConfig;
@@ -33,14 +34,20 @@ final class McpToolFilter {
     private final List<String> allowed;
     private final List<String> denied;
     private final List<McpToolPolicyRule> policies;
+    private final List<McpToolGroupRule> groups;
 
     private McpToolFilter(final List<String> allowed,
                           final List<String> denied,
-                          final List<McpToolPolicyRule> policies) {
+                          final List<McpToolPolicyRule> policies,
+                          final List<McpToolGroupRule> groups) {
         this.allowed = clean(allowed);
         this.denied = clean(denied);
         this.policies = NullSafe.list(policies).stream()
                 .filter(rule -> NullSafe.isNonBlankString(rule.getToolPattern()))
+                .toList();
+        this.groups = NullSafe.list(groups).stream()
+                .filter(rule -> NullSafe.isNonBlankString(rule.getToolPattern())
+                                && NullSafe.isNonBlankString(rule.getGroup()))
                 .toList();
     }
 
@@ -48,8 +55,9 @@ final class McpToolFilter {
     /// @return A filter for the server's tools.
     static McpToolFilter forServer(final McpToolServerConfig server) {
         return server == null
-                ? new McpToolFilter(List.of(), List.of(), List.of())
-                : new McpToolFilter(server.getAllowedTools(), server.getDeniedTools(), server.getToolPolicies());
+                ? new McpToolFilter(List.of(), List.of(), List.of(), List.of())
+                : new McpToolFilter(server.getAllowedTools(), server.getDeniedTools(), server.getToolPolicies(),
+                        server.getToolGroups());
     }
 
     /// @param toolName The tool's name, as given by its server.
@@ -73,6 +81,17 @@ final class McpToolFilter {
         return policies.stream()
                 .filter(rule -> matches(rule.getToolPattern().strip(), toolName))
                 .map(McpToolPolicyRule::getPolicy)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /// @param toolName The tool's name, as given by its server.
+    /// @return The group of the first group rule that matches the tool (which may be
+    /// [McpToolGroupRule#ALWAYS_OFFERED]), or null if none does.
+    String groupFor(final String toolName) {
+        return groups.stream()
+                .filter(rule -> matches(rule.getToolPattern().strip(), toolName))
+                .map(rule -> rule.getGroup().strip())
                 .findFirst()
                 .orElse(null);
     }

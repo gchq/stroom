@@ -49,6 +49,7 @@ appConfig:
     maxRunDuration: "PT2H"
     maxRunsPerNode: 20
     maxRunsPerUser: 3
+    toolGroupThreshold: 24
     unattendedAfter: "PT10M"
     workspace:
       maxCharsPerRead: 20000
