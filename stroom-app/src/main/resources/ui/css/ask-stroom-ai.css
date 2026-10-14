@@ -143,6 +143,18 @@
     color: #d32f2f;
 }
 
+.ai-message--run-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-left: 3px solid var(--text-colour-disabled, #888);
+    opacity: 0.9;
+}
+
+.ai-run-resume {
+    cursor: pointer;
+}
+
 .ai-message--warning {
     background: rgba(237, 108, 2, 0.1);
     border-left: 3px solid #ed6c02;

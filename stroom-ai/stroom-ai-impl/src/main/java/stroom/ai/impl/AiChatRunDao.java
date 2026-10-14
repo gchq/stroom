@@ -21,6 +21,8 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /// Stores "Ask Stroom AI" agent runs (`ai_chat_run`). A run's status is only ever changed with a compare-and-set,
@@ -77,6 +79,23 @@ public interface AiChatRunDao {
                                 AiChatRunStatus newStatus,
                                 AiChatRunStopReason stopReason,
                                 String errorMessage);
+
+    /// Records that the runs are still being worked on, by updating their heartbeat to now. Runs that have ended
+    /// are left alone.
+    ///
+    /// @param runIds The runs being worked on by this node.
+    void heartbeat(Collection<Integer> runIds);
+
+    /// @param runIds Some runs.
+    /// @return The status of each run that exists.
+    Map<Integer, AiChatRunStatus> getStatuses(Collection<Integer> runIds);
+
+    /// Marks active runs whose heartbeat is older than a time as interrupted, as the node working on them must
+    /// have stopped.
+    ///
+    /// @param staleBeforeMs Runs with a heartbeat before this time are interrupted.
+    /// @return The runs that were interrupted, as they were before.
+    List<AiChatRun> interruptStale(long staleBeforeMs);
 
     /// Deletes all of a chat's runs, e.g. because the chat is being deleted.
     ///

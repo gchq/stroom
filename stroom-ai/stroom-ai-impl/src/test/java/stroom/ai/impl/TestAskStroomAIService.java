@@ -17,6 +17,9 @@
 package stroom.ai.impl;
 
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatRun;
+import stroom.ai.shared.AiChatRunStatus;
+import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
 
 import org.junit.jupiter.api.Test;
@@ -36,8 +39,8 @@ class TestAskStroomAIService {
                 message(4, AiMessageType.ERROR, "The AI model took too long to respond"),
                 message(5, AiMessageType.WORKING, "Working..."),
                 message(6, AiMessageType.DEBUG_DETAIL, "detail"),
-                message(7, AiMessageType.USER_MESSAGE, "question 2"),
-                message(8, AiMessageType.AI_RESPONSE, "answer"));
+                message(7, AiMessageType.AI_RESPONSE, "answer"),
+                message(8, AiMessageType.USER_MESSAGE, "question 2"));
 
         final List<AiChatMessage> selected = AskStroomAIService.selectHistoryForModel(history);
 
@@ -45,6 +48,33 @@ class TestAskStroomAIService {
         assertThat(selected)
                 .extracting(AiChatMessage::getId)
                 .containsExactly(1, 2, 7, 8);
+    }
+
+    @Test
+    void testSelectHistoryForModel_endsAtTheLastQuestion() {
+        // A partial answer from an attempt that was stopped is left out, so the question can be answered again.
+        final List<AiChatMessage> history = List.of(
+                message(1, AiMessageType.USER_MESSAGE, "question 1"),
+                message(2, AiMessageType.AI_RESPONSE, "answer 1"),
+                message(3, AiMessageType.USER_MESSAGE, "question 2"),
+                message(4, AiMessageType.AI_RESPONSE, "partial answer 2"));
+
+        assertThat(AskStroomAIService.selectHistoryForModel(history))
+                .extracting(AiChatMessage::getId)
+                .containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void testResumeNote() {
+        final AiChatRun interrupted = new AiChatRun(1, 1, AiChatRunStatus.INTERRUPTED,
+                AiChatRunStopReason.NODE_LOST, 0L, 1L, false, null);
+        final AiChatRun failed = new AiChatRun(2, 1, AiChatRunStatus.FAILED, null, 0L, 1L, false, "boom");
+
+        assertThat(AskStroomAIService.resumeNote(interrupted))
+                .contains("did not finish: interrupted because the stroom node running it stopped")
+                .contains("check the current state")
+                .endsWith("\n\n");
+        assertThat(AskStroomAIService.resumeNote(failed)).contains("did not finish: failed");
     }
 
     @Test

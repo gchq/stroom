@@ -572,6 +572,27 @@ paths:
         ID
       tags:
       - AI
+  /ai/v1/resumeRun:
+    post:
+      operationId: resumeRun
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAiRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: "Resume a chat whose last agent run stopped before finishing, by answering\
+        \ its last question again"
+      tags:
+      - AI
   /ai/v1/setDefaultAskStroomAIConfig:
     post:
       operationId: setDefaultAskStroomAIConfig
