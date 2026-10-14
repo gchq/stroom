@@ -119,7 +119,8 @@ class TestAiRetention {
         // Every user still exists unless a test says otherwise.
         Mockito.when(userService.loadByUuid(Mockito.anyString())).thenReturn(Optional.of(Mockito.mock(User.class)));
         retention = new AiRetention(aiDao, memoryDao, workspaceDao, runDao, workspaceStore, fileStore,
-                Mockito.mock(McpClientCache.class), AiConfig::new, userService, securityContext);
+                Mockito.mock(McpClientCache.class), AiConfig::new, userService, securityContext,
+                Mockito.mock(ToolApprovalService.class));
     }
 
     @Test
@@ -174,8 +175,8 @@ class TestAiRetention {
     void testNoChatRetention() {
         retention = new AiRetention(aiDao, memoryDao, workspaceDao, runDao, workspaceStore, fileStore,
                 Mockito.mock(McpClientCache.class),
-                () -> new AiConfig(null, null, null, null, null, null, null, null, StroomDuration.ZERO, null),
-                userService, securityContext);
+                () -> new AiConfig(null, null, null, null, null, null, null, null, StroomDuration.ZERO, null, null),
+                userService, securityContext, Mockito.mock(ToolApprovalService.class));
         aiDao.createChat(UserRef.builder().uuid("user1").build());
 
         assertThat(retention.deleteOldChats(System.currentTimeMillis() + Duration.ofDays(1000).toMillis()))

@@ -18,6 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.shared.AiApprovalScope;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
@@ -103,6 +104,7 @@ public class AskStroomAiPresenter
     private static final String RETRY_TURN_ATTRIBUTE = "data-retry-turn-id";
     private static final String APPROVAL_ID_ATTRIBUTE = "data-approval-id";
     private static final String APPROVAL_ANSWER_ATTRIBUTE = "data-approval-answer";
+    private static final String APPROVAL_SCOPE_ATTRIBUTE = "data-approval-scope";
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
@@ -192,8 +194,12 @@ public class AskStroomAiPresenter
                     // Capture approval answers.
                     final String approvalIdStr = button.getAttribute(APPROVAL_ID_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(approvalIdStr)) {
+                        final String scope = button.getAttribute(APPROVAL_SCOPE_ATTRIBUTE);
                         onAnswerApproval(Integer.parseInt(approvalIdStr),
-                                "approve".equals(button.getAttribute(APPROVAL_ANSWER_ATTRIBUTE)));
+                                "approve".equals(button.getAttribute(APPROVAL_ANSWER_ATTRIBUTE)),
+                                NullSafe.isNonBlankString(scope)
+                                        ? AiApprovalScope.valueOf(scope)
+                                        : AiApprovalScope.ONCE);
                         return;
                     }
 
@@ -484,17 +490,26 @@ public class AskStroomAiPresenter
      * @param messageId The id of the APPROVAL_REQUEST message.
      * @param approved  True to approve.
      */
-    private void onAnswerApproval(final int messageId, final boolean approved) {
+    private void onAnswerApproval(final int messageId, final boolean approved, final AiApprovalScope scope) {
         final AiChatMessage request = approvalRequests.get(messageId);
         if (currentChat == null || request == null) {
             return;
         }
-        askStroomAiClient.answerApproval(new AnswerAiApprovalRequest(currentChat, messageId, approved), done -> {
-            final String status = approved
-                    ? (Boolean.TRUE.equals(done)
-                            ? "APPROVED"
-                            : "FAILED")
-                    : "REJECTED";
+        final AnswerAiApprovalRequest answer = new AnswerAiApprovalRequest(currentChat, messageId, approved, scope,
+                null, null);
+        askStroomAiClient.answerApproval(answer, done -> {
+            final String status;
+            if (AiToolMessages.isToolRequest(request.getMessage())) {
+                status = Boolean.TRUE.equals(done)
+                        ? "ANSWERED"
+                        : "EXPIRED";
+            } else {
+                status = approved
+                        ? (Boolean.TRUE.equals(done)
+                                ? "APPROVED"
+                                : "FAILED")
+                        : "REJECTED";
+            }
             appendMessage(new AiChatMessage(request.getId(), request.getChatId(), request.getCreateTimeMs(),
                     request.getMessageType(), request.getAttachmentId(),
                     AiToolMessages.withStatus(request.getMessage(), status), request.getTurnId(),
@@ -926,18 +941,40 @@ public class AskStroomAiPresenter
             card.append(markdownConverter.convertUntrustedMarkdownToHtml(AiToolMessages.approvalMarkdown(json)));
             card.div(footer -> {
                 if (AiToolMessages.isPendingApproval(json)) {
-                    footer.elem("Approve", BUTTON,
-                            Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
-                            new Attribute(APPROVAL_ID_ATTRIBUTE, String.valueOf(msg.getId())),
-                            new Attribute(APPROVAL_ANSWER_ATTRIBUTE, "approve"));
-                    footer.elem("Reject", BUTTON,
-                            Attribute.className("allow-focus ai-approval-button"),
-                            new Attribute(APPROVAL_ID_ATTRIBUTE, String.valueOf(msg.getId())),
-                            new Attribute(APPROVAL_ANSWER_ATTRIBUTE, "reject"));
+                    final boolean tool = AiToolMessages.isToolRequest(json);
+                    approvalButton(footer, msg, tool
+                            ? "Allow once"
+                            : "Approve", true, AiApprovalScope.ONCE);
+                    if (tool && AiToolMessages.allowsForChat(json)) {
+                        approvalButton(footer, msg, "Allow in this chat", true, AiApprovalScope.CHAT);
+                    }
+                    if (tool && AiToolMessages.allowsServerReadOnly(json)) {
+                        approvalButton(footer, msg, "Allow this server's read-only tools", true,
+                                AiApprovalScope.SERVER_READ_ONLY);
+                    }
+                    approvalButton(footer, msg, tool
+                            ? "Deny"
+                            : "Reject", false, AiApprovalScope.ONCE);
                 }
                 timestamp(footer, timeMs, nowMs);
             }, Attribute.className("ai-message-footer"));
         }, Attribute.className("ai-message ai-message--approval"));
+    }
+
+    private void approvalButton(final HtmlBuilder footer,
+                                final AiChatMessage msg,
+                                final String label,
+                                final boolean approve,
+                                final AiApprovalScope scope) {
+        footer.elem(label, BUTTON,
+                Attribute.className(approve
+                        ? "allow-focus ai-approval-button ai-approval-button--approve"
+                        : "allow-focus ai-approval-button"),
+                new Attribute(APPROVAL_ID_ATTRIBUTE, String.valueOf(msg.getId())),
+                new Attribute(APPROVAL_ANSWER_ATTRIBUTE, approve
+                        ? "approve"
+                        : "reject"),
+                new Attribute(APPROVAL_SCOPE_ATTRIBUTE, scope.name()));
     }
 
     /**

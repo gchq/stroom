@@ -34,9 +34,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -241,7 +243,66 @@ public class ContextAssembler {
         }
 
         messages.add(new UserMessage(request.getMessage()));
+        // A run carrying on with the question (e.g. after the user approved tool calls) picks up where it was.
+        messages.addAll(currentTurn(history));
         return messages;
+    }
+
+    /**
+     * @param history All the messages in the chat, in order.
+     * @return What has happened so far in answering the latest question: the tool calls that have results, and
+     * anything the user added, in order. Calls without results (waiting for approval) are left to the agent loop.
+     */
+    static List<ChatMessage> currentTurn(final List<AiChatMessage> history) {
+        int question = history.size() - 1;
+        while (question >= 0 && history.get(question).getMessageType() != AiMessageType.USER_MESSAGE) {
+            question--;
+        }
+        final List<ChatMessage> messages = new ArrayList<>();
+        if (question < 0) {
+            return messages;
+        }
+        final List<AiChatMessage> turn = history.subList(question + 1, history.size());
+        final Map<String, ToolResultRecord> results = new HashMap<>();
+        for (final AiChatMessage message : turn) {
+            if (message.getMessageType() == AiMessageType.TOOL_RESULT) {
+                final ToolResultRecord result = readRecord(message, ToolResultRecord.class);
+                if (result != null) {
+                    results.put(result.callId(), result);
+                }
+            }
+        }
+        for (final AiChatMessage message : turn) {
+            switch (message.getMessageType()) {
+                case STEER_MESSAGE -> messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + message.getMessage()));
+                case TOOL_CALL -> {
+                    final ToolCallRecord call = readRecord(message, ToolCallRecord.class);
+                    final ToolResultRecord result = NullSafe.get(call, ToolCallRecord::callId, results::get);
+                    if (result != null) {
+                        final ToolExecutionRequest request = ToolExecutionRequest.builder()
+                                .id(call.callId())
+                                .name(call.tool())
+                                .arguments(call.arguments())
+                                .build();
+                        messages.add(AiMessage.from(List.of(request)));
+                        messages.add(ToolExecutionResultMessage.from(request, NullSafe.string(result.text())));
+                    }
+                }
+                default -> {
+                    // Nothing else is sent.
+                }
+            }
+        }
+        return messages;
+    }
+
+    private static <T> T readRecord(final AiChatMessage message, final Class<T> type) {
+        try {
+            return JsonUtil.readValue(message.getMessage(), type);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read message " + message.getId(), e);
+            return null;
+        }
     }
 
     /**

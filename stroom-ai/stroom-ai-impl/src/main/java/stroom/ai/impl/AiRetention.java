@@ -16,10 +16,16 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.memory.AiMemoryService;
+import stroom.ai.impl.memory.MemoryChange;
+import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiChatAttachment;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -62,6 +68,7 @@ public class AiRetention {
     private final Provider<AiConfig> aiConfigProvider;
     private final UserService userService;
     private final SecurityContext securityContext;
+    private final ToolApprovalService toolApprovalService;
 
     @Inject
     AiRetention(final AiDao aiDao,
@@ -73,7 +80,8 @@ public class AiRetention {
                 final McpClientCache mcpClientCache,
                 final Provider<AiConfig> aiConfigProvider,
                 final UserService userService,
-                final SecurityContext securityContext) {
+                final SecurityContext securityContext,
+                final ToolApprovalService toolApprovalService) {
         this.aiDao = aiDao;
         this.memoryDao = memoryDao;
         this.workspaceDao = workspaceDao;
@@ -84,6 +92,7 @@ public class AiRetention {
         this.aiConfigProvider = aiConfigProvider;
         this.userService = userService;
         this.securityContext = securityContext;
+        this.toolApprovalService = toolApprovalService;
     }
 
     /// Runs the job.
@@ -94,9 +103,11 @@ public class AiRetention {
             final int chats = deleteOldChats(now);
             final int removedUsers = deleteDataOfRemovedUsers();
             final int localCopies = deleteStaleLocalCopies();
+            final int approvals = expireApprovals(now);
             LOGGER.info(() -> JOB_NAME + ": removed " + files + " expired workspace file(s), deleted " + chats
                               + " old chat(s), removed the data of " + removedUsers + " deleted user(s) and "
-                              + localCopies + " stale local file(s)");
+                              + localCopies + " stale local file(s), and expired " + approvals
+                              + " unanswered request(s) for approval");
         });
     }
 
@@ -152,6 +163,30 @@ public class AiRetention {
                 aiDao.getChatIds(userUuid).forEach(this::deleteChat);
                 memoryDao.deleteAllForUser(userUuid);
                 count++;
+            }
+        }
+        return count;
+    }
+
+    /// Expires requests for the user's approval that have not been answered in time. Tool calls waiting for
+    /// approval are not made and their run stops; memory changes are not made.
+    int expireApprovals(final long now) {
+        int count = 0;
+        for (final AiChatMessage message : aiDao.getMessagesOfTypeBefore(AiMessageType.APPROVAL_REQUEST,
+                now - ToolApprovalService.EXPIRY.toMillis())) {
+            final ToolApprovalRequest toolRequest = ToolApprovalService.read(message).orElse(null);
+            if (toolRequest != null) {
+                if (toolRequest.status() == ToolApprovalRequest.Status.PENDING) {
+                    toolApprovalService.expire(message, toolRequest);
+                    count++;
+                }
+            } else {
+                final MemoryChange change = AiMemoryService.readChange(message.getMessage()).orElse(null);
+                if (change != null && change.status() == ApprovalStatus.PENDING
+                    && aiDao.compareAndSetMessageText(message.getId(), message.getMessage(),
+                        JsonUtil.writeValueAsString(change.withStatus(ApprovalStatus.EXPIRED), false))) {
+                    count++;
+                }
             }
         }
         return count;

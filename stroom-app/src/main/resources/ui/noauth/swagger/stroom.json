@@ -944,6 +944,36 @@
         "tags" : [ "AI" ]
       }
     },
+    "/ai/v1/setApproveEverything" : {
+      "post" : {
+        "operationId" : "setAiApproveEverything",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetAiApproveEverythingRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Turn 'approve everything' on or off for a chat, if an administrator has enabled it",
+        "tags" : [ "AI" ]
+      }
+    },
     "/ai/v1/setDefaultAskStroomAIConfig" : {
       "post" : {
         "operationId" : "setDefaultAskStroomAIConfig",
@@ -15735,7 +15765,7 @@
           },
           "stopReason" : {
             "type" : "string",
-            "enum" : [ "USER", "SIGN_OUT", "SESSION_EXPIRED", "TOKEN_EXPIRED", "RUN_LIMIT", "NODE_LOST", "TERMINATED", "ACCOUNT_DISABLED", "EDITED", "NEEDS_APPROVAL" ]
+            "enum" : [ "USER", "SIGN_OUT", "SESSION_EXPIRED", "TOKEN_EXPIRED", "RUN_LIMIT", "NODE_LOST", "TERMINATED", "ACCOUNT_DISABLED", "EDITED", "NEEDS_APPROVAL", "APPROVAL_EXPIRED" ]
           },
           "unattended" : {
             "type" : "boolean"
@@ -16128,9 +16158,22 @@
           "approved" : {
             "type" : "boolean"
           },
+          "callIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "messageId" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "scope" : {
+            "type" : "string",
+            "enum" : [ "ONCE", "CHAT", "SERVER_READ_ONLY" ]
           }
         }
       },
@@ -28253,6 +28296,17 @@
             }
           }
         } ]
+      },
+      "SetAiApproveEverythingRequest" : {
+        "type" : "object",
+        "properties" : {
+          "aiChat" : {
+            "$ref" : "#/components/schemas/AiChat"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          }
+        }
       },
       "SetAllPermissionsFrom" : {
         "type" : "object",

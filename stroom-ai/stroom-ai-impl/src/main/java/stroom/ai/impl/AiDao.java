@@ -119,6 +119,31 @@ public interface AiDao {
     Long getLastPollMs(String userUuid);
 
     /**
+     * Changes a message's text, only if it is still the text expected, so that of two changes made at once (e.g.
+     * answers to the same approval request from two browser tabs) only one is made.
+     *
+     * @return True if it was changed.
+     */
+    boolean compareAndSetMessageText(int messageId, String expected, String message);
+
+    /**
+     * @return True if 'approve everything' is on for the chat.
+     */
+    boolean isApproveEverything(int chatId);
+
+    /**
+     * Turns 'approve everything' on or off for the chat.
+     */
+    void setApproveEverything(int chatId, boolean enabled);
+
+    /**
+     * @param messageType A type of message.
+     * @param before      A time.
+     * @return The messages of that type, in any chat, made before the time.
+     */
+    List<AiChatMessage> getMessagesOfTypeBefore(AiMessageType messageType, long before);
+
+    /**
      * @param timeMs A time.
      * @param limit  The most to return.
      * @return The ids of chats last changed before the time.

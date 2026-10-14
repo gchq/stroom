@@ -17,6 +17,7 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
   ai:
+    allowApproveEverything: false
     chatResponseCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"

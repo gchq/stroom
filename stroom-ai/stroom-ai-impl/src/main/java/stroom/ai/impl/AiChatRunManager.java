@@ -158,27 +158,61 @@ public class AiChatRunManager {
                             chatId, userUuid, status, nodeInfo.getThisNodeName(), sessionIdHash)
                     .orElseThrow(() -> new AiChatBusyException(chatId));
             LOGGER.debug(() -> "Created " + status + " run " + run.getId() + " for chat " + chatId);
-            // The user is here, as they have just asked a question.
-            aiDao.recordPoll(chatId, 0);
-
-            // The task is made now, so that it runs as the user asking, whenever it starts.
-            final Runnable task = taskContextFactory.context(TASK_NAME, taskContext -> {
-                taskContext.info(() -> "Chat " + chatId + ", run " + run.getId());
-                execute(run, work, taskContext::isTerminated);
-            });
-            final LocalRun localRun = new LocalRun(run.getId(), userUuid, task,
-                    new AtomicLong(System.currentTimeMillis()), new AtomicBoolean(false),
-                    new AtomicBoolean(false), new AtomicBoolean(false), new AtomicBoolean(false));
-            localRuns.put(chatId, localRun);
-            ensureHeartbeat();
-
-            if (status == AiChatRunStatus.RUNNING) {
-                submit(chatId, localRun);
-            } else {
-                // Started when a slot is free, see startQueued.
-                queue.add(chatId);
-            }
+            schedule(chatId, run, status, userUuid, work);
             return run;
+        }
+    }
+
+    /// Carries on with a chat's run that is waiting for the user (e.g. for an approval they have now given), by
+    /// doing more work in it. It starts straight away if there is a free slot, otherwise it is queued.
+    ///
+    /// @param chatId The chat.
+    /// @param work   What to do.
+    /// @return The run.
+    /// @throws AiChatBusyException if the chat has no run waiting for the user.
+    public AiChatRun continueRun(final int chatId, final Consumer<AiChatRun> work) {
+        final String userUuid = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
+        synchronized (queue) {
+            final AiChatRun run = runDao.getActive(chatId)
+                    .filter(active -> active.getStatus() == AiChatRunStatus.WAITING_FOR_USER)
+                    .orElseThrow(() -> new AiChatBusyException(chatId));
+            final AiChatRunStatus status = hasFreeSlot(userUuid)
+                    ? AiChatRunStatus.RUNNING
+                    : AiChatRunStatus.QUEUED;
+            if (!runDao.compareAndSetStatus(run.getId(), List.of(AiChatRunStatus.WAITING_FOR_USER), status, null,
+                    null)) {
+                throw new AiChatBusyException(chatId);
+            }
+            LOGGER.debug(() -> "Continuing run " + run.getId() + " of chat " + chatId + " as " + status);
+            schedule(chatId, run, status, userUuid, work);
+            return run;
+        }
+    }
+
+    private void schedule(final int chatId,
+                          final AiChatRun run,
+                          final AiChatRunStatus status,
+                          final String userUuid,
+                          final Consumer<AiChatRun> work) {
+        // The user is here, as they have just asked or answered something.
+        aiDao.recordPoll(chatId, 0);
+
+        // The task is made now, so that it runs as the user asking, whenever it starts.
+        final Runnable task = taskContextFactory.context(TASK_NAME, taskContext -> {
+            taskContext.info(() -> "Chat " + chatId + ", run " + run.getId());
+            execute(run, work, taskContext::isTerminated);
+        });
+        final LocalRun localRun = new LocalRun(run.getId(), userUuid, task,
+                new AtomicLong(System.currentTimeMillis()), new AtomicBoolean(false),
+                new AtomicBoolean(false), new AtomicBoolean(false), new AtomicBoolean(false));
+        localRuns.put(chatId, localRun);
+        ensureHeartbeat();
+
+        if (status == AiChatRunStatus.RUNNING) {
+            submit(chatId, localRun);
+        } else {
+            // Started when a slot is free, see startQueued.
+            queue.add(chatId);
         }
     }
 
@@ -243,6 +277,14 @@ public class AiChatRunManager {
                 stopped(run, AiChatRunStopReason.TERMINATED);
             } else {
                 finish(run);
+            }
+        } catch (final WaitingForUserException e) {
+            // Give up the thread and the slot until the user answers (S8).
+            LOGGER.debug(() -> "Run " + run.getId() + " is waiting for the user: " + e.getMessage());
+            if (!runDao.compareAndSetStatus(run.getId(), List.of(AiChatRunStatus.RUNNING),
+                    AiChatRunStatus.WAITING_FOR_USER, AiChatRunStopReason.NEEDS_APPROVAL, null)) {
+                // A stop was asked for while it worked.
+                stopped(run, null);
             }
         } catch (final TaskTerminatedException e) {
             LOGGER.debug(() -> "Run " + run.getId() + " was terminated");
@@ -516,6 +558,15 @@ public class AiChatRunManager {
     }
 
     /// Thrown when a question is asked in a chat that is still working on an earlier one.
+    /// Thrown by a run's work when it has to wait for the user (e.g. to approve tool calls), to give up its thread
+    /// and its place in the limits until they answer.
+    public static class WaitingForUserException extends RuntimeException {
+
+        public WaitingForUserException(final String message) {
+            super(message);
+        }
+    }
+
     public static class AiChatBusyException extends RuntimeException {
 
         public AiChatBusyException(final int chatId) {

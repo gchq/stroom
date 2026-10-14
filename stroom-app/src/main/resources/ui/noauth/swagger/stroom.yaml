@@ -656,6 +656,27 @@ paths:
         \ its last question again"
       tags:
       - AI
+  /ai/v1/setApproveEverything:
+    post:
+      operationId: setAiApproveEverything
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetAiApproveEverythingRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Turn 'approve everything' on or off for a chat, if an administrator\
+        \ has enabled it"
+      tags:
+      - AI
   /ai/v1/setDefaultAskStroomAIConfig:
     post:
       operationId: setDefaultAskStroomAIConfig
@@ -10914,6 +10935,7 @@ components:
           - ACCOUNT_DISABLED
           - EDITED
           - NEEDS_APPROVAL
+          - APPROVAL_EXPIRED
         unattended:
           type: boolean
     AiContextUsage:
@@ -11236,9 +11258,21 @@ components:
           $ref: "#/components/schemas/AiChat"
         approved:
           type: boolean
+        callIds:
+          type: array
+          items:
+            type: string
         messageId:
           type: integer
           format: int32
+        reason:
+          type: string
+        scope:
+          type: string
+          enum:
+          - ONCE
+          - CHAT
+          - SERVER_READ_ONLY
     AnyBoolean:
       type: object
       allOf:
@@ -20935,6 +20969,13 @@ components:
             $ref: "#/components/schemas/SnapshotSettings"
           synchroniseMerge:
             type: boolean
+    SetAiApproveEverythingRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        enabled:
+          type: boolean
     SetAllPermissionsFrom:
       type: object
       allOf:

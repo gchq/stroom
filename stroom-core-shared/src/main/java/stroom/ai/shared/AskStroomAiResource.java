@@ -96,6 +96,14 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) AnswerAiApprovalRequest request);
 
     @POST
+    @Path("/setApproveEverything")
+    @Operation(
+            summary = "Turn 'approve everything' on or off for a chat, if an administrator has enabled it",
+            operationId = "setAiApproveEverything")
+    Boolean setApproveEverything(
+            @Parameter(description = "request", required = true) SetAiApproveEverythingRequest request);
+
+    @POST
     @Path("/getDefaultConfig")
     @Operation(
             summary = "Get the default config to use for asking questions",

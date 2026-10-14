@@ -61,6 +61,7 @@ import static stroom.ai.impl.db.jooq.tables.AiChatFileChunk.AI_CHAT_FILE_CHUNK;
 import static stroom.ai.impl.db.jooq.tables.AiChatMessage.AI_CHAT_MESSAGE;
 import static stroom.ai.impl.db.jooq.tables.AiChatRun.AI_CHAT_RUN;
 import static stroom.ai.impl.db.jooq.tables.AiMemory.AI_MEMORY;
+import static stroom.ai.impl.db.jooq.tables.AiToolApproval.AI_TOOL_APPROVAL;
 
 public class AiDaoImpl implements AiDao {
 
@@ -183,6 +184,10 @@ public class AiDaoImpl implements AiDao {
             // Delete messages.
             context.deleteFrom(AI_CHAT_MESSAGE)
                     .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                    .execute();
+            // Delete the chat's tool approvals.
+            context.deleteFrom(AI_TOOL_APPROVAL)
+                    .where(AI_TOOL_APPROVAL.FK_AI_CHAT_ID.eq(chatId))
                     .execute();
             // Delete the chat's memory.
             context.deleteFrom(AI_MEMORY)
@@ -581,5 +586,46 @@ public class AiDaoImpl implements AiDao {
                 .from(AI_CHAT)
                 .where(AI_CHAT.USER_UUID.eq(userUuid))
                 .fetch(AI_CHAT.ID));
+    }
+
+    @Override
+    public boolean compareAndSetMessageText(final int messageId, final String expected, final String message) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .update(AI_CHAT_MESSAGE)
+                .set(AI_CHAT_MESSAGE.MESSAGE, message)
+                .where(AI_CHAT_MESSAGE.ID.eq(messageId))
+                .and(AI_CHAT_MESSAGE.MESSAGE.eq(expected))
+                .execute()) == 1;
+    }
+
+    @Override
+    public boolean isApproveEverything(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT.AUTO_APPROVE)
+                .from(AI_CHAT)
+                .where(AI_CHAT.ID.eq(chatId))
+                .fetchOptional(AI_CHAT.AUTO_APPROVE)
+                .orElse(false));
+    }
+
+    @Override
+    public void setApproveEverything(final int chatId, final boolean enabled) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.AUTO_APPROVE, enabled)
+                .where(AI_CHAT.ID.eq(chatId))
+                .execute());
+    }
+
+    @Override
+    public List<AiChatMessage> getMessagesOfTypeBefore(final AiMessageType messageType, final long before) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT_MESSAGE)
+                        .where(AI_CHAT_MESSAGE.MESSAGE_TYPE.eq((int) messageType.getPrimitiveValue()))
+                        .and(AI_CHAT_MESSAGE.CREATE_TIME_MS.lt(before))
+                        .orderBy(AI_CHAT_MESSAGE.ID.asc())
+                        .fetch())
+                .map(RECORD_TO_AI_CHAT_MESSAGE::apply);
     }
 }
