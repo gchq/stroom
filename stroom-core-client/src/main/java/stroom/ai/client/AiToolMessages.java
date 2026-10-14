@@ -16,6 +16,7 @@
 
 package stroom.ai.client;
 
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
@@ -162,9 +163,113 @@ final class AiToolMessages {
     }
 
     /**
+     * @return True if the request is for tool calls (rather than a change to memory).
+     */
+    static boolean isToolRequest(final String json) {
+        return "TOOL".equals(getString(json, "kind"));
+    }
+
+    /**
+     * @return Markdown describing a request to approve tool calls, with each call's arguments in full.
+     */
+    static String toolApprovalMarkdown(final String json) {
+        final StringBuilder sb = new StringBuilder("**The agent wants to use tools that need your approval.**");
+        final String reason = getString(json, "reason");
+        if (reason != null) {
+            sb.append(" ").append(reason);
+        }
+        final JSONArray calls = getArray(json, "calls");
+        for (int i = 0; calls != null && i < calls.size(); i++) {
+            final JSONObject call = calls.get(i).isObject();
+            if (call == null) {
+                continue;
+            }
+            sb.append("\n\n**`").append(text(call, "tool")).append("`**");
+            final String server = text(call, "serverKey");
+            if (server != null) {
+                sb.append(" on ").append(server);
+            }
+            final JSONArray risks = call.get("risks") != null
+                    ? call.get("risks").isArray()
+                    : null;
+            if (risks != null && risks.size() > 0) {
+                sb.append(" (");
+                for (int r = 0; r < risks.size(); r++) {
+                    if (r > 0) {
+                        sb.append(", ");
+                    }
+                    sb.append(risks.get(r).isString() != null
+                            ? risks.get(r).isString().stringValue()
+                            : "");
+                }
+                sb.append(")");
+            }
+            final String decision = text(call, "decision");
+            if (decision != null) {
+                sb.append(" - *").append(decisionText(decision, text(call, "note"))).append("*");
+            }
+            sb.append("\n\n~~~json\n").append(text(call, "arguments") != null
+                    ? text(call, "arguments")
+                    : "{}").append("\n~~~");
+        }
+        final String status = getString(json, "status");
+        if ("EXPIRED".equals(status)) {
+            sb.append("\n\n*Not answered in time, so nothing was run.*");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @return True if the user may allow the request's tools for the rest of the chat.
+     */
+    static boolean allowsForChat(final String json) {
+        return getBoolean(json, "allowForChat");
+    }
+
+    /**
+     * @return True if the user may allow the server's read-only tools for the rest of the chat.
+     */
+    static boolean allowsServerReadOnly(final String json) {
+        return getBoolean(json, "allowServerReadOnly");
+    }
+
+    private static JSONArray getArray(final String json, final String name) {
+        final JSONValue value = getValue(json, name);
+        return value != null
+                ? value.isArray()
+                : null;
+    }
+
+    private static String text(final JSONObject object, final String name) {
+        final JSONValue value = object.get(name);
+        if (value == null || value.isNull() != null) {
+            return null;
+        }
+        return value.isString() != null
+                ? value.isString().stringValue()
+                : value.toString();
+    }
+
+    private static String decisionText(final String decision, final String note) {
+        switch (decision) {
+            case "ALLOWED":
+                return "allowed";
+            case "DENIED":
+                return note != null
+                        ? "denied: " + note
+                        : "denied";
+            default:
+                return "not run";
+        }
+    }
+
+    /**
      * @return Markdown describing a request for the user's approval.
      */
     static String approvalMarkdown(final String json) {
+        if (isToolRequest(json)) {
+            return toolApprovalMarkdown(json);
+        }
         final String status = getString(json, "status");
         final StringBuilder sb = new StringBuilder("**The agent wants to change your memory** (`")
                 .append(getString(json, "path"))

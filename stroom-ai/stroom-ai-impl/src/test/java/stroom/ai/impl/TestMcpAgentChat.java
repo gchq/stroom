@@ -24,6 +24,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.task.api.TaskContext;
+import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
@@ -60,10 +61,15 @@ class TestMcpAgentChat {
     private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
     private final WorkspaceStore workspaceStore =
             Mockito.mock(WorkspaceStore.class);
+    private final ToolConsent toolConsent = Mockito.mock(ToolConsent.class);
+    private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
-            Mockito.mock(ContextUsageTracker.class));
+            Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog);
 
     {
+        // Tool calls run unless a test says otherwise.
+        Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(), Mockito.any(),
+                Mockito.anyBoolean())).thenReturn(ToolConsent.Verdict.RUN);
         // Stored messages get an id and turn, as the DAO would give them.
         Mockito.when(aiService.storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString()))
                 .thenAnswer(invocation -> new AiChatMessage(1000, invocation.getArgument(0), 0L,
@@ -208,25 +214,94 @@ class TestMcpAgentChat {
     }
 
     @Test
-    void unattendedRunDoesNotRunToolsThatCouldChangeSomething() {
-        Mockito.when(runManager.isUnattended(7)).thenReturn(true);
+    void callsThatNeedApprovalStopTheRunWithOneRequest() {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("found"))).build());
         final McpToolset toolset = toolset(client, searchTool());
+        Mockito.when(toolConsent.decide(Mockito.eq(7), Mockito.eq("test__search"), Mockito.any(), Mockito.any(),
+                        Mockito.anyBoolean()))
+                .thenReturn(ToolConsent.Verdict.RUN,
+                        new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", true, false,
+                                List.of("untrusted server")),
+                        new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", true, false,
+                                List.of("untrusted server")));
+        final ChatModel model = new StubToolCallingModel(AiMessage.from(List.of(
+                ToolExecutionRequest.builder().id("1").name("test__search").arguments("{\"q\":1}").build(),
+                ToolExecutionRequest.builder().id("2").name("test__search").arguments("{\"q\":2}").build(),
+                ToolExecutionRequest.builder().id("3").name("test__search").arguments("{\"q\":3}").build())));
 
-        final ChatModel model = new StubToolCallingModel(
-                AiMessage.from(List.of(ToolExecutionRequest.builder()
-                        .id("1")
-                        .name("test__search")
-                        .arguments("{}")
+        assertThatThrownBy(() -> agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false),
+                taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+
+        // The first call ran; the other two wait on one request.
+        Mockito.verify(client, Mockito.times(1)).callTool(Mockito.any());
+        final ArgumentCaptor<String> request = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.APPROVAL_REQUEST),
+                request.capture());
+        final ToolApprovalRequest approval = JsonUtil.readValue(request.getValue(), ToolApprovalRequest.class);
+        assertThat(approval.status()).isEqualTo(ToolApprovalRequest.Status.PENDING);
+        assertThat(approval.calls()).extracting(ToolApprovalRequest.PendingCall::callId).containsExactly("2", "3");
+        assertThat(approval.calls().getFirst().arguments()).isEqualTo("{\"q\":2}");
+        assertThat(approval.allowForChat()).isTrue();
+        Mockito.verify(auditLog).toolCall(7, "test__search", "{\"q\":1}", "Run", true, false);
+    }
+
+    @Test
+    void deniedByAChatDecisionIsNotRun() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(), Mockito.any(),
+                Mockito.anyBoolean())).thenReturn(new ToolConsent.Verdict(ToolConsent.Kind.DENY,
+                "You chose not to allow this tool in this chat.", false, false, List.of()));
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder().id("1").name("test__search").arguments("{}")
                         .build())),
-                AiMessage.from("done"));
-        final StringBuilder debugLog = new StringBuilder();
-        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1, debugLog, 0,
-                ContextBudget.UNKNOWN);
+                AiMessage.from("ok"));
 
-        // The server is not trusted, so the tool is not known to be read-only, and is not run.
+        agentChat.chat(model, null, 7, messages, toolset(client, searchTool()), 99, new AtomicBoolean(false),
+                taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
         Mockito.verify(client, Mockito.never()).callTool(Mockito.any());
-        assertThat(debugLog.toString()).contains("the user is away");
+        assertThat(((ToolExecutionResultMessage) model.requests.get(1).messages().getLast()).text())
+                .isEqualTo("Not run: You chose not to allow this tool in this chat.");
+    }
+
+    @Test
+    void approvedCallsRunWhenTheRunCarriesOn() {
+        final ToolApprovalRequest.PendingCall allowed = new ToolApprovalRequest.PendingCall("a", "test__search",
+                "test", "search", "{}", List.of(), null, null, ToolApprovalRequest.Decision.ALLOWED, null);
+        final ToolApprovalRequest.PendingCall denied = new ToolApprovalRequest.PendingCall("b", "test__search",
+                "test", "search", "{}", List.of(), null, null, ToolApprovalRequest.Decision.DENIED, "not now");
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("created"))).build());
+        Mockito.when(aiService.getMessages(7)).thenReturn(List.of(
+                new AiChatMessage(10, 7, 0L, AiMessageType.USER_MESSAGE, null, "make it", 10, null),
+                new AiChatMessage(11, 7, 0L, AiMessageType.TOOL_CALL, null,
+                        JsonUtil.writeValueAsString(new ToolCallRecord("a", "test__search", "{}", null), false), 10,
+                        null),
+                new AiChatMessage(12, 7, 0L, AiMessageType.TOOL_CALL, null,
+                        JsonUtil.writeValueAsString(new ToolCallRecord("b", "test__search", "{}", null), false), 10,
+                        null),
+                new AiChatMessage(13, 7, 0L, AiMessageType.APPROVAL_REQUEST, null,
+                        JsonUtil.writeValueAsString(new ToolApprovalRequest(ToolApprovalRequest.KIND,
+                                ToolApprovalRequest.Status.ANSWERED, "r", List.of(allowed, denied), true, false),
+                                false), 10, null)));
+        final StubToolCallingModel model = new StubToolCallingModel(AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, toolset(client, searchTool()), 99, new AtomicBoolean(false),
+                taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        // The approved call ran before the model was asked again; the denied one did not.
+        Mockito.verify(client, Mockito.times(1)).callTool(Mockito.any());
+        final List<ChatMessage> sent = model.requests.getFirst().messages();
+        assertThat(sent.stream()
+                .filter(m -> m instanceof ToolExecutionResultMessage)
+                .map(m -> ((ToolExecutionResultMessage) m).text())
+                .toList())
+                .containsExactly("created", "Not run: the user did not allow this call. They said: not now");
+        Mockito.verify(auditLog).toolCall(7, "test__search", "{}", "Denied by the user", false, false);
     }
 
     @Test

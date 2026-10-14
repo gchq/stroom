@@ -16,6 +16,8 @@
 
 package stroom.ai.impl;
 
+import stroom.openai.shared.McpToolPolicy;
+import stroom.openai.shared.McpToolServerConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -30,6 +32,7 @@ import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.Resource;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
+import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +40,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -66,6 +70,7 @@ public final class McpToolset implements AutoCloseable {
     private final List<String> warnings;
     private final boolean ownsConnections;
     private final Set<String> readOnlyToolNames = ConcurrentHashMap.newKeySet();
+    private final Map<String, McpToolInfo> toolInfos = new ConcurrentHashMap<>();
 
     McpToolset(final List<McpServerConnection> connections,
                final List<String> warnings,
@@ -132,6 +137,7 @@ public final class McpToolset implements AutoCloseable {
                     if (isReadOnly(connection, tool)) {
                         readOnlyToolNames.add(name);
                     }
+                    toolInfos.put(name, toolInfo(connection, tool, name, filter.policyFor(tool.name())));
                 } else {
                     LOGGER.debug(() -> "Tool '" + tool.name() + "' of MCP server '" + connection.label()
                                        + "' is not allowed");
@@ -156,6 +162,34 @@ public final class McpToolset implements AutoCloseable {
      */
     public boolean isReadOnly(final String toolName) {
         return readOnlyToolNames.contains(toolName);
+    }
+
+    /**
+     * @param toolName The name of a tool offered by {@link #tools()}.
+     * @return What is known about it, if it is a server's tool (not one of the resource tools).
+     */
+    public Optional<McpToolInfo> toolInfo(final String toolName) {
+        return Optional.ofNullable(toolInfos.get(toolName));
+    }
+
+    private static McpToolInfo toolInfo(final McpServerConnection connection,
+                                        final Tool tool,
+                                        final String prefixedName,
+                                        final McpToolPolicy policy) {
+        final boolean trusted = connection.config() != null && connection.config().isTrusted();
+        final String endpoint = NullSafe.get(connection.config(), McpToolServerConfig::getEndpoint);
+        return new McpToolInfo(
+                prefixedName,
+                connection.label(),
+                tool.name(),
+                trusted,
+                NullSafe.get(tool.annotations(), ToolAnnotations::readOnlyHint),
+                NullSafe.get(tool.annotations(), ToolAnnotations::destructiveHint),
+                NullSafe.get(tool.annotations(), ToolAnnotations::openWorldHint),
+                policy,
+                McpToolInfo.hash(endpoint, String.valueOf(trusted), tool.name(), tool.description(),
+                        String.valueOf(tool.inputSchema())),
+                McpToolInfo.hash(endpoint, String.valueOf(trusted)));
     }
 
     static boolean isReadOnly(final McpServerConnection connection, final Tool tool) {

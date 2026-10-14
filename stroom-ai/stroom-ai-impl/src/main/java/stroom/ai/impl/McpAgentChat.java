@@ -17,6 +17,8 @@
 package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
+import stroom.ai.impl.ToolApprovalRequest.Decision;
+import stroom.ai.impl.ToolApprovalRequest.PendingCall;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.workspace.WorkspaceStore;
@@ -45,7 +47,9 @@ import dev.langchain4j.service.tool.ToolExecutor;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -129,31 +133,29 @@ class McpAgentChat {
      */
     private static final int MAX_STEER_FOLLOW_UPS = 3;
 
-    /**
-     * Given to the model instead of running a tool that could change something while the user is away.
-     */
-    static final String UNATTENDED_REFUSAL = "Not run: the user is away, and this tool could change something, "
-                                             + "so it needs them to be here. Carry on with read-only tools, and "
-                                             + "tell the user what you wanted to do so they can do it when they "
-                                             + "are back.";
-
     private final AiService aiService;
     private final BuiltInTools builtInTools;
     private final AiChatRunManager runManager;
     private final WorkspaceStore workspaceStore;
     private final ContextUsageTracker usageTracker;
+    private final ToolConsent toolConsent;
+    private final AiAuditLog auditLog;
 
     @Inject
     McpAgentChat(final AiService aiService,
                  final BuiltInTools builtInTools,
                  final AiChatRunManager runManager,
                  final WorkspaceStore workspaceStore,
-                 final ContextUsageTracker usageTracker) {
+                 final ContextUsageTracker usageTracker,
+                 final ToolConsent toolConsent,
+                 final AiAuditLog auditLog) {
         this.aiService = aiService;
         this.builtInTools = builtInTools;
         this.runManager = runManager;
         this.workspaceStore = workspaceStore;
         this.usageTracker = usageTracker;
+        this.toolConsent = toolConsent;
+        this.auditLog = auditLog;
     }
 
     ChatResponse chat(final ChatModel chatModel,
@@ -209,6 +211,9 @@ class McpAgentChat {
             return response;
         }
 
+        // Carry on from calls waiting for approval when the run last stopped, now they have been answered.
+        resumePending(chatId, conversation, tools, debugLog);
+
         final List<ToolSpecification> toolSpecifications = List.copyOf(tools.keySet());
         LOGGER.debug(() -> "chat: chatId=" + chatId + " offering " + toolSpecifications.size()
                            + " tool(s): " + toolSpecifications.stream()
@@ -251,6 +256,8 @@ class McpAgentChat {
 
             conversation.add(aiMessage);
             final List<ToolExecutionRequest> toolRequests = aiMessage.toolExecutionRequests();
+            final List<PendingCall> pending = new ArrayList<>();
+            final List<ToolConsent.Verdict> askVerdicts = new ArrayList<>();
             for (int t = 0; t < toolRequests.size(); t++) {
                 if (cancelled.get() || taskContext.isTerminated()) {
                     throw new TaskTerminatedException();
@@ -264,41 +271,30 @@ class McpAgentChat {
                 final AiChatMessage callMessage = aiService.storeMessage(chatId, AiMessageType.TOOL_CALL,
                         JsonUtil.writeValueAsString(new ToolCallRecord(toolRequest.id(), toolRequest.name(),
                                 toolRequest.arguments(), aiMessage.text()), false));
-                final long startMs = System.currentTimeMillis();
-                final String result;
-                final boolean refused;
-                if (runManager.isUnattended(chatId)
-                    && !builtInTools.isReadOnly(toolRequest.name())
-                    && !toolset.isReadOnly(toolRequest.name())) {
-                    // The user has gone, so only read-only tools may run.
-                    LOGGER.info(() -> "Not running tool '" + toolRequest.name() + "' for chatId=" + chatId
-                                      + " as the run is unattended");
-                    result = UNATTENDED_REFUSAL;
-                    refused = true;
-                } else {
-                    if (builtInTools.readsUntrustedContent(toolRequest.name())) {
-                        runManager.markTainted(chatId);
+                final boolean unattended = runManager.isUnattended(chatId);
+                final ToolConsent.Verdict verdict = toolConsent.decide(chatId, toolRequest.name(), builtInTools,
+                        toolset, unattended);
+                switch (verdict.kind()) {
+                    case RUN -> conversation.add(ToolExecutionResultMessage.from(toolRequest,
+                            runAndRecord(chatId, callMessage, toolRequest, tools, debugLog, t + 1, unattended)));
+                    case DENY -> conversation.add(ToolExecutionResultMessage.from(toolRequest,
+                            recordNotRun(chatId, toolRequest, "Not run: " + verdict.reason(), unattended,
+                                    "Not allowed in this chat")));
+                    case ASK -> {
+                        LOGGER.debug(() -> "Tool '" + toolRequest.name() + "' in chatId=" + chatId
+                                           + " needs approval: " + verdict.reason());
+                        pending.add(pendingCall(toolRequest, toolset, verdict));
+                        askVerdicts.add(verdict);
                     }
-                    result = execute(tools, toolRequest, toolRequest.name(), chatId);
-                    refused = false;
                 }
-                final long durationMs = System.currentTimeMillis() - startMs;
-                runManager.addUsage(chatId, 0, 0, 1);
-                LOGGER.trace(() -> "Tool '" + toolRequest.name() + "' result:\n" + result);
-                appendDebugToolCall(debugLog, t + 1, toolRequest, result);
-
-                // A large result is saved to the workspace and the model is given a stub, so it does not fill the
-                // model's context.
-                final String path = ToolOutputs.isLarge(result) && !builtInTools.boundsItsOutput(toolRequest.name())
-                        ? saveOutput(chatId, callMessage, result)
-                        : null;
-                final String forModel = path != null
-                        ? ToolOutputs.stub(result, path)
-                        : result;
-                aiService.storeMessage(chatId, AiMessageType.TOOL_RESULT,
-                        JsonUtil.writeValueAsString(new ToolResultRecord(toolRequest.id(), toolRequest.name(),
-                                refused || isError(result), forModel, path, result.length(), durationMs), false));
-                conversation.add(ToolExecutionResultMessage.from(toolRequest, forModel));
+            }
+            if (!pending.isEmpty()) {
+                // Stop here, giving up the thread and the slot, until the user answers. The run carries on from
+                // the stored calls (see resumePending).
+                aiService.storeMessage(chatId, AiMessageType.APPROVAL_REQUEST,
+                        JsonUtil.writeValueAsString(approvalRequest(pending, askVerdicts), false));
+                throw new AiChatRunManager.WaitingForUserException(pending.size() + " tool call(s) in chat "
+                                                                   + chatId + " need approval");
             }
         }
 
@@ -308,6 +304,175 @@ class McpAgentChat {
             return call(chatModel, conversation, null, chatId, modelDoc, budget);
         }
         return response;
+    }
+
+    /**
+     * Runs a tool call, records its result (saving a large result to the workspace, and giving the model a stub),
+     * and audits it.
+     *
+     * @return What the model is given.
+     */
+    private String runAndRecord(final int chatId,
+                                final AiChatMessage callMessage,
+                                final ToolExecutionRequest toolRequest,
+                                final Map<ToolSpecification, ToolExecutor> tools,
+                                final StringBuilder debugLog,
+                                final int callNo,
+                                final boolean unattended) {
+        if (builtInTools.readsUntrustedContent(toolRequest.name())) {
+            runManager.markTainted(chatId);
+        }
+        final long startMs = System.currentTimeMillis();
+        final String result = execute(tools, toolRequest, toolRequest.name(), chatId);
+        final long durationMs = System.currentTimeMillis() - startMs;
+        runManager.addUsage(chatId, 0, 0, 1);
+        LOGGER.trace(() -> "Tool '" + toolRequest.name() + "' result:\n" + result);
+        appendDebugToolCall(debugLog, callNo, toolRequest, result);
+
+        // A large result is saved to the workspace and the model is given a stub, so it does not fill the
+        // model's context.
+        final String path = ToolOutputs.isLarge(result) && !builtInTools.boundsItsOutput(toolRequest.name())
+                ? saveOutput(chatId, callMessage, result)
+                : null;
+        final String forModel = path != null
+                ? ToolOutputs.stub(result, path)
+                : result;
+        final boolean error = isError(result);
+        aiService.storeMessage(chatId, AiMessageType.TOOL_RESULT,
+                JsonUtil.writeValueAsString(new ToolResultRecord(toolRequest.id(), toolRequest.name(),
+                        error, forModel, path, result.length(), durationMs), false));
+        auditLog.toolCall(chatId, toolRequest.name(), toolRequest.arguments(), error
+                ? "Failed"
+                : "Run", !error, unattended);
+        return forModel;
+    }
+
+    /**
+     * Records that a tool call was not run, and audits it.
+     *
+     * @return What the model is given.
+     */
+    private String recordNotRun(final int chatId,
+                                final ToolExecutionRequest toolRequest,
+                                final String text,
+                                final boolean unattended,
+                                final String outcome) {
+        aiService.storeMessage(chatId, AiMessageType.TOOL_RESULT,
+                JsonUtil.writeValueAsString(new ToolResultRecord(toolRequest.id(), toolRequest.name(), true, text,
+                        null, text.length(), 0), false));
+        auditLog.toolCall(chatId, toolRequest.name(), toolRequest.arguments(), outcome, false, unattended);
+        return text;
+    }
+
+    /**
+     * Finishes the tool calls of the current turn that were waiting for the user's approval when the run last
+     * stopped: those allowed are run, and the model is told about the rest.
+     */
+    private void resumePending(final int chatId,
+                               final List<ChatMessage> conversation,
+                               final Map<ToolSpecification, ToolExecutor> tools,
+                               final StringBuilder debugLog) {
+        final List<AiChatMessage> history = aiService.getMessages(chatId);
+        int question = history.size() - 1;
+        while (question >= 0 && history.get(question).getMessageType() != AiMessageType.USER_MESSAGE) {
+            question--;
+        }
+        if (question < 0) {
+            return;
+        }
+        final List<AiChatMessage> turn = history.subList(question + 1, history.size());
+        final Set<String> answered = new HashSet<>();
+        ToolApprovalRequest approval = null;
+        for (final AiChatMessage message : turn) {
+            if (message.getMessageType() == AiMessageType.TOOL_RESULT) {
+                NullSafe.consume(read(message, ToolResultRecord.class), result -> answered.add(result.callId()));
+            } else if (message.getMessageType() == AiMessageType.APPROVAL_REQUEST) {
+                final ToolApprovalRequest request = read(message, ToolApprovalRequest.class);
+                if (request != null && ToolApprovalRequest.KIND.equals(request.kind())) {
+                    approval = request;
+                }
+            }
+        }
+        int callNo = 0;
+        for (final AiChatMessage message : turn) {
+            if (message.getMessageType() != AiMessageType.TOOL_CALL) {
+                continue;
+            }
+            final ToolCallRecord call = read(message, ToolCallRecord.class);
+            if (call == null || answered.contains(call.callId())) {
+                continue;
+            }
+            final ToolExecutionRequest request = ToolExecutionRequest.builder()
+                    .id(call.callId())
+                    .name(call.tool())
+                    .arguments(call.arguments())
+                    .build();
+            conversation.add(AiMessage.from(List.of(request)));
+            final PendingCall decided = approval == null
+                    ? null
+                    : approval.calls().stream()
+                            .filter(pendingCall -> call.callId().equals(pendingCall.callId()))
+                            .findFirst()
+                            .orElse(null);
+            final boolean unattended = runManager.isUnattended(chatId);
+            final String result;
+            if (decided != null && decided.decision() == Decision.ALLOWED) {
+                LOGGER.debug(() -> "Running approved tool '" + call.tool() + "' in chatId=" + chatId);
+                result = runAndRecord(chatId, message, request, tools, debugLog, ++callNo, unattended);
+            } else if (decided != null && decided.decision() == Decision.DENIED) {
+                result = recordNotRun(chatId, request, "Not run: the user did not allow this call"
+                                                       + (NullSafe.isNonBlankString(decided.note())
+                        ? ". They said: " + decided.note()
+                        : "."), unattended, "Denied by the user");
+            } else {
+                result = recordNotRun(chatId, request, "Not run: it was not approved in time, or the run stopped "
+                                                       + "before it ran. Check the current state before trying it "
+                                                       + "again.", unattended, "Not approved");
+            }
+            conversation.add(ToolExecutionResultMessage.from(request, result));
+        }
+    }
+
+    private static PendingCall pendingCall(final ToolExecutionRequest toolRequest,
+                                           final McpToolset toolset,
+                                           final ToolConsent.Verdict verdict) {
+        final McpToolInfo info = toolset.toolInfo(toolRequest.name()).orElse(null);
+        return new PendingCall(
+                toolRequest.id(),
+                toolRequest.name(),
+                NullSafe.get(info, McpToolInfo::serverKey),
+                NullSafe.get(info, McpToolInfo::toolName),
+                toolRequest.arguments(),
+                verdict.risks(),
+                NullSafe.get(info, McpToolInfo::hash),
+                NullSafe.get(info, McpToolInfo::serverHash),
+                null,
+                null);
+    }
+
+    static ToolApprovalRequest approvalRequest(final List<PendingCall> pending,
+                                               final List<ToolConsent.Verdict> verdicts) {
+        final Set<String> reasons = verdicts.stream()
+                .map(ToolConsent.Verdict::reason)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        return new ToolApprovalRequest(
+                ToolApprovalRequest.KIND,
+                ToolApprovalRequest.Status.PENDING,
+                reasons.size() == 1
+                        ? reasons.iterator().next()
+                        : String.join(" ", reasons),
+                pending,
+                verdicts.stream().allMatch(ToolConsent.Verdict::allowForChat),
+                verdicts.stream().allMatch(ToolConsent.Verdict::allowServerReadOnly));
+    }
+
+    private static <T> T read(final AiChatMessage message, final Class<T> type) {
+        try {
+            return JsonUtil.readValue(message.getMessage(), type);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read message " + message.getId(), e);
+            return null;
+        }
     }
 
     /**
