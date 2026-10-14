@@ -148,6 +148,7 @@ public class AskStroomAiPresenter
     private static final String APPROVAL_ID_ATTRIBUTE = "data-approval-id";
     private static final String APPROVAL_ANSWER_ATTRIBUTE = "data-approval-answer";
     private static final String APPROVAL_SCOPE_ATTRIBUTE = "data-approval-scope";
+    private static final String APPROVAL_CALL_ATTRIBUTE = "data-approval-call";
     private static final String EDIT_MESSAGE_ATTRIBUTE = "data-edit-message-id";
     private static final String EDIT_SEND_ATTRIBUTE = "data-edit-send";
     private static final String EDIT_CANCEL_ATTRIBUTE = "data-edit-cancel";
@@ -185,6 +186,8 @@ public class AskStroomAiPresenter
 
     // The statuses of the user's chats, for the switcher and badges.
     private List<AiChatStatus> chatStatuses = new ArrayList<>();
+    // False until the first statuses arrive, so the chats as they were when the page opened are not notified.
+    private boolean statusesKnown;
     private long statusVersion;
     private Timer statusTimer;
     // How the chat is shown: DOCK, DIALOG or TAB, or null if hidden.
@@ -323,11 +326,15 @@ public class AskStroomAiPresenter
                     final String approvalIdStr = button.getAttribute(APPROVAL_ID_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(approvalIdStr)) {
                         final String scope = button.getAttribute(APPROVAL_SCOPE_ATTRIBUTE);
-                        onAnswerApproval(Integer.parseInt(approvalIdStr),
+                        final String callId = button.getAttribute(APPROVAL_CALL_ATTRIBUTE);
+                        onApprovalButton(Integer.parseInt(approvalIdStr),
                                 "approve".equals(button.getAttribute(APPROVAL_ANSWER_ATTRIBUTE)),
                                 NullSafe.isNonBlankString(scope)
                                         ? AiApprovalScope.valueOf(scope)
-                                        : AiApprovalScope.ONCE);
+                                        : AiApprovalScope.ONCE,
+                                NullSafe.isNonBlankString(callId)
+                                        ? callId
+                                        : null);
                         return;
                     }
 
@@ -573,7 +580,12 @@ public class AskStroomAiPresenter
         askStroomAiClient.getChatStatuses(statusVersion, response -> {
             statusVersion = response.getVersion();
             if (response.getStatuses() != null) {
+                final List<AiChatStatus> previous = chatStatuses;
                 chatStatuses = new ArrayList<>(response.getStatuses());
+                if (statusesKnown) {
+                    notifyChanges(previous, chatStatuses);
+                }
+                statusesKnown = true;
                 fireBadge();
             }
             statusTimer.schedule(DocumentVisibility.isHidden()
@@ -597,6 +609,40 @@ public class AskStroomAiPresenter
             }
         }
         AskStroomAiBadgeEvent.fire(this, needsYou, busy, unread);
+        BrowserNotifications.setTitleCount(needsYou + unread);
+    }
+
+    /**
+     * Shows a browser notification for each chat that has just come to need the user, or has just finished,
+     * while the user is looking at another browser tab (U4).
+     */
+    private void notifyChanges(final List<AiChatStatus> previous, final List<AiChatStatus> current) {
+        if (!DocumentVisibility.isHidden()) {
+            return;
+        }
+        askStroomAiClient.getConfig(config -> {
+            if (!config.isBrowserNotifications()) {
+                return;
+            }
+            final Map<Integer, AiChatStatus> before = new HashMap<>();
+            for (final AiChatStatus status : previous) {
+                before.put(status.getChatId(), status);
+            }
+            for (final AiChatStatus status : current) {
+                final AiChatStatus was = before.get(status.getChatId());
+                final String title = NullSafe.isBlankString(status.getTitle())
+                        ? "A chat"
+                        : "\u201c" + status.getTitle() + "\u201d";
+                if (status.isNeedsYou() && (was == null || !was.isNeedsYou())) {
+                    BrowserNotifications.show("Stroom AI needs you", title + " is waiting for your answer.",
+                            "stroom-ai-" + status.getChatId());
+                } else if (status.isUnread() && !status.isBusy() && !status.isNeedsYou()
+                           && was != null && (was.isBusy() || !was.isUnread())) {
+                    BrowserNotifications.show("Stroom AI has answered", title + " has finished.",
+                            "stroom-ai-" + status.getChatId());
+                }
+            }
+        }, SILENT);
     }
 
     @Override
@@ -992,6 +1038,12 @@ public class AskStroomAiPresenter
     @Override
     public void onSendMessage(final String message) {
         getView().setCommandSuggestions(null);
+        // Browsers only ask for permission to notify in response to something the user did, like this.
+        askStroomAiClient.getConfig(config -> {
+            if (config.isBrowserNotifications()) {
+                BrowserNotifications.requestPermission();
+            }
+        }, SILENT);
         if (runSlashCommand(message)) {
             getView().setSendButtonLoadingState(false);
             return;
@@ -1157,36 +1209,63 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * Approves or rejects something the agent asked the user's approval for, then shows the answer on its card.
+     * Answers a request for approval. Denying tool calls first asks the user why, which the model is told.
      *
-     * @param messageId The id of the APPROVAL_REQUEST message.
-     * @param approved  True to approve.
+     * @param callId The tool call answered, or null for all those not yet answered.
      */
-    private void onAnswerApproval(final int messageId, final boolean approved, final AiApprovalScope scope) {
+    private void onApprovalButton(final int messageId,
+                                  final boolean approved,
+                                  final AiApprovalScope scope,
+                                  final String callId) {
+        final AiChatMessage request = approvalRequests.get(messageId);
+        if (request == null) {
+            return;
+        }
+        if (!approved && AiToolMessages.isToolRequest(request.getMessage())) {
+            PromptEvent.fire(this, "Why not? This is optional, and the model is told.", "", reason -> {
+                // Cancelling the prompt leaves the request unanswered.
+                if (reason != null) {
+                    onAnswerApproval(messageId, false, scope, callId, reason.isBlank()
+                            ? null
+                            : reason.strip());
+                }
+            });
+        } else {
+            onAnswerApproval(messageId, approved, scope, callId, null);
+        }
+    }
+
+    private void onAnswerApproval(final int messageId,
+                                  final boolean approved,
+                                  final AiApprovalScope scope,
+                                  final String callId,
+                                  final String reason) {
         final AiChatMessage request = approvalRequests.get(messageId);
         if (currentChat == null || request == null) {
             return;
         }
+        final List<String> callIds = callId != null
+                ? List.of(callId)
+                : null;
         final AnswerAiApprovalRequest answer = new AnswerAiApprovalRequest(currentChat, messageId, approved, scope,
-                null, null);
+                reason, callIds);
         askStroomAiClient.answerApproval(answer, done -> {
-            final String status;
+            final String json;
             if (AiToolMessages.isToolRequest(request.getMessage())) {
-                status = Boolean.TRUE.equals(done)
-                        ? "ANSWERED"
-                        : "EXPIRED";
+                json = Boolean.TRUE.equals(done)
+                        ? AiToolMessages.withDecisions(request.getMessage(), callIds, approved, reason)
+                        : AiToolMessages.withStatus(request.getMessage(), "EXPIRED");
             } else {
-                status = approved
+                json = AiToolMessages.withStatus(request.getMessage(), approved
                         ? (Boolean.TRUE.equals(done)
                                 ? "APPROVED"
                                 : "FAILED")
-                        : "REJECTED";
+                        : "REJECTED");
             }
             appendMessage(new AiChatMessage(request.getId(), request.getChatId(), request.getCreateTimeMs(),
-                    request.getMessageType(), request.getAttachmentId(),
-                    AiToolMessages.withStatus(request.getMessage(), status), request.getTurnId(),
+                    request.getMessageType(), request.getAttachmentId(), json, request.getTurnId(),
                     request.getTokenCount()), System.currentTimeMillis());
-            // A change made shows its own card.
+            // The run carries on once everything is answered.
             startPolling();
         }, error -> showError(error, "Unable to answer the request", () -> {
         }), getView());
@@ -1552,6 +1631,10 @@ public class AskStroomAiPresenter
         final NodeList<Element> blocks = messageElement.getElementsByTagName("pre");
         for (int i = 0; i < blocks.getLength(); i++) {
             final Element pre = blocks.getItem(i);
+            // The arguments of a tool call waiting for approval are not code to copy.
+            if (pre.hasClassName("ai-approval-args")) {
+                continue;
+            }
             if (pre.getPreviousSiblingElement() != null
                 && pre.getPreviousSiblingElement().hasClassName("ai-code-header")) {
                 continue;
@@ -1832,35 +1915,117 @@ public class AskStroomAiPresenter
                                     final long timeMs,
                                     final long nowMs) {
         final String json = msg.getMessage();
+        if (AiToolMessages.isToolRequest(json)) {
+            appendToolApprovalCard(hb, msg, timeMs, nowMs);
+            return;
+        }
         hb.div(card -> {
             card.append(markdownConverter.convertUntrustedMarkdownToHtml(AiToolMessages.approvalMarkdown(json)));
             card.div(footer -> {
                 if (AiToolMessages.isPendingApproval(json)) {
-                    final boolean tool = AiToolMessages.isToolRequest(json);
-                    approvalButton(footer, msg, tool
-                            ? "Allow once"
-                            : "Approve", true, AiApprovalScope.ONCE);
-                    if (tool && AiToolMessages.allowsForChat(json)) {
-                        approvalButton(footer, msg, "Allow in this chat", true, AiApprovalScope.CHAT);
-                    }
-                    if (tool && AiToolMessages.allowsServerReadOnly(json)) {
-                        approvalButton(footer, msg, "Allow this server's read-only tools", true,
-                                AiApprovalScope.SERVER_READ_ONLY);
-                    }
-                    approvalButton(footer, msg, tool
-                            ? "Deny"
-                            : "Reject", false, AiApprovalScope.ONCE);
+                    approvalButton(footer, msg, "Approve", true, AiApprovalScope.ONCE, null);
+                    approvalButton(footer, msg, "Reject", false, AiApprovalScope.ONCE, null);
                 }
                 timestamp(footer, timeMs, nowMs);
             }, Attribute.className("ai-message-footer"));
-        }, Attribute.className("ai-message ai-message--approval"));
+        }, Attribute.className("ai-message ai-message--approval" + (AiToolMessages.isPendingApproval(json)
+                ? " ai-message--needs-you"
+                : "")));
+    }
+
+    /**
+     * Renders a request to approve tool calls: each call with its tool, server, risks and full arguments, and
+     * buttons to allow or deny it, plus Allow all and Deny all when several are waiting.
+     */
+    private void appendToolApprovalCard(final HtmlBuilder hb,
+                                        final AiChatMessage msg,
+                                        final long timeMs,
+                                        final long nowMs) {
+        final String json = msg.getMessage();
+        final boolean pending = AiToolMessages.isPendingApproval(json);
+        final List<AiToolMessages.ApprovalCall> calls = AiToolMessages.approvalCalls(json);
+        final long undecided = calls.stream().filter(call -> call.getDecision() == null).count();
+        final String reason = AiToolMessages.getString(json, "reason");
+        hb.div(card -> {
+            card.div(title -> title.append(pending
+                    ? "The agent wants to use " + (calls.size() == 1
+                    ? "a tool"
+                    : calls.size() + " tools") + " that need your approval"
+                    : "Tool calls the agent asked to use"), Attribute.className("ai-approval-title"));
+            if (pending && reason != null) {
+                card.div(text -> text.append(reason), Attribute.className("ai-approval-reason"));
+            }
+            for (final AiToolMessages.ApprovalCall call : calls) {
+                card.div(callDiv -> appendApprovalCall(callDiv, msg, json, call, pending),
+                        Attribute.className("ai-approval-call"));
+            }
+            card.div(footer -> {
+                if (pending && undecided > 1) {
+                    approvalButton(footer, msg, "Allow all", true, AiApprovalScope.ONCE, null);
+                    approvalButton(footer, msg, "Deny all…", false, AiApprovalScope.ONCE, null);
+                }
+                if ("EXPIRED".equals(AiToolMessages.getString(json, "status"))) {
+                    footer.span(text -> text.append("Not answered in time, so nothing was run."),
+                            Attribute.className("ai-approval-reason"));
+                }
+                timestamp(footer, timeMs, nowMs);
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className("ai-message ai-message--approval" + (pending
+                ? " ai-message--needs-you"
+                : "")));
+    }
+
+    private void appendApprovalCall(final HtmlBuilder callDiv,
+                                    final AiChatMessage msg,
+                                    final String json,
+                                    final AiToolMessages.ApprovalCall call,
+                                    final boolean pending) {
+        callDiv.div(header -> {
+            header.elem(code -> code.append(call.getTool()), SafeHtmlUtils.fromSafeConstant("code"));
+            if (call.getServer() != null) {
+                header.span(server -> server.append(" on " + call.getServer()),
+                        Attribute.className("ai-approval-server"));
+            }
+            for (final String risk : call.getRisks()) {
+                header.span(badge -> badge.append(risk), Attribute.className("ai-risk-badge"));
+            }
+            if (call.getDecision() != null) {
+                header.span(decision -> decision.append(AiToolMessages.decisionLabel(call.getDecision(),
+                                call.getNote())),
+                        Attribute.className("ai-approval-decision ai-approval-decision--"
+                                            + call.getDecision().toLowerCase()));
+            }
+        }, Attribute.className("ai-approval-call-header"));
+        final String arguments = NullSafe.isBlankString(call.getArguments())
+                ? "{}"
+                : call.getArguments();
+        // The arguments are shown in full, never cut short, so the user sees exactly what will be sent.
+        callDiv.elem(pre -> pre.append(AiToolMessages.prettyJson(arguments)),
+                SafeHtmlUtils.fromSafeConstant("pre"), Attribute.className("ai-approval-args"));
+        callDiv.div(size -> size.append(arguments.length() + " characters of arguments"),
+                Attribute.className("ai-approval-size"));
+        if (pending && call.getDecision() == null) {
+            callDiv.div(buttons -> {
+                approvalButton(buttons, msg, "Allow once", true, AiApprovalScope.ONCE, call.getCallId());
+                if (AiToolMessages.allowsForChat(json)) {
+                    approvalButton(buttons, msg, "Allow in this chat", true, AiApprovalScope.CHAT,
+                            call.getCallId());
+                }
+                if (AiToolMessages.allowsServerReadOnly(json)) {
+                    approvalButton(buttons, msg, "Allow this server's read-only tools", true,
+                            AiApprovalScope.SERVER_READ_ONLY, call.getCallId());
+                }
+                approvalButton(buttons, msg, "Deny…", false, AiApprovalScope.ONCE, call.getCallId());
+            }, Attribute.className("ai-approval-buttons"));
+        }
     }
 
     private void approvalButton(final HtmlBuilder footer,
                                 final AiChatMessage msg,
                                 final String label,
                                 final boolean approve,
-                                final AiApprovalScope scope) {
+                                final AiApprovalScope scope,
+                                final String callId) {
         footer.elem(label, BUTTON,
                 Attribute.className(approve
                         ? "allow-focus ai-approval-button ai-approval-button--approve"
@@ -1869,7 +2034,8 @@ public class AskStroomAiPresenter
                 new Attribute(APPROVAL_ANSWER_ATTRIBUTE, approve
                         ? "approve"
                         : "reject"),
-                new Attribute(APPROVAL_SCOPE_ATTRIBUTE, scope.name()));
+                new Attribute(APPROVAL_SCOPE_ATTRIBUTE, scope.name()),
+                new Attribute(APPROVAL_CALL_ATTRIBUTE, NullSafe.string(callId)));
     }
 
     /**

@@ -739,3 +739,98 @@
 .ai-compaction-divider[open] > .ai-message-footer {
     display: flex;
 }
+
+/* ---- Requests for the user's approval ---- */
+
+.ai-message--needs-you {
+    border-left: 3px solid #ed6c02;
+    box-shadow: 0 0 0 1px rgba(237, 108, 2, 0.25);
+}
+
+.ai-approval-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.ai-approval-reason {
+    font-size: 0.9em;
+    color: var(--control__text-color--disabled);
+    margin-bottom: 6px;
+}
+
+.ai-approval-call {
+    margin: 6px 0;
+    padding: 6px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 4px;
+}
+
+.ai-approval-call-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.ai-approval-server {
+    color: var(--control__text-color--disabled);
+    font-size: 0.9em;
+}
+
+.ai-risk-badge {
+    font-size: 0.75em;
+    padding: 0 6px;
+    border-radius: 8px;
+    border: 1px solid #ed6c02;
+    color: #ed6c02;
+    white-space: nowrap;
+}
+
+.ai-approval-decision {
+    margin-left: auto;
+    font-size: 0.85em;
+    font-style: italic;
+}
+
+.ai-approval-decision--allowed {
+    color: var(--icon-colour__green, #2e7d32);
+}
+
+.ai-approval-decision--denied {
+    color: var(--icon-colour__red, #d32f2f);
+}
+
+/* Arguments are shown in full, so they scroll rather than being cut short. */
+.ai-message--approval pre.ai-approval-args {
+    max-height: 240px;
+    overflow: auto;
+    margin: 6px 0 2px;
+    padding: 4px 6px;
+    font-size: 0.85em;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--control__text-color);
+    background: var(--page__background-color);
+    border-radius: 4px;
+}
+
+.ai-approval-size {
+    font-size: 0.75em;
+    color: var(--control__text-color--disabled);
+}
+
+.ai-approval-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+/* Approval buttons must always be visible, not only on hover. */
+.ai-message--approval > .ai-message-footer > button {
+    opacity: 1;
+}
+
+.ai-compaction-divider > .ai-message-footer > button {
+    opacity: 1;
+}
