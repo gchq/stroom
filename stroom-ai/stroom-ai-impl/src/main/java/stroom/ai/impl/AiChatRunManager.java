@@ -412,7 +412,7 @@ public class AiChatRunManager {
             return;
         }
 
-        if (now - localRun.startTimeMs().get() > aiConfig.getMaxRunDuration().toMillis()) {
+        if (now - localRun.startTimeMs().get() >= aiConfig.getMaxRunDuration().toMillis()) {
             LOGGER.info(() -> "Run " + localRun.runId() + " of chat " + chatId + " has reached the time limit");
             stopRun(run, AiChatRunStopReason.RUN_LIMIT);
             return;

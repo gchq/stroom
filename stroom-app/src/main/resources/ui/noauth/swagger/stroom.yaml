@@ -10748,6 +10748,7 @@ components:
           - DEBUG_DETAIL
           - THINKING
           - WARNING
+          - STEER_MESSAGE
         tokenCount:
           type: integer
           format: int32
