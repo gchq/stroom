@@ -16,7 +16,10 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiAttachmentType;
+import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiRequest;
@@ -25,8 +28,12 @@ import stroom.util.json.JsonUtil;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -131,6 +138,39 @@ class TestContextAssembler {
         assertThat(((UserMessage) messages.get(1)).singleText())
                 .contains("'Firewall events' is no longer available (it reached its retention age)")
                 .contains("ask the user to attach it again");
+    }
+
+    @Test
+    void testTablesAreGivenAsProfilesToModelsWithTools(@TempDir final Path tempDir) throws IOException {
+        final AiWorkspaceDao workspaceDao = Mockito.mock(AiWorkspaceDao.class);
+        final WorkspaceStore workspaceStore = Mockito.mock(WorkspaceStore.class);
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, workspaceStore,
+                Mockito.mock(stroom.ai.api.AiService.class), null, workspaceDao,
+                Mockito.mock(ContextUsageTracker.class), null);
+        final AiChatAttachment attachment = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
+                AiAttachmentType.DASHBOARD, "Firewall events", 2, false, null);
+        final Path table = tempDir.resolve("50.md");
+        Files.writeString(table, "| host |\n| --- |\n| fw1 |\n| fw2 |\n");
+        final Path profile = tempDir.resolve("51.md");
+        Files.writeString(profile, "Profile of Firewall events: 2 rows, 1 columns.");
+        Mockito.when(workspaceStore.localFile(50)).thenReturn(table);
+        Mockito.when(workspaceStore.localFile(51)).thenReturn(profile);
+        Mockito.when(workspaceDao.findFile(1, "/attachments/50.profile.md")).thenReturn(java.util.Optional.of(51));
+        final List<AiChatMessage> history = List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "Firewall events", 0, null),
+                new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 2, null));
+        final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
+
+        final String withTools = ((UserMessage) assembler.assemble(request, 1, java.util.Map.of(50, attachment),
+                history, CompactionRecord.NONE, true).get(1)).singleText();
+        final String withoutTools = ((UserMessage) assembler.assemble(request, 1, java.util.Map.of(50, attachment),
+                history, CompactionRecord.NONE, false).get(1)).singleText();
+
+        assertThat(withTools)
+                .contains("The whole table is the workspace file /attachments/50.md")
+                .contains("Profile of Firewall events")
+                .doesNotContain("| fw2 |");
+        assertThat(withoutTools).contains("| fw2 |").doesNotContain("Profile of");
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final Object record) {

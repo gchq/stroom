@@ -117,7 +117,8 @@ public class ChatCompactor {
                                       final String instructions) {
         final List<AiChatMessage> history = aiService.getMessages(chatId);
         final CompactionRecord current = ContextAssembler.currentCompaction(history);
-        List<ChatMessage> messages = contextAssembler.assemble(request, chatId, attachmentMap, history, current);
+        List<ChatMessage> messages = contextAssembler.assemble(request, chatId, attachmentMap, history, current,
+                tablesAsProfiles(modelDoc));
         final ContextBudget budget = budget(modelDoc);
         final long before = contextAssembler.estimateTokens(chatId, messages);
         if (mode == CompactionMode.AUTO && !budget.isOver(before)) {
@@ -136,7 +137,8 @@ public class ChatCompactor {
             final int digestsUpTo = finishedTurns.get(finishedTurns.size() - keep - 1);
             if (digestsUpTo > next.digestsUpToTurnId()) {
                 next = next.withDigestsUpTo(digestsUpTo);
-                messages = contextAssembler.assemble(request, chatId, attachmentMap, history, next);
+                messages = contextAssembler.assemble(request, chatId, attachmentMap, history, next,
+                        tablesAsProfiles(modelDoc));
             }
         }
 
@@ -148,7 +150,8 @@ public class ChatCompactor {
         };
         if (summarise && next.digestsUpToTurnId() > next.summaryUpToTurnId()) {
             next = summarise(chatId, chatModel, history, finishedTurns, next, instructions);
-            messages = contextAssembler.assemble(request, chatId, attachmentMap, history, next);
+            messages = contextAssembler.assemble(request, chatId, attachmentMap, history, next,
+                    tablesAsProfiles(modelDoc));
         }
 
         if (!next.coversTheSameAs(current)) {
@@ -253,6 +256,12 @@ public class ChatCompactor {
             }
         }
         return Optional.empty();
+    }
+
+    /// A model with tools is given each attached table's profile and queries the table with the data tools; one
+    /// without is given the whole table (with batch summarising as the fallback when it is too large).
+    static boolean tablesAsProfiles(final OpenAIModelDoc modelDoc) {
+        return modelDoc != null && modelDoc.isToolsEnabled();
     }
 
     /// Stores the digest of the chat's latest turn, once it has been answered.
