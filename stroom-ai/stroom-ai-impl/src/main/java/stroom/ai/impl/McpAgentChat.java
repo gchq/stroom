@@ -30,14 +30,10 @@ import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.invocation.InvocationContext;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.service.tool.ToolExecutor;
-import dev.langchain4j.service.tool.ToolProviderRequest;
-import dev.langchain4j.service.tool.ToolProviderResult;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
@@ -108,7 +104,7 @@ class McpAgentChat {
                       final int attempt,
                       final StringBuilder debugLog) {
         final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>(builtInTools.toolMap());
-        tools.putAll(mcpTools(toolset, chatId, messages));
+        tools.putAll(mcpTools(toolset));
         if (tools.isEmpty()) {
             LOGGER.debug(() -> "chat: no tools available for chatId=" + chatId + ", making a plain call");
             return chatModel.chat(messages);
@@ -179,25 +175,10 @@ class McpAgentChat {
     /**
      * The MCP tools/resources for this chat, or an empty map when the model has no MCP tool servers.
      */
-    private Map<ToolSpecification, ToolExecutor> mcpTools(final McpToolset toolset,
-                                                         final int chatId,
-                                                         final List<ChatMessage> messages) {
-        if (toolset.getToolProvider() == null) {
-            return Map.of();
-        }
-        // ToolProviderRequest requires a non-null invocationContext and userMessage even though the MCP
-        // tool provider only uses the request to list tools. Supply a minimal context and the last user
-        // message from the conversation.
-        final ToolProviderResult result = toolset.getToolProvider().provideTools(
-                ToolProviderRequest.builder()
-                        .invocationContext(InvocationContext.builder()
-                                .chatMemoryId(chatId)
-                                .timestampNow()
-                                .build())
-                        .messages(messages)
-                        .userMessage(lastUserMessage(messages))
-                        .build());
-        return result.tools();
+    private Map<ToolSpecification, ToolExecutor> mcpTools(final McpToolset toolset) {
+        return toolset.isEmpty()
+                ? Map.of()
+                : toolset.tools();
     }
 
     private String execute(final Map<ToolSpecification, ToolExecutor> tools,
@@ -343,15 +324,5 @@ class McpAgentChat {
                 .append("**Result:**\n```\n")
                 .append(truncate(NullSafe.string(result), DEBUG_RESULT_LIMIT))
                 .append("\n```\n\n");
-    }
-
-    private static UserMessage lastUserMessage(final List<ChatMessage> messages) {
-        for (int i = messages.size() - 1; i >= 0; i--) {
-            if (messages.get(i) instanceof final UserMessage userMessage) {
-                return userMessage;
-            }
-        }
-        // ToolProviderRequest rejects a null userMessage; the conversation always has one, but stay safe.
-        return UserMessage.from(" ");
     }
 }
