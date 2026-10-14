@@ -16,6 +16,8 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.api.EmailMessage;
+import stroom.analytics.api.EmailService;
 import stroom.analytics.shared.EmailContent;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.ReportDoc;
@@ -55,7 +57,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class EmailSender {
+public class EmailSender implements EmailService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EmailSender.class);
 
@@ -158,45 +160,54 @@ public class EmailSender {
         return Collections.unmodifiableMap(context);
     }
 
+    /// Sends a fully formed email, i.e. one whose subject and body are not templates.
+    ///
+    /// @param emailMessage The email to send.
+    /// @throws IllegalArgumentException If the email has no recipients, or its subject is blank or spans
+    ///                                  more than one line.
+    /// @throws RuntimeException         If the email could not be sent.
+    @Override
+    public void sendEmail(final EmailMessage emailMessage) {
+        Objects.requireNonNull(emailMessage, "emailMessage");
+        final List<String> errors = validate(emailMessage);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(buildValidationMessage("email", errors));
+        }
+        send(emailMessage, Collections.emptyList());
+    }
+
     private void send(final NotificationEmailDestination emailDestination,
                       final EmailContent renderedEmail,
                       final String defaultSubject,
+                      final List<AttachmentResource> attachmentResources) {
+        validate(emailDestination);
+
+        final String subject = NullSafe.nonBlankStringElse(
+                renderedEmail.getSubject(),
+                defaultSubject);
+        final String body = Objects.requireNonNullElse(renderedEmail.getBody(), "");
+        final EmailMessage emailMessage = new EmailMessage(
+                emailDestination.getTo(),
+                emailDestination.getCc(),
+                emailDestination.getBcc(),
+                subject,
+                body);
+        send(emailMessage, attachmentResources);
+    }
+
+    private void send(final EmailMessage emailMessage,
                       final List<AttachmentResource> attachmentResources) {
         final AnalyticsConfig analyticsConfig = analyticsConfigProvider.get();
         final EmailConfig emailConfig = analyticsConfig.getEmailConfig();
         Preconditions.checkNotNull(emailConfig, "Missing 'email' section in config");
         final SmtpConfig smtpConfig = Preconditions.checkNotNull(emailConfig.getSmtpConfig(),
                 "Missing 'smtp' section in email config");
-        final EmailPopulatingBuilder emailBuilder = EmailBuilder.startingBlank();
 
+        final Email email;
         try {
-            validate(emailDestination);
-
-            final String subject = NullSafe.nonBlankStringElse(
-                    renderedEmail.getSubject(),
-                    defaultSubject);
-            final String body = Objects.requireNonNullElse(renderedEmail.getBody(), "");
-
-            emailBuilder
-                    .from(emailConfig.getFromName(), emailConfig.getFromAddress())
-                    .withReplyTo(emailConfig.getFromName(), emailConfig.getFromAddress());
-
-            addAddresses(emailDestination.getTo(), address ->
-                    emailBuilder.withRecipient(address, address, RecipientType.TO));
-            addAddresses(emailDestination.getCc(), address ->
-                    emailBuilder.withRecipient(address, address, RecipientType.CC));
-            addAddresses(emailDestination.getBcc(), address ->
-                    emailBuilder.withRecipient(address, address, RecipientType.BCC));
-
-            emailBuilder.withSubject(subject);
-            if (looksLikeHtml(body)) {
-                emailBuilder.withHTMLText(body);
-            } else {
-                emailBuilder.withPlainText(body);
-            }
-            emailBuilder.withAttachments(attachmentResources);
+            email = buildEmail(emailConfig, emailMessage, attachmentResources);
         } catch (final Exception e) {
-            final String message = LogUtil.message("Error sending alert email using user ({}) at {}:{} - {}",
+            final String message = LogUtil.message("Error sending email using user ({}) at {}:{} - {}",
                     smtpConfig.getUsername(),
                     smtpConfig.getHost(),
                     smtpConfig.getPort(),
@@ -205,7 +216,6 @@ public class EmailSender {
             throw new RuntimeException(message, e);
         }
 
-        final Email email = emailBuilder.buildEmail();
         try {
             final MailerRegularBuilderImpl mailerBuilder = MailerBuilder
                     .withTransportStrategy(smtpConfig.getTransportStrategy());
@@ -224,10 +234,10 @@ public class EmailSender {
             }
 
             LOGGER.info(() -> LogUtil.message(
-                    "Sending alert email to recipients {} with subject '{}'. See DEBUG for full detail.",
+                    "Sending email to recipients {} with subject '{}'. See DEBUG for full detail.",
                     recipientsToString(email), email.getSubject()));
 
-            LOGGER.debug(() -> LogUtil.message("Sending alert email {} using user ({}) at {}:{}",
+            LOGGER.debug(() -> LogUtil.message("Sending email {} using user ({}) at {}:{}",
                     email,
                     smtpConfig.getUsername(),
                     smtpConfig.getHost(),
@@ -236,7 +246,7 @@ public class EmailSender {
                 mailer.sendMail(email);
             }
         } catch (final Exception e) {
-            final String message = LogUtil.message("Error sending alert email {} using user ({}) at {}:{} - {}",
+            final String message = LogUtil.message("Error sending email {} using user ({}) at {}:{} - {}",
                     email,
                     smtpConfig.getUsername(),
                     smtpConfig.getHost(),
@@ -247,7 +257,7 @@ public class EmailSender {
         }
     }
 
-    private boolean looksLikeHtml(final String str) {
+    private static boolean looksLikeHtml(final String str) {
         if (NullSafe.isBlankString(str)) {
             return false;
         } else {
@@ -276,17 +286,8 @@ public class EmailSender {
     }
 
     private void validate(final NotificationEmailDestination emailDestination) {
-        final List<String> msgs = new ArrayList<>();
-        final String subject = emailDestination.getSubjectTemplate();
-        final String body = emailDestination.getBodyTemplate();
-
-        if (NullSafe.isBlankString(subject)) {
-            msgs.add("Subject cannot be blank.");
-        }
-        if (subject.contains("\n") || subject.contains("\r")) {
-            msgs.add("Subject contains line breaks or carriage returns. It must be one line only.");
-        }
-        if (NullSafe.isBlankString(body)) {
+        final List<String> msgs = new ArrayList<>(validateSubject(emailDestination.getSubjectTemplate()));
+        if (NullSafe.isBlankString(emailDestination.getBodyTemplate())) {
             msgs.add("Body cannot be blank.");
         }
         final boolean hasRecipients = Stream.of(
@@ -300,17 +301,76 @@ public class EmailSender {
         }
 
         if (!msgs.isEmpty()) {
-            final String prefix = msgs.size() > 1
-                    ? "The following errors were found with the email notification settings:"
-                    : "The following error was found with the email notification settings:";
-            final String msg = prefix + "\n\n" + String.join("\n", msgs);
-
-            throw new RuntimeException(msg);
+            throw new RuntimeException(buildValidationMessage("email notification settings", msgs));
         }
     }
 
-    private void addAddresses(final String addresses,
-                              final Consumer<String> consumer) {
+    /// Checks that an email has a single line subject and at least one recipient.
+    ///
+    /// @param emailMessage The email to check.
+    /// @return The problems with emailMessage, or an empty list if there are none.
+    static List<String> validate(final EmailMessage emailMessage) {
+        final List<String> msgs = new ArrayList<>(validateSubject(emailMessage.subject()));
+        final List<String> recipients = new ArrayList<>();
+        Stream.of(emailMessage.to(), emailMessage.cc(), emailMessage.bcc())
+                .forEach(addresses -> addAddresses(addresses, recipients::add));
+        if (recipients.isEmpty()) {
+            msgs.add("There must be at least one recipient (To, Cc, Bcc).");
+        }
+        return msgs;
+    }
+
+    private static List<String> validateSubject(final String subject) {
+        final List<String> msgs = new ArrayList<>();
+        if (NullSafe.isBlankString(subject)) {
+            msgs.add("Subject cannot be blank.");
+        } else if (subject.contains("\n") || subject.contains("\r")) {
+            msgs.add("Subject contains line breaks or carriage returns. It must be one line only.");
+        }
+        return msgs;
+    }
+
+    private static String buildValidationMessage(final String subjectOfValidation,
+                                                 final List<String> msgs) {
+        final String prefix = msgs.size() > 1
+                ? "The following errors were found with the " + subjectOfValidation + ":"
+                : "The following error was found with the " + subjectOfValidation + ":";
+        return prefix + "\n\n" + String.join("\n", msgs);
+    }
+
+    /// Builds the email to send, from the configured sender and the given message.
+    ///
+    /// @param emailConfig         The configuration holding the sender's name and address.
+    /// @param emailMessage        The recipients, subject and body of the email.
+    /// @param attachmentResources Any files to attach to the email.
+    /// @return The built email.
+    static Email buildEmail(final EmailConfig emailConfig,
+                            final EmailMessage emailMessage,
+                            final List<AttachmentResource> attachmentResources) {
+        final EmailPopulatingBuilder emailBuilder = EmailBuilder.startingBlank()
+                .from(emailConfig.getFromName(), emailConfig.getFromAddress())
+                .withReplyTo(emailConfig.getFromName(), emailConfig.getFromAddress());
+
+        addAddresses(emailMessage.to(), address ->
+                emailBuilder.withRecipient(address, address, RecipientType.TO));
+        addAddresses(emailMessage.cc(), address ->
+                emailBuilder.withRecipient(address, address, RecipientType.CC));
+        addAddresses(emailMessage.bcc(), address ->
+                emailBuilder.withRecipient(address, address, RecipientType.BCC));
+
+        final String body = Objects.requireNonNullElse(emailMessage.body(), "");
+        emailBuilder.withSubject(emailMessage.subject());
+        if (looksLikeHtml(body)) {
+            emailBuilder.withHTMLText(body);
+        } else {
+            emailBuilder.withPlainText(body);
+        }
+        emailBuilder.withAttachments(attachmentResources);
+        return emailBuilder.buildEmail();
+    }
+
+    private static void addAddresses(final String addresses,
+                                     final Consumer<String> consumer) {
         if (addresses != null) {
             final String[] emailAddresses = addresses.split(";");
             for (final String emailAddress : emailAddresses) {
