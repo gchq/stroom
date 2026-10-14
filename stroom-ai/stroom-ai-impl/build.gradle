@@ -44,10 +44,13 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.commons.csv
     implementation libs.dropwizard.client
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
+    implementation libs.jackson.jq
+    implementation libs.jackson2.databind
     implementation libs.jakarta.servlet.api
     implementation libs.langchain4j
     implementation libs.langchain4j.cohere
@@ -58,6 +61,7 @@ dependencies {
     implementation libs.langchain4j.open.ai
     implementation libs.jooq
     implementation libs.restygwt
+    implementation libs.saxon.he
     implementation libs.zstd.jni
 
     runtimeOnly libs.mysql.connector.java
