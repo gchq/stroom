@@ -77,9 +77,10 @@
   --button-contained-primary__background-color--selected: var(--blue-900); /* material blue 900 */
 
   --button-contained-secondary__color: var(--white);
-  --button-contained-secondary__background-color: var(--pink-700); /* material pink 700 */
-  --button-contained-secondary__background-color--hover: var(--pink-800); /* material pink 800 */
-  --button-contained-secondary__background-color--selected: var(--pink-900); /* material pink 900 */
+  /* The lightest pink with 4.5:1 for the white text (blue-700 already is the lightest blue) */
+  --button-contained-secondary__background-color: var(--pink-600); /* material pink 600 */
+  --button-contained-secondary__background-color--hover: var(--pink-700); /* material pink 700 */
+  --button-contained-secondary__background-color--selected: var(--pink-800); /* material pink 800 */
 
   --button-contained-green__color: var(--white);
   --button-contained-green__background-color: var(--green-800); /* material green 800 */

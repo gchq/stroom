@@ -1929,6 +1929,16 @@ button.main-menu svg {
 .duration-picker {
     display: flex;
     width: 200px;
+    /* Room for a focused field's focus ring, so it doesn't run into the field beside it */
+    gap: 8px;
+}
+
+/* The days of the week, one tick box under another, with room for a focused one's focus ring */
+.days {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
 }
 
 .editNodeTagsAllTagsFrmGrp,
