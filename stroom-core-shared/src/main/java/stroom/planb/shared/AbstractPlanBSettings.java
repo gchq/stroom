@@ -42,7 +42,8 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = SessionSettings.class, name = "session"),
         @JsonSubTypes.Type(value = HistogramSettings.class, name = "histogram"),
         @JsonSubTypes.Type(value = MetricSettings.class, name = "metric"),
-        @JsonSubTypes.Type(value = TraceSettings.class, name = "trace")
+        @JsonSubTypes.Type(value = TraceSettings.class, name = "trace"),
+        @JsonSubTypes.Type(value = PathwaysSettings.class, name = "pathways")
 })
 @Description("Defines settings for Plan B")
 @JsonPropertyOrder({
@@ -60,9 +61,11 @@ import java.util.Objects;
                 @DiscriminatorMapping(value = "session", schema = SessionSettings.class),
                 @DiscriminatorMapping(value = "histogram", schema = HistogramSettings.class),
                 @DiscriminatorMapping(value = "metric", schema = MetricSettings.class),
-                @DiscriminatorMapping(value = "trace", schema = TraceSettings.class)})
+                @DiscriminatorMapping(value = "trace", schema = TraceSettings.class),
+                @DiscriminatorMapping(value = "pathways", schema = PathwaysSettings.class)})
 public abstract sealed class AbstractPlanBSettings permits
         AbstractHttpStoreSettings,
+        PathwaysSettings,
         TraceSettings {
 
     // 10 GiB

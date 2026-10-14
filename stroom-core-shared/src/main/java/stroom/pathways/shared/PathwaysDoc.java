@@ -22,11 +22,16 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.pathways.shared.pathway.Pathway;
+import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.planb.shared.PathwaysSettings;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.SharedFileStoreSettings;
+import stroom.planb.shared.StateType;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -64,7 +69,7 @@ import java.util.Objects;
         "ignoredAttributes",
         "pathways"})
 @JsonInclude(Include.NON_NULL)
-public class PathwaysDoc extends AbstractDoc {
+public class PathwaysDoc extends AbstractDoc implements PlanBDocument {
 
     private static final boolean DEFAULT_ALLOW_PATHWAY_CREATION = true;
     private static final boolean DEFAULT_ALLOW_PATHWAY_MUTATION = true;
@@ -141,6 +146,10 @@ public class PathwaysDoc extends AbstractDoc {
     @JsonInclude(Include.NON_NULL)
     private final Boolean hasSharedFileStoreData;
 
+    /** Held rather than made on demand: Plan B asks for it once per shard of every pass. */
+    @JsonIgnore
+    private final PathwaysSettings planBSettings;
+
 
     @JsonCreator
     public PathwaysDoc(@JsonProperty("uuid") final String uuid,
@@ -183,6 +192,7 @@ public class PathwaysDoc extends AbstractDoc {
         this.infoFeed = infoFeed;
         this.sharedFileStore = sharedFileStore;
         this.hasSharedFileStoreData = hasSharedFileStoreData;
+        this.planBSettings = new PathwaysSettings(sharedFileStore);
     }
 
     /**
@@ -203,6 +213,28 @@ public class PathwaysDoc extends AbstractDoc {
 
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * What kind of store this is to Plan B, which keeps every document that has shards on the shared
+     * file store and works them the same way.
+     */
+    @JsonIgnore
+    @Override
+    public StateType getStateType() {
+        return StateType.PATHWAYS;
+    }
+
+    /**
+     * What Plan B asks every document for when it wants to know where its shards are.
+     *
+     * <p>Built from this document's own shared file store setting rather than stored, so nothing
+     * about the document on disk changes — which is why it is not written out.
+     */
+    @JsonIgnore
+    @Override
+    public AbstractPlanBSettings getSettings() {
+        return planBSettings;
     }
 
     public SimpleDuration getTemporalOrderingTolerance() {

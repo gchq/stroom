@@ -18,7 +18,6 @@ package stroom.pathways.impl;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.pathways.impl.TraceProcessor.ApplyOutcome;
 import stroom.pathways.shared.PathwaysDoc;
@@ -28,12 +27,14 @@ import stroom.planb.impl.dao.trace.IgnoredSpans;
 import stroom.planb.impl.dao.trace.PathwaysDb;
 import stroom.planb.impl.dao.trace.QueueItem;
 import stroom.planb.impl.dao.trace.QueueItemReader;
+import stroom.planb.impl.fs.MergeContext;
+import stroom.planb.impl.fs.MergeResult;
+import stroom.planb.impl.fs.MergeStrategy;
 import stroom.planb.impl.fs.OperationMarker;
-import stroom.planb.impl.fs.ShardPass;
 import stroom.planb.impl.fs.ShardQueue;
 import stroom.planb.impl.serde.trace.HexStringUtil;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.SharedFileStoreSettings;
-import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -56,11 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
@@ -71,7 +68,7 @@ import java.util.function.Consumer;
  * both live on the shared filesystem.
  */
 @Singleton
-public class PathwaysProcessor {
+public class PathwaysProcessor implements MergeStrategy {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PathwaysProcessor.class);
 
@@ -88,32 +85,16 @@ public class PathwaysProcessor {
     static final int MAX_ITEMS_PER_HOLD = 50;
     static final Duration MAX_TIME_PER_HOLD = Duration.ofSeconds(30);
 
-    /**
-     * Shards worked at once by this node.
-     *
-     * <p>Shards are independent — one lock each, one queue folder each — so working them one after
-     * another would make a pass take the sum of their holds rather than the longest of them. At the
-     * bound above, a node with eight busy shards would need four minutes for a pass the scheduler
-     * starts every minute.
-     *
-     * <p>Deliberately not the Plan B merge thread count. The two compete for the same shared
-     * filesystem but are sized for different work, and silently spending a budget meant for merging
-     * would make each harder to reason about.
-     */
-    static final int SHARD_THREADS = 4;
 
     /** When each shard was last narrowed, kept beside the shard on the shared file store. */
     private static final OperationMarker NARROWED_MARKER =
             new OperationMarker(PlanBConstants.NARROWED_LAST_FILE_NAME);
 
-    private final PathwaysStore pathwaysStore;
     private final PathwaysShardStore shardStore;
     private final MessageReceiverFactory messageReceiverFactory;
     private final PathwaySerde pathwaySerde;
     private final MutationLog mutationLog;
     private final PathwayNarrower pathwayNarrower;
-    private final ShardPass shardPass;
-    private final SecurityContext securityContext;
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
 
@@ -125,32 +106,24 @@ public class PathwaysProcessor {
      * themselves. At most one cycle stale, which is fine for a backlog, and it keeps a metrics scrape
      * off the shared mount and out of the permission checks that reading a document needs.
      */
-    private volatile long lastQueueDepth;
-    private volatile long lastOldestItemAgeMs;
+    private final Map<String, Backlog> backlogByDoc = new ConcurrentHashMap<>();
 
     @Inject
     public PathwaysProcessor(final MutationLog mutationLog,
-                                  final PathwaysStore pathwaysStore,
-                                  final PathwaysShardStore shardStore,
-                                  final MessageReceiverFactory messageReceiverFactory,
-                                  final PathwaySerde pathwaySerde,
-                                  final PathwayNarrower pathwayNarrower,
-                                  final ClusterLockService clusterLockService,
-                                  final SecurityContext securityContext,
-                                  final ByteBuffers byteBuffers,
-                                  final ByteBufferFactory byteBufferFactory,
-                                  final Metrics metrics) {
+                             final PathwaysShardStore shardStore,
+                             final MessageReceiverFactory messageReceiverFactory,
+                             final PathwaySerde pathwaySerde,
+                             final PathwayNarrower pathwayNarrower,
+                             final ByteBuffers byteBuffers,
+                             final ByteBufferFactory byteBufferFactory,
+                             final Metrics metrics) {
         this.mutationLog = mutationLog;
-        this.pathwaysStore = pathwaysStore;
         this.shardStore = shardStore;
         this.messageReceiverFactory = messageReceiverFactory;
         this.pathwaySerde = pathwaySerde;
         this.pathwayNarrower = pathwayNarrower;
-        this.securityContext = securityContext;
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
-        this.shardPass = new ShardPass(clusterLockService, securityContext,
-                createShardExecutor("Pathways Queue Drain"));
 
         this.tracesApplied = metrics.registrationBuilder(getClass())
                 .addNamePart("tracesApplied")
@@ -163,60 +136,82 @@ public class PathwaysProcessor {
         metrics.registrationBuilder(getClass())
                 .addNamePart("queueDepth")
                 .addNamePart(Metrics.COUNT)
-                .gauge(() -> lastQueueDepth)
+                .gauge(() -> backlogByDoc.values().stream().mapToLong(Backlog::items).sum())
                 .register();
         metrics.registrationBuilder(getClass())
                 .addNamePart("oldestItem")
                 .addNamePart(Metrics.AGE_MS)
-                .gauge(() -> lastOldestItemAgeMs)
+                .gauge(() -> backlogByDoc.values().stream().mapToLong(Backlog::oldestAgeMs).max().orElse(0))
                 .register();
     }
 
-    public void exec() {
-        securityContext.asProcessingUser(() -> {
-            long depth = 0;
-            long oldestAgeMs = 0;
-            for (final DocRef docRef : NullSafe.list(pathwaysStore.list())) {
-                try {
-                    final Backlog backlog = processDocument(docRef);
-                    depth += backlog.items();
-                    oldestAgeMs = Math.max(oldestAgeMs, backlog.oldestAgeMs());
-                } catch (final RuntimeException e) {
-                    // One unreadable or mid-deletion document must not stop the others being drained.
-                    LOGGER.error(() -> LogUtil.message("Error draining pathways queue for '{}': {}",
-                            docRef, e.getMessage()), e);
-                }
-            }
-            lastQueueDepth = depth;
-            lastOldestItemAgeMs = oldestAgeMs;
-        });
+    /**
+     * What Plan B's merge asks for when it reaches a pathways document: the shards with traces to
+     * apply or a narrowing falling due, and what to do with each.
+     *
+     * <p>A pathways document has no batches waiting for it — nothing writes to a processing folder on
+     * its behalf — so everything it has to do arrives this way.
+     */
+    @Override
+    public Set<Integer> shardsWithOwnWork(final PlanBDocument doc) {
+        return shardsWithWork((PathwaysDoc) doc);
     }
 
-    private Backlog processDocument(final DocRef docRef) {
-        final PathwaysDoc doc = pathwaysStore.readDocument(docRef);
-        final SharedFileStoreSettings settings = doc == null
-                ? null
-                : doc.getSharedFileStore();
+    /**
+     * The same lock the screens take when they write to a shard — see {@code PathwaysService} — so
+     * that a reader editing a model and a pass applying traces to it cannot hold one shard at once.
+     */
+    @Override
+    public String lockName(final PlanBDocument doc, final int shardIndex) {
+        return lockName(doc.getUuid(), shardIndex);
+    }
+
+    /**
+     * Applies this shard's queued traces to its model, narrows the model if that is due, and
+     * publishes it — inside the cluster lock the caller is holding.
+     *
+     * @param batchDirs always empty. A pathways document has no batches: nothing writes to a
+     *                  processing folder on its behalf, and what it has to do is found by
+     *                  {@link #shardsWithOwnWork}.
+     * @return nothing merged and nothing failed. The queue items that went in are deleted here
+     * instead, because they can only go once the model that consumed them is safely published.
+     */
+    @Override
+    public MergeResult mergeShard(final MergeContext ctx, final List<Path> batchDirs) {
+        final PathwaysDoc doc = (PathwaysDoc) ctx.doc();
+        final SharedFileStoreSettings settings = doc.getSharedFileStore();
+        if (settings != null && NullSafe.isNonBlankString(settings.getSharedPath())) {
+            // Looked at again now the lock is held rather than carried from before it: items arrive
+            // while a pass runs, and on a cluster another node may have narrowed this shard since.
+            drain(doc, ctx.shardIndex(), queued(doc, settings, ctx.shardIndex(), Instant.now()));
+        }
+        return MergeResult.none();
+    }
+
+    // The shards of one pathways document with traces queued or a narrowing falling due.
+    private Set<Integer> shardsWithWork(final PathwaysDoc doc) {
+        final SharedFileStoreSettings settings = doc.getSharedFileStore();
         if (settings == null || NullSafe.isBlankString(settings.getSharedPath())) {
             // Nothing has been configured, so nothing was ever written for it.
-            return Backlog.NONE;
+            return Set.of();
         }
 
         final Survey survey = survey(doc, settings);
-        final Set<Integer> busy = shardPass.run(survey.shards().keySet(),
-                shard -> lockName(doc.getUuid(), shard),
-                shard -> drain(doc, shard, survey.shards().get(shard)),
-                "draining " + doc.getName());
-        if (!busy.isEmpty()) {
-            // Worth seeing, but not worth saying out loud: this runs every minute, the node holding
-            // the shard is working it, and whatever was left waits for the next pass.
-            LOGGER.debug(() -> LogUtil.message("{} shard(s) of {} were in use this pass: {}",
-                    busy.size(), doc.getName(), busy));
-        }
+        // What was waiting when the document was looked at, not what is left now. A shard that turns
+        // out to be held elsewhere still counts, because its items are still queued.
+        backlogByDoc.put(doc.getUuid(), survey.backlog());
+        return survey.shards().keySet();
+    }
 
-        // The backlog is what was waiting when the document was looked at, not what is left now. A
-        // shard that was in use counts towards it, because its items are still queued.
-        return survey.backlog();
+    // One shard's queue and whether its model is due a narrowing, as they stand right now.
+    private Queued queued(final PathwaysDoc doc,
+                          final SharedFileStoreSettings settings,
+                          final int shardIndex,
+                          final Instant now) {
+        final ShardQueue queue = ShardQueue.of(settings, doc.getUuid(), shardIndex);
+        return new Queued(queue,
+                queue.itemsOldestFirst().size(),
+                narrowingDue(shardStore.sharedDocDir(doc), shardIndex, now));
     }
 
     // One look at every shard's queue folder: which have items, how many, and how far behind the
@@ -464,27 +459,6 @@ public class PathwaysProcessor {
         private boolean changed;
     }
 
-    // Sets an unreadable item aside rather than deleting or retrying it: retrying stalls the shard
-    // forever on the same item, and deleting destroys the only copy of whatever went wrong.
-
-    // Shared with the narrowing, which works the same shards under the same locks and wants the same
-    // small pool of low priority threads to do it on.
-    static ExecutorService createShardExecutor(final String threadName) {
-        final AtomicInteger threadNo = new AtomicInteger();
-        return new ThreadPoolExecutor(
-                SHARD_THREADS,
-                SHARD_THREADS,
-                60L,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(),
-                runnable -> {
-                    final Thread thread = new Thread(
-                            runnable, threadName + " #" + threadNo.incrementAndGet());
-                    thread.setDaemon(true);
-                    thread.setPriority(3);
-                    return thread;
-                });
-    }
 
     // --------------------------------------------------------------------------------
 

@@ -129,11 +129,12 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
                 if (handler instanceof final ImportExportActionHandler ieHandler) {
                     for (final DocRef docRef : ieHandler.listDocuments()) {
                         try {
-                            // listDocuments() already gives us the full DocRef, so on a cache
-                            // miss load straight from it rather than re-resolving by name via
-                            // create()/findByName. Warm cache entries are still reused.
-                            final PlanBDocument doc = cache.get(docRef.getName(),
-                                    name -> loadFromDocRef(docRef));
+                            // Loaded from the DocRef rather than taken from the cache, which is keyed
+                            // on the document's name alone: two documents of different types can
+                            // share a name, and the one cached first would stand in for the other
+                            // here. Nothing is saved by caching anyway — this runs once a cycle and
+                            // every document is wanted.
+                            final PlanBDocument doc = loadFromDocRef(docRef);
                             if (doc != null) {
                                 results.add(doc);
                             }

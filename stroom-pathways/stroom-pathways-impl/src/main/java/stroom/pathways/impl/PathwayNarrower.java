@@ -46,7 +46,6 @@ import stroom.planb.impl.dao.LmdbWriter;
 import stroom.planb.impl.dao.trace.NanoTimeUtil;
 import stroom.planb.impl.dao.trace.PathwaysDb;
 import stroom.planb.impl.dao.trace.PathwaysDb.SimpleDb;
-import stroom.planb.impl.fs.ShardPass;
 import stroom.planb.impl.fs.ShardQueue;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.security.api.SecurityContext;

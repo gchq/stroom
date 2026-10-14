@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -127,44 +128,70 @@ public class SharedFileStoreMergeProcessor {
     public void merge() {
         securityContext.asProcessingUser(() -> {
             LOGGER.debug("Starting Plan B Shared FS Merge");
-
-            final TaskContext taskContext = taskContextFactory.current();
-            final List<PlanBDocument> planBDocs = planBDocCache.getAll();
-            Collections.shuffle(planBDocs);
-
-            for (final PlanBDocument doc : planBDocs) {
-                if (SharedFileStore.isConfigured(doc)) {
-                    try {
-                        mergeDoc(doc, taskContext);
-                    } catch (final Exception e) {
-                        LOGGER.error("Error merging shards for doc {}", doc.getName(), e);
-                    }
+            for (final PlanBDocument doc : documents()) {
+                try {
+                    mergeDoc(doc);
+                } catch (final RuntimeException e) {
+                    // Documents are independent of each other, and they are read while the cycle runs
+                    // so one may be mid-deletion. A cycle that gave up on the first bad one would
+                    // leave every doc after it alone until somebody noticed.
+                    LOGGER.error(() -> LogUtil.message("Error merging shards for {}: {}",
+                            doc.getName(), e.getMessage()), e);
                 }
             }
-
             LOGGER.debug("Finished Plan B Shared FS Merge");
         });
     }
 
-    private void mergeDoc(final PlanBDocument doc, final TaskContext parentTaskContext) {
+    /**
+     * Every doc held on a shared file store, in a different order each cycle.
+     *
+     * <p>Shuffled so that concurrent nodes scatter across docs as well as across the shards within
+     * one. Taken in the same order, every node would work down the same list and spend its cycle
+     * losing the same races.
+     */
+    private List<PlanBDocument> documents() {
+        final List<PlanBDocument> planBDocs = new ArrayList<>(planBDocCache.getAll().stream()
+                .filter(SharedFileStore::isConfigured)
+                .toList());
+        Collections.shuffle(planBDocs);
+        return planBDocs;
+    }
+
+    private void mergeDoc(final PlanBDocument doc) {
         final MergeStrategy strategy = mergeStrategies.get(doc.getStateType());
         if (strategy == null) {
             LOGGER.debug(() -> "No merge strategy for " + doc.getStateType() + ", skipping " + doc.getName());
             return;
         }
 
-        final Map<Integer, List<Path>> withWork = batchesByShard(doc);
-        final Set<Integer> busy = shardPass.run(withWork.keySet(),
-                shardIndex -> PlanBConstants.getMergeLockName(doc.getUuid(), shardIndex),
+        // Taken on this thread, where the job's own context is, so that each shard's work hangs under
+        // the job rather than under whichever pool thread happens to run it.
+        final TaskContext parentTaskContext = taskContextFactory.current();
+
+        final Map<Integer, List<Path>> batches = batchesByShard(doc);
+
+        // Shards worth locking: those with batches waiting, and those the strategy says have work of
+        // some other kind. A shard in both lists is worked once, with its batches — taking the shard
+        // is the expensive part, and what the strategy does with it once held is its own business.
+        final Set<Integer> shardIndexes = new LinkedHashSet<>(batches.keySet());
+        shardIndexes.addAll(strategy.shardsWithOwnWork(doc));
+        if (shardIndexes.isEmpty()) {
+            return;
+        }
+
+        final Set<Integer> busy = shardPass.run(shardIndexes,
+                shardIndex -> strategy.lockName(doc, shardIndex),
                 shardIndex -> taskContextFactory.childContext(parentTaskContext,
                         "Merge doc " + doc.getName()
                         + " shard " + PlanBConstants.formatShardIndex(shardIndex),
                         taskContext -> mergeShard(strategy, doc, shardIndex,
-                                withWork.get(shardIndex))).run(),
+                                batches.getOrDefault(shardIndex, List.of()))).run(),
                 "merging " + doc.getName());
+
         if (!busy.isEmpty()) {
-            // Expected rather than wrong: every node runs this, so a shard another node is merging is
-            // a shard this one does not have to. It waits for the next cycle, a minute away.
+            // Said quietly, because it is the ordinary case rather than a fault: every node runs this,
+            // so a shard one node is holding is a shard the others do not have to.
             LOGGER.debug(() -> LogUtil.message("{} shard(s) of {} were held elsewhere this cycle: {}",
                     busy.size(), doc.getName(), busy));
         }

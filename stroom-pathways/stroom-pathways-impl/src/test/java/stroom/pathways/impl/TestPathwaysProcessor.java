@@ -29,6 +29,7 @@ import stroom.planb.impl.dao.trace.QueueItem;
 import stroom.planb.impl.dao.trace.QueueItemWriter;
 import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.data.value.SpanKV;
+import stroom.planb.impl.fs.MergeContext;
 import stroom.planb.impl.fs.OperationMarker;
 import stroom.planb.impl.fs.ShardQueue;
 import stroom.planb.impl.serde.trace.HexStringUtil;
@@ -58,9 +59,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -95,8 +93,6 @@ class TestPathwaysProcessor {
     Path tempDir;
 
     @Mock
-    private PathwaysStore pathwaysStore;
-    @Mock
     private ClusterLockService clusterLockService;
     @Mock
     private SecurityContext securityContext;
@@ -130,8 +126,6 @@ class TestPathwaysProcessor {
                 .name("Test Pathways")
                 .sharedFileStore(new SharedFileStoreSettings(SHARD_COUNT, pathwaysShared.toString()))
                 .build();
-        doReturn(List.of(pathwaysDoc.asDocRef())).when(pathwaysStore).list();
-        doReturn(pathwaysDoc).when(pathwaysStore).readDocument(any());
 
         // Run the supplied work rather than mocking out the thing under test.
         doAnswer(invocation -> {
@@ -179,19 +173,18 @@ class TestPathwaysProcessor {
 
         processor = new PathwaysProcessor(
                 new MutationLog(BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY)),
-                pathwaysStore, shardStore, messageReceiverFactory,
+                shardStore, messageReceiverFactory,
                 new PathwaySerde(BYTE_BUFFER_FACTORY),
                 new PathwayNarrower(new PathwaySerde(BYTE_BUFFER_FACTORY),
                         new MutationLog(BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY)),
                         BYTE_BUFFERS),
-                clusterLockService, securityContext,
                 BYTE_BUFFERS, BYTE_BUFFER_FACTORY,
                 () -> new MetricRegistry());
     }
 
     @Test
     void anEmptyShardIsNeverLocked() {
-        processor.exec();
+        runPass();
 
         verify(clusterLockService, never()).tryLock(anyString(), any(Runnable.class));
     }
@@ -201,7 +194,7 @@ class TestPathwaysProcessor {
         final int shard = 2;
         writeItem(shard, 1_000L, 1);
 
-        processor.exec();
+        runPass();
 
         verify(clusterLockService).tryLock(
                 eq(PathwaysProcessor.lockName(pathwaysDoc.getUuid(), shard)), any(Runnable.class));
@@ -215,7 +208,7 @@ class TestPathwaysProcessor {
         writeItem(1, 2_000L, 1);
         assertThat(itemsIn(1)).hasSize(2);
 
-        processor.exec();
+        runPass();
 
         assertThat(itemsIn(1)).as("an applied item is taken out of the queue").isEmpty();
     }
@@ -227,7 +220,7 @@ class TestPathwaysProcessor {
         }
         final int before = itemsIn(1).size();
 
-        processor.exec();
+        runPass();
 
         assertThat(itemsIn(1))
                 .as("one hold takes at most the bound, and the rest stay queued")
@@ -243,7 +236,7 @@ class TestPathwaysProcessor {
             writeItem(1, 1_000L + i, 1);
         }
 
-        processor.exec();
+        runPass();
 
         final List<Path> left = itemsIn(1);
         assertThat(left).hasSize(1);
@@ -272,7 +265,7 @@ class TestPathwaysProcessor {
             return null;
         }).when(clusterLockService).tryLock(anyString(), any(Runnable.class));
 
-        processor.exec();
+        runPass();
 
         assertThat(itemsIn(1))
                 .as("an interrupted process must not delete what it never applied")
@@ -285,7 +278,7 @@ class TestPathwaysProcessor {
         corruptItem(1, 2_000L);
         writeItem(1, 3_000L, 1);
 
-        processor.exec();
+        runPass();
 
         assertThat(itemsIn(1)).as("the readable items were applied and removed").isEmpty();
         final Path quarantine = shardDir(1).resolve(ShardQueue.QUARANTINE_DIR_NAME);
@@ -296,41 +289,10 @@ class TestPathwaysProcessor {
     }
 
     @Test
-    void shardsAreWorkedAtTheSameTime() throws IOException, InterruptedException {
-        final int busyShards = 3;
-        assertThat(PathwaysProcessor.SHARD_THREADS)
-                .as("the pool has to be able to hold every busy shard for this to mean anything")
-                .isGreaterThanOrEqualTo(busyShards);
-        for (int shard = 0; shard < busyShards; shard++) {
-            writeItem(shard, 1_000L, 1);
-        }
-
-        // Each shard announces itself and then waits for the others. Worked one after another, the
-        // first would wait out the timeout because the second could not have started yet.
-        final CountDownLatch allStarted = new CountDownLatch(busyShards);
-        final AtomicBoolean overlapped = new AtomicBoolean(true);
-        doAnswer(invocation -> {
-            allStarted.countDown();
-            if (!allStarted.await(5, TimeUnit.SECONDS)) {
-                overlapped.set(false);
-            }
-            invocation.getArgument(1, Runnable.class).run();
-            return null;
-        }).when(clusterLockService).tryLock(anyString(), any(Runnable.class));
-
-        processor.exec();
-
-        assertThat(overlapped.get()).as("every busy shard was in flight together").isTrue();
-        for (int shard = 0; shard < busyShards; shard++) {
-            assertThat(itemsIn(shard)).as("shard %s drained", shard).isEmpty();
-        }
-    }
-
-    @Test
     void aTraceBecomesAPathwayInTheShardsModel() throws IOException {
         writeItem(1, 1_000L, 1);
 
-        processor.exec();
+        runPass();
 
         try (final PathwaysDb db = PathwaysDb.create(lastLocalDir, BYTE_BUFFERS, true)) {
             final List<String> names = new ArrayList<>();
@@ -346,13 +308,13 @@ class TestPathwaysProcessor {
     void aTraceAlreadyAppliedDoesNotMakeTheModelWorthPushing() throws IOException {
         final String traceId = "d".repeat(32);
         writeItem(1, 1_000L, traceId);
-        processor.exec();
+        runPass();
         assertThat(lastChanged).as("the first sighting builds a pathway").isTrue();
 
         // The same trace again, into the model that already holds it — which is what at-least-once
         // delivery makes routine. Nothing changes, so there is nothing worth copying back up.
         writeItem(1, 2_000L, traceId);
-        processor.exec();
+        runPass();
 
         assertThat(lastChanged)
                 .as("re-applying a trace this shard has seen is not worth a push")
@@ -365,7 +327,7 @@ class TestPathwaysProcessor {
         // that has never been narrowed presents.
         Files.delete(narrowedMarkers.resolve("0002").resolve(PlanBConstants.NARROWED_LAST_FILE_NAME));
 
-        processor.exec();
+        runPass();
 
         verify(clusterLockService).tryLock(
                 eq(PathwaysProcessor.lockName(pathwaysDoc.getUuid(), 2)), any(Runnable.class));
@@ -376,11 +338,11 @@ class TestPathwaysProcessor {
     @Test
     void aShardNarrowedIsNotNarrowedAgainUntilTheMarkerIsOldEnough() throws IOException {
         Files.delete(narrowedMarkers.resolve("0002").resolve(PlanBConstants.NARROWED_LAST_FILE_NAME));
-        processor.exec();
+        runPass();
 
         // The pass stamped the marker, so the next one has no reason to open the shard.
         clearInvocations(clusterLockService);
-        processor.exec();
+        runPass();
 
         verify(clusterLockService, never()).tryLock(anyString(), any(Runnable.class));
     }
@@ -391,26 +353,44 @@ class TestPathwaysProcessor {
         // tryLock returning without running is how a lock held by another node presents.
         doAnswer(invocation -> null).when(clusterLockService).tryLock(anyString(), any(Runnable.class));
 
-        processor.exec();
+        runPass();
 
         assertThat(itemsIn(1)).as("someone else's turn, so nothing is consumed").hasSize(1);
     }
 
     @Test
     void aDocumentWithNoSharedFileStoreIsSkipped() {
-        doReturn(PathwaysDoc.builder()
+        final PathwaysDoc unconfigured = PathwaysDoc.builder()
                 .uuid(pathwaysDoc.getUuid())
                 .name("Unconfigured")
-                .build()).when(pathwaysStore).readDocument(any());
+                .build();
 
-        processor.exec();
-
-        verify(clusterLockService, never()).tryLock(anyString(), any(Runnable.class));
+        assertThat(processor.shardsWithOwnWork(unconfigured))
+                .as("nothing was ever written for it, so there is nothing to lock a shard for")
+                .isEmpty();
     }
 
     // -----------------------------------------------------------------------
     // Fixture
     // -----------------------------------------------------------------------
+
+    /**
+     * One pass over the document, done the way Plan B's merge does it: ask the strategy which shards
+     * have work, then take each one's lock and run what it gave back.
+     *
+     * <p>Here rather than calling something on the processor, because there is nothing to call — the
+     * processor no longer drives a pass of its own, and a test that drove one would be testing a path
+     * nothing uses.
+     */
+    private void runPass() {
+        processor.shardsWithOwnWork(pathwaysDoc).forEach(shardIndex ->
+                securityContext.asProcessingUser(() ->
+                        clusterLockService.tryLock(processor.lockName(pathwaysDoc, shardIndex),
+                                () -> processor.mergeShard(
+                                        new MergeContext(pathwaysDoc, shardIndex,
+                                                processor.lockName(pathwaysDoc, shardIndex), false),
+                                        List.of()))));
+    }
 
     private void writeItem(final int shard, final long orderKey, final String traceIdHex)
             throws IOException {
