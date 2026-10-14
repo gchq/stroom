@@ -21,18 +21,19 @@ import stroom.ai.impl.tools.BuiltInTools;
 import stroom.task.api.TaskContext;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.invocation.InvocationContext;
-import dev.langchain4j.mcp.McpToolProvider;
-import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.service.tool.ToolExecutionResult;
+import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.ListToolsResult;
+import io.modelcontextprotocol.spec.McpSchema.TextContent;
+import io.modelcontextprotocol.spec.McpSchema.Tool;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -58,14 +59,9 @@ class TestMcpAgentChat {
             new SystemMessage("system prompt"),
             new UserMessage("how many errors today?"));
 
-    /**
-     * Regression: {@code ToolProviderRequest} requires a non-null invocationContext and userMessage, so
-     * building the request without them threw "invocationContext cannot be null" as soon as a tool server
-     * was configured.
-     */
     @Test
-    void chatWithToolsDoesNotThrowOnRequestBuild() {
-        final McpToolset toolset = toolset(Mockito.mock(McpClient.class), toolSpec());
+    void chatWithToolsAnswersWithoutCallingATool() {
+        final McpToolset toolset = toolset(Mockito.mock(McpSyncClient.class), searchTool());
 
         final ChatResponse response = agentChat.chat(new StubChatModel(), 1, messages, toolset, 99,
                 new AtomicBoolean(false), taskContext, 1, new StringBuilder());
@@ -76,11 +72,13 @@ class TestMcpAgentChat {
 
     @Test
     void progressAndDebugDetailDescribeWhyEachToolRuns() {
-        final McpClient client = Mockito.mock(McpClient.class);
-        Mockito.when(client.executeTool(Mockito.any(ToolExecutionRequest.class),
-                        Mockito.any(InvocationContext.class)))
-                .thenReturn(ToolExecutionResult.builder().resultText("42 errors").build());
-        final McpToolset toolset = toolset(client, toolSpec());
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder()
+                        .content(List.of(new TextContent("42 errors")))
+                        .isError(false)
+                        .build());
+        final McpToolset toolset = toolset(client, searchTool());
 
         // First model turn: rationale + a tool call; second turn: the final answer.
         final ChatModel model = new StubToolCallingModel(
@@ -117,18 +115,19 @@ class TestMcpAgentChat {
                 .contains("42 errors");
     }
 
-    private static ToolSpecification toolSpec() {
-        return ToolSpecification.builder().name("search").description("run a search").build();
+    private static Tool searchTool() {
+        return Tool.builder()
+                .name("search")
+                .description("run a search")
+                .inputSchema(Map.of(
+                        "type", "object",
+                        "properties", Map.of("query", Map.of("type", "string"))))
+                .build();
     }
 
-    private static McpToolset toolset(final McpClient client, final ToolSpecification... tools) {
-        Mockito.when(client.key()).thenReturn("test");
-        Mockito.when(client.listTools()).thenReturn(List.of(tools));
-        final McpToolProvider provider = McpToolProvider.builder()
-                .mcpClients(List.of(client))
-                .failIfOneServerFails(false)
-                .build();
-        return new McpToolset(List.of(client), provider);
+    private static McpToolset toolset(final McpSyncClient client, final Tool... tools) {
+        Mockito.when(client.listTools()).thenReturn(new ListToolsResult(List.of(tools), null));
+        return new McpToolset(List.of(new McpToolset.McpServerConnection("test", null, client)));
     }
 
     /**

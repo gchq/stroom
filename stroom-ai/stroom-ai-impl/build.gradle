@@ -49,7 +49,9 @@ dependencies {
     implementation libs.langchain4j
     implementation libs.langchain4j.cohere
     implementation libs.langchain4j.jina
-    implementation libs.langchain4j.mcp
+    implementation platform(libs.mcp.bom)
+    implementation libs.mcp.core
+    implementation libs.mcp.json.jackson3
     implementation libs.langchain4j.open.ai
     implementation libs.jooq
     implementation libs.restygwt
@@ -62,6 +64,9 @@ dependencies {
     testImplementation project(':stroom-dictionary:stroom-dictionary-api')
     testImplementation project(':stroom-explorer:stroom-collection-api')
     testImplementation project(':stroom-test-common')
+    testImplementation libs.jakarta.servlet.api
+    testImplementation libs.jetty.server
+    testImplementation libs.jetty.servlet
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

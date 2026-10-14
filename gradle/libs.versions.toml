@@ -17,7 +17,7 @@ junit-jupiter = "5.13.1"
 langchain4j = "1.22.0"
 langchain4j-cohere = "1.22.0-beta32"
 langchain4j-jina = "1.22.0-beta32"
-langchain4j-mcp = "1.22.0-beta32"
+mcp-sdk = "2.0.1"
 kafka = "3.9.0"
 openai = "4.69.3"
 poi = "5.5.1"
@@ -166,6 +166,9 @@ log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j" } # version controlle
 logback-classic = { module = "ch.qos.logback:logback-classic" } # version controlled by dropwizard-dependencies
 logback-core = { module = "ch.qos.logback:logback-core" } # version controlled by dropwizard-dependencies
 mbknor-jackson-jsonSchema = { module = "com.kjetland:mbknor-jackson-jsonschema_2.12", version = "1.0.39" }
+mcp-bom = { module = "io.modelcontextprotocol.sdk:mcp-bom", version.ref = "mcp-sdk" }
+mcp-core = { module = "io.modelcontextprotocol.sdk:mcp-core" } # version controlled by mcp-bom
+mcp-json-jackson3 = { module = "io.modelcontextprotocol.sdk:mcp-json-jackson3" } # version controlled by mcp-bom
 mockito-core = { module = "org.mockito:mockito-core" } # version controlled by dropwizard-dependencies
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter" } # version controlled by dropwizard-dependencies
 mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.4.0" }
@@ -173,7 +176,6 @@ langchain4j = { module = "dev.langchain4j:langchain4j", version.ref = "langchain
 langchain4j-open-ai = { module = "dev.langchain4j:langchain4j-open-ai", version.ref = "langchain4j" }
 langchain4j-cohere = { module = "dev.langchain4j:langchain4j-cohere", version.ref = "langchain4j-cohere" }
 langchain4j-jina = { module = "dev.langchain4j:langchain4j-jina", version.ref = "langchain4j-jina" }
-langchain4j-mcp = { module = "dev.langchain4j:langchain4j-mcp", version.ref = "langchain4j-mcp" }
 openai = { module = "com.openai:openai-java", version.ref = "openai" }
 poi = { module = "org.apache.poi:poi", version.ref = "poi" }
 poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
