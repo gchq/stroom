@@ -569,12 +569,7 @@ public class AskStroomAIService {
             final Map<Integer, AiChatAttachment> attachmentMap = readyAttachments.stream()
                     .collect(Collectors.toMap(AiChatAttachment::getId, a -> a));
             final List<AiChatMessage> history = aiService.getMessages(chatId);
-            final List<AiChatMessage> relevantHistory = history.stream()
-                    .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
-                                 || m.getMessageType() == AiMessageType.AI_RESPONSE
-                                 || m.getMessageType() == AiMessageType.ERROR
-                                 || m.getMessageType() == AiMessageType.ATTACHMENT)
-                    .toList();
+            final List<AiChatMessage> relevantHistory = selectHistoryForModel(history);
 
             final int safetyCap = NullSafe.getOrElse(
                     defaultConfigProvider.get(),
@@ -767,6 +762,21 @@ public class AskStroomAIService {
     }
 
     /**
+     * Selects the stored messages that are sent to the model as conversation history: questions, answers and
+     * attachments. ERROR rows are left out, as the model would read them as its own earlier replies.
+     *
+     * @param history All the messages in the chat, in order.
+     * @return The messages to send, in the same order.
+     */
+    static List<AiChatMessage> selectHistoryForModel(final List<AiChatMessage> history) {
+        return history.stream()
+                .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
+                             || m.getMessageType() == AiMessageType.AI_RESPONSE
+                             || m.getMessageType() == AiMessageType.ATTACHMENT)
+                .toList();
+    }
+
+    /**
      * Builds the list of ChatMessages for a unified LLM call. Includes system prompt,
      * optional context summary (from prior trimming), filtered conversation history
      * with inline attachment data, and the current user message.
@@ -841,7 +851,8 @@ public class AskStroomAIService {
                     }
                 }
                 case USER_MESSAGE -> messages.add(new UserMessage(msg.getMessage()));
-                default -> messages.add(new AiMessage(msg.getMessage()));
+                case AI_RESPONSE -> messages.add(new AiMessage(msg.getMessage()));
+                default -> LOGGER.debug(() -> "Not sending message of type " + msg.getMessageType());
             }
         }
 
