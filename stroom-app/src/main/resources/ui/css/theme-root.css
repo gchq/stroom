@@ -194,12 +194,15 @@
        against the tab bar (WCAG 1.4.11) */
     --curve-tab__selected-color: var(--blue-800);
     --tab__focus-color: var(--blue-800);
+    /* The band around a focused tab, as around a focused control (--focus-shadow) */
+    --tab__focus-band-color: rgba(21, 101, 192, .3);
     --curve-tab__svg-color: #555;
     --curve-tab__background-color: transparent;
     --curve-tab__border: thin solid transparent;
     --curve-tab__border--hover: thin solid rgb(200 200 200);
     --curve-tab__background-color--selected: #fff;
-    --curve-tab__background-color--hover: rgba(var(--blue-300-rgb), .2);
+    /* The neutral hover of toolbar buttons, leaving blue to the selected bar and the focus ring */
+    --curve-tab__background-color--hover: var(--icon-button__background-color--hover);
     --curve-tab__box-shadow--selected: 0 0 4px 0px rgb(200 200 200 / 100%);
     --curve-tab__border-radius: .2rem;
 

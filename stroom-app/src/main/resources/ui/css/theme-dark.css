@@ -178,6 +178,7 @@
        against the tab bar (WCAG 1.4.11) */
     --curve-tab__selected-color: var(--blue-300);
     --tab__focus-color: var(--blue-300);
+    --tab__focus-band-color: rgba(100, 181, 246, .3);
     --curve-tab__svg-color: #fff;
     --curve-tab__background-color: transparent;
     --curve-tab__border: thin solid transparent;

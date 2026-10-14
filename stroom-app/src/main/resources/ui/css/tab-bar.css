@@ -46,18 +46,23 @@
     inset: 0;
 }
 
+/* Room before the first document tab for its focus ring */
+.tab-bar--curved .tab-bar__tabs {
+    left: 6px;
+}
+
 /* Invisible text that gives a link bar its height */
 .tab-bar__strut {
     display: inline;
     opacity: 0;
 }
 
-/* The "|" between link tabs, with room either side for a focused tab's ring */
+/* The "|" between link tabs, with room either side for a focused tab's ring and its band */
 .tab-bar__separator {
     position: absolute;
     top: 0;
-    padding-left: 7px;
-    padding-right: 7px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 /* --------------------------------------------------------------------------------
@@ -74,7 +79,11 @@
     cursor: pointer;
     display: flex;
     align-items: center;
-    height: 34px;
+    /* 5px shorter and lower than the bar, so its selected bar stays on the bar's bottom edge and its
+       focus ring (drawn outside it) has room above it; the bar leaves 6px between tabs for the ring
+       at the sides (CurveTabBar.getTabGap) */
+    top: 5px;
+    height: 29px;
     border-bottom: solid 3px transparent;
     border-top: solid 3px transparent;
     background-color: var(--curve-tab__background-color);
@@ -83,6 +92,8 @@
 
 .tab-bar--curved .tab-bar__tab:hover {
     background: var(--curve-tab__background-color--hover);
+    /* Rounded at the top only, so it meets the bar's edge (and a selected tab's bar) square */
+    border-radius: 4px 4px 0 0;
 }
 
 .tab-bar--curved .tab-bar__tab[aria-selected="true"] {
@@ -293,13 +304,15 @@
 }
 
 /* --------------------------------------------------------------------------------
-   Keyboard focus (not a mouse click's): a ring in the focus colour */
+   Keyboard focus (not a mouse click's): a line in the focus colour with a band of it beside the
+   line, as a focused control has */
 
-/* Inside the edge of a document tab, above its selected bar */
+/* Around a document tab, in the room the bar leaves around it, and above its neighbours */
 .tab-bar--curved .tab-bar__tab:focus-visible {
     outline: none;
-    box-shadow: inset 0 0 0 2px var(--tab__focus-color);
+    box-shadow: 0 0 0 1px var(--tab__focus-color), 0 0 0 5px var(--tab__focus-band-color);
     border-radius: 4px;
+    z-index: 1;
 }
 
 /* Around a link tab's label, reaching past it into the room beside the separators */
@@ -311,14 +324,15 @@
     content: '';
     position: absolute;
     inset: -1px -4px;
-    border: 2px solid var(--tab__focus-color);
+    border: 1px solid var(--tab__focus-color);
+    box-shadow: 0 0 0 4px var(--tab__focus-band-color);
     border-radius: 4px;
     pointer-events: none;
 }
 
 .tab-bar__selector:focus-visible {
     outline: none;
-    box-shadow: inset 0 0 0 2px var(--tab__focus-color);
+    box-shadow: inset 0 0 0 1px var(--tab__focus-color), inset 0 0 0 5px var(--tab__focus-band-color);
 }
 
 /* In forced colours (e.g. Windows high contrast) a box shadow isn't drawn, so focus is an outline */

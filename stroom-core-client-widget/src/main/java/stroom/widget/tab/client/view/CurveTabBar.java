@@ -56,6 +56,14 @@ public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandle
         return new CurveTabSelector();
     }
 
+    /// The room between document tabs, for a focused tab's focus ring, which is drawn outside it.
+    ///
+    /// @return The gap in pixels.
+    @Override
+    protected int getTabGap() {
+        return 6;
+    }
+
     @Override
     public HandlerRegistration addShowTabMenuHandler(final Handler handler) {
         return addHandler(handler, ShowTabMenuEvent.getType());

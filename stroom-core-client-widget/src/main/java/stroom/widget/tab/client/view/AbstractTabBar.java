@@ -63,7 +63,8 @@ import java.util.stream.Collectors;
 /// don't fit), wrapping at the ends; Home and End go to the first and last; Enter or Space selects
 /// the focused tab (or opens the selector), as selecting a tab may load its content; Delete closes a
 /// closable tab; the context menu key or Shift+F10 opens the focused tab's menu (as a right click
-/// does).
+/// does). When focus leaves the bar, the tab stop goes back to the selected tab, so tabbing back in
+/// lands on it.
 public abstract class AbstractTabBar extends FlowPanel implements TabBar, RequiresResize {
 
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
@@ -90,6 +91,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         sinkEvents(Event.ONMOUSEDOWN |
                    Event.ONMOUSEUP |
                    Event.ONKEYDOWN);
+        listenForFocusLeaving(getElement());
     }
 
     protected abstract AbstractTab createTab(TabData tabData);
@@ -585,6 +587,28 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     public native Element getActiveElement(Document doc) /*-{
         return doc.activeElement;
     }-*/;
+
+    // Calls onFocusLeft when focus moves from the bar to somewhere outside it (focusout bubbles, so
+    // it hears focus leaving any of the bar's tabs or its selector)
+    private native void listenForFocusLeaving(Element bar) /*-{
+        var self = this;
+        bar.addEventListener('focusout', $entry(function (event) {
+            if (!event.relatedTarget || !bar.contains(event.relatedTarget)) {
+                self.@stroom.widget.tab.client.view.AbstractTabBar::onFocusLeft()();
+            }
+        }));
+    }-*/;
+
+    // The arrow keys move the tab stop with the focus without selecting; once focus leaves the bar,
+    // the tab stop returns to the selected tab (the WAI-ARIA tabs pattern)
+    private void onFocusLeft() {
+        if (selectedTab != null
+            && visibleTabs.contains(selectedTab)
+            && !Objects.equals(keyboardSelectedTab, selectedTab)) {
+            keyboardSelectedTab = selectedTab;
+            updateTabStyles();
+        }
+    }
 
     protected Element addSeparator() {
         final Element separator = createSeparator();
