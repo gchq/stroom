@@ -81,6 +81,10 @@ public class AiConfigGeneralPresenter
                 config,
                 AskStroomAiConfig::isEnableDebugDetail,
                 AskStroomAiConfig.DEFAULT_ENABLE_DEBUG_DETAIL));
+        getView().setBrowserNotifications(NullSafe.getOrElse(
+                config,
+                AskStroomAiConfig::isBrowserNotifications,
+                AskStroomAiConfig.DEFAULT_BROWSER_NOTIFICATIONS));
         getView().setDockBehaviour(dockBehaviour);
     }
 
@@ -92,7 +96,8 @@ public class AiConfigGeneralPresenter
                 .chatSystemPrompt(getView().getChatSystemPrompt())
                 .historySummaryPrompt(getView().getHistorySummaryPrompt())
                 .maxHistorySafetyCapMessages(getView().getMaxHistorySafetyCapMessages())
-                .enableDebugDetail(getView().isEnableDebugDetail());
+                .enableDebugDetail(getView().isEnableDebugDetail())
+                .browserNotifications(getView().isBrowserNotifications());
     }
 
     public DockBehaviour getDockBehaviour() {
@@ -135,5 +140,9 @@ public class AiConfigGeneralPresenter
         void setEnableDebugDetail(boolean enabled);
 
         boolean isEnableDebugDetail();
+
+        void setBrowserNotifications(boolean enabled);
+
+        boolean isBrowserNotifications();
     }
 }
