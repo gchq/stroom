@@ -12,6 +12,7 @@ import org.jooq.impl.Internal;
 import stroom.ai.impl.db.jooq.tables.AiChat;
 import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
+import stroom.ai.impl.db.jooq.tables.AiChatRun;
 
 
 /**
@@ -25,6 +26,11 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     public static final Index AI_CHAT_ATTACHMENT_IDX_AI_CHAT_ATTACHMENT_CHAT_ID = Internal.createIndex(DSL.name("idx_ai_chat_attachment_chat_id"), AiChatAttachment.AI_CHAT_ATTACHMENT, new OrderField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID }, false);
-    public static final Index AI_CHAT_MESSAGE_IDX_AI_CHAT_MESSAGE_CHAT_ID = Internal.createIndex(DSL.name("idx_ai_chat_message_chat_id"), AiChatMessage.AI_CHAT_MESSAGE, new OrderField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_AI_CHAT_ID }, false);
-    public static final Index AI_CHAT_IDX_AI_CHAT_USER_UUID = Internal.createIndex(DSL.name("idx_ai_chat_user_uuid"), AiChat.AI_CHAT, new OrderField[] { AiChat.AI_CHAT.USER_UUID }, false);
+    public static final Index AI_CHAT_ATTACHMENT_IDX_AI_CHAT_ATTACHMENT_EXPIRE_TIME = Internal.createIndex(DSL.name("idx_ai_chat_attachment_expire_time"), AiChatAttachment.AI_CHAT_ATTACHMENT, new OrderField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.EXPIRE_TIME_MS }, false);
+    public static final Index AI_CHAT_MESSAGE_IDX_AI_CHAT_MESSAGE_CHAT_ID_ID = Internal.createIndex(DSL.name("idx_ai_chat_message_chat_id_id"), AiChatMessage.AI_CHAT_MESSAGE, new OrderField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_AI_CHAT_ID, AiChatMessage.AI_CHAT_MESSAGE.ID }, false);
+    public static final Index AI_CHAT_MESSAGE_IDX_AI_CHAT_MESSAGE_CHAT_ID_TYPE_ID = Internal.createIndex(DSL.name("idx_ai_chat_message_chat_id_type_id"), AiChatMessage.AI_CHAT_MESSAGE, new OrderField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_AI_CHAT_ID, AiChatMessage.AI_CHAT_MESSAGE.MESSAGE_TYPE, AiChatMessage.AI_CHAT_MESSAGE.ID }, false);
+    public static final Index AI_CHAT_RUN_IDX_AI_CHAT_RUN_CHAT_STATUS = Internal.createIndex(DSL.name("idx_ai_chat_run_chat_status"), AiChatRun.AI_CHAT_RUN, new OrderField[] { AiChatRun.AI_CHAT_RUN.FK_AI_CHAT_ID, AiChatRun.AI_CHAT_RUN.STATUS }, false);
+    public static final Index AI_CHAT_RUN_IDX_AI_CHAT_RUN_STATUS_HEARTBEAT = Internal.createIndex(DSL.name("idx_ai_chat_run_status_heartbeat"), AiChatRun.AI_CHAT_RUN, new OrderField[] { AiChatRun.AI_CHAT_RUN.STATUS, AiChatRun.AI_CHAT_RUN.HEARTBEAT_MS }, false);
+    public static final Index AI_CHAT_RUN_IDX_AI_CHAT_RUN_USER_STATUS = Internal.createIndex(DSL.name("idx_ai_chat_run_user_status"), AiChatRun.AI_CHAT_RUN, new OrderField[] { AiChatRun.AI_CHAT_RUN.USER_UUID, AiChatRun.AI_CHAT_RUN.STATUS }, false);
+    public static final Index AI_CHAT_IDX_AI_CHAT_USER_UUID_UPDATE_TIME = Internal.createIndex(DSL.name("idx_ai_chat_user_uuid_update_time"), AiChat.AI_CHAT, new OrderField[] { AiChat.AI_CHAT.USER_UUID, AiChat.AI_CHAT.UPDATE_TIME_MS }, false);
 }

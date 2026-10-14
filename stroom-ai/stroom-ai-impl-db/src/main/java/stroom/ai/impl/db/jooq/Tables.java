@@ -6,7 +6,11 @@ package stroom.ai.impl.db.jooq;
 
 import stroom.ai.impl.db.jooq.tables.AiChat;
 import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
+import stroom.ai.impl.db.jooq.tables.AiChatFileChunk;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
+import stroom.ai.impl.db.jooq.tables.AiChatRun;
+import stroom.ai.impl.db.jooq.tables.AiMemory;
+import stroom.ai.impl.db.jooq.tables.AiToolApproval;
 
 
 /**
@@ -26,7 +30,27 @@ public class Tables {
     public static final AiChatAttachment AI_CHAT_ATTACHMENT = AiChatAttachment.AI_CHAT_ATTACHMENT;
 
     /**
+     * The table <code>stroom.ai_chat_file_chunk</code>.
+     */
+    public static final AiChatFileChunk AI_CHAT_FILE_CHUNK = AiChatFileChunk.AI_CHAT_FILE_CHUNK;
+
+    /**
      * The table <code>stroom.ai_chat_message</code>.
      */
     public static final AiChatMessage AI_CHAT_MESSAGE = AiChatMessage.AI_CHAT_MESSAGE;
+
+    /**
+     * The table <code>stroom.ai_chat_run</code>.
+     */
+    public static final AiChatRun AI_CHAT_RUN = AiChatRun.AI_CHAT_RUN;
+
+    /**
+     * The table <code>stroom.ai_memory</code>.
+     */
+    public static final AiMemory AI_MEMORY = AiMemory.AI_MEMORY;
+
+    /**
+     * The table <code>stroom.ai_tool_approval</code>.
+     */
+    public static final AiToolApproval AI_TOOL_APPROVAL = AiToolApproval.AI_TOOL_APPROVAL;
 }
