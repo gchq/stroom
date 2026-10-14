@@ -16,12 +16,6 @@
 
 package stroom.ai.impl;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.util.Objects;
 
 /// The state of a chat's compaction, as stored (as JSON) in a COMPACTION_SUMMARY message. Turns are identified
@@ -41,24 +35,17 @@ import java.util.Objects;
 /// @param manual            True if the user asked for it, false if it was automatic.
 /// @param stale             True if a message it covers has since been changed or deleted, so it is no longer
 ///                          used.
-@JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder(alphabetic = true)
-public record CompactionRecord(@JsonProperty("digestsUpToTurnId") int digestsUpToTurnId,
-                               @JsonProperty("summaryUpToTurnId") int summaryUpToTurnId,
-                               @JsonProperty("summary") String summary,
-                               @JsonProperty("tokensBefore") long tokensBefore,
-                               @JsonProperty("tokensAfter") long tokensAfter,
-                               @JsonProperty("messageCount") int messageCount,
-                               @JsonProperty("manual") boolean manual,
-                               @JsonProperty("stale") boolean stale) {
+public record CompactionRecord(int digestsUpToTurnId,
+                               int summaryUpToTurnId,
+                               String summary,
+                               long tokensBefore,
+                               long tokensAfter,
+                               int messageCount,
+                               boolean manual,
+                               boolean stale) {
 
     /// Nothing compacted.
     public static final CompactionRecord NONE = new CompactionRecord(0, 0, null, 0, 0, 0, false, false);
-
-    @JsonCreator
-    public CompactionRecord {
-        // Explicit constructor for Jackson.
-    }
 
     /// @return A copy that shows turns up to {@code turnId} as digests.
     public CompactionRecord withDigestsUpTo(final int turnId) {
