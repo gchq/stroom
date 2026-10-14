@@ -20,7 +20,9 @@ import stroom.ai.api.AiService;
 import stroom.ai.api.SimpleTokenCountEstimator;
 import stroom.ai.impl.AiDao.ChatUsage;
 import stroom.ai.impl.memory.AiMemoryService;
+import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspaceStore;
+import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiContextUsage;
@@ -250,9 +252,21 @@ public class ContextAssembler {
                 ? attachmentMap.get(attachmentId)
                 : null;
         if (attachment == null) {
-            return null;
+            if (attachmentId == null) {
+                return null;
+            }
+            // Say if it has gone, so the model does not guess what it held.
+            return workspaceDao.getFileInfo(attachmentId)
+                    .filter(info -> info.status() == AiAttachmentStatus.UNAVAILABLE)
+                    .map(info -> unavailableNote(msg.getMessage(), info.errorMessage()))
+                    .orElse(null);
         }
-        final Path mdFile = workspaceStore.localFile(attachment.getId());
+        final Path mdFile;
+        try {
+            mdFile = workspaceStore.localFile(attachment.getId());
+        } catch (final WorkspaceFileUnavailableException e) {
+            return unavailableNote(attachment.getDescription(), e.getMessage());
+        }
         if (!Files.exists(mdFile)) {
             return null;
         }
@@ -274,6 +288,12 @@ public class ContextAssembler {
             LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
             return null;
         }
+    }
+
+    static UserMessage unavailableNote(final String description, final String reason) {
+        return new UserMessage("[The attached table '" + NullSafe.nonBlankStringElse(description, "?")
+                               + "' is no longer available (" + NullSafe.nonBlankStringElse(reason, "removed")
+                               + "). Do not guess what it held; if you need it, ask the user to attach it again.]");
     }
 
     /**

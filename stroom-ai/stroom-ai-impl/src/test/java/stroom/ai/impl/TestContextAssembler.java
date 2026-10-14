@@ -16,10 +16,14 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AskStroomAiRequest;
 import stroom.util.json.JsonUtil;
 
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.UserMessage;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -105,6 +109,28 @@ class TestContextAssembler {
         final stroom.ai.shared.AiContextUsage corrected = assembler.estimateUsage(1);
         assertThat(corrected.isEstimated()).isFalse();
         assertThat(corrected.getUsedTokens()).isEqualTo(sum * 2);
+    }
+
+    @Test
+    void testUnavailableAttachmentIsSaidToBeGone() {
+        final stroom.ai.api.AiService aiService = Mockito.mock(stroom.ai.api.AiService.class);
+        final AiWorkspaceDao workspaceDao = Mockito.mock(AiWorkspaceDao.class);
+        final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
+        final ContextAssembler assembler = new ContextAssembler(
+                () -> null, AiConfig::new, null, aiService, null, workspaceDao, tracker, null);
+        final List<AiChatMessage> history = List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "Firewall events", 0, null),
+                new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 2, null));
+        Mockito.when(workspaceDao.getFileInfo(50)).thenReturn(java.util.Optional.of(new AiWorkspaceDao.FileInfo(
+                50, 1, "/attachments/50.md", AiAttachmentStatus.UNAVAILABLE, null, null,
+                "it reached its retention age")));
+
+        final List<ChatMessage> messages = assembler.assemble(new AskStroomAiRequest(null, null, null, "q"), 1,
+                java.util.Map.of(), history, CompactionRecord.NONE);
+
+        assertThat(((UserMessage) messages.get(1)).singleText())
+                .contains("'Firewall events' is no longer available (it reached its retention age)")
+                .contains("ask the user to attach it again");
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final Object record) {

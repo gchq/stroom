@@ -68,6 +68,14 @@ public interface AiMemoryDao {
     /// @return True if it was deleted.
     boolean delete(int id, int expectedVersion);
 
+    /// @return The UUIDs of every user who has memory.
+    List<String> getUserUuids();
+
+    /// Deletes all of a user's memory, e.g. because the user has been deleted.
+    ///
+    /// @return How many pieces of memory were deleted.
+    int deleteAllForUser(String userUuid);
+
     /// Deletes a chat's memory, e.g. because the chat is being deleted.
     void deleteChatMemory(int chatId);
 }

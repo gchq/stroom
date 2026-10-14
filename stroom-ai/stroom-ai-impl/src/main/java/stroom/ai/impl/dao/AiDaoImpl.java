@@ -554,4 +554,32 @@ public class AiDaoImpl implements AiDao {
                         record.value4(), record.value5()))
                 .orElse(new ChatUsage(null, null, null, 0, 0));
     }
+
+    @Override
+    public List<Integer> findChatsNotUpdatedSince(final long timeMs, final int limit) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT.ID)
+                .from(AI_CHAT)
+                .where(AI_CHAT.UPDATE_TIME_MS.lt(timeMs))
+                .orderBy(AI_CHAT.UPDATE_TIME_MS)
+                .limit(limit)
+                .fetch(AI_CHAT.ID));
+    }
+
+    @Override
+    public List<String> getChatOwners() {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .selectDistinct(AI_CHAT.USER_UUID)
+                .from(AI_CHAT)
+                .fetch(AI_CHAT.USER_UUID));
+    }
+
+    @Override
+    public List<Integer> getChatIds(final String userUuid) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT.ID)
+                .from(AI_CHAT)
+                .where(AI_CHAT.USER_UUID.eq(userUuid))
+                .fetch(AI_CHAT.ID));
+    }
 }

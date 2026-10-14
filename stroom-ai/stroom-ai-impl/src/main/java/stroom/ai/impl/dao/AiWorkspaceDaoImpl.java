@@ -139,6 +139,81 @@ public class AiWorkspaceDaoImpl implements AiWorkspaceDao {
     }
 
     @Override
+    public void setRetention(final int fileId, final String sourceDocUuid, final Long expireTimeMs) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT_ATTACHMENT)
+                .set(AI_CHAT_ATTACHMENT.SOURCE_DOC_UUID, sourceDocUuid)
+                .set(AI_CHAT_ATTACHMENT.EXPIRE_TIME_MS, expireTimeMs)
+                .where(AI_CHAT_ATTACHMENT.ID.eq(fileId))
+                .execute());
+    }
+
+    @Override
+    public Optional<FileInfo> getFileInfo(final int fileId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select(AI_CHAT_ATTACHMENT.ID,
+                                AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID,
+                                AI_CHAT_ATTACHMENT.PATH,
+                                AI_CHAT_ATTACHMENT.STATUS,
+                                AI_CHAT_ATTACHMENT.SOURCE_DOC_UUID,
+                                AI_CHAT_ATTACHMENT.EXPIRE_TIME_MS,
+                                AI_CHAT_ATTACHMENT.ERROR_MESSAGE)
+                        .from(AI_CHAT_ATTACHMENT)
+                        .where(AI_CHAT_ATTACHMENT.ID.eq(fileId))
+                        .fetchOptional())
+                .map(record -> new FileInfo(
+                        record.value1(),
+                        record.value2(),
+                        record.value3(),
+                        AiAttachmentStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                                record.value4().byteValue()),
+                        record.value5(),
+                        record.value6(),
+                        record.value7()));
+    }
+
+    @Override
+    public List<Integer> findExpired(final long nowMs, final int limit) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT_ATTACHMENT.ID)
+                .from(AI_CHAT_ATTACHMENT)
+                .where(AI_CHAT_ATTACHMENT.EXPIRE_TIME_MS.le(nowMs))
+                .and(AI_CHAT_ATTACHMENT.STATUS.ne((int) AiAttachmentStatus.UNAVAILABLE.getPrimitiveValue()))
+                .orderBy(AI_CHAT_ATTACHMENT.EXPIRE_TIME_MS)
+                .limit(limit)
+                .fetch(AI_CHAT_ATTACHMENT.ID));
+    }
+
+    @Override
+    public void makeUnavailable(final int fileId, final String reason) {
+        JooqUtil.transaction(aiDbConnProvider, context -> {
+            context.deleteFrom(AI_CHAT_FILE_CHUNK)
+                    .where(AI_CHAT_FILE_CHUNK.FK_ATTACHMENT_ID.eq(fileId))
+                    .execute();
+            context.update(AI_CHAT_ATTACHMENT)
+                    .set(AI_CHAT_ATTACHMENT.STATUS, (int) AiAttachmentStatus.UNAVAILABLE.getPrimitiveValue())
+                    .set(AI_CHAT_ATTACHMENT.ERROR_MESSAGE, reason)
+                    .set(AI_CHAT_ATTACHMENT.SIZE_BYTES, 0L)
+                    .set(AI_CHAT_ATTACHMENT.UPDATE_TIME_MS, System.currentTimeMillis())
+                    .where(AI_CHAT_ATTACHMENT.ID.eq(fileId))
+                    .execute();
+        });
+    }
+
+    @Override
+    public List<Integer> findAvailable(final List<Integer> fileIds) {
+        if (fileIds.isEmpty()) {
+            return List.of();
+        }
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT_ATTACHMENT.ID)
+                .from(AI_CHAT_ATTACHMENT)
+                .where(AI_CHAT_ATTACHMENT.ID.in(fileIds))
+                .and(AI_CHAT_ATTACHMENT.STATUS.ne((int) AiAttachmentStatus.UNAVAILABLE.getPrimitiveValue()))
+                .fetch(AI_CHAT_ATTACHMENT.ID));
+    }
+
+    @Override
     public long getTotalSize(final int chatId) {
         final Long total = JooqUtil.contextResult(aiDbConnProvider, context -> context
                 .select(DSL.sum(AI_CHAT_ATTACHMENT.SIZE_BYTES))

@@ -21,12 +21,16 @@ import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.tools.BuiltInToolsModule;
 import stroom.docstore.api.DocumentStoreBinder;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.language.functions.AiProvider;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpSessionListener;
 
 public class AiModule extends AbstractModule {
@@ -52,8 +56,27 @@ public class AiModule extends AbstractModule {
                 .bind(OpenAIModelResourceImpl.class)
                 .bind(AskStroomAiResourceImpl.class);
 
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(AiRetentionJob.class, builder -> builder
+                        .name(AiRetention.JOB_NAME)
+                        .description("Removes 'Ask Stroom AI' workspace files and chats that are past their "
+                                     + "retention age, and the chats and memory of deleted users")
+                        .cronSchedule(CronExpressions.EVERY_HOUR.getExpression()));
+
         // Stops agent runs when the session that started them ends.
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
                 .addBinding(AiChatRunSessionListener.class);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class AiRetentionJob extends RunnableWrapper {
+
+        @Inject
+        AiRetentionJob(final AiRetention aiRetention) {
+            super(aiRetention::exec);
+        }
     }
 }
