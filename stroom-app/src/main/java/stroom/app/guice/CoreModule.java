@@ -64,7 +64,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.gitrepo.impl.GitRepoModule());
         install(new stroom.gitrepo.impl.dao.GitRepoDaoModule());
         install(new stroom.dashboard.impl.visualisation.VisualisationModule());
-        install(new stroom.dashboard.impl.dao.VisualisationAssetDaoModule());
+        install(new stroom.document.asset.impl.db.DocumentAssetDaoModule());
+        install(new stroom.document.asset.impl.DocumentAssetModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
         install(new stroom.data.store.impl.DataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
@@ -135,7 +136,10 @@ public class CoreModule extends AbstractModule {
         install(new stroom.analytics.impl.AnalyticRuleModule());
         install(new stroom.analytics.impl.ReportModule());
         install(new stroom.datagen.impl.DataGenModule());
+        install(new stroom.floormap.impl.FloorMapModule());
         install(new stroom.planb.impl.PlanBModule());
+        install(new stroom.sqlstore.impl.SqlStoreModule());
+        install(new stroom.sqlstore.impl.db.SqlStoreDaoModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
         install(new stroom.statistics.impl.sql.SqlStatisticsModule());
         install(new stroom.statistics.impl.sql.entity.StatisticStoreModule());

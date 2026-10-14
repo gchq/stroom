@@ -60,6 +60,7 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jakarta.validation.api
     implementation libs.jooq
     implementation libs.jinjava
@@ -76,5 +77,6 @@ dependencies {
     runtimeOnly libs.simple.java.mail.batch.module
 
     testImplementation libs.bundles.common.test.implementation
+    testImplementation libs.logback.classic
     testRuntimeOnly libs.bundles.common.test.runtime
 }

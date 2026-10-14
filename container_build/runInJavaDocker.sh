@@ -130,7 +130,7 @@ else
     run_cmd=( \
       "bash" \
       "-c"  \
-      "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" GWT_MIN_HEAP=\"${GWT_MIN_HEAP:-50M}\" GWT_MAX_HEAP=\"${GWT_MAX_HEAP:-2G}\" ./container_build/gradleBuild.sh" \
+      "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" GWT_MIN_HEAP=\"${GWT_MIN_HEAP:-1G}\" GWT_MAX_HEAP=\"${GWT_MAX_HEAP:-2G}\" ./container_build/gradleBuild.sh" \
     )
   elif [[ $# -eq 1 ]] && [[ "$1" = "GRADLE_COMPILE" ]]; then
     # Run the full CI gradle build
@@ -203,6 +203,7 @@ docker_login
 # for an example of how to hash the build context so we can pull or push
 # depending on whether there is already an image for the hash.
 
+echo "::group::Building Building image ${image_tag}"
 echo -e "${GREEN}Building image ${BLUE}${image_tag}${NC}"
 docker build \
   --tag "${image_tag}" \
@@ -212,6 +213,7 @@ docker build \
   --build-arg "DOCKER_HOST_IP=${host_ip}" \
   --build-arg "DOCKER_GROUP_ID=${docker_group_id}" \
   "${local_repo_root}/container_build/docker_java"
+echo "::endgroup::"
 
 
   #--workdir "${dest_dir}" \

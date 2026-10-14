@@ -24,9 +24,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import io.vavr.Tuple;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.util.Version;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.io.IOException;
@@ -115,6 +119,23 @@ class TestAnalyzerFactory extends StroomUnitTest {
                                 doTest(AnalyzerFactory.create(analyzerType, isCaseSensitive), tuple3._2, tuple3._3);
                             });
                 });
+    }
+
+    /**
+     * gh-5819. The analysers in lucene-analysis-common must come from the same Lucene release as
+     * lucene-core. The module used to depend on lucene-analyzers-common:8.11.4, the pre v9 name of
+     * the artifact, which ran against lucene-core 10 as nothing forced the two to match.
+     */
+    @Test
+    void testAnalysisCommonMatchesLuceneCoreVersion() {
+        final String coreVersion = Version.LATEST.toString();
+        for (final Class<?> clazz : List.of(WhitespaceAnalyzer.class, EnglishAnalyzer.class)) {
+            final String implementationVersion = clazz.getPackage().getImplementationVersion();
+            Assertions.assertThat(implementationVersion)
+                    .as("Implementation version of the jar containing %s", clazz.getName())
+                    .isNotNull()
+                    .startsWith(coreVersion + " ");
+        }
     }
 
     private void doTest(final Analyzer analyzer, final String input, final List<String> expectedTokens)

@@ -863,6 +863,7 @@ public class AnnotationEditPresenter
                                  final AnnotationEntryGroup group,
                                  final long nowMs,
                                  final SafeHtml line) {
+        @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
         final AnnotationEntry first = group.getEntries().get(0);
         final boolean expanded = expandedItems.contains(first.getId());
         final AnnotationEntryType entryType = first.getEntryType();

@@ -24,11 +24,13 @@ import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.item.client.SelectionBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -57,6 +59,8 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     SelectionBox<String> volumeGroups;
     @UiField
     SimplePanel defaultExtractionPipeline;
+    @UiField
+    Button reset;
 
     @Inject
     public IndexSettingsViewImpl(final Binder binder) {
@@ -159,6 +163,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
         shardsPerPartition.setEnabled(!readOnly);
         retentionAge.setEnabled(!readOnly);
         volumeGroups.setEnabled(!readOnly);
+        reset.setEnabled(!readOnly);
         timeField.setEnabled(!readOnly);
     }
 
@@ -195,6 +200,14 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @UiHandler("volumeGroups")
     public void onVolumeGroupsValueChange(final ValueChangeEvent<String> e) {
         fireChange();
+    }
+
+    @UiHandler("reset")
+    @SuppressWarnings("unused")
+    public void onResetClick(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onReset();
+        }
     }
 
     private void fireChange() {

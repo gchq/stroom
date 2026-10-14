@@ -54,7 +54,10 @@ class NonPooledByteBuffer implements PooledByteBuffer {
      */
     @Override
     public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
-        try (this) {
+        // A named resource rather than `try (this)`, which crashes the Checkstyle parser.
+        // Try-with-resources (not try/finally) so a close() failure is suppressed onto the
+        // consumer's exception instead of replacing it.
+        try (final PooledByteBuffer ignored = this) {
             byteBufferConsumer.accept(byteBuffer);
         }
     }
@@ -95,7 +98,7 @@ class NonPooledByteBuffer implements PooledByteBuffer {
     @Override
     public String toString() {
         return "NonPooledByteBuffer{" +
-                "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
-                '}';
+               "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
+               '}';
     }
 }

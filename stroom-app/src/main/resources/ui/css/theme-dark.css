@@ -30,6 +30,10 @@
     --text-color: #dce4e5;
     --text-color--hover: #e5eaeb;
     --text-color--selected: #fff;
+    /* See theme-root.css. 5.8:1 against the dark page background — the light
+       theme's #5f6368 would be 1.5:1 here, so this override is required, not
+       cosmetic. */
+    --text-color--low-emphasis: #9aa0a6;
     --text-color--disabled: #999;
     --text-color--disabled--selected: #ccc;
     --text-color--red: var(--red-400);

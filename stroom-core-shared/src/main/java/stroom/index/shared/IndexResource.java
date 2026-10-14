@@ -98,6 +98,13 @@ public interface IndexResource extends RestResource, DirectRestService, FetchWit
             @Parameter(description = "criteria", required = true) FindFieldCriteria criteria);
 
     @POST
+    @Path("/{uuid}/reset")
+    @Operation(
+            summary = "Reset index contents (delete all shards across all nodes)",
+            operationId = "resetIndex")
+    Boolean reset(@PathParam("uuid") String uuid);
+
+    @POST
     @Path("/addField")
     @Operation(
             summary = "Add field",

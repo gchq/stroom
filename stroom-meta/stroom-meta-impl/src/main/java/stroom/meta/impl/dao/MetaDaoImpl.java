@@ -42,7 +42,6 @@ import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
-import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;

@@ -47,6 +47,7 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.http.client
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jooq

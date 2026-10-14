@@ -19,7 +19,6 @@ package stroom.query.api.datasource;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

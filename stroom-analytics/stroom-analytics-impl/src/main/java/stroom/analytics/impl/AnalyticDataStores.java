@@ -78,6 +78,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -182,6 +183,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                                "listed: " + e.getMessage(), e);
             return;
         }
+        logRetainedDirs(expectedDirs, actualDirs);
 
         // Drop and close exactly the cached stores whose dir the sweep below is about to delete,
         // so no dir is ever deleted with an open env on it. Decided by dir, which is what the
@@ -276,22 +278,42 @@ public class AnalyticDataStores implements HasResultStoreInfo {
      */
     private ExpectedDirs getExpectedAnalyticStoreDirs(final CurrentRules currentRules) {
         final Set<String> expectedDirs = new HashSet<>();
-        final Set<String> protectedPrefixes = new HashSet<>();
-        currentRules.unreadableUuids().forEach(uuid -> protectedPrefixes.add(protectedPrefix(uuid)));
+        // Prefix -> why it is protected, for the warning if it turns out to retain a dir.
+        final Map<String, String> protectedPrefixes = new HashMap<>();
+        currentRules.unreadableRules().forEach((uuid, reason) ->
+                protectedPrefixes.put(protectedPrefix(uuid), reason));
         for (final AnalyticRuleDoc analyticRuleDoc : currentRules.rules()) {
             try {
                 expectedDirs.add(getAnalyticStoreDir(
                         analyticRuleSearchRequestHelper.create(analyticRuleDoc)));
             } catch (final RuntimeException e) {
-                final String prefix = protectedPrefix(analyticRuleDoc.getUuid());
-                LOGGER.error(() -> "Not deleting any analytic store dir starting '" + prefix +
-                                   "' as the store dir for rule " +
-                                   RuleUtil.getRuleIdentity(analyticRuleDoc) +
-                                   " could not be resolved: " + e.getMessage(), e);
-                protectedPrefixes.add(prefix);
+                // Commonly a rule with an empty or unfinished query, which most likely has never
+                // had a store, so only debug here. logRetainedDirs() warns if a dir is retained.
+                final String reason = "the store dir for rule " +
+                                      RuleUtil.getRuleIdentity(analyticRuleDoc) +
+                                      " could not be resolved: " + e.getMessage();
+                LOGGER.debug(() -> "Protecting analytic store dirs as " + reason, e);
+                protectedPrefixes.put(protectedPrefix(analyticRuleDoc.getUuid()), reason);
             }
         }
         return new ExpectedDirs(expectedDirs, protectedPrefixes);
+    }
+
+    /**
+     * Warns about each dir on disk that is being kept only because it belongs to a rule we could
+     * not read or resolve. Most such rules have never had a store, e.g. a rule with an empty
+     * query, so warning about every one of them on every run would be noise.
+     */
+    private void logRetainedDirs(final ExpectedDirs expectedDirs, final Set<String> actualDirs) {
+        expectedDirs.protectedPrefixes().forEach((prefix, reason) -> {
+            final List<String> retainedDirs = actualDirs.stream()
+                    .filter(dir -> dir.startsWith(prefix))
+                    .sorted()
+                    .toList();
+            if (!retainedDirs.isEmpty()) {
+                LOGGER.warn("Not deleting analytic store dir(s) {} as {}", retainedDirs, reason);
+            }
+        });
     }
 
     /**
@@ -302,10 +324,10 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         return sanitise(ruleUuid + " - ");
     }
 
-    private record ExpectedDirs(Set<String> dirs, Set<String> protectedPrefixes) {
+    private record ExpectedDirs(Set<String> dirs, Map<String, String> protectedPrefixes) {
 
         private boolean keep(final String dir) {
-            return dirs.contains(dir) || protectedPrefixes.stream().anyMatch(dir::startsWith);
+            return dirs.contains(dir) || protectedPrefixes.keySet().stream().anyMatch(dir::startsWith);
         }
     }
 
@@ -505,7 +527,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
      */
     private CurrentRules loadAllForDeletion() {
         final List<AnalyticRuleDoc> currentRules = new ArrayList<>();
-        final Set<String> unreadableUuids = new HashSet<>();
+        // Uuid -> why it could not be read.
+        final Map<String, String> unreadableRules = new HashMap<>();
         for (final DocRef docRef : analyticRuleStore.list()) {
             try {
                 final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
@@ -520,15 +543,16 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 // from the list is treated as deleted, so skipping would delete the store of a
                 // rule that still exists. We cannot tell whether it does, so protect its dirs
                 // and carry on rather than stop every other rule's store being reclaimed.
-                LOGGER.error(() -> "Not deleting any analytic store of rule " + docRef.getUuid() +
-                                   " as it could not be read: " + e.getMessage(), e);
-                unreadableUuids.add(docRef.getUuid());
+                // Only debug here, logRetainedDirs() warns if a dir is retained because of this.
+                final String reason = "rule " + docRef.getUuid() + " could not be read: " + e.getMessage();
+                LOGGER.debug(() -> "Protecting analytic store dirs as " + reason, e);
+                unreadableRules.put(docRef.getUuid(), reason);
             }
         }
-        return new CurrentRules(currentRules, unreadableUuids);
+        return new CurrentRules(currentRules, unreadableRules);
     }
 
-    private record CurrentRules(List<AnalyticRuleDoc> rules, Set<String> unreadableUuids) {
+    private record CurrentRules(List<AnalyticRuleDoc> rules, Map<String, String> unreadableRules) {
 
     }
 

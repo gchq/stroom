@@ -31,6 +31,7 @@ import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
+import stroom.query.api.Param;
 import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
 import stroom.query.api.TimeRange;
@@ -61,8 +62,10 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import javax.inject.Provider;
@@ -89,6 +92,7 @@ public class QueryEditPresenter
     private QueryResultVisPresenter currentVisPresenter;
     private String currentQuery;
     private Timer requestTimer;
+    private Map<String, String> queryVariables;
 
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
@@ -282,19 +286,24 @@ public class QueryEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
+        //noinspection unused event
         registerHandler(editorPresenter.addValueChangeHandler(event -> {
             final String query = editorPresenter.getText();
             updateQuery(query);
             onChange();
         }));
+        //noinspection unused event
         registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
+        //noinspection unused e
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> toggleStart()));
+        //noinspection unused e
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
-            run(true, true);
+            run();
             onChange();
         }));
         queryHelpPresenter.linkToEditor(editorPresenter);
 
+        //noinspection unused event
         registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
             // If a user is even attempting to close the browser or browser tab then destroy the query.
             queryModel.reset(DestroyReason.WINDOW_CLOSE);
@@ -348,7 +357,7 @@ public class QueryEditPresenter
         if (queryModel.isSearching()) {
             queryModel.stop();
         } else {
-            run(true, true);
+            run();
         }
     }
 
@@ -356,24 +365,50 @@ public class QueryEditPresenter
         if (queryModel.isSearching()) {
             queryModel.stop();
         }
-        run(true, true);
+        run();
     }
 
     public void stop() {
         queryModel.stop();
     }
 
-    private void run(final boolean incremental,
-                     final boolean storeHistory) {
+    /**
+     * Registers a listener notified whenever this query starts or stops searching.
+     *
+     * <p>Needed by consumers that must act only on a <em>finished</em> result set.
+     * Searches here run incrementally, so the result table is updated on every
+     * poll with whatever the store holds at that moment; a consumer that treats
+     * each of those updates as a result set acts on a half-filled store. The
+     * searching-to-idle transition is the only signal that the rows are final.</p>
+     *
+     * @param listener called with {@code true} when a search starts and
+     *                 {@code false} when it completes, is stopped or is reset
+     * @return the registration, to be removed when the caller unbinds
+     */
+    public HandlerRegistration addSearchStateListener(final SearchStateListener listener) {
+        queryModel.addSearchStateListener(listener);
+        return () -> queryModel.removeSearchStateListener(listener);
+    }
+
+    private void run() {
         // No point running the search if there is no query
         if (!NullSafe.isBlankString(editorPresenter.getText())) {
-            queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()), this);
+            queryInfo.prompt(() -> run(Function.identity()), this);
         }
     }
 
-    private void run(final boolean incremental,
-                     final boolean storeHistory,
-                     final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
+    // STROOMWORKS-LOCAL: signature diverges from upstream — KEEP LOCAL ON MERGE FROM master.
+    // Upstream declares run(boolean incremental, boolean storeHistory, Function<...>) and passes
+    // (true, true) from all three of its call sites, so neither flag was ever variable; they are
+    // hardcoded at the startNewSearch call below instead. The change is behaviour-preserving, so
+    // taking upstream's signature back would only reintroduce two constants — but if upstream
+    // ever starts passing something other than true, restore the parameters and thread them
+    // through.
+    // The expressionDecorator parameter below is unused, here and upstream (always called with
+    // Function.identity()). Left in place deliberately: removing it would be a third rewrite of
+    // a shared signature for no behavioural gain, and is better fixed upstream.
+    @SuppressWarnings("unused")
+    private void run(final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
         // Clear the table selection and any markers.
         queryResultPresenter.clear();
         editorPresenter.setMarkers(Collections.emptyList());
@@ -382,15 +417,32 @@ public class QueryEditPresenter
         // Destroy any previous query.
         queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
 
-        // Start search.
+        // STROOMWORKS-LOCAL: added for FloorMap in commit d2ecee9a35 — KEEP LOCAL ON MERGE FROM
+        // master. Upstream passes no params here at all. Dropping this breaks FloorMap's
+        // param('FactStore') / param('EventStore') references, which are how a floor map selects
+        // its temporal stores, so upstream's version must NOT win here.
+        //
+        // The query text is sent exactly as written. It used to be rewritten first — every
+        // param('key') replaced by its quoted value — because the from clause accepted only a
+        // string literal. SearchRequestFactory.resolveDataSourceName now resolves param() there,
+        // so the values travel as ordinary Params and the text is left alone. That also keeps the
+        // error offsets the editor highlights aligned with what the user is looking at, which
+        // rewriting the text silently broke.
+        List<Param> params = null;
+        if (queryVariables != null && !queryVariables.isEmpty()) {
+            params = new ArrayList<>();
+            for (final Map.Entry<String, String> entry : queryVariables.entrySet()) {
+                params.add(new Param(entry.getKey(), entry.getValue()));
+            }
+        }
         queryModel.startNewSearch(
                 null,
                 null,
                 editorPresenter.getText(),
-                null, //getDashboardContext().getCombinedParams(),
+                params,
                 queryToolbarPresenter.getTimeRange(),
-                incremental,
-                storeHistory,
+                true,
+                true,
                 queryInfo.getMessage(),
                 null);
     }
@@ -401,6 +453,19 @@ public class QueryEditPresenter
 
     public void setTimeRange(final TimeRange timeRange) {
         queryToolbarPresenter.setTimeRange(timeRange);
+    }
+
+    /**
+     * Sets query parameters to be made available during query execution.
+     *
+     * <p>They are passed natively as {@link Param}s and the query text is sent unmodified, so a
+     * {@code param('key')} reference resolves server-side wherever it appears — including the
+     * {@code from} clause, which {@code SearchRequestFactory.resolveDataSourceName} handles.</p>
+     *
+     * @param queryVariables parameter key → value map, or {@code null}
+     */
+    public void setQueryVariables(final Map<String, String> queryVariables) {
+        this.queryVariables = queryVariables;
     }
 
     public void setQuery(final DocRef docRef, final String query, final boolean readOnly) {
@@ -456,6 +521,10 @@ public class QueryEditPresenter
     public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(
             final ValueChangeHandler<String> handler) {
         return editorPresenter.addValueChangeHandler(handler);
+    }
+
+    public QueryResultTableSplitPresenter getQueryResultPresenter() {
+        return queryResultPresenter;
     }
 
     // --------------------------------------------------------------------------------

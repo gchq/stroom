@@ -19,8 +19,8 @@ ext.moduleName = 'stroom.dashboard.impl'
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-dashboard:stroom-dashboard-impl-db')
     implementation project(':stroom-dashboard:stroom-storedquery-api')
+    implementation project(':stroom-document-asset:stroom-document-asset-impl')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
@@ -43,6 +43,7 @@ dependencies {
     implementation libs.commons.text
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.poi.ooxml

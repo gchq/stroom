@@ -23,8 +23,12 @@ import stroom.node.api.NodeGroupState;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.processor.shared.ProfilePeriod;
 import stroom.query.language.functions.UserTimeZoneUtil;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.Day;
@@ -41,14 +45,18 @@ import java.util.List;
 import java.util.Optional;
 
 @Singleton
-public class ProcessorProfileCache implements Clearable {
+@EntityEventHandler(type = ProcessorProfileService.ENTITY_TYPE, action = {
+        EntityAction.UPDATE,
+        EntityAction.CREATE,
+        EntityAction.DELETE})
+public class ProcessorProfileCache implements Clearable, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorProfileCache.class);
 
     private static final String CACHE_NAME = "Processor Profile Cache";
     private static final ProfileResult ZERO = new ProfileResult(0, 0);
 
-    private final LoadingStroomCache<String, Optional<ProcessorProfile>> cache;
+    private final LoadingStroomCache<String, Optional<ProcessorProfile>> nameToProfileCache;
     private final ProcessorProfileDao processorProfileDao;
     private final NodeGroupCache nodeGroupCache;
 
@@ -59,14 +67,14 @@ public class ProcessorProfileCache implements Clearable {
                                  final NodeGroupCache nodeGroupCache) {
         this.processorProfileDao = processorProfileDao;
         this.nodeGroupCache = nodeGroupCache;
-        cache = cacheManager.createLoadingCache(
+        this.nameToProfileCache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> processorConfigProvider.get().getProcessorProfileCache(),
                 this::create);
     }
 
     public Optional<ProcessorProfile> get(final String name) {
-        return cache.get(name);
+        return nameToProfileCache.get(name);
     }
 
     private Optional<ProcessorProfile> create(final String name) {
@@ -75,7 +83,7 @@ public class ProcessorProfileCache implements Clearable {
 
     @Override
     public void clear() {
-        cache.clear();
+        nameToProfileCache.clear();
     }
 
     public ProfileResult getProfile(final String node, final String profileName) {
@@ -99,14 +107,15 @@ public class ProcessorProfileCache implements Clearable {
 
         // If the node group is disabled then return zero tasks.
         if (!nodeGroupState.isEnabled()) {
-            LOGGER.debug("Node group '{}' is disabled", nodeGroupState.getNodeGroup());
+            LOGGER.debug(() -> LogUtil.message("Node group '{}' is disabled", nodeGroupState.getNodeGroup()));
             return ZERO;
         }
 
         // If the node group does not include the requesting node then return zero tasks.
         final boolean included = nodeGroupState.isIncludedNode(node);
         if (!included) {
-            LOGGER.debug("Node '{}' is not included in group '{}'", node, nodeGroupState.getNodeGroup());
+            LOGGER.debug(() -> LogUtil.message("Node '{}' is not included in group '{}'",
+                    node, nodeGroupState.getNodeGroup()));
             return ZERO;
         }
 
@@ -177,6 +186,29 @@ public class ProcessorProfileCache implements Clearable {
                 .withSecond(time.getSecond())
                 .withNano(0);
     }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        if (event != null) {
+            LOGGER.debug("onChange: {}", event);
+            final EntityAction action = event.getAction();
+            final String profileName = event.getDataAsString();
+            if (NullSafe.isNonBlankString(profileName)) {
+                switch (action) {
+                    case CREATE, UPDATE, DELETE -> nameToProfileCache.invalidate(profileName);
+                }
+            } else {
+                switch (action) {
+                    // We don't know what the profile name is, so clear the cache.
+                    case CREATE, UPDATE, DELETE -> clear();
+                }
+            }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public record ProfileResult(int maxNodeThreads, int maxClusterThreads) {
 
