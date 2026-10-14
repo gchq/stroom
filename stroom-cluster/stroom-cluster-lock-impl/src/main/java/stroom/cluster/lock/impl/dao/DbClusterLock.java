@@ -194,9 +194,12 @@ class DbClusterLock implements Clearable {
             if (waitForLock) {
                 throw new RuntimeException("Failed to acquire lock: " + lockName);
             } else {
-                // This is a tryLock that failed to acquire the lock
-                final String ownerInfo = getOwnerInfoMessage(lockName);
-                LOGGER.warn("Failed to acquire lock '{}'. {}", lockName, ownerInfo);
+                // A tryLock that did not get the lock, which is the ordinary outcome rather than a
+                // fault: the caller asked for work it is happy to miss — see tryLock — and somebody
+                // else is doing it. Said at debug, and who holds it is only looked up if anyone is
+                // listening, because finding out costs a query against cluster_lock.
+                LOGGER.debug(() -> LogUtil.message("Did not get lock '{}'. {}",
+                        lockName, getOwnerInfoMessage(lockName)));
                 return null;
             }
         }
