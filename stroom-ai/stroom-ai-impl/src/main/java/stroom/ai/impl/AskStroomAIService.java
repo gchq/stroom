@@ -25,6 +25,7 @@ import stroom.ai.impl.ChatCompactor.CompactionMode;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.workspace.TableProfiler;
+import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAttachmentDataPage;
 import stroom.ai.shared.AiAttachmentStatus;
@@ -60,10 +61,12 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
+import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.OffsetRange;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.impl.QueryService;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
@@ -547,6 +550,36 @@ public class AskStroomAIService {
     }
 
     /**
+     * @return True if the attachment can still be used. If it has expired, or the user no longer has access to
+     * the data it came from, its content is removed and the model is told it has gone.
+     */
+    private boolean isAvailable(final AiChatAttachment attachment) {
+        try {
+            workspaceStore.checkAvailable(attachment.getId());
+            return true;
+        } catch (final WorkspaceFileUnavailableException e) {
+            LOGGER.debug(e::getMessage);
+            return false;
+        }
+    }
+
+    /**
+     * @return The UUID of the document whose data an attached table holds, so the user's access to it can be
+     * checked again whenever the table is used: the data source of a dashboard table, or the query document of a
+     * query table.
+     */
+    static String sourceDocUuid(final AskStroomAiContext context) {
+        return switch (context) {
+            case final DashboardTableContext dashboard -> NullSafe.get(dashboard.getSearchRequest(),
+                    DashboardSearchRequest::getSearch, Search::getDataSourceRef, DocRef::getUuid);
+            case final QueryTableContext query -> NullSafe.get(query.getSearchRequest(),
+                    QuerySearchRequest::getSearchRequestSource, SearchRequestSource::getOwnerDocRef,
+                    DocRef::getUuid);
+            default -> null;
+        };
+    }
+
+    /**
      * Converts GeneralTableContext (in-memory table data) directly to a markdown file
      * in the attachment file store and marks the attachment as READY.
      */
@@ -602,7 +635,7 @@ public class AskStroomAIService {
                                        + (truncated
                     ? ", truncated to limit"
                     : "") + ")";
-            storeAttachment(chatId, attachmentId, mdFile, description);
+            storeAttachment(chatId, attachmentId, mdFile, description, null);
             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
                     rowCount, description, null, truncated);
         } catch (final Exception e) {
@@ -620,12 +653,15 @@ public class AskStroomAIService {
     private void storeAttachment(final int chatId,
                                  final int attachmentId,
                                  final Path tableFile,
-                                 final String description) {
+                                 final String description,
+                                 final String sourceDocUuid) {
         workspaceStore.persist(attachmentId, attachmentPath(attachmentId), tableFile);
+        workspaceStore.setRetention(attachmentId, sourceDocUuid);
         try (final Reader reader = Files.newBufferedReader(tableFile, StandardCharsets.UTF_8)) {
             final String profile = TableProfiler.profile(reader, description);
-            workspaceStore.createFile(chatId, AiAttachmentType.WORKSPACE_FILE, profilePath(attachmentId), null,
-                    profile);
+            final int profileId = workspaceStore.createFile(chatId, AiAttachmentType.WORKSPACE_FILE,
+                    profilePath(attachmentId), null, profile);
+            workspaceStore.setRetention(profileId, sourceDocUuid);
         } catch (final IOException | RuntimeException e) {
             // The table is still usable without its profile.
             LOGGER.warn(() -> "Unable to profile attachment " + attachmentId + ": " + e.getMessage(), e);
@@ -737,7 +773,7 @@ public class AskStroomAIService {
                             info(taskContext, () -> "Async download finished: attachmentId=" + attachmentId
                                                     + " rows=" + reportedRowCount + " cols=" + colCount
                                                     + " truncated=" + truncated);
-                            storeAttachment(chatId, attachmentId, targetFile, description);
+                            storeAttachment(chatId, attachmentId, targetFile, description, sourceDocUuid(context));
                             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
                                     reportedRowCount, description, null, truncated);
                         } finally {
@@ -881,6 +917,7 @@ public class AskStroomAIService {
             final List<AiChatAttachment> readyAttachments = attachments.stream()
                     .filter(a -> a.getStatus() == AiAttachmentStatus.READY)
                     .filter(a -> a.getAttachmentType() == null || a.getAttachmentType().isTableContext())
+                    .filter(this::isAvailable)
                     .toList();
 
             LOGGER.debug(() -> "processQuestion: chatId=" + chatId

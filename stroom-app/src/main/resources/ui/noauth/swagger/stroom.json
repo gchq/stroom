@@ -15962,7 +15962,7 @@
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "PENDING", "DOWNLOADING", "READY", "ERROR" ]
+            "enum" : [ "PENDING", "DOWNLOADING", "READY", "ERROR", "UNAVAILABLE" ]
           },
           "truncated" : {
             "type" : "boolean"

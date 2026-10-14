@@ -158,4 +158,19 @@ public class MockAiDao implements AiDao {
     public ChatUsage getUsage(final int chatId) {
         return new ChatUsage(null, null, null, 0, 0);
     }
+
+    @Override
+    public List<Integer> findChatsNotUpdatedSince(final long timeMs, final int limit) {
+        return List.of();
+    }
+
+    @Override
+    public List<String> getChatOwners() {
+        return List.of();
+    }
+
+    @Override
+    public List<Integer> getChatIds(final String userUuid) {
+        return List.of();
+    }
 }

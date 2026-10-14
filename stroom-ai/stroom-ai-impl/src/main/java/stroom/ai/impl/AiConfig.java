@@ -37,6 +37,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     static final StroomDuration DEFAULT_UNATTENDED_AFTER = StroomDuration.ofMinutes(10);
     static final int DEFAULT_MAX_RUNS_PER_USER = 3;
     static final int DEFAULT_MAX_RUNS_PER_NODE = 20;
+    static final StroomDuration DEFAULT_WORKSPACE_FILE_RETENTION = StroomDuration.ofDays(7);
+    static final StroomDuration DEFAULT_CHAT_RETENTION = StroomDuration.ofDays(90);
 
     private final AiDbConfig dbConfig;
     private final CacheConfig chatResponseCache;
@@ -45,6 +47,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final int maxRunsPerUser;
     private final int maxRunsPerNode;
     private final AiCompactionConfig compaction;
+    private final StroomDuration workspaceFileRetention;
+    private final StroomDuration chatRetention;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -57,6 +61,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         maxRunsPerUser = DEFAULT_MAX_RUNS_PER_USER;
         maxRunsPerNode = DEFAULT_MAX_RUNS_PER_NODE;
         compaction = new AiCompactionConfig();
+        workspaceFileRetention = DEFAULT_WORKSPACE_FILE_RETENTION;
+        chatRetention = DEFAULT_CHAT_RETENTION;
     }
 
     @SuppressWarnings("unused")
@@ -67,7 +73,9 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("unattendedAfter") final StroomDuration unattendedAfter,
                     @JsonProperty("maxRunsPerUser") final Integer maxRunsPerUser,
                     @JsonProperty("maxRunsPerNode") final Integer maxRunsPerNode,
-                    @JsonProperty("compaction") final AiCompactionConfig compaction) {
+                    @JsonProperty("compaction") final AiCompactionConfig compaction,
+                    @JsonProperty("workspaceFileRetention") final StroomDuration workspaceFileRetention,
+                    @JsonProperty("chatRetention") final StroomDuration chatRetention) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -75,6 +83,9 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.maxRunsPerUser = Objects.requireNonNullElse(maxRunsPerUser, DEFAULT_MAX_RUNS_PER_USER);
         this.maxRunsPerNode = Objects.requireNonNullElse(maxRunsPerNode, DEFAULT_MAX_RUNS_PER_NODE);
         this.compaction = Objects.requireNonNullElseGet(compaction, AiCompactionConfig::new);
+        this.workspaceFileRetention = Objects.requireNonNullElse(workspaceFileRetention,
+                DEFAULT_WORKSPACE_FILE_RETENTION);
+        this.chatRetention = Objects.requireNonNullElse(chatRetention, DEFAULT_CHAT_RETENTION);
     }
 
     @Override
@@ -128,6 +139,23 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         return compaction;
     }
 
+    @JsonPropertyDescription("How long the files in an 'Ask Stroom AI' chat's workspace (attached tables, large " +
+                             "tool results and files written by tools) are kept. They hold copies of Stroom data, " +
+                             "so they are removed sooner than the chat itself. Set to 0 to keep them as long as " +
+                             "the chat.")
+    @JsonProperty("workspaceFileRetention")
+    public StroomDuration getWorkspaceFileRetention() {
+        return workspaceFileRetention;
+    }
+
+    @JsonPropertyDescription("How long an 'Ask Stroom AI' chat is kept after it was last changed. Older chats, " +
+                             "with their files and memory, are deleted by the 'AI Chat Retention' job. Set to 0 " +
+                             "to keep chats until their users delete them.")
+    @JsonProperty("chatRetention")
+    public StroomDuration getChatRetention() {
+        return chatRetention;
+    }
+
     @Override
     public String toString() {
         return "AiConfig{" +
@@ -138,6 +166,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", maxRunsPerUser=" + maxRunsPerUser +
                ", maxRunsPerNode=" + maxRunsPerNode +
                ", compaction=" + compaction +
+               ", workspaceFileRetention=" + workspaceFileRetention +
+               ", chatRetention=" + chatRetention +
                '}';
     }
 }

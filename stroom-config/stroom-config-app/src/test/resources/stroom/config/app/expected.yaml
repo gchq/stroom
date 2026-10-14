@@ -23,6 +23,7 @@ appConfig:
       maximumSize: 1000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
+    chatRetention: "P90D"
     compaction:
       digestMaxResultRows: 20
       replyReserveTokens: 4096
@@ -48,6 +49,7 @@ appConfig:
     maxRunsPerNode: 20
     maxRunsPerUser: 3
     unattendedAfter: "PT10M"
+    workspaceFileRetention: "P7D"
   analytics:
     db:
       connection:

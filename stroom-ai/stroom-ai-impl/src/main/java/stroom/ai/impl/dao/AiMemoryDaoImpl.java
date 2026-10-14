@@ -139,6 +139,22 @@ public class AiMemoryDaoImpl implements AiMemoryDao {
     }
 
     @Override
+    public List<String> getUserUuids() {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .selectDistinct(AI_MEMORY.USER_UUID)
+                .from(AI_MEMORY)
+                .fetch(AI_MEMORY.USER_UUID));
+    }
+
+    @Override
+    public int deleteAllForUser(final String userUuid) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .deleteFrom(AI_MEMORY)
+                .where(AI_MEMORY.USER_UUID.eq(userUuid))
+                .execute());
+    }
+
+    @Override
     public void deleteChatMemory(final int chatId) {
         JooqUtil.context(aiDbConnProvider, context -> context
                 .deleteFrom(AI_MEMORY)
