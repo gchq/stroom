@@ -96,16 +96,28 @@ public class UserIdentityImpl
     }
 
     public void invalidateSession() {
-        NullSafe.consume(httpSession, HttpSession::invalidate);
+        if (httpSession != null) {
+            try {
+                httpSession.invalidate();
+            } catch (final IllegalStateException e) {
+                // Already invalidated (e.g. it expired), which is what was wanted.
+                LOGGER.debug("Session is already invalid");
+            }
+        }
     }
 
     /**
      * Remove this {@link UserIdentity} from the HTTP session. This will require any future requests
-     * to re-authenticate with the IDP.
+     * to re-authenticate with the IDP. Does nothing if the session has already been invalidated.
      */
     public void removeUserFromSession() {
         if (httpSession != null) {
-            UserIdentitySessionUtil.setUserInSession(httpSession, null);
+            try {
+                UserIdentitySessionUtil.setUserInSession(httpSession, null);
+            } catch (final IllegalStateException e) {
+                // Already invalidated (e.g. it expired), so the user is no longer in it anyway.
+                LOGGER.debug("Session is already invalid");
+            }
         }
     }
 

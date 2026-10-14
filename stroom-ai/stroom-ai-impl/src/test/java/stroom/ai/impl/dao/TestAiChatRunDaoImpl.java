@@ -164,6 +164,52 @@ class TestAiChatRunDaoImpl {
     }
 
     @Test
+    void testSessionRuns() {
+        final AiChatRun fromSession = runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "n", "hash1");
+        final AiChat otherChat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        runDao.create(otherChat.getId(), "user1", AiChatRunStatus.RUNNING, "n", "hash2");
+
+        assertThat(runDao.getActiveBySession("hash1"))
+                .extracting(AiChatRun::getId)
+                .containsExactly(fromSession.getId());
+
+        // Terminated when its session ended, then corrected once it is known the user signed out.
+        runDao.compareAndSetStatus(fromSession.getId(), Set.of(AiChatRunStatus.RUNNING), AiChatRunStatus.STOPPED,
+                AiChatRunStopReason.TERMINATED, null);
+        runDao.correctStopReason("hash1", AiChatRunStopReason.TERMINATED, AiChatRunStopReason.SIGN_OUT,
+                System.currentTimeMillis() - 60_000);
+
+        assertThat(runDao.get(fromSession.getId()).orElseThrow().getStopReason())
+                .isEqualTo(AiChatRunStopReason.SIGN_OUT);
+        assertThat(runDao.getActiveBySession("hash1")).isEmpty();
+    }
+
+    @Test
+    void testSetUnattended() {
+        final AiChatRun run = runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "n", null);
+
+        runDao.setUnattended(run.getId(), true);
+        assertThat(runDao.get(run.getId()).orElseThrow().isUnattended()).isTrue();
+        runDao.setUnattended(run.getId(), false);
+        assertThat(runDao.get(run.getId()).orElseThrow().isUnattended()).isFalse();
+    }
+
+    @Test
+    void testPresence() {
+        assertThat(aiDao.getLastPollMs("user1")).isNull();
+
+        final long before = System.currentTimeMillis();
+        aiDao.recordPoll(chat.getId(), 0);
+        final Long first = aiDao.getLastPollMs("user1");
+        assertThat(first).isGreaterThanOrEqualTo(before);
+
+        // Not written again within the interval.
+        aiDao.recordPoll(chat.getId(), 60_000);
+        assertThat(aiDao.getLastPollMs("user1")).isEqualTo(first);
+        assertThat(aiDao.getLastPollMs("user2")).isNull();
+    }
+
+    @Test
     void testDeletingChatDeletesRuns() {
         runDao.create(chat.getId(), "user1", AiChatRunStatus.RUNNING, "node1", null);
 

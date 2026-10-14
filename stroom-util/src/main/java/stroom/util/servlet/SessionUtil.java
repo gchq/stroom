@@ -33,6 +33,11 @@ public class SessionUtil {
     public static final String STROOM_SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
     public static final String JSESSIONID = "JSESSIONID";
 
+    /**
+     * Set on a session that is being ended because the user signed out, rather than because it expired.
+     */
+    private static final String EXPLICIT_LOGOUT_ATTRIBUTE = "stroom.explicitLogout";
+
     private SessionUtil() {
     }
 
@@ -97,6 +102,37 @@ public class SessionUtil {
             return session;
         } else {
             return null;
+        }
+    }
+
+    /**
+     * Marks the session as being ended by the user signing out, so that listeners told the session has been
+     * destroyed can tell that from it having expired. Call just before invalidating the session.
+     *
+     * @param session The session, or null.
+     */
+    public static void markExplicitLogout(final HttpSession session) {
+        if (session != null) {
+            try {
+                session.setAttribute(EXPLICIT_LOGOUT_ATTRIBUTE, Boolean.TRUE);
+            } catch (final IllegalStateException e) {
+                // Already invalidated, so there is nothing to mark.
+            }
+        }
+    }
+
+    /**
+     * @param session A session, e.g. one that is being destroyed.
+     * @return True if the session was ended by the user signing out, rather than by it expiring.
+     */
+    public static boolean isExplicitLogout(final HttpSession session) {
+        if (session == null) {
+            return false;
+        }
+        try {
+            return Boolean.TRUE.equals(session.getAttribute(EXPLICIT_LOGOUT_ATTRIBUTE));
+        } catch (final IllegalStateException e) {
+            return false;
         }
     }
 

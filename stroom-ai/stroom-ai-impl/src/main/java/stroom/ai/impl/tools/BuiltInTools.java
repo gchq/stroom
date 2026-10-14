@@ -25,6 +25,7 @@ import dev.langchain4j.service.tool.ToolExecutor;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -39,12 +40,17 @@ public class BuiltInTools {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuiltInTools.class);
 
     private final Map<ToolSpecification, ToolExecutor> toolMap;
+    private final Set<String> readOnlyToolNames;
 
     @Inject
     BuiltInTools(final Set<BuiltInTool> tools) {
         final Map<ToolSpecification, ToolExecutor> map = new LinkedHashMap<>();
+        final Set<String> readOnly = new HashSet<>();
         for (final BuiltInTool tool : tools) {
             final ToolSpecification specification = tool.specification();
+            if (tool.isReadOnly()) {
+                readOnly.add(specification.name());
+            }
             map.put(specification, (request, memoryId) -> {
                 try {
                     return NullSafe.string(tool.execute(request));
@@ -56,6 +62,7 @@ public class BuiltInTools {
             });
         }
         toolMap = Map.copyOf(map);
+        readOnlyToolNames = Set.copyOf(readOnly);
         LOGGER.debug(() -> "Registered " + toolMap.size() + " built-in tool(s): "
                            + toolMap.keySet().stream().map(ToolSpecification::name).sorted().toList());
     }
@@ -66,6 +73,14 @@ public class BuiltInTools {
      */
     public Map<ToolSpecification, ToolExecutor> toolMap() {
         return toolMap;
+    }
+
+    /**
+     * @param toolName A tool name.
+     * @return True if it is a built-in tool that cannot change anything.
+     */
+    public boolean isReadOnly(final String toolName) {
+        return readOnlyToolNames.contains(toolName);
     }
 
     public boolean isEmpty() {

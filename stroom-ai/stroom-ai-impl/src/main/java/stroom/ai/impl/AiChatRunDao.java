@@ -97,6 +97,28 @@ public interface AiChatRunDao {
     /// @return The runs that were interrupted, as they were before.
     List<AiChatRun> interruptStale(long staleBeforeMs);
 
+    /// @param sessionIdHash A hash of an HTTP session's id.
+    /// @return The active runs started from that session.
+    List<AiChatRun> getActiveBySession(String sessionIdHash);
+
+    /// Corrects the stop reason of the runs started from a session that were stopped with one reason since a
+    /// time, e.g. runs terminated because their session ended, once it is known whether the user signed out.
+    ///
+    /// @param sessionIdHash A hash of an HTTP session's id.
+    /// @param from          The reason to correct.
+    /// @param to            The correct reason.
+    /// @param endedAfterMs  Only runs that ended after this time are corrected.
+    void correctStopReason(String sessionIdHash,
+                           AiChatRunStopReason from,
+                           AiChatRunStopReason to,
+                           long endedAfterMs);
+
+    /// Records whether a run is unattended, i.e. its user has gone.
+    ///
+    /// @param runId      The run's id.
+    /// @param unattended True if the run is unattended.
+    void setUnattended(int runId, boolean unattended);
+
     /// Deletes all of a chat's runs, e.g. because the chat is being deleted.
     ///
     /// @param chatId The chat.

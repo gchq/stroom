@@ -1564,6 +1564,9 @@ public class AskStroomAIService {
     }
 
     public AiChatPollResponse pollMessages(final int chatId, final AiChatPollRequest request) {
+        aiService.verifyOwnership(chatId);
+        // A browser checking on the chat means the user is still here.
+        runManager.recordPresence(chatId);
         final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
 
         // The WORKING message is updated in place as processing advances, so it is reported as it

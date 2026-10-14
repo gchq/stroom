@@ -38,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The MCP servers available to a single "Ask Stroom AI" question. The toolset offers each server's tools to
@@ -64,6 +65,7 @@ public final class McpToolset implements AutoCloseable {
     private final List<McpServerConnection> connections;
     private final List<String> warnings;
     private final boolean ownsConnections;
+    private final Set<String> readOnlyToolNames = ConcurrentHashMap.newKeySet();
 
     McpToolset(final List<McpServerConnection> connections,
                final List<String> warnings,
@@ -127,6 +129,9 @@ public final class McpToolset implements AutoCloseable {
                             .build();
                     tools.put(specification, (request, memoryId) ->
                             callTool(connection, tool.name(), request.arguments()));
+                    if (isReadOnly(connection, tool)) {
+                        readOnlyToolNames.add(name);
+                    }
                 } else {
                     LOGGER.debug(() -> "Tool '" + tool.name() + "' of MCP server '" + connection.label()
                                        + "' is not allowed");
@@ -137,8 +142,27 @@ public final class McpToolset implements AutoCloseable {
         if (anyResources) {
             tools.put(listResourcesSpecification(), (request, memoryId) -> listResources(request.arguments()));
             tools.put(getResourceSpecification(), (request, memoryId) -> getResource(request.arguments()));
+            readOnlyToolNames.add(LIST_RESOURCES_TOOL);
+            readOnlyToolNames.add(GET_RESOURCE_TOOL);
         }
         return tools;
+    }
+
+    /**
+     * @param toolName The name of a tool offered by {@link #tools()}.
+     * @return True if the tool cannot change anything. An MCP tool only counts as read-only if its server is
+     * trusted and the tool is annotated as read-only, as annotations from an untrusted server are only hints.
+     * Reading resources is read-only.
+     */
+    public boolean isReadOnly(final String toolName) {
+        return readOnlyToolNames.contains(toolName);
+    }
+
+    static boolean isReadOnly(final McpServerConnection connection, final Tool tool) {
+        return connection.config() != null
+               && connection.config().isTrusted()
+               && tool.annotations() != null
+               && Boolean.TRUE.equals(tool.annotations().readOnlyHint());
     }
 
     private static List<Resource> listResources(final McpSyncClient client) {
