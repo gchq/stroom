@@ -640,3 +640,102 @@
         opacity: 0.35;
     }
 }
+
+/* ---- Context meter, next to the model ---- */
+
+.askStroomAiViewImpl-contextMeter {
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 0.8em;
+    padding: 1px 6px;
+    margin: 0 4px;
+    border-radius: 10px;
+    color: var(--control__text-color--disabled);
+    background: none;
+    border: 1px solid var(--control__border-color);
+}
+
+.askStroomAiViewImpl-contextMeter:hover {
+    color: var(--control__text-color);
+}
+
+.askStroomAiViewImpl-contextMeter--warn {
+    color: #ed6c02;
+    border-color: #ed6c02;
+}
+
+.askStroomAiViewImpl-contextMeter--over {
+    color: #d32f2f;
+    border-color: #d32f2f;
+}
+
+/* ---- Commands suggested as the user types "/" ---- */
+
+.askStroomAiViewImpl-commands {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
+}
+
+.askStroomAiViewImpl-command {
+    cursor: pointer;
+    text-align: left;
+    padding: 3px 6px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: var(--control__text-color);
+    font-family: inherit;
+}
+
+.askStroomAiViewImpl-command:hover,
+.askStroomAiViewImpl-command:focus {
+    background: var(--page__background-color);
+}
+
+.askStroomAiViewImpl-commandArgs {
+    color: var(--control__text-color--disabled);
+}
+
+.askStroomAiViewImpl-commandDescription {
+    margin-left: 8px;
+    font-size: 0.85em;
+    color: var(--control__text-color--disabled);
+}
+
+/* ---- Compaction divider ---- */
+
+.ai-compaction-divider > summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.8em;
+    color: var(--control__text-color--disabled);
+}
+
+.ai-compaction-divider > summary::-webkit-details-marker {
+    display: none;
+}
+
+.ai-compaction-divider > summary::before,
+.ai-compaction-divider > summary::after {
+    content: "";
+    flex: 1;
+    border-top: 1px dashed var(--control__border-color);
+}
+
+.ai-compaction-divider > summary .ai-entry-title {
+    flex: 0 1 auto;
+    text-align: center;
+}
+
+.ai-compaction-divider > .ai-message-footer {
+    display: none;
+}
+
+.ai-compaction-divider[open] > .ai-message-footer {
+    display: flex;
+}

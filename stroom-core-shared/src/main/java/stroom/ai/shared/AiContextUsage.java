@@ -41,6 +41,8 @@ public class AiContextUsage {
     private final boolean estimated;
     @JsonProperty
     private final Map<String, Long> parts;
+    @JsonProperty
+    private final int compactAtPercent;
 
     /**
      * @param contextWindowTokens The model's context window, or 0 if it is not known.
@@ -48,18 +50,22 @@ public class AiContextUsage {
      * @param estimated           True if the figure is only an estimate, not yet checked against what the model
      *                            reported for this chat.
      * @param parts               Where the tokens go (e.g. "Conversation", "Tool definitions"), in order.
+     * @param compactAtPercent    The percentage of the context window at which the chat is compacted
+     *                            automatically, or 0 if not known.
      */
     @JsonCreator
     public AiContextUsage(@JsonProperty("contextWindowTokens") final Integer contextWindowTokens,
                           @JsonProperty("usedTokens") final Long usedTokens,
                           @JsonProperty("estimated") final Boolean estimated,
-                          @JsonProperty("parts") final Map<String, Long> parts) {
+                          @JsonProperty("parts") final Map<String, Long> parts,
+                          @JsonProperty("compactAtPercent") final Integer compactAtPercent) {
         this.contextWindowTokens = Objects.requireNonNullElse(contextWindowTokens, 0);
         this.usedTokens = Objects.requireNonNullElse(usedTokens, 0L);
         this.estimated = Objects.requireNonNullElse(estimated, true);
         this.parts = parts == null
                 ? new LinkedHashMap<>()
                 : new LinkedHashMap<>(parts);
+        this.compactAtPercent = Objects.requireNonNullElse(compactAtPercent, 0);
     }
 
     /**
@@ -88,6 +94,14 @@ public class AiContextUsage {
     }
 
     /**
+     * @return The percentage of the context window at which the chat is compacted automatically, or 0 if not
+     * known.
+     */
+    public int getCompactAtPercent() {
+        return compactAtPercent;
+    }
+
+    /**
      * @return The percentage of the context window used, or -1 if the window is not known.
      */
     public int getPercentUsed() {
@@ -105,12 +119,13 @@ public class AiContextUsage {
         return contextWindowTokens == that.contextWindowTokens
                && usedTokens == that.usedTokens
                && estimated == that.estimated
-               && Objects.equals(parts, that.parts);
+               && Objects.equals(parts, that.parts)
+               && compactAtPercent == that.compactAtPercent;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(contextWindowTokens, usedTokens, estimated, parts);
+        return Objects.hash(contextWindowTokens, usedTokens, estimated, parts, compactAtPercent);
     }
 
     @Override
@@ -120,6 +135,7 @@ public class AiContextUsage {
                ", usedTokens=" + usedTokens +
                ", estimated=" + estimated +
                ", parts=" + parts +
+               ", compactAtPercent=" + compactAtPercent +
                '}';
     }
 }

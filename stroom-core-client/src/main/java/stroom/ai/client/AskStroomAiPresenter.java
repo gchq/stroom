@@ -25,6 +25,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatStatus;
+import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -35,6 +36,7 @@ import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
+import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
@@ -82,6 +84,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.TextAreaElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.i18n.client.DateTimeFormat;
@@ -151,6 +154,13 @@ public class AskStroomAiPresenter
     private static final String COPY_TEXT_ATTRIBUTE = "data-copy-text";
     private static final String DAY_DIVIDER_CLASS = "ai-day-divider";
     private static final String PENDING_MESSAGE_ID = "pending";
+    private static final String UNDO_COMPACTION_ATTRIBUTE = "data-undo-compaction";
+    private static final int DEFAULT_COMPACT_AT_PERCENT = 80;
+    private static final int WARN_BELOW_COMPACT_AT_PERCENT = 10;
+    private static final String COMPACT_COMMAND = "/compact";
+    private static final List<AiSlashCommand> SLASH_COMMANDS = List.of(
+            new AiSlashCommand(COMPACT_COMMAND, "[focus]",
+                    "Compact the conversation now, optionally saying what the summary should keep"));
     private static final String LIVE_ANSWER_ID = "ai-live-answer";
     private static final int STREAMING_POLL_MS = 500;
     private static final int BOTTOM_TOLERANCE_PX = 40;
@@ -196,6 +206,8 @@ public class AskStroomAiPresenter
     private String lastRenderedDay;
     // True while the conversation is scrolled to the bottom, so new messages scroll into view.
     private boolean followBottom = true;
+    // How much of the model's context window the chat uses, as last reported.
+    private AiContextUsage contextUsage;
 
     @Inject
     public AskStroomAiPresenter(final EventBus eventBus,
@@ -266,6 +278,13 @@ public class AskStroomAiPresenter
                     final String retryTurnIdStr = button.getAttribute(RETRY_TURN_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(retryTurnIdStr)) {
                         onRetry(Integer.parseInt(retryTurnIdStr));
+                        return;
+                    }
+
+                    // Undoing a compaction.
+                    final String undoStr = button.getAttribute(UNDO_COMPACTION_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(undoStr)) {
+                        onUndoCompaction(Integer.parseInt(undoStr));
                         return;
                     }
 
@@ -672,6 +691,195 @@ public class AskStroomAiPresenter
     /**
      * Compacts the chat now: earlier turns are replaced, in what the model sees, by digests and a summary.
      */
+    @Override
+    public void onInputChanged(final String text) {
+        final String trimmed = NullSafe.string(text).trim();
+        if (trimmed.startsWith("/") && !trimmed.contains(" ")) {
+            final List<AiSlashCommand> matches = new ArrayList<>();
+            for (final AiSlashCommand command : SLASH_COMMANDS) {
+                if (command.getName().startsWith(trimmed)) {
+                    matches.add(command);
+                }
+            }
+            getView().setCommandSuggestions(matches);
+        } else {
+            getView().setCommandSuggestions(null);
+        }
+    }
+
+    /**
+     * Runs the message if it is a command, e.g. "/compact keep the IP addresses".
+     *
+     * @return True if it was a command, so is not to be sent to the model.
+     */
+    private boolean runSlashCommand(final String message) {
+        final String trimmed = NullSafe.string(message).trim();
+        if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
+            return false;
+        }
+        final String[] parts = trimmed.split("\\s+", 2);
+        if (COMPACT_COMMAND.equals(parts[0])) {
+            if (currentChat == null) {
+                AlertEvent.fireWarn(this, "There is nothing to compact yet.", null);
+            } else {
+                compact(parts.length > 1
+                        ? parts[1].strip()
+                        : null);
+            }
+            return true;
+        }
+        final StringBuilder known = new StringBuilder();
+        for (final AiSlashCommand command : SLASH_COMMANDS) {
+            known.append("\n").append(command.getName()).append(" ").append(command.getArguments());
+        }
+        AlertEvent.fireWarn(this, "Unknown command " + parts[0] + ". The commands are:" + known
+                                  + "\n\nTo send a message starting with /, start it with //.", null);
+        return true;
+    }
+
+    /**
+     * Shows how much of the model's context window the chat uses, e.g. "42% · 54k / 128k", in amber near the
+     * point where the chat is compacted and red past it. "≈" says the figure is only an estimate.
+     */
+    private void updateContextMeter(final AiContextUsage usage) {
+        contextUsage = usage;
+        final String approx = usage.isEstimated()
+                ? "≈"
+                : "";
+        final int percent = usage.getPercentUsed();
+        if (percent < 0) {
+            getView().setContextMeter(approx + kilo(usage.getUsedTokens()) + " tokens",
+                    "How many tokens of context this chat uses. The model's context window is not known yet. "
+                    + "Click for details.", null);
+            return;
+        }
+        final int compactAt = usage.getCompactAtPercent() > 0
+                ? usage.getCompactAtPercent()
+                : DEFAULT_COMPACT_AT_PERCENT;
+        final String level = percent >= compactAt
+                ? "over"
+                : percent >= compactAt - WARN_BELOW_COMPACT_AT_PERCENT
+                        ? "warn"
+                        : null;
+        getView().setContextMeter(approx + percent + "% · " + kilo(usage.getUsedTokens()) + " / "
+                                  + kilo(usage.getContextWindowTokens()),
+                "How much of the model's context window this chat uses. Earlier messages are compacted "
+                + "automatically at " + compactAt + "%. Click for details.", level);
+    }
+
+    private static String kilo(final long tokens) {
+        return tokens >= 1000
+                ? (tokens / 1000) + "k"
+                : String.valueOf(tokens);
+    }
+
+    @Override
+    public void onShowContextMeter(final Element target) {
+        if (contextUsage == null) {
+            return;
+        }
+        final MenuBuilder builder = MenuBuilder.builder();
+        for (final Map.Entry<String, Long> part : contextUsage.getParts().entrySet()) {
+            if (part.getValue() > 0) {
+                builder.withSimpleMenuItem(item -> item
+                        .text(part.getKey() + ": " + kilo(part.getValue()) + " tokens")
+                        .enabled(false));
+            }
+        }
+        final List<Item> items = builder
+                .withSeparator()
+                .withIconMenuItem(item -> item
+                        .icon(SvgImage.COLLAPSE_UP)
+                        .text("Compact Now…")
+                        .enabled(currentChat != null)
+                        .command(this::onCompact))
+                .build();
+        ShowMenuEvent.builder()
+                .items(items)
+                .popupPosition(new PopupPosition(new Rect(target).grow(3), PopupLocation.ABOVE))
+                .fire(this);
+    }
+
+    /**
+     * Renders a compaction as a divider in the conversation, which opens to show what the model now sees in
+     * place of the earlier messages, with a button to undo it.
+     */
+    private void appendCompactionDivider(final HtmlBuilder hb,
+                                         final AiChatMessage msg,
+                                         final long timeMs,
+                                         final long nowMs) {
+        final String json = msg.getMessage();
+        hb.elem(details -> {
+            details.elem(summary -> summary.span(title -> title.append(AiToolMessages.compactionTitle(json)),
+                            Attribute.className("ai-entry-title")),
+                    SUMMARY, Attribute.className("ai-message-header"));
+            details.div(content -> content.append(markdownConverter.convertUntrustedMarkdownToHtml(
+                    AiToolMessages.compactionMarkdown(json))), Attribute.className("ai-details-content"));
+            details.div(footer -> {
+                if (!AiToolMessages.getBoolean(json, "stale")) {
+                    footer.elem("Undo", BUTTON,
+                            Attribute.className("allow-focus ai-approval-button"),
+                            Attribute.title("Undo this compaction, so the model sees the earlier messages in full "
+                                            + "again"),
+                            new Attribute(UNDO_COMPACTION_ATTRIBUTE, String.valueOf(msg.getId())));
+                }
+                timestamp(footer, timeMs, nowMs);
+            }, Attribute.className("ai-message-footer"));
+        }, DETAILS, Attribute.className("ai-message ai-message--compaction ai-compaction-divider"));
+    }
+
+    /**
+     * Only the latest compaction can be undone, so only it shows its Undo button.
+     */
+    private void showUndoOnLatestCompaction() {
+        final NodeList<Element> buttons = getView().getMarkdownContainer().getElement()
+                .getElementsByTagName("button");
+        Element latest = null;
+        int latestId = -1;
+        for (int i = 0; i < buttons.getLength(); i++) {
+            final Element button = buttons.getItem(i);
+            final String idStr = button.getAttribute(UNDO_COMPACTION_ATTRIBUTE);
+            if (NullSafe.isNonBlankString(idStr)) {
+                button.getStyle().setDisplay(Display.NONE);
+                if (Integer.parseInt(idStr) > latestId) {
+                    latestId = Integer.parseInt(idStr);
+                    latest = button;
+                }
+            }
+        }
+        if (latest != null) {
+            latest.getStyle().clearDisplay();
+        }
+    }
+
+    private void onUndoCompaction(final int messageId) {
+        if (currentChat == null) {
+            return;
+        }
+        final String question = "Undo this compaction? The model will see the earlier messages in full again, "
+                                + "which uses more of its context window.";
+        ConfirmEvent.fire(this, question, ok -> {
+            if (ok && currentChat != null) {
+                undoCompaction(messageId);
+            }
+        });
+    }
+
+    private void undoCompaction(final int messageId) {
+        askStroomAiClient.undoCompaction(new UndoAiCompactionRequest(currentChat, messageId), usage -> {
+            final Element element = findMessageElement(getView().getMarkdownContainer().getElement(),
+                    String.valueOf(messageId));
+            if (element != null) {
+                element.removeFromParent();
+            }
+            renderedMessages.remove(messageId);
+            showUndoOnLatestCompaction();
+            if (usage != null) {
+                updateContextMeter(usage);
+            }
+        }, error -> showError(error, "Unable to undo the compaction", null), getView());
+    }
+
     private void onCompact() {
         if (currentChat == null) {
             return;
@@ -783,6 +991,19 @@ public class AskStroomAiPresenter
 
     @Override
     public void onSendMessage(final String message) {
+        getView().setCommandSuggestions(null);
+        if (runSlashCommand(message)) {
+            getView().setSendButtonLoadingState(false);
+            return;
+        }
+        // "//" sends a message that starts with "/".
+        final String trimmed = NullSafe.string(message).trim();
+        sendMessage(trimmed.startsWith("//")
+                ? trimmed.substring(1)
+                : message);
+    }
+
+    private void sendMessage(final String message) {
         getView().setSendButtonLoadingState(true);
         getView().setEmptyState(false);
         getView().clearContextIndicator();
@@ -1153,6 +1374,11 @@ public class AskStroomAiPresenter
                 scrollToBottom();
             }
 
+            // Show how much of the context window the chat uses, when that has changed.
+            if (response.getContextUsage() != null) {
+                updateContextMeter(response.getContextUsage());
+            }
+
             // Update attachment status elements in-place.
             updateAttachmentStatuses(response.getAttachments());
 
@@ -1273,6 +1499,9 @@ public class AskStroomAiPresenter
             appendDayDivider(markdownContainer, msg.getCreateTimeMs(), nowMs);
             markdownContainer.appendChild(messageElement);
         }
+        if (msg.getMessageType() == AiMessageType.COMPACTION_SUMMARY) {
+            showUndoOnLatestCompaction();
+        }
     }
 
     /**
@@ -1367,6 +1596,8 @@ public class AskStroomAiPresenter
         getView().clearMessages();
         renderedMessages.clear();
         activityGroups.clear();
+        contextUsage = null;
+        getView().setContextMeter(null, null, null);
         lastRenderedDay = null;
         followBottom = true;
         getView().setJumpToLatestVisible(false);
@@ -1464,9 +1695,7 @@ public class AskStroomAiPresenter
                 // Only for the model.
                 break;
             case COMPACTION_SUMMARY:
-                appendDetailsElement(hb, "ai-message ai-message--compaction", SvgImage.INFO,
-                        AiToolMessages.compactionTitle(msg.getMessage()),
-                        AiToolMessages.compactionMarkdown(msg.getMessage()), timeMs, nowMs);
+                appendCompactionDivider(hb, msg, timeMs, nowMs);
                 break;
             case WARNING:
                 appendMessageHtml(hb, "ai-message ai-message--warning", msg.getMessage(),
@@ -2142,6 +2371,22 @@ public class AskStroomAiPresenter
          * @param visible True to show it.
          */
         void setJumpToLatestVisible(boolean visible);
+
+        /**
+         * Shows how much of the model's context window the chat uses, or hides the meter.
+         *
+         * @param text  E.g. "42% · 54k / 128k", or null to hide the meter.
+         * @param title The meter's tooltip.
+         * @param level "warn" near the point where the chat is compacted, "over" past it, or null.
+         */
+        void setContextMeter(String text, String title, String level);
+
+        /**
+         * Shows commands that match what the user is typing, or hides them.
+         *
+         * @param commands The commands, or null/empty to hide them.
+         */
+        void setCommandSuggestions(List<AiSlashCommand> commands);
 
         /**
          * @param tab True if the chat is shown in a content tab, so the tab/panel button moves it back.
