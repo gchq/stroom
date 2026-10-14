@@ -350,6 +350,27 @@ paths:
       summary: Cancel in-progress AI batch analysis for a chat
       tags:
       - AI
+  /ai/v1/compactChat:
+    post:
+      operationId: compactChat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompactAiChatRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: "Compact a chat now: earlier turns are replaced, in what the model\
+        \ sees, by short digests and a summary. Nothing is deleted"
+      tags:
+      - AI
   /ai/v1/createChat:
     post:
       operationId: createChat
@@ -633,6 +654,27 @@ paths:
                 type: boolean
           description: default response
       summary: Set the default Stroom AI config to use for asking questions
+      tags:
+      - AI
+  /ai/v1/undoCompaction:
+    post:
+      operationId: undoCompaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UndoAiCompactionRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Undo a chat's latest compaction, so the model sees the turns it covered\
+        \ as they were"
       tags:
       - AI
   /ai/v1/updateChatTitle/{chatId}:
@@ -12076,6 +12118,15 @@ components:
           type: object
           additionalProperties:
             $ref: "#/components/schemas/ColumnValueSelection"
+    CompactAiChatRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        config:
+          $ref: "#/components/schemas/AskStroomAiConfig"
+        instructions:
+          type: string
     CompletionItem:
       type: object
       discriminator:
@@ -22900,6 +22951,14 @@ components:
           $ref: "#/components/schemas/ThemeConfig"
         welcomeHtml:
           type: string
+    UndoAiCompactionRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        messageId:
+          type: integer
+          format: int32
     UnlinkAnnotations:
       type: object
       allOf:

@@ -24,7 +24,9 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.EditAiMessageRequest;
+import stroom.ai.shared.UndoAiCompactionRequest;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -42,10 +44,11 @@ class TestAskStroomAIService {
     private final AiChatRunDao runDao = Mockito.mock(AiChatRunDao.class);
     private final AiChat chat = new AiChat(1, 0L, 0L, "user1", "chat");
 
+    private final ChatCompactor compactor = Mockito.mock(ChatCompactor.class);
+
     private AskStroomAIService service() {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, runManager, runDao, null, null, null, null,
-                Mockito.mock(ChatCompactor.class));
+                null, null, null, null, null, runManager, runDao, null, null, null, null, compactor);
     }
 
     @Test
@@ -224,6 +227,51 @@ class TestAskStroomAIService {
     @Test
     void testSelectHistoryForModel_empty() {
         assertThat(AskStroomAIService.selectHistoryForModel(List.of())).isEmpty();
+    }
+
+    @Test
+    void testUndoCompaction_onlyTheLatest() {
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(1, AiMessageType.USER_MESSAGE, "q"),
+                message(2, AiMessageType.COMPACTION_SUMMARY, "{\"digestsUpToTurnId\":1}"),
+                message(3, AiMessageType.COMPACTION_SUMMARY, "{\"digestsUpToTurnId\":2}"),
+                message(4, AiMessageType.COMPACTION_SUMMARY, "{\"digestsUpToTurnId\":3,\"stale\":true}")));
+
+        assertThatThrownBy(() -> service().undoCompaction(new UndoAiCompactionRequest(chat, 2)))
+                .hasMessageContaining("Only the latest compaction");
+        assertThatThrownBy(() -> service().undoCompaction(new UndoAiCompactionRequest(chat, 4)))
+                .hasMessageContaining("Only the latest compaction");
+
+        assertThat(service().undoCompaction(new UndoAiCompactionRequest(chat, 3))).isTrue();
+        Mockito.verify(aiService).deleteMessage(3);
+    }
+
+    @Test
+    void testUndoCompaction_notWhileBusy() {
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running));
+
+        assertThatThrownBy(() -> service().undoCompaction(new UndoAiCompactionRequest(chat, 3)))
+                .isInstanceOf(AiChatRunManager.AiChatBusyException.class);
+        Mockito.verify(aiService, Mockito.never()).deleteMessage(Mockito.anyInt());
+    }
+
+    @Test
+    void testCompactNow_saysWhenThereIsNothingToCompact() {
+        final AskStroomAIService service = Mockito.spy(service());
+        Mockito.doReturn(null).when(service).getModelDocForCompaction(Mockito.any());
+        Mockito.when(runManager.start(Mockito.eq(1), Mockito.any())).thenAnswer(invocation -> {
+            final java.util.function.Consumer<AiChatRun> work = invocation.getArgument(1);
+            work.accept(null);
+            return null;
+        });
+        Mockito.when(compactor.compactNow(Mockito.eq(1), Mockito.any(), Mockito.any(), Mockito.eq("focus")))
+                .thenReturn(false);
+
+        service.compactChat(new CompactAiChatRequest(chat, null, "focus"));
+
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.WARNING, AskStroomAIService.NOTHING_TO_COMPACT);
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final String text) {
