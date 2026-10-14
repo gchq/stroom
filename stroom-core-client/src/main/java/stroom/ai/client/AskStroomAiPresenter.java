@@ -92,6 +92,7 @@ public class AskStroomAiPresenter
     private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
     private static final String WORKING_MESSAGE_ID = "ai-working-message";
     private static final String WORKING_TEXT_ID = "ai-working-text";
+    private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
@@ -495,17 +496,15 @@ public class AskStroomAiPresenter
                                            && !response.getNewMessages().isEmpty();
             if (hasNewMessages) {
                 final long nowMs = System.currentTimeMillis();
-                final HtmlBuilder hb = new HtmlBuilder();
                 for (final AiChatMessage msg : response.getNewMessages()) {
                     // Skip USER_MESSAGE — we already rendered it inline in onSendMessage.
                     if (msg.getMessageType() != AiMessageType.USER_MESSAGE) {
-                        renderMessage(hb, msg, nowMs);
+                        appendMessage(msg, nowMs);
                     }
                     // Track the highest seen message ID.
                     lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
                 }
-                // Scroll to show new content.
-                appendToContainer(hb);
+                scrollToBottom();
             }
 
             // Update attachment status elements in-place.
@@ -537,10 +536,62 @@ public class AskStroomAiPresenter
         }, getView());
     }
 
+    /**
+     * Appends the html to the end of the conversation and scrolls to it. Only the new html is parsed; the
+     * messages already shown are left as they are, so any state in them (e.g. an expanded section) is kept.
+     */
     void appendToContainer(final HtmlBuilder hb) {
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
-        final String current = NullSafe.toString(markdownContainer.getInnerHTML());
-        markdownContainer.setInnerHTML(current + hb.toSafeHtml().asString());
+        final Element holder = parseHtml(hb);
+        while (holder.getFirstChild() != null) {
+            markdownContainer.appendChild(holder.getFirstChild());
+        }
+        scrollToBottom();
+    }
+
+    /**
+     * Renders a message as its own element, tagged with its id. If an element for the message is already shown,
+     * it is replaced where it stands, otherwise the new element is added to the end of the conversation.
+     */
+    private void appendMessage(final AiChatMessage msg, final long nowMs) {
+        final HtmlBuilder hb = new HtmlBuilder();
+        renderMessage(hb, msg, nowMs);
+        final Element holder = parseHtml(hb);
+        final Element messageElement = holder.getFirstChildElement();
+        if (messageElement == null) {
+            return;
+        }
+        final String messageId = String.valueOf(msg.getId());
+        messageElement.setAttribute(MESSAGE_ID_ATTRIBUTE, messageId);
+
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        final Element existing = findMessageElement(markdownContainer, messageId);
+        if (existing != null) {
+            markdownContainer.replaceChild(messageElement, existing);
+        } else {
+            markdownContainer.appendChild(messageElement);
+        }
+    }
+
+    private Element findMessageElement(final Element markdownContainer, final String messageId) {
+        Element child = markdownContainer.getFirstChildElement();
+        while (child != null) {
+            if (messageId.equals(child.getAttribute(MESSAGE_ID_ATTRIBUTE))) {
+                return child;
+            }
+            child = child.getNextSiblingElement();
+        }
+        return null;
+    }
+
+    private Element parseHtml(final HtmlBuilder hb) {
+        final Element holder = Document.get().createDivElement();
+        holder.setInnerHTML(hb.toSafeHtml().asString());
+        return holder;
+    }
+
+    private void scrollToBottom() {
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
         markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
     }
 
@@ -968,18 +1019,17 @@ public class AskStroomAiPresenter
         // Load messages for the selected chat.
         askStroomAiClient.getMessages(chat.getId(), messages -> {
             final long nowMs = System.currentTimeMillis();
-            final HtmlBuilder hb = new HtmlBuilder();
             if (messages != null && !messages.isEmpty()) {
                 getView().setEmptyState(false);
                 for (final AiChatMessage msg : messages) {
-                    renderMessage(hb, msg, nowMs);
+                    appendMessage(msg, nowMs);
                     lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
                 }
             } else {
                 getView().setEmptyState(true);
             }
             // Scroll to bottom after loading all messages.
-            appendToContainer(hb);
+            scrollToBottom();
             getView().focus();
 
             // Fetch attachment statuses to update status elements rendered above.
