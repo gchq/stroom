@@ -17054,6 +17054,31 @@ components:
           type: string
       required:
       - type
+    McpToolServerConfig:
+      type: object
+      properties:
+        apiKeyHeaderName:
+          type: string
+        apiKeyValuePrefix:
+          type: string
+        authMode:
+          type: string
+          enum:
+          - NONE
+          - BEARER_TOKEN
+          - API_KEY
+          - BASIC
+          - STROOM_SESSION_TOKEN
+        credentialName:
+          type: string
+        enabled:
+          type: boolean
+        endpoint:
+          type: string
+        httpClientConfiguration:
+          $ref: "#/components/schemas/HttpClientConfig"
+        name:
+          type: string
     Message:
       type: object
       properties:
@@ -17521,6 +17546,10 @@ components:
         maxContextWindowTokens:
           type: integer
           format: int32
+        mcpToolServers:
+          type: array
+          items:
+            $ref: "#/components/schemas/McpToolServerConfig"
         modelId:
           type: string
         name:
