@@ -48,7 +48,6 @@ class GrepTool extends AbstractWorkspaceTool {
     static final String REGEX_ARG = "regex";
     static final String IGNORE_CASE_ARG = "ignoreCase";
     static final String MAX_RESULTS_ARG = "maxResults";
-    static final String OUT_ARG = "out";
     static final int DEFAULT_MAX_RESULTS = 50;
     static final int MAX_FILES = 100;
     private static final int BATCH_LINES = 5_000;
