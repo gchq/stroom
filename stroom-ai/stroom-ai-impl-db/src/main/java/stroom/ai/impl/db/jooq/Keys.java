@@ -13,10 +13,18 @@ import org.jooq.impl.QOM.ForeignKeyRule;
 
 import stroom.ai.impl.db.jooq.tables.AiChat;
 import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
+import stroom.ai.impl.db.jooq.tables.AiChatFileChunk;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
+import stroom.ai.impl.db.jooq.tables.AiChatRun;
+import stroom.ai.impl.db.jooq.tables.AiMemory;
+import stroom.ai.impl.db.jooq.tables.AiToolApproval;
 import stroom.ai.impl.db.jooq.tables.records.AiChatAttachmentRecord;
+import stroom.ai.impl.db.jooq.tables.records.AiChatFileChunkRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiChatMessageRecord;
 import stroom.ai.impl.db.jooq.tables.records.AiChatRecord;
+import stroom.ai.impl.db.jooq.tables.records.AiChatRunRecord;
+import stroom.ai.impl.db.jooq.tables.records.AiMemoryRecord;
+import stroom.ai.impl.db.jooq.tables.records.AiToolApprovalRecord;
 
 
 /**
@@ -32,13 +40,22 @@ public class Keys {
 
     public static final UniqueKey<AiChatRecord> KEY_AI_CHAT_PRIMARY = Internal.createUniqueKey(AiChat.AI_CHAT, DSL.name("KEY_ai_chat_PRIMARY"), new TableField[] { AiChat.AI_CHAT.ID }, true);
     public static final UniqueKey<AiChatAttachmentRecord> KEY_AI_CHAT_ATTACHMENT_PRIMARY = Internal.createUniqueKey(AiChatAttachment.AI_CHAT_ATTACHMENT, DSL.name("KEY_ai_chat_attachment_PRIMARY"), new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.ID }, true);
+    public static final UniqueKey<AiChatFileChunkRecord> KEY_AI_CHAT_FILE_CHUNK_IDX_AI_CHAT_FILE_CHUNK_ATTACHMENT_SEQ = Internal.createUniqueKey(AiChatFileChunk.AI_CHAT_FILE_CHUNK, DSL.name("KEY_ai_chat_file_chunk_idx_ai_chat_file_chunk_attachment_seq"), new TableField[] { AiChatFileChunk.AI_CHAT_FILE_CHUNK.FK_ATTACHMENT_ID, AiChatFileChunk.AI_CHAT_FILE_CHUNK.SEQ }, true);
+    public static final UniqueKey<AiChatFileChunkRecord> KEY_AI_CHAT_FILE_CHUNK_PRIMARY = Internal.createUniqueKey(AiChatFileChunk.AI_CHAT_FILE_CHUNK, DSL.name("KEY_ai_chat_file_chunk_PRIMARY"), new TableField[] { AiChatFileChunk.AI_CHAT_FILE_CHUNK.ID }, true);
     public static final UniqueKey<AiChatMessageRecord> KEY_AI_CHAT_MESSAGE_PRIMARY = Internal.createUniqueKey(AiChatMessage.AI_CHAT_MESSAGE, DSL.name("KEY_ai_chat_message_PRIMARY"), new TableField[] { AiChatMessage.AI_CHAT_MESSAGE.ID }, true);
+    public static final UniqueKey<AiChatRunRecord> KEY_AI_CHAT_RUN_PRIMARY = Internal.createUniqueKey(AiChatRun.AI_CHAT_RUN, DSL.name("KEY_ai_chat_run_PRIMARY"), new TableField[] { AiChatRun.AI_CHAT_RUN.ID }, true);
+    public static final UniqueKey<AiMemoryRecord> KEY_AI_MEMORY_IDX_AI_MEMORY_SCOPE_NAME = Internal.createUniqueKey(AiMemory.AI_MEMORY, DSL.name("KEY_ai_memory_idx_ai_memory_scope_name"), new TableField[] { AiMemory.AI_MEMORY.USER_UUID, AiMemory.AI_MEMORY.SCOPE, AiMemory.AI_MEMORY.SCOPE_KEY, AiMemory.AI_MEMORY.NAME }, true);
+    public static final UniqueKey<AiMemoryRecord> KEY_AI_MEMORY_PRIMARY = Internal.createUniqueKey(AiMemory.AI_MEMORY, DSL.name("KEY_ai_memory_PRIMARY"), new TableField[] { AiMemory.AI_MEMORY.ID }, true);
+    public static final UniqueKey<AiToolApprovalRecord> KEY_AI_TOOL_APPROVAL_IDX_AI_TOOL_APPROVAL_CHAT_TOOL = Internal.createUniqueKey(AiToolApproval.AI_TOOL_APPROVAL, DSL.name("KEY_ai_tool_approval_idx_ai_tool_approval_chat_tool"), new TableField[] { AiToolApproval.AI_TOOL_APPROVAL.FK_AI_CHAT_ID, AiToolApproval.AI_TOOL_APPROVAL.SERVER_KEY, AiToolApproval.AI_TOOL_APPROVAL.TOOL_NAME }, true);
+    public static final UniqueKey<AiToolApprovalRecord> KEY_AI_TOOL_APPROVAL_PRIMARY = Internal.createUniqueKey(AiToolApproval.AI_TOOL_APPROVAL, DSL.name("KEY_ai_tool_approval_PRIMARY"), new TableField[] { AiToolApproval.AI_TOOL_APPROVAL.ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
     public static final ForeignKey<AiChatAttachmentRecord, AiChatRecord> FK_AI_CHAT_ATTACHMENT_CHAT = Internal.createForeignKey(AiChatAttachment.AI_CHAT_ATTACHMENT, DSL.name("fk_ai_chat_attachment_chat"), new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID }, Keys.KEY_AI_CHAT_PRIMARY, new TableField[] { AiChat.AI_CHAT.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<AiChatFileChunkRecord, AiChatAttachmentRecord> FK_AI_CHAT_FILE_CHUNK_ATTACHMENT = Internal.createForeignKey(AiChatFileChunk.AI_CHAT_FILE_CHUNK, DSL.name("fk_ai_chat_file_chunk_attachment"), new TableField[] { AiChatFileChunk.AI_CHAT_FILE_CHUNK.FK_ATTACHMENT_ID }, Keys.KEY_AI_CHAT_ATTACHMENT_PRIMARY, new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<AiChatMessageRecord, AiChatAttachmentRecord> FK_AI_CHAT_MESSAGE_ATTACHMENT = Internal.createForeignKey(AiChatMessage.AI_CHAT_MESSAGE, DSL.name("fk_ai_chat_message_attachment"), new TableField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_ATTACHMENT_ID }, Keys.KEY_AI_CHAT_ATTACHMENT_PRIMARY, new TableField[] { AiChatAttachment.AI_CHAT_ATTACHMENT.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<AiChatMessageRecord, AiChatRecord> FK_AI_CHAT_MESSAGE_CHAT = Internal.createForeignKey(AiChatMessage.AI_CHAT_MESSAGE, DSL.name("fk_ai_chat_message_chat"), new TableField[] { AiChatMessage.AI_CHAT_MESSAGE.FK_AI_CHAT_ID }, Keys.KEY_AI_CHAT_PRIMARY, new TableField[] { AiChat.AI_CHAT.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<AiChatRunRecord, AiChatRecord> FK_AI_CHAT_RUN_CHAT = Internal.createForeignKey(AiChatRun.AI_CHAT_RUN, DSL.name("fk_ai_chat_run_chat"), new TableField[] { AiChatRun.AI_CHAT_RUN.FK_AI_CHAT_ID }, Keys.KEY_AI_CHAT_PRIMARY, new TableField[] { AiChat.AI_CHAT.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

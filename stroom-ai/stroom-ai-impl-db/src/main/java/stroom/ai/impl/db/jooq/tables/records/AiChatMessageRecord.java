@@ -102,6 +102,34 @@ public class AiChatMessageRecord extends UpdatableRecordImpl<AiChatMessageRecord
         return (String) get(5);
     }
 
+    /**
+     * Setter for <code>stroom.ai_chat_message.turn_id</code>.
+     */
+    public void setTurnId(Integer value) {
+        set(6, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat_message.turn_id</code>.
+     */
+    public Integer getTurnId() {
+        return (Integer) get(6);
+    }
+
+    /**
+     * Setter for <code>stroom.ai_chat_message.token_count</code>.
+     */
+    public void setTokenCount(Integer value) {
+        set(7, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat_message.token_count</code>.
+     */
+    public Integer getTokenCount() {
+        return (Integer) get(7);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -125,7 +153,7 @@ public class AiChatMessageRecord extends UpdatableRecordImpl<AiChatMessageRecord
     /**
      * Create a detached, initialised AiChatMessageRecord
      */
-    public AiChatMessageRecord(Integer id, Integer fkAiChatId, Long createTimeMs, Integer messageType, Integer fkAttachmentId, String message) {
+    public AiChatMessageRecord(Integer id, Integer fkAiChatId, Long createTimeMs, Integer messageType, Integer fkAttachmentId, String message, Integer turnId, Integer tokenCount) {
         super(AiChatMessage.AI_CHAT_MESSAGE);
 
         setId(id);
@@ -134,6 +162,8 @@ public class AiChatMessageRecord extends UpdatableRecordImpl<AiChatMessageRecord
         setMessageType(messageType);
         setFkAttachmentId(fkAttachmentId);
         setMessage(message);
+        setTurnId(turnId);
+        setTokenCount(tokenCount);
         resetTouchedOnNotNull();
     }
 }
