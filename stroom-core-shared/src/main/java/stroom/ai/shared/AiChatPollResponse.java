@@ -39,16 +39,23 @@ public class AiChatPollResponse {
     private final AiChatMessage workingMessage;
     @JsonProperty
     private final boolean complete;
+    /**
+     * The chat's latest agent run, or null if it has never had one.
+     */
+    @JsonProperty
+    private final AiChatRun run;
 
     @JsonCreator
     public AiChatPollResponse(@JsonProperty("newMessages") final List<AiChatMessage> newMessages,
                               @JsonProperty("attachments") final List<AiChatAttachment> attachments,
                               @JsonProperty("workingMessage") final AiChatMessage workingMessage,
-                              @JsonProperty("complete") final Boolean complete) {
+                              @JsonProperty("complete") final Boolean complete,
+                              @JsonProperty("run") final AiChatRun run) {
         this.newMessages = newMessages;
         this.attachments = attachments;
         this.workingMessage = workingMessage;
         this.complete = Objects.requireNonNullElse(complete, false);
+        this.run = run;
     }
 
     public List<AiChatMessage> getNewMessages() {
@@ -63,7 +70,14 @@ public class AiChatPollResponse {
         return workingMessage;
     }
 
+    /**
+     * @return True if nothing more is coming: no agent run is active and no attachment is downloading.
+     */
     public boolean isComplete() {
         return complete;
+    }
+
+    public AiChatRun getRun() {
+        return run;
     }
 }
