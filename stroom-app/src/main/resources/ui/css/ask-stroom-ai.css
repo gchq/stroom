@@ -38,8 +38,9 @@
     align-items: center;
 }
 
+/* Room around the conversation, so text does not run up against the panel's edges. */
 .askStroomAiViewImpl-middle {
-    padding: 2px 5px;
+    padding: 8px 16px 24px;
 }
 
 .askStroomAiViewImpl-bottom {
@@ -119,10 +120,10 @@
 /* ---- Message thread ---- */
 
 .ai-message {
-    padding: 8px 12px;
-    margin: 4px 0;
+    padding: 10px 14px;
+    margin: 6px 0;
     border-radius: 6px;
-    line-height: 1.5;
+    line-height: 1.6;
     word-wrap: break-word;
 }
 
@@ -135,6 +136,8 @@
     width: fit-content;
     max-width: 85%;
     margin-left: auto;
+    /* A new question starts a new turn, so leave a clear gap above it. */
+    margin-top: 20px;
 }
 
 .ai-message--user > .ai-message-content > :first-child,
@@ -152,8 +155,8 @@
 }
 
 .ai-message--assistant {
-    padding-left: 0;
-    padding-right: 0;
+    padding: 6px 0 4px;
+    margin-top: 10px;
 }
 
 .ai-message-avatar {
@@ -164,7 +167,7 @@
     font-weight: 600;
     color: var(--control__text-color);
     opacity: 0.8;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
 }
 
 .ai-message-avatar .svgIcon,
@@ -221,23 +224,26 @@
 
 /* ---- Code blocks ---- */
 
+/* The language and Copy button sit in a bar joined to the top of the code, as one box. */
 .ai-code-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 2px 6px;
-    margin-top: 8px;
+    padding: 4px 6px 4px 12px;
+    margin-top: 4px;
     font-size: var(--ai-font-size--meta);
-    border: 1px solid var(--control__border-color);
+    border: 1px solid var(--markdown-code__border-color, var(--control__border-color));
     border-bottom: none;
-    border-radius: 4px 4px 0 0;
-    background: var(--page__background-color);
+    border-radius: 6px 6px 0 0;
+    background: var(--markdown-code__background-color, var(--page__background-color));
 }
 
-.ai-code-header + pre {
+.ai-code-header + pre,
+.ai-code-header + pre[class*=language-] {
     margin-top: 0;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
+    border-top-style: dashed;
 }
 
 .ai-code-language {
