@@ -646,29 +646,28 @@ public class AskStroomAiPresenter
     public void onShowMenu(final Element target) {
         final boolean hasChat = currentChat != null;
         final List<Item> items = MenuBuilder.builder()
+                // Things to do with this chat.
+                .withInfoMenuItem(item -> item
+                        .text(SafeHtmlUtils.fromSafeConstant("This chat"))
+                        .disabled())
                 .withIconMenuItem(item -> item
                         .icon(SvgImage.EDIT)
-                        .text("Rename…")
+                        .text("Rename Chat")
                         .enabled(hasChat)
                         .command(this::onRename))
                 .withIconMenuItem(item -> item
                         .icon(SvgImage.COLLAPSE_UP)
-                        .text("Compact Context…")
+                        .text("Compact Context")
                         .enabled(hasChat)
                         .command(this::onCompact))
                 .withIconMenuItem(item -> item
-                        .icon(SvgImage.INFO)
-                        .text("Memory…")
-                        .enabled(hasChat)
-                        .command(() -> memoryPresenterProvider.get().show(currentChat)))
-                .withIconMenuItem(item -> item
                         .icon(SvgImage.OK)
-                        .text("Tool Approvals…")
+                        .text("Tool Approvals")
                         .enabled(hasChat)
                         .command(() -> toolApprovalsPresenterProvider.get().show(currentChat)))
                 .withIconMenuItem(item -> item
                         .icon(SvgImage.DOWNLOAD)
-                        .text("Download History…")
+                        .text("Download History")
                         .enabled(hasChat)
                         .command(this::onDownloadChat))
                 .withIconMenuItem(item -> item
@@ -677,9 +676,19 @@ public class AskStroomAiPresenter
                         .enabled(hasChat)
                         .command(this::onDeleteChat))
                 .withSeparator()
+                // Things that go beyond this chat: memory is loaded into all the user's chats, and the settings
+                // apply to them all.
+                .withInfoMenuItem(item -> item
+                        .text(SafeHtmlUtils.fromSafeConstant("All your chats"))
+                        .disabled())
+                .withIconMenuItem(item -> item
+                        .icon(SvgImage.INFO)
+                        .text("Memory")
+                        .enabled(hasChat)
+                        .command(() -> memoryPresenterProvider.get().show(currentChat)))
                 .withIconMenuItem(item -> item
                         .icon(SvgImage.SETTINGS)
-                        .text("Settings…")
+                        .text("Settings")
                         .command(this::onChangeConfig))
                 .build();
         ShowMenuEvent.builder()
@@ -3005,7 +3014,7 @@ public class AskStroomAiPresenter
     private void loadChat(final AiChat chat) {
         currentChat = chat;
         currentRunActive = false;
-        // A loaded chat already has a title.
+        // A loaded chat already has a title, unless it has no question yet (see below).
         titleGenerated = true;
         lastSeenMessageId = 0;
         data = null;
@@ -3020,6 +3029,11 @@ public class AskStroomAiPresenter
         // Load messages for the selected chat.
         askStroomAiClient.getMessages(chat.getId(), messages -> {
             final long nowMs = System.currentTimeMillis();
+            // A chat with no question yet (e.g. a new chat reopened after a refresh) is named by its first.
+            if (NullSafe.list(messages).stream()
+                    .noneMatch(msg -> msg.getMessageType() == AiMessageType.USER_MESSAGE)) {
+                titleGenerated = false;
+            }
             if (messages != null && !messages.isEmpty()) {
                 getView().setEmptyState(false);
                 for (final AiChatMessage msg : messages) {
