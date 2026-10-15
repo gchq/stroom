@@ -19,6 +19,7 @@ package stroom.dashboard.impl.download;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.query.api.Column;
 import stroom.query.api.Row;
+import stroom.query.api.SpecialColumns;
 
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +70,34 @@ class TestSearchResultWriter {
         writer.addRow(row());
         writer.addRow(row());
         assertThat(writer.getRowCount()).isEqualTo(2);
+    }
+
+    @Test
+    void writesTheHiddenStreamAndEventIdsWhenAsked() throws IOException {
+        final List<Column> columns = List.of(VISIBLE_A, SpecialColumns.RESERVED_STREAM_ID_COLUMN,
+                SpecialColumns.RESERVED_EVENT_ID_COLUMN);
+        final RecordingTarget target = new RecordingTarget();
+        final SearchResultWriter writer = new SearchResultWriter(new SampleGenerator(false, 100), target, true);
+        writer.columns(columns);
+        writer.addRow(row());
+
+        assertThat(target.headings).containsExactly("A", "StreamId", "EventId");
+        assertThat(target.values).containsExactly("valueA", "valueB", "valueC");
+        // Not unless asked.
+        assertThat(write(columns).headings).containsExactly("A");
+    }
+
+    @Test
+    void aVisibleStreamIdColumnIsNotWrittenTwice() throws IOException {
+        final Column visibleStreamId = Column.builder().id("s").name("StreamId").visible(true).build();
+        final RecordingTarget target = new RecordingTarget();
+        final SearchResultWriter writer = new SearchResultWriter(new SampleGenerator(false, 100), target, true);
+        writer.columns(List.of(visibleStreamId, SpecialColumns.RESERVED_STREAM_ID_COLUMN,
+                SpecialColumns.RESERVED_EVENT_ID_COLUMN));
+        writer.addRow(row());
+
+        assertThat(target.headings).containsExactly("StreamId", "EventId");
+        assertThat(target.values).containsExactly("valueA", "valueC");
     }
 
     private static RecordingTarget write(final List<Column> columns) throws IOException {

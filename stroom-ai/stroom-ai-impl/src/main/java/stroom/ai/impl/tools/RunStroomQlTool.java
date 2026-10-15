@@ -145,7 +145,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
 
         final ResourceGeneration generation = queryService.downloadSearchResults(new DownloadQueryResultsRequest(
                 searchRequest.copy().queryKey(response.getQueryKey()).build(),
-                DownloadSearchResultFileType.MARKDOWN, false, 100));
+                // With each row's stream and event ids, so the events behind the rows can be fetched.
+                DownloadSearchResultFileType.MARKDOWN, false, 100, true));
         final ResourceKey resourceKey = generation.getResourceKey();
         if (resourceKey == null) {
             throw new WorkspaceException("The query's results could not be written: " + generation.getMessageList());

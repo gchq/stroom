@@ -315,4 +315,15 @@ class TestContextAssembler {
     private static AiChatMessage message(final int id, final AiMessageType type, final Object record) {
         return new AiChatMessage(id, 1, 0L, type, null, JsonUtil.writeValueAsString(record, false), 1, null);
     }
+
+    @Test
+    void attachedTablesWithEventIdsMentionTheEventTools() {
+        assertThat(ContextAssembler.eventsNote("| Column | Type |\n| User | text |\n| StreamId | number |\n"
+                                               + "| EventId | number |"))
+                .contains("fetch_events")
+                .contains("search_events");
+        // A grouped table has no event ids.
+        assertThat(ContextAssembler.eventsNote("| Column | Type |\n| User | text |\n| Count | number |")).isEmpty();
+    }
+
 }

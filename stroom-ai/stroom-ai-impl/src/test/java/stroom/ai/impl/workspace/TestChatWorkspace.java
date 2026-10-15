@@ -168,7 +168,7 @@ class TestChatWorkspace {
     @Test
     void testLimits() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(10L, 15L, 18L, null, null, null, null, null), null, null, null, null,
+                new AiWorkspaceConfig(10L, 15L, 18L, null, null, null, null, null, null, null), null, null, null, null,
                         null, null, null);
         final WorkspacePath a = WorkspacePath.parse("/outputs/a");
 

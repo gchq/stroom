@@ -122,7 +122,8 @@ public final class SafeXPath {
         }
     }
 
-    static XMLReader secureReader() {
+    /// @return An XML reader that refuses a DOCTYPE and never loads anything from outside the document.
+    public static XMLReader secureReader() {
         try {
             final SAXParserFactory factory = SAXParserFactoryFactory.newInstance();
             // Set here whatever the parser config says, as nothing from the model's input should need them.
@@ -170,6 +171,17 @@ public final class SafeXPath {
             return compiler.compile(expression);
         } catch (final SaxonApiException e) {
             throw new WorkspaceException("'" + expression + "' is not a valid XPath expression: " + e.getMessage());
+        }
+    }
+
+    /// @param node A node of a document, e.g. one event of many.
+    /// @return A copy of the node as a document of its own, so that an expression evaluated against it (even one
+    /// starting //) only sees that node.
+    public static XdmNode asDocument(final XdmNode node) {
+        try {
+            return PROCESSOR.newDocumentBuilder().build(node.asSource());
+        } catch (final SaxonApiException e) {
+            throw new WorkspaceException("Unable to read an event: " + e.getMessage());
         }
     }
 

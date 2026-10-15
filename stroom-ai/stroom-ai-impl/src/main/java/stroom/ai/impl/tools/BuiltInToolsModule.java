@@ -46,6 +46,8 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(JqTool.class)
                 .addBinding(XPathTool.class)
                 .addBinding(TaskListTool.class)
+                .addBinding(FetchEventsTool.class)
+                .addBinding(SearchEventsTool.class)
                 .addBinding(TableTool.class)
                 .addBinding(PipelineTool.class)
                 .addBinding(RunStroomQlTool.class)

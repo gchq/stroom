@@ -30,9 +30,11 @@ import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
 import stroom.collection.api.CollectionService;
+import stroom.data.store.api.Store;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docstore.api.DocFinder;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.TempDirProvider;
@@ -153,6 +155,9 @@ class TestWorkspaceTools {
         final String path = JsonUtil.writeValueAsString(attempt.replace("SECRET", secret.toAbsolutePath().toString()),
                 false);
         final TableTool tableTool = tableTool();
+        Mockito.when(injectorSecurityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)).thenReturn(true);
+        final Store store = Mockito.mock(Store.class);
+        final FetchEventsTool fetchEvents = new FetchEventsTool(workspace, () -> store, () -> injectorSecurityContext);
         final List<String> calls = List.of(
                 run(new LsTool(workspace), "{\"path\":" + path + "}"),
                 run(new ReadFileTool(workspace), "{\"path\":" + path + "}"),
@@ -167,13 +172,21 @@ class TestWorkspaceTools {
                 run(new WriteFileTool(workspace), "{\"path\":" + path + ",\"content\":\"planted\"}"),
                 run(new StrReplaceTool(workspace), "{\"path\":" + path + ",\"oldText\":\"TOP\","
                                                    + "\"newText\":\"X\"}"),
-                run(new DeleteFileTool(workspace), "{\"path\":" + path + "}"));
+                run(new DeleteFileTool(workspace), "{\"path\":" + path + "}"),
+                run(fetchEvents, "{\"path\":" + path + "}"),
+                run(fetchEvents, "{\"path\":\"/attachments/7.md\",\"out\":" + path + "}"),
+                run(new SearchEventsTool(workspace), "{\"path\":" + path + ",\"text\":\"SECRET\"}"),
+                run(new SearchEventsTool(workspace), "{\"path\":\"/outputs/events.log\",\"text\":\"x\","
+                                                     + "\"out\":" + path + "}"),
+                run(new SearchEventsTool(workspace), "{\"path\":\"/outputs/events.log\",\"text\":\"x\","
+                                                     + "\"join\":" + path + "}"));
 
         assertThat(calls).allSatisfy(result -> assertThat(result)
                 .startsWith("Error")
                 .doesNotContain("TOP-SECRET-7f3a"));
         // Nothing was changed outside the workspace.
         assertThat(Files.readString(secret)).isEqualTo("TOP-SECRET-7f3a");
+        Mockito.verifyNoInteractions(store);
         assertThat(tempDir.resolve("x")).doesNotExist();
     }
 
@@ -211,7 +224,7 @@ class TestWorkspaceTools {
     @Test
     void testReadFileLimits() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, 10, 300, null, null, null), null, null, null, null,
+                new AiWorkspaceConfig(null, null, null, 10, 300, null, null, null, null, null), null, null, null, null,
                         null, null, null);
         workspace.write(chatId, WorkspacePath.parse("/outputs/long.txt"), "x".repeat(5_000) + "\n", null);
 
@@ -277,7 +290,8 @@ class TestWorkspaceTools {
     @Test
     void testGrepReDoSIsStopped() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, null, null, StroomDuration.ofMillis(300), null, null), null,
+                new AiWorkspaceConfig(null, null, null, null, null, StroomDuration.ofMillis(300), null, null,
+                        null, null), null,
                 null,
                 null,
                 null, null, null, null);
@@ -330,7 +344,8 @@ class TestWorkspaceTools {
     @Test
     void testQuota() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(100L, null, null, null, null, null, null, null), null, null, null, null, null,
+                new AiWorkspaceConfig(100L, null, null, null, null, null, null, null, null, null),
+                        null, null, null, null, null,
                         null, null);
 
         assertThat(run(new WriteFileTool(workspace), "{\"path\":\"/outputs/big\",\"content\":\""
