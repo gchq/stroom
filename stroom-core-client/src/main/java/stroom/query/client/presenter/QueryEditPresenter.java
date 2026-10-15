@@ -47,6 +47,7 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HasHandlers;
@@ -238,11 +239,28 @@ public class QueryEditPresenter
     }
 
     private void focus() {
+        // Only if the focus hasn't moved since, other than within the query (e.g. as the screen is
+        // opened), so this doesn't take it from a menu or dialog the user has opened in the meantime
+        final Element focusBefore = getActiveElement();
         Scheduler.get().scheduleFixedDelay(() -> {
-            editorPresenter.focus();
+            if (isFocusUnmoved(focusBefore, getWidget().getElement())) {
+                editorPresenter.focus();
+            }
             return false;
         }, 500);
     }
+
+    private static native Element getActiveElement() /*-{
+        return $doc.activeElement;
+    }-*/;
+
+    // Whether the focus is where it was, in the query, or has gone nowhere (to the page, or with an
+    // element that has gone)
+    private static native boolean isFocusUnmoved(Element before, Element query) /*-{
+        var active = $doc.activeElement;
+        return !active || active === before || active === $doc.body || !active.isConnected
+            || query.contains(active);
+    }-*/;
 
     private void setVisHidden(final boolean state) {
         final boolean currentState = linkTabsLayoutView.getTabBar().isTabHidden(VISUALISATION);

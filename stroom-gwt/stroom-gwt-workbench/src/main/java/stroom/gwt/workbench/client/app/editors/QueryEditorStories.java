@@ -462,6 +462,10 @@ public final class QueryEditorStories {
                     // would let it move the focus after the click
                     final Query input = dialog.querySelector(".ace_text-input");
                     play.waitFor(() -> play.expect(input).toHaveFocus());
+                    // Opening the query focuses its editor half a second later, which mustn't take the
+                    // focus from a dialog opened in the meantime
+                    play.sleep(600);
+                    play.expect(input).toHaveFocus();
                     // Clicking the editor's content keeps the focus in its text input
                     play.click(dialog.querySelector(".ace_content"));
                     play.waitFor(() -> play.expect(input).toHaveFocus());
