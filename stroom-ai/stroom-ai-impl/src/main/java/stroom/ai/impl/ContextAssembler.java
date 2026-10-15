@@ -383,6 +383,53 @@ public class ContextAssembler {
         return sb.toString().strip();
     }
 
+    /// The chat so far, as the model sees it after compaction (a summary and digests of earlier turns, then later
+    /// questions and answers in full), for prompts that need to know what has been discussed, such as the
+    /// prompts that analyse a large table in batches. The current question is left out, as those prompts give it
+    /// separately. The most recent turns are kept when it is too long.
+    ///
+    /// @param chatId    The chat.
+    /// @param maxTokens The most it may take, roughly.
+    /// @return The chat so far, or an empty string if there is nothing before the question.
+    public String conversationContext(final int chatId, final int maxTokens) {
+        final List<AiChatMessage> history = aiService.getMessages(chatId);
+        final CompactionRecord compaction = currentCompaction(history);
+        final List<AiChatMessage> relevantHistory = selectHistoryForModel(history);
+
+        // Later turns in full, newest first, until the budget is used.
+        final List<String> recent = new ArrayList<>();
+        int tokens = 0;
+        for (int i = relevantHistory.size() - 2; i >= 0; i--) {
+            final AiChatMessage msg = relevantHistory.get(i);
+            if (compaction.covers(msg.getTurnId())) {
+                break;
+            }
+            final String line = switch (msg.getMessageType()) {
+                case USER_MESSAGE, STEER_MESSAGE -> "User: " + msg.getMessage();
+                case AI_RESPONSE -> "AI: " + msg.getMessage();
+                default -> null;
+            };
+            if (line == null) {
+                continue;
+            }
+            final int lineTokens = ESTIMATOR.estimateTokenCountInText(line);
+            if (tokens + lineTokens > maxTokens) {
+                break;
+            }
+            recent.addFirst(line);
+            tokens += lineTokens;
+        }
+
+        // Earlier turns as the model sees them, if there is room.
+        final String earlier = earlierTurns(history, relevantHistory, compaction);
+        final StringBuilder sb = new StringBuilder();
+        if (earlier != null && tokens + ESTIMATOR.estimateTokenCountInText(earlier) <= maxTokens) {
+            sb.append(earlier).append("\n\n");
+        }
+        sb.append(String.join("\n", recent));
+        return sb.toString().strip();
+    }
+
     /**
      * @return The attached table as a short stub: what it is, where the whole table is in the workspace, and its
      * profile. Null if it has no profile (e.g. it was attached before tables were profiled).

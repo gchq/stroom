@@ -91,6 +91,29 @@ class TestTableSummariser {
     }
 
     @Test
+    void wideRows_areSplitToFitTheModelsContextWindow() {
+        final TableAnalysisConfig manyRows = TableAnalysisConfig.builder().maxRowsPerBatch(1_000).build();
+        final String wide = "x".repeat(900);
+        final Path file = write("| Name | Count |\n| --- | --- |\n"
+                                + ("| " + wide + " | 1 |\n").repeat(5));
+
+        // About 2,000 characters a batch: two rows, with the header.
+        final List<String> batches = summariser.buildBatchesFromMarkdown(file, manyRows, 2_000);
+
+        assertThat(batches).hasSize(3);
+        assertThat(batches).allSatisfy(batch -> assertThat(batch.length()).isLessThanOrEqualTo(2_000));
+        // A row too big for any batch still gets one of its own.
+        assertThat(summariser.buildBatchesFromMarkdown(file, manyRows, 100)).hasSize(5);
+    }
+
+    @Test
+    void batchSizeFollowsTheContextWindow() {
+        assertThat(TableSummariserImpl.maxBatchChars(0)).isEqualTo(Integer.MAX_VALUE);
+        assertThat(TableSummariserImpl.maxBatchChars(128_000)).isEqualTo(256_000);
+        assertThat(TableSummariserImpl.maxBatchChars(100)).isEqualTo(TableSummariserImpl.MIN_BATCH_CHARS);
+    }
+
+    @Test
     void tableWithNoRows_producesNoBatches() {
         assertThat(summariser.buildBatchesFromMarkdown(table(0), config)).isEmpty();
     }

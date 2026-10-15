@@ -145,6 +145,8 @@ import java.util.stream.Collectors;
 public class AskStroomAIService {
 
     static final int MAX_CHAT_STATUSES = 100;
+    // How much of each table batch prompt the chat so far may take when the model's context window is not known.
+    static final int DEFAULT_CONVERSATION_CONTEXT_TOKENS = 2_000;
     static final String NOTHING_TO_COMPACT = "There is nothing to compact yet: the latest turns are always kept "
                                              + "in full.";
 
@@ -1209,7 +1211,7 @@ public class AskStroomAIService {
                                     .append(", context window: ").append(maxContextTokens)
                                     .append("\n\n---\n\n");
                         }
-                        final String result = analyseWithAttachments(request, chatModel,
+                        final String result = analyseWithAttachments(request, chatModel, maxContextTokens,
                                 readyAttachments, chatId, workingMessageId, debugLog);
                         if (debugLog != null) {
                             storeDebugDetail(chatId, debugLog.toString());
@@ -1267,7 +1269,7 @@ public class AskStroomAIService {
                         if (!readyAttachments.isEmpty()) {
                             LOGGER.info(() -> "Context overflow after compacting chatId=" + chatId
                                               + ", falling back to batch processing");
-                            final String result = analyseWithAttachments(request, chatModel,
+                            final String result = analyseWithAttachments(request, chatModel, maxContextTokens,
                                     readyAttachments, chatId, workingMessageId,
                                     debugLog);
                             if (debugLog != null) {
@@ -1359,6 +1361,7 @@ public class AskStroomAIService {
      */
     private String analyseWithAttachments(final AskStroomAiRequest request,
                                           final ChatModel chatModel,
+                                          final int contextWindowTokens,
                                           final List<AiChatAttachment> attachments,
                                           final int chatId,
                                           final int workingMessageId,
@@ -1366,12 +1369,14 @@ public class AskStroomAIService {
         return taskContextFactory.contextResult(
                 "Batched AI data analysis",
                 taskContext -> analyseWithAttachments(taskContext,
-                        request, chatModel, attachments, chatId, workingMessageId, debugLog)).get();
+                        request, chatModel, contextWindowTokens, attachments, chatId, workingMessageId,
+                        debugLog)).get();
     }
 
     private String analyseWithAttachments(final TaskContext taskContext,
                                           final AskStroomAiRequest request,
                                           final ChatModel chatModel,
+                                          final int contextWindowTokens,
                                           final List<AiChatAttachment> attachments,
                                           final int chatId,
                                           final int workingMessageId,
@@ -1398,7 +1403,9 @@ public class AskStroomAIService {
                 .chatModel(chatModel)
                 .config(getTableAnalysisConfig(request.getConfig()))
                 .query(request.getMessage())
-                .context(buildConversationSummary(chatId))
+                .context(contextAssembler.conversationContext(chatId,
+                        conversationContextTokens(contextWindowTokens)))
+                .contextWindowTokens(contextWindowTokens)
                 .cancelled(stopRequested)
                 .progressListener(new TableSummaryProgressListener() {
                     @Override
@@ -1639,44 +1646,13 @@ public class AskStroomAIService {
                 "Attachment download timed out, proceeding with available data");
     }
 
-    /**
-     * Builds a textual summary of the recent conversation history for inclusion in
-     * LLM prompts. This allows the AI to be aware of prior questions and answers.
-     */
-    private String buildConversationSummary(final int chatId) {
-        final List<AiChatMessage> history = aiService.getMessages(chatId);
-        final List<AiChatMessage> relevantMessages = history.stream()
-                .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
-                             || m.getMessageType() == AiMessageType.AI_RESPONSE)
-                .toList();
-
-        if (relevantMessages.isEmpty()) {
-            return "";
-        }
-
-        // Take last N messages for context.
-        final int maxHistory = NullSafe.getOrElse(
-                defaultConfigProvider.get(),
-                AskStroomAiConfig::getMaxHistorySafetyCapMessages,
-                AskStroomAiConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
-        final int startIdx = Math.max(0, relevantMessages.size() - maxHistory);
-
-        final StringBuilder sb = new StringBuilder();
-        for (int i = startIdx; i < relevantMessages.size(); i++) {
-            final AiChatMessage msg = relevantMessages.get(i);
-            if (msg.getMessageType() == AiMessageType.USER_MESSAGE) {
-                sb
-                        .append("User: ")
-                        .append(msg.getMessage())
-                        .append('\n');
-            } else {
-                sb
-                        .append("AI: ")
-                        .append(msg.getMessage())
-                        .append('\n');
-            }
-        }
-        return sb.toString();
+    /// @param contextWindowTokens The model's context window, or 0 if not known.
+    /// @return How much of each batch's prompt the chat so far may take: a tenth of the context window, or
+    /// [#DEFAULT_CONVERSATION_CONTEXT_TOKENS] if the window is not known, as it is sent with every batch.
+    static int conversationContextTokens(final int contextWindowTokens) {
+        return contextWindowTokens > 0
+                ? Math.max(500, contextWindowTokens / 10)
+                : DEFAULT_CONVERSATION_CONTEXT_TOKENS;
     }
 
     /**
