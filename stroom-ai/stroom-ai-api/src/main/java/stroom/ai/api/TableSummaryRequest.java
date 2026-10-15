@@ -40,6 +40,7 @@ public class TableSummaryRequest {
     private final TableAnalysisConfig config;
     private final String query;
     private final String context;
+    private final int contextWindowTokens;
     private final TableSummaryProgressListener progressListener;
     private final BooleanSupplier cancelled;
 
@@ -49,6 +50,7 @@ public class TableSummaryRequest {
                                 final TableAnalysisConfig config,
                                 final String query,
                                 final String context,
+                                final int contextWindowTokens,
                                 final TableSummaryProgressListener progressListener,
                                 final BooleanSupplier cancelled) {
         this.sources = Objects.requireNonNull(sources, "No sources supplied");
@@ -63,6 +65,7 @@ public class TableSummaryRequest {
         this.config = Objects.requireNonNull(config, "No table analysis config supplied");
         this.query = Objects.requireNonNull(query, "No query supplied");
         this.context = context;
+        this.contextWindowTokens = contextWindowTokens;
         this.progressListener = Objects.requireNonNullElse(progressListener, TableSummaryProgressListener.NO_OP);
         this.cancelled = Objects.requireNonNullElse(cancelled, NEVER_CANCELLED);
     }
@@ -105,6 +108,14 @@ public class TableSummaryRequest {
         return context;
     }
 
+    /**
+     * @return The model's context window, in tokens, so that batches fit in it, or 0 if not known (batches are
+     * then limited by rows alone).
+     */
+    public int getContextWindowTokens() {
+        return contextWindowTokens;
+    }
+
     public TableSummaryProgressListener getProgressListener() {
         return progressListener;
     }
@@ -142,6 +153,7 @@ public class TableSummaryRequest {
         private TableAnalysisConfig config;
         private String query;
         private String context;
+        private int contextWindowTokens;
         private TableSummaryProgressListener progressListener;
         private BooleanSupplier cancelled;
 
@@ -189,6 +201,14 @@ public class TableSummaryRequest {
             return this;
         }
 
+        /**
+         * The model's context window, in tokens, so that batches are made small enough to fit. 0 if not known.
+         */
+        public Builder contextWindowTokens(final int contextWindowTokens) {
+            this.contextWindowTokens = contextWindowTokens;
+            return this;
+        }
+
         public Builder progressListener(final TableSummaryProgressListener progressListener) {
             this.progressListener = progressListener;
             return this;
@@ -201,7 +221,8 @@ public class TableSummaryRequest {
 
         public TableSummaryRequest build() {
             return new TableSummaryRequest(
-                    sources, chatModel, modelRef, config, query, context, progressListener, cancelled);
+                    sources, chatModel, modelRef, config, query, context, contextWindowTokens, progressListener,
+                    cancelled);
         }
     }
 }
