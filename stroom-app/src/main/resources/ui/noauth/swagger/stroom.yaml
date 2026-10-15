@@ -937,6 +937,29 @@ paths:
       summary: Save a piece of memory the user has written or edited
       tags:
       - AI
+  /ai/v1/searchChats:
+    post:
+      operationId: searchAiChats
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchAiChatsRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiChatSearchHit"
+          description: default response
+      summary: "Search the user's chats by their titles and the user's questions in\
+        \ them, most recently active first"
+      tags:
+      - AI
   /ai/v1/setAgentMode/{chatId}/{mode}:
     put:
       operationId: setAiAgentMode
@@ -11351,6 +11374,19 @@ components:
           - NEEDS_INPUT
         unattended:
           type: boolean
+    AiChatSearchHit:
+      type: object
+      properties:
+        chatId:
+          type: integer
+          format: int32
+        snippet:
+          type: string
+        title:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
     AiChatStatus:
       type: object
       properties:
@@ -21253,6 +21289,11 @@ components:
           type: string
         timeRange:
           $ref: "#/components/schemas/TimeRange"
+    SearchAiChatsRequest:
+      type: object
+      properties:
+        text:
+          type: string
     SearchRequest:
       type: object
       description: A request for new search or a follow up request for more data for

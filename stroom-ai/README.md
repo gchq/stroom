@@ -140,8 +140,14 @@ _Steps for you_ card. The model can neither make nor click one.
   (deletes the chat's messages, attached data, workspace files and memory, keeping the chat, its mode and
   its tool approvals), `/remember <fact>` (adds the fact to the user's memory, in `remembered.md`) and
   `/help`. A message starting with `//` is sent as it is, starting with `/`.
+* The list of chats can be searched, as you type, by the chats' titles and the user's questions in them
+  (`POST /ai/v1/searchChats`; at least 2 characters, at most 50 chats). A search is only sent once the user
+  pauses typing for 300ms, so typing doesn't load the database with a query per key. Matches are highlighted,
+  and a chat found by a question shows up to 3 lines of the latest matching question. Escape clears the search.
 * A chat is named after its first question, then, after the answers to its 1st, 3rd, 6th and 10th questions
-  (and every 10th after), the chat's model is asked for a title of a few words. Only the user's questions
+  (and every 10th after), the chat's model is asked for a title of at most `stroom.ai.maxChatTitleWords`
+  words (12 by default; a longer reply is cut to that many). Titles are cut short with an ellipsis only where
+  they would not fit on one line. Only the user's questions
   are sent. Once the user renames a chat, it is no longer named automatically; `/clear` lets it be again.
 * The prompts MCP servers offer are slash commands too, e.g. `/onboard_data_source feed=ACME`.
   The filled-in prompt is put in the input box for the user to check and send.

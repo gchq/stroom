@@ -22,6 +22,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
+import stroom.ai.shared.AiChatSearchHit;
 import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMcpPrompt;
@@ -43,6 +44,7 @@ import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.GetAiMcpPromptRequest;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.SaveAiMemoryRequest;
+import stroom.ai.shared.SearchAiChatsRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.ai.shared.UndoAiCompactionRequest;
@@ -506,6 +508,18 @@ public class AskStroomAiClient {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.deleteChat(chatId))
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Searches the user's chats by their titles and the user's questions in them.
+    void searchChats(final String text,
+                     final Consumer<List<AiChatSearchHit>> consumer,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.searchChats(new SearchAiChatsRequest(text)))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
