@@ -39,7 +39,8 @@ class TestToolConsent {
     private final BuiltInTools builtInTools = Mockito.mock(BuiltInTools.class);
     private final McpToolset toolset = Mockito.mock(McpToolset.class);
     private AiConfig aiConfig = new AiConfig();
-    private final ToolConsent consent = new ToolConsent(approvalDao, aiDao, () -> aiConfig);
+    private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
+    private final ToolConsent consent = new ToolConsent(approvalDao, aiDao, () -> aiConfig, () -> runManager);
 
     {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
@@ -155,13 +156,56 @@ class TestToolConsent {
     }
 
     @Test
+    void testReadOnlyToolsAskAfterDataIsReadOnlyWhenAnAdministratorSaysSo() {
+        tool(info(true, true, null, null, null));
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+
+        // By default, a trusted server's read-only tool runs even after untrusted data has been read.
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.RUN);
+        assertThat(decide("s__t", true).kind()).isEqualTo(Kind.RUN);
+
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                true);
+        final Verdict verdict = decide("s__t", false);
+        assertThat(verdict.kind()).isEqualTo(Kind.ASK);
+        assertThat(verdict.reason()).isEqualTo(ToolConsent.DATA_WAS_READ_REASON);
+        // The user can allow it for the rest of the chat.
+        assertThat(verdict.allowForChat()).isTrue();
+        // While the user is away it waits for them.
+        assertThat(decide("s__t", true).kind()).isEqualTo(Kind.ASK);
+
+        // Nothing untrusted has been read, so it runs.
+        Mockito.when(runManager.isTainted(1)).thenReturn(false);
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.RUN);
+    }
+
+    @Test
+    void testAfterDataIsReadOnlyApprovalsOfTheToolItselfCount() {
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                true);
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+        tool(info(true, true, null, null, null));
+
+        // Allowing all the server's read-only tools doesn't cover this.
+        Mockito.when(approvalDao.find(1, "s", AiToolApprovalDao.ALL_READ_ONLY_TOOLS))
+                .thenReturn(Optional.of(new Approval(8, "s", "*", "server-hash", AiToolApprovalDecision.ALLOW)));
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
+
+        // Allowing this tool for the chat does.
+        Mockito.when(approvalDao.find(1, "s", "t"))
+                .thenReturn(Optional.of(new Approval(9, "s", "t", "hash", AiToolApprovalDecision.ALLOW)));
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.RUN);
+    }
+
+    @Test
     void testApproveEverything() {
         Mockito.when(aiDao.isApproveEverything(1)).thenReturn(true);
         tool(info(true, false, null, null, null));
         // Not allowed by the administrator.
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
 
-        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null, null, null);
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null, null, null,
+                null);
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.RUN);
         // Never untrusted, destructive or open-world tools (S4).
         tool(info(false, false, null, null, null));
@@ -174,7 +218,8 @@ class TestToolConsent {
 
     @Test
     void testWhileTheUserIsAwayOnlyTrustedReadOnlyToolsRun() {
-        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null, null, null);
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null, null, null,
+                null);
         Mockito.when(aiDao.isApproveEverything(1)).thenReturn(true);
         Mockito.when(approvalDao.find(1, "s", "t"))
                 .thenReturn(Optional.of(new Approval(9, "s", "t", "hash", AiToolApprovalDecision.ALLOW)));
