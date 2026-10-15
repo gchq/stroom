@@ -210,6 +210,23 @@ to `tableAnalysis.maxTotalRows` rows (default 50,000).
 * These settings, and the batch and merge prompts, apply to everyone. Administrators change them on the
   **Table Analysis** tab of the chat's **Settings**, which other users don't see.
 
+### The events behind the rows
+
+A dashboard or StroomQL table that isn't grouped is attached with each row's `StreamId` and `EventId` (from
+the hidden columns Stroom adds), as are the agent's own `run_stroomql` results. The agent can then look into
+the events themselves, e.g. for a value the table doesn't show:
+
+* `fetch_events` reads the event behind each row of a table (or of a CSV made from one with the `table`
+  tool, to pick rows) into one XML file in the workspace, each event in a
+  `<stroom-event streamId=".." eventId="..">` element. Events are read as the user, who needs the _View Data_
+  permission; streams of feeds they can't see are left out. An event that isn't well-formed XML (or has a
+  DOCTYPE) is kept as text. At most `workspace.maxEventsPerFetch` events (default 500) are fetched, each
+  up to `workspace.maxEventBytes` (default 1 MiB). Each stream is opened once and its events read in order;
+  on local disk 500 events take about a third of a second.
+* `search_events` evaluates an XPath against each event on its own and/or finds text in each, and writes a
+  CSV of `StreamId`, `EventId` and the result, or adds the result as a column of the original table (`join`),
+  for the `table` tool to count or group.
+
 
 ## Retention and limits
 
@@ -246,6 +263,8 @@ All under `appConfig.ai` unless stated.
 | `unattendedAfter` | `PT10M` | When a run with no one watching becomes unattended |
 | `workspace.maxQueryLength` | `10000` | The longest StroomQL query `run_stroomql` may run, in characters |
 | `workspace.queryTimeLimit` | `PT2M` | The longest a `run_stroomql` query may take |
+| `workspace.maxEventsPerFetch` | `500` | The most source events `fetch_events` fetches in one call |
+| `workspace.maxEventBytes` | `1048576` | The largest source event `fetch_events` fetches, in bytes |
 | `workspaceFileRetention` | `P7D` | How long workspace files are kept |
 | `appConfig.askStroomAi.browserNotifications` | `true` | Browser notifications when a chat finishes or needs the user |
 
