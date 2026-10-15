@@ -41,7 +41,7 @@ class TestAiActivityExport {
         final String call = JsonUtil.writeValueAsString(
                 new ToolCallRecord("1", "grep", "{\"pattern\":\"ERROR\"}", null), false);
         final String result = JsonUtil.writeValueAsString(
-                new ToolResultRecord("1", "grep", true, "No such file", "/outputs/x.txt", 12, 30), false);
+                new ToolResultRecord("1", "grep", true, "No such file", "/outputs/x.txt", 12, 30, null), false);
 
         assertThat(AiActivityExport.body(message(AiMessageType.TOOL_CALL, call)))
                 .startsWith("`grep`")
@@ -55,7 +55,8 @@ class TestAiActivityExport {
     @Test
     void textCannotEndTheFenceEarly() {
         final String result = JsonUtil.writeValueAsString(
-                new ToolResultRecord("1", "read_file", false, "a\n~~~~~~~~\n# Not a heading", null, 30, 1), false);
+                new ToolResultRecord("1", "read_file", false, "a\n~~~~~~~~\n# Not a heading", null,
+                        30, 1, null), false);
 
         final String body = AiActivityExport.body(message(AiMessageType.TOOL_RESULT, result));
 
