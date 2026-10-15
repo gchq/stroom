@@ -81,6 +81,9 @@ Before a tool runs, Stroom decides whether to ask the user:
 * Built-in tools run without asking.
 * MCP tools on untrusted servers always ask. On trusted servers, read-only tools run without asking and
   others ask, unless a tool policy says otherwise.
+* A trusted server's tool marked `_meta.confirms` (it asks the user itself, through a form, as FastMCP's
+  changing tools do) runs without Stroom asking as well, so the user isn't asked twice. An _Ask every
+  time_ policy still asks.
 * The user can allow a tool for the rest of the chat, or all of a trusted server's read-only tools.
   A change to a tool's name or description, or to the server's settings, asks again.
 * _Approve everything_ (per chat: the shield beside the model, or **Tool Approvals…**) is off unless

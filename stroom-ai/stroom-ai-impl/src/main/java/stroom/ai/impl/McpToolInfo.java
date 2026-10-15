@@ -33,6 +33,8 @@ import java.util.HexFormat;
 /// @param readOnlyHint    The tool's readOnlyHint annotation, or null.
 /// @param destructiveHint The tool's destructiveHint annotation, or null.
 /// @param openWorldHint   The tool's openWorldHint annotation, or null.
+/// @param confirms        True if the tool says (as `_meta.confirms`) that it asks the user itself, through a
+///                        form, before doing anything.
 /// @param policy          The tool's policy from the server's config, or null.
 /// @param hash            A hash of the server's endpoint and trust, and the tool's name, description and input
 ///                        schema, so approvals of a tool are asked again if it, or its server, changes.
@@ -44,6 +46,7 @@ public record McpToolInfo(String prefixedName,
                           Boolean readOnlyHint,
                           Boolean destructiveHint,
                           Boolean openWorldHint,
+                          boolean confirms,
                           McpToolPolicy policy,
                           String hash,
                           String serverHash) {
