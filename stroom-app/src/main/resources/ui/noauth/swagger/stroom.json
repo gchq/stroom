@@ -566,6 +566,34 @@
         "tags" : [ "AI" ]
       }
     },
+    "/ai/v1/clearChat/{chatId}" : {
+      "post" : {
+        "operationId" : "clearAiChat",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Clear a chat so it starts afresh: its messages, attached data, workspace files and memory are deleted, and its title is reset. The chat, its mode and its tool approvals are kept.",
+        "tags" : [ "AI" ]
+      }
+    },
     "/ai/v1/compactChat" : {
       "post" : {
         "operationId" : "compactChat",

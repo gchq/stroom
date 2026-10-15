@@ -51,7 +51,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.InsertSetMoreStep;
 import org.jooq.Record;
-import org.jooq.Record5;
+import org.jooq.Record6;
 import org.jooq.impl.DSL;
 
 import java.math.BigDecimal;
@@ -114,7 +114,7 @@ public class AiDaoImpl implements AiDao {
         final long now = System.currentTimeMillis();
         final String userName = userRef.toDisplayString();
         final String userUuid = userRef.getUuid();
-        final String title = "New chat";
+        final String title = DEFAULT_CHAT_TITLE;
 
         final int id = JooqUtil.contextResult(aiDbConnProvider, context -> context
                 .insertInto(AI_CHAT)
@@ -178,7 +178,39 @@ public class AiDaoImpl implements AiDao {
         JooqUtil.context(aiDbConnProvider, context -> context
                 .update(AI_CHAT)
                 .set(AI_CHAT.TITLE, title)
+                .set(AI_CHAT.TITLE_SET_BY_USER, (byte) 1)
                 .set(AI_CHAT.UPDATE_TIME_MS, System.currentTimeMillis())
+                .where(AI_CHAT.ID.eq(chatId))
+                .execute());
+    }
+
+    @Override
+    public boolean setAutoTitle(final int chatId, final String title) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.TITLE, title)
+                .where(AI_CHAT.ID.eq(chatId))
+                .and(AI_CHAT.TITLE_SET_BY_USER.eq((byte) 0))
+                .execute()) > 0;
+    }
+
+    @Override
+    public boolean isTitleSetByUser(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT.TITLE_SET_BY_USER)
+                .from(AI_CHAT)
+                .where(AI_CHAT.ID.eq(chatId))
+                .fetchOptional(AI_CHAT.TITLE_SET_BY_USER)
+                .map(value -> value != 0)
+                .orElse(false));
+    }
+
+    @Override
+    public void resetChatTitle(final int chatId) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.TITLE, DEFAULT_CHAT_TITLE)
+                .set(AI_CHAT.TITLE_SET_BY_USER, (byte) 0)
                 .where(AI_CHAT.ID.eq(chatId))
                 .execute());
     }
@@ -786,12 +818,15 @@ public class AiDaoImpl implements AiDao {
             final Field<BigDecimal> settings = DSL.sum(AI_CHAT.ID.mul(
                     AI_CHAT.AGENT_MODE.cast(Integer.class).plus(1)
                             .plus(AI_CHAT.AUTO_APPROVE.cast(Integer.class).mul(10))));
-            final Record5<Long, Long, Integer, Integer, BigDecimal> chats = context
+            // The titles too, as an automatic title doesn't change when the chat was last active.
+            final Field<BigDecimal> titles = DSL.sum(DSL.field("CRC32({0})", Long.class, AI_CHAT.TITLE));
+            final Record6<Long, Long, Integer, Integer, BigDecimal, BigDecimal> chats = context
                     .select(DSL.max(AI_CHAT.UPDATE_TIME_MS),
                             DSL.max(AI_CHAT.LAST_OPENED_MS),
                             DSL.max(AI_CHAT.LAST_READ_MESSAGE_ID),
                             DSL.count(),
-                            settings)
+                            settings,
+                            titles)
                     .from(AI_CHAT)
                     .where(AI_CHAT.USER_UUID.eq(userUuid))
                     .fetchOne();
@@ -804,7 +839,7 @@ public class AiDaoImpl implements AiDao {
             // or auto-approve changed, or a run changed.
             long version = 17;
             for (final Object part : Arrays.asList(chats.value1(), chats.value2(), chats.value3(), chats.value4(),
-                    chats.value5(), runs)) {
+                    chats.value5(), chats.value6(), runs)) {
                 version = version * 1_000_003L + Objects.hashCode(part);
             }
             return version;

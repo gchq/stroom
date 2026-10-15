@@ -78,6 +78,15 @@ class TestAiChatTexts {
     }
 
     @Test
+    void clearQuestion() {
+        assertThat(AiChatTexts.clearChatQuestion(false))
+                .startsWith("Clear this chat?")
+                .contains("as is your own memory")
+                .doesNotContain("stopped");
+        assertThat(AiChatTexts.clearChatQuestion(true)).endsWith("It is still working, so it will be stopped first.");
+    }
+
+    @Test
     void editWarnings() {
         assertThat(AiChatTexts.editWarning(0, false)).isEqualTo("Editing will ask this question again.");
         assertThat(AiChatTexts.editWarning(1, false))

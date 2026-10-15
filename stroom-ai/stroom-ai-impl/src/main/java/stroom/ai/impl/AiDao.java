@@ -39,9 +39,25 @@ public interface AiDao {
 
     Optional<AiChat> getChat(int chatId);
 
+    /// Names a chat as the user chose, so it is no longer named automatically.
     void updateChatTitle(int chatId, String title);
 
+    /// Names a chat automatically, unless the user has named it themselves. When the chat was last active is left
+    /// as it is.
+    ///
+    /// @return True if the title was set.
+    boolean setAutoTitle(int chatId, String title);
+
+    /// @return True if the user has named the chat themselves, so it is not named automatically.
+    boolean isTitleSetByUser(int chatId);
+
+    /// Gives a chat the default title again, and lets it be named automatically.
+    void resetChatTitle(int chatId);
+
     void deleteChat(int chatId);
+
+    /// The title a chat has until its first question names it.
+    String DEFAULT_CHAT_TITLE = "New chat";
 
     AiChatMessage storeMessage(int chatId, AiMessageType messageType, String message);
 

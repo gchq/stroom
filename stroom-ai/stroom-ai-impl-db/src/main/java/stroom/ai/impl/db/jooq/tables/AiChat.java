@@ -145,6 +145,11 @@ public class AiChat extends TableImpl<AiChatRecord> {
      */
     public final TableField<AiChatRecord, Byte> AGENT_MODE = createField(DSL.name("agent_mode"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
 
+    /**
+     * The column <code>stroom.ai_chat.title_set_by_user</code>.
+     */
+    public final TableField<AiChatRecord, Byte> TITLE_SET_BY_USER = createField(DSL.name("title_set_by_user"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
+
     private AiChat(Name alias, Table<AiChatRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
