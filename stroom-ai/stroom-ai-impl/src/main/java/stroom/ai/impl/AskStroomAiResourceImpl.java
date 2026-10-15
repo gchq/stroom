@@ -429,6 +429,22 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
+    public Boolean clearChat(final int chatId) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "clearChat"))
+                .withDescription("Clear AI chat " + chatId)
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addObject(chatObject(chatId))
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    askStroomAIServiceProvider.get().clearChat(chatId);
+                    return true;
+                })
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
     public Integer deleteAllChats() {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "deleteAllChats"))

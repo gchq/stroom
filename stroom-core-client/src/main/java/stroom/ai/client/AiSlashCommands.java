@@ -28,6 +28,7 @@ final class AiSlashCommands {
     static final String MODE = "/mode";
     static final String PLAN = "/plan";
     static final String NEW = "/new";
+    static final String CLEAR = "/clear";
     static final String REMEMBER = "/remember";
     static final String HELP = "/help";
 
@@ -43,6 +44,8 @@ final class AiSlashCommands {
                     "Switch to Plan mode and ask for a plan for the task"),
             new AiSlashCommand(NEW, "[question]",
                     "Start a new chat, optionally asking its first question"),
+            new AiSlashCommand(CLEAR, "",
+                    "Clear this chat's messages, attached data, files and memory, so it starts afresh"),
             new AiSlashCommand(REMEMBER, "<fact>",
                     "Add a fact to your memory, which is loaded into all your chats"),
             new AiSlashCommand(HELP, "",

@@ -97,6 +97,17 @@ final class AiChatTexts {
                 : "");
     }
 
+    /// @param working True if the chat is working.
+    /// @return The question asked before clearing a chat.
+    static String clearChatQuestion(final boolean working) {
+        return "Clear this chat? Its messages, attached data, workspace files and memory are deleted, so it "
+               + "starts afresh. The chat, its mode and its tool approvals are kept, as is your own memory. This "
+               + "can't be undone."
+               + (working
+                ? " It is still working, so it will be stopped first."
+                : "");
+    }
+
     /// @param count      How many chats the user has.
     /// @param anyWorking True if any of them is working.
     /// @return The question asked before deleting all the user's chats.

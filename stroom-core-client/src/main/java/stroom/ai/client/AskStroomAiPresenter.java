@@ -164,6 +164,7 @@ public class AskStroomAiPresenter
     private static final String WORKING_TEXT_ID = "ai-working-text";
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
     private static final String USER_ACTION_MESSAGE_ATTRIBUTE = "data-user-action-message";
+    private static final String DEFAULT_CHAT_TITLE = "New chat";
     private static final String MARK_ALL_READ_ATTRIBUTE = "data-mark-all-read";
     private static final String DELETE_ALL_CHATS_ATTRIBUTE = "data-delete-all-chats";
     private static final String USER_ACTION_ID_ATTRIBUTE = "data-user-action-id";
@@ -717,6 +718,7 @@ public class AskStroomAiPresenter
                     notifyChanges(previous, chatStatuses);
                 }
                 statusesKnown = true;
+                showRenamedChatTitle();
                 fireBadge();
                 if (chatListShowing) {
                     renderChatList();
@@ -743,6 +745,19 @@ public class AskStroomAiPresenter
             }
         }
         AskStroomAiBadgeEvent.fire(this, needsYou, busy, unread);
+    }
+
+    /// Shows the current chat's new title, once the server has named it after what the chat is about.
+    private void showRenamedChatTitle() {
+        if (currentChat == null) {
+            return;
+        }
+        findStatus(currentChat.getId())
+                .map(AiChatStatus::getTitle)
+                .filter(title -> !title.isBlank()
+                                 && !DEFAULT_CHAT_TITLE.equals(title)
+                                 && !title.equals(currentChat.getTitle()))
+                .ifPresent(this::setChatTitle);
     }
 
     /**
@@ -1090,6 +1105,13 @@ public class AskStroomAiPresenter
                     }
                 });
             }
+            case AiSlashCommands.CLEAR -> {
+                if (currentChat == null) {
+                    AlertEvent.fireWarn(this, "There is nothing to clear yet.", null);
+                } else {
+                    onClearChat(currentChat);
+                }
+            }
             case AiSlashCommands.REMEMBER -> {
                 if (rest.isEmpty()) {
                     AlertEvent.fireWarn(this, "Say what to remember, e.g. /remember our firewall feeds start "
@@ -1100,6 +1122,28 @@ public class AskStroomAiPresenter
             }
             default -> AlertEvent.fireInfo(this, AiSlashCommands.help(slashCommands()), null);
         }
+    }
+
+    /// Clears the chat, after asking, and shows it empty, to be named afresh by its next question.
+    private void onClearChat(final AiChat chat) {
+        ConfirmEvent.fire(this, AiChatTexts.clearChatQuestion(isBusy(chat.getId())), ok -> {
+            if (ok) {
+                askStroomAiClient.clearChat(chat.getId(), done -> {
+                    if (currentChat != null && currentChat.getId() == chat.getId()) {
+                        currentRunActive = false;
+                        titleGenerated = false;
+                        lastSeenMessageId = 0;
+                        data = null;
+                        clearRenderedMessages();
+                        getView().setEmptyState(true);
+                        getView().clearContextIndicator();
+                        getView().setSendButtonLoadingState(false);
+                        setChatTitle(DEFAULT_CHAT_TITLE);
+                    }
+                    checkChatStatuses();
+                }, this);
+            }
+        });
     }
 
     /// Switches the chat to a mode, as choosing it in the mode list does.
@@ -3174,10 +3218,9 @@ public class AskStroomAiPresenter
             title = userMessage.substring(0, MAX_TITLE_LENGTH) + "…";
         }
 
+        // Only shown here: the server names the chat after its first question, and later after what it is about.
+        // Saving it from here would count as the user naming it, which stops the automatic names.
         setChatTitle(title);
-        askStroomAiClient.updateChatTitle(currentChat.getId(), title, success -> {
-            // Title persisted successfully — nothing more to do.
-        }, this);
     }
 
     /**

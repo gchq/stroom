@@ -222,6 +222,22 @@ public class MockAiDao implements AiDao {
     }
 
     @Override
+    public boolean setAutoTitle(final int chatId, final String title) {
+        // Not tracked by the mock.
+        return false;
+    }
+
+    @Override
+    public boolean isTitleSetByUser(final int chatId) {
+        return false;
+    }
+
+    @Override
+    public void resetChatTitle(final int chatId) {
+        // Not tracked by the mock.
+    }
+
+    @Override
     public int markAllRead(final String userUuid) {
         // Not tracked by the mock.
         return 0;
