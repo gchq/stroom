@@ -457,10 +457,14 @@ public final class QueryEditorStories {
                     executeAndOpenColumnMenu(play, "Count");
                     play.click(screen.findByText("Filter", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Filter 'Count'");
-                    // The filter is an Ace editor
-                    play.waitFor(() -> play.expect(dialog.querySelector(".ace_text-input")).toBeInTheDocument());
-                    // Clicking the editor's content focuses its text input
+                    // The filter is an Ace editor, which the dialog focuses once it is shown. That
+                    // happens after the dialog appears, so the play waits for it: clicking before it
+                    // would let it move the focus after the click
+                    final Query input = dialog.querySelector(".ace_text-input");
+                    play.waitFor(() -> play.expect(input).toHaveFocus());
+                    // Clicking the editor's content keeps the focus in its text input
                     play.click(dialog.querySelector(".ace_content"));
+                    play.waitFor(() -> play.expect(input).toHaveFocus());
                     play.keyboard("foo");
                     play.waitFor(() -> play.expect(dialog.querySelector(".ace_content").textContent())
                             .toMatch(TextMatch.containing("foo")));
