@@ -26,7 +26,37 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = Meta.FUNCTION_NAME,
+        aliases = {Meta.FUNCTION_NAME_FEED_ATTRIBUTE},
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Looks up a metadata value for the current stream part.
+
+                The key can be `Feed`, `StreamType`, `CreatedTime`, `EffectiveTime`, `Pipeline`
+                or any other attribute supplied when the stream was sent to Stroom, e.g. `meta('System')`.
+
+                `feed-attribute()` is a deprecated alias.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The value for the key, or an empty sequence if the key is not found.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "key",
+                                        description = "The metadata key (case-insensitive), such as `Feed`, " +
+                                                      "`StreamType` or a " +
+                                                      "supplied attribute.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class Meta extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "meta";
+    public static final String FUNCTION_NAME_FEED_ATTRIBUTE = "feed-attribute";
 
     private final MetaDataHolder metaDataHolder;
 

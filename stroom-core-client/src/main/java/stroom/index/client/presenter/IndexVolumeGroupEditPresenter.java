@@ -29,8 +29,9 @@ import stroom.index.shared.IndexVolumeResource;
 import stroom.node.client.NodeClient;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.PathSafeNames;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -85,14 +86,35 @@ public class IndexVolumeGroupEditPresenter
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
 
-        newButton = volumeStatusListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
-        openButton = volumeStatusListPresenter.getView().addButton(SvgPresets.EDIT);
-        deleteButton = volumeStatusListPresenter.getView().addButton(SvgPresets.DELETE);
-        rescanButton = volumeStatusListPresenter.getView().addButton(SvgPresets.REFRESH_GREEN);
-        rescanButton.setTitle("Rescan Volumes");
+        volumeStatusListPresenter.getView().getToolbar().setName("Volume actions");
+        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::create);
+        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        openButton.setEnabled(false);
+        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteButton.setEnabled(false);
+        rescanButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.REFRESH, "Rescan Volumes",
+                this::onRescan);
 
         view.setListView(volumeStatusListPresenter.getView());
         delayedUpdate = new DelayedUpdate(volumeStatusListPresenter::refresh);
+    }
+
+    private void onRescan() {
+        delayedUpdate.reset();
+        nodeClient.listAllNodes(nodeNames ->
+                        nodeNames.forEach(nodeName ->
+                                restFactory
+                                        .create(INDEX_VOLUME_RESOURCE)
+                                        .method(res -> res.rescan(nodeName))
+                                        .onSuccess(response -> delayedUpdate.update())
+                                        .onFailure(throwable -> {
+                                        })
+                                        .taskMonitorFactory(this)
+                                        .exec()
+                        ),
+                throwable -> {
+                },
+                volumeStatusListPresenter.getTaskListener());
     }
 
     @Override
@@ -102,27 +124,6 @@ public class IndexVolumeGroupEditPresenter
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();
             }
-        }));
-        registerHandler(newButton.addClickHandler(event -> create()));
-        registerHandler(openButton.addClickHandler(event -> edit()));
-        registerHandler(deleteButton.addClickHandler(event -> delete()));
-        registerHandler(rescanButton.addClickHandler(event -> {
-            delayedUpdate.reset();
-            nodeClient.listAllNodes(nodeNames ->
-                            nodeNames.forEach(nodeName ->
-                                    restFactory
-                                            .create(INDEX_VOLUME_RESOURCE)
-                                            .method(res -> res.rescan(nodeName))
-                                            .onSuccess(response -> delayedUpdate.update())
-                                            .onFailure(throwable -> {
-                                            })
-                                            .taskMonitorFactory(this)
-                                            .exec()
-                            ),
-                    throwable -> {
-                    },
-                    volumeStatusListPresenter.getTaskListener());
-
         }));
     }
 
@@ -246,6 +247,11 @@ public class IndexVolumeGroupEditPresenter
             AlertEvent.fireError(
                     IndexVolumeGroupEditPresenter.this,
                     "You must provide a name for the index volume group.",
+                    event::reset);
+        } else if (PathSafeNames.validate(groupName) != null) {
+            AlertEvent.fireError(
+                    IndexVolumeGroupEditPresenter.this,
+                    PathSafeNames.validate(groupName),
                     event::reset);
         } else {
             restFactory

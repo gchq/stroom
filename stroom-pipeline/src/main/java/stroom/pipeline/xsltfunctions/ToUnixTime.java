@@ -25,6 +25,25 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.DateTimeValue;
 import net.sf.saxon.value.Int64Value;
 
+@XsltFunctionDef(
+        name = ToUnixTime.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.DATE,
+        commonDescription = """
+                Converts an XPath date-time value to milliseconds since the Unix epoch.
+                """,
+        commonReturnType = XsltDataType.INTEGER,
+        commonReturnDescription = "The corresponding milliseconds since the Unix epoch.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "dateTime",
+                                        description = "The date-time value to convert.",
+                                        argType = XsltDataType.DATE_TIME
+                                )
+                        }
+                )
+        })
 class ToUnixTime extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "to-unixTime";

@@ -18,9 +18,7 @@ package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.query.client.view.QueryButtons;
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,9 +37,9 @@ public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize
     @UiField
     FlowPanel expressionTree;
     @UiField
-    ButtonPanel buttonPanelLeft;
+    Toolbar expressionToolbar;
     @UiField
-    ButtonPanel buttonPanelRight;
+    Toolbar messagesToolbar;
     @UiField
     QueryButtons queryButtons;
 
@@ -61,18 +59,13 @@ public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize
     }
 
     @Override
-    public ButtonView addButtonLeft(final Preset preset) {
-        return buttonPanelLeft.addButton(preset);
+    public Toolbar getExpressionToolbar() {
+        return expressionToolbar;
     }
 
     @Override
-    public ButtonView addButtonRight(final Preset preset) {
-        return buttonPanelRight.addButton(preset);
-    }
-
-    @Override
-    public void addButtonRight(final ButtonView button) {
-        buttonPanelRight.addButton(button);
+    public Toolbar getMessagesToolbar() {
+        return messagesToolbar;
     }
 
     @Override

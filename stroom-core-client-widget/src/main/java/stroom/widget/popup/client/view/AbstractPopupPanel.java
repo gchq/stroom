@@ -45,6 +45,50 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
         return dragGlass;
     }
 
+    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+    // Upstream shows the drag glass in beginDragging and hides it ONLY in endDragging, i.e. only
+    // on a mouse-up the popup actually receives. Any drag whose release is never delivered - the
+    // button let go outside the browser window, focus lost mid-drag, or the dialog closed while
+    // the button is still down - leaves a full-viewport glass attached to the body. It swallows
+    // every click, so the whole UI is dead: no CPU, nothing in the console, the server healthy,
+    // and DevTools the only way back. Diagnosed 2026-09-04; see
+    // docs/task-popup-drag-glass-orphaned.md. Dropping these hunks reinstates that.
+
+    /**
+     * Abandons any drag in progress and removes the drag glass.
+     *
+     * <p>Subclasses override to clear their own drag state as well, then call {@code super}.
+     * Idempotent, because it is reached from several directions and may be reached twice.</p>
+     */
+    protected void abandonDrag() {
+        dragGlass.hide();
+    }
+
+    /**
+     * Whether a mouse button is still held.
+     *
+     * <p>{@code buttons} is the held-button bitmask, which is what a {@code mousemove} carries;
+     * {@code button} identifies the button of a press or release and is not meaningful here. Used
+     * to notice a release that happened where no listener could see it — the browser delivers no
+     * event at all for a mouse-up outside its own window, so the first evidence is a subsequent
+     * move with nothing held.</p>
+     */
+    protected static native boolean isButtonHeld(NativeEvent event) /*-{
+        return (event.buttons === undefined) ? true : (event.buttons !== 0);
+    }-*/;
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The deterministic half of the leak: a popup closed mid-drag never sees its mouse-up, so
+     * the glass has to come off on teardown.</p>
+     */
+    @Override
+    protected void onUnload() {
+        super.onUnload();
+        abandonDrag();
+    }
+
     /**
      * Notify the dialog when either the Enter or Escape key is pressed.
      * For dialogs with a close button, the Escape will cause them to close.

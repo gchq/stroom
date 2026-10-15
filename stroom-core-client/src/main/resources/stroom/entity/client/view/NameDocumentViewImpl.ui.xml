@@ -3,7 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="nameDocumentName" label="Name" addStyleNames="dock-min">
+        <form:FormGroup identity="nameDocumentName" label="Name" addStyleNames="dock-min"
+                        helpText="The new name. Folder names may only contain letters, numbers, spaces and _ - . ( )."
+                        screenReaderText="Folder names: letters, numbers, spaces, underscores, hyphens, full stops, brackets only.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

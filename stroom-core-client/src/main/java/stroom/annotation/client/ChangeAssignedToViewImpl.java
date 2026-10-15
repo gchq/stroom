@@ -44,6 +44,7 @@ public class ChangeAssignedToViewImpl
     @Inject
     public ChangeAssignedToViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        AssignYourselfLink.init(assignYourself, this::assignYourself);
     }
 
     @Override
@@ -57,18 +58,18 @@ public class ChangeAssignedToViewImpl
     }
 
     @Override
-    public void setAssignYourselfVisible(final boolean visible) {
-        assignYourself.setVisible(visible);
+    public void setAssignYourselfEnabled(final boolean enabled) {
+        AssignYourselfLink.update(assignYourself, !enabled, false);
     }
 
     @Override
     public void setAssignedTo(final UserRef assignedTo) {
         if (assignedTo == null) {
             this.assignedTo.setText("Nobody");
-            this.assignedTo.getElement().getStyle().setOpacity(0.5);
+            this.assignedTo.addStyleName(AnnotationEditViewImpl.EMPTY_VALUE_STYLE);
         } else {
             this.assignedTo.setText(assignedTo.toDisplayString());
-            this.assignedTo.getElement().getStyle().setOpacity(1);
+            this.assignedTo.removeStyleName(AnnotationEditViewImpl.EMPTY_VALUE_STYLE);
         }
     }
 
@@ -81,10 +82,14 @@ public class ChangeAssignedToViewImpl
 
     @UiHandler("assignYourself")
     public void onAssignYourself(final ClickEvent e) {
+        AssignYourselfLink.runIfEnabled(assignYourself, this::assignYourself);
+        e.stopPropagation();
+    }
+
+    private void assignYourself() {
         if (getUiHandlers() != null) {
             getUiHandlers().assignYourself();
         }
-        e.stopPropagation();
     }
 
 

@@ -28,10 +28,9 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
-import stroom.security.shared.QuickFilterExpressionParser;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -43,7 +42,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -65,7 +63,6 @@ public class BatchDocumentPermissionsPresenter
     private final ButtonView docEdit;
     private final ButtonView batchEdit;
     private ExpressionOperator filterExpression;
-    private ExpressionOperator quickFilterExpression;
     private ExpressionOperator combinedExpression;
     private ResultPage<FindResult> docs;
 
@@ -75,9 +72,15 @@ public class BatchDocumentPermissionsPresenter
                                              final Provider<ExpressionPresenter> docFilterPresenterProvider,
                                              final DocumentListPresenter documentListPresenter,
                                              final Provider<BatchDocumentPermissionsEditPresenter>
-                                                     batchDocumentPermissionsEditPresenterProvider) {
+                                                     batchDocumentPermissionsEditPresenterProvider,
+                                             final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.documentListPresenter = documentListPresenter;
+        // A rejected filter comes back as an empty page like any other, so surface the reason on
+        // the filter box. See ResultPage.filterError.
+        documentListPresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                DocumentPermissionFields.QUICK_FILTER_CONTEXT, this, this));
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
         this.docFilterPresenterProvider = docFilterPresenterProvider;
 
@@ -85,21 +88,23 @@ public class BatchDocumentPermissionsPresenter
         getView().setUiHandlers(this);
 
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
-        quickFilterExpression = ExpressionOperator.builder().op(Op.AND).build();
 
         // Filter
-        docFilter = documentListPresenter.getView().addButton(new Preset(
+        documentListPresenter.getView().getToolbar().setName("Document permission actions");
+        docFilter = documentListPresenter.getView().getToolbar().button(
                 SvgImage.FILTER,
                 "Filter Documents To Apply Permissions Changes On",
-                true));
-        docEdit = documentListPresenter.getView().addButton(new Preset(
+                this::onFilter);
+        docEdit = documentListPresenter.getView().getToolbar().button(
                 SvgImage.EDIT,
                 "Edit Permissions For Selected Document",
-                false));
-        batchEdit = documentListPresenter.getView().addButton(new Preset(
+                this::onEdit);
+        docEdit.setEnabled(false);
+        batchEdit = documentListPresenter.getView().getToolbar().button(
                 SvgImage.GENERATE,
                 "Batch Edit Permissions For Filtered Documents",
-                false));
+                this::onBatchEdit);
+        batchEdit.setEnabled(false);
 
         documentListPresenter.setFindResultListHandler(new FindDocResultListHandler<FindResult>() {
             @Override
@@ -124,27 +129,12 @@ public class BatchDocumentPermissionsPresenter
     protected void onBind() {
         super.onBind();
 
-        registerHandler(docFilter.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onFilter();
-            }
-        }));
 //        registerHandler(documentListPresenter.getSelectionModel().addSelectionHandler(e -> {
 //            docEdit.setEnabled(documentListPresenter.getSelected() != null);
 //            if (e.getSelectionType().isDoubleSelect()) {
 //                onEdit();
 //            }
 //        }));
-        registerHandler(docEdit.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onEdit();
-            }
-        }));
-        registerHandler(batchEdit.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onBatchEdit();
-            }
-        }));
     }
 
     private void onFilter() {
@@ -194,9 +184,6 @@ public class BatchDocumentPermissionsPresenter
         if (filterExpression != null) {
             builder.addOperator(filterExpression);
         }
-        if (quickFilterExpression != null) {
-            builder.addOperator(quickFilterExpression);
-        }
 
         combinedExpression = builder.build();
         documentListPresenter.setExpression(combinedExpression);
@@ -205,10 +192,8 @@ public class BatchDocumentPermissionsPresenter
 
     @Override
     public void onFilterChange(final String text) {
-        quickFilterExpression = QuickFilterExpressionParser.parse(text,
-                Set.of(DocumentPermissionFields.DOCUMENT_NAME,
-                        DocumentPermissionFields.DOCUMENT_UUID),
-                DocumentPermissionFields.getAllFieldMap());
+        // The filter text goes to the server verbatim - see AdvancedDocumentFindRequest.
+        documentListPresenter.setQuickFilter(text);
         refresh();
     }
 

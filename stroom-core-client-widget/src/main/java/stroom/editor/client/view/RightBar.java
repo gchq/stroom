@@ -53,7 +53,7 @@ public class RightBar extends Composite {
         if (indicators != null) {
             final String className = target.getClassName();
             if (className != null) {
-                if (className.toUpperCase().contains("codeEditor-marker".toUpperCase())) {
+                if (className.toUpperCase().contains("code-editor__marker".toUpperCase())) {
                     // This is a marker box.
                     final String lineNo = target.getAttribute("lineno");
                     if (lineNo != null) {
@@ -72,7 +72,7 @@ public class RightBar extends Composite {
                             indicatorPopup.hide();
                         }
                     }
-                } else if (className.toUpperCase().contains("codeEditor-summary".toUpperCase())) {
+                } else if (className.toUpperCase().contains("code-editor__summary".toUpperCase())) {
                     if (eventType == Event.ONMOUSEOVER) {
                         // This is a summary box.
                         final Element parent = target.getParentElement().cast();
@@ -104,24 +104,24 @@ public class RightBar extends Composite {
                 if (maxSeverity != null) {
                     // Add the top summary marker.
                     sb.append("<div class=\"");
-                    sb.append("codeEditor-summaryContainer");
+                    sb.append("code-editor__summary-container");
                     sb.append("\">");
 
                     sb.append("<div class=\"");
-                    sb.append("codeEditor-summary");
+                    sb.append("code-editor__summary");
                     sb.append(" ");
                     switch (maxSeverity) {
                         case FATAL_ERROR:
-                            sb.append("codeEditor-fatal");
+                            sb.append("code-editor__summary--fatal");
                             break;
                         case ERROR:
-                            sb.append("codeEditor-error");
+                            sb.append("code-editor__summary--error");
                             break;
                         case WARNING:
-                            sb.append("codeEditor-warning");
+                            sb.append("code-editor__summary--warning");
                             break;
                         default:
-                            sb.append("codeEditor-info");
+                            sb.append("code-editor__summary--info");
                             break;
                     }
                     sb.append("\">");
@@ -168,20 +168,20 @@ public class RightBar extends Composite {
                                     sb.append("<div lineno=\"");
                                     sb.append(lineNo);
                                     sb.append("\" class=\"");
-                                    sb.append("codeEditor-marker");
+                                    sb.append("code-editor__marker");
                                     sb.append(" ");
                                     switch (severity) {
                                         case FATAL_ERROR:
-                                            sb.append("codeEditor-fatal");
+                                            sb.append("code-editor__marker--fatal");
                                             break;
                                         case ERROR:
-                                            sb.append("codeEditor-error");
+                                            sb.append("code-editor__marker--error");
                                             break;
                                         case WARNING:
-                                            sb.append("codeEditor-warning");
+                                            sb.append("code-editor__marker--warning");
                                             break;
                                         default:
-                                            sb.append("codeEditor-info");
+                                            sb.append("code-editor__marker--info");
                                             break;
                                     }
                                     sb.append("\" style=\"top:");

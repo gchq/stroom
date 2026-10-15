@@ -22,7 +22,29 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = HexToOct.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.CONVERSION,
+        commonDescription = """
+                Converts a hexadecimal value to its octal representation.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The octal representation, or an empty sequence if conversion fails.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "hex",
+                                        description = "The hexadecimal value to convert.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class HexToOct extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "hex-to-oct";
+
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         String result = null;

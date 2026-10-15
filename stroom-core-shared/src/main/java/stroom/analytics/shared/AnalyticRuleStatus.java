@@ -17,6 +17,9 @@
 package stroom.analytics.shared;
 
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.HasCaseInsensitiveForm.CaseInsensitiveConverter;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
  * A rule's status denotes how reliable it is.
@@ -43,6 +46,9 @@ public enum AnalyticRuleStatus implements HasDisplayValue {
     DEPRECATED("Deprecated"),
     ;
 
+    private static final CaseInsensitiveConverter<AnalyticRuleStatus> CASE_INSENSITIVE_CONVERTER =
+            CaseInsensitiveConverter.create(AnalyticRuleStatus.class);
+
     private final String displayValue;
 
     AnalyticRuleStatus(final String displayValue) {
@@ -52,5 +58,16 @@ public enum AnalyticRuleStatus implements HasDisplayValue {
     @Override
     public String getDisplayValue() {
         return displayValue;
+    }
+
+    /// Reads a status from its name in any case, for JSON de-serialisation. A rule's status was once
+    /// free text, so a stored rule can hold a value that isn't one of these (e.g. `ENABLED`). That
+    /// reads as no status rather than failing, so that the rule can still be opened.
+    ///
+    /// @param name The status's name.
+    /// @return The status, or null if the name is null or isn't a status.
+    @JsonCreator
+    public static AnalyticRuleStatus fromCaseInsensitiveString(final String name) {
+        return CASE_INSENSITIVE_CONVERTER.convert(name);
     }
 }

@@ -136,8 +136,11 @@ public class CredentialSettingsViewImpl
      * Updates the state of the UI.
      */
     private void updateState() {
-        // Expiry only visible if checkbox selected
-        expiryTimeFormGroup.setVisible(credsExpire.getValue());
+        // Expiry is shown either way but only enabled if the tick box is ticked, as in the global
+        // property dialog, so the dialog doesn't change shape
+        final boolean expires = credsExpire.getValue();
+        expiryTime.setEnabled(expires);
+        expiryTimeFormGroup.setDisabled(!expires);
     }
 
     @UiHandler("credentialType")

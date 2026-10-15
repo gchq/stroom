@@ -25,8 +25,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersScreenEvent;
 import stroom.security.client.presenter.UsersPresenter;
 import stroom.security.shared.AppPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -41,7 +40,7 @@ import javax.inject.Singleton;
 public class UsersPlugin extends MonitoringPlugin<UsersPresenter> {
 
     public static final String SCREEN_NAME = "Users";
-    public static final Preset ICON = SvgPresets.USER;
+    public static final SvgImage ICON = SvgImage.USER;
 
     @Inject
     public UsersPlugin(final EventBus eventBus,

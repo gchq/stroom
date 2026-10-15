@@ -63,6 +63,11 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
 
     @Override
     public void onDialogAction(final DialogAction action) {
+        final Button button = getButton(action);
+        if (!DialogButtonAction.canRun(button)) {
+            return;
+        }
+        final Runnable restoreFocus = DialogButtonAction.keepFocus(button);
         setEnabled(false);
         if (action == DialogAction.OK) {
             ok.setLoading(true);
@@ -73,7 +78,17 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
             setEnabled(true);
             ok.setLoading(false);
             cancel.setLoading(false);
+            restoreFocus.run();
         }));
+    }
+
+    private Button getButton(final DialogAction action) {
+        if (action == DialogAction.OK) {
+            return ok;
+        } else if (action == DialogAction.CREATE) {
+            return create;
+        }
+        return cancel;
     }
 
     @UiHandler("ok")
@@ -93,8 +108,20 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
 
     @Override
     public void setEnabled(final boolean enabled) {
+        create.setEnabled(enabled);
         ok.setEnabled(enabled);
         cancel.setEnabled(enabled);
+    }
+
+    @Override
+    public void setEnabled(final DialogAction action, final boolean enabled) {
+        if (DialogAction.CREATE.equals(action)) {
+            create.setEnabled(enabled);
+        } else if (DialogAction.OK.equals(action)) {
+            ok.setEnabled(enabled);
+        } else if (DialogAction.CANCEL.equals(action)) {
+            cancel.setEnabled(enabled);
+        }
     }
 
 

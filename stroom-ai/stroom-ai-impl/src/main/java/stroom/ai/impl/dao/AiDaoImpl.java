@@ -31,9 +31,11 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.query.api.ExpressionOperator;
-import stroom.query.common.v2.FieldProviderImpl;
-import stroom.query.common.v2.SimpleStringExpressionParser;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -115,13 +117,18 @@ public class AiDaoImpl implements AiDao {
         conditions.add(AI_CHAT.USER_UUID.eq(userRef.getUuid()));
 
         final FieldProvider fieldProvider = new FieldProviderImpl(
-                List.of(AiChatHistoryFields.NAME),
-                List.of(AiChatHistoryFields.NAME));
+                List.of(AiChatHistoryFields.NAME_FIELD),
+                List.of(AiChatHistoryFields.NAME_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
-                    .create(fieldProvider, criteria.getFilter());
+                    .create(fieldProvider, criteria.getQuickFilter());
             optionalExpressionOperator.ifPresent(expressionOperator ->
                     conditions.add(expressionMapper.apply(expressionOperator)));
+        } catch (final TokenException e) {
+            // A rejected filter must not look like a filter that matched nothing, so send the
+            // reason back with the (empty) results. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
             return ResultPage.empty();

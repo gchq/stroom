@@ -24,10 +24,9 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.ConditionalFormattingRule;
-import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -167,8 +166,11 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
         return selectionModel;
     }
 
-    public ButtonView add(final Preset preset) {
-        return getView().addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return getView().getToolbar();
     }
 
     public void setDirty(final boolean dirty) {

@@ -25,6 +25,7 @@ import java.time.format.DateTimeParseException;
         name = CeilingTime.NAME,
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = AbstractRoundDateTime.ROUND_SUB_CATEGORY,
+        commonDescription = "Rounds the supplied time up to the nearest duration.",
         commonReturnType = ValDate.class,
         commonReturnDescription = "The result date and time.",
         signatures =
@@ -73,14 +74,21 @@ class CeilingTime extends AbstractRoundDateTime {
         };
     }
 
+    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. See AbstractRoundDateTime.constantString -
+    // upstream reads the argument with param.toString(), which silently breaks param('key') here.
     private Duration parseDuration(final Param param, final String paramName) {
         if (param == null) {
             return Duration.ZERO;
         }
+        final String value = constantString(param);
+        if (value == null) {
+            throw new IllegalArgumentException(
+                    "Invalid " + paramName + ": " + param + " - " + whyNotConstant(param));
+        }
         try {
-            return Duration.parse(param.toString());
+            return Duration.parse(value);
         } catch (final DateTimeParseException e) {
-            throw new IllegalArgumentException("Invalid " + paramName + " format: " + param);
+            throw new IllegalArgumentException("Invalid " + paramName + " format: " + value);
         }
     }
 }

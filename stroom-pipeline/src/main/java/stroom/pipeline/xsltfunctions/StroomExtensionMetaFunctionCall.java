@@ -16,11 +16,14 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.util.shared.NullSafe;
+
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.ReceivingContentHandler;
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.SAXException;
@@ -38,9 +41,20 @@ public abstract class StroomExtensionMetaFunctionCall extends StroomExtensionFun
     private static final String URI = "stroom-meta";
     private static final String KEY_ATTRIBUTE_NAME = "key";
 
-    Sequence createMetaSequence(final XPathContext context, final String elementName,
-                                final Set<Entry<String, String>> meta)
-            throws SAXException {
+    /// Create an empty meta element. If an exception occurs, returns an empty sequence.
+    Sequence createEmptyMetaSequence(final XPathContext context, final String elementName) {
+        try {
+            return createMetaSequence(context, elementName, Set.of());
+        } catch (final SAXException e) {
+            outputWarning(context, new StringBuilder(
+                    "Error building empty meta sequence, returning empty sequence"), e);
+            return EmptyAtomicSequence.getInstance();
+        }
+    }
+
+    Sequence createMetaSequence(final XPathContext context,
+                                final String elementName,
+                                final Set<Entry<String, String>> meta) throws SAXException {
         final Configuration configuration = context.getConfiguration();
         final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
         final Builder builder = new TinyBuilder(pipe);
@@ -52,12 +66,14 @@ public abstract class StroomExtensionMetaFunctionCall extends StroomExtensionFun
         contentHandler.startDocument();
         startElement(contentHandler, elementName);
 
-        final SequencedSet<Entry<String, String>> sortedMeta = meta.stream()
-                .sorted(Entry.comparingByKey())
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (NullSafe.hasItems(meta)) {
+            final SequencedSet<Entry<String, String>> sortedMeta = meta.stream()
+                    .sorted(Entry.comparingByKey())
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        for (final Entry<String, String> metaEntry : sortedMeta) {
-            data(contentHandler, metaEntry.getKey(), metaEntry.getValue());
+            for (final Entry<String, String> metaEntry : sortedMeta) {
+                data(contentHandler, metaEntry.getKey(), metaEntry.getValue());
+            }
         }
         endElement(contentHandler, elementName);
         contentHandler.endDocument();

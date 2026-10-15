@@ -22,6 +22,7 @@ import stroom.entity.client.presenter.NameDocumentView;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.NodeGroup;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PathSafeNames;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -73,6 +74,11 @@ public class NewNodeGroupPresenter
                 AlertEvent.fireError(
                         NewNodeGroupPresenter.this,
                         "You must provide a name",
+                        e::reset);
+            } else if (PathSafeNames.validate(name) != null) {
+                AlertEvent.fireError(
+                        NewNodeGroupPresenter.this,
+                        PathSafeNames.validate(name),
                         e::reset);
             } else {
                 checkNodeGroupName(name, e);

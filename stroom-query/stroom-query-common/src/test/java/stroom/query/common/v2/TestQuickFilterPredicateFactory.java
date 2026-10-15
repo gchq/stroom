@@ -19,7 +19,16 @@ package stroom.query.common.v2;
 import stroom.docref.DocRef;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QuickFilterFields;
+import stroom.query.api.token.TokenException;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.language.filter.SingleFieldProvider;
 import stroom.util.ConsoleColour;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -42,18 +51,26 @@ class TestQuickFilterPredicateFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestQuickFilterPredicateFactory.class);
 
-    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(List.of(
+    private static final List<FilterFieldDefinition> FIELD_DEFINITIONS = List.of(
             FilterFieldDefinition.qualifiedField("Status"),
             FilterFieldDefinition.defaultField("SimpleStr1"),
             FilterFieldDefinition.defaultField("SimpleStr2"),
             FilterFieldDefinition.qualifiedField("Type"),
             FilterFieldDefinition.qualifiedField("Name"),
-            FilterFieldDefinition.qualifiedField("Uuid")));
+            FilterFieldDefinition.qualifiedField("Uuid"));
 
-    private static final FieldProvider FIELD_PROVIDER_2 = new FieldProviderImpl(List.of(
+    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(
+            QuickFilterFields.uiTextDefaults(FIELD_DEFINITIONS),
+            QuickFilterFields.uiText(FIELD_DEFINITIONS));
+
+    private static final List<FilterFieldDefinition> FIELD_DEFINITIONS_2 = List.of(
             FilterFieldDefinition.defaultField("Name"),
             FilterFieldDefinition.qualifiedField("Age"),
-            FilterFieldDefinition.qualifiedField("Sex")));
+            FilterFieldDefinition.qualifiedField("Sex"));
+
+    private static final FieldProvider FIELD_PROVIDER_2 = new FieldProviderImpl(
+            QuickFilterFields.uiTextDefaults(FIELD_DEFINITIONS_2),
+            QuickFilterFields.uiText(FIELD_DEFINITIONS_2));
 
     private static final ValueFunctionFactoriesImpl<Pojo> VALUE_FUNCTION_FACTORIES =
             new ValueFunctionFactoriesImpl<Pojo>()
@@ -501,7 +518,7 @@ class TestQuickFilterPredicateFactory {
      */
     @Test
     void testSingleFieldProvider_colonIsNotAQualifier() {
-        final FieldProvider fieldProvider = new SingleFieldProvider("test");
+        final FieldProvider fieldProvider = new SingleFieldProvider(QueryField.createUiText("test"));
 
         doQualifyInputTest("12:30", "AND {test contains 12:30}", fieldProvider);
         doQualifyInputTest("http://example.com", "AND {test contains http://example.com}", fieldProvider);
@@ -517,7 +534,7 @@ class TestQuickFilterPredicateFactory {
      */
     @Test
     void testSingleFieldProvider_operatorsStillApply() {
-        final FieldProvider fieldProvider = new SingleFieldProvider("test");
+        final FieldProvider fieldProvider = new SingleFieldProvider(QueryField.createUiText("test"));
 
         doQualifyInputTest("=12:30", "AND {test = 12:30}", fieldProvider);
         doQualifyInputTest("^12:30", "AND {test starts with 12:30}", fieldProvider);
@@ -536,6 +553,141 @@ class TestQuickFilterPredicateFactory {
         doQualifyInputTest("nosuchfield:x",
                 "OR {simplestr1 contains nosuchfield:x, simplestr2 contains nosuchfield:x}",
                 FIELD_PROVIDER);
+    }
+
+    // --------------------------------------------------------------------------------
+    // A term the user writes with no sigil takes its condition from the field it resolved
+    // against, rather than always being CONTAINS. See SimpleStringExpressionParser.defaultCondition.
+
+    private static final FieldProvider NARROW_FIELD_PROVIDER = new FieldProviderImpl(
+            List.of(QueryField.builder()
+                    .fldName("status")
+                    .fldType(FieldType.TEXT)
+                    .conditionSet(ConditionSet.SQL_ENUM_TEXT)
+                    .build()),
+            List.of(QueryField.builder()
+                    .fldName("status")
+                    .fldType(FieldType.TEXT)
+                    .conditionSet(ConditionSet.SQL_ENUM_TEXT)
+                    .build()));
+
+    @Test
+    void testDefaultCondition_fieldSupportingContainsGetsContains() {
+        doQualifyInputTest("jane", "AND {name contains jane}", FIELD_PROVIDER_2);
+    }
+
+    @Test
+    void testDefaultCondition_fieldNotSupportingContainsGetsEquals() {
+        // SQL_ENUM_TEXT is {EQUALS, NOT_EQUALS}. Defaulting to CONTAINS here would emit a term the
+        // field's own declaration says is unsupported - which is exactly what "status:OK" did on
+        // the Dependencies screen.
+        doQualifyInputTest("OK", "AND {status = OK}", NARROW_FIELD_PROVIDER);
+        doQualifyInputTest("status:OK", "AND {status = OK}", NARROW_FIELD_PROVIDER);
+    }
+
+    @Test
+    void testDefaultCondition_explicitSigilStillWins() {
+        // The fallback only applies when the user wrote no sigil. An explicit operator is
+        // honoured verbatim rather than silently rewritten to something the field does support.
+        doQualifyInputTest("=OK", "AND {status = OK}", NARROW_FIELD_PROVIDER);
+    }
+
+    @Test
+    void testCapabilityCheck_explicitUnsupportedConditionIsRejected() {
+        // '^' is honoured verbatim, so it reaches the capability check and is rejected there with
+        // a positional message naming what the field does support - rather than reaching
+        // TermHandler's default case and being swallowed into an empty grid by the DAO.
+        Assertions.assertThatThrownBy(() ->
+                        SimpleStringExpressionParser.create(NARROW_FIELD_PROVIDER, "^OK"))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("does not support 'starts with'")
+                .hasMessageContaining("'='");
+    }
+
+    @Test
+    void testCapabilityCheck_orderingConditionsAreSupportedOnTextFields() {
+        // Both evaluators compare text lexicographically for these, so both text sets declare
+        // them. Arming the check without them would have broken '>foo' everywhere it works.
+        doQualifyInputTest(">m", "AND {name > m}", FIELD_PROVIDER_2);
+        doQualifyInputTest(">=m", "AND {name >= m}", FIELD_PROVIDER_2);
+        doQualifyInputTest("<m", "AND {name < m}", FIELD_PROVIDER_2);
+        doQualifyInputTest("<=m", "AND {name <= m}", FIELD_PROVIDER_2);
+    }
+
+    @Test
+    void testDefaultCondition_negationUsesTheFieldsDefault() {
+        doQualifyInputTest("!OK", "NOT {status = OK}", NARROW_FIELD_PROVIDER);
+    }
+
+    /**
+     * Every field the Dependencies quick filter declares must be able to honour a bare term, or
+     * arming the {@code CommonExpressionMapper} capability check turns a working filter into a
+     * rejection. {@code QF_STATUS} is {@code SQL_ENUM_TEXT} and was the known offender.
+     */
+    @Test
+    void testDefaultCondition_isSupportedByEveryDeclaredField() {
+        for (final QueryField field : List.of(
+                QueryField.createSqlText("a"),
+                QueryField.createUiText("b"),
+                QueryField.createText("c"),
+                QueryField.builder()
+                        .fldName("d")
+                        .fldType(FieldType.TEXT)
+                        .conditionSet(ConditionSet.SQL_ENUM_TEXT)
+                        .build())) {
+            final FieldProvider provider = new FieldProviderImpl(List.of(field), List.of(field));
+            final ExpressionOperator operator = SimpleStringExpressionParser
+                    .create(provider, "someValue")
+                    .orElseThrow();
+            final ExpressionTerm term = (ExpressionTerm) operator.getChildren().getFirst();
+            Assertions.assertThat(field.supportsCondition(term.getCondition()))
+                    .describedAs("field %s declares %s but a bare term produced %s",
+                            field.getFldName(), field.getConditionSet(), term.getCondition())
+                    .isTrue();
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+    // The contract every quick filter surface's catch block depends on. GlobalConfigService,
+    // TaskManagerImpl, ExplorerServiceImpl, ActivityServiceImpl and the five DAOs all catch
+    // TokenException specifically; if the parser threw something else for realistic mid-keystroke
+    // input, those catches would miss and the user would get an error instead of an empty result.
+
+    @Test
+    void testMidKeystrokeInput_throwsTokenExceptionNotSomethingElse() {
+        // A trailing operator is the ordinary transient state of typing "foo and bar" - the
+        // debounce fires on "foo and" long before the user finishes.
+        for (final String input : List.of("foo and", "foo or", "foo AND", "not", "and", "or")) {
+            Assertions.assertThatThrownBy(() ->
+                            SimpleStringExpressionParser.create(FIELD_PROVIDER_2, input))
+                    .describedAs("input [%s]", input)
+                    .isInstanceOf(TokenException.class);
+        }
+    }
+
+    @Test
+    void testMidKeystrokeInput_unclosedQuotesAndBracketsDoNotThrow() {
+        // Documenting the boundary rather than asserting a wish: these parse cleanly and simply
+        // match little or nothing. Worth pinning because it is the opposite of what the name
+        // "unparseable filter" suggests, and because a future tokeniser change that made them
+        // throw would silently widen what the catch blocks have to handle.
+        for (final String input : List.of("\"unbalanced", "(unclosed", ")", "\\", "foo or or bar")) {
+            Assertions.assertThatCode(() ->
+                            SimpleStringExpressionParser.create(FIELD_PROVIDER_2, input))
+                    .describedAs("input [%s]", input)
+                    .doesNotThrowAnyException();
+        }
+    }
+
+    @Test
+    void testMidKeystrokeInput_tokenExceptionIsPositional() {
+        // The diagnostic is only useful if it can point at something, so the exception must carry
+        // a token. TokenErrorUtil turns this into the from/to on ResultPage.filterError.
+        final TokenException e = Assertions.catchThrowableOfType(
+                () -> SimpleStringExpressionParser.create(FIELD_PROVIDER_2, "foo and"),
+                TokenException.class);
+        Assertions.assertThat(e.getToken()).isNotNull();
+        Assertions.assertThat(e.getMessage()).isNotBlank();
     }
 
     private void doQualifyInputTest(final String input,

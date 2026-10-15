@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
@@ -122,6 +123,12 @@ class QueryResourceImpl implements QueryResource {
             LOGGER.debug(e::getMessage, e);
         }
         return null;
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public ExpressionOperator parseQuery(final String query) {
+        return queryServiceProvider.get().parseQuery(query);
     }
 
     @Override

@@ -23,7 +23,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 
@@ -64,9 +63,12 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
         this.restFactory = restFactory;
         this.newIndexVolumeGroupPresenterProvider = newIndexVolumeGroupPresenterProvider;
 
-        newButton = volumeStatusListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
-        openButton = volumeStatusListPresenter.getView().addButton(SvgPresets.EDIT);
-        deleteButton = volumeStatusListPresenter.getView().addButton(SvgPresets.DELETE);
+        volumeStatusListPresenter.getView().getToolbar().setName("Volume group actions");
+        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::add);
+        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        openButton.setEnabled(false);
+        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteButton.setEnabled(false);
 
         view.setView(volumeStatusListPresenter.getView());
     }
@@ -79,9 +81,6 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                 edit();
             }
         }));
-        registerHandler(newButton.addClickHandler(event -> add()));
-        registerHandler(openButton.addClickHandler(event -> edit()));
-        registerHandler(deleteButton.addClickHandler(event -> delete()));
     }
 
 //    public void show() {

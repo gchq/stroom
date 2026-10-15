@@ -4,7 +4,10 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel styleName="dropDownView-container stroom-control allow-focus">
         <g:Label ui:field="label" styleName="dropDownView-label"/>
-        <btn:SvgButton ui:field="warningButton" />
+        <btn:Toolbar name="Warnings" addStyleNames="dropDownView-warningToolbar">
+            <btn:ToolbarButton ui:field="warningButton" svg="ALERT" title="Show Warnings"
+                               visible="false" addStyleNames="dropDownView-warning"/>
+        </btn:Toolbar>
         <g:SimplePanel ui:field="ellipsesBtnPanel" styleName="dropDownView-button"/>
     </g:FlowPanel>
 </ui:UiBinder>

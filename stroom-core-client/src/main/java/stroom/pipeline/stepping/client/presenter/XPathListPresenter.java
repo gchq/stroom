@@ -22,8 +22,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.pipeline.shared.XPathFilter;
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -59,8 +58,11 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    ButtonView addButton(final Preset preset) {
-        return getView().addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return getView().getToolbar();
     }
 
     /**

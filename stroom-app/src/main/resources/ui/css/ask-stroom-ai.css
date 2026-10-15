@@ -1,18 +1,19 @@
 .askStroomAiViewImpl {
     overflow: hidden;
-    background-color: var(--control__background-color);
+    background-color: var(--content-box__background-color);
     color: var(--control__text-color);
     display: flex;
 }
 
 .dialog-content .askStroomAiViewImpl {
   border: 1px solid var(--control__border-color);
+  border-radius: .25rem;
   overflow: auto;
 }
 
 .askStroomAiViewImpl-top {
     display: flex;
-    border-bottom: 1px solid var(--splitter__background-color);
+    border-bottom: 1px solid var(--border-color);
     padding: 0 5px;
     gap: 5px;
     min-height: 34px;
@@ -36,6 +37,7 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    margin: 0;
 }
 
 .askStroomAiViewImpl-middle {
@@ -51,7 +53,7 @@
     gap: 5px;
     overflow: hidden;
     background-color: var(--page__background-color);
-    border: 1px solid var(--splitter__background-color);
+    border: 1px solid var(--border-color);
     border-radius: .25rem;
     padding: 5px;
 }
@@ -61,13 +63,14 @@
     align-items: center;
 }
 
+/* Hidden until there is a context by the view (setVisible), not here: a display: none rule here
+   once kept it hidden for good, as showing it only clears the inline style */
 .askStroomAiViewImpl-contextChip {
-    display: none;
     font-size: 0.75rem;
     line-height: 1;
     padding: 3px 8px;
     border-radius: 10px;
-    background-color: var(--control__border-color);
+    background-color: var(--button-contained__background-color);
     color: var(--control__text-color);
     white-space: nowrap;
     align-self: center;
@@ -284,15 +287,17 @@
     opacity: 0;
 }
 
-.ai-message:hover > .ai-message-footer .ai-message-delete {
+.ai-message:hover > .ai-message-footer .ai-message-delete,
+/* Keyboard users can tab to it, so it shows when it or its message has focus */
+.ai-message:focus-within > .ai-message-footer .ai-message-delete {
     opacity: 1;
 }
 
-.ai-message-delete .face {
+.ai-message-delete .toolbar-button__icon {
     color: var(--control__text-color--disabled);
 }
 
-.ai-message-delete:hover .face {
+.ai-message-delete:hover .toolbar-button__icon {
     color: var(--icon-colour__red);
 }
 
@@ -300,6 +305,6 @@
     cursor: default !important;
 }
 
-.ai-attachment-status-icon .face {
+.ai-attachment-status-icon .toolbar-button__icon {
     color: var(--icon-colour__green);
 }

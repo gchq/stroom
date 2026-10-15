@@ -32,6 +32,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
@@ -101,6 +102,8 @@ public class MainPresenter
             taskCount--;
             updateSpinnerState();
         });
+        // Show the menus that widgets with no event bus ask for (e.g. a split pane's splitter)
+        registerHandler(MenuRequest.relay(this));
         registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
                     final ExtendedUiConfig uiConfig = event.getProperties();

@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:e="urn:import:stroom.editor.client.view">
-    <g:FlowPanel styleName="SingleLineEditorViewImpl max dock-container">
-        <g:SimplePanel ui:field="content" styleName="codeEditor-text dock-max"/>
+    <g:FlowPanel styleName="code-editor max dock-container">
+        <g:SimplePanel ui:field="content" styleName="code-editor__text dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder>

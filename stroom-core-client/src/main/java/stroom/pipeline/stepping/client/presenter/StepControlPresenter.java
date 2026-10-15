@@ -100,12 +100,21 @@ public class StepControlPresenter
         return getView().isEnabled(stepType);
     }
 
+    /// Disables every step button, as there is nothing to step until a stream has been chosen.
     public void initButtons() {
         getView().setStepFirstEnabled(false);
         getView().setStepBackwardEnabled(false);
         getView().setStepForwardEnabled(false);
         getView().setStepLastEnabled(false);
-        getView().setStepRefreshEnabled(true);
+        getView().setStepRefreshEnabled(false);
+    }
+
+    /// Sets whether the refresh button is enabled. It is enabled once a stream has been chosen to
+    /// step through.
+    ///
+    /// @param enabled True to enable the refresh button.
+    public void setRefreshEnabled(final boolean enabled) {
+        getView().setStepRefreshEnabled(enabled);
     }
 
     public void setEnabledButtons(final StepType stepType,

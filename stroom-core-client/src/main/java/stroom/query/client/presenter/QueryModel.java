@@ -55,6 +55,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+// Part of adding the SQL Temporal Store, which upstream does not have. FloorMap stores its
+// facts and events in one, so dropping these hunks breaks reference-data lookup, XSLT lookup
+// or the store's Data tab depending on the file. Upstream's version must not simply win here.
 public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
@@ -77,6 +81,12 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     private SourceType sourceType = SourceType.QUERY_UI;
     private Set<String> currentHighlights;
     private final Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
+
+    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+    // No timeout setter exists upstream, so every search is built with QuerySearchRequest's
+    // 1-second default. The floor map's baseline read is a whole-store scan that routinely
+    // exceeds that; losing this field silently returns it to late results and poll churn.
+    private Long timeout;
 
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
@@ -102,6 +112,22 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     public void init(final DocRef queryDocRef) {
         this.queryDocRef = queryDocRef;
+    }
+
+    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. See the `timeout` field.
+    /**
+     * How long the server waits for a search before responding, in milliseconds.
+     *
+     * <p>Unset leaves {@code QuerySearchRequest}'s 1-second default. That is not a data-loss
+     * risk — a non-incremental search past its timeout returns {@code complete=false}, polling
+     * continues, and the rows arrive when the search finishes — but it costs a round trip per
+     * second per slow search, and {@code SearchResponseMapper} strips the timeout message, so the
+     * lateness is invisible. Raise it for a query known to be slow.</p>
+     *
+     * @param timeout milliseconds, or {@code null} for the request default
+     */
+    public void setTimeout(final Long timeout) {
+        this.timeout = timeout;
     }
 
     /**
@@ -172,7 +198,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .additionalQueryExpression(additionalQueryExpression)
                 .build();
 
-        currentSearch = QuerySearchRequest
+        final QuerySearchRequest.Builder searchBuilder = QuerySearchRequest
                 .builder()
                 .searchRequestSource(
                         SearchRequestSource
@@ -185,8 +211,14 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .query(query)
                 .queryContext(currentQueryContext)
                 .incremental(incremental)
-                .queryTablePreferences(queryTablePreferencesSupplier.get())
-                .build();
+                .queryTablePreferences(queryTablePreferencesSupplier.get());
+
+        // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. See the `timeout` field.
+        if (timeout != null) {
+            searchBuilder.timeout(timeout);
+        }
+
+        currentSearch = searchBuilder.build();
 //            }
 //        }
 //
@@ -241,6 +273,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         if (resultComponent == null) {
             return false;
         }
+        // The search this is for, to tell whether it is still current when the reply comes
+        final QuerySearchRequest searchAtStart = currentSearch;
 
         final QuerySearchRequest request = currentSearch
                 .copy()
@@ -271,7 +305,10 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 })
                 .onFailure(throwable -> {
                     try {
-                        if (queryKey.equals(currentQueryKey)) {
+                        // A forced new search (no query key) reports if its search is still current
+                        if (queryKey == null
+                                ? searchAtStart == currentSearch
+                                : queryKey.equals(currentQueryKey)) {
                             setErrors(Collections.singletonList(
                                     new ErrorMessage(Severity.ERROR, throwable.toString())));
                         }
@@ -333,6 +370,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                                     update(response);
                                 } catch (final RuntimeException e) {
                                     GWT.log(e.getMessage());
+                                    // update() is what sees the search finish, so stop it here
+                                    endSearchWithError(e.toString());
                                 }
 
                                 if (polling) {
@@ -350,25 +389,16 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                                 // If we have completed search then stop the task spinner.
                                 polling = false;
                             }
-                        } else {
+                        } else if (response != null) {
+                            // A reply to an earlier search (a finished one replies with null)
                             deleteStore(response.getNode(), response.getQueryKey(), DestroyReason.NO_LONGER_NEEDED);
                         }
                     })
                     .onFailure(throwable -> {
-//                        GWT.log(throwable.getMessage());
-
-                        try {
-                            if (search == currentSearch) {
-                                setErrors(Collections.singletonList(
-                                        new ErrorMessage(Severity.ERROR, throwable.toString())));
-                                polling = false;
-                            }
-                        } catch (final RuntimeException e) {
-                            GWT.log(e.getMessage());
-                        }
-
-                        if (polling) {
-                            poll(false);
+                        // A failed request ends the search it was for. A failure for an earlier
+                        // search is ignored: the current search has its own polling.
+                        if (search == currentSearch) {
+                            endSearchWithError(throwable.toString());
                         }
                     })
                     .taskMonitorFactory(taskMonitorFactory)
@@ -414,6 +444,19 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
             // If we have completed search then stop the task spinner.
             polling = false;
         }
+    }
+
+    // Ends a search that failed, or whose results couldn't be handled: stops polling (else the
+    // search would never be seen to finish, and the client would poll it for ever), stops the search
+    // on the server (as no one will poll it again; its results are kept, as for stop()), tells the
+    // components the search has ended, says what went wrong and stops showing it as running (which
+    // lets an auto refresh be scheduled). The error is set first, as a completed search's are.
+    private void endSearchWithError(final String message) {
+        polling = false;
+        terminate(currentNode, currentQueryKey);
+        resultComponents.values().forEach(ResultComponent::endSearch);
+        setErrors(Collections.singletonList(new ErrorMessage(Severity.ERROR, message)));
+        setSearching(false);
     }
 
     private void setErrors(final List<ErrorMessage> errors) {

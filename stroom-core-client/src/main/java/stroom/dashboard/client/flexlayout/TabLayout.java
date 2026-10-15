@@ -20,7 +20,8 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.TabManager;
 import stroom.item.client.EventBinder;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
@@ -41,7 +42,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private final FlexLayout flexLayout;
     private final TabManager tabManager;
     private final FlexLayoutChangeHandler changeHandler;
-    private final InlineSvgButton settings;
+    private final ToolbarButton settings;
     private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final EventBinder eventBinder = new EventBinder() {
@@ -106,15 +107,13 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         panel.add(contentOuter);
         initWidget(panel);
 
-        final FlowPanel buttons = new FlowPanel();
-        buttons.setStyleName("dock-min button-container icon-button-group tabLayout-buttons icon-colour__grey");
+        // Shown when the pane is hovered over or has the focus (tabLayout-buttons)
+        final Toolbar buttons = new Toolbar("Pane actions");
+        buttons.addStyleName("dock-min tabLayout-buttons icon-colour__grey");
         barOuter.add(buttons);
 
-        settings = new InlineSvgButton();
+        settings = buttons.button(SvgImage.ELLIPSES_VERTICAL, "Settings", null);
         settings.addStyleName("tabLayout-settingsButton");
-        settings.setSvg(SvgImage.ELLIPSES_VERTICAL);
-        settings.setTitle("Settings");
-        buttons.add(settings);
 
         final LayerContainerImpl layerContainerImpl = new LayerContainerImpl();
         layerContainerImpl.setFade(true);
@@ -122,6 +121,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         contentInner.add(layerContainerImpl);
 
         layerContainer = layerContainerImpl;
+        tabBar.setTabPanel(layerContainerImpl.getElement());
 
         bind();
     }

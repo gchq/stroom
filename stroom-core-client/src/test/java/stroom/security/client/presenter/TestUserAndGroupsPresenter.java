@@ -19,14 +19,12 @@ package stroom.security.client.presenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.UserRef;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +34,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -44,6 +44,7 @@ import java.util.function.Function;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
@@ -54,6 +55,7 @@ import static org.mockito.Mockito.when;
 
 class TestUserAndGroupsPresenter {
 
+    private final Map<ToolbarButton, Runnable> actions = new HashMap<>();
     private MockedStatic<GWT> gwt;
     private UserAndGroupsPresenter presenter;
     private UserListPresenter users;
@@ -61,10 +63,10 @@ class TestUserAndGroupsPresenter {
     private UserListPresenter children;
     private UserRefPopupPresenter popup;
     private RestFactory restFactory;
-    private ButtonView addParent;
-    private ButtonView removeParent;
-    private ButtonView addChild;
-    private ButtonView removeChild;
+    private ToolbarButton addParent;
+    private ToolbarButton removeParent;
+    private ToolbarButton addChild;
+    private ToolbarButton removeChild;
 
     @BeforeEach
     void setUp() {
@@ -76,13 +78,14 @@ class TestUserAndGroupsPresenter {
         when(users.getSelectionModel().getSelected()).thenReturn(null);
         when(parents.getSelectionModel().getSelected()).thenReturn(null);
         when(children.getSelectionModel().getSelected()).thenReturn(null);
-        when(users.addButton(any())).thenAnswer(call -> mock(ButtonView.class));
-        addParent = mock(ButtonView.class);
-        removeParent = mock(ButtonView.class);
-        addChild = mock(ButtonView.class);
-        removeChild = mock(ButtonView.class);
-        when(parents.addButton(any())).thenReturn(addParent, removeParent);
-        when(children.addButton(any())).thenReturn(addChild, removeChild);
+        addParent = mock(ToolbarButton.class);
+        removeParent = mock(ToolbarButton.class);
+        addChild = mock(ToolbarButton.class);
+        removeChild = mock(ToolbarButton.class);
+        stubButton(parents, SvgImage.ADD, addParent);
+        stubButton(parents, SvgImage.REMOVE, removeParent);
+        stubButton(children, SvgImage.ADD, addChild);
+        stubButton(children, SvgImage.REMOVE, removeChild);
         popup = mock(UserRefPopupPresenter.class);
         restFactory = mock(RestFactory.class, RETURNS_DEEP_STUBS);
         final List<UserListPresenter> lists = List.of(users, parents, children);
@@ -193,12 +196,18 @@ class TestUserAndGroupsPresenter {
         }).when(popup).show(anyString(), any());
     }
 
-    private void click(final ButtonView button) {
-        final ArgumentCaptor<ClickHandler> handler = ArgumentCaptor.forClass(ClickHandler.class);
-        verify(button).addClickHandler(handler.capture());
-        final ClickEvent event = mock(ClickEvent.class);
-        when(event.getNativeButton()).thenReturn(NativeEvent.BUTTON_LEFT);
-        handler.getValue().onClick(event);
+    private void stubButton(final UserListPresenter list,
+                            final SvgImage icon,
+                            final ToolbarButton button) {
+        when(list.getToolbar().button(eq(icon), anyString(), any(Runnable.class))).thenAnswer(call -> {
+            actions.put(button, call.getArgument(2));
+            return button;
+        });
+    }
+
+    private void click(final ToolbarButton button) {
+        assertThat(actions).containsKey(button);
+        actions.get(button).run();
     }
 
     private UserResource executeRequest() {

@@ -20,6 +20,7 @@ import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerUiHandlers;
 import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -66,6 +67,16 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     @Override
     public void setList(final Widget list) {
         listContainer.setWidget(list);
+    }
+
+    @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        nameFilter.setContextHandler(contextHandler);
     }
 
     @Override

@@ -20,6 +20,7 @@ import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsProxy;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -43,8 +44,9 @@ public class RecentItemsPresenter
                                 final FindView view,
                                 final RecentItemsProxy proxy,
                                 final FindDocResultListPresenter findResultListPresenter,
-                                final RecentItems recentItems) {
-        super(eventBus, view, proxy, findResultListPresenter);
+                                final RecentItems recentItems,
+                                final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
+        super(eventBus, view, proxy, findResultListPresenter, quickFilterContextHandlerFactory);
         this.recentItems = recentItems;
     }
 

@@ -13,6 +13,55 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.7] - 2026-10-14
+
+* Feature **#5834** : Enterprise Floor Mapping
+
+* Build : Bumps org.yaml:snakeyaml from 2.6 to 2.7 in the build script.
+
+* Dependency : Bumps poi from 5.4.1 to 5.5.1.
+
+* Dependency : Bumps software.amazon.awssdk.crt:aws-crt from 0.47.0 to 0.48.5.
+
+* Dependency : Bumps jakarta.xml.bind:jakarta.xml.bind-api from 4.0.2 to 4.0.5.
+
+* Dependency : Uplift lucene from 10.3.2 to 10.5.1.
+
+* Bug : Fix pooled byte buffer resource closure.
+
+* Bug : Fix more issues with failure handling during S3 event consumption.
+
+
+## [v7.14-beta.6] - 2026-10-13
+
+* Dependency : Uplift org.apache.commons:commons-fileupload2-jakarta-servlet6 from 2.0.0-M4 to 2.0.0-M5.
+
+* Dependency : Uplift Jooq to v3.21.9.
+
+* Build : Bump com.gradle.develocity from 4.2.2 to 4.4.1.
+
+* Dependency : Bumps com.openai:openai-java from 4.3.0 to 4.69.3.
+
+* Build : Uplift gradle to 9.8.0.
+
+* Dependency : Uplift docker image base to eclipse-temurin:25.0.4.1_1-jdk-alpine-3.24.
+
+* Build : Change ERD dockerfile to use debian:trixie-slim, uplift plant_erd to v0.4.12.
+
+* Build : Uplift PlantUML to v1.2026.8 and fix SVG generation script.
+
+* Bug **#5835** : Stop logging an ERROR on every run of the Table Builder analytic job for each rule with an empty or broken query. A WARN is now only logged if such a rule is preventing an existing store from being deleted.
+
+* Bug **#5819** : Replace the Lucene 8.11.4 `lucene-analyzers-common` dependency with `lucene-analysis-common:10.3.2` so that it matches the version of Lucene core.
+
+* Bug **#5667** : Fix scheduled analytic, report and data generation execution needlessly using single-threaded work queues. Executions now run sequentially on the calling thread.
+
+* Build : Split up java CI build to reduce memory use and to make checkstyle fail fast.
+
+* Dependency : Add missing jackson annotation dependencies.
+
+* Bug **#5844** : Fix termination handling for S3 event notifications poll job. Also stop it spamming the logs when there is a problem. Added the property `sleepDurationPostFailure` to control sleep time after a failure.
+
 * Bug **#5813** : Fix missing entity event handlers.
 
 
@@ -2635,7 +2684,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.7...HEAD
+[v7.14-beta.7]: https://github.com/gchq/stroom/compare/v7.14-beta.6...v7.14-beta.7
+[v7.14-beta.6]: https://github.com/gchq/stroom/compare/v7.14-beta.5...v7.14-beta.6
 [v7.14-beta.5]: https://github.com/gchq/stroom/compare/v7.14-beta.4...v7.14-beta.5
 [v7.14-beta.4]: https://github.com/gchq/stroom/compare/v7.14-beta.3...v7.14-beta.4
 [v7.14-beta.3]: https://github.com/gchq/stroom/compare/v7.14-beta.2...v7.14-beta.3

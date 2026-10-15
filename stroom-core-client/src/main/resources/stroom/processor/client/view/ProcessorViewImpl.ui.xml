@@ -1,27 +1,22 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client">
     <g:SimplePanel addStyleNames="max">
-        <g:ThinSplitLayoutPanel vSplits="0.5" styleName="max">
-            <g:north size="200">
-                <g:SimplePanel ui:field="processorList"
-                               addStyleNames="max dashboard-panel"/>
-            </g:north>
-            <g:center>
-                <g:ThinSplitLayoutPanel vSplits="0.5" addStyleNames="max">
-                    <g:west size="600">
-                        <g:MaxScrollPanel addStyleNames="max dashboard-panel">
-                            <g:SimplePanel ui:field="info"/>
-                        </g:MaxScrollPanel>
-                    </g:west>
-                    <g:center>
-                        <g:MaxScrollPanel addStyleNames="max dashboard-panel">
-                            <g:SimplePanel ui:field="details"/>
-                        </g:MaxScrollPanel>
-                    </g:center>
-                </g:ThinSplitLayoutPanel>
-            </g:center>
-        </g:ThinSplitLayoutPanel>
+        <split:SplitPane vertical="true" thin="true" sizes="50%, *"
+                         names="Processors, Settings" addStyleNames="max">
+            <g:SimplePanel ui:field="processorList"
+                           addStyleNames="max dashboard-panel"/>
+            <split:SplitPane thin="true" sizes="600px, *"
+                             names="Info, Details" addStyleNames="max">
+                <g:MaxScrollPanel addStyleNames="max dashboard-panel">
+                    <g:SimplePanel ui:field="info"/>
+                </g:MaxScrollPanel>
+                <g:MaxScrollPanel addStyleNames="max dashboard-panel">
+                    <g:SimplePanel ui:field="details"/>
+                </g:MaxScrollPanel>
+            </split:SplitPane>
+        </split:SplitPane>
     </g:SimplePanel>
 </ui:UiBinder>
 

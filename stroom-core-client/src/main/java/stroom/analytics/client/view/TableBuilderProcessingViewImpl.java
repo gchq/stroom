@@ -95,7 +95,9 @@ public class TableBuilderProcessingViewImpl
         this.node.clear();
         this.node.addItems(nodes);
         if (selectedNode == null) {
+            //noinspection SizeReplaceableByIsEmpty
             if (nodes.size() > 0) {
+                //noinspection SequencedCollectionMethodCanBeUsed
                 this.node.setValue(nodes.get(0));
             }
         } else {
@@ -164,6 +166,16 @@ public class TableBuilderProcessingViewImpl
     @Override
     public void setInfo(final SafeHtml info) {
         this.info.setWidget(new HTML(info));
+    }
+
+    @Override
+    public void setReadOnly(final boolean readOnly) {
+        enabled.setReadOnly(readOnly);
+        node.setReadOnly(readOnly);
+        minMetaCreateTimeMs.setReadOnly(readOnly);
+        maxMetaCreateTimeMs.setReadOnly(readOnly);
+        timeToWaitForData.setReadOnly(readOnly);
+        dataRetention.setReadOnly(readOnly);
     }
 
     @UiHandler("enabled")

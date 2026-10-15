@@ -144,6 +144,19 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
+// Local change: *creating* a document routes through
+// plugin.getInitialisationHandler().showInitialisationDialog(...) rather than calling
+// plugin.open(...) directly, so a document type can require configuration before it is first
+// opened. The sole call site is in fireShowCreateDocumentDialogEvent below, and it is what makes
+// DocumentPlugin.getInitialisationHandler() do anything at all; FloorMap uses it to prompt for
+// its Facts/Events stores. Upstream calls open() directly - restoring that silently disables the
+// dialog for every document type that relies on it.
+//
+// This banner said "opening a document" until 2026-09-04, which was wrong and dangerous to act on:
+// the handler's cancel path DELETES the document (see DocInitialisationHandler), so wiring this
+// into the open path would make cancelling the dialog destroy an existing document.
+@SuppressWarnings("SequencedCollectionMethodCanBeUsed")
 @Singleton
 public class DocumentPluginEventManager extends Plugin {
 
@@ -425,9 +438,9 @@ public class DocumentPluginEventManager extends Plugin {
                         .create(EXPLORER_RESOURCE)
                         .method(res -> res.fetchDeleteConfirmation(
                                 new DeleteConfirmationRequest(event.getDocRefs())))
-                        .onSuccess(info -> confirmDelete(event.getDocRefs(), info, action))
+                        .onSuccess(info -> confirmDelete(event.getDocRefs(), info, action, event.getCallback()))
                         .onFailure(err -> confirmDeleteAfterLookupError(
-                                event.getDocRefs(), err.getMessage(), action))
+                                event.getDocRefs(), err.getMessage(), action, event.getCallback()))
                         .taskMonitorFactory(explorerListener)
                         .exec();
             } else {
@@ -773,13 +786,10 @@ public class DocumentPluginEventManager extends Plugin {
      */
     private void confirmDelete(final List<DocRef> docRefs,
                                final DeleteConfirmation info,
-                               final Runnable action) {
+                               final Runnable action,
+                               final ResultCallback resultCallback) {
         final int cnt = NullSafe.size(docRefs);
-        final ConfirmCallback callback = ok -> {
-            if (ok) {
-                action.run();
-            }
-        };
+        final ConfirmCallback callback = createDeleteConfirmCallback(action, resultCallback);
 
         if (info == null || info.isEmpty()) {
             final String msg = cnt > 1
@@ -929,7 +939,8 @@ public class DocumentPluginEventManager extends Plugin {
      */
     private void confirmDeleteAfterLookupError(final List<DocRef> docRefs,
                                                final String errorMessage,
-                                               final Runnable action) {
+                                               final Runnable action,
+                                               final ResultCallback resultCallback) {
         final int cnt = NullSafe.size(docRefs);
         final String msg = cnt > 1
                 ? "Unable to check what would be affected by deleting these " + cnt + " items. Are you "
@@ -946,11 +957,20 @@ public class DocumentPluginEventManager extends Plugin {
                 DocumentPluginEventManager.this,
                 SafeHtmlUtil.getSafeHtml(msg),
                 detail.toSafeHtml(),
-                ok -> {
-                    if (ok) {
-                        action.run();
-                    }
-                });
+                createDeleteConfirmCallback(action, resultCallback));
+    }
+
+    /// Runs the delete if the user agrees. If they cancel, the caller's callback (if any) is told the
+    /// delete didn't happen, so anything waiting on the result isn't left waiting.
+    private ConfirmCallback createDeleteConfirmCallback(final Runnable action,
+                                                        final ResultCallback resultCallback) {
+        return ok -> {
+            if (ok) {
+                action.run();
+            } else if (resultCallback != null) {
+                resultCallback.onResult(false);
+            }
+        };
     }
 
     private void setAsFavourite(final DocRef docRef,
@@ -1286,7 +1306,17 @@ public class DocumentPluginEventManager extends Plugin {
             // Open the document in the content pane.
             final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(docRef.getType());
             if (plugin != null) {
-                plugin.open(docRef, true, false, new DefaultTaskMonitorFactory(this));
+                final TaskMonitorFactory tmf = new DefaultTaskMonitorFactory(this);
+                plugin.getInitialisationHandler().showInitialisationDialog(
+                        docRef,
+                        proceed -> {
+                            if (proceed) {
+                                plugin.open(docRef, true, false, tmf);
+                            }
+                            // If !proceed, the handler has already deleted the doc
+                            // and fired RefreshExplorerTreeEvent.
+                        },
+                        tmf);
             }
         };
 

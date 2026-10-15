@@ -124,17 +124,17 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        classification.setEnabled(!readOnly);
-        dataEncoding.setEnabled(!readOnly);
-        contextEncoding.setEnabled(!readOnly);
-        receivedType.setEnabled(!readOnly);
-        feedStatus.setEnabled(!readOnly);
-        reference.setEnabled(!readOnly);
-        volumeGroup.setEnabled(!readOnly);
-        dataFormat.setEnabled(!readOnly);
-        contextFormat.setEnabled(!readOnly);
-        schema.setEnabled(!readOnly);
-        schemaVersion.setEnabled(!readOnly);
+        classification.setReadOnly(readOnly);
+        dataEncoding.setReadOnly(readOnly);
+        contextEncoding.setReadOnly(readOnly);
+        receivedType.setReadOnly(readOnly);
+        feedStatus.setReadOnly(readOnly);
+        reference.setReadOnly(readOnly);
+        volumeGroup.setReadOnly(readOnly);
+        dataFormat.setReadOnly(readOnly);
+        contextFormat.setReadOnly(readOnly);
+        schema.setReadOnly(readOnly);
+        schemaVersion.setReadOnly(readOnly);
     }
 
 

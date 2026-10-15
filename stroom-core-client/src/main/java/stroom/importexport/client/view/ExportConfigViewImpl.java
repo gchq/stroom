@@ -18,13 +18,14 @@ package stroom.importexport.client.view;
 
 import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
 import stroom.importexport.client.presenter.ExportConfigUiHandlers;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -41,7 +42,7 @@ public class ExportConfigViewImpl
     @UiField
     MaxScrollPanel tree;
     @UiField
-    FlowPanel buttonContainer;
+    Toolbar toolbar;
 
     private boolean hasActiveFilter = false;
 
@@ -66,8 +67,18 @@ public class ExportConfigViewImpl
     }
 
     @Override
-    public FlowPanel getButtonContainer() {
-        return buttonContainer;
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        nameFilter.setContextHandler(contextHandler);
+    }
+
+    @Override
+    public Toolbar getToolbar() {
+        return toolbar;
     }
 
     @UiHandler("nameFilter")

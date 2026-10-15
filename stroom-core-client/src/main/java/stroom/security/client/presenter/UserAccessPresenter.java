@@ -25,12 +25,10 @@ import stroom.security.client.event.OpenUserEvent;
 import stroom.security.client.presenter.UserAccessPresenter.UserAccessView;
 import stroom.security.shared.UserAccessResource;
 import stroom.security.shared.UserAccessRow;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -83,13 +81,18 @@ public class UserAccessPresenter
         // straight back in. The confirmation said so, but only once it had been clicked, which is too late
         // for an administrator scanning the toolbar for the containment action. "Revoke" is kept for the
         // tokens, where it is literally true - those never work again.
-        revokeButton = listPresenter.addButton(
-                SvgPresets.DELETE.title("End this user's sessions and revoke their tokens"));
+        listPresenter.getToolbar().setName("User access actions");
+        revokeButton = listPresenter.getToolbar().button(
+                SvgImage.DELETE,
+                "End this user's sessions and revoke their tokens",
+                this::revokeSelected);
+        revokeButton.setEnabled(false);
         // Revoking does not stop someone coming back, and under an external identity provider it barely
         // slows them down. Disabling is what does, so it belongs next to it rather than on a screen an
         // administrator has to know to go and find.
-        openUserButton = listPresenter.addButton(
-                SvgPresets.EDIT.title("Open this user, where they can be disabled"));
+        openUserButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Open this user, where they can be disabled",
+                this::openSelectedUser);
+        openUserButton.setEnabled(false);
 
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
@@ -101,16 +104,6 @@ public class UserAccessPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(revokeButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                revokeSelected();
-            }
-        }));
-        registerHandler(openUserButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                openSelectedUser();
-            }
-        }));
         registerHandler(getSelectionModel().addSelectionHandler(e -> {
             setButtonStates();
             showSessionsForSelectedUser();

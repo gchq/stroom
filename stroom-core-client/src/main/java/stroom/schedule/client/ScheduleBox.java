@@ -24,6 +24,7 @@ import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
+import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -49,6 +50,8 @@ public class ScheduleBox
             .type(ScheduleType.CRON)
             .build();
     private SchedulePopup popup;
+    private boolean enabled = true;
+    private boolean readOnly;
     private ScheduleRestriction scheduleRestriction = new ScheduleRestriction(false, true, true);
 
     private Consumer<Consumer<ScheduleReferenceTime>> scheduleReferenceTimeConsumer = (consumer) ->
@@ -66,7 +69,7 @@ public class ScheduleBox
             }));
             registerHandler(textBox.addBlurHandler(event -> validate()));
             registerHandler(textBox.addFocusHandler(event ->
-                    textBox.getElement().removeClassName("invalid")));
+                    FieldValidity.setInvalid(textBox.getElement(), false)));
         }
     };
 
@@ -80,18 +83,19 @@ public class ScheduleBox
         final SchedulePopup popup = getSchedulePresenter();
         if (popup != null) {
             schedulePresenterProvider.get().validate(schedule, scheduleRestriction, scheduledTimes -> {
-                if (isEnabled() && (scheduledTimes == null || scheduledTimes.isError())) {
-                    textBox.getElement().addClassName("invalid");
+                if (isEnabled() && !isInstant() && (scheduledTimes == null || scheduledTimes.isError())) {
+                    FieldValidity.setInvalid(textBox.getElement(), true);
                 } else {
-                    textBox.getElement().removeClassName("invalid");
+                    FieldValidity.setInvalid(textBox.getElement(), false);
                 }
                 if (scheduledTimes != null && scheduledTimes.getSchedule() != null) {
                     value = scheduledTimes.getSchedule();
+                    updateReadOnly();
                 }
                 consumer.accept(scheduledTimes);
             });
         } else {
-            textBox.getElement().removeClassName("invalid");
+            FieldValidity.setInvalid(textBox.getElement(), false);
             consumer.accept(new ScheduledTimes(schedule, null,
                     "No schedule presenter has been configured"));
         }
@@ -123,6 +127,9 @@ public class ScheduleBox
     }
 
     private void showPopup() {
+        if (!enabled || readOnly) {
+            return;
+        }
         final SchedulePopup popup = getSchedulePresenter();
         if (popup != null) {
             value = value.copy().expression(textBox.getValue()).build();
@@ -161,13 +168,40 @@ public class ScheduleBox
         textBox.setName(name);
     }
 
+    /// Disables the whole box: the text and the icon that opens the schedule dialog.
+    ///
+    /// @param enabled Whether the schedule can be changed.
     public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
         textBox.setEnabled(enabled);
+        svgIconBox.setReadonly(!enabled || readOnly);
+        updateReadOnly();
         validate();
     }
 
+    /// Makes the schedule read only: it can be read, selected and copied, and stays in the tab
+    /// order, but can't be changed, and its dialog doesn't open. It looks like the normal field
+    /// with its value greyed.
+    ///
+    /// @param readOnly Whether the schedule is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        svgIconBox.setReadonly(!enabled || readOnly);
+        updateReadOnly();
+    }
+
     public boolean isEnabled() {
-        return textBox.isEnabled();
+        return enabled;
+    }
+
+    private boolean isInstant() {
+        return ScheduleType.INSTANT.equals(value.getType());
+    }
+
+    // An instant schedule has no expression to type, so the text is read-only, but it stays
+    // focusable and Enter (or the icon) still opens the dialog to change the type.
+    private void updateReadOnly() {
+        textBox.setReadOnly(readOnly || (enabled && isInstant()));
     }
 
     public Schedule getValue() {
@@ -186,6 +220,8 @@ public class ScheduleBox
             } else {
                 textBox.setValue("");
             }
+
+            updateReadOnly();
 
             if (fireEvents) {
                 ValueChangeEvent.fire(this, value);

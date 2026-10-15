@@ -16,7 +16,6 @@
 
 package stroom.index.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -35,13 +34,15 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.UpdateField;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.IndexFieldFields;
-import stroom.svg.client.SvgPresets;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -71,6 +72,7 @@ public class IndexFieldListPresenter
 
     private String filter;
     private DocRef docRef;
+    private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
     private boolean readOnly = true;
 
     @Inject
@@ -78,12 +80,14 @@ public class IndexFieldListPresenter
                                    final QuickFilterPageView view,
                                    final PagerView pagerView,
                                    final RestFactory restFactory,
-                                   final IndexFieldEditPresenter indexFieldEditPresenter) {
+                                   final IndexFieldEditPresenter indexFieldEditPresenter,
+                                   final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         view.setDataView(pagerView);
         view.setUiHandlers(this);
+        this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Index Fields");
@@ -92,39 +96,39 @@ public class IndexFieldListPresenter
 
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
-        newButton = pagerView.addButton(SvgPresets.NEW_ITEM);
-        editButton = pagerView.addButton(SvgPresets.EDIT);
-        removeButton = pagerView.addButton(SvgPresets.DELETE);
+        pagerView.getToolbar().setName("Field actions");
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New", this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit", this::onEditClicked);
+        editButton.setEnabled(false);
+        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete", this::onRemoveClicked);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
+    }
+
+    private void onNew() {
+        if (!readOnly) {
+            onAdd();
+        }
+    }
+
+    private void onEditClicked() {
+        if (!readOnly) {
+            onEdit();
+        }
+    }
+
+    private void onRemoveClicked() {
+        if (!readOnly) {
+            onRemove();
+        }
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onAdd();
-                }
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onEdit();
-                }
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onRemove();
-                }
-            }
-        }));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             if (!readOnly) {
                 enableButtons();
@@ -251,17 +255,22 @@ public class IndexFieldListPresenter
         indexFieldEditPresenter.show("New Field", e -> {
             if (e.isOk()) {
                 final IndexFieldImpl indexField = indexFieldEditPresenter.write();
-                restFactory
-                        .create(INDEX_RESOURCE)
-                        .method(res -> res.addField(new AddField(docRef, indexField)))
-                        .onSuccess(response -> {
-                            selectionModel.setSelected(indexField);
-                            refresh();
-                            e.hide();
-                        })
-                        .onFailure(new DefaultErrorHandler(this, e::reset))
-                        .taskMonitorFactory(pagerView)
-                        .exec();
+                if (indexField == null) {
+                    // Not valid: write() has said why, so let the dialog be used again
+                    e.reset();
+                } else {
+                    restFactory
+                            .create(INDEX_RESOURCE)
+                            .method(res -> res.addField(new AddField(docRef, indexField)))
+                            .onSuccess(response -> {
+                                selectionModel.setSelected(indexField);
+                                refresh();
+                                e.hide();
+                            })
+                            .onFailure(new DefaultErrorHandler(this, e::reset))
+                            .taskMonitorFactory(pagerView)
+                            .exec();
+                }
             } else {
                 e.hide();
             }
@@ -274,8 +283,11 @@ public class IndexFieldListPresenter
             indexFieldEditPresenter.read(existingField);
             indexFieldEditPresenter.show("Edit Field", e -> {
                 if (e.isOk()) {
-                    try {
-                        final IndexFieldImpl indexField = indexFieldEditPresenter.write();
+                    final IndexFieldImpl indexField = indexFieldEditPresenter.write();
+                    if (indexField == null) {
+                        // Not valid: write() has said why, so let the dialog be used again
+                        e.reset();
+                    } else {
                         restFactory
                                 .create(INDEX_RESOURCE)
                                 .method(res -> res.updateField(new UpdateField(
@@ -290,8 +302,6 @@ public class IndexFieldListPresenter
                                 .onFailure(new DefaultErrorHandler(this, e::reset))
                                 .taskMonitorFactory(pagerView)
                                 .exec();
-                    } catch (final RuntimeException ex) {
-                        AlertEvent.fireError(IndexFieldListPresenter.this, ex.getMessage(), e::reset);
                     }
                 } else {
                     e.hide();
@@ -330,6 +340,9 @@ public class IndexFieldListPresenter
     protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
         dataGrid.setTableName("Index '" + docRef.getName() + "' Fields");
         this.docRef = docRef;
+        // Field names are particular to one index, so its recent filters are too.
+        getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                IndexResource.QUICK_FILTER_CONTEXT.withDataSource(docRef), this, this));
         this.readOnly = readOnly;
         enableButtons();
         refresh();
@@ -357,7 +370,13 @@ public class IndexFieldListPresenter
                     restFactory
                             .create(INDEX_RESOURCE)
                             .method(res -> res.findFields(criteria))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(resultPage -> {
+                                // A rejected filter comes back as an empty page like any other, so
+                                // surface the reason on the filter box. See ResultPage.filterError.
+                                getView().setFilterError(
+                                        NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                                dataConsumer.accept(resultPage);
+                            })
                             .onFailure(errorHandler)
                             .taskMonitorFactory(pagerView)
                             .exec();

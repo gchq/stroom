@@ -38,6 +38,8 @@ import java.util.function.Consumer;
 public class CustomFileUpload extends Composite {
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    private static final FileUploadTransport DEFAULT_TRANSPORT = FileUploadSubmitter::submit;
+    private static FileUploadTransport uploadTransport = DEFAULT_TRANSPORT;
     private final Widget widget;
 
     @UiField
@@ -61,8 +63,12 @@ public class CustomFileUpload extends Composite {
         return widget;
     }
 
+    /// Gets the name of the chosen file, without the (fake) path that browsers give a file input's
+    /// value, e.g. `stream.txt` for `C:\fakepath\stream.txt`.
+    ///
+    /// @return The name of the chosen file, or an empty string if no file has been chosen.
     public String getFilename() {
-        return fileUpload.getFilename();
+        return FileUploadUtil.getFileName(fileUpload.getFilename());
     }
 
     /**
@@ -101,9 +107,20 @@ public class CustomFileUpload extends Composite {
     }
 
     public void submit() {
-        // Upload via XMLHttpRequest rather than a native form submission so we can attach the
-        // X-CSRF header that the server requires for session-authenticated requests.
-        FileUploadSubmitter.submit(actionUrl, fileUpload.getElement(), resultHandler);
+        // By default this uploads via XMLHttpRequest rather than a native form submission so we
+        // can attach the X-CSRF header that the server requires for session-authenticated requests.
+        resultHandler.onUploadStart();
+        uploadTransport.upload(actionUrl, fileUpload.getElement(), resultHandler);
+    }
+
+    /// Sets how every [CustomFileUpload] sends its file, e.g. to fake uploads in tests.
+    ///
+    /// @param transport The transport, or null for Stroom's default, which uploads the file with
+    ///                  an `XMLHttpRequest`.
+    public static void setUploadTransport(final FileUploadTransport transport) {
+        uploadTransport = transport != null
+                ? transport
+                : DEFAULT_TRANSPORT;
     }
 
     public void focus() {
@@ -117,18 +134,7 @@ public class CustomFileUpload extends Composite {
 
     @UiHandler("fileUpload")
     void onFileUpload(final ChangeEvent e) {
-        String name = fileUpload.getFilename();
-        if (name != null) {
-            int index = name.lastIndexOf("/");
-            if (index != -1) {
-                name = name.substring(index + 1);
-            }
-            index = name.lastIndexOf("\\");
-            if (index != -1) {
-                name = name.substring(index + 1);
-            }
-        }
-        fileName.setText(name);
+        fileName.setText(getFilename());
     }
 
     public interface Binder extends UiBinder<Widget, CustomFileUpload> {

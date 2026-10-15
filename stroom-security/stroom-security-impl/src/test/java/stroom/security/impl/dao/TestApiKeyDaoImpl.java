@@ -16,7 +16,6 @@
 
 package stroom.security.impl.dao;
 
-import stroom.query.api.ExpressionOperator;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
@@ -24,11 +23,9 @@ import stroom.security.impl.apikey.ApiKeyDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.impl.db.SecurityDbConnProvider;
 import stroom.security.impl.db.SecurityDbModule;
-import stroom.security.impl.db.jooq.tables.ApiKey;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -181,14 +178,10 @@ class TestApiKeyDaoImpl {
 
     @Test
     void testFind_withFilter() {
-        final ExpressionOperator expr = QuickFilterExpressionParser.parse(
-                "\"user1 key 3 inv\"",
-                FindApiKeyCriteria.DEFAULT_FIELDS,
-                FindApiKeyCriteria.ALL_FIELDs_MAP);
-
+        // The filter is now text on the wire, parsed by the DAO.
         final FindApiKeyCriteria criteria = FindApiKeyCriteria.builder()
                 .owner(user1ApiKey3.getOwner())
-                .expression(expr)
+                .quickFilter("\"user1 key 3 inv\"")
                 .build();
 
         final ResultPage<HashedApiKey> resultPage = apiKeyDao.find(criteria);
@@ -211,12 +204,8 @@ class TestApiKeyDaoImpl {
 
     @Test
     void testFind_withFilter2() {
-        final ExpressionOperator expr = QuickFilterExpressionParser.parse(
-                "\"key 1\"",
-                FindApiKeyCriteria.DEFAULT_FIELDS,
-                FindApiKeyCriteria.ALL_FIELDs_MAP);
         final FindApiKeyCriteria criteria = FindApiKeyCriteria.builder()
-                .expression(expr)
+                .quickFilter("\"key 1\"")
                 .build();
 
         final ResultPage<HashedApiKey> resultPage = apiKeyDao.find(criteria);

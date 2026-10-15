@@ -3,13 +3,17 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="viewSettingsDataSource" label="Data Source">
+        <form:FormGroup identity="viewSettingsDataSource" label="Data Source"
+                        helpText="Data source the view queries, such as an index or a searchable store. Only data sources you have Use permission on are listed.">
             <g:SimplePanel ui:field="dataSource" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="viewSettingsPipeline" label="Pipeline">
+        <form:FormGroup identity="viewSettingsPipeline" label="Pipeline"
+                        helpText="Pipeline used to extract field values from the original events when the view is queried.">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="viewSettingsFilterExpression" label="Meta Filter" addStyleNames="dock-max">
+        <form:FormGroup identity="viewSettingsFilterExpression" label="Meta Filter" addStyleNames="dock-max"
+                        helpText="Expression that limits which streams are processed when the view is used by an analytic rule, based on stream (meta) fields such as Feed or Type."
+                        screenReaderText="Limits which streams analytic rules process.">
             <g:SimplePanel ui:field="expression" styleName="max default-min-sizes"/>
         </form:FormGroup>
     </g:FlowPanel>

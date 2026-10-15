@@ -21,6 +21,7 @@ import stroom.item.client.SelectionBox;
 import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.widget.customdatebox.client.MomentJs;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -81,6 +82,9 @@ public final class TimePreferencesViewImpl
     @Inject
     public TimePreferencesViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Named by the part they are, as the Time Zone Offset label names the pair
+        AccessibleName.set(timeZoneOffsetHours, "Hours");
+        AccessibleName.set(timeZoneOffsetMinutes, "Minutes");
         format.addItems(STANDARD_FORMATS);
 
         timeZoneUse.addItem(Use.LOCAL);
@@ -131,7 +135,9 @@ public final class TimePreferencesViewImpl
     @Override
     public void setPattern(final String pattern) {
         String text = pattern;
+        //noinspection SizeReplaceableByIsEmpty
         if (text == null || text.trim().length() == 0) {
+            //noinspection SequencedCollectionMethodCanBeUsed
             text = STANDARD_FORMATS.get(0);
         }
 

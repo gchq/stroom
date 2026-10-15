@@ -32,10 +32,12 @@
 
 package stroom.widget.tickbox.client.view;
 
+import stroom.util.shared.NullSafe;
 import stroom.widget.form.client.FormLabel;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.WhiteSpace;
@@ -110,6 +112,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     final FormLabel label = new FormLabel();
     private LeafValueEditor<Boolean> editor;
     private boolean valueChangeHandlerInitialized;
+    private boolean readOnly;
 
     public CustomCheckBox() {
         super(DOM.createDiv());
@@ -130,9 +133,11 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
 
         getElement().appendChild(label.getElement());
 
-//        String uid = DOM.createUniqueId();
-//        inputElem.setPropertyString("id", uid);
-//        labelElem.setHtmlFor(uid);
+        // The label is for the input, so that it names the tick box and clicking it toggles the tick,
+        // until setIdentity gives them an id of their own
+        final String uid = DOM.createUniqueId();
+        inputElem.setId(uid);
+        label.setIdentity(uid);
 
         directionalTextHelper = new DirectionalTextHelper(checkmarkElem, true);
 
@@ -142,6 +147,41 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
         // that this call is made, inputElem has not been created. So, we have
         // to call setTabIndex again, once inputElem has been created.
         setTabIndex(0);
+
+        // So that a read-only tick box can undo a click before the browser shows it
+        sinkEvents(Event.ONCLICK);
+    }
+
+    /// Makes the tick read only: the tick box can be focused and read, but clicking it, its
+    /// label or pressing Space doesn't change it. It looks like the normal tick box with a grey
+    /// tick and label.
+    ///
+    /// @param readOnly Whether the tick is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        if (readOnly) {
+            addStyleDependentName("readonly");
+            inputElem.setAttribute("aria-readonly", "true");
+        } else {
+            removeStyleDependentName("readonly");
+            inputElem.removeAttribute("aria-readonly");
+        }
+    }
+
+    /// @return Whether the tick is read only.
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    @Override
+    public void onBrowserEvent(final Event event) {
+        // A click (or Space) on a read-only tick box mustn't change it: cancelling the click undoes
+        // the tick, and its handlers aren't told
+        if (readOnly && DOM.eventGetType(event) == Event.ONCLICK) {
+            event.preventDefault();
+            return;
+        }
+        super.onBrowserEvent(event);
     }
 
     @Override
@@ -188,6 +228,24 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
 
     public void setLabel(final String label) {
         this.label.setLabel(label);
+    }
+
+    /// @return The label beside the tick box, or null or blank if it has none.
+    public String getLabel() {
+        return label.getLabel();
+    }
+
+    /// Names the tick box for screen readers when it has no label of its own, e.g. a tick box that
+    /// chooses whether the field beside it is changed. Bound to the `ariaLabel` attribute in
+    /// ui.xml.
+    ///
+    /// @param ariaLabel The name, or null or blank for none.
+    public void setAriaLabel(final String ariaLabel) {
+        if (NullSafe.isBlankString(ariaLabel)) {
+            inputElem.removeAttribute("aria-label");
+        } else {
+            inputElem.setAttribute("aria-label", ariaLabel);
+        }
     }
 
     public void setIdentity(final String identity) {
@@ -438,10 +496,15 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
         addClickHandler(new ClickHandler() {
             @Override
             public void onClick(final ClickEvent event) {
-                // Checkboxes always toggle their value, no need to compare
-                // with old value. Radio buttons are not so lucky, see
-                // overrides in RadioButton
-                ValueChangeEvent.fire(CustomCheckBox.this, getValue());
+                // Only a click on the input toggles it. A click on the label is followed by the
+                // browser's click on the input, and a click elsewhere in the widget changes nothing.
+                final EventTarget target = event.getNativeEvent().getEventTarget();
+                if (Element.is(target) && inputElem.isOrHasChild(Element.as(target))) {
+                    // Checkboxes always toggle their value, no need to compare
+                    // with old value. Radio buttons are not so lucky, see
+                    // overrides in RadioButton
+                    ValueChangeEvent.fire(CustomCheckBox.this, getValue());
+                }
             }
         });
     }

@@ -4,10 +4,14 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="processorLimitsRecordLimit" label="Record Limit">
+        <form:FormGroup identity="processorLimitsRecordLimit" label="Record Limit"
+                        helpText="Maximum number of records (events) to process before processing of the search results stops. Enter 1 to 1,000,000,000. Default is 1,000,000 unless changed in the system configuration."
+                        screenReaderText="1 to 1,000,000,000 records.">
             <v:ValueSpinner ui:field="recordLimit" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="processorLimitsTimeLimit" label="Time Limit (mins)">
+        <form:FormGroup identity="processorLimitsTimeLimit" label="Time Limit (mins)"
+                        helpText="Number of minutes, from the time processing is started, after which no more search results are processed. Enter 1 to 1,440. Default is 30 unless changed in the system configuration."
+                        screenReaderText="1 to 1,440 minutes.">
             <v:ValueSpinner ui:field="timeLimit" width="200px"/>
         </form:FormGroup>
     </g:FlowPanel>

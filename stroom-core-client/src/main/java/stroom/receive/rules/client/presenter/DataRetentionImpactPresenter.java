@@ -34,12 +34,12 @@ import stroom.meta.shared.MetaFields;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -71,7 +71,6 @@ public class DataRetentionImpactPresenter
     private static final String BTN_TITLE_RUN_QUERY = "Run Query";
     private static final String BTN_TITLE_STOP_QUERY = "Abort Query";
     private static final String BTN_TITLE_SET_FILTER = "Set Query Filter";
-    private static final String BTN_TITLE_FLAT_TABLE = "View Flat Results";
     private static final String BTN_TITLE_NESTED_TABLE = "View Nested Results";
     private static final String BTN_TITLE_EXPAND_ALL = "Expand all";
     private static final String BTN_TITLE_COLLAPSE_ALL = "Collapse all";
@@ -120,14 +119,17 @@ public class DataRetentionImpactPresenter
         this.restFactory = restFactory;
         this.editExpressionPresenterProvider = editExpressionPresenterProvider;
 
-        runButton = view.addButton(SvgPresets.RUN.title(BTN_TITLE_RUN_QUERY));
-        stopButton = view.addButton(SvgPresets.STOP.title(BTN_TITLE_STOP_QUERY));
-        filterButton = view.addButton(SvgPresets.FILTER.title(BTN_TITLE_SET_FILTER));
-        flatNestedToggleButton = view.addToggleButton(
-                SvgPresets.TABLE.title(BTN_TITLE_FLAT_TABLE),
-                SvgPresets.TABLE_NESTED.title(BTN_TITLE_NESTED_TABLE));
-        expandAllButton = view.addButton(SvgPresets.EXPAND_ALL.title(BTN_TITLE_EXPAND_ALL));
-        collapseAllButton = view.addButton(SvgPresets.COLLAPSE_ALL.title(BTN_TITLE_COLLAPSE_ALL));
+        view.getToolbar().setName("Retention impact actions");
+        runButton = view.getToolbar().button(SvgImage.PLAY, BTN_TITLE_RUN_QUERY,
+                () -> refreshSourceData(new Range(0, Integer.MAX_VALUE)));
+        stopButton = view.getToolbar().button(SvgImage.STOP, BTN_TITLE_STOP_QUERY, this::cancelQuery);
+        filterButton = view.getToolbar().button(SvgImage.FILTER, BTN_TITLE_SET_FILTER, this::openFilterPresenter);
+        // Pressed while the results are shown nested
+        flatNestedToggleButton = view.getToolbar().toggle(SvgImage.TABLE_NESTED, BTN_TITLE_NESTED_TABLE,
+                this::setTableNested);
+        expandAllButton = view.getToolbar().button(SvgImage.EXPAND_ALL, BTN_TITLE_EXPAND_ALL, this::onExpandAll);
+        collapseAllButton = view.getToolbar().button(SvgImage.COLLAPSE_ALL, BTN_TITLE_COLLAPSE_ALL,
+                this::onCollapseAll);
 
         updateButtonStates();
 
@@ -257,35 +259,31 @@ public class DataRetentionImpactPresenter
         updateButtonStates();
     }
 
+    private void onExpandAll() {
+        treeAction.expandAll();
+        refreshVisibleData();
+    }
+
+    private void onCollapseAll() {
+        treeAction.collapseAll();
+        refreshVisibleData();
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
 
         // Get the user's rules without our default one
-        registerHandler(runButton.addClickHandler(event ->
-                refreshSourceData(new Range(0, Integer.MAX_VALUE))));
 
         // Get the user's rules without our default one
-        registerHandler(stopButton.addClickHandler(event ->
-                cancelQuery()));
 
-        registerHandler(filterButton.addClickHandler(event ->
-                openFilterPresenter()));
 
-        registerHandler(flatNestedToggleButton.addClickHandler(e -> {
-            // Get the user's rules without our default one
-            isTableNested = flatNestedToggleButton.getState();
-            refreshVisibleData();
-        }));
-        registerHandler(expandAllButton.addClickHandler(event -> {
-            treeAction.expandAll();
-            refreshVisibleData();
-        }));
-        registerHandler(collapseAllButton.addClickHandler(event -> {
-            treeAction.collapseAll();
-            refreshVisibleData();
-        }));
         registerHandler(dataGrid.addColumnSortHandler(event -> refreshVisibleData()));
+    }
+
+    private void setTableNested(final boolean nested) {
+        isTableNested = nested;
+        refreshVisibleData();
     }
 
     private void openFilterPresenter() {
@@ -414,8 +412,11 @@ public class DataRetentionImpactPresenter
                 150);
     }
 
-    public ButtonView addButton(final Preset preset) {
-        return getView().addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return getView().getToolbar();
     }
 
     @Override

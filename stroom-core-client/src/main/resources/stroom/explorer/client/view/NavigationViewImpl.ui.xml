@@ -2,7 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
-             xmlns:spinner="urn:import:stroom.widget.spinner.client">
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical navigation">
         <g:FlowPanel styleName="dock-min navigation-title-bar">
             <g:Button ui:field="logo" styleName="navigation-logo"/>
@@ -12,10 +13,10 @@
         <g:SimplePanel styleName="dock-min explorerTreeViewImpl-nameFilterPanel">
             <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
         </g:SimplePanel>
-        <g:FlowPanel styleName="navigation-toolbar">
-            <g:FlowPanel ui:field="buttonContainer" styleName="dock-min navigation-header-buttons"/>
+        <b:ToolbarRow addStyleNames="navigation-toolbar">
+            <b:Toolbar ui:field="toolbar" name="Explorer" addStyleNames="toolbar--navigation"/>
             <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
-        </g:FlowPanel>
+        </b:ToolbarRow>
         <g:MaxScrollPanel addStyleNames="dock-max explorerTree-container" ui:field="explorerTreeContainer"/>
         <g:SimplePanel ui:field="activityPanel" styleName="dock-min"/>
     </g:FlowPanel>

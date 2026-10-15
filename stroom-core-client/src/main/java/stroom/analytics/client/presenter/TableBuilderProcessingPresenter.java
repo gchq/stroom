@@ -71,10 +71,19 @@ public class TableBuilderProcessingPresenter
         this.nodeClient = nodeClient;
     }
 
+    /// Shows the table builder processing settings of a rule.
+    ///
+    /// @param ruleDocRef                        The rule the settings belong to.
+    /// @param tableBuilderAnalyticProcessConfig The settings to show.
+    /// @param readOnly                          Whether the rule is read only, in which case the settings
+    ///                                          can't be changed.
     public void read(final DocRef ruleDocRef,
-                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig,
+                     final boolean readOnly) {
+        getView().setReadOnly(readOnly);
         nodeClient.listAllNodes(
                 list -> {
+                    //noinspection SizeReplaceableByIsEmpty
                     if (list != null && list.size() > 0) {
                         getView().setNodes(list);
                     }
@@ -144,6 +153,7 @@ public class TableBuilderProcessingPresenter
                 addRowDateString(tb, "Last Event Time", td.getLastEventTime());
                 tb.row(SafeHtmlUtil.from("Total Streams Processed"), SafeHtmlUtil.from(td.getTotalStreamCount()));
                 tb.row(SafeHtmlUtil.from("Total Events Processed"), SafeHtmlUtil.from(td.getTotalEventCount()));
+                //noinspection SizeReplaceableByIsEmpty
                 if (td.getMessage() != null && td.getMessage().length() > 0) {
                     tb.row(SafeHtmlUtil.from("Message"), SafeHtmlUtil.from(td.getMessage()));
                 }
@@ -205,5 +215,10 @@ public class TableBuilderProcessingPresenter
         void setDataRetention(SimpleDuration dataRetention);
 
         void setInfo(SafeHtml info);
+
+        /// Sets whether the settings fields are read only.
+        ///
+        /// @param readOnly True if the settings can be seen but not changed.
+        void setReadOnly(boolean readOnly);
     }
 }

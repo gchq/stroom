@@ -5,16 +5,25 @@
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="dataUploadMetaData" label="Meta Data" addStyleNames="dock-max">
+        <form:FormGroup identity="dataUploadMetaData" label="Meta Data" addStyleNames="dock-max"
+                        helpText="Extra meta data to attach to the uploaded data, one 'Key:Value' entry per line. Example: System:Example."
+                        screenReaderText="One Key:Value entry per line.">
             <g:TextArea ui:field="metaData" addStyleNames="max"/>
         </form:FormGroup>
-        <form:FormGroup identity="dataUploadType" label="Type" addStyleNames="dock-min">
+        <form:FormGroup identity="dataUploadType" label="Type" addStyleNames="dock-min"
+                        helpText="The stream type to give the uploaded data, for example Raw Events or Raw Reference. Defaults to the feed's stream type."
+                        screenReaderText="Stream type for the uploaded data. Defaults to the feed's type.">
             <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="dataUploadEffectiveDate" label="Effective Date" addStyleNames="dock-min">
+        <form:FormGroup identity="dataUploadEffectiveDate" label="Effective Date" addStyleNames="dock-min"
+                        helpText="The date and time from which the data applies, mainly for reference data. Optional. Use ISO 8601 format; add Z for UTC, for example 2026-01-31T00:00:00.000Z."
+                        screenReaderText="ISO 8601 date, e.g. 2026-01-31T00:00:00.000Z.">
             <c:MyDateBox ui:field="effective" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="dataUploadFile" label="File" addStyleNames="dock-min">
+        <form:FormGroup identity="dataUploadFile" label="File" addStyleNames="dock-min"
+                        helpText="The file to upload. A .zip file is unpacked as a Stroom zip; .gz and .gzip files are treated as gzip compressed. Other files are stored as they are."
+                        screenReaderText=".zip and .gz files are handled as compressed data."
+                        required="true">
             <form:CustomFileUpload ui:field="fileUpload"/>
         </form:FormGroup>
     </g:FlowPanel>

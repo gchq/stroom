@@ -26,8 +26,7 @@ import stroom.security.client.event.OpenAppPermissionsScreenEvent;
 import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.UserFields;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 import stroom.welcome.client.presenter.WelcomePresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
@@ -44,7 +43,7 @@ import javax.inject.Singleton;
 public class AppPermissionsPlugin extends MonitoringPlugin<AppPermissionsPresenter> {
 
     public static final String SCREEN_NAME = "Application Permissions";
-    public static final Preset ICON = SvgPresets.SHIELD;
+    public static final SvgImage ICON = SvgImage.SHIELD;
 
     @Inject
     public AppPermissionsPlugin(final EventBus eventBus,

@@ -1,0 +1,171 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.gwt.workbench.client.app.gin.query;
+
+import stroom.pipeline.client.presenter.DocRefSelectionPresenter;
+import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
+import stroom.pipeline.client.presenter.PipelinePresenter;
+import stroom.pipeline.client.presenter.TextConverterPresenter;
+import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
+import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
+import stroom.pipeline.client.presenter.XsltPresenter;
+import stroom.pipeline.client.view.DocRefSelectionViewImpl;
+import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
+import stroom.pipeline.stepping.client.presenter.ElementPresenter;
+import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
+import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
+import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
+import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter;
+import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter.StepLocationLinkView;
+import stroom.pipeline.stepping.client.presenter.StepLocationPresenter;
+import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
+import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
+import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
+import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
+import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
+import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter;
+import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
+import stroom.pipeline.stepping.client.view.ElementViewImpl;
+import stroom.pipeline.stepping.client.view.StepControlViewImpl;
+import stroom.pipeline.stepping.client.view.StepLocationLinkViewImpl;
+import stroom.pipeline.stepping.client.view.StepLocationViewImpl;
+import stroom.pipeline.stepping.client.view.SteppingFilterViewImpl;
+import stroom.pipeline.stepping.client.view.SteppingViewImpl;
+import stroom.pipeline.stepping.client.view.XPathFilterViewImpl;
+import stroom.pipeline.structure.client.presenter.NewElementPresenter;
+import stroom.pipeline.structure.client.presenter.NewElementPresenter.NewElementView;
+import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter;
+import stroom.pipeline.structure.client.presenter.NewPipelineReferencePresenter.NewPipelineReferenceView;
+import stroom.pipeline.structure.client.presenter.NewPropertyPresenter;
+import stroom.pipeline.structure.client.presenter.NewPropertyPresenter.NewPropertyView;
+import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter;
+import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
+import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
+import stroom.pipeline.structure.client.presenter.PipelineTreePresenter.PipelineTreeView;
+import stroom.pipeline.structure.client.view.NewElementViewImpl;
+import stroom.pipeline.structure.client.view.NewPipelineReferenceViewImpl;
+import stroom.pipeline.structure.client.view.NewPropertyViewImpl;
+import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
+import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
+import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter;
+import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
+import stroom.processor.client.presenter.EditFeedDependencyPresenter;
+import stroom.processor.client.presenter.EditFeedDependencyPresenter.EditFeedDependencyView;
+import stroom.processor.client.presenter.FeedDependencyPresenter;
+import stroom.processor.client.presenter.FeedDependencyPresenter.FeedDependencyView;
+import stroom.processor.client.presenter.ProcessorEditPresenter;
+import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
+import stroom.processor.client.presenter.ProcessorPresenter;
+import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
+import stroom.processor.client.presenter.ProcessorProfileEditPresenter;
+import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
+import stroom.processor.client.presenter.ProfilePeriodEditPresenter;
+import stroom.processor.client.presenter.ProfilePeriodEditPresenter.ProfilePeriodEditView;
+import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
+import stroom.processor.client.view.EditFeedDependencyViewImpl;
+import stroom.processor.client.view.FeedDependencyViewImpl;
+import stroom.processor.client.view.ProcessorEditViewImpl;
+import stroom.processor.client.view.ProcessorProfileEditViewImpl;
+import stroom.processor.client.view.ProcessorViewImpl;
+import stroom.processor.client.view.ProfilePeriodEditViewImpl;
+import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
+import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
+import stroom.processor.task.client.view.ProcessorTaskViewImpl;
+
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+
+/// The presenter and view bindings of Stroom's `PipelineModule`
+/// (`stroom/pipeline/client/gin/PipelineModule.java`), without its plugins and app services.
+/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
+/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+public class PipelineScreenModule extends AbstractPresenterModule {
+
+    /// Binds the presenters and views.
+    @Override
+    protected void configure() {
+        bind(TextConverterPresenter.class);
+        bindPresenterWidget(TextConverterSettingsPresenter.class,
+                TextConverterSettingsView.class,
+                TextConverterSettingsViewImpl.class);
+        bind(XsltPresenter.class);
+        bind(PipelinePresenter.class);
+        bindPresenterWidget(StepLocationLinkPresenter.class,
+                StepLocationLinkView.class,
+                StepLocationLinkViewImpl.class);
+        bindPresenterWidget(StepLocationPresenter.class,
+                StepLocationView.class,
+                StepLocationViewImpl.class);
+        bindPresenterWidget(StepControlPresenter.class,
+                StepControlView.class,
+                StepControlViewImpl.class);
+        bindPresenterWidget(PipelineTreePresenter.class,
+                PipelineTreeView.class,
+                PipelineTreeViewImpl.class);
+        bindPresenterWidget(PipelineStructurePresenter.class,
+                PipelineStructureView.class,
+                PipelineStructureViewImpl.class);
+        bindPresenterWidget(DocRefSelectionPresenter.class,
+                DocRefSelectionView.class,
+                DocRefSelectionViewImpl.class);
+        bindPresenterWidget(NewElementPresenter.class,
+                NewElementView.class,
+                NewElementViewImpl.class);
+        bindPresenterWidget(NewPropertyPresenter.class,
+                NewPropertyView.class,
+                NewPropertyViewImpl.class);
+        bindPresenterWidget(NewPipelineReferencePresenter.class,
+                NewPipelineReferenceView.class,
+                NewPipelineReferenceViewImpl.class);
+        bindPresenterWidget(SteppingPresenter.class,
+                SteppingView.class,
+                SteppingViewImpl.class);
+        bindPresenterWidget(SteppingFilterPresenter.class,
+                SteppingFilterView.class,
+                SteppingFilterViewImpl.class);
+        bindPresenterWidget(XPathFilterPresenter.class,
+                XPathFilterView.class,
+                XPathFilterViewImpl.class);
+        bindPresenterWidget(ElementPresenter.class,
+                ElementView.class,
+                ElementViewImpl.class);
+        bindPresenterWidget(ProcessorPresenter.class,
+                ProcessorView.class,
+                ProcessorViewImpl.class);
+        bindPresenterWidget(ProcessorEditPresenter.class,
+                ProcessorEditView.class,
+                ProcessorEditViewImpl.class);
+        bindPresenterWidget(BatchProcessorFilterEditPresenter.class,
+                BatchProcessorFilterEditView.class,
+                BatchProcessorFilterEditViewImpl.class);
+        bindPresenterWidget(FeedDependencyPresenter.class,
+                FeedDependencyView.class,
+                FeedDependencyViewImpl.class);
+        bindPresenterWidget(EditFeedDependencyPresenter.class,
+                EditFeedDependencyView.class,
+                EditFeedDependencyViewImpl.class);
+        bindPresenterWidget(ProcessorProfileEditPresenter.class,
+                ProcessorProfileEditView.class,
+                ProcessorProfileEditViewImpl.class);
+        bindPresenterWidget(ProfilePeriodEditPresenter.class,
+                ProfilePeriodEditView.class,
+                ProfilePeriodEditViewImpl.class);
+        bindPresenterWidget(ProcessorTaskPresenter.class,
+                ProcessorTaskView.class,
+                ProcessorTaskViewImpl.class);
+    }
+}
+

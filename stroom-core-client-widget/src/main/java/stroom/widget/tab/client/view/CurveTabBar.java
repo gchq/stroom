@@ -26,7 +26,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandlers {
 
     public CurveTabBar() {
-        getElement().setClassName("curveTabBar");
+        getElement().setClassName("tab-bar tab-bar--curved");
+        setAccessibleName("Open documents");
     }
 
     @Override
@@ -53,6 +54,14 @@ public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandle
     @Override
     protected AbstractTabSelector createTabSelector() {
         return new CurveTabSelector();
+    }
+
+    /// The room between document tabs, for a focused tab's focus ring, which is drawn outside it.
+    ///
+    /// @return The gap in pixels.
+    @Override
+    protected int getTabGap() {
+        return 6;
     }
 
     @Override

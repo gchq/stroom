@@ -60,7 +60,7 @@ public class RangeKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
     }
 
     public void onReadOnly(final boolean readOnly) {
-        rangeType.setEnabled(!readOnly);
+        rangeType.setReadOnly(readOnly);
     }
 
 

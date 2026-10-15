@@ -17,6 +17,7 @@
 package stroom.index.shared;
 
 import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.FindWithCriteria;
 import stroom.util.shared.ResourcePaths;
@@ -44,6 +45,13 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface IndexResource extends RestResource, DirectRestService, FetchWithUuid<LuceneIndexDoc>,
         FindWithCriteria<FindIndexShardCriteria, IndexShard> {
+
+    /**
+     * The index field list is over one index document, so the screen calls
+     * {@link QuickFilterContext#withDataSource} with it. History only: the fields the server
+     * parses against are declared in the field DAO, not here.
+     */
+    QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.historyOnly("indexFields");
 
     String BASE_PATH = "/index" + ResourcePaths.V2;
     String SHARD_DELETE_SUB_PATH = "/shard/delete";
@@ -96,6 +104,13 @@ public interface IndexResource extends RestResource, DirectRestService, FetchWit
             operationId = "findFields")
     ResultPage<IndexFieldImpl> findFields(
             @Parameter(description = "criteria", required = true) FindFieldCriteria criteria);
+
+    @POST
+    @Path("/{uuid}/reset")
+    @Operation(
+            summary = "Reset index contents (delete all shards across all nodes)",
+            operationId = "resetIndex")
+    Boolean reset(@PathParam("uuid") String uuid);
 
     @POST
     @Path("/addField")

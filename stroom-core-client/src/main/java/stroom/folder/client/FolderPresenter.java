@@ -133,6 +133,18 @@ public class FolderPresenter
         callback.onReady(tabContentProvider.getPresenter(tab, this));
     }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
+        tabContentProvider.bind();
+    }
+
+    @Override
+    protected void onUnbind() {
+        super.onUnbind();
+        tabContentProvider.unbind();
+    }
+
     public void read(final DocRef docRef) {
         this.docRef = docRef;
         tabContentProvider.read(docRef, null, true);

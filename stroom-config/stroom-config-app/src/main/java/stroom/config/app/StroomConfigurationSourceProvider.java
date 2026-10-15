@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -60,6 +61,20 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
     private static final List<String> KEYS_TO_MUTATE = List.of(
             "currentLogFilename",
             "archivedLogFilenamePattern");
+
+    /**
+     * Config keys that have been renamed, old name to new.
+     *
+     * <p>Boot fails when one of these appears, naming both spellings — see
+     * {@link #rejectRenamedKeys}. The alternative that was tried first, a {@code @JsonAlias} on
+     * {@code AppConfig}, cannot work here: {@link #mergeInDefaultConfig} injects the compiled
+     * defaults under the <em>new</em> name, and an alias is another spelling of the same property,
+     * so last-one-wins handed the injected default the win and the operator's value was silently
+     * discarded on every boot.</p>
+     */
+    private static final Map<String, String> RENAMED_APP_CONFIG_KEYS = Map.of(
+            "visualisationAsset", AppConfig.PROP_NAME_DOCUMENT_ASSET,
+            "visualisationAssetDb", AppConfig.PROP_NAME_DOCUMENT_ASSET_DB);
 
     private static final String PATH_CONFIG_JSON_POINTER = APP_CONFIG_JSON_POINTER + "/path";
     private static final String STROOM_HOME_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/home";
@@ -98,6 +113,10 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
             JSON_POINTERS_TO_INSPECT.forEach(jsonPointerExp ->
                     mutateNodes(rootNode, jsonPointerExp, KEYS_TO_MUTATE, logDirMutator));
 
+            // Before the defaults merge, which is what made the old alias unworkable and would
+            // otherwise turn a renamed key into a silent revert to the default.
+            rejectRenamedKeys(rootNode, path);
+
             mergeInDefaultConfig(mapper, rootNode);
 
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -106,6 +125,40 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
 //            dumpYamlDiff(path, in, mapper, rootNode);
 
             return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+        }
+    }
+
+    /**
+     * Fails the boot when a renamed config key is present, naming the new spelling.
+     *
+     * <p>Raised here rather than left to Jackson's {@code FAIL_ON_UNKNOWN_PROPERTIES}, which does
+     * also fail but reports an unrecognised field without saying what to do about it. A rename is
+     * the one config error where the fix can be stated exactly, so it is worth stating.</p>
+     *
+     * @param rootNode the whole config tree, after substitution
+     * @param path     the config file, for the message
+     */
+    private void rejectRenamedKeys(final JsonNode rootNode, final String path) {
+        final JsonNode appConfigNode = rootNode.at(APP_CONFIG_JSON_POINTER);
+        if (appConfigNode == null || appConfigNode.isMissingNode()) {
+            return;
+        }
+        final List<String> problems = RENAMED_APP_CONFIG_KEYS.entrySet()
+                .stream()
+                .filter(entry -> appConfigNode.has(entry.getKey()))
+                .map(entry -> LogUtil.message("'{}.{}' is now '{}.{}'",
+                        AppConfig.ROOT_PROPERTY_NAME, entry.getKey(),
+                        AppConfig.ROOT_PROPERTY_NAME, entry.getValue()))
+                .sorted()
+                .toList();
+
+        if (!problems.isEmpty()) {
+            throw new RuntimeException(LogUtil.message(
+                    "Configuration file {} uses {} config key(s) that have been renamed. "
+                    + "Rename them to continue: {}.",
+                    Paths.get(path).toAbsolutePath().normalize(),
+                    problems.size(),
+                    String.join("; ", problems)));
         }
     }
 

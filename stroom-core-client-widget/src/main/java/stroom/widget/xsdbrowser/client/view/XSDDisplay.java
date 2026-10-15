@@ -23,14 +23,9 @@ import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
@@ -92,9 +87,8 @@ public class XSDDisplay extends Composite {
     }
 
     private XSDDisplayBox getRootDisplay(final SelectionMap map, final XSDNode node) {
-        final HorizontalPanel midPanel = new HorizontalPanel();
+        final FlowPanel midPanel = new FlowPanel();
         midPanel.addStyleName("midPanel");
-        midPanel.setSpacing(5);
 
         midPanel.add(new XSDDisplayBox(
                 "xsdBrowser-xsdTitleElements",
@@ -111,8 +105,8 @@ public class XSDDisplay extends Composite {
                 map,
                 model,
                 null,
-                "100%",
-                "100%"));
+                null,
+                null));
 
         midPanel.add(new XSDDisplayBox(
                 "xsdBrowser-xsdTitleTypes",
@@ -129,8 +123,8 @@ public class XSDDisplay extends Composite {
                 map,
                 model,
                 null,
-                "100%",
-                "100%"));
+                null,
+                null));
 
         final String targetNamespace = XMLUtil.getAttributeValue(
                 node.getNode(),
@@ -147,14 +141,14 @@ public class XSDDisplay extends Composite {
         return box;
     }
 
-    private HorizontalPanel getElementDisplay(final SelectionMap map, final XSDNode node) {
+    private FlowPanel getElementDisplay(final SelectionMap map, final XSDNode node) {
         final XSDNode typeNode = node.getTypeNode();
         if (typeNode == null) {
             return null;
         }
 
-        final VerticalPanel left = new VerticalPanel();
-        final VerticalPanel right = new VerticalPanel();
+        final FlowPanel left = column(false);
+        final FlowPanel right = column(true);
 
         left.add(new XSDDisplayBox(
                 "xsdBrowser-xsdTitleElement",
@@ -166,25 +160,15 @@ public class XSDDisplay extends Composite {
                 null,
                 null));
 
-        right.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
         right.add(getTypeBox(right, map, typeNode));
 
-        final Label padding = new Label();
-        padding.setSize("40px", "1px");
-
-        final HorizontalPanel layout = new HorizontalPanel();
-        layout.add(left);
-        layout.add(padding);
-        layout.add(right);
-
-        return layout;
+        return columns(left, right);
     }
 
-    private HorizontalPanel getTypeDisplay(final SelectionMap map, final XSDNode node) {
-        final VerticalPanel left = new VerticalPanel();
-        final VerticalPanel right = new VerticalPanel();
+    private FlowPanel getTypeDisplay(final SelectionMap map, final XSDNode node) {
+        final FlowPanel left = column(true);
+        final FlowPanel right = column(false);
 
-        left.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
         left.add(getTypeBox(left, map, node));
 
         for (final XSDNode child : node.getChildTypes()) {
@@ -193,18 +177,29 @@ public class XSDDisplay extends Composite {
             right.add(typeBox);
         }
 
-        final Label padding = new Label();
-        padding.setSize("40px", "1px");
+        return columns(left, right);
+    }
 
-        final HorizontalPanel layout = new HorizontalPanel();
+    // A column of boxes, one above another, either centred or to its left
+    private FlowPanel column(final boolean centred) {
+        final FlowPanel column = new FlowPanel();
+        column.addStyleName("xsdBrowser-column");
+        if (centred) {
+            column.addStyleName("xsdBrowser-column--centred");
+        }
+        return column;
+    }
+
+    // Two columns side by side, with a gap between them
+    private FlowPanel columns(final FlowPanel left, final FlowPanel right) {
+        final FlowPanel layout = new FlowPanel();
+        layout.addStyleName("xsdBrowser-columns");
         layout.add(left);
-        layout.add(padding);
         layout.add(right);
-
         return layout;
     }
 
-    private XSDDisplayBox getTypeBox(final VerticalPanel layoutColumn,
+    private XSDDisplayBox getTypeBox(final FlowPanel layoutColumn,
                                      final SelectionMap map,
                                      final XSDNode node) {
         if (node != null) {
@@ -253,7 +248,7 @@ public class XSDDisplay extends Composite {
         return null;
     }
 
-    private Grid getNodeListDisplay(final VerticalPanel layoutColumn,
+    private XSDNodeGrid getNodeListDisplay(final FlowPanel layoutColumn,
                                     final SelectionMap map,
                                     final XSDNode node,
                                     final boolean showAttributes,
@@ -261,7 +256,7 @@ public class XSDDisplay extends Composite {
                                     final boolean showComplexTypes,
                                     final boolean showSimpleTypes,
                                     final boolean showOccurance) {
-        Grid layout = null;
+        XSDNodeGrid layout = null;
 
         if (node != null) {
             // Clear the row map.
@@ -275,12 +270,10 @@ public class XSDDisplay extends Composite {
                 maxConstructDepth = maxConstructDepth * 2;
             }
 
-            layout = new Grid(0, 6 + maxConstructDepth);
-            layout.setCellPadding(0);
-            layout.setCellSpacing(0);
+            layout = new XSDNodeGrid(6 + maxConstructDepth);
 
             int row = 0;
-            int col = 0;
+            final int col = 0;
 
             if (showAttributes) {
                 row = addNode(layoutColumn, layout, map, node, showOccurance, true, row, col,
@@ -301,18 +294,11 @@ public class XSDDisplay extends Composite {
                         XSDTypeFilter.SIMPLE_TYPE_FILTER);
             }
 
-            // Apply some overall styles to surround the content.
+            // Apply some overall styles to surround the content (the cells are aligned to the
+            // middle by xsdbrowser.css).
             for (row = 0; row < layout.getRowCount(); row++) {
-                layout.getCellFormatter().getElement(row, 0).getStyle().setProperty("paddingLeft", "5px");
-                layout.getCellFormatter().getElement(row, layout.getColumnCount() - 1).getStyle()
-                        .setProperty("paddingRight", "5px");
-            }
-
-            // Align all cells to the middle.
-            for (row = 0; row < layout.getRowCount(); row++) {
-                for (col = 0; col < layout.getColumnCount(); col++) {
-                    layout.getCellFormatter().setVerticalAlignment(row, col, HasVerticalAlignment.ALIGN_MIDDLE);
-                }
+                layout.setCellStyle(row, 0, "paddingLeft", "5px");
+                layout.setCellStyle(row, layout.getColumnCount() - 1, "paddingRight", "5px");
             }
 
             if (layout.getRowCount() > 0) {
@@ -369,8 +355,8 @@ public class XSDDisplay extends Composite {
         return maxDepth;
     }
 
-    private int addNode(final VerticalPanel layoutColumn,
-                        final Grid layout,
+    private int addNode(final FlowPanel layoutColumn,
+                        final XSDNodeGrid layout,
                         final SelectionMap map,
                         final XSDNode node,
                         final boolean showOccurrence,
@@ -402,9 +388,6 @@ public class XSDDisplay extends Composite {
                             final SimplePanel superArrow = new SimplePanel();
                             superArrow.getElement().setClassName("xsdBrowser-superArrowSelect");
                             layoutColumn.add(superArrow);
-                            superArrow.getElement().getParentElement().setAttribute(
-                                    "textAlign",
-                                    "center");
                         }
 
                         row = addNode(
@@ -464,15 +447,13 @@ public class XSDDisplay extends Composite {
         return row;
     }
 
-    private void addChild(final Grid layout,
+    private void addChild(final XSDNodeGrid layout,
                           final SelectionMap map,
                           final XSDNode node,
                           final boolean showOccurance,
                           final int row, final int col) {
         // Ensure layout size.
-        if (layout.getRowCount() < row + 1) {
-            layout.resizeRows(row + 1);
-        }
+        layout.ensureRows(row + 1);
 
         final XSDType type = node.getType();
         rowMap.put(node, row);
@@ -621,16 +602,14 @@ public class XSDDisplay extends Composite {
         return panel;
     }
 
-    private void addSeparator(final Grid layout) {
+    private void addSeparator(final XSDNodeGrid layout) {
         // Add a row with a black border at the bottom.
         setRowStyle(layout, layout.getRowCount() - 1, "borderBottom", "1px solid black");
     }
 
-    private void setRowStyle(final Grid layout, final int row, final String name, final String value) {
+    private void setRowStyle(final XSDNodeGrid layout, final int row, final String name, final String value) {
         if (row >= 0) {
-            for (int col = 0; col < layout.getColumnCount(); col++) {
-                layout.getCellFormatter().getElement(row, col).getStyle().setProperty(name, value);
-            }
+            layout.setRowStyle(row, name, value);
         }
     }
 

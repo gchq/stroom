@@ -19,9 +19,10 @@ package stroom.importexport.shared;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
-import stroom.util.shared.BaseCriteria;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,7 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class DependencyCriteria extends BaseCriteria {
+public class DependencyCriteria extends QuickFilterCriteria {
 
     // Display names. These are the column headings, and the sort ids sent in
     // CriteriaFieldSort - they are NOT what a user types in the quick filter.
@@ -95,6 +96,27 @@ public class DependencyCriteria extends BaseCriteria {
      */
     public static final QueryField QF_STATUS = queryField(FIELD_DEF_STATUS, ConditionSet.SQL_ENUM_TEXT);
 
+    // What DocDependencyDao's quick filter declares it can honour. Until these were wired into
+    // the FieldProvider, the DAO built its provider from FIELD_DEFINITIONS and so could not reach
+    // its own declarations.
+    public static final List<QueryField> DEFAULT_QUERY_FIELDS = Arrays.asList(
+            QF_FROM_NAME,
+            QF_TO_NAME);
+    public static final List<QueryField> QUERY_FIELDS = Arrays.asList(
+            QF_FROM_TYPE,
+            QF_FROM_NAME,
+            QF_FROM_UUID,
+            QF_TO_TYPE,
+            QF_TO_NAME,
+            QF_TO_UUID,
+            QF_STATUS);
+
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "dependencies",
+            FIELD_DEFINITIONS,
+            DEFAULT_QUERY_FIELDS,
+            QUERY_FIELDS);
+
     /**
      * Not {@link QueryField#createText(String)} - that defaults to
      * {@link ConditionSet#DEFAULT_TEXT}, which omits CONTAINS, the condition a quick filter
@@ -114,8 +136,6 @@ public class DependencyCriteria extends BaseCriteria {
                 .build();
     }
 
-    @JsonProperty
-    private String partialName;
 
     public DependencyCriteria() {
     }
@@ -130,23 +150,15 @@ public class DependencyCriteria extends BaseCriteria {
     @JsonCreator
     public DependencyCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                              @JsonProperty("partialName") final String partialName) {
-        super(pageRequest, sortList);
-        this.partialName = partialName;
+                              @JsonProperty("quickFilter") final String quickFilter) {
+        super(pageRequest, sortList, quickFilter);
     }
 
-    public String getPartialName() {
-        return partialName;
-    }
-
-    public void setPartialName(final String partialName) {
-        this.partialName = partialName;
-    }
 
     @Override
     public String toString() {
         return "DependencyCriteria{" +
-                "partialName='" + partialName + '\'' +
+                "quickFilter='" + getQuickFilter() + '\'' +
                 '}';
     }
 }

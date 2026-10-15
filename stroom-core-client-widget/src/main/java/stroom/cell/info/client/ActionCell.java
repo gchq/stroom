@@ -16,8 +16,7 @@
 
 package stroom.cell.info.client;
 
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -38,18 +37,18 @@ import java.util.function.BiConsumer;
  */
 public class ActionCell<R> extends AbstractCell<R> {
 
-    private final Preset svgPreset;
+    private final CellIcon cellIcon;
     private final BiConsumer<R, NativeEvent> action;
 
     public ActionCell(final BiConsumer<R, NativeEvent> action) {
-        this(SvgPresets.ELLIPSES_HORIZONTAL, action);
+        this(CellIcon.of(SvgImage.ELLIPSES_HORIZONTAL, "Actions..."), action);
     }
 
-    public ActionCell(final Preset svgPreset,
+    public ActionCell(final CellIcon cellIcon,
                       final BiConsumer<R, NativeEvent> action) {
         super("click");
         this.action = action;
-        this.svgPreset = svgPreset;
+        this.cellIcon = cellIcon;
     }
 
     @Override
@@ -92,7 +91,7 @@ public class ActionCell<R> extends AbstractCell<R> {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             final String className = "svgCell-icon svgCell-button";
-            sb.append(SvgImageUtil.toSafeHtml(svgPreset, className));
+            sb.append(SvgImageUtil.toSafeHtml(cellIcon, className));
         }
     }
 }

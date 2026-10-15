@@ -1,0 +1,8 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:FlowPanel styleName="max dock-container-vertical advancedQuickFilter">
+        <g:Label ui:field="message" styleName="dock-min advancedQuickFilter-message"/>
+        <g:SimplePanel ui:field="expression" styleName="dock-max advancedQuickFilter-expression"/>
+    </g:FlowPanel>
+</ui:UiBinder>

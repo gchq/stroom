@@ -20,11 +20,16 @@ import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QuickFilterFields;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.common.v2.FieldProviderImpl;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.common.v2.ValueFunctionFactoriesImpl;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.logging.LambdaLogger;
@@ -44,6 +49,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -139,14 +145,29 @@ public class ActivityServiceImpl implements ActivityService {
             final List<Activity> filteredActivities;
             if (!Strings.isNullOrEmpty(filter)) {
                 final List<FilterFieldDefinition> fieldDefinitions = buildFieldDefinitions(allActivities);
-                final FieldProvider fieldProvider = new FieldProviderImpl(fieldDefinitions);
+                // Every activity property is a default field, so the two lists are the same.
+                // Built here rather than as a constant because the fields are data driven - they
+                // come from the activities themselves, not from a static declaration.
+                final List<QueryField> queryFields = QuickFilterFields.uiText(fieldDefinitions);
+                final FieldProvider fieldProvider = new FieldProviderImpl(queryFields, queryFields);
                 final ValueFunctionFactories<Activity> valueFunctionFactories =
                         buildValueFunctionFactories(fieldDefinitions);
+                // ExpressionPredicateFactory swallows a bad filter and matches nothing, which is
+                // the right result on a debounced filter - but the reason has to come back with
+                // the empty page or it is indistinguishable from "nothing matched".
+                // See ResultPage.filterError.
+                final AtomicReference<TokenException> filterError = new AtomicReference<>();
                 filteredActivities = expressionPredicateFactory.filterAndSortStream(
                                 allActivities.stream(),
                                 filter, fieldProvider, valueFunctionFactories,
-                                Optional.of(Comparator.comparingInt(Activity::getId)))
+                                DateTimeSettings.builder().build(),
+                                Optional.of(Comparator.comparingInt(Activity::getId)),
+                                filterError::set)
                         .toList();
+                if (filterError.get() != null) {
+                    return ResultPage.emptyWithFilterError(
+                            TokenErrorUtil.toTokenError(filterError.get()));
+                }
             } else {
                 filteredActivities = allActivities;
             }

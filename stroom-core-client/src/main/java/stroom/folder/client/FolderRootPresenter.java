@@ -132,6 +132,18 @@ public class FolderRootPresenter
         callback.onReady(tabContentProvider.getPresenter(tab, this));
     }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
+        tabContentProvider.bind();
+    }
+
+    @Override
+    protected void onUnbind() {
+        super.onUnbind();
+        tabContentProvider.unbind();
+    }
+
     public void read() {
         tabContentProvider.read(ExplorerConstants.SYSTEM_DOC_REF, null, true);
     }

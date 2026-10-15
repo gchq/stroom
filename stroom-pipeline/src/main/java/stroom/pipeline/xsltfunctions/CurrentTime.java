@@ -24,6 +24,19 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = CurrentTime.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.DATE,
+        commonDescription = """
+                Returns the current system date and time in Stroom's standard date-time format.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The current date and time.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class CurrentTime extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "current-time";

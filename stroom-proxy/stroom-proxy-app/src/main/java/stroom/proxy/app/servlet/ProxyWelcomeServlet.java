@@ -55,7 +55,7 @@ public class ProxyWelcomeServlet extends HttpServlet implements IsServlet {
         final BuildInfo buildInfo = buildInfoProvider.get();
         response.setContentType("text/html; charset=utf-8");
         final Writer writer = response.getWriter();
-        writer.write("<html>\n" +
+        writer.write("<html lang=\"en\">\n" +
                      "<head>\n" +
                      "<style>\n" +
                      "body {\n" +

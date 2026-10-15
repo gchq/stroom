@@ -8,24 +8,34 @@
 
     <g:FlowPanel styleName="max form">
         <!-- Date time settings -->
-        <form:FormGroup identity="userPreferencesDateFormat" label="Date and Time Format">
+        <form:FormGroup identity="userPreferencesDateFormat" label="Date and Time Format"
+                        helpText="The format used to show dates and times. Default is yyyy-MM-dd'T'HH:mm:ss.SSSXX unless an administrator has changed the defaults."
+                        screenReaderText="Choose a format, or tick Custom to enter your own.">
             <item:SelectionBox ui:field="format" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="custom" identity="userPreferencesCustom" label="Custom"/>
         </form:FormGroup>
-        <form:FormGroup identity="userPreferencesCustomFormat" label="Custom Format">
+        <form:FormGroup identity="userPreferencesCustomFormat" label="Custom Format"
+                        helpText="A Java DateTimeFormatter pattern, e.g. dd/MM/yyyy HH:mm:ss. Only editable when Custom is ticked."
+                        screenReaderText="Java date pattern, e.g. dd/MM/yyyy HH:mm:ss. Editable when Custom is ticked.">
             <g:TextBox ui:field="text" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="userPreferencesTimeZone" label="Time Zone">
+        <form:FormGroup identity="userPreferencesTimeZone" label="Time Zone"
+                        helpText="The time zone used to show dates and times: Local (your browser's time zone), UTC, Id (a named zone) or Offset (hours from UTC). Default is UTC unless an administrator has changed the defaults."
+                        screenReaderText="Local, UTC, Id or Offset. Default is UTC.">
             <item:SelectionBox ui:field="timeZoneUse" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="userPreferencesTimeZoneId" identity="userPreferencesTimeZoneId"
-                        label="Time Zone Id">
+                        label="Time Zone Id"
+                        helpText="A named time zone, e.g. Europe/London. Only shown when Time Zone is Id."
+                        screenReaderText="Named zone, e.g. Europe/London.">
             <item:SelectionBox ui:field="timeZoneId" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="userPreferencesTimeZoneOffset" identity="userPreferencesTimeZoneOffset"
-                        label="Time Zone Offset">
+                        label="Time Zone Offset"
+                        helpText="The number of hours ahead of or behind UTC, from -12 to +12. Only shown when Time Zone is Offset."
+                        screenReaderText="Hours from UTC, -12 to +12.">
             <g:FlowPanel>
                 <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
                 <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes"/>

@@ -5,7 +5,9 @@
     <g:FlowPanel styleName="gitrepo-commit-message-dialog">
         <form:FormGroup identity="commitMessage"
                         label="Commit message"
-                        helpText="Message to record against this commit">
+                        helpText="Message recorded with the Git commit that this push creates. Required."
+                        screenReaderText="Recorded with the Git commit this push creates."
+                        required="true">
             <g:TextArea ui:field="txtCommitMessage"/>
         </form:FormGroup>
     </g:FlowPanel>

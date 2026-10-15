@@ -20,6 +20,7 @@ import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -50,6 +51,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     private SelectionPopup<T, I> popup;
     private boolean allowTextEntry;
     private boolean isEnabled = true;
+    private boolean readOnly;
     private Supplier<SafeHtml> popupTextSupplier;
 
     private final EventBinder eventBinder = new EventBinder() {
@@ -74,6 +76,13 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
         renderBox = new SimplePanel();
         renderBox.addStyleName("SelectionBox-renderBox stroom-control allow-focus");
+        // A picture of the value, which the text box (the named control) also holds, so screen
+        // readers don't read it twice
+        renderBox.getElement().setAttribute("aria-hidden", "true");
+        // The text box opens a list of the values to choose from
+        textBox.getElement().setAttribute("role", "combobox");
+        textBox.getElement().setAttribute("aria-haspopup", "listbox");
+        textBox.getElement().setAttribute("aria-expanded", "false");
 
         final FlowPanel outer = new FlowPanel();
         outer.addStyleName("SelectionBox-outer");
@@ -90,7 +99,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
     public void setAllowTextEntry(final boolean allowTextEntry) {
         this.allowTextEntry = allowTextEntry;
-        textBox.setReadOnly(!allowTextEntry);
+        textBox.setReadOnly(readOnly || !allowTextEntry);
         textBox.getElement().getStyle().setOpacity(allowTextEntry
                 ? 1
                 : 0);
@@ -105,13 +114,13 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     }
 
     private void updatePointer() {
-        if (allowTextEntry || !isEnabled()) {
+        if (allowTextEntry || !isEnabled() || readOnly) {
             textBox.removeStyleName(POINTER_CLASS_NAME);
         } else {
             textBox.addStyleName(POINTER_CLASS_NAME);
         }
 
-        if (isEnabled()) {
+        if (isEnabled() && !readOnly) {
             svgIconBox.addStyleName(POINTER_CLASS_NAME);
         } else {
             svgIconBox.removeStyleName(POINTER_CLASS_NAME);
@@ -144,6 +153,9 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     }
 
     private void showPopup() {
+        if (readOnly || !isEnabled()) {
+            return;
+        }
         if (popup != null) {
 //            GWT.log("Hiding popup");
             hidePopup();
@@ -154,6 +166,10 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             popup.addAutoHidePartner(textBox.getElement());
             popup.addAutoHidePartner(svgIconBox.getElement());
             popup.registerPopupTextProvider(popupTextSupplier);
+            // The list is named after the box, and the box says that it is open and controls it
+            popup.setAccessibleName(getAccessibleName(textBox.getElement()));
+            textBox.getElement().setAttribute("aria-expanded", "true");
+            textBox.getElement().setAttribute("aria-controls", popup.getListBoxId());
 
             final I selectionItem = model.wrap(value);
             if (selectionItem != null) {
@@ -161,6 +177,8 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             }
             final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
             handlerRegistrations.add(popup.addCloseHandler(event -> {
+                textBox.getElement().setAttribute("aria-expanded", "false");
+                textBox.getElement().removeAttribute("aria-controls");
                 focus();
                 for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
                     handlerRegistration.removeHandler();
@@ -182,6 +200,14 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         }
     }
 
+    // The box's name: the text of its label, else its aria-label
+    private static native String getAccessibleName(Element element) /*-{
+        if (element.labels && element.labels.length > 0) {
+            return element.labels[0].textContent.trim();
+        }
+        return element.getAttribute("aria-label") || "";
+    }-*/;
+
     private void hidePopup() {
         popup.hide();
         popup = null;
@@ -198,12 +224,41 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
     public void setEnabled(final boolean enabled) {
         this.isEnabled = enabled;
+        // An open list would still let the value be changed
+        if (!enabled && popup != null) {
+            hidePopup();
+        }
         textBox.setEnabled(enabled);
-        svgIconBox.setReadonly(!enabled);
-        renderBox.getElement().getStyle().setOpacity(enabled
-                ? 1
-                : 0.2);
+        svgIconBox.setReadonly(!enabled || readOnly);
+        // The disabled look (SelectionBox.css), rather than fading the value
+        svgIconBox.setStyleName("disabled", !enabled);
         updatePointer();
+    }
+
+    /// Makes the value read only: it can be read and stays in the tab order, but the list
+    /// doesn't open and typing doesn't change it. It looks like the normal field with its value
+    /// greyed.
+    ///
+    /// @param readOnly Whether the value is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        if (readOnly && popup != null) {
+            hidePopup();
+        }
+        textBox.setReadOnly(readOnly || !allowTextEntry);
+        if (readOnly) {
+            textBox.getElement().setAttribute("aria-readonly", "true");
+        } else {
+            textBox.getElement().removeAttribute("aria-readonly");
+        }
+        svgIconBox.setReadonly(!isEnabled() || readOnly);
+        svgIconBox.setStyleName("readonly", readOnly);
+        updatePointer();
+    }
+
+    /// @return Whether the value is read only.
+    public boolean isReadOnly() {
+        return readOnly;
     }
 
     public T getValue() {

@@ -25,20 +25,18 @@ import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DelayedUpdate;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
@@ -114,11 +112,12 @@ public final class ManageGlobalPropertyEditPresenter
         this.clientPropertyCache = clientPropertyCache;
         this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
 
-        this.effectiveValueWarningsButton = view.addEffectiveValueIcon(
-                SvgPresets.ALERT.title("Click to see cluster values"));
-        this.effectiveValueInfoButton = view.addEffectiveValueIcon(
-                SvgPresets.INFO.title("All nodes have the same effective value"));
-        this.dataTypeHelpButton = view.addDataTypeHelpIcon(SvgPresets.HELP);
+        this.effectiveValueWarningsButton = view.getEffectiveValueToolbar().button(
+                SvgImage.ALERT, "Click to see cluster values", this::onOpenClusterValues);
+        this.effectiveValueInfoButton = view.getEffectiveValueToolbar().button(
+                SvgImage.INFO, "All nodes have the same effective value", this::onOpenClusterValues);
+        this.dataTypeHelpButton = view.getDataTypeToolbar().button(
+                SvgImage.HELP, "Help", () -> showHelp("Data Types"));
 
         this.effectiveValueWarningsButton.setVisible(false);
         this.effectiveValueInfoButton.setVisible(false);
@@ -129,19 +128,6 @@ public final class ManageGlobalPropertyEditPresenter
 
     @Override
     protected void onBind() {
-        final ClickHandler iconClickHandler = event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onOpenClusterValues();
-            }
-        };
-
-        registerHandler(effectiveValueInfoButton.addClickHandler(iconClickHandler));
-        registerHandler(effectiveValueWarningsButton.addClickHandler(iconClickHandler));
-        registerHandler(dataTypeHelpButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                showHelp("Data Types");
-            }
-        }));
     }
 
     private void onOpenClusterValues() {
@@ -587,10 +573,13 @@ public final class ManageGlobalPropertyEditPresenter
 
         void setEditable(boolean edit);
 
-        ButtonView addYamlValueWarningIcon(Preset preset);
+        /// @return The toolbar beside the nodes' YAML value.
+        Toolbar getYamlValueToolbar();
 
-        ButtonView addEffectiveValueIcon(Preset preset);
+        /// @return The toolbar beside the nodes' effective value, for its warning and info icons.
+        Toolbar getEffectiveValueToolbar();
 
-        ButtonView addDataTypeHelpIcon(Preset preset);
+        /// @return The toolbar beside the data type, for its help button.
+        Toolbar getDataTypeToolbar();
     }
 }

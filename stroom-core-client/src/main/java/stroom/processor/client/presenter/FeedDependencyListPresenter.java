@@ -22,17 +22,15 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
 import stroom.processor.shared.FeedDependency;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -70,9 +68,12 @@ public class FeedDependencyListPresenter
 
         this.newFeedDependencyPresenter = newFeedDependencyPresenter;
 
-        addButton = view.addButton(SvgPresets.NEW_ITEM);
-        editButton = view.addButton(SvgPresets.EDIT);
-        removeButton = view.addButton(SvgPresets.REMOVE);
+        addButton = view.getToolbar().button(SvgImage.ADD, "New", this::onAdd);
+        view.getToolbar().setName("Feed dependency actions");
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", () -> onEdit(selectionModel.getSelected()));
+        editButton.setEnabled(false);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
@@ -84,21 +85,6 @@ public class FeedDependencyListPresenter
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onEdit(selectionModel.getSelected());
-            }
-        }));
-        registerHandler(addButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAdd(event);
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onEdit(selectionModel.getSelected());
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onRemove();
             }
         }));
     }
@@ -174,7 +160,7 @@ public class FeedDependencyListPresenter
         enableButtons();
     }
 
-    private void onAdd(final ClickEvent event) {
+    private void onAdd() {
         final FeedDependency feedDependency = new FeedDependency(UUID.randomUUID().toString(),
                 null,
                 StreamTypeNames.REFERENCE);

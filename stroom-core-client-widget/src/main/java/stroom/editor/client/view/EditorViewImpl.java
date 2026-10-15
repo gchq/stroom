@@ -247,7 +247,7 @@ public class EditorViewImpl
                                     highlightStr.getTo().getColNo()); // zero-based & exclusive so no need to change
                         })
                         .map(aceRange ->
-                                new Marker(aceRange, "hl", AceMarkerType.TEXT, false))
+                                new Marker(aceRange, "code-editor__highlight", AceMarkerType.TEXT, false))
                         .collect(Collectors.toList());
 
                 editor.setMarkers(markers);
@@ -271,7 +271,7 @@ public class EditorViewImpl
     public void setErrorText(final String title, final String errorText) {
 
         final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder()
-                .appendHtmlConstant("<div class=\"editor-error\">")
+                .appendHtmlConstant("<div class=\"code-editor__load-error\">")
                 .appendHtmlConstant("<p>")
                 .append(SafeHtmlUtils.fromString(title))
                 .appendHtmlConstant("</p>");
@@ -290,7 +290,7 @@ public class EditorViewImpl
 
         final ScrollPanel scrollPanel = new ScrollPanel();
         scrollPanel.addDomHandler(this::handleMouseDown, MouseDownEvent.getType());
-        scrollPanel.getElement().addClassName("editor-error-container");
+        scrollPanel.getElement().addClassName("code-editor__load-error-container");
         scrollPanel.getElement().addClassName("max");
         scrollPanel.setWidget(new HTMLPanel(safeHtmlBuilder.toSafeHtml()).asWidget());
         content.setWidget(scrollPanel.asWidget());

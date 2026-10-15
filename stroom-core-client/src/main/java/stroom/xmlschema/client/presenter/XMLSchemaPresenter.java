@@ -28,9 +28,8 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
@@ -70,7 +69,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
     private boolean updateDiagram;
     private XmlSchemaValidationResponse validationResponse =
             new XmlSchemaValidationResponse(true, null);
-    private final SvgButton validationIndicator;
+    private final ToolbarButton validationIndicator;
     private final Timer validationDebounceTimer;
 
     @Inject
@@ -85,10 +84,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        validationIndicator = SvgButton.create(SvgPresets.ALERT);
-        validationIndicator.setSvg(SvgImage.OK);
-        validationIndicator.setTitle(VALID);
-        toolbar.addButton(this.validationIndicator);
+        validationIndicator = toolbar.button(SvgImage.OK, VALID, this::showValidationResult);
 
         this.validationDebounceTimer = new Timer() {
             @Override
@@ -130,6 +126,10 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
                                final XmlSchemaDoc document,
                                final boolean readOnly) {
                 presenter.setText(document.getData(), true);
+                // Applied on every read, not just when the editor is created, so a later read
+                // with a different read-only state takes effect
+                presenter.setReadOnly(readOnly);
+                presenter.getFormatAction().setAvailable(!readOnly);
                 if (!readOnly) {
                     // Enable controls based on user permission
                     registerHandler(presenter.addValueChangeHandler(event -> {
@@ -169,16 +169,12 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
         selectTab(GRAPHICAL);
     }
 
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(validationIndicator.addClickHandler(e -> {
-            if (validationResponse.isOk()) {
-                AlertEvent.fireInfo(this, VALID, null);
-            } else {
-                AlertEvent.fireWarn(this, validationResponse.getError(), null);
-            }
-        }));
+    private void showValidationResult() {
+        if (validationResponse.isOk()) {
+            AlertEvent.fireInfo(this, VALID, null);
+        } else {
+            AlertEvent.fireWarn(this, validationResponse.getError(), null);
+        }
     }
 
     private void validateSchema(final Consumer<XmlSchemaValidationResponse> consumer) {

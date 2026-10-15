@@ -20,8 +20,11 @@ import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
+import stroom.query.language.filter.SimpleStringExpressionParser;
+import stroom.query.language.filter.SingleFieldProvider;
 import stroom.query.language.functions.Val;
 
 import jakarta.inject.Inject;
@@ -45,7 +48,7 @@ public class ValPredicateFactory {
         final ExpressionOperator.Builder valueFilterBuilder = ExpressionOperator.builder();
         if (filter != null) {
             final Optional<ExpressionOperator> operator = SimpleStringExpressionParser.create(
-                    new SingleFieldProvider(column.getId()),
+                    new SingleFieldProvider(QueryField.createUiText(column.getId())),
                     filter);
             operator.ifPresent(valueFilterBuilder::addOperator);
             final ExpressionOperator valueFilter = valueFilterBuilder.build();

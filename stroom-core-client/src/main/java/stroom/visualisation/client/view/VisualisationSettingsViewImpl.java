@@ -67,7 +67,7 @@ public class VisualisationSettingsViewImpl extends ViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        functionName.setEnabled(!readOnly);
+        functionName.setReadOnly(readOnly);
     }
 
 

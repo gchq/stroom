@@ -18,10 +18,10 @@ package stroom.explorer.client.view;
 
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
@@ -60,10 +60,10 @@ public class ExplorerNodeEditTagsViewImpl
     private static final Predicate<String> ALWAYS_TRUE_PREDICATE = (str) -> true;
 
     private final Widget widget;
-    private final ButtonView removeButton;
-    private final ButtonView addFromInputButton;
-    private final ButtonView clearInputButton;
-    private final ButtonView addFromAllTagsButton;
+    private final ToolbarButton removeButton;
+    private final ToolbarButton addFromInputButton;
+    private final ToolbarButton clearInputButton;
+    private final ToolbarButton addFromAllTagsButton;
     private final KeyPressHandler tagsKeyPressHandler = new TagsKeyPressHandler();
 
     //    private SelectionBoxModel<String> model;
@@ -74,15 +74,15 @@ public class ExplorerNodeEditTagsViewImpl
     @UiField
     TextBox textBox;
     @UiField
-    ButtonPanel clearButtonPanel;
+    Toolbar clearButtonPanel;
     @UiField
-    ButtonPanel inputButtonPanel;
+    Toolbar inputButtonPanel;
     @UiField
     FormGroup allTagsFormGroup;
     @UiField
     ListBox allTagsListBox;
     @UiField
-    ButtonPanel nodeTagsButtonPanel;
+    Toolbar nodeTagsButtonPanel;
     @UiField
     FormGroup nodeTagsFormGroup;
     @UiField
@@ -94,26 +94,30 @@ public class ExplorerNodeEditTagsViewImpl
         widget = binder.createAndBindUi(this);
         widget.addAttachHandler(event -> focus());
 
-        addFromAllTagsButton = nodeTagsButtonPanel.addButton(
-                SvgPresets.ARROW_RIGHT.title("Add selected tags from 'All Known Tags'"));
+        addFromAllTagsButton = nodeTagsButtonPanel.button(
+                SvgImage.ARROW_RIGHT,
+                "Add selected tags from 'All Known Tags'",
+                this::onAddFromAllTagsClicked);
         addFromAllTagsButton.setEnabled(false);
-        addFromAllTagsButton.addClickHandler(this::onAddFromAllTagsClicked);
 
-        removeButton = nodeTagsButtonPanel.addButton(
-                SvgPresets.ARROW_LEFT.title("Remove selected tags"));
+        removeButton = nodeTagsButtonPanel.button(
+                SvgImage.ARROW_LEFT,
+                "Remove selected tags",
+                this::onDeleteClicked);
         removeButton.setEnabled(false);
-        removeButton.addClickHandler(this::onDeleteClicked);
 
-        clearInputButton = clearButtonPanel.addButton(
-                SvgPresets.CLEAR.title("Clear entered tag(s)"));
-        clearInputButton.setEnabled(true); // hidden/visible, never disabled
-        clearInputButton.addClickHandler(this::onClearInputClicked);
-        clearInputButton.asWidget().addStyleName("clear");
+        // Hidden/visible, never disabled
+        clearInputButton = clearButtonPanel.button(
+                SvgImage.CLEAR,
+                "Clear entered tag(s)",
+                this::onClearInputClicked);
+        clearInputButton.addStyleName("clear");
 
-        addFromInputButton = inputButtonPanel.addButton(
-                SvgPresets.ADD.title("Add entered tag(s)"));
+        addFromInputButton = inputButtonPanel.button(
+                SvgImage.ADD,
+                "Add entered tag(s)",
+                this::onAddFromInputClicked);
         addFromInputButton.setEnabled(false);
-        addFromInputButton.addClickHandler(this::onAddFromInputClicked);
 
         nodeTagsListBox.setMultipleSelect(true);
         nodeTagsListBox.addKeyDownHandler(this::handleNodeTagsKeyDownEvent);
@@ -274,7 +278,7 @@ public class ExplorerNodeEditTagsViewImpl
         }
     }
 
-    private void onDeleteClicked(final ClickEvent event) {
+    private void onDeleteClicked() {
         removedSelectedNodeTags();
 //        if (nodeTagsListBox.getItemCount() > 0
 //                && nodeTagsListBox.getSelectedValue() != null) {
@@ -307,12 +311,14 @@ public class ExplorerNodeEditTagsViewImpl
         }
     }
 
-    private void onAddFromInputClicked(final ClickEvent event) {
+    private void onAddFromInputClicked() {
         addTagsFromTextInput();
     }
 
-    private void onClearInputClicked(final ClickEvent event) {
+    private void onClearInputClicked() {
         clearInput();
+        // The button hides itself once the input is empty, which would leave focus nowhere
+        textBox.setFocus(true);
     }
 
     private void addTagsFromTextInput() {
@@ -325,7 +331,7 @@ public class ExplorerNodeEditTagsViewImpl
         }
     }
 
-    private void onAddFromAllTagsClicked(final ClickEvent event) {
+    private void onAddFromAllTagsClicked() {
         addSelectedTags();
     }
 

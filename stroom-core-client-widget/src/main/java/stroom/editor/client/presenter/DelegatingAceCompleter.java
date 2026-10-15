@@ -75,9 +75,15 @@ public class DelegatingAceCompleter {
                 ? aceEditorMode.getName()
                 : null;
         final MapKey mapKey = MapKey.from(editorId, modeName);
-        editorIdToCompletionProviderMap.computeIfAbsent(
-                        mapKey, k -> new ArrayList<>())
-                .addAll(Arrays.asList(completionProviders));
+        final List<AceCompletionProvider> providers = editorIdToCompletionProviderMap.computeIfAbsent(
+                mapKey, k -> new ArrayList<>());
+        // Registering again (e.g. each time an editor is attached) mustn't add duplicates, each of
+        // which would answer every completion request again
+        for (final AceCompletionProvider completionProvider : completionProviders) {
+            if (!providers.contains(completionProvider)) {
+                providers.add(completionProvider);
+            }
+        }
 
         logCompletionProvidersCount();
     }
@@ -110,10 +116,10 @@ public class DelegatingAceCompleter {
     public void deRegisterCompletionProviders(final String editorId) {
 //        GWT.log("DeRegistering id " + editorId);
         if (editorId != null) {
+            // Not removing while streaming over the keys (which could fail or skip entries), and
+            // mode-only keys have no editor id
             editorIdToCompletionProviderMap.keySet()
-                    .stream()
-                    .filter(mapKey -> mapKey.getEditorId().equals(editorId))
-                    .forEach(editorIdToCompletionProviderMap::remove);
+                    .removeIf(mapKey -> editorId.equals(mapKey.getEditorId()));
         }
         logCompletionProvidersCount();
     }

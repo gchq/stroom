@@ -99,7 +99,6 @@ public class ScheduledProcessEditViewImpl
     private void updateNonInstantUI(final ScheduleType scheduleType) {
         startTime.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
         endTime.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
-        scheduleBox.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
         if (scheduleType.equals(ScheduleType.INSTANT)) {
             scheduleBox.setValue(scheduleBox
                     .getValue()
@@ -151,7 +150,9 @@ public class ScheduledProcessEditViewImpl
         this.node.clear();
         this.node.addItems(nodes);
         if (selectedNode == null) {
+            //noinspection SizeReplaceableByIsEmpty
             if (nodes.size() > 0) {
+                //noinspection SequencedCollectionMethodCanBeUsed
                 this.node.setValue(nodes.get(0));
             }
         } else {

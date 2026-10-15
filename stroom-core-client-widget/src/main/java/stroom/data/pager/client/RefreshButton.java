@@ -20,102 +20,88 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 
+/// A toolbar's refresh button, which also shows whether what it refreshes is refreshing (a turning
+/// spinner) and, if it can be paused (e.g. a dashboard's table or visualisation), whether updates are
+/// paused. It is a [ToolbarButton], so it is one of its toolbar's buttons like any other: made by
+/// [stroom.widget.button.client.Toolbar#refresh], or declared in a template inside a toolbar as
+/// `<refresh-button:RefreshButton ui:field="refresh"/>`.
 public class RefreshButton
-        extends Composite
+        extends ToolbarButton
         implements TaskMonitorFactory {
 
-    private final SvgButton button;
+    // Its BEM names (see refresh-button.css)
+    private static final String BLOCK = "refresh-button";
+    private static final String ICON = BLOCK + "__icon";
+    private static final String REFRESHING = BLOCK + "--refreshing";
+    private static final String PAUSABLE = BLOCK + "--pausable";
+    private static final String PAUSED = BLOCK + "--paused";
+
     private int taskCount;
     private boolean allowPause;
     private boolean paused;
     private boolean refreshing;
     private boolean refreshState;
 
+    /// A button holding four icons, one above another, whose modifiers (refreshing, pausable and
+    /// paused) choose which are shown (see refresh-button.css): refresh; a spinner turning; a static
+    /// circle; and pause.
     public RefreshButton() {
-        final SimplePanel refreshInner = new SimplePanel();
-        refreshInner.setStyleName("refresh-inner");
-        refreshInner.getElement().setInnerHTML(SvgImage.REFRESH.getSvg());
-        final SimplePanel refreshOuter = new SimplePanel(refreshInner);
-        refreshOuter.setStyleName("refresh-outer");
+        addStyleName(BLOCK);
+        setTitle("Refresh");
 
-        final SimplePanel circleInner = new SimplePanel();
-        circleInner.setStyleName("circle-inner");
-        circleInner.getElement().setInnerHTML(SvgImage.SPINNER_CIRCLE.getSvg());
-        final SimplePanel circleOuter = new SimplePanel(circleInner);
-        circleOuter.setStyleName("circle-outer");
-
-        final SimplePanel spinningInner = new SimplePanel();
-        spinningInner.setStyleName("spinning-inner");
-        spinningInner.getElement().setInnerHTML(SvgImage.SPINNER_SPINNING.getSvg());
-        final SimplePanel spinningOuter = new SimplePanel(spinningInner);
-        spinningOuter.setStyleName("spinning-outer");
-
-        final SimplePanel pauseInner = new SimplePanel();
-        pauseInner.setStyleName("pause-inner");
-        pauseInner.getElement().setInnerHTML(SvgImage.SPINNER_PAUSE.getSvg());
-        final SimplePanel pauseOuter = new SimplePanel(pauseInner);
-        pauseOuter.setStyleName("pause-outer");
-
-        final FlowPanel layout = new FlowPanel();
-        layout.setStyleName("background");
-        layout.add(refreshOuter);
-        layout.add(circleOuter);
-        layout.add(spinningOuter);
-        layout.add(pauseOuter);
-
-        button = new SvgButton();
-        button.addStyleName("RefreshButton");
-        button.setTitle("Refresh");
-        button.setEnabled(true);
-
-        button.getElement().removeAllChildren();
-        DOM.appendChild(button.getElement(), layout.getElement());
-
-        initWidget(button);
+        final Element element = getElement();
+        element.appendChild(icon(SvgImage.REFRESH, "refresh"));
+        element.appendChild(icon(SvgImage.SPINNER_CIRCLE, "circle"));
+        element.appendChild(icon(SvgImage.SPINNER_SPINNING, "spinning"));
+        element.appendChild(icon(SvgImage.SPINNER_PAUSE, "pause"));
     }
 
+    // The image's SVG element, with the classes that place and show it, e.g. refresh-button__icon
+    // and refresh-button__icon--spinning
+    private static Element icon(final SvgImage image, final String name) {
+        final Element holder = Document.get().createDivElement();
+        holder.setInnerHTML(image.getSvg());
+        final Element svg = holder.getFirstChildElement();
+        // An SVG element's className isn't a string, so set the class attribute itself
+        final String classes = svg.getAttribute("class");
+        svg.setAttribute("class", (classes == null || classes.isEmpty()
+                ? ""
+                : classes + " ") + ICON + " " + ICON + "--" + name);
+        // The icon is decoration: the button is named by its title
+        svg.setAttribute("aria-hidden", "true");
+        return svg;
+    }
+
+    /// @param refreshing Whether what the button refreshes is refreshing, shown by a turning spinner.
     public void setRefreshing(final boolean refreshing) {
         this.refreshing = refreshing;
         updateRefreshState();
     }
 
+    /// Makes the button pause and resume updates rather than refresh: it is named for what pressing
+    /// it does, and can only be pressed while refreshing or paused.
+    ///
+    /// @param allowPause Whether the button pauses and resumes updates.
     public void setAllowPause(final boolean allowPause) {
         this.allowPause = allowPause;
+        setStyleName(PAUSABLE, allowPause);
         if (allowPause) {
             setEnabled(false);
-            button.addStyleName("allowPause");
-        } else {
-            button.removeStyleName("allowPause");
         }
         update();
     }
 
+    /// @param paused Whether updates are paused, shown by a pulsing pause icon.
     public void setPaused(final boolean paused) {
         this.paused = paused;
-        if (paused) {
-            button.addStyleName("paused");
-        } else {
-            button.removeStyleName("paused");
-        }
+        setStyleName(PAUSED, paused);
         update();
-    }
-
-    public void setEnabled(final boolean enabled) {
-        button.setEnabled(enabled);
-    }
-
-    public HandlerRegistration addClickHandler(final ClickHandler handler) {
-        return button.addClickHandler(handler);
     }
 
     @Override
@@ -135,6 +121,8 @@ public class RefreshButton
         };
     }
 
+    /// Shows whether what the button refreshes is refreshing, from [#setRefreshing(boolean)] and the
+    /// tasks started by its task monitors.
     public void updateRefreshState() {
         if (taskCount < 0) {
             GWT.log("Negative task count");
@@ -143,11 +131,7 @@ public class RefreshButton
         final boolean refreshState = refreshing || taskCount > 0;
         if (refreshState != this.refreshState) {
             this.refreshState = refreshState;
-            if (refreshState) {
-                button.addStyleName("refreshing");
-            } else {
-                button.removeStyleName("refreshing");
-            }
+            setStyleName(REFRESHING, refreshState);
         }
         update();
     }
@@ -157,14 +141,14 @@ public class RefreshButton
             setEnabled(paused || refreshing || taskCount > 0);
 
             if (paused) {
-                button.setTitle("Resume Update");
+                setTitle("Resume Update");
             } else if (refreshing || taskCount > 0) {
-                button.setTitle("Pause Update");
+                setTitle("Pause Update");
             } else {
-                button.setTitle("Not Updating");
+                setTitle("Not Updating");
             }
         } else {
-            button.setTitle("Refresh");
+            setTitle("Refresh");
         }
     }
 }

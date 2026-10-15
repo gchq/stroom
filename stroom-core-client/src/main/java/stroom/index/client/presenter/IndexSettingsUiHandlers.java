@@ -20,4 +20,5 @@ import stroom.document.client.event.ChangeUiHandlers;
 
 public interface IndexSettingsUiHandlers extends ChangeUiHandlers {
 
+    void onReset();
 }

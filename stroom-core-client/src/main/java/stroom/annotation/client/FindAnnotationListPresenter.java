@@ -25,8 +25,10 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.SelectionEventManager;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -53,6 +55,7 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
     private Long sourceId;
     private Long destinationId;
     private String lastFilter;
+    private Consumer<String> filterErrorConsumer;
     private String filter;
     private boolean initialised;
     private boolean focusText;
@@ -114,6 +117,12 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
                         sourceId,
                         destinationId);
                 resourceClient.findAnnotations(request, resultPage -> {
+                    // A rejected filter comes back as an empty page like any other, so surface the
+                    // reason on the filter box. See ResultPage.filterError.
+                    if (filterErrorConsumer != null) {
+                        filterErrorConsumer.accept(
+                                NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                    }
                     if (resultPage.getPageStart() != cellTable.getPageStart()) {
                         cellTable.setPageStart(resultPage.getPageStart());
                     }
@@ -173,6 +182,10 @@ public class FindAnnotationListPresenter extends MyPresenterWidget<PagerView> {
 
     public void setFocusText(final boolean focusText) {
         this.focusText = focusText;
+    }
+
+    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+        this.filterErrorConsumer = filterErrorConsumer;
     }
 
     public void setFilter(final String filter) {

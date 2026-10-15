@@ -22,7 +22,6 @@ import stroom.annotation.shared.AnnotationTagType;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 
@@ -64,9 +63,13 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
         this.editProvider = editProvider;
         this.annotationResourceClient = annotationResourceClient;
 
-        newButton = annotationTagListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
-        openButton = annotationTagListPresenter.getView().addButton(SvgPresets.EDIT);
-        deleteButton = annotationTagListPresenter.getView().addButton(SvgPresets.DELETE);
+        annotationTagListPresenter.getView().getToolbar().setName("Tag actions");
+        newButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::add);
+        openButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        openButton.setEnabled(false);
+        deleteButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete",
+                this::delete);
+        deleteButton.setEnabled(false);
 
         view.setView(annotationTagListPresenter.getView());
     }
@@ -79,9 +82,6 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
                 edit();
             }
         }));
-        registerHandler(newButton.addClickHandler(event -> add()));
-        registerHandler(openButton.addClickHandler(event -> edit()));
-        registerHandler(deleteButton.addClickHandler(event -> delete()));
     }
 
     private void add() {

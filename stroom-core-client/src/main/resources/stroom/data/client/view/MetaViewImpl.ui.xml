@@ -1,22 +1,17 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:split="urn:import:stroom.widget.layout.client">
     <g:SimplePanel styleName="max">
-        <g:ThinSplitLayoutPanel styleName="max">
-            <g:north size="200">
-                <g:SimplePanel ui:field="streamList" styleName="max"/>
-            </g:north>
-            <g:center>
-                <g:ThinSplitLayoutPanel styleName="max">
-                    <g:north size="150">
-                        <g:SimplePanel ui:field="streamRelationList" styleName="max">
-                        </g:SimplePanel>
-                    </g:north>
-                    <g:center>
-                        <g:SimplePanel ui:field="data" styleName="max"/>
-                    </g:center>
-                </g:ThinSplitLayoutPanel>
-            </g:center>
-        </g:ThinSplitLayoutPanel>
+        <split:SplitPane vertical="true" thin="true" sizes="200px, *"
+                         names="Streams, Details" addStyleNames="max">
+            <g:SimplePanel ui:field="streamList" styleName="max"/>
+            <split:SplitPane vertical="true" thin="true" sizes="150px, *"
+                             names="Related streams, Data" addStyleNames="max">
+                <g:SimplePanel ui:field="streamRelationList" styleName="max">
+                </g:SimplePanel>
+                <g:SimplePanel ui:field="data" styleName="max"/>
+            </split:SplitPane>
+        </split:SplitPane>
     </g:SimplePanel>
 </ui:UiBinder>

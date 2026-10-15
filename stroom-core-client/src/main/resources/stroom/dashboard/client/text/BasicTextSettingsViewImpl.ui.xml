@@ -5,37 +5,56 @@
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="basicTextSettingsId" label="Id">
+        <form:FormGroup identity="basicTextSettingsId" label="Id"
+                        helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. text-AB1C2). It cannot be changed.">
             <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsName" label="Name">
+        <form:FormGroup identity="basicTextSettingsName" label="Name"
+                        helpText="Name of this component, shown in its tab on the dashboard.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsTable" label="Table">
+        <form:FormGroup identity="basicTextSettingsTable" label="Table"
+                        helpText="Table or embedded query whose selected row decides which data is shown. Choose Any to follow a selection in any of them."
+                        screenReaderText="Component whose selected row decides the data shown, or Any.">
             <i:SelectionBox ui:field="table" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsStreamIdColumn" label="Stream Id Column">
+        <form:FormGroup identity="basicTextSettingsStreamIdColumn" label="Stream Id Column"
+                        helpText="Column that holds the stream ID of the selected row. Default is __stream_id__."
+                        screenReaderText="Default is __stream_id__.">
             <i:SelectionBox ui:field="streamIdColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsPartNoColumn" label="Part No Column">
+        <form:FormGroup identity="basicTextSettingsPartNoColumn" label="Part No Column"
+                        helpText="Column that holds the part number (starting at 1) of the selected row. Optional."
+                        screenReaderText="Numbers start at 1.">
             <i:SelectionBox ui:field="partNoColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsRecordNoColumn" label="Record No Column">
+        <form:FormGroup identity="basicTextSettingsRecordNoColumn" label="Record No Column"
+                        helpText="Column that holds the record number (starting at 1) of the selected row. Not needed if the line from and line to columns are set. Default is __event_id__."
+                        screenReaderText="Default is __event_id__. Numbers start at 1.">
             <i:SelectionBox ui:field="recordNoColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsLineFromColumn" label="Line From Column">
+        <form:FormGroup identity="basicTextSettingsLineFromColumn" label="Line From Column"
+                        helpText="Column that holds the line number where the text to highlight starts. Used with the other line and column settings."
+                        screenReaderText="Highlight start line. Used with the other position columns.">
             <i:SelectionBox ui:field="lineFromColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsColFromColumn" label="Col From Column">
+        <form:FormGroup identity="basicTextSettingsColFromColumn" label="Col From Column"
+                        helpText="Column that holds the column (character) number where the text to highlight starts."
+                        screenReaderText="Highlight start column.">
             <i:SelectionBox ui:field="colFromColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsLineToColumn" label="Line To Column">
+        <form:FormGroup identity="basicTextSettingsLineToColumn" label="Line To Column"
+                        helpText="Column that holds the line number where the text to highlight ends. Used with the other line and column settings."
+                        screenReaderText="Highlight end line. Used with the other position columns.">
             <i:SelectionBox ui:field="lineToColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsColToColumn" label="Col To Column">
+        <form:FormGroup identity="basicTextSettingsColToColumn" label="Col To Column"
+                        helpText="Column that holds the column (character) number where the text to highlight ends."
+                        screenReaderText="Highlight end column.">
             <i:SelectionBox ui:field="colToColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsPipeline" label="Pipeline">
+        <form:FormGroup identity="basicTextSettingsPipeline" label="Pipeline"
+                        helpText="Pipeline used to process the data before it is shown. Optional, but required if you only have permission to view data through a pipeline.">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>

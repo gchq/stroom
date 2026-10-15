@@ -53,6 +53,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     private final ExplorerPopupPresenter explorerPopupPresenter;
     private final RestFactory restFactory;
     private boolean enabled = true;
+    private boolean readOnly;
     private DocRef value = null;
     private String errorMsg = null;
     private String itemType = null;
@@ -94,6 +95,28 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
      */
     public void setItemType(final String itemType) {
         this.itemType = itemType;
+    }
+
+    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
+    // Local addition: a pass-through to ExplorerPopupPresenter.setCaption, which was already
+    // public but unreachable through this wrapper because explorerPopupPresenter is private.
+    // Callers holding an ExplorerPopupPresenter directly have always been able to title the
+    // chooser ("Choose Dictionary", "Choose Dashboard", ...); callers holding a
+    // DocSelectionBoxPresenter were stuck with the default "Choose item". Purely additive, so
+    // upstream's version of this file can be taken wholesale as long as this method survives.
+    /**
+     * Sets the caption of the chooser popup this box opens.
+     *
+     * <p>Defaults to {@code "Choose item"}, which says nothing about what is being chosen —
+     * unhelpful on a dialog with more than one box. Convention elsewhere is
+     * {@code "Choose <Thing>"} in title case.</p>
+     *
+     * @param caption the popup caption; a null leaves the default in place
+     */
+    public void setCaption(final String caption) {
+        if (caption != null) {
+            explorerPopupPresenter.setCaption(caption);
+        }
     }
 
     public void setQuickFilter(final String filterInput) {
@@ -260,7 +283,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
 
     @Override
     public void showPopup() {
-        if (enabled) {
+        if (enabled && !readOnly) {
             final DocRef oldDocRef = getSelectedEntityReference();
             explorerPopupPresenter.show(selectedDocRef -> {
 //                GWT.log("currentSelectionRef: " + selectedDocRef);
@@ -293,13 +316,18 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                 NullSafe.isNonBlankString(errorMsg));
     }
 
+    /// Makes the selection read only: it can be read and stays in the tab order, but the
+    /// picker doesn't open. It looks like the normal field with its value greyed.
+    ///
+    /// @param readOnly Whether the selection is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        getView().setReadOnly(readOnly);
+    }
+
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
-        if (!enabled) {
-            getView().asWidget().getElement().addClassName("disabled");
-        } else {
-            getView().asWidget().getElement().removeClassName("disabled");
-        }
+        getView().setEnabled(enabled);
     }
 
     private String getErrorMsg() {

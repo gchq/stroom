@@ -15,6 +15,16 @@ This licence is included in the _licences/custom_ folder.
 Some of the SVG icons used in _Stroom_ are taken from or derived from [FontAwesome](https://github.com/FortAwesome/Font-Awesome).
 These icons are licenced under [CC BY 4.0 License](https://creativecommons.org/licenses/by/4.0/).
 
+The _Stroom GWT Workbench_ (`stroom-gwt/stroom-gwt-workbench-framework`) is inspired by [Storybook](https://storybook.js.org/),
+and is not affiliated with or endorsed by Storybook or Chromatic.
+Some of its code and assets are taken from or derived from Storybook, which is Copyright (c) 2024 Storybook and licensed under the MIT licence:
+the SVG icons (from [@storybook/icons](https://github.com/storybookjs/icons), whose own MIT licence is also included, and from Storybook itself),
+the colour vision filters, the measure overlay, and the story id and URL args formats.
+These licences are included in the _licences/custom_ folder.
+
+The _Stroom GWT Workbench_ downloads [axe-core](https://github.com/dequelabs/axe-core) with npm when it is run, to check stories for accessibility.
+axe-core is licensed under the Mozilla Public Licence, Version 2.0 and is not distributed with _Stroom_.
+
 The table below includes licences for all Maven dependencies. 
 
 | Group                            | Artifact                                     | Version          | Licence       | Licence   | Licence       |

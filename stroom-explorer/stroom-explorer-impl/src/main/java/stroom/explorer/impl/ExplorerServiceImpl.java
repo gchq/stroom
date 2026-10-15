@@ -58,7 +58,10 @@ import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.language.filter.QuickFilter;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.DocumentPermissionService;
@@ -240,6 +243,21 @@ class ExplorerServiceImpl
         // A transient holder for the filter, predicate
         final NodeInclusionChecker nodeInclusionChecker =
                 new NodeInclusionChecker(securityContext, filter, expressionPredicateFactory);
+
+        // Build the predicate up front rather than lazily during the traversal, so a bad filter is
+        // known before any work is done. ExpressionPredicateFactory matches nothing on a bad
+        // filter, which is the right result on a debounced filter - but the reason has to come
+        // back with the empty tree or it is indistinguishable from "nothing matched".
+        // See FetchExplorerNodeResult.filterError.
+        nodeInclusionChecker.getFuzzyMatchPredicate();
+        if (nodeInclusionChecker.getFilterError() != null) {
+            return new FetchExplorerNodeResult(
+                    Collections.emptyList(),
+                    Collections.emptyList(),
+                    Collections.emptySet(),
+                    filter.getNameFilter(),
+                    TokenErrorUtil.toTokenError(nodeInclusionChecker.getFilterError()));
+        }
 
         // Recurse down the tree adding items that should be included
         final NodeStates nodeStates = addDescendants(
@@ -1762,6 +1780,12 @@ class ExplorerServiceImpl
                     OpenItemsImpl.all(),
                     metrics,
                     false);
+            if (result.getFilterError() != null) {
+                // A rejected filter must not look like a filter that matched nothing. The tree
+                // walk already worked out why; send it back with the empty page. See
+                // ResultPage.filterError.
+                return ResultPage.emptyWithFilterError(result.getFilterError());
+            }
             final List<FindResult> results = new ArrayList<>();
 
             walkNodeTree(result.getRootNodes(), (path, node) -> {
@@ -1845,6 +1869,11 @@ class ExplorerServiceImpl
 
             return ResultPage.createPageLimitedList(results, request.getPageRequest());
 
+        } catch (final TokenException e) {
+            // Debounced filter - match nothing and say why rather than erroring at the user
+            // mid-keystroke. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
         } catch (final Exception e) {
             LOGGER.error("Error finding nodes with request {}", request, e);
             throw e;
@@ -1860,7 +1889,15 @@ class ExplorerServiceImpl
                                        final TreeConsumer consumer) {
         final LocalMetrics metrics = SimpleMetrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
-            if (!ExpressionUtil.hasTerms(request.getExpression())) {
+            // The user's text is parsed here rather than on the client, so the document permission
+            // screens speak the same filter language as every other one. See spec §9 and §11.
+            final ExpressionOperator expression = QuickFilter.and(
+                    request.getExpression(),
+                    request.getQuickFilter(),
+                    DocumentPermissionFields.QUICK_FILTER_DEFAULT_FIELDS,
+                    DocumentPermissionFields.QUICK_FILTER_FIELDS);
+
+            if (!ExpressionUtil.hasTerms(expression)) {
                 return;
             }
 
@@ -1882,7 +1919,6 @@ class ExplorerServiceImpl
                     metrics,
                     false);
 
-            final ExpressionOperator expression = request.getExpression();
             final ExpressionMatcher expressionMatcher =
                     new ExpressionMatcher(DocumentPermissionFields.getAllFieldMap());
 
@@ -1903,6 +1939,18 @@ class ExplorerServiceImpl
             final AdvancedDocumentFindWithPermissionsRequest request) {
         // First find the results then decorate them with user permissions.
         final List<FindResultWithPermissions> results = new ArrayList<>();
+        try {
+            return advancedFindWithPermissions(request, results);
+        } catch (final TokenException e) {
+            // Debounced filter - match nothing and say why. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
+        }
+    }
+
+    private ResultPage<FindResultWithPermissions> advancedFindWithPermissions(
+            final AdvancedDocumentFindWithPermissionsRequest request,
+            final List<FindResultWithPermissions> results) {
         applyExpressionFilter(request, (path, node) -> {
             final FetchDocumentUserPermissionsRequest fetchDocumentUserPermissionsRequest =
                     new FetchDocumentUserPermissionsRequest.Builder()
