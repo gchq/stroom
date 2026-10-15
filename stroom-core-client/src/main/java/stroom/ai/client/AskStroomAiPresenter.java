@@ -697,10 +697,7 @@ public class AskStroomAiPresenter
                         .command(this::onDeleteChat))
                 .withSeparator()
                 // Things that go beyond this chat: memory is loaded into all the user's chats, and the settings
-                // apply to them all.
-                .withInfoMenuItem(item -> item
-                        .text(SafeHtmlUtils.fromSafeConstant("All your chats"))
-                        .disabled())
+                // apply to them all. The separator sets them apart, without a heading.
                 .withIconMenuItem(item -> item
                         .icon(SvgImage.INFO)
                         .text("Memory")
@@ -844,7 +841,7 @@ public class AskStroomAiPresenter
         final HtmlBuilder hb = new HtmlBuilder();
         if (searchHits != null) {
             if (searchHits.isEmpty()) {
-                hb.div(div -> div.append("No chats match \u201c" + searchedText + "\u201d."),
+                hb.div(div -> div.append("No chats match “" + searchedText + "”."),
                         Attribute.className("ai-chat-list-empty"));
             }
             for (final AiChatSearchHit hit : searchHits) {
@@ -1211,11 +1208,18 @@ public class AskStroomAiPresenter
             }
             case AiSlashCommands.NEW -> {
                 setChatListShowing(false);
-                startNewChat(() -> {
+                final Runnable ask = () -> {
                     if (!rest.isEmpty()) {
                         sendMessage(rest);
                     }
-                });
+                };
+                // An unused chat is new already, so it is used rather than left behind.
+                if (isCurrentChatUnused()) {
+                    getView().focus();
+                    ask.run();
+                } else {
+                    startNewChat(ask);
+                }
             }
             case AiSlashCommands.CLEAR -> {
                 if (currentChat == null) {
@@ -3063,7 +3067,17 @@ public class AskStroomAiPresenter
     @Override
     public void onNewChat() {
         setChatListShowing(false);
-        startNewChat();
+        if (isCurrentChatUnused()) {
+            // It is new already, so use it rather than leave an unused chat behind.
+            getView().focus();
+        } else {
+            startNewChat();
+        }
+    }
+
+    /// @return True if the chat being shown has nothing in it, so is as good as a new one.
+    private boolean isCurrentChatUnused() {
+        return currentChat != null && getView().isEmptyState() && !currentRunActive;
     }
 
     private void startNewChat() {
@@ -3357,6 +3371,9 @@ public class AskStroomAiPresenter
         void clearMessages();
 
         void setEmptyState(boolean empty);
+
+        /// @return True if the chat being shown has nothing in it yet.
+        boolean isEmptyState();
 
         /// @return The panel the list of chats is shown in.
         FlowPanel getChatList();
