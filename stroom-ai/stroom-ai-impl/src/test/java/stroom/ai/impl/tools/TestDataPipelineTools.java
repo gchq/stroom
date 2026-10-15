@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.TableSummariser;
+import stroom.ai.api.TableSummaryRequest;
 import stroom.ai.api.TableSummaryResult;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiDao;
@@ -35,6 +36,7 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.QueryKey;
 import stroom.query.impl.QueryService;
 import stroom.query.shared.QuerySearchRequest;
@@ -209,7 +211,20 @@ class TestDataPipelineTools {
         workspace.write(chatId, WorkspacePath.parse("/outputs/many.csv"), csv.toString(), null);
         Mockito.when(tableSummariser.summarise(Mockito.any()))
                 .thenReturn(TableSummaryResult.summarised("Mostly unusual messages."));
-        final ToolRunContext context = new ToolRunContext(Mockito.mock(ChatModel.class), null, () -> false);
+        // With the run's model document too, as in a real chat: a request takes a model or a model ref, not both.
+        final OpenAIModelDoc modelDoc = OpenAIModelDoc.builder()
+                .uuid("model-uuid")
+                .name("model")
+                .maxContextWindowTokens(8_000)
+                .build();
+        final ToolRunContext context = new ToolRunContext(Mockito.mock(ChatModel.class), modelDoc, () -> false);
+        Mockito.when(tableSummariser.summarise(Mockito.any())).thenAnswer(invocation -> {
+            final TableSummaryRequest request = invocation.getArgument(0);
+            assertThat(request.getChatModel()).isNotNull();
+            assertThat(request.getModelRef()).isNull();
+            assertThat(request.getContextWindowTokens()).isEqualTo(8_000);
+            return TableSummaryResult.summarised("Mostly unusual messages.");
+        });
 
         final String first = context.run(() -> run(summariseTool(),
                 "{\"path\":\"/outputs/many.csv\",\"column\":\"message\"}"));
