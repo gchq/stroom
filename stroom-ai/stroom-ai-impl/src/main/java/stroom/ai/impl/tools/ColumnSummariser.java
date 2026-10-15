@@ -107,6 +107,8 @@ class ColumnSummariser {
                     .source(new TableSource("Patterns of column '" + column + "' of " + path, temp, false))
                     .chatModel(context.getChatModel())
                     .modelRef(NullSafe.get(context.getModelDoc(), OpenAIModelDoc::asDocRef))
+                    .contextWindowTokens(NullSafe.getOrElse(context.getModelDoc(),
+                            OpenAIModelDoc::getMaxContextWindowTokens, 0))
                     .config(tableAnalysisConfig())
                     .query(NullSafe.nonBlankStringElse(focus, "Summarise the kinds of value in this column, how "
                                                               + "common each is, and anything unusual. Keep "

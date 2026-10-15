@@ -170,6 +170,35 @@ class TestContextAssembler {
     }
 
     @Test
+    void testConversationContextIsTheChatAsCompacted() {
+        final stroom.ai.api.AiService aiService = Mockito.mock(stroom.ai.api.AiService.class);
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null, aiService, null,
+                Mockito.mock(AiWorkspaceDao.class), Mockito.mock(ContextUsageTracker.class), null);
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "first question", 1, null),
+                new AiChatMessage(2, 1, 0L, AiMessageType.AI_RESPONSE, null, "a long first answer", 1, null),
+                new AiChatMessage(3, 1, 0L, AiMessageType.COMPACTION_SUMMARY, null,
+                        "{\"digestsUpToTurnId\":1,\"summaryUpToTurnId\":1,\"summary\":\"They asked about "
+                        + "firewalls.\"}", 1, null),
+                new AiChatMessage(4, 1, 0L, AiMessageType.USER_MESSAGE, null, "second question", 4, null),
+                new AiChatMessage(5, 1, 0L, AiMessageType.AI_RESPONSE, null, "second answer", 4, null),
+                new AiChatMessage(6, 1, 0L, AiMessageType.USER_MESSAGE, null, "the current question", 6, null)));
+
+        final String context = assembler.conversationContext(1, 1_000);
+
+        // Earlier turns as the model sees them, then later ones in full, without the question being answered.
+        assertThat(context)
+                .contains("They asked about firewalls.")
+                .doesNotContain("a long first answer")
+                .endsWith("User: second question\nAI: second answer")
+                .doesNotContain("the current question");
+
+        // The most recent turns are kept when there is little room.
+        assertThat(assembler.conversationContext(1, 5)).isEqualTo("AI: second answer");
+        assertThat(assembler.conversationContext(1, 0)).isEmpty();
+    }
+
+    @Test
     void testAskAndPlanModesAreExplainedToTheModel() {
         final AiDao aiDao = Mockito.mock(AiDao.class);
         final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
