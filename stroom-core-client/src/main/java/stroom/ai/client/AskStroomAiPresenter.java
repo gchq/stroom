@@ -814,16 +814,17 @@ public class AskStroomAiPresenter
             final boolean current = currentChat != null && currentChat.getId() == status.getChatId();
             final String title = NullSafe.nonBlankStringElse(status.getTitle(), "New chat");
             hb.div(item -> {
-                item.div(iconDiv -> icon(iconDiv, switcherIcon(status)), Attribute.className("ai-chat-list-icon"));
+                item.div(iconDiv -> icon(iconDiv, AiChatTexts.statusIcon(status)),
+                        Attribute.className("ai-chat-list-icon"));
                 item.div(text -> {
                     text.div(name -> name.append(title), Attribute.className("ai-chat-list-title"),
                             Attribute.title(title));
-                    final String note = switcherNote(status);
+                    final String note = AiChatTexts.statusNote(status);
                     text.div(when -> when.append(dateTimeFormatter.formatRelative(status.getUpdateTimeMs(),
                                             System.currentTimeMillis())
                                     + (note.isEmpty()
                                     ? ""
-                                    : " ·" + note.substring(2))),
+                                    : " · " + note)),
                             Attribute.className("ai-chat-list-when"),
                             Attribute.title("Last active " + dateTimeFormatter.format(status.getUpdateTimeMs())));
                 }, Attribute.className("ai-chat-list-text"));
@@ -875,15 +876,7 @@ public class AskStroomAiPresenter
     private void onDeleteAllChats() {
         final int count = chatStatuses.size();
         final boolean anyWorking = chatStatuses.stream().anyMatch(AiChatStatus::isBusy);
-        final String message = "Delete all " + (count == 1
-                ? "your chat"
-                : count + " of your chats") + "? Their messages, attached data, workspace files, chat memory "
-                               + "and tool approvals are deleted."
-                               + (anyWorking
-                ? " Chats that are working are stopped first."
-                : "")
-                               + " Your own memory is kept. This can't be undone.";
-        ConfirmEvent.fire(this, message, ok -> {
+        ConfirmEvent.fire(this, AiChatTexts.deleteAllChatsQuestion(count, anyWorking), ok -> {
             if (ok) {
                 askStroomAiClient.deleteAllChats(deleted -> {
                     if (deleted < count) {
@@ -903,41 +896,6 @@ public class AskStroomAiPresenter
         return chatStatuses.stream()
                 .filter(status -> status.getChatId() == chatId)
                 .findFirst();
-    }
-
-    private static SvgImage switcherIcon(final AiChatStatus status) {
-        if (status.isNeedsYou()) {
-            return SvgImage.ALERT;
-        } else if (status.isBusy()) {
-            return SvgImage.SPINNER_SPINNING;
-        } else if (status.getRunStatus() == AiChatRunStatus.FAILED) {
-            return SvgImage.ERROR;
-        } else if (status.getRunStatus() == AiChatRunStatus.INTERRUPTED
-                   || status.getRunStatus() == AiChatRunStatus.STOPPED) {
-            return SvgImage.PAUSE;
-        } else if (status.isUnread()) {
-            return SvgImage.DOT;
-        }
-        return SvgImage.AI;
-    }
-
-    private static String switcherNote(final AiChatStatus status) {
-        if (status.isNeedsYou()) {
-            return " - needs you";
-        } else if (status.getRunStatus() == AiChatRunStatus.QUEUED) {
-            return " - queued";
-        } else if (status.isBusy()) {
-            return " - working";
-        } else if (status.getRunStatus() == AiChatRunStatus.FAILED) {
-            return " - failed";
-        } else if (status.getRunStatus() == AiChatRunStatus.INTERRUPTED) {
-            return " - interrupted";
-        } else if (status.isUnread()) {
-            return " - unread";
-        }
-        return status.isApproveEverything()
-                ? " - approving everything"
-                : "";
     }
 
     private void onRename() {
@@ -1178,7 +1136,7 @@ public class AskStroomAiPresenter
                             Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
                             new Attribute(ELICITATION_ATTRIBUTE, String.valueOf(msg.getId())));
                 } else {
-                    footer.span(text -> text.append(elicitationStatusText(status)),
+                    footer.span(text -> text.append(AiChatTexts.formStatus(status)),
                             Attribute.className("ai-approval-reason"));
                 }
                 timestamp(footer, timeMs, nowMs);
@@ -1186,6 +1144,20 @@ public class AskStroomAiPresenter
         }, Attribute.className("ai-message ai-message--approval" + (pending
                 ? " ai-message--needs-you"
                 : "")));
+    }
+
+    private void onRespondToForm(final int messageId) {
+        final AiChatMessage msg = renderedMessages.get(messageId);
+        if (msg == null || currentChat == null) {
+            return;
+        }
+        elicitationPresenterProvider.get().show(currentChat, msg, status -> {
+            appendMessage(new AiChatMessage(msg.getId(), msg.getChatId(), msg.getCreateTimeMs(),
+                    msg.getMessageType(), msg.getAttachmentId(), AiToolMessages.withStatus(msg.getMessage(), status),
+                    msg.getTurnId(), msg.getTokenCount()), System.currentTimeMillis());
+            // The tool carries on with the answer.
+            pollAfterAnswer();
+        });
     }
 
     /**
@@ -1205,9 +1177,8 @@ public class AskStroomAiPresenter
             final JSONObject action = actions.get(i).isObject();
             if (action != null) {
                 final String json = action.toString();
-                final long expiresMs = AiToolMessages.parseLong(AiToolMessages.getString(json, "expiresMs"));
-                final boolean pending = "PENDING".equals(AiToolMessages.getString(json, "status"))
-                                        && expiresMs > nowMs;
+                final boolean pending = UserActionsUi.isPending(AiToolMessages.getString(json, "status"),
+                        AiToolMessages.parseLong(AiToolMessages.getString(json, "expiresMs")), nowMs);
                 waiting |= pending && !UserActionsUi.ELASTICSEARCH_REQUEST.equals(
                         AiToolMessages.getString(json, "action"));
                 rows.add(row -> userActionRow(row, msg.getId(), json, pending, nowMs));
@@ -1281,12 +1252,8 @@ public class AskStroomAiPresenter
                         new Attribute(USER_ACTION_ID_ATTRIBUTE,
                                 NullSafe.string(AiToolMessages.getString(json, "id"))));
             } else {
-                final String outcome = AiToolMessages.getString(json, "outcome");
-                row.div(text -> text.append(NullSafe.isNonBlankString(outcome)
-                                ? outcome
-                                : "PENDING".equals(status)
-                                        ? "This button has expired."
-                                        : status),
+                row.div(text -> text.append(UserActionsUi.outcomeText(status,
+                                AiToolMessages.getString(json, "outcome"))),
                         Attribute.className("ai-approval-reason"));
             }
         }, Attribute.className("ai-user-action"));
@@ -1345,35 +1312,6 @@ public class AskStroomAiPresenter
                 msg.getTokenCount());
         renderedMessages.put(messageId, updated);
         appendUserActionsCard(getView().getMarkdownContainer().getElement(), updated, System.currentTimeMillis());
-    }
-
-    private static String elicitationStatusText(final String status) {
-        switch (status) {
-            case "ACCEPTED":
-                return "You answered it.";
-            case "DECLINED":
-                return "You declined it.";
-            case "CANCELLED":
-                return "Not answered, as the run was stopped.";
-            case "EXPIRED":
-                return "Not answered in time.";
-            default:
-                return status;
-        }
-    }
-
-    private void onRespondToForm(final int messageId) {
-        final AiChatMessage msg = renderedMessages.get(messageId);
-        if (msg == null || currentChat == null) {
-            return;
-        }
-        elicitationPresenterProvider.get().show(currentChat, msg, status -> {
-            appendMessage(new AiChatMessage(msg.getId(), msg.getChatId(), msg.getCreateTimeMs(),
-                    msg.getMessageType(), msg.getAttachmentId(), AiToolMessages.withStatus(msg.getMessage(), status),
-                    msg.getTurnId(), msg.getTokenCount()), System.currentTimeMillis());
-            // The tool carries on with the answer.
-            pollAfterAnswer();
-        });
     }
 
     /**
@@ -1728,14 +1666,7 @@ public class AskStroomAiPresenter
                 }
             }
         }
-        final String warning = (later == 0
-                ? "Editing will ask this question again."
-                : "Editing will remove " + later + " later message" + (later == 1
-                        ? ""
-                        : "s") + " and ask this question again.")
-                               + (sideEffects
-                ? " Changes the agent has made with tools, or to your memory, will not be undone."
-                : "");
+        final String warning = AiChatTexts.editWarning(later, sideEffects);
         ConfirmEvent.fire(this, warning, ok -> {
             if (ok && currentChat != null) {
                 askStroomAiClient.getConfig(config -> {
@@ -3038,15 +2969,7 @@ public class AskStroomAiPresenter
      * Deletes a chat, after asking. If it is the one being looked at, a new chat is started in its place.
      */
     private void deleteChat(final AiChat chat) {
-        final String title = NullSafe.isBlankString(chat.getTitle())
-                ? "this chat"
-                : "“" + chat.getTitle() + "”";
-        final String working = isBusy(chat.getId())
-                ? " It is still working, so it will be stopped first."
-                : "";
-        ConfirmEvent.fire(this,
-                "Delete " + title + "? Its messages, attached data, workspace files, memory and tool approvals "
-                + "are all deleted, and this cannot be undone." + working,
+        ConfirmEvent.fire(this, AiChatTexts.deleteChatQuestion(chat.getTitle(), isBusy(chat.getId())),
                 ok -> {
                     if (ok) {
                         askStroomAiClient.deleteChat(chat.getId(), success -> {
