@@ -601,6 +601,37 @@ over the end of the box) as regular toolbar buttons, so they are one tab stop wi
 between them. Its help icon is the same size and colour everywhere (it was smaller, in the
 navigation colour, inside a form group), and Clear sits a toolbar gap from the help button (it
 overlapped it by a pixel).
+`RefreshButton` is a `ToolbarButton` itself (it was a `Composite` holding one), so it is one of its
+toolbar's buttons like any other: declared in the pagers' and data navigators' toolbars as before, or
+made by `Toolbar.refresh(onClick)`. Presenters set what it does with `setOnClick`. A visualisation's
+pause and resume button, which was on its own, is in a toolbar of its own ("Visualisation",
+`dashboardVis-refresh`, placed where the button was). The pagers, navigators and visualisations look
+as they did.
+A grouped table's Expand and Collapse are regular toolbar buttons, made by `GroupLevelButtons` (in
+the dashboard table's and query result table's pager toolbars, and in a "Group levels" toolbar on
+the traces screen, which made them one tab stop where they were two). The screen keeps the group
+selection; the helper works out the next level and names and enables the buttons for it.
+`TableExpandButton`, `TableCollapseButton` and `PagerView.addButton(ButtonView)` are gone.
+The date picker's Previous and Next year and month buttons are two toolbars ("Year" and "Month"),
+one beside each select box, with names ("Previous year", "Next month" and so on) where they had none.
+They were out of the tab order; each toolbar is now one tab stop, with the arrow keys between its two
+buttons, so the calendar can be stepped a month or a year at a time from the keyboard. It looks as it
+did.
+Password fields are a `PasswordBox` (`stroom.widget.form.client`, styled by `password-box.css`): a
+box with a show/hide button over its end, in a toolbar, as every password field in the app now is
+(login, change and current password, the three credential secrets, and the global property's and
+Elastic cluster's secret values, which had no show/hide). Six views each had their own copy of the
+overlay and its click handler; they are gone, with the overlay rules in `Login.css` and
+`ChangePassword.css`. The button is named for what pressing it does ("Show password", then "Hide
+password", which its tooltip shows too), and a polite live region in the box tells a screen reader
+"Your password is shown" or "hidden", as the focus stays on the button. Validation marks the input
+itself (`getInput()`), and the change password screen's length badge sits beside the button
+(`setBadge`).
+`Preset` and `SvgPresets` (72 shared icon, title and enabled constants) are deleted. A table cell's
+icon is a `CellIcon` (`SvgCell`, `InfoColumn`, `ActionCell`, `ActionMenuCell` and the `DataGridUtil`
+column builders), made where it is used with its own name; each keeps the icon, name and enabled
+state its preset gave it (e.g. a rule's Delete icon starts disabled). Menu items and the security
+plugins' icons are a plain `SvgImage`, as only the image was used.
 
 ### Opening a screen leaves the focus behind (#5405)
 
@@ -691,17 +722,17 @@ and component settings (they aren't saved).
 
 ### Upgrading the Ace editor
 
-**Deferred.** Ace 1.44.0 (npm `ace-builds`) has `enableKeyboardAccessibility`, which fixes the trap:
-Tab moves past the editor, Enter starts editing and Escape stops. Stroom ships Ace 1.5.0, the
-non-minified build, in two identical copies (`stroom-app/src/main/resources/ui/stroom/ace` and
-`ui/dashboard/ace`) with Stroom's own 7 modes and 4 snippet files, and three patches to Ace: the
-gutter shows Stroom's annotation types (`ace.js`, marked "STROOM SPECIFIC CODE"), and the XML and
-Markdown modes use Stroom's XML snippets. Every Ace module and method the GWT wrapper
-(`edu/ycp/cs/dh/acegwt`) calls still exists in 1.44, and every theme and mode Stroom has, except
-Perl 6 (now Raku), which Stroom doesn't use. Before upgrading, the workbench needs stories for what
-it doesn't show yet (autocomplete popups and snippets, the search box, folding, gutter annotations,
-Vim keys, the light and other editor themes, and Stroom's query, expression and data splitter
-modes), so that a screenshot diff and the plays compare before and after.
+**Upgraded; the keyboard trap remains.** Stroom now ships Ace 1.44.0 (the non-minified `src` of npm
+`ace-builds`), from its one tracked copy (`edu/ycp/cs/dh/acegwt/public/ace`; the copies in
+`stroom-app/src/main/resources/ui` are build outputs). `ace.js` is no longer patched: Stroom's
+annotation types go in as each annotation's `className`, and `AceEditor` labels their gutter
+markers for screen readers, which Ace only does for its own types. The workbench's
+`AceEditorFeatures` and `AceEditorThemes` stories cover folding, the search box, autocompletion,
+snippets, every annotation type (in the gutter, with its tooltip, and the overview bar), stepping's
+and the query editor's markers, the context menu, formatting, Vim keys, Stroom's modes and the
+editor themes, including the 10 that 1.44 added, which the user preferences now offer. Ace 1.44 has
+`enableKeyboardAccessibility`, which fixes the trap (Tab moves past the editor, Enter starts editing
+and Escape stops), but Stroom doesn't turn it on yet.
 
 ### Expression terms and tables
 
@@ -779,12 +810,12 @@ editors. Dialogs aren't limited to the window's size, and long forms rely on scr
 
 **Confirmed** (`workbenchTest`'s accessibility check, dark theme). The workbench now shows stories
 on the theme's page colour (`--page__background-color`), which Stroom's panels and dialogs are drawn
-on, instead of the near-black app background, and three stories' text then falls below the WCAG AA
-contrast ratio (`color-contrast`):
+on, instead of the near-black app background, and two stories' text then falls below the WCAG AA
+contrast ratio (`color-contrast`) (a third, `CopyText`'s inserted text, was the story's own colour, a
+token that doesn't exist, and is fixed):
 
 * the Traces screen's histogram hint and timeline header text (`.histogram-hint`,
   `.timeline-header` spans; `app-main-tracesscreen--traces`);
-* `CopyText`'s inserted text (`widgets-display-copytext--with-insert`);
 * a disabled form group's description (`.form-group__description`, faded to 80% and in the
   disabled colour; `widgets-inputs-formgroup--disabled`). WCAG exempts text that is part of a
   disabled control, so this one may be acceptable.
@@ -1133,6 +1164,15 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   (`TestCredentialsService`). Found by the suite's credentials cycle (§ B4): two runs left two
   rows, found by looking for permission rows whose document no longer exists; a run since the fix
   leaves none. The two rows have been deleted.
+* #59: Batch Change All Filtered Processors asked to change the wrong number of processors. Its
+  Confirm used the Processors grid's row total (`BatchProcessorFilterEditPresenter.apply`), and that
+  grid lists each processor's row as well as its filters' rows, while `bulkChange` changes only the
+  filters: one filter asked to change "2 processors", and the System root asked about 64. A count
+  from the grid can't be right either, because a collapsed processor row leaves its filters out of
+  the list while `bulkChange` still changes them. The dialog now asks the server
+  (`POST /processorFilter/v1/bulkChange/count`), which counts the filters with the same lookup
+  `bulkChange` uses (`TestProcessorFilterResourceImpl`). Found by the suite's processor batch cycle
+  (§ B4), which now passes only on "Are you sure you want to change this processor?" for one filter.
 * #49 to #56: dialogs left with OK and Cancel disabled after an error, so that only reloading the
   page got rid of them (Escape honours the disabled buttons). OK disables a dialog's buttons, and
   each of these had a failure path that neither closed the dialog nor called

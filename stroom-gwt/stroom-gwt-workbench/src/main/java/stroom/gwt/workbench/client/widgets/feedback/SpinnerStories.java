@@ -81,7 +81,7 @@ public final class SpinnerStories {
         style.setProperty("position", "relative");
         style.setProperty("width", "200px");
         style.setProperty("height", "100px");
-        style.setProperty("background", "var(--panel__background-color,#1e2233)");
+        style.setProperty("background", "var(--row__background-color--even)");
         style.setProperty("borderRadius", "6px");
         style.setProperty("display", "flex");
         style.setProperty("alignItems", "center");

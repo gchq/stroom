@@ -108,7 +108,7 @@ public final class IndexEditorStories {
                     for (final String label : new String[]{"Fields", "Settings", "Documentation", "Permissions"}) {
                         play.waitFor(() -> play.expect(DocEditors.tab(play, label)).toBeInTheDocument());
                     }
-                    play.expect(play.queryByText("Shards", ".linkTab-label")).toBeNull();
+                    play.expect(play.queryByText("Shards", ".tab-bar--link .tab-bar__label")).toBeNull();
                     // Fields is the default tab, sorted by Name, ascending and case sensitive
                     play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
                     play.expect(play.getByText("UserId")).toBeInTheDocument();

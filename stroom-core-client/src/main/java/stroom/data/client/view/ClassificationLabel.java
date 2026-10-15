@@ -20,6 +20,7 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -33,6 +34,7 @@ import java.util.List;
 public class ClassificationLabel extends Composite {
 
     private static final Binder binder = GWT.create(Binder.class);
+    private static final String BACKGROUND_COLOUR_PROPERTY = "--classification-label__background-color";
     private final List<LabelColour> labelColours = new ArrayList<>();
     @UiField
     Label classification;
@@ -67,8 +69,6 @@ public class ClassificationLabel extends Composite {
         upper = upper.toUpperCase();
         classification.setText(upper);
 
-        classification.getElement().getStyle().setColor("black");
-
         String colour = "#888888";
         for (final LabelColour labelColour : labelColours) {
             if (upper.indexOf(labelColour.getName()) != -1) {
@@ -77,8 +77,13 @@ public class ClassificationLabel extends Composite {
             }
         }
 
-        classification.getElement().getStyle().setBackgroundColor(colour);
+        // The colour is set as a CSS variable, so the stylesheet can pick black or white text to suit it
+        setStyleProperty(classification.getElement(), BACKGROUND_COLOUR_PROPERTY, colour);
     }
+
+    private static native void setStyleProperty(final Element element, final String name, final String value) /*-{
+        element.style.setProperty(name, value);
+    }-*/;
 
     public interface Binder extends UiBinder<Widget, ClassificationLabel> {
 

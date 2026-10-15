@@ -16,8 +16,7 @@
 
 package stroom.cell.info.client;
 
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.Rect;
@@ -27,15 +26,15 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 
-public abstract class InfoColumn<T> extends Column<T, Preset> {
+public abstract class InfoColumn<T> extends Column<T, CellIcon> {
 
     public InfoColumn() {
         super(new SvgCell());
     }
 
     @Override
-    public Preset getValue(final T object) {
-        return SvgPresets.INFO;
+    public CellIcon getValue(final T object) {
+        return CellIcon.of(SvgImage.INFO, "Info");
     }
 
     /// Shows the row's info, e.g. with [stroom.widget.tooltip.client.presenter.TooltipPresenter].

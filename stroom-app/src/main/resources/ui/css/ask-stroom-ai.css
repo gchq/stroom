@@ -1,18 +1,19 @@
 .askStroomAiViewImpl {
     overflow: hidden;
-    background-color: var(--control__background-color);
+    background-color: var(--content-box__background-color);
     color: var(--control__text-color);
     display: flex;
 }
 
 .dialog-content .askStroomAiViewImpl {
   border: 1px solid var(--control__border-color);
+  border-radius: .25rem;
   overflow: auto;
 }
 
 .askStroomAiViewImpl-top {
     display: flex;
-    border-bottom: 1px solid var(--splitter__background-color);
+    border-bottom: 1px solid var(--border-color);
     padding: 0 5px;
     gap: 5px;
     min-height: 34px;
@@ -52,7 +53,7 @@
     gap: 5px;
     overflow: hidden;
     background-color: var(--page__background-color);
-    border: 1px solid var(--splitter__background-color);
+    border: 1px solid var(--border-color);
     border-radius: .25rem;
     padding: 5px;
 }
@@ -69,7 +70,7 @@
     line-height: 1;
     padding: 3px 8px;
     border-radius: 10px;
-    background-color: var(--control__border-color);
+    background-color: var(--button-contained__background-color);
     color: var(--control__text-color);
     white-space: nowrap;
     align-self: center;

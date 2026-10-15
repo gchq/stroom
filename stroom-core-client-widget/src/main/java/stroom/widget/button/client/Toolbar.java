@@ -16,6 +16,7 @@
 
 package stroom.widget.button.client;
 
+import stroom.data.pager.client.RefreshButton;
 import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.uibinder.client.UiConstructor;
@@ -86,6 +87,18 @@ public class Toolbar extends FlowPanel {
         button.setSvg(icon);
         button.setTitle(name);
         button.setOnToggle(onToggle);
+        add(button);
+        return button;
+    }
+
+    /// Adds a refresh button, which also shows whether what it refreshes is refreshing and can be made
+    /// to pause and resume updates (see [RefreshButton]). It names itself for what pressing it does.
+    ///
+    /// @param onClick What clicking it does.
+    /// @return The button, e.g. to show that what it refreshes is refreshing.
+    public RefreshButton refresh(final Runnable onClick) {
+        final RefreshButton button = new RefreshButton();
+        button.setOnClick(onClick);
         add(button);
         return button;
     }

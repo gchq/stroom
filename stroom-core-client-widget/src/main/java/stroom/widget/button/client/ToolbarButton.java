@@ -41,6 +41,10 @@ import com.google.gwt.user.client.ui.ButtonBase;
 /// them the older buttons) work with it unchanged; that interface goes when they no longer need it.
 public class ToolbarButton extends ButtonBase implements ButtonView {
 
+    // Marks focus that a mouse press gave the button, which toolbar.css draws no focus ring for: the
+    // button focuses itself from code (see onBrowserEvent), which browsers treat as keyboard focus
+    private static final String POINTER_FOCUS_ATTRIBUTE = "data-pointer-focus";
+
     private boolean enabled = true;
     // Whether pressing the button with the mouse focuses it
     private boolean focusOnMouseDown = true;
@@ -50,7 +54,7 @@ public class ToolbarButton extends ButtonBase implements ButtonView {
     public ToolbarButton() {
         super(Document.get().createPushButtonElement());
         setStyleName("toolbar-button");
-        sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN);
+        sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONKEYDOWN | Event.ONBLUR);
         // Shows the button's name when it has the keyboard focus
         FocusTooltip.install();
     }
@@ -121,6 +125,10 @@ public class ToolbarButton extends ButtonBase implements ButtonView {
     @Override
     public void onBrowserEvent(final Event event) {
         final int type = DOM.eventGetType(event);
+        if (type == Event.ONKEYDOWN || type == Event.ONBLUR) {
+            // The keyboard is in use (or the focus has gone), so the focus ring shows again
+            getElement().removeAttribute(POINTER_FOCUS_ATTRIBUTE);
+        }
         if (!enabled) {
             // Its clicks, including those from Enter and Space, go no further
             if (type == Event.ONCLICK) {
@@ -135,6 +143,7 @@ public class ToolbarButton extends ButtonBase implements ButtonView {
             // where it is (e.g. in the field beside it)
             event.preventDefault();
             if (focusOnMouseDown) {
+                getElement().setAttribute(POINTER_FOCUS_ATTRIBUTE, "");
                 setFocus(true);
             }
         }

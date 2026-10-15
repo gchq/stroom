@@ -16,8 +16,7 @@
 
 package stroom.pathways.client.presenter;
 
-import stroom.dashboard.client.table.TableCollapseButton;
-import stroom.dashboard.client.table.TableExpandButton;
+import stroom.dashboard.client.table.GroupLevelButtons;
 import stroom.data.client.presenter.CopyTextUtil;
 import stroom.data.grid.client.DefaultResources;
 import stroom.data.grid.client.Glass;
@@ -39,6 +38,7 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.StringUtil;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -142,8 +142,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
     // rendering. maxDepth caps the expand-level buttons.
     private GroupSelection groupSelection;
     private int maxDepth;
-    private final TableExpandButton expandButton = TableExpandButton.create();
-    private final TableCollapseButton collapseButton = TableCollapseButton.create();
+    private final GroupLevelButtons groupLevelButtons;
 
     /**
      * Fetches a bounded, tree-order window of spans. For random/offset paging pass {@code cursor == null}
@@ -170,22 +169,17 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
         pagerBar.setVisible(false);
         pager.setDisplay(pagerRows);
         // Expand/collapse-level buttons on the LEFT, the pager on the RIGHT (CSS space-between).
-        final FlowPanel expandControls = new FlowPanel();
+        final Toolbar expandControls = new Toolbar("Group levels");
         expandControls.addStyleName("trace-expand-controls");
-        expandControls.add(expandButton);
-        expandControls.add(collapseButton);
+        groupLevelButtons = new GroupLevelButtons(expandControls, this::effectiveSelection, () -> maxDepth,
+                selection -> {
+                    groupSelection = selection;
+                    onSelectionChanged();
+                });
         pagerBar.add(expandControls);
         pagerBar.add(pager);
         root.add(pagerBar);
 
-        expandButton.addClickHandler(e -> {
-            groupSelection = expandButton.expand(effectiveSelection(), maxDepth);
-            onSelectionChanged();
-        });
-        collapseButton.addClickHandler(e -> {
-            groupSelection = collapseButton.collapse(effectiveSelection());
-            onSelectionChanged();
-        });
 
         // Lets the CSS lay the widget out as a fixed timeline/header above a
         // vertically-scrollable operation list (see .trace-overview in pathways.css).
@@ -522,8 +516,7 @@ public class TraceOverviewWidget extends Composite implements TaskMonitorFactory
 
     private void updateExpandButtons() {
         final GroupSelection selection = effectiveSelection();
-        expandButton.update(selection, maxDepth);
-        collapseButton.update(selection, maxDepth);
+        groupLevelButtons.update(selection, maxDepth);
     }
 
     private static int parseDepth(final String value) {

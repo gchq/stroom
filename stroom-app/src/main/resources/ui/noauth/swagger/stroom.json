@@ -9396,6 +9396,37 @@
         "tags" : [ "Processor Filters" ]
       }
     },
+    "/processorFilter/v1/bulkChange/count" : {
+      "post" : {
+        "operationId" : "getBulkChangeCount",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BulkProcessorFilterChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Count the processor filters a bulk change would change",
+        "tags" : [ "Processor Filters" ]
+      }
+    },
     "/processorFilter/v1/find" : {
       "post" : {
         "operationId" : "findProcessorFilters",

@@ -18,14 +18,12 @@ package stroom.security.identity.client.view;
 
 import stroom.security.identity.client.presenter.ChangePasswordPresenter.ChangePasswordView;
 import stroom.security.identity.shared.InternalIdpPasswordPolicyConfig;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.PasswordBox;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -35,7 +33,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -47,40 +44,30 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
     @UiField
     Label passwordPolicyMessage;
     @UiField
-    PasswordTextBox password;
-    @UiField
-    ToolbarButton showPassword;
+    PasswordBox password;
     @UiField
     Label passwordFeedback;
     @UiField
-    PasswordTextBox confirmPassword;
-    @UiField
-    ToolbarButton showConfirmPassword;
+    PasswordBox confirmPassword;
     @UiField
     FlowPanel strengthMeter;
     @UiField
     SimplePanel strengthMeterBar;
     @UiField
-    SimplePanel passwordLengthBadge;
-    @UiField
     Label confirmPasswordFeedback;
 
+    // The new password's length, in its box, coloured by whether it meets the policy
+    private final SimplePanel passwordLengthBadge = new SimplePanel();
     private InternalIdpPasswordPolicyConfig passwordPolicyConfig;
 
     @Inject
     public ChangePasswordViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        showPassword.setSvg(SvgImage.EYE);
-        showPassword.setTitle("Show Password");
-        showPassword.setEnabled(true);
-
-        showConfirmPassword.setSvg(SvgImage.EYE);
-        showConfirmPassword.setTitle("Show Password");
-        showConfirmPassword.setEnabled(true);
-
-        password.getElement().setAttribute("placeholder", "Enter Password");
-        confirmPassword.getElement().setAttribute("placeholder", "Confirm Password");
+        password.setPlaceholder("Enter Password");
+        confirmPassword.setPlaceholder("Confirm Password");
+        passwordLengthBadge.setStyleName("badge badge-pill badge-danger");
+        password.setBadge(passwordLengthBadge);
     }
 
     @Override
@@ -114,30 +101,31 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
         boolean valid = true;
 
         if (password.getValue().length() == 0) {
-            FieldValidity.setInvalid(password, passwordFeedback, "Password is required");
+            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is required");
             valid = false;
         } else if (password.getValue().length() < passwordPolicyConfig.getMinimumPasswordLength()) {
-            FieldValidity.setInvalid(password, passwordFeedback, "Password is short");
+            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is short");
             valid = false;
         } else if (getPasswordStrength(password.getValue()) < passwordPolicyConfig.getMinimumPasswordStrength()) {
-            FieldValidity.setInvalid(password, passwordFeedback, "Password is weak");
+            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is weak");
             valid = false;
         } else {
-            FieldValidity.setValid(password, passwordFeedback);
+            FieldValidity.setValid(password.getInput(), passwordFeedback);
         }
 
         if (confirmPassword.getValue().length() == 0) {
-            FieldValidity.setInvalid(confirmPassword, confirmPasswordFeedback, "Password confirmation is required");
+            FieldValidity.setInvalid(confirmPassword.getInput(), confirmPasswordFeedback,
+                    "Password confirmation is required");
             valid = false;
         } else if (!confirmPassword.getValue().equals(password.getValue())) {
-            FieldValidity.setInvalid(confirmPassword, confirmPasswordFeedback, "Passwords must match");
+            FieldValidity.setInvalid(confirmPassword.getInput(), confirmPasswordFeedback, "Passwords must match");
             valid = false;
         } else {
-            FieldValidity.setValid(confirmPassword, confirmPasswordFeedback);
+            FieldValidity.setValid(confirmPassword.getInput(), confirmPasswordFeedback);
         }
 
         if (!valid) {
-            FieldValidity.focusFirstInvalid(password, confirmPassword);
+            FieldValidity.focusFirstInvalid(password.getInput(), confirmPassword.getInput());
         }
 
         return valid;
@@ -168,34 +156,6 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
         }
     }
 
-    @UiHandler("showPassword")
-    public void onShowPassword(final ClickEvent e) {
-        final String type = password.getElement().getAttribute("type");
-        if (type == null || "password".equals(type)) {
-            password.getElement().setAttribute("type", "text");
-            showPassword.setSvg(SvgImage.EYE_OFF);
-            showPassword.setTitle("Hide Password");
-        } else {
-            password.getElement().setAttribute("type", "password");
-            showPassword.setSvg(SvgImage.EYE);
-            showPassword.setTitle("Show Password");
-        }
-    }
-
-    @UiHandler("showConfirmPassword")
-    public void onShowConfirmPassword(final ClickEvent e) {
-        final String type = confirmPassword.getElement().getAttribute("type");
-        if (type == null || "password".equals(type)) {
-            confirmPassword.getElement().setAttribute("type", "text");
-            showConfirmPassword.setSvg(SvgImage.EYE_OFF);
-            showConfirmPassword.setTitle("Hide Password");
-        } else {
-            confirmPassword.getElement().setAttribute("type", "password");
-            showConfirmPassword.setSvg(SvgImage.EYE);
-            showConfirmPassword.setTitle("Show Password");
-        }
-    }
-
     @UiHandler("password")
     public void onPassword(final ValueChangeEvent<String> e) {
         updateStrength();
@@ -217,7 +177,6 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
         }
 //        strengthMeter.setVisible(passwordLength > 0);
         strengthMeterBar.setStyleName("strength-meter-bar strength-meter-" + strength);
-
 
 //        for (int i = 0; i < 5; i++) {
 //            final SimplePanel segment = new SimplePanel();

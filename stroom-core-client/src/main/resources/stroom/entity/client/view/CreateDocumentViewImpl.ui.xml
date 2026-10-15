@@ -5,9 +5,9 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="createDocumentSelectParentGroup" label="Select the parent folder"
-                        addStyleNames="dock-max overflow-hidden"
+                        addStyleNames="dock-max overflow-hidden focus-ring-room"
                         helpText="The folder to create the new item in.">
-            <g:SimplePanel ui:field="foldersInner" styleName="dock-max overflow-hidden default-min-sizes"/>
+            <g:SimplePanel ui:field="foldersInner" styleName="dock-max overflow-hidden default-min-sizes focus-ring-room"/>
         </form:FormGroup>
         <form:FormGroup identity="createDocumentName" label="Name" addStyleNames="dock-min"
                         helpText="The name of the new item. Folder names may only contain letters, numbers, spaces and _ - . ( )."

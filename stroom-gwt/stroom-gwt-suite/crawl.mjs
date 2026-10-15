@@ -130,7 +130,7 @@ const looseReported = new Set();
  * crawl then looked for `button[title="Close Close"]`, found nothing, and recorded 17 affordances as
  * `vanished` — the crawler reporting its own selector bug as a property of the UI.
  *
- * Exactly the shape of the `.linkTab-label` trap, which also emits a hidden width-reserving copy of
+ * Exactly the shape of the `.tab-bar--link .tab-bar__label` trap, which also emits a hidden width-reserving copy of
  * its text. Assume any label that is a string repeated twice is one label.
  */
 /**
@@ -267,7 +267,7 @@ async function openDoc(name, type) {
  * timed-out wait rather than a silent 2.5s followed by a survey of the wrong screen.
  */
 async function waitForDocOpen() {
-  await waitUntil(page, () => page.evaluate(() => [...document.querySelectorAll('.linkTab-label, .curveTab-label')]
+  await waitUntil(page, () => page.evaluate(() => [...document.querySelectorAll('.tab-bar__label')]
     .some((e) => e.offsetWidth > 0)), { budget: 2_500, label: 'doc-open', kind: 'editor' }).catch(() => {});
 }
 
@@ -421,7 +421,7 @@ async function navigate(node) {
       // The CONTENT TAB's own menu — Close / Close Others / Close Saved / Close All / Save / Save
       // All / Locate / Add To Favourites — which is a separate menu built from `event.getTabData()`
       // and is not reachable from the explorer at all.
-      if (!(await rightClickByText(page, '.curveTab', step.label))) {
+      if (!(await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', step.label))) {
         throw new Error(`no content tab "${step.label}" to right-click`);
       }
       await page.waitForTimeout(600);
@@ -528,7 +528,7 @@ async function survey() {
   const fingerprint = await page.evaluate((sel) => {
     const root = document.querySelector(sel) ?? document.body;
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const tabs = [...root.querySelectorAll('.linkTab-label, .curveTab-label')]
+    const tabs = [...root.querySelectorAll('.tab-bar__label')]
       .filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent)).sort();
     const n = (q) => root.querySelectorAll(q).length;
     return `${tabs.join(',')}#${n('input,select,textarea')}/${n('.form-group')}/${n('.ace_editor')}`;

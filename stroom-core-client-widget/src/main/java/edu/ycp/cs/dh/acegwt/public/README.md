@@ -2,29 +2,30 @@ You can find Ace release builds here https://github.com/ajaxorg/ace-builds/relea
 Use the content of `src` directory.
 If we every have issues with conflicts with the globally named things like `define` and `require` then
 we can switch to using the `src-src-noconflict`.
-Ideally we would use the minified version but as we have to modify it we can't.
 
-Currently using `1.5.0` of Ace.
+This is the one copy of Ace in the repository: the GWT build copies it to `stroom-app/src/main/resources/ui/stroom/ace`
+and `ui/dashboard/ace`, which are build outputs and not tracked.
+
+Currently using `1.44.0` of Ace (`src` of the npm package `ace-builds`).
 To check the version, look for `exports.version = ` in `ace.js`.
 
-For Stroom to be able to display four different annotation icons in the left hand gutter the source for `ace.js` has been altered.
-Any future update to `ace.js` will need to incorporate this change.
+`ace.js` is unaltered. Stroom shows four different annotation icons in the left hand gutter by giving each annotation
+a `className` (`stroom_info`, `stroom_warning`, `stroom_error` or `stroom_fatal_error`, see `AceAnnotationType`), which
+Ace adds to the row's gutter cell, and `editor.css` draws the icons. Ace labels a gutter annotation for screen readers
+only when its class is one of Ace's own, so `AceEditor.startEditor` labels Stroom's after each render of the gutter.
 
-The original `ace.js` lines 15705-15711:
-```
-            var type = annotation.type;
-            if (type == "error")
-                rowInfo.className = " ace_error";
-            else if (type == "warning" && rowInfo.className != " ace_error")
-                rowInfo.className = " ace_warning";
-            else if (type == "info" && (!rowInfo.className))
-                rowInfo.className = " ace_info";
-```
+To upgrade Ace:
+* Copy everything in `src` over the `ace` folder, except `snippets/xml.js` and `snippets/markdown.js`, which are Stroom's.
+* Keep Stroom's own files, which aren't in Ace: the `mode-stroom_*.js` modes, the `snippets/stroom_*.js` snippets
+  and `beautify/beautify.min.js`.
+* In `mode-xml.js` and `mode-markdown.js` (which embeds the XML mode), add this line after
+  `this.$id = "ace/mode/xml";`, so that the XML mode uses Stroom's XML (XSLT) snippets:
+  ``` js
+      this.snippetFileId = "ace/snippets/xml"; // Stroom: its XML (XSLT) snippets
+  ```
+* Run the workbench's `Widgets/Editors & Viewers/AceEditor*` stories, and compare their screenshots, before and after.
 
-The replacement needed to allow custom annotation class names:
-```
-            rowInfo.className = " " + annotation.type;
-```
+Perl 6 was removed from Ace (it is now Raku) and Stroom doesn't use it.
 
 Also to make code snippets work this was changed in AceEditor.java:
 

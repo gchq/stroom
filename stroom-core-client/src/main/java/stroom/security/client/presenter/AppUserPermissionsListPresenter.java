@@ -221,7 +221,7 @@ public class AppUserPermissionsListPresenter
 
         // Icon
         dataGrid.addColumn(
-                DataGridUtil.svgPresetColumnBuilder(false, (AppUserPermissions row) ->
+                DataGridUtil.cellIconColumnBuilder(false, (AppUserPermissions row) ->
                                 UserAndGroupHelper.mapUserRefTypeToIcon(row.getUserRef()))
                         .withSorting(UserFields.FIELD_IS_GROUP)
                         .centerAligned()

@@ -80,6 +80,11 @@
     <inherits name='stroom.entity.Entity'/>
     <inherits name='stroom.query.Query'/>
     <inherits name='stroom.quickfilter.QuickFilter'/>
+    <!-- As App.gwt.xml: the SQL temporal store (whose document the pipeline's references use) and
+         the floor map, with its histogram -->
+    <inherits name='stroom.sqlstore.SqlTemporalStore'/>
+    <inherits name='stroom.floormap.FloorMap'/>
+    <inherits name='stroom.widget.histogram.Histogram'/>
     <inherits name='stroom.ai.AI'/>
     <inherits name='stroom.receive.rules.RuleSet'/>
     <inherits name='stroom.annotation.Annotation'/>

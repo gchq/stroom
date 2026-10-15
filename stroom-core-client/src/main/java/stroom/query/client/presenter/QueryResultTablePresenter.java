@@ -33,9 +33,8 @@ import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.FormatPresenter;
+import stroom.dashboard.client.table.GroupLevelButtons;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.table.TableCollapseButton;
-import stroom.dashboard.client.table.TableExpandButton;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.table.cf.RulesPresenter;
@@ -129,8 +128,7 @@ public class QueryResultTablePresenter
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private GroupSelection groupSelection = new GroupSelection();
 
-    private final TableExpandButton expandButton;
-    private final TableCollapseButton collapseButton;
+    private final GroupLevelButtons groupLevelButtons;
 
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
@@ -216,11 +214,8 @@ public class QueryResultTablePresenter
 
         pagerView.getRefreshButton().setAllowPause(true);
 
-        expandButton = TableExpandButton.create();
-        pagerView.addButton(expandButton);
-
-        collapseButton = TableCollapseButton.create();
-        pagerView.addButton(collapseButton);
+        groupLevelButtons = new GroupLevelButtons(
+                pagerView.getToolbar(), () -> groupSelection, () -> maxDepth, this::setGroupSelection);
 
         // Download
         pagerView.getToolbar().setName("Table actions");
@@ -340,17 +335,8 @@ public class QueryResultTablePresenter
 //            }
 //        }));
 
-        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
+        pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
 
-        registerHandler(expandButton.addClickHandler(event -> {
-            groupSelection = expandButton.expand(groupSelection, maxDepth);
-            refresh();
-        }));
-
-        registerHandler(collapseButton.addClickHandler(event -> {
-            groupSelection = collapseButton.collapse(groupSelection);
-            refresh();
-        }));
 
 
 
@@ -463,6 +449,12 @@ public class QueryResultTablePresenter
         } else {
             RefreshRequestEvent.fire(this);
         }
+    }
+
+    // Shows the table's groups opened and closed as the selection says
+    private void setGroupSelection(final GroupSelection groupSelection) {
+        this.groupSelection = groupSelection;
+        refresh();
     }
 
     public void refresh() {
@@ -802,8 +794,7 @@ public class QueryResultTablePresenter
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
-        expandButton.update(groupSelection, maxDepth);
-        collapseButton.update(groupSelection, maxDepth);
+        groupLevelButtons.update(groupSelection, maxDepth);
 
         return processed;
     }

@@ -22,6 +22,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.form.client.PasswordBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -30,7 +31,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -57,7 +57,7 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     TextArea databaseValue;
     @UiField
-    PasswordTextBox databaseValuePassword;
+    PasswordBox databaseValuePassword;
     @UiField
     TextArea effectiveValue;
     @UiField

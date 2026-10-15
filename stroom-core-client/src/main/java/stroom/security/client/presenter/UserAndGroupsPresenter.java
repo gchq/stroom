@@ -532,7 +532,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     @Override
     public SvgImage getIcon() {
-        return UsersAndGroupsPlugin.ICON.getSvgImage();
+        return UsersAndGroupsPlugin.ICON;
     }
 
     @Override

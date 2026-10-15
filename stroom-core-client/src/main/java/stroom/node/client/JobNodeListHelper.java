@@ -19,6 +19,7 @@ package stroom.node.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.ActionCell;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -39,8 +40,6 @@ import stroom.job.shared.JobNodeUtil;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -319,12 +318,11 @@ public class JobNodeListHelper {
                         : "Disabled");
     }
 
-    public static Preset buildRunIconPreset(final JobNodeAndInfo jobNodeAndInfo) {
+    public static CellIcon buildRunIcon(final JobNodeAndInfo jobNodeAndInfo) {
         if (jobNodeAndInfo != null
             && jobNodeAndInfo.getJobType() != JobType.DISTRIBUTED
             && jobNodeAndInfo.getJobType() != JobType.UNKNOWN) {
-            return SvgPresets.RUN
-                    .title("Execute job on node " + jobNodeAndInfo.getNodeName() + " now.");
+            return CellIcon.of(SvgImage.PLAY, "Execute job on node " + jobNodeAndInfo.getNodeName() + " now.");
         }
         return null;
     }

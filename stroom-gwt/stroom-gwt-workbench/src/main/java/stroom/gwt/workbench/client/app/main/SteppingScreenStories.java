@@ -30,6 +30,7 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -174,9 +175,23 @@ public final class SteppingScreenStories {
                     // xmlWriter has an error: the box's hover tip and severity class
                     play.waitFor(() -> play.expect(play.getByTitle(TextMatch.containing("xmlWriter' has errors")))
                             .toHaveClass("pipelineElementBox-severityError"));
+                    // The pipeline's pane fits its boxes, rather than cutting off their bottoms
+                    final Value<Double> boxBottom = play.getByTitle(TextMatch.containing("xmlWriter' has errors"))
+                            .bottom();
+                    final Value<Double> paneBottom = play.querySelector(".steppingViewImpl-treeContainer").bottom();
+                    play.waitFor(() -> play.expect("the box's bottom below its pane's",
+                            () -> boxBottom.get() - paneBottom.get()).toBeLessThanOrEqual(0));
                     // Selecting it shows its log pane toggle
                     play.click(play.getByText("xmlWriter"));
                     play.findByTitle(TextMatch.containing("Toggle Log Pane (1 Error"));
+                    // Its output's warning (line 1) is in the editor's gutter and overview bar; its
+                    // error (line 3) is past the one line of output, so only the overview's summary,
+                    // which shows the worst severity, has it
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_gutter-cell.stroom_warning"))
+                            .toHaveTextContent("1"));
+                    play.expect(play.querySelector(".code-editor__marker--warning"))
+                            .toHaveAttribute("lineno", "1");
+                    play.expect(play.querySelector(".code-editor__summary")).toHaveClass("code-editor__summary--error");
                     // Clicking the location label opens the Set Location dialog
                     play.click(play.getAllByText("[1:1:1]").nth(0));
                     final Play jump = screen.within(

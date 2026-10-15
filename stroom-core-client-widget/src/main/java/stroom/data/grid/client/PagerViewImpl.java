@@ -20,7 +20,6 @@ import stroom.data.pager.client.Pager;
 import stroom.data.pager.client.RefreshButton;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
 
 import com.google.gwt.core.client.GWT;
@@ -77,11 +76,6 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
             toolbarWidgets.add(toolbar);
         }
         return toolbar;
-    }
-
-    @Override
-    public void addButton(final ButtonView buttonView) {
-        getToolbar().add(buttonView.asWidget());
     }
 
     @Override

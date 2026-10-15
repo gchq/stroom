@@ -18,7 +18,6 @@ package stroom.floormap.client.view;
 
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter.FloorMapTimelineView;
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter.OutOfRange;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
@@ -135,7 +134,7 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
         // the handler rather than stacking another click registration — two
         // registrations on play/pause would toggle `playing` twice per click and
         // silently cancel playback. Their icons and names are set by the
-        // presenter (setXxxPreset).
+        // presenter (setXxxIcon).
         stepBackButton = playbackToolbar.button(SvgImage.STEP_BACKWARD, "Step Back", () -> {
             if (stepBackHandler != null) {
                 stepBackHandler.run();
@@ -320,9 +319,9 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
     // -----------------------------------------------------------------------
 
     @Override
-    public void setPlayPausePreset(final Preset preset) {
-        playPauseButton.setSvg(preset.getSvgImage());
-        playPauseButton.setTitle(preset.getTitle());
+    public void setPlayPauseIcon(final SvgImage icon, final String title) {
+        playPauseButton.setSvg(icon);
+        playPauseButton.setTitle(title);
     }
 
     @Override
@@ -335,15 +334,15 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
     // -----------------------------------------------------------------------
 
     @Override
-    public void setStepBackPreset(final Preset preset) {
-        stepBackButton.setSvg(preset.getSvgImage());
-        stepBackButton.setTitle(preset.getTitle());
+    public void setStepBackIcon(final SvgImage icon, final String title) {
+        stepBackButton.setSvg(icon);
+        stepBackButton.setTitle(title);
     }
 
     @Override
-    public void setStepForwardPreset(final Preset preset) {
-        stepForwardButton.setSvg(preset.getSvgImage());
-        stepForwardButton.setTitle(preset.getTitle());
+    public void setStepForwardIcon(final SvgImage icon, final String title) {
+        stepForwardButton.setSvg(icon);
+        stepForwardButton.setTitle(title);
     }
 
     @Override
@@ -361,9 +360,9 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
     // -----------------------------------------------------------------------
 
     @Override
-    public void setSettingsPreset(final Preset preset) {
-        settingsButton.setSvg(preset.getSvgImage());
-        settingsButton.setTitle(preset.getTitle());
+    public void setSettingsIcon(final SvgImage icon, final String title) {
+        settingsButton.setSvg(icon);
+        settingsButton.setTitle(title);
     }
 
     @Override

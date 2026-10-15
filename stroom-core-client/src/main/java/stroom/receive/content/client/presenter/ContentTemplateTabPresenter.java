@@ -18,6 +18,7 @@ package stroom.receive.content.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.CellIcon;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.event.CloseContentEvent;
@@ -33,8 +34,6 @@ import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.Conte
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.ContentTemplates;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
@@ -67,16 +66,16 @@ public class ContentTemplateTabPresenter
     private static final ContentTemplateResource CONTENT_TEMPLATE_RESOURCE = GWT.create(
             ContentTemplateResource.class);
 
-    private static final Preset DELETE_TEMPLATE_SVG_PRESET = SvgPresets.DELETE.title("Delete template");
-    //    private static final Preset DISABLE_TEMPLATE_SVG_PRESET = SvgPresets.DISABLE.title("Enable/Disable template");
-    protected static final Preset ADD_ABOVE_SVG_PRESET = SvgPresets.ADD_ABOVE.title(
+    private static final CellIcon DELETE_TEMPLATE_ICON = CellIcon.of(SvgImage.DELETE, "Delete template", false);
+    //    private static final Preset DISABLE_TEMPLATE_ICON = SvgPresets.DISABLE.title("Enable/Disable template");
+    protected static final CellIcon ADD_ABOVE_ICON = CellIcon.of(SvgImage.ADD_ABOVE,
             "Add new template above the selected one");
-    protected static final Preset ADD_BELOW_SVG_PRESET = SvgPresets.ADD_BELOW.title(
+    protected static final CellIcon ADD_BELOW_ICON = CellIcon.of(SvgImage.ADD_BELOW,
             "Add new template below the selected one");
-    protected static final Preset COPY_TEMPLATE_SVG_PRESET = SvgPresets.COPY.title("Copy template");
-    protected static final Preset EDIT_TEMPLATE_SVG_PRESET = SvgPresets.EDIT.title("Edit template");
-    protected static final Preset MOVE_TEMPLATE_UP_SVG_PRESET = SvgPresets.UP.title("Move template up");
-    protected static final Preset MOVE_TEMPLATE_DOWN_SVG_PRESET = SvgPresets.DOWN.title("Move template down");
+    protected static final CellIcon COPY_TEMPLATE_ICON = CellIcon.of(SvgImage.COPY, "Copy template", false);
+    protected static final CellIcon EDIT_TEMPLATE_ICON = CellIcon.of(SvgImage.EDIT, "Edit template", false);
+    protected static final CellIcon MOVE_TEMPLATE_UP_ICON = CellIcon.of(SvgImage.UP, "Move template up", false);
+    protected static final CellIcon MOVE_TEMPLATE_DOWN_ICON = CellIcon.of(SvgImage.DOWN, "Move template down", false);
 
     private final ContentTemplateListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;

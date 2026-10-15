@@ -34,7 +34,7 @@ final class SplitPanes {
     /// @return The pane.
     static Widget leftPane(final String hint) {
         final Widget pane = pane("Left panel", hint);
-        pane.getElement().getStyle().setProperty("background", "var(--sidebar__background-color,#1e2229)");
+        pane.getElement().getStyle().setProperty("background", "var(--row__background-color--even)");
         return pane;
     }
 
@@ -43,6 +43,23 @@ final class SplitPanes {
     /// @return The pane.
     static Widget rightPane() {
         return pane("Right panel", "Content goes here");
+    }
+
+    /// The top (first) pane of stacked panes.
+    ///
+    /// @param hint The second line of text.
+    /// @return The pane.
+    static Widget topPane(final String hint) {
+        final Widget pane = pane("Top panel", hint);
+        pane.getElement().getStyle().setProperty("background", "var(--row__background-color--even)");
+        return pane;
+    }
+
+    /// The bottom (second) pane of stacked panes.
+    ///
+    /// @return The pane.
+    static Widget bottomPane() {
+        return pane("Bottom panel", "Content goes here");
     }
 
     /// The stories' frame: 300px high with a rounded border.

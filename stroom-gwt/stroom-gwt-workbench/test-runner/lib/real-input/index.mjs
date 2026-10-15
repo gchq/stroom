@@ -27,10 +27,12 @@
 // component (e.g. in its own worktree) adds a file rather than editing a shared one. A story's
 // checks belong to one file: a story id in two files is an error.
 
+import { CHECKS as ACE_EDITOR } from './ace-editor.mjs';
 import { CHECKS as BUTTONS } from './buttons.mjs';
 import { CHECKS as SPLIT_PANE } from './split-pane.mjs';
+import { CHECKS as TABS } from './tabs.mjs';
 
-const FILES = { 'buttons.mjs': BUTTONS, 'split-pane.mjs': SPLIT_PANE };
+const FILES = { 'ace-editor.mjs': ACE_EDITOR, 'buttons.mjs': BUTTONS, 'split-pane.mjs': SPLIT_PANE, 'tabs.mjs': TABS };
 
 // Merges each file's checks, refusing a story id found in two files
 export function mergeChecks(files) {

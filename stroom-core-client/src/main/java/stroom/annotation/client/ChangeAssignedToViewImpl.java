@@ -66,10 +66,10 @@ public class ChangeAssignedToViewImpl
     public void setAssignedTo(final UserRef assignedTo) {
         if (assignedTo == null) {
             this.assignedTo.setText("Nobody");
-            this.assignedTo.getElement().getStyle().setOpacity(0.5);
+            this.assignedTo.addStyleName(AnnotationEditViewImpl.EMPTY_VALUE_STYLE);
         } else {
             this.assignedTo.setText(assignedTo.toDisplayString());
-            this.assignedTo.getElement().getStyle().setOpacity(1);
+            this.assignedTo.removeStyleName(AnnotationEditViewImpl.EMPTY_VALUE_STYLE);
         }
     }
 

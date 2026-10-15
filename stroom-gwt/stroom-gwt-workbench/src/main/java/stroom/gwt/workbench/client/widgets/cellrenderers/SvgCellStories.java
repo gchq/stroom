@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.cellrenderers;
 
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.SvgCell;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.widgets.StoryArgs;
@@ -25,15 +26,14 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [SvgCell]. Each cell is a `CellWidget`, whose value is the cell's [Preset]
-/// (icon, title and enabled state). A clickable cell (`new SvgCell(true)`) reports a click by
+/// Stories for Stroom's [SvgCell]. Each cell is a `CellWidget`, whose value is the cell's [CellIcon]
+/// (icon, name and enabled state). A clickable cell (`new SvgCell(true)`) reports a click by
 /// updating the value, which the `CellWidget` reports as a value change.
 public final class SvgCellStories {
 
@@ -54,10 +54,10 @@ public final class SvgCellStories {
         registry.component("Widgets/Cell Renderers/SvgCell", SvgCellStories.class)
                 .layout(StoryLayout.CENTERED)
                 .argType(ArgType.select(ICON, "INFO", "COPY", "DELETE", "ADD", "EDIT")
-                        .description("The icon (GWT Preset's SvgImage).")
+                        .description("The icon (GWT CellIcon's SvgImage).")
                         .typeName("SvgImage"))
-                .argType(ArgType.text(TITLE).description("The icon's tooltip (GWT Preset's title)."))
-                .argType(ArgType.bool(ENABLED).description("GWT Preset's enabled state.").defaultSummary("true"))
+                .argType(ArgType.text(TITLE).description("The icon's tooltip (GWT CellIcon's title)."))
+                .argType(ArgType.bool(ENABLED).description("GWT CellIcon's enabled state.").defaultSummary("true"))
                 // Only ClickableIcons has clickable cells; a cell from the args is a static icon
                 // (new SvgCell(false)), as GWT decides whether a cell is a button when it is created
                 .args(Args.of(ICON, "INFO"))
@@ -84,10 +84,10 @@ public final class SvgCellStories {
             // No icon: render nothing
             return new InlineLabel();
         }
-        final Preset preset = new Preset(icon,
+        final CellIcon cellIcon = CellIcon.of(icon,
                 args.getString(TITLE),
                 StoryArgs.getBoolean(args, ENABLED, true));
-        return new CellWidget<>(new SvgCell(false), preset);
+        return new CellWidget<>(new SvgCell(false), cellIcon);
     }
 
     private static Widget clickableIcons(final StoryContext context) {
@@ -95,16 +95,16 @@ public final class SvgCellStories {
         clicked.getElement().getStyle().setProperty("fontSize", "12px");
         final Spy onClick = context.fn(ON_CLICK);
 
-        final CellWidget<Preset> info = pressable(new Preset(SvgImage.INFO, "View info", true), () -> {
+        final CellWidget<CellIcon> info = pressable(CellIcon.of(SvgImage.INFO, "View info"), () -> {
             onClick.call("info");
             clicked.setText("info clicked");
         });
-        final CellWidget<Preset> delete = pressable(new Preset(SvgImage.DELETE, "Delete", true), () -> {
+        final CellWidget<CellIcon> delete = pressable(CellIcon.of(SvgImage.DELETE, "Delete"), () -> {
             onClick.call("delete");
             clicked.setText("delete clicked");
         });
-        // A disabled preset greys the icon (svgCell-disabled) and ignores clicks, so this never runs
-        final CellWidget<Preset> copy = pressable(new Preset(SvgImage.COPY, "Copy (disabled)", false), () -> {
+        // A disabled cell icon greys the icon (svgCell-disabled) and ignores clicks, so this never runs
+        final CellWidget<CellIcon> copy = pressable(CellIcon.of(SvgImage.COPY, "Copy (disabled)", false), () -> {
             onClick.call("copy");
             clicked.setText("copy clicked");
         });
@@ -113,12 +113,12 @@ public final class SvgCellStories {
     }
 
     // A clickable icon cell that runs onPress when it is pressed. A pressed SvgCell updates its value
-    // with the same preset, and CellWidget only reports a value that changes, so the cell's updates
+    // with the same cell icon, and CellWidget only reports a value that changes, so the cell's updates
     // are caught here instead.
-    private static CellWidget<Preset> pressable(final Preset preset, final Runnable onPress) {
-        return new CellWidget<>(new SvgCell(true), preset) {
+    private static CellWidget<CellIcon> pressable(final CellIcon cellIcon, final Runnable onPress) {
+        return new CellWidget<>(new SvgCell(true), cellIcon) {
             @Override
-            public void setValue(final Preset value, final boolean fireEvents, final boolean redraw) {
+            public void setValue(final CellIcon value, final boolean fireEvents, final boolean redraw) {
                 if (fireEvents) {
                     onPress.run();
                 } else {

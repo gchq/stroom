@@ -155,4 +155,16 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         selectionList.registerPopupTextProvider(popupTextSupplier);
     }
+
+    /// Names the popup's list for screen readers, e.g. after the box that opened it.
+    ///
+    /// @param name The list's accessible name.
+    public void setAccessibleName(final String name) {
+        selectionList.setAccessibleName(name);
+    }
+
+    /// @return The id of the popup's list box element, for a box that controls it (`aria-controls`).
+    public String getListBoxId() {
+        return selectionList.getListBoxId();
+    }
 }

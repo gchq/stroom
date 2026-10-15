@@ -100,6 +100,14 @@ export const RULES = [
   // consulted the feedback too, the way the `ok` checker already did.
   { rule: 'the key probes read inline feedback', since: '2190b0f', kind: 'key',
     why: /Ctrl\+Enter did nothing where OK/ },
+  // Covered AFTER the list was read: in a grid, pressing `spinner 1` changes its row, the write it
+  // sends is refused by the guard, and the alert's glass then covers every spinner after it. r10's
+  // `spinner 2` failed hover and press on the Processors tab and under Batch Edit that way.
+  // `spinnerGestures` now checks again just before each gesture (`spinnerCovered`).
+  { rule: 'a spinner is checked for cover again just before its gesture', since: '6a386799c3', kind: 'mouseover',
+    why: /left the class as valueSpinner-arrow valueSpinner-arrowUp\b/ },
+  { rule: 'a spinner is checked for cover again just before its gesture', since: '6a386799c3', kind: 'mousedown',
+    why: /changed neither the class nor the value/ },
 ];
 
 /**

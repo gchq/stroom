@@ -86,7 +86,7 @@ public final class CopyTextStories {
         final ScreenHarness harness = harness(context);
         final Spy onInsert = context.fn(ON_INSERT);
         final InlineLabel inserted = StoryPanels.note("Click the insert icon…", "#888", "0.8rem");
-        inserted.getElement().getStyle().setProperty("color", "var(--text-color--low-contrast, #888)");
+        inserted.getElement().getStyle().setProperty("color", "var(--text-color--disabled)");
         final Widget copyText = copyText(harness, "my-feed-name", true, value -> {
             onInsert.call(value);
             inserted.setText("Inserted: " + value);

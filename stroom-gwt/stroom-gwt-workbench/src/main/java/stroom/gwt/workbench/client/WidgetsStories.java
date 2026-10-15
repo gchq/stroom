@@ -54,7 +54,9 @@ import stroom.gwt.workbench.client.widgets.display.CopyTextStories;
 import stroom.gwt.workbench.client.widgets.display.HtmlPresenterStories;
 import stroom.gwt.workbench.client.widgets.display.InfinityLogoStories;
 import stroom.gwt.workbench.client.widgets.display.LogoStories;
+import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorFeatureStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorStories;
+import stroom.gwt.workbench.client.widgets.editorsandviewers.AceEditorThemeStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.MarkdownEditorStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.SourcePresenterStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.SourceViewerStories;
@@ -79,6 +81,7 @@ import stroom.gwt.workbench.client.widgets.inputs.ViewStateStories;
 import stroom.gwt.workbench.client.widgets.layout.RoundedPanelStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneContentStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneResizingStories;
+import stroom.gwt.workbench.client.widgets.layout.SplitPaneStateStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneStories;
 import stroom.gwt.workbench.client.widgets.menu.MenuItemWidgetStories;
 import stroom.gwt.workbench.client.widgets.menu.MenuPanelStories;
@@ -130,6 +133,8 @@ public final class WidgetsStories {
     public static StoryRegistry addTo(final StoryRegistry registry) {
         // Widgets/Editors & Viewers/AceEditor
         AceEditorStories.addTo(registry);
+        AceEditorFeatureStories.addTo(registry);
+        AceEditorThemeStories.addTo(registry);
         // Widgets/Editors & Viewers/MarkdownEditor
         MarkdownEditorStories.addTo(registry);
         // Widgets/Editors & Viewers/SourcePresenter
@@ -289,6 +294,8 @@ public final class WidgetsStories {
         SplitPaneStories.addTo(registry);
         SplitPaneResizingStories.addTo(registry);
         SplitPaneContentStories.addTo(registry);
+        // Widgets/Layout/SplitPaneStates
+        SplitPaneStateStories.addTo(registry);
         // Widgets/Inputs/ViewStates (GWT only): every control as normal, read only and disabled
         ViewStateStories.addTo(registry);
         return registry;

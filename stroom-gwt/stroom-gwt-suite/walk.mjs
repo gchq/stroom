@@ -190,6 +190,13 @@ const INVERSE = new Map([
   ['Turn Cell Line Wrapping Off', 'Turn Cell Line Wrapping On'],
   ['Turn Cell Line Wrapping On', 'Turn Cell Line Wrapping Off'],
 ]);
+
+// A toggle that is ON. The toolbar's ToolbarToggleButton says so with `aria-pressed="true"`;
+// the older InlineSvgToggleButton says `.on`. Looking only for `.on` after the toolbar merge
+// (c4b3e53fbd) never saw the AI dock open, so every re-sync into it pressed Ask Stroom AI and
+// CLOSED it, then waited 30s for a `Configure` that was no longer there — r14's doc shards ran
+// for 5h+ against r13's 2h.
+const toggleOn = (label) => `button[title="${label}"].on, button[title="${label}"][aria-pressed="true"]`;
 const looseReported = new Set();
 /** Checker verdicts that failed (lib/checks.mjs) — printed in the summary, filed by the ledger. */
 let checkFails = 0;
@@ -384,7 +391,9 @@ async function clickAffordance(label, timeout = 3000) {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
       const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
+      // A toolbar button (ToolbarButton) disables with aria-disabled and stays focusable.
       const el = [...scope.querySelectorAll('button, [role=button], .Button')].find((b) => b.offsetWidth > 0 && !b.disabled
+        && b.getAttribute('aria-disabled') !== 'true'
         && (norm(b.getAttribute('title')) === wanted || norm(b.getAttribute('aria-label')) === wanted)
         && !b.closest('.navigationTree, .explorerTree, [class*=navigation], [class*=explorer]'));
       if (!el) return null;
@@ -477,7 +486,7 @@ async function clickDesignHeader(name) {
 async function tabBarOf(tab) {
   return page.evaluate((wanted) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const lab = [...document.querySelectorAll('.linkTab-label')]
+    const lab = [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .find((e) => e.offsetWidth > 0 && norm(e.textContent) === wanted);
     const bar = lab?.closest('.tabLayout-barOuter');
     if (!bar) return null;
@@ -546,12 +555,12 @@ async function survey() {
   const fingerprint = await page.evaluate((sel) => {
     const root = document.querySelector(sel) ?? document.body;
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    // `.linkTab-label` only: those are an editor's own sub-tabs. The CONTENT tab strip
-    // (`.curveTab-label`) is the application's history — every screen visited adds one — and a
+    // `.tab-bar--link .tab-bar__label` only: those are an editor's own sub-tabs. The CONTENT tab strip
+    // (`.tab-bar--curved .tab-bar__label`) is the application's history — every screen visited adds one — and a
     // walk that never reloads accumulates it, so including it made every screen-level node's
     // signature drift with whatever had been opened before. crawl.mjs never saw this because each
     // of its nodes began from a reload with an empty strip.
-    const tabs = [...root.querySelectorAll('.linkTab-label')]
+    const tabs = [...root.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent)).sort();
     const n = (q) => root.querySelectorAll(q).length;
     return `${tabs.join(',')}#${n('input,select,textarea')}/${n('.form-group')}/${n('.ace_editor')}`;
@@ -659,7 +668,7 @@ async function reloadAndSignIn() {
 }
 
 /**
- * An open editor's sub-tabs — `.linkTab-label` only. lib/tabs.mjs's readEditorTabs also reads the
+ * An open editor's sub-tabs — `.tab-bar--link .tab-bar__label` only. lib/tabs.mjs's readEditorTabs also reads the
  * CONTENT strip and filters out `Welcome` and the document's own name, which was enough for a
  * recorder that opened one document per fresh page; in a walk the strip holds every screen visited
  * so far, and all of them would be reported as sub-tabs of whichever editor is open.
@@ -674,7 +683,7 @@ async function readSubTabs({ inDialog = false } = {}) {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
     const top = popups[popups.length - 1];
-    return [...document.querySelectorAll('.linkTab-label')]
+    return [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .filter((e) => e.offsetWidth > 0 && e.offsetHeight > 0)
       .filter((e) => (inDialog ? top && top.contains(e) : !popups.some((p) => p.contains(e))))
       .map((e) => norm(e.textContent)).filter(Boolean);
@@ -682,9 +691,9 @@ async function readSubTabs({ inDialog = false } = {}) {
 }
 
 /** The content tab strip's labels, in order. */
-const contentTabs = () => page.evaluate(() => [...document.querySelectorAll('.curveTab')]
+const contentTabs = () => page.evaluate(() => [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')]
   .filter((t) => t.offsetWidth > 0)
-  .map((t) => (t.querySelector('.curveTab-label') || t).textContent.replace(/\s+/g, ' ').trim())
+  .map((t) => (t.querySelector('.tab-bar__label') || t).textContent.replace(/\s+/g, ' ').trim())
   .filter(Boolean)).catch(() => []);
 
 /**
@@ -715,7 +724,7 @@ async function closeAllContentTabs() {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const open = (await contentTabs()).filter((t) => t && !/Welcome/.test(t));
     if (!open.length) return true;
-    if (attempt === 0 && await rightClickByText(page, '.curveTab', open[0]).catch(() => false)) {
+    if (attempt === 0 && await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', open[0]).catch(() => false)) {
       const before = (await contentTabs()).length;
       if (await clickMenuItem(page, 'Close All').catch(() => false)) {
         // Close All closes tab by tab and may ask once per dirty document.
@@ -819,7 +828,7 @@ async function discardIfAsked({ wait = 2_000 } = {}) {
 async function closeContentTab(label) {
   if (!label) return false;
   const before = (await contentTabs()).length;
-  if (!(await rightClickByText(page, '.curveTab', label).catch(() => false))) return false;
+  if (!(await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', label).catch(() => false))) return false;
   if (!(await clickMenuItem(page, 'Close').catch(() => false))) { await dismissMenus(page).catch(() => {}); return false; }
   return settleTabClose(before, 'Close');
 }
@@ -879,23 +888,23 @@ async function clickDialogButton(captionRe, labelRe) {
 async function whereAmI() {
   return page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const tabs = [...document.querySelectorAll('.curveTab')].filter((t) => t.offsetWidth > 0)
-      .map((t) => `${norm((t.querySelector('.curveTab-label') || t).textContent)}${/curveTab-selected/.test(t.className) ? '*' : ''}`);
-    const sub = [...document.querySelectorAll('.linkTab-label')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
+    const tabs = [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')].filter((t) => t.offsetWidth > 0)
+      .map((t) => `${norm((t.querySelector('.tab-bar__label') || t).textContent)}${t.getAttribute('aria-selected') === 'true' ? '*' : ''}`);
+    const sub = [...document.querySelectorAll('.tab-bar--link .tab-bar__label')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
     const dialogs = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
     return `tabs [${tabs.join(' | ')}] sub-tabs [${sub.join(', ')}] dialogs [${dialogs.join(', ')}]`;
   }).catch(() => '(unknown)');
 }
 
 /**
- * A document is open when ITS EDITOR'S sub-tab bar exists — `.linkTab-label`, not any tab label.
+ * A document is open when ITS EDITOR'S sub-tab bar exists — `.tab-bar--link .tab-bar__label`, not any tab label.
  * The content strip's `Welcome` tab satisfied the old test instantly, so after a fast re-sync the
  * walker clicked sub-tabs of an editor that had not rendered yet: nine of Analytic Rule's ten tabs
  * came back "no sub-tab". crawl.mjs got away with the same test because its reload made every open
  * slow enough to lose the race.
  */
 async function waitForDocOpen() {
-  const r = await waitUntil(page, () => page.evaluate(() => [...document.querySelectorAll('.linkTab-label')]
+  const r = await waitUntil(page, () => page.evaluate(() => [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
     .some((e) => e.offsetWidth > 0)), { budget: 6_000, label: 'doc-open', kind: 'editor' }).catch(() => ({ ok: false }));
   if (!r.ok) console.log(`      (doc-open: no editor sub-tab bar after 6s — ${await whereAmI()})`);
 }
@@ -922,10 +931,10 @@ async function activateContentTab(label) {
   if (!label) return;
   const clicked = await page.evaluate((wanted) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim().replace(/^\* /, '');
-    const tabs = [...document.querySelectorAll('.curveTab')].filter((t) => t.offsetWidth > 0);
-    const mine = tabs.find((t) => norm((t.querySelector('.curveTab-label') || t).textContent) === wanted);
-    if (!mine || /curveTab-selected/.test(mine.className)) return !!mine;
-    (mine.querySelector('.curveTab-label') || mine).click();
+    const tabs = [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')].filter((t) => t.offsetWidth > 0);
+    const mine = tabs.find((t) => norm((t.querySelector('.tab-bar__label') || t).textContent) === wanted);
+    if (!mine || mine.getAttribute('aria-selected') === 'true') return !!mine;
+    (mine.querySelector('.tab-bar__label') || mine).click();
     return true;
   }, label).catch(() => false);
   if (clicked) await page.waitForTimeout(300);
@@ -1094,9 +1103,9 @@ async function driveStep(step) {
     // A TOGGLE in a route is a state to be IN, not a click to be made. The Ask Stroom AI dock is not
     // closed by the reset (it is neither a tab nor a dialog), so a replay that re-clicked it closed
     // it — `re-sync after "New Conversation" reached a different state`, and `Conversation History`
-    // was `present when surveyed, not locatable when clicked`. InlineSvgToggleButton says `.on`.
+    // was `present when surveyed, not locatable when clicked`. See toggleOn for how ON reads.
     if (step.post && INVERSE.get(label) === label) {
-      const on = await page.locator(`button[title="${label}"].on`).count().catch(() => 0);
+      const on = await page.locator(toggleOn(label)).count().catch(() => 0);
       if (on) return;
     }
     if (!(await clickAffordance(label, 8000))) throw new Error(`no affordance "${label}"`);
@@ -1170,7 +1179,7 @@ async function driveStep(step) {
     await page.mouse.click(t.x, t.y, { button: 'right' });
     await waitForMenu(page, { budget: 1_500, label: `right-click:${step.what}` }).catch(() => {});
   } else if (step.via === 'tab-context') {
-    if (!(await rightClickByText(page, '.curveTab', step.label))) {
+    if (!(await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', step.label))) {
       throw new Error(`no content tab "${step.label}" to right-click`);
     }
   } else if (step.via === 'doc') {
@@ -1222,7 +1231,7 @@ async function driveStep(step) {
     cell = (await findCell()) ?? cell;
     await page.mouse.click(cell.x, cell.y);
     await waitForStableCount(page, () => page.evaluate(() =>
-      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled).length),
+      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: 'select-row', kind: 'content', allowZero: true }).catch(() => {});
   } else if (step.via === 'tick-row') {
     // The first row's TICK BOX (`TickBoxCell` renders `div.tickBox`), a real click — the batch
@@ -1238,7 +1247,7 @@ async function driveStep(step) {
     if (!box) throw new Error('no tick box in a row');
     await page.mouse.click(box.x, box.y);
     await waitForStableCount(page, () => page.evaluate(() =>
-      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled).length),
+      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: 'tick-row', kind: 'content', allowZero: true }).catch(() => {});
   } else if (step.via === 'row-action') {
     // A grid row's ACTION CELL — the `⋮` `ActionCell` renders as `.svgCell-button` in the row — opens
@@ -1386,7 +1395,7 @@ async function driveStep(step) {
     await page.mouse.down();
     await page.mouse.up();
     await waitForStableCount(page, () => page.evaluate(() =>
-      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled).length),
+      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: 'select-element', kind: 'content', allowZero: true }).catch(() => {});
   } else if (step.via === 'dblclick') {
     // MainPresenter opens the user task manager on a DOUBLE click of the toolbar spinner — a
@@ -1446,7 +1455,7 @@ async function driveStep(step) {
     lastAddDelta = { items: now.buttons.filter((b) => !buttonsBefore.includes(b)), disabled: now.disabled };
   } else if (step.via === 'tab') {
     // Wait for the tab to EXIST before asking clickEditorTab, whose count check is immediate.
-    await waitUntil(page, () => page.evaluate((label) => [...document.querySelectorAll('.linkTab-label')]
+    await waitUntil(page, () => page.evaluate((label) => [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .some((e) => e.offsetWidth > 0 && e.textContent.replace(/\s+/g, ' ').trim() === label), step.label),
     { budget: 5_000, label: `tab-exists:${step.label}`, kind: 'tab' }).catch(() => {});
     if (!(await clickEditorTab(page, step.label, { nth: step.nth ?? 0 }))) {
@@ -1457,7 +1466,7 @@ async function driveStep(step) {
       for (const parent of await readSubTabs().catch(() => [])) {
         if (parent === step.label) continue;
         if (!(await clickEditorTab(page, parent, { nth: 0, timeout: 3_000 }).catch(() => false))) continue;
-        await waitUntil(page, () => page.evaluate((label) => [...document.querySelectorAll('.linkTab-label')]
+        await waitUntil(page, () => page.evaluate((label) => [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
           .some((e) => e.offsetWidth > 0 && e.textContent.replace(/\s+/g, ' ').trim() === label), step.label),
         { budget: 1_500, label: `nested:${step.label}`, kind: 'tab' }).catch(() => {});
         if (await clickEditorTab(page, step.label, { nth: step.nth ?? 0, timeout: 3_000 }).catch(() => false)) { found = true; break; }
@@ -1497,16 +1506,23 @@ async function resync(node) {
   const wantsOn = new Set(node.route.filter((st) => st.via === 'button' && st.post && INVERSE.get(st.label) === st.label).map((st) => st.label));
   for (const [label, inverse] of INVERSE) {
     if (inverse !== label || wantsOn.has(label)) continue;
-    if (await page.locator(`button[title="${label}"].on`).count().catch(() => 0)) await clickAffordance(label).catch(() => {});
+    if (await page.locator(toggleOn(label)).count().catch(() => 0)) await clickAffordance(label).catch(() => {});
   }
   const tTabs = Date.now();
-  for (const step of node.route) await driveStep(step);
+  // Each step's time, so a slow route names its slow step: r14's doc shards spent 33s a re-sync
+  // in the route, against 4s in r13, and the total alone could not say where.
+  const stepMs = [];
+  for (const step of node.route) {
+    const tStep = Date.now();
+    await driveStep(step);
+    stepMs.push(`${step.via}:${step.label ?? step.leaf ?? step.type ?? step.what ?? ''}=${Date.now() - tStep}ms`);
+  }
   await discardIfAsked({ wait: 600 });
   const ms = Date.now() - t0;
   // Say where a slow re-sync went. 38s a re-sync on the Navigation shard was invisible until timed.
   if (ms > 8_000) {
     console.log(`      (slow re-sync ${Math.round(ms / 1000)}s: clear ${tClear - t0}ms, tabs ${tTabs - tClear}ms, `
-      + `route ${Date.now() - tTabs}ms over ${node.route.length} step(s))`);
+      + `route ${Date.now() - tTabs}ms over ${node.route.length} step(s): ${stepMs.join(', ')})`);
   }
 }
 
@@ -2651,6 +2667,23 @@ async function walk(node, state, arrivedAt) {
     if (SELF_DESTRUCTIVE.has(label)) {
       affordances.push({ node: id, label, kind: 'button', outcome: 'skipped',
         detail: 'ends the walk session or destroys the seeded row — see SELF_DESTRUCTIVE', rows: [], blocked: [] });
+      continue;
+    }
+    // Disabled by the time its turn came. A toolbar button (ToolbarButton, 2026-10-12) disables with
+    // aria-disabled and stays focusable, and Playwright waits on aria-disabled for the whole click
+    // timeout, so the explorer's buttons, disabled when its selection cleared, read as "did not
+    // accept a click within 3s". A press on a disabled button proves nothing either way.
+    const onlyDisabled = await page.evaluate((wanted) => {
+      const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
+      const named = [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0
+        && (norm(b.getAttribute('title')) === wanted || norm(b.getAttribute('aria-label')) === wanted));
+      const off = (b) => b.disabled || b.getAttribute('aria-disabled') === 'true' || b.classList.contains('disabled');
+      return named.length > 0 && named.every(off);
+    }, label).catch(() => false);
+    if (onlyDisabled) {
+      affordances.push({ node: id, label, kind: 'button', outcome: 'skipped',
+        detail: 'disabled when its turn came', rows: [], blocked: [] });
+      console.log(`      · ${label} — disabled when its turn came`);
       continue;
     }
     // Chrome is app-level — the explorer's New/Delete, the main menu, the AI dock — and is covered

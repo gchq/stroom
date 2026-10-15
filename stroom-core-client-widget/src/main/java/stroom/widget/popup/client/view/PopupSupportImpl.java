@@ -136,7 +136,6 @@ public class PopupSupportImpl implements PopupSupport {
                 hideHandler.onHide(event);
                 hideHandler = null;
             }
-            CurrentFocus.pop();
         }
     }
 

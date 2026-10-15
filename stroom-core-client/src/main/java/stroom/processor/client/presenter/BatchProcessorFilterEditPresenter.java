@@ -27,7 +27,6 @@ import stroom.processor.shared.ProcessorFilterResource;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.PageResponse;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -51,7 +50,6 @@ public class BatchProcessorFilterEditPresenter
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final RestFactory restFactory;
     private ExpressionOperator expression;
-    private PageResponse currentResultPageResponse;
 
     @Inject
     public BatchProcessorFilterEditPresenter(final EventBus eventBus,
@@ -65,10 +63,8 @@ public class BatchProcessorFilterEditPresenter
     }
 
     public void show(final ExpressionOperator expression,
-                     final PageResponse currentResultPageResponse,
                      final Runnable onClose) {
         this.expression = expression;
-        this.currentResultPageResponse = currentResultPageResponse;
 
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
@@ -126,22 +122,32 @@ public class BatchProcessorFilterEditPresenter
             }
         }
 
-        final long docCount;
-        if (currentResultPageResponse != null &&
-            currentResultPageResponse.getTotal() != null) {
-            docCount = currentResultPageResponse.getTotal();
-        } else {
-            docCount = 0;
-        }
+        // Ask the server how many filters the change would apply to. The processor list's row total
+        // can't be used: it counts each processor's row as well as its filters' rows.
+        restFactory
+                .create(PROCESSOR_FILTER_RESOURCE)
+                .method(res -> res.getBulkChangeCount(createRequest()))
+                .onSuccess(count -> confirm(count, taskMonitorFactory, event, onClose))
+                .onFailure(RestErrorHandler.forPopup(this, event))
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
 
-        if (docCount == 0) {
+    private void confirm(final Integer count,
+                         final TaskMonitorFactory taskMonitorFactory,
+                         final HidePopupRequestEvent event,
+                         final Runnable onClose) {
+        final int filterCount = count == null
+                ? 0
+                : count;
+        if (filterCount == 0) {
             AlertEvent.fireWarn(this, "No processors are included in the current filter.", event::reset);
             return;
         }
 
         String message = "Are you sure you want to change this processor?";
-        if (docCount > 1) {
-            message = "Are you sure you want to change " + docCount + " processors?";
+        if (filterCount > 1) {
+            message = "Are you sure you want to change " + filterCount + " processors?";
         }
         ConfirmEvent.fire(
                 this,

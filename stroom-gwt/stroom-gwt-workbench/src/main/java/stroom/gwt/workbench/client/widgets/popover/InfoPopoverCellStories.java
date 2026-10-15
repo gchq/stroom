@@ -58,7 +58,7 @@ public final class InfoPopoverCellStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // InfoColumn's icon is always SvgPresets.INFO
+        // InfoColumn's icon is always the Info cell icon (SvgImage.INFO)
         registry.component("Widgets/Popover/InfoPopoverCell", InfoPopoverCellStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Clicking the info icon opens the anchored popover; clicking outside closes it

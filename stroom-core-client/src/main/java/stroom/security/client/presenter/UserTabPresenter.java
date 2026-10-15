@@ -213,8 +213,8 @@ public class UserTabPresenter
     @Override
     public SvgImage getIcon() {
         return userRef != null && userRef.isGroup()
-                ? UserTabPlugin.GROUP_ICON.getSvgImage()
-                : UserTabPlugin.USER_ICON.getSvgImage();
+                ? UserTabPlugin.GROUP_ICON
+                : UserTabPlugin.USER_ICON;
     }
 
     @Override

@@ -32,215 +32,6 @@
     padding: 5px;
 }
 
-.basicTabSelector {
-    position: absolute;
-    left: 0;
-    top: 0;
-    cursor: pointer;
-    display: flex;
-    height: 34px;
-    border: none;
-    border-radius: .25rem;
-    border: 1px solid transparent;
-    background-color: transparent;
-    color: var(--control__text-color);
-    padding: 1px;
-}
-
-.basicTabSelector-arrows {
-    display: flex;
-}
-
-.basicTabSelector-arrows svg {
-    width: 11px;
-    height: 9px;
-}
-
-.basicTabSelector-text {
-    font-size: var(--font-size-7);
-    white-space: nowrap;
-    margin-left: 2px;
-    margin-top: 6px;
-    -moz-user-select: none;
-}
-
-.curveTabBar {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-.curveTab {
-    position: absolute;
-    left: 0;
-    top: 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    height: 34px;
-    border-bottom: solid 3px transparent;
-    border-top: solid 3px transparent;
-    background-color: var(--curve-tab__background-color);
-    color: var(--control__text-color);
-}
-
-.curveTab:hover {
-    background: var(--curve-tab__background-color--hover);
-}
-
-.curveTab-selected {
-    border-bottom: solid 3px var(--blue-300);
-}
-
-.curveTab-selected:hover {
-    background: var(--curve-tab__background-color--hover);
-}
-
-.curveTab-keyboardSelected:focus {
-    background: var(--curve-tab__background-color--hover);
-}
-
-/* Tab content */
-.curveTab .curveTab-icon {
-    position: relative;
-    width: 18px;
-    height: 18px;
-    -moz-user-select: none;
-    margin: 0 5px 0 5px;
-}
-
-.curveTab .curveTab-icon svg {
-    width: 18px;
-    height: 18px;
-}
-
-.curveTab .curveTab-face {
-	border: none;
-	outline: none;
-	background: none;
-	cursor: pointer;
-	text-decoration: none;
-	min-width: 16px;
-	min-height: 16px;
-	margin: auto;
-	padding: 0;
-	overflow: hidden;
-	position: relative;
-	color: #5398ff;
-	font-size: var(--font-size-16);
-	opacity: 1;
-}
-
-.curveTab .curveTab-text {
-    position: relative;
-    white-space: nowrap;
-    padding: 1px 1px 1px 1px;
-    -moz-user-select: none;
-    opacity: 0.8;
-}
-
-.curveTab-selected .curveTab-text {
-	opacity: 1;
-}
-
-/* Close button */
-.curveTab .curveTab-close-wrapper {
-    position: relative;
-    width: 22px;
-    height: 22px;
-}
-
-.curveTab .curveTab-spinner {
-    position: absolute;
-    transition: opacity 0.2s ease-in-out;
-    -webkit-transition: opacity 0.2s ease-in-out;
-    -moz-transition: opacity 0.2s ease-in-out;
-    -o-transition: opacity 0.2s ease-in-out;
-}
-
-.curveTab .curveTab-spinner svg {
-    color: var(--curve-tab__svg-color);
-	opacity: 0.8;
-}
-
-.curveTab .curveTab-close {
-    position: absolute;
-    opacity: 0;
-    top: 2px;
-    left: -1px;
-}
-
-.curveTab:hover .curveTab-spinner {
-	opacity: 0;
-}
-
-.curveTab:hover .curveTab-close,
-.curveTab-keyboardSelected:focus .curveTab-close {
-	opacity: 1;
-}
-
-/* The close cross replaces the spinner while the tab has keyboard focus, as it does on hover */
-.curveTab-keyboardSelected:focus .curveTab-spinner {
-	opacity: 0;
-}
-
-.curveTab .curveTab-close svg {
-    width: 17px;
-    height: 17px;
-    cursor: pointer;
-    margin: 0px 6px 0 4px;
-    z-index: 0;
-    color: var(--curve-tab__svg-color);
-    opacity: 0.8;
-}
-
-.curveTab .curveTab-closeActive svg {
-    opacity: 1;
-}
-
-.curveTabSelector {
-    position: absolute;
-    left: 0;
-    top: 0;
-    cursor: pointer;
-    display: flex;
-    height: 34px;
-    border: var(--curve-tab__border);
-    border-radius: var(--curve-tab__border-radius);
-    background-color: var(--curve-tab__background-color);
-    color: var(--control__text-color);
-    padding: 10px;
-    align-items: center;
-}
-
-.curveTabSelector:hover {
-    background: var(--curve-tab__background-color--hover);
-    border: var(--curve-tab__border--hover);
-}
-
-.curveTabSelector-keyboardSelected:focus {
-    border-color: var(--focus-border);
-    box-shadow: var(--focus-shadow);
-}
-
-/* Content. */
-.curveTabSelector .curveTabSelector-arrows {
-    display: flex;
-}
-
-.curveTabSelector .curveTabSelector-arrows svg {
-    width: 14px;
-    height: 11px;
-}
-
-.curveTabSelector .curveTabSelector-text {
-    font-size: var(--font-size-11);
-    white-space: nowrap;
-    margin-left: 0.25em;
-    margin-top: 1em;
-    -moz-user-select: none;
-}
-
 .layerContainer-container {
 	width: 100%;
 	height: 100%;
@@ -262,116 +53,6 @@
 
 .layerContainer-layer--visible {
     opacity: 1;
-}
-
-.linkTabBar {
-    position: relative;
-	white-space: nowrap;
-	padding-top: 1px;
-}
-
-.dialog-content .linkTabBar {
-    margin-bottom: var(--control__gap--vertical);
-}
-
-.linkTabBar-hiddenText {
-    display: inline;
-    opacity: 0;
-}
-
-.linkTabBar .linkTabBar-separator {
-	position: absolute;
-	top: 0;
-	padding-left: 5px;
-	padding-right: 5px;
-}
-
-
-.linkTab {
-	position: absolute;
-	left: 0;
-	top: 0;
-    opacity: 0.8;
-    transition: opacity 0.5s linear;
-    -webkit-transition: opacity 0.5s linear;
-    -moz-transition: opacity 0.5s linear;
-    -o-transition: opacity 0.5s linear;
-    color: var(--link-tab__text-color);
-}
-
-.multiple-tabs .linkTab,
-.dashboard__designMode .linkTab{
-    cursor: pointer;
-}
-
-.linkTab-selected {
-    opacity: 1;
-}
-
-.linkTab-keyboardSelected {
-    opacity: 1;
-}
-
-.multiple-tabs .linkTab-keyboardSelected:focus,
-.dashboard__designMode .linkTab-keyboardSelected:focus {
-    opacity: 1;
-    color: var(--link-tab__text-color--focussed);
-    text-decoration: underline;
-}
-
-.multiple-tabs .linkTab:hover,
-.dashboard__designMode .linkTab:hover {
-    opacity: 1;
-    text-decoration: underline;
-}
-
-.linkTab-background {
-	cursor: pointer;
-	white-space: nowrap;
-	font-weight: 600;
-	opacity: 0;
-}
-
-.linkTab-label {
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 100%;
-	cursor: pointer;
-	text-decoration: inherit;
-	white-space: nowrap;
-}
-
-.linkTab-selected .linkTab-label {
-	font-weight: 600;
-}
-
-.linkTab .linkTab-hotspot {
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: 0;
-	bottom: 0;
-	margin: 0;
-	padding: 0;
-	border-width: 1px;
-	border-color: black;
-	border-style: solid;
-	background-color: red;
-	opacity: 0;
-
-	transition: opacity .2s;
-	-webkit-transition: opacity .2s;
-	-moz-transition: opacity .2s;
-	-o-transition: opacity .2s;
-}
-
-.multiple-tabs .linkTab .linkTab-hotspot {
-	cursor: pointer;
-}
-
-.linkTab .linkTab-hotspotVisible {
-	opacity: .3 !important;
 }
 
 .info-tooltip {
@@ -405,7 +86,7 @@
 	width: 100%;
 	height: 100%;
 	border: 1px solid var(--control__border-color);
-	background: var(--control__background-color);
+	background: var(--content-box__background-color);
 	color: var(--control__text-color);
 	padding: 5px;
   	-webkit-user-select: text;
@@ -427,14 +108,41 @@
     cursor: pointer;
 }
 
+/* A tick box choosing whether to change a field, then the field, taking the rest of the row */
+.batchExecutionScheduleEdit-row {
+    display: flex;
+    align-items: center;
+}
+
+.batchExecutionScheduleEdit-row > .SimpleTickBox {
+    flex: 0 0 50px;
+}
+
+/* Not spaced from the tick box above it, as a form group following another is */
+.batchExecutionScheduleEdit-row > .form-group:not(:first-child) {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-top: 0;
+}
+
+/* The task's details, taking the width, then its terminate button */
 .userTaskView-layout {
     position: relative;
     width: 100%;
+    display: flex;
+    border-bottom: 1px solid grey;
 }
 
-.userTaskView-layout tr > td {
-	padding: 5px 8px;
-	border-bottom: 1px solid grey;
+.userTaskView-details {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 5px 8px;
+}
+
+.userTaskView-terminateCell {
+    flex: 0 0 auto;
+    align-self: center;
+    padding: 5px 8px;
 }
 
 .userTaskView-layout .gwt-Label {
@@ -543,7 +251,7 @@
 
 .tabBarContainer {
     display: flex;
-    border-bottom: 1px solid var(--splitter__background-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .curveTabLayoutViewImpl-layout {
@@ -622,7 +330,7 @@
 }
 
 .pipelineStructureViewImpl-property-default {
-    opacity: 0.5;
+    color: var(--text-color--muted);
 }
 
 
@@ -771,7 +479,11 @@
     font-weight: 500;
     text-align: center;
     vertical-align: middle;
-    background-color: #888888;
+    /* The colour configured for the classification (ClassificationLabel sets it) */
+    background-color: var(--classification-label__background-color, #888888);
+    /* Black or white text, whichever is 4.5:1 on that colour: white below a CIE lightness of 49.4,
+       where the two contrast equally */
+    color: lab(from var(--classification-label__background-color, #888888) clamp(0, (49.4 - l) * 1000, 100) 0 0);
     overflow: hidden;
     white-space: nowrap;
 }
@@ -894,7 +606,6 @@
     height: 288px;
     display: flex;
     flex-direction: column;
-    margin: -8px -5px 0 -8px;
 }
 
 .aboutViewImpl-stroom-body {
@@ -922,12 +633,21 @@
     color: var(--logo-color);
 }
 
+/* The details, framed as a control */
 .aboutViewImpl-body {
     padding: 8px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: var(--page__background-color);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--control__background-color);
+}
+
+/* The result stores' list and details fill the frame, its toolbar and splitter meeting its border */
+.stroom-control.resultStoreViewImpl {
+    padding: 0;
+    overflow: hidden;
 }
 
 .aboutViewImpl-buildInfo {
@@ -1249,9 +969,14 @@
     height: 22px;
 }
 
+/* The tasks, scrolling in a rounded frame */
 .userTaskManagerViewImpl-layout {
     width: 400px;
     height: 200px;
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--content-box__background-color);
+    overflow: hidden;
 }
 
 .progressViewImpl-progressBarContainer {
@@ -1677,7 +1402,7 @@ button.main-menu svg {
 }
 
 .form-control-background {
-  background-color: var(--control__background-color);
+  background-color: var(--content-box__background-color);
 }
 
 .form-control {
@@ -2109,7 +1834,7 @@ button.main-menu svg {
     display: flex;
     font-size: .7rem;
     flex-grow: 1;
-    opacity: .5;
+    color: var(--text-color--muted);
     user-select: text;
 }
 
@@ -2118,8 +1843,18 @@ button.main-menu svg {
     font-size: .6rem;
     font-family: monospace;
     flex-grow: 0;
-    opacity: .5;
+    color: var(--text-color--muted);
     user-select: text;
+}
+
+/* On a selected row, secondary text takes the row's text colour: muted grey wouldn't show on it */
+.cellTableSelectedRow .findCell-tags,
+.cellTableSelectedRow .findCell-path,
+.cellTableSelectedRow .findCell-uuid,
+.dataGridSelectedRow .findCell-tags,
+.dataGridSelectedRow .findCell-path,
+.dataGridSelectedRow .findCell-uuid {
+    color: inherit;
 }
 
 .pipelineElementChooser-iconCell {
@@ -2234,6 +1969,16 @@ button.main-menu svg {
 .duration-picker {
     display: flex;
     width: 200px;
+    /* Room for a focused field's focus ring, so it doesn't run into the field beside it */
+    gap: 8px;
+}
+
+/* The days of the week, one tick box under another, with room for a focused one's focus ring */
+.days {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
 }
 
 .editNodeTagsAllTagsFrmGrp,
@@ -2298,7 +2043,7 @@ button.main-menu svg {
     /*width: 1000px;*/
 }
 
-.AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate .EditorViewImpl {
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate .code-editor {
     height: 60px;
 }
 
@@ -2306,13 +2051,13 @@ button.main-menu svg {
     width: 200px;
 }
 
-.AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .EditorViewImpl {
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .code-editor {
     min-height: 300px;
 }
 
 .ScheduledProcessingViewImpl,
 .DuplicateManagementViewImpl {
-    border-top: 1px solid var(--splitter__background-color);
+    border-top: 1px solid var(--border-color);
 }
 
 .documentPermissionChangeControls {
@@ -2358,6 +2103,33 @@ button.main-menu svg {
 
 .permissionDetails {
     overflow-y: scroll;
+}
+
+/* The users and groups fill what the pane has left below Permission Visibility, and the list fills
+   what its group has left below its label */
+.documentUserPermissionsViewImpl-users,
+.documentUserPermissionsViewImpl-list {
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+/* In a dialog, the table (with its toolbar) and the details are framed as controls, and inset to line
+   up with the controls above them (which have form-padding) */
+.dialog-content .documentUserPermissions-table,
+.dialog-content .documentUserPermissions-details {
+    width: auto;
+    margin: 0 var(--control__gap--horizontal);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--content-box__background-color);
+    overflow: hidden;
+}
+
+/* The details fill what their group has left below its (empty) label row */
+.documentUserPermissions-details {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
 }
 
 .ColumnValuesFilterViewImpl {
@@ -2428,8 +2200,13 @@ button.main-menu svg {
     height: 100px;
     width: 100px;
 }
-/* Padding in details table */
-.contentstore-details .contentstore-details-table th, .contentstore-details .contentstore-details-table td {
+/* The details: each name, then its value beside it */
+.contentstore-details .contentstore-details-list {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+}
+.contentstore-details .contentstore-details-list > * {
     padding: 5px;
 }
 /* Overall width of details table */
@@ -2507,7 +2284,7 @@ button.main-menu svg {
     flex-direction: column;
 }
 .credentials-manager-dialog .credentials-manager {
-    background-color: var(--control__background-color);
+    background-color: var(--content-box__background-color);
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;
 }
@@ -2684,10 +2461,12 @@ button.main-menu svg {
     background-color: var(--row__background-color--selected);
 }
 
-/* A part of a form that doesn't apply while another setting is off (its controls are disabled
-   too), set from Java with setStyleName("section--disabled", ...) rather than inline opacity */
-.section--disabled {
-    opacity: var(--disabled-opacity);
+/* A part of a form that doesn't apply while another setting is off, set from Java with
+   setStyleName("section--disabled", ...). Its controls are disabled too, so show it themselves; its
+   labels are greyed (fading the whole part as well took them under 4.5:1) */
+.section--disabled,
+.section--disabled .form-group__label {
+    color: var(--text-color--disabled);
 }
 
 /* The "Read only" status at the far right of a read-only document's tab bar (DocTabPresenter) */

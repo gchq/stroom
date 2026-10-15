@@ -24,6 +24,7 @@ import stroom.analytics.shared.ExecutionScheduleFields;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.SvgCell;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
@@ -44,7 +45,6 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
@@ -231,15 +231,15 @@ public class ExecutionScheduleManager
 
     private void createIconColumn() {
         dataGrid.addColumn(
-            new OrderByColumn<ExecutionSchedule, Preset>(
+            new OrderByColumn<ExecutionSchedule, CellIcon>(
                 new SvgCell(),
                 ExecutionScheduleFields.PARENT_DOC_TYPE,
                 false) {
                 @Override
-                public Preset getValue(final ExecutionSchedule row) {
+                public CellIcon getValue(final ExecutionSchedule row) {
                     return row.getOwningDoc().getType().equals(AnalyticRuleDoc.TYPE)
-                            ? new Preset(SvgImage.DOCUMENT_ANALYTIC_RULE, "Analytic Rule", true)
-                            : new Preset(SvgImage.DOCUMENT_REPORT, "Report", true);
+                            ? CellIcon.of(SvgImage.DOCUMENT_ANALYTIC_RULE, "Analytic Rule")
+                            : CellIcon.of(SvgImage.DOCUMENT_REPORT, "Report");
                 }
             }, "", ColumnSizeConstants.CHECKBOX_COL
         );
@@ -275,16 +275,16 @@ public class ExecutionScheduleManager
 
     private void createEnabledColumn() {
 
-        final OrderByColumn<ExecutionSchedule, Preset> enabledColumn = new OrderByColumn<ExecutionSchedule, Preset>(
+        final OrderByColumn<ExecutionSchedule, CellIcon> enabledColumn = new OrderByColumn<ExecutionSchedule, CellIcon>(
             new SvgCell(false),
             ExecutionScheduleFields.ENABLED,
             false) {
             @Override
-            public Preset getValue(final ExecutionSchedule row) {
+            public CellIcon getValue(final ExecutionSchedule row) {
                 if (row.isEnabled()) {
-                    return new Preset(SvgImage.TICK, "Enabled", true);
+                    return CellIcon.of(SvgImage.TICK, "Enabled");
                 } else {
-                    return new Preset(SvgImage.CLOSE, "Disabled", true);
+                    return CellIcon.of(SvgImage.CLOSE, "Disabled");
                 }
             }
         };

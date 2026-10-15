@@ -79,7 +79,7 @@ let server;
 let baseUrl;
 let outputRoot;
 let flakyAttempts = 0;
-// Called when the preview of the story with the id is requested
+// Called when the preview of the story with the id is requested, with the preview's URL
 let onPreview = () => {};
 
 before(async () => {
@@ -94,7 +94,7 @@ before(async () => {
       return;
     }
     const id = url.searchParams.get('id');
-    onPreview(id);
+    onPreview(id, url);
     const attempt = id === 'flaky' ? ++flakyAttempts : 0;
     response.writeHead(200, { 'content-type': 'text/html' });
     response.end(`<!doctype html><html><body>Story<script>window.FLAKY_ATTEMPT = ${attempt};`
@@ -196,6 +196,34 @@ test('runner: a console error that fails a story is printed once', { skip }, asy
   const { code, output } = await run('console', ['--fail-on-console', 'console']);
   assert.equal(code, 1);
   assert.equal(output.match(/Console error: Oops/g).length, 1);
+});
+
+test('runner: --theme shows the stories in that theme, as the workbench\'s theme global', { skip }, async () => {
+  const themes = [];
+  // The story's preview (not the index, which the runner reads from a preview without a story)
+  onPreview = (id, url) => {
+    if (id === 'pass') {
+      themes.push(url.searchParams.get('globals'));
+    }
+  };
+  try {
+    const light = await run('theme-light', ['--theme', 'light', 'pass']);
+    assert.equal(light.code, 0);
+    assert.deepEqual(themes, ['theme:light']);
+    themes.length = 0;
+    // Without it, the workbench's default theme
+    const standard = await run('theme-default', ['pass']);
+    assert.equal(standard.code, 0);
+    assert.deepEqual(themes, [null]);
+  } finally {
+    onPreview = () => {};
+  }
+});
+
+test('runner: a theme other than dark or light is refused', { skip }, async () => {
+  const { code, output } = await run('theme-bad', ['--theme', 'blue', 'pass']);
+  assert.notEqual(code, 0);
+  assert.match(output, /--theme must be dark or light, not 'blue'/);
 });
 
 test('runner: no matching stories has its own exit code', { skip }, async () => {

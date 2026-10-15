@@ -188,8 +188,9 @@
     margin-block: -50px;
 }
 
-.form-group--indented .form-group__label,
-.form-group--indented .form-group__help {
+/* The label row moves down, not the label and help button, so the help button keeps its own margins
+   (it overlaps the row) and stays beside the label */
+.form-group--indented .form-group__label-row {
     margin-top: var(--control__gap--vertical);
 }
 
@@ -199,6 +200,11 @@
 
 .form-group__description-row--disabled {
     color: var(--text-color--disabled);
+}
+
+/* Already greyed, so not faded as well (that took it under 4.5:1) */
+.form-group__description-row--disabled .form-group__description {
+    opacity: 1;
 }
 
 .form-group__description-row--disabled code {

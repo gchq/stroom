@@ -77,7 +77,7 @@ public class SingleLineEditorViewImpl
 
     @Override
     protected String getAdditionalClassNames() {
-        return "single-line-editor";
+        return "code-editor__ace--single-line";
     }
 
     // --------------------------------------------------------------------------------

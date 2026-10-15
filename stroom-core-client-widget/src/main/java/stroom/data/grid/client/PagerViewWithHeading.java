@@ -18,7 +18,6 @@ package stroom.data.grid.client;
 
 import stroom.data.pager.client.RefreshButton;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
@@ -38,8 +37,6 @@ public interface PagerViewWithHeading extends View, TaskMonitorFactory {
     ///
     /// @return The toolbar.
     Toolbar getToolbar();
-
-    void addButton(ButtonView buttonView);
 
     RefreshButton getRefreshButton();
 

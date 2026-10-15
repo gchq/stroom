@@ -805,6 +805,9 @@ public class SteppingPresenter
                     !pipelineModel.hasRole(e, PipelineElementType.VISABILITY_STEPPING));
             pipelineTreePresenter.setDisabledElements(disabledElements);
 
+            // Fit the pipeline's pane to the tree, so that its elements aren't cut off
+            resize();
+
         } catch (final PipelineModelException e) {
             AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
         }
@@ -833,9 +836,11 @@ public class SteppingPresenter
         return properties.stream().filter(p -> p.getName().equals(propertyName)).findAny();
     }
 
+    /// Sizes the pipeline's pane to fit the pipeline's tree, once it has been drawn.
     public void resize() {
+        // A little space below the boxes, so that their borders aren't against the splitter
         Scheduler.get().scheduleDeferred(() ->
-                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 30));
+                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 4));
     }
 
     public void save(final List<DocRef> docsToSave, final Runnable onComplete) {

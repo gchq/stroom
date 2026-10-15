@@ -18,6 +18,7 @@ package stroom.importexport.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -36,8 +37,7 @@ import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
@@ -384,33 +384,33 @@ public class ImportConfigConfirmPresenter extends
 
     }
 
-    private Preset createInfoColSvgPreset(final Severity severity) {
+    private CellIcon createInfoColIcon(final Severity severity) {
 
         final String title = "Click to see " + severity.getSummaryValue()
                 .toLowerCase();
 
-        final Preset svgPreset;
+        final CellIcon cellIcon;
         switch (severity) {
             case INFO:
-                svgPreset = SvgPresets.INFO;
+                cellIcon = CellIcon.of(SvgImage.INFO, "Info");
                 break;
             case WARNING:
-                svgPreset = SvgPresets.ALERT;
+                cellIcon = CellIcon.of(SvgImage.ALERT, "Alert");
                 break;
             default:
-                svgPreset = SvgPresets.ERROR;
+                cellIcon = CellIcon.of(SvgImage.ERROR, "Error");
         }
-        return svgPreset.title(title);
+        return cellIcon.withName(title);
     }
 
     protected void addInfoColumn() {
         // Info column.
         final InfoColumn<ImportState> infoColumn = new InfoColumn<ImportState>() {
             @Override
-            public Preset getValue(final ImportState object) {
+            public CellIcon getValue(final ImportState object) {
                 if (object.getMessageList().size() > 0 || object.getUpdatedFieldList().size() > 0) {
                     final Severity severity = object.getSeverity();
-                    return createInfoColSvgPreset(severity);
+                    return createInfoColIcon(severity);
                 } else {
                     return null;
                 }

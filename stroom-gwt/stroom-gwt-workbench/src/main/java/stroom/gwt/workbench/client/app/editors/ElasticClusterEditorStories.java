@@ -59,7 +59,8 @@ public final class ElasticClusterEditorStories {
     // (ElasticClusterSettingsViewImpl.ui.xml)
     private static final String URLS = "#elasticClusterSettingsConnectionURLs";
     private static final String API_KEY_ID = "#elasticClusterSettingsAPIKeyId";
-    private static final String API_KEY_SECRET = "#elasticClusterSettingsAPIKeySecret";
+    // The secret is a PasswordBox, which has the id: its input is inside it
+    private static final String API_KEY_SECRET = "#elasticClusterSettingsAPIKeySecret .password-box__input";
 
     private ElasticClusterEditorStories() {
         // Static utility

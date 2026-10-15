@@ -119,6 +119,12 @@ public final class SplitPaneContentStories {
                     // Reading order: code, input, output, then log
                     play.expect(play.getByTestId("stepping")).toHaveTextContent(
                             TextMatch.regex("Code.*Input.*Output.*Log"));
+                    // Where the Input splitter meets the Code splitter in a T, at the middle of
+                    // the Code splitter (where its handle is), the Code splitter is on top
+                    final Value<Element> codeSplitter = play.getByRole("separator", "Code").element();
+                    play.expect("the splitter at the middle of the Code splitter",
+                                    () -> labelAtCentre(codeSplitter.get()))
+                            .toBe("Code");
                 })
                 // A pane collapsed to nothing is inert, so its fields can't be reached unseen;
                 // restored, they can again
@@ -304,6 +310,14 @@ public final class SplitPaneContentStories {
 
     // ElementViewImpl's layout: code, the middle and the log stacked, and the middle input beside
     // output
+    // The name of the splitter the pointer would find at the centre of an element
+    private static native String labelAtCentre(Element element) /*-{
+        var box = element.getBoundingClientRect();
+        var found = $doc.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        var splitter = found && found.closest('.split-pane__splitter');
+        return splitter ? splitter.getAttribute('aria-label') : null;
+    }-*/;
+
     private static Widget stepping() {
         final SplitPane middle = thin("50%, *", "Input, Output");
         middle.add(SplitPaneContent.block("Input", "input", true));

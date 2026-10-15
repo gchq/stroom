@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.presenter;
 
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.MyDataGrid;
@@ -28,7 +29,6 @@ import stroom.floormap.client.presenter.FloorMapGroupsPresenter.FloorMapGroupsVi
 import stroom.floormap.shared.FloorMapGroup;
 import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
@@ -172,11 +172,11 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
     private void initGridColumns() {
         // Highlight toggle. A button cell, so clicking the eye flips the group's
         // highlight without also having to select the row.
-        final Column<FloorMapGroup, Preset> highlightColumn =
+        final Column<FloorMapGroup, CellIcon> highlightColumn =
                 new Column<>(new SvgCell()) {
                     @Override
-                    public Preset getValue(final FloorMapGroup group) {
-                        return highlightPreset(isShown(group));
+                    public CellIcon getValue(final FloorMapGroup group) {
+                        return highlightIcon(isShown(group));
                     }
                 };
         //noinspection unused index, val
@@ -225,8 +225,8 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
     }
 
     /// The eye icon for a row, worded for what a click will do next.
-    private static Preset highlightPreset(final boolean shown) {
-        return new Preset(
+    private static CellIcon highlightIcon(final boolean shown) {
+        return CellIcon.of(
                 shown
                         ? SvgImage.EYE
                         : SvgImage.EYE_OFF,

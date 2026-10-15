@@ -32,7 +32,11 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -41,6 +45,7 @@ import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -55,10 +60,16 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 
 public class SelectionList<T, I extends SelectionItem> extends Composite {
+
+    private static final String ROLE = "role";
+    private static final String ROLE_NONE = "none";
+    private static final Set<String> TABLE_SECTIONS = Set.of("THEAD", "TBODY", "TFOOT");
 
     private final QuickFilter quickFilter;
     private final FlowPanel links;
@@ -133,6 +144,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                     }
                 };
         cellTable.addColumn(expanderColumn);
+        // The table is a list box, and each time it is drawn its rows are given the roles of options
+        cellTable.getElement().setAttribute(ROLE, "listbox");
+        cellTable.getElement().setId(DOM.createUniqueId());
+        cellTable.addRedrawHandler(this::updateAria);
 
         pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
         pagerView.setDataWidget(cellTable);
@@ -169,6 +184,53 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         quickFilter.registerPopupTextProvider(popupTextSupplier);
+    }
+
+    /// Names the list for screen readers, e.g. after the box that opened it.
+    ///
+    /// @param name The list's accessible name.
+    public void setAccessibleName(final String name) {
+        cellTable.getElement().setAttribute("aria-label", NullSafe.string(name));
+    }
+
+    /// @return The id of the list's list box element, for a box that controls it (`aria-controls`).
+    public String getListBoxId() {
+        return cellTable.getElement().getId();
+    }
+
+    // Gives the table the structure of a list box: the table's own parts have no role, and the
+    // focusable element of each row (the div GWT's table builder puts in the cell, which takes the
+    // keyboard focus) is an option, selected if its item is. An option with no text (e.g. the blank
+    // one that clears a value) is named None
+    private void updateAria() {
+        final NodeList<Element> sections = cellTable.getElement().getChildNodes().cast();
+        for (int i = 0; i < sections.getLength(); i++) {
+            final Element section = sections.getItem(i);
+            if (Element.is(section) && TABLE_SECTIONS.contains(section.getTagName().toUpperCase(Locale.ROOT))) {
+                section.setAttribute(ROLE, ROLE_NONE);
+            }
+        }
+        final List<I> items = cellTable.getVisibleItems();
+        for (int row = 0; row < items.size(); row++) {
+            final TableRowElement tr = cellTable.getRowElement(row);
+            tr.setAttribute(ROLE, ROLE_NONE);
+            final NodeList<TableCellElement> cells = tr.getCells();
+            for (int i = 0; i < cells.getLength(); i++) {
+                final TableCellElement td = cells.getItem(i);
+                td.setAttribute(ROLE, ROLE_NONE);
+                final Element focusable = td.getFirstChildElement();
+                if (focusable != null) {
+                    focusable.setAttribute(ROLE, "option");
+                    focusable.setAttribute("aria-selected",
+                            String.valueOf(selectionModel.isSelected(items.get(row))));
+                    if (NullSafe.isBlankString(items.get(row).getLabel())) {
+                        focusable.setAttribute("aria-label", "None");
+                    } else {
+                        focusable.removeAttribute("aria-label");
+                    }
+                }
+            }
+        }
     }
 
     public void setKeyboardSelectionPolicy(final KeyboardSelectionPolicy policy) {
@@ -394,9 +456,28 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             }
         }
 
+        // Choosing the item that is already the only one selected doesn't change the selection, so
+        // the model would fire no event and whatever opened the list (e.g. a selection box) wouldn't
+        // know it had been chosen. Choosing it is then treated as a double select, which the model
+        // does fire an event for
+        private SelectionType asChoice(final I row, final SelectionType selectionType) {
+            if (row != null
+                && !row.isHasChildren()
+                && !selectionType.isDoubleSelect()
+                && selectionModel.isSelected(row)
+                && selectionModel.getSelectedCount() == 1) {
+                return new SelectionType(true,
+                        selectionType.isRightClick(),
+                        selectionType.isAllowMultiSelect(),
+                        selectionType.isControlPressed(),
+                        selectionType.isShiftPressed());
+            }
+            return selectionType;
+        }
+
         void doSelect(final I row, final SelectionType selectionType, final boolean stealFocus) {
             if (selectionModel != null) {
-                selectionModel.setSelected(row, selectionType);
+                selectionModel.setSelected(row, asChoice(row, selectionType));
                 if (row != null && row.isHasChildren()) {
                     selectionList.navigate(row, false, stealFocus);
                 } else {

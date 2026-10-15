@@ -121,6 +121,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         contentInner.add(layerContainerImpl);
 
         layerContainer = layerContainerImpl;
+        tabBar.setTabPanel(layerContainerImpl.getElement());
 
         bind();
     }

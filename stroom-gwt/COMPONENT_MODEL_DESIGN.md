@@ -369,8 +369,8 @@ A toolbar is self-contained (case 1): its callbacks are on its buttons and `Butt
 1. Done: `Toolbar`, `ToolbarRow`, `ToolbarSeparator`, `ToolbarButton` and `ToolbarToggleButton` (with `setOnClick` and `setOnToggle`), styled by `toolbar.css` alone, with stories for the Java and UiBinder forms (`Widgets/Buttons/Toolbar`). `ButtonPanel`'s `Preset` methods and `SvgToggleButton` are deprecated; existing toolbars keep working, already with the keyboard behaviour. `InlineSvgToggleButton` now says it is a toggle (`aria-pressed="false"`) before it is first pressed.
 2. Convert the Dictionary editor first, the pilot's screen, using its `ToolbarTabStops` numbers as the before and after.
 3. Done: convert by area: the plain `FlowPanel` groups (explorer header, pagers, main toolbar, data navigators), `HasToolbar` and the document tab, then the remaining `addButton` callers, removing pass-throughs as they go. `SvgButton` and `ButtonPanel` are deleted (`Toolbar.setVertical` replaces `ButtonPanel.setVertical`). A form group's help button is a form control of its own (`FormGroupHelpButton`), not a toolbar button.
-4. Make the button widgets built on `ToolbarButton` (`RefreshButton`, table expand and collapse, the date picker's buttons) in a toolbar. Done for the quick filter's.
-5. Replace `Preset` where cells and menus use it (`SvgCell`, `InfoColumn`, `ActionCell`, `IconMenuItem.icon(Preset)`), then delete `Preset` and `SvgPresets`.
+4. Done: make the button widgets built on `ToolbarButton` in a toolbar: the quick filter's, the date picker's, `RefreshButton` (a `ToolbarButton`, made by `Toolbar.refresh`) and table expand and collapse (regular buttons, made by `GroupLevelButtons`; `PagerView.addButton(ButtonView)` is gone).
+5. Done: replace `Preset` where cells and menus use it, then delete `Preset` and `SvgPresets`. Cells take a `CellIcon` (icon, name, enabled; `stroom.cell.info.client`), made where it is used (`CellIcon.of(SvgImage.LOCKED, "Locked Stream")`); menus and the plugins' icons take an `SvgImage`.
 
 ## Split panes
 
@@ -398,7 +398,7 @@ Migration (done): User Groups first (which nests splits), with screenshot diffs 
 
 ## CSS for new widgets
 
-New widgets get their own stylesheet, named after the widget's block, in `stroom-app/src/main/resources/ui/css/` and imported by `app.css` (after `stroom-button.css`, whose styles they may build on), e.g. `toolbar.css`, `focus-tooltip.css` and `split-pane.css`. Existing stylesheets (e.g. the 3,000 lines of `components.css`) are left as they are, and a widget's rules move into a file of its own when it is next changed.
+New widgets get their own stylesheet, named after the widget's block, in `stroom-app/src/main/resources/ui/css/` and imported by `app.css` (after `stroom-button.css`, whose styles they may build on), e.g. `toolbar.css`, `focus-tooltip.css`, `split-pane.css` and `tab-bar.css`. Existing stylesheets (e.g. the 3,000 lines of `components.css`) are left as they are, and a widget's rules move into a file of its own when it is next changed.
 
 - **BEM names.** A block is a widget, in lower-case kebab case (`toolbar`, `toolbar-row`, `focus-tooltip`); a part of it is `block__element` (`toolbar__separator`); a variant is `block--modifier` (e.g. a colour scheme). `Button.css` already uses this form, with capitalised blocks (`Button__content`, `Button--contained-green`), which stay as they are.
 - **States come from ARIA attributes, not classes.** Where an ARIA attribute says what state an element is in, the CSS reads it, so what is shown always matches what a screen reader is told: `[aria-pressed="true"]`, `[aria-disabled="true"]`, `[aria-expanded="true"]`, `[aria-orientation="vertical"]`. Modifiers are only for variants that have no ARIA meaning, and for the rare state ARIA has no attribute for (e.g. `split-pane--resizing`, while a splitter is dragged), which the stylesheet says is one.

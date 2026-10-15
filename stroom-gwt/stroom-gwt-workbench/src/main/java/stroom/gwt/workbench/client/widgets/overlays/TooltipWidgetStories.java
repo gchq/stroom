@@ -96,7 +96,7 @@ public final class TooltipWidgetStories {
         final Style style = target.getElement().getStyle();
         style.setProperty("width", "240px");
         style.setProperty("height", "120px");
-        style.setProperty("border", "1px dashed var(--panel__border-color)");
+        style.setProperty("border", "1px dashed var(--border-color)");
         style.setProperty("display", "grid");
         style.setProperty("placeItems", "center");
 

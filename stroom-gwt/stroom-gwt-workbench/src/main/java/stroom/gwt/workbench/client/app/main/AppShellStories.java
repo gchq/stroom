@@ -20,6 +20,7 @@ package stroom.gwt.workbench.client.app.main;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.DocumentTabData;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.ai.AiFixtures;
 import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
@@ -46,6 +47,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
@@ -85,8 +89,8 @@ public final class AppShellStories {
 
     // The explorer panel is NavigationViewImpl's '.navigation'
     private static final String NAVIGATION = ".navigation";
-    // GWT's document tabs have no 'tab' role; their labels are '.curveTab-text'
-    private static final String TAB_LABEL = ".curveTab-text";
+    // The document tabs' labels
+    private static final String TAB_LABEL = ".tab-bar--curved .tab-bar__label";
     // Menu items have no 'menuitem' role or aria-disabled; a disabled item has
     // the 'menuItem-disabled' class
     private static final String MENU_ITEM = ".menuItem-outer";
@@ -279,6 +283,32 @@ public final class AppShellStories {
                             .toBeInTheDocument());
                     expectNoProblems(play);
                 })
+                // The preferences offer every Ace editor theme of the Stroom theme's type, including
+                // those Ace 1.44 added. The user's theme is the workbench's, which the harness makes
+                // the current one, so that changing it in the dialog is a change, as in Stroom.
+                .story("EditorThemePreferences", context -> render(context, AppShellFixtures.dictTree(),
+                        routes -> {
+                        }, builder -> builder.startup(startup -> startup.userPreferences(
+                                StartupFixtures.DEFAULT_USER_PREFERENCES.replace("\"theme\": \"Light\"",
+                                        "\"theme\": \"" + StroomThemeDecorator.getStroomThemeName() + "\""))),
+                        null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Dictionaries");
+                    play.keyboard("gu");
+                    final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    chooseTheme(play, dialog, "Light");
+                    expectEditorThemes(play, dialog, "Stroom light", "Chrome", "Cloud9 day", "Cloud editor",
+                            "Github light default", "Gruvbox light hard");
+                    chooseTheme(play, dialog, "Dark");
+                    // Choosing the theme that's already chosen closes the list too
+                    chooseTheme(play, dialog, "Dark");
+                    expectEditorThemes(play, dialog, "Stroom dark", "Ambiance", "Cloud9 night",
+                            "Cloud9 night low color", "Cloud editor dark", "Github dark", "Gruvbox dark hard",
+                            "One dark");
+                    expectNoProblems(play);
+                })
                 // The maintenance banner above the shell
                 .story("Banner", context -> render(context, TreeFixtures.fixtureTree(), routes -> {
                 }, builder -> builder.uiConfig(QueryFixtures.uiConfigWith("\"maintenanceMessage\": "
@@ -403,6 +433,25 @@ public final class AppShellStories {
                             "New, Delete, Locate Current Item, Expand All, Collapse All, "
                             + "Filter Types, Find In Content: 1 tab stop"));
                 })
+                // The main toolbar is shown at the right of the content's tab row, over the content,
+                // but comes first in the page, so the Tab key reaches it before the explorer and the
+                // content (it once came after all the content, so a keyboard user met it last)
+                .story("MainToolbarTabOrder", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    final Query mainToolbar = play.querySelector(".mainToolbar");
+                    final Query explorer = play.querySelector(NAVIGATION);
+                    play.run("expect the main toolbar to come before the explorer in the page", () -> {
+                        if (!isBefore(mainToolbar.element().get(), explorer.element().get())) {
+                            throw new IllegalStateException("The main toolbar comes after the explorer");
+                        }
+                    });
+                    // From the main menu's button, Tab goes on to the explorer
+                    final Query mainMenu = play.getByTitle(MAIN_MENU);
+                    play.run("focus the main menu's button", () -> mainMenu.element().get().focus());
+                    play.tab();
+                    play.expect(play.querySelector(NAVIGATION + ":focus-within")).toBeInTheDocument();
+                })
                 // #5405: a screen opened from the main menu takes the focus, rather than leave it
                 // on the menu's button, so a keyboard user carries on in the screen they opened
                 .story("OpenedScreenTakesFocus", context -> render(context, TreeFixtures.fixtureTree(),
@@ -472,8 +521,8 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(play.getByTitle("Save")).not().toHaveAttribute("aria-disabled"));
                     // The tab's close icon has no title
                     play.click(play.within(play.getByText(TextMatch.containing("Countries"), TAB_LABEL)
-                                    .closest(".curveTab"))
-                            .querySelector(".curveTab-close"));
+                                    .closest(".tab-bar__tab"))
+                            .querySelector(".tab-bar__close"));
                     play.expect(screen.findByText(TextMatch.containingIgnoreCase("unsaved changes")))
                             .toBeInTheDocument();
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
@@ -567,6 +616,37 @@ public final class AppShellStories {
                     play.click(menuItem(screen, "Close Others"));
                     play.waitFor(() -> play.expect(tabs(play)).toHaveLength(1));
                     play.expect(tabs(play).nth(0)).toHaveTextContent(TextMatch.containing("Countries"));
+                    expectNoProblems(play);
+                })
+                // From the keyboard: Shift+F10 or the context menu key opens a focused tab's menu
+                // (below it), and Escape gives the focus back to the tab; Delete closes the focused
+                // tab, and the focus moves to the tab before it
+                .story("TabKeyboard", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play nav = navTree(play);
+                    play.dblClick(nav.getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    play.dblClick(nav.getByText("Colours"));
+                    play.waitFor(5000, () -> play.expect(tabs(play)).toHaveLength(2));
+                    final Query countries = play.getByRole("tab", "Countries");
+                    play.click(countries);
+                    play.expect(countries).toHaveFocus();
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    play.waitFor(() -> play.expect(menuItem(screen, "Close Others")).toBeInTheDocument());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByText("Close Others", StroomDom.MENU_ITEM_TEXT))
+                            .toBeNull());
+                    play.waitFor(() -> play.expect(countries).toHaveFocus());
+                    play.keyboard("{ContextMenu}");
+                    play.waitFor(() -> play.expect(menuItem(screen, "Close Others")).toBeInTheDocument());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(countries).toHaveFocus());
+                    play.keyboard("{ArrowRight}");
+                    play.expect(play.getByRole("tab", "Colours")).toHaveFocus();
+                    play.keyboard("{Delete}");
+                    play.waitFor(() -> play.expect(tabs(play)).toHaveLength(1));
+                    play.waitFor(() -> play.expect(countries).toHaveFocus());
                     expectNoProblems(play);
                 })
                 // No menu at all on the Favourites root
@@ -1069,6 +1149,21 @@ public final class AppShellStories {
     // --------------------------------------------------------------------------------
     // Play helpers
 
+    // Whether one element comes before another in the page (in document order)
+    private static boolean isBefore(final Element first, final Element second) {
+        final NodeList<Element> all = Document.get().getElementsByTagName("*");
+        for (int i = 0; i < all.getLength(); i++) {
+            final Element element = all.getItem(i);
+            if (element == second) {
+                return false;
+            }
+            if (element == first) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // Waits for the shell to show the explorer, and returns a query scoped to it
     private static Play navTree(final Play play) {
         return navTree(play, "Dictionaries");
@@ -1081,6 +1176,43 @@ public final class AppShellStories {
 
     private static Query tabs(final Play play) {
         return play.queryAllByText(TextMatch.regex(".", ""), TAB_LABEL);
+    }
+
+    // Chooses the Stroom theme on the preferences' Theme tab
+    private static void chooseTheme(final Play play, final Play dialog, final String theme) {
+        play.click(dialog.getByText("Theme", StroomDom.LINK_TAB_LABEL));
+        // The box is a combo box, which says when its list is open, and the list is named after it
+        final Query box = dialog.querySelector("#userPreferencesTheme .SelectionBox-textBox");
+        play.expect(box).toHaveAttribute("role", "combobox");
+        play.expect(box).toHaveAttribute("aria-expanded", "false");
+        play.click(box);
+        play.waitFor(() -> play.expect(box).toHaveAttribute("aria-expanded", "true"));
+        final Query list = play.screen().getByRole("listbox", "Theme");
+        play.expect("the box controls the list", () -> list.element().get().getId()
+                .equals(box.element().get().getAttribute("aria-controls"))).toEqual(true);
+        // Its options, the current theme's selected
+        play.waitFor(() -> play.expect(play.screen().within(list).getAllByRole("option").count())
+                .toBeGreaterThan(1));
+        play.click(play.screen().findByText(theme, ".SelectionPopup .selectionItemCell-text"));
+        play.waitFor(() -> play.expect(box).toHaveAttribute("aria-expanded", "false"));
+        play.waitFor(() -> play.expect(dialog.querySelector("#userPreferencesTheme .SelectionBox-renderBox"))
+                .toHaveTextContent(theme));
+    }
+
+    // Opens the Editor tab's Editor Theme list and checks it offers the themes, the first (Stroom's own)
+    // first, then closes it
+    private static void expectEditorThemes(final Play play, final Play dialog, final String... themes) {
+        final Play screen = play.screen();
+        play.click(dialog.getByText("Editor", StroomDom.LINK_TAB_LABEL));
+        play.click(dialog.querySelector("#userPreferencesEditorTheme .SelectionBox-textBox"));
+        final Play list = screen.within(screen.findByText(themes[0], ".selectionItemCell-text")
+                .closest(".SelectionPopup"));
+        play.expect(list.querySelector(".selectionItemCell-text")).toHaveTextContent(themes[0]);
+        for (final String theme : themes) {
+            play.expect(list.getByText(theme, ".selectionItemCell-text")).toBeInTheDocument();
+        }
+        play.keyboard("{Escape}");
+        play.waitFor(() -> play.expect(screen.querySelector(".SelectionPopup")).toBeNull());
     }
 
     private static Query menuItem(final Play screen, final String title) {

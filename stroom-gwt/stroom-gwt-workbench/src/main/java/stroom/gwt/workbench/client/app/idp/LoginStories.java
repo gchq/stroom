@@ -93,6 +93,8 @@ public final class LoginStories {
                     // Clicking the help button shows it, leaving the focus in the user name
                     play.click(play.getByTitle("Password - Click for help"));
                     play.expect(play.screen().findByText(PASSWORD_HELP_RESETS, HELP_POPUP_TEXT)).toBeInTheDocument();
+                    // The popup is a dialog (not modal) named Help, for screen readers
+                    play.expect(play.screen().getByRole("dialog", "Help")).not().toHaveAttribute("aria-modal");
                     play.expect(play.getByLabelText("User Name")).toHaveFocus();
                 })
                 // The policy forbids resets: 'Forgot password?' is hidden

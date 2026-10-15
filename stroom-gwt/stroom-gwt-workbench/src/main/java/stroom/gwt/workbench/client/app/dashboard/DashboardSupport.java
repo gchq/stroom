@@ -63,10 +63,10 @@ public final class DashboardSupport {
             "/dashboard/v1/search/" + RequestMatcher.PATH_WILDCARD);
 
     /// The user's preferences with Stroom's dark theme (the editors' Ace themes follow the
-    /// preferences, e.g. `tomorrow_night`).
+    /// preferences, e.g. `stroom_dark`).
     public static final String DARK_PREFERENCES = StartupFixtures.DEFAULT_USER_PREFERENCES
             .replace("\"Light\"", "\"Dark\"")
-            .replace("\"chrome\"", "\"tomorrow_night\"");
+            .replace("\"stroom_light\"", "\"stroom_dark\"");
 
     /// The rows `alpha` and `beta` of the table results.
     public static final String ALPHA_BETA_ROWS = "[{\"values\": [\"alpha\"], \"depth\": 0}, "

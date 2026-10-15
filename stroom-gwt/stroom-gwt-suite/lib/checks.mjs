@@ -160,7 +160,7 @@ export function readPager(page, title) {
     const from = toI > 0 ? num(labels[toI - 1]) : null;
     const to = toI >= 0 ? num(labels[toI + 1]) : null;
     const of = ofI >= 0 ? num(labels[ofI + 1]) : null;
-    const enabled = Object.fromEntries(['First', 'Backward', 'Forward', 'Last'].map((t) => [t, !![...pager.querySelectorAll(`button[title="${t}"]`)].find((b) => b.offsetWidth > 0 && !b.disabled)]));
+    const enabled = Object.fromEntries(['First', 'Backward', 'Forward', 'Last'].map((t) => [t, !![...pager.querySelectorAll(`button[title="${t}"]`)].find((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true')]));
     return { from, to, of, enabled, text: labels.join(' ') };
   }, title).catch(() => null);
 }

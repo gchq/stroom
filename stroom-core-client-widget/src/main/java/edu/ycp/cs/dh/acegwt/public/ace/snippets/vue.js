@@ -1,6 +1,6 @@
 
 ;                (function() {
-                    window.require(["ace/snippets/perl6"], function(m) {
+                    window.require(["ace/snippets/vue"], function(m) {
                         if (typeof module == "object" && typeof exports == "object" && module) {
                             module.exports = m;
                         }

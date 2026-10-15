@@ -116,6 +116,7 @@ Options:
   --output-dir <dir>       Where to write results.json, junit.xml and screenshots
                            (default: ${path.relative(process.cwd(), DEFAULT_OUTPUT_DIR) || '.'})
   --screenshots            Save a PNG of every story (failed stories are always saved)
+  --theme <dark|light>     The theme to show the stories in (default: the workbench's, dark)
   --fixed-time <iso>       Fix the stories' clock (Date) at this time, e.g. 2026-01-01T12:00:00Z,
                            so that times they show are the same every run (for comparing
                            screenshots). Timers still run
@@ -152,6 +153,14 @@ function fixedTime(text) {
   return time;
 }
 
+// The theme to show the stories in, or undefined for the workbench's default
+function theme(text) {
+  if (text === undefined || text === 'dark' || text === 'light') {
+    return text;
+  }
+  throw new Error(`--theme must be dark or light, not '${text}'`);
+}
+
 function parseOptions() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
@@ -171,6 +180,7 @@ function parseOptions() {
       'output-dir': { type: 'string', default: DEFAULT_OUTPUT_DIR },
       screenshots: { type: 'boolean', default: false },
       'fixed-time': { type: 'string' },
+      theme: { type: 'string' },
       'leak-check': { type: 'boolean', default: false },
       'leak-cycles': { type: 'string', default: String(DEFAULT_LEAK_CYCLES) },
       'skip-a11y': { type: 'boolean', default: false },
@@ -205,6 +215,7 @@ function parseOptions() {
     outputDir: path.resolve(values['output-dir']),
     screenshots: values.screenshots,
     fixedTime: fixedTime(values['fixed-time']),
+    theme: theme(values.theme),
     leakCheck: values['leak-check'],
     leakCycles: integer('leak-cycles', values['leak-cycles'], 2),
     a11y: !values['skip-a11y'],
@@ -215,8 +226,10 @@ function parseOptions() {
   };
 }
 
-function previewUrl(baseUrl, id) {
-  return `${baseUrl}/iframe.html?id=${encodeURIComponent(id)}&viewMode=story`;
+function previewUrl(baseUrl, id, storyTheme) {
+  // The workbench's theme global, as its Theme toolbar item sets it
+  const globals = storyTheme ? `&globals=theme:${storyTheme}` : '';
+  return `${baseUrl}/iframe.html?id=${encodeURIComponent(id)}&viewMode=story${globals}`;
 }
 
 // Reads every story from the workbench's index (window.__workbenchIndex).
@@ -256,8 +269,8 @@ function emptyResult(story, options, status) {
     name: story.name,
     hasPlay: Boolean(story.hasPlay),
     url: options.leakCheck
-      ? withLeakProbe(previewUrl(options.url, story.id))
-      : previewUrl(options.url, story.id),
+      ? withLeakProbe(previewUrl(options.url, story.id, options.theme))
+      : previewUrl(options.url, story.id, options.theme),
     leak: null,
     a11y: null,
     status,

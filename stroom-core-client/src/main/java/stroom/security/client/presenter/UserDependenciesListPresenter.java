@@ -175,7 +175,7 @@ public class UserDependenciesListPresenter
     private void setupColumns() {
         // Doc type icon col
 //        dataGrid.addColumn(
-//                DataGridUtil.svgPresetColumnBuilder(
+//                DataGridUtil.cellIconColumnBuilder(
 //                                false,
 //                                (UserDependency row) -> {
 //                                    final String documentType = NullSafe.get(

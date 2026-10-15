@@ -457,10 +457,20 @@ public final class QueryEditorStories {
                     executeAndOpenColumnMenu(play, "Count");
                     play.click(screen.findByText("Filter", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Filter 'Count'");
-                    // The filter is an Ace editor
-                    play.waitFor(() -> play.expect(dialog.querySelector(".ace_text-input")).toBeInTheDocument());
-                    // Clicking the editor's content focuses its text input
+                    // A modal dialog, named by its title, for screen readers
+                    play.expect(screen.getByRole("dialog", "Filter 'Count'")).toHaveAttribute("aria-modal", "true");
+                    // The filter is an Ace editor, which the dialog focuses once it is shown. That
+                    // happens after the dialog appears, so the play waits for it: clicking before it
+                    // would let it move the focus after the click
+                    final Query input = dialog.querySelector(".ace_text-input");
+                    play.waitFor(() -> play.expect(input).toHaveFocus());
+                    // Opening the query focuses its editor half a second later, which mustn't take the
+                    // focus from a dialog opened in the meantime
+                    play.sleep(600);
+                    play.expect(input).toHaveFocus();
+                    // Clicking the editor's content keeps the focus in its text input
                     play.click(dialog.querySelector(".ace_content"));
+                    play.waitFor(() -> play.expect(input).toHaveFocus());
                     play.keyboard("foo");
                     play.waitFor(() -> play.expect(dialog.querySelector(".ace_content").textContent())
                             .toMatch(TextMatch.containing("foo")));
@@ -841,8 +851,8 @@ public final class QueryEditorStories {
                     play.waitFor(8000, () -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/visualisation/v1/vis-1").toSpyMatcher()));
                     // The tab is selected, and the visualisation's frame is on the page's body
-                    play.expect(DocumentEditors.tab(play, "Visualisation").closest(".linkTab"))
-                            .toHaveClass("linkTab-selected");
+                    play.expect(DocumentEditors.tab(play, "Visualisation").closest(".tab-bar__tab"))
+                            .toHaveAttribute("aria-selected", "true");
                     play.expect(play.screen().querySelector("iframe")).toBeInTheDocument();
                     play.click(DocumentEditors.tab(play, "Table"));
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeVisible());

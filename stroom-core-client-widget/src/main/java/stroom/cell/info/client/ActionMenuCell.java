@@ -16,8 +16,7 @@
 
 package stroom.cell.info.client;
 
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -47,7 +46,7 @@ import java.util.function.Function;
  */
 public class ActionMenuCell<R> extends AbstractCell<R> {
 
-    private static final Preset SVG_PRESET = SvgPresets.ELLIPSES_HORIZONTAL;
+    private static final CellIcon ICON = CellIcon.of(SvgImage.ELLIPSES_HORIZONTAL, "Actions...");
     private static final String ACTION_MENU_CELL_CLASS_NAME = "actionMenuCell";
 
     private final Function<R, String> tooltipExtractor;
@@ -143,9 +142,9 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                     func -> func.apply(row),
                     "Actions...");
 
-            final Preset preset = SVG_PRESET.title(tooltipText);
+            final CellIcon icon = ICON.withName(tooltipText);
             sb.append(SvgImageUtil.toSafeHtml(
-                    preset,
+                    icon,
                     "svgCell-icon",
                     "svgCell-button",
                     ACTION_MENU_CELL_CLASS_NAME));

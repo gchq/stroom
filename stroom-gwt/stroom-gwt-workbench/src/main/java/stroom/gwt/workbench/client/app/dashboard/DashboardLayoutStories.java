@@ -91,7 +91,7 @@ public final class DashboardLayoutStories {
                     DashboardPlays.opened(play);
                     for (final String tab : List.of("Dashboard", "Documentation", "Permissions")) {
                         // Stroom's link tabs have no role="tab"
-                        play.expect(play.getByText(tab, ".linkTabPanelViewImpl .linkTab-label")).toBeInTheDocument();
+                        play.expect(play.getByText(tab, ".linkTabPanelViewImpl .tab-bar__label")).toBeInTheDocument();
                     }
                     play.expect(DashboardPlays.tab(play, "My Panel")).toBeInTheDocument();
                     // An Embedded Query shows only its results, with no Execute button of its own;
@@ -312,16 +312,16 @@ public final class DashboardLayoutStories {
                 }))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    // A selected link tab has the 'linkTab-selected' class (no aria-selected)
+                    // A selected link tab is aria-selected
                     play.waitFor(() -> play.expect(DashboardPlays.linkTab(play, "The Query"))
-                            .toHaveClass(DashboardPlays.SELECTED_TAB));
+                            .toHaveAttribute("aria-selected", "true"));
                     play.expect(DashboardPlays.linkTab(play, "The Table"))
-                            .not().toHaveClass(DashboardPlays.SELECTED_TAB);
+                            .toHaveAttribute("aria-selected", "false");
                     play.click(DashboardPlays.tab(play, "The Table"));
                     play.waitFor(() -> play.expect(DashboardPlays.linkTab(play, "The Table"))
-                            .toHaveClass(DashboardPlays.SELECTED_TAB));
+                            .toHaveAttribute("aria-selected", "true"));
                     play.expect(DashboardPlays.linkTab(play, "The Query"))
-                            .not().toHaveClass(DashboardPlays.SELECTED_TAB);
+                            .toHaveAttribute("aria-selected", "false");
                     DashboardPlays.expectNoProblems(play);
                 })
                 // Dragging a tab onto another tab of its strip moves it there
@@ -416,8 +416,8 @@ public final class DashboardLayoutStories {
                     play.expect(play.queryByText("Alpha", DashboardPlays.COMPONENT_TAB)).toBeNull();
                     // 'selected' is the index of a visible tab (FlexLayout.layout), so 2 is out of
                     // range and the first visible tab, Bravo, is selected
-                    play.expect(DashboardPlays.linkTab(play, "Bravo")).toHaveClass(DashboardPlays.SELECTED_TAB);
-                    play.expect(DashboardPlays.linkTab(play, "Charlie")).not().toHaveClass(DashboardPlays.SELECTED_TAB);
+                    play.expect(DashboardPlays.linkTab(play, "Bravo")).toHaveAttribute("aria-selected", "true");
+                    play.expect(DashboardPlays.linkTab(play, "Charlie")).toHaveAttribute("aria-selected", "false");
                     DashboardPlays.expectNoProblems(play);
                 })
                 // Dropping a tab on a nested split's outer edge docks it in that split

@@ -7,7 +7,9 @@
     overflow: hidden;
 }
 
-.SelectionBox.allow-focus:focus-within {
+.SelectionBox.allow-focus:focus-within,
+/* Focus is on the box's hidden text box, so the box shows it (from the keyboard) */
+.SelectionBox:has(.SelectionBox-textBox:focus-visible) {
   outline: 0;
   border-color: var(--focus-border);
   box-shadow: var(--focus-shadow);

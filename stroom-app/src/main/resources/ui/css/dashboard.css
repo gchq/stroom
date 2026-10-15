@@ -33,7 +33,7 @@
     display: flex;
 }
 
-.DashboardViewImpl .linkTab {
+.DashboardViewImpl .tab-bar--link .tab-bar__tab {
     opacity: 0.8 !important;
     color: var(--link-tab__text-color) !important;
     transition: none;
@@ -45,20 +45,20 @@
 }
 
 /*
-.DashboardViewImpl .linkTab {
+.DashboardViewImpl .tab-bar--link .tab-bar__tab {
     cursor: default;
     text-decoration: none;
 }
 
-.DashboardViewImpl.dashboard__designMode .linkTab {
+.DashboardViewImpl.dashboard__designMode .tab-bar--link .tab-bar__tab {
   cursor: pointer;
 }
 
-.DashboardViewImpl .linkTab:hover {
+.DashboardViewImpl .tab-bar--link .tab-bar__tab:hover {
     text-decoration: none;
 }
 
-.DashboardViewImpl.dashboard__designMode .linkTab:hover {
+.DashboardViewImpl.dashboard__designMode .tab-bar--link .tab-bar__tab:hover {
     text-decoration: underline;
 }
 */
@@ -91,7 +91,7 @@
 .DashboardViewImpl-content {
     display: flex;
     flex-grow: 1;
-	background-color: var(--control__background-color);
+	background-color: var(--content-box__background-color);
 }
 
 .fullScreenViewImpl-root {
@@ -524,15 +524,20 @@
     height: 100%;
 }
 
+/* A visualisation's toolbar (its pause and resume button), over its top right corner. Not
+   visibility: hidden, which left its icon showing but took the button itself out of the tab order
+   and away from screen readers */
 .dashboardVis-refresh {
 	position: absolute;
 	right: 9px;
 	top: 27px;
 	z-index: 5;
+	margin: 0;
+}
+
+.dashboardVis-refresh > .toolbar-button {
 	width: 18px;
 	height: 18px;
-	/* Not visibility: hidden, which left its icon showing but took the button itself out of the
-	   tab order and away from screen readers */
 }
 
 .DashboardViewImpl-content .dashboardVis-refresh {

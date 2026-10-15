@@ -177,7 +177,7 @@ public class UserListPresenter
         // Icon
         if (mode == Mode.USERS_AND_GROUPS) {
             dataGrid.addColumn(
-                    DataGridUtil.svgPresetColumnBuilder(false, (User user) ->
+                    DataGridUtil.cellIconColumnBuilder(false, (User user) ->
                                     UserAndGroupHelper.mapUserTypeToIcon(user))
                             .withSorting(UserFields.FIELD_IS_GROUP)
                             .enabledWhen(User::isEnabled)
@@ -191,7 +191,7 @@ public class UserListPresenter
                     (ColumnSizeConstants.ICON_COL * 2) + 20);
         } else {
             dataGrid.addColumn(
-                    DataGridUtil.svgPresetColumnBuilder(false, (User user) ->
+                    DataGridUtil.cellIconColumnBuilder(false, (User user) ->
                                     UserAndGroupHelper.mapUserTypeToIcon(user))
                             .enabledWhen(User::isEnabled)
                             .centerAligned()

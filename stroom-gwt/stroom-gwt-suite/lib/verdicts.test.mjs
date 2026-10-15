@@ -423,6 +423,18 @@ test('guard: a download or export only writes a temp file, so it is a read', asy
   assert.equal(classifyRequest('POST', '/api/dashboard/v1/downloadSearchResults/node1a/more'), 'mutate');
 });
 
+test('vintage: r10\'s covered spinner 2 is stale, a walk with the cover check is not', async () => {
+  const { staleBy } = await import('./vintage.mjs');
+  const hover = { kind: 'mouseover', why: 'hovering "spinner 2" left the class as valueSpinner-arrow valueSpinner-arrowUp (Spinner:121 sets …arrowUpHover)' };
+  const press = { kind: 'mousedown', why: 'pressing "spinner 2" changed neither the class nor the value (Spinner:105 sets …arrowUpPressed and calls increase())' };
+  // r10 was walked at 378c255092, before 6a386799c3 checked each spinner again.
+  assert.equal(staleBy({ ...hover, walkerVersion: '378c255092' }), 'a spinner is checked for cover again just before its gesture');
+  assert.equal(staleBy({ ...press, walkerVersion: '378c255092' }), 'a spinner is checked for cover again just before its gesture');
+  // r13, walked at that commit, is judged as it stands.
+  assert.equal(staleBy({ ...hover, walkerVersion: '6a386799c3' }), null);
+  assert.equal(staleBy({ ...press, walkerVersion: '6a386799c3' }), null);
+});
+
 test('sort: durations are compared as durations', () => {
   const col = (direction, values) => ({ rows: values.length, direction, values });
   // Server Tasks' Age, descending: 144ms is longer than 40ms

@@ -20,8 +20,7 @@ import stroom.widget.util.client.DoubleSelectTester;
 
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 
@@ -42,8 +41,9 @@ public class XSDDisplayBoxTitle extends Composite {
         lblTitle.getElement().setAttribute("unselectable", "on");
         lblTitle.getElement().getStyle().setColor("white");
 
-        final HorizontalPanel hp = new HorizontalPanel();
-        hp.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+        // The image, then the title beside it
+        final FlowPanel hp = new FlowPanel();
+        hp.addStyleName("boxTitle-row");
         hp.add(imgImage);
         hp.add(lblTitle);
 

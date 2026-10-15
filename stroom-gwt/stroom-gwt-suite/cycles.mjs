@@ -33,6 +33,8 @@
 // cycle may make the requests it declares and no others. An undeclared mutation is still aborted
 // and reported, so a cycle that reaches further than its spec says fails on that alone.
 import { existsSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { gwt } from './compare/adapters/gwt.mjs';
@@ -41,7 +43,7 @@ import { attachReadOnlyGuard } from './compare/lib/readonly-guard.mjs';
 import { settleExplorer } from './compare/lib/settle.mjs';
 import { clickMenuItem, dismissMenus, rightClickByText } from './compare/lib/structure.mjs';
 import {
-  clickButton, dialogCaptions, fillField, openScreen, permissionSteps, readRows, runAnnotationCycle, runCycle, runDocCycle,
+  clickButton, dialogCaptions, fillField, openScreen, permissionSteps, readRows, runAnnotationCycle, runCycle, runDocCycle, runProcessorBatchCycle, runStreamCycle, volumeSteps,
   runEditCycle,
 } from './lib/cycle.mjs';
 import { fromSuite } from './lib/paths.mjs';
@@ -70,6 +72,9 @@ const OUT = fromSuite(env('OUT', `${SUITE}/out/cycles`));
  * leavings and reporting it as a defect every time.
  */
 const STAMP = `zz-cycle-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '')}`;
+// Where the volume cycles point a volume. Stroom (on this machine) may make the directory; nothing is
+// written into it, because the volume's group is the cycle's own and no feed or index uses it.
+const VOLUME_SCRATCH = env('VOLUME_SCRATCH', join(tmpdir(), 'stroom-suite-volumes'));
 
 /**
  * One spec per thing that can be created, edited and deleted through the UI. `writes` is the
@@ -97,7 +102,10 @@ const SPECS = [
   {
     name: 'data volume group',
     // The create dialog is `NewFsVolumeGroupPresenter:59` ("New"), as the index volume group's is.
-    okPresenters: ['FsVolumeGroupEditPresenter', 'NewFsVolumeGroupPresenter'],   // onHideRequest at :203
+    okPresenters: ['FsVolumeGroupEditPresenter', 'NewFsVolumeGroupPresenter', 'FsVolumeEditPresenter'],   // onHideRequest at :203
+    // FsVolumeEditPresenter's OK (:68) is the volume's own dialog, Add Volume, inside the group's.
+    provedBy: { FsVolumeEditPresenter: '\\(Add Volume\\)$' },
+    steps: volumeSteps({ path: `${VOLUME_SCRATCH}/${STAMP}-data` }),
     menu: ['Administration', 'Data Volumes'],
     // Edit is `FsVolumeGroupEditViewImpl` — ui.xml labels its only box "Volume Group Name", the same
     // shape as the index volume group below, which is why this spec needs nothing new.
@@ -105,7 +113,9 @@ const SPECS = [
     seed: `${STAMP} data volume group`,
     edited: `${STAMP} data volume group (edited)`,
     // FsVolumeGroupResource: @Path("/fsVolume/volumeGroup" + V2).
-    writes: [{ path: /\/api\/fsVolume\/volumeGroup\/v\d+/ }],
+    // FsVolumeResource: @POST /fsVolume/v1 (create), @DELETE /fsVolume/v1/{id}.
+    writes: [{ path: /\/api\/fsVolume\/volumeGroup\/v\d+/ },
+      { method: 'POST', path: /\/api\/fsVolume\/v1$/ }, { method: 'DELETE', path: /\/api\/fsVolume\/v1\/\d+$/ }],
   },
   {
     name: 'user group',
@@ -128,14 +138,19 @@ const SPECS = [
   },
   {
     name: 'index volume group',
-    okPresenters: ['IndexVolumeGroupEditPresenter', 'NewIndexVolumeGroupPresenter'], // :217 and :65
+    okPresenters: ['IndexVolumeGroupEditPresenter', 'NewIndexVolumeGroupPresenter', 'IndexVolumeEditPresenter'], // :217 and :65
+    // IndexVolumeEditPresenter's OK (:64), Add Volume; an index volume also names its node.
+    provedBy: { IndexVolumeEditPresenter: '\\(Add Volume\\)$' },
+    steps: volumeSteps({ path: `${VOLUME_SCRATCH}/${STAMP}-index`, fields: { Node: { choose: 'node1a' } } }),
     menu: ['Administration', 'Index Volumes'],
     // Edit is `IndexVolumeGroupEditViewImpl` ("Volume Group Name").
     nameField: ['Name', 'Volume Group Name'],
     seed: `${STAMP} index volume group`,
     edited: `${STAMP} index volume group (edited)`,
     // IndexVolumeGroupResource: @Path("/index/volumeGroup" + V2).
-    writes: [{ path: /\/api\/index\/volumeGroup\/v\d+/ }],
+    // IndexVolumeResource: @POST /index/volume/v2 (create), @DELETE /index/volume/v2/{id}.
+    writes: [{ path: /\/api\/index\/volumeGroup\/v\d+/ },
+      { method: 'POST', path: /\/api\/index\/volume\/v2$/ }, { method: 'DELETE', path: /\/api\/index\/volume\/v2\/\d+$/ }],
   },
   {
     name: 'credentials',
@@ -281,18 +296,48 @@ const SPECS = [
     // seed-data.mjs's status tag.
     name: 'annotation status and assignee',
     kind: 'annotation',
-    okPresenters: ['ChangeStatusPresenter', 'ChangeAssignedToPresenter'],
+    // AnnotationEditPresenter's only OK is Edit Comment (:668), so the class credit is that handler.
+    okPresenters: ['ChangeStatusPresenter', 'ChangeAssignedToPresenter', 'AnnotationEditPresenter'],
     provedBy: {
       ChangeStatusPresenter: '\\(Change Status\\)$',
       ChangeAssignedToPresenter: '\\(Change Assigned To\\)$',
+      AnnotationEditPresenter: '\\(Edit Comment\\)$',
     },
+    comment: true,
     query: 'iptolocation',
     eventQuery: 'from "Example Index" limit 5 select StreamId, EventId, EventTime, UserId',
     status: 'Seed Status',
     // AnnotationResource: @POST create, @POST batchChange (both dialogs), @DELETE delete.
     writes: [{ method: 'POST', path: /\/api\/annotation\/v1\/create$/ },
       { method: 'POST', path: /\/api\/annotation\/v1\/batchChange$/ },
+      // @POST change (a comment), @POST changeAnnotationEntry (Edit Comment).
+      { method: 'POST', path: /\/api\/annotation\/v1\/(change|changeAnnotationEntry)$/ },
       { method: 'DELETE', path: /\/api\/annotation\/v1\/delete$/ }],
+  },
+  {
+    // SelectionSummaryPresenter's onHideRequest (:83): the "Confirm Delete" / "Confirm Restore"
+    // summary a stream list shows before it changes any status. COUNT_V3 holds one Raw Events stream
+    // and nothing in the walks or the other cycles reads it.
+    name: 'stream delete and restore',
+    kind: 'stream',
+    okPresenters: ['SelectionSummaryPresenter'],
+    provedBy: { SelectionSummaryPresenter: '\\(Confirm Delete\\)$' },
+    feed: 'COUNT_V3',
+    row: 'COUNT_V3',
+    // MetaResource: @PUT /meta/v1/update/status (UpdateStatusRequest: Unlocked -> Deleted, then back).
+    writes: [{ method: 'PUT', path: /\/api\/meta\/v1\/update\/status$/ }],
+  },
+  {
+    // BatchProcessorFilterEditPresenter's onHideRequest (:78), Batch Change All Filtered Processors.
+    // The walk reaches it but always declines its Confirm, so its write was never made. This pipeline
+    // has one processor filter, enabled; the cycle disables it and enables it again.
+    name: 'processor filter batch change',
+    kind: 'processor-batch',
+    okPresenters: ['BatchProcessorFilterEditPresenter'],
+    provedBy: { BatchProcessorFilterEditPresenter: '\\(Batch Change All Filtered Processors\\)$' },
+    pipeline: 'RAW_STREAMING_FORK-EVENTS',
+    // ProcessorFilterResource: @POST /processorFilter/v1/bulkChange.
+    writes: [{ method: 'POST', path: /\/api\/processorFilter\/v1\/bulkChange$/ }],
   },
   // The four annotation tag screens are one resource with a `type`; each is its own cycle because
   // each is its own screen, and a create on one must not show up on another.
@@ -320,6 +365,8 @@ for (const s of specs) {
   console.log(s.kind === 'doc' ? `  ${s.name}: ${s.parent} › New › ${s.type} · creates "${s.seed}"`
     + `${(s.steps ?? []).map(([what]) => ` · ${what}`).join('')}`
     + `${s.rename === false ? '' : ` · renames to "${s.edited}"`} · deletes it`
+    : s.kind === 'processor-batch' ? `  ${s.name}: ${s.pipeline} › Processors · disables its filter · enables it again`
+    : s.kind === 'stream' ? `  ${s.name}: ${s.feed} › Data · deletes the stream holding "${s.row}" · restores it`
     : s.kind === 'annotation' ? `  ${s.name}: creates an annotation on a "${s.eventQuery}" row · Change Status to "${s.status}" · Change Assigned To · deletes it`
     : s.kind === 'edit' ? `  ${s.name}: ${s.menu.join(' › ')} · changes "${s.field}" of "${s.row}" · puts it back`
       : `  ${s.name}: ${s.menu.join(' › ')} · creates "${s.seed}" · edits to "${s.edited}" · deletes it`);
@@ -347,12 +394,13 @@ const reloadTree = async () => {
   await settleExplorer(page, { label: 'expand' }).catch(() => {});
 };
 // A Query document, opened for its editor: the cycle replaces its text and never saves it.
-const openQuery = async (name) => {
+const openDoc = async (name, type) => {
   await gwt.filterExplorer(page, name);
   await settle(1500);
-  await gwt.openDocByName(page, name, 'Query');
+  await gwt.openDocByName(page, name, type);
   await settle(2500);
 };
+const openQuery = (name) => openDoc(name, 'Query');
 const results = [];
 
 if (REHEARSE) {
@@ -406,8 +454,9 @@ for (const spec of specs) {
   // global property, the user's own preferences, a document permission — and for those the
   // compensation is putting the old value back, verified across a reload like everything else.
   const run = spec.kind === 'edit' ? runEditCycle : spec.kind === 'doc' ? runDocCycle
-    : spec.kind === 'annotation' ? runAnnotationCycle : runCycle;
-  const rec = await run(page, { ...spec, helpers: { clickMenuItem, settle, rightClickByText, dismissMenus, reloadTree, openQuery } },
+    : spec.kind === 'annotation' ? runAnnotationCycle : spec.kind === 'stream' ? runStreamCycle
+    : spec.kind === 'processor-batch' ? runProcessorBatchCycle : runCycle;
+  const rec = await run(page, { ...spec, helpers: { clickMenuItem, settle, rightClickByText, dismissMenus, reloadTree, openQuery, openDoc } },
     { guard, settle, log: (l) => console.log(l) });
   await page.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {});
   // The record carries the OK handlers this cycle drove, so the inventory can credit them: a cycle

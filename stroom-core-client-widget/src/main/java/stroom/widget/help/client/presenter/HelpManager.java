@@ -105,6 +105,9 @@ public class HelpManager {
             closeActionHandler.popup = this;
 
             setWidget(new HTMLPanel(content));
+            // A dialog (not modal) for screen readers
+            getElement().setAttribute("role", "dialog");
+            getElement().setAttribute("aria-label", "Help");
         }
 
         @Override

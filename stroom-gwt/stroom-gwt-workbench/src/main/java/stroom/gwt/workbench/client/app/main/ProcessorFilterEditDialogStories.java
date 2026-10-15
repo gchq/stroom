@@ -192,7 +192,7 @@ public final class ProcessorFilterEditDialogStories {
                     // A duration is a group of an amount and its unit, which the duration picker names
                     final Play delay = screen.within(screen.getByRole("group", "Max Task Creation Delay"));
                     play.expect(delay.getByRole("textbox", "Amount")).toBeInTheDocument();
-                    play.expect(delay.getByRole("textbox", "Unit")).toBeInTheDocument();
+                    play.expect(delay.getByRole("combobox", "Unit")).toBeInTheDocument();
                     saveExistingFilter(play, screen);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/processorFilter/v1/9")

@@ -132,7 +132,7 @@
 .timeline-header span {
     position: absolute;
     font-size: 10px;
-    color: #888;
+    color: var(--text-color--muted);
     padding: 5px 0;
     transform: translate(-50%, 0%);
 }
@@ -250,7 +250,7 @@
 }
 
 .time-range-info {
-    color: #ccc;
+    color: var(--text-color--muted);
     padding: 4px 8px;
     font-size: 10px;
 }
@@ -296,9 +296,9 @@
 }
 
 .section-header {
-    background-color: #2d2d2d;
+    background-color: var(--row__background-color--even);
     padding: 8px 20px;
-    border-bottom: 1px solid #404040;
+    border-bottom: 1px solid var(--border-color);
     font-size: 13px;
     line-height: 15px;      /* explicit line box so .span-info-header can match exactly */
     font-weight: 500;
@@ -682,6 +682,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #888;
+    color: var(--text-color--muted);
     font-size: 13px;
 }

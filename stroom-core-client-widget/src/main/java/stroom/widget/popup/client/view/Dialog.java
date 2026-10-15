@@ -104,6 +104,7 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
 
         setStyleName("dialog-popup");
         setWidget(binder.createAndBindUi(this));
+        PopupUtil.setDialogRole(getElement(), titleText.getElement());
 
         final MouseHandler mouseHandler = new MouseHandler();
         addDomHandler(mouseHandler, MouseDownEvent.getType());

@@ -8,7 +8,7 @@
          split pane's own class) -->
     <split:SplitPane vertical="true" thin="true" sizes="*, 200px" names="Users and groups, Details"
                      addStyleNames="max default-min-sizes">
-        <g:FlowPanel>
+        <g:FlowPanel styleName="max dock-container-vertical">
             <form:FormGroup label="Permission Visibility"
                             addStyleNames="form-padding"
                             screenReaderText="Filters the users and groups list: explicit, effective or all.">
@@ -29,18 +29,19 @@
                 <l:SelectionBox ui:field="permissionVisibility"/>
             </form:FormGroup>
             <form:FormGroup label="Users and Groups"
-                            addStyleNames="form-group--indented max"
+                            addStyleNames="form-group--indented documentUserPermissionsViewImpl-users"
                             screenReaderText="Filtered by Permission Visibility. Select one to see and edit its permissions.">
                 <form:HelpHTML>
                     <p>Lists users/groups, optionally filtered based on the value of the
                         <em>Permission Visibility</em> dropdown.</p>
                 </form:HelpHTML>
-                <g:SimplePanel ui:field="docUserPermissionsList" styleName="max"/>
+                <g:SimplePanel ui:field="docUserPermissionsList"
+                               styleName="documentUserPermissionsViewImpl-list"/>
             </form:FormGroup>
         </g:FlowPanel>
         <form:FormGroup ui:field="detailsFormGroup"
                         addStyleNames="form-group--indented">
-            <g:SimplePanel styleName="max form-padding">
+            <g:SimplePanel styleName="max form-padding documentUserPermissions-details">
                 <g:HTML ui:field="details" styleName="max permissionDetails"/>
             </g:SimplePanel>
         </form:FormGroup>

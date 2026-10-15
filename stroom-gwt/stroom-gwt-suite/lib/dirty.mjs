@@ -44,7 +44,7 @@ export function readSave(page) {
     const save = btns.find((b) => un(b.getAttribute('title') ?? '') === 'Save'
       || un(b.getAttribute('aria-label') ?? '') === 'Save' || un(b.textContent) === 'Save');
     if (!save) return null;
-    return { enabled: !save.disabled && !save.classList.contains('disabled') };
+    return { enabled: !save.disabled && !save.classList.contains('disabled') && save.getAttribute('aria-disabled') !== 'true' };
   }).catch(() => null);
 }
 
@@ -201,7 +201,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
         .find((e) => e.offsetWidth > 100 && e.offsetHeight > 40
           && (inDialogScope ? (top && top.contains(e)) : !e.closest('.dialog-popup, .resizableDialog-popup')));
       if (solo) {
-        const tab = norm([...document.querySelectorAll('.linkTab-selected .linkTab-label, .curveTab-selected .curveTab-label')]
+        const tab = norm([...document.querySelectorAll('.tab-bar--link .tab-bar__tab[aria-selected="true"] .tab-bar__label, .tab-bar--curved .tab-bar__tab[aria-selected="true"] .tab-bar__label')]
           .find((e) => e.offsetWidth > 0)?.textContent) || 'the editor';
         const r = solo.getBoundingClientRect();
         out.push({ label: tab, kind: 'ace', value: aceText(solo), x: r.x + r.width * 0.3, y: r.y + Math.min(r.height / 2, 60) });

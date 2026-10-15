@@ -77,6 +77,27 @@ public final class LinkTabsWidgetStories {
                     frame.add(presenter.getWidget());
                     harness.add(frame);
                     return harness.asWidget();
+                })
+                // A tab list with one tab stop, whose content is a tab panel named by the selected
+                // tab. The arrow keys move the focus, and Enter selects (as selecting a tab may load
+                // its content)
+                .withPlay(play -> {
+                    play.expect(play.within(play.getByRole("tablist")).getAllByRole("tab")).toHaveLength(3);
+                    play.expect(play.getByRole("tab", "Overview")).toHaveAttribute("aria-selected", "true");
+                    play.expect(play.getByRole("tabpanel", "Overview")).toBeInTheDocument();
+                    play.tab();
+                    play.expect(play.getByRole("tab", "Overview")).toHaveFocus();
+                    play.keyboard("{ArrowRight}");
+                    play.expect(play.getByRole("tab", "Settings")).toHaveFocus();
+                    play.expect(play.spy(ON_SELECT_TAB)).not().toHaveBeenCalled();
+                    play.keyboard("{Enter}");
+                    play.expect(play.spy(ON_SELECT_TAB)).toHaveBeenLastCalledWith(1);
+                    play.expect(play.getByRole("tab", "Settings")).toHaveAttribute("aria-selected", "true");
+                    play.expect(play.getByRole("tabpanel", "Settings")).toBeInTheDocument();
+                    play.keyboard("{ArrowLeft}{ArrowLeft}");
+                    play.expect(play.getByRole("tab", "Advanced")).toHaveFocus();
+                    play.keyboard(" ");
+                    play.expect(play.spy(ON_SELECT_TAB)).toHaveBeenLastCalledWith(2);
                 });
     }
 }

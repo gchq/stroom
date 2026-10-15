@@ -78,14 +78,14 @@ const name = await page.evaluate((t) => {
 if (!name) { console.error(`no ${DOCTYPE} in the explorer`); await browser.close(); process.exit(2); }
 console.log(`\n  opening "${name}" (${DOCTYPE}) with its fetch answering 500\n`);
 
-const tabsBefore = await page.evaluate(() => [...document.querySelectorAll('.curveTab')]
+const tabsBefore = await page.evaluate(() => [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')]
   .filter((e) => e.offsetWidth > 0).map((e) => e.textContent.replace(/\s+/g, ' ').trim()));
 
 await gwt.openDocByName(page, name, DOCTYPE).catch((e) => console.log(`  (open threw: ${e.message.split('\n')[0]})`));
 await page.waitForTimeout(4_000);
 
 const dialogs = await readDialogs(page).catch(() => []);
-const tabsAfter = await page.evaluate(() => [...document.querySelectorAll('.curveTab')]
+const tabsAfter = await page.evaluate(() => [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')]
   .filter((e) => e.offsetWidth > 0).map((e) => e.textContent.replace(/\s+/g, ' ').trim()));
 const bodyText = await page.evaluate(() => {
   const pops = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
