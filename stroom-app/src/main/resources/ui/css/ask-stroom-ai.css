@@ -983,3 +983,35 @@
     font-size: 0.85em;
     color: #ed6c02;
 }
+
+/* ---- Edit MCP Tool Server dialog ---- */
+
+.mcpToolServer-content {
+    overflow: auto;
+}
+
+.mcpToolServer-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--control__gap--horizontal);
+    margin-top: 8px;
+}
+
+/* A tool policy: its pattern, what to do, and a button to remove it. */
+.mcpToolServer-policy {
+    display: flex;
+    align-items: center;
+    gap: var(--control__gap--horizontal);
+    margin-bottom: 4px;
+}
+
+.mcpToolServer-policyPattern {
+    flex: 1 1 0;
+    min-width: 0;
+    font-family: var(--monospace-font-family);
+}
+
+.mcpToolServer-policyValue {
+    flex: none;
+    width: 150px;
+}

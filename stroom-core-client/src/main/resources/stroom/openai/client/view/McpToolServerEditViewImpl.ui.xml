@@ -4,81 +4,75 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
-    <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="enabled"
-                                    identity="mcpToolServerEnabled"
-                                    label="Enabled"/>
-        </form:FormGroup>
-        <form:FormGroup identity="mcpToolServerName"
-                        label="Name"
-                        helpText="A short name for this tool server. Used in the UI, to prefix tool names and in error messages.">
-            <g:TextBox ui:field="name" width="400px"
-                       title="A short name for this tool server."/>
-        </form:FormGroup>
-        <form:FormGroup identity="mcpToolServerEndpoint"
-                        label="Endpoint URL"
-                        helpText="The MCP Streamable HTTP endpoint URL, e.g. https://mcp.example.com/mcp . Both http and https are supported.">
-            <g:TextBox ui:field="endpoint" width="400px"
-                       title="The MCP Streamable HTTP endpoint URL."/>
-        </form:FormGroup>
-        <form:FormGroup identity="mcpToolServerAuthMode"
-                        label="Authentication"
-                        helpText="How Stroom authenticates to this server.">
-            <g:FlowPanel>
-                <l:SelectionBox ui:field="authMode"/>
-                <g:Label ui:field="authModeWarning" styleName="mcpToolServer-warning"/>
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:tab="urn:import:stroom.widget.tab.client.view">
+    <g:FlowPanel styleName="max dock-container-vertical mcpToolServer">
+        <tab:LinkTabBar ui:field="tabBar" styleName="dock-min linkTabBar"/>
+        <g:FlowPanel styleName="dock-max mcpToolServer-content">
+            <g:FlowPanel ui:field="generalTab" styleName="form-padding form">
+                <form:FormGroup helpText="Whether the model is offered this server's tools. A disabled server is kept, but not connected to.">
+                    <tickbox:CustomCheckBox ui:field="enabled"
+                                            identity="mcpToolServerEnabled"
+                                            label="Enabled"/>
+                </form:FormGroup>
+                <form:FormGroup identity="mcpToolServerName"
+                                label="Name"
+                                helpText="A short name for this tool server. It is shown to users, starts the names of its tools as the model sees them (e.g. 'fastmcp__find_feeds'), and appears in error messages.">
+                    <g:TextBox ui:field="name" addStyleNames="w-100"
+                               title="A short name for this tool server."/>
+                </form:FormGroup>
+                <form:FormGroup identity="mcpToolServerEndpoint"
+                                label="Endpoint URL"
+                                helpText="The server's MCP Streamable HTTP endpoint, e.g. https://mcp.example.com/mcp . Both http and https are supported; use https for anything not on the same machine.">
+                    <g:TextBox ui:field="endpoint" addStyleNames="w-100"
+                               title="The MCP Streamable HTTP endpoint URL."/>
+                </form:FormGroup>
+                <form:FormGroup identity="mcpToolServerAuthMode"
+                                label="Authentication"
+                                helpText="How Stroom proves who it is to the server. 'OAuth2 passthrough' sends each user's own sign-in, so the server acts as them (needs an external identity provider). The other modes send one stored credential for everyone.">
+                    <g:FlowPanel>
+                        <l:SelectionBox ui:field="authMode"/>
+                        <g:Label ui:field="authModeWarning" styleName="mcpToolServer-warning"/>
+                    </g:FlowPanel>
+                </form:FormGroup>
+                <form:FormGroup identity="mcpToolServerCredential"
+                                label="Credential"
+                                helpText="The stored credential to authenticate with. For 'Bearer token' and 'Custom API key header' this is an Access Token credential; for 'Basic auth' it is a Username / Password credential.">
+                    <l:SelectionBox ui:field="credential"/>
+                </form:FormGroup>
+                <form:FormGroup ui:field="apiKeyHeaderNameGroup"
+                                identity="mcpToolServerApiKeyHeaderName"
+                                label="API key header name"
+                                helpText="The HTTP header to send the key in, e.g. X-API-Key. Default: Authorization">
+                    <g:TextBox ui:field="apiKeyHeaderName" addStyleNames="w-100"
+                               title="The HTTP header to send the key in."/>
+                </form:FormGroup>
+                <form:FormGroup ui:field="apiKeyValuePrefixGroup"
+                                identity="mcpToolServerApiKeyValuePrefix"
+                                label="API key value prefix"
+                                helpText="Text placed before the key in the header, e.g. 'Bearer ' (with its trailing space). Leave empty to send the key on its own.">
+                    <g:TextBox ui:field="apiKeyValuePrefix" addStyleNames="w-100"
+                               title="An optional prefix placed before the key value."/>
+                </form:FormGroup>
+                <g:FlowPanel styleName="mcpToolServer-buttons">
+                    <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config"
+                              addStyleNames="allow-focus"/>
+                    <b:Button ui:field="test" text="Test Connection"
+                              addStyleNames="allow-focus"/>
+                </g:FlowPanel>
             </g:FlowPanel>
-        </form:FormGroup>
-        <form:FormGroup identity="mcpToolServerCredential"
-                        label="Credential"
-                        helpText="The stored credential to authenticate with. For 'Bearer token' and 'Custom API key header' this is an Access Token credential; for 'Basic auth' it is a Username / Password credential.">
-            <l:SelectionBox ui:field="credential"/>
-        </form:FormGroup>
-        <form:FormGroup ui:field="apiKeyHeaderNameGroup"
-                        identity="mcpToolServerApiKeyHeaderName"
-                        label="API key header name"
-                        helpText="The HTTP header to send the key in. Default: Authorization">
-            <g:TextBox ui:field="apiKeyHeaderName" width="400px"
-                       title="The HTTP header to send the key in."/>
-        </form:FormGroup>
-        <form:FormGroup ui:field="apiKeyValuePrefixGroup"
-                        identity="mcpToolServerApiKeyValuePrefix"
-                        label="API key value prefix"
-                        helpText="An optional prefix placed before the key value, e.g. 'Bearer '.">
-            <g:TextBox ui:field="apiKeyValuePrefix" width="400px"
-                       title="An optional prefix placed before the key value."/>
-        </form:FormGroup>
-        <form:FormGroup identity="mcpToolServerAllowedTools"
-                        label="Allowed tools"
-                        helpText="Comma separated patterns for the tools of this server that may be offered to the model, e.g. 'find_*, describe_document'. '*' matches any characters. Leave empty to allow all tools (apart from denied ones).">
-            <g:TextBox ui:field="allowedTools" width="400px"
-                       title="Patterns for the tools that may be offered to the model."/>
-        </form:FormGroup>
-        <form:FormGroup identity="mcpToolServerDeniedTools"
-                        label="Denied tools"
-                        helpText="Comma separated patterns for the tools of this server that must never be offered to the model, e.g. 'reprocess_*'. Takes precedence over the allowed tools.">
-            <g:TextBox ui:field="deniedTools" width="400px"
-                       title="Patterns for the tools that must never be offered to the model."/>
-        </form:FormGroup>
-        <form:FormGroup identity="mcpToolServerTrusted"
-                        helpText="Whether this server is trusted. The MCP tool annotations (e.g. read-only) of an untrusted server are ignored, so all of its tools ask the user before running, unless a tool policy says otherwise.">
-            <tickbox:CustomCheckBox ui:field="trusted" label="Trusted"/>
-        </form:FormGroup>
-        <form:FormGroup identity="mcpToolServerToolPolicies"
-                        label="Tool policies"
-                        helpText="One rule per line, 'pattern = policy', e.g. 'find_* = Allow' or 'reprocess_* = Ask every time'. Policies: Allow, Ask, Ask every time, Deny. '*' matches any characters. The first rule that matches a tool applies.">
-            <g:TextArea ui:field="toolPolicies" width="400px" visibleLines="4"
-                        title="Tool policy rules, one per line: pattern = policy"/>
-        </form:FormGroup>
-        <form:FormGroup identity="mcpToolServerToolGroups"
-                        label="Tool groups"
-                        helpText="When a model is offered many tools, they are put in groups that the model turns on when it needs them, so their definitions don't fill its context. Groups come from the server, or else from shared name prefixes. One rule per line, 'pattern = group', overrides that, e.g. 'pipeline_* = pipelines'. A group of '-' means the tools are always offered.">
-            <g:TextArea ui:field="toolGroups" width="400px" visibleLines="3"
-                        title="Tool group rules, one per line: pattern = group"/>
-        </form:FormGroup>
-        <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px"
-                  addStyleNames="allow-focus"/>
+            <g:FlowPanel ui:field="toolsTab" styleName="form-padding form">
+                <form:FormGroup helpText="Whether you trust this server, e.g. because you run it. Only a trusted server's tool descriptions (such as 'read-only') are believed, so its read-only tools can run without asking. Every tool of an untrusted server asks the user before running, unless a policy below says otherwise.">
+                    <tickbox:CustomCheckBox ui:field="trusted"
+                                            identity="mcpToolServerTrusted"
+                                            label="Trusted"/>
+                </form:FormGroup>
+                <form:FormGroup identity="mcpToolServerToolPolicies"
+                                label="Tool policies"
+                                helpText="What happens when the model wants to use a tool. Each policy has a regular expression that must match the tool's whole name, ignoring case, e.g. 'find_.*' or '(get|list)_feeds?'. The first policy that matches a tool applies: Allow runs it without asking, Ask every time asks the user each time, and Deny never offers it to the model. A tool no policy matches runs without asking if the server is trusted and the tool is read-only, and otherwise asks.">
+                    <g:FlowPanel ui:field="toolPolicies" styleName="mcpToolServer-policies"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>
