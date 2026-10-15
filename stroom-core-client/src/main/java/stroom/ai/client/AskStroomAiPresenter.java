@@ -54,8 +54,11 @@ import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestError;
+import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.openai.shared.OpenAIModelDoc;
@@ -98,6 +101,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -237,6 +241,7 @@ public class AskStroomAiPresenter
     private boolean fetchingPrompts;
     // How much of the model's context window the chat uses, as last reported.
     private AiContextUsage contextUsage;
+    private final DocumentTypeCache documentTypeCache;
 
     @Inject
     public AskStroomAiPresenter(final EventBus eventBus,
@@ -254,7 +259,8 @@ public class AskStroomAiPresenter
                                 final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider,
                                 final ContentManager contentManager,
                                 final LocationManager locationManager,
-                                final DateTimeFormatter dateTimeFormatter) {
+                                final DateTimeFormatter dateTimeFormatter,
+                                final DocumentTypeCache documentTypeCache) {
         super(eventBus, view, askStroomAiProxy);
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
@@ -269,6 +275,7 @@ public class AskStroomAiPresenter
         this.locationManager = locationManager;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
+        this.documentTypeCache = documentTypeCache;
 
         getView().setModelRefSelection(docSelectionBoxPresenter.getView());
         docSelectionBoxPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
@@ -302,6 +309,13 @@ public class AskStroomAiPresenter
         registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 final Element target = e.getNativeEvent().getEventTarget().cast();
+                final Element link = ElementUtil.findParent(target, element ->
+                        element.getTagName().equalsIgnoreCase("a"), 6);
+                if (link != null) {
+                    e.preventDefault();
+                    onLinkClick(link.getAttribute("href"));
+                    return;
+                }
                 final Element button = ElementUtil.findParent(target, element ->
                         element.getTagName().equalsIgnoreCase("button"), 5);
                 if (button != null) {
@@ -583,6 +597,29 @@ public class AskStroomAiPresenter
                         ? DockType.DOCK
                         : DockType.TAB,
                 dockBehaviour.getDockLocation())));
+    }
+
+    /// Opens a link from the chat without leaving Stroom: a link to a Stroom document opens it here, an
+    /// external link opens in a new browser tab, and a link within the page scrolls to its target.
+    private void onLinkClick(final String href) {
+        final DocRef docRef = ChatLinks.openDocTarget(href);
+        if (docRef != null) {
+            documentTypeCache.fetch(types -> {
+                if (types.getDocumentType(docRef.getType()) != null) {
+                    OpenDocumentEvent.fire(this, docRef, true);
+                } else {
+                    AlertEvent.fireError(this, "This link is to an unknown type of document, '"
+                                               + docRef.getType() + "'.", null);
+                }
+            }, this);
+        } else if (ChatLinks.isExternal(href)) {
+            Window.open(href.trim(), "_blank", "noopener,noreferrer");
+        } else if (href != null && href.startsWith("#") && href.length() > 1) {
+            final Element anchor = Document.get().getElementById(href.substring(1));
+            if (anchor != null && getView().getMarkdownContainer().getElement().isOrHasChild(anchor)) {
+                anchor.scrollIntoView();
+            }
+        }
     }
 
     @Override
