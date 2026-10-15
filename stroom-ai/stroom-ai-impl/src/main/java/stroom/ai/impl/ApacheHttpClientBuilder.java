@@ -25,16 +25,26 @@ import dev.langchain4j.http.client.HttpClient;
 import dev.langchain4j.http.client.HttpClientBuilder;
 
 import java.time.Duration;
+import java.util.Map;
 
 public class ApacheHttpClientBuilder implements HttpClientBuilder {
 
     private final HttpClientProviderCache httpClientProviderCache;
+    private final Map<String, String> headers;
     private HttpClientConfiguration httpClientConfiguration;
 
     public ApacheHttpClientBuilder(final HttpClientProviderCache httpClientProviderCache,
                                    final HttpClientConfiguration httpClientConfiguration) {
+        this(httpClientProviderCache, httpClientConfiguration, Map.of());
+    }
+
+    /// @param headers Headers to send with every request, unless the request sets them itself.
+    public ApacheHttpClientBuilder(final HttpClientProviderCache httpClientProviderCache,
+                                   final HttpClientConfiguration httpClientConfiguration,
+                                   final Map<String, String> headers) {
         this.httpClientProviderCache = httpClientProviderCache;
         this.httpClientConfiguration = httpClientConfiguration;
+        this.headers = headers;
     }
 
     @Override
@@ -67,6 +77,6 @@ public class ApacheHttpClientBuilder implements HttpClientBuilder {
 
     @Override
     public HttpClient build() {
-        return new ApacheHttpClient(httpClientProviderCache, httpClientConfiguration);
+        return new ApacheHttpClient(httpClientProviderCache, httpClientConfiguration, headers);
     }
 }

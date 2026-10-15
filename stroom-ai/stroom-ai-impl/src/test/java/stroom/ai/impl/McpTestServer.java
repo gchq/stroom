@@ -30,7 +30,9 @@ import org.eclipse.jetty.server.ServerConnector;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /// An MCP server running in-process on a random port, for testing the client side against the real
@@ -44,6 +46,7 @@ final class McpTestServer implements AutoCloseable {
     private final Server jetty;
     private final McpSyncServer mcpServer;
     private final List<String> authorizationHeaders = Collections.synchronizedList(new ArrayList<>());
+    private final List<Map<String, String>> requestHeaders = Collections.synchronizedList(new ArrayList<>());
 
     private McpTestServer(final List<SyncToolSpecification> tools,
                           final List<SyncResourceSpecification> resources) throws Exception {
@@ -51,6 +54,11 @@ final class McpTestServer implements AutoCloseable {
                 .builder()
                 .mcpEndpoint(MCP_PATH)
                 .contextExtractor(request -> {
+                    final Map<String, String> headers = new HashMap<>();
+                    for (final String name : Collections.list(request.getHeaderNames())) {
+                        headers.put(name.toLowerCase(Locale.ROOT), request.getHeader(name));
+                    }
+                    requestHeaders.add(headers);
                     final String authorization = request.getHeader("Authorization");
                     authorizationHeaders.add(authorization == null
                             ? ""
@@ -99,6 +107,13 @@ final class McpTestServer implements AutoCloseable {
     List<String> authorizationHeaders() {
         synchronized (authorizationHeaders) {
             return List.copyOf(authorizationHeaders);
+        }
+    }
+
+    /// @return The headers of every request received so far, by lower case name (first value only).
+    List<Map<String, String>> requestHeaders() {
+        synchronized (requestHeaders) {
+            return List.copyOf(requestHeaders);
         }
     }
 

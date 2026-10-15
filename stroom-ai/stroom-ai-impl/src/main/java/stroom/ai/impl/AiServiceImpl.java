@@ -175,6 +175,11 @@ public class AiServiceImpl implements AiService {
             // Provide an API key
             getApiKey(modelDoc).ifPresent(apiKey ->
                     httpGet.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey));
+            HttpClientUtil.headers(httpClientConfig).forEach((name, value) -> {
+                if (!httpGet.containsHeader(name)) {
+                    httpGet.addHeader(name, value);
+                }
+            });
 
             final HttpResult result = httpClientProvider.get().execute(httpGet, this::readResponse);
             LOGGER.debug(() -> "getModel: GET '" + url + "' returned " + result.code() + " " + result.reasonPhrase()
@@ -501,11 +506,13 @@ public class AiServiceImpl implements AiService {
     }
 
     private HttpClientBuilder getClientBuilder(final OpenAIModelDoc modelDoc) {
-        final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(NullSafe.getOrElse(
+        final HttpClientConfig httpClientConfig = NullSafe.getOrElse(
                 modelDoc,
                 OpenAIModelDoc::getHttpClientConfiguration,
-                getDefaultHttpClientConfig()));
-        return new ApacheHttpClientBuilder(httpClientCacheProvider.get(), httpClientConfiguration);
+                getDefaultHttpClientConfig());
+        return new ApacheHttpClientBuilder(httpClientCacheProvider.get(),
+                httpConfigResolver.resolve(httpClientConfig),
+                HttpClientUtil.headers(httpClientConfig));
     }
 
     @Override

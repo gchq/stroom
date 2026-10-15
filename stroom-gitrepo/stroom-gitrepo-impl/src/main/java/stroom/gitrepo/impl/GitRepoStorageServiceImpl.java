@@ -37,6 +37,7 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.util.http.HttpClientConfiguration;
+import stroom.util.http.HttpClientUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
@@ -665,7 +666,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         transportCommand.setTransportConfigCallback(new GitRepoTransportConfigCallback(
                 sshCallback,
                 httpClientProviderCache,
-                resolveHttpClientConfiguration(gitRepoDoc)));
+                resolveHttpClientConfiguration(gitRepoDoc),
+                HttpClientUtil.headers(gitRepoDoc.getHttpClientConfiguration())));
     }
 
     /**
