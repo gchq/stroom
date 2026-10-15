@@ -29,6 +29,26 @@ final class UserActionsUi {
         // Static methods only.
     }
 
+    /// @param status    The action's status, as stored.
+    /// @param expiresMs When its button stops working.
+    /// @param nowMs     The time now.
+    /// @return True if its button can still be used.
+    static boolean isPending(final String status, final long expiresMs, final long nowMs) {
+        return "PENDING".equals(status) && expiresMs > nowMs;
+    }
+
+    /// @param status  The action's status, as stored.
+    /// @param outcome What happened when it was used, or null.
+    /// @return What to show in place of a button that can't be used.
+    static String outcomeText(final String status, final String outcome) {
+        if (outcome != null && !outcome.isBlank()) {
+            return outcome;
+        }
+        return "PENDING".equals(status)
+                ? "This button has expired."
+                : String.valueOf(status);
+    }
+
     /// @param action An action.
     /// @return What its button says.
     static String buttonText(final String action) {
