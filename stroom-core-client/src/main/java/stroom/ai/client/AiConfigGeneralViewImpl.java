@@ -23,7 +23,6 @@ import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.ai.shared.AskStroomAiConfig.DockType;
 import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
-import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -53,8 +52,6 @@ public class AiConfigGeneralViewImpl
     @UiField
     TextArea historySummaryPrompt;
     @UiField
-    ValueSpinner maxHistorySafetyCapMessages;
-    @UiField
     CustomCheckBox enableDebugDetail;
     @UiField
     CustomCheckBox browserNotifications;
@@ -74,8 +71,6 @@ public class AiConfigGeneralViewImpl
         dockLocationSelectionBox.addItem(DockLocation.BOTTOM);
         dockLocationSelectionBox.setValue(DockLocation.RIGHT);
 
-        maxHistorySafetyCapMessages.setMin(1);
-        maxHistorySafetyCapMessages.setMax(500);
     }
 
     @Override
@@ -118,16 +113,6 @@ public class AiConfigGeneralViewImpl
     @Override
     public String getChatSystemPrompt() {
         return chatSystemPrompt.getText();
-    }
-
-    @Override
-    public void setMaxHistorySafetyCapMessages(final int max) {
-        maxHistorySafetyCapMessages.setValue(max);
-    }
-
-    @Override
-    public int getMaxHistorySafetyCapMessages() {
-        return maxHistorySafetyCapMessages.getIntValue();
     }
 
     @Override

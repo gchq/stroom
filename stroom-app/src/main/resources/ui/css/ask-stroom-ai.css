@@ -1286,14 +1286,15 @@
     margin: 4px 0;
 }
 
-/* Above the list of chats when any is unread. */
+/* Buttons above the list of chats. */
 .ai-chat-list-header {
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
     margin-bottom: 6px;
 }
 
-.ai-chat-list-mark-read {
+.ai-chat-list-action {
     background: none;
     border: 1px solid var(--ai-border-color, rgba(128, 128, 128, 0.35));
     border-radius: 4px;
@@ -1304,6 +1305,11 @@
     cursor: pointer;
 }
 
-.ai-chat-list-mark-read:hover {
+.ai-chat-list-action:hover {
     background: var(--curve-tab__background-color--hover);
+}
+
+.aiConfigTableAnalysis-note {
+    margin-bottom: 10px;
+    color: var(--control__text-color--disabled);
 }

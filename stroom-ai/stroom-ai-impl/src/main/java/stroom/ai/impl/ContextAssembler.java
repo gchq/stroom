@@ -30,6 +30,7 @@ import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.TableAnalysisConfig;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,6 +45,7 @@ import dev.langchain4j.data.message.UserMessage;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -488,7 +490,26 @@ public class ContextAssembler {
             return null;
         }
         try {
-            final String markdown = Files.readString(mdFile, StandardCharsets.UTF_8);
+            // A model without tools is only given so many rows, as all of them go in the prompt.
+            final int maxRows = maxRowsWithoutTools();
+            final StringBuilder markdown = new StringBuilder();
+            int rows = 0;
+            boolean capped = false;
+            try (final BufferedReader reader = Files.newBufferedReader(mdFile, StandardCharsets.UTF_8)) {
+                String line;
+                int lineNo = 0;
+                while ((line = reader.readLine()) != null) {
+                    // The first two lines are the header and its separator.
+                    if (lineNo++ >= 2 && !line.isEmpty()) {
+                        if (rows >= maxRows) {
+                            capped = true;
+                            break;
+                        }
+                        rows++;
+                    }
+                    markdown.append(line).append('\n');
+                }
+            }
             final StringBuilder tagged = new StringBuilder()
                     .append("[Attached Table: ")
                     .append(NullSafe.nonBlankStringElse(attachment.getDescription(),
@@ -498,6 +519,10 @@ public class ContextAssembler {
             }
             if (attachment.isTruncated()) {
                 tagged.append(" TRUNCATED");
+            }
+            if (capped) {
+                tagged.append(" Only the first ").append(maxRows).append(" rows are given here, so findings "
+                                                                          + "cover those rows only.");
             }
             tagged.append("]\n").append(markdown);
             return new UserMessage(tagged.toString());
@@ -616,6 +641,13 @@ public class ContextAssembler {
         return hasTools
                 ? "\n\n" + AGENT_GUIDANCE
                 : "";
+    }
+
+    private int maxRowsWithoutTools() {
+        return NullSafe.getOrElse(defaultConfigProvider.get(),
+                AskStroomAiConfig::getTableAnalysis,
+                TableAnalysisConfig::getMaxRowsWithoutTools,
+                TableAnalysisConfig.DEFAULT_MAX_ROWS_WITHOUT_TOOLS);
     }
 
     private String memory(final int chatId) {

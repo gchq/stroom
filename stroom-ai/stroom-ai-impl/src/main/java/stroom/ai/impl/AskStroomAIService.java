@@ -1702,11 +1702,10 @@ public class AskStroomAIService {
         return aiService.getChatModel(openAIModelDoc);
     }
 
-    private TableAnalysisConfig getTableAnalysisConfig(final AskStroomAiConfig config) {
-        return NullSafe.getOrElse(
-                config,
-                AskStroomAiConfig::getTableAnalysis,
-                new TableAnalysisConfig());
+    // The table analysis settings apply to everyone, so any a user's own settings hold (saved before they were
+    // made admin-only) are ignored.
+    private TableAnalysisConfig getTableAnalysisConfig(final AskStroomAiConfig ignored) {
+        return Objects.requireNonNullElseGet(tableAnalysisConfigProvider.get(), TableAnalysisConfig::new);
     }
 
 
@@ -1791,6 +1790,29 @@ public class AskStroomAIService {
         mcpClientCache.evictChat(chatId);
         usageTracker.forget(chatId);
         attachmentFileStore.deleteAttachmentFiles(attachmentIds); // cleanup attachment files
+    }
+
+    /**
+     * Deletes all the user's chats, as {@link #deleteChat} does each one. The user's own memory is kept. A chat
+     * whose run doesn't stop in time is left, as with deleting one chat.
+     *
+     * @return How many chats were deleted.
+     */
+    public int deleteAllChats() {
+        final String userUuid = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
+        if (userUuid == null) {
+            return 0;
+        }
+        int deleted = 0;
+        for (final int chatId : aiDao.getChatIds(userUuid)) {
+            try {
+                deleteChat(chatId);
+                deleted++;
+            } catch (final AiChatRunManager.AiChatBusyException e) {
+                LOGGER.info(() -> "deleteAllChats: chat " + chatId + " is busy, so it has been left");
+            }
+        }
+        return deleted;
     }
 
     public void deleteMessage(final int chatId, final int messageId) {
@@ -1926,7 +1948,10 @@ public class AskStroomAIService {
     }
 
     public Boolean setDefaultAskStroomAIConfig(final AskStroomAiConfig config) {
-        setDefaultTableAnalysisConfig(config.getTableAnalysis());
+        // Table analysis settings are only ever the defaults, so may be left out.
+        if (config.getTableAnalysis() != null) {
+            setDefaultTableAnalysisConfig(config.getTableAnalysis());
+        }
 
         final AskStroomAiConfig currentConfig = getDefaultConfig();
         globalConfigProvider.get().setDocRef(currentConfig,
@@ -1959,8 +1984,20 @@ public class AskStroomAIService {
         return true;
     }
 
+    /**
+     * Sets the table analysis settings, which apply to everyone. Needs permission to manage properties, which
+     * changing a property checks.
+     */
+    public Boolean setTableAnalysisConfig(final TableAnalysisConfig config) {
+        setDefaultTableAnalysisConfig(Objects.requireNonNull(config, "No table analysis config supplied"));
+        return true;
+    }
+
     private void setDefaultTableAnalysisConfig(final TableAnalysisConfig config) {
         final TableAnalysisConfig defaultTableAnalysisConfig = tableAnalysisConfigProvider.get();
+        globalConfigProvider.get().setInt(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_MAX_ROWS_WITHOUT_TOOLS,
+                config.getMaxRowsWithoutTools());
         globalConfigProvider.get().setInt(defaultTableAnalysisConfig,
                 TableAnalysisConfig.PROP_NAME_MAXIMUM_BATCH_SIZE,
                 config.getMaxRowsPerBatch());

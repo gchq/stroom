@@ -197,6 +197,21 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     AskStroomAiConfig getDefaultConfig();
 
     @POST
+    @Path("/setTableAnalysisConfig")
+    @Operation(
+            summary = "Set the table analysis settings, which apply to everyone",
+            operationId = "setAiTableAnalysisConfig")
+    Boolean setTableAnalysisConfig(@Parameter(description = "config", required = true) TableAnalysisConfig config);
+
+    @POST
+    @Path("/deleteAllChats")
+    @Operation(
+            summary = "Delete all the user's chats, with their messages, attached data, workspace files, chat "
+                      + "memory and tool approvals. The user's own memory is kept.",
+            operationId = "deleteAllAiChats")
+    Integer deleteAllChats();
+
+    @POST
     @Path("/markAllChatsRead")
     @Operation(
             summary = "Mark everything in all the user's chats as read, clearing their unread marks",

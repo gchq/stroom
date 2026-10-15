@@ -162,6 +162,7 @@ public class AskStroomAiPresenter
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
     private static final String USER_ACTION_MESSAGE_ATTRIBUTE = "data-user-action-message";
     private static final String MARK_ALL_READ_ATTRIBUTE = "data-mark-all-read";
+    private static final String DELETE_ALL_CHATS_ATTRIBUTE = "data-delete-all-chats";
     private static final String USER_ACTION_ID_ATTRIBUTE = "data-user-action-id";
     // A tool result's buttons are shown in a card of their own, outside the turn's activity.
     private static final String USER_ACTIONS_ID_SUFFIX = "-actions";
@@ -794,12 +795,20 @@ public class AskStroomAiPresenter
         if (chatStatuses.isEmpty()) {
             hb.div(div -> div.append("You have no chats yet."), Attribute.className("ai-chat-list-empty"));
         }
-        if (chatStatuses.stream().anyMatch(AiChatStatus::isUnread)) {
-            hb.div(header -> header.elem("Mark All as Read", BUTTON,
-                            Attribute.className("allow-focus ai-chat-list-mark-read"),
+        if (!chatStatuses.isEmpty()) {
+            final boolean anyUnread = chatStatuses.stream().anyMatch(AiChatStatus::isUnread);
+            hb.div(header -> {
+                if (anyUnread) {
+                    header.elem("Mark All as Read", BUTTON,
+                            Attribute.className("allow-focus ai-chat-list-action"),
                             Attribute.title("Clear the unread mark from all your chats"),
-                            new Attribute(MARK_ALL_READ_ATTRIBUTE, "true")),
-                    Attribute.className("ai-chat-list-header"));
+                            new Attribute(MARK_ALL_READ_ATTRIBUTE, "true"));
+                }
+                header.elem("Delete All Chats", BUTTON,
+                        Attribute.className("allow-focus ai-chat-list-action"),
+                        Attribute.title("Delete all your chats"),
+                        new Attribute(DELETE_ALL_CHATS_ATTRIBUTE, "true"));
+            }, Attribute.className("ai-chat-list-header"));
         }
         for (final AiChatStatus status : chatStatuses) {
             final boolean current = currentChat != null && currentChat.getId() == status.getChatId();
@@ -832,6 +841,10 @@ public class AskStroomAiPresenter
     }
 
     private void onChatListClick(final Element target) {
+        if (ElementUtil.findParent(target, element -> element.hasAttribute(DELETE_ALL_CHATS_ATTRIBUTE), 3) != null) {
+            onDeleteAllChats();
+            return;
+        }
         if (ElementUtil.findParent(target, element -> element.hasAttribute(MARK_ALL_READ_ATTRIBUTE), 3) != null) {
             askStroomAiClient.markAllChatsRead(count -> {
                 // Show the change now, rather than at the next check.
@@ -857,6 +870,33 @@ public class AskStroomAiPresenter
                 loadChat(new AiChat(chatId, 0L, status.getUpdateTimeMs(), null, status.getTitle()));
             });
         }
+    }
+
+    private void onDeleteAllChats() {
+        final int count = chatStatuses.size();
+        final boolean anyWorking = chatStatuses.stream().anyMatch(AiChatStatus::isBusy);
+        final String message = "Delete all " + (count == 1
+                ? "your chat"
+                : count + " of your chats") + "? Their messages, attached data, workspace files, chat memory "
+                               + "and tool approvals are deleted."
+                               + (anyWorking
+                ? " Chats that are working are stopped first."
+                : "")
+                               + " Your own memory is kept. This can't be undone.";
+        ConfirmEvent.fire(this, message, ok -> {
+            if (ok) {
+                askStroomAiClient.deleteAllChats(deleted -> {
+                    if (deleted < count) {
+                        AlertEvent.fireWarn(this, (count - deleted) + " chat(s) could not be deleted, as they "
+                                                  + "did not stop in time. Try again shortly.", null);
+                    }
+                    setChatListShowing(false);
+                    startNewChat();
+                    statusTimer.cancel();
+                    checkChatStatuses();
+                }, this);
+            }
+        });
     }
 
     private Optional<AiChatStatus> findStatus(final int chatId) {

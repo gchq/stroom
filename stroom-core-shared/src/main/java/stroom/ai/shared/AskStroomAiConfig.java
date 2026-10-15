@@ -193,9 +193,8 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
         return historySummaryPrompt;
     }
 
-    @JsonPropertyDescription("Safety cap on the maximum number of history messages loaded from "
-            + "the database. The actual context boundary is determined by the model's context "
-            + "window via progressive trimming.")
+    @JsonPropertyDescription("No longer used: how much of a chat a model is given is now managed by compaction "
+            + "(see stroom.ai.compaction). Kept so that existing settings can still be read.")
     public int getMaxHistorySafetyCapMessages() {
         return maxHistorySafetyCapMessages;
     }

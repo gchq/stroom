@@ -425,6 +425,21 @@ paths:
       summary: Create a new AI chat
       tags:
       - AI
+  /ai/v1/deleteAllChats:
+    post:
+      operationId: deleteAllAiChats
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: "Delete all the user's chats, with their messages, attached data, workspace\
+        \ files, chat memory and tool approvals. The user's own memory is kept."
+      tags:
+      - AI
   /ai/v1/deleteAllMessages/{chatId}:
     post:
       operationId: deleteAllMessages
@@ -968,6 +983,26 @@ paths:
                 type: boolean
           description: default response
       summary: Set the default Stroom AI config to use for asking questions
+      tags:
+      - AI
+  /ai/v1/setTableAnalysisConfig:
+    post:
+      operationId: setAiTableAnalysisConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TableAnalysisConfig"
+        description: config
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Set the table analysis settings, which apply to everyone"
       tags:
       - AI
   /ai/v1/undoCompaction:
@@ -22661,6 +22696,9 @@ components:
           type: integer
           format: int32
         maxRowsPerBatch:
+          type: integer
+          format: int32
+        maxRowsWithoutTools:
           type: integer
           format: int32
         maxTotalRows:

@@ -118,8 +118,9 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
         agentMode.addItems(AiAgentMode.values());
         agentMode.setValue(AiAgentMode.AGENT);
-        agentMode.setTitle("Agent: does what you ask with all its tools. Ask: answers questions, and changes "
-                           + "nothing. Plan: works out a plan for what you ask, without carrying it out.");
+        agentMode.setTitle("Agent: does what you ask with all its tools.\n"
+                           + "Ask: answers questions, and changes nothing.\n"
+                           + "Plan: works out a plan for what you ask, without carrying it out.");
         agentMode.addValueChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onAgentModeChange(event.getValue());
