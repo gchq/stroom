@@ -64,7 +64,6 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
 
     static final String NAME = "run_stroomql";
     static final String QUERY_ARG = "query";
-    static final int MAX_QUERY_LENGTH = 10_000;
     private static final Duration POLL_INTERVAL = Duration.ofMillis(500);
     private static final DateTimeFormatter FILE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
@@ -109,8 +108,9 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         if (query == null || query.isBlank()) {
             throw new WorkspaceException("Give a StroomQL query.");
         }
-        if (query.length() > MAX_QUERY_LENGTH) {
-            throw new WorkspaceException("The query may be at most " + MAX_QUERY_LENGTH + " characters.");
+        final int maxQueryLength = workspace.limits().getMaxQueryLength();
+        if (query.length() > maxQueryLength) {
+            throw new WorkspaceException("The query may be at most " + maxQueryLength + " characters.");
         }
         final WorkspacePath given = outArg(request);
         final WorkspacePath out = given != null
