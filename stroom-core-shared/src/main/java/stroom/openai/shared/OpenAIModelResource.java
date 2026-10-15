@@ -65,6 +65,14 @@ public interface OpenAIModelResource extends RestResource, DirectRestService, Fe
             @Parameter(description = "openAIModelDoc", required = true) OpenAIModelDoc openAIModelDoc);
 
     @POST
+    @Path("/testMcpToolServer")
+    @Operation(
+            summary = "Connect to an MCP tool server and list the tools it would offer",
+            operationId = "testMcpToolServer")
+    OpenAIModelTestResponse testMcpToolServer(
+            @Parameter(description = "request", required = true) TestMcpToolServerRequest request);
+
+    @POST
     @Path("/getDefaultHttpClientConfig")
     @Operation(
             summary = "Get default HTTP client configuration",

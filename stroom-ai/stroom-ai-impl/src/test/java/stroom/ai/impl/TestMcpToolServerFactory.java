@@ -22,6 +22,8 @@ import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.AccessTokenSecret;
 import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.openai.shared.McpAuthMode;
+import stroom.openai.shared.McpToolPolicy;
+import stroom.openai.shared.McpToolPolicyRule;
 import stroom.openai.shared.McpToolServerConfig;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.api.SecurityContext;
@@ -320,7 +322,7 @@ class TestMcpToolServerFactory {
     }
 
     @Test
-    void allowedAndDeniedToolsAreApplied() throws Exception {
+    void deniedToolsAreNotOffered() throws Exception {
         final Tool other = Tool.builder().name("delete_all").inputSchema(Map.of()).build();
         final SyncToolSpecification otherSpec = new SyncToolSpecification(other,
                 (exchange, request) -> CallToolResult.builder().addTextContent("deleted").build());
@@ -331,7 +333,7 @@ class TestMcpToolServerFactory {
                     .name("m")
                     .mcpToolServers(List.of(serverConfig("s", server.endpoint(), McpAuthMode.NONE, null)
                             .copy()
-                            .deniedTools(List.of("delete_*"))
+                            .toolPolicies(List.of(new McpToolPolicyRule("delete_.*", McpToolPolicy.DENY)))
                             .build()))
                     .build();
 

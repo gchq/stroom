@@ -16,7 +16,6 @@
 
 package stroom.ai.impl;
 
-import stroom.openai.shared.McpToolGroupRule;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.service.tool.ToolExecutor;
@@ -38,9 +37,8 @@ import java.util.stream.Collectors;
 /// tools are offered from the next request. This keeps tool definitions the model does not need out of its
 /// context.
 ///
-/// A tool's group is, in order: the group an admin's rule gives it (or never grouped, if the rule says
-/// [McpToolGroupRule#ALWAYS_OFFERED]); the group its server gives it, as `_meta.group`; the start of its name
-/// up to the first `_`, if other tools on its server share it; or else its server.
+/// A tool's group is, in order: the group its server gives it, as `_meta.group`; the start of its name up to the
+/// first `_`, if other tools on its server share it; or else its server.
 final class ToolGroups {
 
     static final String ACTIVATE_PREFIX = "activate_";
@@ -160,9 +158,6 @@ final class ToolGroups {
             return null;
         }
         final String declared = toolset.declaredGroup(toolName).orElse(null);
-        if (McpToolGroupRule.ALWAYS_OFFERED.equals(declared)) {
-            return null;
-        }
         if (declared != null) {
             return clean(declared, info.serverKey());
         }
