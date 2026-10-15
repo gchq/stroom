@@ -102,6 +102,10 @@ public class AskStroomAiConfigPresenter
 
     // True once every user's settings have been reset, so that closing the dialog saves nothing.
     private boolean resetAllDone;
+    // Only administrators see and change the table analysis settings, which apply to everyone.
+    private boolean isAdmin;
+    // The table analysis settings as loaded, to tell whether the administrator changed them.
+    private String loadedTableAnalysis;
 
     public void show(final AskStroomAiConfig currentConfig,
                      final Consumer<AskStroomAiConfig> configConsumer,
@@ -111,7 +115,9 @@ public class AskStroomAiConfigPresenter
         // Wire the dock behaviour callback through to the General sub-presenter.
         generalPresenter.setDockBehaviourChangeHandler(dockBehaviourConsumer);
 
-        final boolean isAdmin = clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION);
+        isAdmin = clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION);
+        getView().getTabBar().setTabHidden(TABLE_ANALYSIS, !isAdmin);
+        switchTab(GENERAL);
         getView().setRestoreFromDefaults(this::onRestoreFromDefaults);
         getView().allowSetDefaults(isAdmin);
         getView().setOnSetDefaults(isAdmin ? this::onSetDefaults
@@ -138,6 +144,7 @@ public class AskStroomAiConfigPresenter
                         final AskStroomAiConfig config = write();
                         dockBehaviourConsumer.accept(generalPresenter.getDockBehaviour());
                         configConsumer.accept(config);
+                        saveTableAnalysisIfChanged();
                     } else {
                         if (dockBehaviourConsumer != null && snapshotDockBehaviour != null) {
                             dockBehaviourConsumer.accept(snapshotDockBehaviour);
@@ -157,7 +164,9 @@ public class AskStroomAiConfigPresenter
     }
 
     private void onSetDefaults(final TaskMonitorFactory taskMonitorFactory) {
-        final AskStroomAiConfig config = write();
+        final AskStroomAiConfig config = write().copy()
+                .tableAnalysisConfig(tableAnalysisPresenter.write())
+                .build();
         askStroomAiClient.setDefaultAskStroomAIConfig(config, success ->
                 AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default config updated", null),
                 taskMonitorFactory);
@@ -189,18 +198,34 @@ public class AskStroomAiConfigPresenter
     private void read(final AskStroomAiConfig config,
                       final DockBehaviour dockBehaviour) {
         generalPresenter.read(config, dockBehaviour);
-        final TableAnalysisConfig tableConfig = config != null
-                ? config.getTableAnalysis()
-                : null;
-        tableAnalysisPresenter.read(
-                tableConfig != null ? tableConfig : new TableAnalysisConfig(),
-                config);
+        if (isAdmin) {
+            // The table analysis settings are always the ones everyone uses, not this user's own.
+            askStroomAiClient.getDefaultConfig(defaults -> {
+                final TableAnalysisConfig tableConfig = defaults.getTableAnalysis() != null
+                        ? defaults.getTableAnalysis()
+                        : new TableAnalysisConfig();
+                tableAnalysisPresenter.read(tableConfig, config);
+                loadedTableAnalysis = tableAnalysisPresenter.write().toString();
+            }, this);
+        }
+    }
+
+    private void saveTableAnalysisIfChanged() {
+        if (!isAdmin || loadedTableAnalysis == null) {
+            return;
+        }
+        final TableAnalysisConfig tableConfig = tableAnalysisPresenter.write();
+        if (!tableConfig.toString().equals(loadedTableAnalysis)) {
+            askStroomAiClient.setTableAnalysisConfig(tableConfig, done -> {
+            }, this);
+        }
     }
 
     private AskStroomAiConfig write() {
         final AskStroomAiConfig.Builder builder = AskStroomAiConfig.builder();
         generalPresenter.write(builder);
-        builder.tableAnalysisConfig(tableAnalysisPresenter.write());
+        // Table analysis settings apply to everyone, so are not kept in a user's own settings.
+        builder.tableAnalysisConfig(null);
         builder.attachmentDownloadTimeoutMs(tableAnalysisPresenter.getAttachmentDownloadTimeoutMs());
         return builder.build();
     }

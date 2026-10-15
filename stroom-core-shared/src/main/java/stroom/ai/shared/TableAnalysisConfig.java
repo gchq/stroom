@@ -40,7 +40,8 @@ import java.util.Objects;
 })
 public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfig {
 
-    public static final int DEFAULT_MAX_TOTAL_ROWS = 10000;
+    public static final int DEFAULT_MAX_TOTAL_ROWS = 50_000;
+    public static final int DEFAULT_MAX_ROWS_WITHOUT_TOOLS = 10_000;
     public static final int DEFAULT_MAX_ROWS_PER_BATCH = 1000;
     public static final int DEFAULT_MAX_PARALLEL_BATCHES = 4;
     public static final String DEFAULT_TABLE_QUERY_SYSTEM_PROMPT = """
@@ -83,6 +84,7 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
             """;
 
     public static final String PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS = "maxTotalRows";
+    public static final String PROP_NAME_MAX_ROWS_WITHOUT_TOOLS = "maxRowsWithoutTools";
     public static final String PROP_NAME_MAXIMUM_BATCH_SIZE = "maxRowsPerBatch";
     public static final String PROP_NAME_MAX_PARALLEL_BATCHES = "maxParallelBatches";
     public static final String PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT = "tableQuerySystemPrompt";
@@ -91,6 +93,8 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
 
     @JsonProperty(PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS)
     private final int maxTotalRows;
+    @JsonProperty(PROP_NAME_MAX_ROWS_WITHOUT_TOOLS)
+    private final int maxRowsWithoutTools;
     @JsonProperty(PROP_NAME_MAXIMUM_BATCH_SIZE)
     private final int maxRowsPerBatch;
     @JsonProperty(PROP_NAME_MAX_PARALLEL_BATCHES)
@@ -104,6 +108,7 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
 
     public TableAnalysisConfig() {
         maxTotalRows = DEFAULT_MAX_TOTAL_ROWS;
+        maxRowsWithoutTools = DEFAULT_MAX_ROWS_WITHOUT_TOOLS;
         maxRowsPerBatch = DEFAULT_MAX_ROWS_PER_BATCH;
         maxParallelBatches = DEFAULT_MAX_PARALLEL_BATCHES;
         tableQuerySystemPrompt = DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
@@ -118,8 +123,10 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
             @JsonProperty(PROP_NAME_MAX_PARALLEL_BATCHES) final Integer maxParallelBatches,
             @JsonProperty(PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT) final String tableQuerySystemPrompt,
             @JsonProperty(PROP_NAME_TABLE_QUERY_USER_PROMPT) final String tableQueryUserPrompt,
-            @JsonProperty(PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT) final String multiSummaryMergePrompt) {
+            @JsonProperty(PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT) final String multiSummaryMergePrompt,
+            @JsonProperty(PROP_NAME_MAX_ROWS_WITHOUT_TOOLS) final Integer maxRowsWithoutTools) {
         this.maxTotalRows = Objects.requireNonNullElse(maxTotalRows, DEFAULT_MAX_TOTAL_ROWS);
+        this.maxRowsWithoutTools = Objects.requireNonNullElse(maxRowsWithoutTools, DEFAULT_MAX_ROWS_WITHOUT_TOOLS);
         this.maxRowsPerBatch = Objects.requireNonNullElse(maxRowsPerBatch, DEFAULT_MAX_ROWS_PER_BATCH);
         this.maxParallelBatches = Objects.requireNonNullElse(maxParallelBatches, DEFAULT_MAX_PARALLEL_BATCHES);
         this.tableQuerySystemPrompt = tableQuerySystemPrompt;
@@ -127,30 +134,43 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
         this.multiSummaryMergePrompt = multiSummaryMergePrompt;
     }
 
-    @JsonPropertyDescription("Maximum total number of rows to download from the table for AI analysis.")
+    @JsonPropertyDescription("Maximum number of rows of a table attached to a chat that are downloaded into the " +
+                             "chat's workspace. A model with tools is given the table's profile and queries " +
+                             "the rows with its tools, so this can be large; maxRowsWithoutTools limits what " +
+                             "a model without tools is given.")
     public int getMaxTotalRows() {
         return maxTotalRows;
     }
 
-    @JsonPropertyDescription("Maximum number of data rows to include in a single AI prompt batch when using batch " +
-                             "processing for large tables")
+    @JsonPropertyDescription("Maximum number of rows of each attached table given to a model without tools, " +
+                             "either in the prompt or, if the table doesn't fit the model's context window, " +
+                             "in batches. The model is told when a table has more rows than this.")
+    public int getMaxRowsWithoutTools() {
+        return maxRowsWithoutTools;
+    }
+
+    @JsonPropertyDescription("Maximum number of rows in one batch, when tables that don't fit the model's " +
+                             "context window are analysed in batches (and when summarise_column summarises a " +
+                             "column with many patterns). A batch is also limited to half the model's context " +
+                             "window.")
     public int getMaxRowsPerBatch() {
         return maxRowsPerBatch;
     }
 
-    @JsonPropertyDescription("Maximum number of concurrent LLM calls when processing batches in parallel")
+    @JsonPropertyDescription("Maximum number of batches analysed at once.")
     public int getMaxParallelBatches() {
         return maxParallelBatches;
     }
 
-    @JsonPropertyDescription("System prompt used when querying the AI about table data")
+    @JsonPropertyDescription("System prompt for analysing one batch of a table.")
     public String getTableQuerySystemPrompt() {
         return tableQuerySystemPrompt;
     }
 
     @JsonPropertyDescription(
-            "User prompt template for table queries. Use {{query}} for the user's question, " +
-            "{{table}} for the markdown table data, and {{context}} for prior chat history")
+            "User prompt template for analysing one batch of a table. Use {{query}} for the user's question, " +
+            "{{table}} for the batch (a markdown table, after a line naming the table), and {{context}} for " +
+            "the chat so far (as compacted, and limited to a tenth of the model's context window)")
     public String getTableQueryUserPrompt() {
         return tableQueryUserPrompt;
     }
@@ -166,6 +186,7 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
     public String toString() {
         return "TableAnalysisConfig{" +
                "maxTotalRows=" + maxTotalRows +
+               ", maxRowsWithoutTools=" + maxRowsWithoutTools +
                ", maxRowsPerBatch=" + maxRowsPerBatch +
                ", maxParallelBatches=" + maxParallelBatches +
                ", tableQuerySystemPrompt='" + tableQuerySystemPrompt + '\'' +
@@ -185,6 +206,7 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
     public static class Builder extends AbstractBuilder<TableAnalysisConfig, TableAnalysisConfig.Builder> {
 
         private int maxTotalRows = DEFAULT_MAX_TOTAL_ROWS;
+        private int maxRowsWithoutTools = DEFAULT_MAX_ROWS_WITHOUT_TOOLS;
         private int maxRowsPerBatch = DEFAULT_MAX_ROWS_PER_BATCH;
         private int maxParallelBatches = DEFAULT_MAX_PARALLEL_BATCHES;
         private String tableQuerySystemPrompt = DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
@@ -196,6 +218,7 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
 
         private Builder(final TableAnalysisConfig tableAnalysisConfig) {
             maxTotalRows = tableAnalysisConfig.maxTotalRows;
+            maxRowsWithoutTools = tableAnalysisConfig.maxRowsWithoutTools;
             maxRowsPerBatch = tableAnalysisConfig.maxRowsPerBatch;
             maxParallelBatches = tableAnalysisConfig.maxParallelBatches;
             tableQuerySystemPrompt = tableAnalysisConfig.tableQuerySystemPrompt;
@@ -205,6 +228,11 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
 
         public Builder maxTotalRows(final int maxTotalRows) {
             this.maxTotalRows = maxTotalRows;
+            return self();
+        }
+
+        public Builder maxRowsWithoutTools(final int maxRowsWithoutTools) {
+            this.maxRowsWithoutTools = maxRowsWithoutTools;
             return self();
         }
 
@@ -245,7 +273,8 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
                     maxParallelBatches,
                     tableQuerySystemPrompt,
                     tableQueryUserPrompt,
-                    multiSummaryMergePrompt);
+                    multiSummaryMergePrompt,
+                    maxRowsWithoutTools);
         }
     }
 }

@@ -105,6 +105,7 @@ public class TableSummariserImpl implements TableSummariser {
         // Build batches from markdown files on disk.
         final List<String> batches = new ArrayList<>();
         boolean anyTruncated = false;
+        boolean anyCapped = false;
         int unreadableSources = 0;
         for (final TableSource source : sources) {
             try {
@@ -114,9 +115,11 @@ public class TableSummariserImpl implements TableSummariser {
                 }
                 // Each batch says which table it is from, so findings can say so too.
                 final String label = "Table: " + source.description() + "\n";
-                buildBatchesFromMarkdown(source.markdownFile(), tableAnalysisConfig,
-                        maxBatchChars(request.getContextWindowTokens()))
-                        .forEach(batch -> batches.add(label + batch));
+                // A model without tools is only given so many rows of each table.
+                final Batches built = buildBatches(source.markdownFile(), tableAnalysisConfig,
+                        maxBatchChars(request.getContextWindowTokens()), tableAnalysisConfig.getMaxRowsWithoutTools());
+                built.batches().forEach(batch -> batches.add(label + batch));
+                anyCapped |= built.capped();
                 if (source.truncated()) {
                     anyTruncated = true;
                 }
@@ -136,11 +139,13 @@ public class TableSummariserImpl implements TableSummariser {
         final boolean truncatedData = anyTruncated;
         LOGGER.debug(() -> "summarise: batches=" + batches.size() + " anyTruncated=" + truncatedData);
 
-        // Include truncation note in the user query if applicable.
-        final String userQuery = anyTruncated
-                ? request.getQuery() + "\n\nNote: this data is truncated to the first "
-                  + tableAnalysisConfig.getMaxTotalRows()
-                  + " rows of a larger result set."
+        // Say if only part of the data is given, so the answer doesn't claim to cover it all.
+        final int givenRows = anyCapped
+                ? Math.min(tableAnalysisConfig.getMaxRowsWithoutTools(), tableAnalysisConfig.getMaxTotalRows())
+                : tableAnalysisConfig.getMaxTotalRows();
+        final String userQuery = anyTruncated || anyCapped
+                ? request.getQuery() + "\n\nNote: only the first " + givenRows + " rows of a larger table are "
+                  + "given, so findings cover those rows only."
                 : request.getQuery();
 
         final int totalBatches = batches.size();
@@ -318,26 +323,35 @@ public class TableSummariserImpl implements TableSummariser {
         return buildBatchesFromMarkdown(mdFile, config, Integer.MAX_VALUE);
     }
 
+    List<String> buildBatchesFromMarkdown(final Path mdFile,
+                                          final TableAnalysisConfig config,
+                                          final int maxBatchChars) {
+        return buildBatches(mdFile, config, maxBatchChars, Integer.MAX_VALUE).batches();
+    }
+
     /**
      * Reads a markdown table file and splits it into batches, each with no more than the maximum rows per batch
      * and, if it can, no more than the given number of characters (a batch always has at least one row). The
      * header and separator rows are preserved at the start of each batch.
      */
-    List<String> buildBatchesFromMarkdown(final Path mdFile,
-                                          final TableAnalysisConfig config,
-                                          final int maxBatchChars) {
+    Batches buildBatches(final Path mdFile,
+                         final TableAnalysisConfig config,
+                         final int maxBatchChars,
+                         final int maxRows) {
         return LOGGER.logDurationIfDebugEnabled(() -> {
             final List<String> batches = new ArrayList<>();
+            int totalRows = 0;
+            boolean capped = false;
             final int maxRowsPerBatch = config.getMaxRowsPerBatch();
 
             try (final BufferedReader reader = Files.newBufferedReader(mdFile)) {
                 final String headerLine = reader.readLine();
                 if (headerLine == null) {
-                    return batches;
+                    return new Batches(batches, false);
                 }
                 final String separatorLine = reader.readLine();
                 if (separatorLine == null) {
-                    return batches;
+                    return new Batches(batches, false);
                 }
 
                 final String mdHeader = headerLine + "\n" + separatorLine + "\n";
@@ -349,6 +363,11 @@ public class TableSummariserImpl implements TableSummariser {
                     if (line.isEmpty()) {
                         continue;
                     }
+                    if (totalRows >= maxRows) {
+                        capped = true;
+                        break;
+                    }
+                    totalRows++;
                     if (rowsInBatch > 0
                         && (rowsInBatch >= maxRowsPerBatch || batch.length() + line.length() + 1 > maxBatchChars)) {
                         batches.add(batch.toString());
@@ -366,10 +385,11 @@ public class TableSummariserImpl implements TableSummariser {
             } catch (final IOException e) {
                 throw new UncheckedIOException("Failed to read markdown file: " + mdFile, e);
             }
-            return batches;
-        }, batches -> "buildBatchesFromMarkdown: file=" + mdFile.getFileName()
-                      + ", maxRowsPerBatch=" + config.getMaxRowsPerBatch()
-                      + ", batch(es)=" + batches.size());
+            return new Batches(batches, capped);
+        }, result -> "buildBatches: file=" + mdFile.getFileName()
+                     + ", maxRowsPerBatch=" + config.getMaxRowsPerBatch()
+                     + ", batch(es)=" + result.batches().size()
+                     + ", capped=" + result.capped());
     }
 
     /**
@@ -390,5 +410,17 @@ public class TableSummariserImpl implements TableSummariser {
             // A batch that failed is accounted for when the results are collected.
             LOGGER.debug(() -> "awaitInFlightBatches: a batch failed", e);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A table split into batches.
+    ///
+    /// @param batches The batches.
+    /// @param capped  True if the table had more rows than were put in batches.
+    record Batches(List<String> batches, boolean capped) {
+
     }
 }

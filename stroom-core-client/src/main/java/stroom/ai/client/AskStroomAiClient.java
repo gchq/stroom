@@ -44,6 +44,7 @@ import stroom.ai.shared.GetAiMcpPromptRequest;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.SaveAiMemoryRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
+import stroom.ai.shared.TableAnalysisConfig;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.ai.shared.UndoAiMemoryChangeRequest;
 import stroom.dispatch.client.RestErrorHandler;
@@ -139,6 +140,22 @@ public class AskStroomAiClient {
                 .onSuccess(config -> {
                     defaultConfig = config;
                     consumer.accept(config);
+                })
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Sets the table analysis settings, which apply to everyone. Needs permission to manage properties.
+    void setTableAnalysisConfig(final TableAnalysisConfig config,
+                                final Consumer<Boolean> consumer,
+                                final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.setTableAnalysisConfig(config))
+                .onSuccess(result -> {
+                    // Fetch the new defaults next time.
+                    defaultConfig = null;
+                    consumer.accept(result);
                 })
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
@@ -337,6 +354,16 @@ public class AskStroomAiClient {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.doUserAction(chatId, messageId, actionId))
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Deletes all the user's chats. The consumer is given how many were deleted.
+    void deleteAllChats(final Consumer<Integer> consumer, final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(AskStroomAiResource::deleteAllChats)
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
