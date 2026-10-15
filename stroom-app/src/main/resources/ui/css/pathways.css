@@ -5,6 +5,16 @@
     --pathway-off-path: 0.22;
     /* How far off a node the ring that says it has just been reached starts. */
     --pathway-pulse-start: 2px;
+    /* How long anything takes to go from what one step of a model's history showed to what the next
+       one shows: a node growing, recolouring, moving or fading, and the lines between them with it.
+       One number because they all have to take the same time — a node that moves faster than it
+       grows drifts away from its own circle, and a line that fades faster than the node it points at
+       leaves the node hanging on nothing.
+
+       Playing a history steps every second and a half, so there is room to go slower than this; what
+       it cannot do is reach the next step, or a drawing left part way would be taken somewhere else
+       before it arrived. */
+    --pathway-step-ease: 0.6s;
 }
 
 /* Which node the constraints under it belong to. Inside the box rather than under the panel's label,
@@ -778,12 +788,14 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    /* So a model stepped through its own history grows and recolours rather than jumping. The step is
-       a second and a half, and easing over a third of that reads as the node changing while leaving
-       most of the step still. Not box-shadow's job alone: the ring says when the node last changed and
-       moves band by band, so it eases too. The pulse put on a node is an outline rather than a shadow,
-       which is why it does not fight any of this. */
-    transition: width 0.35s ease, height 0.35s ease, background-color 0.35s ease, box-shadow 0.35s ease;
+    /* So a model stepped through its own history grows and recolours rather than jumping. Not
+       box-shadow's job alone: the ring says when the node last changed and moves band by band, so it
+       eases too. The pulse put on a node is an outline rather than a shadow, which is why it does not
+       fight any of this. */
+    transition: width var(--pathway-step-ease) ease,
+                height var(--pathway-step-ease) ease,
+                background-color var(--pathway-step-ease) ease,
+                box-shadow var(--pathway-step-ease) ease;
 }
 
 /* Written away from the middle of the diagram — to the right of a node on the right, to the left of
@@ -825,9 +837,16 @@
 }
 
 /* A node is placed by its top left corner and drawn from its middle, so growing moves it. Eased over
-   the same time as the growing, or the two would pull apart and the node would drift. */
+   the same time as the growing, or the two would pull apart and the node would drift.
+
+   Opacity eases over the same time because stepping through a history takes nodes in and out: the
+   drawing holds every node the pathway has ever had, and one the model did not have at this point is
+   faded rather than removed. Without this it switches between two opacities in one frame, which reads
+   as the node appearing from nowhere rather than arriving. */
 .pathway-graph .pathway-graph-node {
-    transition: left 0.35s ease, top 0.35s ease;
+    transition: left var(--pathway-step-ease) ease,
+                top var(--pathway-step-ease) ease,
+                opacity var(--pathway-step-ease) ease;
 }
 
 /* Dragged to move around and scaled with the wheel, the way a map is. Selecting text while dragging
@@ -971,16 +990,29 @@
 /* A node the work no longer does: nothing within the document's observation window carried it. Placed
    but not shown — the drawing is laid out from every node the pathway has ever held, so leaving it out
    of the layout would move everything the reader was looking at, while showing it would put work on
-   the picture that the work no longer does. Hidden rather than made see-through, so nothing can be
-   hovered or clicked that is not there to be read. It comes back the moment a trace carries it again,
-   and winding the changes back to before it went shows it as it was then. */
+   the picture that the work no longer does. Taken to nothing rather than hidden outright, so that
+   going and coming back ease like every other change in a step; pointer events go with it, so nothing
+   can be hovered or clicked that is not there to be read. It comes back the moment a trace carries it
+   again, and winding the changes back to before it went shows it as it was then. */
 .pathway-graph-node--retired {
-    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
 }
 
-/* The join goes with it, or a line is left running out to nothing. */
+/* Lines are kept from one step to the next rather than drawn again, so a join arriving or going eases
+   the way the node at its end does. Only what the browser treats as a property can ease: the ends of
+   a line are attributes, so an endpoint shifting a few pixels as a node grows still goes there at
+   once. That is a few pixels against a join fading in, which is the part that was jumping. */
+.pathway-graph .pathway-curves svg line.pathway-graph-edge {
+    transition: opacity var(--pathway-step-ease) ease,
+                stroke-width var(--pathway-step-ease) ease;
+}
+
+/* The join goes with it, or a line is left running out to nothing. Taken to nothing rather than
+   hidden outright, so it fades with the node it points at instead of vanishing a step ahead of it. */
 .pathway-graph .pathway-curves svg line.pathway-graph-edge--retired {
-    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .pathway-graph .pathway-curves svg line.pathway-graph-edge--absent {

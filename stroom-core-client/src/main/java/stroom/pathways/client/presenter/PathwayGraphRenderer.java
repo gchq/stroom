@@ -26,6 +26,7 @@ import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
@@ -78,12 +79,15 @@ class PathwayGraphRenderer implements PathwayRenderer {
     // branch entirely. Gathered here and laid down once every line is in.
     private HtmlBuilder walkBadges = new HtmlBuilder();
     private HtmlBuilder gradients = new HtmlBuilder();
-    private int gradientCount;
-    // Counted up for every drawing anywhere, so no two drawings can name a gradient alike. Static
-    // rather than per renderer: two graphs can be on the page at once — the pathway list has one
-    // behind the edit dialog's — and a url(#id) is looked up across the whole document, so the one in
-    // front would be painted with the one behind's colours.
+    // Counted up so that no two drawings can name a gradient alike. Static because two graphs can be
+    // on the page at once — the pathway list has one behind the edit dialog's — and a url(#id) is
+    // looked up across the whole document, so the one in front would otherwise be painted with the
+    // one behind's colours.
     private static int drawings;
+    // This drawing's share of that count, taken once rather than once a pass. A gradient has to keep
+    // its name from one step to the next, or the line pointing at it could not be left where it is
+    // and brought up to date.
+    private final int drawingId = ++drawings;
 
     // How long ago the node last changed, in steps against the clock rather than a scale running from
     // the oldest change in this model to the newest. A scale within the model has no fixed meaning —
@@ -137,6 +141,12 @@ class PathwayGraphRenderer implements PathwayRenderer {
      * let up as a walk passes, and whatever tells it when has to know what to look for.
      */
     static final String LABEL_CLASS = "pathway-graph-label";
+
+    // What a line the model draws is called. Written when the drawing is built and looked for when
+    // one already on the screen is brought up to date, which is how the lines the model draws are
+    // told apart from the ones a path being watched lays over them.
+    static final String EDGE_CLASS = "pathway-graph-edge";
+
     /**
      * The line a walk traces along an edge. Named here for the same reason as the veil and the name.
      */
@@ -195,6 +205,9 @@ class PathwayGraphRenderer implements PathwayRenderer {
     // drawing already on the screen is being brought up to date, so the two say the same thing by
     // construction rather than by two pieces of code agreeing with each other.
     private final Map<String, Appearance> appearance = new HashMap<>();
+    // The same for the lines between them. Separate because a line is drawn into the svg layer rather
+    // than as an element of its own in the run of nodes, and is found a different way.
+    private final Map<String, EdgeAppearance> edgeAppearance = new HashMap<>();
     // What the drawing on the screen was built with, for the two things that decide its shape rather
     // than its colours: whether the key is open, and whether a path is being watched — which is what
     // puts a veil over every node. Neither is part of a node's appearance, so neither can be changed
@@ -203,6 +216,21 @@ class PathwayGraphRenderer implements PathwayRenderer {
     private boolean drawnVeiled;
 
     private record Appearance(String className, String style, String dotStyle, String title) {
+
+    }
+
+    // What the last pass gave each line, by the uuid of the node it arrives at — which names a line,
+    // because a node is arrived at from one parent. Start and end are the two ends of its gradient,
+    // which is held apart from the line and has to be brought up to date with it.
+    private record EdgeAppearance(String className,
+                                  int x1,
+                                  int y1,
+                                  int x2,
+                                  int y2,
+                                  int width,
+                                  String stroke,
+                                  String start,
+                                  String end) {
 
     }
 
@@ -226,6 +254,7 @@ class PathwayGraphRenderer implements PathwayRenderer {
             return new HtmlBuilder().toSafeHtml();
         }
         appearance.clear();
+        edgeAppearance.clear();
         final Painted painted = paint(request, root);
         drawnLegend = request.isLegendVisible();
         drawnVeiled = !NullSafe.set(request.getOnPath()).isEmpty();
@@ -291,6 +320,7 @@ class PathwayGraphRenderer implements PathwayRenderer {
         }
 
         appearance.clear();
+        edgeAppearance.clear();
         final Painted painted = paint(request, root);
 
         // Every node the drawing now wants has to be one already on the screen. Anything else means a
@@ -309,7 +339,13 @@ class PathwayGraphRenderer implements PathwayRenderer {
             return false;
         }
 
-        curves.setInnerHTML(painted.curves().asString());
+        // The lines are left where they are and brought up to date, so a join arriving or going can
+        // ease the way the nodes do. Not while a path is being watched: that lays a second run of
+        // lines and a set of badges over these, none of which are named, so the layer goes back to
+        // being drawn again.
+        if (!onPath.isEmpty() || !changeEdges(curves, painted.size())) {
+            curves.setInnerHTML(painted.curves().asString());
+        }
         badges.setInnerHTML(painted.badges().asString());
         appearance.forEach((uuid, want) -> {
             final Element node = onScreen.get(uuid);
@@ -322,6 +358,69 @@ class PathwayGraphRenderer implements PathwayRenderer {
             }
         });
         return true;
+    }
+
+    // Brings the lines already on the screen up to what the last pass wants. Everything is found
+    // before anything is written, so answering false leaves the drawing exactly as it was and the
+    // caller can draw the layer again instead.
+    private boolean changeEdges(final Element curves, final Size size) {
+        final Element svg = firstChild(curves);
+        if (svg == null) {
+            return false;
+        }
+        final Map<String, Element> lines = new HashMap<>();
+        final NodeList<Element> drawn = curves.getElementsByTagName("line");
+        for (int i = 0; i < drawn.getLength(); i++) {
+            final Element line = drawn.getItem(i);
+            if ((" " + line.getAttribute("class") + " ").contains(" " + EDGE_CLASS + " ")) {
+                lines.put(line.getAttribute("edge"), line);
+            }
+        }
+        if (!lines.keySet().equals(edgeAppearance.keySet())) {
+            return false;
+        }
+        // A line is painted with a gradient held away from it, so both have to be there to be moved.
+        final Map<String, Element> paints = new HashMap<>();
+        for (final String uuid : edgeAppearance.keySet()) {
+            final Element paint = Document.get().getElementById(gradientId(uuid));
+            if (paint == null
+                || paint.getChildCount() != 2
+                || !Element.is(paint.getChild(0))
+                || !Element.is(paint.getChild(1))) {
+                return false;
+            }
+            paints.put(uuid, paint);
+        }
+
+        svg.setAttribute("width", String.valueOf(size.width));
+        svg.setAttribute("height", String.valueOf(size.height));
+        edgeAppearance.forEach((uuid, want) -> {
+            final Element line = lines.get(uuid);
+            line.setAttribute("class", want.className());
+            line.setAttribute("x1", String.valueOf(want.x1()));
+            line.setAttribute("y1", String.valueOf(want.y1()));
+            line.setAttribute("x2", String.valueOf(want.x2()));
+            line.setAttribute("y2", String.valueOf(want.y2()));
+            line.setAttribute("stroke-width", String.valueOf(want.width()));
+            final Element paint = paints.get(uuid);
+            paint.setAttribute("x1", String.valueOf(want.x1()));
+            paint.setAttribute("y1", String.valueOf(want.y1()));
+            paint.setAttribute("x2", String.valueOf(want.x2()));
+            paint.setAttribute("y2", String.valueOf(want.y2()));
+            Element.as(paint.getChild(0)).setAttribute("stop-color", want.start());
+            Element.as(paint.getChild(1)).setAttribute("stop-color", want.end());
+        });
+        return true;
+    }
+
+    private static Element firstChild(final Element element) {
+        final NodeList<Node> children = element.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            if (Element.is(children.getItem(i))) {
+                return Element.as(children.getItem(i));
+            }
+        }
+        return null;
     }
 
     // The first element below this one carrying the given class. Read as an attribute rather than
@@ -346,7 +445,9 @@ class PathwayGraphRenderer implements PathwayRenderer {
 
     // Everything inside the box: the lines as one svg, the nodes as a run of divs, and the size both
     // are laid out at. One pass, used both to build a drawing and to bring one already on the screen
-    // up to date, so there is no second idea of what a drawing looks like to fall out of step.
+    // up to date, so there is no second idea of what a drawing looks like to fall out of step. What
+    // each node and each line should look like is written down as it goes, which is what updating one
+    // already on the screen reads back.
     private Painted paint(final RenderRequest request, final PathNode root) {
         final PathNode shown = NullSafe.get(request.getPathway(), Pathway::getRoot);
         final Map<String, PathNode> shownNodes = new HashMap<>();
@@ -366,8 +467,6 @@ class PathwayGraphRenderer implements PathwayRenderer {
         places.replaceAll((uuid, at) -> new Point(at.getX() - size.left, at.getY() - size.top));
 
         gradients = new HtmlBuilder();
-        gradientCount = 0;
-        drawings++;
         final HtmlBuilder edges = new HtmlBuilder();
         final HtmlBuilder markers = new HtmlBuilder();
         walkEdges = new HtmlBuilder();
@@ -567,16 +666,19 @@ class PathwayGraphRenderer implements PathwayRenderer {
             // the direction the work flows without needing an arrow head on it.
             final int edgeWidth = scale.edge(timesUsed(child, usage));
             final PathNode childShown = shownNodes.get(child.getUuid());
-            line(edges,
-                    from,
-                    to,
+            final EdgeAppearance want = new EdgeAppearance(
+                    edgeClass(childShown != null,
+                            ran(child),
+                            childShown != null && childShown.isRetired()),
+                    (int) from.getX(), (int) from.getY(),
+                    (int) to.getX(), (int) to.getY(),
                     edgeWidth,
-                    childShown != null,
-                    ran(child),
-                    childShown != null && childShown.isRetired(),
-                    gradient(from, to,
-                            light(lastUsed(child, usage), now),
-                            colour(lastUsed(child, usage), now)));
+                    "url(#" + gradientId(child.getUuid()) + ")",
+                    light(lastUsed(child, usage), now),
+                    colour(lastUsed(child, usage), now));
+            edgeAppearance.put(child.getUuid(), want);
+            gradient(child.getUuid(), from, to, want.start(), want.end());
+            line(edges, child.getUuid(), want);
             if (!onPath.isEmpty() && ran(child)) {
                 walkLine(walkEdges, child.getUuid(), from, to, Math.max(edgeWidth, WALK_WIDTH));
                 walkBadge(walkBadges, child.getUuid(), from, to);
@@ -662,8 +764,11 @@ class PathwayGraphRenderer implements PathwayRenderer {
     // A gradient of its own for each link, laid along the line it paints. Along the line rather than
     // across the drawing, which is what gradientUnits="userSpaceOnUse" with the line's own ends does —
     // the default would measure against the shape's box and turn with it.
-    private String gradient(final Point from, final Point to, final String start, final String end) {
-        final String id = "pathwayEdge" + drawings + "-" + gradientCount++;
+    private void gradient(final String uuid,
+                          final Point from,
+                          final Point to,
+                          final String start,
+                          final String end) {
         gradients.elem(gradient -> {
             gradient.elem(SafeHtmlUtil.from("stop"),
                     new Attribute("offset", "0"),
@@ -672,13 +777,19 @@ class PathwayGraphRenderer implements PathwayRenderer {
                     new Attribute("offset", "1"),
                     new Attribute("stop-color", end));
         }, SafeHtmlUtil.from("linearGradient"),
-                new Attribute("id", id),
+                new Attribute("id", gradientId(uuid)),
                 new Attribute("gradientUnits", "userSpaceOnUse"),
                 new Attribute("x1", String.valueOf((int) from.getX())),
                 new Attribute("y1", String.valueOf((int) from.getY())),
                 new Attribute("x2", String.valueOf((int) to.getX())),
                 new Attribute("y2", String.valueOf((int) to.getY())));
-        return "url(#" + id + ")";
+    }
+
+    // Named after the node the line arrives at, so a gradient keeps its name across a step and the
+    // line pointing at it can be left where it is. The drawing's own number goes in front, because a
+    // url(#id) is looked up across the whole document and two graphs can be on the page at once.
+    private String gradientId(final String uuid) {
+        return "pathwayEdge" + drawingId + "-" + uuid;
     }
 
     // The point on a node's rim facing the other end of the line, which is where the line starts.
@@ -693,31 +804,31 @@ class PathwayGraphRenderer implements PathwayRenderer {
                 from.getY() + ((dy / length) * radius));
     }
 
-    private static void line(final HtmlBuilder svg,
-                             final Point start,
-                             final Point end,
-                             final int width,
-                             final boolean present,
-                             final boolean ran,
-                             final boolean retired,
-                             final String colour) {
+    private static void line(final HtmlBuilder svg, final String uuid, final EdgeAppearance want) {
         svg.elem(SafeHtmlUtil.from("line"),
-                new Attribute("x1", String.valueOf((int) start.getX())),
-                new Attribute("y1", String.valueOf((int) start.getY())),
-                new Attribute("x2", String.valueOf((int) end.getX())),
-                new Attribute("y2", String.valueOf((int) end.getY())),
-                new Attribute("stroke-width", String.valueOf(width)),
-                new Attribute("stroke", colour),
-                Attribute.className("pathway-graph-edge"
-                                    + (present
-                                            ? ""
-                                            : " pathway-graph-edge--absent")
-                                    + (ran
-                                            ? ""
-                                            : " pathway-graph-edge--off-path")
-                                    + (retired
-                                            ? " pathway-graph-edge--retired"
-                                            : "")));
+                // Which node this line arrives at, so the line can be found again rather than drawn
+                // again when the drawing is brought up to date.
+                new Attribute("edge", uuid),
+                new Attribute("x1", String.valueOf(want.x1())),
+                new Attribute("y1", String.valueOf(want.y1())),
+                new Attribute("x2", String.valueOf(want.x2())),
+                new Attribute("y2", String.valueOf(want.y2())),
+                new Attribute("stroke-width", String.valueOf(want.width())),
+                new Attribute("stroke", want.stroke()),
+                Attribute.className(want.className()));
+    }
+
+    private static String edgeClass(final boolean present, final boolean ran, final boolean retired) {
+        return EDGE_CLASS
+               + (present
+                       ? ""
+                       : " pathway-graph-edge--absent")
+               + (ran
+                       ? ""
+                       : " pathway-graph-edge--off-path")
+               + (retired
+                       ? " pathway-graph-edge--retired"
+                       : "");
     }
 
     // What the reading kept at the moment being shown says, or what the node says where there is no
