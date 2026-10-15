@@ -131,6 +131,11 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
         getView().setRerankScoreMinimum(index.getRerankScoreMinimum());
 
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
+
+        clusterPresenter.setReadOnly(readOnly);
+        vectorGenerationModelPresenter.setReadOnly(readOnly);
+        rerankModelPresenter.setReadOnly(readOnly);
+        pipelinePresenter.setReadOnly(readOnly);
     }
 
     @Override

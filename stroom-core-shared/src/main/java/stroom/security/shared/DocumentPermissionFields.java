@@ -20,8 +20,10 @@ import stroom.docref.DocRef;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.quickfilter.shared.QuickFilterContext;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -74,28 +76,28 @@ public class DocumentPermissionFields {
             .builder()
             .fldName("DocumentType")
             .fldType(FieldType.TEXT)
-            .conditionSet(ConditionSet.DEFAULT_TEXT)
+            .conditionSet(ConditionSet.MATCHER_TEXT)
             .queryable(true)
             .build();
     public static final QueryField DOCUMENT_NAME = QueryField
             .builder()
             .fldName("DocumentName")
             .fldType(FieldType.TEXT)
-            .conditionSet(ConditionSet.DEFAULT_TEXT)
+            .conditionSet(ConditionSet.MATCHER_TEXT)
             .queryable(true)
             .build();
     public static final QueryField DOCUMENT_UUID = QueryField
             .builder()
             .fldName("DocumentUUID")
             .fldType(FieldType.TEXT)
-            .conditionSet(ConditionSet.DEFAULT_TEXT)
+            .conditionSet(ConditionSet.MATCHER_TEXT)
             .queryable(true)
             .build();
     public static final QueryField DOCUMENT_TAG = QueryField
             .builder()
             .fldName("DocumentTag")
             .fldType(FieldType.TEXT)
-            .conditionSet(ConditionSet.DEFAULT_TEXT)
+            .conditionSet(ConditionSet.MATCHER_TEXT)
             .queryable(true)
             .build();
 
@@ -125,4 +127,29 @@ public class DocumentPermissionFields {
     public static Map<String, QueryField> getAllFieldMap() {
         return ALL_FIELD_MAP;
     }
+
+    /**
+     * The fields the document permission quick filters resolve against, server side.
+     * UserPermissionReportPresenter defaults to the name alone; BatchDocumentPermissionsPresenter
+     * also matches the uuid, so the wider set is the default here.
+     */
+    public static final List<QueryField> QUICK_FILTER_DEFAULT_FIELDS = Arrays.asList(
+            DOCUMENT_NAME,
+            DOCUMENT_UUID);
+
+    public static final List<QueryField> QUICK_FILTER_FIELDS = Arrays.asList(
+            DOCUMENT_NAME,
+            DOCUMENT_UUID,
+            DOCUMENT_TYPE,
+            DOCUMENT_TAG);
+
+    // Shared by the batch permissions and permission report screens: both parse against these
+    // fields via ExplorerServiceImpl.applyExpressionFilter. No FilterFieldDefinitions - the
+    // tooltip for these screens is hand-built - so only history and Advanced Query use this.
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "documentPermissions",
+            null,
+            QUICK_FILTER_DEFAULT_FIELDS,
+            QUICK_FILTER_FIELDS);
+
 }

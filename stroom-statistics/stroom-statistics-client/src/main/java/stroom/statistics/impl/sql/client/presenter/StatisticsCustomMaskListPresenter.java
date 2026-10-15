@@ -28,12 +28,10 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
 import stroom.statistics.impl.sql.client.presenter.State.Mask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -65,32 +63,19 @@ public class StatisticsCustomMaskListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-        newButton = view.addButton(SvgPresets.NEW_ITEM);
-        autoGenerateButton = view.addButton(SvgPresets.GENERATE);
-        removeButton = view.addButton(SvgPresets.REMOVE);
+        newButton = view.getToolbar().button(SvgImage.ADD, "New", this::onAdd);
+        autoGenerateButton = view.getToolbar().button(SvgImage.GENERATE, "Auto-generate roll-up permutations",
+                this::onAutoGenerate);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        removeButton.setEnabled(false);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAdd(event);
-            }
-        }));
 
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onRemove(event);
-            }
-        }));
 
-        registerHandler(autoGenerateButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAutoGenerate(event);
-            }
-        }));
 
         registerHandler(selectionModel.addSelectionHandler(event -> enableButtons()));
     }
@@ -147,13 +132,13 @@ public class StatisticsCustomMaskListPresenter
         columns.add(rolledUpColumn);
     }
 
-    private void onAdd(final ClickEvent event) {
+    private void onAdd() {
         this.state.addMask(new HashSet<>());
         refresh();
         DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
     }
 
-    private void onAutoGenerate(final ClickEvent event) {
+    private void onAutoGenerate() {
         final StatisticsCustomMaskListPresenter thisInstance = this;
         ConfirmEvent.fire(this,
                 "Are you sure you want to clear the existing roll-ups and generate all possible " +
@@ -167,7 +152,7 @@ public class StatisticsCustomMaskListPresenter
                 });
     }
 
-    private void onRemove(final ClickEvent event) {
+    private void onRemove() {
         final List<Mask> list = selectionModel.getSelectedItems();
         if (list != null && list.size() > 0) {
             state.removeMasks(list);

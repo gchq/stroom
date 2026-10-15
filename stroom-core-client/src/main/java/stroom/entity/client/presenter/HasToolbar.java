@@ -18,9 +18,24 @@ package stroom.entity.client.presenter;
 
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.Collections;
 import java.util.List;
 
+/// Tab content (e.g. an editor in a document's tab) that adds buttons to the toolbar row above it.
+///
+/// Buttons that sit beside the document's own (Save and Save As) join its toolbar, so that the
+/// buttons together are one group and one tab stop; other toolbars or controls, apart from them on
+/// the row (e.g. a query's time range and Execute button, at its end), are each their own.
 public interface HasToolbar {
 
-    List<Widget> getToolbars();
+    /// @return Groups of buttons (e.g. a [stroom.widget.button.client.Toolbar]) to add to the
+    /// document's toolbar, after its own buttons.
+    default List<Widget> getDocumentButtons() {
+        return Collections.emptyList();
+    }
+
+    /// @return Other toolbars or controls for the row, after the document's toolbar.
+    default List<Widget> getToolbars() {
+        return Collections.emptyList();
+    }
 }

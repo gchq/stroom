@@ -24,8 +24,7 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.SigningKeyPresenter;
 import stroom.security.shared.AppPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -38,7 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 public class SigningKeyPlugin extends MonitoringPlugin<SigningKeyPresenter> {
 
     public static final String SCREEN_NAME = "Signing Keys";
-    public static final Preset ICON = SvgPresets.KEY;
+    public static final SvgImage ICON = SvgImage.KEY;
 
     @Inject
     public SigningKeyPlugin(final EventBus eventBus,

@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public final class DaysWidget extends Composite {
@@ -62,6 +63,29 @@ public final class DaysWidget extends Composite {
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    /// Makes the days read only: they can be read and stay in the tab order, but can't be ticked
+    /// or unticked. They look like the normal tick boxes with grey ticks.
+    ///
+    /// @param readOnly Whether the days are read only.
+    public void setReadOnly(final boolean readOnly) {
+        for (final CustomCheckBox day : days()) {
+            day.setReadOnly(readOnly);
+        }
+    }
+
+    /// Enables or disables every day.
+    ///
+    /// @param enabled Whether the days can be changed.
+    public void setEnabled(final boolean enabled) {
+        for (final CustomCheckBox day : days()) {
+            day.setEnabled(enabled);
+        }
+    }
+
+    private List<CustomCheckBox> days() {
+        return List.of(mon, tue, wed, thu, fri, sat, sun);
     }
 
     public Days getValue() {

@@ -16,10 +16,9 @@
 
 package stroom.security.identity.shared;
 
-import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,38 +28,30 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class FindAccountRequest extends ExpressionCriteria {
-
-
-//    @JsonProperty
-//    private final String quickFilter;
+public class FindAccountRequest extends QuickFilterCriteria {
 
     @JsonCreator
     public FindAccountRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                              @JsonProperty("expression") final ExpressionOperator expression) {
-        super(pageRequest, sortList, expression);
-//        this.quickFilter = quickFilter;
+                              @JsonProperty("quickFilter") final String quickFilter) {
+        super(pageRequest, sortList, quickFilter);
     }
-
-//    public String getQuickFilter() {
-//        return quickFilter;
-//    }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends ExpressionCriteriaBuilder<FindAccountRequest, Builder> {
+    public static class Builder extends QuickFilterCriteriaBuilder<FindAccountRequest, Builder> {
 
         @Override
         protected Builder self() {
-            return null;
+            // Was returning null, which made every inherited setter throw when chained.
+            return this;
         }
 
         @Override
         public FindAccountRequest build() {
-            return new FindAccountRequest(pageRequest, sortList, expression);
+            return new FindAccountRequest(pageRequest, sortList, quickFilter);
         }
     }
 }

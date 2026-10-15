@@ -19,7 +19,7 @@ package stroom.ai.client;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.spinner.client.SpinnerSmall;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -51,15 +51,15 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     Label chatTitle;
     @UiField
-    InlineSvgButton newChat;
+    ToolbarButton newChat;
     @UiField
-    InlineSvgButton chatHistory;
+    ToolbarButton chatHistory;
     @UiField
-    InlineSvgButton download;
+    ToolbarButton download;
     @UiField
-    InlineSvgButton deleteAll;
+    ToolbarButton deleteAll;
     @UiField
-    InlineSvgButton configure;
+    ToolbarButton configure;
     @UiField
     Label emptyPrompt;
 
@@ -68,7 +68,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     TextArea message;
     @UiField
-    InlineSvgButton run;
+    ToolbarButton run;
     @UiField
     Label contextIndicator;
     @UiField
@@ -80,36 +80,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public AskStroomAiViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        newChat.setText("New Conversation");
-        newChat.setTitle("New Conversation");
-        newChat.setSvg(SvgImage.ADD);
-        newChat.setEnabled(true);
-
-        chatHistory.setText("Conversation History");
-        chatHistory.setTitle("Conversation History");
-        chatHistory.setSvg(SvgImage.HISTORY);
-        chatHistory.setEnabled(true);
-
-        download.setText("Download");
-        download.setTitle("Download");
-        download.setSvg(SvgImage.DOWN);
-        download.setEnabled(false);
-
-        deleteAll.setText("Delete All Messages");
-        deleteAll.setTitle("Delete All Messages");
-        deleteAll.setSvg(SvgImage.DELETE);
-        deleteAll.setEnabled(false);
-
-        configure.setText("Configure");
-        configure.setTitle("Configure");
-        configure.setSvg(SvgImage.SETTINGS);
-        configure.setEnabled(true);
-
         message.getElement().setAttribute("placeholder", "How can I help?");
-
-        run.setText(SEND_BUTTON_NORMAL_TEXT);
-        run.setSvg(SvgImage.PLAY);
-        run.setEnabled(false);
     }
 
     @Override
@@ -136,14 +107,15 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public void setSendButtonLoadingState(final boolean loading) {
         if (loading) {
             run.setEnabled(true);
-            run.setText(SEND_BUTTON_CANCEL_TEXT);
+            // Its name (its title) says what pressing it does now
+            run.setTitle(SEND_BUTTON_CANCEL_TEXT);
             run.setSvg(SvgImage.STOP);
             run.addStyleName("stop");
             run.removeStyleName("play");
         } else {
             sending = false;
             run.setEnabled(!message.getText().isEmpty());
-            run.setText(SEND_BUTTON_NORMAL_TEXT);
+            run.setTitle(SEND_BUTTON_NORMAL_TEXT);
             run.setSvg(SvgImage.PLAY);
             run.addStyleName("play");
             run.removeStyleName("stop");

@@ -23,14 +23,13 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.query.api.datasource.QueryField;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridComparatorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -52,7 +51,6 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 
     private final MyDataGrid<QueryField> dataGrid;
     private final MultiSelectionModelImpl<QueryField> selectionModel;
-    private final UiConfigCache uiConfigCache;
     private final FieldEditPresenter fieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -76,14 +74,13 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
         view.setDataWidget(dataGrid);
 
         this.fieldEditPresenter = fieldEditPresenter;
-        this.uiConfigCache = uiConfigCache;
 
-        newButton = getView().addButton(SvgPresets.NEW_ITEM);
-        newButton.setTitle("New Field");
-        editButton = getView().addButton(SvgPresets.EDIT);
-        editButton.setTitle("Edit Field");
-        removeButton = getView().addButton(SvgPresets.DELETE);
-        removeButton.setTitle("Remove Field");
+        getView().getToolbar().setName("Field actions");
+        newButton = getView().getToolbar().button(SvgImage.ADD, "New Field", this::onAddClicked);
+        editButton = getView().getToolbar().button(SvgImage.EDIT, "Edit Field", this::onEditClicked);
+        editButton.setEnabled(false);
+        removeButton = getView().getToolbar().button(SvgImage.DELETE, "Remove Field", this::onRemoveClicked);
+        removeButton.setEnabled(false);
 //        upButton = getView().addButton(SvgPresets.UP);
 //        upButton.setTitle("Move Up");
 //        downButton = getView().addButton(SvgPresets.DOWN);
@@ -98,31 +95,28 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
         });
     }
 
+    private void onAddClicked() {
+        if (!isReadOnly()) {
+            onAdd();
+        }
+    }
+
+    private void onEditClicked() {
+        if (!isReadOnly()) {
+            onEdit();
+        }
+    }
+
+    private void onRemoveClicked() {
+        if (!isReadOnly()) {
+            onRemove();
+        }
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(event -> {
-            if (!isReadOnly()) {
-                if (MouseUtil.isPrimary(event)) {
-                    onAdd();
-                }
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (!isReadOnly()) {
-                if (MouseUtil.isPrimary(event)) {
-                    onEdit();
-                }
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (!isReadOnly()) {
-                if (MouseUtil.isPrimary(event)) {
-                    onRemove();
-                }
-            }
-        }));
 //        registerHandler(upButton.addClickHandler(event -> {
 //            if (!isReadOnly()) {
 //                if (MouseUtil.isPrimary(event)) {
@@ -338,7 +332,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 //                if (column instanceof OrderByColumn<?, ?> orderByColumn) {
 //                    final String sortField = orderByColumn.getField();
 //                    final boolean isAscending = columnSortInfo.isAscending();
-////                    GWT.log("sortField " + i + ": " + sortField + " isAscending: " + isAscending);
+//                    GWT.log("sortField " + i + ": " + sortField + " isAscending: " + isAscending);
 //
 //                    Comparator<QueryField> comparator = null;
 //                    if (NAME_FIELD.equals(sortField)) {

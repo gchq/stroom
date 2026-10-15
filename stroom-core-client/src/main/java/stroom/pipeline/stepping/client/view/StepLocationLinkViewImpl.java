@@ -44,6 +44,11 @@ public class StepLocationLinkViewImpl extends ViewImpl implements StepLocationLi
         return label;
     }
 
+    @Override
+    public void setEnabled(final boolean enabled) {
+        label.setStyleName("stepLocationLink--disabled", !enabled);
+    }
+
     public interface Binder extends UiBinder<Widget, StepLocationLinkViewImpl> {
 
     }

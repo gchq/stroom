@@ -21,6 +21,8 @@ import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.Position;
 import stroom.widget.popup.client.presenter.PositionUtil;
 import stroom.widget.popup.client.view.SimplePopupLayout;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.Rect;
 
@@ -30,6 +32,8 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.PopupPanel;
 
@@ -50,7 +54,19 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     };
 
     public SelectionPopup() {
-        popupPanel = new PopupPanel();
+        popupPanel = new PopupPanel() {
+            @Override
+            protected void onPreviewNativeEvent(final NativePreviewEvent event) {
+                super.onPreviewNativeEvent(event);
+                // Escape closes the list wherever the focus is (e.g. still in the box that opened
+                // it), and is cancelled so that nothing else (e.g. a dialog or the window) sees it
+                if (event.getTypeInt() == Event.ONKEYDOWN
+                    && KeyBinding.test(event.getNativeEvent()) == Action.CLOSE) {
+                    event.cancel();
+                    hide();
+                }
+            }
+        };
         selectionList = new SelectionList<>();
         selectionList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
 
@@ -138,5 +154,17 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         selectionList.registerPopupTextProvider(popupTextSupplier);
+    }
+
+    /// Names the popup's list for screen readers, e.g. after the box that opened it.
+    ///
+    /// @param name The list's accessible name.
+    public void setAccessibleName(final String name) {
+        selectionList.setAccessibleName(name);
+    }
+
+    /// @return The id of the popup's list box element, for a box that controls it (`aria-controls`).
+    public String getListBoxId() {
+        return selectionList.getListBoxId();
     }
 }

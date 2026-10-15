@@ -4,10 +4,14 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="searchProcessTimeToIdle" label="Search Process Time To Idle">
+        <form:FormGroup identity="searchProcessTimeToIdle" label="Search Process Time To Idle"
+                        helpText="How long the search can go unused before it is stopped. Results already found are kept. Enter a duration such as 30s, 10m, 1h or 1d, or ISO 8601 such as PT10M."
+                        screenReaderText="Duration, e.g. 10m, 1h or PT10M.">
             <g:TextBox ui:field="searchProcessTimeToIdle" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="searchProcessTimeToLive" label="Search Process Time To Live">
+        <form:FormGroup identity="searchProcessTimeToLive" label="Search Process Time To Live"
+                        helpText="How long after the search was created before it is stopped, whether or not it is in use. Results already found are kept. Enter a duration such as 10m, 1h or 1d, or ISO 8601 such as PT1H."
+                        screenReaderText="Duration from creation, e.g. 1h or PT1H.">
             <g:TextBox ui:field="searchProcessTimeToLive" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
@@ -17,10 +21,14 @@
             <tickbox:CustomCheckBox ui:field="searchProcessDestroyOnWindowClose" identity="searchProcessDestroyOnWindowClose" label="Search Process Destroy On Window Close"/>
         </form:FormGroup>
 
-        <form:FormGroup identity="storeTimeToIdle" label="Store Time To Idle">
+        <form:FormGroup identity="storeTimeToIdle" label="Store Time To Idle"
+                        helpText="How long the results can go unused before they are deleted. Enter a duration such as 30s, 10m, 1h or 1d, or ISO 8601 such as PT10M."
+                        screenReaderText="Duration, e.g. 10m, 1h or PT10M.">
             <g:TextBox ui:field="storeTimeToIdle" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="storeTimeToLive" label="Store Time To Live">
+        <form:FormGroup identity="storeTimeToLive" label="Store Time To Live"
+                        helpText="How long after the results were created before they are deleted, whether or not they are in use. Enter a duration such as 10m, 1h or 1d, or ISO 8601 such as P1D."
+                        screenReaderText="Duration from creation, e.g. 1d or P1D.">
             <g:TextBox ui:field="storeTimeToLive" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>

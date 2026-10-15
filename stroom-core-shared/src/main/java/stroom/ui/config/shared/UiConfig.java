@@ -41,6 +41,7 @@ import java.util.Set;
 public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final String DEFAULT_USER_GUIDE_BASE_SUB_PATH = "/user-guide";
+    private static final int DEFAULT_QUICK_FILTER_HISTORY_SIZE = 20;
     private static final int DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES = 1_000;
 
     @JsonProperty
@@ -173,6 +174,11 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                              "ctrl-space or live autocompletion.")
     private final int maxEditorCompletionEntries;
 
+    @JsonProperty
+    @JsonPropertyDescription("The number of recently used filters to remember per user for each quick " +
+                             "filter. Older filters are forgotten as new ones are used.")
+    private final int quickFilterHistorySize;
+
     public UiConfig() {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
         aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
@@ -204,6 +210,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 StandardExplorerTags.REFERENCE_LOADER);
         defaultApiKeyHashAlgorithm = HashAlgorithm.SHA3_256;
         maxEditorCompletionEntries = DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES;
+        quickFilterHistorySize = DEFAULT_QUICK_FILTER_HISTORY_SIZE;
     }
 
     @JsonCreator
@@ -235,7 +242,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
                     @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags,
                     @JsonProperty("defaultApiKeyHashAlgorithm") final HashAlgorithm defaultApiKeyHashAlgorithm,
-                    @JsonProperty("maxEditorCompletionEntries") final Integer maxEditorCompletionEntries) {
+                    @JsonProperty("maxEditorCompletionEntries") final Integer maxEditorCompletionEntries,
+                    @JsonProperty("quickFilterHistorySize") final Integer quickFilterHistorySize) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -264,6 +272,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.referencePipelineSelectorIncludedTags = referencePipelineSelectorIncludedTags;
         this.defaultApiKeyHashAlgorithm = defaultApiKeyHashAlgorithm;
         this.maxEditorCompletionEntries = Objects.requireNonNullElse(maxEditorCompletionEntries, DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES);
+        this.quickFilterHistorySize = Objects.requireNonNullElse(quickFilterHistorySize, DEFAULT_QUICK_FILTER_HISTORY_SIZE);
     }
 
     public String getWelcomeHtml() {
@@ -438,6 +447,10 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return maxEditorCompletionEntries;
     }
 
+    public int getQuickFilterHistorySize() {
+        return quickFilterHistorySize;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -473,7 +486,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                && Objects.equals(nestedIndexFieldsDelimiterPattern, uiConfig.nestedIndexFieldsDelimiterPattern)
                && Objects.equals(referencePipelineSelectorIncludedTags, uiConfig.referencePipelineSelectorIncludedTags)
                && Objects.equals(defaultApiKeyHashAlgorithm, uiConfig.defaultApiKeyHashAlgorithm)
-               && Objects.equals(maxEditorCompletionEntries, uiConfig.maxEditorCompletionEntries);
+               && Objects.equals(maxEditorCompletionEntries, uiConfig.maxEditorCompletionEntries)
+               && quickFilterHistorySize == uiConfig.quickFilterHistorySize;
     }
 
     @Override
@@ -503,7 +517,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 nestedIndexFieldsDelimiterPattern,
                 referencePipelineSelectorIncludedTags,
                 defaultApiKeyHashAlgorithm,
-                maxEditorCompletionEntries);
+                maxEditorCompletionEntries,
+                quickFilterHistorySize);
     }
 
     @Override
@@ -535,6 +550,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                ", referencePipelineSelectorIncludedTags=" + referencePipelineSelectorIncludedTags +
                ", defaultApiKeyHashAlgorithm=" + defaultApiKeyHashAlgorithm +
                ", maxEditorCompletionEntries=" + maxEditorCompletionEntries +
+               ", quickFilterHistorySize=" + quickFilterHistorySize +
                '}';
     }
 }

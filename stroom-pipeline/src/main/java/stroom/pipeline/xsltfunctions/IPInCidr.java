@@ -29,6 +29,30 @@ import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@XsltFunctionDef(
+        name = IPInCidr.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.NETWORK,
+        commonDescription = """
+                Checks whether an IPv4 address lies within a CIDR range.
+                """,
+        commonReturnType = XsltDataType.BOOLEAN,
+        commonReturnDescription = "`true` if the address is in the range; otherwise `false`.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "ipAddress",
+                                        description = "The IPv4 address to check.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "cidr",
+                                        description = "The CIDR range, for example `192.168.1.0/24`.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class IPInCidr extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "ip-in-cidr";

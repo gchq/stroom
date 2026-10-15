@@ -44,6 +44,7 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.util.client.PresenterScope;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -55,6 +56,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
+// Local addition: getInitialisationHandler(), which lets a document type collect required
+// configuration before its editor opens, plus the postSaveCallback save() overload. FloorMap
+// needs both - the handler prompts for the Facts and Events store refs, and the callback
+// flushes pending temporal-store changes and saves assets after the document is persisted.
+// Upstream has neither. Taking upstream's version wholesale means a FloorMapDoc opens with no
+// stores selected, and FloorMapPlugin's save throws (it deliberately fails the legacy save).
 public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 
     private final DocumentTabManager documentTabManager = new DocumentTabManager();
@@ -152,6 +160,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             // If we already have a tab item for this document then make sure it is
             // visible.
             if (!existing.isEmpty() && !duplicate) {
+                @SuppressWarnings("SequencedCollectionMethodCanBeUsed") // Not in GWT
                 final DocumentTabData existingTab = existing.get(0);
                 // Tell the content presenter to select this existing tab.
                 SelectContentTabEvent.fire(this, existingTab);
@@ -175,7 +184,9 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             } else if (forceOpen) {
                 // If the item isn't already open but we are forcing it open then,
                 // create a new presenter and register it as open.
-                final MyPresenterWidget<?> documentEditPresenter = createEditor();
+                // The editor, and every presenter made for it now or as its tabs are shown, belong to
+                // a scope that releases them all when the document is closed
+                final MyPresenterWidget<?> documentEditPresenter = new PresenterScope().capture(this::createEditor);
                 presenter = documentEditPresenter;
 
                 if (presenter instanceof final HasMultipleInstances hasMultipleInstances) {
@@ -322,7 +333,6 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     /**
      * 5. This method will save a document.
      */
-    @SuppressWarnings("unchecked")
     public void save(final DocumentTabData tabData) {
         save(tabData, () -> {
         });
@@ -715,6 +725,21 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 
     public abstract String getType();
 
+    /**
+     * Returns the initialisation handler for this document type.
+     *
+     * <p>The default implementation returns a no-op handler that immediately
+     * signals completion, meaning the document editor opens without any
+     * additional user interaction. Override this method to provide a custom
+     * dialog that collects required configuration before the editor opens.</p>
+     *
+     * @return a non-null {@link DocInitialisationHandler}; the default is a
+     *         no-op that calls {@code onComplete.accept(true)} immediately
+     */
+    public DocInitialisationHandler getInitialisationHandler() {
+        return (docRef, onComplete, tmf) -> onComplete.accept(true);
+    }
+
     public void create(final String documentName,
                        final Consumer<D> resultConsumer,
                        final RestErrorHandler errorHandler,
@@ -761,6 +786,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                     removeTabData(tabData);
                     // Tell the callback to close the tab.
                     event.getCallback().closeTab(true);
+                    PresenterScope.disposeScopeOf(tabData);
                 }
             }
         }
@@ -777,6 +803,10 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             }
             // Tell the callback to close the tab if ok.
             callback.closeTab(ok);
+            if (ok) {
+                // Closed for good, so release the editor and all its presenters
+                PresenterScope.disposeScopeOf(presenter);
+            }
         }
     }
 }

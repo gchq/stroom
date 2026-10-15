@@ -53,7 +53,6 @@ import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.query.api.ExpressionOperator;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
@@ -65,10 +64,10 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -129,8 +128,8 @@ public class SteppingPresenter
     // elementId => ElementPresenter
     private final Map<ElementId, ElementPresenter> elementPresenterMap = new HashMap<>();
     private PipelineModel pipelineModel;
-    private final InlineSvgButton terminateButton;
-    private final InlineSvgToggleButton toggleLogPaneButton;
+    private final ToolbarButton terminateButton;
+    private final ToolbarToggleButton toggleLogPaneButton;
     private boolean foundRecord;
     private boolean busyTranslating;
     // Whether the in-flight step is answering an applied step filter. A filtered step is a scan - the
@@ -139,7 +138,7 @@ public class SteppingPresenter
     private boolean searching;
     private SteppingResult lastFoundResult;
     private SteppingResult currentResult;
-    private final ButtonPanel leftButtons;
+    private final Toolbar leftButtons;
     private boolean runStepping = true;
 
     final ButtonView streamListFilter;
@@ -178,13 +177,10 @@ public class SteppingPresenter
         this.streamListFilterPresenterProvider = streamListFilterPresenterProvider;
         this.expressionValidator = expressionValidator;
 
-        terminateButton = new InlineSvgButton();
+        final Toolbar buttonPanel = new Toolbar("Stepping");
+        terminateButton = buttonPanel.button(SvgImage.STOP, "Terminate Stepping", this::terminate);
         terminateButton.setEnabled(false);
         terminateButton.addStyleName("QueryButtons-button stop");
-        terminateButton.setSvg(SvgImage.STOP);
-        terminateButton.setTitle("Terminate Stepping");
-        final ButtonPanel buttonPanel = new ButtonPanel();
-        buttonPanel.addButton(terminateButton);
 
         view.addWidgetRight(stepLocationLinkPresenter.getView().asWidget());
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
@@ -198,16 +194,13 @@ public class SteppingPresenter
         pipelineTreePresenter.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
         pipelineTreePresenter.setAllowNullSelection(false);
 
+        // Nothing can be stepped until a stream has been chosen (see beginStepping).
         stepControlPresenter.initButtons();
+        stepLocationLinkPresenter.setEnabled(false);
 
-        leftButtons = new ButtonPanel();
-
-        // Create but don't add yet
-        toggleLogPaneButton = new InlineSvgToggleButton();
-        toggleLogPaneButton.setSvg(SvgImage.EXCLAMATION);
+        leftButtons = new Toolbar("Log pane");
+        toggleLogPaneButton = leftButtons.toggle(SvgImage.EXCLAMATION, "Toggle Log Pane", this::onToggleLogPane);
         toggleLogPaneButton.setOn();
-        toggleLogPaneButton.setTitle("Toggle Log Pane");
-        leftButtons.addButton(toggleLogPaneButton);
 
         sourcePresenter.setClassificationUiHandlers(this);
 
@@ -219,7 +212,9 @@ public class SteppingPresenter
         stepToolbar.add(stepMessage);
         getView().addWidgetLeft(stepToolbar);
 
-        streamListFilter = steppingMetaListPresenter.add(SvgPresets.FILTER);
+        steppingMetaListPresenter.getToolbar().setName("Stream actions");
+        streamListFilter = steppingMetaListPresenter.getToolbar().button(SvgImage.FILTER, "Filter",
+                this::onStreamListFilter);
 
         sourcePresenter.getView().setMetaListContainerView(steppingMetaListPresenter.getWidget());
     }
@@ -230,6 +225,72 @@ public class SteppingPresenter
         for (final ElementPresenter elementPresenter : elementPresenterMap.values()) {
             elementPresenter.setClassification(classification);
         }
+    }
+
+    private void onToggleLogPane(final boolean visible) {
+        final ElementPresenter elementPresenter = getCurrentElementPresenter();
+        if (elementPresenter != null) {
+            elementPresenter.setDesiredLogPanVisibility(visible);
+            elementPresenter.setLogPaneVisibility(visible);
+        }
+    }
+
+    private void onStreamListFilter() {
+        final ExpressionPresenter presenter = streamListFilterPresenterProvider.get();
+
+        final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
+            if (e.isOk()) {
+                final ExpressionOperator expression = presenter.write();
+
+                expressionValidator.validateExpression(
+                        SteppingPresenter.this,
+                        MetaFields.getAllFields(),
+                        expression, expression2 -> {
+                            if (!expression2.equals(getCriteria().getExpression())) {
+                                if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
+                                    ConfirmEvent.fire(SteppingPresenter.this,
+                                            "You are setting advanced filters!  It is recommended you constrain " +
+                                            "your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                            + "Are you sure you want to apply this advanced filter?",
+                                            confirm -> {
+                                                if (confirm) {
+                                                    setExpression(expression2);
+                                                    e.hide();
+                                                } else {
+                                                    // Don't hide
+                                                    e.reset();
+                                                }
+                                            });
+                                } else {
+                                    setExpression(expression2);
+                                    e.hide();
+                                }
+                            } else {
+                                // Nothing changed!
+                                e.hide();
+                            }
+                        },
+                        // If it isn't valid, let the user change it or cancel
+                        e::reset,
+                        this);
+            } else {
+                e.hide();
+            }
+        };
+
+        presenter.read(getCriteria().getExpression(),
+                MetaFields.STREAM_STORE_DOC_REF,
+                MetaFields.getAllFields());
+
+        presenter.getWidget().getElement().addClassName("default-min-sizes");
+        final PopupSize popupSize = PopupSize.resizable(1_000, 600);
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Filter Streams")
+                .onShow(e -> presenter.focus())
+                .onHideRequest(HidePopupRequestEventHandler)
+                .fire();
     }
 
     @Override
@@ -249,14 +310,6 @@ public class SteppingPresenter
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addChangeFilterHandler(event ->
                 showChangeFiltersDialog()));
-        registerHandler(terminateButton.addClickHandler(event -> terminate()));
-        registerHandler(toggleLogPaneButton.addClickHandler(event -> {
-            final ElementPresenter elementPresenter = getCurrentElementPresenter();
-            if (elementPresenter != null) {
-                elementPresenter.setDesiredLogPanVisibility(toggleLogPaneButton.isOn());
-                elementPresenter.setLogPaneVisibility(toggleLogPaneButton.isOn());
-            }
-        }));
 
         registerHandler(steppingMetaListPresenter.getSelectionModel().addSelectionHandler(event -> {
             if (runStepping) {
@@ -300,60 +353,6 @@ public class SteppingPresenter
             }
         }));
 
-        registerHandler(streamListFilter.addClickHandler(event -> {
-            final ExpressionPresenter presenter = streamListFilterPresenterProvider.get();
-
-            final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
-                if (e.isOk()) {
-                    final ExpressionOperator expression = presenter.write();
-
-                    expressionValidator.validateExpression(
-                            SteppingPresenter.this,
-                            MetaFields.getAllFields(),
-                            expression, expression2 -> {
-                                if (!expression2.equals(getCriteria().getExpression())) {
-                                    if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
-                                        ConfirmEvent.fire(SteppingPresenter.this,
-                                                "You are setting advanced filters!  It is recommended you constrain " +
-                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
-                                                + "Are you sure you want to apply this advanced filter?",
-                                                confirm -> {
-                                                    if (confirm) {
-                                                        setExpression(expression2);
-                                                        e.hide();
-                                                    } else {
-                                                        // Don't hide
-                                                        e.reset();
-                                                    }
-                                                });
-                                    } else {
-                                        setExpression(expression2);
-                                        e.hide();
-                                    }
-                                } else {
-                                    // Nothing changed!
-                                    e.hide();
-                                }
-                            }, this);
-                } else {
-                    e.hide();
-                }
-            };
-
-            presenter.read(getCriteria().getExpression(),
-                    MetaFields.STREAM_STORE_DOC_REF,
-                    MetaFields.getAllFields());
-
-            presenter.getWidget().getElement().addClassName("default-min-sizes");
-            final PopupSize popupSize = PopupSize.resizable(1_000, 600);
-            ShowPopupEvent.builder(presenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Filter Streams")
-                    .onShow(e -> presenter.focus())
-                    .onHideRequest(HidePopupRequestEventHandler)
-                    .fire();
-        }));
 
 //        steppingMetaListPresenter.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, () -> {});
     }
@@ -659,12 +658,7 @@ public class SteppingPresenter
             toggleLogPaneButton.setTitle(msg);
         }
 
-        final boolean hasButton = leftButtons.containsButton(toggleLogPaneButton);
-        if (isButtonVisible && !hasButton) {
-            leftButtons.addButton(toggleLogPaneButton);
-        } else if (!isButtonVisible && hasButton) {
-            leftButtons.removeButton(toggleLogPaneButton);
-        }
+        toggleLogPaneButton.setVisible(isButtonVisible);
         // Now set the button state based on the desired state from the presenter
         if (isButtonVisible) {
             toggleLogPaneButton.setState(isLogPaneVisible);
@@ -745,6 +739,9 @@ public class SteppingPresenter
         findMetaCriteria.setSortList(steppingMetaListPresenter.getCriteria().getSortList());
         findMetaCriteria.setExpression(steppingMetaListPresenter.getCriteria().getExpression());
         requestBuilder.criteria(findMetaCriteria);
+        // A step request needs the criteria, so a refresh or new location is only possible from now.
+        stepControlPresenter.setRefreshEnabled(true);
+        stepLocationLinkPresenter.setEnabled(true);
 
         requestBuilder.childStreamType(childStreamType);
 
@@ -808,6 +805,9 @@ public class SteppingPresenter
                     !pipelineModel.hasRole(e, PipelineElementType.VISABILITY_STEPPING));
             pipelineTreePresenter.setDisabledElements(disabledElements);
 
+            // Fit the pipeline's pane to the tree, so that its elements aren't cut off
+            resize();
+
         } catch (final PipelineModelException e) {
             AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
         }
@@ -836,9 +836,11 @@ public class SteppingPresenter
         return properties.stream().filter(p -> p.getName().equals(propertyName)).findAny();
     }
 
+    /// Sizes the pipeline's pane to fit the pipeline's tree, once it has been drawn.
     public void resize() {
+        // A little space below the boxes, so that their borders aren't against the splitter
         Scheduler.get().scheduleDeferred(() ->
-                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 30));
+                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 4));
     }
 
     public void save(final List<DocRef> docsToSave, final Runnable onComplete) {

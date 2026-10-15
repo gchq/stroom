@@ -109,6 +109,8 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                     .onSuccess(result -> {
                         enable(disabled, consumer, event, nextSelection, taskMonitorFactory);
                     })
+                    // If a user can't be restored, let the user try again or cancel
+                    .onFailure(RestErrorHandler.forPopup(this, event))
                     .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         }

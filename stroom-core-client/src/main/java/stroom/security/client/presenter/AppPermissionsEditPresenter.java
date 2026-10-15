@@ -98,8 +98,7 @@ public class AppPermissionsEditPresenter
         registerHandler(getSelectionModel()
                 .addSelectionHandler(e -> updateDetails()));
 
-        registerHandler(pagerView.getRefreshButton().addClickHandler(event ->
-                refresh()));
+        pagerView.getRefreshButton().setOnClick(this::refresh);
     }
 
     public MultiSelectionModelImpl<AppPermission> getSelectionModel() {

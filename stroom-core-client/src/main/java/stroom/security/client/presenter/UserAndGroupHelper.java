@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.CellIcon;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.ApiKeysPlugin;
 import stroom.security.client.AppPermissionsPlugin;
@@ -35,8 +36,7 @@ import stroom.security.shared.HasUserRef;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -83,16 +83,16 @@ public class UserAndGroupHelper {
 
     public static SafeHtml buildSingleIconHeader(final boolean isGroup) {
         final String iconClassName = "svgCell-icon";
-        final Preset preset = isGroup
-                ? SvgPresets.USER_GROUP.title("")
-                : SvgPresets.USER.title("");
+        final SvgImage icon = isGroup
+                ? SvgImage.USERS
+                : SvgImage.USER;
 
         return HtmlBuilder.builder()
                 .div(
                         divBuilder -> {
                             divBuilder.append(SvgImageUtil.toSafeHtml(
-                                    preset.getTitle(),
-                                    preset.getSvgImage(),
+                                    "",
+                                    icon,
                                     iconClassName));
                         },
                         Attribute.className("single-icon-column-header"))
@@ -101,41 +101,38 @@ public class UserAndGroupHelper {
 
     public static SafeHtml buildUserAndGroupIconHeader() {
         final String iconClassName = "svgCell-icon";
-        final Preset userPreset = SvgPresets.USER.title("");
-        final Preset groupPreset = SvgPresets.USER_GROUP.title("");
         return HtmlBuilder.builder()
                 .div(
                         divBuilder -> {
                             divBuilder.append(SvgImageUtil.toSafeHtml(
-                                    userPreset.getTitle(),
-                                    userPreset.getSvgImage(),
+                                    "",
+                                    SvgImage.USER,
                                     iconClassName));
                             divBuilder.append("/");
                             divBuilder.append(SvgImageUtil.toSafeHtml(
-                                    groupPreset.getTitle(),
-                                    groupPreset.getSvgImage(),
+                                    "",
+                                    SvgImage.USERS,
                                     iconClassName));
                         },
                         Attribute.className("two-icon-column-header"))
                 .toSafeHtml();
     }
 
-    public static Preset mapUserRefTypeToIcon(final UserRef userRef) {
+    public static CellIcon mapUserRefTypeToIcon(final UserRef userRef) {
         return NullSafe.get(userRef,
                 userRef2 -> mapUserTypeToIcon(userRef2.isGroup(), userRef.isEnabled()));
     }
 
-    public static Preset mapUserTypeToIcon(final User user) {
+    public static CellIcon mapUserTypeToIcon(final User user) {
         return NullSafe.get(user,
                 usr -> mapUserTypeToIcon(usr.isGroup(), usr.isEnabled()));
     }
 
-    public static Preset mapUserTypeToIcon(final boolean isGroup,
+    public static CellIcon mapUserTypeToIcon(final boolean isGroup,
                                            final boolean isEnabled) {
-        final Preset preset = isGroup
-                ? SvgPresets.USER_GROUP
-                : SvgPresets.USER;
-        return preset.enabled(isEnabled);
+        return isGroup
+                ? CellIcon.of(SvgImage.USERS, "User Group", isEnabled)
+                : CellIcon.of(SvgImage.USER, "User", isEnabled);
     }
 
     public static void onDelete(final UserListPresenter userListPresenter,
@@ -353,10 +350,17 @@ public class UserAndGroupHelper {
         if (userRef == null) {
             return "";
         } else if (userRef.getDisplayName() != null) {
-            return UserFields.FIELD_DISPLAY_NAME + ":" + userRef.getDisplayName();
+            // Quoted, as a display name may contain spaces
+            return UserFields.FIELD_DISPLAY_NAME + ":" + quoteFilterValue(userRef.getDisplayName());
         } else {
             return "";
         }
+    }
+
+    // Quotes a quick filter value so that it is read as one value, whatever it contains, escaping
+    // any backslashes and double quotes, as QuickFilterPrinter does.
+    private static String quoteFilterValue(final String value) {
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 
 }

@@ -16,9 +16,7 @@
 
 package stroom.dashboard.client.table.cf;
 
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,7 +37,7 @@ public class EditExpressionViewImpl
     @UiField
     SimplePanel expressionTree;
     @UiField
-    ButtonPanel buttonPanel;
+    Toolbar toolbar;
 
     @Inject
     public EditExpressionViewImpl(final Binder binder) {
@@ -57,8 +55,8 @@ public class EditExpressionViewImpl
     }
 
     @Override
-    public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
+    public Toolbar getToolbar() {
+        return toolbar;
     }
 
     @Override

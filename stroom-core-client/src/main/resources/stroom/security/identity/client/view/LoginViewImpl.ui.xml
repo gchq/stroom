@@ -2,7 +2,6 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="LoginView">
 
@@ -14,7 +13,8 @@
                 </g:SimplePanel>
 
                 <!-- User Name -->
-                <form:FormGroup identity="userName" label="User Name">
+                <form:FormGroup identity="userName" label="User Name"
+                                helpText="Enter your Stroom account user name. This is the name you were given when your account was created.">
                     <g:FlowPanel>
                         <!-- Add user name text box -->
                         <g:FlowPanel addStyleNames="userNameTextBoxOuter">
@@ -27,15 +27,10 @@
                 </form:FormGroup>
 
                 <!-- Password -->
-                <form:FormGroup identity="password" label="Password">
+                <form:FormGroup ui:field="passwordGroup" identity="password" label="Password">
                     <g:FlowPanel>
                         <!-- Add password text box -->
-                        <g:FlowPanel addStyleNames="passwordTextBoxOuter">
-                            <g:PasswordTextBox ui:field="password" addStyleNames="passwordTextBox"/>
-                            <g:FlowPanel addStyleNames="passwordTextBoxOverlay">
-                                <p:InlineSvgButton ui:field="showPassword" addStyleNames="showPassword"/>
-                            </g:FlowPanel>
-                        </g:FlowPanel>
+                        <form:PasswordBox ui:field="password"/>
 
                         <!-- Add feedback -->
                         <g:Label ui:field="passwordFeedback" styleName="feedback"/>

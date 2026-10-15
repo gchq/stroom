@@ -34,11 +34,10 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 import javax.inject.Inject;
 
@@ -214,48 +213,47 @@ public class ContentStoreContentPackDetailsPresenter
         pnlButtons.add(btnUpgradeGitRepo);
 
         // Main layout
-        final FlexTable detailsTable = new FlexTable();
-        detailsTable.addStyleName("contentstore-details-table");
-        final FlexCellFormatter detailsFormatter = detailsTable.getFlexCellFormatter();
+        final FlowPanel detailsList = new FlowPanel();
+        detailsList.addStyleName("contentstore-details-list");
 
         // Whether installed
-        detailsTable.setHTML(3, 0, "Installed status:");
-        detailsTable.setWidget(3, 1, lblIsInstalled);
+        addDetail(detailsList, "Installed status:", lblIsInstalled);
 
         // License
-        detailsTable.setHTML(4, 0, "License:");
-        detailsTable.setWidget(4, 1, lblLicense);
+        addDetail(detailsList, "License:", lblLicense);
 
         lnkLicense.setTarget(LICENCE_URL_TARGET);
         lnkLicense.setTitle(LICENCE_URL_TITLE);
-        detailsTable.setHTML(5, 0, "License details:");
-        detailsTable.setWidget(5, 1, lnkLicense);
+        addDetail(detailsList, "License details:", lnkLicense);
 
         // Installed location
-        detailsTable.setHTML(6, 0, "Installed location:");
-        detailsTable.setWidget(6, 1, lblStroomPath);
+        addDetail(detailsList, "Installed location:", lblStroomPath);
 
         // Git details
         lnkGitUrl.setTarget(GIT_URL_TARGET);
         lnkGitUrl.setTitle(GIT_URL_TITLE);
 
-        detailsTable.setHTML(7, 0, "Git URL:");
-        detailsTable.setWidget(7, 1, lnkGitUrl);
-        detailsTable.setHTML(8, 0, "Git branch:");
-        detailsTable.setWidget(8, 1, lblGitBranch);
-        detailsTable.setHTML(9, 0, "Git path:");
-        detailsTable.setWidget(9, 1, lblGitPath);
-        detailsTable.setHTML(10, 0, "Git commit:");
-        detailsTable.setWidget(10, 1, lblGitCommit);
+        addDetail(detailsList, "Git URL:", lnkGitUrl);
+        addDetail(detailsList, "Git branch:", lblGitBranch);
+        addDetail(detailsList, "Git path:", lblGitPath);
+        addDetail(detailsList, "Git commit:", lblGitCommit);
 
         // Add the panels into the structure
         pnlVertical.add(lblName);
         pnlVertical.add(lblDetails);
-        pnlVertical.add(detailsTable);
+        pnlVertical.add(detailsList);
         pnlVertical.add(pnlButtons);
 
         // Ensure initial state is correct
         setContentPack(null);
+    }
+
+    // Adds a detail's name, and the widget showing its value beside it
+    private static void addDetail(final FlowPanel detailsList, final String name, final Widget value) {
+        final Label nameLabel = new Label(name);
+        nameLabel.addStyleName("contentstore-details-name");
+        detailsList.add(nameLabel);
+        detailsList.add(value);
     }
 
     /**

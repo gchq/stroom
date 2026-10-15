@@ -17,16 +17,15 @@
 package stroom.widget.xsdbrowser.client.view;
 
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class XSDDisplayBox extends Composite implements SelectableItem {
 
     private final XSDDisplayBoxTitle boxTitle;
-    private final VerticalPanel layout;
-    private final VerticalPanel outerBox;
+    private final FlowPanel layout;
+    private final FlowPanel outerBox;
     private boolean selected;
 
     public XSDDisplayBox(final String imageClassName, final String title, final Widget content,
@@ -36,22 +35,20 @@ public class XSDDisplayBox extends Composite implements SelectableItem {
         boxTitle = new XSDDisplayBoxTitle(imageClassName, title, model, node);
         boxTitle.setStylePrimaryName("boxTitle");
 
-        layout = new VerticalPanel();
+        // The title, then any content below it taking the rest of the height, both centred
+        layout = new FlowPanel();
         layout.setStyleName("box");
-
-        layout.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
         layout.add(boxTitle);
-        layout.setCellHeight(boxTitle, "1px");
 
         if (content != null) {
             final ScrollPanel scrollPanel = new ScrollPanel();
+            scrollPanel.addStyleName("boxContent");
             scrollPanel.add(content);
             layout.add(scrollPanel);
-            layout.setCellHeight(scrollPanel, "100%");
             boxTitle.addStyleDependentName("noContent");
         }
 
-        outerBox = new VerticalPanel();
+        outerBox = new FlowPanel();
         outerBox.setStyleName("outerBox");
         outerBox.add(layout);
 

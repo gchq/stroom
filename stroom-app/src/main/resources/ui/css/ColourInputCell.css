@@ -1,0 +1,67 @@
+/*
+ * Editable colour-picker cell: a native <input type="color"> restyled to match
+ * Stroom form controls. The browser renders this control through a shadow DOM,
+ * so the outer element is reset (appearance:none) and the colour swatch itself
+ * is styled via vendor pseudo-elements. All colours come from theme variables
+ * so it tracks the light/dark theme automatically.
+ */
+.colourInputCell {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+
+    /* Size is deliberately modest so it fits a data-grid row; tune to taste. */
+    width: 100%;
+    max-width: 3rem;
+    height: 1.5em;
+    padding: 1px;
+    margin: 0;
+    cursor: pointer;
+
+    background-color: var(--control__background-color);
+    border: 1px solid var(--control__border-color);
+    border-radius: 6px;
+}
+
+/* Chrome / Edge / Safari: strip the wrapper padding, round the swatch. */
+.colourInputCell::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.colourInputCell::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+/* Firefox */
+.colourInputCell::-moz-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+/* Match Stroom's standard control focus treatment. */
+.colourInputCell:focus {
+    outline: none;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+/* In the dark theme, hint the browser to render the native colour-picker popup
+   (and the control's own native chrome) in dark mode so it doesn't flash a white
+   dialog over a dark UI. This is the only influence CSS has over the OS/browser
+   popup — it selects light-vs-dark, not an arbitrary colour — and support is
+   browser-dependent (Chromium honours it; a true OS-native dialog may follow the
+   OS setting instead). */
+.stroom-theme-dark .colourInputCell {
+    color-scheme: dark;
+}
+
+/* Disabled grid cells: use the control's disabled theme colours + dim, mirroring
+   ColourSwatchCell, and block interaction. */
+.dataGridDisabledCell .colourInputCell {
+    background-color: var(--control__background-color--disabled);
+    border-color: var(--control__border-color--disabled);
+    opacity: 0.3;
+    pointer-events: none;
+}

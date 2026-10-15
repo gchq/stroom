@@ -4,13 +4,18 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="profileName" label="Profile Name">
+        <form:FormGroup identity="profileName" label="Profile Name"
+                        helpText="A unique name for this processing profile. Processor filters refer to the profile by this name."
+                        screenReaderText="Must be unique.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="nodeGroup" label="Node Group">
+        <form:FormGroup identity="nodeGroup" label="Node Group"
+                        helpText="The node group whose nodes may run tasks for filters using this profile. If the group is disabled, no tasks run."
+                        screenReaderText="Only nodes in this group run tasks for this profile.">
             <i:SelectionBox ui:field="nodeGroup" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="processingSchedules" label="Processing Schedules" addStyleNames="dock-max">
+        <form:FormGroup identity="processingSchedules" label="Processing Schedules" addStyleNames="dock-max"
+                        helpText="The periods when filters using this profile may process data, each with optional thread limits. No processing happens outside all of these periods.">
             <g:SimplePanel ui:field="list" styleName="dock-max"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="timeZone" addStyleNames="form-group"/>

@@ -13,6 +13,10 @@
     --dialog__padding--vertical: 1rem;
     --split__size: 7px;
     --split__offset: -1px;
+    /* Room inside a box that clips (e.g. one that scrolls) for the focus ring round a control at its
+       edge: the ring's 1px edge and 4px band, and the 3px a form's help button stands above its
+       label row */
+    --focus-ring__room: 7px;
 }
 
 .stroom-density-compact {

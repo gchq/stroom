@@ -32,6 +32,34 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+@XsltFunctionDef(
+        name = CurrentUser.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.VALUE,
+        commonDescription = """
+                Returns the identity of the user Stroom is processing as. This is mainly useful in interactive
+                processing, such as a search.
+
+                The form of the user's identity returned is controlled by the optional `form` argument.
+                By default, the display name is used, falling back to the subject identifier if there is no
+                display name.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The requested user identity, or an empty sequence if unavailable.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "form",
+                                        description = "The form of the user's identity to return. If not provided " +
+                                                      "'display name is used, falling back to the subject " +
+                                                      "identifier if there is no display name.",
+                                        isOptional = true,
+                                        argType = XsltDataType.STRING,
+                                        allowedValues = {"display", "subject", "full"}
+                                )
+                        }
+                )
+        })
 class CurrentUser extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "current-user";

@@ -19,9 +19,20 @@ package stroom.query.impl;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionValidationException;
 import stroom.query.common.v2.ExpressionValidator;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.QuickFilter;
+import stroom.query.language.filter.QuickFilterPrintException;
+import stroom.query.language.filter.QuickFilterPrinter;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.shared.ExpressionResource;
+import stroom.query.shared.FormatQuickFilterRequest;
+import stroom.query.shared.FormatQuickFilterResult;
+import stroom.query.shared.ParseQuickFilterRequest;
+import stroom.query.shared.ParseQuickFilterResult;
 import stroom.query.shared.ValidateExpressionRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -46,6 +57,36 @@ public class ExpressionResourceImpl implements ExpressionResource {
             return ValidateExpressionResult.ok();
         } catch (final ExpressionValidationException e) {
             return ValidateExpressionResult.failed(e);
+        }
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public ParseQuickFilterResult parseQuickFilter(final ParseQuickFilterRequest request) {
+        Objects.requireNonNull(request);
+        try {
+            return ParseQuickFilterResult.of(QuickFilter.parse(
+                    request.getText(),
+                    request.getDefaultFields(),
+                    request.getQualifiedFields()));
+        } catch (final TokenException e) {
+            // Positional, so the dialog can say which token rather than just that something is
+            // wrong. The same conversion the DAOs use for ResultPage.filterError.
+            return ParseQuickFilterResult.failed(TokenErrorUtil.toTokenError(e));
+        }
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public FormatQuickFilterResult formatQuickFilter(final FormatQuickFilterRequest request) {
+        Objects.requireNonNull(request);
+        try {
+            final FieldProvider fieldProvider = new FieldProviderImpl(
+                    request.getDefaultFields(),
+                    request.getQualifiedFields());
+            return FormatQuickFilterResult.of(QuickFilterPrinter.print(request.getExpression(), fieldProvider));
+        } catch (final QuickFilterPrintException e) {
+            return FormatQuickFilterResult.failed(e.getMessage());
         }
     }
 }

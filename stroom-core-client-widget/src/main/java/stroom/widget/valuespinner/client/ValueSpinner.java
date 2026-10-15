@@ -32,6 +32,8 @@ public class ValueSpinner
 
     private final Spinner spinner;
     private final TextBox valueBox = new TextBox();
+    private boolean enabled = true;
+    private boolean readOnly;
 
     public ValueSpinner() {
         spinner = new Spinner();
@@ -40,6 +42,9 @@ public class ValueSpinner
         valueBox.addStyleName("allow-focus");
         valueBox.addBlurHandler(event -> updateSpinner());
         valueBox.addKeyDownHandler(event -> {
+            if (readOnly) {
+                return;
+            }
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
                 updateSpinner();
                 event.preventDefault();
@@ -96,7 +101,7 @@ public class ValueSpinner
      * @return whether this widget is enabled.
      */
     public boolean isEnabled() {
-        return spinner.isEnabled();
+        return enabled;
     }
 
     /**
@@ -105,8 +110,24 @@ public class ValueSpinner
      * @param enabled true to enable the widget, false to disable it
      */
     public void setEnabled(final boolean enabled) {
-        spinner.setEnabled(enabled);
+        this.enabled = enabled;
+        spinner.setEnabled(enabled && !readOnly);
         valueBox.setEnabled(enabled);
+    }
+
+    /// Makes the value read only: it can be read, selected and copied, and stays in the tab
+    /// order, but can't be changed. It looks like the normal field with its value greyed.
+    ///
+    /// @param readOnly Whether the value is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        valueBox.setReadOnly(readOnly);
+        spinner.setEnabled(enabled && !readOnly);
+    }
+
+    /// @return Whether the value is read only.
+    public boolean isReadOnly() {
+        return readOnly;
     }
 
     /**

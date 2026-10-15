@@ -33,10 +33,11 @@ import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.PlanBDocument;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.QuickFilterFields;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.FieldProviderImpl;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.common.v2.ValueFunctionFactoriesImpl;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -76,8 +77,9 @@ class TraceArchiveReader {
                     .put(FindTraceCriteria.FIELD_DEF_OPERATION, TraceRoot::getName)
                     .put(FindTraceCriteria.FIELD_DEF_TRACE_ID, TraceRoot::getTraceId)
                     .put(FindTraceCriteria.FIELD_DEF_IS_ERROR, root -> Boolean.toString(root.isError()));
-    private static final FieldProvider FILTER_FIELD_PROVIDER =
-            new FieldProviderImpl(FindTraceCriteria.FIELD_DEFINITIONS);
+    private static final FieldProvider FILTER_FIELD_PROVIDER = new FieldProviderImpl(
+            QuickFilterFields.uiTextDefaults(FindTraceCriteria.FIELD_DEFINITIONS),
+            QuickFilterFields.uiText(FindTraceCriteria.FIELD_DEFINITIONS));
 
     private final TracesDocLoader docLoader;
     private final ShardManager shardManager;

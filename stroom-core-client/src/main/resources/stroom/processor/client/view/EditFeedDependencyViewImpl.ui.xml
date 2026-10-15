@@ -11,7 +11,8 @@
         </form:FormGroup>
         <form:FormGroup identity="feedDependencyType"
                         label="Type"
-                        helpText="Choose the stream type for the data this processing depends on.">
+                        helpText="Choose the stream type for the data this processing depends on."
+                        screenReaderText="Stream type of the dependency data, e.g. Reference.">
             <g:SimplePanel ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

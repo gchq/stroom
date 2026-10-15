@@ -34,14 +34,29 @@ public class TokenError {
     private final DefaultLocation to;
     @JsonProperty
     private final String text;
+    /**
+     * Null for the StroomQL callers that predate this field, which treat every token error as
+     * fatal. Quick filters need the distinction: some diagnostics accompany results rather than
+     * replacing them.
+     */
+    @JsonProperty
+    private final Severity severity;
+
+    public TokenError(final DefaultLocation from,
+                      final DefaultLocation to,
+                      final String text) {
+        this(from, to, text, null);
+    }
 
     @JsonCreator
     public TokenError(@JsonProperty("from") final DefaultLocation from,
                       @JsonProperty("to") final DefaultLocation to,
-                      @JsonProperty("text") final String text) {
+                      @JsonProperty("text") final String text,
+                      @JsonProperty("severity") final Severity severity) {
         this.from = from;
         this.to = to;
         this.text = text;
+        this.severity = severity;
     }
 
     public DefaultLocation getFrom() {
@@ -56,6 +71,10 @@ public class TokenError {
         return text;
     }
 
+    public Severity getSeverity() {
+        return severity;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -67,12 +86,13 @@ public class TokenError {
         final TokenError that = (TokenError) o;
         return Objects.equals(from, that.from) &&
                 Objects.equals(to, that.to) &&
-                Objects.equals(text, that.text);
+                Objects.equals(text, that.text) &&
+                severity == that.severity;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(from, to, text);
+        return Objects.hash(from, to, text, severity);
     }
 
     @Override
@@ -81,6 +101,7 @@ public class TokenError {
                 "from=" + from +
                 ", to=" + to +
                 ", text='" + text + '\'' +
+                ", severity=" + severity +
                 '}';
     }
 }

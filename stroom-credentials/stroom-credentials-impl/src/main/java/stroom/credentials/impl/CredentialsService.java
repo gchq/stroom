@@ -268,6 +268,10 @@ public class CredentialsService implements StoredSecrets {
         checkAppPermission();
         checkDeletePermission(uuid);
         credentialsDao.deleteCredentialsAndSecret(uuid);
+        // Creating a credential made its creator the owner (storeCredentials), so the permissions
+        // go with it, as the explorer's delete does for a document. Done after the delete so that a
+        // failed delete leaves the credential still usable by its owner.
+        permissionServiceProvider.get().removeAllDocumentPermissions(new DocRef(Credential.TYPE, uuid));
     }
 
     @Override

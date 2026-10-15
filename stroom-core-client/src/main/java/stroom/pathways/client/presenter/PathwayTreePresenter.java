@@ -21,12 +21,11 @@ import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.PathNodeSequence;
 import stroom.pathways.shared.pathway.Pathway;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.htree.client.treelayout.Point;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
@@ -58,7 +57,7 @@ public class PathwayTreePresenter
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
-    private final InlineSvgButton viewTracesButton;
+    private final ToolbarButton viewTracesButton;
 
     private final HTML html;
     private final MySingleSelectionModel<PathNode> selectionModel = new MySingleSelectionModel<PathNode>();
@@ -73,19 +72,55 @@ public class PathwayTreePresenter
     public PathwayTreePresenter(final EventBus eventBus,
                                 final PathwayTreeView view) {
         super(eventBus, view);
-        newButton = view.addButton(SvgPresets.NEW_ITEM);
-        editButton = view.addButton(SvgPresets.EDIT);
-        removeButton = view.addButton(SvgPresets.DELETE);
+        newButton = view.getToolbar().button(SvgImage.ADD, "New", null);
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", null);
+        editButton.setEnabled(false);
+        removeButton = view.getToolbar().button(SvgImage.DELETE, "Delete", null);
+        removeButton.setEnabled(false);
 
-        viewTracesButton = new InlineSvgButton();
-        viewTracesButton.setSvg(SvgImage.EYE);
-        viewTracesButton.setTitle("View Matching Traces");
-        view.addButton(viewTracesButton);
+        viewTracesButton = view.getToolbar().button(SvgImage.EYE, "View Matching Traces", this::onViewTraces);
         enableButtons();
 
         html = new HTML();
         html.addStyleName("max");
         view.setDataWidget(html);
+    }
+
+    private void onViewTraces() {
+        final Map<String, String> parentMap = new HashMap<>();
+        final Map<String, PathNodeSequence> pathNodeSequenceMap = new HashMap<>();
+        final Map<String, PathNode> pathNodeMap = new HashMap<>();
+        addToMap(pathway.getRoot(), parentMap, pathNodeSequenceMap, pathNodeMap);
+
+        PathNode pathNode = selectionModel.getSelectedObject();
+        PathNode root = pathNode;
+        while (pathNode != null) {
+            // Get parent sequence.
+            final String parentSequenceUuid = parentMap.get(pathNode.getUuid());
+            if (parentSequenceUuid != null) {
+                final PathNodeSequence pathNodeSequence = pathNodeSequenceMap.get(parentSequenceUuid);
+                // Get parent node.
+                final String parentNodeUuid = parentMap.get(pathNodeSequence.getUuid());
+                pathNode = pathNodeMap.get(parentNodeUuid);
+
+                root = pathNode.copy().targets(Collections.singletonList(pathNodeSequence)).build();
+            } else {
+                pathNode = null;
+            }
+        }
+
+        final Pathway pathway;
+        if (root != null) {
+            pathway = this.pathway.copy().root(root).build();
+        } else {
+            pathway = this.pathway;
+        }
+
+        ShowTracesEvent.fire(
+                this,
+                pathwaysDoc.getTracesDocRef(),
+                null,
+                pathway);
     }
 
     @Override
@@ -109,42 +144,6 @@ public class PathwayTreePresenter
                     }
                 }
             }
-        }));
-        registerHandler(viewTracesButton.addClickHandler(e -> {
-            final Map<String, String> parentMap = new HashMap<>();
-            final Map<String, PathNodeSequence> pathNodeSequenceMap = new HashMap<>();
-            final Map<String, PathNode> pathNodeMap = new HashMap<>();
-            addToMap(pathway.getRoot(), parentMap, pathNodeSequenceMap, pathNodeMap);
-
-            PathNode pathNode = selectionModel.getSelectedObject();
-            PathNode root = pathNode;
-            while (pathNode != null) {
-                // Get parent sequence.
-                final String parentSequenceUuid = parentMap.get(pathNode.getUuid());
-                if (parentSequenceUuid != null) {
-                    final PathNodeSequence pathNodeSequence = pathNodeSequenceMap.get(parentSequenceUuid);
-                    // Get parent node.
-                    final String parentNodeUuid = parentMap.get(pathNodeSequence.getUuid());
-                    pathNode = pathNodeMap.get(parentNodeUuid);
-
-                    root = pathNode.copy().targets(Collections.singletonList(pathNodeSequence)).build();
-                } else {
-                    pathNode = null;
-                }
-            }
-
-            final Pathway pathway;
-            if (root != null) {
-                pathway = this.pathway.copy().root(root).build();
-            } else {
-                pathway = this.pathway;
-            }
-
-            ShowTracesEvent.fire(
-                    this,
-                    pathwaysDoc.getTracesDocRef(),
-                    null,
-                    pathway);
         }));
     }
 
@@ -381,9 +380,10 @@ public class PathwayTreePresenter
 
     public interface PathwayTreeView extends View {
 
-        ButtonView addButton(Preset preset);
-
-        void addButton(ButtonView buttonView);
+        /// The toolbar for the view's buttons, e.g. `getToolbar().button(SvgImage.ADD, "Add", this::add)`.
+        ///
+        /// @return The toolbar.
+        Toolbar getToolbar();
 
         void setDataWidget(Widget widget);
     }

@@ -109,11 +109,11 @@ public class CredentialsManagerViewImpl
     }
 
     /**
-     * @return The UUID of the credentials set within this UI, or null if no credentials were set.
+     * @return The name of the credentials set within this UI, or null if no credentials were set.
      */
     @Override
     public String getCredentialName() {
-        return credentialsList.getSelectedCredentialsId();
+        return credentialsList.getSelectedCredentialsName();
     }
 
     /**

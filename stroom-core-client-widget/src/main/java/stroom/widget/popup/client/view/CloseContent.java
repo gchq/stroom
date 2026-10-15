@@ -55,11 +55,17 @@ public class CloseContent extends Composite implements DialogButtons {
 
     @Override
     public void onDialogAction(final DialogAction action) {
+        final Button button = close;
+        if (!DialogButtonAction.canRun(button)) {
+            return;
+        }
+        final Runnable restoreFocus = DialogButtonAction.keepFocus(button);
         setEnabled(false);
         close.setLoading(true);
         uiHandlers.hideRequest(new HideRequest(action, () -> {
             setEnabled(true);
             close.setLoading(false);
+            restoreFocus.run();
         }));
     }
 
@@ -71,6 +77,13 @@ public class CloseContent extends Composite implements DialogButtons {
     @Override
     public void setEnabled(final boolean enabled) {
         close.setEnabled(enabled);
+    }
+
+    @Override
+    public void setEnabled(final DialogAction action, final boolean enabled) {
+        if (DialogAction.CLOSE.equals(action)) {
+            close.setEnabled(enabled);
+        }
     }
 
     public interface Binder extends UiBinder<Widget, CloseContent> {

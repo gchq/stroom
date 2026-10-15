@@ -3,7 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="importConfigFile" label="File">
+        <form:FormGroup identity="importConfigFile" label="File"
+                        helpText="The Stroom export file (.zip) to import."
+                        screenReaderText="A Stroom export .zip file.">
             <form:CustomFileUpload ui:field="fileUpload"/>
         </form:FormGroup>
     </g:FlowPanel>

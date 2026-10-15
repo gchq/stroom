@@ -25,15 +25,14 @@ import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PageRequest;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.core.client.GWT;
@@ -79,12 +78,46 @@ public class QueryFavouritesPresenter
         selectionModel = new MySingleSelectionModel<>();
         view.getCellList().setSelectionModel(selectionModel);
 
-        createButton = view.addButton(SvgPresets.NEW_ITEM);
-        createButton.setTitle("Create Favourite From Current Query");
-        editButton = view.addButton(SvgPresets.EDIT);
-        editButton.setTitle("Change Favourite Name");
-        deleteButton = view.addButton(SvgPresets.DELETE);
-        deleteButton.setTitle("Delete Favourite");
+        createButton = view.getToolbar().button(SvgImage.ADD, "Create Favourite From Current Query", this::onCreate);
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Change Favourite Name", this::onEdit);
+        editButton.setEnabled(false);
+        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete Favourite", this::onDelete);
+        deleteButton.setEnabled(false);
+    }
+
+    private void onCreate() {
+        final Query query = Query.builder()
+                .dataSource(currentDataSource)
+                .expression(currentExpression)
+                .build();
+        final StoredQuery queryEntity = StoredQuery
+                .builder()
+                .query(query)
+                .dashboardUuid(currentDashboardUuid)
+                .componentId(queryPresenter.getId())
+                .name("")
+                .favourite(true)
+                .build();
+        namePresenter.show(queryEntity, result -> refresh(false));
+    }
+
+    private void onEdit() {
+        final StoredQuery query = selectionModel.getSelectedObject();
+        if (query != null) {
+            namePresenter.show(query, result -> refresh(false));
+        }
+    }
+
+    private void onDelete() {
+        final StoredQuery query = selectionModel.getSelectedObject();
+        if (query != null) {
+            ConfirmEvent.fire(QueryFavouritesPresenter.this,
+                    "Are you sure you want to delete this favourite?", ok -> {
+                        if (ok) {
+                            delete(query);
+                        }
+                    });
+        }
     }
 
     @Override
@@ -103,44 +136,6 @@ public class QueryFavouritesPresenter
             }
         }));
         registerHandler(selectionModel.addDoubleSelectHandler(event -> hide()));
-        registerHandler(createButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                final Query query = Query.builder()
-                        .dataSource(currentDataSource)
-                        .expression(currentExpression)
-                        .build();
-                final StoredQuery queryEntity = StoredQuery
-                        .builder()
-                        .query(query)
-                        .dashboardUuid(currentDashboardUuid)
-                        .componentId(queryPresenter.getId())
-                        .name("")
-                        .favourite(true)
-                        .build();
-                namePresenter.show(queryEntity, result -> refresh(false));
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                final StoredQuery query = selectionModel.getSelectedObject();
-                if (query != null) {
-                    namePresenter.show(query, result -> refresh(false));
-                }
-            }
-        }));
-        registerHandler(deleteButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                final StoredQuery query = selectionModel.getSelectedObject();
-                if (query != null) {
-                    ConfirmEvent.fire(QueryFavouritesPresenter.this,
-                            "Are you sure you want to delete this favourite?", ok -> {
-                                if (ok) {
-                                    delete(query);
-                                }
-                            });
-                }
-            }
-        }));
     }
 
     public void show(final QueryPresenter queryPresenter, final String dashboardUuid,
@@ -217,6 +212,9 @@ public class QueryFavouritesPresenter
 
         void setExpressionView(View view);
 
-        ButtonView addButton(Preset preset);
+        /// The toolbar for the view's buttons, e.g. `getToolbar().button(SvgImage.ADD, "Add", this::add)`.
+        ///
+        /// @return The toolbar.
+        Toolbar getToolbar();
     }
 }

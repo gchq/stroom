@@ -21,8 +21,7 @@ import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.client.presenter.QueryHelpSelectionItem;
 import stroom.query.client.presenter.QueryHelpUiHandlers;
 import stroom.query.shared.QueryHelpRow;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -45,16 +44,13 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     @UiField
     SimplePanel details;
     @UiField
-    InlineSvgButton copyButton;
+    ToolbarButton copyButton;
     @UiField
-    InlineSvgButton insertButton;
+    ToolbarButton insertButton;
 
     @Inject
     public QueryHelpViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        copyButton.setSvg(SvgImage.COPY);
-        insertButton.setSvg(SvgImage.INSERT);
     }
 
     @Override

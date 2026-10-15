@@ -31,16 +31,31 @@
 	cursor: text;
 }
 
-.quickFilter button {
+/* The filter's buttons (Clear and its syntax help), over the end of its box */
+.quickFilter-toolbar {
 	position: absolute;
-}
-
-.quickFilter button.clear {
-	right: 25px;
-}
-
-.quickFilter button.info {
 	right: 4px;
+	margin: 0;
+}
+
+/* Its buttons are the 24px of a minimum touch target (WCAG 2.5.8), as they sit over the text box
+   with no space around them */
+.quickFilter-toolbar .toolbar-button {
+	width: 24px;
+	height: 24px;
+}
+
+/* Its icons are in the colour of a form group's help icon */
+.quickFilter-toolbar .toolbar-button__icon {
+	color: var(--navigation-icon-button__color);
+	/* The drop-down arrow is drawn in black rather than currentColor; give it the same colour */
+	--icon-colour__black: currentColor;
+}
+
+/* With a recent-filters drop-down: [text][clear][drop-down][help]. The drop-down is always shown,
+   so leave room for it as well as the help */
+.quickFilter.hasDropDown .quickFilter-textBox {
+	padding-right: 56px;
 }
 
 .quickFilter .svgIcon {
@@ -74,4 +89,16 @@
 /* Style any tables in the tooltip */
 .quickFilter-tooltip th, .quickFilter-tooltip td {
     padding-right: 1em;
+}
+
+/* Advanced Query dialog */
+.advancedQuickFilter-message {
+	padding: var(--control__padding--vertical) var(--control__padding--horizontal);
+	margin-bottom: var(--control__padding--vertical);
+	color: var(--warning);
+	white-space: pre-wrap;
+}
+
+.advancedQuickFilter-expression {
+	min-height: 200px;
 }

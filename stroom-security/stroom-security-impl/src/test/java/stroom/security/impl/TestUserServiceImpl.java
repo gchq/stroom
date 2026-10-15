@@ -49,6 +49,7 @@ class TestUserServiceImpl {
                 null,
                 null,
                 null,
+                null,
                 null);
 
         final UserDesc userDesc = UserDesc.builder(SUBJECT_ID)
@@ -76,6 +77,7 @@ class TestUserServiceImpl {
         final UserServiceImpl userService = new UserServiceImpl(
                 new MockSecurityContext(),
                 mockUserDao,
+                null,
                 null,
                 null,
                 null,
@@ -153,6 +155,7 @@ class TestUserServiceImpl {
                 new MockSecurityContext(),
                 mockUserDao,
                 Mockito.mock(stroom.security.impl.event.PermissionChangeEventBus.class),
+                null,
                 null,
                 null,
                 null,

@@ -23,6 +23,7 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Window;
@@ -67,6 +68,8 @@ public class AuthenticationErrorPresenter
                 getView().setGenericMessage(SafeHtmlUtils.fromTrustedString(authErrorMessage));
             }
             loading.getStyle().setOpacity(0);
+            // Hidden, not just transparent, so screen readers stop reading "Loading..."
+            loading.getStyle().setVisibility(Visibility.HIDDEN);
         });
     }
 

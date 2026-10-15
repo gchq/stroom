@@ -52,7 +52,7 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
     @UiField
     CurveTabBar tabBar;
     @UiField
-    LayerContainer layerContainer;
+    LayerContainerImpl layerContainer;
 
     private boolean menuVisible;
 
@@ -65,7 +65,10 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
             }
         };
         widget = binder.createAndBindUi(this);
+        tabBar.setTabPanel(layerContainer.getElement());
         SvgImageUtil.setSvgAsInnerHtml(menu, HIDE_SIDEBAR_TITLE, SvgImage.HIDE_MENU);
+        // The title is on the icon, so the button is named for screen readers too
+        menu.getElement().setAttribute("aria-label", HIDE_SIDEBAR_TITLE);
 
         menuVisible = true;
     }
@@ -105,9 +108,11 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
         if (menuVisible) {
             menuVisible = false;
             SvgImageUtil.setSvgAsInnerHtml(menu, SHOW_SIDEBAR_TITLE, SvgImage.SHOW_MENU);
+            menu.getElement().setAttribute("aria-label", SHOW_SIDEBAR_TITLE);
         } else {
             menuVisible = true;
             SvgImageUtil.setSvgAsInnerHtml(menu, HIDE_SIDEBAR_TITLE, SvgImage.HIDE_MENU);
+            menu.getElement().setAttribute("aria-label", HIDE_SIDEBAR_TITLE);
         }
         getUiHandlers().maximise();
     }

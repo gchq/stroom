@@ -5,11 +5,13 @@
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup label="Key Type"
-                        helpText="Choose the data type to use for the key.">
+                        helpText="The data type used to store keys. Fixed-size types (Boolean to Double) are compact; String allows up to 511 bytes; the lookup table types de-duplicate keys to save space at some cost to speed; Variable stores short keys directly and longer ones in a lookup table; Tags stores sets of name=value tags. Default is Variable."
+                        screenReaderText="Fixed-size types are compact; lookup tables are smaller but slower. Default is Variable.">
             <i:SelectionBox ui:field="keyType" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Hash Length"
-                        helpText="When using a hashing key type how long should the hash be?">
+                        helpText="The size of the hash used by the Hash lookup table and Variable types: Integer (4 bytes) or Long (8 bytes). Only enabled for those types. Default is Integer."
+                        screenReaderText="Integer (4 bytes) or Long (8 bytes); only used by hash lookup and Variable types.">
             <i:SelectionBox ui:field="hashLength" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>

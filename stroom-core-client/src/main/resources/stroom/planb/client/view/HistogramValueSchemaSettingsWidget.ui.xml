@@ -5,7 +5,8 @@
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup label="Value Size"
-                        helpText="Choose how big a value can be for a data point. Larger values require more storage.">
+                        helpText="The largest count a single histogram data point can hold, from Max 255 (1 byte) to about 9.2 quintillion (8 bytes). Larger limits need more storage. Default is Max 65,535."
+                        screenReaderText="Largest count per data point; larger limits need more storage.">
             <i:SelectionBox ui:field="maxValue" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>

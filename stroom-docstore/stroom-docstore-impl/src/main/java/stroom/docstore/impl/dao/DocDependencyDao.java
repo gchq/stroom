@@ -24,9 +24,11 @@ import stroom.docstore.impl.db.DocStoreDbConnProvider;
 import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.query.common.v2.FieldProviderImpl;
-import stroom.query.common.v2.SimpleStringExpressionParser;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -99,8 +101,9 @@ public class DocDependencyDao {
                 DependencyCriteria.FIELD_STATUS, statusField);
     }
 
-    private static final FieldProvider FIELD_PROVIDER =
-            new FieldProviderImpl(DependencyCriteria.FIELD_DEFINITIONS);
+    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(
+            DependencyCriteria.DEFAULT_QUERY_FIELDS,
+            DependencyCriteria.QUERY_FIELDS);
 
     /**
      * A dependency is OK if its target still exists as a non deleted doc, or if it is a known
@@ -319,12 +322,17 @@ public class DocDependencyDao {
         // on input that is partially typed or uses a condition this field does not support, which
         // is expected while the user types, so match nothing rather than failing the request.
         final List<Condition> conditions = new ArrayList<>();
-        final String filterInput = NullSafe.get(criteria, DependencyCriteria::getPartialName);
+        final String filterInput = NullSafe.get(criteria, DependencyCriteria::getQuickFilter);
         try {
             SimpleStringExpressionParser
                     .create(FIELD_PROVIDER, filterInput)
                     .ifPresent(expression ->
                             conditions.add(createExpressionMapper(pseudoRefUuids).apply(expression)));
+        } catch (final TokenException e) {
+            // A rejected filter must not look like a filter that matched nothing, so send the
+            // reason back with the (empty) results. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
             return ResultPage.empty();

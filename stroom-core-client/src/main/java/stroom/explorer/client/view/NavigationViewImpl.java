@@ -20,7 +20,9 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -53,7 +55,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @UiField
     QuickFilter nameFilter;
     @UiField
-    FlowPanel buttonContainer;
+    Toolbar toolbar;
     @UiField
     SimplePanel explorerTreeContainer;
     @UiField
@@ -106,8 +108,8 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     }
 
     @Override
-    public FlowPanel getButtonContainer() {
-        return buttonContainer;
+    public Toolbar getToolbar() {
+        return toolbar;
     }
 
     @Override
@@ -123,6 +125,16 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @Override
     public void focusQuickFilter() {
         nameFilter.focus();
+    }
+
+    @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        nameFilter.setContextHandler(contextHandler);
     }
 
     @Override

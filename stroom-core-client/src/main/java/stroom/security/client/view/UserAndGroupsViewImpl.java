@@ -17,11 +17,11 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
+import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -32,12 +32,12 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     private final Widget widget;
 
     @UiField
-    ThinSplitLayoutPanel outerSplitLayoutPanel;
+    SplitPane outerSplitPane;
     @UiField
     SimplePanel userList;
 
     @UiField
-    ThinSplitLayoutPanel innerSplitLayoutPanel;
+    SplitPane innerSplitPane;
     @UiField
     SimplePanel parents;
     @UiField
@@ -56,13 +56,8 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     @Override
     public void setUserListVisible(final boolean visible) {
         userList.setVisible(visible);
-        outerSplitLayoutPanel.setWidgetHidden(userList.asWidget(), !visible);
-        if (visible) {
-            outerSplitLayoutPanel.setVSplits(0.5);
-        } else {
-            outerSplitLayoutPanel.setVSplits();
-        }
-        outerSplitLayoutPanel.onResize();
+        // The pane below takes the space
+        outerSplitPane.setPaneHidden(userList, !visible);
     }
 
     @Override
@@ -76,10 +71,8 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     }
 
     @Override
-    public void setParentsVisible(final boolean visible) {
-        parents.getElement().getStyle().setOpacity(visible
-                ? 1
-                : 0.4);
+    public void setParentsEnabled(final boolean enabled) {
+        setPaneEnabled(parents, enabled);
     }
 
     @Override
@@ -88,15 +81,29 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     }
 
     @Override
+    public void setChildrenEnabled(final boolean enabled) {
+        setPaneEnabled(children, enabled);
+    }
+
+    // A pane that waits for a selection is shown dimmed, saying 'No Selection', rather than hidden,
+    // so the screen doesn't change shape. It is also inert: out of the tab order, unclickable and
+    // hidden from screen readers, rather than only looking unavailable
+    private static void setPaneEnabled(final Widget pane, final boolean enabled) {
+        pane.getElement().getStyle().setOpacity(enabled
+                ? 1
+                : 0.4);
+        if (enabled) {
+            pane.getElement().removeAttribute("inert");
+        } else {
+            pane.getElement().setAttribute("inert", "");
+        }
+    }
+
+    @Override
     public void setChildrenVisible(final boolean visible) {
         children.setVisible(visible);
-        innerSplitLayoutPanel.setWidgetHidden(children.asWidget(), !visible);
-        if (visible) {
-            innerSplitLayoutPanel.setHSplits(0.5);
-        } else {
-            innerSplitLayoutPanel.setHSplits();
-        }
-        innerSplitLayoutPanel.onResize();
+        // The Member Of pane takes the space
+        innerSplitPane.setPaneHidden(children, !visible);
     }
 
 

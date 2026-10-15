@@ -35,6 +35,7 @@ public class StepLocationLinkPresenter
 
     private final StepLocationPresenter stepLocationPresenter;
     private StepLocation stepLocation;
+    private boolean enabled = true;
 
     @Inject
     public StepLocationLinkPresenter(final EventBus eventBus,
@@ -49,6 +50,9 @@ public class StepLocationLinkPresenter
     protected void onBind() {
         super.onBind();
         getView().getLabel().addClickHandler(event -> {
+            if (!enabled) {
+                return;
+            }
             stepLocationPresenter.setStepLocation(stepLocation);
             ShowPopupEvent.builder(stepLocationPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -66,6 +70,15 @@ public class StepLocationLinkPresenter
         });
     }
 
+    /// Sets whether the location can be clicked to set a new one. It is enabled once a stream has
+    /// been chosen to step through.
+    ///
+    /// @param enabled True to let the location be set.
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
+        getView().setEnabled(enabled);
+    }
+
     public void setStepLocation(final StepLocation stepLocation) {
         this.stepLocation = stepLocation;
         updateLabel(stepLocation);
@@ -73,13 +86,13 @@ public class StepLocationLinkPresenter
 
     private void updateLabel(final StepLocation stepLocation) {
         if (stepLocation.getMetaId() == 0 && stepLocation.getPartIndex() == 0 && stepLocation.getRecordIndex() == 0) {
-            getView().getLabel().getElement().setInnerHTML("[??:??:??]");
+            getView().getLabel().setText("[??:??:??]");
         } else {
-            getView().getLabel().getElement().setInnerHTML("[" +
-                                                           stepLocation.getMetaId() + ":" +
-                                                           (stepLocation.getPartIndex() + 1) + ":" +
-                                                           (stepLocation.getRecordIndex() + 1) +
-                                                           "]");
+            getView().getLabel().setText("[" +
+                                         stepLocation.getMetaId() + ":" +
+                                         (stepLocation.getPartIndex() + 1) + ":" +
+                                         (stepLocation.getRecordIndex() + 1) +
+                                         "]");
         }
     }
 
@@ -90,5 +103,10 @@ public class StepLocationLinkPresenter
     public interface StepLocationLinkView extends View {
 
         Label getLabel();
+
+        /// Shows whether the location can be clicked to set a new one.
+        ///
+        /// @param enabled True if the location can be set.
+        void setEnabled(boolean enabled);
     }
 }

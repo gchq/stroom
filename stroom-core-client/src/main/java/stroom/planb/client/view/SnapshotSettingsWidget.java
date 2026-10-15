@@ -42,8 +42,6 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget {
     @UiField
     CustomCheckBox useSnapshotsForQuery;
 
-    private boolean readOnly;
-
     @Inject
     public SnapshotSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -69,16 +67,10 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget {
         }
     }
 
-    private void updateStates() {
-        final boolean enabled = !readOnly;
-        useSnapshotsForLookup.setEnabled(enabled);
-        useSnapshotsForGet.setEnabled(enabled);
-        useSnapshotsForQuery.setEnabled(enabled);
-    }
-
     public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        updateStates();
+        useSnapshotsForLookup.setReadOnly(readOnly);
+        useSnapshotsForGet.setReadOnly(readOnly);
+        useSnapshotsForQuery.setReadOnly(readOnly);
     }
 
     @UiHandler("useSnapshotsForLookup")

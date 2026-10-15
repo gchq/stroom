@@ -7,7 +7,8 @@
 
         <form:FormGroup identity="subjectId"
                         label="Users to add"
-                        addStyleNames="dock-min form">
+                        addStyleNames="dock-min form"
+                        screenReaderText="One user per line: user ID, optional display name, optional full name.">
 
             <form:DescriptionHTML>
                 <p>Unique User ID,[Optional Display Name],[Optional Full Name]</p>
@@ -39,13 +40,13 @@
                         Stroom's property
                         <code>stroom.security.authentication.openId.userDisplayNameClaim</code>
                         determines which Open ID Connect claim is used to supply the Display Name.
-                        The Display Name will be obtained from the identity provider when the user logs in, but
+                        The Display Name will be obtained from the identity provider when the user signs in, but
                         you can optionally enter it to make it easier to identify the user in Stroom.
                     </li>
                     <li>
                         <strong>Full Name</strong>
                         - The full name of the user, e.g. <code>Joe Bloggs</code>.
-                        The Full Name will be obtained from the identity provider when the user logs in, but
+                        The Full Name will be obtained from the identity provider when the user signs in, but
                         you can optionally enter it to make it easier to identify the user in Stroom.
                     </li>
                 </ul>

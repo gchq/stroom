@@ -16,8 +16,7 @@
 
 package stroom.cell.info.client;
 
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.Rect;
@@ -27,18 +26,25 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 
-public abstract class InfoColumn<T> extends Column<T, Preset> {
+public abstract class InfoColumn<T> extends Column<T, CellIcon> {
 
     public InfoColumn() {
         super(new SvgCell());
     }
 
     @Override
-    public Preset getValue(final T object) {
-        return SvgPresets.INFO;
+    public CellIcon getValue(final T object) {
+        return CellIcon.of(SvgImage.INFO, "Info");
     }
 
-    protected abstract void showInfo(T row, PopupPosition popupPosition);
+    /// Shows the row's info, e.g. with [stroom.widget.tooltip.client.presenter.TooltipPresenter].
+    ///
+    /// @param row           The row whose info to show.
+    /// @param popupPosition Where to show it.
+    /// @param anchor        The cell clicked, which should be the popup's auto-hide partner, so that
+    ///                      a second click on it closes the popup rather than its mousedown
+    ///                      auto-hiding the popup and its click showing it again.
+    protected abstract void showInfo(T row, PopupPosition popupPosition, Element anchor);
 
     @Override
     public void onBrowserEvent(final Context context, final Element elem, final T row, final NativeEvent event) {
@@ -54,6 +60,6 @@ public abstract class InfoColumn<T> extends Column<T, Preset> {
 
         final Rect relativeRect = new Rect(target);
         final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
-        showInfo(row, position);
+        showInfo(row, position, target);
     }
 }

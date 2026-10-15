@@ -103,6 +103,8 @@ public class FlexLayout extends Composite {
 
     private List<Component> newComponents;
     private Component addedComponent;
+    private double[] placementStart;
+    private final PlacementKeys placementKeys = new PlacementKeys();
 
     @Inject
     public FlexLayout(final EventBus eventBus) {
@@ -306,9 +308,11 @@ public class FlexLayout extends Composite {
     }
 
     private void finishSelection(final Event event) {
-        final double x = event.getClientX();
-        final double y = event.getClientY();
+        finishSelectionAt(event.getClientX(), event.getClientY());
+        event.preventDefault();
+    }
 
+    private void finishSelectionAt(final double x, final double y) {
         if (selectedSplitter != null) {
             if (startPos != null) {
                 stopSplitResize(x, y);
@@ -401,8 +405,12 @@ public class FlexLayout extends Composite {
             }
         }
 
+        endSelection();
+    }
+
+    // Ends a drag, a resize or a placement, whichever is under way.
+    private void endSelection() {
         releaseCapture();
-        event.preventDefault();
 
         // Reset vars.
         startPos = null;
@@ -452,8 +460,39 @@ public class FlexLayout extends Composite {
 
         capture();
 
+        // Keys can finish or cancel placing too: a keyboard user who chose Duplicate was stuck
+        placementStart = new double[]{x, y};
+        glass.getElement().setTitle(PlacementKeys.HELP);
+        placementKeys.start(this::cancelPlacement, this::placeAtStart);
+
         final MouseTarget mouseTarget = getMouseTarget(x, y, true, false);
         highlightMouseTarget(mouseTarget);
+    }
+
+    // Enter places the new components where placing them started, beside the tab they came from,
+    // or cancels if they can't go there
+    private void placeAtStart() {
+        if (newComponents != null) {
+            finishSelectionAt(placementStart[0], placementStart[1]);
+            if (newComponents != null) {
+                cancelPlacement();
+            }
+        }
+    }
+
+    // Abandons placing the new components and has the dashboard remove them.
+    private void cancelPlacement() {
+        final List<Component> unplaced = newComponents;
+        if (selection != null && selection.tabWidget != null) {
+            selection.tabWidget.setHighlight(false);
+        }
+        addedComponent = null;
+        newComponents = null;
+        selection = null;
+        endSelection();
+        if (changeHandler != null && unplaced != null) {
+            changeHandler.cancelNewComponents(unplaced);
+        }
     }
 
     private boolean moveTab(final MouseTarget mouseTarget,
@@ -824,6 +863,10 @@ public class FlexLayout extends Composite {
     private void releaseCapture() {
         glass.hide();
         hideMarker();
+        if (placementKeys.isListening()) {
+            placementKeys.stop();
+            glass.getElement().setTitle("");
+        }
 
         Event.releaseCapture(getElement());
     }

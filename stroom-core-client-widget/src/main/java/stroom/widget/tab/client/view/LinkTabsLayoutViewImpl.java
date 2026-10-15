@@ -32,11 +32,12 @@ public class LinkTabsLayoutViewImpl extends ViewImpl implements LinkTabsLayoutVi
     @UiField
     TabBar tabBar;
     @UiField
-    LayerContainer layerContainer;
+    LayerContainerImpl layerContainer;
 
     @Inject
     public LinkTabsLayoutViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        tabBar.setTabPanel(layerContainer.getElement());
         layerContainer.setFade(true);
     }
 

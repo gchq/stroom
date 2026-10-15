@@ -1,0 +1,2514 @@
+{
+ "generated": "2026-10-08T22:51:04.174Z",
+ "source": "stroom-gwt-suite/tools/build-reachability-graph.mjs",
+ "presenters": [
+  {
+   "name": "AboutPresenter",
+   "area": "About",
+   "how": "screen/dialog via plugin",
+   "via": "AboutPlugin"
+  },
+  {
+   "name": "ActivityEditPresenter",
+   "area": "Activity",
+   "how": "config-gated (a door only when enabled)",
+   "via": "stroom.ui.activity.enabled (opened from ManageActivityPresenter)"
+  },
+  {
+   "name": "ActivityListPresenter",
+   "area": "Activity",
+   "how": "embedded panel (covered via parent)",
+   "via": "ManageActivityPresenter"
+  },
+  {
+   "name": "ManageActivityPresenter",
+   "area": "Activity",
+   "how": "config-gated (a door only when enabled)",
+   "via": "stroom.ui.activity.enabled (NavigationPresenter: `activityConfig.isEnabled()` adds the activity button)"
+  },
+  {
+   "name": "SplashPresenter",
+   "area": "Activity",
+   "how": "config-gated (a door only when enabled)",
+   "via": "stroom.ui.splash.enabled (SplashPresenter.show: `splashConfig.isEnabled()`)"
+  },
+  {
+   "name": "AiAttachmentDataPresenter",
+   "area": "AI",
+   "how": "dialog",
+   "via": "AskStroomAiPresenter"
+  },
+  {
+   "name": "AiChatHistoryPresenter",
+   "area": "AI",
+   "how": "dialog",
+   "via": "AskStroomAiPresenter"
+  },
+  {
+   "name": "AiChatHistoryResultListPresenter",
+   "area": "AI",
+   "how": "embedded panel (covered via parent)",
+   "via": "AiChatHistoryPresenter"
+  },
+  {
+   "name": "AiConfigGeneralPresenter",
+   "area": "AI",
+   "how": "embedded panel (covered via parent)",
+   "via": "AskStroomAiConfigPresenter"
+  },
+  {
+   "name": "AiConfigTableAnalysisPresenter",
+   "area": "AI",
+   "how": "embedded panel (covered via parent)",
+   "via": "AskStroomAiConfigPresenter"
+  },
+  {
+   "name": "AskStroomAiConfigPresenter",
+   "area": "AI",
+   "how": "dialog",
+   "via": "AskStroomAiPresenter"
+  },
+  {
+   "name": "AskStroomAiPresenter",
+   "area": "AI",
+   "how": "dialog",
+   "via": "AskStroomAIGinjector, MainPresenter, MyDataGridAiSupport, QueryResultTablePresenter, TablePresenter"
+  },
+  {
+   "name": "DownloadChatPresenter",
+   "area": "AI",
+   "how": "dialog",
+   "via": "AskStroomAiPresenter"
+  },
+  {
+   "name": "AbstractDuplicateManagementPresenter",
+   "area": "Analytics",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "AbstractNotificationListPresenter",
+   "area": "Analytics",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "AbstractNotificationPresenter",
+   "area": "Analytics",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "AbstractProcessingPresenter",
+   "area": "Analytics",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "AbstractQueryEditPresenter",
+   "area": "Analytics",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "AbstractSettingsPresenter",
+   "area": "Analytics",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "AnalyticDataShardListPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticDataShardsPresenter"
+  },
+  {
+   "name": "AnalyticDataShardsPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticRulePresenter"
+  },
+  {
+   "name": "AnalyticDuplicateManagementPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticRulePresenter"
+  },
+  {
+   "name": "AnalyticEmailDestinationPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticNotificationEditPresenter"
+  },
+  {
+   "name": "AnalyticNotificationEditPresenter",
+   "area": "Analytics",
+   "how": "dialog",
+   "via": "AbstractNotificationListPresenter"
+  },
+  {
+   "name": "AnalyticNotificationListPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticNotificationPresenter"
+  },
+  {
+   "name": "AnalyticNotificationPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticRulePresenter"
+  },
+  {
+   "name": "AnalyticProcessingPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticRulePresenter"
+  },
+  {
+   "name": "AnalyticQueryEditPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticRulePresenter"
+  },
+  {
+   "name": "AnalyticRulePresenter",
+   "area": "Analytics",
+   "how": "screen/dialog via plugin",
+   "via": "AnalyticsPlugin"
+  },
+  {
+   "name": "AnalyticSettingsPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticRulePresenter"
+  },
+  {
+   "name": "AnalyticStreamDestinationPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticNotificationEditPresenter"
+  },
+  {
+   "name": "BatchExecutionScheduleEditPresenter",
+   "area": "Analytics",
+   "how": "dialog",
+   "via": "ExecutionScheduleManager"
+  },
+  {
+   "name": "DuplicateManagementListPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AbstractDuplicateManagementPresenter, AnalyticDuplicateManagementPresenter"
+  },
+  {
+   "name": "ExecutionScheduleRunNowPresenter",
+   "area": "Analytics",
+   "how": "dialog",
+   "via": "ExecutionScheduleManager"
+  },
+  {
+   "name": "ReportNotificationListPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "ReportNotificationPresenter"
+  },
+  {
+   "name": "ReportNotificationPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "ReportPresenter"
+  },
+  {
+   "name": "ReportPresenter",
+   "area": "Analytics",
+   "how": "screen/dialog via plugin",
+   "via": "ReportPlugin"
+  },
+  {
+   "name": "ReportProcessingPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "ReportPresenter"
+  },
+  {
+   "name": "ReportQueryEditPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "ReportPresenter"
+  },
+  {
+   "name": "ReportSettingsPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "ReportPresenter"
+  },
+  {
+   "name": "ScheduledProcessEditPresenter",
+   "area": "Analytics",
+   "how": "dialog",
+   "via": "ExecutionScheduleManager, ScheduledProcessingPresenter"
+  },
+  {
+   "name": "ScheduledProcessHistoryListPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "ScheduledProcessingPresenter"
+  },
+  {
+   "name": "ScheduledProcessListPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "ScheduledProcessingPresenter"
+  },
+  {
+   "name": "ScheduledProcessingPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AbstractProcessingPresenter, AnalyticProcessingPresenter, DataGenProcessingPresenter"
+  },
+  {
+   "name": "StreamingProcessingPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AbstractProcessingPresenter, AnalyticProcessingPresenter, ReportProcessingPresenter"
+  },
+  {
+   "name": "TableBuilderProcessingPresenter",
+   "area": "Analytics",
+   "how": "embedded panel (covered via parent)",
+   "via": "AbstractProcessingPresenter, AnalyticProcessingPresenter, ReportProcessingPresenter"
+  },
+  {
+   "name": "AddEventLinkPresenter",
+   "area": "Annotation",
+   "how": "dialog",
+   "via": "LinkedEventPresenter"
+  },
+  {
+   "name": "AnnotationEditPresenter",
+   "area": "Annotation",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnnotationPresenter"
+  },
+  {
+   "name": "AnnotationLinkPresenter",
+   "area": "Annotation",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnnotationPresenter"
+  },
+  {
+   "name": "AnnotationPresenter",
+   "area": "Annotation",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnnotationEditPresenter, AnnotationLinkPresenter, LinkedEventPresenter"
+  },
+  {
+   "name": "AnnotationTagCreatePresenter",
+   "area": "Annotation",
+   "how": "dialog",
+   "via": "AnnotationTagPresenter"
+  },
+  {
+   "name": "AnnotationTagEditPresenter",
+   "area": "Annotation",
+   "how": "dialog",
+   "via": "AnnotationTagCreatePresenter, AnnotationTagPresenter"
+  },
+  {
+   "name": "AnnotationTagListPresenter",
+   "area": "Annotation",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnnotationTagPresenter"
+  },
+  {
+   "name": "AnnotationTagPresenter",
+   "area": "Annotation",
+   "how": "screen/dialog via plugin",
+   "via": "AnnotationCollectionPlugin, AnnotationCommentPlugin, AnnotationLabelPlugin, AnnotationPlugin, AnnotationStatusPlugin"
+  },
+  {
+   "name": "BrowseAnnotationPresenter",
+   "area": "Annotation",
+   "how": "screen/dialog via plugin",
+   "via": "AnnotationBrowsePlugin"
+  },
+  {
+   "name": "ChangeAssignedToPresenter",
+   "area": "Annotation",
+   "how": "dialog",
+   "via": "AnnotationManager"
+  },
+  {
+   "name": "ChangeStatusPresenter",
+   "area": "Annotation",
+   "how": "dialog",
+   "via": "AnnotationManager"
+  },
+  {
+   "name": "ChooserPresenter",
+   "area": "Annotation",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnnotationEditPresenter, ChangeStatusPresenter, MultiChooserPresenter"
+  },
+  {
+   "name": "CommentEditPresenter",
+   "area": "Annotation",
+   "how": "dialog",
+   "via": "AnnotationEditPresenter"
+  },
+  {
+   "name": "DurationPresenter",
+   "area": "Annotation",
+   "how": "dialog",
+   "via": "AnnotationEditPresenter"
+  },
+  {
+   "name": "FindAnnotationListPresenter",
+   "area": "Annotation",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnnotationLinkPresenter, BrowseAnnotationPresenter, FindAnnotationPresenter"
+  },
+  {
+   "name": "FindAnnotationPresenter",
+   "area": "Annotation",
+   "how": "dialog",
+   "via": "AnnotationLinkPresenter, AnnotationManager"
+  },
+  {
+   "name": "LinkedEventPresenter",
+   "area": "Annotation",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnnotationPresenter"
+  },
+  {
+   "name": "MultiChooserPresenter",
+   "area": "Annotation",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnnotationEditPresenter"
+  },
+  {
+   "name": "S3ConfigPresenter",
+   "area": "AWS / S3",
+   "how": "screen/dialog via plugin",
+   "via": "S3ConfigPlugin"
+  },
+  {
+   "name": "CacheListPresenter",
+   "area": "Cache",
+   "how": "embedded panel (covered via parent)",
+   "via": "CachePresenter"
+  },
+  {
+   "name": "CacheNodeListPresenter",
+   "area": "Cache",
+   "how": "embedded panel (covered via parent)",
+   "via": "CachePresenter"
+  },
+  {
+   "name": "CachePresenter",
+   "area": "Cache",
+   "how": "screen/dialog via plugin",
+   "via": "CacheMonitoringPlugin"
+  },
+  {
+   "name": "ConfigPropertyClusterValuesListPresenter",
+   "area": "Config / properties",
+   "how": "embedded panel (covered via parent)",
+   "via": "ConfigPropertyClusterValuesPresenter"
+  },
+  {
+   "name": "ConfigPropertyClusterValuesPresenter",
+   "area": "Config / properties",
+   "how": "dialog",
+   "via": "ManageGlobalPropertyEditPresenter"
+  },
+  {
+   "name": "GlobalPropertyTabPresenter",
+   "area": "Config / properties",
+   "how": "screen/dialog via plugin",
+   "via": "ManageGlobalPropertiesPlugin"
+  },
+  {
+   "name": "ManageGlobalPropertyEditPresenter",
+   "area": "Config / properties",
+   "how": "dialog",
+   "via": "GlobalPropertyTabPresenter"
+  },
+  {
+   "name": "ManageGlobalPropertyListPresenter",
+   "area": "Config / properties",
+   "how": "embedded panel (covered via parent)",
+   "via": "GlobalPropertyTabPresenter"
+  },
+  {
+   "name": "ContentTabPanePresenter",
+   "area": "Content",
+   "how": "not a door (by construction)",
+   "via": "the content tab pane itself — application shell, revealed by the AppModule proxy, not opened"
+  },
+  {
+   "name": "ContentTabPresenter",
+   "area": "Content",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "ContentStoreContentPackDetailsPresenter",
+   "area": "Content store",
+   "how": "embedded panel (covered via parent)",
+   "via": "ContentStorePresenter"
+  },
+  {
+   "name": "ContentStoreContentPackListPresenter",
+   "area": "Content store",
+   "how": "embedded panel (covered via parent)",
+   "via": "ContentStorePresenter"
+  },
+  {
+   "name": "ContentStorePresenter",
+   "area": "Content store",
+   "how": "screen/dialog via plugin",
+   "via": "ContentStorePlugin"
+  },
+  {
+   "name": "AccessTokenSecretPresenter",
+   "area": "Credentials",
+   "how": "embedded panel (covered via parent)",
+   "via": "CredentialSettingsPresenter, SecretPresenter"
+  },
+  {
+   "name": "CredentialEditPresenter",
+   "area": "Credentials",
+   "how": "dialog",
+   "via": "CredentialsListPresenter"
+  },
+  {
+   "name": "CredentialSettingsPresenter",
+   "area": "Credentials",
+   "how": "embedded panel (covered via parent)",
+   "via": "CredentialEditPresenter"
+  },
+  {
+   "name": "CredentialsListPresenter",
+   "area": "Credentials",
+   "how": "embedded panel (covered via parent)",
+   "via": "CredentialsManagerDialogPresenter, CredentialsPresenter"
+  },
+  {
+   "name": "CredentialsManagerDialogPresenter",
+   "area": "Credentials",
+   "how": "dialog",
+   "via": "ContentStoreContentPackDetailsPresenter"
+  },
+  {
+   "name": "CredentialsPresenter",
+   "area": "Credentials",
+   "how": "screen/dialog via plugin",
+   "via": "CredentialsPlugin"
+  },
+  {
+   "name": "KeyStoreSecretPresenter",
+   "area": "Credentials",
+   "how": "embedded panel (covered via parent)",
+   "via": "CredentialSettingsPresenter, SecretPresenter"
+  },
+  {
+   "name": "SecretPresenter",
+   "area": "Credentials",
+   "how": "embedded panel (covered via parent)",
+   "via": "AccessTokenSecretPresenter, CredentialSettingsPresenter, KeyStoreSecretPresenter"
+  },
+  {
+   "name": "SshKeySecretPresenter",
+   "area": "Credentials",
+   "how": "embedded panel (covered via parent)",
+   "via": "CredentialSettingsPresenter, SecretPresenter"
+  },
+  {
+   "name": "UsernamePasswordSecretPresenter",
+   "area": "Credentials",
+   "how": "embedded panel (covered via parent)",
+   "via": "CredentialSettingsPresenter, SecretPresenter"
+  },
+  {
+   "name": "BasicEmbeddedQuerySettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "EmbeddedQuerySettingsPresenter"
+  },
+  {
+   "name": "EmbeddedQueryPresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "EmbeddedQueryPlugin"
+  },
+  {
+   "name": "EmbeddedQuerySettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "EmbeddedQueryPresenter"
+  },
+  {
+   "name": "BasicKeyValueInputSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "KeyValueInputSettingsPresenter"
+  },
+  {
+   "name": "BasicListInputSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "ListInputSettingsPresenter"
+  },
+  {
+   "name": "BasicTableFilterSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "TableFilterSettingsPresenter"
+  },
+  {
+   "name": "BasicTextInputSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "TextInputSettingsPresenter"
+  },
+  {
+   "name": "ColumnSelectionPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "BasicTableFilterSettingsPresenter"
+  },
+  {
+   "name": "KeyValueInputPresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "KeyValueInputPlugin"
+  },
+  {
+   "name": "KeyValueInputSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "KeyValueInputPresenter"
+  },
+  {
+   "name": "ListInputPresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "ListInputPlugin"
+  },
+  {
+   "name": "ListInputSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "ListInputPresenter"
+  },
+  {
+   "name": "MultiRulesPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "BasicTableFilterSettingsPresenter, TableFilterSettingsPresenter"
+  },
+  {
+   "name": "TableFilterPresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "TableFilterPlugin"
+  },
+  {
+   "name": "TableFilterSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "TableFilterPresenter"
+  },
+  {
+   "name": "TextInputPresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "TextInputPlugin"
+  },
+  {
+   "name": "TextInputSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "TextInputPresenter"
+  },
+  {
+   "name": "AbstractComponentPresenter",
+   "area": "Dashboard",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "AbstractRefreshableComponentPresenter",
+   "area": "Dashboard",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "AbstractSettingsTabPresenter",
+   "area": "Dashboard",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "BasicSettingsTabPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "BasicEmbeddedQuerySettingsPresenter, BasicKeyValueInputSettingsPresenter, BasicListInputSettingsPresenter"
+  },
+  {
+   "name": "DashboardPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "DashboardSuperPresenter, RenameTabPresenter"
+  },
+  {
+   "name": "DashboardSuperPresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "DashboardPlugin"
+  },
+  {
+   "name": "LayoutConstraintPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "DashboardPresenter"
+  },
+  {
+   "name": "RenameTabPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "DashboardPresenter, TabManager"
+  },
+  {
+   "name": "SettingsPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "AbstractComponentPresenter"
+  },
+  {
+   "name": "BasicQuerySettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "QuerySettingsPresenter"
+  },
+  {
+   "name": "CurrentSelectionPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "DashboardPresenter"
+  },
+  {
+   "name": "NamePresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "QueryFavouritesPresenter"
+  },
+  {
+   "name": "ProcessorLimitsPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "QueryPresenter"
+  },
+  {
+   "name": "QueryFavouritesPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "QueryPresenter"
+  },
+  {
+   "name": "QueryHistoryPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "QueryPresenter"
+  },
+  {
+   "name": "QueryInfoPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "QueryInfo"
+  },
+  {
+   "name": "QueryPresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "QueryPlugin"
+  },
+  {
+   "name": "QuerySettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "QueryPresenter"
+  },
+  {
+   "name": "SelectionHandlerListPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "SelectionHandlersPresenter"
+  },
+  {
+   "name": "SelectionHandlerPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "SelectionHandlersPresenter"
+  },
+  {
+   "name": "SelectionHandlersPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "EmbeddedQuerySettingsPresenter, QuerySettingsPresenter, TableSettingsPresenter"
+  },
+  {
+   "name": "BasicTableSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "TableSettingsPresenter"
+  },
+  {
+   "name": "ColumnFilterPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "QueryResultTablePresenter, QueryTableColumnsManager, TableFilterPresenter"
+  },
+  {
+   "name": "ColumnFunctionEditorPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "ColumnsManager, TablePresenter"
+  },
+  {
+   "name": "ColumnValuesFilterPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "ColumnsManager, QueryResultTablePresenter, QueryTableColumnsManager, TableFilterPresenter, TablePresenter"
+  },
+  {
+   "name": "DownloadPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "QueryResultTablePresenter, TablePresenter"
+  },
+  {
+   "name": "FormatPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "ColumnsManager, QueryResultTablePresenter, QueryTableColumnsManager, TablePresenter"
+  },
+  {
+   "name": "IncludeExcludeFilterDictionaryPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "IncludeExcludeFilterPresenter"
+  },
+  {
+   "name": "IncludeExcludeFilterPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "TableFilterPresenter"
+  },
+  {
+   "name": "RenameColumnPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "ColumnsManager, TablePresenter"
+  },
+  {
+   "name": "TableFilterPresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "TableFilterPlugin"
+  },
+  {
+   "name": "TablePresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "TablePlugin"
+  },
+  {
+   "name": "TableSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "TablePresenter"
+  },
+  {
+   "name": "CustomRowStylePresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "RulePresenter"
+  },
+  {
+   "name": "EditExpressionPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "DataRetentionImpactPresenter"
+  },
+  {
+   "name": "RuleListPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "RulesPresenter"
+  },
+  {
+   "name": "RulePresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "RulesPresenter"
+  },
+  {
+   "name": "RulesPresenter",
+   "area": "Dashboard",
+   "how": "dialog",
+   "via": "QueryTableColumnsManager"
+  },
+  {
+   "name": "BasicTextSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "TextSettingsPresenter"
+  },
+  {
+   "name": "TextPresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "TextPlugin"
+  },
+  {
+   "name": "TextSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "TextPresenter"
+  },
+  {
+   "name": "UnknownComponentPresenter",
+   "area": "Dashboard",
+   "how": "not a door (by construction)",
+   "via": "fallback for a dashboard component whose type is not registered (Components.java: `componentRegistry.getComponent(type) == null`) — needs corrupt content"
+  },
+  {
+   "name": "BasicVisSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "VisSettingsPresenter"
+  },
+  {
+   "name": "VisPresenter",
+   "area": "Dashboard",
+   "how": "screen/dialog via plugin",
+   "via": "VisPlugin"
+  },
+  {
+   "name": "VisSettingsPresenter",
+   "area": "Dashboard",
+   "how": "embedded panel (covered via parent)",
+   "via": "VisPresenter"
+  },
+  {
+   "name": "AbstractMetaListPresenter",
+   "area": "Data / streams",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "CharacterNavigatorPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "SourcePresenter"
+  },
+  {
+   "name": "CharacterRangeSelectionPresenter",
+   "area": "Data / streams",
+   "how": "dialog",
+   "via": "CharacterNavigatorPresenter"
+  },
+  {
+   "name": "DataPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "DataPreviewTabPresenter, LinkedEventPresenter, MarkerListPresenter"
+  },
+  {
+   "name": "DataPreviewTabPresenter",
+   "area": "Data / streams",
+   "how": "screen/dialog via plugin",
+   "via": "DataPreviewTabPlugin"
+  },
+  {
+   "name": "DataUploadPresenter",
+   "area": "Data / streams",
+   "how": "dialog",
+   "via": "MetaPresenter"
+  },
+  {
+   "name": "EditExpressionPresenter",
+   "area": "Data / streams",
+   "how": "dialog",
+   "via": "DataRetentionImpactPresenter"
+  },
+  {
+   "name": "ExpressionPresenter",
+   "area": "Data / streams",
+   "how": "dialog",
+   "via": "ExecutionScheduleManager, MetaPresenter, ProcessorPresenter"
+  },
+  {
+   "name": "ItemNavigatorPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "DataPresenter"
+  },
+  {
+   "name": "ItemSelectionPresenter",
+   "area": "Data / streams",
+   "how": "dialog",
+   "via": "ItemNavigatorPresenter"
+  },
+  {
+   "name": "MarkerListPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "DataPresenter"
+  },
+  {
+   "name": "MetaListPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "MetaPresenter"
+  },
+  {
+   "name": "MetaPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "DataUploadPresenter, FeedPresenter, FolderPresenter"
+  },
+  {
+   "name": "MetaRelationListPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "MetaPresenter"
+  },
+  {
+   "name": "ProcessChoicePresenter",
+   "area": "Data / streams",
+   "how": "dialog",
+   "via": "AbstractMetaListPresenter, MetaListPresenter, MetaRelationListPresenter, SteppingMetaListPresenter"
+  },
+  {
+   "name": "ProcessorTaskListPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "ProcessorTaskPresenter"
+  },
+  {
+   "name": "ProcessorTaskPresenter",
+   "area": "Data / streams",
+   "how": "screen/dialog via plugin",
+   "via": "ProcessorTaskPlugin"
+  },
+  {
+   "name": "ProcessorTaskSummaryPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "ProcessorTaskPresenter"
+  },
+  {
+   "name": "SelectionSummaryPresenter",
+   "area": "Data / streams",
+   "how": "dialog",
+   "via": "AbstractMetaListPresenter, MetaListPresenter, MetaRelationListPresenter, SteppingMetaListPresenter"
+  },
+  {
+   "name": "SourcePresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "SourceTabPresenter, SteppingPresenter"
+  },
+  {
+   "name": "SourceTabPresenter",
+   "area": "Data / streams",
+   "how": "screen/dialog via plugin",
+   "via": "SourceTabPlugin"
+  },
+  {
+   "name": "SteppingMetaListPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "SteppingPresenter"
+  },
+  {
+   "name": "TextPresenter",
+   "area": "Data / streams",
+   "how": "screen/dialog via plugin",
+   "via": "TextPlugin"
+  },
+  {
+   "name": "FsVolumeEditPresenter",
+   "area": "Data / streams",
+   "how": "dialog",
+   "via": "FsVolumeGinjector, FsVolumeGroupEditPresenter"
+  },
+  {
+   "name": "FsVolumeGroupEditPresenter",
+   "area": "Data / streams",
+   "how": "dialog",
+   "via": "FsVolumeGroupPresenter"
+  },
+  {
+   "name": "FsVolumeGroupListPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "FsVolumeGroupPresenter"
+  },
+  {
+   "name": "FsVolumeGroupPresenter",
+   "area": "Data / streams",
+   "how": "screen/dialog via plugin",
+   "via": "ManageFsVolumesPlugin"
+  },
+  {
+   "name": "FsVolumeStatusListPresenter",
+   "area": "Data / streams",
+   "how": "embedded panel (covered via parent)",
+   "via": "FsVolumeGroupEditPresenter"
+  },
+  {
+   "name": "NewFsVolumeGroupPresenter",
+   "area": "Data / streams",
+   "how": "dialog",
+   "via": "FsVolumeGroupPresenter"
+  },
+  {
+   "name": "DataGenPresenter",
+   "area": "Data generation",
+   "how": "screen/dialog via plugin",
+   "via": "DataGenPlugin"
+  },
+  {
+   "name": "DataGenProcessingPresenter",
+   "area": "Data generation",
+   "how": "embedded panel (covered via parent)",
+   "via": "DataGenPresenter"
+  },
+  {
+   "name": "DataGenSettingsPresenter",
+   "area": "Data generation",
+   "how": "embedded panel (covered via parent)",
+   "via": "DataGenPresenter"
+  },
+  {
+   "name": "DictionaryListPresenter",
+   "area": "Dictionary",
+   "how": "embedded panel (covered via parent)",
+   "via": "DictionarySettingsPresenter"
+  },
+  {
+   "name": "DictionaryPresenter",
+   "area": "Dictionary",
+   "how": "screen/dialog via plugin",
+   "via": "DictionaryPlugin"
+  },
+  {
+   "name": "DictionarySettingsPresenter",
+   "area": "Dictionary",
+   "how": "embedded panel (covered via parent)",
+   "via": "DictionaryPresenter"
+  },
+  {
+   "name": "DocRefListPresenter",
+   "area": "Dictionary",
+   "how": "embedded panel (covered via parent)",
+   "via": "DictionaryListPresenter, IncludeExcludeFilterDictionaryPresenter"
+  },
+  {
+   "name": "WordListPresenter",
+   "area": "Dictionary",
+   "how": "embedded panel (covered via parent)",
+   "via": "DictionaryPresenter, DictionarySettingsPresenter"
+  },
+  {
+   "name": "DocumentationPresenter",
+   "area": "Documentation",
+   "how": "screen/dialog via plugin",
+   "via": "DocumentationPlugin"
+  },
+  {
+   "name": "CopyDocumentPresenter",
+   "area": "Entity",
+   "how": "dialog",
+   "via": "DocumentPluginEventManager"
+  },
+  {
+   "name": "CreateDocumentPresenter",
+   "area": "Entity",
+   "how": "dialog",
+   "via": "DocumentPlugin, DocumentPluginEventManager, ExplorerPopupPresenter, QueryDocEditPresenter"
+  },
+  {
+   "name": "DocPresenter",
+   "area": "Entity",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "DocTabPresenter",
+   "area": "Entity",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "InfoDocumentPresenter",
+   "area": "Entity",
+   "how": "dialog",
+   "via": "DocumentPluginEventManager"
+  },
+  {
+   "name": "LinkTabPanelPresenter",
+   "area": "Entity",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "MarkdownEditPresenter",
+   "area": "Entity",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticRulePresenter, AnnotationPresenter, DashboardSuperPresenter"
+  },
+  {
+   "name": "MarkdownPreviewPresenter",
+   "area": "Entity",
+   "how": "embedded panel (covered via parent)",
+   "via": "MarkdownEditPresenter"
+  },
+  {
+   "name": "MoveDocumentPresenter",
+   "area": "Entity",
+   "how": "dialog",
+   "via": "DocumentPluginEventManager"
+  },
+  {
+   "name": "NameDocumentPresenter",
+   "area": "Entity",
+   "how": "dialog",
+   "via": "DocumentPluginEventManager"
+  },
+  {
+   "name": "AbstractFindPresenter",
+   "area": "Explorer",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "DocSelectionBoxPresenter",
+   "area": "Explorer",
+   "how": "embedded panel (covered via parent)",
+   "via": "AbstractSettingsPresenter, AiConfigGeneralPresenter, AnalyticProcessingPresenter"
+  },
+  {
+   "name": "DocumentListPresenter",
+   "area": "Explorer",
+   "how": "embedded panel (covered via parent)",
+   "via": "BatchDocumentPermissionsPresenter"
+  },
+  {
+   "name": "DocumentPermissionsListPresenter",
+   "area": "Explorer",
+   "how": "embedded panel (covered via parent)",
+   "via": "UserPermissionReportPresenter"
+  },
+  {
+   "name": "EntityCheckTreePresenter",
+   "area": "Explorer",
+   "how": "embedded panel (covered via parent)",
+   "via": "ExportConfigPresenter"
+  },
+  {
+   "name": "EntityTreePresenter",
+   "area": "Explorer",
+   "how": "embedded panel (covered via parent)",
+   "via": "CopyDocumentPresenter, CreateDocumentPresenter, MoveDocumentPresenter"
+  },
+  {
+   "name": "ExplorerNodeEditTagsPresenter",
+   "area": "Explorer",
+   "how": "dialog",
+   "via": "DocumentPluginEventManager"
+  },
+  {
+   "name": "ExplorerNodeRemoveTagsPresenter",
+   "area": "Explorer",
+   "how": "dialog",
+   "via": "DocumentPluginEventManager"
+  },
+  {
+   "name": "ExplorerPopupPresenter",
+   "area": "Explorer",
+   "how": "dialog",
+   "via": "DocSelectionBoxPresenter"
+  },
+  {
+   "name": "FindDocResultListPresenter",
+   "area": "Explorer",
+   "how": "embedded panel (covered via parent)",
+   "via": "AbstractFindPresenter, FindPresenter, RecentItemsPresenter"
+  },
+  {
+   "name": "FindInContentPresenter",
+   "area": "Explorer",
+   "how": "dialog",
+   "via": "AppGinjectorUser"
+  },
+  {
+   "name": "FindPresenter",
+   "area": "Explorer",
+   "how": "dialog",
+   "via": "DocumentPluginEventManager, NavigationPlugin"
+  },
+  {
+   "name": "NavigationPresenter",
+   "area": "Explorer",
+   "how": "place-based (session/navigation state)",
+   "via": "GWTP proxy"
+  },
+  {
+   "name": "RecentItemsPresenter",
+   "area": "Explorer",
+   "how": "dialog",
+   "via": "DocumentPluginEventManager, NavigationPlugin"
+  },
+  {
+   "name": "TabSessionChooserPresenter",
+   "area": "Explorer",
+   "how": "UNKNOWN",
+   "via": ""
+  },
+  {
+   "name": "TypeFilterPresenter",
+   "area": "Explorer",
+   "how": "dialog",
+   "via": "ExportConfigPresenter, NavigationPresenter"
+  },
+  {
+   "name": "FeedPresenter",
+   "area": "Feed",
+   "how": "screen/dialog via plugin",
+   "via": "FeedPlugin"
+  },
+  {
+   "name": "FeedSettingsPresenter",
+   "area": "Feed",
+   "how": "embedded panel (covered via parent)",
+   "via": "FeedPresenter"
+  },
+  {
+   "name": "FolderPresenter",
+   "area": "Folder",
+   "how": "screen/dialog via plugin",
+   "via": "FolderPlugin"
+  },
+  {
+   "name": "FolderRootPresenter",
+   "area": "Folder",
+   "how": "screen/dialog via plugin",
+   "via": "FolderPlugin, FolderRootPlugin"
+  },
+  {
+   "name": "GitRepoCommitDialogPresenter",
+   "area": "Git repository",
+   "how": "dialog",
+   "via": "GitRepoSettingsPresenter"
+  },
+  {
+   "name": "GitRepoPresenter",
+   "area": "Git repository",
+   "how": "screen/dialog via plugin",
+   "via": "GitRepoPlugin"
+  },
+  {
+   "name": "GitRepoSettingsPresenter",
+   "area": "Git repository",
+   "how": "dialog",
+   "via": "GitRepoPresenter"
+  },
+  {
+   "name": "HttpClientConfigPresenter",
+   "area": "HTTP",
+   "how": "dialog",
+   "via": "GitRepoSettingsPresenter, OpenAIModelSettingsPresenter"
+  },
+  {
+   "name": "HttpTlsConfigPresenter",
+   "area": "HTTP",
+   "how": "dialog",
+   "via": "HttpClientConfigPresenter"
+  },
+  {
+   "name": "DependenciesInfoPresenter",
+   "area": "Import / Export",
+   "how": "dialog",
+   "via": "DependenciesPresenter, ImportExportConfigGinjector"
+  },
+  {
+   "name": "DependenciesPresenter",
+   "area": "Import / Export",
+   "how": "embedded panel (covered via parent)",
+   "via": "DependenciesTabPresenter"
+  },
+  {
+   "name": "DependenciesTabPresenter",
+   "area": "Import / Export",
+   "how": "screen/dialog via plugin",
+   "via": "DependenciesPlugin"
+  },
+  {
+   "name": "ExportConfigPresenter",
+   "area": "Import / Export",
+   "how": "dialog",
+   "via": "DocumentPluginEventManager, ExportConfigPlugin"
+  },
+  {
+   "name": "ImportConfigConfirmPresenter",
+   "area": "Import / Export",
+   "how": "dialog",
+   "via": "ImportConfigPresenter, ImportExportConfigGinjector"
+  },
+  {
+   "name": "ImportConfigPresenter",
+   "area": "Import / Export",
+   "how": "dialog",
+   "via": "DocumentPluginEventManager, ImportConfigPlugin"
+  },
+  {
+   "name": "DenseVectorFieldPresenter",
+   "area": "Index",
+   "how": "embedded panel (covered via parent)",
+   "via": "IndexFieldEditPresenter"
+  },
+  {
+   "name": "IndexFieldEditPresenter",
+   "area": "Index",
+   "how": "dialog",
+   "via": "IndexFieldListPresenter, IndexGinjector"
+  },
+  {
+   "name": "IndexFieldListPresenter",
+   "area": "Index",
+   "how": "embedded panel (covered via parent)",
+   "via": "IndexPresenter"
+  },
+  {
+   "name": "IndexPresenter",
+   "area": "Index",
+   "how": "screen/dialog via plugin",
+   "via": "IndexPlugin"
+  },
+  {
+   "name": "IndexSettingsPresenter",
+   "area": "Index",
+   "how": "embedded panel (covered via parent)",
+   "via": "IndexPresenter"
+  },
+  {
+   "name": "IndexShardPresenter",
+   "area": "Index",
+   "how": "embedded panel (covered via parent)",
+   "via": "IndexPresenter"
+  },
+  {
+   "name": "IndexVolumeEditPresenter",
+   "area": "Index",
+   "how": "dialog",
+   "via": "IndexVolumeGroupEditPresenter"
+  },
+  {
+   "name": "IndexVolumeGroupEditPresenter",
+   "area": "Index",
+   "how": "dialog",
+   "via": "IndexVolumeGroupPresenter"
+  },
+  {
+   "name": "IndexVolumeGroupListPresenter",
+   "area": "Index",
+   "how": "embedded panel (covered via parent)",
+   "via": "IndexVolumeGroupPresenter"
+  },
+  {
+   "name": "IndexVolumeGroupPresenter",
+   "area": "Index",
+   "how": "screen/dialog via plugin",
+   "via": "ManageIndexVolumesPlugin"
+  },
+  {
+   "name": "IndexVolumeStatusListPresenter",
+   "area": "Index",
+   "how": "embedded panel (covered via parent)",
+   "via": "IndexVolumeGroupEditPresenter"
+  },
+  {
+   "name": "NewIndexVolumeGroupPresenter",
+   "area": "Index",
+   "how": "dialog",
+   "via": "IndexVolumeGroupPresenter"
+  },
+  {
+   "name": "JobListPresenter",
+   "area": "Jobs / scheduler",
+   "how": "embedded panel (covered via parent)",
+   "via": "JobPresenter"
+  },
+  {
+   "name": "JobNodeListPresenter",
+   "area": "Jobs / scheduler",
+   "how": "embedded panel (covered via parent)",
+   "via": "JobPresenter"
+  },
+  {
+   "name": "JobPresenter",
+   "area": "Jobs / scheduler",
+   "how": "screen/dialog via plugin",
+   "via": "JobListPlugin"
+  },
+  {
+   "name": "KafkaConfigPresenter",
+   "area": "Kafka",
+   "how": "screen/dialog via plugin",
+   "via": "KafkaConfigPlugin"
+  },
+  {
+   "name": "MainPresenter",
+   "area": "Main",
+   "how": "place-based (session/navigation state)",
+   "via": "GWTP proxy"
+  },
+  {
+   "name": "DatabaseTablesMonitoringPresenter",
+   "area": "Monitoring",
+   "how": "screen/dialog via plugin",
+   "via": "DatabaseTablesMonitoringPlugin"
+  },
+  {
+   "name": "NewNodeGroupPresenter",
+   "area": "Node / cluster",
+   "how": "dialog",
+   "via": "NodeGroupPresenter"
+  },
+  {
+   "name": "NodeGroupEditPresenter",
+   "area": "Node / cluster",
+   "how": "dialog",
+   "via": "NodeGroupPresenter"
+  },
+  {
+   "name": "NodeGroupListPresenter",
+   "area": "Node / cluster",
+   "how": "embedded panel (covered via parent)",
+   "via": "NodeGroupPresenter"
+  },
+  {
+   "name": "NodeGroupPresenter",
+   "area": "Node / cluster",
+   "how": "screen/dialog via plugin",
+   "via": "NodeGroupsPlugin"
+  },
+  {
+   "name": "NodeGroupStateListPresenter",
+   "area": "Node / cluster",
+   "how": "embedded panel (covered via parent)",
+   "via": "NodeGroupEditPresenter"
+  },
+  {
+   "name": "NodeJobListPresenter",
+   "area": "Node / cluster",
+   "how": "embedded panel (covered via parent)",
+   "via": "NodePresenter"
+  },
+  {
+   "name": "NodePresenter",
+   "area": "Node / cluster",
+   "how": "screen/dialog via plugin",
+   "via": "NodeMonitoringPlugin"
+  },
+  {
+   "name": "NodeStatusListPresenter",
+   "area": "Node / cluster",
+   "how": "embedded panel (covered via parent)",
+   "via": "NodePresenter"
+  },
+  {
+   "name": "OpenAIModelPresenter",
+   "area": "AI (OpenAI)",
+   "how": "screen/dialog via plugin",
+   "via": "OpenAIModelPlugin"
+  },
+  {
+   "name": "OpenAIModelSettingsPresenter",
+   "area": "AI (OpenAI)",
+   "how": "embedded panel (covered via parent)",
+   "via": "OpenAIModelPresenter"
+  },
+  {
+   "name": "ConstraintEditPresenter",
+   "area": "Pathways",
+   "how": "dialog",
+   "via": "ConstraintListPresenter"
+  },
+  {
+   "name": "ConstraintListPresenter",
+   "area": "Pathways",
+   "how": "embedded panel (covered via parent)",
+   "via": "PathwayEditPresenter"
+  },
+  {
+   "name": "PathwayEditPresenter",
+   "area": "Pathways",
+   "how": "dialog",
+   "via": "PathwayListPresenter"
+  },
+  {
+   "name": "PathwayListPresenter",
+   "area": "Pathways",
+   "how": "embedded panel (covered via parent)",
+   "via": "PathwaysSplitPresenter"
+  },
+  {
+   "name": "PathwayTreePresenter",
+   "area": "Pathways",
+   "how": "embedded panel (covered via parent)",
+   "via": "PathwayEditPresenter, PathwaysSplitPresenter"
+  },
+  {
+   "name": "PathwaysPresenter",
+   "area": "Pathways",
+   "how": "screen/dialog via plugin",
+   "via": "PathwaysPlugin"
+  },
+  {
+   "name": "PathwaysSettingsPresenter",
+   "area": "Pathways",
+   "how": "embedded panel (covered via parent)",
+   "via": "PathwaysPresenter"
+  },
+  {
+   "name": "PathwaysSplitPresenter",
+   "area": "Pathways",
+   "how": "embedded panel (covered via parent)",
+   "via": "PathwaysPresenter"
+  },
+  {
+   "name": "TracesListPresenter",
+   "area": "Pathways",
+   "how": "embedded panel (covered via parent)",
+   "via": "TracesListTabPresenter"
+  },
+  {
+   "name": "TracesListTabPresenter",
+   "area": "Pathways",
+   "how": "embedded panel (covered via parent)",
+   "via": "TracesPresenter"
+  },
+  {
+   "name": "TracesPresenter",
+   "area": "Pathways",
+   "how": "screen/dialog via plugin",
+   "via": "TracesDocPlugin, TracesPlugin"
+  },
+  {
+   "name": "TracesSettingsPresenter",
+   "area": "Pathways",
+   "how": "embedded panel (covered via parent)",
+   "via": "TracesPresenter"
+  },
+  {
+   "name": "DocRefSelectionPresenter",
+   "area": "Pipeline",
+   "how": "screen/dialog via plugin",
+   "via": "PipelinePlugin"
+  },
+  {
+   "name": "PipelinePresenter",
+   "area": "Pipeline",
+   "how": "screen/dialog via plugin",
+   "via": "PipelinePlugin"
+  },
+  {
+   "name": "TextConverterPresenter",
+   "area": "Pipeline",
+   "how": "screen/dialog via plugin",
+   "via": "TextConverterPlugin"
+  },
+  {
+   "name": "TextConverterSettingsPresenter",
+   "area": "Pipeline",
+   "how": "embedded panel (covered via parent)",
+   "via": "TextConverterPresenter"
+  },
+  {
+   "name": "XsltPresenter",
+   "area": "Pipeline",
+   "how": "screen/dialog via plugin",
+   "via": "XsltPlugin"
+  },
+  {
+   "name": "ElementPresenter",
+   "area": "Pipeline",
+   "how": "dialog",
+   "via": "SteppingPresenter"
+  },
+  {
+   "name": "StepControlPresenter",
+   "area": "Pipeline",
+   "how": "embedded panel (covered via parent)",
+   "via": "SteppingPresenter"
+  },
+  {
+   "name": "StepLocationLinkPresenter",
+   "area": "Pipeline",
+   "how": "embedded panel (covered via parent)",
+   "via": "SteppingPresenter"
+  },
+  {
+   "name": "StepLocationPresenter",
+   "area": "Pipeline",
+   "how": "dialog",
+   "via": "StepLocationLinkPresenter"
+  },
+  {
+   "name": "SteppingFilterPresenter",
+   "area": "Pipeline",
+   "how": "dialog",
+   "via": "PipelineGinjector, SteppingPresenter"
+  },
+  {
+   "name": "SteppingPresenter",
+   "area": "Pipeline",
+   "how": "embedded panel (covered via parent)",
+   "via": "PipelinePresenter"
+  },
+  {
+   "name": "XPathFilterPresenter",
+   "area": "Pipeline",
+   "how": "dialog",
+   "via": "SteppingFilterPresenter"
+  },
+  {
+   "name": "XPathListPresenter",
+   "area": "Pipeline",
+   "how": "embedded panel (covered via parent)",
+   "via": "SteppingFilterPresenter"
+  },
+  {
+   "name": "NewElementPresenter",
+   "area": "Pipeline",
+   "how": "dialog",
+   "via": "PipelineStructurePresenter"
+  },
+  {
+   "name": "NewPipelineReferencePresenter",
+   "area": "Pipeline",
+   "how": "dialog",
+   "via": "PipelineReferenceListPresenter"
+  },
+  {
+   "name": "NewPropertyPresenter",
+   "area": "Pipeline",
+   "how": "dialog",
+   "via": "PropertyListPresenter"
+  },
+  {
+   "name": "PipelineReferenceListPresenter",
+   "area": "Pipeline",
+   "how": "embedded panel (covered via parent)",
+   "via": "PipelineStructurePresenter"
+  },
+  {
+   "name": "PipelineStructurePresenter",
+   "area": "Pipeline",
+   "how": "embedded panel (covered via parent)",
+   "via": "PipelinePresenter"
+  },
+  {
+   "name": "PipelineTreePresenter",
+   "area": "Pipeline",
+   "how": "embedded panel (covered via parent)",
+   "via": "PipelineStructurePresenter, SteppingPresenter"
+  },
+  {
+   "name": "PropertyListPresenter",
+   "area": "Pipeline",
+   "how": "embedded panel (covered via parent)",
+   "via": "NewPropertyPresenter, PipelineStructurePresenter"
+  },
+  {
+   "name": "AbstractPlanBSettingsPresenter",
+   "area": "State (Plan B)",
+   "how": "abstract base (not a door)",
+   "via": ""
+  },
+  {
+   "name": "HistogramSettingsPresenter",
+   "area": "State (Plan B)",
+   "how": "embedded panel (covered via parent)",
+   "via": "PlanBSettingsPresenter"
+  },
+  {
+   "name": "MetricSettingsPresenter",
+   "area": "State (Plan B)",
+   "how": "embedded panel (covered via parent)",
+   "via": "PlanBSettingsPresenter"
+  },
+  {
+   "name": "PlanBPresenter",
+   "area": "State (Plan B)",
+   "how": "screen/dialog via plugin",
+   "via": "PlanBPlugin"
+  },
+  {
+   "name": "PlanBSettingsPresenter",
+   "area": "State (Plan B)",
+   "how": "embedded panel (covered via parent)",
+   "via": "PlanBPresenter, TracesSettingsPresenter"
+  },
+  {
+   "name": "RangeStateSettingsPresenter",
+   "area": "State (Plan B)",
+   "how": "embedded panel (covered via parent)",
+   "via": "PlanBSettingsPresenter"
+  },
+  {
+   "name": "SessionSettingsPresenter",
+   "area": "State (Plan B)",
+   "how": "embedded panel (covered via parent)",
+   "via": "PlanBSettingsPresenter"
+  },
+  {
+   "name": "StateSettingsPresenter",
+   "area": "State (Plan B)",
+   "how": "embedded panel (covered via parent)",
+   "via": "PlanBSettingsPresenter"
+  },
+  {
+   "name": "TemporalRangeStateSettingsPresenter",
+   "area": "State (Plan B)",
+   "how": "embedded panel (covered via parent)",
+   "via": "PlanBSettingsPresenter"
+  },
+  {
+   "name": "TemporalStateSettingsPresenter",
+   "area": "State (Plan B)",
+   "how": "embedded panel (covered via parent)",
+   "via": "PlanBSettingsPresenter"
+  },
+  {
+   "name": "TraceSettingsPresenter",
+   "area": "State (Plan B)",
+   "how": "embedded panel (covered via parent)",
+   "via": "PlanBSettingsPresenter"
+  },
+  {
+   "name": "EditorPreferencesPresenter",
+   "area": "Preferences",
+   "how": "embedded panel (covered via parent)",
+   "via": "UserPreferencesPresenter"
+  },
+  {
+   "name": "ThemePreferencesPresenter",
+   "area": "Preferences",
+   "how": "embedded panel (covered via parent)",
+   "via": "UserPreferencesPresenter"
+  },
+  {
+   "name": "TimePreferencesPresenter",
+   "area": "Preferences",
+   "how": "embedded panel (covered via parent)",
+   "via": "UserPreferencesPresenter"
+  },
+  {
+   "name": "UserPreferencesPresenter",
+   "area": "Preferences",
+   "how": "screen/dialog via plugin",
+   "via": "UserPreferencesPlugin"
+  },
+  {
+   "name": "BatchProcessorFilterEditPresenter",
+   "area": "Processor",
+   "how": "dialog",
+   "via": "ProcessorPresenter"
+  },
+  {
+   "name": "EditFeedDependencyPresenter",
+   "area": "Processor",
+   "how": "dialog",
+   "via": "FeedDependencyListPresenter"
+  },
+  {
+   "name": "FeedDependencyListPresenter",
+   "area": "Processor",
+   "how": "embedded panel (covered via parent)",
+   "via": "FeedDependencyPresenter"
+  },
+  {
+   "name": "FeedDependencyPresenter",
+   "area": "Processor",
+   "how": "dialog",
+   "via": "ProcessorEditPresenter"
+  },
+  {
+   "name": "ProcessorEditPresenter",
+   "area": "Processor",
+   "how": "dialog",
+   "via": "ProcessorPresenter"
+  },
+  {
+   "name": "ProcessorListPresenter",
+   "area": "Processor",
+   "how": "embedded panel (covered via parent)",
+   "via": "ProcessorPresenter"
+  },
+  {
+   "name": "ProcessorPresenter",
+   "area": "Processor",
+   "how": "embedded panel (covered via parent)",
+   "via": "FolderPresenter, FolderRootPresenter, PipelinePresenter"
+  },
+  {
+   "name": "ProcessorProfileEditPresenter",
+   "area": "Processor",
+   "how": "dialog",
+   "via": "ProcessorProfilePresenter"
+  },
+  {
+   "name": "ProcessorProfileListPresenter",
+   "area": "Processor",
+   "how": "embedded panel (covered via parent)",
+   "via": "ProcessorProfilePresenter"
+  },
+  {
+   "name": "ProcessorProfilePresenter",
+   "area": "Processor",
+   "how": "screen/dialog via plugin",
+   "via": "ProcessorProfilePlugin"
+  },
+  {
+   "name": "ProfilePeriodEditPresenter",
+   "area": "Processor",
+   "how": "dialog",
+   "via": "ProfilePeriodListPresenter"
+  },
+  {
+   "name": "ProfilePeriodListPresenter",
+   "area": "Processor",
+   "how": "embedded panel (covered via parent)",
+   "via": "ProcessorProfileEditPresenter"
+  },
+  {
+   "name": "ProcessorTaskPresenter",
+   "area": "Processor",
+   "how": "screen/dialog via plugin",
+   "via": "ProcessorTaskPlugin"
+  },
+  {
+   "name": "ExpressionTreePresenter",
+   "area": "Query / search",
+   "how": "embedded panel (covered via parent)",
+   "via": "ContentTemplateTabPresenter, DataRetentionPolicyPresenter, EditExpressionPresenter"
+  },
+  {
+   "name": "QueryDocEditPresenter",
+   "area": "Query / search",
+   "how": "embedded panel (covered via parent)",
+   "via": "QueryDocPresenter"
+  },
+  {
+   "name": "QueryDocPresenter",
+   "area": "Query / search",
+   "how": "screen/dialog via plugin",
+   "via": "QueryPlugin"
+  },
+  {
+   "name": "QueryEditPresenter",
+   "area": "Query / search",
+   "how": "embedded panel (covered via parent)",
+   "via": "AbstractQueryEditPresenter, AnalyticQueryEditPresenter, QueryDocEditPresenter"
+  },
+  {
+   "name": "QueryHelpPresenter",
+   "area": "Query / search",
+   "how": "embedded panel (covered via parent)",
+   "via": "ColumnFunctionEditorPresenter, QueryEditPresenter"
+  },
+  {
+   "name": "QueryResultTablePresenter",
+   "area": "Query / search",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticDataShardsPresenter, EmbeddedQueryPresenter, QueryResultTableSplitPresenter"
+  },
+  {
+   "name": "QueryResultTableSplitPresenter",
+   "area": "Query / search",
+   "how": "embedded panel (covered via parent)",
+   "via": "QueryEditPresenter"
+  },
+  {
+   "name": "QueryResultVisPresenter",
+   "area": "Query / search",
+   "how": "embedded panel (covered via parent)",
+   "via": "EmbeddedQueryPresenter, QueryEditPresenter, QueryResultTablePresenter"
+  },
+  {
+   "name": "QueryToolbarPresenter",
+   "area": "Query / search",
+   "how": "embedded panel (covered via parent)",
+   "via": "AnalyticDataShardsPresenter, DashboardPresenter, QueryEditPresenter"
+  },
+  {
+   "name": "ResultStoreListPresenter",
+   "area": "Query / search",
+   "how": "embedded panel (covered via parent)",
+   "via": "ResultStorePresenter"
+  },
+  {
+   "name": "ResultStorePresenter",
+   "area": "Query / search",
+   "how": "screen/dialog via plugin",
+   "via": "ResultStorePlugin"
+  },
+  {
+   "name": "ResultStoreSettingsPresenter",
+   "area": "Query / search",
+   "how": "dialog",
+   "via": "ResultStoreListPresenter"
+  },
+  {
+   "name": "TextPresenter",
+   "area": "Query / search",
+   "how": "screen/dialog via plugin",
+   "via": "TextPlugin"
+  },
+  {
+   "name": "ContentTemplateEditPresenter",
+   "area": "Data receipt",
+   "how": "dialog",
+   "via": "ContentTemplateTabPresenter"
+  },
+  {
+   "name": "ContentTemplateListPresenter",
+   "area": "Data receipt",
+   "how": "embedded panel (covered via parent)",
+   "via": "ContentTemplateTabPresenter"
+  },
+  {
+   "name": "ContentTemplateTabPresenter",
+   "area": "Data receipt",
+   "how": "screen/dialog via plugin",
+   "via": "ContentTemplatePlugin"
+  },
+  {
+   "name": "DataRetentionImpactPresenter",
+   "area": "Data receipt",
+   "how": "embedded panel (covered via parent)",
+   "via": "DataRetentionPresenter"
+  },
+  {
+   "name": "DataRetentionPolicyListPresenter",
+   "area": "Data receipt",
+   "how": "embedded panel (covered via parent)",
+   "via": "DataRetentionPolicyPresenter"
+  },
+  {
+   "name": "DataRetentionPolicyPresenter",
+   "area": "Data receipt",
+   "how": "embedded panel (covered via parent)",
+   "via": "DataRetentionPolicyListPresenter, DataRetentionPresenter"
+  },
+  {
+   "name": "DataRetentionPresenter",
+   "area": "Data receipt",
+   "how": "screen/dialog via plugin",
+   "via": "DataRetentionPlugin"
+  },
+  {
+   "name": "DataRetentionRulePresenter",
+   "area": "Data receipt",
+   "how": "dialog",
+   "via": "DataRetentionPolicyPresenter"
+  },
+  {
+   "name": "FieldEditPresenter",
+   "area": "Data receipt",
+   "how": "dialog",
+   "via": "FieldListPresenter"
+  },
+  {
+   "name": "FieldListPresenter",
+   "area": "Data receipt",
+   "how": "embedded panel (covered via parent)",
+   "via": "RuleSetPresenter, RuleSetSettingsPresenter"
+  },
+  {
+   "name": "RulePresenter",
+   "area": "Data receipt",
+   "how": "dialog",
+   "via": "RulesPresenter"
+  },
+  {
+   "name": "RuleSetListPresenter",
+   "area": "Data receipt",
+   "how": "embedded panel (covered via parent)",
+   "via": "RuleSetSettingsPresenter"
+  },
+  {
+   "name": "RuleSetPresenter",
+   "area": "Data receipt",
+   "how": "screen/dialog via plugin",
+   "via": "ReceiveDataRuleSetPlugin"
+  },
+  {
+   "name": "RuleSetSettingsPresenter",
+   "area": "Data receipt",
+   "how": "embedded panel (covered via parent)",
+   "via": "RuleSetPresenter"
+  },
+  {
+   "name": "ScriptDependencyListPresenter",
+   "area": "Script",
+   "how": "embedded panel (covered via parent)",
+   "via": "ScriptSettingsPresenter"
+  },
+  {
+   "name": "ScriptListPresenter",
+   "area": "Script",
+   "how": "embedded panel (covered via parent)",
+   "via": "ScriptDependencyListPresenter"
+  },
+  {
+   "name": "ScriptPresenter",
+   "area": "Script",
+   "how": "screen/dialog via plugin",
+   "via": "ScriptPlugin"
+  },
+  {
+   "name": "ScriptSettingsPresenter",
+   "area": "Script",
+   "how": "embedded panel (covered via parent)",
+   "via": "ScriptPresenter"
+  },
+  {
+   "name": "ElasticClusterPresenter",
+   "area": "Search",
+   "how": "screen/dialog via plugin",
+   "via": "ElasticClusterPlugin"
+  },
+  {
+   "name": "ElasticClusterSettingsPresenter",
+   "area": "Search",
+   "how": "embedded panel (covered via parent)",
+   "via": "ElasticClusterPresenter"
+  },
+  {
+   "name": "ElasticIndexFieldListPresenter",
+   "area": "Search",
+   "how": "embedded panel (covered via parent)",
+   "via": "ElasticIndexPresenter"
+  },
+  {
+   "name": "ElasticIndexPresenter",
+   "area": "Search",
+   "how": "screen/dialog via plugin",
+   "via": "ElasticIndexPlugin"
+  },
+  {
+   "name": "ElasticIndexSettingsPresenter",
+   "area": "Search",
+   "how": "embedded panel (covered via parent)",
+   "via": "ElasticIndexPresenter"
+  },
+  {
+   "name": "SolrIndexFieldEditPresenter",
+   "area": "Search",
+   "how": "dialog",
+   "via": "SolrIndexFieldListPresenter, SolrIndexGinjector"
+  },
+  {
+   "name": "SolrIndexFieldListPresenter",
+   "area": "Search",
+   "how": "embedded panel (covered via parent)",
+   "via": "SolrIndexPresenter"
+  },
+  {
+   "name": "SolrIndexPresenter",
+   "area": "Search",
+   "how": "screen/dialog via plugin",
+   "via": "SolrIndexPlugin"
+  },
+  {
+   "name": "SolrIndexSettingsPresenter",
+   "area": "Search",
+   "how": "embedded panel (covered via parent)",
+   "via": "SolrIndexPresenter"
+  },
+  {
+   "name": "ApiKeysListPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "ApiKeysPresenter"
+  },
+  {
+   "name": "ApiKeysPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "ApiKeysPlugin"
+  },
+  {
+   "name": "AppPermissionsEditPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "AppPermissionsPresenter, UserTabPresenter"
+  },
+  {
+   "name": "AppPermissionsPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "AppPermissionsPlugin, CacheMonitoringPlugin, ContentStorePlugin, ContentTemplatePlugin, CredentialsPlugin, DataRetentionPlugin, DatabaseTablesMonitoringPlugin, DependenciesPlugin, DocumentPermissionsPlugin"
+  },
+  {
+   "name": "AppUserPermissionsListPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "AppPermissionsPresenter"
+  },
+  {
+   "name": "BatchDocumentPermissionsEditPresenter",
+   "area": "Security",
+   "how": "dialog",
+   "via": "BatchDocumentPermissionsPresenter, UserPermissionReportPresenter"
+  },
+  {
+   "name": "BatchDocumentPermissionsPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "DocumentPermissionsPlugin, NodeMonitoringPlugin, ReceiveDataRuleSetPlugin"
+  },
+  {
+   "name": "CreateExternalUserPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "CreateUserPresenter"
+  },
+  {
+   "name": "CreateMultipleUsersPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "CreateUserPresenter"
+  },
+  {
+   "name": "CreateNewGroupPresenter",
+   "area": "Security",
+   "how": "dialog",
+   "via": "UserAndGroupHelper"
+  },
+  {
+   "name": "CreateUserPresenter",
+   "area": "Security",
+   "how": "dialog",
+   "via": "UserAndGroupsPresenter, UsersPresenter"
+  },
+  {
+   "name": "DocumentCreatePermissionsListPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "DocumentUserCreatePermissionsEditPresenter"
+  },
+  {
+   "name": "DocumentUserCreatePermissionsEditPresenter",
+   "area": "Security",
+   "how": "dialog",
+   "via": "DocumentUserPermissionsEditPresenter"
+  },
+  {
+   "name": "DocumentUserPermissionsEditPresenter",
+   "area": "Security",
+   "how": "dialog",
+   "via": "DocumentUserPermissionsPresenter, UserPermissionReportPresenter"
+  },
+  {
+   "name": "DocumentUserPermissionsListPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "name": "DocumentUserPermissionsPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "DocumentPermissionsPlugin"
+  },
+  {
+   "name": "EditApiKeyPresenter",
+   "area": "Security",
+   "how": "dialog",
+   "via": "ApiKeysPresenter"
+  },
+  {
+   "name": "SigningKeyListPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "SigningKeyPresenter"
+  },
+  {
+   "name": "SigningKeyPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "SigningKeyPlugin"
+  },
+  {
+   "name": "UserAccessListPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "UserAccessPresenter"
+  },
+  {
+   "name": "UserAccessPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "UserAccessPlugin"
+  },
+  {
+   "name": "UserAndGroupsPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "UsersAndGroupsPlugin"
+  },
+  {
+   "name": "UserDependenciesListPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "UserTabPresenter"
+  },
+  {
+   "name": "UserInfoPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "UserTabPresenter"
+  },
+  {
+   "name": "UserListPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "UserAndGroupsPresenter, UsersPresenter"
+  },
+  {
+   "name": "UserPermissionReportPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "UserPermissionsReportPlugin"
+  },
+  {
+   "name": "UserRefPopupPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "UserPermissionsReportPlugin"
+  },
+  {
+   "name": "UserRefSelectionBoxPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "BatchDocumentPermissionsEditPresenter, BatchExecutionScheduleEditPresenter, BatchProcessorFilterEditPresenter"
+  },
+  {
+   "name": "UserSessionsListPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "UserAccessPresenter"
+  },
+  {
+   "name": "UserTabPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "UserPlugin, UserTabPlugin"
+  },
+  {
+   "name": "UsersPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "UsersPlugin"
+  },
+  {
+   "name": "AccountsListPresenter",
+   "area": "Security",
+   "how": "embedded panel (covered via parent)",
+   "via": "AccountsPresenter"
+  },
+  {
+   "name": "AccountsPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "AccountsPlugin"
+  },
+  {
+   "name": "AuthenticationErrorPresenter",
+   "area": "Security",
+   "how": "place-based (session/navigation state)",
+   "via": "GWTP proxy"
+  },
+  {
+   "name": "ChangePasswordPresenter",
+   "area": "Security",
+   "how": "dialog",
+   "via": "ChangePasswordGinjector, CurrentPasswordPresenter, EditAccountPresenter, LoginPresenter, ResetPasswordPresenter"
+  },
+  {
+   "name": "CurrentPasswordPresenter",
+   "area": "Security",
+   "how": "screen/dialog via plugin",
+   "via": "ChangePasswordPlugin"
+  },
+  {
+   "name": "EditAccountPresenter",
+   "area": "Security",
+   "how": "dialog",
+   "via": "AccountsListPresenter"
+  },
+  {
+   "name": "EmailResetPasswordPresenter",
+   "area": "Security",
+   "how": "dialog",
+   "via": "LoginPresenter"
+  },
+  {
+   "name": "LoginPresenter",
+   "area": "Security",
+   "how": "place-based (session/navigation state)",
+   "via": "GWTP proxy"
+  },
+  {
+   "name": "ResetPasswordPresenter",
+   "area": "Security",
+   "how": "place-based (session/navigation state)",
+   "via": "GWTP proxy"
+  },
+  {
+   "name": "TaskManagerListPresenter",
+   "area": "Tasks",
+   "how": "embedded panel (covered via parent)",
+   "via": "TaskManagerPresenter"
+  },
+  {
+   "name": "TaskManagerPresenter",
+   "area": "Tasks",
+   "how": "screen/dialog via plugin",
+   "via": "TaskManagerPlugin"
+  },
+  {
+   "name": "UserTaskManagerPresenter",
+   "area": "Tasks",
+   "how": "dialog",
+   "via": "TaskGinjector"
+  },
+  {
+   "name": "UserTaskPresenter",
+   "area": "Tasks",
+   "how": "embedded panel (covered via parent)",
+   "via": "UserTaskManagerPresenter"
+  },
+  {
+   "name": "ViewPresenter",
+   "area": "View",
+   "how": "screen/dialog via plugin",
+   "via": "ViewPlugin"
+  },
+  {
+   "name": "ViewSettingsPresenter",
+   "area": "View",
+   "how": "embedded panel (covered via parent)",
+   "via": "ViewPresenter"
+  },
+  {
+   "name": "VisualisationAssetsAddItemDialogPresenter",
+   "area": "Visualisation",
+   "how": "dialog",
+   "via": "VisualisationAssetsPresenter"
+  },
+  {
+   "name": "VisualisationAssetsEditAssetDialogPresenter",
+   "area": "Visualisation",
+   "how": "dialog",
+   "via": "VisualisationAssetsPresenter"
+  },
+  {
+   "name": "VisualisationAssetsPresenter",
+   "area": "Visualisation",
+   "how": "dialog",
+   "via": "VisualisationPresenter"
+  },
+  {
+   "name": "VisualisationAssetsUploadFileDialogPresenter",
+   "area": "Visualisation",
+   "how": "dialog",
+   "via": "VisualisationAssetsPresenter"
+  },
+  {
+   "name": "VisualisationPresenter",
+   "area": "Visualisation",
+   "how": "screen/dialog via plugin",
+   "via": "VisualisationPlugin"
+  },
+  {
+   "name": "VisualisationSettingsPresenter",
+   "area": "Visualisation",
+   "how": "embedded panel (covered via parent)",
+   "via": "VisualisationPresenter"
+  },
+  {
+   "name": "WelcomePresenter",
+   "area": "Welcome",
+   "how": "screen/dialog via plugin",
+   "via": "AccountsPlugin, ApiKeysPlugin, AppPermissionsPlugin, WelcomePlugin"
+  },
+  {
+   "name": "XMLSchemaPresenter",
+   "area": "XML schema",
+   "how": "screen/dialog via plugin",
+   "via": "XMLSchemaPlugin"
+  },
+  {
+   "name": "XMLSchemaSettingsPresenter",
+   "area": "XML schema",
+   "how": "embedded panel (covered via parent)",
+   "via": "XMLSchemaPresenter"
+  },
+  {
+   "name": "ContentPresenter",
+   "area": "Gwt",
+   "how": "UNKNOWN",
+   "via": ""
+  },
+  {
+   "name": "StatisticsCustomMaskListPresenter",
+   "area": "Statistics",
+   "how": "embedded panel (covered via parent)",
+   "via": "StatisticsDataSourcePresenter, StatisticsFieldListPresenter"
+  },
+  {
+   "name": "StatisticsDataSourcePresenter",
+   "area": "Statistics",
+   "how": "screen/dialog via plugin",
+   "via": "StatisticsPlugin"
+  },
+  {
+   "name": "StatisticsDataSourceSettingsPresenter",
+   "area": "Statistics",
+   "how": "embedded panel (covered via parent)",
+   "via": "StatisticsDataSourcePresenter"
+  },
+  {
+   "name": "StatisticsFieldEditPresenter",
+   "area": "Statistics",
+   "how": "dialog",
+   "via": "StatisticsFieldListPresenter, StatisticsGinjector"
+  },
+  {
+   "name": "StatisticsFieldListPresenter",
+   "area": "Statistics",
+   "how": "embedded panel (covered via parent)",
+   "via": "StatisticsDataSourcePresenter"
+  }
+ ]
+}

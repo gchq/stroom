@@ -134,11 +134,7 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
     }
 
     private void setEnabled(final boolean enabled) {
-        if (enabled) {
-            retainLabel.getElement().getStyle().setOpacity(1);
-        } else {
-            retainLabel.getElement().getStyle().setOpacity(0.5);
-        }
+        retainLabel.setStyleName("section--disabled", !enabled);
         age.setEnabled(enabled);
         timeUnit.setEnabled(enabled);
     }

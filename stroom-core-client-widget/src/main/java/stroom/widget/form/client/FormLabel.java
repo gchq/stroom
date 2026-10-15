@@ -33,8 +33,15 @@ public class FormLabel extends Composite {
         initWidget(lbl);
     }
 
+    /// Makes this the label for an element.
+    ///
+    /// @param id The id of the element this labels, or null for none.
     public void setIdentity(final String id) {
-        lbl.getElement().setAttribute("for", id);
+        if (id == null) {
+            lbl.getElement().removeAttribute("for");
+        } else {
+            lbl.getElement().setAttribute("for", id);
+        }
     }
 
     public void setLabel(final String label) {

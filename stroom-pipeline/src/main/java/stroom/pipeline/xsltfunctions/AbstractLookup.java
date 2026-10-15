@@ -67,6 +67,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+// Part of adding the SQL Temporal Store, which upstream does not have. FloorMap stores its
+// facts and events in one, so dropping these hunks breaks reference-data lookup, XSLT lookup
+// or the store's Data tab depending on the file. Upstream's version must not simply win here.
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractLookup.class);
@@ -394,23 +398,57 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         } else if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
             // No effective streams were found to lookup from
             if (NullSafe.hasItems(pipelineReferences)) {
-                final String feeds = pipelineReferences.stream()
-                        .map(pipeRef -> NullSafe.get(pipeRef, PipelineReference::getFeed, DocRef::getName))
-                        .filter(Objects::nonNull)
-                        .map(name -> "'" + name + "'")
-                        .collect(Collectors.joining(", "));
+                final List<PipelineReference> dbRefs = pipelineReferences.stream()
+                        .filter(pipeRef -> {
+                            final String type = NullSafe.get(pipeRef, PipelineReference::getPipeline, DocRef::getType);
+                            return "SqlTemporalStore".equals(type) || "PlanB".equals(type);
+                        })
+                        .toList();
 
-                outputInfo(
-                        maxSeverity.atLeast(Severity.WARNING),
-                        () -> LogUtil.message(
-                                "No effective streams found in any of the reference loaders (feeds: [{}]). " +
-                                "Do reference data streams exist for the lookup time? ",
-                                feeds),
-                        result.getCurrentLookupIdentifier(),
-                        trace,
-                        ignoreWarnings,
-                        result,
-                        context);
+                final List<PipelineReference> streamRefs = pipelineReferences.stream()
+                        .filter(pipeRef -> {
+                            final String type = NullSafe.get(pipeRef, PipelineReference::getPipeline, DocRef::getType);
+                            return !"SqlTemporalStore".equals(type) && !"PlanB".equals(type);
+                        })
+                        .toList();
+
+                if (streamRefs.isEmpty() && !dbRefs.isEmpty()) {
+                    final String stores = dbRefs.stream()
+                            .map(pipeRef -> NullSafe.get(pipeRef, PipelineReference::getPipeline, DocRef::getName))
+                            .filter(Objects::nonNull)
+                            .map(name -> "'" + name + "'")
+                            .collect(Collectors.joining(", "));
+
+                    outputInfo(
+                            maxSeverity.atLeast(Severity.WARNING),
+                            () -> LogUtil.message(
+                                    "No effective entries found in any of the reference stores (stores: [{}]). " +
+                                    "Do reference data entries exist for the lookup time? ",
+                                    stores),
+                            result.getCurrentLookupIdentifier(),
+                            trace,
+                            ignoreWarnings,
+                            result,
+                            context);
+                } else {
+                    final String feeds = pipelineReferences.stream()
+                            .map(pipeRef -> NullSafe.get(pipeRef, PipelineReference::getFeed, DocRef::getName))
+                            .filter(Objects::nonNull)
+                            .map(name -> "'" + name + "'")
+                            .collect(Collectors.joining(", "));
+
+                    outputInfo(
+                            maxSeverity.atLeast(Severity.WARNING),
+                            () -> LogUtil.message(
+                                    "No effective streams found in any of the reference loaders (feeds: [{}]). " +
+                                    "Do reference data streams exist for the lookup time? ",
+                                    feeds),
+                            result.getCurrentLookupIdentifier(),
+                            trace,
+                            ignoreWarnings,
+                            result,
+                            context);
+                }
             }
         } else if (!ignoreWarnings && result.getQualifyingStreams().isEmpty()) {
             // None of the effective streams contains the map

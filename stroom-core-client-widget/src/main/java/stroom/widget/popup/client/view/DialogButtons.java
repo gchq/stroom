@@ -21,4 +21,6 @@ import com.google.gwt.user.client.ui.Focus;
 public interface DialogButtons extends Focus, DialogActionUiHandlers {
 
     void setEnabled(boolean enabled);
+
+    void setEnabled(DialogAction action, boolean enabled);
 }

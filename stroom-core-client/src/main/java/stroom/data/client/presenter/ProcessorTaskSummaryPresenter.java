@@ -47,6 +47,7 @@ import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -94,7 +95,9 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         // Info column.
         final InfoColumn<ProcessorTaskSummary> infoColumn = new InfoColumn<ProcessorTaskSummary>() {
             @Override
-            protected void showInfo(final ProcessorTaskSummary row, final PopupPosition popupPosition) {
+            protected void showInfo(final ProcessorTaskSummary row,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 final TableBuilder tb = new TableBuilder();
                 tb.row(TableCell.header("Key Data", 2));
                 final DocRef pipeline = row.getPipeline();
@@ -110,7 +113,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 htmlBuilder.div(tb::write, Attribute.className("infoTable"));
 
-                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

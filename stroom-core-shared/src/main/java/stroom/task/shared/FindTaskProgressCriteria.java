@@ -16,9 +16,12 @@
 
 package stroom.task.shared;
 
-import stroom.util.shared.BaseCriteria;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QuickFilterFields;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -32,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
-public class FindTaskProgressCriteria extends BaseCriteria {
+public class FindTaskProgressCriteria extends QuickFilterCriteria {
 
     public static final String FIELD_NODE = "Node";
     public static final String FIELD_NAME = "Name";
@@ -56,10 +59,21 @@ public class FindTaskProgressCriteria extends BaseCriteria {
             FIELD_DEF_SUBMIT_TIME,
             FIELD_DEF_INFO);
 
+    // What TaskManagerImpl's quick filter declares it can honour. Filtered in memory by
+    // ExpressionPredicateFactory, hence ALL_UI_TEXT - including "Submit Time", which
+    // TaskManagerImpl extracts as an ISO string rather than as a date.
+    public static final List<QueryField> QUERY_FIELDS = QuickFilterFields.uiText(FIELD_DEFINITIONS);
+    public static final List<QueryField> DEFAULT_QUERY_FIELDS =
+            QuickFilterFields.uiTextDefaults(FIELD_DEFINITIONS);
+
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "tasks",
+            FIELD_DEFINITIONS,
+            DEFAULT_QUERY_FIELDS,
+            QUERY_FIELDS);
+
     @JsonProperty
     private Set<TaskProgress> expandedTasks;
-    @JsonProperty
-    private String nameFilter;
     @JsonProperty
     private String sessionId;
 
@@ -70,11 +84,10 @@ public class FindTaskProgressCriteria extends BaseCriteria {
     public FindTaskProgressCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                     @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                     @JsonProperty("expandedTasks") final Set<TaskProgress> expandedTasks,
-                                    @JsonProperty("nameFilter") final String nameFilter,
+                                    @JsonProperty("quickFilter") final String quickFilter,
                                     @JsonProperty("sessionId") final String sessionId) {
-        super(pageRequest, sortList);
+        super(pageRequest, sortList, quickFilter);
         this.expandedTasks = expandedTasks;
-        this.nameFilter = nameFilter;
         this.sessionId = sessionId;
     }
 
@@ -86,13 +99,6 @@ public class FindTaskProgressCriteria extends BaseCriteria {
         this.expandedTasks = expandedTasks;
     }
 
-    public String getNameFilter() {
-        return nameFilter;
-    }
-
-    public void setNameFilter(final String nameFilter) {
-        this.nameFilter = nameFilter;
-    }
 
     public String getSessionId() {
         return sessionId;

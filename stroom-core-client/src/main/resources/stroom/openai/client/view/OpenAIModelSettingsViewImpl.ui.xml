@@ -8,36 +8,42 @@
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="openAIModelBaseUrl"
                         label="Base URL (optional)"
-                        helpText="The URL of the AI service">
+                        helpText="The base URL of an OpenAI-compatible API, e.g. https://api.openai.com/v1 or a self-hosted service. Leave blank to use OpenAI (https://api.openai.com/v1)."
+                        screenReaderText="Leave blank to use https://api.openai.com/v1.">
             <g:TextBox ui:field="baseUrl" width="400px"
-                       title="Override the URL for the vector embeddings endpoint. Example: https://model-server.example.com/v1"/>
+                       title="Override the URL of the OpenAI-compatible API. Example: https://model-server.example.com/v1"/>
         </form:FormGroup>
         <form:FormGroup identity="openAIModelApiKey"
                         label="API Key (optional)"
-                        helpText="Select the API key to use if needed">
+                        helpText="The stored access token credential to send as the API key. Leave blank if the service does not need one."
+                        screenReaderText="Access token credential. Leave blank if not needed.">
             <l:SelectionBox ui:field="apiKey"/>
         </form:FormGroup>
         <form:FormGroup identity="openAIModelId"
                         label="Model ID"
-                        helpText="Specify the model identity to use">
+                        helpText="The model name as known by the service, e.g. gpt-4o for a chat model, or the name of an embedding or rerank model."
+                        screenReaderText="Name the service uses for the model, e.g. gpt-4o.">
             <g:TextBox ui:field="modelId" width="400px"
-                       title="ID of the model to use to generate embeddings. Example: intfloat/e5-mistral-7b-instruct"/>
+                       title="ID of the model. Examples: gpt-4o, intfloat/e5-mistral-7b-instruct"/>
         </form:FormGroup>
         <form:FormGroup identity="openAIMaxContextWindowTokens"
                         label="Maximum context window tokens"
-                        helpText="Specify the maximum number of tokens to be used for the context window">
+                        helpText="The largest number of tokens the model can accept at once. Ask Stroom AI uses it to decide when to split large attachments into batches. Elasticsearch reranking also uses it as a limit on the number of characters of each value sent. Set to 0 if not known. Default is 0."
+                        screenReaderText="Number of tokens. 0 means not set. Default is 0.">
             <v:ValueSpinner ui:field="maxContextWindowTokens" width="80px"
                             title="Maximum number of tokens allowed in the model's context window. Set to zero to disable."/>
         </form:FormGroup>
         <form:FormGroup identity="openAIReasoningEffort"
                         label="Reasoning Effort (optional)"
-                        helpText="Controls reasoning depth for models that support it (e.g. OpenAI o-series). Values: low, medium, high. Leave blank for default.">
+                        helpText="How much reasoning the model does, for models that support it (e.g. OpenAI o-series): low, medium or high. Leave blank to use the model's default."
+                        screenReaderText="Low, medium or high. Leave blank for the model's default.">
             <g:TextBox ui:field="reasoningEffort" width="400px"
                        title="Reasoning effort level: low, medium, or high. Leave blank if the model does not support reasoning."/>
         </form:FormGroup>
         <form:FormGroup identity="embeddingModelDimensions"
                         label="Embedding model dimensions"
-                        helpText="Specify the number of dimensions to use for embedding models. Lucene has a max of 1024 but Elastic can handle 4096. Set to zero to disable and allow models to use their default.">
+                        helpText="The number of dimensions for embedding vectors. Lucene supports up to 1024; Elasticsearch up to 4096. Set to 0 to use the model's default. Default is 1024."
+                        screenReaderText="Lucene max 1024, Elasticsearch max 4096. 0 uses the model's default.">
             <v:ValueSpinner ui:field="embeddingModelDimensions" width="80px"
                             title="Number of dimensions to use for embedding models."/>
         </form:FormGroup>

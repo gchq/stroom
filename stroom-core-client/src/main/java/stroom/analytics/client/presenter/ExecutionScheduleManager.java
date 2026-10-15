@@ -24,6 +24,7 @@ import stroom.analytics.shared.ExecutionScheduleFields;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.SvgCell;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
@@ -44,10 +45,10 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -58,7 +59,6 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -207,80 +207,39 @@ public class ExecutionScheduleManager
 
 
     private void createButtons() {
-        singleEditButton = this.getView().addButton(new Preset(
-                SvgImage.EDIT,
-                "Edit Selected Schedule",
-                false));
-        registerHandler(singleEditButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onSingleEdit();
-            }
-        }));
+        this.getView().getToolbar().setName("Execution schedule actions");
+        singleEditButton = this.getView().getToolbar().button(SvgImage.EDIT, "Edit Selected Schedule",
+                this::onSingleEdit);
+        singleEditButton.setEnabled(false);
 
-        batchEditButton = this.getView().addButton(new Preset(
-                SvgImage.GENERATE,
-                "Batch Edit Schedules",
-                true));
-        registerHandler(batchEditButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                batchExecutionScheduleEditPresenter.show();
-            }
-        }));
+        batchEditButton = this.getView().getToolbar().button(SvgImage.GENERATE, "Batch Edit Schedules",
+                () -> batchExecutionScheduleEditPresenter.show());
 
-        filterButton = this.getView().addButton(new Preset(
-                SvgImage.FILTER,
-                "Filter Schedules",
-                true));
-        registerHandler(filterButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onFilter();
-            }
-        }));
+        filterButton = this.getView().getToolbar().button(SvgImage.FILTER, "Filter Schedules", this::onFilter);
 
-        clearFilterButton = this.getView().addButton(new Preset(
-                SvgImage.CLEAR,
-                "Clear Filter",
-                false));
-        registerHandler(clearFilterButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onClearFilter();
-            }
-        }));
+        clearFilterButton = this.getView().getToolbar().button(SvgImage.CLEAR, "Clear Filter", this::onClearFilter);
+        clearFilterButton.setEnabled(false);
 
-        runJobNowButton = this.getView().addButton(new Preset(
-                SvgImage.STEP_FORWARD,
-                "Run Schedules Now",
-                true));
-        registerHandler(runJobNowButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                executionScheduleRunNowPresenter.show();
-            }
-        }));
+        runJobNowButton = this.getView().getToolbar().button(SvgImage.STEP_FORWARD, "Run Schedules Now",
+                () -> executionScheduleRunNowPresenter.show());
 
-        deleteButton = this.getView().addButton(new Preset(
-                SvgImage.DELETE,
-                "Delete Schedules",
-                false));
-        registerHandler(deleteButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onDelete();
-            }
-        }));
+        deleteButton = this.getView().getToolbar().button(SvgImage.DELETE, "Delete Schedules", this::onDelete);
+        deleteButton.setEnabled(false);
 
         setButtonState();
     }
 
     private void createIconColumn() {
         dataGrid.addColumn(
-            new OrderByColumn<ExecutionSchedule, Preset>(
+            new OrderByColumn<ExecutionSchedule, CellIcon>(
                 new SvgCell(),
                 ExecutionScheduleFields.PARENT_DOC_TYPE,
                 false) {
                 @Override
-                public Preset getValue(final ExecutionSchedule row) {
+                public CellIcon getValue(final ExecutionSchedule row) {
                     return row.getOwningDoc().getType().equals(AnalyticRuleDoc.TYPE)
-                            ? new Preset(SvgImage.DOCUMENT_ANALYTIC_RULE, "Analytic Rule", true)
-                            : new Preset(SvgImage.DOCUMENT_REPORT, "Report", true);
+                            ? CellIcon.of(SvgImage.DOCUMENT_ANALYTIC_RULE, "Analytic Rule")
+                            : CellIcon.of(SvgImage.DOCUMENT_REPORT, "Report");
                 }
             }, "", ColumnSizeConstants.CHECKBOX_COL
         );
@@ -316,16 +275,16 @@ public class ExecutionScheduleManager
 
     private void createEnabledColumn() {
 
-        final OrderByColumn<ExecutionSchedule, Preset> enabledColumn = new OrderByColumn<ExecutionSchedule, Preset>(
+        final OrderByColumn<ExecutionSchedule, CellIcon> enabledColumn = new OrderByColumn<ExecutionSchedule, CellIcon>(
             new SvgCell(false),
             ExecutionScheduleFields.ENABLED,
             false) {
             @Override
-            public Preset getValue(final ExecutionSchedule row) {
+            public CellIcon getValue(final ExecutionSchedule row) {
                 if (row.isEnabled()) {
-                    return new Preset(SvgImage.TICK, "Enabled", true);
+                    return CellIcon.of(SvgImage.TICK, "Enabled");
                 } else {
-                    return new Preset(SvgImage.CLOSE, "Disabled", true);
+                    return CellIcon.of(SvgImage.CLOSE, "Disabled");
                 }
             }
         };
@@ -642,7 +601,10 @@ public class ExecutionScheduleManager
                                 // Nothing changed!
                                 e.hide();
                             }
-                        }, this);
+                        },
+                        // If it isn't valid, let the user change it or cancel
+                        e::reset,
+                        this);
             } else {
                 e.hide();
             }
@@ -795,7 +757,8 @@ public class ExecutionScheduleManager
         }
         if (item instanceof final ExpressionOperator operator) {
             final ArrayList<ExpressionItem> newChildren = new ArrayList<>();
-            for (final ExpressionItem child : operator.getChildren()) {
+            // An operator with no terms has no children
+            for (final ExpressionItem child : NullSafe.list(operator.getChildren())) {
                 newChildren.add(formatISOExpressions(child));
             }
             return operator.copy().children(newChildren).build();

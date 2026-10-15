@@ -95,6 +95,9 @@ public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDo
 
     @Override
     protected void onRead(final DocRef docRef, final ViewDoc entity, final boolean readOnly) {
+        dataSourceSelectionPresenter.setReadOnly(readOnly);
+        pipelineSelectionPresenter.setReadOnly(readOnly);
+        expressionPresenter.setReadOnly(readOnly);
         dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource(), true);
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline(), true);
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();

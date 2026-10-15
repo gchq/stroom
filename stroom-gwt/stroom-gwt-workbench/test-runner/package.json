@@ -1,0 +1,19 @@
+{
+  "name": "stroom-gwt-workbench-test-runner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runs every Stroom GWT Workbench story and its play function in headless Chromium, like Storybook's test-runner. See README.md.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node run.mjs",
+    "test:self": "node --test lib/",
+    "selftest:reference": "npm install --no-save --no-package-lock --prefix selftest/reference storybook@10.4.6"
+  },
+  "devDependencies": {
+    "playwright": "1.61.1"
+  }
+}

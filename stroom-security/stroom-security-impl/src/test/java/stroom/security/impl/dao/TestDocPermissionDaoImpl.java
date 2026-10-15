@@ -17,7 +17,6 @@
 package stroom.security.impl.dao;
 
 import stroom.docref.DocRef;
-import stroom.query.api.ExpressionOperator;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
@@ -228,7 +227,6 @@ class TestDocPermissionDaoImpl {
         final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
                 PageRequest.unlimited(),
                 Collections.emptyList(),
-                ExpressionOperator.builder().build(),
                 docRef1,
                 null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
@@ -258,7 +256,6 @@ class TestDocPermissionDaoImpl {
         final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
                 PageRequest.unlimited(),
                 Collections.emptyList(),
-                ExpressionOperator.builder().build(),
                 docRef1,
                 null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
@@ -290,7 +287,6 @@ class TestDocPermissionDaoImpl {
         final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
                 PageRequest.unlimited(),
                 Collections.emptyList(),
-                ExpressionOperator.builder().build(),
                 docRef1,
                 null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
@@ -329,7 +325,6 @@ class TestDocPermissionDaoImpl {
         final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
                 PageRequest.unlimited(),
                 Collections.emptyList(),
-                ExpressionOperator.builder().build(),
                 docRef1,
                 null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
@@ -371,7 +366,6 @@ class TestDocPermissionDaoImpl {
         final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
                 PageRequest.unlimited(),
                 Collections.emptyList(),
-                ExpressionOperator.builder().build(),
                 docRef1,
                 null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
@@ -414,7 +408,6 @@ class TestDocPermissionDaoImpl {
         final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
                 PageRequest.unlimited(),
                 Collections.emptyList(),
-                ExpressionOperator.builder().build(),
                 docRef1,
                 null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
@@ -449,7 +442,6 @@ class TestDocPermissionDaoImpl {
         final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
                 PageRequest.unlimited(),
                 Collections.emptyList(),
-                ExpressionOperator.builder().build(),
                 docRef1,
                 null,
                 PermissionShowLevel.SHOW_EFFECTIVE);
@@ -499,7 +491,6 @@ class TestDocPermissionDaoImpl {
         final FetchDocumentUserPermissionsRequest request = new FetchDocumentUserPermissionsRequest(
                 PageRequest.unlimited(),
                 Collections.emptyList(),
-                ExpressionOperator.builder().build(),
                 docRef1,
                 null,
                 PermissionShowLevel.SHOW_EFFECTIVE);

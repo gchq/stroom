@@ -1,0 +1,4582 @@
+{
+ "recipes": [
+  {
+   "presenter": "AboutPresenter",
+   "via": "menu",
+   "owner": "AboutPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Help",
+     "leaf": "About"
+    }
+   ],
+   "label": "Main Menu > Help > About",
+   "resolved": true
+  },
+  {
+   "presenter": "BrowseAnnotationPresenter",
+   "via": "menu",
+   "owner": "AnnotationBrowsePlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Annotations",
+     "leaf": "Browse Annotations"
+    }
+   ],
+   "label": "Main Menu > Annotations > Browse Annotations",
+   "resolved": true
+  },
+  {
+   "presenter": null,
+   "via": "menu",
+   "owner": "AnnotationCreatePlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Annotations",
+     "leaf": "Create New Annotation"
+    }
+   ],
+   "label": "Main Menu > Annotations > Create New Annotation",
+   "resolved": false
+  },
+  {
+   "presenter": "AnnotationTagPresenter",
+   "via": "menu",
+   "owner": "AnnotationCollectionPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Annotations",
+     "leaf": "Annotation Collections"
+    }
+   ],
+   "label": "Main Menu > Annotations > Annotation Collections",
+   "resolved": true
+  },
+  {
+   "presenter": "AnnotationTagPresenter",
+   "via": "menu",
+   "owner": "AnnotationCommentPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Annotations",
+     "leaf": "Annotation Comments"
+    }
+   ],
+   "label": "Main Menu > Annotations > Annotation Comments",
+   "resolved": true
+  },
+  {
+   "presenter": "AnnotationTagPresenter",
+   "via": "menu",
+   "owner": "AnnotationLabelPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Annotations",
+     "leaf": "Annotation Labels"
+    }
+   ],
+   "label": "Main Menu > Annotations > Annotation Labels",
+   "resolved": true
+  },
+  {
+   "presenter": "AnnotationTagPresenter",
+   "via": "menu",
+   "owner": "AnnotationStatusPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Annotations",
+     "leaf": "Annotation Statuses"
+    }
+   ],
+   "label": "Main Menu > Annotations > Annotation Statuses",
+   "resolved": true
+  },
+  {
+   "presenter": "CachePresenter",
+   "via": "menu",
+   "owner": "CacheMonitoringPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Monitoring",
+     "leaf": "Caches"
+    }
+   ],
+   "label": "Main Menu > Monitoring > Caches",
+   "resolved": true
+  },
+  {
+   "presenter": "ContentStorePresenter",
+   "via": "menu",
+   "owner": "ContentStorePlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Tools",
+     "leaf": "Content Store"
+    }
+   ],
+   "label": "Main Menu > Tools > Content Store",
+   "resolved": true
+  },
+  {
+   "presenter": "CredentialsPresenter",
+   "via": "menu",
+   "owner": "CredentialsPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Security",
+     "leaf": "Credentials Manager"
+    }
+   ],
+   "label": "Main Menu > Security > Credentials Manager",
+   "resolved": true
+  },
+  {
+   "presenter": "FsVolumeGroupPresenter",
+   "via": "menu",
+   "owner": "ManageFsVolumesPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Administration",
+     "leaf": "Data Volumes"
+    }
+   ],
+   "label": "Main Menu > Administration > Data Volumes",
+   "resolved": true
+  },
+  {
+   "presenter": "NavigationPresenter",
+   "via": "menu",
+   "owner": "NavigationPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Navigation",
+     "leaf": "Find"
+    }
+   ],
+   "label": "Main Menu > Navigation > Find",
+   "resolved": true
+  },
+  {
+   "presenter": "NavigationPresenter",
+   "via": "menu",
+   "owner": "NavigationPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Navigation",
+     "leaf": "Find in Content"
+    }
+   ],
+   "label": "Main Menu > Navigation > Find in Content",
+   "resolved": true
+  },
+  {
+   "presenter": "NavigationPresenter",
+   "via": "menu",
+   "owner": "NavigationPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Navigation",
+     "leaf": "Recent Items"
+    }
+   ],
+   "label": "Main Menu > Navigation > Recent Items",
+   "resolved": true
+  },
+  {
+   "presenter": "NavigationPresenter",
+   "via": "menu",
+   "owner": "NavigationPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Navigation",
+     "leaf": "Locate Current Item"
+    }
+   ],
+   "label": "Main Menu > Navigation > Locate Current Item",
+   "resolved": true
+  },
+  {
+   "presenter": "NavigationPresenter",
+   "via": "menu",
+   "owner": "NavigationPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Navigation",
+     "leaf": "Add Current Item to Favourites"
+    }
+   ],
+   "label": "Main Menu > Navigation > Add Current Item to Favourites",
+   "resolved": true
+  },
+  {
+   "presenter": "NavigationPresenter",
+   "via": "menu",
+   "owner": "NavigationPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Navigation",
+     "leaf": "Open Tab Session"
+    }
+   ],
+   "label": "Main Menu > Navigation > Open Tab Session",
+   "resolved": true
+  },
+  {
+   "presenter": "NavigationPresenter",
+   "via": "menu",
+   "owner": "NavigationPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Navigation",
+     "leaf": "Save Tab Session"
+    }
+   ],
+   "label": "Main Menu > Navigation > Save Tab Session",
+   "resolved": true
+  },
+  {
+   "presenter": "NavigationPresenter",
+   "via": "menu",
+   "owner": "NavigationPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Navigation",
+     "leaf": "Delete Tab Session"
+    }
+   ],
+   "label": "Main Menu > Navigation > Delete Tab Session",
+   "resolved": true
+  },
+  {
+   "presenter": null,
+   "via": "menu",
+   "owner": "HelpPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Help",
+     "leaf": "Help"
+    }
+   ],
+   "label": "Main Menu > Help > Help",
+   "resolved": false
+  },
+  {
+   "presenter": null,
+   "via": "menu",
+   "owner": "HelpPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Help",
+     "leaf": "API Specification"
+    }
+   ],
+   "label": "Main Menu > Help > API Specification",
+   "resolved": false
+  },
+  {
+   "presenter": "DependenciesTabPresenter",
+   "via": "menu",
+   "owner": "DependenciesPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Tools",
+     "leaf": "Dependencies"
+    }
+   ],
+   "label": "Main Menu > Tools > Dependencies",
+   "resolved": true
+  },
+  {
+   "presenter": "ExportConfigPresenter",
+   "via": "menu",
+   "owner": "ExportConfigPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Tools",
+     "leaf": "Export"
+    }
+   ],
+   "label": "Main Menu > Tools > Export",
+   "resolved": true
+  },
+  {
+   "presenter": "ImportConfigPresenter",
+   "via": "menu",
+   "owner": "ImportConfigPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Tools",
+     "leaf": "Import"
+    }
+   ],
+   "label": "Main Menu > Tools > Import",
+   "resolved": true
+  },
+  {
+   "presenter": "IndexVolumeGroupPresenter",
+   "via": "menu",
+   "owner": "ManageIndexVolumesPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Administration",
+     "leaf": "Index Volumes"
+    }
+   ],
+   "label": "Main Menu > Administration > Index Volumes",
+   "resolved": true
+  },
+  {
+   "presenter": "DatabaseTablesMonitoringPresenter",
+   "via": "menu",
+   "owner": "DatabaseTablesMonitoringPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Monitoring",
+     "leaf": "Database Tables"
+    }
+   ],
+   "label": "Main Menu > Monitoring > Database Tables",
+   "resolved": true
+  },
+  {
+   "presenter": null,
+   "via": "menu",
+   "owner": "ExecutionScheduleManagerPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Monitoring",
+     "leaf": "Execution Schedule Manager"
+    }
+   ],
+   "label": "Main Menu > Monitoring > Execution Schedule Manager",
+   "resolved": false
+  },
+  {
+   "presenter": "JobPresenter",
+   "via": "menu",
+   "owner": "JobListPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Monitoring",
+     "leaf": "Jobs"
+    }
+   ],
+   "label": "Main Menu > Monitoring > Jobs",
+   "resolved": true
+  },
+  {
+   "presenter": "NodeGroupPresenter",
+   "via": "menu",
+   "owner": "NodeGroupsPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Monitoring",
+     "leaf": "Node Groups"
+    }
+   ],
+   "label": "Main Menu > Monitoring > Node Groups",
+   "resolved": true
+  },
+  {
+   "presenter": "NodePresenter",
+   "via": "menu",
+   "owner": "NodeMonitoringPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Monitoring",
+     "leaf": "Nodes"
+    }
+   ],
+   "label": "Main Menu > Monitoring > Nodes",
+   "resolved": true
+  },
+  {
+   "presenter": "ProcessorProfilePresenter",
+   "via": "menu",
+   "owner": "ProcessorProfilePlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Monitoring",
+     "leaf": "Processor Profiles"
+    }
+   ],
+   "label": "Main Menu > Monitoring > Processor Profiles",
+   "resolved": true
+  },
+  {
+   "presenter": "GlobalPropertyTabPresenter",
+   "via": "menu",
+   "owner": "ManageGlobalPropertiesPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Administration",
+     "leaf": "Properties"
+    }
+   ],
+   "label": "Main Menu > Administration > Properties",
+   "resolved": true
+  },
+  {
+   "presenter": "UserPreferencesPresenter",
+   "via": "menu",
+   "owner": "UserPreferencesPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "User",
+     "leaf": "Preferences"
+    }
+   ],
+   "label": "Main Menu > User > Preferences",
+   "resolved": true
+  },
+  {
+   "presenter": "ResultStorePresenter",
+   "via": "menu",
+   "owner": "ResultStorePlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Monitoring",
+     "leaf": "Search Results"
+    }
+   ],
+   "label": "Main Menu > Monitoring > Search Results",
+   "resolved": true
+  },
+  {
+   "presenter": "ContentTemplateTabPresenter",
+   "via": "menu",
+   "owner": "ContentTemplatePlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Administration",
+     "leaf": "Content Templates"
+    }
+   ],
+   "label": "Main Menu > Administration > Content Templates",
+   "resolved": true
+  },
+  {
+   "presenter": "DataRetentionPresenter",
+   "via": "menu",
+   "owner": "DataRetentionPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Administration",
+     "leaf": "Data Retention"
+    }
+   ],
+   "label": "Main Menu > Administration > Data Retention",
+   "resolved": true
+  },
+  {
+   "presenter": "RuleSetPresenter",
+   "via": "menu",
+   "owner": "ReceiveDataRuleSetPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Administration",
+     "leaf": "Data Receipt Rules"
+    }
+   ],
+   "label": "Main Menu > Administration > Data Receipt Rules",
+   "resolved": true
+  },
+  {
+   "presenter": "ApiKeysPresenter",
+   "via": "menu",
+   "owner": "ApiKeysPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Security",
+     "leaf": "Manage API Keys"
+    }
+   ],
+   "label": "Main Menu > Security > Manage API Keys",
+   "resolved": true
+  },
+  {
+   "presenter": "AppPermissionsPresenter",
+   "via": "menu",
+   "owner": "AppPermissionsPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Security",
+     "leaf": "Application Permissions"
+    }
+   ],
+   "label": "Main Menu > Security > Application Permissions",
+   "resolved": true
+  },
+  {
+   "presenter": "BatchDocumentPermissionsPresenter",
+   "via": "menu",
+   "owner": "DocumentPermissionsPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Security",
+     "leaf": "Document Permissions"
+    }
+   ],
+   "label": "Main Menu > Security > Document Permissions",
+   "resolved": true
+  },
+  {
+   "presenter": null,
+   "via": "menu",
+   "owner": "LogoutPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "User",
+     "leaf": "Sign Out"
+    }
+   ],
+   "label": "Main Menu > User > Sign Out",
+   "resolved": false
+  },
+  {
+   "presenter": "SigningKeyPresenter",
+   "via": "menu",
+   "owner": "SigningKeyPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Security",
+     "leaf": "Signing Keys"
+    }
+   ],
+   "label": "Main Menu > Security > Signing Keys",
+   "resolved": true
+  },
+  {
+   "presenter": "UserAccessPresenter",
+   "via": "menu",
+   "owner": "UserAccessPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Security",
+     "leaf": "User Access"
+    }
+   ],
+   "label": "Main Menu > Security > User Access",
+   "resolved": true
+  },
+  {
+   "presenter": "UserRefPopupPresenter",
+   "via": "menu",
+   "owner": "UserPermissionsReportPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Security",
+     "leaf": "User Permissions Report"
+    }
+   ],
+   "label": "Main Menu > Security > User Permissions Report",
+   "resolved": true
+  },
+  {
+   "presenter": "UserTabPresenter",
+   "via": "menu",
+   "owner": "UserPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "User",
+     "leaf": "User Profile"
+    }
+   ],
+   "label": "Main Menu > User > User Profile",
+   "resolved": true
+  },
+  {
+   "presenter": "UserAndGroupsPresenter",
+   "via": "menu",
+   "owner": "UsersAndGroupsPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Security",
+     "leaf": "User Groups"
+    }
+   ],
+   "label": "Main Menu > Security > User Groups",
+   "resolved": true
+  },
+  {
+   "presenter": "UsersPresenter",
+   "via": "menu",
+   "owner": "UsersPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Security",
+     "leaf": "Users"
+    }
+   ],
+   "label": "Main Menu > Security > Users",
+   "resolved": true
+  },
+  {
+   "presenter": "AccountsPresenter",
+   "via": "menu",
+   "owner": "AccountsPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Security",
+     "leaf": "Manage Accounts"
+    }
+   ],
+   "label": "Main Menu > Security > Manage Accounts",
+   "resolved": true
+  },
+  {
+   "presenter": "CurrentPasswordPresenter",
+   "via": "menu",
+   "owner": "ChangePasswordPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "User",
+     "leaf": "Change Password"
+    }
+   ],
+   "label": "Main Menu > User > Change Password",
+   "resolved": true
+  },
+  {
+   "presenter": "TaskManagerPresenter",
+   "via": "menu",
+   "owner": "TaskManagerPlugin",
+   "route": [
+    {
+     "via": "menu",
+     "group": "Monitoring",
+     "leaf": "Server Tasks"
+    }
+   ],
+   "label": "Main Menu > Monitoring > Server Tasks",
+   "resolved": true
+  },
+  {
+   "presenter": "AnalyticRulePresenter",
+   "via": "doc",
+   "owner": "AnalyticsPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "AnalyticRule"
+    }
+   ],
+   "label": "Explorer > New > … > AnalyticRule",
+   "resolved": true
+  },
+  {
+   "presenter": "ReportPresenter",
+   "via": "doc",
+   "owner": "ReportPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Report"
+    }
+   ],
+   "label": "Explorer > New > … > Report",
+   "resolved": true
+  },
+  {
+   "presenter": "S3ConfigPresenter",
+   "via": "doc",
+   "owner": "S3ConfigPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "S3Config"
+    }
+   ],
+   "label": "Explorer > New > … > S3Config",
+   "resolved": true
+  },
+  {
+   "presenter": "DashboardSuperPresenter",
+   "via": "doc",
+   "owner": "DashboardPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Dashboard"
+    }
+   ],
+   "label": "Explorer > New > … > Dashboard",
+   "resolved": true
+  },
+  {
+   "presenter": "DataGenPresenter",
+   "via": "doc",
+   "owner": "DataGenPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "DataGen"
+    }
+   ],
+   "label": "Explorer > New > … > DataGen",
+   "resolved": true
+  },
+  {
+   "presenter": "DictionaryPresenter",
+   "via": "doc",
+   "owner": "DictionaryPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Dictionary"
+    }
+   ],
+   "label": "Explorer > New > … > Dictionary",
+   "resolved": true
+  },
+  {
+   "presenter": "DocumentationPresenter",
+   "via": "doc",
+   "owner": "DocumentationPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Documentation"
+    }
+   ],
+   "label": "Explorer > New > … > Documentation",
+   "resolved": true
+  },
+  {
+   "presenter": "FeedPresenter",
+   "via": "doc",
+   "owner": "FeedPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Feed"
+    }
+   ],
+   "label": "Explorer > New > … > Feed",
+   "resolved": true
+  },
+  {
+   "presenter": "GitRepoPresenter",
+   "via": "doc",
+   "owner": "GitRepoPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "GitRepo"
+    }
+   ],
+   "label": "Explorer > New > … > GitRepo",
+   "resolved": true
+  },
+  {
+   "presenter": "IndexPresenter",
+   "via": "doc",
+   "owner": "IndexPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "LuceneIndex"
+    }
+   ],
+   "label": "Explorer > New > … > LuceneIndex",
+   "resolved": true
+  },
+  {
+   "presenter": "KafkaConfigPresenter",
+   "via": "doc",
+   "owner": "KafkaConfigPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "KafkaConfig"
+    }
+   ],
+   "label": "Explorer > New > … > KafkaConfig",
+   "resolved": true
+  },
+  {
+   "presenter": "OpenAIModelPresenter",
+   "via": "doc",
+   "owner": "OpenAIModelPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "OpenAIModel"
+    }
+   ],
+   "label": "Explorer > New > … > OpenAIModel",
+   "resolved": true
+  },
+  {
+   "presenter": "PathwaysPresenter",
+   "via": "doc",
+   "owner": "PathwaysPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Pathways"
+    }
+   ],
+   "label": "Explorer > New > … > Pathways",
+   "resolved": true
+  },
+  {
+   "presenter": "TracesPresenter",
+   "via": "doc",
+   "owner": "TracesDocPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Traces"
+    }
+   ],
+   "label": "Explorer > New > … > Traces",
+   "resolved": true
+  },
+  {
+   "presenter": "PipelinePresenter",
+   "via": "doc",
+   "owner": "PipelinePlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Pipeline"
+    }
+   ],
+   "label": "Explorer > New > … > Pipeline",
+   "resolved": true
+  },
+  {
+   "presenter": "TextConverterPresenter",
+   "via": "doc",
+   "owner": "TextConverterPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "TextConverter"
+    }
+   ],
+   "label": "Explorer > New > … > TextConverter",
+   "resolved": true
+  },
+  {
+   "presenter": "XsltPresenter",
+   "via": "doc",
+   "owner": "XsltPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Xslt"
+    }
+   ],
+   "label": "Explorer > New > … > Xslt",
+   "resolved": true
+  },
+  {
+   "presenter": "PlanBPresenter",
+   "via": "doc",
+   "owner": "PlanBPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "PlanB"
+    }
+   ],
+   "label": "Explorer > New > … > PlanB",
+   "resolved": true
+  },
+  {
+   "presenter": "QueryDocPresenter",
+   "via": "doc",
+   "owner": "QueryPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Query"
+    }
+   ],
+   "label": "Explorer > New > … > Query",
+   "resolved": true
+  },
+  {
+   "presenter": "ScriptPresenter",
+   "via": "doc",
+   "owner": "ScriptPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Script"
+    }
+   ],
+   "label": "Explorer > New > … > Script",
+   "resolved": true
+  },
+  {
+   "presenter": "ElasticClusterPresenter",
+   "via": "doc",
+   "owner": "ElasticClusterPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "ElasticCluster"
+    }
+   ],
+   "label": "Explorer > New > … > ElasticCluster",
+   "resolved": true
+  },
+  {
+   "presenter": "ElasticIndexPresenter",
+   "via": "doc",
+   "owner": "ElasticIndexPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "ElasticIndex"
+    }
+   ],
+   "label": "Explorer > New > … > ElasticIndex",
+   "resolved": true
+  },
+  {
+   "presenter": "SolrIndexPresenter",
+   "via": "doc",
+   "owner": "SolrIndexPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "SolrIndex"
+    }
+   ],
+   "label": "Explorer > New > … > SolrIndex",
+   "resolved": true
+  },
+  {
+   "presenter": "ViewPresenter",
+   "via": "doc",
+   "owner": "ViewPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "View"
+    }
+   ],
+   "label": "Explorer > New > … > View",
+   "resolved": true
+  },
+  {
+   "presenter": "VisualisationPresenter",
+   "via": "doc",
+   "owner": "VisualisationPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "Visualisation"
+    }
+   ],
+   "label": "Explorer > New > … > Visualisation",
+   "resolved": true
+  },
+  {
+   "presenter": "XMLSchemaPresenter",
+   "via": "doc",
+   "owner": "XMLSchemaPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "XmlSchema"
+    }
+   ],
+   "label": "Explorer > New > … > XmlSchema",
+   "resolved": true
+  },
+  {
+   "presenter": "StatisticsDataSourcePresenter",
+   "via": "doc",
+   "owner": "StatisticsPlugin",
+   "route": [
+    {
+     "via": "newDoc",
+     "type": "StatisticStore"
+    }
+   ],
+   "label": "Explorer > New > … > StatisticStore",
+   "resolved": true
+  }
+ ],
+ "captionOf": [
+  {
+   "caption": "About",
+   "presenter": "AboutPresenter",
+   "shower": "AboutPresenter"
+  },
+  {
+   "caption": "Attachment Data",
+   "presenter": "AiAttachmentDataPresenter",
+   "shower": "AiAttachmentDataPresenter"
+  },
+  {
+   "caption": "Chat History",
+   "presenter": "AiChatHistoryPresenter",
+   "shower": "AiChatHistoryPresenter"
+  },
+  {
+   "caption": "Configure Ask Stroom AI",
+   "presenter": "AskStroomAiConfigPresenter",
+   "shower": "AskStroomAiConfigPresenter"
+  },
+  {
+   "caption": "Ask Stroom AI",
+   "presenter": "AskStroomAiPresenter",
+   "shower": "AskStroomAiPresenter"
+  },
+  {
+   "caption": "Download Options",
+   "presenter": "DownloadChatPresenter",
+   "shower": "AskStroomAiPresenter"
+  },
+  {
+   "caption": "Ask Stroom AI",
+   "presenter": "AskStroomAiPresenter",
+   "shower": "AskStroomAiPresenter"
+  },
+  {
+   "caption": "Confirm",
+   "presenter": "CommonAlertPresenter",
+   "shower": "CommonAlertPresenter"
+  },
+  {
+   "caption": "Alert",
+   "presenter": "CommonAlertPresenter",
+   "shower": "CommonAlertPresenter"
+  },
+  {
+   "caption": "Add Notification",
+   "presenter": "AnalyticNotificationEditPresenter",
+   "shower": "AbstractNotificationListPresenter"
+  },
+  {
+   "caption": "Edit Notification",
+   "presenter": "AnalyticNotificationEditPresenter",
+   "shower": "AbstractNotificationListPresenter"
+  },
+  {
+   "caption": "Batch Change Selected Schedules",
+   "presenter": "BatchExecutionScheduleEditPresenter",
+   "shower": "BatchExecutionScheduleEditPresenter"
+  },
+  {
+   "caption": "Filter Schedules",
+   "presenter": "ExpressionPresenter",
+   "shower": "ExecutionScheduleManager"
+  },
+  {
+   "caption": "Run Now",
+   "presenter": "ExecutionScheduleRunNowPresenter",
+   "shower": "ExecutionScheduleRunNowPresenter"
+  },
+  {
+   "caption": "Create Schedule",
+   "presenter": "ScheduledProcessEditPresenter",
+   "shower": "ScheduledProcessEditPresenter"
+  },
+  {
+   "caption": "Edit Schedule",
+   "presenter": "ScheduledProcessEditPresenter",
+   "shower": "ScheduledProcessEditPresenter"
+  },
+  {
+   "caption": "Link An Event",
+   "presenter": "AddEventLinkPresenter",
+   "shower": "AddEventLinkPresenter"
+  },
+  {
+   "caption": "Edit Comment",
+   "presenter": "CommentEditPresenter",
+   "shower": "AnnotationEditPresenter"
+  },
+  {
+   "caption": "Create New …",
+   "presenter": "AnnotationTagCreatePresenter",
+   "shower": "AnnotationTagCreatePresenter"
+  },
+  {
+   "caption": "Create New …",
+   "presenter": "AnnotationTagCreatePresenter",
+   "shower": "AnnotationTagCreatePresenter"
+  },
+  {
+   "caption": "Edit …",
+   "presenter": "AnnotationTagEditPresenter",
+   "shower": "AnnotationTagCreatePresenter"
+  },
+  {
+   "caption": "Change Permissions",
+   "presenter": "DocumentUserPermissionsPresenter",
+   "shower": "AnnotationTagEditPresenter"
+  },
+  {
+   "caption": "Change Assigned To",
+   "presenter": "ChangeAssignedToPresenter",
+   "shower": "ChangeAssignedToPresenter"
+  },
+  {
+   "caption": "Change Status",
+   "presenter": "ChangeStatusPresenter",
+   "shower": "ChangeStatusPresenter"
+  },
+  {
+   "caption": "Set Retention Period",
+   "presenter": "DurationPresenter",
+   "shower": "DurationPresenter"
+  },
+  {
+   "caption": "Choose Annotation",
+   "presenter": "FindAnnotationPresenter",
+   "shower": "FindAnnotationPresenter"
+  },
+  {
+   "caption": "Cluster values - …",
+   "presenter": "ConfigPropertyClusterValuesPresenter",
+   "shower": "ConfigPropertyClusterValuesPresenter"
+  },
+  {
+   "caption": "Application Property - …",
+   "presenter": "ManageGlobalPropertyEditPresenter",
+   "shower": "ManageGlobalPropertyEditPresenter"
+  },
+  {
+   "caption": "New Credentials",
+   "presenter": "CredentialEditPresenter",
+   "shower": "CredentialEditPresenter"
+  },
+  {
+   "caption": "Edit Credentials",
+   "presenter": "CredentialEditPresenter",
+   "shower": "CredentialEditPresenter"
+  },
+  {
+   "caption": "Credentials",
+   "presenter": "CredentialsManagerDialogPresenter",
+   "shower": "CredentialsManagerDialogPresenter"
+  },
+  {
+   "caption": "Settings",
+   "presenter": "SettingsPresenter",
+   "shower": "AbstractComponentPresenter"
+  },
+  {
+   "caption": "Set Layout Constraints",
+   "presenter": "LayoutConstraintPresenter",
+   "shower": "DashboardPresenter"
+  },
+  {
+   "caption": "Current Selection",
+   "presenter": "CurrentSelectionPresenter",
+   "shower": "DashboardPresenter"
+  },
+  {
+   "caption": "Rename Tab",
+   "presenter": "RenameTabPresenter",
+   "shower": "RenameTabPresenter"
+  },
+  {
+   "caption": "Create New Favourite",
+   "presenter": "NamePresenter",
+   "shower": "NamePresenter"
+  },
+  {
+   "caption": "Rename Favourite",
+   "presenter": "NamePresenter",
+   "shower": "NamePresenter"
+  },
+  {
+   "caption": "Query Favourites",
+   "presenter": "QueryFavouritesPresenter",
+   "shower": "QueryFavouritesPresenter"
+  },
+  {
+   "caption": "Query History",
+   "presenter": "QueryHistoryPresenter",
+   "shower": "QueryHistoryPresenter"
+  },
+  {
+   "caption": "Process Search Results",
+   "presenter": "ProcessorLimitsPresenter",
+   "shower": "QueryPresenter"
+  },
+  {
+   "caption": "Add New Selection Handler",
+   "presenter": "SelectionHandlerPresenter",
+   "shower": "SelectionHandlersPresenter"
+  },
+  {
+   "caption": "Edit Selection Handler",
+   "presenter": "SelectionHandlerPresenter",
+   "shower": "SelectionHandlersPresenter"
+  },
+  {
+   "caption": "Filter '…'",
+   "presenter": "ColumnFilterPresenter",
+   "shower": "ColumnFilterPresenter"
+  },
+  {
+   "caption": "Set Expression For '…'",
+   "presenter": "ColumnFunctionEditorPresenter",
+   "shower": "ColumnFunctionEditorPresenter"
+  },
+  {
+   "caption": "Format '…'",
+   "presenter": "FormatPresenter",
+   "shower": "FormatPresenter"
+  },
+  {
+   "caption": "Rename Field",
+   "presenter": "RenameColumnPresenter",
+   "shower": "RenameColumnPresenter"
+  },
+  {
+   "caption": "Filter '…'",
+   "presenter": "TableFilterPresenter",
+   "shower": "TableFilterPresenter"
+  },
+  {
+   "caption": "Download Options",
+   "presenter": "DownloadPresenter",
+   "shower": "TablePresenter"
+  },
+  {
+   "caption": "Edit Custom Row Style",
+   "presenter": "CustomRowStylePresenter",
+   "shower": "CustomRowStylePresenter"
+  },
+  {
+   "caption": "Add New Rule",
+   "presenter": "RulePresenter",
+   "shower": "RulesPresenter"
+  },
+  {
+   "caption": "Edit Rule",
+   "presenter": "RulePresenter",
+   "shower": "RulesPresenter"
+  },
+  {
+   "caption": "Selection Summary",
+   "presenter": "SelectionSummaryPresenter",
+   "shower": "AbstractMetaListPresenter"
+  },
+  {
+   "caption": "Confirm Download",
+   "presenter": "SelectionSummaryPresenter",
+   "shower": "AbstractMetaListPresenter"
+  },
+  {
+   "caption": "Confirm Process",
+   "presenter": "SelectionSummaryPresenter",
+   "shower": "AbstractMetaListPresenter"
+  },
+  {
+   "caption": "Confirm Reprocess",
+   "presenter": "SelectionSummaryPresenter",
+   "shower": "AbstractMetaListPresenter"
+  },
+  {
+   "caption": "Confirm Delete",
+   "presenter": "SelectionSummaryPresenter",
+   "shower": "AbstractMetaListPresenter"
+  },
+  {
+   "caption": "Confirm Restore",
+   "presenter": "SelectionSummaryPresenter",
+   "shower": "AbstractMetaListPresenter"
+  },
+  {
+   "caption": "Set Source Range",
+   "presenter": "CharacterRangeSelectionPresenter",
+   "shower": "CharacterRangeSelectionPresenter"
+  },
+  {
+   "caption": "Stream …",
+   "presenter": "DataPresenter",
+   "shower": "DataDisplaySupport"
+  },
+  {
+   "caption": "Stream …",
+   "presenter": "SourcePresenter",
+   "shower": "DataDisplaySupport"
+  },
+  {
+   "caption": "Upload",
+   "presenter": "DataUploadPresenter",
+   "shower": "DataUploadPresenter"
+  },
+  {
+   "caption": "Select …",
+   "presenter": "ItemSelectionPresenter",
+   "shower": "ItemSelectionPresenter"
+  },
+  {
+   "caption": "Filter Streams",
+   "presenter": "ExpressionPresenter",
+   "shower": "MetaPresenter"
+  },
+  {
+   "caption": "Create Processors",
+   "presenter": "ProcessChoicePresenter",
+   "shower": "ProcessChoicePresenter"
+  },
+  {
+   "caption": "Add Volume",
+   "presenter": "FsVolumeEditPresenter",
+   "shower": "FsVolumeGroupEditPresenter"
+  },
+  {
+   "caption": "Edit Volume",
+   "presenter": "FsVolumeEditPresenter",
+   "shower": "FsVolumeGroupEditPresenter"
+  },
+  {
+   "caption": "Edit Volume Group - …",
+   "presenter": "FsVolumeGroupEditPresenter",
+   "shower": "FsVolumeGroupPresenter"
+  },
+  {
+   "caption": "New",
+   "presenter": "NewFsVolumeGroupPresenter",
+   "shower": "NewFsVolumeGroupPresenter"
+  },
+  {
+   "caption": "Copy Multiple Items",
+   "presenter": "CopyDocumentPresenter",
+   "shower": "CopyDocumentPresenter"
+  },
+  {
+   "caption": "Copy …",
+   "presenter": "CopyDocumentPresenter",
+   "shower": "CopyDocumentPresenter"
+  },
+  {
+   "caption": "Info",
+   "presenter": "InfoDocumentPresenter",
+   "shower": "InfoDocumentPresenter"
+  },
+  {
+   "caption": "Move Multiple Items",
+   "presenter": "MoveDocumentPresenter",
+   "shower": "MoveDocumentPresenter"
+  },
+  {
+   "caption": "Move …",
+   "presenter": "MoveDocumentPresenter",
+   "shower": "MoveDocumentPresenter"
+  },
+  {
+   "caption": "Rename …",
+   "presenter": "NameDocumentPresenter",
+   "shower": "NameDocumentPresenter"
+  },
+  {
+   "caption": "Edit Tags on …",
+   "presenter": "ExplorerNodeEditTagsPresenter",
+   "shower": "ExplorerNodeEditTagsPresenter"
+  },
+  {
+   "caption": "Add Tags to …",
+   "presenter": "ExplorerNodeEditTagsPresenter",
+   "shower": "ExplorerNodeEditTagsPresenter"
+  },
+  {
+   "caption": "Remove Tags from … Documents",
+   "presenter": "ExplorerNodeRemoveTagsPresenter",
+   "shower": "ExplorerNodeRemoveTagsPresenter"
+  },
+  {
+   "caption": "Choose item",
+   "presenter": "ExplorerPopupPresenter",
+   "shower": "ExplorerPopupPresenter"
+  },
+  {
+   "caption": "Find In Content",
+   "presenter": "FindInContentPresenter",
+   "shower": "FindInContentPresenter"
+  },
+  {
+   "caption": "Find",
+   "presenter": "FindPresenter",
+   "shower": "FindPresenter"
+  },
+  {
+   "caption": "Recent Items",
+   "presenter": "RecentItemsPresenter",
+   "shower": "RecentItemsPresenter"
+  },
+  {
+   "caption": "Select Tab Session To Open:",
+   "presenter": "TabSessionChooserPresenter",
+   "shower": "TabSessionManager"
+  },
+  {
+   "caption": "Select Tab Session To Delete:",
+   "presenter": "TabSessionChooserPresenter",
+   "shower": "TabSessionManager"
+  },
+  {
+   "caption": "Save New Tab Session",
+   "presenter": "TextBoxPopup",
+   "shower": "TabSessionManager"
+  },
+  {
+   "caption": "Git Push",
+   "presenter": "GitRepoCommitDialogPresenter",
+   "shower": "GitRepoCommitDialogPresenter"
+  },
+  {
+   "caption": "Edit HTTP Client Configuration",
+   "presenter": "HttpClientConfigPresenter",
+   "shower": "HttpClientConfigPresenter"
+  },
+  {
+   "caption": "Edit HTTP TLS Configuration",
+   "presenter": "HttpTlsConfigPresenter",
+   "shower": "HttpTlsConfigPresenter"
+  },
+  {
+   "caption": "Dependency Information",
+   "presenter": "DependenciesInfoPresenter",
+   "shower": "DependenciesInfoPresenter"
+  },
+  {
+   "caption": "Export",
+   "presenter": "ExportConfigPresenter",
+   "shower": "ExportConfigPresenter"
+  },
+  {
+   "caption": "Confirm Import",
+   "presenter": "ImportConfigConfirmPresenter",
+   "shower": "ImportConfigConfirmPresenter"
+  },
+  {
+   "caption": "Import",
+   "presenter": "ImportConfigPresenter",
+   "shower": "ImportConfigPresenter"
+  },
+  {
+   "caption": "New Field",
+   "presenter": "IndexFieldEditPresenter",
+   "shower": "IndexFieldListPresenter"
+  },
+  {
+   "caption": "Edit Field",
+   "presenter": "IndexFieldEditPresenter",
+   "shower": "IndexFieldListPresenter"
+  },
+  {
+   "caption": "Add Volume",
+   "presenter": "IndexVolumeEditPresenter",
+   "shower": "IndexVolumeGroupEditPresenter"
+  },
+  {
+   "caption": "Edit Volume",
+   "presenter": "IndexVolumeEditPresenter",
+   "shower": "IndexVolumeGroupEditPresenter"
+  },
+  {
+   "caption": "Edit Volume Group - …",
+   "presenter": "IndexVolumeGroupEditPresenter",
+   "shower": "IndexVolumeGroupPresenter"
+  },
+  {
+   "caption": "New",
+   "presenter": "NewIndexVolumeGroupPresenter",
+   "shower": "NewIndexVolumeGroupPresenter"
+  },
+  {
+   "caption": "New",
+   "presenter": "NewNodeGroupPresenter",
+   "shower": "NewNodeGroupPresenter"
+  },
+  {
+   "caption": "Edit Node Group - …",
+   "presenter": "NodeGroupEditPresenter",
+   "shower": "NodeGroupPresenter"
+  },
+  {
+   "caption": "New Constraint",
+   "presenter": "ConstraintEditPresenter",
+   "shower": "ConstraintListPresenter"
+  },
+  {
+   "caption": "Edit Constraint",
+   "presenter": "ConstraintEditPresenter",
+   "shower": "ConstraintListPresenter"
+  },
+  {
+   "caption": "New Pathway",
+   "presenter": "PathwayEditPresenter",
+   "shower": "PathwayListPresenter"
+  },
+  {
+   "caption": "Edit Pathway",
+   "presenter": "PathwayEditPresenter",
+   "shower": "PathwayListPresenter"
+  },
+  {
+   "caption": "Save Pipeline: …",
+   "presenter": "DocRefSelectionPresenter",
+   "shower": "PipelinePlugin"
+  },
+  {
+   "caption": "Set Location",
+   "presenter": "StepLocationPresenter",
+   "shower": "StepLocationLinkPresenter"
+  },
+  {
+   "caption": "Change Step Filters",
+   "presenter": "SteppingFilterPresenter",
+   "shower": "SteppingFilterPresenter"
+  },
+  {
+   "caption": "Filter Streams",
+   "presenter": "ExpressionPresenter",
+   "shower": "SteppingPresenter"
+  },
+  {
+   "caption": "Add XPath Filter",
+   "presenter": "XPathFilterPresenter",
+   "shower": "XPathFilterPresenter"
+  },
+  {
+   "caption": "Edit XPath Filter",
+   "presenter": "XPathFilterPresenter",
+   "shower": "XPathFilterPresenter"
+  },
+  {
+   "caption": "New Pipeline Reference",
+   "presenter": "NewPipelineReferencePresenter",
+   "shower": "PipelineReferenceListPresenter"
+  },
+  {
+   "caption": "Edit Pipeline Reference",
+   "presenter": "NewPipelineReferencePresenter",
+   "shower": "PipelineReferenceListPresenter"
+  },
+  {
+   "caption": "Pipeline Source",
+   "presenter": "EditorPresenter",
+   "shower": "PipelineStructurePresenter"
+  },
+  {
+   "caption": "Edit Element",
+   "presenter": "NewElementPresenter",
+   "shower": "PipelineStructurePresenter"
+  },
+  {
+   "caption": "Create Element",
+   "presenter": "NewElementPresenter",
+   "shower": "PipelineStructurePresenter"
+  },
+  {
+   "caption": "Edit Property",
+   "presenter": "NewPropertyPresenter",
+   "shower": "PropertyListPresenter"
+  },
+  {
+   "caption": "User Preferences",
+   "presenter": "UserPreferencesPresenter",
+   "shower": "UserPreferencesPresenter"
+  },
+  {
+   "caption": "Batch Change All Filtered Processors",
+   "presenter": "BatchProcessorFilterEditPresenter",
+   "shower": "BatchProcessorFilterEditPresenter"
+  },
+  {
+   "caption": "New Feed Dependency",
+   "presenter": "EditFeedDependencyPresenter",
+   "shower": "FeedDependencyListPresenter"
+  },
+  {
+   "caption": "Edit Feed Dependency",
+   "presenter": "EditFeedDependencyPresenter",
+   "shower": "FeedDependencyListPresenter"
+  },
+  {
+   "caption": "Set Feed Dependencies",
+   "presenter": "FeedDependencyPresenter",
+   "shower": "FeedDependencyPresenter"
+  },
+  {
+   "caption": "Edit Filter",
+   "presenter": "ProcessorEditPresenter",
+   "shower": "ProcessorEditPresenter"
+  },
+  {
+   "caption": "Add Filter",
+   "presenter": "ProcessorEditPresenter",
+   "shower": "ProcessorEditPresenter"
+  },
+  {
+   "caption": "Filter Processors",
+   "presenter": "ExpressionPresenter",
+   "shower": "ProcessorPresenter"
+  },
+  {
+   "caption": "Create Processor Profile",
+   "presenter": "ProcessorProfileEditPresenter",
+   "shower": "ProcessorProfilePresenter"
+  },
+  {
+   "caption": "Edit Processor Profile - …",
+   "presenter": "ProcessorProfileEditPresenter",
+   "shower": "ProcessorProfilePresenter"
+  },
+  {
+   "caption": "Edit Period",
+   "presenter": "ProfilePeriodEditPresenter",
+   "shower": "ProfilePeriodEditPresenter"
+  },
+  {
+   "caption": "Download Options",
+   "presenter": "DownloadPresenter",
+   "shower": "QueryResultTablePresenter"
+  },
+  {
+   "caption": "Settings",
+   "presenter": "RulesPresenter",
+   "shower": "QueryTableColumnsManager"
+  },
+  {
+   "caption": "Change Result Store Settings",
+   "presenter": "ResultStoreSettingsPresenter",
+   "shower": "ResultStoreListPresenter"
+  },
+  {
+   "caption": "Search Result Stores",
+   "presenter": "ResultStorePresenter",
+   "shower": "ResultStorePresenter"
+  },
+  {
+   "caption": "Add New Template",
+   "presenter": "ContentTemplateEditPresenter",
+   "shower": "ContentTemplateTabPresenter"
+  },
+  {
+   "caption": "Edit Template",
+   "presenter": "ContentTemplateEditPresenter",
+   "shower": "ContentTemplateTabPresenter"
+  },
+  {
+   "caption": "Query Filter",
+   "presenter": "EditExpressionPresenter",
+   "shower": "DataRetentionImpactPresenter"
+  },
+  {
+   "caption": "Add New Rule",
+   "presenter": "DataRetentionRulePresenter",
+   "shower": "DataRetentionPolicyPresenter"
+  },
+  {
+   "caption": "Edit Rule",
+   "presenter": "DataRetentionRulePresenter",
+   "shower": "DataRetentionPolicyPresenter"
+  },
+  {
+   "caption": "New Field",
+   "presenter": "FieldEditPresenter",
+   "shower": "FieldListPresenter"
+  },
+  {
+   "caption": "Edit Field",
+   "presenter": "FieldEditPresenter",
+   "shower": "FieldListPresenter"
+  },
+  {
+   "caption": "Edit Rule",
+   "presenter": "RulePresenter",
+   "shower": "RuleSetSettingsPresenter"
+  },
+  {
+   "caption": "Change Schedule",
+   "presenter": "SchedulePopup",
+   "shower": "SchedulePopup"
+  },
+  {
+   "caption": "New Field",
+   "presenter": "SolrIndexFieldEditPresenter",
+   "shower": "SolrIndexFieldListPresenter"
+  },
+  {
+   "caption": "Edit Field",
+   "presenter": "SolrIndexFieldEditPresenter",
+   "shower": "SolrIndexFieldListPresenter"
+  },
+  {
+   "caption": "Batch Change Permissions For All Filtered Documents",
+   "presenter": "BatchDocumentPermissionsEditPresenter",
+   "shower": "BatchDocumentPermissionsEditPresenter"
+  },
+  {
+   "caption": "Filter Documents",
+   "presenter": "ExpressionPresenter",
+   "shower": "BatchDocumentPermissionsPresenter"
+  },
+  {
+   "caption": "Change Permissions",
+   "presenter": "BatchDocumentPermissionsPresenter",
+   "shower": "BatchDocumentPermissionsPresenter"
+  },
+  {
+   "caption": "Add User Group",
+   "presenter": "CreateUserPresenter",
+   "shower": "CreateUserPresenter"
+  },
+  {
+   "caption": "Set Document Create Permissions",
+   "presenter": "DocumentUserCreatePermissionsEditPresenter",
+   "shower": "DocumentUserCreatePermissionsEditPresenter"
+  },
+  {
+   "caption": "Set Permissions",
+   "presenter": "DocumentUserPermissionsEditPresenter",
+   "shower": "DocumentUserPermissionsEditPresenter"
+  },
+  {
+   "caption": "Create new API key",
+   "presenter": "EditApiKeyPresenter",
+   "shower": "EditApiKeyPresenter"
+  },
+  {
+   "caption": "View created API key",
+   "presenter": "EditApiKeyPresenter",
+   "shower": "EditApiKeyPresenter"
+  },
+  {
+   "caption": "Edit API key",
+   "presenter": "EditApiKeyPresenter",
+   "shower": "EditApiKeyPresenter"
+  },
+  {
+   "caption": "Edit API key",
+   "presenter": "EditApiKeyPresenter",
+   "shower": "EditApiKeyPresenter"
+  },
+  {
+   "caption": "Edit User Group",
+   "presenter": "CreateNewGroupPresenter",
+   "shower": "UserAndGroupHelper"
+  },
+  {
+   "caption": "Select Group",
+   "presenter": "UserRefPopupPresenter",
+   "shower": "UserAndGroupsPresenter"
+  },
+  {
+   "caption": "Add User Or Group",
+   "presenter": "UserRefPopupPresenter",
+   "shower": "UserAndGroupsPresenter"
+  },
+  {
+   "caption": "Filter Documents",
+   "presenter": "ExpressionPresenter",
+   "shower": "UserPermissionReportPresenter"
+  },
+  {
+   "caption": "Select User Or Group",
+   "presenter": "UserRefPopupPresenter",
+   "shower": "UserRefPopupPresenter"
+  },
+  {
+   "caption": "Enter Your Current Password",
+   "presenter": "CurrentPasswordPresenter",
+   "shower": "CurrentPasswordPresenter"
+  },
+  {
+   "caption": "Change Password",
+   "presenter": "ChangePasswordPresenter",
+   "shower": "CurrentPasswordPresenter"
+  },
+  {
+   "caption": "Create Account",
+   "presenter": "EditAccountPresenter",
+   "shower": "EditAccountPresenter"
+  },
+  {
+   "caption": "Edit Account",
+   "presenter": "EditAccountPresenter",
+   "shower": "EditAccountPresenter"
+  },
+  {
+   "caption": "Reset Your Password",
+   "presenter": "EmailResetPasswordPresenter",
+   "shower": "EmailResetPasswordPresenter"
+  },
+  {
+   "caption": "Change Password",
+   "presenter": "ChangePasswordPresenter",
+   "shower": "LoginPresenter"
+  },
+  {
+   "caption": "Reset Password",
+   "presenter": "ChangePasswordPresenter",
+   "shower": "ResetPasswordPresenter"
+  },
+  {
+   "caption": "Task Manager",
+   "presenter": "UserTaskManagerPresenter",
+   "shower": "UserTaskManagerPresenter"
+  },
+  {
+   "caption": "New …",
+   "presenter": "VisualisationAssetsAddItemDialogPresenter",
+   "shower": "VisualisationAssetsAddItemDialogPresenter"
+  },
+  {
+   "caption": "Edit",
+   "presenter": "VisualisationAssetsEditAssetDialogPresenter",
+   "shower": "VisualisationAssetsEditAssetDialogPresenter"
+  },
+  {
+   "caption": "Add File",
+   "presenter": "VisualisationAssetsUploadFileDialogPresenter",
+   "shower": "VisualisationAssetsUploadFileDialogPresenter"
+  },
+  {
+   "caption": "Set Date And Time",
+   "presenter": "DateTimePopup",
+   "shower": "DateTimePopup"
+  },
+  {
+   "caption": "Set Time",
+   "presenter": "TimePopup",
+   "shower": "TimePopup"
+  },
+  {
+   "caption": "New Field",
+   "presenter": "StatisticsFieldEditPresenter",
+   "shower": "StatisticsFieldListPresenter"
+  },
+  {
+   "caption": "Edit Field",
+   "presenter": "StatisticsFieldEditPresenter",
+   "shower": "StatisticsFieldListPresenter"
+  },
+  {
+   "caption": "Save '…' as",
+   "presenter": "CreateDocumentPresenter",
+   "shower": "DocumentPlugin"
+  },
+  {
+   "caption": "New …",
+   "presenter": "CreateDocumentPresenter",
+   "shower": "DocumentPluginEventManager"
+  },
+  {
+   "caption": "New …",
+   "presenter": "CreateDocumentPresenter",
+   "shower": "ExplorerPopupPresenter"
+  },
+  {
+   "caption": "Create New Analytic Rule",
+   "presenter": "CreateDocumentPresenter",
+   "shower": "QueryDocEditPresenter"
+  },
+  {
+   "caption": "Create New Report",
+   "presenter": "CreateDocumentPresenter",
+   "shower": "QueryDocEditPresenter"
+  }
+ ],
+ "showEdges": [
+  {
+   "shower": "AboutPlugin",
+   "presenter": "AboutPresenter"
+  },
+  {
+   "shower": "AboutPresenter",
+   "presenter": "AboutPresenter",
+   "caption": "About"
+  },
+  {
+   "shower": "ActivityEditPresenter",
+   "presenter": "ActivityEditPresenter"
+  },
+  {
+   "shower": "CurrentActivity",
+   "presenter": "ManageActivityPresenter"
+  },
+  {
+   "shower": "ManageActivityPresenter",
+   "presenter": "ManageActivityPresenter"
+  },
+  {
+   "shower": "ManageActivityPresenter",
+   "presenter": "ActivityEditPresenter"
+  },
+  {
+   "shower": "SplashPresenter",
+   "presenter": "SplashPresenter"
+  },
+  {
+   "shower": "AiAttachmentDataPresenter",
+   "presenter": "AiAttachmentDataPresenter",
+   "caption": "Attachment Data"
+  },
+  {
+   "shower": "AiChatHistoryPresenter",
+   "presenter": "AiChatHistoryPresenter",
+   "caption": "Chat History"
+  },
+  {
+   "shower": "AskStroomAiConfigPresenter",
+   "presenter": "AskStroomAiConfigPresenter",
+   "caption": "Configure Ask Stroom AI"
+  },
+  {
+   "shower": "AskStroomAiPresenter",
+   "presenter": "AskStroomAiPresenter",
+   "caption": "Ask Stroom AI"
+  },
+  {
+   "shower": "AskStroomAiPresenter",
+   "presenter": "DownloadChatPresenter",
+   "caption": "Download Options"
+  },
+  {
+   "shower": "AskStroomAiPresenter",
+   "presenter": "AskStroomAiPresenter",
+   "caption": "Ask Stroom AI"
+  },
+  {
+   "shower": "AskStroomAiPresenter",
+   "presenter": "AskStroomAiConfigPresenter"
+  },
+  {
+   "shower": "AskStroomAiPresenter",
+   "presenter": "AiChatHistoryPresenter"
+  },
+  {
+   "shower": "AskStroomAiPresenter",
+   "presenter": "AiAttachmentDataPresenter"
+  },
+  {
+   "shower": "AlertPlugin",
+   "presenter": "CommonAlertPresenter"
+  },
+  {
+   "shower": "AlertPlugin",
+   "presenter": "CommonAlertPresenter"
+  },
+  {
+   "shower": "CommonAlertPresenter",
+   "presenter": "CommonAlertPresenter",
+   "caption": "Confirm"
+  },
+  {
+   "shower": "CommonAlertPresenter",
+   "presenter": "CommonAlertPresenter",
+   "caption": "Alert"
+  },
+  {
+   "shower": "AbstractNotificationListPresenter",
+   "presenter": "AnalyticNotificationEditPresenter",
+   "caption": "Add Notification"
+  },
+  {
+   "shower": "AbstractNotificationListPresenter",
+   "presenter": "AnalyticNotificationEditPresenter",
+   "caption": "Edit Notification"
+  },
+  {
+   "shower": "BatchExecutionScheduleEditPresenter",
+   "presenter": "BatchExecutionScheduleEditPresenter",
+   "caption": "Batch Change Selected Schedules"
+  },
+  {
+   "shower": "ExecutionScheduleManager",
+   "presenter": "ExpressionPresenter",
+   "caption": "Filter Schedules"
+  },
+  {
+   "shower": "ExecutionScheduleManager",
+   "presenter": "BatchExecutionScheduleEditPresenter"
+  },
+  {
+   "shower": "ExecutionScheduleManager",
+   "presenter": "ExecutionScheduleRunNowPresenter"
+  },
+  {
+   "shower": "ExecutionScheduleManager",
+   "presenter": "ScheduledProcessEditPresenter"
+  },
+  {
+   "shower": "ExecutionScheduleRunNowPresenter",
+   "presenter": "ExecutionScheduleRunNowPresenter",
+   "caption": "Run Now"
+  },
+  {
+   "shower": "ScheduledProcessEditPresenter",
+   "presenter": "ScheduledProcessEditPresenter",
+   "caption": "Create Schedule"
+  },
+  {
+   "shower": "ScheduledProcessEditPresenter",
+   "presenter": "ScheduledProcessEditPresenter",
+   "caption": "Edit Schedule"
+  },
+  {
+   "shower": "ScheduledProcessingPresenter",
+   "presenter": "ScheduledProcessEditPresenter"
+  },
+  {
+   "shower": "ScheduledProcessingPresenter",
+   "presenter": "ScheduledProcessEditPresenter"
+  },
+  {
+   "shower": "AddEventLinkPresenter",
+   "presenter": "AddEventLinkPresenter",
+   "caption": "Link An Event"
+  },
+  {
+   "shower": "AnnotationEditPresenter",
+   "presenter": "CommentEditPresenter",
+   "caption": "Edit Comment"
+  },
+  {
+   "shower": "AnnotationEditPresenter",
+   "presenter": "ChooserPresenter"
+  },
+  {
+   "shower": "AnnotationEditPresenter",
+   "presenter": "MultiChooserPresenter"
+  },
+  {
+   "shower": "AnnotationEditPresenter",
+   "presenter": "MultiChooserPresenter"
+  },
+  {
+   "shower": "AnnotationEditPresenter",
+   "presenter": "ChooserPresenter"
+  },
+  {
+   "shower": "AnnotationEditPresenter",
+   "presenter": "DurationPresenter"
+  },
+  {
+   "shower": "AnnotationEditPresenter",
+   "presenter": "UserRefPopupPresenter"
+  },
+  {
+   "shower": "AnnotationTagCreatePresenter",
+   "presenter": "AnnotationTagCreatePresenter",
+   "caption": "Create New …"
+  },
+  {
+   "shower": "AnnotationTagCreatePresenter",
+   "presenter": "AnnotationTagCreatePresenter",
+   "caption": "Create New …"
+  },
+  {
+   "shower": "AnnotationTagCreatePresenter",
+   "presenter": "AnnotationTagEditPresenter",
+   "caption": "Edit …"
+  },
+  {
+   "shower": "AnnotationTagEditPresenter",
+   "presenter": "AnnotationTagEditPresenter"
+  },
+  {
+   "shower": "AnnotationTagEditPresenter",
+   "presenter": "DocumentUserPermissionsPresenter",
+   "caption": "Change Permissions"
+  },
+  {
+   "shower": "AnnotationTagPresenter",
+   "presenter": "AnnotationTagCreatePresenter"
+  },
+  {
+   "shower": "AnnotationTagPresenter",
+   "presenter": "AnnotationTagEditPresenter"
+  },
+  {
+   "shower": "ChangeAssignedToPresenter",
+   "presenter": "ChangeAssignedToPresenter",
+   "caption": "Change Assigned To"
+  },
+  {
+   "shower": "ChangeAssignedToPresenter",
+   "presenter": "UserRefPopupPresenter"
+  },
+  {
+   "shower": "ChangeStatusPresenter",
+   "presenter": "ChangeStatusPresenter",
+   "caption": "Change Status"
+  },
+  {
+   "shower": "ChangeStatusPresenter",
+   "presenter": "ChooserPresenter"
+  },
+  {
+   "shower": "DurationPresenter",
+   "presenter": "DurationPresenter",
+   "caption": "Set Retention Period"
+  },
+  {
+   "shower": "FindAnnotationPresenter",
+   "presenter": "FindAnnotationPresenter",
+   "caption": "Choose Annotation"
+  },
+  {
+   "shower": "LinkedEventPresenter",
+   "presenter": "AddEventLinkPresenter"
+  },
+  {
+   "shower": "ConfigPropertyClusterValuesPresenter",
+   "presenter": "ConfigPropertyClusterValuesPresenter",
+   "caption": "Cluster values - …"
+  },
+  {
+   "shower": "ManageGlobalPropertyEditPresenter",
+   "presenter": "ManageGlobalPropertyEditPresenter",
+   "caption": "Application Property - …"
+  },
+  {
+   "shower": "ManageGlobalPropertyEditPresenter",
+   "presenter": "ConfigPropertyClusterValuesPresenter"
+  },
+  {
+   "shower": "ContentStoreContentPackDetailsPresenter",
+   "presenter": "CredentialsManagerDialogPresenter"
+  },
+  {
+   "shower": "CredentialEditPresenter",
+   "presenter": "CredentialEditPresenter",
+   "caption": "New Credentials"
+  },
+  {
+   "shower": "CredentialEditPresenter",
+   "presenter": "CredentialEditPresenter",
+   "caption": "Edit Credentials"
+  },
+  {
+   "shower": "CredentialsListPresenter",
+   "presenter": "CredentialEditPresenter"
+  },
+  {
+   "shower": "CredentialsListPresenter",
+   "presenter": "CredentialEditPresenter"
+  },
+  {
+   "shower": "CredentialsManagerDialogPresenter",
+   "presenter": "CredentialsManagerDialogPresenter",
+   "caption": "Credentials"
+  },
+  {
+   "shower": "AbstractComponentPresenter",
+   "presenter": "SettingsPresenter",
+   "caption": "Settings"
+  },
+  {
+   "shower": "DashboardPresenter",
+   "presenter": "LayoutConstraintPresenter",
+   "caption": "Set Layout Constraints"
+  },
+  {
+   "shower": "DashboardPresenter",
+   "presenter": "CurrentSelectionPresenter",
+   "caption": "Current Selection"
+  },
+  {
+   "shower": "RenameTabPresenter",
+   "presenter": "RenameTabPresenter",
+   "caption": "Rename Tab"
+  },
+  {
+   "shower": "TabManager",
+   "presenter": "RenameTabPresenter"
+  },
+  {
+   "shower": "NamePresenter",
+   "presenter": "NamePresenter",
+   "caption": "Create New Favourite"
+  },
+  {
+   "shower": "NamePresenter",
+   "presenter": "NamePresenter",
+   "caption": "Rename Favourite"
+  },
+  {
+   "shower": "QueryFavouritesPresenter",
+   "presenter": "QueryFavouritesPresenter",
+   "caption": "Query Favourites"
+  },
+  {
+   "shower": "QueryFavouritesPresenter",
+   "presenter": "NamePresenter"
+  },
+  {
+   "shower": "QueryFavouritesPresenter",
+   "presenter": "NamePresenter"
+  },
+  {
+   "shower": "QueryHistoryPresenter",
+   "presenter": "QueryHistoryPresenter",
+   "caption": "Query History"
+  },
+  {
+   "shower": "QueryInfo",
+   "presenter": "QueryInfoPresenter"
+  },
+  {
+   "shower": "QueryInfoPresenter",
+   "presenter": "QueryInfoPresenter"
+  },
+  {
+   "shower": "QueryPresenter",
+   "presenter": "ProcessorLimitsPresenter",
+   "caption": "Process Search Results"
+  },
+  {
+   "shower": "QueryPresenter",
+   "presenter": "QueryHistoryPresenter"
+  },
+  {
+   "shower": "QueryPresenter",
+   "presenter": "QueryFavouritesPresenter"
+  },
+  {
+   "shower": "SelectionHandlersPresenter",
+   "presenter": "SelectionHandlerPresenter",
+   "caption": "Add New Selection Handler"
+  },
+  {
+   "shower": "SelectionHandlersPresenter",
+   "presenter": "SelectionHandlerPresenter",
+   "caption": "Edit Selection Handler"
+  },
+  {
+   "shower": "ColumnFilterPresenter",
+   "presenter": "ColumnFilterPresenter",
+   "caption": "Filter '…'"
+  },
+  {
+   "shower": "ColumnFunctionEditorPresenter",
+   "presenter": "ColumnFunctionEditorPresenter",
+   "caption": "Set Expression For '…'"
+  },
+  {
+   "shower": "ColumnValuesFilterPresenter",
+   "presenter": "ColumnValuesFilterPresenter"
+  },
+  {
+   "shower": "ColumnsManager",
+   "presenter": "ColumnValuesFilterPresenter"
+  },
+  {
+   "shower": "ColumnsManager",
+   "presenter": "RenameColumnPresenter"
+  },
+  {
+   "shower": "ColumnsManager",
+   "presenter": "ColumnFunctionEditorPresenter"
+  },
+  {
+   "shower": "ColumnsManager",
+   "presenter": "FormatPresenter"
+  },
+  {
+   "shower": "ColumnsManager",
+   "presenter": "TableFilterPresenter"
+  },
+  {
+   "shower": "FormatPresenter",
+   "presenter": "FormatPresenter",
+   "caption": "Format '…'"
+  },
+  {
+   "shower": "RenameColumnPresenter",
+   "presenter": "RenameColumnPresenter",
+   "caption": "Rename Field"
+  },
+  {
+   "shower": "TableFilterPresenter",
+   "presenter": "TableFilterPresenter",
+   "caption": "Filter '…'"
+  },
+  {
+   "shower": "TablePresenter",
+   "presenter": "DownloadPresenter",
+   "caption": "Download Options"
+  },
+  {
+   "shower": "CustomRowStylePresenter",
+   "presenter": "CustomRowStylePresenter",
+   "caption": "Edit Custom Row Style"
+  },
+  {
+   "shower": "RulePresenter",
+   "presenter": "CustomRowStylePresenter"
+  },
+  {
+   "shower": "RulesPresenter",
+   "presenter": "RulePresenter",
+   "caption": "Add New Rule"
+  },
+  {
+   "shower": "RulesPresenter",
+   "presenter": "RulePresenter",
+   "caption": "Edit Rule"
+  },
+  {
+   "shower": "AbstractMetaListPresenter",
+   "presenter": "ProcessChoicePresenter"
+  },
+  {
+   "shower": "AbstractMetaListPresenter",
+   "presenter": "SelectionSummaryPresenter",
+   "caption": "Selection Summary"
+  },
+  {
+   "shower": "AbstractMetaListPresenter",
+   "presenter": "SelectionSummaryPresenter",
+   "caption": "Confirm Download"
+  },
+  {
+   "shower": "AbstractMetaListPresenter",
+   "presenter": "SelectionSummaryPresenter",
+   "caption": "Confirm Process"
+  },
+  {
+   "shower": "AbstractMetaListPresenter",
+   "presenter": "SelectionSummaryPresenter",
+   "caption": "Confirm Reprocess"
+  },
+  {
+   "shower": "AbstractMetaListPresenter",
+   "presenter": "SelectionSummaryPresenter",
+   "caption": "Confirm Delete"
+  },
+  {
+   "shower": "AbstractMetaListPresenter",
+   "presenter": "SelectionSummaryPresenter",
+   "caption": "Confirm Restore"
+  },
+  {
+   "shower": "CharacterNavigatorPresenter",
+   "presenter": "CharacterRangeSelectionPresenter"
+  },
+  {
+   "shower": "CharacterRangeSelectionPresenter",
+   "presenter": "CharacterRangeSelectionPresenter",
+   "caption": "Set Source Range"
+  },
+  {
+   "shower": "DataDisplaySupport",
+   "presenter": "DataPresenter",
+   "caption": "Stream …"
+  },
+  {
+   "shower": "DataDisplaySupport",
+   "presenter": "SourcePresenter",
+   "caption": "Stream …"
+  },
+  {
+   "shower": "DataUploadPresenter",
+   "presenter": "DataUploadPresenter",
+   "caption": "Upload"
+  },
+  {
+   "shower": "ItemNavigatorPresenter",
+   "presenter": "ItemSelectionPresenter"
+  },
+  {
+   "shower": "ItemSelectionPresenter",
+   "presenter": "ItemSelectionPresenter",
+   "caption": "Select …"
+  },
+  {
+   "shower": "MetaPresenter",
+   "presenter": "ExpressionPresenter",
+   "caption": "Filter Streams"
+  },
+  {
+   "shower": "MetaPresenter",
+   "presenter": "DataUploadPresenter"
+  },
+  {
+   "shower": "ProcessChoicePresenter",
+   "presenter": "ProcessChoicePresenter",
+   "caption": "Create Processors"
+  },
+  {
+   "shower": "ProcessorTaskListPresenter",
+   "presenter": "TooltipPresenter"
+  },
+  {
+   "shower": "ProcessorTaskSummaryPresenter",
+   "presenter": "TooltipPresenter"
+  },
+  {
+   "shower": "SelectionSummaryPresenter",
+   "presenter": "SelectionSummaryPresenter"
+  },
+  {
+   "shower": "FsVolumeEditPresenter",
+   "presenter": "FsVolumeEditPresenter"
+  },
+  {
+   "shower": "FsVolumeGroupEditPresenter",
+   "presenter": "FsVolumeGroupEditPresenter"
+  },
+  {
+   "shower": "FsVolumeGroupEditPresenter",
+   "presenter": "FsVolumeEditPresenter",
+   "caption": "Add Volume"
+  },
+  {
+   "shower": "FsVolumeGroupEditPresenter",
+   "presenter": "FsVolumeEditPresenter",
+   "caption": "Edit Volume"
+  },
+  {
+   "shower": "FsVolumeGroupPresenter",
+   "presenter": "NewFsVolumeGroupPresenter"
+  },
+  {
+   "shower": "FsVolumeGroupPresenter",
+   "presenter": "FsVolumeGroupEditPresenter",
+   "caption": "Edit Volume Group - …"
+  },
+  {
+   "shower": "NewFsVolumeGroupPresenter",
+   "presenter": "NewFsVolumeGroupPresenter",
+   "caption": "New"
+  },
+  {
+   "shower": "CopyDocumentPresenter",
+   "presenter": "CopyDocumentPresenter",
+   "caption": "Copy Multiple Items"
+  },
+  {
+   "shower": "CopyDocumentPresenter",
+   "presenter": "CopyDocumentPresenter",
+   "caption": "Copy …"
+  },
+  {
+   "shower": "CreateDocumentPresenter",
+   "presenter": "CreateDocumentPresenter"
+  },
+  {
+   "shower": "InfoDocumentPresenter",
+   "presenter": "InfoDocumentPresenter",
+   "caption": "Info"
+  },
+  {
+   "shower": "MoveDocumentPresenter",
+   "presenter": "MoveDocumentPresenter",
+   "caption": "Move Multiple Items"
+  },
+  {
+   "shower": "MoveDocumentPresenter",
+   "presenter": "MoveDocumentPresenter",
+   "caption": "Move …"
+  },
+  {
+   "shower": "NameDocumentPresenter",
+   "presenter": "NameDocumentPresenter",
+   "caption": "Rename …"
+  },
+  {
+   "shower": "DocSelectionBoxPresenter",
+   "presenter": "ExplorerPopupPresenter"
+  },
+  {
+   "shower": "ExplorerNodeEditTagsPresenter",
+   "presenter": "ExplorerNodeEditTagsPresenter",
+   "caption": "Edit Tags on …"
+  },
+  {
+   "shower": "ExplorerNodeEditTagsPresenter",
+   "presenter": "ExplorerNodeEditTagsPresenter",
+   "caption": "Add Tags to …"
+  },
+  {
+   "shower": "ExplorerNodeRemoveTagsPresenter",
+   "presenter": "ExplorerNodeRemoveTagsPresenter",
+   "caption": "Remove Tags from … Documents"
+  },
+  {
+   "shower": "ExplorerPopupPresenter",
+   "presenter": "ExplorerPopupPresenter",
+   "caption": "Choose item"
+  },
+  {
+   "shower": "FindInContentPresenter",
+   "presenter": "FindInContentPresenter",
+   "caption": "Find In Content"
+  },
+  {
+   "shower": "FindPresenter",
+   "presenter": "FindPresenter",
+   "caption": "Find"
+  },
+  {
+   "shower": "NavigationPresenter",
+   "presenter": "TypeFilterPresenter"
+  },
+  {
+   "shower": "RecentItemsPresenter",
+   "presenter": "RecentItemsPresenter",
+   "caption": "Recent Items"
+  },
+  {
+   "shower": "TabSessionManager",
+   "presenter": "TabSessionChooserPresenter",
+   "caption": "Select Tab Session To Open:"
+  },
+  {
+   "shower": "TabSessionManager",
+   "presenter": "TabSessionChooserPresenter",
+   "caption": "Select Tab Session To Delete:"
+  },
+  {
+   "shower": "TabSessionManager",
+   "presenter": "TextBoxPopup",
+   "caption": "Save New Tab Session"
+  },
+  {
+   "shower": "TypeFilterPresenter",
+   "presenter": "TypeFilterPresenter"
+  },
+  {
+   "shower": "GitRepoCommitDialogPresenter",
+   "presenter": "GitRepoCommitDialogPresenter",
+   "caption": "Git Push"
+  },
+  {
+   "shower": "GitRepoSettingsPresenter",
+   "presenter": "GitRepoCommitDialogPresenter"
+  },
+  {
+   "shower": "GitRepoSettingsPresenter",
+   "presenter": "HttpClientConfigPresenter"
+  },
+  {
+   "shower": "HttpClientConfigPresenter",
+   "presenter": "HttpClientConfigPresenter",
+   "caption": "Edit HTTP Client Configuration"
+  },
+  {
+   "shower": "HttpClientConfigPresenter",
+   "presenter": "HttpTlsConfigPresenter"
+  },
+  {
+   "shower": "HttpTlsConfigPresenter",
+   "presenter": "HttpTlsConfigPresenter",
+   "caption": "Edit HTTP TLS Configuration"
+  },
+  {
+   "shower": "HyperlinkEventHandlerImpl",
+   "presenter": "IFramePresenter"
+  },
+  {
+   "shower": "DependenciesInfoPresenter",
+   "presenter": "DependenciesInfoPresenter",
+   "caption": "Dependency Information"
+  },
+  {
+   "shower": "DependenciesPresenter",
+   "presenter": "MenuPresenter"
+  },
+  {
+   "shower": "ExportConfigPresenter",
+   "presenter": "ExportConfigPresenter",
+   "caption": "Export"
+  },
+  {
+   "shower": "ExportConfigPresenter",
+   "presenter": "TypeFilterPresenter"
+  },
+  {
+   "shower": "ExportConfigPresenter",
+   "presenter": "TypeFilterPresenter"
+  },
+  {
+   "shower": "ImportConfigConfirmPresenter",
+   "presenter": "ImportConfigConfirmPresenter",
+   "caption": "Confirm Import"
+  },
+  {
+   "shower": "ImportConfigConfirmPresenter",
+   "presenter": "TooltipPresenter"
+  },
+  {
+   "shower": "ImportConfigPresenter",
+   "presenter": "ImportConfigPresenter",
+   "caption": "Import"
+  },
+  {
+   "shower": "DenseVectorFieldPresenter",
+   "presenter": "DenseVectorFieldPresenter"
+  },
+  {
+   "shower": "IndexFieldEditPresenter",
+   "presenter": "IndexFieldEditPresenter"
+  },
+  {
+   "shower": "IndexFieldListPresenter",
+   "presenter": "IndexFieldEditPresenter",
+   "caption": "New Field"
+  },
+  {
+   "shower": "IndexFieldListPresenter",
+   "presenter": "IndexFieldEditPresenter",
+   "caption": "Edit Field"
+  },
+  {
+   "shower": "IndexShardPresenter",
+   "presenter": "TooltipPresenter"
+  },
+  {
+   "shower": "IndexVolumeEditPresenter",
+   "presenter": "IndexVolumeEditPresenter"
+  },
+  {
+   "shower": "IndexVolumeGroupEditPresenter",
+   "presenter": "IndexVolumeGroupEditPresenter"
+  },
+  {
+   "shower": "IndexVolumeGroupEditPresenter",
+   "presenter": "IndexVolumeEditPresenter",
+   "caption": "Add Volume"
+  },
+  {
+   "shower": "IndexVolumeGroupEditPresenter",
+   "presenter": "IndexVolumeEditPresenter",
+   "caption": "Edit Volume"
+  },
+  {
+   "shower": "IndexVolumeGroupPresenter",
+   "presenter": "NewIndexVolumeGroupPresenter"
+  },
+  {
+   "shower": "IndexVolumeGroupPresenter",
+   "presenter": "IndexVolumeGroupEditPresenter",
+   "caption": "Edit Volume Group - …"
+  },
+  {
+   "shower": "NewIndexVolumeGroupPresenter",
+   "presenter": "NewIndexVolumeGroupPresenter",
+   "caption": "New"
+  },
+  {
+   "shower": "JobNodeListHelper",
+   "presenter": "MenuPresenter"
+  },
+  {
+   "shower": "JobNodeListHelper",
+   "presenter": "SchedulePopup"
+  },
+  {
+   "shower": "JobNodeListHelper",
+   "presenter": "SchedulePopup"
+  },
+  {
+   "shower": "NewNodeGroupPresenter",
+   "presenter": "NewNodeGroupPresenter",
+   "caption": "New"
+  },
+  {
+   "shower": "NodeGroupEditPresenter",
+   "presenter": "NodeGroupEditPresenter"
+  },
+  {
+   "shower": "NodeGroupPresenter",
+   "presenter": "NewNodeGroupPresenter"
+  },
+  {
+   "shower": "NodeGroupPresenter",
+   "presenter": "NodeGroupEditPresenter",
+   "caption": "Edit Node Group - …"
+  },
+  {
+   "shower": "NodeStatusListPresenter",
+   "presenter": "TooltipPresenter"
+  },
+  {
+   "shower": "NodeStatusListPresenter",
+   "presenter": "TooltipPresenter"
+  },
+  {
+   "shower": "OpenAIModelSettingsPresenter",
+   "presenter": "HttpClientConfigPresenter"
+  },
+  {
+   "shower": "ConstraintEditPresenter",
+   "presenter": "ConstraintEditPresenter"
+  },
+  {
+   "shower": "ConstraintListPresenter",
+   "presenter": "ConstraintEditPresenter",
+   "caption": "New Constraint"
+  },
+  {
+   "shower": "ConstraintListPresenter",
+   "presenter": "ConstraintEditPresenter",
+   "caption": "Edit Constraint"
+  },
+  {
+   "shower": "PathwayEditPresenter",
+   "presenter": "PathwayEditPresenter"
+  },
+  {
+   "shower": "PathwayListPresenter",
+   "presenter": "PathwayEditPresenter",
+   "caption": "New Pathway"
+  },
+  {
+   "shower": "PathwayListPresenter",
+   "presenter": "PathwayEditPresenter",
+   "caption": "Edit Pathway"
+  },
+  {
+   "shower": "PipelinePlugin",
+   "presenter": "DocRefSelectionPresenter",
+   "caption": "Save Pipeline: …"
+  },
+  {
+   "shower": "StepLocationLinkPresenter",
+   "presenter": "StepLocationPresenter",
+   "caption": "Set Location"
+  },
+  {
+   "shower": "SteppingFilterPresenter",
+   "presenter": "SteppingFilterPresenter",
+   "caption": "Change Step Filters"
+  },
+  {
+   "shower": "SteppingPresenter",
+   "presenter": "ExpressionPresenter",
+   "caption": "Filter Streams"
+  },
+  {
+   "shower": "SteppingPresenter",
+   "presenter": "SteppingFilterPresenter"
+  },
+  {
+   "shower": "XPathFilterPresenter",
+   "presenter": "XPathFilterPresenter",
+   "caption": "Add XPath Filter"
+  },
+  {
+   "shower": "XPathFilterPresenter",
+   "presenter": "XPathFilterPresenter",
+   "caption": "Edit XPath Filter"
+  },
+  {
+   "shower": "NewElementPresenter",
+   "presenter": "NewElementPresenter"
+  },
+  {
+   "shower": "PipelineReferenceListPresenter",
+   "presenter": "NewPipelineReferencePresenter",
+   "caption": "New Pipeline Reference"
+  },
+  {
+   "shower": "PipelineReferenceListPresenter",
+   "presenter": "NewPipelineReferencePresenter",
+   "caption": "Edit Pipeline Reference"
+  },
+  {
+   "shower": "PipelineStructurePresenter",
+   "presenter": "EditorPresenter",
+   "caption": "Pipeline Source"
+  },
+  {
+   "shower": "PipelineStructurePresenter",
+   "presenter": "NewElementPresenter",
+   "caption": "Edit Element"
+  },
+  {
+   "shower": "PipelineStructurePresenter",
+   "presenter": "NewElementPresenter",
+   "caption": "Create Element"
+  },
+  {
+   "shower": "PropertyListPresenter",
+   "presenter": "NewPropertyPresenter",
+   "caption": "Edit Property"
+  },
+  {
+   "shower": "UserPreferencesPlugin",
+   "presenter": "UserPreferencesPresenter"
+  },
+  {
+   "shower": "UserPreferencesPresenter",
+   "presenter": "UserPreferencesPresenter",
+   "caption": "User Preferences"
+  },
+  {
+   "shower": "BatchProcessorFilterEditPresenter",
+   "presenter": "BatchProcessorFilterEditPresenter",
+   "caption": "Batch Change All Filtered Processors"
+  },
+  {
+   "shower": "FeedDependencyListPresenter",
+   "presenter": "EditFeedDependencyPresenter",
+   "caption": "New Feed Dependency"
+  },
+  {
+   "shower": "FeedDependencyListPresenter",
+   "presenter": "EditFeedDependencyPresenter",
+   "caption": "Edit Feed Dependency"
+  },
+  {
+   "shower": "FeedDependencyPresenter",
+   "presenter": "FeedDependencyPresenter",
+   "caption": "Set Feed Dependencies"
+  },
+  {
+   "shower": "ProcessorEditPresenter",
+   "presenter": "ProcessorEditPresenter",
+   "caption": "Edit Filter"
+  },
+  {
+   "shower": "ProcessorEditPresenter",
+   "presenter": "ProcessorEditPresenter",
+   "caption": "Add Filter"
+  },
+  {
+   "shower": "ProcessorEditPresenter",
+   "presenter": "FeedDependencyPresenter"
+  },
+  {
+   "shower": "ProcessorListPresenter",
+   "presenter": "TooltipPresenter"
+  },
+  {
+   "shower": "ProcessorPresenter",
+   "presenter": "ExpressionPresenter",
+   "caption": "Filter Processors"
+  },
+  {
+   "shower": "ProcessorPresenter",
+   "presenter": "ExpressionPresenter"
+  },
+  {
+   "shower": "ProcessorPresenter",
+   "presenter": "ProcessorEditPresenter"
+  },
+  {
+   "shower": "ProcessorPresenter",
+   "presenter": "ProcessorEditPresenter"
+  },
+  {
+   "shower": "ProcessorProfileEditPresenter",
+   "presenter": "ProcessorProfileEditPresenter"
+  },
+  {
+   "shower": "ProcessorProfilePresenter",
+   "presenter": "ProcessorProfileEditPresenter",
+   "caption": "Create Processor Profile"
+  },
+  {
+   "shower": "ProcessorProfilePresenter",
+   "presenter": "ProcessorProfileEditPresenter",
+   "caption": "Edit Processor Profile - …"
+  },
+  {
+   "shower": "ProfilePeriodEditPresenter",
+   "presenter": "ProfilePeriodEditPresenter",
+   "caption": "Edit Period"
+  },
+  {
+   "shower": "ProfilePeriodListPresenter",
+   "presenter": "ProfilePeriodEditPresenter"
+  },
+  {
+   "shower": "AnnotationManager",
+   "presenter": "ChangeStatusPresenter"
+  },
+  {
+   "shower": "AnnotationManager",
+   "presenter": "ChangeAssignedToPresenter"
+  },
+  {
+   "shower": "QueryResultTablePresenter",
+   "presenter": "DownloadPresenter",
+   "caption": "Download Options"
+  },
+  {
+   "shower": "QueryResultTableSplitPresenter",
+   "presenter": "TextPresenter"
+  },
+  {
+   "shower": "QueryTableColumnsManager",
+   "presenter": "RulesPresenter",
+   "caption": "Settings"
+  },
+  {
+   "shower": "QueryTableColumnsManager",
+   "presenter": "ColumnValuesFilterPresenter"
+  },
+  {
+   "shower": "QueryTableColumnsManager",
+   "presenter": "FormatPresenter"
+  },
+  {
+   "shower": "QueryTableColumnsManager",
+   "presenter": "ColumnFilterPresenter"
+  },
+  {
+   "shower": "ResultStoreListPresenter",
+   "presenter": "ResultStoreSettingsPresenter",
+   "caption": "Change Result Store Settings"
+  },
+  {
+   "shower": "ResultStorePresenter",
+   "presenter": "ResultStorePresenter",
+   "caption": "Search Result Stores"
+  },
+  {
+   "shower": "ResultStoreSettingsPresenter",
+   "presenter": "ResultStoreSettingsPresenter"
+  },
+  {
+   "shower": "ContentTemplateTabPresenter",
+   "presenter": "ContentTemplateEditPresenter",
+   "caption": "Add New Template"
+  },
+  {
+   "shower": "ContentTemplateTabPresenter",
+   "presenter": "ContentTemplateEditPresenter",
+   "caption": "Edit Template"
+  },
+  {
+   "shower": "DataRetentionImpactPresenter",
+   "presenter": "EditExpressionPresenter",
+   "caption": "Query Filter"
+  },
+  {
+   "shower": "DataRetentionPolicyPresenter",
+   "presenter": "DataRetentionRulePresenter",
+   "caption": "Add New Rule"
+  },
+  {
+   "shower": "DataRetentionPolicyPresenter",
+   "presenter": "DataRetentionRulePresenter",
+   "caption": "Edit Rule"
+  },
+  {
+   "shower": "FieldEditPresenter",
+   "presenter": "FieldEditPresenter"
+  },
+  {
+   "shower": "FieldListPresenter",
+   "presenter": "FieldEditPresenter",
+   "caption": "New Field"
+  },
+  {
+   "shower": "FieldListPresenter",
+   "presenter": "FieldEditPresenter",
+   "caption": "Edit Field"
+  },
+  {
+   "shower": "RuleSetSettingsPresenter",
+   "presenter": "RulePresenter",
+   "caption": "Edit Rule"
+  },
+  {
+   "shower": "ScheduleBox",
+   "presenter": "SchedulePopup"
+  },
+  {
+   "shower": "SchedulePopup",
+   "presenter": "SchedulePopup",
+   "caption": "Change Schedule"
+  },
+  {
+   "shower": "SolrIndexFieldEditPresenter",
+   "presenter": "SolrIndexFieldEditPresenter"
+  },
+  {
+   "shower": "SolrIndexFieldListPresenter",
+   "presenter": "SolrIndexFieldEditPresenter",
+   "caption": "New Field"
+  },
+  {
+   "shower": "SolrIndexFieldListPresenter",
+   "presenter": "SolrIndexFieldEditPresenter",
+   "caption": "Edit Field"
+  },
+  {
+   "shower": "CurrentUser",
+   "presenter": "SplashPresenter"
+  },
+  {
+   "shower": "BatchDocumentPermissionsEditPresenter",
+   "presenter": "BatchDocumentPermissionsEditPresenter",
+   "caption": "Batch Change Permissions For All Filtered Documents"
+  },
+  {
+   "shower": "BatchDocumentPermissionsPresenter",
+   "presenter": "ExpressionPresenter",
+   "caption": "Filter Documents"
+  },
+  {
+   "shower": "BatchDocumentPermissionsPresenter",
+   "presenter": "BatchDocumentPermissionsPresenter",
+   "caption": "Change Permissions"
+  },
+  {
+   "shower": "BatchDocumentPermissionsPresenter",
+   "presenter": "BatchDocumentPermissionsEditPresenter"
+  },
+  {
+   "shower": "CreateUserPresenter",
+   "presenter": "CreateUserPresenter",
+   "caption": "Add User Group"
+  },
+  {
+   "shower": "DocumentUserCreatePermissionsEditPresenter",
+   "presenter": "DocumentUserCreatePermissionsEditPresenter",
+   "caption": "Set Document Create Permissions"
+  },
+  {
+   "shower": "DocumentUserPermissionsEditPresenter",
+   "presenter": "DocumentUserPermissionsEditPresenter",
+   "caption": "Set Permissions"
+  },
+  {
+   "shower": "DocumentUserPermissionsEditPresenter",
+   "presenter": "DocumentUserCreatePermissionsEditPresenter"
+  },
+  {
+   "shower": "DocumentUserPermissionsPresenter",
+   "presenter": "DocumentUserPermissionsEditPresenter"
+  },
+  {
+   "shower": "EditApiKeyPresenter",
+   "presenter": "EditApiKeyPresenter",
+   "caption": "Create new API key"
+  },
+  {
+   "shower": "EditApiKeyPresenter",
+   "presenter": "EditApiKeyPresenter",
+   "caption": "View created API key"
+  },
+  {
+   "shower": "EditApiKeyPresenter",
+   "presenter": "EditApiKeyPresenter",
+   "caption": "Edit API key"
+  },
+  {
+   "shower": "EditApiKeyPresenter",
+   "presenter": "EditApiKeyPresenter",
+   "caption": "Edit API key"
+  },
+  {
+   "shower": "UserAndGroupHelper",
+   "presenter": "CreateNewGroupPresenter",
+   "caption": "Edit User Group"
+  },
+  {
+   "shower": "UserAndGroupsPresenter",
+   "presenter": "UserRefPopupPresenter",
+   "caption": "Select Group"
+  },
+  {
+   "shower": "UserAndGroupsPresenter",
+   "presenter": "UserRefPopupPresenter",
+   "caption": "Add User Or Group"
+  },
+  {
+   "shower": "UserAndGroupsPresenter",
+   "presenter": "CreateUserPresenter"
+  },
+  {
+   "shower": "UserPermissionReportPresenter",
+   "presenter": "ExpressionPresenter",
+   "caption": "Filter Documents"
+  },
+  {
+   "shower": "UserPermissionReportPresenter",
+   "presenter": "BatchDocumentPermissionsEditPresenter"
+  },
+  {
+   "shower": "UserPermissionReportPresenter",
+   "presenter": "BatchDocumentPermissionsEditPresenter"
+  },
+  {
+   "shower": "UserRefPopupPresenter",
+   "presenter": "UserRefPopupPresenter",
+   "caption": "Select User Or Group"
+  },
+  {
+   "shower": "UserRefSelectionBoxPresenter",
+   "presenter": "UserRefPopupPresenter"
+  },
+  {
+   "shower": "UsersPresenter",
+   "presenter": "CreateUserPresenter"
+  },
+  {
+   "shower": "ChangePasswordPlugin",
+   "presenter": "CurrentPasswordPresenter"
+  },
+  {
+   "shower": "ChangePasswordPresenter",
+   "presenter": "ChangePasswordPresenter"
+  },
+  {
+   "shower": "CurrentPasswordPresenter",
+   "presenter": "CurrentPasswordPresenter",
+   "caption": "Enter Your Current Password"
+  },
+  {
+   "shower": "CurrentPasswordPresenter",
+   "presenter": "ChangePasswordPresenter",
+   "caption": "Change Password"
+  },
+  {
+   "shower": "EditAccountPresenter",
+   "presenter": "EditAccountPresenter",
+   "caption": "Create Account"
+  },
+  {
+   "shower": "EditAccountPresenter",
+   "presenter": "EditAccountPresenter",
+   "caption": "Edit Account"
+  },
+  {
+   "shower": "EditAccountPresenter",
+   "presenter": "ChangePasswordPresenter"
+  },
+  {
+   "shower": "EmailResetPasswordPresenter",
+   "presenter": "EmailResetPasswordPresenter",
+   "caption": "Reset Your Password"
+  },
+  {
+   "shower": "LoginPresenter",
+   "presenter": "EmailResetPasswordPresenter"
+  },
+  {
+   "shower": "LoginPresenter",
+   "presenter": "ChangePasswordPresenter",
+   "caption": "Change Password"
+  },
+  {
+   "shower": "ResetPasswordPresenter",
+   "presenter": "ChangePasswordPresenter",
+   "caption": "Reset Password"
+  },
+  {
+   "shower": "TaskManagerListPresenter",
+   "presenter": "TooltipPresenter"
+  },
+  {
+   "shower": "UserTaskManagerPresenter",
+   "presenter": "UserTaskManagerPresenter",
+   "caption": "Task Manager"
+  },
+  {
+   "shower": "VisualisationAssetsAddItemDialogPresenter",
+   "presenter": "VisualisationAssetsAddItemDialogPresenter",
+   "caption": "New …"
+  },
+  {
+   "shower": "VisualisationAssetsEditAssetDialogPresenter",
+   "presenter": "VisualisationAssetsEditAssetDialogPresenter",
+   "caption": "Edit"
+  },
+  {
+   "shower": "VisualisationAssetsPresenter",
+   "presenter": "VisualisationAssetsAddItemDialogPresenter"
+  },
+  {
+   "shower": "VisualisationAssetsPresenter",
+   "presenter": "VisualisationAssetsEditAssetDialogPresenter"
+  },
+  {
+   "shower": "VisualisationAssetsUploadFileDialogPresenter",
+   "presenter": "VisualisationAssetsUploadFileDialogPresenter",
+   "caption": "Add File"
+  },
+  {
+   "shower": "EditorPresenter",
+   "presenter": "EditorMenuPresenter"
+  },
+  {
+   "shower": "DateTimeBox",
+   "presenter": "DateTimePopup"
+  },
+  {
+   "shower": "DateTimePopup",
+   "presenter": "DateTimePopup",
+   "caption": "Set Date And Time"
+  },
+  {
+   "shower": "TimeBox",
+   "presenter": "TimePopup"
+  },
+  {
+   "shower": "TimePopup",
+   "presenter": "TimePopup",
+   "caption": "Set Time"
+  },
+  {
+   "shower": "Menu",
+   "presenter": "MenuPresenter"
+  },
+  {
+   "shower": "MenuPresenter",
+   "presenter": "MenuPresenter"
+  },
+  {
+   "shower": "TextBoxPopup",
+   "presenter": "TextBoxPopup"
+  },
+  {
+   "shower": "TooltipPresenter",
+   "presenter": "TooltipPresenter"
+  },
+  {
+   "shower": "StatisticsFieldEditPresenter",
+   "presenter": "StatisticsFieldEditPresenter"
+  },
+  {
+   "shower": "StatisticsFieldListPresenter",
+   "presenter": "StatisticsFieldEditPresenter",
+   "caption": "New Field"
+  },
+  {
+   "shower": "StatisticsFieldListPresenter",
+   "presenter": "StatisticsFieldEditPresenter",
+   "caption": "Edit Field"
+  },
+  {
+   "shower": "AskStroomAiPresenter",
+   "presenter": "AskStroomAiPresenter",
+   "via": "ShowAskStroomAiEvent"
+  },
+  {
+   "shower": "AskStroomAiPresenter",
+   "presenter": "AskStroomAiPresenter",
+   "via": "ShowAskStroomAiEvent"
+  },
+  {
+   "shower": "AskStroomAiPresenter",
+   "presenter": "AskStroomAiPresenter",
+   "via": "ShowAskStroomAiEvent"
+  },
+  {
+   "shower": "AnnotationLinkPresenter",
+   "presenter": "FindAnnotationPresenter",
+   "via": "ShowFindAnnotationEvent"
+  },
+  {
+   "shower": "TablePresenter",
+   "presenter": "AskStroomAiPresenter",
+   "via": "AskStroomAiEvent"
+  },
+  {
+   "shower": "DocumentPlugin",
+   "presenter": "CreateDocumentPresenter",
+   "caption": "Save '…' as",
+   "via": "ShowCreateDocumentDialogEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "FindPresenter",
+   "via": "ShowFindEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "RecentItemsPresenter",
+   "via": "ShowRecentItemsEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "NameDocumentPresenter",
+   "via": "ShowRenameDocumentDialogEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "CreateDocumentPresenter",
+   "caption": "New …",
+   "via": "ShowCreateDocumentDialogEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "InfoDocumentPresenter",
+   "via": "ShowInfoDocumentDialogEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "ExplorerNodeEditTagsPresenter",
+   "via": "ShowEditNodeTagsDialogEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "ExplorerNodeRemoveTagsPresenter",
+   "via": "ShowRemoveNodeTagsDialogEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "CopyDocumentPresenter",
+   "via": "ShowCopyDocumentDialogEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "MoveDocumentPresenter",
+   "via": "ShowMoveDocumentDialogEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "ImportConfigPresenter",
+   "via": "ImportConfigEvent"
+  },
+  {
+   "shower": "DocumentPluginEventManager",
+   "presenter": "ExportConfigPresenter",
+   "via": "ExportConfigEvent"
+  },
+  {
+   "shower": "NavigationPlugin",
+   "presenter": "FindPresenter",
+   "via": "ShowFindEvent"
+  },
+  {
+   "shower": "NavigationPlugin",
+   "presenter": "RecentItemsPresenter",
+   "via": "ShowRecentItemsEvent"
+  },
+  {
+   "shower": "ExplorerPopupPresenter",
+   "presenter": "CreateDocumentPresenter",
+   "caption": "New …",
+   "via": "ShowCreateDocumentDialogEvent"
+  },
+  {
+   "shower": "ExportConfigPlugin",
+   "presenter": "ExportConfigPresenter",
+   "via": "ExportConfigEvent"
+  },
+  {
+   "shower": "ImportConfigPlugin",
+   "presenter": "ImportConfigPresenter",
+   "via": "ImportConfigEvent"
+  },
+  {
+   "shower": "DependenciesPresenter",
+   "presenter": "DependenciesInfoPresenter",
+   "via": "ShowDependenciesInfoDialogEvent"
+  },
+  {
+   "shower": "ImportConfigPresenter",
+   "presenter": "ImportConfigConfirmPresenter",
+   "via": "ImportConfigConfirmEvent"
+  },
+  {
+   "shower": "MainPresenter",
+   "presenter": "AskStroomAiPresenter",
+   "via": "ShowAskStroomAiEvent"
+  },
+  {
+   "shower": "AnnotationManager",
+   "presenter": "FindAnnotationPresenter",
+   "via": "ShowFindAnnotationEvent"
+  },
+  {
+   "shower": "QueryDocEditPresenter",
+   "presenter": "CreateDocumentPresenter",
+   "caption": "Create New Analytic Rule",
+   "via": "ShowCreateDocumentDialogEvent"
+  },
+  {
+   "shower": "QueryDocEditPresenter",
+   "presenter": "CreateDocumentPresenter",
+   "caption": "Create New Report",
+   "via": "ShowCreateDocumentDialogEvent"
+  },
+  {
+   "shower": "QueryResultTablePresenter",
+   "presenter": "AskStroomAiPresenter",
+   "via": "AskStroomAiEvent"
+  },
+  {
+   "shower": "MyDataGridAiSupport",
+   "presenter": "AskStroomAiPresenter",
+   "via": "AskStroomAiEvent"
+  },
+  {
+   "shower": "MyDataGridAiSupport",
+   "presenter": "AskStroomAiPresenter",
+   "via": "AskStroomAiEvent"
+  },
+  {
+   "shower": "MyDataGridAiSupport",
+   "presenter": "AskStroomAiPresenter",
+   "via": "AskStroomAiEvent"
+  },
+  {
+   "shower": "MyDataGridAiSupport",
+   "presenter": "AskStroomAiPresenter",
+   "via": "AskStroomAiEvent"
+  },
+  {
+   "shower": "MyDataGridAiSupport",
+   "presenter": "AskStroomAiPresenter",
+   "via": "AskStroomAiEvent"
+  },
+  {
+   "shower": "MyDataGridAiSupport",
+   "presenter": "AskStroomAiPresenter",
+   "via": "AskStroomAiEvent"
+  }
+ ],
+ "eventEdgesAmbiguous": [],
+ "tabsOf": [
+  {
+   "owner": "AskStroomAiConfigPresenter",
+   "tab": "General",
+   "presenter": "AiConfigGeneralPresenter"
+  },
+  {
+   "owner": "AskStroomAiConfigPresenter",
+   "tab": "Table Analysis",
+   "presenter": "AiConfigTableAnalysisPresenter"
+  },
+  {
+   "owner": "AnalyticRulePresenter",
+   "tab": "Query",
+   "presenter": "AnalyticQueryEditPresenter"
+  },
+  {
+   "owner": "AnalyticRulePresenter",
+   "tab": "Settings",
+   "presenter": "AnalyticSettingsPresenter"
+  },
+  {
+   "owner": "AnalyticRulePresenter",
+   "tab": "Notifications",
+   "presenter": "AnalyticNotificationPresenter"
+  },
+  {
+   "owner": "AnalyticRulePresenter",
+   "tab": "Execution",
+   "presenter": "AnalyticProcessingPresenter"
+  },
+  {
+   "owner": "AnalyticRulePresenter",
+   "tab": "Shards",
+   "presenter": "AnalyticDataShardsPresenter"
+  },
+  {
+   "owner": "AnalyticRulePresenter",
+   "tab": "Duplicate Management",
+   "presenter": "AnalyticDuplicateManagementPresenter"
+  },
+  {
+   "owner": "AnalyticRulePresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "AnalyticRulePresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "ReportPresenter",
+   "tab": "Query",
+   "presenter": "ReportQueryEditPresenter"
+  },
+  {
+   "owner": "ReportPresenter",
+   "tab": "Settings",
+   "presenter": "ReportSettingsPresenter"
+  },
+  {
+   "owner": "ReportPresenter",
+   "tab": "Notifications",
+   "presenter": "ReportNotificationPresenter"
+  },
+  {
+   "owner": "ReportPresenter",
+   "tab": "Execution",
+   "presenter": "ReportProcessingPresenter"
+  },
+  {
+   "owner": "ReportPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "ReportPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "AnnotationPresenter",
+   "tab": "Annotation",
+   "presenter": "AnnotationEditPresenter"
+  },
+  {
+   "owner": "AnnotationPresenter",
+   "tab": "Events",
+   "presenter": "LinkedEventPresenter"
+  },
+  {
+   "owner": "AnnotationPresenter",
+   "tab": "Link To",
+   "presenter": "AnnotationLinkPresenter"
+  },
+  {
+   "owner": "AnnotationPresenter",
+   "tab": "Link From",
+   "presenter": "AnnotationLinkPresenter"
+  },
+  {
+   "owner": "AnnotationPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "AnnotationPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "S3ConfigPresenter",
+   "tab": "Config",
+   "presenter": "EditorPresenter"
+  },
+  {
+   "owner": "S3ConfigPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "S3ConfigPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Dashboard",
+   "presenter": "DashboardPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "DataGenPresenter",
+   "tab": "Settings",
+   "presenter": "DataGenSettingsPresenter"
+  },
+  {
+   "owner": "DataGenPresenter",
+   "tab": "Execution",
+   "presenter": "DataGenProcessingPresenter"
+  },
+  {
+   "owner": "DataGenPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "DataGenPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "DictionaryPresenter",
+   "tab": "Words",
+   "presenter": "EditorPresenter"
+  },
+  {
+   "owner": "DictionaryPresenter",
+   "tab": "Imports",
+   "presenter": "DictionarySettingsPresenter"
+  },
+  {
+   "owner": "DictionaryPresenter",
+   "tab": "Effective Words",
+   "presenter": "WordListPresenter"
+  },
+  {
+   "owner": "DictionaryPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "DictionaryPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "DocumentationPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "DocumentationPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "FeedPresenter",
+   "tab": "Data",
+   "presenter": "MetaPresenter"
+  },
+  {
+   "owner": "FeedPresenter",
+   "tab": "Active Tasks",
+   "presenter": "ProcessorTaskPresenter"
+  },
+  {
+   "owner": "FeedPresenter",
+   "tab": "Settings",
+   "presenter": "FeedSettingsPresenter"
+  },
+  {
+   "owner": "FeedPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "FeedPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "GitRepoPresenter",
+   "tab": "Settings",
+   "presenter": "GitRepoSettingsPresenter"
+  },
+  {
+   "owner": "GitRepoPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "GitRepoPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "IndexPresenter",
+   "tab": "Shards",
+   "presenter": "IndexShardPresenter"
+  },
+  {
+   "owner": "IndexPresenter",
+   "tab": "Fields",
+   "presenter": "IndexFieldListPresenter"
+  },
+  {
+   "owner": "IndexPresenter",
+   "tab": "Settings",
+   "presenter": "IndexSettingsPresenter"
+  },
+  {
+   "owner": "IndexPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "IndexPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "KafkaConfigPresenter",
+   "tab": "Config",
+   "presenter": "EditorPresenter"
+  },
+  {
+   "owner": "KafkaConfigPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "KafkaConfigPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "OpenAIModelPresenter",
+   "tab": "Settings",
+   "presenter": "OpenAIModelSettingsPresenter"
+  },
+  {
+   "owner": "OpenAIModelPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "OpenAIModelPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "PathwaysPresenter",
+   "tab": "Pathways",
+   "presenter": "PathwaysSplitPresenter"
+  },
+  {
+   "owner": "PathwaysPresenter",
+   "tab": "Settings",
+   "presenter": "PathwaysSettingsPresenter"
+  },
+  {
+   "owner": "PathwaysPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "PathwaysPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "TracesPresenter",
+   "tab": "Traces",
+   "presenter": "TracesListTabPresenter"
+  },
+  {
+   "owner": "TracesPresenter",
+   "tab": "Settings",
+   "presenter": "TracesSettingsPresenter"
+  },
+  {
+   "owner": "TracesPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "TracesPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "PipelinePresenter",
+   "tab": "Data",
+   "presenter": "MetaPresenter"
+  },
+  {
+   "owner": "PipelinePresenter",
+   "tab": "Processors",
+   "presenter": "ProcessorPresenter"
+  },
+  {
+   "owner": "PipelinePresenter",
+   "tab": "Active Tasks",
+   "presenter": "ProcessorTaskPresenter"
+  },
+  {
+   "owner": "PipelinePresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "PipelinePresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "TextConverterPresenter",
+   "tab": "Conversion",
+   "presenter": "EditorPresenter"
+  },
+  {
+   "owner": "TextConverterPresenter",
+   "tab": "Settings",
+   "presenter": "TextConverterSettingsPresenter"
+  },
+  {
+   "owner": "TextConverterPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "TextConverterPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "XsltPresenter",
+   "tab": "XSLT",
+   "presenter": "EditorPresenter"
+  },
+  {
+   "owner": "XsltPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "XsltPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "PlanBPresenter",
+   "tab": "Settings",
+   "presenter": "PlanBSettingsPresenter"
+  },
+  {
+   "owner": "PlanBPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "PlanBPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "UserPreferencesPresenter",
+   "tab": "Theme",
+   "presenter": "ThemePreferencesPresenter"
+  },
+  {
+   "owner": "UserPreferencesPresenter",
+   "tab": "Editor",
+   "presenter": "EditorPreferencesPresenter"
+  },
+  {
+   "owner": "UserPreferencesPresenter",
+   "tab": "Date and Time",
+   "presenter": "TimePreferencesPresenter"
+  },
+  {
+   "owner": "QueryDocPresenter",
+   "tab": "Query",
+   "presenter": "DocTabPresenter"
+  },
+  {
+   "owner": "QueryDocPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "QueryDocPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "DataRetentionPresenter",
+   "tab": "Rules",
+   "presenter": "DataRetentionPolicyPresenter"
+  },
+  {
+   "owner": "RuleSetPresenter",
+   "tab": "Rules",
+   "presenter": "RuleSetSettingsPresenter"
+  },
+  {
+   "owner": "RuleSetPresenter",
+   "tab": "Fields",
+   "presenter": "FieldListPresenter"
+  },
+  {
+   "owner": "ScriptPresenter",
+   "tab": "Script",
+   "presenter": "EditorPresenter"
+  },
+  {
+   "owner": "ScriptPresenter",
+   "tab": "Settings",
+   "presenter": "ScriptSettingsPresenter"
+  },
+  {
+   "owner": "ScriptPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "ScriptPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "ElasticClusterPresenter",
+   "tab": "Settings",
+   "presenter": "ElasticClusterSettingsPresenter"
+  },
+  {
+   "owner": "ElasticClusterPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "ElasticClusterPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "ElasticIndexPresenter",
+   "tab": "Settings",
+   "presenter": "ElasticIndexSettingsPresenter"
+  },
+  {
+   "owner": "ElasticIndexPresenter",
+   "tab": "Fields",
+   "presenter": "ElasticIndexFieldListPresenter"
+  },
+  {
+   "owner": "ElasticIndexPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "ElasticIndexPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "SolrIndexPresenter",
+   "tab": "Fields",
+   "presenter": "SolrIndexFieldListPresenter"
+  },
+  {
+   "owner": "SolrIndexPresenter",
+   "tab": "Settings",
+   "presenter": "SolrIndexSettingsPresenter"
+  },
+  {
+   "owner": "SolrIndexPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "SolrIndexPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "UserTabPresenter",
+   "tab": "Info",
+   "presenter": "UserInfoPresenter"
+  },
+  {
+   "owner": "UserTabPresenter",
+   "tab": "User Groups",
+   "presenter": "UserAndGroupsPresenter"
+  },
+  {
+   "owner": "UserTabPresenter",
+   "tab": "Application Permissions",
+   "presenter": "AppPermissionsEditPresenter"
+  },
+  {
+   "owner": "UserTabPresenter",
+   "tab": "Document Permissions",
+   "presenter": "UserPermissionReportPresenter"
+  },
+  {
+   "owner": "UserTabPresenter",
+   "tab": "Dependencies",
+   "presenter": "UserDependenciesListPresenter"
+  },
+  {
+   "owner": "ViewPresenter",
+   "tab": "Settings",
+   "presenter": "ViewSettingsPresenter"
+  },
+  {
+   "owner": "ViewPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "ViewPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "VisualisationPresenter",
+   "tab": "Settings",
+   "presenter": "VisualisationSettingsPresenter"
+  },
+  {
+   "owner": "VisualisationPresenter",
+   "tab": "Assets",
+   "presenter": "VisualisationAssetsPresenter"
+  },
+  {
+   "owner": "VisualisationPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "VisualisationPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "XMLSchemaPresenter",
+   "tab": "Graphical",
+   "presenter": "XSDBrowserPresenter"
+  },
+  {
+   "owner": "XMLSchemaPresenter",
+   "tab": "Text",
+   "presenter": "EditorPresenter"
+  },
+  {
+   "owner": "XMLSchemaPresenter",
+   "tab": "Settings",
+   "presenter": "XMLSchemaSettingsPresenter"
+  },
+  {
+   "owner": "XMLSchemaPresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "XMLSchemaPresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "StatisticsDataSourcePresenter",
+   "tab": "Settings",
+   "presenter": "StatisticsDataSourceSettingsPresenter"
+  },
+  {
+   "owner": "StatisticsDataSourcePresenter",
+   "tab": "Fields",
+   "presenter": "StatisticsFieldListPresenter"
+  },
+  {
+   "owner": "StatisticsDataSourcePresenter",
+   "tab": "Custom Roll-ups",
+   "presenter": "StatisticsCustomMaskListPresenter"
+  },
+  {
+   "owner": "StatisticsDataSourcePresenter",
+   "tab": "Documentation",
+   "presenter": "MarkdownEditPresenter"
+  },
+  {
+   "owner": "StatisticsDataSourcePresenter",
+   "tab": "Permissions",
+   "presenter": "DocumentUserPermissionsPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Embedded Query",
+   "presenter": "EmbeddedQueryPresenter"
+  },
+  {
+   "owner": "DashboardPresenter",
+   "tab": "Embedded Query",
+   "presenter": "EmbeddedQueryPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Key/Value Input",
+   "presenter": "KeyValueInputPresenter"
+  },
+  {
+   "owner": "DashboardPresenter",
+   "tab": "Key/Value Input",
+   "presenter": "KeyValueInputPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "List Input",
+   "presenter": "ListInputPresenter"
+  },
+  {
+   "owner": "DashboardPresenter",
+   "tab": "List Input",
+   "presenter": "ListInputPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Table Filter",
+   "presenter": "TableFilterPresenter"
+  },
+  {
+   "owner": "DashboardPresenter",
+   "tab": "Table Filter",
+   "presenter": "TableFilterPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Text Input",
+   "presenter": "TextInputPresenter"
+  },
+  {
+   "owner": "DashboardPresenter",
+   "tab": "Text Input",
+   "presenter": "TextInputPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Query",
+   "presenter": "QueryPresenter"
+  },
+  {
+   "owner": "DashboardPresenter",
+   "tab": "Query",
+   "presenter": "QueryPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Table",
+   "presenter": "TablePresenter"
+  },
+  {
+   "owner": "DashboardPresenter",
+   "tab": "Table",
+   "presenter": "TablePresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Text",
+   "presenter": "TextPresenter"
+  },
+  {
+   "owner": "DashboardPresenter",
+   "tab": "Text",
+   "presenter": "TextPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Unknown",
+   "presenter": "UnknownComponentPresenter"
+  },
+  {
+   "owner": "DashboardPresenter",
+   "tab": "Unknown",
+   "presenter": "UnknownComponentPresenter"
+  },
+  {
+   "owner": "DashboardSuperPresenter",
+   "tab": "Visualisation",
+   "presenter": "VisPresenter"
+  },
+  {
+   "owner": "DashboardPresenter",
+   "tab": "Visualisation",
+   "presenter": "VisPresenter"
+  }
+ ],
+ "unrouted": [
+  "ActivityEditPresenter",
+  "ActivityListPresenter",
+  "ManageActivityPresenter",
+  "SplashPresenter",
+  "AiAttachmentDataPresenter",
+  "AiChatHistoryPresenter",
+  "AiChatHistoryResultListPresenter",
+  "AiConfigGeneralPresenter",
+  "AiConfigTableAnalysisPresenter",
+  "AskStroomAiConfigPresenter",
+  "AskStroomAiPresenter",
+  "DownloadChatPresenter",
+  "AbstractDuplicateManagementPresenter",
+  "AbstractNotificationListPresenter",
+  "AbstractNotificationPresenter",
+  "AbstractProcessingPresenter",
+  "AbstractQueryEditPresenter",
+  "AbstractSettingsPresenter",
+  "AnalyticDataShardListPresenter",
+  "AnalyticDataShardsPresenter",
+  "AnalyticDuplicateManagementPresenter",
+  "AnalyticEmailDestinationPresenter",
+  "AnalyticNotificationEditPresenter",
+  "AnalyticNotificationListPresenter",
+  "AnalyticNotificationPresenter",
+  "AnalyticProcessingPresenter",
+  "AnalyticQueryEditPresenter",
+  "AnalyticSettingsPresenter",
+  "AnalyticStreamDestinationPresenter",
+  "BatchExecutionScheduleEditPresenter",
+  "DuplicateManagementListPresenter",
+  "ExecutionScheduleRunNowPresenter",
+  "ReportNotificationListPresenter",
+  "ReportNotificationPresenter",
+  "ReportProcessingPresenter",
+  "ReportQueryEditPresenter",
+  "ReportSettingsPresenter",
+  "ScheduledProcessEditPresenter",
+  "ScheduledProcessHistoryListPresenter",
+  "ScheduledProcessListPresenter",
+  "ScheduledProcessingPresenter",
+  "StreamingProcessingPresenter",
+  "TableBuilderProcessingPresenter",
+  "AddEventLinkPresenter",
+  "AnnotationEditPresenter",
+  "AnnotationLinkPresenter",
+  "AnnotationPresenter",
+  "AnnotationTagCreatePresenter",
+  "AnnotationTagEditPresenter",
+  "AnnotationTagListPresenter",
+  "ChangeAssignedToPresenter",
+  "ChangeStatusPresenter",
+  "ChooserPresenter",
+  "CommentEditPresenter",
+  "DurationPresenter",
+  "FindAnnotationListPresenter",
+  "FindAnnotationPresenter",
+  "LinkedEventPresenter",
+  "MultiChooserPresenter",
+  "CacheListPresenter",
+  "CacheNodeListPresenter",
+  "ConfigPropertyClusterValuesListPresenter",
+  "ConfigPropertyClusterValuesPresenter",
+  "ManageGlobalPropertyEditPresenter",
+  "ManageGlobalPropertyListPresenter",
+  "ContentTabPanePresenter",
+  "ContentTabPresenter",
+  "ContentStoreContentPackDetailsPresenter",
+  "ContentStoreContentPackListPresenter",
+  "AccessTokenSecretPresenter",
+  "CredentialEditPresenter",
+  "CredentialSettingsPresenter",
+  "CredentialsListPresenter",
+  "CredentialsManagerDialogPresenter",
+  "KeyStoreSecretPresenter",
+  "SecretPresenter",
+  "SshKeySecretPresenter",
+  "UsernamePasswordSecretPresenter",
+  "BasicEmbeddedQuerySettingsPresenter",
+  "EmbeddedQueryPresenter",
+  "EmbeddedQuerySettingsPresenter",
+  "BasicKeyValueInputSettingsPresenter",
+  "BasicListInputSettingsPresenter",
+  "BasicTableFilterSettingsPresenter",
+  "BasicTextInputSettingsPresenter",
+  "ColumnSelectionPresenter",
+  "KeyValueInputPresenter",
+  "KeyValueInputSettingsPresenter",
+  "ListInputPresenter",
+  "ListInputSettingsPresenter",
+  "MultiRulesPresenter",
+  "TableFilterPresenter",
+  "TableFilterSettingsPresenter",
+  "TextInputPresenter",
+  "TextInputSettingsPresenter",
+  "AbstractComponentPresenter",
+  "AbstractRefreshableComponentPresenter",
+  "AbstractSettingsTabPresenter",
+  "BasicSettingsTabPresenter",
+  "DashboardPresenter",
+  "LayoutConstraintPresenter",
+  "RenameTabPresenter",
+  "SettingsPresenter",
+  "BasicQuerySettingsPresenter",
+  "CurrentSelectionPresenter",
+  "NamePresenter",
+  "ProcessorLimitsPresenter",
+  "QueryFavouritesPresenter",
+  "QueryHistoryPresenter",
+  "QueryInfoPresenter",
+  "QueryPresenter",
+  "QuerySettingsPresenter",
+  "SelectionHandlerListPresenter",
+  "SelectionHandlerPresenter",
+  "SelectionHandlersPresenter",
+  "BasicTableSettingsPresenter",
+  "ColumnFilterPresenter",
+  "ColumnFunctionEditorPresenter",
+  "ColumnValuesFilterPresenter",
+  "DownloadPresenter",
+  "FormatPresenter",
+  "IncludeExcludeFilterDictionaryPresenter",
+  "IncludeExcludeFilterPresenter",
+  "RenameColumnPresenter",
+  "TableFilterPresenter",
+  "TablePresenter",
+  "TableSettingsPresenter",
+  "CustomRowStylePresenter",
+  "EditExpressionPresenter",
+  "RuleListPresenter",
+  "RulePresenter",
+  "RulesPresenter",
+  "BasicTextSettingsPresenter",
+  "TextPresenter",
+  "TextSettingsPresenter",
+  "UnknownComponentPresenter",
+  "BasicVisSettingsPresenter",
+  "VisPresenter",
+  "VisSettingsPresenter",
+  "AbstractMetaListPresenter",
+  "CharacterNavigatorPresenter",
+  "CharacterRangeSelectionPresenter",
+  "DataPresenter",
+  "DataPreviewTabPresenter",
+  "DataUploadPresenter",
+  "EditExpressionPresenter",
+  "ExpressionPresenter",
+  "ItemNavigatorPresenter",
+  "ItemSelectionPresenter",
+  "MarkerListPresenter",
+  "MetaListPresenter",
+  "MetaPresenter",
+  "MetaRelationListPresenter",
+  "ProcessChoicePresenter",
+  "ProcessorTaskListPresenter",
+  "ProcessorTaskPresenter",
+  "ProcessorTaskSummaryPresenter",
+  "SelectionSummaryPresenter",
+  "SourcePresenter",
+  "SourceTabPresenter",
+  "SteppingMetaListPresenter",
+  "TextPresenter",
+  "FsVolumeEditPresenter",
+  "FsVolumeGroupEditPresenter",
+  "FsVolumeGroupListPresenter",
+  "FsVolumeStatusListPresenter",
+  "NewFsVolumeGroupPresenter",
+  "DataGenProcessingPresenter",
+  "DataGenSettingsPresenter",
+  "DictionaryListPresenter",
+  "DictionarySettingsPresenter",
+  "DocRefListPresenter",
+  "WordListPresenter",
+  "CopyDocumentPresenter",
+  "CreateDocumentPresenter",
+  "DocPresenter",
+  "DocTabPresenter",
+  "InfoDocumentPresenter",
+  "LinkTabPanelPresenter",
+  "MarkdownEditPresenter",
+  "MarkdownPreviewPresenter",
+  "MoveDocumentPresenter",
+  "NameDocumentPresenter",
+  "AbstractFindPresenter",
+  "DocSelectionBoxPresenter",
+  "DocumentListPresenter",
+  "DocumentPermissionsListPresenter",
+  "EntityCheckTreePresenter",
+  "EntityTreePresenter",
+  "ExplorerNodeEditTagsPresenter",
+  "ExplorerNodeRemoveTagsPresenter",
+  "ExplorerPopupPresenter",
+  "FindDocResultListPresenter",
+  "FindInContentPresenter",
+  "FindPresenter",
+  "RecentItemsPresenter",
+  "TabSessionChooserPresenter",
+  "TypeFilterPresenter",
+  "FeedSettingsPresenter",
+  "FolderPresenter",
+  "FolderRootPresenter",
+  "GitRepoCommitDialogPresenter",
+  "GitRepoSettingsPresenter",
+  "HttpClientConfigPresenter",
+  "HttpTlsConfigPresenter",
+  "DependenciesInfoPresenter",
+  "DependenciesPresenter",
+  "ImportConfigConfirmPresenter",
+  "DenseVectorFieldPresenter",
+  "IndexFieldEditPresenter",
+  "IndexFieldListPresenter",
+  "IndexSettingsPresenter",
+  "IndexShardPresenter",
+  "IndexVolumeEditPresenter",
+  "IndexVolumeGroupEditPresenter",
+  "IndexVolumeGroupListPresenter",
+  "IndexVolumeStatusListPresenter",
+  "NewIndexVolumeGroupPresenter",
+  "JobListPresenter",
+  "JobNodeListPresenter",
+  "MainPresenter",
+  "NewNodeGroupPresenter",
+  "NodeGroupEditPresenter",
+  "NodeGroupListPresenter",
+  "NodeGroupStateListPresenter",
+  "NodeJobListPresenter",
+  "NodeStatusListPresenter",
+  "OpenAIModelSettingsPresenter",
+  "ConstraintEditPresenter",
+  "ConstraintListPresenter",
+  "PathwayEditPresenter",
+  "PathwayListPresenter",
+  "PathwayTreePresenter",
+  "PathwaysSettingsPresenter",
+  "PathwaysSplitPresenter",
+  "TracesListPresenter",
+  "TracesListTabPresenter",
+  "TracesSettingsPresenter",
+  "DocRefSelectionPresenter",
+  "TextConverterSettingsPresenter",
+  "ElementPresenter",
+  "StepControlPresenter",
+  "StepLocationLinkPresenter",
+  "StepLocationPresenter",
+  "SteppingFilterPresenter",
+  "SteppingPresenter",
+  "XPathFilterPresenter",
+  "XPathListPresenter",
+  "NewElementPresenter",
+  "NewPipelineReferencePresenter",
+  "NewPropertyPresenter",
+  "PipelineReferenceListPresenter",
+  "PipelineStructurePresenter",
+  "PipelineTreePresenter",
+  "PropertyListPresenter",
+  "AbstractPlanBSettingsPresenter",
+  "HistogramSettingsPresenter",
+  "MetricSettingsPresenter",
+  "PlanBSettingsPresenter",
+  "RangeStateSettingsPresenter",
+  "SessionSettingsPresenter",
+  "StateSettingsPresenter",
+  "TemporalRangeStateSettingsPresenter",
+  "TemporalStateSettingsPresenter",
+  "TraceSettingsPresenter",
+  "EditorPreferencesPresenter",
+  "ThemePreferencesPresenter",
+  "TimePreferencesPresenter",
+  "BatchProcessorFilterEditPresenter",
+  "EditFeedDependencyPresenter",
+  "FeedDependencyListPresenter",
+  "FeedDependencyPresenter",
+  "ProcessorEditPresenter",
+  "ProcessorListPresenter",
+  "ProcessorPresenter",
+  "ProcessorProfileEditPresenter",
+  "ProcessorProfileListPresenter",
+  "ProfilePeriodEditPresenter",
+  "ProfilePeriodListPresenter",
+  "ProcessorTaskPresenter",
+  "ExpressionTreePresenter",
+  "QueryDocEditPresenter",
+  "QueryEditPresenter",
+  "QueryHelpPresenter",
+  "QueryResultTablePresenter",
+  "QueryResultTableSplitPresenter",
+  "QueryResultVisPresenter",
+  "QueryToolbarPresenter",
+  "ResultStoreListPresenter",
+  "ResultStoreSettingsPresenter",
+  "TextPresenter",
+  "ContentTemplateEditPresenter",
+  "ContentTemplateListPresenter",
+  "DataRetentionImpactPresenter",
+  "DataRetentionPolicyListPresenter",
+  "DataRetentionPolicyPresenter",
+  "DataRetentionRulePresenter",
+  "FieldEditPresenter",
+  "FieldListPresenter",
+  "RulePresenter",
+  "RuleSetListPresenter",
+  "RuleSetSettingsPresenter",
+  "ScriptDependencyListPresenter",
+  "ScriptListPresenter",
+  "ScriptSettingsPresenter",
+  "ElasticClusterSettingsPresenter",
+  "ElasticIndexFieldListPresenter",
+  "ElasticIndexSettingsPresenter",
+  "SolrIndexFieldEditPresenter",
+  "SolrIndexFieldListPresenter",
+  "SolrIndexSettingsPresenter",
+  "ApiKeysListPresenter",
+  "AppPermissionsEditPresenter",
+  "AppUserPermissionsListPresenter",
+  "BatchDocumentPermissionsEditPresenter",
+  "CreateExternalUserPresenter",
+  "CreateMultipleUsersPresenter",
+  "CreateNewGroupPresenter",
+  "CreateUserPresenter",
+  "DocumentCreatePermissionsListPresenter",
+  "DocumentUserCreatePermissionsEditPresenter",
+  "DocumentUserPermissionsEditPresenter",
+  "DocumentUserPermissionsListPresenter",
+  "DocumentUserPermissionsPresenter",
+  "EditApiKeyPresenter",
+  "SigningKeyListPresenter",
+  "UserAccessListPresenter",
+  "UserDependenciesListPresenter",
+  "UserInfoPresenter",
+  "UserListPresenter",
+  "UserPermissionReportPresenter",
+  "UserRefSelectionBoxPresenter",
+  "UserSessionsListPresenter",
+  "AccountsListPresenter",
+  "AuthenticationErrorPresenter",
+  "ChangePasswordPresenter",
+  "EditAccountPresenter",
+  "EmailResetPasswordPresenter",
+  "LoginPresenter",
+  "ResetPasswordPresenter",
+  "TaskManagerListPresenter",
+  "UserTaskManagerPresenter",
+  "UserTaskPresenter",
+  "ViewSettingsPresenter",
+  "VisualisationAssetsAddItemDialogPresenter",
+  "VisualisationAssetsEditAssetDialogPresenter",
+  "VisualisationAssetsPresenter",
+  "VisualisationAssetsUploadFileDialogPresenter",
+  "VisualisationSettingsPresenter",
+  "WelcomePresenter",
+  "XMLSchemaSettingsPresenter",
+  "ContentPresenter",
+  "StatisticsCustomMaskListPresenter",
+  "StatisticsDataSourceSettingsPresenter",
+  "StatisticsFieldEditPresenter",
+  "StatisticsFieldListPresenter"
+ ]
+}

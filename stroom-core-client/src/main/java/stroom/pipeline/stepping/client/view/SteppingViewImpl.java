@@ -17,6 +17,7 @@
 package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
+import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,7 +25,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
@@ -35,7 +35,7 @@ public class SteppingViewImpl extends ViewImpl implements SteppingView, Requires
 
     private final Widget widget;
     @UiField
-    ThinSplitLayoutPanel bottomLayout;
+    SplitPane bottomLayout;
     @UiField
     FlowPanel left;
     @UiField
@@ -57,12 +57,14 @@ public class SteppingViewImpl extends ViewImpl implements SteppingView, Requires
 
     @Override
     public void onResize() {
-        ((RequiresResize) widget).onResize();
+        // The panes' widgets are told when their panes change size; this brings the splitter's
+        // value up to date
+        bottomLayout.onResize();
     }
 
     @Override
     public void setTreeHeight(final int height) {
-        bottomLayout.setWidgetSize(treeContainer, height);
+        bottomLayout.setPaneSize(treeContainer, height + "px");
     }
 
     @Override

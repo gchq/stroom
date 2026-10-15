@@ -684,10 +684,6 @@ public class CustomDatePicker extends Composite implements
      * Sets up the date picker.
      */
     protected void setup() {
-        /*
-         * Use a table (VerticalPanel) to get shrink-to-fit behavior. Divs expand to
-         * fill the available width, so we'd need to give it a size.
-         */
         final FlowPanel panel = new FlowPanel();
         panel.setStyleName(css.datePicker());
         panel.add(this.getMonthSelector());

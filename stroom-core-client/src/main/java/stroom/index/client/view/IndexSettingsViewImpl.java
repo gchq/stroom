@@ -24,11 +24,13 @@ import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.item.client.SelectionBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -57,6 +59,8 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     SelectionBox<String> volumeGroups;
     @UiField
     SimplePanel defaultExtractionPipeline;
+    @UiField
+    Button reset;
 
     @Inject
     public IndexSettingsViewImpl(final Binder binder) {
@@ -70,7 +74,8 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
         maxDocsPerShard.setValue(1000000000L);
         maxDocsPerShard.setMin(1000L);
-        maxDocsPerShard.setMax(10000000000L);
+        // The value is an int (Lucene can't hold more documents than that in one index)
+        maxDocsPerShard.setMax(Integer.MAX_VALUE);
 
         shardsPerPartition.setValue(1L);
         shardsPerPartition.setMin(1L);
@@ -153,13 +158,14 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        maxDocsPerShard.setEnabled(!readOnly);
-        partitionBy.setEnabled(!readOnly);
-        partitionSize.setEnabled(!readOnly);
-        shardsPerPartition.setEnabled(!readOnly);
-        retentionAge.setEnabled(!readOnly);
-        volumeGroups.setEnabled(!readOnly);
-        timeField.setEnabled(!readOnly);
+        maxDocsPerShard.setReadOnly(readOnly);
+        partitionBy.setReadOnly(readOnly);
+        partitionSize.setReadOnly(readOnly);
+        shardsPerPartition.setReadOnly(readOnly);
+        retentionAge.setReadOnly(readOnly);
+        volumeGroups.setReadOnly(readOnly);
+        reset.setEnabled(!readOnly);
+        timeField.setReadOnly(readOnly);
     }
 
     @UiHandler("maxDocsPerShard")
@@ -195,6 +201,14 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @UiHandler("volumeGroups")
     public void onVolumeGroupsValueChange(final ValueChangeEvent<String> e) {
         fireChange();
+    }
+
+    @UiHandler("reset")
+    @SuppressWarnings("unused")
+    public void onResetClick(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onReset();
+        }
     }
 
     private void fireChange() {

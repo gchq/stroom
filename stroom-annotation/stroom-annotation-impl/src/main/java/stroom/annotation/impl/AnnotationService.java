@@ -42,6 +42,7 @@ import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.FindAnnotationRequest;
+import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.annotation.shared.LinkAnnotations;
 import stroom.annotation.shared.LinkEvents;
 import stroom.annotation.shared.RemoveTag;
@@ -499,11 +500,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     public AnnotationTag updateAnnotationTag(final AnnotationTag annotationTag) {
         checkAppPermission();
         final AnnotationTag annotationTag2 = annotationTagDao.updateAnnotationTag(annotationTag);
-        final String fieldName = getFieldNameFromTagType(annotationTag.getType());
-        entityEventBus.fire(AnnotationFieldsEntityEventData.createAllAnnotationsEvent(
-                EntityAction.UPDATE,
-                Set.of(fieldName)));
-
+        fireAllAnnotationsEvent(EntityAction.UPDATE, annotationTag.getType());
         return annotationTag2;
     }
 
@@ -511,12 +508,18 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         Objects.requireNonNull(annotationTag);
         checkAppPermission();
         final Boolean didDelete = annotationTagDao.deleteAnnotationTag(annotationTag);
-
-        final String fieldName = getFieldNameFromTagType(annotationTag.getType());
-        entityEventBus.fire(AnnotationFieldsEntityEventData.createAllAnnotationsEvent(
-                EntityAction.DELETE,
-                Set.of(fieldName)));
+        fireAllAnnotationsEvent(EntityAction.DELETE, annotationTag.getType());
         return didDelete;
+    }
+
+    private void fireAllAnnotationsEvent(final EntityAction entityAction, final AnnotationTagType tagType) {
+        final String fieldName = getFieldNameFromTagType(tagType);
+        // Comment tags are not a decoration field, so no annotation field has changed.
+        if (fieldName != null) {
+            entityEventBus.fire(AnnotationFieldsEntityEventData.createAllAnnotationsEvent(
+                    entityAction,
+                    Set.of(fieldName)));
+        }
     }
 
     private static @Nullable String getFieldNameFromTagType(final AnnotationTagType tagType) {
@@ -530,7 +533,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         };
     }
 
-    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
+    public ResultPage<AnnotationTag> findAnnotationTags(final FindAnnotationTagCriteria request) {
         checkAppPermission();
         final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
         return annotationTagDao.findAnnotationTags(request, viewPermissionPredicate);

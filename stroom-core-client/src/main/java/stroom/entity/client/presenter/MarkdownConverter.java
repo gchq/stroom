@@ -78,7 +78,7 @@ public class MarkdownConverter {
             final SafeHtml iFrameHtmlContent = new SafeHtmlBuilder()
                     .appendHtmlConstant("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
                     .appendHtmlConstant("<!DOCTYPE html>")
-                    .appendHtmlConstant("<html class=\"")
+                    .appendHtmlConstant("<html lang=\"en\" class=\"")
                     .append(SafeHtmlUtil.from(currentPreferenceClasses))
                     .appendHtmlConstant("\">")
                     .appendHtmlConstant("<head>")

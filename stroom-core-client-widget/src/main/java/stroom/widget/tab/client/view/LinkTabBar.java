@@ -24,11 +24,13 @@ import com.google.gwt.user.client.DOM;
 public class LinkTabBar extends AbstractTabBar {
 
     public LinkTabBar() {
-        getElement().setClassName("linkTabBar");
+        getElement().setClassName("tab-bar tab-bar--link");
 
         final Element text = DOM.createDiv();
-        text.setClassName("linkTabBar-hiddenText");
+        text.setClassName("tab-bar__strut");
         text.setInnerText("A");
+        // Invisible text that gives the bar its height, so screen readers don't read it
+        text.setAttribute("aria-hidden", "true");
         getElement().appendChild(text);
     }
 
@@ -59,7 +61,7 @@ public class LinkTabBar extends AbstractTabBar {
     @Override
     protected Element createSeparator() {
         final Element separator = DOM.createDiv();
-        separator.setClassName("linkTabBar-separator");
+        separator.setClassName("tab-bar__separator");
         separator.setInnerText("|");
         return separator;
     }

@@ -25,8 +25,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.shared.AppPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -41,7 +40,7 @@ import javax.inject.Singleton;
 public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresenter> {
 
     public static final String SCREEN_NAME = "User Groups";
-    public static final Preset ICON = SvgPresets.USER_GROUP;
+    public static final SvgImage ICON = SvgImage.USERS;
 
     @Inject
     public UsersAndGroupsPlugin(final EventBus eventBus,

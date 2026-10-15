@@ -1859,6 +1859,28 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testMutableMap() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Map<String, String>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.mutableMap(testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final Map<String, String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isInstanceOf(HashMap.class);
+                })
+                .addCase(null, Collections.emptyMap())
+                .addCase(Collections.emptyMap(), Collections.emptyMap())
+                .addCase(Map.of("foo", "bar"), Map.of("foo", "bar"))
+                .addCase(Map.of("foo", "bar", "k2", "v2"),
+                        Map.of("foo", "bar", "k2", "v2"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testValuesOf() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<Map<Integer, String>>() {

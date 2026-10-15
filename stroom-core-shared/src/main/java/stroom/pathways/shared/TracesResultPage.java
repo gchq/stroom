@@ -19,6 +19,7 @@ package stroom.pathways.shared;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -40,14 +41,21 @@ public class TracesResultPage extends ResultPage<TraceRoot> {
 
     public TracesResultPage(final List<TraceRoot> values,
                             final PageResponse pageResponse) {
-        this(values, pageResponse, null);
+        this(values, pageResponse, null, null);
+    }
+
+    public TracesResultPage(final List<TraceRoot> values,
+                            final PageResponse pageResponse,
+                            final TraceHistogram histogram) {
+        this(values, pageResponse, null, histogram);
     }
 
     @JsonCreator
     public TracesResultPage(@JsonProperty("values") final List<TraceRoot> values,
                             @JsonProperty("pageResponse") final PageResponse pageResponse,
+                            @JsonProperty("filterError") final TokenError filterError,
                             @JsonProperty("histogram") final TraceHistogram histogram) {
-        super(values, pageResponse);
+        super(values, pageResponse, filterError);
         this.histogram = histogram;
     }
 

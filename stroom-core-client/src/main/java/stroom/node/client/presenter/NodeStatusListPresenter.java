@@ -42,7 +42,7 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
@@ -54,7 +54,7 @@ import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -93,7 +93,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
     private final Map<String, PingResult> latestPing = new HashMap<>();
     private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
     private final MultiSelectionModelImpl<NodeStatusResult> selectionModel;
-    private final InlineSvgToggleButton autoRefreshButton;
+    private final ToolbarToggleButton autoRefreshButton;
     private final DelayedUpdate redrawDelayedUpdate;
 
     private Map<String, NodeStatusResult> nodeNameToNodeStatusMap = null;
@@ -119,11 +119,10 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         this.dateTimeFormatter = dateTimeFormatter;
         this.redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
 
-        autoRefreshButton = new InlineSvgToggleButton();
-        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
-        autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
+        getView().getToolbar().setName("Node actions");
+        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, AUTO_REFRESH_ON_TITLE,
+                pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
-        getView().addButton(autoRefreshButton);
 
         initTableColumns();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
@@ -179,21 +178,19 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         dataProvider.addDataDisplay(dataGrid);
     }
 
+    private void onAutoRefreshToggled() {
+        autoRefresh = !autoRefresh;
+        if (autoRefresh) {
+            autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
+            internalRefresh();
+        } else {
+            autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
+        }
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
-
-        registerHandler(autoRefreshButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                autoRefresh = !autoRefresh;
-                if (autoRefresh) {
-                    autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
-                    internalRefresh();
-                } else {
-                    autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
-                }
-            }
-        }));
 
         registerHandler(dataGrid.addColumnSortHandler(event -> internalRefresh()));
     }
@@ -234,11 +231,13 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         // Info column.
         final InfoColumn<NodeStatusResult> infoColumn = new InfoColumn<NodeStatusResult>() {
             @Override
-            protected void showInfo(final NodeStatusResult row, final PopupPosition popupPosition) {
+            protected void showInfo(final NodeStatusResult row,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 nodeClient.info(
                         row.getNode().getName(),
-                        result -> showNodeInfoResult(row.getNode(), result, popupPosition),
-                        error -> showNodeInfoError(error.getException(), popupPosition),
+                        result -> showNodeInfoResult(row.getNode(), result, popupPosition, anchor),
+                        error -> showNodeInfoError(error.getException(), popupPosition, anchor),
                         NodeStatusListPresenter.this);
             }
         };
@@ -476,7 +475,10 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         return htmlBuilder.toSafeHtml();
     }
 
-    private void showNodeInfoResult(final Node node, final ClusterNodeInfo result, final PopupPosition popupPosition) {
+    private void showNodeInfoResult(final Node node,
+                                    final ClusterNodeInfo result,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
         final TableBuilder tb1 = new TableBuilder();
         final TableBuilder tb2 = new TableBuilder();
 
@@ -522,11 +524,13 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         htmlBuilder.div(tb1::write, Attribute.className("infoTable"));
         htmlBuilder.div(tb2::write, Attribute.className("infoTable"));
 
-        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
+        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
     }
 
-    private void showNodeInfoError(final Throwable caught, final PopupPosition popupPosition) {
-        tooltipPresenter.show(SafeHtmlUtils.fromString(caught.getMessage()), popupPosition);
+    private void showNodeInfoError(final Throwable caught,
+                                   final PopupPosition popupPosition,
+                                   final Element anchor) {
+        tooltipPresenter.show(SafeHtmlUtils.fromString(caught.getMessage()), popupPosition, anchor);
     }
 
     @Override

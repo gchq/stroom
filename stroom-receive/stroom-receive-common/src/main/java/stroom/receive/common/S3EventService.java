@@ -28,9 +28,11 @@ import stroom.aws.sqs.SqsClientFactory;
 import stroom.aws.sqs.SqsConfig;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.json.JsonUtil;
@@ -39,10 +41,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -50,11 +54,13 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
+import software.amazon.awssdk.services.sqs.model.RequestThrottledException;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import tools.jackson.databind.JsonNode;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -88,6 +94,8 @@ public class S3EventService {
     private static final String TIME_FIELD = "Time";
     private static final String BUCKET_FIELD = "Bucket";
     private static final String RECORDS_FIELD = "Records";
+    /// AWS states a message can have up to 10 message attributes
+    public static final int MAX_MESSAGE_ATTRIBUTES = 10;
 
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final SqsClientFactory sqsClientFactory;
@@ -102,6 +110,7 @@ public class S3EventService {
     //    CachedValue<SqsClient, SqsConfig> cachedSqsClient;
     private volatile S3EventConfig lastS3EventConfig = null;
     private volatile ClientState sqsClientState;
+    private volatile Instant lastConfigWarning = Instant.EPOCH;
 
     @Inject
     public S3EventService(
@@ -122,13 +131,6 @@ public class S3EventService {
         this.s3MetaKeysMapper = s3MetaKeysMapper;
         this.commonSecurityContext = commonSecurityContext;
     }
-
-//    public void start() {
-//    }
-//
-//    public void stop() {
-//        shuttingDown.set(true);
-//    }
 
     /**
      * This is the main entry point for REST based S3 event notifications.
@@ -174,26 +176,42 @@ public class S3EventService {
 
         optS3ClientConfig.ifPresentOrElse(
                 s3ClientConfig -> {
-                    final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
-                    final S3ObjectInfo objectInfo = s3ClientHelper.getObjectInfo(
-                            s3Location.getRegionName(),
-                            s3Location.getBucketName(),
-                            s3Location.getKey(),
-                            eTag);
-
-                    // Map any known keys back to their original form as some of our keys may not fit the
-                    // key restrictions.
-                    objectInfo.s3Metadata().forEach((k, v) -> {
-                        final CIKey originalKey = s3MetaKeysMapper.getOriginalKey(k)
-                                .orElse(k);
-                        attributeMap.put(originalKey.get(), v);
-                    });
-                    LOGGER.debug("addS3MetaAttributes() - s3Location: {}, modified attributeMap: {}",
-                            s3Location, attributeMap);
+                    final Map<CIKey, String> s3Metadata = getS3Metadata(s3Location, eTag, s3ClientConfig);
+                    if (s3Metadata != null) {
+                        s3Metadata.forEach((k, v) -> {
+                            final CIKey originalKey = s3MetaKeysMapper.getOriginalKey(k)
+                                    .orElse(k);
+                            attributeMap.put(originalKey.get(), v);
+                        });
+                    }
+                    LOGGER.debug("addS3MetaAttributes() - s3Location: {}, s3Metadata: {}, modified attributeMap: {}",
+                            s3Location, s3Metadata, attributeMap);
                 },
                 () -> LOGGER.warn("No S3 client config found matching region '{}' and bucket '{}'. " +
                                   "Unable to fetch S3 metadata for key '{}'",
                         s3Location.getRegionName(), s3Location.getBucketName(), s3Location.getKey()));
+    }
+
+    private Map<CIKey, String> getS3Metadata(final S3Location s3Location,
+                                             final String eTag,
+                                             final S3ClientConfig s3ClientConfig) {
+        try {
+            final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
+            final S3ObjectInfo objectInfo = s3ClientHelper.getObjectInfo(
+                    s3Location.getRegionName(),
+                    s3Location.getBucketName(),
+                    s3Location.getKey(),
+                    eTag);
+
+            // Map any known keys back to their original form as some of our keys may not fit the
+            // key restrictions.
+            return objectInfo.s3Metadata();
+        } catch (final SdkClientException e) {
+            // Comms issues with S3 are likely to be transient so retry
+            throw new RetryableMessageException("Error fetching S3 object info, s3Location: " + s3Location, e);
+        } catch (final Exception e) {
+            throw new RuntimeException("Error fetching S3 object info, s3Location: " + s3Location, e);
+        }
     }
 
     /// Do a single poll for a batch of messages from the SQS queue.
@@ -246,15 +264,43 @@ public class S3EventService {
                             break;
                         }
                     }
+                } catch (final RequestThrottledException e) {
+                    // Swallow and go round again
+                    LOGGER.warn("Request failed due to throttling - {}, will try again immediately. " +
+                                "Debug for stacktrace",
+                            LogUtil.exceptionMessage(e));
+                    LOGGER.debug("Request failed due to throttling - {}, will try again immediately. " +
+                                 "Debug for stacktrace",
+                            LogUtil.exceptionMessage(e), e);
                 } catch (final Throwable e) {
-                    LOGGER.error("Error polling SQS queue {}. Swallowing error - {}",
-                            queueUrl, LogUtil.exceptionMessage(e), e);
+                    throw new RuntimeException(LogUtil.message("Error polling SQS queue {} - {}",
+                            queueUrl, LogUtil.exceptionMessage(e)), e);
                 }
             } else {
-                LOGGER.warn("SQS has not been configured. Nothing to do.");
+                throw new RuntimeException("SQS has not been configured. Nothing to do.");
             }
         } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
+            // Had a failure so no point in immediately retrying, so sleep for a bit
+            final StroomDuration sleepDuration = NullSafe.getOrElse(
+                    sqsClientState,
+                    ClientState::config,
+                    S3EventConfig::getSleepDurationPostFailure,
+                    S3EventConfig.DEFAULT_SLEEP_DURATION_POST_FAILURE);
+            LOGGER.error("{} Will sleep for {} before trying again.", LogUtil.exceptionMessage(e), sleepDuration, e);
+
+            final long sleepEndTimeEpochMs = Instant.now()
+                    .plus(sleepDuration)
+                    .toEpochMilli();
+
+            do {
+                try {
+                    Thread.sleep(1_000);
+                } catch (final InterruptedException ie) {
+                    LOGGER.debug("Thread interrupted while sleeping");
+                    Thread.currentThread().interrupt();
+                    throw UncheckedInterruptedException.create(ie);
+                }
+            } while (!terminationChecker.isTerminated() && System.currentTimeMillis() < sleepEndTimeEpochMs);
         }
     }
 
@@ -267,15 +313,25 @@ public class S3EventService {
             addReceiptId(attributeMap);
             addSqsMessageId(attributeMap, message);
 
-            final S3CreateEvent s3CreateEvent = convertMessage(message.body(), attributeMap);
+            final List<S3CreateEvent> s3CreateEvents = convertMessage(message.body(), attributeMap);
 
-            // Consumer is responsible for doing attributeMap filtering as they need
-            // to deal with accept/drop/reject
-            s3EventConsumer.accept(s3CreateEvent);
-
-            // RECEIVE or DROP so delete the message
+            if (NullSafe.hasItems(s3CreateEvents)) {
+                // Consumer is responsible for doing attributeMap filtering as they need
+                // to deal with accept/drop/reject
+                s3CreateEvents.forEach(s3EventConsumer::accept);
+            }
+            // RECEIVE, DROP or a message type we don't care about, so delete the message
             deleteSqsMessage(message, queueUrl, sqsClient);
+        } catch (final RetryableMessageException e) {
+            LOGGER.error(LogUtil.message(
+                    "Transient error so will leave message on the queue for retry, messageId: {} - {}",
+                    message.messageId(),
+                    LogUtil.exceptionMessage(e)), e);
+        } catch (final StroomStreamException e) {
+            // Not retryable so move to dead letter queue
+            handleMessageFailure(message, queueUrl, sqsClient, deadLetterQueueUrl, e);
         } catch (final RuntimeException e) {
+            // Assume not retryable so move to dead letter queue
             handleMessageFailure(message, queueUrl, sqsClient, deadLetterQueueUrl, e);
         }
     }
@@ -284,16 +340,16 @@ public class S3EventService {
                                              final String queueUrl,
                                              final SqsClient sqsClient,
                                              final String deadLetterQueueUrl,
-                                             final RuntimeException e) {
+                                             final RuntimeException cause) {
         if (NullSafe.isNonBlankString(deadLetterQueueUrl)) {
             LOGGER.error(LogUtil.message("Error processing message - queueUrl: {}, " +
                                          "moving it to deadLetterQueueUrl: {} - {}",
-                    queueUrl, deadLetterQueueUrl, LogUtil.exceptionMessage(e)), e);
+                    queueUrl, deadLetterQueueUrl, LogUtil.exceptionMessage(cause)), cause);
             try {
                 // Manually 'move' the message to the dead letter queue
-                reSendSqsMessage(message, deadLetterQueueUrl, sqsClient);
+                reSendSqsMessage(message, deadLetterQueueUrl, sqsClient, cause);
                 deleteSqsMessage(message, queueUrl, sqsClient);
-            } catch (final Exception ex) {
+            } catch (final Exception e) {
                 // If something goes wrong, the message will remain in the main queue and eventually
                 // become visible again, so will get re-received under the redrive policy.
                 LOGGER.error(LogUtil.message(
@@ -302,40 +358,76 @@ public class S3EventService {
             }
         } else {
             LOGGER.error(LogUtil.message("Error processing message - queueUrl: {} - {}",
-                    queueUrl, LogUtil.exceptionMessage(e)), e);
+                    queueUrl, LogUtil.exceptionMessage(cause)), cause);
         }
     }
 
     private static void reSendSqsMessage(final Message message,
                                          final String queueUrl,
-                                         final SqsClient sqsClient) {
+                                         final SqsClient sqsClient,
+                                         final RuntimeException cause) {
         try {
             // Capture the original message attributes as they will get lost on re-send
-            final Map<String, MessageAttributeValue> messageAttributes = message.messageAttributes();
-            final String originalMessageId = message.messageId();
-            messageAttributes.put("OriginalMessageId", MessageAttributeValue.builder()
-                    .stringValue(originalMessageId)
-                    .build());
-            if (NullSafe.hasEntries(messageAttributes)) {
-                final MessageAttributeValue originalSentTime = messageAttributes.get(
-                        MessageSystemAttributeName.SENT_TIMESTAMP.toString());
-                final MessageAttributeValue originalSenderId = messageAttributes.get(
-                        MessageSystemAttributeName.SENDER_ID.toString());
-                messageAttributes.put("Original" + MessageSystemAttributeName.SENT_TIMESTAMP, originalSentTime);
-                messageAttributes.put("Original" + MessageSystemAttributeName.SENDER_ID, originalSenderId);
+            final Map<String, MessageAttributeValue> msgAttributesCopy = NullSafe.mutableMap(
+                    message.messageAttributes());
+
+            putMessageAttribute(msgAttributesCopy, "OriginalMessageId", message.messageId());
+            NullSafe.consumeNonBlankString(cause.getMessage(), msg ->
+                    putMessageAttribute(msgAttributesCopy, "ErrorMessage", msg));
+
+            if (cause instanceof final StroomStreamException sse) {
+                final StroomStatusCode statusCode = NullSafe.get(
+                        sse.getStroomStreamStatus(),
+                        StroomStreamStatus::getStroomStatusCode);
+                if (statusCode != null) {
+                    putMessageAttribute(
+                            msgAttributesCopy,
+                            "StroomStatusCode",
+                            String.valueOf(statusCode.getCode()));
+                    putMessageAttribute(
+                            msgAttributesCopy,
+                            "StroomStatusMessage",
+                            statusCode.getMessage());
+                    putMessageAttribute(
+                            msgAttributesCopy,
+                            "StroomStatusReason",
+                            statusCode.getReason());
+                }
             }
+
+            LOGGER.error(() -> LogUtil.message("Moving message {} to dead letter queue {} - Sending message - " +
+                                               "cause: {}, message: {}, messageAttributes: {}",
+                    message.messageId(), queueUrl, LogUtil.exceptionMessage(cause),
+                    message, message.messageAttributes()));
 
             final SendMessageRequest sendMessageRequest = SendMessageRequest.builder()
                     .queueUrl(queueUrl)
                     .messageBody(message.body())
-                    .messageAttributes(messageAttributes)
+                    .messageAttributes(msgAttributesCopy)
                     .build();
             final SendMessageResponse sendMessageResponse = sqsClient.sendMessage(sendMessageRequest);
-            LOGGER.debug("reSendSqsMessage() - Success - message: {}, sendMessageResponse: {}, queueUrl: {}",
-                    message, sendMessageResponse, queueUrl);
+            LOGGER.debug("reSendSqsMessage() - Success - message: {}, sendMessageResponse: {}, " +
+                         "queueUrl: {}, messageAttributes: {}",
+                    message, sendMessageResponse, queueUrl, msgAttributesCopy);
         } catch (final RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error sending message to SQS - queueUrl: {} - {}",
                     queueUrl, LogUtil.exceptionMessage(e)), e);
+        }
+    }
+
+    private static void putMessageAttribute(final Map<String, MessageAttributeValue> msgAttributes,
+                                            final String key,
+                                            final String value) {
+        if (msgAttributes.size() < MAX_MESSAGE_ATTRIBUTES) {
+            msgAttributes.put(
+                    key,
+                    MessageAttributeValue.builder()
+                            .stringValue(value)
+                            .build());
+        } else {
+            LOGGER.warn("putMessageAttribute() - Max attributes {} reached, messageAttributes: {}, " +
+                        "omitting key: {}, value: {}",
+                    MAX_MESSAGE_ATTRIBUTES, msgAttributes, key, value);
         }
     }
 
@@ -352,7 +444,8 @@ public class S3EventService {
         } catch (final RuntimeException e) {
             LOGGER.error("Error deleting sqs messageId: {}, receiptHandle: {}, queueUrl: {}",
                     message.messageId(), receiptHandle, queueUrl, e);
-            throw new RuntimeException(e);
+            // Could be a comms issue with SQS, so assume retryable
+            throw new RetryableMessageException("Error deleting sqs messageId: " + message.messageId(), e);
         }
     }
 
@@ -385,8 +478,12 @@ public class S3EventService {
         }
     }
 
-    private S3CreateEvent convertMessage(final String messageBody, final AttributeMap attributeMap) {
-        S3CreateEvent s3CreateEvent = null;
+    /// Convert the message body into a list of S3CreateEvents if it is a valid S3 Create Event.
+    /// If it is a message type we don't care about ignore it
+    /// If there are any problems parsing the message then throw an exception.
+    private List<S3CreateEvent> convertMessage(final String messageBody, final AttributeMap attributeMap) {
+        // We are only expecting one event record per message but just in case return a list.
+        final List<S3CreateEvent> s3CreateEvents = new ArrayList<>();
         try {
             final JsonNode rootNode = JsonUtil.getMapper().readTree(messageBody);
 
@@ -414,10 +511,11 @@ public class S3EventService {
 
                     final String eventName = getNodeAsString(recordsItemNode, "eventName");
                     if (eventName != null && eventName.startsWith(SUPPORTED_EVENT_NAME_PREFIX)) {
+                        final AttributeMap attributeMapCopy = new AttributeMap(attributeMap);
                         final String awsRegion = getNodeAsString(recordsItemNode, "awsRegion");
                         final String eventTime = getNodeAsString(recordsItemNode, "eventTime");
 
-                        addEventTime(attributeMap, eventTime);
+                        addEventTime(attributeMapCopy, eventTime);
 
                         final JsonNode s3Node = getNode(recordsItemNode, "s3");
 
@@ -430,18 +528,17 @@ public class S3EventService {
                         final long objectSize = getNodeAsLong(objectNode, "size");
                         final String eTag = getNodeAsString(objectNode, "eTag");
 
-                        attributeMap.put(StandardHeaderArguments.CONTENT_LENGTH, String.valueOf(objectSize));
+                        attributeMapCopy.put(StandardHeaderArguments.CONTENT_LENGTH, String.valueOf(objectSize));
 
                         // Print extracted values
                         LOGGER.debug("processMessage() - awsRegion: {}, eventTime: {}, eventName: {}, " +
                                      "bucketName: {}, bucketArn: {}, objectKey: {}, objectSize: {}, attributeMap: {}",
                                 awsRegion, eventTime, eventName, bucketName,
-                                bucketArn, objectKey, objectSize, attributeMap);
+                                bucketArn, objectKey, objectSize, attributeMapCopy);
 
                         final S3Location s3Location = new S3Location(awsRegion, bucketName, objectKey);
-                        addS3MetaAttributes(s3Location, eTag, attributeMap);
-//                        addS3MetaAttributes(s3Location, attributeMap);
-                        s3CreateEvent = new S3CreateEvent(s3Location, attributeMap);
+                        addS3MetaAttributes(s3Location, eTag, attributeMapCopy);
+                        s3CreateEvents.add(new S3CreateEvent(s3Location, attributeMapCopy));
                     } else {
                         LOGGER.debug("processMessage() - Ignoring eventName: {}\n{}", eventName, messageBody);
                     }
@@ -450,45 +547,12 @@ public class S3EventService {
                 throw new IllegalStateException("Unknown messageBody format, messageBody:\n" + messageBody);
             }
         } catch (final Exception e) {
-            throw new IllegalStateException(LogUtil.message(
-                    "Error parsing SQS message body - {}, messageBody:\n{}",
+            LOGGER.debug(() -> LogUtil.message("Error parsing SQS message body - {}, messageBody:\n{}",
                     LogUtil.exceptionMessage(e), messageBody), e);
+            throw e;
         }
-        return s3CreateEvent;
+        return s3CreateEvents;
     }
-
-//    /**
-//     * Call out to S3 to get the objects metadata.
-//     */
-//    private void addS3MetaAttributes(final S3Location s3Location,
-//                                     final AttributeMap attributeMap) {
-//        LOGGER.debug("addS3MetaAttributes() - s3Location: {}, attributeMap: {}", s3Location, attributeMap);
-//        final Optional<FsVolume> optS3Volume = s3VolumeService.getS3Volume(
-//                s3Location.regionName(),
-//                s3Location.bucketName());
-//
-//        optS3Volume.ifPresentOrElse(
-//                s3Volume -> {
-//                    final S3ClientConfig s3ClientConfig = s3Volume.getS3ClientConfig();
-//                    final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
-//                    final S3ObjectInfo objectInfo = s3ClientHelper.getObjectInfo(
-//                            s3Location.bucketName(),
-//                            s3Location.key());
-//
-//                    // Map any known keys back to their original form as some of our keys may not fit the
-//                    // key restrictions.
-//                    objectInfo.s3Metadata().forEach((k, v) -> {
-//                        final CIKey originalKey = s3MetaFieldsMapper.getOriginalKey(k)
-//                                .orElse(k);
-//                        attributeMap.put(originalKey.get(), v);
-//                    });
-//                    LOGGER.debug("addS3MetaAttributes() - s3Location: {}, modified attributeMap: {}",
-//                            s3Location, attributeMap);
-//                },
-//                () -> LOGGER.warn("No S3 volume found matching region '{}' and bucket '{}'. " +
-//                                  "Unable to fetch S3 metadata for key '{}'",
-//                        s3Location.regionName(), s3Location.bucketName(), s3Location.key()));
-//    }
 
     private static String getNodeAsString(final JsonNode baseNode, final String fieldName) {
         final String val = JsonUtil.getNodeAsString(baseNode, fieldName);
@@ -542,6 +606,7 @@ public class S3EventService {
                         LOGGER.debug(() -> LogUtil.message("getClients() - sqsClientState: {}", sqsClientState));
                     }
                 } else {
+                    closeClient(sqsClientState);
                     sqsClientState = null;
                     lastS3EventConfig = null;
                 }
@@ -551,12 +616,15 @@ public class S3EventService {
     }
 
     private void closeClient(final ClientState clientState) {
-        try {
-            clientState.sqsClient.close();
-        } catch (final Exception e) {
-            LOGGER.error(LogUtil.message("Error closing sqsClient {}, config: {},  - {}",
-                    clientState.sqsClient, clientState.config, LogUtil.exceptionMessage(e)), e);
-            throw new RuntimeException(e);
+        if (clientState != null) {
+            try {
+                LOGGER.debug("closeClient() - clientState: {}", clientState);
+                clientState.sqsClient.close();
+            } catch (final Exception e) {
+                LOGGER.error(LogUtil.message("Error closing sqsClient {}, config: {},  - {}",
+                        clientState.sqsClient, clientState.config, LogUtil.exceptionMessage(e)), e);
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -580,5 +648,27 @@ public class S3EventService {
     public interface TerminationChecker {
 
         boolean isTerminated();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// An exception that indicates that a message should be left on the queue
+    /// to be retried.
+    private static class RetryableMessageException extends RuntimeException {
+
+        private RetryableMessageException(final String message) {
+            super(message);
+        }
+
+        private RetryableMessageException(final Throwable cause) {
+            super(cause);
+        }
+
+        private RetryableMessageException(final String message,
+                                          final Throwable cause) {
+            super(message + " - " + cause.getMessage(), cause);
+        }
     }
 }

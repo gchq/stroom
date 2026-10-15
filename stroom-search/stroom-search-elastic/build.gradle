@@ -42,6 +42,7 @@ dependencies {
     implementation libs.dropwizard.metrics.annotation
     implementation libs.elasticsearch.java
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.langchain4j.jina
     implementation libs.restygwt

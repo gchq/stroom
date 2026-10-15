@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
@@ -30,7 +31,6 @@ import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter.D
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissionsReport;
-import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -264,7 +264,7 @@ public class DocumentCreatePermissionsListPresenter
         }
 
         // Icon
-        final Column<DocumentType, Preset> iconColumn = DataGridUtil.svgPresetColumnBuilder(
+        final Column<DocumentType, CellIcon> iconColumn = DataGridUtil.cellIconColumnBuilder(
                 false,
                 this::getDocTypeIcon).build();
         iconColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
@@ -318,9 +318,9 @@ public class DocumentCreatePermissionsListPresenter
         return explicitCreatePermissions;
     }
 
-    private Preset getDocTypeIcon(final DocumentType documentType) {
+    private CellIcon getDocTypeIcon(final DocumentType documentType) {
         if (documentType != null) {
-            return new Preset(documentType.getIcon(), documentType.getDisplayType(), true);
+            return CellIcon.of(documentType.getIcon(), documentType.getDisplayType(), true);
         }
         return null;
     }

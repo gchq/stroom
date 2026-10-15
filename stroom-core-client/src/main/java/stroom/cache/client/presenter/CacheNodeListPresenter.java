@@ -19,14 +19,14 @@ package stroom.cache.client.presenter;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
+import stroom.cell.info.client.CellIcon;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
@@ -120,7 +120,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private void addClearColumn() {
         addIconButtonColumn(
-                SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
+                CellIcon.of(SvgImage.DELETE, "Clear and rebuild cache"),
                 (row, nativeEvent) -> {
                     restFactory
                             .create(CACHE_RESOURCE)
@@ -180,11 +180,11 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         columns.add(nodeColumn);
     }
 
-    private void addIconButtonColumn(final Preset svgPreset,
+    private void addIconButtonColumn(final CellIcon cellIcon,
                                      final BiConsumer<CacheInfo, NativeEvent> action) {
         //noinspection Convert2Diamond
         final ActionCell<CacheInfo> cell = new stroom.cell.info.client.ActionCell<CacheInfo>(
-                svgPreset, action);
+                cellIcon, action);
         //noinspection Convert2Diamond
         final Column<CacheInfo, CacheInfo> col =
                 new Column<CacheInfo, CacheInfo>(cell) {

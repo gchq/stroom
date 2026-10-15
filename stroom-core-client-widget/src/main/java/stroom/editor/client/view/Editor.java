@@ -61,7 +61,7 @@ public class Editor extends Composite implements
     private boolean readOnlyDirty;
     private AceEditorMode mode = AceEditorMode.XML;
     private boolean modeDirty = true;
-    private AceEditorTheme theme = AceEditorTheme.TOMORROW_NIGHT;
+    private AceEditorTheme theme = AceEditorTheme.DEFAULT_DARK_THEME;
     private boolean themeDirty = true;
     private boolean showGutter = true;
     private boolean showGutterDirty;
@@ -98,7 +98,9 @@ public class Editor extends Composite implements
         editor.addAttachHandler(event -> {
             if (event.isAttached()) {
                 if (!started) {
-                    // Can only be started once attached
+                    // Can only be started once attached, and Stroom's themes must be registered
+                    // before it starts with one
+                    StroomAceThemes.register();
                     editor.startEditor(theme.getName());
 
                     // TODO 04/01/2022 AT: This should be made configurable for dev use but can wait till v7.1
@@ -113,6 +115,9 @@ public class Editor extends Composite implements
                     editor.setShowPrintMargin(false);
                     editor.setUseSoftTabs(true);
                     editor.setTabSize(2);
+                    // Ace's text input had no name; a FormGroup or screen can't label it, so it has
+                    // a generic one
+                    editor.getTextInputElement().setAttribute("aria-label", "Code editor");
                     started = true;
 
                     DOM.setEventListener(editor.getTextInputElement(), e -> {
@@ -124,7 +129,6 @@ public class Editor extends Composite implements
                     });
                 }
 
-                updateAnnotations();
                 updateChangeHandler();
                 updateFirstLineNumber();
                 updateGotoLine();
@@ -137,6 +141,9 @@ public class Editor extends Composite implements
                 updateShowGutter();
                 updateShowInvisibles();
                 updateText();
+                // After the text: Ace moves annotations down as text is inserted above them, so ones
+                // set before it would end up past the end of the document
+                updateAnnotations();
                 updateTheme();
                 updateUseBasicAutoCompletion();
                 updateUseLiveAutoCompletion();
@@ -147,8 +154,19 @@ public class Editor extends Composite implements
             }
         });
 
-        editor.getElement().setClassName("editor");
+        editor.getElement().setClassName("code-editor__ace");
         initWidget(editor);
+    }
+
+    /// Destroys the Ace editor for good, removing what it added to the page (e.g. its listener on
+    /// the window, which would otherwise keep it, and everything it belongs to, for the life of the
+    /// page). If attached again, a new Ace editor is started.
+    public void destroy() {
+        if (started) {
+            text = editor.getText();
+            editor.destroy();
+            started = false;
+        }
     }
 
     public String getId() {
@@ -280,6 +298,11 @@ public class Editor extends Composite implements
     private void updateReadOnly() {
         if (started && readOnlyDirty) {
             editor.setReadOnly(readOnly);
+            if (readOnly) {
+                editor.getTextInputElement().setAttribute("aria-readonly", "true");
+            } else {
+                editor.getTextInputElement().removeAttribute("aria-readonly");
+            }
             readOnlyDirty = false;
         }
     }

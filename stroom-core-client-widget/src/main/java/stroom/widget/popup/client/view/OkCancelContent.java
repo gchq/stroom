@@ -60,6 +60,11 @@ public class OkCancelContent extends Composite implements DialogButtons {
 
     @Override
     public void onDialogAction(final DialogAction action) {
+        final Button button = action == DialogAction.OK ? ok : cancel;
+        if (!DialogButtonAction.canRun(button)) {
+            return;
+        }
+        final Runnable restoreFocus = DialogButtonAction.keepFocus(button);
         setEnabled(false);
         if (action == DialogAction.OK) {
             ok.setLoading(true);
@@ -70,6 +75,7 @@ public class OkCancelContent extends Composite implements DialogButtons {
             setEnabled(true);
             ok.setLoading(false);
             cancel.setLoading(false);
+            restoreFocus.run();
         }));
     }
 
@@ -87,6 +93,15 @@ public class OkCancelContent extends Composite implements DialogButtons {
     public void setEnabled(final boolean enabled) {
         ok.setEnabled(enabled);
         cancel.setEnabled(enabled);
+    }
+
+    @Override
+    public void setEnabled(final DialogAction action, final boolean enabled) {
+        if (DialogAction.OK.equals(action)) {
+            ok.setEnabled(enabled);
+        } else if (DialogAction.CANCEL.equals(action)) {
+            cancel.setEnabled(enabled);
+        }
     }
 
     public interface Binder extends UiBinder<Widget, OkCancelContent> {

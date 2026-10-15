@@ -96,6 +96,7 @@ public class HttpClientConfigPresenter
             getView().setMaxConnectionsPerRoute(config.getMaxConnectionsPerRoute());
             getView().setKeepAlive(config.getKeepAlive());
             getView().setRetries(config.getRetries());
+            getView().setUserAgent(config.getUserAgent());
             getView().setValidateAfterInactivityPeriod(config.getValidateAfterInactivityPeriod());
             httpTlsConfig = config.getTls();
         }
@@ -114,6 +115,7 @@ public class HttpClientConfigPresenter
                 .maxConnectionsPerRoute(getView().getMaxConnectionsPerRoute())
                 .keepAlive(getView().getKeepAlive())
                 .retries(getView().getRetries())
+                .userAgent(getView().getUserAgent())
                 .validateAfterInactivityPeriod(getView().getValidateAfterInactivityPeriod())
                 .tlsConfiguration(httpTlsConfig)
                 .build();
@@ -163,10 +165,11 @@ public class HttpClientConfigPresenter
         int getRetries();
 
 
-//    // Changed this to be a string rather than an optional to avoid serialisation issues when
-//    // we merge our config.yml node tree with a default node tree and then serialise for drop wiz to
-//    // read.
-//    private final String userAgent;
+        /// @param userAgent The User-Agent header value, or null for the HTTP client's own.
+        void setUserAgent(String userAgent);
+
+        /// @return The User-Agent header value, or null (when blank) for the HTTP client's own.
+        String getUserAgent();
 
 //    private final HttpProxyConfiguration proxyConfiguration;
 

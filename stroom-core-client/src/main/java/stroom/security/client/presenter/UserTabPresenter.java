@@ -213,8 +213,8 @@ public class UserTabPresenter
     @Override
     public SvgImage getIcon() {
         return userRef != null && userRef.isGroup()
-                ? UserTabPlugin.GROUP_ICON.getSvgImage()
-                : UserTabPlugin.USER_ICON.getSvgImage();
+                ? UserTabPlugin.GROUP_ICON
+                : UserTabPlugin.USER_ICON;
     }
 
     @Override
@@ -227,12 +227,21 @@ public class UserTabPresenter
         return TAB_TYPE;
     }
 
+    private static String getLabel(final UserRef userRef) {
+        // A user with nothing to identify it would otherwise be shown as '{null}'
+        if (userRef == null
+            || (userRef.getDisplayName() == null
+                && userRef.getSubjectId() == null
+                && userRef.getFullName() == null
+                && userRef.getUuid() == null)) {
+            return "Unknown User/Group";
+        }
+        return userRef.getType(CaseType.SENTENCE) + ": " + userRef.toDisplayString();
+    }
+
     public void setUserRef(final UserRef userRef) {
         this.userRef = userRef;
-        this.label = NullSafe.getOrElse(
-                userRef,
-                ref -> ref.getType(CaseType.SENTENCE) + ": " + ref.toDisplayString(),
-                "Unknown User/Group");
+        this.label = getLabel(userRef);
         userInfoPresenter.setUserRef(userRef);
         appPermissionsEditPresenterLazyValue.consumeIfInitialised(appPermissionsEditPresenter ->
                 appPermissionsEditPresenter.setUserRef(userRef));

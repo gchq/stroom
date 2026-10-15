@@ -104,7 +104,7 @@ public class Option {
                 ? "ON"
                 : "OFF";
         final String classNameSuffix = value.toLowerCase();
-        final String className = "editor-menu-option-" + classNameSuffix;
+        final String className = "code-editor-menu-option code-editor-menu-option--" + classNameSuffix;
         return HtmlBuilder.builder()
                 .append(text)
                 .append(" (")

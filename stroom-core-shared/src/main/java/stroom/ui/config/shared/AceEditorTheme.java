@@ -61,9 +61,19 @@ public enum AceEditorTheme {
     ------- IMPORTANT!!! -------
     */
 
+    // Stroom's own themes, which take their colours from the Stroom theme. They have no theme-*.js
+    // file; StroomAceThemes registers them with Ace and editor-themes.css styles them.
+    STROOM_LIGHT("stroom_light", ThemeType.LIGHT, true),
+    STROOM_DARK("stroom_dark", ThemeType.DARK, true),
+
     AMBIANCE("ambiance", ThemeType.DARK),
     CHAOS("chaos", ThemeType.DARK),
     CHROME("chrome", ThemeType.LIGHT),
+    CLOUD9_DAY("cloud9_day", ThemeType.LIGHT),
+    CLOUD9_NIGHT("cloud9_night", ThemeType.DARK),
+    CLOUD9_NIGHT_LOW_COLOR("cloud9_night_low_color", ThemeType.DARK),
+    CLOUD_EDITOR("cloud_editor", ThemeType.LIGHT),
+    CLOUD_EDITOR_DARK("cloud_editor_dark", ThemeType.DARK),
     CLOUDS("clouds", ThemeType.LIGHT),
     CLOUDS_MIDNIGHT("clouds_midnight", ThemeType.DARK),
     COBALT("cobalt", ThemeType.DARK),
@@ -73,8 +83,12 @@ public enum AceEditorTheme {
     DREAMWEAVER("dreamweaver", ThemeType.LIGHT),
     ECLIPSE("eclipse", ThemeType.LIGHT),
     GITHUB("github", ThemeType.LIGHT),
+    GITHUB_DARK("github_dark", ThemeType.DARK),
+    GITHUB_LIGHT_DEFAULT("github_light_default", ThemeType.LIGHT),
     GOB("gob", ThemeType.DARK),
     GRUVBOX("gruvbox", ThemeType.DARK),
+    GRUVBOX_DARK_HARD("gruvbox_dark_hard", ThemeType.DARK),
+    GRUVBOX_LIGHT_HARD("gruvbox_light_hard", ThemeType.LIGHT),
     IDLE_FINGERS("idle_fingers", ThemeType.DARK),
     IPLASTIC("iplastic", ThemeType.LIGHT),
     KATZENMILCH("katzenmilch", ThemeType.LIGHT),
@@ -85,6 +99,7 @@ public enum AceEditorTheme {
     MONO_INDUSTRIAL("mono_industrial", ThemeType.DARK),
     MONOKAI("monokai", ThemeType.DARK),
     NORD_DARK("nord_dark", ThemeType.DARK),
+    ONE_DARK("one_dark", ThemeType.DARK),
     PASTEL_ON_DARK("pastel_on_dark", ThemeType.DARK),
     SOLARIZED_DARK("solarized_dark", ThemeType.DARK),
     SOLARIZED_LIGHT("solarized_light", ThemeType.LIGHT),
@@ -100,8 +115,8 @@ public enum AceEditorTheme {
     VIBRANT_INK("vibrant_ink", ThemeType.DARK),
     XCODE("xcode", ThemeType.LIGHT);
 
-    public static final AceEditorTheme DEFAULT_LIGHT_THEME = AceEditorTheme.CHROME;
-    public static final AceEditorTheme DEFAULT_DARK_THEME = AceEditorTheme.TOMORROW_NIGHT;
+    public static final AceEditorTheme DEFAULT_LIGHT_THEME = AceEditorTheme.STROOM_LIGHT;
+    public static final AceEditorTheme DEFAULT_DARK_THEME = AceEditorTheme.STROOM_DARK;
 
     private static final EnumMap<ThemeType, Set<AceEditorTheme>> TYPE_TO_THEME_MAP = new EnumMap<>(
             ThemeType.class);
@@ -140,10 +155,16 @@ public enum AceEditorTheme {
 
     private final String name;
     private final ThemeType themeType;
+    private final boolean stroomTheme;
 
     AceEditorTheme(final String name, final ThemeType themeType) {
+        this(name, themeType, false);
+    }
+
+    AceEditorTheme(final String name, final ThemeType themeType, final boolean stroomTheme) {
         this.name = Objects.requireNonNull(name);
         this.themeType = Objects.requireNonNull(themeType);
+        this.stroomTheme = stroomTheme;
     }
 
     /**
@@ -163,6 +184,12 @@ public enum AceEditorTheme {
 
     public boolean isLight() {
         return themeType.isLight();
+    }
+
+    /// @return True if this is one of Stroom's own themes (e.g. Stroom Light), which have no Ace
+    /// theme file, rather than one of Ace's.
+    public boolean isStroomTheme() {
+        return stroomTheme;
     }
 
     public static AceEditorTheme fromName(final String name) {
@@ -187,7 +214,8 @@ public enum AceEditorTheme {
     public static List<AceEditorTheme> getThemesByType(final ThemeType themeType) {
         return TYPE_TO_THEME_MAP.get(themeType)
                 .stream()
-                .sorted(Comparator.comparing(AceEditorTheme::getName))
+                .sorted(Comparator.comparing((AceEditorTheme theme) -> !theme.isStroomTheme())
+                        .thenComparing(AceEditorTheme::getName))
                 .collect(Collectors.toList());
     }
 
