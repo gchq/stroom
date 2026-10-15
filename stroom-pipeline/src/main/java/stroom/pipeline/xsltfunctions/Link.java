@@ -23,7 +23,59 @@ import net.sf.saxon.value.StringValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@XsltFunctionDef(
+        name = Link.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.STRING,
+        commonDescription = """
+                Builds a Markdown-style link for display in a dashboard table.
+                The optional type suffix controls whether Stroom opens it in a dialog, tab,
+                browser tab or dashboard.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The formatted link string.",
+        signatures = {
+                @XsltFunctionSignature(
+                        description = """
+                                Uses the URL as both link text and target.
+                                """,
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "url",
+                                        description = "The link target.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                ),
+                @XsltFunctionSignature(
+                        description = """
+                                Uses a separate title and target URL, with optional target type.
+                                """,
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "title",
+                                        description = "The text to display.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "url",
+                                        description = "The link target.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "type",
+                                        description = "The target display type.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true,
+                                        allowedValues = {
+                                                "tab", "dialog", "dashboard", "stepping", "data",
+                                                "annotation", "browser"}
+                                )
+                        }
+                )
+        })
 public class Link extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "link";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Link.class);
 

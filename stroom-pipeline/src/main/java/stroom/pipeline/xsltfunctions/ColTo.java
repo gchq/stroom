@@ -25,7 +25,22 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+@XsltFunctionDef(
+        name = ColTo.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the input column where the current record ends.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The ending input column, if available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class ColTo extends AbstractLocationFunction {
+
+    public static final String FUNCTION_NAME = "col-to";
 
     @Inject
     ColTo(final LocationHolder locationHolder) {

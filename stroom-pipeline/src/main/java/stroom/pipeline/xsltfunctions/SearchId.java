@@ -17,6 +17,7 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.state.SearchIdHolder;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -25,7 +26,22 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = SearchId.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the batch search ID when a pipeline is processing as part of a batch search.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The batch search ID, if available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class SearchId extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "search-id";
 
     private final SearchIdHolder searchIdHolder;
 
@@ -44,9 +60,9 @@ class SearchId extends StroomExtensionFunctionCall {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
+        return NullSafe.getOrElseGet(
+                result,
+                StringValue::makeStringValue,
+                EmptyAtomicSequence::getInstance);
     }
 }

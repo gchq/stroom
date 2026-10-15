@@ -27,58 +27,52 @@ public @interface FunctionDef {
 
     String UNDEFINED = "[UNDEFINED]";
 
+    /// The name of the function
     String name();
 
-    /**
-     * The html link anchor to the section of the documentation page for this function.
-     * It should only need to be set if the name when converted into anchor format differs
-     * from the actual anchor.
-     */
+    /// The html link anchor to the section of the documentation page for this function.
+    /// It should only need to be set if the name when converted into anchor format differs
+    /// from the actual anchor.
     String helpAnchor() default UNDEFINED;
 
-    /**
-     * Any alias names for the function
-     */
+    /// Any alias names for the function
     String[] aliases() default {};
 
-    /**
-     * The single category of functions that this function signature belongs to unless overridden at the
-     * signature level.
-     * Defined as an array to allow us to not have one by default.
-     */
+    /// The single category of functions that this function signature belongs to unless overridden at the
+    /// signature level.
+    /// Defined as an array to allow us to not have one by default.
     FunctionCategory[] commonCategory() default {};
 
-    /**
-     * An array of sub-categories that this function belongs to. The sub-categories represent a path
-     * in a tree of categories from root to leaf. E.g. if the main category is String the sub categories
-     * could be [Conversion, Case], i.e. String -> Conversion -> Case.
-     * Can be overridden at the signature level.
-     */
+    /// An array of sub-categories that this function belongs to. The sub-categories represent a path
+    /// in a tree of categories from root to leaf. E.g. if the main category is String the sub categories
+    /// could be [Conversion, Case], i.e. String -> Conversion -> Case.
+    /// Can be overridden at the signature level.
     String[] commonSubCategories() default {};
 
-    /**
-     * A description of what the function does that is common to all signatures unless overridden
-     * at the signature level.
-     */
+    /// A description of what the function does that is common to all signatures unless overridden
+    /// at the signature level. This should be a few sentences at most as it will be displayed in
+    /// hover tooltips in stroom-docs. If you need a big description, either use the
+    /// extendedCommonDescription or add content directly to stroom-docs.
+    ///
+    /// You must provide a commonDescription even if each signature provides its own description.
+    /// This is because stroom-docs needs a common description for some of its content.
     String commonDescription() default "";
 
-    /**
-     * A single return type that is common to all signatures unless overridden at the signature level.
-     * You must specify either this or {@link FunctionSignature#returnType()}
-     * Defined as an array to allow us to not have one by default.
-     */
+    /// Optional extended description that is common to all signatures. It is in addition to the
+    /// commonDescription. It can be used when the description is more than a few sentences.
+    String extendedCommonDescription() default "";
+
+    /// A single return type that is common to all signatures unless overridden at the signature level.
+    /// You must specify either this or [FunctionSignature#returnType()]
+    /// Defined as an array to allow us to not have one by default.
     Class<? extends Val>[] commonReturnType() default {};
 
-    /**
-     * A return description that is common to all signatures unless overridden at the signature level
-     * You must specify either this or {@link FunctionSignature#returnDescription()}
-     */
+    /// A return description that is common to all signatures unless overridden at the signature level
+    /// You must specify either this or [FunctionSignature#returnDescription()]
     String commonReturnDescription() default "";
 
-    /**
-     * All the overloaded function signatures for the method,
-     * e.g. parseDate(dateStr) & parseDate(dateStr, format).
-     * Must have at least one signature.
-     */
+    /// All the overloaded function signatures for the method,
+    /// e.g. parseDate(dateStr) & parseDate(dateStr, format).
+    /// Must have at least one signature.
     FunctionSignature[] signatures();
 }

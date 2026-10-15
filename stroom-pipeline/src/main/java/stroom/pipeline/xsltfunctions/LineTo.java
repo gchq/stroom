@@ -25,7 +25,22 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+@XsltFunctionDef(
+        name = LineTo.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the input line where the current record ends.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The ending input line, if available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class LineTo extends AbstractLocationFunction {
+
+    public static final String FUNCTION_NAME = "line-to";
 
     @Inject
     LineTo(final LocationHolder locationHolder) {
