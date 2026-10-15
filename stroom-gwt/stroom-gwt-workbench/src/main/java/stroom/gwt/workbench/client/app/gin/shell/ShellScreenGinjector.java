@@ -57,6 +57,7 @@ import stroom.gwt.workbench.client.app.gin.DictionaryScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
+import stroom.gwt.workbench.client.app.gin.QueryResultTableScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
@@ -130,6 +131,7 @@ import com.google.gwt.inject.client.GinModules;
 /// harness has been built.
 @GinModules({
         ScreenViewsModule.class,
+        QueryResultTableScreenModule.class,
         CredentialsScreenModule.class,
         DictionaryScreenModule.class,
         EntityScreenModule.class,

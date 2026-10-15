@@ -129,6 +129,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-sqlstore:stroom-sqlstore-shared')
     implementation project(':stroom-util-shared')
 
     // These source deps are all needed for the GWT transpiling to javascript
@@ -168,6 +169,7 @@ def clientProjects = [
         project(':stroom-core-shared'),
         project(':stroom-docref'),
         project(':stroom-query:stroom-query-api'),
+        project(':stroom-sqlstore:stroom-sqlstore-shared'),
         project(':stroom-util-shared'),
 ]
 

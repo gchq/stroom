@@ -29,6 +29,7 @@ import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
+import stroom.gwt.workbench.client.app.gin.QueryResultTableScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
@@ -62,6 +63,7 @@ import com.google.gwt.inject.client.GinModules;
 /// the editors (`XxxScreenModule` for Stroom's `XxxModule`), without plugins and app services.
 @GinModules({
         ScreenViewsModule.class,
+        QueryResultTableScreenModule.class,
         CredentialsScreenModule.class,
         EntityScreenModule.class,
         ExplorerScreenModule.class,
