@@ -2,76 +2,92 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:d="urn:import:stroom.widget.customdatebox.client">
-    <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="httpClientTimeout"
-                        label="Timeout"
-                        helpText="Determines the timeout until arrival of a response from the opposite endpoint. A timeout value of zero is interpreted as an infinite timeout. Default: 3 minutes">
-            <d:DurationPicker ui:field="timeout"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpClientConnectionTimeout"
-                        label="Connection Timeout"
-                        helpText="Determines the timeout until a new connection is fully established. This may also include transport security negotiation exchanges such as SSL or TLS protocol negotiation. A timeout value of zero is interpreted as an infinite timeout. Default: 3 minutes">
-            <d:DurationPicker ui:field="connectionTimeout"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpClientConnectionRequestTimeout"
-                        label="Connection Request Timeout"
-                        helpText="Returns the connection lease request timeout used when requesting a connection from the connection manager. Default: 3 minutes">
-            <d:DurationPicker ui:field="connectionRequestTimeout"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpClientTimeToLive"
-                        label="Time To Live"
-                        helpText="The maximum time a pooled connection can stay idle (not leased to any thread) before it is shut down. Default: 1 hour">
-            <d:DurationPicker ui:field="timeToLive"/>
-        </form:FormGroup>
-        <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="cookiesEnabled"
-                                    identity="httpClientCookiesEnabled"
-                                    label="Cookies Enabled"/>
-        </form:FormGroup>
-        <form:FormGroup helpText="Whether a redirect response (3xx) is followed. Some endpoints redirect in order to authenticate, so a request that does not follow redirects will see the redirect response itself rather than the resource it was after. Default: on">
-            <tickbox:CustomCheckBox ui:field="followRedirects"
-                                    identity="httpClientFollowRedirects"
-                                    label="Follow Redirects"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpClientMaxConnections"
-                        label="Max Connections"
-                        helpText="Max Connections">
-            <v:ValueSpinner ui:field="maxConnections"
-                            width="200px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpClientMaxConnectionsPerRoute"
-                        label="Max Connections Per Route"
-                        helpText="Max Connections Per Route">
-            <v:ValueSpinner ui:field="maxConnectionsPerRoute"
-                            width="200px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpClientKeepAlive"
-                        label="Keep Alive"
-                        helpText="The maximum time a connection will be kept alive before it is reconnected. If set to 0, connections will be immediately closed after every request/response. Default: 0">
-            <d:DurationPicker ui:field="keepAlive"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpClientRetries"
-                        label="Retries"
-                        helpText="Retries">
-            <v:ValueSpinner ui:field="retries"
-                            width="200px"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpClientUserAgent"
-                        label="User Agent"
-                        helpText="User Agent">
-            <g:TextBox ui:field="userAgent"
-                       width="400px"
-                       title="User Agent"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpClientValidateAfterInactivityPeriod"
-                        label="Validate After Inactivity Period"
-                        helpText="Validate After Inactivity Period">
-            <d:DurationPicker ui:field="validateAfterInactivityPeriod"/>
-        </form:FormGroup>
-        <b:Button ui:field="setHttpTlsConfig" text="Set HTTP TLS Config" width="200px" addStyleNames="allow-focus"/>
+             xmlns:d="urn:import:stroom.widget.customdatebox.client"
+             xmlns:tab="urn:import:stroom.widget.tab.client.view">
+    <g:FlowPanel styleName="max dock-container-vertical httpClientConfig">
+        <tab:LinkTabBar ui:field="tabBar" styleName="dock-min linkTabBar"/>
+        <g:FlowPanel styleName="dock-max httpClientConfig-content">
+            <g:FlowPanel ui:field="generalTab" styleName="form-padding form">
+                <form:FormGroup helpText="Whether a redirect response (3xx) is followed to the address it gives. Some endpoints redirect in order to authenticate or to move to a new address; without this, the request sees the redirect itself rather than what it asked for. Redirects to cloud metadata addresses are always refused. Default: on">
+                    <tickbox:CustomCheckBox ui:field="followRedirects"
+                                            identity="httpClientFollowRedirects"
+                                            label="Follow Redirects"/>
+                </form:FormGroup>
+                <form:FormGroup helpText="Whether cookies the server sets are kept and sent back with later requests on the same connection pool. Only needed for servers that track a session with a cookie, e.g. some load balancers. Default: off">
+                    <tickbox:CustomCheckBox ui:field="cookiesEnabled"
+                                            identity="httpClientCookiesEnabled"
+                                            label="Cookies Enabled"/>
+                </form:FormGroup>
+                <form:FormGroup identity="httpClientUserAgent"
+                                label="User Agent"
+                                helpText="The User-Agent header sent with every request, which some servers and proxies use to identify or allow the client. Leave empty for the HTTP client's own default. Not used by Git repositories, which send Git's own.">
+                    <g:TextBox ui:field="userAgent"
+                               addStyleNames="w-100"
+                               title="User Agent"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+            <g:SimplePanel ui:field="tlsTab" styleName="form-padding"/>
+            <g:FlowPanel ui:field="headersTab" styleName="form-padding form">
+                <form:FormGroup identity="httpClientHeaders"
+                                label="Headers"
+                                helpText="HTTP headers sent with every request, e.g. 'anthropic-version' = '2023-06-01' for Anthropic's OpenAI-compatible endpoint, or a header a gateway needs to route the request. Rows with no name are ignored. Headers set for authentication (e.g. an API key or token) take precedence over these, as do headers the request sets itself. Do not put secrets here: values are stored in the document as plain text, so use a credential instead.">
+                    <g:FlowPanel ui:field="headers" styleName="httpClientConfig-headers"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="timeoutsTab" styleName="form-padding form">
+                <form:FormGroup identity="httpClientTimeout"
+                                label="Timeout"
+                                helpText="How long to wait for the server to send data once a request has been sent: the response, or the next part of a response that is streamed. AI models can take minutes to answer, so allow for that. Zero means wait for ever. Default: 3 minutes">
+                    <d:DurationPicker ui:field="timeout"/>
+                </form:FormGroup>
+                <form:FormGroup identity="httpClientConnectionTimeout"
+                                label="Connection Timeout"
+                                helpText="How long to wait for a new connection to the server to be made, including the TLS handshake. A server that cannot be reached fails after this long. Zero means wait for ever. Default: 3 minutes">
+                    <d:DurationPicker ui:field="connectionTimeout"/>
+                </form:FormGroup>
+                <form:FormGroup identity="httpClientConnectionRequestTimeout"
+                                label="Connection Request Timeout"
+                                helpText="How long a request waits for a free connection from the pool when all connections (see Limits) are in use. Zero means wait for ever. Default: 3 minutes">
+                    <d:DurationPicker ui:field="connectionRequestTimeout"/>
+                </form:FormGroup>
+                <form:FormGroup identity="httpClientTimeToLive"
+                                label="Time To Live"
+                                helpText="The longest a connection is reused for, however busy it is, before it is closed and a new one made. This lets the client pick up changes such as a server's address moving behind a load balancer. Default: 1 hour">
+                    <d:DurationPicker ui:field="timeToLive"/>
+                </form:FormGroup>
+                <form:FormGroup identity="httpClientKeepAlive"
+                                label="Keep Alive"
+                                helpText="How long an idle connection is kept open for the next request, when the server does not say. Zero closes each connection after its request and response, so every request makes a new connection. Default: 0">
+                    <d:DurationPicker ui:field="keepAlive"/>
+                </form:FormGroup>
+                <form:FormGroup identity="httpClientValidateAfterInactivityPeriod"
+                                label="Validate After Inactivity Period"
+                                helpText="How long a connection may sit idle in the pool before it is checked to still be open before it is reused. Checking avoids a request failing on a connection the server has closed, at the cost of a little time. Zero checks every time a connection is reused. Default: 0">
+                    <d:DurationPicker ui:field="validateAfterInactivityPeriod"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="limitsTab" styleName="form-padding form">
+                <form:FormGroup identity="httpClientMaxConnections"
+                                label="Max Connections"
+                                helpText="The most connections that may be open at once, to all servers together. Requests beyond this wait for a free connection (see Connection Request Timeout). Default: 1024">
+                    <v:ValueSpinner ui:field="maxConnections"
+                                    width="200px"/>
+                </form:FormGroup>
+                <form:FormGroup identity="httpClientMaxConnectionsPerRoute"
+                                label="Max Connections Per Route"
+                                helpText="The most connections that may be open at once to any one server. Lower this to avoid overloading a server that cannot take many requests at a time. Default: 1024">
+                    <v:ValueSpinner ui:field="maxConnectionsPerRoute"
+                                    width="200px"/>
+                </form:FormGroup>
+                <form:FormGroup identity="httpClientRetries"
+                                label="Retries"
+                                helpText="How many more times a request is tried, a second apart, after a connection problem (e.g. the connection was reset) or when the server answers 429 Too Many Requests or 503 Service Unavailable. Only requests that are safe to repeat are retried. Default: 0">
+                    <v:ValueSpinner ui:field="retries"
+                                    width="200px"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

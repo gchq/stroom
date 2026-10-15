@@ -4,61 +4,61 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
-    <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="httpTlsConfigProtocol"
-                        label="Protocol"
-                        helpText="Protocol">
-            <g:TextBox ui:field="protocol"
-                       width="400px"
-                       title="Protocol"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpTlsConfigProvider"
-                        label="Provider"
-                        helpText="Provider">
-            <g:TextBox ui:field="provider"
-                       width="400px"
-                       title="Provider"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpTlsConfigKeyStore"
-                        label="Key Store"
-                        helpText="Key Store">
-            <l:SelectionBox ui:field="keyStore"/>
-        </form:FormGroup>
-        <form:FormGroup identity="httpTlsConfigTrustStore"
-                        label="Trust Store"
-                        helpText="Trust Store">
-            <l:SelectionBox ui:field="trustStore"/>
-        </form:FormGroup>
-        <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="trustSelfSignedCertificates"
-                                    identity="httpTlsConfigTrustSelfSignedCertificates"
-                                    label="Trust Self Signed Certificates"/>
-        </form:FormGroup>
-        <form:FormGroup>
+    <g:FlowPanel styleName="form">
+        <form:FormGroup helpText="Whether the server's certificate must be for the host name in the URL. Turning this off lets a server present any certificate it holds, which makes it much easier to impersonate. Only turn it off for testing. Default: on">
             <tickbox:CustomCheckBox ui:field="verifyHostname"
                                     identity="httpTlsConfigVerifyHostname"
                                     label="Verify Host Name"/>
         </form:FormGroup>
+        <form:FormGroup helpText="Whether a server certificate that is signed by itself, rather than by a certificate authority, is accepted. Prefer adding the server's certificate to a trust store instead, as this accepts any self-signed certificate. Default: off">
+            <tickbox:CustomCheckBox ui:field="trustSelfSignedCertificates"
+                                    identity="httpTlsConfigTrustSelfSignedCertificates"
+                                    label="Trust Self Signed Certificates"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigTrustStore"
+                        label="Trust Store"
+                        helpText="A key store credential holding the certificate authorities (or server certificates) to trust, e.g. an internal CA. Leave empty to trust the certificate authorities Stroom's Java runtime trusts by default.">
+            <l:SelectionBox ui:field="trustStore"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigKeyStore"
+                        label="Key Store"
+                        helpText="A key store credential holding the client certificate and private key that Stroom presents to the server, for servers that need mutual TLS (client certificate) authentication. Leave empty if the server does not ask for a client certificate.">
+            <l:SelectionBox ui:field="keyStore"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigCertAlias"
+                        label="Certificate Alias"
+                        helpText="Which client certificate in the key store to present, by its alias, when the key store holds more than one. Leave empty to let the client choose.">
+            <g:TextBox ui:field="certAlias"
+                       addStyleNames="w-100"
+                       title="Certificate Alias"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigProtocol"
+                        label="Protocol"
+                        helpText="The TLS protocol the connection is set up with, e.g. TLSv1.3 or TLSv1.2. Use TLSv1.2 for servers that do not support TLS 1.3. Default: TLSv1.3">
+            <g:TextBox ui:field="protocol"
+                       addStyleNames="w-100"
+                       title="Protocol"/>
+        </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigSupportedProtocols"
                         label="Supported Protocols"
-                        helpText="Supported Protocols">
+                        helpText="The TLS protocol versions that may be negotiated with the server, one per line, e.g. TLSv1.3 and TLSv1.2. Leave empty to allow every version the Java runtime enables.">
             <g:TextArea ui:field="supportedProtocols"
-                        width="400px"
+                        addStyleNames="w-100"
                         title="Supported Protocols"/>
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigSupportedCiphers"
                         label="Supported Ciphers"
-                        helpText="Supported Ciphers">
+                        helpText="The cipher suites that may be negotiated with the server, one per line, e.g. TLS_AES_256_GCM_SHA384. Leave empty to allow every cipher suite the Java runtime enables. Only restrict this if a security policy requires it.">
             <g:TextArea ui:field="supportedCiphers"
-                        width="400px"
+                        addStyleNames="w-100"
                         title="Supported Ciphers"/>
         </form:FormGroup>
-        <form:FormGroup identity="httpTlsConfigCertAlias"
-                        label="Certificate Alias"
-                        helpText="Certificate Alias">
-            <g:TextBox ui:field="certAlias"
-                       width="400px"
-                       title="Certificate Alias"/>
+        <form:FormGroup identity="httpTlsConfigProvider"
+                        label="Provider"
+                        helpText="The name of the Java security provider that implements TLS, e.g. SunJSSE. Leave empty to use the Java runtime's default, which is almost always right.">
+            <g:TextBox ui:field="provider"
+                       addStyleNames="w-100"
+                       title="Provider"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>
