@@ -16,6 +16,7 @@
 
 package stroom.main.client.presenter;
 
+import stroom.ai.client.PanelState;
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
@@ -41,6 +42,7 @@ import stroom.widget.util.client.GlobalKeyHandler;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -74,6 +76,7 @@ public class MainPresenter
     private boolean click;
     private final MenuItems menuItems;
     private int taskCount;
+    private boolean aiStateRestored;
     private boolean showingAi;
 
     @Inject
@@ -229,6 +232,18 @@ public class MainPresenter
                     .popupPosition(popupPosition)
                     .addAutoHidePartner(autoHidePartner)
                     .fire(this);
+        }
+    }
+
+    @Override
+    protected void onReveal() {
+        super.onReveal();
+        // Open the Ask Stroom AI chat again if it was open when the page was last left, e.g. before a refresh.
+        if (!aiStateRestored) {
+            aiStateRestored = true;
+            if (PanelState.wasOpen()) {
+                Scheduler.get().scheduleDeferred(() -> ShowAskStroomAiEvent.fire(this, true));
+            }
         }
     }
 

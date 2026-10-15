@@ -63,7 +63,7 @@
 
 .askStroomAiViewImpl-contextChip {
     display: none;
-    font-size: 0.75rem;
+    font-size: var(--ai-font-size--meta);
     line-height: 1;
     padding: 3px 8px;
     border-radius: 10px;
@@ -110,7 +110,11 @@
     min-width: 80px;
 }
 
-
+/* Text sizes in the chat: body text is 1em; these are the only smaller sizes, so text stays legible. */
+:root {
+    --ai-font-size--small: 0.9em;
+    --ai-font-size--meta: 0.85em;
+}
 
 /* ---- Message thread ---- */
 
@@ -124,8 +128,9 @@
 
 /* The user's own messages are bubbles on the right, as in most chat tools. */
 .ai-message--user {
-    background: var(--page__background-color);
-    border: 1px solid var(--control__border-color);
+    /* A muted blue, so questions stand out from answers without glaring, in light and dark themes. */
+    background: rgba(25, 118, 210, 0.16);
+    border: 1px solid rgba(25, 118, 210, 0.35);
     border-radius: 12px 12px 4px 12px;
     width: fit-content;
     max-width: 85%;
@@ -155,9 +160,10 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.85em;
+    font-size: var(--ai-font-size--small);
     font-weight: 600;
-    color: var(--control__text-color--disabled);
+    color: var(--control__text-color);
+    opacity: 0.8;
     margin-bottom: 4px;
 }
 
@@ -202,7 +208,7 @@
     align-items: center;
     gap: 8px;
     margin: 12px 0 4px;
-    font-size: 0.75em;
+    font-size: var(--ai-font-size--meta);
     color: var(--control__text-color--disabled);
 }
 
@@ -221,7 +227,7 @@
     justify-content: space-between;
     padding: 2px 6px;
     margin-top: 8px;
-    font-size: 0.8em;
+    font-size: var(--ai-font-size--meta);
     border: 1px solid var(--control__border-color);
     border-bottom: none;
     border-radius: 4px 4px 0 0;
@@ -240,20 +246,31 @@
 
 /* ---- Jump to the latest message ---- */
 
+/* Floats over the bottom of the conversation, taking no room of its own. */
 .askStroomAiViewImpl-jumpToLatestBar {
-    display: flex;
-    justify-content: center;
-    padding: 2px 0;
+    position: relative;
+    height: 0;
+    overflow: visible;
+    z-index: 1;
 }
 
 .askStroomAiViewImpl-jumpToLatest {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     cursor: pointer;
     font-size: 0.85em;
-    padding: 2px 10px;
-    border-radius: 12px;
-    color: var(--control__text-color);
-    background: var(--control__background-color);
-    border: 1px solid var(--control__border-color--focused);
+    padding: 3px 12px;
+    border-radius: 14px;
+    color: #ffffff;
+    background: #1976d2;
+    border: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.askStroomAiViewImpl-jumpToLatest:hover {
+    background: #1565c0;
 }
 
 .ai-message--error {
@@ -319,11 +336,47 @@
     background: var(--page__background-color);
 }
 
-.ai-message--working summary::marker,
-.ai-message--data summary::marker,
-.ai-message--thinking summary::marker,
-.ai-message--debug-detail summary::marker {
-    font-size: 0.8em;
+/* Expandable sections all use the same chevron, drawn with borders so it is bold enough to see. */
+.ai-message--working > summary,
+.ai-message--data > summary,
+.ai-message--thinking > summary,
+.ai-message--debug-detail > summary {
+    list-style: none;
+}
+
+.ai-message--working > summary::-webkit-details-marker,
+.ai-message--data > summary::-webkit-details-marker,
+.ai-message--thinking > summary::-webkit-details-marker,
+.ai-message--debug-detail > summary::-webkit-details-marker {
+    display: none;
+}
+
+.ai-message--working > summary::before,
+.ai-message--data > summary::before,
+.ai-message--thinking > summary::before,
+.ai-message--debug-detail > summary::before,
+.ai-activity > summary::before {
+    content: "";
+    display: inline-block;
+    flex: none;
+    align-self: center;
+    width: 7px;
+    height: 7px;
+    margin: 0 6px 0 2px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.15s;
+    vertical-align: 1px;
+}
+
+.ai-message--working[open] > summary::before,
+.ai-message--data[open] > summary::before,
+.ai-message--thinking[open] > summary::before,
+.ai-message--debug-detail[open] > summary::before,
+.ai-activity[open] > summary::before {
+    transform: rotate(45deg);
+    vertical-align: 3px;
 }
 
 .ai-message--debug-detail .ai-details-content {
@@ -377,7 +430,7 @@
 }
 
 .ai-attachment-status {
-    font-size: 0.85em;
+    font-size: var(--ai-font-size--meta);
     opacity: 0.8;
     font-style: italic;
     display: flex;
@@ -397,7 +450,8 @@
 }
 
 .ai-message-timestamp {
-    font-size: 0.7em;
+    font-size: var(--ai-font-size--meta);
+    white-space: nowrap;
     color: var(--control__text-color--disabled);
     margin-left: auto;
     cursor: default;
@@ -511,11 +565,12 @@
 .ai-badge--unread::after {
     content: "";
     position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 8px;
-    height: 8px;
+    top: 1px;
+    right: 1px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
+    box-shadow: 0 0 0 1px #ffffff;
     pointer-events: none;
 }
 
@@ -528,8 +583,9 @@
     animation: ai-badge-pulse 1.5s ease-in-out infinite;
 }
 
+/* Green, so it stands out from the blue button. */
 .ai-badge--unread::after {
-    background-color: #1976d2;
+    background-color: #43a047;
 }
 
 @keyframes ai-badge-pulse {
@@ -554,22 +610,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.85em;
+    font-size: var(--ai-font-size--small);
     color: var(--control__text-color--disabled);
 }
 
 .ai-activity > summary::-webkit-details-marker {
     display: none;
-}
-
-.ai-activity > summary::before {
-    content: "▸";
-    display: inline-block;
-    transition: transform 0.15s;
-}
-
-.ai-activity[open] > summary::before {
-    transform: rotate(90deg);
 }
 
 .ai-activity > summary:hover {
@@ -591,7 +637,7 @@
 .ai-activity-entries > .ai-message {
     margin: 2px 0;
     padding: 2px 4px;
-    font-size: 0.9em;
+    font-size: var(--ai-font-size--small);
 }
 
 .ai-activity-entry--error .ai-entry-title {
@@ -646,7 +692,7 @@
 .askStroomAiViewImpl-contextMeter {
     cursor: pointer;
     white-space: nowrap;
-    font-size: 0.8em;
+    font-size: var(--ai-font-size--meta);
     padding: 1px 6px;
     margin: 0 4px;
     border-radius: 10px;
@@ -700,7 +746,7 @@
 
 .askStroomAiViewImpl-commandDescription {
     margin-left: 8px;
-    font-size: 0.85em;
+    font-size: var(--ai-font-size--meta);
     color: var(--control__text-color--disabled);
 }
 
@@ -712,7 +758,7 @@
     gap: 8px;
     cursor: pointer;
     list-style: none;
-    font-size: 0.8em;
+    font-size: var(--ai-font-size--meta);
     color: var(--control__text-color--disabled);
 }
 
@@ -753,7 +799,7 @@
 }
 
 .ai-approval-reason {
-    font-size: 0.9em;
+    font-size: var(--ai-font-size--small);
     color: var(--control__text-color--disabled);
     margin-bottom: 6px;
 }
@@ -774,11 +820,11 @@
 
 .ai-approval-server {
     color: var(--control__text-color--disabled);
-    font-size: 0.9em;
+    font-size: var(--ai-font-size--small);
 }
 
 .ai-risk-badge {
-    font-size: 0.75em;
+    font-size: var(--ai-font-size--meta);
     padding: 0 6px;
     border-radius: 8px;
     border: 1px solid #ed6c02;
@@ -788,7 +834,7 @@
 
 .ai-approval-decision {
     margin-left: auto;
-    font-size: 0.85em;
+    font-size: var(--ai-font-size--meta);
     font-style: italic;
 }
 
@@ -806,7 +852,7 @@
     overflow: auto;
     margin: 6px 0 2px;
     padding: 4px 6px;
-    font-size: 0.85em;
+    font-size: var(--ai-font-size--small);
     white-space: pre-wrap;
     word-break: break-word;
     color: var(--control__text-color);
@@ -815,7 +861,7 @@
 }
 
 .ai-approval-size {
-    font-size: 0.75em;
+    font-size: var(--ai-font-size--meta);
     color: var(--control__text-color--disabled);
 }
 
