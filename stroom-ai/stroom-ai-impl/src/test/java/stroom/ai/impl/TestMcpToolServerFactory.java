@@ -31,6 +31,7 @@ import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.openid.api.UserTokenIssuer;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpHeader;
 
@@ -49,6 +50,7 @@ import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -75,6 +77,7 @@ class TestMcpToolServerFactory {
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final UserIdentityFactory userIdentityFactory = Mockito.mock(UserIdentityFactory.class);
     private final OpenIdConfiguration openIdConfiguration = Mockito.mock(OpenIdConfiguration.class);
+    private final UserTokenIssuer userTokenIssuer = Mockito.mock(UserTokenIssuer.class);
 
     {
         Mockito.when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.EXTERNAL_IDP);
@@ -82,7 +85,7 @@ class TestMcpToolServerFactory {
 
     private final McpToolServerFactory factory = new McpToolServerFactory(
             () -> storedSecrets, null, null, () -> securityContext, () -> userIdentityFactory, new McpClientCache(),
-            () -> null, AiConfig::new, () -> openIdConfiguration);
+            () -> null, AiConfig::new, () -> openIdConfiguration, () -> userTokenIssuer);
 
     @Test
     void noneMode() {
@@ -165,14 +168,58 @@ class TestMcpToolServerFactory {
     }
 
     @Test
-    void stroomSessionToken_needsAnExternalIdentityProvider() {
-        Mockito.when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.INTERNAL_IDP);
+    void stroomSessionToken_withTheInternalIdentityProvider_sendsATokenStroomIssues() {
+        internalIdp();
+        Mockito.when(userTokenIssuer.getAccessToken("jbloggs", "stroom-mcp", null)).thenReturn(Optional.of("issued"));
 
-        assertThatThrownBy(() -> headers(server(McpAuthMode.STROOM_SESSION_TOKEN, null)))
-                .hasMessageContaining("are unavailable")
-                .hasMessageContaining("external identity provider");
-        // Other modes don't depend on it.
-        assertThat(headers(server(McpAuthMode.NONE, null))).isEmpty();
+        assertThat(headers(issuedTokenServer("https://x/mcp", "stroom-mcp", true)))
+                .containsExactly(Map.entry("Authorization", "Bearer issued"));
+        // Not the session's token.
+        Mockito.verifyNoInteractions(userIdentityFactory);
+    }
+
+    @Test
+    void stroomSessionToken_withTheInternalIdentityProvider_needsAnAudienceATrustedServerAndHttps() {
+        internalIdp();
+        Mockito.when(userTokenIssuer.getAccessToken(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(Optional.of("issued"));
+
+        assertThatThrownBy(() -> headers(issuedTokenServer("https://x/mcp", " ", true)))
+                .hasMessageContaining("no token audience");
+        assertThatThrownBy(() -> headers(issuedTokenServer("https://x/mcp", "stroom-mcp", false)))
+                .hasMessageContaining("trusted server");
+        assertThatThrownBy(() -> headers(issuedTokenServer("http://mcp.example.com/mcp", "stroom-mcp", true)))
+                .hasMessageContaining("https");
+        // On the same machine, http is allowed.
+        assertThat(headers(issuedTokenServer("http://localhost:8000/mcp", "stroom-mcp", true))).hasSize(1);
+        Mockito.verify(userTokenIssuer, Mockito.times(2)).getAccessToken("jbloggs", "stroom-mcp", null);
+    }
+
+    @Test
+    void secureEndpoints() {
+        assertThat(McpToolServerFactory.isSecureEndpoint("https://mcp.example.com/mcp")).isTrue();
+        assertThat(McpToolServerFactory.isSecureEndpoint("http://127.0.0.1:8000/mcp")).isTrue();
+        assertThat(McpToolServerFactory.isSecureEndpoint("http://[::1]:8000/mcp")).isTrue();
+        assertThat(McpToolServerFactory.isSecureEndpoint("http://localhost.evil.com/mcp")).isFalse();
+        assertThat(McpToolServerFactory.isSecureEndpoint("http://mcp.example.com/mcp")).isFalse();
+        assertThat(McpToolServerFactory.isSecureEndpoint("not a url")).isFalse();
+        assertThat(McpToolServerFactory.isSecureEndpoint(null)).isFalse();
+    }
+
+    private void internalIdp() {
+        Mockito.when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.INTERNAL_IDP);
+        Mockito.when(userIdentity.subjectId()).thenReturn("jbloggs");
+        Mockito.when(securityContext.getUserIdentity()).thenReturn(userIdentity);
+    }
+
+    private McpToolServerConfig issuedTokenServer(final String endpoint, final String audience, final boolean trusted) {
+        return McpToolServerConfig.builder()
+                .name("s")
+                .endpoint(endpoint)
+                .authMode(McpAuthMode.STROOM_SESSION_TOKEN)
+                .audience(audience)
+                .trusted(trusted)
+                .build();
     }
 
     private Map<String, String> headers(final McpToolServerConfig server) {

@@ -47,7 +47,7 @@ class TestOpenAIModelResourceImpl {
     private final McpToolServerFactory factory = new McpToolServerFactory(
             () -> Mockito.mock(StoredSecrets.class), null, null, () -> securityContext,
             () -> Mockito.mock(UserIdentityFactory.class), new McpClientCache(), () -> null, AiConfig::new,
-            () -> Mockito.mock(OpenIdConfiguration.class));
+            () -> Mockito.mock(OpenIdConfiguration.class), () -> null);
     private final OpenAIModelResourceImpl resource = new OpenAIModelResourceImpl(
             () -> null, () -> null, () -> null, () -> securityContext, () -> factory);
 

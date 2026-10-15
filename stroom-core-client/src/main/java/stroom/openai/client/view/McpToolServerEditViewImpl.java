@@ -94,6 +94,10 @@ public class McpToolServerEditViewImpl
     @UiField
     TextBox apiKeyValuePrefix;
     @UiField
+    FormGroup audienceGroup;
+    @UiField
+    TextBox audience;
+    @UiField
     CustomCheckBox trusted;
     @UiField
     FlowPanel toolPolicies;
@@ -154,6 +158,7 @@ public class McpToolServerEditViewImpl
         credential.setEnabled(!readOnly);
         apiKeyHeaderName.setEnabled(!readOnly);
         apiKeyValuePrefix.setEnabled(!readOnly);
+        audience.setEnabled(!readOnly);
         trusted.setEnabled(!readOnly);
         setHttpClientConfig.setEnabled(!readOnly);
         addPolicy.setEnabled(!readOnly);
@@ -276,6 +281,21 @@ public class McpToolServerEditViewImpl
     public void setAuthModeWarning(final String warning) {
         authModeWarning.setText(warning);
         authModeWarning.setVisible(warning != null);
+    }
+
+    @Override
+    public String getAudience() {
+        return audience.getValue();
+    }
+
+    @Override
+    public void setAudience(final String audience) {
+        this.audience.setValue(audience);
+    }
+
+    @Override
+    public void setAudienceVisible(final boolean visible) {
+        audienceGroup.setVisible(visible);
     }
 
     @Override

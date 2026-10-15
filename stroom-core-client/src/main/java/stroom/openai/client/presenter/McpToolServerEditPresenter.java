@@ -204,12 +204,16 @@ public class McpToolServerEditPresenter
      */
     private void updateAuthModeWarning(final McpAuthMode authMode) {
         getView().setAuthModeWarning(null);
+        getView().setAudienceVisible(false);
         if (authMode == McpAuthMode.STROOM_SESSION_TOKEN) {
             uiConfigCache.get(config -> {
                 if (config != null && !config.isExternalIdentityProvider()) {
-                    getView().setAuthModeWarning("Stroom uses its internal identity provider, so it has no "
-                                                 + "sign-in to pass through. This server's tools will be "
-                                                 + "unavailable until Stroom uses an external identity provider.");
+                    // Stroom issues its own tokens for the server, which need an audience.
+                    getView().setAudienceVisible(true);
+                    getView().setAuthModeWarning("Stroom uses its internal identity provider, so it signs each "
+                                                 + "user in with a short-lived token it issues for this server. "
+                                                 + "Set the token audience, mark the server trusted, and use "
+                                                 + "https.");
                 }
             }, this);
         }
@@ -244,6 +248,7 @@ public class McpToolServerEditPresenter
         getView().setApiKeyHeaderName(NullSafe.nonBlankStringElse(
                 c.getApiKeyHeaderName(), McpToolServerConfig.DEFAULT_API_KEY_HEADER_NAME));
         getView().setApiKeyValuePrefix(c.getApiKeyValuePrefix());
+        getView().setAudience(c.getAudience());
         getView().setApiKeyFieldsVisible(c.getAuthMode() == McpAuthMode.API_KEY);
         getView().setTrusted(c.isTrusted());
         getView().setToolPolicies(c.getToolPolicies());
@@ -260,6 +265,7 @@ public class McpToolServerEditPresenter
                         getView().getCredentialSelectionBox().getValue(), Credential::getName))
                 .apiKeyHeaderName(NullSafe.trim(getView().getApiKeyHeaderName()))
                 .apiKeyValuePrefix(getView().getApiKeyValuePrefix())
+                .audience(NullSafe.trim(getView().getAudience()))
                 .httpClientConfiguration(httpClientConfiguration)
                 .trusted(getView().isTrusted())
                 .toolPolicies(NullSafe.isEmptyCollection(getView().getToolPolicies())
@@ -329,6 +335,13 @@ public class McpToolServerEditPresenter
         String getApiKeyValuePrefix();
 
         void setApiKeyValuePrefix(String apiKeyValuePrefix);
+
+        String getAudience();
+
+        void setAudience(String audience);
+
+        /// Shows the token audience, used for 'OAuth2 passthrough' with Stroom's internal identity provider.
+        void setAudienceVisible(boolean visible);
 
         void setApiKeyFieldsVisible(boolean visible);
 

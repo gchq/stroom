@@ -41,13 +41,14 @@ class TestUserTokenIssuerImpl {
     private final OAuthTokenDao oAuthTokenDao = Mockito.mock(OAuthTokenDao.class);
     private final RevokedTokenChecker revokedTokenChecker = Mockito.mock(RevokedTokenChecker.class);
     private final OpenIdConfiguration openIdConfiguration = Mockito.mock(OpenIdConfiguration.class);
+    private PublicJsonWebKeyProvider keys;
     private UserTokenIssuerImpl issuer;
 
     @BeforeEach
     void setUp() throws JoseException {
         final RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(2048);
         jwk.setKeyId("test-key");
-        final PublicJsonWebKeyProvider keys = Mockito.mock(PublicJsonWebKeyProvider.class);
+        keys = Mockito.mock(PublicJsonWebKeyProvider.class);
         Mockito.when(keys.getActiveKey()).thenReturn(jwk);
         Mockito.when(openIdConfiguration.getIssuer()).thenReturn("http://stroom");
         Mockito.when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.INTERNAL_IDP);
@@ -58,7 +59,7 @@ class TestUserTokenIssuerImpl {
 
     @Test
     void aTokenIsForTheUserAndAudienceAndShortLived() throws Exception {
-        final String token = issuer.getAccessToken("jbloggs", "stroom-mcp").orElseThrow();
+        final String token = issuer.getAccessToken("jbloggs", "stroom-mcp", null).orElseThrow();
 
         final JwtClaims claims = claimsOf(token);
         assertThat(claims.getSubject()).isEqualTo("jbloggs");
@@ -76,16 +77,39 @@ class TestUserTokenIssuerImpl {
 
     @Test
     void aTokenIsReusedUntilRevoked() {
-        final String first = issuer.getAccessToken("jbloggs", "stroom-mcp").orElseThrow();
+        final String first = issuer.getAccessToken("jbloggs", "stroom-mcp", null).orElseThrow();
 
-        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp")).contains(first);
+        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", null)).contains(first);
         // Another audience or user gets its own.
-        assertThat(issuer.getAccessToken("jbloggs", "other-mcp")).isNotEqualTo(Optional.of(first));
-        assertThat(issuer.getAccessToken("asmith", "stroom-mcp")).isNotEqualTo(Optional.of(first));
+        assertThat(issuer.getAccessToken("jbloggs", "other-mcp", null)).isNotEqualTo(Optional.of(first));
+        assertThat(issuer.getAccessToken("asmith", "stroom-mcp", null)).isNotEqualTo(Optional.of(first));
 
         // E.g. the user signed out.
         Mockito.when(revokedTokenChecker.isRevoked(Mockito.anyString())).thenReturn(true);
-        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp")).isNotEqualTo(Optional.of(first));
+        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", null)).isNotEqualTo(Optional.of(first));
+    }
+
+    @Test
+    void aTokenJoinsTheGrantOfTheSignInSoSigningOutRevokesIt() {
+        final String signIn = new TokenBuilderFactory(IdentityConfig::new, keys, () -> openIdConfiguration).builder()
+                .subject("jbloggs")
+                .clientId("stroom")
+                .build()
+                .token();
+        Mockito.when(oAuthTokenDao.fetchByJti(Mockito.anyString(), Mockito.anyLong()))
+                .thenReturn(Optional.of(OAuthToken.newJwt(OAuthTokenType.ACCESS, "j", "jbloggs", "stroom",
+                        "family-1", null, null, 0L, Long.MAX_VALUE)));
+
+        final String token = issuer.getAccessToken("jbloggs", "stroom-mcp", signIn).orElseThrow();
+
+        final ArgumentCaptor<OAuthToken> recorded = ArgumentCaptor.forClass(OAuthToken.class);
+        Mockito.verify(oAuthTokenDao).create(recorded.capture());
+        assertThat(recorded.getValue().familyId()).isEqualTo("family-1");
+        // Another sign-in of the same user gets its own token.
+        Mockito.when(oAuthTokenDao.fetchByJti(Mockito.anyString(), Mockito.anyLong()))
+                .thenReturn(Optional.of(OAuthToken.newJwt(OAuthTokenType.ACCESS, "j", "jbloggs", "stroom",
+                        "family-2", null, null, 0L, Long.MAX_VALUE)));
+        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", signIn)).isNotEqualTo(Optional.of(token));
     }
 
     @Test
@@ -93,14 +117,14 @@ class TestUserTokenIssuerImpl {
         Mockito.when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.EXTERNAL_IDP);
 
         assertThat(issuer.isAvailable()).isFalse();
-        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp")).isEmpty();
+        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", null)).isEmpty();
         Mockito.verifyNoInteractions(oAuthTokenDao);
     }
 
     @Test
     void noTokenWithoutAUserOrAudience() {
-        assertThat(issuer.getAccessToken(" ", "stroom-mcp")).isEmpty();
-        assertThat(issuer.getAccessToken("jbloggs", null)).isEmpty();
+        assertThat(issuer.getAccessToken(" ", "stroom-mcp", null)).isEmpty();
+        assertThat(issuer.getAccessToken("jbloggs", null, null)).isEmpty();
     }
 
     private static JwtClaims claimsOf(final String jwt) throws Exception {

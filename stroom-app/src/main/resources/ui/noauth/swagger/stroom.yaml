@@ -17979,6 +17979,8 @@ components:
           type: string
         apiKeyValuePrefix:
           type: string
+        audience:
+          type: string
         authMode:
           type: string
           enum:
