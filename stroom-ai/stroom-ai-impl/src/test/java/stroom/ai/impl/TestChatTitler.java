@@ -21,6 +21,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -38,7 +39,8 @@ class TestChatTitler {
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
-    private final ChatTitler titler = new ChatTitler(aiService, aiDao);
+    private AiConfig aiConfig = new AiConfig();
+    private final ChatTitler titler = new ChatTitler(aiService, aiDao, () -> aiConfig);
     private final List<ChatRequest> requests = new ArrayList<>();
 
     @Test
@@ -91,6 +93,30 @@ class TestChatTitler {
     }
 
     @Test
+    void theModelIsAskedForUpToTheConfiguredNumberOfWords() {
+        questions("one");
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, 4);
+
+        titler.retitleIfDue(1, model("Firewall errors on hosts fw1 and fw2"));
+
+        assertThat(((SystemMessage) requests.getFirst().messages().getFirst()).text()).contains("at most 4 words");
+        // A longer reply is cut to that many words.
+        Mockito.verify(aiDao).setAutoTitle(1, "Firewall errors on hosts");
+    }
+
+    @Test
+    void byDefaultTitlesAreUpToTwelveWords() {
+        questions("one");
+        final String title = "Why the firewall on host fw1 dropped packets from the backup network overnight";
+
+        titler.retitleIfDue(1, model(title));
+
+        assertThat(((SystemMessage) requests.getFirst().messages().getFirst()).text()).contains("at most 12 words");
+        Mockito.verify(aiDao).setAutoTitle(1, "Why the firewall on host fw1 dropped packets from the backup network");
+    }
+
+    @Test
     void noTitleIsAskedForWhenNoneIsDue() {
         questions("one", "two");
 
@@ -134,7 +160,7 @@ class TestChatTitler {
         assertThat(ChatTitler.clean("'Quoted'")).isEqualTo("Quoted");
         // A label inside quotes, as models sometimes give.
         assertThat(ChatTitler.clean("\"Title: Firewall errors.\"")).isEqualTo("Firewall errors");
-        assertThat(ChatTitler.clean("y".repeat(100))).hasSize(ChatTitler.MAX_TITLE_CHARS).endsWith("…");
+        assertThat(ChatTitler.clean("y".repeat(300))).hasSize(ChatTitler.MAX_TITLE_CHARS).endsWith("…");
         assertThat(ChatTitler.clean(null)).isEmpty();
     }
 

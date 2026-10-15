@@ -268,7 +268,7 @@ class TestAiChatRunManager {
     @Test
     void testTick_stopsRunsPastTheTimeLimit() {
         aiConfig = new AiConfig(null, null, StroomDuration.ZERO, null, null, null, null, null, null, null, null,
-                null, null, null, null);
+                null, null, null, null, null);
         startAndTick(true);
 
         Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.STOPPING),
@@ -342,7 +342,8 @@ class TestAiChatRunManager {
 
     @Test
     void testStart_queuedWhenTheUserIsAtTheLimit() {
-        aiConfig = new AiConfig(null, null, null, null, 1, 20, null, null, null, null, null, null, null, null, null);
+        aiConfig = new AiConfig(null, null, null, null, 1, 20, null, null, null, null, null, null, null, null, null,
+                null);
         Mockito.when(runDao.countWorking("user1")).thenReturn(1);
         final AiChatRun queued = new AiChatRun(7, 1, AiChatRunStatus.QUEUED, null, 0L, null, false, null);
         Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.QUEUED, "node1", null))
@@ -365,7 +366,8 @@ class TestAiChatRunManager {
 
     @Test
     void testStartQueued_runStoppedWhileQueuedIsDropped() {
-        aiConfig = new AiConfig(null, null, null, null, 1, 20, null, null, null, null, null, null, null, null, null);
+        aiConfig = new AiConfig(null, null, null, null, 1, 20, null, null, null, null, null, null, null, null, null,
+                null);
         Mockito.when(runDao.countWorking("user1")).thenReturn(1);
         final AiChatRun queued = new AiChatRun(7, 1, AiChatRunStatus.QUEUED, null, 0L, null, false, null);
         Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.QUEUED, "node1", null))
@@ -387,7 +389,8 @@ class TestAiChatRunManager {
 
     @Test
     void testStart_queuedWhenTheNodeIsAtTheLimit() {
-        aiConfig = new AiConfig(null, null, null, null, 3, 0, null, null, null, null, null, null, null, null, null);
+        aiConfig = new AiConfig(null, null, null, null, 3, 0, null, null, null, null, null, null, null, null, null,
+                null);
         final AiChatRun queued = new AiChatRun(7, 1, AiChatRunStatus.QUEUED, null, 0L, null, false, null);
         Mockito.when(runDao.createIfNoneActive(1, "user1", AiChatRunStatus.QUEUED, "node1", null))
                 .thenReturn(Optional.of(queued));

@@ -238,6 +238,11 @@ public class MockAiDao implements AiDao {
     }
 
     @Override
+    public List<ChatSearchMatch> searchChats(final String userUuid, final String text, final int limit) {
+        return List.of();
+    }
+
+    @Override
     public int markAllRead(final String userUuid) {
         // Not tracked by the mock.
         return 0;

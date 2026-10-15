@@ -618,14 +618,28 @@
     border-radius: 4px;
 }
 
+/* A long title is cut short to fit on one line, keeping the arrow in view. */
+.askStroomAiViewImpl-title .askStroomAiViewImpl-switcher {
+    position: relative;
+    width: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-right: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .askStroomAiViewImpl-switcher:hover,
 .askStroomAiViewImpl-switcher--open {
     background: var(--curve-tab__background-color--hover);
 }
 
 .askStroomAiViewImpl-switcher::after {
-    content: " \25BE";
+    content: "\25BE";
     opacity: 0.6;
+    position: absolute;
+    right: 6px;
 }
 
 /* Badges on the toolbar's Ask Stroom AI button: a chat needs the user, is working, or has unread messages. */
@@ -1286,12 +1300,59 @@
     margin: 4px 0;
 }
 
-/* Buttons above the list of chats. */
+/* The search box and buttons above the list of chats, kept in view as the list scrolls. */
 .ai-chat-list-header {
+    position: sticky;
+    top: -8px;
+    z-index: 1;
     display: flex;
-    justify-content: flex-end;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    margin: -8px -12px 6px;
+    padding: 8px 12px 6px;
+    background: var(--control__background-color);
+}
+
+/* The buttons go below the search box when there isn't room for both. */
+.ai-chat-list-search.allow-focus {
+    flex: 1 1 120px;
+    min-width: 120px;
+    max-width: 320px;
+    font-size: var(--ai-font-size--small);
+}
+
+.ai-chat-list-actions {
+    margin-left: auto;
+    display: flex;
     gap: 8px;
-    margin-bottom: 6px;
+    flex: none;
+}
+
+/* Part of the matching question, under a chat found by searching. */
+.ai-chat-list-snippet {
+    margin-top: 2px;
+    font-size: var(--ai-font-size--meta);
+    color: var(--control__text-color--disabled);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+/* A match of the search. */
+mark.ai-chat-list-hit {
+    background: rgba(255, 200, 0, 0.35);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0;
+}
+
+/* Chrome paints a cut-off match's background past a title's ellipsis; an inline block is hidden whole instead. */
+.ai-chat-list-title mark.ai-chat-list-hit {
+    display: inline-block;
 }
 
 .ai-chat-list-action {

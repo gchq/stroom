@@ -40,6 +40,7 @@ import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
+import stroom.ai.shared.AiChatSearchHit;
 import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMcpPrompt;
@@ -130,6 +131,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -146,6 +148,13 @@ import java.util.stream.Collectors;
 public class AskStroomAIService {
 
     static final int MAX_CHAT_STATUSES = 100;
+    // Searching chats: the shortest text searched for (shorter matches too much to be useful), and the most chats
+    // returned.
+    static final int MIN_SEARCH_CHARS = 2;
+    static final int MAX_SEARCH_HITS = 50;
+    // How much of a matching question is shown around the match.
+    static final int SNIPPET_CHARS_BEFORE = 60;
+    static final int SNIPPET_CHARS = 240;
     // How much of each table batch prompt the chat so far may take when the model's context window is not known.
     static final int DEFAULT_CONVERSATION_CONTEXT_TOKENS = 2_000;
     static final String NOTHING_TO_COMPACT = "There is nothing to compact yet: the latest turns are always kept "
@@ -1859,6 +1868,54 @@ public class AskStroomAIService {
 
         // Clean up attachment files on disk.
         attachmentFileStore.deleteAttachmentFiles(attachmentIds);
+    }
+
+    /**
+     * Searches the user's chats by their titles and the user's questions in them, ignoring case.
+     *
+     * @param text What to look for. Text shorter than {@link #MIN_SEARCH_CHARS} finds nothing.
+     * @return The chats found, most recently active first, each with part of the latest matching question.
+     */
+    public List<AiChatSearchHit> searchChats(final String text) {
+        final String userUuid = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
+        final String trimmed = NullSafe.string(text).strip();
+        if (userUuid == null || trimmed.length() < MIN_SEARCH_CHARS) {
+            return List.of();
+        }
+        return aiDao.searchChats(userUuid, trimmed, MAX_SEARCH_HITS).stream()
+                .map(match -> new AiChatSearchHit(match.chatId(), match.title(), match.updateTimeMs(),
+                        snippet(match.question(), trimmed)))
+                .toList();
+    }
+
+    /**
+     * @param question A question that contains the text, or null.
+     * @param text     The text searched for.
+     * @return Part of the question around the first match, on one line, with "…" where it was cut, or null if
+     * there is no question.
+     */
+    static String snippet(final String question, final String text) {
+        if (question == null) {
+            return null;
+        }
+        final String oneLine = question.replaceAll("\\s+", " ").strip();
+        final int at = Math.max(0, oneLine.toLowerCase(Locale.ROOT).indexOf(text.toLowerCase(Locale.ROOT)));
+        int start = Math.max(0, at - SNIPPET_CHARS_BEFORE);
+        // Start at a word, unless that would lose the match.
+        if (start > 0) {
+            final int space = oneLine.indexOf(' ', start);
+            if (space >= 0 && space < at) {
+                start = space + 1;
+            }
+        }
+        final int end = Math.min(oneLine.length(), start + SNIPPET_CHARS);
+        return (start > 0
+                ? "…"
+                : "")
+               + oneLine.substring(start, end)
+               + (end < oneLine.length()
+                ? "…"
+                : "");
     }
 
     /**

@@ -634,4 +634,33 @@ class TestAskStroomAIService {
     private static AiChatMessage message(final int id, final AiMessageType type, final String text) {
         return new AiChatMessage(id, 1, 0L, type, null, text, 0, null);
     }
+
+    @Test
+    void testSnippetsShowTheMatchInContext() {
+        final String question = "word ".repeat(40) + "the FIREWALL dropped packets\nfrom fw1 " + "tail ".repeat(80);
+
+        final String snippet = AskStroomAIService.snippet(question, "firewall");
+
+        assertThat(snippet)
+                .startsWith("…")
+                .endsWith("…")
+                .contains("the FIREWALL dropped packets from fw1")
+                .doesNotContain("\n");
+        assertThat(snippet.length()).isLessThanOrEqualTo(AskStroomAIService.SNIPPET_CHARS + 2);
+        // A short question is shown whole.
+        assertThat(AskStroomAIService.snippet("Is fw1 up?", "fw1")).isEqualTo("Is fw1 up?");
+        assertThat(AskStroomAIService.snippet(null, "fw1")).isNull();
+    }
+
+    @Test
+    void testSearchingWithTooLittleTextFindsNothing() {
+        Mockito.when(securityContext.getUserRef()).thenReturn(UserRef.builder().uuid("user1").build());
+
+        assertThat(serviceForDelete().searchChats(" a ")).isEmpty();
+        Mockito.verify(aiDao, Mockito.never()).searchChats(Mockito.any(), Mockito.any(), Mockito.anyInt());
+
+        serviceForDelete().searchChats(" fw ");
+        Mockito.verify(aiDao).searchChats("user1", "fw", AskStroomAIService.MAX_SEARCH_HITS);
+    }
+
 }

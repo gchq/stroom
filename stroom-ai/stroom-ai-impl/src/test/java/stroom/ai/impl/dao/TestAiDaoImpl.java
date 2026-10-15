@@ -268,4 +268,47 @@ class TestAiDaoImpl {
         assertThat(aiDao.setAutoTitle(chat.getId(), "Disk space")).isTrue();
     }
 
+
+    @Test
+    void searchFindsChatsByTitleOrQuestion() {
+        final AiChat byTitle = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        aiDao.updateChatTitle(byTitle.getId(), "Firewall errors");
+        final AiChat byQuestion = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        aiDao.storeMessage(byQuestion.getId(), AiMessageType.USER_MESSAGE, "Why is FIREWALL fw1 slow?");
+        aiDao.storeMessage(byQuestion.getId(), AiMessageType.AI_RESPONSE, "an answer");
+        aiDao.storeMessage(byQuestion.getId(), AiMessageType.USER_MESSAGE, "and the firewall on fw2?");
+        final AiChat byAnswerOnly = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        aiDao.storeMessage(byAnswerOnly.getId(), AiMessageType.USER_MESSAGE, "what failed?");
+        aiDao.storeMessage(byAnswerOnly.getId(), AiMessageType.AI_RESPONSE, "the firewall failed");
+        final AiChat othersChat = aiDao.createChat(UserRef.builder().uuid("user2").build());
+        aiDao.updateChatTitle(othersChat.getId(), "Firewall too");
+
+        final List<AiDao.ChatSearchMatch> matches = aiDao.searchChats("user1", "firewall", 10);
+
+        // Ignoring case; only the user's own chats; not answers.
+        assertThat(matches).extracting(AiDao.ChatSearchMatch::chatId)
+                .containsExactlyInAnyOrder(byTitle.getId(), byQuestion.getId());
+        // The latest matching question is given, and none where only the title matched.
+        assertThat(matches).filteredOn(match -> match.chatId() == byQuestion.getId())
+                .singleElement()
+                .extracting(AiDao.ChatSearchMatch::question)
+                .isEqualTo("and the firewall on fw2?");
+        assertThat(matches).filteredOn(match -> match.chatId() == byTitle.getId())
+                .singleElement()
+                .extracting(AiDao.ChatSearchMatch::question)
+                .isNull();
+        assertThat(aiDao.searchChats("user1", "firewall", 1)).hasSize(1);
+    }
+
+    @Test
+    void searchTreatsWildcardsAsText() {
+        final AiChat chat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        aiDao.storeMessage(chat.getId(), AiMessageType.USER_MESSAGE, "disk 100% full");
+
+        assertThat(aiDao.searchChats("user1", "100%", 10)).hasSize(1);
+        assertThat(aiDao.searchChats("user1", "1_0", 10)).isEmpty();
+        assertThat(aiDao.searchChats("user1", "%", 10)).hasSize(1);
+        assertThat(aiDao.searchChats("user1", "!", 10)).isEmpty();
+    }
+
 }

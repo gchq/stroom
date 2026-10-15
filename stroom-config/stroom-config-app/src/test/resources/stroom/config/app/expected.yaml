@@ -48,6 +48,7 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     elicitationTimeout: "PT10M"
+    maxChatTitleWords: 12
     maxElicitationsPerNode: 5
     maxRunDuration: "PT2H"
     maxRunsPerNode: 20

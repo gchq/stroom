@@ -204,6 +204,15 @@ public interface AiDao {
      */
     List<AiChatStatus> getChatStatuses(String userUuid, int limit);
 
+    /// Finds the user's chats whose title, or one of whose questions, contains some text, ignoring case.
+    ///
+    /// @param userUuid The user.
+    /// @param text     The text.
+    /// @param limit    The most chats to return.
+    /// @return The chats, most recently active first, each with the latest of its questions that matched, if
+    /// any did.
+    List<ChatSearchMatch> searchChats(String userUuid, String text, int limit);
+
     /**
      * @param userUuid A user.
      * @return A number that changes whenever the status of any of the user's chats might have.
@@ -242,6 +251,16 @@ public interface AiDao {
                      Integer lastInputTokens,
                      long totalInputTokens,
                      long totalOutputTokens) {
+
+    }
+
+    /// A chat found by [#searchChats].
+    ///
+    /// @param chatId       The chat.
+    /// @param title        Its title.
+    /// @param updateTimeMs When it was last active.
+    /// @param question     The latest of its questions that matched, or null if only the title did.
+    record ChatSearchMatch(int chatId, String title, long updateTimeMs, String question) {
 
     }
 }
