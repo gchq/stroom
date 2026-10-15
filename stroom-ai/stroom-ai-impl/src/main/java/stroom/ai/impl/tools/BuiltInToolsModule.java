@@ -40,7 +40,6 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(ReadFileTool.class)
                 .addBinding(GrepTool.class)
                 .addBinding(WcTool.class)
-                .addBinding(UploadFileTool.class)
                 .addBinding(WriteFileTool.class)
                 .addBinding(StrReplaceTool.class)
                 .addBinding(DeleteFileTool.class)

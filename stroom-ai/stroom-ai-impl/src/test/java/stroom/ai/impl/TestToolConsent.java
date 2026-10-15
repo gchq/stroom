@@ -56,20 +56,6 @@ class TestToolConsent {
     }
 
     @Test
-    void testUploadsAlwaysAsk() {
-        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
-                ToolSpecification.builder().name("upload_file").build(), (request, memoryId) -> ""));
-        Mockito.when(builtInTools.alwaysAsks("upload_file")).thenReturn(true);
-
-        final ToolConsent.Verdict verdict = decide("upload_file", false);
-
-        assertThat(verdict.kind()).isEqualTo(Kind.ASK);
-        assertThat(verdict.risks()).containsExactly("sends data out");
-        // Never for the rest of the chat: each upload is checked.
-        assertThat(verdict.allowForChat()).isFalse();
-    }
-
-    @Test
     void testUntrustedServersAlwaysAsk() {
         tool(info(false, true, null, null, null));
 
