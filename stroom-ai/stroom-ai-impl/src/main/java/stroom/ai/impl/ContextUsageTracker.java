@@ -52,6 +52,7 @@ public class ContextUsageTracker {
     private final AiChatRunManager runManager;
     private final Map<Integer, Double> corrections = new ConcurrentHashMap<>();
     private final Map<Integer, Integer> toolDefinitionTokens = new ConcurrentHashMap<>();
+    private final Map<Integer, Integer> serverInstructionTokens = new ConcurrentHashMap<>();
 
     @Inject
     ContextUsageTracker(final AiDao aiDao, final AiChatRunManager runManager) {
@@ -124,6 +125,21 @@ public class ContextUsageTracker {
         return toolDefinitionTokens.getOrDefault(chatId, 0);
     }
 
+    /// Records the MCP server instructions given to the model in the chat's latest run, so the context breakdown
+    /// can show them.
+    ///
+    /// @param chatId       The chat.
+    /// @param instructions The instructions, or null if there were none.
+    public void recordServerInstructions(final int chatId, final String instructions) {
+        serverInstructionTokens.put(chatId, ESTIMATOR.estimateTokenCountInText(NullSafe.string(instructions)));
+    }
+
+    /// @param chatId The chat.
+    /// @return An estimate of the tokens taken by the MCP server instructions in the chat's latest run.
+    public int getServerInstructionTokens(final int chatId) {
+        return serverInstructionTokens.getOrDefault(chatId, 0);
+    }
+
     /// @param tools Tool definitions, or null.
     /// @return An estimate of the tokens they take.
     static int estimateTools(final List<ToolSpecification> tools) {
@@ -141,5 +157,6 @@ public class ContextUsageTracker {
     public void forget(final int chatId) {
         corrections.remove(chatId);
         toolDefinitionTokens.remove(chatId);
+        serverInstructionTokens.remove(chatId);
     }
 }

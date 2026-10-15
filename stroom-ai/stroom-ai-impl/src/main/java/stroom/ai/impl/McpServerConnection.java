@@ -97,6 +97,11 @@ final class McpServerConnection implements AutoCloseable {
         return lastUsedMs;
     }
 
+    /// @return What the server says, when connected, about how to use it, or null if it says nothing.
+    String instructions() {
+        return client.getServerInstructions();
+    }
+
     /// @return The server's tools, from the cache if the list is recent enough.
     List<Tool> tools() {
         final List<Tool> current = tools;
