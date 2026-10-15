@@ -180,8 +180,12 @@ class TestContextAssembler {
         final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
 
         Mockito.when(aiDao.getAgentMode(1)).thenReturn(AiAgentMode.AGENT);
+        // So that after a switch from Plan mode, the model knows it can now do what it planned.
         assertThat(((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), history,
-                CompactionRecord.NONE, true).getFirst()).text()).doesNotContain("## Mode");
+                CompactionRecord.NONE, true).getFirst()).text()).contains(ContextAssembler.AGENT_GUIDANCE);
+        // A model without tools has nothing to change things with.
+        assertThat(((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), history,
+                CompactionRecord.NONE, false).getFirst()).text()).doesNotContain("## Mode");
 
         Mockito.when(aiDao.getAgentMode(1)).thenReturn(AiAgentMode.ASK);
         assertThat(((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), history,

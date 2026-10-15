@@ -103,4 +103,10 @@ class MemoryTool extends AbstractBuiltInTool {
         // Memory only holds what the user wrote, or changes they could see (and approve) being made.
         return false;
     }
+
+    /// @return False. Some of its commands change memory.
+    @Override
+    public boolean isReadOnly() {
+        return false;
+    }
 }
