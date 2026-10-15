@@ -18,6 +18,7 @@ appConfig:
         prepStmtCacheSqlLimit: 256
   ai:
     allowApproveEverything: false
+    askReadOnlyToolsAfterUntrustedContent: false
     chatResponseCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"
@@ -58,6 +59,7 @@ appConfig:
       maxChatBytes: 104857600
       maxFileBytes: 20971520
       maxLinesPerRead: 500
+      maxQueryLength: 10000
       maxUserBytes: 524288000
       queryTimeLimit: "PT2M"
       toolTimeLimit: "PT30S"

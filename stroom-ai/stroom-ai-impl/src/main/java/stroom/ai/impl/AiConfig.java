@@ -57,6 +57,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final int toolGroupThreshold;
     private final StroomDuration elicitationTimeout;
     private final int maxElicitationsPerNode;
+    private final boolean askReadOnlyToolsAfterUntrustedContent;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -76,6 +77,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         toolGroupThreshold = DEFAULT_TOOL_GROUP_THRESHOLD;
         elicitationTimeout = DEFAULT_ELICITATION_TIMEOUT;
         maxElicitationsPerNode = DEFAULT_MAX_ELICITATIONS_PER_NODE;
+        askReadOnlyToolsAfterUntrustedContent = false;
     }
 
     @SuppressWarnings("unused")
@@ -93,7 +95,9 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("allowApproveEverything") final Boolean allowApproveEverything,
                     @JsonProperty("toolGroupThreshold") final Integer toolGroupThreshold,
                     @JsonProperty("elicitationTimeout") final StroomDuration elicitationTimeout,
-                    @JsonProperty("maxElicitationsPerNode") final Integer maxElicitationsPerNode) {
+                    @JsonProperty("maxElicitationsPerNode") final Integer maxElicitationsPerNode,
+                    @JsonProperty("askReadOnlyToolsAfterUntrustedContent")
+                    final Boolean askReadOnlyToolsAfterUntrustedContent) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -110,6 +114,18 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.elicitationTimeout = Objects.requireNonNullElse(elicitationTimeout, DEFAULT_ELICITATION_TIMEOUT);
         this.maxElicitationsPerNode = Objects.requireNonNullElse(maxElicitationsPerNode,
                 DEFAULT_MAX_ELICITATIONS_PER_NODE);
+        this.askReadOnlyToolsAfterUntrustedContent = Objects.requireNonNullElse(
+                askReadOnlyToolsAfterUntrustedContent, false);
+    }
+
+    @JsonPropertyDescription("If true, once a chat's run has read data from tools or attached tables (which could "
+                             + "hold instructions planted by someone else), even read-only tools on trusted MCP "
+                             + "servers ask the user before running. A read-only tool changes nothing, but its "
+                             + "arguments still go to its server, so planted instructions could have the model put "
+                             + "data in them. A tool the user has allowed for the chat still runs.")
+    @JsonProperty("askReadOnlyToolsAfterUntrustedContent")
+    public boolean isAskReadOnlyToolsAfterUntrustedContent() {
+        return askReadOnlyToolsAfterUntrustedContent;
     }
 
     @Override
@@ -233,6 +249,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", toolGroupThreshold=" + toolGroupThreshold +
                ", elicitationTimeout=" + elicitationTimeout +
                ", maxElicitationsPerNode=" + maxElicitationsPerNode +
+               ", askReadOnlyToolsAfterUntrustedContent=" + askReadOnlyToolsAfterUntrustedContent +
                '}';
     }
 }
