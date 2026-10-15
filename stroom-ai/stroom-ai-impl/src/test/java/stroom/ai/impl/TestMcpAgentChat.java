@@ -190,12 +190,12 @@ class TestMcpAgentChat {
         final dev.langchain4j.agent.tool.ToolSpecification readTool = dev.langchain4j.agent.tool.ToolSpecification
                 .builder().name("grep").description("reads").build();
         final dev.langchain4j.agent.tool.ToolSpecification writeTool = dev.langchain4j.agent.tool.ToolSpecification
-                .builder().name("upload_file").description("changes things").build();
+                .builder().name("write_file").description("changes things").build();
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
                 readTool, (request, memoryId) -> "read",
                 writeTool, (request, memoryId) -> "written"));
         Mockito.when(builtInTools.isReadOnly("grep")).thenReturn(true);
-        Mockito.when(builtInTools.isReadOnly("upload_file")).thenReturn(false);
+        Mockito.when(builtInTools.isReadOnly("write_file")).thenReturn(false);
         final McpToolset toolset = toolset(Mockito.mock(McpSyncClient.class), searchTool());
 
         for (final AiAgentMode mode : AiAgentMode.values()) {
@@ -209,7 +209,7 @@ class TestMcpAgentChat {
                     .map(dev.langchain4j.agent.tool.ToolSpecification::name)
                     .toList();
             if (mode == AiAgentMode.AGENT) {
-                assertThat(offered).contains("grep", "upload_file");
+                assertThat(offered).contains("grep", "write_file");
             } else {
                 // The MCP search tool is from an untrusted server, so it is not known to be read-only either.
                 assertThat(offered).containsExactly("grep");
