@@ -59,4 +59,10 @@ class DeleteFileTool extends AbstractWorkspaceTool {
     public boolean readsUntrustedContent() {
         return false;
     }
+
+    /// @return False. It deletes files from the workspace.
+    @Override
+    public boolean isReadOnly() {
+        return false;
+    }
 }

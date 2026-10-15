@@ -374,8 +374,11 @@ class TestWorkspaceTools {
         assertThat(tools.readsUntrustedContent("read_file")).isTrue();
         assertThat(tools.readsUntrustedContent("grep")).isTrue();
         assertThat(tools.readsUntrustedContent("write_file")).isFalse();
-        // They only change the chat's own workspace, so may run while the user is away.
-        assertThat(tools.isReadOnly("write_file")).isTrue();
+        // Tools that change the workspace are not offered in Ask and Plan modes.
+        assertThat(tools.isReadOnly("write_file")).isFalse();
+        assertThat(tools.isReadOnly("str_replace")).isFalse();
+        assertThat(tools.isReadOnly("delete_file")).isFalse();
+        assertThat(tools.isReadOnly("read_file")).isTrue();
         assertThat(tools.boundsItsOutput("read_file")).isTrue();
     }
 
