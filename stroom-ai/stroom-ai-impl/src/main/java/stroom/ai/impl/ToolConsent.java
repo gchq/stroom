@@ -37,6 +37,8 @@ import java.util.Optional;
 /// - built-in tools run (they only reach the chat's own workspace and memory, which have their own controls),
 ///   except, while the user is away, any that could change something;
 /// - an MCP tool with an ALLOW policy runs, ASK_ALWAYS always asks, DENY tools are never offered;
+/// - a trusted server's tool marked `_meta.confirms` runs, even while the user is away, as it asks the user
+///   itself through a form (unless its policy is ASK_ALWAYS);
 /// - otherwise a tool runs if allowed for the chat (and unchanged since), if its server's read-only tools are
 ///   allowed for the chat and it is read-only, if its server is trusted and it is marked read-only, or if
 ///   'approve everything' is on for the chat (only if an administrator allows it, and only for trusted servers'
@@ -87,6 +89,11 @@ public class ToolConsent {
                     : Verdict.ask("This tool is not known to be safe.", false, false, List.of());
         }
         final List<String> risks = risks(info);
+        // A trusted server's tool that asks the user itself, through a form, is not asked about twice. Its form
+        // waits for the user, so this holds while they are away too.
+        if (info.trusted() && info.confirms() && info.policy() != McpToolPolicy.ASK_ALWAYS) {
+            return Verdict.RUN;
+        }
         if (unattended) {
             return info.trusted() && info.claimsReadOnly()
                     ? Verdict.RUN
