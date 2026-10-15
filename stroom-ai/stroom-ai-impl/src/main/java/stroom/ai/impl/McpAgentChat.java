@@ -150,6 +150,7 @@ class McpAgentChat {
     private final ModelStreamer modelStreamer;
     private final ToolGroups.Activations toolGroupActivations;
     private final Provider<AiConfig> aiConfigProvider;
+    private final UserActions userActions;
 
     @Inject
     McpAgentChat(final AiService aiService,
@@ -162,7 +163,9 @@ class McpAgentChat {
                  final ModelStreamer modelStreamer,
                  final ToolGroups.Activations toolGroupActivations,
                  final Provider<AiConfig> aiConfigProvider,
-                 final AiDao aiDao) {
+                 final AiDao aiDao,
+                 final UserActions userActions) {
+        this.userActions = userActions;
         this.aiService = aiService;
         this.aiDao = aiDao;
         this.toolGroupActivations = toolGroupActivations;
@@ -245,7 +248,7 @@ class McpAgentChat {
         }
 
         // Carry on from calls waiting for approval when the run last stopped, now they have been answered.
-        resumePending(chatId, conversation, tools, debugLog);
+        resumePending(chatId, conversation, tools, toolset, debugLog);
 
 
         ChatResponse response = null;
@@ -314,7 +317,8 @@ class McpAgentChat {
                         : toolConsent.decide(chatId, toolRequest.name(), builtInTools, toolset, unattended);
                 switch (verdict.kind()) {
                     case RUN -> conversation.add(ToolExecutionResultMessage.from(toolRequest,
-                            runAndRecord(chatId, callMessage, toolRequest, tools, debugLog, t + 1, unattended)));
+                            runAndRecord(chatId, callMessage, toolRequest, tools, toolset, debugLog, t + 1,
+                                    unattended)));
                     case DENY -> conversation.add(ToolExecutionResultMessage.from(toolRequest,
                             recordNotRun(chatId, toolRequest, "Not run: " + verdict.reason(), unattended,
                                     "Not allowed in this chat")));
@@ -354,6 +358,7 @@ class McpAgentChat {
                                 final AiChatMessage callMessage,
                                 final ToolExecutionRequest toolRequest,
                                 final Map<ToolSpecification, ToolExecutor> tools,
+                                final McpToolset toolset,
                                 final StringBuilder debugLog,
                                 final int callNo,
                                 final boolean unattended) {
@@ -376,9 +381,15 @@ class McpAgentChat {
                 ? ToolOutputs.stub(result, path)
                 : result;
         final boolean error = isError(result);
+        // Steps that are the user's, checked, to show as buttons. The model is not told about them: the steps are
+        // in the result's text too.
+        final List<UserActionRecord> actions = userActions.check(toolset.takeUserActions(toolRequest.id()),
+                System.currentTimeMillis());
         aiService.storeMessage(chatId, AiMessageType.TOOL_RESULT,
                 JsonUtil.writeValueAsString(new ToolResultRecord(toolRequest.id(), toolRequest.name(),
-                        error, forModel, path, result.length(), durationMs), false));
+                        error, forModel, path, result.length(), durationMs, actions.isEmpty()
+                        ? null
+                        : actions), false));
         auditLog.toolCall(chatId, toolRequest.name(), toolRequest.arguments(), error
                 ? "Failed"
                 : "Run", !error, unattended);
@@ -397,7 +408,7 @@ class McpAgentChat {
                                 final String outcome) {
         aiService.storeMessage(chatId, AiMessageType.TOOL_RESULT,
                 JsonUtil.writeValueAsString(new ToolResultRecord(toolRequest.id(), toolRequest.name(), true, text,
-                        null, text.length(), 0), false));
+                        null, text.length(), 0, null), false));
         auditLog.toolCall(chatId, toolRequest.name(), toolRequest.arguments(), outcome, false, unattended);
         return text;
     }
@@ -409,6 +420,7 @@ class McpAgentChat {
     private void resumePending(final int chatId,
                                final List<ChatMessage> conversation,
                                final Map<ToolSpecification, ToolExecutor> tools,
+                               final McpToolset toolset,
                                final StringBuilder debugLog) {
         final List<AiChatMessage> history = aiService.getMessages(chatId);
         int question = history.size() - 1;
@@ -456,7 +468,7 @@ class McpAgentChat {
             final String result;
             if (decided != null && decided.decision() == Decision.ALLOWED) {
                 LOGGER.debug(() -> "Running approved tool '" + call.tool() + "' in chatId=" + chatId);
-                result = runAndRecord(chatId, message, request, tools, debugLog, ++callNo, unattended);
+                result = runAndRecord(chatId, message, request, tools, toolset, debugLog, ++callNo, unattended);
             } else if (decided != null && decided.decision() == Decision.DENIED) {
                 result = recordNotRun(chatId, request, "Not run: the user did not allow this call"
                                                        + (NullSafe.isNonBlankString(decided.note())
