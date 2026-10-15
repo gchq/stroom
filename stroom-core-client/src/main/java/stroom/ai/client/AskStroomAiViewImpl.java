@@ -162,9 +162,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         });
 
         newChat.setText("New chat");
-        newChat.setTitle("Start a new chat");
         newChat.setIcon(SvgImage.ADD);
-        newChat.setEnabled(true);
+        setNewChatEnabled(true);
 
         setTabMode(false);
         tabToggle.setEnabled(true);
@@ -406,12 +405,26 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     public void setEmptyState(final boolean empty) {
         this.empty = empty;
+        setNewChatEnabled(!empty);
         // The list of chats takes the conversation's place, so it is not shown as an empty chat.
         if (empty && !chatList.isVisible()) {
             root.addStyleName(EMPTY_STYLE);
         } else {
             root.removeStyleName(EMPTY_STYLE);
         }
+    }
+
+    @Override
+    public boolean isEmptyState() {
+        return empty;
+    }
+
+    /// A chat with nothing in it is new already, so another isn't started, which would only leave unused chats.
+    private void setNewChatEnabled(final boolean enabled) {
+        newChat.setEnabled(enabled);
+        newChat.setTitle(enabled
+                ? "Start a new chat"
+                : "This chat is new: ask it something first");
     }
 
     @Override
