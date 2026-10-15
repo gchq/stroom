@@ -162,6 +162,11 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
             this.errorConsumer = errorHandler;
             return this;
         }
+
+        @Override
+        public void exec() {
+            taskMonitorFactory(null).exec();
+        }
     }
 
     private static class TaskExecutorImpl<T extends DirectRestService, R> implements TaskExecutor<T, R> {

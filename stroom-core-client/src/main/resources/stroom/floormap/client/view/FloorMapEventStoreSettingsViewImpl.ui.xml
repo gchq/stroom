@@ -1,0 +1,49 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:sg="urn:import:stroom.planb.client.view"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.item.client">
+    <!--
+      Deliberately without the Key Schema and Value Schema panels a Plan B store shows here. Those
+      are properties of this document type rather than choices: the Map tab's read seeks to each
+      entity's answer, which is only correct over the prefix-free key encoding the type fixes, and a
+      Plan B schema is immutable once data is written. A control the document would overwrite on save
+      is worse than no control at all.
+    -->
+    <g:FlowPanel styleName="max form">
+        <sg:SettingsGroup label="Map Display">
+            <form:FormGroup
+                    label="Event Expiry"
+                    helpText="How long an entity stays on the map after its last event. Measured from the position of the timeline scrubber rather than from now, so scrubbing back in time shows what was current then. This cannot be turned off - an entity that stopped emitting would otherwise be drawn for ever. It must not be longer than the data retention period below, because the data needed to show the entity would by then have been deleted.">
+                <g:FlowPanel styleName="durationSetting">
+                    <valuespinner:ValueSpinner ui:field="expiryTime"/>
+                    <i:SelectionBox ui:field="expiryTimeUnit" addStyleNames="allow-focus"/>
+                </g:FlowPanel>
+            </form:FormGroup>
+        </sg:SettingsGroup>
+        <sg:SettingsGroup label="General"
+                          ui:field="generalPanel"/>
+        <sg:SettingsGroup label="Condense Data"
+                          ui:field="condensePanel"/>
+        <sg:SettingsGroup label="Data Retention"
+                          ui:field="retentionPanel"/>
+    </g:FlowPanel>
+</ui:UiBinder>

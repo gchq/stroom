@@ -16,28 +16,29 @@
 
 package stroom.gwt.workbench.client.app.gin.editors;
 
-import stroom.visualisation.client.presenter.VisualisationAssetsAddItemDialogPresenter;
-import stroom.visualisation.client.presenter.VisualisationAssetsAddItemDialogPresenter.VisualisationAssetsAddFolderDialogView;
-import stroom.visualisation.client.presenter.VisualisationAssetsEditAssetDialogPresenter;
-import stroom.visualisation.client.presenter.VisualisationAssetsEditAssetDialogPresenter.VisualisationAssetsEditAssetDialogView;
-import stroom.visualisation.client.presenter.VisualisationAssetsPresenter;
-import stroom.visualisation.client.presenter.VisualisationAssetsPresenter.VisualisationAssetsView;
-import stroom.visualisation.client.presenter.VisualisationAssetsUploadFileDialogPresenter;
-import stroom.visualisation.client.presenter.VisualisationAssetsUploadFileDialogPresenter.VisualisationAssetsUploadFileDialogView;
+import stroom.document.asset.client.presenter.DocumentAssetAddItemDialogPresenter;
+import stroom.document.asset.client.presenter.DocumentAssetAddItemDialogPresenter.DocumentAssetAddItemDialogView;
+import stroom.document.asset.client.presenter.DocumentAssetEditAssetDialogPresenter;
+import stroom.document.asset.client.presenter.DocumentAssetEditAssetDialogPresenter.DocumentAssetEditAssetDialogView;
+import stroom.document.asset.client.presenter.DocumentAssetPresenter;
+import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
+import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter;
+import stroom.document.asset.client.presenter.DocumentAssetUploadFileDialogPresenter.DocumentAssetUploadFileDialogView;
+import stroom.document.asset.client.view.DocumentAssetAddItemDialogViewImpl;
+import stroom.document.asset.client.view.DocumentAssetEditAssetDialogViewImpl;
+import stroom.document.asset.client.view.DocumentAssetUploadFileDialogViewImpl;
+import stroom.document.asset.client.view.DocumentAssetViewImpl;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
-import stroom.visualisation.client.view.VisualisationAssetsAddItemDialogViewImpl;
-import stroom.visualisation.client.view.VisualisationAssetsEditAssetDialogViewImpl;
-import stroom.visualisation.client.view.VisualisationAssetsUploadFileDialogViewImpl;
-import stroom.visualisation.client.view.VisualisationAssetsViewImpl;
 import stroom.visualisation.client.view.VisualisationSettingsViewImpl;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `VisualisationModule`
-/// (`stroom/visualisation/client/gin/VisualisationModule.java`),
-/// without its plugins and app services.
+/// (`stroom/visualisation/client/gin/VisualisationModule.java`) and of the document asset
+/// presenters its 'Assets' tab uses (`stroom/document/asset/client/gin/DocumentAssetModule.java`),
+/// without their plugins and app services.
 /// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
 /// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
 public class VisualisationScreenModule extends AbstractPresenterModule {
@@ -49,18 +50,18 @@ public class VisualisationScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(VisualisationSettingsPresenter.class,
                 VisualisationSettingsView.class,
                 VisualisationSettingsViewImpl.class);
-        bindPresenterWidget(VisualisationAssetsPresenter.class,
-                VisualisationAssetsView.class,
-                VisualisationAssetsViewImpl.class);
-        bindPresenterWidget(VisualisationAssetsUploadFileDialogPresenter.class,
-                VisualisationAssetsUploadFileDialogView.class,
-                VisualisationAssetsUploadFileDialogViewImpl.class);
-        bindPresenterWidget(VisualisationAssetsAddItemDialogPresenter.class,
-                VisualisationAssetsAddFolderDialogView.class,
-                VisualisationAssetsAddItemDialogViewImpl.class);
-        bindPresenterWidget(VisualisationAssetsEditAssetDialogPresenter.class,
-                VisualisationAssetsEditAssetDialogView.class,
-                VisualisationAssetsEditAssetDialogViewImpl.class);
+        bindPresenterWidget(DocumentAssetPresenter.class,
+                DocumentAssetView.class,
+                DocumentAssetViewImpl.class);
+        bindPresenterWidget(DocumentAssetUploadFileDialogPresenter.class,
+                DocumentAssetUploadFileDialogView.class,
+                DocumentAssetUploadFileDialogViewImpl.class);
+        bindPresenterWidget(DocumentAssetAddItemDialogPresenter.class,
+                DocumentAssetAddItemDialogView.class,
+                DocumentAssetAddItemDialogViewImpl.class);
+        bindPresenterWidget(DocumentAssetEditAssetDialogPresenter.class,
+                DocumentAssetEditAssetDialogView.class,
+                DocumentAssetEditAssetDialogViewImpl.class);
     }
 }
 

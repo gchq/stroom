@@ -25,9 +25,14 @@ import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.util.io.PathCreator;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -196,15 +201,7 @@ class TestAnalyticDataStores {
             throws IOException {
         final AnalyticRuleDoc unresolvable = rule("a rule whose search request will not build");
 
-        final AnalyticRuleStore ruleStore = ruleStoreReturning(unresolvable);
-        final PathCreator pathCreator = Mockito.mock(PathCreator.class);
-        Mockito.when(pathCreator.toAppPath(Mockito.anyString())).thenReturn(tempDir);
-        final AnalyticRuleSearchRequestHelper helper = Mockito.mock(AnalyticRuleSearchRequestHelper.class);
-        Mockito.when(helper.create(Mockito.any()))
-                .thenThrow(new RuntimeException("Cannot build a search request for this rule"));
-        final AnalyticDataStores dataStores = new AnalyticDataStores(
-                null, pathCreator, ruleStore, helper, AnalyticResultStoreConfig::new,
-                null, null, null, null, null, null, null, null);
+        final AnalyticDataStores dataStores = createUnresolvable(tempDir, ruleStoreReturning(unresolvable));
 
         final Path storeDir = createStoreDir(tempDir, dataStores, unresolvable);
         // A dir belonging to some other rule that really has gone.
@@ -215,6 +212,85 @@ class TestAnalyticDataStores {
 
         assertThat(storeDir).exists();
         assertThat(otherRulesDir).doesNotExist();
+    }
+
+    /**
+     * gh-5835. A rule with an empty or broken query has most likely never had a store, so there
+     * is nothing to warn about. This job runs every few minutes on every node, so logging an
+     * error for every such rule on every run swamped the logs.
+     */
+    @Test
+    void doesNotWarnAboutAnUnresolvableRuleThatHasNoStore(@TempDir final Path tempDir) throws IOException {
+        final AnalyticRuleDoc unresolvable = rule("a rule with an empty query");
+        final AnalyticDataStores dataStores = createUnresolvable(tempDir, ruleStoreReturning(unresolvable));
+        // A dir belonging to some other rule that really has gone.
+        final Path otherRulesDir = tempDir.resolve("some_other_rule_uuid___a_name_table");
+        Files.createDirectories(otherRulesDir);
+
+        final List<ILoggingEvent> warnings = captureWarnings(dataStores::deleteOldStores);
+
+        assertThat(warnings).isEmpty();
+        assertThat(otherRulesDir).doesNotExist();
+    }
+
+    /**
+     * gh-5835. As above, but for a rule that could not be read at all.
+     */
+    @Test
+    void doesNotWarnAboutAnUnreadableRuleThatHasNoStore(@TempDir final Path tempDir) {
+        final AnalyticRuleStore ruleStore = Mockito.mock(AnalyticRuleStore.class);
+        Mockito.when(ruleStore.list()).thenReturn(List.of(docRef()));
+        Mockito.when(ruleStore.readDocument(Mockito.any()))
+                .thenThrow(new RuntimeException("Some transient failure"));
+        final AnalyticDataStores dataStores = create(tempDir, ruleStore);
+
+        final List<ILoggingEvent> warnings = captureWarnings(dataStores::deleteOldStores);
+
+        assertThat(warnings).isEmpty();
+    }
+
+    /**
+     * gh-5835. If a dir really is being kept only because its rule cannot be resolved, then that
+     * is worth a warning, as the dir will never be cleaned up until the rule is fixed. It is not
+     * an error, and the stack trace is only of use at debug.
+     */
+    @Test
+    void warnsOnceWithoutAStackTraceWhenAnUnresolvableRuleRetainsAStore(@TempDir final Path tempDir)
+            throws IOException {
+        final AnalyticRuleDoc unresolvable = rule("a rule whose query has been broken");
+        final AnalyticDataStores dataStores = createUnresolvable(tempDir, ruleStoreReturning(unresolvable));
+        final Path storeDir = createStoreDir(tempDir, dataStores, unresolvable);
+
+        final List<ILoggingEvent> warnings = captureWarnings(dataStores::deleteOldStores);
+
+        assertThat(storeDir).exists();
+        assertThat(warnings).singleElement().satisfies(event -> {
+            assertThat(event.getLevel()).isEqualTo(Level.WARN);
+            assertThat(event.getFormattedMessage())
+                    .contains(storeDir.getFileName().toString())
+                    .contains("Cannot build a search request for this rule");
+            assertThat(event.getThrowableProxy()).isNull();
+        });
+    }
+
+    /**
+     * Runs the supplied action, returning every event at WARN or above that
+     * {@link AnalyticDataStores} logged while it ran.
+     */
+    private List<ILoggingEvent> captureWarnings(final Runnable runnable) {
+        final Logger logger = (Logger) LoggerFactory.getLogger(AnalyticDataStores.class);
+        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            runnable.run();
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+        return appender.list.stream()
+                .filter(event -> event.getLevel().isGreaterOrEqual(Level.WARN))
+                .toList();
     }
 
     private AnalyticRuleStore ruleStoreReturning(final AnalyticRuleDoc doc) {
@@ -236,6 +312,21 @@ class TestAnalyticDataStores {
         Files.createDirectories(dir);
         Files.writeString(dir.resolve("data.mdb"), "analytic data for " + doc.getUuid());
         return dir;
+    }
+
+    /**
+     * As {@link #create(Path, AnalyticRuleStore)} but no rule's search request, and so no rule's
+     * store dir, can be worked out.
+     */
+    private AnalyticDataStores createUnresolvable(final Path tempDir, final AnalyticRuleStore ruleStore) {
+        final PathCreator pathCreator = Mockito.mock(PathCreator.class);
+        Mockito.when(pathCreator.toAppPath(Mockito.anyString())).thenReturn(tempDir);
+        final AnalyticRuleSearchRequestHelper helper = Mockito.mock(AnalyticRuleSearchRequestHelper.class);
+        Mockito.when(helper.create(Mockito.any()))
+                .thenThrow(new RuntimeException("Cannot build a search request for this rule"));
+        return new AnalyticDataStores(
+                null, pathCreator, ruleStore, helper, AnalyticResultStoreConfig::new,
+                null, null, null, null, null, null, null, null);
     }
 
     private AnalyticDataStores create(final Path tempDir, final AnalyticRuleStore ruleStore) {

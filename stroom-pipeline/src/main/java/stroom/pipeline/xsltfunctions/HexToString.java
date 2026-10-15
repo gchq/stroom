@@ -27,6 +27,31 @@ import net.sf.saxon.value.StringValue;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
+@XsltFunctionDef(
+        name = HexToString.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.CONVERSION,
+        commonDescription = """
+                Decodes hexadecimal bytes to text using the specified character set. Whitespace in the hexadecimal input
+                is ignored.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The decoded text, or an empty sequence if decoding fails.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "hex",
+                                        description = "The hexadecimal bytes to decode.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "charset",
+                                        description = "The character set name, such as `UTF-8`.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class HexToString extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "hex-to-string";

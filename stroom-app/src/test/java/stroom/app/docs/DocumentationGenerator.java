@@ -20,5 +20,7 @@ import io.github.classgraph.ScanResult;
 
 public interface DocumentationGenerator {
 
+    /// Generate documentation using the provided result of scanning all the classes
+    /// in the stroom package
     void generateAll(ScanResult scanResult);
 }

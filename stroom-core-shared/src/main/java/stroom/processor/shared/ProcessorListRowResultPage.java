@@ -18,6 +18,7 @@ package stroom.processor.shared;
 
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,9 +30,15 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class ProcessorListRowResultPage extends ResultPage<ProcessorListRow> {
 
+    public ProcessorListRowResultPage(final List<ProcessorListRow> values,
+                                      final PageResponse pageResponse) {
+        this(values, pageResponse, null);
+    }
+
     @JsonCreator
     public ProcessorListRowResultPage(@JsonProperty("values") final List<ProcessorListRow> values,
-                                      @JsonProperty("pageResponse") final PageResponse pageResponse) {
-        super(values, pageResponse);
+                                      @JsonProperty("pageResponse") final PageResponse pageResponse,
+                                      @JsonProperty("filterError") final TokenError filterError) {
+        super(values, pageResponse, filterError);
     }
 }

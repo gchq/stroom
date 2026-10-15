@@ -22,9 +22,11 @@ import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.UrlParameters;
 import stroom.dispatch.client.RestFactory;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -78,7 +80,8 @@ public class ManageActivityPresenter
                                    final RestFactory restFactory,
                                    final UiConfigCache uiConfigCache,
                                    final UrlParameters urlParameters,
-                                   final CurrentActivity currentActivity) {
+                                   final CurrentActivity currentActivity,
+                                   final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
@@ -90,6 +93,11 @@ public class ManageActivityPresenter
         getView().setUiHandlers(this);
 
         setInSlot(LIST, listPresenter);
+        // A rejected filter comes back as an empty page like any other, so surface the reason on
+        // the filter box. See ResultPage.filterError.
+        listPresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                ActivityResource.QUICK_FILTER_CONTEXT, this, this));
 
         listPresenter.getToolbar().setName("Activity actions");
         newButton = listPresenter.getToolbar().button(SvgImage.ADD, "New", this::onNew);
@@ -304,6 +312,14 @@ public class ManageActivityPresenter
     public interface ManageActivityView extends View, Focus, HasUiHandlers<ManageActivityUiHandlers> {
 
         void setTooltipContentSupplier(final Supplier<SafeHtml> tooltipSupplier);
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code ResultPage.filterError}.
+         */
+        void setFilterError(String filterError);
+
+        void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
     }
 
     private class NameFilterTimer extends Timer {

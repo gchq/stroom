@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 
+@SuppressWarnings("SequencedCollectionMethodCanBeUsed")
 public class LinkedEventPresenter
         extends DocPresenter<LinkedEventView, Annotation> {
 

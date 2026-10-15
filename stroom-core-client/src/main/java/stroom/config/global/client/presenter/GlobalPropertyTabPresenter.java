@@ -20,10 +20,12 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -54,12 +56,18 @@ public class GlobalPropertyTabPresenter
                                       final GlobalPropertyTabView view,
                                       final ManageGlobalPropertyListPresenter listPresenter,
                                       final Provider<ManageGlobalPropertyEditPresenter> editProvider,
-                                      final UiConfigCache uiConfigCache) {
+                                      final UiConfigCache uiConfigCache,
+                                      final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
         view.setUiHandlers(this);
         setInSlot(LIST, listPresenter);
+        // A rejected filter comes back as an empty page like any other, so surface the reason on
+        // the filter box. See ResultPage.filterError.
+        listPresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                GlobalConfigResource.QUICK_FILTER_CONTEXT, this, this));
         listPresenter.getToolbar().setName("Property actions");
         openButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit", this::onOpen);
         openButton.setEnabled(false);
@@ -166,5 +174,13 @@ public class GlobalPropertyTabPresenter
         void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
         void focusFilter();
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code ResultPage.filterError}.
+         */
+        void setFilterError(String filterError);
+
+        void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
     }
 }

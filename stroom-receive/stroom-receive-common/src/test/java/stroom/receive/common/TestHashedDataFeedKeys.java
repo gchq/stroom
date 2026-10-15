@@ -22,7 +22,9 @@ import stroom.receive.common.DataFeedKeyHasher.HashOutput;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -85,6 +87,85 @@ class TestHashedDataFeedKeys {
         for (final String json : jsonList) {
             LOGGER.info("json\n{}", json);
         }
+    }
+
+    @Test
+    void test() {
+        final Instant expiry = Instant.now().plus(365, ChronoUnit.DAYS);
+        final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
+                "1234",
+                Map.of(
+                        "MetaKey1", "MetaKey1Val",
+                        "MetaKey2", "MetaKey2Val"),
+                expiry);
+
+        logKey("keyWithHash", keyWithHash);
+
+        final BCryptDataFeedKeyHasher hasher = new BCryptDataFeedKeyHasher();
+        final boolean isValid = hasher.verify(keyWithHash.key(),
+                keyWithHash.hashedDataFeedKey().getHash(),
+                keyWithHash.hashedDataFeedKey().getSalt());
+
+        assertThat(isValid)
+                .isTrue();
+    }
+
+    @Disabled // Manual only
+    @Test
+    void makeKeys() throws IOException {
+        final Instant expiry = Instant.now().plus(365, ChronoUnit.DAYS);
+        System.out.println("Key, Hash, Salt");
+
+        final String tmpdir = System.getProperty("java.io.tmpdir");
+        final Path tempDir = Path.of(tmpdir);
+        final Path tempFile = tempDir.resolve("stroom_dfks.txt");
+        Files.deleteIfExists(tempFile);
+
+        for (int i = 0; i < 10; i++) {
+            final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
+                    "1234",
+                    Map.of(
+                            "MetaKey1", "MetaKey1Val",
+                            "MetaKey2", "MetaKey2Val"),
+                    expiry);
+
+            final BCryptDataFeedKeyHasher hasher = new BCryptDataFeedKeyHasher();
+            final boolean isValid = hasher.verify(keyWithHash.key(),
+                    keyWithHash.hashedDataFeedKey().getHash(),
+                    keyWithHash.hashedDataFeedKey().getSalt());
+
+            assertThat(isValid)
+                    .isTrue();
+
+            final String str = LogUtil.message("""
+                            {}
+                            {}
+                            {}
+                            \s
+                            """,
+                    keyWithHash.key(),
+                    keyWithHash.hashedDataFeedKey().getHash(),
+                    keyWithHash.hashedDataFeedKey().getSalt());
+
+            Files.writeString(tempFile,
+                    str,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND);
+        }
+
+        LOGGER.info("Data written to {}", tempFile.toAbsolutePath());
+    }
+
+    @Disabled // This hash was generated in CyberChef and is a newer $2b$ version, which we don't support yet
+    @Test
+    void test2() {
+        @SuppressWarnings("checkstyle:lineLength") final String key = "sdk_PZ64WYh2ieNNsHYNtmxxXhx3NepYbyaVGEtPGxdaCkR3aa3t7HGG4oZhYCKvcg4ivSeXE8EKGNL7KCiGrtMFavkVn79d1yrhWASdbtFoiJyeiYvwfZapKkk3Q8JriYp4";
+        final String hash = "$2b$10$ARCzn6tchFTjC.wr1GXeE.kT0VOUp0.jGV5W71SB1MbFJywkTk7/q";
+
+        final BCryptDataFeedKeyHasher hasher = new BCryptDataFeedKeyHasher();
+        final boolean isValid = hasher.verify(key, hash, null);
+        assertThat(isValid)
+                .isTrue();
     }
 
     private static void logKey(final String name, final KeyWithHash keyWithHash) {

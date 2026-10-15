@@ -20,6 +20,8 @@ import stroom.planb.client.presenter.HistogramSettingsPresenter;
 import stroom.planb.client.presenter.HistogramSettingsPresenter.HistogramSettingsView;
 import stroom.planb.client.presenter.MetricSettingsPresenter;
 import stroom.planb.client.presenter.MetricSettingsPresenter.MetricSettingsView;
+import stroom.planb.client.presenter.PlanBDataPresenter;
+import stroom.planb.client.presenter.PlanBDataPresenter.PlanBDataView;
 import stroom.planb.client.presenter.PlanBPresenter;
 import stroom.planb.client.presenter.PlanBSettingsPresenter;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
@@ -37,6 +39,7 @@ import stroom.planb.client.presenter.TraceSettingsPresenter;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
 import stroom.planb.client.view.HistogramSettingsViewImpl;
 import stroom.planb.client.view.MetricSettingsViewImpl;
+import stroom.planb.client.view.PlanBDataViewImpl;
 import stroom.planb.client.view.PlanBSettingsViewImpl;
 import stroom.planb.client.view.RangeStateSettingsViewImpl;
 import stroom.planb.client.view.SessionSettingsViewImpl;
@@ -57,6 +60,10 @@ public class PlanBScreenModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(PlanBPresenter.class);
+        // The store's Data tab
+        bindPresenterWidget(PlanBDataPresenter.class,
+                PlanBDataView.class,
+                PlanBDataViewImpl.class);
         bindPresenterWidget(PlanBSettingsPresenter.class,
                 PlanBSettingsView.class,
                 PlanBSettingsViewImpl.class);

@@ -28,7 +28,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -50,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ManageGlobalPropertyListPresenter
@@ -92,6 +95,7 @@ public class ManageGlobalPropertyListPresenter
 
     // This is node that responded to the top level request
     private String lastNodeName;
+    private Consumer<String> filterErrorConsumer;
 
     private final DelayedUpdate updateChildMapsTimer = new DelayedUpdate(UPDATE_MAPS_TIMER_DELAY_MS,
             this::updatePropertyKeyedMaps);
@@ -155,6 +159,10 @@ public class ManageGlobalPropertyListPresenter
                 .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .method(res -> res.list(criteria))
                 .onSuccess(listConfigResponse -> {
+                    if (filterErrorConsumer != null) {
+                        filterErrorConsumer.accept(
+                                NullSafe.get(listConfigResponse.getFilterError(), TokenError::getText));
+                    }
 
                     lastNodeName = listConfigResponse.getNodeName();
 
@@ -411,6 +419,10 @@ public class ManageGlobalPropertyListPresenter
         refresh();
     }
 
+    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+        this.filterErrorConsumer = filterErrorConsumer;
+    }
+
     public void refresh() {
         dataProvider.refresh(false);
     }
@@ -426,7 +438,7 @@ public class ManageGlobalPropertyListPresenter
     }
 
     void clearFilter() {
-        this.criteria.setQuickFilterInput(null);
+        this.criteria.setQuickFilter(null);
 
         if (!(lastNodeName == null || lastNodeName.isEmpty())) {
             refresh();
@@ -514,8 +526,8 @@ public class ManageGlobalPropertyListPresenter
                 }
             }
 
-            if (!Objects.equals(filter, criteria.getQuickFilterInput())) {
-                criteria.setQuickFilterInput(filter);
+            if (!Objects.equals(filter, criteria.getQuickFilter())) {
+                criteria.setQuickFilter(filter);
                 // Need to reset the range else the name criteria can push us outside the page we are on
                 final Range range = dataGrid.getVisibleRange();
                 dataGrid.setVisibleRange(0, range.getLength());

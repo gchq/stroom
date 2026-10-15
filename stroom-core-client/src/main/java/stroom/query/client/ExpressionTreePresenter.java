@@ -22,6 +22,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
@@ -38,6 +39,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePresenter.ExpressionTreeView>
         implements HasDataSelectionHandlers<Item>,
@@ -78,6 +80,14 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
                      final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
         getView().init(restFactory, dataSource, fieldSelectionListModel);
+    }
+
+    /**
+     * Offer only the conditions that pass {@code conditionFilter}, on top of each field's own
+     * {@code ConditionSet}.
+     */
+    public void setConditionFilter(final Predicate<Condition> conditionFilter) {
+        getView().setConditionFilter(conditionFilter);
     }
 
     public void read(final ExpressionOperator root) {
@@ -303,6 +313,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
                   FieldSelectionListModel fieldSelectionListModel);
 
         void write();
+
+        void setConditionFilter(Predicate<Condition> conditionFilter);
 
         void endEditing();
 

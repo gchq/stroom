@@ -24,7 +24,6 @@ import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.Batch
 import stroom.processor.shared.ProcessorFilterChange;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
-import stroom.util.shared.PageResponse;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
@@ -107,11 +106,47 @@ class TestBatchProcessorFilterEditPresenter {
 
         final HidePopupRequestEvent okPressed = showAndPressOk(2);
 
-        // Nothing is wrong, so OK asks for confirmation rather than warning
+        // Nothing is wrong, so OK asks for confirmation, with the server's count, rather than warning
         assertThat(alerts)
                 .isEmpty();
+        assertThat(confirms)
+                .extracting(confirm -> confirm.getMessage().asString())
+                .containsExactly("Are you sure you want to change 2 processors?");
         Mockito.verify(okPressed, Mockito.never()).reset();
         Mockito.verify(okPressed, Mockito.never()).hide();
+    }
+
+    @Test
+    void ok_oneProcessor() {
+        Mockito.when(view.getChange()).thenReturn(ProcessorFilterChange.ENABLE);
+
+        showAndPressOk(1);
+
+        assertThat(confirms)
+                .extracting(confirm -> confirm.getMessage().asString())
+                .containsExactly("Are you sure you want to change this processor?");
+    }
+
+    @Test
+    void ok_countFails() {
+        // The count has a failure handler, so if the server can't count the processors the error is
+        // shown and the dialog can be used again, rather than being left with OK and Cancel disabled
+        Mockito.when(view.getChange()).thenReturn(ProcessorFilterChange.ENABLE);
+        final HidePopupRequestEvent okPressed = showAndPressOkWithoutCount();
+        assertThat(restFactory.getRequests())
+                .hasSize(1);
+        assertThat(restFactory.getLastRequest().hasFailureHandler())
+                .isTrue();
+
+        restFactory.getLastRequest().fail(new RuntimeException("Can't count"));
+
+        assertThat(confirms)
+                .isEmpty();
+        assertThat(alerts)
+                .hasSize(1);
+        Mockito.verify(okPressed, Mockito.never()).hide();
+        alerts.getFirst().getCallback().onClose();
+        Mockito.verify(okPressed).reset();
     }
 
     @Test
@@ -134,11 +169,20 @@ class TestBatchProcessorFilterEditPresenter {
         Mockito.verify(okPressed, Mockito.never()).hide();
     }
 
-    // Shows the dialog for a filter matching the given number of processors, and presses OK.
-    private HidePopupRequestEvent showAndPressOk(final long processorCount) {
+    // Shows the dialog for a filter, presses OK and, if the presenter then asks the server how many
+    // processor filters the change would apply to, answers with the given count.
+    private HidePopupRequestEvent showAndPressOk(final int filterCount) {
+        final HidePopupRequestEvent okPressed = showAndPressOkWithoutCount();
+        if (!restFactory.getRequests().isEmpty()) {
+            restFactory.getLastRequest().succeed(filterCount);
+        }
+        return okPressed;
+    }
+
+    // Shows the dialog for a filter and presses OK, leaving any request the presenter makes pending.
+    private HidePopupRequestEvent showAndPressOkWithoutCount() {
         presenter.show(
                 ExpressionOperator.builder().build(),
-                PageResponse.builder().total(processorCount).build(),
                 () -> {
                 });
         assertThat(shown)

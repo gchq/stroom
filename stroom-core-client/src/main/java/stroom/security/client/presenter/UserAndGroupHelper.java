@@ -33,7 +33,6 @@ import stroom.security.client.event.OpenUsersScreenEvent;
 import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.event.OpenAccountEvent;
 import stroom.security.shared.HasUserRef;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
@@ -352,10 +351,16 @@ public class UserAndGroupHelper {
             return "";
         } else if (userRef.getDisplayName() != null) {
             // Quoted, as a display name may contain spaces
-            return QuickFilterExpressionParser.quote(UserFields.FIELD_DISPLAY_NAME + ":" + userRef.getDisplayName());
+            return UserFields.FIELD_DISPLAY_NAME + ":" + quoteFilterValue(userRef.getDisplayName());
         } else {
             return "";
         }
+    }
+
+    // Quotes a quick filter value so that it is read as one value, whatever it contains, escaping
+    // any backslashes and double quotes, as QuickFilterPrinter does.
+    private static String quoteFilterValue(final String value) {
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 
 }

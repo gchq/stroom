@@ -18,7 +18,10 @@ package stroom.ai.client;
 
 import stroom.ai.client.AiChatHistoryPresenter.AiChatHistoryView;
 import stroom.ai.shared.AiChat;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -49,13 +52,17 @@ public class AiChatHistoryPresenter
     @Inject
     public AiChatHistoryPresenter(final EventBus eventBus,
                          final AiChatHistoryView view,
-                         final AiChatHistoryResultListPresenter findResultListPresenter) {
+                         final AiChatHistoryResultListPresenter findResultListPresenter,
+                         final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.findResultListPresenter = findResultListPresenter;
 
         // Ensure list has a border in the popup view.
         findResultListPresenter.getView().asWidget().addStyleName("form-control-border form-control-background");
         view.setResultView(findResultListPresenter.getView());
+        findResultListPresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                FindAiChatHistoryCriteria.QUICK_FILTER_CONTEXT, this, this));
         view.setUiHandlers(this);
         findResultListPresenter.setFindResultListHandler(this);
     }
@@ -224,6 +231,14 @@ public class AiChatHistoryPresenter
 //        void setSelected(AiChat chat);
 
         void setResultView(View view);
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code ResultPage.filterError}.
+         */
+        void setFilterError(String filterError);
+
+        void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
     }
 //
 //

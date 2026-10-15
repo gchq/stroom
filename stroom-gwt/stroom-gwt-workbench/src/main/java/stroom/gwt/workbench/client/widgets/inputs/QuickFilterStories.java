@@ -19,11 +19,13 @@ package stroom.gwt.workbench.client.widgets.inputs;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.TableCell;
@@ -39,6 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 /// Stories for [QuickFilter].
 ///
@@ -46,7 +49,18 @@ import java.util.Locale;
 /// before reporting a change (or reports it at once on Enter or when cleared).
 public final class QuickFilterStories {
 
+    /// The name of the spy recording each time the quick filter asks for its recent filters.
+    static final String ON_SHOW_RECENT_FILTERS = "onShowRecentFilters";
+    /// The name of the spy recording the filters the quick filter asks to be remembered.
+    static final String ON_RECORD_USE = "onRecordUse";
+
     private static final String MAX_WIDTH = "400px";
+    // The recent filter the stand-in for Stroom's menu picks
+    private static final String RECENT_FILTER = "name:alpha";
+    // The stand-in server rejects a filter with a bracket in it, as Stroom's parser rejects one
+    // that doesn't close
+    private static final String REJECTED_CHARACTER = "(";
+    private static final String REJECTION = "Expected ')' to close the group opened at 1:1";
     private static final List<String> ITEMS = Arrays.asList(
             "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta");
 
@@ -116,7 +130,96 @@ public final class QuickFilterStories {
                     view.setLabel("User Groups:");
                     view.setHelpText(SafeHtmlUtils.fromString("Filter the list of user groups."));
                     return InputWidgets.maxWidth(view.asWidget(), MAX_WIDTH);
+                })
+                // A quick filter with a context: its arrow (or Alt+Down) asks the screen for the
+                // recent filters, and the one picked is put in the box, applied and remembered.
+                // Stroom's screens show the filters in a menu (QuickFilterContextHandlerFactory);
+                // here the stand-in picks one at once
+                .story("RecentFilters", context -> withContext(context, quickFilter(context)))
+                .withPlay(play -> {
+                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    play.click(play.getByTitle("Recent Filters"));
+                    play.expect(play.spy(ON_SHOW_RECENT_FILTERS)).toHaveBeenCalledTimes(1);
+                    play.expect(textBox).toHaveValue(RECENT_FILTER);
+                    play.expect(play.spy(InputWidgets.ON_CHANGE)).toHaveBeenCalledWith(RECENT_FILTER);
+                    // A recent filter was accepted when it was first used, so it is remembered at
+                    // once rather than waiting for the server to accept it again
+                    play.expect(play.spy(ON_RECORD_USE)).toHaveBeenCalledWith(RECENT_FILTER);
+                    play.expect(textBox).toHaveFocus();
+                    // Alt+Down opens the list from the keyboard, as a combo box's does
+                    play.keyboard("{Alt>}{ArrowDown}{/Alt}");
+                    play.expect(play.spy(ON_SHOW_RECENT_FILTERS)).toHaveBeenCalledTimes(2);
+                })
+                // A filter is remembered when it is committed (Enter, or leaving the box) and the
+                // server accepted it. The filters applied while typing aren't remembered, nor is
+                // one the server rejects. The stand-in server rejects a filter with a '('
+                .story("RecordsAcceptedFilters", context -> withContext(context, quickFilter(context)))
+                .withPlay(play -> {
+                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    play.type(textBox, "alpha");
+                    // Applied after the 400ms pause, and accepted, but not committed
+                    play.waitFor(() -> play.expect(play.spy(InputWidgets.ON_CHANGE)).toHaveBeenCalledWith("alpha"));
+                    play.expect(play.spy(ON_RECORD_USE)).not().toHaveBeenCalled();
+                    play.keyboard("{Enter}");
+                    play.expect(play.spy(ON_RECORD_USE)).toHaveBeenCalledWith("alpha");
+                    play.expect(play.spy(ON_RECORD_USE)).toHaveBeenCalledTimes(1);
+                    // Committing it again doesn't remember it twice
+                    play.tab();
+                    play.expect(play.spy(ON_RECORD_USE)).toHaveBeenCalledTimes(1);
+                    // A rejected filter isn't remembered, committed or not
+                    play.type(textBox, " " + REJECTED_CHARACTER + "beta{Enter}");
+                    play.expect(play.spy(InputWidgets.ON_CHANGE)).toHaveBeenCalledWith("alpha (beta");
+                    play.expect(play.spy(ON_RECORD_USE)).toHaveBeenCalledTimes(1);
+                    // Nor is clearing it
+                    play.click(play.getByTitle("Clear Filter"));
+                    play.expect(textBox).toHaveValue("");
+                    play.expect(play.spy(ON_RECORD_USE)).toHaveBeenCalledTimes(1);
+                })
+                // A filter the server rejects comes back as an empty page, like one that matched
+                // nothing, so the box says why: it is marked invalid, the reason is its hover text,
+                // and the syntax help leads with it
+                .story("RejectedFilter", context -> withContext(context, quickFilter(context)))
+                .withPlay(play -> {
+                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    play.type(textBox, REJECTED_CHARACTER + "alpha{Enter}");
+                    play.expect(textBox).toHaveClass("invalid");
+                    play.expect(textBox).toHaveAttribute("title", REJECTION);
+                    play.click(play.getByTitle("Quick Filter Syntax Help"));
+                    play.expect(play.screen().findByText("This filter was not applied")).toBeInTheDocument();
+                    play.expect(play.screen().getByText(TextMatch.containing(REJECTION))).toBeInTheDocument();
+                    play.keyboard("{Escape}");
+                    // Clearing the box clears the error
+                    play.click(play.getByTitle("Clear Filter"));
+                    play.expect(textBox).not().toHaveClass("invalid");
+                    play.expect(textBox).not().toHaveAttribute("title");
+                })
+                // A disabled quick filter can't be typed in, so it offers no recent filters
+                // either; its syntax help stays available
+                .story("Disabled", context -> {
+                    final QuickFilter quickFilter = quickFilter(context);
+                    final Widget widget = withContext(context, quickFilter);
+                    quickFilter.setEnabled(false);
+                    return widget;
+                })
+                .withPlay(play -> {
+                    final Query recentFilters = play.getByTitle("Recent Filters");
+                    play.expect(recentFilters).toHaveAttribute("aria-disabled", "true");
+                    play.click(recentFilters);
+                    play.expect(play.spy(ON_SHOW_RECENT_FILTERS)).not().toHaveBeenCalled();
+                    play.expect(play.getByTitle("Quick Filter Syntax Help")).not().toHaveAttribute("aria-disabled");
                 });
+    }
+
+    // Gives the quick filter a context, with a stand-in for the server that accepts or rejects
+    // each filter applied, as Stroom's list presenters report the server's answer
+    private static Widget withContext(final StoryContext context, final QuickFilter quickFilter) {
+        quickFilter.setContextHandler(new RecentFiltersHandler(
+                context.fn(ON_SHOW_RECENT_FILTERS), context.fn(ON_RECORD_USE)));
+        quickFilter.addValueChangeHandler(event -> quickFilter.setFilterError(
+                event.getValue().contains(REJECTED_CHARACTER)
+                        ? REJECTION
+                        : null));
+        return InputWidgets.maxWidth(quickFilter, MAX_WIDTH);
     }
 
     private static QuickFilter quickFilter(final StoryContext context) {
@@ -146,5 +249,33 @@ public final class QuickFilterStories {
         style.setProperty("borderRadius", "4px");
         style.setProperty("fontSize", "0.85rem");
         return row;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Stands in for QuickFilterContextHandlerFactory's handler: rather than fetch the recent
+    // filters and show them in a menu, it picks one at once
+    private static final class RecentFiltersHandler implements QuickFilterContextHandler {
+
+        private final Spy onShowRecentFilters;
+        private final Spy onRecordUse;
+
+        private RecentFiltersHandler(final Spy onShowRecentFilters, final Spy onRecordUse) {
+            this.onShowRecentFilters = onShowRecentFilters;
+            this.onRecordUse = onRecordUse;
+        }
+
+        @Override
+        public void showRecentFilters(final QuickFilter quickFilter, final Consumer<String> onSelect) {
+            onShowRecentFilters.call();
+            onSelect.accept(RECENT_FILTER);
+        }
+
+        @Override
+        public void recordUse(final String filterText) {
+            onRecordUse.call(filterText);
+        }
     }
 }

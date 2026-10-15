@@ -23,22 +23,19 @@ import stroom.node.shared.NodeGroupState;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.Objects;
+
 @Singleton
-@EntityEventHandler(type = NodeGroupService.ENTITY_TYPE, action = {
-        EntityAction.UPDATE,
-        EntityAction.CREATE,
-        EntityAction.DELETE})
 public class NodeGroupServiceImpl implements NodeGroupService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeGroupServiceImpl.class);
@@ -63,17 +60,26 @@ public class NodeGroupServiceImpl implements NodeGroupService {
 
     @Override
     public NodeGroup create(final String name) {
-        final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
-                nodeGroupDao.create(NodeGroup.builder().name(name).stampAudit(securityContext).build()));
-        fireChange(EntityAction.CREATE);
+        final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () -> {
+            final NodeGroup nodeGroup = nodeGroupDao.create(NodeGroup.builder()
+                    .name(name)
+                    .stampAudit(securityContext)
+                    .build());
+            fireChange(EntityAction.CREATE, nodeGroup.getName());
+            return nodeGroup;
+        });
         return result;
     }
 
     @Override
     public NodeGroup update(final NodeGroup nodeGroup) {
-        final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
-                nodeGroupDao.update(nodeGroup.copy().stampAudit(securityContext).build()));
-        fireChange(EntityAction.UPDATE);
+        final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () -> {
+            final NodeGroup persistedNodeGroup = nodeGroupDao.update(nodeGroup.copy()
+                    .stampAudit(securityContext)
+                    .build());
+            fireChange(EntityAction.UPDATE, persistedNodeGroup.getName());
+            return persistedNodeGroup;
+        });
         return result;
     }
 
@@ -89,8 +95,13 @@ public class NodeGroupServiceImpl implements NodeGroupService {
 
     @Override
     public void delete(final int id) {
-        securityContext.secure(AppPermission.MANAGE_NODES_PERMISSION, () -> nodeGroupDao.delete(id));
-        fireChange(EntityAction.DELETE);
+        securityContext.secure(AppPermission.MANAGE_NODES_PERMISSION, () -> {
+
+            final NodeGroup nodeGroup = nodeGroupDao.fetchById(id);
+            Objects.requireNonNull(nodeGroup, "NodeGroup with id " + id + " not found");
+            nodeGroupDao.delete(id);
+            fireChange(EntityAction.DELETE, nodeGroup.getName());
+        });
     }
 
     @Override
@@ -103,20 +114,21 @@ public class NodeGroupServiceImpl implements NodeGroupService {
     public Boolean updateNodeGroupState(final NodeGroupChange change) {
         final Boolean result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
                 nodeGroupDao.updateNodeGroupState(change));
-        fireChange(EntityAction.UPDATE);
+        fireChange(EntityAction.UPDATE, NullSafe.get(change, NodeGroupChange::getNodeGroup, NodeGroup::getName));
         return result;
     }
 
-    private void fireChange(final EntityAction action) {
-        if (entityEventBusProvider != null) {
+    private void fireChange(final EntityAction action, final String nodeGroupName) {
+        NullSafe.consume(entityEventBusProvider, Provider::get, entityEventBus -> {
             try {
-                final EntityEventBus entityEventBus = entityEventBusProvider.get();
-                if (entityEventBus != null) {
-                    entityEventBus.fire(new EntityEvent(EVENT_DOCREF, action));
-                }
+                entityEventBus.buildFiring()
+                        .withDocRef(EVENT_DOCREF)
+                        .withAction(action)
+                        .withStringData(nodeGroupName)
+                        .fire();
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
-        }
+        });
     }
 }

@@ -84,7 +84,7 @@ public final class AskStroomAiDialogStories {
 
     private static final RestFixtures FIXTURES = AiFixtures.builder(
                     AiFixtures.poll(ATTACHMENTS, true, REPLY, ATTACHMENT))
-            .route(RequestMatcher.post("/ai/v1/listChats").withJsonBodyContaining("{\"filter\": \"pipeline\"}"),
+            .route(RequestMatcher.post("/ai/v1/listChats").withJsonBodyContaining("{\"quickFilter\": \"pipeline\"}"),
                     RestReply.json(chats(PIPELINE_CHAT)))
             .post("/ai/v1/listChats", RestReply.json(chats(OLD_CHAT + ", " + PIPELINE_CHAT)))
             .post("/ai/v1/getMessages/5", RestReply.json(LOADED))

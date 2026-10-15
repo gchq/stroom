@@ -26,15 +26,17 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.FindUserContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.GetUserRequest;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserRefResource;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -92,7 +94,8 @@ public class UserRefPopupPresenter
                                  final QuickFilterDialogView userListView,
                                  final PagerView pagerView,
                                  final RestFactory restFactory,
-                                 final UiConfigCache uiConfigCache) {
+                                 final UiConfigCache uiConfigCache,
+                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
@@ -115,6 +118,8 @@ public class UserRefPopupPresenter
 
         userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
+        userListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                UserFields.QUICK_FILTER_CONTEXT, this, this));
 
         setupColumns();
     }
@@ -255,18 +260,24 @@ public class UserRefPopupPresenter
                 protected void exec(final Range range,
                                     final Consumer<ResultPage<UserRef>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
-                    ExpressionOperator expression = QuickFilterExpressionParser
-                            .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
+                    // The filter text goes to the server verbatim; only the structural term this
+                    // screen adds on the user's behalf is composed here. See FindUserCriteria.
+                    ExpressionOperator expression = ExpressionOperator.builder().build();
                     if (additionalTerm != null) {
                         expression = expression.copy().addTerm(additionalTerm).build();
                     }
                     criteriaBuilder.expression(expression);
+                    criteriaBuilder.quickFilter(filter);
                     criteriaBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
                     criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
                     restFactory
                             .create(RESOURCE)
                             .method(res -> res.find(criteriaBuilder.build()))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(resultPage -> {
+                                getView().setFilterError(NullSafe.get(
+                                        resultPage.getFilterError(), TokenError::getText));
+                                dataConsumer.accept(resultPage);
+                            })
                             .onFailure(errorHandler)
                             .taskMonitorFactory(pagerView)
                             .exec();

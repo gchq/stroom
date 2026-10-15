@@ -28,7 +28,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.query.api.ExpressionOperator;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
@@ -36,13 +36,13 @@ import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.security.shared.PermissionShowLevel;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.Toolbar;
@@ -95,7 +95,9 @@ public class DocumentUserPermissionsListPresenter
                                                 final RestFactory restFactory,
                                                 final UiConfigCache uiConfigCache,
                                                 final DocumentTypeCache documentTypeCache,
-                                                final ClientSecurityContext securityContext) {
+                                                final ClientSecurityContext securityContext,
+                                                final QuickFilterContextHandlerFactory
+                                                        quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
@@ -123,6 +125,8 @@ public class DocumentUserPermissionsListPresenter
 
         userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
+        userListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                UserFields.QUICK_FILTER_CONTEXT, this, this));
 
 //        criteriaBuilder.sortList(List.of(
 //                new CriteriaFieldSort(
@@ -149,9 +153,8 @@ public class DocumentUserPermissionsListPresenter
         }
         // Clear to ensure we go back to page one
         clear();
-        final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
-        criteriaBuilder.expression(expression);
+        // The filter text goes to the server verbatim - see FindUserCriteria.
+        criteriaBuilder.quickFilter(text);
         refresh();
     }
 
@@ -171,6 +174,8 @@ public class DocumentUserPermissionsListPresenter
                                     .create(DOC_PERMISSION_RESOURCE)
                                     .method(res -> res.fetchDocumentUserPermissions(request))
                                     .onSuccess(response -> {
+                                        getView().setFilterError(NullSafe.get(
+                                                response.getFilterError(), TokenError::getText));
                                         GWT.log("Fetched " + response.size() + " records");
                                         dataConsumer.accept(response);
                                     })

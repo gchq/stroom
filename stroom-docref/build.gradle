@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.docref'
 
 dependencies {
+
     implementation libs.jackson.annotations
     implementation libs.swagger.annotations
 

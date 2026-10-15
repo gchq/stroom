@@ -23,7 +23,19 @@ import net.sf.saxon.value.DoubleValue;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+@XsltFunctionDef(
+        name = Random.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.VALUE,
+        commonDescription = "Generates a random decimal number between 0.0 (inclusive) and 1.0 (exclusive).",
+        commonReturnType = XsltDataType.DECIMAL,
+        commonReturnDescription = "The random decimal number.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {})
+        })
 class Random extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "random";
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {

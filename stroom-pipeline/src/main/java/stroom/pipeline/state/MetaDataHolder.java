@@ -18,23 +18,21 @@ package stroom.pipeline.state;
 
 import stroom.meta.api.AttributeMap;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.NullSafe;
 
 @PipelineScoped
 public class MetaDataHolder extends AbstractHolder<MetaDataHolder> implements Holder {
+
     private MetaDataProvider metaDataProvider;
 
     public String get(final String key) {
-        if (metaDataProvider != null) {
-            return metaDataProvider.get(key);
-        }
-        return null;
+        return NullSafe.get(
+                metaDataProvider,
+                provider -> provider.get(key));
     }
 
     public AttributeMap getMetaData() {
-        if (metaDataProvider != null) {
-            return metaDataProvider.getMetaData();
-        }
-        return null;
+        return NullSafe.get(metaDataProvider, MetaDataProvider::getMetaData);
     }
 
     public void setMetaDataProvider(final MetaDataProvider metaDataProvider) {

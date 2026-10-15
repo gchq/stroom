@@ -19,6 +19,7 @@ package stroom.security.shared;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import java.util.Arrays;
@@ -35,11 +36,15 @@ public class UserFields {
     public static final String FIELD_FULL_NAME = "full";
     public static final String FIELD_ENABLED = "enabled";
 
+    // IS_GROUP and ENABLED are converted by StringUtil::asBoolean before they reach SQL, so only
+    // the exact-match conditions in DEFAULT_BOOLEAN are truthful for them. The three text fields
+    // below are identity-mapped onto text columns in UserDaoImpl, so they can honour SQL_TEXT -
+    // which matters now the quick filter is parsed server-side, because a bare term is CONTAINS.
     public static final QueryField IS_GROUP = QueryField.createBoolean(FIELD_IS_GROUP);
     //    public static final QueryField NAME = QueryField.createText(FIELD_NAME);
-    public static final QueryField DISPLAY_NAME = QueryField.createText(FIELD_DISPLAY_NAME);
-    public static final QueryField UNIQUE_ID = QueryField.createText(FIELD_UNIQUE_ID);
-    public static final QueryField FULL_NAME = QueryField.createText(FIELD_FULL_NAME);
+    public static final QueryField DISPLAY_NAME = QueryField.createSqlText(FIELD_DISPLAY_NAME);
+    public static final QueryField UNIQUE_ID = QueryField.createSqlText(FIELD_UNIQUE_ID);
+    public static final QueryField FULL_NAME = QueryField.createSqlText(FIELD_FULL_NAME);
     public static final QueryField ENABLED = QueryField.createBoolean(FIELD_ENABLED);
     /**
      * Will return all direct members of the group with a UUID matching the term's value
@@ -84,6 +89,30 @@ public class UserFields {
     public static final Set<QueryField> DEFAULT_FIELDS = Set.of(
             DISPLAY_NAME,
             UNIQUE_ID);
+
+    /**
+     * The fields the quick filter resolves against, server side. CHILDREN_OF and PARENTS_OF are
+     * excluded: they are structural terms the client composes into the criteria's expression, not
+     * something a user types.
+     */
+    public static final List<QueryField> QUICK_FILTER_DEFAULT_FIELDS = Arrays.asList(
+            DISPLAY_NAME,
+            UNIQUE_ID);
+
+    public static final List<QueryField> QUICK_FILTER_FIELDS = Arrays.asList(
+            IS_GROUP,
+            UNIQUE_ID,
+            DISPLAY_NAME,
+            FULL_NAME,
+            ENABLED);
+
+    // Shared by every screen that lists users - the user list, the user picker, app and
+    // document permissions - because they all parse against these fields.
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "users",
+            FILTER_FIELD_DEFINITIONS,
+            QUICK_FILTER_DEFAULT_FIELDS,
+            QUICK_FILTER_FIELDS);
 
     public static final Map<String, QueryField> ALL_FIELDS_MAP = QueryField.buildFieldMap(
             IS_GROUP,

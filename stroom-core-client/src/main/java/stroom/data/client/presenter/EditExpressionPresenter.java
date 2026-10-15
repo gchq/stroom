@@ -22,6 +22,7 @@ import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.HasChangeHandlers;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.FieldSelectionListModel;
@@ -44,6 +45,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView>
         implements HasChangeHandlers, Focus {
@@ -146,6 +148,13 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         disableItemButton.setTitle(getEnableDisableText());
         deleteItemButton.setEnabled(canChangeItem);
         deleteItemButton.setTitle("Delete");
+    }
+
+    /**
+     * @see ExpressionTreePresenter#setConditionFilter(Predicate)
+     */
+    public void setConditionFilter(final Predicate<Condition> conditionFilter) {
+        expressionPresenter.setConditionFilter(conditionFilter);
     }
 
     public void read(final ExpressionOperator expressionOperator) {

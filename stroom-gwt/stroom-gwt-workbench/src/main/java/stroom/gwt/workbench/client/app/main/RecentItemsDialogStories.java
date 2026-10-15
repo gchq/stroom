@@ -27,6 +27,7 @@ import stroom.explorer.client.view.FindViewImpl;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.widgets.selectors.SelectorWidgets;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -144,7 +145,8 @@ public final class RecentItemsDialogStories {
                 new FindViewImpl(GWT.create(FindViewImpl.Binder.class)),
                 null,
                 resultList,
-                recentItems);
+                recentItems,
+                SelectorWidgets.quickFilterContextHandlerFactory(harness));
 
         harness.fn(OPEN_DOC_SPY);
         eventBus.addHandler(OpenDocumentEvent.getType(), event ->

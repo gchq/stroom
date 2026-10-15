@@ -18,6 +18,7 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.data.store.api.DataService;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -29,7 +30,29 @@ import net.sf.saxon.value.StringValue;
 
 import java.util.Map;
 
+@XsltFunctionDef(
+        name = MetaAttribute.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Reads one attribute from the current stream's manifest. This opens the manifest from the stream's
+                source, unlike `meta()` which reads metadata for the current part.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The manifest attribute value, or an empty sequence if the key is not found.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "key",
+                                        description = "The manifest attribute key to read.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 public class MetaAttribute extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "meta-attribute";
 
     private final MetaHolder metaHolder;
     private final DataService dataService;
@@ -53,7 +76,7 @@ public class MetaAttribute extends StroomExtensionFunctionCall {
                 key = getSafeString(functionName, context, arguments, 0);
 
                 if (metaAttributes == null) {
-                    metaAttributes = dataService.metaAttributes(metaHolder.getMeta().getId());
+                    metaAttributes = dataService.metaAttributes(metaHolder.getMetaId());
                 }
                 result = metaAttributes.get(key);
             } catch (final XPathException | RuntimeException e) {
@@ -63,9 +86,9 @@ public class MetaAttribute extends StroomExtensionFunctionCall {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
+        return NullSafe.getOrElseGet(
+                result,
+                StringValue::makeStringValue,
+                EmptyAtomicSequence::getInstance);
     }
 }

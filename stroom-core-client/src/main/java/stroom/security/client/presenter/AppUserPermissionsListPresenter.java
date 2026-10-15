@@ -26,7 +26,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.ExpressionOperator;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
@@ -35,12 +35,12 @@ import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
 import stroom.security.shared.PermissionShowLevel;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.string.CaseType;
@@ -81,6 +81,7 @@ public class AppUserPermissionsListPresenter
     private final MultiSelectionModelImpl<AppUserPermissions> selectionModel;
     private boolean isExternalIdp = false;
     private boolean resetSelection = false;
+    private String lastQuickFilter;
 
     @Inject
     public AppUserPermissionsListPresenter(final EventBus eventBus,
@@ -88,7 +89,8 @@ public class AppUserPermissionsListPresenter
                                            final PagerView pagerView,
                                            final RestFactory restFactory,
                                            final UiConfigCache uiConfigCache,
-                                           final ClientSecurityContext securityContext) {
+                                           final ClientSecurityContext securityContext,
+                                           final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
@@ -119,6 +121,8 @@ public class AppUserPermissionsListPresenter
 
         view.setDataView(pagerView);
         view.setUiHandlers(this);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                UserFields.QUICK_FILTER_CONTEXT, this, this));
 
         setupColumns();
     }
@@ -138,12 +142,11 @@ public class AppUserPermissionsListPresenter
             }
         }
 
-        final ExpressionOperator existingExpr = requestBuilder.getExpression();
-        final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
-        if (!Objects.equals(existingExpr, expression)) {
+        // The filter text goes to the server verbatim - see FindUserCriteria.
+        if (!Objects.equals(lastQuickFilter, text)) {
+            lastQuickFilter = text;
             resetSelection = true;
-            requestBuilder.expression(expression);
+            requestBuilder.quickFilter(text);
             refresh();
         }
     }
@@ -186,7 +189,11 @@ public class AppUserPermissionsListPresenter
                         restFactory
                                 .create(APP_PERMISSION_RESOURCE)
                                 .method(res -> res.fetchAppUserPermissions(requestBuilder.build()))
-                                .onSuccess(dataConsumer)
+                                .onSuccess(resultPage -> {
+                                    getView().setFilterError(NullSafe.get(
+                                            resultPage.getFilterError(), TokenError::getText));
+                                    dataConsumer.accept(resultPage);
+                                })
                                 .onFailure(errorHandler)
                                 .taskMonitorFactory(pagerView)
                                 .exec();

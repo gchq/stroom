@@ -106,6 +106,7 @@ import stroom.gwt.workbench.client.app.main.ProcessorFilterListStories;
 import stroom.gwt.workbench.client.app.main.ProcessorLimitsDialogStories;
 import stroom.gwt.workbench.client.app.main.ProcessorProfilesScreenStories;
 import stroom.gwt.workbench.client.app.main.PropertiesScreenStories;
+import stroom.gwt.workbench.client.app.main.QuickFilterHistoryStories;
 import stroom.gwt.workbench.client.app.main.RecentItemsDialogStories;
 import stroom.gwt.workbench.client.app.main.ResultStoresDialogStories;
 import stroom.gwt.workbench.client.app.main.ServerTasksScreenStories;
@@ -275,6 +276,7 @@ public final class AppStories {
         UserTaskManagerDialogStories.addTo(registry);
         // App/Main/UsersScreen
         UsersScreenStories.addTo(registry);
+        QuickFilterHistoryStories.addTo(registry);
         // App/Main/VisualisationAssets
         VisualisationAssetsStories.addTo(registry);
         // App/Main/WelcomeScreen

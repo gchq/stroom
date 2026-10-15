@@ -49,6 +49,17 @@ class TestUserFixture {
     }
 
     @Test
+    void testQuickFilterMatchesDisplayNameOrSubjectIdIgnoringCase() {
+        assertThat(names(find("{\"quickFilter\":\" AN \"}"))).containsExactly("Alice Anderson", "Analysts");
+        assertThat(names(find("{\"quickFilter\":\"bob\"}"))).containsExactly("Bob Brown");
+    }
+
+    @Test
+    void testBlankQuickFilterIsIgnored() {
+        assertThat(names(find("{\"quickFilter\":\"  \"}"))).hasSize(5);
+    }
+
+    @Test
     void testBlankFilterIsIgnored() {
         final String request = "{\"expression\":{\"children\":[{\"field\":\"x\",\"value\":\"  \"}]}}";
         assertThat(names(find(request))).hasSize(5);

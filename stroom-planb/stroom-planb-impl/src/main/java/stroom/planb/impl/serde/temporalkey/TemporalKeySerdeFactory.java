@@ -48,6 +48,7 @@ public class TemporalKeySerdeFactory {
             case FLOAT -> new FloatKeySerde(byteBuffers, timeSerde);
             case DOUBLE -> new DoubleKeySerde(byteBuffers, timeSerde);
             case STRING -> new LimitedStringKeySerde(byteBuffers, timeSerde);
+            case TERMINATED_STRING -> new TerminatedStringKeySerde(byteBuffers, timeSerde);
             case UID_LOOKUP -> {
                 final UidLookupDb uidLookupDb = new UidLookupDb(
                         env,

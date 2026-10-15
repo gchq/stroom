@@ -84,6 +84,19 @@
 	flex-grow: 1;
 }
 
+/* A menu given a fixed width (ShowMenuEvent.Builder.width), e.g. a quick filter's recent filters:
+   laid out to that width, with text too long for it cut short (its tooltip has the whole text) */
+.menuCellTable--fixedWidth {
+    table-layout: fixed;
+}
+
+.menuCellTable--fixedWidth .menuItem-text,
+.menuCellTable--fixedWidth .menuItem-simpleText {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .menuItem-shortcut {
     padding-left: 15px;
     white-space: nowrap;

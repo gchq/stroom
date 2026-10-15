@@ -40,21 +40,21 @@ class TestFieldFixture {
     void testNoFilterFindsEveryField() {
         assertThat(names(FIXTURE.find("{\"pageRequest\":{\"offset\":0,\"length\":100}}")))
                 .containsExactly("UserId", "EventTime", "Feed", "RunAsUser");
-        assertThat(names(FIXTURE.find("{\"filter\":\"  \"}"))).hasSize(4);
-        assertThat(FieldFixture.describe("{\"filter\":null}")).isEqualTo("loadFields");
+        assertThat(names(FIXTURE.find("{\"quickFilter\":\"  \"}"))).hasSize(4);
+        assertThat(FieldFixture.describe("{\"quickFilter\":null}")).isEqualTo("loadFields");
     }
 
     @Test
     void testFilterContainsIgnoringCase() {
-        assertThat(names(FIXTURE.find("{\"filter\":\"E\"}")))
+        assertThat(names(FIXTURE.find("{\"quickFilter\":\"E\"}")))
                 .containsExactly("UserId", "EventTime", "Feed", "RunAsUser");
-        assertThat(names(FIXTURE.find("{\"filter\":\"time\"}"))).containsExactly("EventTime");
-        assertThat(FieldFixture.describe("{\"filter\":\"time\"}")).isEqualTo("loadFields");
+        assertThat(names(FIXTURE.find("{\"quickFilter\":\"time\"}"))).containsExactly("EventTime");
+        assertThat(FieldFixture.describe("{\"quickFilter\":\"time\"}")).isEqualTo("loadFields");
     }
 
     @Test
     void testFindByName() {
-        final String request = "{\"filter\":\"==\\\"UserId\\\"\"}";
+        final String request = "{\"quickFilter\":\"==\\\"UserId\\\"\"}";
         assertThat(names(FIXTURE.find(request))).containsExactly("UserId");
         assertThat(FieldFixture.describe(request)).isEqualTo("findFieldByName:UserId");
         // Case sensitive

@@ -244,14 +244,14 @@ public class ContentResourceImpl implements ContentResource {
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "fetchDependencies"))
                 .withDescription("List filtered dependencies")
                 .withDefaultEventAction(SearchEventAction.builder()
-                        .withQuery(buildRawQuery(criteria.getPartialName()))
+                        .withQuery(buildRawQuery(criteria.getQuickFilter()))
                         .build())
                 .withComplexLoggedResult(searchEventAction -> {
                     final ResultPage<Dependency> result = docDependencyServiceProvider.get()
                             .fetchDependencies(criteria, getPseudoRefUuids());
 
                     final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
-                            .withQuery(buildRawQuery(criteria.getPartialName()))
+                            .withQuery(buildRawQuery(criteria.getQuickFilter()))
                             .withResultPage(StroomEventLoggingUtil.createResultPage(result))
                             .withTotalResults(BigInteger.valueOf(result.size()))
                             .build();

@@ -42,6 +42,9 @@ import stroom.iframe.client.view.IFrameViewImpl;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.query.client.ExpressionTreeViewImpl;
+import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter;
+import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter.AdvancedQuickFilterView;
+import stroom.quickfilter.client.view.AdvancedQuickFilterViewImpl;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
 import stroom.widget.datepicker.client.DateTimeViewImpl;
@@ -100,6 +103,10 @@ public class ScreenViewsModule extends AbstractPresenterModule {
         // SecurityModule
         bindSharedView(QuickFilterDialogView.class, QuickFilterDialogViewImpl.class);
         bindSharedView(QuickFilterPageView.class, QuickFilterPageViewImpl.class);
+
+        // QuickFilterModule: the Advanced Query dialog of a quick filter's recent-filters drop-down
+        bindPresenterWidget(AdvancedQuickFilterPresenter.class, AdvancedQuickFilterView.class,
+                AdvancedQuickFilterViewImpl.class);
 
         // MonitoringModule
         bindSharedView(WrapperView.class, WrapperViewImpl.class);

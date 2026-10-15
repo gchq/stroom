@@ -22,6 +22,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
@@ -46,6 +47,7 @@ import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class ExpressionTreePanel extends TreePanel<Item> {
 
@@ -170,6 +172,10 @@ public class ExpressionTreePanel extends TreePanel<Item> {
                      final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
         termEditor.init(restFactory, dataSource, fieldSelectionListModel);
+    }
+
+    public void setConditionFilter(final Predicate<Condition> conditionFilter) {
+        termEditor.setConditionFilter(conditionFilter);
     }
 
     public void write() {

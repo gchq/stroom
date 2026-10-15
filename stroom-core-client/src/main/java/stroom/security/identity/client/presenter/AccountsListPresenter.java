@@ -28,19 +28,19 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.ExpressionOperator;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -85,7 +85,8 @@ public class AccountsListPresenter
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter,
                                  final Provider<EditAccountPresenter> editAccountPresenterProvider,
-                                 final UiConfigCache uiConfigCache) {
+                                 final UiConfigCache uiConfigCache,
+                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
@@ -127,6 +128,8 @@ public class AccountsListPresenter
 
         view.setDataView(pagerView);
         view.setUiHandlers(this);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                AccountFields.QUICK_FILTER_CONTEXT, this, this));
     }
 
     @Override
@@ -342,7 +345,11 @@ public class AccountsListPresenter
                     restFactory
                             .create(ACCOUNT_RESOURCE)
                             .method(res -> res.find(requestBuilder.build()))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(resultPage -> {
+                                getView().setFilterError(NullSafe.get(
+                                        resultPage.getFilterError(), TokenError::getText));
+                                dataConsumer.accept(resultPage);
+                            })
                             .onFailure(throwable ->
                                     AlertEvent.fireError(
                                             this,
@@ -367,9 +374,8 @@ public class AccountsListPresenter
             }
         }
 
-        final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(text, AccountFields.DEFAULT_FIELDS, AccountFields.ALL_FIELDS_MAP);
-        requestBuilder.expression(expression);
+        // The filter text goes to the server verbatim - see FindAccountRequest.
+        requestBuilder.quickFilter(text);
         refresh();
     }
 

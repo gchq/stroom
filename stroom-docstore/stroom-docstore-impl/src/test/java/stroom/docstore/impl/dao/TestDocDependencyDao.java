@@ -29,6 +29,7 @@ import stroom.test.common.util.db.DbTestModule;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.inject.AbstractModule;
@@ -599,7 +600,7 @@ class TestDocDependencyDao {
         assertThat(aware.getValues().getFirst().isOk()).isTrue();
 
         final DependencyCriteria criteria = new DependencyCriteria();
-        criteria.setPartialName("status:Missing");
+        criteria.setQuickFilter("status:Missing");
         assertThat(dao.fetchDependencies(criteria, pseudoRefUuids, dep -> true).getValues()).isEmpty();
     }
 
@@ -617,12 +618,48 @@ class TestDocDependencyDao {
         assertThat(filter("fromname:?Dashboard").getValues()).isEmpty();
     }
 
+    /**
+     * Empty is the right result for a rejected filter, but on its own it is indistinguishable
+     * from a filter that matched nothing - which is what made arming the capability check a
+     * change from one silent wrong answer to another. The reason has to come back with the page.
+     */
+    @Test
+    void testFetchDependencies_rejectedFilterExplainsItself() {
+        new Fixture();
+
+        final ResultPage<Dependency> page = filter("fromname:?Dashboard");
+
+        assertThat(page.getValues()).isEmpty();
+        assertThat(page.getFilterError()).isNotNull();
+        assertThat(page.getFilterError().getText())
+                .contains("does not support")
+                .contains("word boundary");
+        // Positional, so the offending token can be underlined rather than described.
+        assertThat(page.getFilterError().getFrom()).isNotNull();
+        assertThat(page.getFilterError().getTo()).isNotNull();
+        assertThat(page.getFilterError().getSeverity()).isEqualTo(Severity.ERROR);
+    }
+
+    /**
+     * A filter that legitimately matches nothing must NOT carry a diagnostic, or the widget would
+     * cry wolf on every ordinary empty result.
+     */
+    @Test
+    void testFetchDependencies_emptyResultCarriesNoDiagnostic() {
+        new Fixture();
+
+        final ResultPage<Dependency> page = filter("fromname:NoSuchThingExists");
+
+        assertThat(page.getValues()).isEmpty();
+        assertThat(page.getFilterError()).isNull();
+    }
+
     @Test
     void testFetchDependencies_filterSortAndPageTogether() {
         new Fixture();
 
         final DependencyCriteria criteria = new DependencyCriteria();
-        criteria.setPartialName("fromtype:Dashboard");
+        criteria.setQuickFilter("fromtype:Dashboard");
         criteria.setSortList(List.of(new CriteriaFieldSort(DependencyCriteria.FIELD_TO_NAME, false, true)));
         criteria.setPageRequest(new PageRequest(0, 1));
 
@@ -698,7 +735,7 @@ class TestDocDependencyDao {
 
     private ResultPage<Dependency> filter(final String quickFilterText) {
         final DependencyCriteria criteria = new DependencyCriteria();
-        criteria.setPartialName(quickFilterText);
+        criteria.setQuickFilter(quickFilterText);
         return dao.fetchDependencies(criteria, Set.of(), dep -> true);
     }
 

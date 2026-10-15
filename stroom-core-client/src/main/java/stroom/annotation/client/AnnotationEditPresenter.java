@@ -26,7 +26,6 @@ import stroom.annotation.shared.AnnotationEntryType;
 import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.AnnotationTable;
 import stroom.annotation.shared.AnnotationTag;
-import stroom.annotation.shared.AnnotationTagFields;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.ChangeAnnotationEntryRequest;
 import stroom.annotation.shared.ChangeAssignedTo;
@@ -38,6 +37,7 @@ import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EntryValue;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FetchAnnotationEntryRequest;
+import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.annotation.shared.RemoveTag;
 import stroom.annotation.shared.SetTag;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
@@ -50,14 +50,10 @@ import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionTerm;
-import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.shared.FindUserContext;
@@ -201,7 +197,7 @@ public class AnnotationEditPresenter
         assignedToPresenter.setContext(FindUserContext.ANNOTATION_ASSIGNMENT);
 
         this.annotationStatusPresenter.setDataSupplier((filter, consumer) -> {
-            final ExpressionCriteria criteria = createCriteria(AnnotationTagType.STATUS, filter);
+            final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.STATUS, filter);
             annotationResourceClient.findAnnotationTags(criteria, values ->
                             consumer.accept(values.getValues()),
                     new DefaultErrorHandler(this, null), this);
@@ -209,7 +205,7 @@ public class AnnotationEditPresenter
         annotationStatusPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
 
         this.annotationLabelPresenter.setDataSupplier((filter, consumer) -> {
-            final ExpressionCriteria criteria = createCriteria(AnnotationTagType.LABEL, filter);
+            final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.LABEL, filter);
             annotationResourceClient.findAnnotationTags(criteria, values ->
                             consumer.accept(values.getValues()),
                     new DefaultErrorHandler(this, null), this);
@@ -217,7 +213,7 @@ public class AnnotationEditPresenter
         annotationLabelPresenter.setDisplayValueFunction(Lozenge::create);
 
         this.annotationCollectionPresenter.setDataSupplier((filter, consumer) -> {
-            final ExpressionCriteria criteria = createCriteria(AnnotationTagType.COLLECTION, filter);
+            final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.COLLECTION, filter);
             annotationResourceClient.findAnnotationTags(criteria, values ->
                             consumer.accept(values.getValues()),
                     new DefaultErrorHandler(this, null), this);
@@ -225,7 +221,7 @@ public class AnnotationEditPresenter
         annotationCollectionPresenter.setDisplayValueFunction(Lozenge::create);
 
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
-            final ExpressionCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);
+            final FindAnnotationTagCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);
             annotationResourceClient.findAnnotationTags(
                     criteria,
                     values -> {
@@ -239,22 +235,12 @@ public class AnnotationEditPresenter
         commentPresenter.setTooltipFunction(AnnotationTag::getTagText);
     }
 
-    private ExpressionCriteria createCriteria(final AnnotationTagType annotationTagType,
-                                              final String filter) {
-        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
-        builder.addTerm(ExpressionTerm.builder()
-                .field(AnnotationTagFields.TYPE_ID)
-                .condition(Condition.EQUALS)
-                .value(annotationTagType.getDisplayValue())
-                .build());
-        if (!NullSafe.isBlankString(filter)) {
-            builder.addTerm(ExpressionTerm.builder()
-                    .field(AnnotationTagFields.NAME)
-                    .condition(Condition.CONTAINS)
-                    .value(filter)
-                    .build());
-        }
-        return new ExpressionCriteria(builder.build());
+    private FindAnnotationTagCriteria createCriteria(final AnnotationTagType annotationTagType,
+                                                    final String filter) {
+        // The type says what kind of tag is being chosen, so it is a field of the criteria rather
+        // than a term; the filter is the user's own text and goes to the server unparsed.
+        // See FindAnnotationTagCriteria.
+        return new FindAnnotationTagCriteria(annotationTagType, filter);
     }
 
     @Override
@@ -872,6 +858,7 @@ public class AnnotationEditPresenter
                                  final AnnotationEntryGroup group,
                                  final long nowMs,
                                  final SafeHtml line) {
+        @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
         final AnnotationEntry first = group.getEntries().get(0);
         final boolean expanded = expandedItems.contains(first.getId());
         final AnnotationEntryType entryType = first.getEntryType();

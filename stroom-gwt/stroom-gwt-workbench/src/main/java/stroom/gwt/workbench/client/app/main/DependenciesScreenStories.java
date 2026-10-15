@@ -52,7 +52,7 @@ import java.util.Map;
 /// 'Dependencies' tab) with fake REST replies.
 ///
 /// The dependencies (`POST /content/v1/fetchDependencies`, `ContentResource.fetchDependencies`) are
-/// answered by a handler that stands in for the server: it applies the criteria's `partialName`
+/// answered by a handler that stands in for the server: it applies the criteria's `quickFilter`
 /// (`fromuuid:`/`touuid:` or a partial name), sort and page. `onLocate`/`onProperties`/`onDelete`
 /// are spies on Stroom's `LocateDocEvent`, `ShowDependenciesInfoDialogEvent` and
 /// `DeleteDocumentEvent`, and 'Show dependants' (`ShowDocRefDependenciesEvent`) is handled as
@@ -118,7 +118,7 @@ public final class DependenciesScreenStories {
                     final Query filter = play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);
                     play.waitFor(() -> play.expect(filter).toHaveValue("touuid:x-1"));
                     play.waitFor(3000, () -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
-                            RequestMatcher.post(PATH).withJsonBodyContaining("{\"partialName\": \"touuid:x-1\"}")
+                            RequestMatcher.post(PATH).withJsonBodyContaining("{\"quickFilter\": \"touuid:x-1\"}")
                                     .toSpyMatcher()));
                     play.waitFor(3000, () -> play.expect(play.queryByText("Missing Feed")).toBeNull());
                     // Clearing the filter restores the full list
@@ -128,7 +128,7 @@ public final class DependenciesScreenStories {
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // The grid loads; a resolved dependency shows OK, a broken one Missing; the quick
-                // filter re-queries with partialName
+                // filter re-queries with quickFilter
                 .story("Dependencies", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     play.findByText("Alpha XSLT");
@@ -138,7 +138,7 @@ public final class DependenciesScreenStories {
                     // GWT's quick filter has no label, only a placeholder
                     play.type(play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER), "Missing");
                     play.waitFor(3000, () -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
-                            RequestMatcher.post(PATH).withJsonBodyContaining("{\"partialName\": \"Missing\"}")
+                            RequestMatcher.post(PATH).withJsonBodyContaining("{\"quickFilter\": \"Missing\"}")
                                     .toSpyMatcher()));
                     play.waitFor(3000, () -> play.expect(play.queryByText("Alpha XSLT")).toBeNull());
                     ContentStorySupport.expectNoProblems(play);
@@ -193,14 +193,14 @@ public final class DependenciesScreenStories {
         return "000".substring(text.length()) + text;
     }
 
-    // Stands in for the server: filters by the criteria's partialName, sorts by its sort list and
+    // Stands in for the server: filters by the criteria's quickFilter, sorts by its sort list and
     // returns the requested page
     private static RestReply fetch(final RecordedRequest request, final List<String[]> allRows) {
         final Map<?, ?> criteria = (Map<?, ?>) JsonValues.parse(request.getBody());
-        final String partialName = (String) criteria.get("partialName");
+        final String quickFilter = (String) criteria.get("quickFilter");
         final List<String[]> rows = new ArrayList<>();
         for (final String[] row : allRows) {
-            if (matches(row, partialName)) {
+            if (matches(row, quickFilter)) {
                 rows.add(row);
             }
         }
@@ -229,11 +229,11 @@ public final class DependenciesScreenStories {
                 + offset + ", \"length\": " + values.size() + ", \"total\": " + rows.size() + ", \"exact\": true}}");
     }
 
-    private static boolean matches(final String[] row, final String partialName) {
-        if (partialName == null || partialName.trim().isEmpty()) {
+    private static boolean matches(final String[] row, final String quickFilter) {
+        if (quickFilter == null || quickFilter.trim().isEmpty()) {
             return true;
         }
-        final String filter = partialName.trim().toLowerCase();
+        final String filter = quickFilter.trim().toLowerCase();
         if (filter.startsWith("fromuuid:")) {
             return row[1].equals(filter.substring("fromuuid:".length()));
         } else if (filter.startsWith("touuid:")) {

@@ -291,6 +291,15 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
+    public Optional<ExplorerNode> getNodeByUuid(final String uuid) {
+        // Only return entries the user has permission to see.
+        return Optional.ofNullable(uuid)
+                .map(explorerTreeDao::findByUUID)
+                .filter(node -> securityContext.hasDocumentPermission(node.getDocRef(), DocumentPermission.USE))
+                .map(this::createExplorerNode);
+    }
+
+    @Override
     public List<ExplorerNode> getPath(final DocRef docRef) {
         return getNodeForDocRef(docRef)
                 .map(explorerTreeDao::getPath)

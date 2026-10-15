@@ -21,6 +21,7 @@ import stroom.data.grid.client.PagerViewImpl;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.client.presenter.ExplorerPopupPresenter;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
@@ -56,6 +57,18 @@ public final class SelectorWidgets {
         }
     }
 
+    /// Creates the factory that gives quick filters their recent-filters drop-down. Its Advanced
+    /// Query dialog is not available in the workbench, as building it would need the whole
+    /// expression editor.
+    ///
+    /// @param harness The story's harness.
+    /// @return The factory.
+    public static QuickFilterContextHandlerFactory quickFilterContextHandlerFactory(final ScreenHarness harness) {
+        return new QuickFilterContextHandlerFactory(harness.getRestFactory(), () -> {
+            throw new UnsupportedOperationException("Advanced Query is not available in the workbench");
+        });
+    }
+
     /// Creates a document selection box: Stroom's [DocSelectionBoxPresenter] with its
     /// `DropDownViewImpl` and explorer popup.
     ///
@@ -89,7 +102,8 @@ public final class SelectorWidgets {
                 new QuickFilterDialogViewImpl(GWT.create(QuickFilterDialogViewImpl.Binder.class)),
                 new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class)),
                 harness.getRestFactory(),
-                harness.getUiConfigCache());
+                harness.getUiConfigCache(),
+                quickFilterContextHandlerFactory(harness));
         return new UserRefSelectionBoxPresenter(harness.getEventBus(),
                 new DropDownViewImpl(GWT.create(DropDownViewImpl.Binder.class)),
                 popup);

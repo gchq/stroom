@@ -40,6 +40,16 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
     @JsonProperty
     private final PermissionShowLevel showLevel;
 
+    public AdvancedDocumentFindWithPermissionsRequest(final PageRequest pageRequest,
+                                                      final List<CriteriaFieldSort> sortList,
+                                                      final ExpressionOperator expression,
+                                                      final Set<DocumentPermission>
+                                                              requiredPermissions,
+                                                      final UserRef userRef,
+                                                      final PermissionShowLevel showLevel) {
+        this(pageRequest, sortList, expression, requiredPermissions, userRef, showLevel, null);
+    }
+
     @JsonCreator
     public AdvancedDocumentFindWithPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                                       @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
@@ -47,8 +57,11 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
                                                       @JsonProperty("requiredPermissions") final Set<DocumentPermission>
                                                               requiredPermissions,
                                                       @JsonProperty("userRef") final UserRef userRef,
-                                                      @JsonProperty("showLevel") final PermissionShowLevel showLevel) {
-        super(pageRequest, sortList, expression, requiredPermissions);
+                                                      @JsonProperty("showLevel") final PermissionShowLevel showLevel,
+                                                      @JsonProperty("quickFilter") final String quickFilter) {
+        // quickFilter belongs to the superclass. Redeclaring it here made RestyGWT's generated
+        // decoder pass it twice and Jackson write it twice.
+        super(pageRequest, sortList, expression, requiredPermissions, quickFilter);
         this.userRef = userRef;
         this.showLevel = showLevel;
     }
@@ -86,6 +99,17 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
 
     public static class Builder extends ExpressionCriteriaBuilder<AdvancedDocumentFindWithPermissionsRequest, Builder> {
 
+        private String quickFilter;
+
+        /**
+         * @see AdvancedDocumentFindRequest#getQuickFilter()
+         */
+        public Builder quickFilter(final String quickFilter) {
+            this.quickFilter = quickFilter;
+            return self();
+        }
+
+
         private Set<DocumentPermission> requiredPermissions;
         private UserRef userRef;
         private PermissionShowLevel showLevel;
@@ -99,6 +123,7 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
             this.requiredPermissions = expressionCriteria.getRequiredPermissions();
             this.userRef = expressionCriteria.userRef;
             this.showLevel = expressionCriteria.showLevel;
+            this.quickFilter = expressionCriteria.getQuickFilter();
         }
 
         public Builder requiredPermissions(final Set<DocumentPermission> requiredPermissions) {
@@ -129,7 +154,8 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
                     expression,
                     requiredPermissions,
                     userRef,
-                    showLevel);
+                    showLevel,
+                    quickFilter);
         }
     }
 }

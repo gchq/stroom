@@ -80,6 +80,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(PointIsInsideXYPolygonFunction.class);
         bindFunction(PutFunction.class);
         bindFunction(RandomFunction.class);
+        bindFunction(RandomIntegerFunction.class);
         bindFunction(RecordNoFunction.class);
         bindFunction(SearchIdFunction.class);
         bindFunction(SplitDocumentFunction.class);
@@ -122,7 +123,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         ClassificationFunction(final Provider<Classification> functionCallProvider) {
             super(
-                    "classification",
+                    Classification.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -136,7 +137,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         ColFromFunction(final Provider<ColFrom> functionCallProvider) {
             super(
-                    "col-from",
+                    ColFrom.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -167,7 +168,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         ColToFunction(final Provider<ColTo> functionCallProvider) {
             super(
-                    "col-to",
+                    ColTo.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -223,7 +224,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         DecodeUrlFunction(final Provider<DecodeUrl> functionCallProvider) {
             super(
-                    "decode-url",
+                    DecodeUrl.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -237,7 +238,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         DictionaryFunction(final Provider<Dictionary> functionCallProvider) {
             super(
-                    "dictionary",
+                    Dictionary.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -251,7 +252,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         EncodeUrlFunction(final Provider<EncodeUrl> functionCallProvider) {
             super(
-                    "encode-url",
+                    EncodeUrl.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -267,7 +268,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         FeedAttributeFunction(final Provider<Meta> functionCallProvider) {
             super(
-                    "feed-attribute",
+                    Meta.FUNCTION_NAME_FEED_ATTRIBUTE,
                     1,
                     1, new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.OPTIONAL_STRING,
@@ -280,7 +281,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         FeedNameFunction(final Provider<FeedName> functionCallProvider) {
             super(
-                    "feed-name",
+                    FeedName.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -294,7 +295,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         FetchJsonFunction(final Provider<FetchJson> functionCallProvider) {
             super(
-                    "fetch-json",
+                    FetchJson.FUNCTION_NAME,
                     1,
                     2,
                     new SequenceType[]{
@@ -428,7 +429,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HexToOctFunction(final Provider<HexToOct> functionCallProvider) {
             super(
-                    "hex-to-oct",
+                    HexToOct.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -524,7 +525,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         LineFromFunction(final Provider<LineFrom> functionCallProvider) {
             super(
-                    "line-from",
+                    LineFrom.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -538,7 +539,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         LineToFunction(final Provider<LineTo> functionCallProvider) {
             super(
-                    "line-to",
+                    LineTo.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -552,7 +553,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         LinkFunction(final Provider<Link> functionCallProvider) {
             super(
-                    "link",
+                    Link.FUNCTION_NAME,
                     1,
                     3,
                     new SequenceType[]{
@@ -585,7 +586,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         ManifestFunction(final Provider<Manifest> functionCallProvider) {
             super(
-                    Manifest.FUNCTION_NAME_NO_ARGS,
+                    Manifest.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -594,12 +595,12 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
-    private static class ManifestForIdFunction extends StroomExtensionFunctionDefinition<Manifest> {
+    private static class ManifestForIdFunction extends StroomExtensionFunctionDefinition<ManifestForId> {
 
         @Inject
-        ManifestForIdFunction(final Provider<Manifest> functionCallProvider) {
+        ManifestForIdFunction(final Provider<ManifestForId> functionCallProvider) {
             super(
-                    Manifest.FUNCTION_NAME_FOR_ID,
+                    ManifestForId.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -613,7 +614,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         MetaFunction(final Provider<Meta> functionCallProvider) {
             super(
-                    "meta",
+                    Meta.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -627,7 +628,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         MetaAttributesFunction(final Provider<MetaAttribute> functionCallProvider) {
             super(
-                    "meta-attribute",
+                    MetaAttribute.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -641,7 +642,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         MetaKeysFunction(final Provider<MetaKeys> functionCallProvider) {
             super(
-                    "meta-keys",
+                    MetaKeys.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -655,7 +656,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         MetaStreamFunction(final Provider<MetaStream> functionCallProvider) {
             super(
-                    MetaStream.FUNCTION_NAME_NO_ARGS,
+                    MetaStream.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -664,15 +665,16 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
-    private static class MetaStreamForIdFunction extends StroomExtensionFunctionDefinition<MetaStream> {
+    private static class MetaStreamForIdFunction extends StroomExtensionFunctionDefinition<MetaStreamForId> {
 
         @Inject
-        MetaStreamForIdFunction(final Provider<MetaStream> functionCallProvider) {
+        MetaStreamForIdFunction(final Provider<MetaStreamForId> functionCallProvider) {
             super(
-                    MetaStream.FUNCTION_NAME_FOR_ID,
+                    MetaStreamForId.FUNCTION_NAME,
                     2,
                     2,
-                    new SequenceType[]{SequenceType.SINGLE_STRING,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
                             SequenceType.SINGLE_INTEGER},
                     SequenceType.NODE_SEQUENCE,
                     functionCallProvider);
@@ -684,7 +686,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         NumericIPFunction(final Provider<NumericIP> functionCallProvider) {
             super(
-                    "numeric-ip",
+                    NumericIP.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -715,7 +717,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         ParseUriFunction(final Provider<ParseUri> functionCallProvider) {
             super(
-                    "parse-uri",
+                    ParseUri.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -729,7 +731,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         PipelineNameFunction(final Provider<PipelineName> functionCallProvider) {
             super(
-                    "pipeline-name",
+                    PipelineName.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -746,7 +748,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
             // TODO This really ought to be in lower-kebab-case like all the others but that would
             //  break content packs that use this func.
             super(
-                    "pointIsInsideXYPolygon",
+                    PointIsInsideXYPolygon.FUNCTION_NAME,
                     4,
                     4,
                     new SequenceType[]{
@@ -780,11 +782,27 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         RandomFunction(final Provider<Random> functionCallProvider) {
             super(
-                    "random",
+                    Random.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
                     SequenceType.OPTIONAL_DOUBLE,
+                    functionCallProvider);
+        }
+    }
+
+    private static class RandomIntegerFunction extends StroomExtensionFunctionDefinition<RandomInteger> {
+
+        @Inject
+        RandomIntegerFunction(final Provider<RandomInteger> functionCallProvider) {
+            super(
+                    RandomInteger.FUNCTION_NAME,
+                    1,
+                    1,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_INTEGER,
+                    },
+                    SequenceType.OPTIONAL_INTEGER,
                     functionCallProvider);
         }
     }
@@ -794,7 +812,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         RecordNoFunction(final Provider<RecordNo> functionCallProvider) {
             super(
-                    "record-no",
+                    RecordNo.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -808,7 +826,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         SearchIdFunction(final Provider<SearchId> functionCallProvider) {
             super(
-                    "search-id",
+                    SearchId.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -840,7 +858,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         SourceFunction(final Provider<Source> functionCallProvider) {
             super(
-                    "source",
+                    Source.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},

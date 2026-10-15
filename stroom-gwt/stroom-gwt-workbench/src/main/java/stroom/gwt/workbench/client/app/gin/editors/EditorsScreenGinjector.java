@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.gin.editors;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.aws.s3.client.presenter.S3ConfigPresenter;
 import stroom.datagen.client.presenter.DataGenPresenter;
+import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.folder.client.FolderPresenter;
@@ -28,6 +29,7 @@ import stroom.gwt.workbench.client.app.gin.CredentialsScreenModule;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
 import stroom.gwt.workbench.client.app.gin.MonitoringScreenModule;
+import stroom.gwt.workbench.client.app.gin.QueryResultTableScreenModule;
 import stroom.gwt.workbench.client.app.gin.ScreenViewsModule;
 import stroom.gwt.workbench.client.app.gin.SecurityScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
@@ -41,8 +43,8 @@ import stroom.script.client.presenter.ScriptPresenter;
 import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 import stroom.search.solr.client.presenter.SolrIndexPresenter;
-import stroom.visualisation.client.presenter.VisualisationAssetsPresenter;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
+import stroom.visualisation.shared.VisualisationDoc;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 
 import com.google.gwt.inject.client.GinModules;
@@ -61,6 +63,7 @@ import com.google.gwt.inject.client.GinModules;
 /// the editors (`XxxScreenModule` for Stroom's `XxxModule`), without plugins and app services.
 @GinModules({
         ScreenViewsModule.class,
+        QueryResultTableScreenModule.class,
         CredentialsScreenModule.class,
         EntityScreenModule.class,
         ExplorerScreenModule.class,
@@ -114,7 +117,7 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     /// @return A Visualisation's 'Assets' tab on its own (the asset tree, its editor and its
     /// toolbar's 'Add file' menu with 'Upload File').
-    VisualisationAssetsPresenter getVisualisationAssetsPresenter();
+    DocumentAssetPresenter<VisualisationDoc> getVisualisationAssetsPresenter();
 
     // Code documents
 
