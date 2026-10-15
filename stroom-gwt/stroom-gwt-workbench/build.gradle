@@ -582,6 +582,9 @@ tasks.workbenchCopySources.mustRunAfter(tasks.workbenchClean)
 //                            -PworkbenchTestWorkers=N  -PworkbenchTestScreenshots
 //                            -PworkbenchLeakCheck (after each story passes, close and open its
 //                            screen many times and fail it if each close keeps more of the page)
+//                            -PworkbenchTestTheme=light (show the stories in the light theme, rather
+//                            than the default dark, e.g. to check colour contrast after changing
+//                            the palette; not with the screenshot tasks, whose baseline is dark)
 //                            -PworkbenchTestArgs='<more test-runner/run.mjs options>' (split on
 //                            spaces, except within '...' or "...")
 //                            -PworkbenchTestPort=N (the server's port, which must be free)
@@ -847,6 +850,13 @@ def runTestRunner = { String testUrl ->
     }
     if (findProperty('workbenchLeakCheck') != null) {
         command += ['--leak-check']
+    }
+    if (findProperty('workbenchTestTheme')) {
+        if (screenshotTaskRequested) {
+            throw new GradleException('-PworkbenchTestTheme can\'t be used with the screenshot tasks, '
+                    + 'whose baseline is in the default (dark) theme; use workbenchTest')
+        }
+        command += ['--theme', findProperty('workbenchTestTheme').toString()]
     }
     if (screenshotTaskRequested) {
         // So that the times the stories show are the same in the baseline and each comparison. A

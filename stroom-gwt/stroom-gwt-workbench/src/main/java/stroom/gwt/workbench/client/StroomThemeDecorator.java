@@ -40,6 +40,12 @@ public class StroomThemeDecorator implements StoryDecorator {
     // The theme applied to the page, one story being shown per page
     private static StoryTheme theme = StoryTheme.DEFAULT;
 
+    /// @return True if the stories are shown in Stroom's dark theme, e.g. for a play that checks a
+    /// colour that differs between the themes.
+    public static boolean isDark() {
+        return toStroomTheme(theme).getThemeType().isDark();
+    }
+
     /// @return The name of the Stroom theme the stories are shown in, e.g. `Dark`, for Stroom's
     /// user preferences (`UserPreferences.theme`, `CurrentPreferences.setTheme`).
     public static String getStroomThemeName() {

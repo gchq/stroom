@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -108,10 +109,12 @@ public final class PropertiesScreenStories {
                     final Play screen = play.screen();
                     play.findByText("stroom.node");
                     play.findByText(HOME_NAME);
-                    // stroom.node disagrees across the cluster: "[Multiple values]" in the red text colour
-                    // (the dark theme's --text-color--red, red-300)
+                    // stroom.node disagrees across the cluster: "[Multiple values]" in the theme's red text
+                    // colour (--text-color--red: red-300 in the dark theme, red-700 in the light)
                     final Query multiple = play.findByText("[Multiple values]");
-                    play.expect(multiple).toHaveStyle("color", "rgb(229, 115, 115)");
+                    play.expect(multiple).toHaveStyle("color", StroomThemeDecorator.isDark()
+                            ? "rgb(229, 115, 115)"
+                            : "rgb(211, 47, 47)");
                     // Double-click stroom.path.home's row: the edit dialog
                     // GWT's grid handles the events of its cells, so the row's name is pressed rather
                     // than the row (a <tr> with no role)

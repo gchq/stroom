@@ -541,21 +541,6 @@
   "widgets-editors-viewers-aceeditorfeatures--search-box": [
     "color-contrast"
   ],
-  "widgets-editors-viewers-aceeditorthemes--chrome": [
-    "color-contrast"
-  ],
-  "widgets-editors-viewers-aceeditorthemes--cloud-9-day": [
-    "color-contrast"
-  ],
-  "widgets-editors-viewers-aceeditorthemes--cloud-editor": [
-    "color-contrast"
-  ],
-  "widgets-editors-viewers-aceeditorthemes--github-light-default": [
-    "color-contrast"
-  ],
-  "widgets-editors-viewers-aceeditorthemes--gruvbox-light-hard": [
-    "color-contrast"
-  ],
   "widgets-editors-viewers-markdowneditor--blank-writable": [
     "frame-title"
   ],

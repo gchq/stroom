@@ -71,11 +71,17 @@ public final class AceEditorThemeStories {
                 .story("OneDark", context -> themed(AceEditorTheme.ONE_DARK));
     }
 
-    /// XML and a Stroom query in the theme.
+    /// XML and a Stroom query in the theme, inside the Stroom theme of the same type (e.g. a dark
+    /// editor theme in the dark theme, whichever the workbench shows), as Stroom only offers an
+    /// editor theme with a Stroom theme of its type.
     private static Widget themed(final AceEditorTheme theme) {
-        return StoryPanels.column(8,
+        final Widget column = StoryPanels.column(8,
                 editor(AceEditorStories.SAMPLE_XML, AceEditorMode.XML, theme),
                 editor(QUERY, AceEditorMode.STROOM_QUERY, theme));
+        column.addStyleName(theme.isDark()
+                ? Theme.DARK.getCssClass()
+                : Theme.LIGHT.getCssClass());
+        return column;
     }
 
     private static Widget editor(final String text, final AceEditorMode mode, final AceEditorTheme theme) {

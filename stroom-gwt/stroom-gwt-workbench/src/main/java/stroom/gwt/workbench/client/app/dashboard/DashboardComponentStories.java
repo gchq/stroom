@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.client.app.dashboard;
 
 import stroom.gwt.workbench.client.FrameDocuments;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.ai.AiFixtures;
 import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
@@ -496,9 +497,11 @@ public final class DashboardComponentStories {
                     DashboardPlays.selectTab(play, "T");
                     play.waitFor(() -> play.expect(play.getByText("beta")).toBeInTheDocument());
                     // Stroom styles the row with a generated class, not inline, so the play checks
-                    // the row's computed background
+                    // the row's computed background: the rule's colour for the theme
                     play.waitFor(() -> play.expect(play.getByText("beta").closest("tr"))
-                            .toHaveStyle("backgroundColor", "rgb(200, 100, 50)"));
+                            .toHaveStyle("backgroundColor", StroomThemeDecorator.isDark()
+                                    ? "rgb(200, 100, 50)"
+                                    : "rgb(10, 20, 30)"));
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The Query's history recalls a past query, and its favourites save the current one

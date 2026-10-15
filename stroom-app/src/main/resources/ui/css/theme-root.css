@@ -13,7 +13,10 @@
 *  so any significant changes may break the docs.
 ***************************************************/
 
-:root {
+/* The light theme, on the page and on any element given it inside a dark page (e.g. to show a
+   light editor theme as it is in the light theme) */
+:root,
+.stroom-theme-light {
     /* How see-through a disabled icon, icon button, menu item or tick box is: the one disabled look
        for things drawn as icons (fields use the --control__*--disabled colours instead) */
     --disabled-opacity: 0.4;
