@@ -302,6 +302,8 @@ public final class AppShellStories {
                     expectEditorThemes(play, dialog, "Stroom light", "Chrome", "Cloud9 day", "Cloud editor",
                             "Github light default", "Gruvbox light hard");
                     chooseTheme(play, dialog, "Dark");
+                    // Choosing the theme that's already chosen closes the list too
+                    chooseTheme(play, dialog, "Dark");
                     expectEditorThemes(play, dialog, "Stroom dark", "Ambiance", "Cloud9 night",
                             "Cloud9 night low color", "Cloud editor dark", "Github dark", "Gruvbox dark hard",
                             "One dark");

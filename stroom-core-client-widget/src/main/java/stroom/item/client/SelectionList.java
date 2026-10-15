@@ -449,9 +449,28 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             }
         }
 
+        // Choosing the item that is already the only one selected doesn't change the selection, so
+        // the model would fire no event and whatever opened the list (e.g. a selection box) wouldn't
+        // know it had been chosen. Choosing it is then treated as a double select, which the model
+        // does fire an event for
+        private SelectionType asChoice(final I row, final SelectionType selectionType) {
+            if (row != null
+                && !row.isHasChildren()
+                && !selectionType.isDoubleSelect()
+                && selectionModel.isSelected(row)
+                && selectionModel.getSelectedCount() == 1) {
+                return new SelectionType(true,
+                        selectionType.isRightClick(),
+                        selectionType.isAllowMultiSelect(),
+                        selectionType.isControlPressed(),
+                        selectionType.isShiftPressed());
+            }
+            return selectionType;
+        }
+
         void doSelect(final I row, final SelectionType selectionType, final boolean stealFocus) {
             if (selectionModel != null) {
-                selectionModel.setSelected(row, selectionType);
+                selectionModel.setSelected(row, asChoice(row, selectionType));
                 if (row != null && row.isHasChildren()) {
                     selectionList.navigate(row, false, stealFocus);
                 } else {
