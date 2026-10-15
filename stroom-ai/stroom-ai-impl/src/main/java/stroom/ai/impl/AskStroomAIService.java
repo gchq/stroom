@@ -1755,8 +1755,15 @@ public class AskStroomAIService {
         return aiService.getChat(chatId);
     }
 
+    /// Deletes a chat and everything in it. A run still working on the chat is stopped first, as it would
+    /// otherwise carry on writing to the chat as it is deleted.
+    ///
+    /// @param chatId The chat.
     public void deleteChat(final int chatId) {
-        // Get attachment IDs before cascade-deleting the chat records.
+        aiService.verifyOwnership(chatId);
+        stopAndWait(chatId, AiChatRunStopReason.USER);
+
+        // Get attachment IDs before deleting the chat records.
         final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
         final List<Integer> attachmentIds = attachments.stream()
                 .map(AiChatAttachment::getId)

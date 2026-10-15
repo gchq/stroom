@@ -439,17 +439,6 @@ public class AskStroomAiClient {
                 .exec();
     }
 
-    void deleteAllMessages(final int chatId,
-                           final Consumer<Boolean> consumer,
-                           final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(RESOURCE)
-                .method(res -> res.deleteAllMessages(chatId))
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
     void getMessages(final int chatId,
                      final Consumer<List<AiChatMessage>> consumer,
                      final TaskMonitorFactory taskMonitorFactory) {
