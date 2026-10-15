@@ -26,7 +26,9 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -40,21 +42,21 @@ public class ChatTitler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ChatTitler.class);
 
-    static final int MAX_TITLE_CHARS = 60;
+    // A limit on what is stored (the column holds 255). Where titles are shown, they are cut short to fit with an
+    // ellipsis.
+    static final int MAX_TITLE_CHARS = 200;
     static final int MAX_QUESTIONS = 10;
     static final int MAX_QUESTION_CHARS = 300;
 
-    static final String SYSTEM_PROMPT = """
-            You name chats. Reply with a title of at most six words that says what the chat is about, in the \
-            user's language. Reply with the title alone: no quotes, labels or full stop.""";
-
     private final AiService aiService;
     private final AiDao aiDao;
+    private final Provider<AiConfig> aiConfigProvider;
 
     @Inject
-    ChatTitler(final AiService aiService, final AiDao aiDao) {
+    ChatTitler(final AiService aiService, final AiDao aiDao, final Provider<AiConfig> aiConfigProvider) {
         this.aiService = aiService;
         this.aiDao = aiDao;
+        this.aiConfigProvider = aiConfigProvider;
     }
 
     /// Names a new chat after its first question, unless the user has named it.
@@ -82,16 +84,34 @@ public class ChatTitler {
             if (model == null || !isDue(questions.size()) || aiDao.isTitleSetByUser(chatId)) {
                 return;
             }
+            final int maxWords = aiConfigProvider.get().getMaxChatTitleWords();
             final String reply = model.chat(List.of(
-                    SystemMessage.from(SYSTEM_PROMPT),
+                    SystemMessage.from(systemPrompt(maxWords)),
                     UserMessage.from(prompt(questions)))).aiMessage().text();
-            final String title = clean(reply);
+            final String title = clean(limitWords(clean(reply), maxWords));
             if (!title.isEmpty()) {
                 aiDao.setAutoTitle(chatId, title);
             }
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to retitle chatId=" + chatId, e);
         }
+    }
+
+    /// @param maxWords The most words the title may have.
+    /// @return The instructions for the model.
+    static String systemPrompt(final int maxWords) {
+        return "You name chats. Reply with a title of at most " + maxWords + " words that says what the chat is "
+               + "about, in the user's language. Reply with the title alone: no quotes, labels or full stop.";
+    }
+
+    /// @param title    A title.
+    /// @param maxWords The most words it may have.
+    /// @return The title, with any words past the limit left off.
+    static String limitWords(final String title, final int maxWords) {
+        final String[] words = title.strip().split("\\s+");
+        return words.length <= maxWords
+                ? title
+                : String.join(" ", Arrays.asList(words).subList(0, maxWords));
     }
 
     /// @param questions How many questions the chat has.

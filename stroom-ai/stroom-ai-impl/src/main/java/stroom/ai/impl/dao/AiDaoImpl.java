@@ -51,6 +51,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.InsertSetMoreStep;
 import org.jooq.Record;
+import org.jooq.Record3;
 import org.jooq.Record6;
 import org.jooq.impl.DSL;
 
@@ -76,6 +77,8 @@ import static stroom.ai.impl.db.jooq.tables.AiToolApproval.AI_TOOL_APPROVAL;
 public class AiDaoImpl implements AiDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AiDaoImpl.class);
+    // Escapes % and _ in a LIKE pattern.
+    private static final char LIKE_ESCAPE = '!';
     private static final SimpleTokenCountEstimator TOKEN_COUNT_ESTIMATOR = new SimpleTokenCountEstimator();
 
     private static final Function<Record, AiChat> RECORD_TO_AI_CHAT = record ->
@@ -754,6 +757,50 @@ public class AiDaoImpl implements AiDao {
                     .and(lastMessage.gt(DSL.coalesce(AI_CHAT.LAST_READ_MESSAGE_ID, 0)))
                     .execute();
         });
+    }
+
+    @Override
+    public List<ChatSearchMatch> searchChats(final String userUuid, final String text, final int limit) {
+        final String pattern = "%" + escapeLike(text) + "%";
+        return JooqUtil.contextResult(aiDbConnProvider, context -> {
+            // A question of the chat's that contains the text.
+            final Condition questionMatches = AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(AI_CHAT.ID)
+                    .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.eq((int) AiMessageType.USER_MESSAGE.getPrimitiveValue()))
+                    .and(AI_CHAT_MESSAGE.MESSAGE.like(pattern, LIKE_ESCAPE));
+            final List<Record3<Integer, String, Long>> chats = context
+                    .select(AI_CHAT.ID, AI_CHAT.TITLE, AI_CHAT.UPDATE_TIME_MS)
+                    .from(AI_CHAT)
+                    .where(AI_CHAT.USER_UUID.eq(userUuid))
+                    .and(AI_CHAT.TITLE.like(pattern, LIKE_ESCAPE)
+                            .or(DSL.exists(DSL.selectOne().from(AI_CHAT_MESSAGE).where(questionMatches))))
+                    .orderBy(AI_CHAT.UPDATE_TIME_MS.desc())
+                    .limit(limit)
+                    .fetch();
+            if (chats.isEmpty()) {
+                return List.of();
+            }
+            // The latest matching question of each chat found.
+            final Map<Integer, String> questions = new HashMap<>();
+            context.select(AI_CHAT_MESSAGE.FK_AI_CHAT_ID, AI_CHAT_MESSAGE.MESSAGE)
+                    .from(AI_CHAT_MESSAGE)
+                    .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.in(chats.stream().map(Record3::value1).toList()))
+                    .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.eq((int) AiMessageType.USER_MESSAGE.getPrimitiveValue()))
+                    .and(AI_CHAT_MESSAGE.MESSAGE.like(pattern, LIKE_ESCAPE))
+                    .orderBy(AI_CHAT_MESSAGE.ID.desc())
+                    .fetch()
+                    .forEach(r -> questions.putIfAbsent(r.value1(), r.value2()));
+            return chats.stream()
+                    .map(r -> new ChatSearchMatch(r.value1(), r.value2(), r.value3(), questions.get(r.value1())))
+                    .toList();
+        });
+    }
+
+    /// @return The text with the characters special to LIKE escaped with [#LIKE_ESCAPE], so they match
+    /// themselves.
+    static String escapeLike(final String text) {
+        return text.replace(String.valueOf(LIKE_ESCAPE), String.valueOf(LIKE_ESCAPE) + LIKE_ESCAPE)
+                .replace("%", LIKE_ESCAPE + "%")
+                .replace("_", LIKE_ESCAPE + "_");
     }
 
     @Override

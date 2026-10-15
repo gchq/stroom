@@ -24,6 +24,11 @@ import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AskStroomAiUiHandlers extends UiHandlers {
 
+    /// Called as the user types in the box for searching the list of chats.
+    ///
+    /// @param text What is in the box.
+    void onChatSearch(String text);
+
     void setContext(AskStroomAiContext data);
 
     void onSendMessage(String message);

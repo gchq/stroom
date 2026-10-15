@@ -35,9 +35,11 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -99,6 +101,12 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     SimplePanel modelRef;
     @UiField
     SpinnerSmall spinner;
+    @UiField
+    TextBox chatSearch;
+    @UiField
+    HTML chatListActions;
+    @UiField
+    HTML chatListItems;
 
     @Inject
     public AskStroomAiViewImpl(final Binder binder) {
@@ -131,6 +139,25 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         autoApprove.addClickHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onToggleAutoApprove();
+            }
+        });
+
+        chatSearch.getElement().setAttribute("placeholder", "Search chats");
+        chatSearch.setTitle("Search your chats' titles and your questions in them. Escape clears the search.");
+        chatSearch.addKeyDownHandler(event -> {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE && !chatSearch.getText().isEmpty()) {
+                // Clears the search, rather than doing what Escape does elsewhere.
+                event.preventDefault();
+                event.stopPropagation();
+                chatSearch.setText("");
+                if (getUiHandlers() != null) {
+                    getUiHandlers().onChatSearch("");
+                }
+            }
+        });
+        chatSearch.addKeyUpHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChatSearch(chatSearch.getText());
             }
         });
 
@@ -369,6 +396,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     public void setTitle(final String title) {
         chatTitle.setText(title);
+        // The whole title, as a long one is cut short to fit.
+        chatTitle.setTitle(title + "\nShow your chats");
     }
 
     public void clearMessages() {
@@ -388,6 +417,26 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @Override
     public FlowPanel getChatList() {
         return chatList;
+    }
+
+    @Override
+    public HTML getChatListActions() {
+        return chatListActions;
+    }
+
+    @Override
+    public HTML getChatListItems() {
+        return chatListItems;
+    }
+
+    @Override
+    public void clearChatSearch() {
+        chatSearch.setText("");
+    }
+
+    @Override
+    public void focusChatSearch() {
+        chatSearch.setFocus(true);
     }
 
     @Override
