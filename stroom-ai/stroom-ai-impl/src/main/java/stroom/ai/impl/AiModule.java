@@ -44,6 +44,7 @@ public class AiModule extends AbstractModule {
 
         // Backs the ai() StroomQL function, see ExpressionContextFactory.
         bind(AiProvider.class).to(AiProviderImpl.class);
+        bind(UserActionLookup.class).to(UserActionLookupImpl.class);
 
         // Built-in chat tools (get_current_date, ...).
         install(new BuiltInToolsModule());

@@ -22,11 +22,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.service.tool.ToolExecutor;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.GetPromptRequest;
 import io.modelcontextprotocol.spec.McpSchema.GetPromptResult;
 import io.modelcontextprotocol.spec.McpSchema.ListPromptsResult;
@@ -70,6 +72,7 @@ public final class McpToolset implements AutoCloseable {
     // The tool metadata key a server can use to say which group a tool is in.
     static final String META_GROUP = "group";
     static final String META_CONFIRMS = "confirms";
+    static final String USER_ACTIONS = "user_actions";
     /// The most of one server's instructions given to the model, so that a server cannot fill the context.
     static final int MAX_SERVER_INSTRUCTIONS_CHARS = 20_000;
 
@@ -83,6 +86,7 @@ public final class McpToolset implements AutoCloseable {
     private final boolean ownsConnections;
     private final Set<String> readOnlyToolNames = ConcurrentHashMap.newKeySet();
     private final Map<String, McpToolInfo> toolInfos = new ConcurrentHashMap<>();
+    private final Map<String, Object> userActions = new ConcurrentHashMap<>();
     // The group each tool is declared to be in, by an admin's rule or by its server.
     private final Map<String, String> declaredGroups = new ConcurrentHashMap<>();
 
@@ -188,7 +192,7 @@ public final class McpToolset implements AutoCloseable {
                             .name(name)
                             .build();
                     tools.put(specification, (request, memoryId) ->
-                            callTool(connection, tool.name(), request.arguments()));
+                            callTool(connection, tool.name(), request));
                     if (isReadOnly(connection, tool)) {
                         readOnlyToolNames.add(name);
                     }
@@ -341,11 +345,33 @@ public final class McpToolset implements AutoCloseable {
         return capabilities != null && capabilities.resources() != null;
     }
 
-    private static String callTool(final McpServerConnection connection,
-                                   final String toolName,
-                                   final String argumentsJson) {
-        final Map<String, Object> args = McpToolAdapter.parseArguments(argumentsJson);
-        return McpToolAdapter.renderResult(connection.client().callTool(new CallToolRequest(toolName, args)));
+    private String callTool(final McpServerConnection connection,
+                            final String toolName,
+                            final ToolExecutionRequest request) {
+        final Map<String, Object> args = McpToolAdapter.parseArguments(request.arguments());
+        final CallToolResult result = connection.client().callTool(new CallToolRequest(toolName, args));
+        // Steps that are the user's, to show as buttons. Only a trusted server's are kept, and they are checked
+        // before they are shown.
+        if (request.id() != null
+            && connection.config() != null
+            && connection.config().isTrusted()
+            && result != null
+            && result.structuredContent() instanceof final Map<?, ?> structured
+            && structured.get(USER_ACTIONS) != null) {
+            userActions.put(request.id(), structured.get(USER_ACTIONS));
+        }
+        return McpToolAdapter.renderResult(result);
+    }
+
+    /**
+     * @param callId The model's id for a tool call.
+     * @return The user actions the call's result gave, as the server sent them (unchecked), or null if it gave
+     * none. They are forgotten once taken.
+     */
+    public Object takeUserActions(final String callId) {
+        return callId == null
+                ? null
+                : userActions.remove(callId);
     }
 
     private String listResources(final String argumentsJson) {

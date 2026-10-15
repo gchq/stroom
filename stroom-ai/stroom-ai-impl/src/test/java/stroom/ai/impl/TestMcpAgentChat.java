@@ -23,6 +23,7 @@ import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.task.api.TaskContext;
 import stroom.util.json.JsonUtil;
@@ -51,6 +52,7 @@ import org.mockito.Mockito;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -69,9 +71,11 @@ class TestMcpAgentChat {
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
     private final ContextUsageTracker usageTracker = Mockito.mock(ContextUsageTracker.class);
+    private final UserActionLookup userActionLookup = Mockito.mock(UserActionLookup.class);
+    private final UserActions userActions = new UserActions(userActionLookup);
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
             usageTracker, toolConsent, auditLog, new ModelStreamer(aiService),
-            new ToolGroups.Activations(), AiConfig::new, aiDao);
+            new ToolGroups.Activations(), AiConfig::new, aiDao, userActions);
 
     {
         // Tool calls run unless a test says otherwise.
@@ -321,7 +325,7 @@ class TestMcpAgentChat {
                 null, null);
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService),
-                new ToolGroups.Activations(), () -> config, aiDao);
+                new ToolGroups.Activations(), () -> config, aiDao, userActions);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
@@ -568,6 +572,58 @@ class TestMcpAgentChat {
                 .contains("x".repeat(McpToolset.MAX_SERVER_INSTRUCTIONS_CHARS))
                 .doesNotContain("x".repeat(McpToolset.MAX_SERVER_INSTRUCTIONS_CHARS + 1))
                 .endsWith("[The rest of these instructions has been left out, as they are too long.]");
+    }
+
+    @Test
+    void userActionsFromTrustedServersAreCheckedAndKeptWithTheResult() {
+        final String uuid = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90";
+        final DocRef pipeline = new DocRef("Pipeline", uuid, "Acme-Events");
+        Mockito.when(userActionLookup.find(new DocRef("Pipeline", uuid))).thenReturn(Optional.of(pipeline));
+        final Map<String, Object> structured = Map.of("user_actions", List.of(
+                Map.of("id", "open", "action", "open_document",
+                        "doc", Map.of("type", "Pipeline", "uuid", uuid, "name", "x")),
+                Map.of("id", "bad", "action", "run_anything")));
+
+        final List<String> trustedResults = toolResults(trustedConfig("test"), structured);
+        final List<String> untrustedResults = toolResults(null, structured);
+
+        final ToolResultRecord trusted = JsonUtil.readValue(trustedResults.getFirst(), ToolResultRecord.class);
+        assertThat(trusted.userActions()).singleElement().satisfies(action -> {
+            assertThat(action.id()).isEqualTo("open");
+            assertThat(action.label()).isEqualTo("Open Pipeline 'Acme-Events'");
+        });
+        // The model only sees the result's text.
+        assertThat(trusted.text()).isEqualTo("created");
+        // An untrusted server's are not offered.
+        assertThat(JsonUtil.readValue(untrustedResults.getFirst(), ToolResultRecord.class).userActions()).isNull();
+    }
+
+    private List<String> toolResults(final stroom.openai.shared.McpToolServerConfig config,
+                                     final Map<String, Object> structured) {
+        Mockito.clearInvocations(aiService);
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class))).thenReturn(CallToolResult.builder()
+                .content(List.of(new TextContent("created")))
+                .structuredContent(structured)
+                .build());
+        Mockito.when(client.listTools()).thenReturn(new ListToolsResult(List.of(searchTool()), null));
+        final McpToolset toolset = new McpToolset(
+                List.of(new McpServerConnection("test", config, client, null)), List.of(), true);
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("test__search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        final ArgumentCaptor<String> results = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService, Mockito.atLeastOnce()).storeMessage(Mockito.eq(7),
+                Mockito.eq(AiMessageType.TOOL_RESULT), results.capture());
+        return results.getAllValues();
     }
 
     @Test
