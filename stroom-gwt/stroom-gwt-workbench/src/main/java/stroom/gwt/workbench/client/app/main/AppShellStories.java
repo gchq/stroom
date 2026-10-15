@@ -1142,8 +1142,20 @@ public final class AppShellStories {
     // Chooses the Stroom theme on the preferences' Theme tab
     private static void chooseTheme(final Play play, final Play dialog, final String theme) {
         play.click(dialog.getByText("Theme", StroomDom.LINK_TAB_LABEL));
-        play.click(dialog.querySelector("#userPreferencesTheme .SelectionBox-textBox"));
+        // The box is a combo box, which says when its list is open, and the list is named after it
+        final Query box = dialog.querySelector("#userPreferencesTheme .SelectionBox-textBox");
+        play.expect(box).toHaveAttribute("role", "combobox");
+        play.expect(box).toHaveAttribute("aria-expanded", "false");
+        play.click(box);
+        play.waitFor(() -> play.expect(box).toHaveAttribute("aria-expanded", "true"));
+        final Query list = play.screen().getByRole("listbox", "Theme");
+        play.expect("the box controls the list", () -> list.element().get().getId()
+                .equals(box.element().get().getAttribute("aria-controls"))).toEqual(true);
+        // Its options, the current theme's selected
+        play.waitFor(() -> play.expect(play.screen().within(list).getAllByRole("option").count())
+                .toBeGreaterThan(1));
         play.click(play.screen().findByText(theme, ".SelectionPopup .selectionItemCell-text"));
+        play.waitFor(() -> play.expect(box).toHaveAttribute("aria-expanded", "false"));
         play.waitFor(() -> play.expect(dialog.querySelector("#userPreferencesTheme .SelectionBox-renderBox"))
                 .toHaveTextContent(theme));
     }

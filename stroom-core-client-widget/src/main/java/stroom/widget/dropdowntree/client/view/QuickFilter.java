@@ -254,6 +254,9 @@ public class QuickFilter extends FlowPanel
 
 //            setWidget(new Label(popupTextSupplier.get(), true));
             setWidget(new HTMLPanel(content));
+            // A dialog (not modal) for screen readers, named after the button that opens it
+            getElement().setAttribute("role", "dialog");
+            getElement().setAttribute("aria-label", "Quick Filter Syntax Help");
 //            setWidget(new HTMLPanel(SafeHtmlUtils.fromTrustedString("<b>hello</b>")));
         }
 

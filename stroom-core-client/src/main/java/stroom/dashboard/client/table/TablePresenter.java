@@ -503,6 +503,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             if (addColumnPopup == null) {
                 addColumnPopup = new SelectionPopup<>();
                 addColumnPopup.init(columnSelectionListModel);
+                addColumnPopup.setAccessibleName("Add Column");
 
                 uiConfigCache.get(uiConfig ->
                         NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->

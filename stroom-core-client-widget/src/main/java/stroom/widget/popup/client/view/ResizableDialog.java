@@ -137,6 +137,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
 
         setStyleName("resizableDialog-popup");
         setWidget(binder.createAndBindUi(this));
+        PopupUtil.setDialogRole(getElement(), titleText.getElement());
 
         initialWindowWidth = Window.getClientWidth();
         initialWindowHeight = Window.getClientHeight();

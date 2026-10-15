@@ -32,6 +32,8 @@ public class IndicatorPopup extends PopupPanel {
         setModal(false);
         setAutoHideEnabled(true);
         setStyleName("code-editor-indicator");
+        // It describes the overview bar's marker or summary under the mouse
+        getElement().setAttribute("role", "tooltip");
 
         setWidget(content);
     }

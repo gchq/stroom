@@ -201,7 +201,7 @@ public final class AceEditorFeatureStories {
                     play.expect(fatalMarker).toHaveAttribute("lineno", "9");
                     // Hovering a marker in the overview bar says where it is
                     play.hover(fatalMarker);
-                    play.waitFor(() -> play.expect(play.screen().querySelector(".code-editor-indicator"))
+                    play.waitFor(() -> play.expect(play.screen().querySelector(".code-editor-indicator[role=tooltip]"))
                             .toHaveTextContent(TextMatch.containing("at line 9, click to navigate.")));
                 })
                 // Stepping's and the data viewer's highlight of the current record (a

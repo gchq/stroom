@@ -457,6 +457,8 @@ public final class QueryEditorStories {
                     executeAndOpenColumnMenu(play, "Count");
                     play.click(screen.findByText("Filter", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Filter 'Count'");
+                    // A modal dialog, named by its title, for screen readers
+                    play.expect(screen.getByRole("dialog", "Filter 'Count'")).toHaveAttribute("aria-modal", "true");
                     // The filter is an Ace editor, which the dialog focuses once it is shown. That
                     // happens after the dialog appears, so the play waits for it: clicking before it
                     // would let it move the focus after the click

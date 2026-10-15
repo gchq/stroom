@@ -24,11 +24,28 @@ import stroom.widget.popup.client.presenter.PositionUtil;
 import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public class PopupUtil {
 
     private static final int POPUP_SHADOW_WIDTH = 9;
+    private static final String ROLE = "role";
+    private static final String DIALOG_ROLE = "dialog";
+    private static final String ARIA_MODAL = "aria-modal";
+
+    /// Makes a popup a dialog for screen readers, named by its title.
+    ///
+    /// @param popup The popup's element.
+    /// @param title The element holding the dialog's title.
+    public static void setDialogRole(final Element popup, final Element title) {
+        if (title.getId() == null || title.getId().isEmpty()) {
+            title.setId(DOM.createUniqueId());
+        }
+        popup.setAttribute(ROLE, DIALOG_ROLE);
+        popup.setAttribute("aria-labelledby", title.getId());
+    }
 
     public static void showPopup(final Popup popup,
                                  final boolean isModal,
@@ -47,6 +64,15 @@ public class PopupUtil {
         // Way to set popups to be modal using glass.
         if (isModal) {
             popupPanel.setGlassEnabled(isModal);
+        }
+        // A dialog shown modal tells screen readers that the rest of the page can't be used
+        final Element element = popupPanel.getElement();
+        if (DIALOG_ROLE.equals(element.getAttribute(ROLE))) {
+            if (isModal) {
+                element.setAttribute(ARIA_MODAL, "true");
+            } else {
+                element.removeAttribute(ARIA_MODAL);
+            }
         }
 
         // Attach the popup to the DOM, returning the focus to where it is now when it closes

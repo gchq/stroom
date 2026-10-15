@@ -20,6 +20,7 @@ import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -78,6 +79,10 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         // A picture of the value, which the text box (the named control) also holds, so screen
         // readers don't read it twice
         renderBox.getElement().setAttribute("aria-hidden", "true");
+        // The text box opens a list of the values to choose from
+        textBox.getElement().setAttribute("role", "combobox");
+        textBox.getElement().setAttribute("aria-haspopup", "listbox");
+        textBox.getElement().setAttribute("aria-expanded", "false");
 
         final FlowPanel outer = new FlowPanel();
         outer.addStyleName("SelectionBox-outer");
@@ -161,6 +166,10 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             popup.addAutoHidePartner(textBox.getElement());
             popup.addAutoHidePartner(svgIconBox.getElement());
             popup.registerPopupTextProvider(popupTextSupplier);
+            // The list is named after the box, and the box says that it is open and controls it
+            popup.setAccessibleName(getAccessibleName(textBox.getElement()));
+            textBox.getElement().setAttribute("aria-expanded", "true");
+            textBox.getElement().setAttribute("aria-controls", popup.getListBoxId());
 
             final I selectionItem = model.wrap(value);
             if (selectionItem != null) {
@@ -168,6 +177,8 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             }
             final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
             handlerRegistrations.add(popup.addCloseHandler(event -> {
+                textBox.getElement().setAttribute("aria-expanded", "false");
+                textBox.getElement().removeAttribute("aria-controls");
                 focus();
                 for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
                     handlerRegistration.removeHandler();
@@ -188,6 +199,14 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             popup.show(textBox.getElement());
         }
     }
+
+    // The box's name: the text of its label, else its aria-label
+    private static native String getAccessibleName(Element element) /*-{
+        if (element.labels && element.labels.length > 0) {
+            return element.labels[0].textContent.trim();
+        }
+        return element.getAttribute("aria-label") || "";
+    }-*/;
 
     private void hidePopup() {
         popup.hide();
