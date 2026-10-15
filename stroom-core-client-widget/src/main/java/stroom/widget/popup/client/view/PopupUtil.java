@@ -26,6 +26,7 @@ import stroom.widget.popup.client.presenter.Size;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public class PopupUtil {
@@ -34,6 +35,8 @@ public class PopupUtil {
     private static final String ROLE = "role";
     private static final String DIALOG_ROLE = "dialog";
     private static final String ARIA_MODAL = "aria-modal";
+    // The least room left between a dialog and each edge of the window
+    private static final int WINDOW_MARGIN = 10;
 
     /// Makes a popup a dialog for screen readers, named by its title.
     ///
@@ -93,6 +96,12 @@ public class PopupUtil {
             if (popupSize != null) {
                 newWidth = getSize(newWidth, popupSize.getWidth());
                 newHeight = getSize(newHeight, popupSize.getHeight());
+            }
+            if (popupType != PopupType.POPUP) {
+                // A dialog is no bigger than the window, so none of it (e.g. its title or its buttons)
+                // is off the screen; its content scrolls instead
+                newWidth = Math.min(newWidth, Window.getClientWidth() - (2 * WINDOW_MARGIN));
+                newHeight = Math.min(newHeight, Window.getClientHeight() - (2 * WINDOW_MARGIN));
             }
             if (newWidth != w) {
                 popupPanel.setWidth(newWidth + "px");

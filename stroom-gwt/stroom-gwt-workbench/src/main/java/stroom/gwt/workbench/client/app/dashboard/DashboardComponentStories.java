@@ -39,6 +39,8 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.shared.AppPermission;
 
+import com.google.gwt.dom.client.Element;
+
 import java.util.List;
 
 /// The component stories of `App/Editors/DashboardEditor` (see `DashboardEditorStories`): the
@@ -219,6 +221,32 @@ public final class DashboardComponentStories {
                     play.expect(labels).not().toContain("Column Filter");
                     play.click(screen.getByText("Rename", StroomDom.MENU_ITEM_TEXT));
                     play.expect(screen.findByText("Rename Field", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // The column's Filter dialog splits Include from Exclude with a splitter between them,
+                // so Tab meets Include, the splitter, then Exclude
+                .story("TableIncludeExcludeFilter", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    DashboardPlays.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.click(DashboardPlays.menuItem(screen, "Filter"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Filter 'Name'");
+                    play.click(dialog.getByText("Include Exclude", StroomDom.LINK_TAB_LABEL));
+                    // The text areas by id: the splitter is also named Include, after the pane it sizes
+                    final Query include = dialog.querySelector("textarea#filterInclude");
+                    final Query splitter = dialog.getByRole("separator", "Include");
+                    final Query exclude = dialog.querySelector("textarea#filterExclude");
+                    play.waitFor(() -> play.expect(include).toBeVisible());
+                    play.expect(exclude).toBeVisible();
+                    play.expect("Include before the splitter", () -> follows(
+                            include.element().get(), splitter.element().get())).toBe(true);
+                    play.expect("the splitter before Exclude", () -> follows(
+                            splitter.element().get(), exclude.element().get())).toBe(true);
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The column values filter's whitelist is sent with the table's next search
@@ -552,6 +580,11 @@ public final class DashboardComponentStories {
         }
         return count;
     }
+
+    // Whether the second element comes after the first in the page
+    private static native boolean follows(Element first, Element second) /*-{
+        return (first.compareDocumentPosition(second) & 4) !== 0; // DOCUMENT_POSITION_FOLLOWING
+    }-*/;
 
     // Whether the items are in the list in the order given
     private static boolean inOrder(final List<String> list, final List<String> items) {

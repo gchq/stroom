@@ -7,6 +7,7 @@
 
 .dialog-content .askStroomAiViewImpl {
   border: 1px solid var(--control__border-color);
+  border-radius: .25rem;
   overflow: auto;
 }
 

@@ -235,8 +235,9 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
             final ResizeFlowPanel contentWrapper = new ResizeFlowPanel();
             contentWrapper.addStyleName("mainViewImpl-contentWrapper");
             innerContent.setSize("100%", "100%");
-            contentWrapper.add(innerContent);
+            // The toolbar first, so that the Tab key reaches it before the content it is shown over
             contentWrapper.add(mainToolbar);
+            contentWrapper.add(innerContent);
 
             final String dockSize = Math.round(state.dockSize) + "px";
             final boolean dockedFirst = state.dockLocation == DockLocation.LEFT
@@ -260,8 +261,8 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
             }
             contentPanel.setWidget(outerSplitPanel);
         } else {
-            // No dock — toolbar goes back to the main FlowPanel.
-            main.add(mainToolbar);
+            // No dock — toolbar goes back to the main FlowPanel, before the content.
+            main.insert(mainToolbar, 0);
             contentPanel.setWidget(innerContent);
         }
     }

@@ -25,6 +25,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
 import stroom.widget.xsdbrowser.client.view.XSDBrowserViewImpl;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
+import stroom.widget.xsdbrowser.client.view.XSDNode;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -37,9 +38,10 @@ public final class XsdBrowserStories {
 
     // Arg names
     private static final String XSD_TEXT = "xsdText";
+    private static final String OPEN = "open";
 
     // A small but representative sample schema: named types, documentation, an enumeration
-    // facet, a pattern facet and a ref
+    // facet, a pattern facet, a ref, a choice within a sequence and a type extending another
     private static final String SAMPLE_XSD = """
             <?xml version="1.0" encoding="UTF-8"?>
             <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -73,6 +75,10 @@ public final class XsdBrowserStories {
                     <xs:element name="author" type="AuthorType"/>
                     <xs:element name="genre" type="GenreType"/>
                     <xs:element name="isbn" type="IsbnType" minOccurs="0"/>
+                    <xs:choice>
+                      <xs:element name="price" type="xs:decimal"/>
+                      <xs:element name="free" type="xs:boolean"/>
+                    </xs:choice>
                   </xs:sequence>
                   <xs:attribute name="id" type="xs:integer" use="required"/>
                 </xs:complexType>
@@ -86,6 +92,19 @@ public final class XsdBrowserStories {
                   <xs:element name="firstName" type="xs:string"/>
                   <xs:element name="lastName" type="xs:string"/>
                 </xs:sequence>
+              </xs:complexType>
+
+              <xs:complexType name="EditorType">
+                <xs:annotation>
+                  <xs:documentation>An author who also edits, for a publisher.</xs:documentation>
+                </xs:annotation>
+                <xs:complexContent>
+                  <xs:extension base="AuthorType">
+                    <xs:sequence>
+                      <xs:element name="publisher" type="xs:string"/>
+                    </xs:sequence>
+                  </xs:extension>
+                </xs:complexContent>
               </xs:complexType>
 
               <xs:simpleType name="GenreType">
@@ -128,10 +147,19 @@ public final class XsdBrowserStories {
         registry.component("Widgets/Editors & Viewers/XsdBrowser", XsdBrowserStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 .argType(ArgType.text(XSD_TEXT).description("The raw schema text (GWT XSDModel.setContents(...))."))
-                .args(Args.of(XSD_TEXT, SAMPLE_XSD))
+                .argType(ArgType.text(OPEN).description("The name of a global element or type to open "
+                                                        + "(as a double-click does), or blank for the schema."))
+                .args(Args.of(XSD_TEXT, SAMPLE_XSD, OPEN, ""))
                 // The box diagram browser: double-click to drill in, single-click to see the
                 // documentation and constraints; Home / Back / Forward
                 .story("Browse", XsdBrowserStories::fromArgs)
+                // An element: its box beside its type's, whose children (a sequence holding a
+                // choice) are joined by tree lines, with its attributes above a separator
+                .story("Element", XsdBrowserStories::fromArgs)
+                .withArgs(Args.of(OPEN, "book"))
+                // A type extending another: the base type's box above an arrow, above its own
+                .story("ExtendedType", XsdBrowserStories::fromArgs)
+                .withArgs(Args.of(OPEN, "EditorType"))
                 // A malformed schema: the parse error is shown, not the partial schema (Chrome's
                 // XML parser recovers, and GWT's XSDModel once showed what it recovered)
                 .story("ParseError", XsdBrowserStories::fromArgs)
@@ -150,6 +178,7 @@ public final class XsdBrowserStories {
         final XSDModel model = new XSDModel();
         presenter.setModel(model);
         model.setContents(context.getArgs().getString(XSD_TEXT, ""));
+        open(model, context.getArgs().getString(OPEN, ""));
 
         // A 480px high frame with a rounded border
         final FlowPanel frame = new FlowPanel();
@@ -160,5 +189,19 @@ public final class XsdBrowserStories {
         frame.getElement().getStyle().setProperty("position", "relative");
         frame.add(presenter.getWidget());
         return frame;
+    }
+
+    // Opens the global element or type with this name, if there is one
+    private static void open(final XSDModel model, final String name) {
+        if (name.isEmpty() || model.getGlobalElementMap() == null) {
+            return;
+        }
+        XSDNode node = model.getGlobalElementMap().get(name);
+        if (node == null) {
+            node = model.getGlobalTypeMap().get(name);
+        }
+        if (node != null) {
+            model.setSelectedItem(node, true);
+        }
     }
 }

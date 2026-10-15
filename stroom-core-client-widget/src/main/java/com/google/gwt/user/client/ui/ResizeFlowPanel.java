@@ -19,11 +19,11 @@ package com.google.gwt.user.client.ui;
 /**
  * A {@link FlowPanel} that participates in the GWT resize chain.
  * <p>
- * {@link DockLayoutPanel} only propagates {@code onResize()} to children that implement
- * {@link RequiresResize}. A plain {@link FlowPanel} does not, so any
- * {@link RequiresResize} widgets inside it (such as another
- * {@code DockLayoutPanel}) will never be notified of size changes —
- * breaking the resize chain.
+ * A {@link ProvidesResize} parent (such as a {@code SplitPane}) only propagates
+ * {@code onResize()} to children that implement {@link RequiresResize}. A plain
+ * {@link FlowPanel} does not, so any {@link RequiresResize} widgets inside it
+ * (such as a data grid) will never be notified of size changes — breaking the
+ * resize chain.
  * <p>
  * This subclass implements both {@link RequiresResize} and
  * {@link ProvidesResize} so it can receive and forward resize events

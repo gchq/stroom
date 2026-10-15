@@ -188,8 +188,9 @@
     margin-block: -50px;
 }
 
-.form-group--indented .form-group__label,
-.form-group--indented .form-group__help {
+/* The label row moves down, not the label and help button, so the help button keeps its own margins
+   (it overlaps the row) and stays beside the label */
+.form-group--indented .form-group__label-row {
     margin-top: var(--control__gap--vertical);
 }
 

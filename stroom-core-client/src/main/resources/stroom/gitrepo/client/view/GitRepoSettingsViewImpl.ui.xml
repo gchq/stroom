@@ -69,13 +69,13 @@
                         label="Credentials"
                         helpText="Stored credential used to access the Git repository: an SSH key, a user name and password, or an access token."
                         screenReaderText="SSH key, user name and password, or access token.">
-            <g:HorizontalPanel>
+            <g:FlowPanel styleName="dock-container-horizontal">
                 <sel:SelectionBox ui:field="credentialSelectionBox"/>
 <!--                <b:Button ui:field="btnSetCredentials"-->
 <!--                          text="..."-->
 <!--                          addStyleNames="allow-focus credentials-button"-->
 <!--                          title="Manage Credentials"/>-->
-            </g:HorizontalPanel>
+            </g:FlowPanel>
         </form:FormGroup>
 
         <!-- Button to configure how Stroom talks to the remote over HTTP(S), including which key stores

@@ -47,6 +47,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
@@ -427,6 +430,25 @@ public final class AppShellStories {
                             "Save, Save As, Download Dictionary words: 1 tab stop",
                             "New, Delete, Locate Current Item, Expand All, Collapse All, "
                             + "Filter Types, Find In Content: 1 tab stop"));
+                })
+                // The main toolbar is shown at the right of the content's tab row, over the content,
+                // but comes first in the page, so the Tab key reaches it before the explorer and the
+                // content (it once came after all the content, so a keyboard user met it last)
+                .story("MainToolbarTabOrder", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    final Query mainToolbar = play.querySelector(".mainToolbar");
+                    final Query explorer = play.querySelector(NAVIGATION);
+                    play.run("expect the main toolbar to come before the explorer in the page", () -> {
+                        if (!isBefore(mainToolbar.element().get(), explorer.element().get())) {
+                            throw new IllegalStateException("The main toolbar comes after the explorer");
+                        }
+                    });
+                    // From the main menu's button, Tab goes on to the explorer
+                    final Query mainMenu = play.getByTitle(MAIN_MENU);
+                    play.run("focus the main menu's button", () -> mainMenu.element().get().focus());
+                    play.tab();
+                    play.expect(play.querySelector(NAVIGATION + ":focus-within")).toBeInTheDocument();
                 })
                 // #5405: a screen opened from the main menu takes the focus, rather than leave it
                 // on the menu's button, so a keyboard user carries on in the screen they opened
@@ -1124,6 +1146,21 @@ public final class AppShellStories {
 
     // --------------------------------------------------------------------------------
     // Play helpers
+
+    // Whether one element comes before another in the page (in document order)
+    private static boolean isBefore(final Element first, final Element second) {
+        final NodeList<Element> all = Document.get().getElementsByTagName("*");
+        for (int i = 0; i < all.getLength(); i++) {
+            final Element element = all.getItem(i);
+            if (element == second) {
+                return false;
+            }
+            if (element == first) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     // Waits for the shell to show the explorer, and returns a query scoped to it
     private static Play navTree(final Play play) {

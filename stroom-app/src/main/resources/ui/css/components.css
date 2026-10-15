@@ -108,14 +108,41 @@
     cursor: pointer;
 }
 
+/* A tick box choosing whether to change a field, then the field, taking the rest of the row */
+.batchExecutionScheduleEdit-row {
+    display: flex;
+    align-items: center;
+}
+
+.batchExecutionScheduleEdit-row > .SimpleTickBox {
+    flex: 0 0 50px;
+}
+
+/* Not spaced from the tick box above it, as a form group following another is */
+.batchExecutionScheduleEdit-row > .form-group:not(:first-child) {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-top: 0;
+}
+
+/* The task's details, taking the width, then its terminate button */
 .userTaskView-layout {
     position: relative;
     width: 100%;
+    display: flex;
+    border-bottom: 1px solid grey;
 }
 
-.userTaskView-layout tr > td {
-	padding: 5px 8px;
-	border-bottom: 1px solid grey;
+.userTaskView-details {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 5px 8px;
+}
+
+.userTaskView-terminateCell {
+    flex: 0 0 auto;
+    align-self: center;
+    padding: 5px 8px;
 }
 
 .userTaskView-layout .gwt-Label {
@@ -579,7 +606,6 @@
     height: 288px;
     display: flex;
     flex-direction: column;
-    margin: -8px -5px 0 -8px;
 }
 
 .aboutViewImpl-stroom-body {
@@ -607,12 +633,21 @@
     color: var(--logo-color);
 }
 
+/* The details, framed as a control */
 .aboutViewImpl-body {
     padding: 8px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: var(--page__background-color);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--control__background-color);
+}
+
+/* The result stores' list and details fill the frame, its toolbar and splitter meeting its border */
+.stroom-control.resultStoreViewImpl {
+    padding: 0;
+    overflow: hidden;
 }
 
 .aboutViewImpl-buildInfo {
@@ -934,9 +969,14 @@
     height: 22px;
 }
 
+/* The tasks, scrolling in a rounded frame */
 .userTaskManagerViewImpl-layout {
     width: 400px;
     height: 200px;
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--content-box__background-color);
+    overflow: hidden;
 }
 
 .progressViewImpl-progressBarContainer {
@@ -2065,6 +2105,33 @@ button.main-menu svg {
     overflow-y: scroll;
 }
 
+/* The users and groups fill what the pane has left below Permission Visibility, and the list fills
+   what its group has left below its label */
+.documentUserPermissionsViewImpl-users,
+.documentUserPermissionsViewImpl-list {
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+/* In a dialog, the table (with its toolbar) and the details are framed as controls, and inset to line
+   up with the controls above them (which have form-padding) */
+.dialog-content .documentUserPermissions-table,
+.dialog-content .documentUserPermissions-details {
+    width: auto;
+    margin: 0 var(--control__gap--horizontal);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--content-box__background-color);
+    overflow: hidden;
+}
+
+/* The details fill what their group has left below its (empty) label row */
+.documentUserPermissions-details {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+}
+
 .ColumnValuesFilterViewImpl {
     display: flex;
     flex-direction: column;
@@ -2133,8 +2200,13 @@ button.main-menu svg {
     height: 100px;
     width: 100px;
 }
-/* Padding in details table */
-.contentstore-details .contentstore-details-table th, .contentstore-details .contentstore-details-table td {
+/* The details: each name, then its value beside it */
+.contentstore-details .contentstore-details-list {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+}
+.contentstore-details .contentstore-details-list > * {
     padding: 5px;
 }
 /* Overall width of details table */

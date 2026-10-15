@@ -303,6 +303,16 @@ public final class AnnotationEditorStories {
                     waitForAnnotation(play);
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // The comment's buttons are reached by the Tab key in the order they are shown, left
+                // to right (they were once laid out in reverse, so Tab went right to left)
+                .story("CommentButtonsTabOrder", context -> render(context, fixtures(ENTRIES).build(), false))
+                .withPlay(play -> {
+                    waitForAnnotation(play);
+                    final Query chooseComment = play.getByRole("button", StroomDom.button("Choose Comment"));
+                    play.run("focus Choose Comment", () -> chooseComment.element().get().focus());
+                    play.tab();
+                    play.expect(play.getByRole("button", StroomDom.button("Comment"))).toHaveFocus();
+                })
                 // The Annotation tab (the default) when the user may only view the annotation
                 .story("AnnotationReadOnly", context -> render(context, fixtures(ENTRIES).build(), true))
                 .withPlay(play -> {
