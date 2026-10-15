@@ -127,7 +127,6 @@ public class Editor extends Composite implements
                     });
                 }
 
-                updateAnnotations();
                 updateChangeHandler();
                 updateFirstLineNumber();
                 updateGotoLine();
@@ -140,6 +139,9 @@ public class Editor extends Composite implements
                 updateShowGutter();
                 updateShowInvisibles();
                 updateText();
+                // After the text: Ace moves annotations down as text is inserted above them, so ones
+                // set before it would end up past the end of the document
+                updateAnnotations();
                 updateTheme();
                 updateUseBasicAutoCompletion();
                 updateUseLiveAutoCompletion();
