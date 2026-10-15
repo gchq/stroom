@@ -19,7 +19,10 @@ package stroom.ai.impl;
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.shared.AiAgentMode;
+import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
@@ -66,6 +69,9 @@ class TestAskStroomAIService {
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
     private final AiChatRunDao runDao = Mockito.mock(AiChatRunDao.class);
+    private final ChatTitler chatTitler = Mockito.mock(ChatTitler.class);
+    private final stroom.ai.impl.memory.AiMemoryService memoryService =
+            Mockito.mock(stroom.ai.impl.memory.AiMemoryService.class);
     private final AiChat chat = new AiChat(1, 0L, 0L, "user1", "chat");
 
     private final ChatCompactor compactor = Mockito.mock(ChatCompactor.class);
@@ -78,7 +84,7 @@ class TestAskStroomAIService {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, () -> null, null, null,
                 null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null, compactor, null,
                 toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext,
-                () -> null);
+                () -> null, chatTitler);
     }
 
     private final AiAttachmentFileStore attachmentFileStore = Mockito.mock(AiAttachmentFileStore.class);
@@ -89,8 +95,8 @@ class TestAskStroomAIService {
     private AskStroomAIService serviceForDelete() {
         return new AskStroomAIService(aiService, attachmentFileStore, null, null, null, null, null, () -> null,
                 null, null, null, null, null, mcpClientCache, null, runManager, runDao, null, null,
-                contextAssembler, usageTracker, compactor, null, toolApprovalService, Mockito.mock(AiAuditLog.class),
-                aiDao, AiConfig::new, securityContext, () -> null);
+                contextAssembler, usageTracker, compactor, memoryService, toolApprovalService,
+                Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext, () -> null, chatTitler);
     }
 
     private static final DocRef CHOSEN_MODEL = new DocRef(OpenAIModelDoc.TYPE, "chosen-uuid", "Chosen");
@@ -102,7 +108,7 @@ class TestAskStroomAIService {
         return new AskStroomAIService(aiService, null, null, null, store, null, null, () -> defaultConfig,
                 null, null, null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null,
                 compactor, null, toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new,
-                securityContext, () -> null);
+                securityContext, () -> null, chatTitler);
     }
 
     @Test
@@ -189,6 +195,41 @@ class TestAskStroomAIService {
         // Each is checked as deleting one chat is.
         Mockito.verify(aiService).verifyOwnership(1);
         Mockito.verify(aiService).verifyOwnership(3);
+    }
+
+    @Test
+    void testClearChat_startsTheChatAfreshButKeepsIt() {
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of(new AiChatAttachment(50, 1, 0L, 0L,
+                AiAttachmentStatus.READY, AiAttachmentType.WORKSPACE_FILE, "f", null, false, null)));
+
+        serviceForDelete().clearChat(1);
+
+        final InOrder inOrder = Mockito.inOrder(aiService, attachmentFileStore, memoryService);
+        inOrder.verify(aiService).verifyOwnership(1);
+        inOrder.verify(aiService).deleteAllChatMessagesAndAttachments(1);
+        inOrder.verify(attachmentFileStore).deleteAttachmentFiles(List.of(50));
+        // This chat's memory goes; the user's own is kept.
+        inOrder.verify(memoryService).deleteByUser(1, "/memories/session/", null);
+        Mockito.verify(memoryService, Mockito.never()).deleteByUser(1, "/memories/", null);
+        Mockito.verify(runDao).deleteByChat(1);
+        Mockito.verify(usageTracker).forget(1);
+        // Named afresh by its next question.
+        Mockito.verify(aiDao).resetChatTitle(1);
+        // The chat itself stays.
+        Mockito.verify(aiService, Mockito.never()).deleteChat(Mockito.anyInt());
+    }
+
+    @Test
+    void testClearChat_aRunThatWillNotStopLeavesTheChatAsItIs() {
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(
+                new AiChatRun(5, 1, AiChatRunStatus.STOPPING, null, 0L, null, false, null)));
+        final AskStroomAIService service = serviceForDelete();
+        service.setStopWait(java.time.Duration.ofMillis(200));
+
+        assertThatThrownBy(() -> service.clearChat(1)).isInstanceOf(AiChatRunManager.AiChatBusyException.class);
+        Mockito.verify(aiService, Mockito.never()).deleteAllChatMessagesAndAttachments(Mockito.anyInt());
+        Mockito.verifyNoInteractions(memoryService);
     }
 
     @Test

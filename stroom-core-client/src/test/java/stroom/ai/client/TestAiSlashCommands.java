@@ -29,7 +29,7 @@ class TestAiSlashCommands {
     @Test
     void ownCommandsAreKnown() {
         assertThat(AiSlashCommands.COMMANDS).extracting(AiSlashCommand::getName)
-                .containsExactly("/compact", "/mode", "/plan", "/new", "/remember", "/help");
+                .containsExactly("/compact", "/mode", "/plan", "/new", "/clear", "/remember", "/help");
         assertThat(AiSlashCommands.isOwn("/plan")).isTrue();
         // An MCP server's prompt is not one of the chat's own.
         assertThat(AiSlashCommands.isOwn("/onboard_data_source")).isFalse();
