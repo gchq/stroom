@@ -49,7 +49,11 @@ public class GlobalKeyHandlerImpl implements GlobalKeyHandler {
 
     @Override
     public void onKeyDown(final KeyDownEvent event) {
-        final NativeEvent nativeEvent = event.getNativeEvent();
+        onKeyDown(event.getNativeEvent());
+    }
+
+    @Override
+    public void onKeyDown(final NativeEvent nativeEvent) {
         // If there is a Command associated with this key bind then this will execute that
         // else we pass the action down to the current tab to deal with
         final Action action = KeyBinding.test(nativeEvent);
