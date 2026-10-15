@@ -22,11 +22,13 @@ import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import org.junit.jupiter.api.Test;
@@ -140,6 +142,28 @@ class TestContextAssembler {
         assertThat(((UserMessage) messages.get(1)).singleText())
                 .contains("'Firewall events' is no longer available (it reached its retention age)")
                 .contains("ask the user to attach it again");
+    }
+
+    @Test
+    void testOnlyModelsWithToolsAreToldAboutThem() {
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
+                Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
+                Mockito.mock(ContextUsageTracker.class), null);
+        final List<AiChatMessage> history = List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, null));
+        final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
+
+        final String withTools = ((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), history,
+                CompactionRecord.NONE, true).getFirst()).text();
+        final String withoutTools = ((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), history,
+                CompactionRecord.NONE, false).getFirst()).text();
+
+        assertThat(withTools)
+                .startsWith(AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT)
+                .contains("## Tools")
+                .contains("read_turn and search_history");
+        assertThat(withoutTools)
+                .isEqualTo(AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT);
     }
 
     @Test
