@@ -108,6 +108,27 @@ form. The answer goes to the MCP server, never to the model. The tool call keeps
 * only flat forms are shown (text, numbers, true/false, a choice of one or several); others are declined.
 
 
+## Steps for the user (user actions)
+
+Some steps are the user's to take, such as enabling a processor filter. A trusted MCP server's tool result
+can list them (`structuredContent.user_actions`, as FastMCP does), and the chat shows them as buttons in a
+_Steps for you_ card. The model can neither make nor click one.
+
+* Only four actions are shown: _Enable_ or _Disable_ a processor filter, _Open_ a document, and an
+  Elasticsearch request for the cluster admin. Anything else is dropped.
+* Stroom writes each button's text itself, from the filter as it is (pipeline, selection, task limit), and
+  warns if the pipeline isn't tagged `mcp-generated`. The server's own wording is only shown for "Do first"
+  conditions, as plain text.
+* When clicked, the step is checked again (the filter exists, is on that pipeline and still needs the
+  change), then done as the user, so their permissions apply. Each button works once, for 24 hours, only for
+  the chat's owner, and each click is audited (`AskStroomAi.userAction`). A note goes into the chat, so the
+  model knows on its next turn.
+* An Elasticsearch request is shown read-only, with a copy button, only if it is `PUT _index_template/<name>`,
+  `DELETE _data_stream/<index>` or `DELETE <index>` (no wildcards, lists or `_all`), for an index of an
+  Elastic Index document used by a pipeline in the same result. Stroom never runs it.
+* A run carries on without waiting for buttons; nothing happens until the user clicks.
+
+
 ## Prompts and uploads
 
 * The prompts MCP servers offer are slash commands in the input box, e.g. `/onboard_data_source feed=ACME`.
