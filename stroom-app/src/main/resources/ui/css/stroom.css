@@ -869,6 +869,20 @@ textarea[readonly],
     overflow: hidden;
 }
 
+/* A box that clips (e.g. a form, which scrolls) has room inside for the focus ring round a control
+   at its edge, and reaches as far outside to keep its contents where they were */
+.focus-ring-room,
+.form:not(.form-padding) {
+    padding: var(--focus-ring__room);
+    margin: calc(-1 * var(--focus-ring__room));
+}
+
+.focus-ring-room.max,
+.form.max:not(.form-padding) {
+    width: calc(100% + 2 * var(--focus-ring__room));
+    height: calc(100% + 2 * var(--focus-ring__room));
+}
+
 .clickableLabel.enabled {
     cursor: pointer;
 }

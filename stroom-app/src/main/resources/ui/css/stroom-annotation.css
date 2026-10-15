@@ -116,9 +116,9 @@
 
 
 
-.annotationSetting {
-    width: 100%;
-    padding: 5px 0;
+/* 5px above and below as well as the form's room for focus rings */
+.form.max.annotationSetting {
+    padding: calc(var(--focus-ring__room) + 5px) var(--focus-ring__room);
 }
 
 .annotationSettingHeading {

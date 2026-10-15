@@ -107,6 +107,8 @@ public class DocumentUserPermissionsListPresenter
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
+        // In a dialog, the table and its toolbar are framed as a control (see components.css)
+        pagerView.asWidget().addStyleName("documentUserPermissions-table");
 
         // Not easy to determine if we are dealing in users or groups at this point so just
         // call it Quick Filter

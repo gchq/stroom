@@ -606,7 +606,6 @@
     height: 288px;
     display: flex;
     flex-direction: column;
-    margin: -8px -5px 0 -8px;
 }
 
 .aboutViewImpl-stroom-body {
@@ -634,12 +633,21 @@
     color: var(--logo-color);
 }
 
+/* The details, framed as a control */
 .aboutViewImpl-body {
     padding: 8px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: var(--page__background-color);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--control__background-color);
+}
+
+/* The result stores' list and details fill the frame, its toolbar and splitter meeting its border */
+.stroom-control.resultStoreViewImpl {
+    padding: 0;
+    overflow: hidden;
 }
 
 .aboutViewImpl-buildInfo {
@@ -961,9 +969,14 @@
     height: 22px;
 }
 
+/* The tasks, scrolling in a rounded frame */
 .userTaskManagerViewImpl-layout {
     width: 400px;
     height: 200px;
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--content-box__background-color);
+    overflow: hidden;
 }
 
 .progressViewImpl-progressBarContainer {
@@ -2090,6 +2103,33 @@ button.main-menu svg {
 
 .permissionDetails {
     overflow-y: scroll;
+}
+
+/* The users and groups fill what the pane has left below Permission Visibility, and the list fills
+   what its group has left below its label */
+.documentUserPermissionsViewImpl-users,
+.documentUserPermissionsViewImpl-list {
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+/* In a dialog, the table (with its toolbar) and the details are framed as controls, and inset to line
+   up with the controls above them (which have form-padding) */
+.dialog-content .documentUserPermissions-table,
+.dialog-content .documentUserPermissions-details {
+    width: auto;
+    margin: 0 var(--control__gap--horizontal);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--content-box__background-color);
+    overflow: hidden;
+}
+
+/* The details fill what their group has left below its (empty) label row */
+.documentUserPermissions-details {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
 }
 
 .ColumnValuesFilterViewImpl {

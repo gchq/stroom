@@ -4,7 +4,7 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:split="urn:import:stroom.widget.layout.client">
     <g:SimplePanel styleName="max">
-        <split:SplitPane thin="true" sizes="50%, *" names="Include, Exclude" addStyleNames="max">
+        <split:SplitPane sizes="50%, *" names="Include, Exclude" addStyleNames="max">
             <g:FlowPanel styleName="max form">
                 <form:FormGroup identity="filterInclude" label="Include" addStyleNames="dock-max"
                                 helpText="Regular expressions, one per line. A row is shown if its value contains a match for any of them (or matches an Include Dictionary). Parameters such as ${{key} can be used."

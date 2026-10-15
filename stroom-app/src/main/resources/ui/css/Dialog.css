@@ -50,7 +50,9 @@
 
 .dialog-titleBar {
     flex-grow: 0;
-    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
+    /* Less below, where the content's own padding (its focus room) makes up the gap */
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal)
+             calc(var(--dialog__padding--vertical) - var(--focus-ring__room));
     display: flex;
     gap: 5px;
 }
@@ -90,7 +92,8 @@
 .dialog-content {
     flex-grow: 1;
     overflow: auto;
-    padding: 0 var(--dialog__padding--horizontal);
+    /* Inside the scrolling box, so a focus ring at any edge isn't clipped */
+    padding: var(--focus-ring__room) var(--dialog__padding--horizontal);
 }
 
 .dialog-buttons {
