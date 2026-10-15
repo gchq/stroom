@@ -16,12 +16,18 @@
 
 package stroom.widget.util.client;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 
 public interface GlobalKeyHandler {
 
     void onKeyDown(KeyDownEvent event);
+
+    /// Handles a key press that did not reach the page itself, e.g. one in a document shown in an iframe.
+    ///
+    /// @param nativeEvent The key down event.
+    void onKeyDown(NativeEvent nativeEvent);
 
     void onKeyUp(KeyUpEvent event);
 }
