@@ -44,7 +44,10 @@ import java.util.Optional;
 ///   'approve everything' is on for the chat (only if an administrator allows it, and only for trusted servers'
 ///   tools that are not destructive or open-world) (S4);
 /// - while the user is away (an unattended run), only read-only tools on trusted servers run; anything else asks,
-///   whatever the policies or approvals say (S3).
+///   whatever the policies or approvals say (S3);
+/// - if an administrator sets `askReadOnlyToolsAfterUntrustedContent`, read-only tools on trusted servers ask too
+///   once the run has read data that could hold planted instructions, as their arguments go to the server. A tool
+///   the user has allowed for the chat still runs.
 ///
 /// Annotations are only hints from the server, so they only count on trusted servers, except that the user may
 /// choose to allow a server's tools that say they are read-only.
@@ -52,14 +55,21 @@ public class ToolConsent {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ToolConsent.class);
 
+    static final String DATA_WAS_READ_REASON = "This tool only reads, but this chat has read data from tools or "
+                                               + "attached tables, which could tell the model to put that data in "
+                                               + "this call, and the tool's server would receive it.";
+
     private final AiToolApprovalDao approvalDao;
     private final AiDao aiDao;
     private final Provider<AiConfig> aiConfigProvider;
+    private final Provider<AiChatRunManager> runManagerProvider;
 
     @Inject
     ToolConsent(final AiToolApprovalDao approvalDao,
                 final AiDao aiDao,
-                final Provider<AiConfig> aiConfigProvider) {
+                final Provider<AiConfig> aiConfigProvider,
+                final Provider<AiChatRunManager> runManagerProvider) {
+        this.runManagerProvider = runManagerProvider;
         this.approvalDao = approvalDao;
         this.aiDao = aiDao;
         this.aiConfigProvider = aiConfigProvider;
@@ -94,8 +104,11 @@ public class ToolConsent {
         if (info.trusted() && info.confirms() && info.policy() != McpToolPolicy.ASK_ALWAYS) {
             return Verdict.RUN;
         }
+        // Read-only tools on trusted servers normally run without asking. An administrator can have them ask
+        // once the run has read data that could hold planted instructions, as their arguments go to the server.
+        final boolean readOnlyMayRun = info.trusted() && info.claimsReadOnly() && !askAsDataWasRead(chatId);
         if (unattended) {
-            return info.trusted() && info.claimsReadOnly()
+            return readOnlyMayRun
                     ? Verdict.RUN
                     : Verdict.ask(awayReason(), false, false, risks);
         }
@@ -110,18 +123,28 @@ public class ToolConsent {
                         ? Verdict.RUN
                         : Verdict.deny("You chose not to allow this tool in this chat.");
             }
-            if (info.claimsReadOnly() && current(chatId, info.serverKey(), AiToolApprovalDao.ALL_READ_ONLY_TOOLS,
-                    info.serverHash()).filter(a -> a.decision() == AiToolApprovalDecision.ALLOW).isPresent()) {
+            if (info.claimsReadOnly() && !askAsDataWasRead(chatId) && current(chatId, info.serverKey(),
+                    AiToolApprovalDao.ALL_READ_ONLY_TOOLS, info.serverHash())
+                    .filter(a -> a.decision() == AiToolApprovalDecision.ALLOW).isPresent()) {
+                return Verdict.RUN;
+            }
+            if (readOnlyMayRun) {
                 return Verdict.RUN;
             }
             if (info.trusted() && info.claimsReadOnly()) {
-                return Verdict.RUN;
+                return Verdict.ask(DATA_WAS_READ_REASON, true, false, List.of("after reading data"));
             }
             if (info.trusted() && !info.isRisky() && approveEverything(chatId)) {
                 return Verdict.RUN;
             }
         }
         return Verdict.ask(reason(info), !askAlways, !askAlways && info.claimsReadOnly(), risks);
+    }
+
+    // True if read-only tools are to ask because the run has read data that could hold planted instructions.
+    private boolean askAsDataWasRead(final int chatId) {
+        return NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::isAskReadOnlyToolsAfterUntrustedContent, false)
+               && runManagerProvider.get().isTainted(chatId);
     }
 
     private boolean approveEverything(final int chatId) {

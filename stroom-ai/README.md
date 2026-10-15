@@ -91,6 +91,10 @@ Before a tool runs, Stroom decides whether to ask the user:
   Even then it only covers trusted servers' tools that are not destructive or open-world.
 * If no browser has polled the chat for `unattendedAfter`, the run is unattended: only read-only tools
   run, and anything else waits for the user.
+* A read-only tool changes nothing, but its arguments still go to its server. Set
+  `askReadOnlyToolsAfterUntrustedContent` to make trusted servers' read-only tools ask too, once a run has
+  read data from tools or attached tables that could hold planted instructions. A tool the user has allowed
+  for the chat still runs.
 * Approval cards show each call's full arguments. Denying can give a reason, which the model is told.
 * A run waiting for an approval gives up its thread, and carries on when the user answers. Requests
   expire after 24 hours.
@@ -192,6 +196,7 @@ All under `appConfig.ai` unless stated.
 | Property | Default | What it does |
 |---|---|---|
 | `allowApproveEverything` | `false` | Lets users turn on _approve everything_ for a chat |
+| `askReadOnlyToolsAfterUntrustedContent` | `false` | Trusted servers' read-only tools ask once a run has read untrusted data |
 | `chatRetention` | `P90D` | How long an unused chat is kept |
 | `compaction.thresholdPercent` | `80` | When a chat is compacted automatically |
 | `compaction.turnsKeptInFull` | `2` | The latest turns never compacted |
@@ -202,6 +207,8 @@ All under `appConfig.ai` unless stated.
 | `maxRunsPerUser` | `3` | Runs working at once for a user |
 | `toolGroupThreshold` | `24` | More MCP tools than this are offered as groups (0 never groups) |
 | `unattendedAfter` | `PT10M` | When a run with no one watching becomes unattended |
+| `workspace.maxQueryLength` | `10000` | The longest StroomQL query `run_stroomql` may run, in characters |
+| `workspace.queryTimeLimit` | `PT2M` | The longest a `run_stroomql` query may take |
 | `workspaceFileRetention` | `P7D` | How long workspace files are kept |
 | `appConfig.askStroomAi.browserNotifications` | `true` | Browser notifications when a chat finishes or needs the user |
 
