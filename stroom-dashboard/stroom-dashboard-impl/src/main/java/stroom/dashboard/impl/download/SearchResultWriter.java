@@ -20,6 +20,7 @@ import stroom.dashboard.impl.SampleGenerator;
 import stroom.query.api.Column;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Row;
+import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultBuilder;
 import stroom.util.shared.ErrorMessage;
@@ -27,16 +28,35 @@ import stroom.util.shared.ErrorMessage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SearchResultWriter implements TableResultBuilder {
 
+    // The names the stream and event ids are written under, when asked for.
+    static final String STREAM_ID_HEADING = "StreamId";
+    static final String EVENT_ID_HEADING = "EventId";
+
     private final SampleGenerator sampleGenerator;
     private final Target target;
+    private final boolean includeSourceIds;
     private List<Column> columns;
+    // The names of the visible columns, so a hidden id isn't written as well as a visible column of the same name.
+    private Set<String> visibleNames = Set.of();
     private long rowCount;
 
     public SearchResultWriter(final SampleGenerator sampleGenerator,
                               final Target target) throws IOException {
+        this(sampleGenerator, target, false);
+    }
+
+    /// @param includeSourceIds True to also write the hidden stream and event id columns (as
+    ///                         [#STREAM_ID_HEADING] and [#EVENT_ID_HEADING]), so each row can be traced to the
+    ///                         event it came from.
+    public SearchResultWriter(final SampleGenerator sampleGenerator,
+                              final Target target,
+                              final boolean includeSourceIds) throws IOException {
+        this.includeSourceIds = includeSourceIds;
         this.sampleGenerator = sampleGenerator;
         this.target = target;
     }
@@ -49,6 +69,10 @@ public class SearchResultWriter implements TableResultBuilder {
     @Override
     public TableResultBuilder columns(final List<Column> columns) {
         this.columns = columns;
+        this.visibleNames = columns.stream()
+                .filter(Column::isVisible)
+                .map(Column::getName)
+                .collect(Collectors.toSet());
 
         // Write heading.
         try {
@@ -56,8 +80,8 @@ public class SearchResultWriter implements TableResultBuilder {
 
             int fieldIndex = 0;
             for (final Column column : columns) {
-                if (column.isVisible()) {
-                    target.writeHeading(fieldIndex, column, column.getName());
+                if (isWritten(column)) {
+                    target.writeHeading(fieldIndex, column, heading(column));
                     fieldIndex++;
                 }
             }
@@ -77,7 +101,7 @@ public class SearchResultWriter implements TableResultBuilder {
                     target.startLine();
                     for (int i = 0; i < columns.size(); i++) {
                         final Column column = columns.get(i);
-                        if (column.isVisible()) {
+                        if (isWritten(column)) {
                             final String val = row.getValues().get(i);
                             target.writeValue(column, val);
                         }
@@ -90,6 +114,25 @@ public class SearchResultWriter implements TableResultBuilder {
             throw new UncheckedIOException(e);
         }
         return this;
+    }
+
+    private boolean isWritten(final Column column) {
+        return column.isVisible()
+               || (includeSourceIds && isSourceId(column) && !visibleNames.contains(heading(column)));
+    }
+
+    private static boolean isSourceId(final Column column) {
+        return SpecialColumns.RESERVED_STREAM_ID.equals(column.getId())
+               || SpecialColumns.RESERVED_EVENT_ID.equals(column.getId());
+    }
+
+    private static String heading(final Column column) {
+        if (!column.isVisible() && SpecialColumns.RESERVED_STREAM_ID.equals(column.getId())) {
+            return STREAM_ID_HEADING;
+        } else if (!column.isVisible() && SpecialColumns.RESERVED_EVENT_ID.equals(column.getId())) {
+            return EVENT_ID_HEADING;
+        }
+        return column.getName();
     }
 
     @Override

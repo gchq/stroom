@@ -461,7 +461,8 @@ public class ContextAssembler {
             return new UserMessage("[Attached table: " + NullSafe.nonBlankStringElse(attachment.getDescription(),
                     "Attachment " + attachment.getId()) + ". The whole table is the workspace file " + tablePath
                                    + "; its profile is below. Work out figures from it with the table tool (or "
-                                   + "summarise_column for free text), not by guessing from the profile.]\n"
+                                   + "summarise_column for free text), not by guessing from the profile."
+                                   + eventsNote(profile) + "]\n"
                                    + profile);
         } catch (final WorkspaceFileUnavailableException e) {
             return unavailableNote(attachment.getDescription(), e.getMessage());
@@ -469,6 +470,16 @@ public class ContextAssembler {
             LOGGER.warn(() -> "Failed to read the profile of attachment " + attachment.getId(), e);
             return null;
         }
+    }
+
+    /// @return A note that the rows' source events can be looked into, if the table has their ids (its profile
+    /// names its columns), or an empty string.
+    static String eventsNote(final String profile) {
+        return profile.contains("StreamId") && profile.contains("EventId")
+                ? " Its StreamId and EventId columns identify the event behind each row: to look into the events "
+                  + "themselves (e.g. a value by XPath, or text not in the table), use fetch_events, then "
+                  + "search_events."
+                : "";
     }
 
     private UserMessage attachmentMessage(final AiChatMessage msg,

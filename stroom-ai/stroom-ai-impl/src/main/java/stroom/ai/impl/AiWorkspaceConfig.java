@@ -39,6 +39,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     static final StroomDuration DEFAULT_TOOL_TIME_LIMIT = StroomDuration.ofSeconds(30);
     static final StroomDuration DEFAULT_QUERY_TIME_LIMIT = StroomDuration.ofMinutes(2);
     static final int DEFAULT_MAX_QUERY_LENGTH = 10_000;
+    static final int DEFAULT_MAX_EVENTS_PER_FETCH = 500;
+    static final int DEFAULT_MAX_EVENT_BYTES = 1024 * 1024;
 
     private final long maxFileBytes;
     private final long maxChatBytes;
@@ -48,6 +50,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     private final StroomDuration toolTimeLimit;
     private final StroomDuration queryTimeLimit;
     private final int maxQueryLength;
+    private final int maxEventsPerFetch;
+    private final int maxEventBytes;
 
     public AiWorkspaceConfig() {
         maxFileBytes = DEFAULT_MAX_FILE_BYTES;
@@ -58,6 +62,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         toolTimeLimit = DEFAULT_TOOL_TIME_LIMIT;
         queryTimeLimit = DEFAULT_QUERY_TIME_LIMIT;
         maxQueryLength = DEFAULT_MAX_QUERY_LENGTH;
+        maxEventsPerFetch = DEFAULT_MAX_EVENTS_PER_FETCH;
+        maxEventBytes = DEFAULT_MAX_EVENT_BYTES;
     }
 
     @JsonCreator
@@ -68,7 +74,9 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                              @JsonProperty("maxCharsPerRead") final Integer maxCharsPerRead,
                              @JsonProperty("toolTimeLimit") final StroomDuration toolTimeLimit,
                              @JsonProperty("queryTimeLimit") final StroomDuration queryTimeLimit,
-                             @JsonProperty("maxQueryLength") final Integer maxQueryLength) {
+                             @JsonProperty("maxQueryLength") final Integer maxQueryLength,
+                             @JsonProperty("maxEventsPerFetch") final Integer maxEventsPerFetch,
+                             @JsonProperty("maxEventBytes") final Integer maxEventBytes) {
         this.maxFileBytes = Objects.requireNonNullElse(maxFileBytes, DEFAULT_MAX_FILE_BYTES);
         this.maxChatBytes = Objects.requireNonNullElse(maxChatBytes, DEFAULT_MAX_CHAT_BYTES);
         this.maxUserBytes = Objects.requireNonNullElse(maxUserBytes, DEFAULT_MAX_USER_BYTES);
@@ -77,6 +85,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         this.toolTimeLimit = Objects.requireNonNullElse(toolTimeLimit, DEFAULT_TOOL_TIME_LIMIT);
         this.queryTimeLimit = Objects.requireNonNullElse(queryTimeLimit, DEFAULT_QUERY_TIME_LIMIT);
         this.maxQueryLength = Objects.requireNonNullElse(maxQueryLength, DEFAULT_MAX_QUERY_LENGTH);
+        this.maxEventsPerFetch = Objects.requireNonNullElse(maxEventsPerFetch, DEFAULT_MAX_EVENTS_PER_FETCH);
+        this.maxEventBytes = Objects.requireNonNullElse(maxEventBytes, DEFAULT_MAX_EVENT_BYTES);
     }
 
     @JsonPropertyDescription("The largest a single workspace file may be, in bytes.")
@@ -129,6 +139,19 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         return maxQueryLength;
     }
 
+    @JsonPropertyDescription("The most source events the agent may fetch in one call of fetch_events.")
+    @JsonProperty("maxEventsPerFetch")
+    public int getMaxEventsPerFetch() {
+        return maxEventsPerFetch;
+    }
+
+    @JsonPropertyDescription("The largest a single source event fetched by the agent (fetch_events) may be, in "
+                             + "bytes. Larger events are left out.")
+    @JsonProperty("maxEventBytes")
+    public int getMaxEventBytes() {
+        return maxEventBytes;
+    }
+
     @Override
     public String toString() {
         return "AiWorkspaceConfig{" +
@@ -140,6 +163,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                ", toolTimeLimit=" + toolTimeLimit +
                ", queryTimeLimit=" + queryTimeLimit +
                ", maxQueryLength=" + maxQueryLength +
+               ", maxEventsPerFetch=" + maxEventsPerFetch +
+               ", maxEventBytes=" + maxEventBytes +
                '}';
     }
 }

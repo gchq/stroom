@@ -70,13 +70,28 @@ public final class SafePattern {
     /// @return True if the line contains a match.
     /// @throws ToolTimeoutException if matching runs past the time limit.
     public boolean find(final String line) {
+        return indexIn(line) >= 0;
+    }
+
+    /// @param text Some text.
+    /// @return Where the first match starts in the text, or -1 if there is none.
+    /// @throws ToolTimeoutException if matching runs past the time limit.
+    public int indexIn(final String text) {
         if (pattern == null) {
             ToolDeadline.check();
-            return (ignoreCase
-                    ? line.toLowerCase(Locale.ROOT)
-                    : line).contains(literal);
+            // Lower-casing can change a string's length (rarely), which would give the wrong place; the match is
+            // then said to start at the beginning.
+            final String haystack = ignoreCase
+                    ? text.toLowerCase(Locale.ROOT)
+                    : text;
+            final int index = haystack.indexOf(literal);
+            return index >= 0 && haystack.length() != text.length()
+                    ? 0
+                    : index;
         }
-        final Matcher matcher = pattern.matcher(new DeadlineCharSequence(line));
-        return matcher.find();
+        final Matcher matcher = pattern.matcher(new DeadlineCharSequence(text));
+        return matcher.find()
+                ? matcher.start()
+                : -1;
     }
 }
