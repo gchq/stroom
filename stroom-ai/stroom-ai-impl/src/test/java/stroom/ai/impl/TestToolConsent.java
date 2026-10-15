@@ -56,6 +56,24 @@ class TestToolConsent {
     }
 
     @Test
+    void testToolsThatConfirmThemselvesAreNotAskedAboutTwice() {
+        tool(info(true, false, true, null, true, null));
+
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.RUN);
+        // Its own form waits for the user, so it can run while they are away.
+        assertThat(decide("s__t", true).kind()).isEqualTo(Kind.RUN);
+    }
+
+    @Test
+    void testToolsThatConfirmThemselvesStillAskOnUntrustedServersOrWhenTheirPolicySays() {
+        tool(info(false, false, null, null, true, null));
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
+
+        tool(info(true, false, null, null, true, McpToolPolicy.ASK_ALWAYS));
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
+    }
+
+    @Test
     void testUntrustedServersAlwaysAsk() {
         tool(info(false, true, null, null, null));
 
@@ -186,7 +204,16 @@ class TestToolConsent {
                                     final Boolean destructive,
                                     final Boolean openWorld,
                                     final McpToolPolicy policy) {
-        return new McpToolInfo("s__t", "s", "t", trusted, readOnly, destructive, openWorld, policy, "hash",
-                "server-hash");
+        return info(trusted, readOnly, destructive, openWorld, false, policy);
+    }
+
+    private static McpToolInfo info(final boolean trusted,
+                                    final boolean readOnly,
+                                    final Boolean destructive,
+                                    final Boolean openWorld,
+                                    final boolean confirms,
+                                    final McpToolPolicy policy) {
+        return new McpToolInfo("s__t", "s", "t", trusted, readOnly, destructive, openWorld, confirms, policy,
+                "hash", "server-hash");
     }
 }
