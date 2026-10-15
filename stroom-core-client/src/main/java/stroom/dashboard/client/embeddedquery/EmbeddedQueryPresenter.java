@@ -517,6 +517,10 @@ public class EmbeddedQueryPresenter
             currentVisPresenter = null;
             if (currentTablePresenter != null) {
                 currentTablePresenter.setQueryResultVisPresenter(null);
+            } else if (getQuerySettings().getShowTable() != Boolean.TRUE) {
+                // The removed vis is being shown and there is no table to show instead, so clear it
+                // rather than leave a vis that will never finish loading
+                getView().setResultView(null);
             }
         }
     }
@@ -882,6 +886,9 @@ public class EmbeddedQueryPresenter
 
     public interface EmbeddedQueryView extends View, RequiresResize {
 
+        /// Shows the view of the query's result, i.e. its table or vis.
+        ///
+        /// @param view The result view to show, or `null` to show nothing.
         void setResultView(View view);
     }
 }

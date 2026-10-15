@@ -48,7 +48,11 @@ public class EmbeddedQueryViewImpl extends ViewImpl implements EmbeddedQueryView
 
     @Override
     public void setResultView(final View view) {
-        layout.setWidget(view.asWidget());
+        if (view != null) {
+            layout.setWidget(view.asWidget());
+        } else {
+            layout.clear();
+        }
     }
 
     @Override
