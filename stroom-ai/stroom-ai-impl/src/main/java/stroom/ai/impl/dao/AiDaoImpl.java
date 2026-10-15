@@ -709,6 +709,22 @@ public class AiDaoImpl implements AiDao {
     }
 
     @Override
+    public int markAllRead(final String userUuid) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> {
+            final Field<Integer> lastMessage = DSL.field(DSL.select(DSL.max(AI_CHAT_MESSAGE.ID))
+                    .from(AI_CHAT_MESSAGE)
+                    .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(AI_CHAT.ID))
+                    .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.in(UNREAD_TYPES)));
+            return context
+                    .update(AI_CHAT)
+                    .set(AI_CHAT.LAST_READ_MESSAGE_ID, lastMessage)
+                    .where(AI_CHAT.USER_UUID.eq(userUuid))
+                    .and(lastMessage.gt(DSL.coalesce(AI_CHAT.LAST_READ_MESSAGE_ID, 0)))
+                    .execute();
+        });
+    }
+
+    @Override
     public List<AiChatStatus> getChatStatuses(final String userUuid, final int limit) {
         return JooqUtil.contextResult(aiDbConnProvider, context -> {
             final List<Record> chats = context

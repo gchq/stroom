@@ -174,6 +174,13 @@ public interface AiDao {
      */
     void markRead(int chatId, int messageId);
 
+    /// Marks everything in all of a user's chats as read, so none shows as unread. When each chat was last
+    /// opened is left as it is.
+    ///
+    /// @param userUuid The user.
+    /// @return How many chats had something unread.
+    int markAllRead(String userUuid);
+
     /**
      * @param userUuid A user.
      * @param limit    The most to return.
