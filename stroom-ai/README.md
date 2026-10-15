@@ -129,9 +129,13 @@ _Steps for you_ card. The model can neither make nor click one.
 * A run carries on without waiting for buttons; nothing happens until the user clicks.
 
 
-## Prompts and uploads
+## Commands, prompts and uploads
 
-* The prompts MCP servers offer are slash commands in the input box, e.g. `/onboard_data_source feed=ACME`.
+* Typing `/` in the input box lists the commands. The chat's own are `/compact [focus]`,
+  `/mode agent|ask|plan`, `/plan <task>` (switches to Plan mode and asks), `/new [question]`,
+  `/remember <fact>` (adds the fact to the user's memory, in `remembered.md`) and `/help`. A message
+  starting with `//` is sent as it is, starting with `/`.
+* The prompts MCP servers offer are slash commands too, e.g. `/onboard_data_source feed=ACME`.
   The filled-in prompt is put in the input box for the user to check and send.
 * A link in the chat to a Stroom document (`?action=open-doc&docType=…&docUuid=…`, as FastMCP returns) opens
   the document in the current Stroom session, whatever host the link names, so set FastMCP's
