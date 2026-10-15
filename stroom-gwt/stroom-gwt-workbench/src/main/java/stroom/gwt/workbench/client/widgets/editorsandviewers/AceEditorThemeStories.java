@@ -25,9 +25,10 @@ import stroom.ui.config.shared.AceEditorTheme;
 import com.google.gwt.user.client.ui.Widget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
-/// Stories for Ace's editor themes: Stroom's default light and dark themes, and the dark themes
-/// that are candidates for the default. Each shows XML and a Stroom query, so the colours of a
-/// theme can be compared, and checked for contrast, before and after an upgrade of Ace.
+/// Stories for Ace's editor themes: Stroom's default light and dark themes, the dark themes
+/// that are candidates for the default, and the themes Ace 1.44 added. Each shows XML and a Stroom
+/// query, so the colours of a theme can be compared, and checked for contrast, before and after an
+/// upgrade of Ace.
 public final class AceEditorThemeStories {
 
     private static final String QUERY = """
@@ -50,7 +51,18 @@ public final class AceEditorThemeStories {
                 .story("TomorrowNight", context -> themed(AceEditorTheme.TOMORROW_NIGHT))
                 // Dark themes that are candidates for the default
                 .story("TomorrowNightEighties", context -> themed(AceEditorTheme.TOMORROW_NIGHT_EIGHTIES))
-                .story("Dracula", context -> themed(AceEditorTheme.DRACULA));
+                .story("Dracula", context -> themed(AceEditorTheme.DRACULA))
+                // Themes Ace 1.44 added
+                .story("Cloud9Day", context -> themed(AceEditorTheme.CLOUD9_DAY))
+                .story("Cloud9Night", context -> themed(AceEditorTheme.CLOUD9_NIGHT))
+                .story("Cloud9NightLowColor", context -> themed(AceEditorTheme.CLOUD9_NIGHT_LOW_COLOR))
+                .story("CloudEditor", context -> themed(AceEditorTheme.CLOUD_EDITOR))
+                .story("CloudEditorDark", context -> themed(AceEditorTheme.CLOUD_EDITOR_DARK))
+                .story("GithubDark", context -> themed(AceEditorTheme.GITHUB_DARK))
+                .story("GithubLightDefault", context -> themed(AceEditorTheme.GITHUB_LIGHT_DEFAULT))
+                .story("GruvboxDarkHard", context -> themed(AceEditorTheme.GRUVBOX_DARK_HARD))
+                .story("GruvboxLightHard", context -> themed(AceEditorTheme.GRUVBOX_LIGHT_HARD))
+                .story("OneDark", context -> themed(AceEditorTheme.ONE_DARK));
     }
 
     /// XML and a Stroom query in the theme.

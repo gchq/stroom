@@ -177,6 +177,14 @@ public final class SteppingScreenStories {
                     // Selecting it shows its log pane toggle
                     play.click(play.getByText("xmlWriter"));
                     play.findByTitle(TextMatch.containing("Toggle Log Pane (1 Error"));
+                    // Its output's warning (line 1) is in the editor's gutter and overview bar; its
+                    // error (line 3) is past the one line of output, so only the overview's summary,
+                    // which shows the worst severity, has it
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_gutter-cell.stroom_warning"))
+                            .toHaveTextContent("1"));
+                    play.expect(play.querySelector(".codeEditor-marker.codeEditor-warning"))
+                            .toHaveAttribute("lineno", "1");
+                    play.expect(play.querySelector(".codeEditor-summary")).toHaveClass("codeEditor-error");
                     // Clicking the location label opens the Set Location dialog
                     play.click(play.getAllByText("[1:1:1]").nth(0));
                     final Play jump = screen.within(

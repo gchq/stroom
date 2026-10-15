@@ -20,6 +20,7 @@ package stroom.gwt.workbench.client.app.main;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.DocumentTabData;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.ai.AiFixtures;
 import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
@@ -277,6 +278,29 @@ public final class AppShellStories {
                     play.keyboard("gu");
                     play.waitFor(() -> play.expect(screen.getByText("User Preferences", StroomDom.DIALOG_TITLE))
                             .toBeInTheDocument());
+                    expectNoProblems(play);
+                })
+                // The preferences offer every Ace editor theme of the Stroom theme's type, including
+                // those Ace 1.44 added. The user's theme is the workbench's, which the harness makes
+                // the current one, so that changing it in the dialog is a change, as in Stroom.
+                .story("EditorThemePreferences", context -> render(context, AppShellFixtures.dictTree(),
+                        routes -> {
+                        }, builder -> builder.startup(startup -> startup.userPreferences(
+                                StartupFixtures.DEFAULT_USER_PREFERENCES.replace("\"theme\": \"Light\"",
+                                        "\"theme\": \"" + StroomThemeDecorator.getStroomThemeName() + "\""))),
+                        null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Dictionaries");
+                    play.keyboard("gu");
+                    final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    chooseTheme(play, dialog, "Light");
+                    expectEditorThemes(play, dialog, "Chrome", "Cloud9 day", "Cloud editor", "Github light default",
+                            "Gruvbox light hard");
+                    chooseTheme(play, dialog, "Dark");
+                    expectEditorThemes(play, dialog, "Ambiance", "Cloud9 night", "Cloud9 night low color",
+                            "Cloud editor dark", "Github dark", "Gruvbox dark hard", "One dark");
                     expectNoProblems(play);
                 })
                 // The maintenance banner above the shell
@@ -1112,6 +1136,29 @@ public final class AppShellStories {
 
     private static Query tabs(final Play play) {
         return play.queryAllByText(TextMatch.regex(".", ""), TAB_LABEL);
+    }
+
+    // Chooses the Stroom theme on the preferences' Theme tab
+    private static void chooseTheme(final Play play, final Play dialog, final String theme) {
+        play.click(dialog.getByText("Theme", StroomDom.LINK_TAB_LABEL));
+        play.click(dialog.querySelector("#userPreferencesTheme .SelectionBox-textBox"));
+        play.click(play.screen().findByText(theme, ".SelectionPopup .selectionItemCell-text"));
+        play.waitFor(() -> play.expect(dialog.querySelector("#userPreferencesTheme .SelectionBox-renderBox"))
+                .toHaveTextContent(theme));
+    }
+
+    // Opens the Editor tab's Editor Theme list and checks it offers the themes, then closes it
+    private static void expectEditorThemes(final Play play, final Play dialog, final String... themes) {
+        final Play screen = play.screen();
+        play.click(dialog.getByText("Editor", StroomDom.LINK_TAB_LABEL));
+        play.click(dialog.querySelector("#userPreferencesEditorTheme .SelectionBox-textBox"));
+        final Play list = screen.within(screen.findByText(themes[0], ".selectionItemCell-text")
+                .closest(".SelectionPopup"));
+        for (final String theme : themes) {
+            play.expect(list.getByText(theme, ".selectionItemCell-text")).toBeInTheDocument();
+        }
+        play.keyboard("{Escape}");
+        play.waitFor(() -> play.expect(screen.querySelector(".SelectionPopup")).toBeNull());
     }
 
     private static Query menuItem(final Play screen, final String title) {

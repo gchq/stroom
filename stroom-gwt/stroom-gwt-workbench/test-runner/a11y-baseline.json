@@ -253,6 +253,9 @@
   "app-main-appshell--dictionary-lifecycle": [
     "button-name"
   ],
+  "app-main-appshell--editor-theme-preferences": [
+    "button-name"
+  ],
   "app-main-appshell--explorer-toggle-alerts": [
     "button-name"
   ],
@@ -527,12 +530,24 @@
     "button-name"
   ],
   "widgets-editors-viewers-aceeditorfeatures--autocomplete": [
-    "label"
+    "aria-hidden-focus"
   ],
   "widgets-editors-viewers-aceeditorfeatures--search-box": [
     "color-contrast"
   ],
   "widgets-editors-viewers-aceeditorthemes--chrome": [
+    "color-contrast"
+  ],
+  "widgets-editors-viewers-aceeditorthemes--cloud-9-day": [
+    "color-contrast"
+  ],
+  "widgets-editors-viewers-aceeditorthemes--cloud-editor": [
+    "color-contrast"
+  ],
+  "widgets-editors-viewers-aceeditorthemes--github-light-default": [
+    "color-contrast"
+  ],
+  "widgets-editors-viewers-aceeditorthemes--gruvbox-light-hard": [
     "color-contrast"
   ],
   "widgets-editors-viewers-markdowneditor--blank-writable": [

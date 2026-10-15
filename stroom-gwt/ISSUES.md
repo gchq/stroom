@@ -722,17 +722,17 @@ and component settings (they aren't saved).
 
 ### Upgrading the Ace editor
 
-**Deferred.** Ace 1.44.0 (npm `ace-builds`) has `enableKeyboardAccessibility`, which fixes the trap:
-Tab moves past the editor, Enter starts editing and Escape stops. Stroom ships Ace 1.5.0, the
-non-minified build, in two identical copies (`stroom-app/src/main/resources/ui/stroom/ace` and
-`ui/dashboard/ace`) with Stroom's own 7 modes and 4 snippet files, and three patches to Ace: the
-gutter shows Stroom's annotation types (`ace.js`, marked "STROOM SPECIFIC CODE"), and the XML and
-Markdown modes use Stroom's XML snippets. Every Ace module and method the GWT wrapper
-(`edu/ycp/cs/dh/acegwt`) calls still exists in 1.44, and every theme and mode Stroom has, except
-Perl 6 (now Raku), which Stroom doesn't use. Before upgrading, the workbench needs stories for what
-it doesn't show yet (autocomplete popups and snippets, the search box, folding, gutter annotations,
-Vim keys, the light and other editor themes, and Stroom's query, expression and data splitter
-modes), so that a screenshot diff and the plays compare before and after.
+**Upgraded; the keyboard trap remains.** Stroom now ships Ace 1.44.0 (the non-minified `src` of npm
+`ace-builds`), from its one tracked copy (`edu/ycp/cs/dh/acegwt/public/ace`; the copies in
+`stroom-app/src/main/resources/ui` are build outputs). `ace.js` is no longer patched: Stroom's
+annotation types go in as each annotation's `className`, and `AceEditor` labels their gutter
+markers for screen readers, which Ace only does for its own types. The workbench's
+`AceEditorFeatures` and `AceEditorThemes` stories cover folding, the search box, autocompletion,
+snippets, every annotation type (in the gutter, with its tooltip, and the overview bar), stepping's
+and the query editor's markers, the context menu, formatting, Vim keys, Stroom's modes and the
+editor themes, including the 10 that 1.44 added, which the user preferences now offer. Ace 1.44 has
+`enableKeyboardAccessibility`, which fixes the trap (Tab moves past the editor, Enter starts editing
+and Escape stops), but Stroom doesn't turn it on yet.
 
 ### Expression terms and tables
 
