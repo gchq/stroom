@@ -51,12 +51,13 @@ class TestContextAssembler {
                 message(1, AiMessageType.TOOL_CALL,
                         new ToolCallRecord("c1", "stroom__find_documents", "{\"name\":\"fw\"}", "looking")),
                 message(2, AiMessageType.TOOL_RESULT,
-                        new ToolResultRecord("c1", "stroom__find_documents", false, "Found 2 feeds", null, 13, 5)),
+                        new ToolResultRecord("c1", "stroom__find_documents", false, "Found 2 feeds", null,
+                                13, 5, null)),
                 message(3, AiMessageType.TOOL_CALL,
                         new ToolCallRecord("c2", "run_stroomql", "{\"query\":\"from x\"}", null)),
                 message(4, AiMessageType.TOOL_RESULT,
                         new ToolResultRecord("c2", "run_stroomql", false, "stub", "/outputs/turn-1/call-3.txt",
-                                90_000, 50)));
+                                90_000, 50, null)));
 
         assertThat(ContextAssembler.toolLog(toolMessages)).isEqualTo("""
                 Tools you used to answer this:
@@ -75,7 +76,8 @@ class TestContextAssembler {
         final String longText = "y".repeat(500);
         final List<AiChatMessage> toolMessages = List.of(
                 message(1, AiMessageType.TOOL_CALL, new ToolCallRecord("c1", "t", longText, null)),
-                message(2, AiMessageType.TOOL_RESULT, new ToolResultRecord("c1", "t", false, longText, null, 500, 1)));
+                message(2, AiMessageType.TOOL_RESULT, new ToolResultRecord("c1", "t", false, longText, null,
+                        500, 1, null)));
 
         assertThat(ContextAssembler.toolLog(toolMessages))
                 .contains("y".repeat(ContextAssembler.TOOL_LOG_ARGS_LIMIT - 1) + "…")
@@ -230,7 +232,7 @@ class TestContextAssembler {
                 message(2, AiMessageType.AI_RESPONSE, "earlier answer"),
                 message(10, AiMessageType.USER_MESSAGE, "q"),
                 message(11, AiMessageType.TOOL_CALL, new ToolCallRecord("a", "t", "{}", null)),
-                message(12, AiMessageType.TOOL_RESULT, new ToolResultRecord("a", "t", false, "r1", null, 2, 1)),
+                message(12, AiMessageType.TOOL_RESULT, new ToolResultRecord("a", "t", false, "r1", null, 2, 1, null)),
                 message(13, AiMessageType.STEER_MESSAGE, "also b"),
                 // Waiting for approval: left to the agent loop.
                 message(14, AiMessageType.TOOL_CALL, new ToolCallRecord("b", "t", "{}", null)));

@@ -35,13 +35,15 @@ class TestTurnDigests {
                 message(11, AiMessageType.STEER_MESSAGE, "only on fw1"),
                 json(12, AiMessageType.TOOL_CALL, new ToolCallRecord("c1", "run_query", "{\"q\":\"errors\"}", null)),
                 json(13, AiMessageType.TOOL_RESULT,
-                        new ToolResultRecord("c1", "run_query", false, "| host | n |\n| fw1 | 42 |", null, 20, 5)),
+                        new ToolResultRecord("c1", "run_query", false, "| host | n |\n| fw1 | 42 |", null,
+                                20, 5, null)),
                 json(14, AiMessageType.TOOL_CALL, new ToolCallRecord("c2", "big", "{}", null)),
                 json(15, AiMessageType.TOOL_RESULT,
-                        new ToolResultRecord("c2", "big", false, "stub", "/outputs/turn-10/call-14.txt", 90_000, 5)),
+                        new ToolResultRecord("c2", "big", false, "stub", "/outputs/turn-10/call-14.txt",
+                                90_000, 5, null)),
                 json(16, AiMessageType.TOOL_CALL, new ToolCallRecord("c3", "broken", "{}", null)),
                 json(17, AiMessageType.TOOL_RESULT,
-                        new ToolResultRecord("c3", "broken", true, "Error: no such feed", null, 19, 5)),
+                        new ToolResultRecord("c3", "broken", true, "Error: no such feed", null, 19, 5, null)),
                 message(18, AiMessageType.AI_RESPONSE, "There were 42 errors on fw1.\n\nThe details follow..."),
                 message(19, AiMessageType.THINKING, "not in the digest"));
 
@@ -67,7 +69,8 @@ class TestTurnDigests {
         final List<AiChatMessage> turn = List.of(
                 message(10, AiMessageType.USER_MESSAGE, "q"),
                 json(11, AiMessageType.TOOL_CALL, new ToolCallRecord("c1", "t", "{}", null)),
-                json(12, AiMessageType.TOOL_RESULT, new ToolResultRecord("c1", "t", false, result, null, 120, 1)));
+                json(12, AiMessageType.TOOL_RESULT, new ToolResultRecord("c1", "t", false, result, null,
+                        120, 1, null)));
 
         assertThat(TurnDigests.build(10, turn, 20))
                 .contains("(30 lines; use read_turn 10 for all of it)")
