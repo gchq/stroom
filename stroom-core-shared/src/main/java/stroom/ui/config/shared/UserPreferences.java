@@ -297,7 +297,9 @@ public class UserPreferences {
             dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
             timeZone = UserTimeZone.builder().use(Use.UTC).build();
             enableTransparency = true;
-            askStroomAiConfig = new AskStroomAiConfig();
+            // Left unset, so that the configured Ask Stroom AI defaults are used until the user changes a
+            // setting. An empty config here meant users had no model, rather than the default one.
+            askStroomAiConfig = null;
         }
 
         private Builder(final UserPreferences userPreferences) {

@@ -2,15 +2,16 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:p="urn:import:stroom.widget.button.client"
-             xmlns:spinner="urn:import:stroom.widget.spinner.client">
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel ui:field="root" styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical empty">
         <g:FlowPanel styleName="dock-min askStroomAiViewImpl-top">
             <g:FlowPanel styleName="dock-max askStroomAiViewImpl-title">
                 <g:Label ui:field="chatTitle" text="Agent"/>
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-min askStroomAiViewImpl-buttons">
-                <p:InlineSvgButton ui:field="newChat" text="New Conversation"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
+                <p:Button ui:field="newChat" text="New chat"
+                          addStyleNames="allow-focus askStroomAiViewImpl-newChat"/>
                 <p:InlineSvgButton ui:field="tabToggle" text="Open in a Tab"
                                    addStyleNames="allow-focus navigation-menu-button"/>
                 <p:InlineSvgButton ui:field="menu" text="More"
@@ -18,13 +19,15 @@
             </g:FlowPanel>
         </g:FlowPanel>
         <g:SimplePanel ui:field="markdownPreview" styleName="dock-max askStroomAiViewImpl-middle markdown-container"/>
+        <g:FlowPanel ui:field="chatList" styleName="dock-max askStroomAiViewImpl-chatList" visible="false"/>
         <g:FlowPanel ui:field="jumpToLatestBar" styleName="dock-min askStroomAiViewImpl-jumpToLatestBar">
             <g:Button ui:field="jumpToLatest" styleName="allow-focus askStroomAiViewImpl-jumpToLatest"
-                      text="↓ Latest" title="Scroll to the latest message, and follow the conversation"/>
+                      title="Scroll to the latest message, and follow the chat"/>
         </g:FlowPanel>
         <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
             <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
-            <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
+            <g:FlowPanel ui:field="inputBox"
+                         styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
                 <g:FlowPanel ui:field="commandSuggestions" styleName="dock-min askStroomAiViewImpl-commands"/>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-messagePane">
                     <g:Label ui:field="contextIndicator"
@@ -32,7 +35,9 @@
                     <g:TextArea ui:field="message" addStyleNames="dock-max w-100"/>
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
+                    <l:SelectionBox ui:field="agentMode" addStyleNames="askStroomAiViewImpl-agentMode"/>
                     <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>
+                    <p:InlineSvgButton ui:field="autoApprove" addStyleNames="allow-focus askStroomAiViewImpl-autoApprove"/>
                     <g:Button ui:field="contextMeter" styleName="allow-focus askStroomAiViewImpl-contextMeter"/>
                     <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
                     <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>

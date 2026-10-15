@@ -19,6 +19,7 @@ package stroom.ai.impl;
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.workspace.WorkspaceStore;
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
@@ -65,9 +66,10 @@ class TestMcpAgentChat {
             Mockito.mock(WorkspaceStore.class);
     private final ToolConsent toolConsent = Mockito.mock(ToolConsent.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
+    private final AiDao aiDao = Mockito.mock(AiDao.class);
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
             Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService),
-            new ToolGroups.Activations(), AiConfig::new);
+            new ToolGroups.Activations(), AiConfig::new, aiDao);
 
     {
         // Tool calls run unless a test says otherwise.
@@ -184,6 +186,38 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void askAndPlanModesOnlyOfferToolsThatCannotChangeAnything() {
+        final dev.langchain4j.agent.tool.ToolSpecification readTool = dev.langchain4j.agent.tool.ToolSpecification
+                .builder().name("grep").description("reads").build();
+        final dev.langchain4j.agent.tool.ToolSpecification writeTool = dev.langchain4j.agent.tool.ToolSpecification
+                .builder().name("upload_file").description("changes things").build();
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
+                readTool, (request, memoryId) -> "read",
+                writeTool, (request, memoryId) -> "written"));
+        Mockito.when(builtInTools.isReadOnly("grep")).thenReturn(true);
+        Mockito.when(builtInTools.isReadOnly("upload_file")).thenReturn(false);
+        final McpToolset toolset = toolset(Mockito.mock(McpSyncClient.class), searchTool());
+
+        for (final AiAgentMode mode : AiAgentMode.values()) {
+            Mockito.when(aiDao.getAgentMode(1)).thenReturn(mode);
+            final StubToolCallingModel model = new StubToolCallingModel(AiMessage.from("an answer"));
+
+            agentChat.chat(model, null, 1, messages, toolset, 99,
+                    new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+            final List<String> offered = model.requests.get(0).toolSpecifications().stream()
+                    .map(dev.langchain4j.agent.tool.ToolSpecification::name)
+                    .toList();
+            if (mode == AiAgentMode.AGENT) {
+                assertThat(offered).contains("grep", "upload_file");
+            } else {
+                // The MCP search tool is from an untrusted server, so it is not known to be read-only either.
+                assertThat(offered).containsExactly("grep");
+            }
+        }
+    }
+
+    @Test
     void toolsTurnedOffGivesAPlainCall() {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         final McpToolset toolset = toolset(client, searchTool());
@@ -285,7 +319,7 @@ class TestMcpAgentChat {
                 null, null);
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService),
-                new ToolGroups.Activations(), () -> config);
+                new ToolGroups.Activations(), () -> config, aiDao);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")

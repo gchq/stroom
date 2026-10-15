@@ -528,6 +528,15 @@ public enum SvgImage {
             "svg>\n" +
             ""),
 
+    COPY_TEXT("copy-text.svg", "svg-image__copy-text", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\"><!-- A letter A in a box: copy as text. --><path style=\"fill:currentC" +
+            "olor;fill-rule:evenodd\" d=\"M320 128H1472Q1664 128 1664 320V1472Q1664 1664 1472 1" +
+            "664H320Q128 1664 128 1472V320Q128 128 320 128Z M320 256Q256 256 256 320V1472Q256" +
+            " 1536 320 1536H1472Q1536 1536 1536 1472V320Q1536 256 1472 256Z M808 448H984L1344" +
+            " 1344H1184L1100 1120H692L608 1344H448Z M896 640L744 992H1048Z\"/></svg> \n" +
+            ""),
+
     DATABASE("database.svg", "svg-image__database", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:currentColor\" d=\"M896 768q237 0 443-43t325-127v170q" +

@@ -18,6 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.client.AiConfigGeneralPresenter.AiConfigGeneralView;
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.ai.shared.AskStroomAiConfig.DockType;
 import stroom.item.client.SelectionBox;
@@ -61,11 +62,11 @@ public class AiConfigGeneralViewImpl
     @Inject
     public AiConfigGeneralViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        // Only DIALOG and DOCK modes are supported.
-        dockTypeSelectionBox.addItem(DockType.DIALOG);
+        // Docked on the right is the default.
         dockTypeSelectionBox.addItem(DockType.DOCK);
+        dockTypeSelectionBox.addItem(DockType.DIALOG);
         dockTypeSelectionBox.addItem(DockType.TAB);
-        dockTypeSelectionBox.setValue(DockType.DIALOG);
+        dockTypeSelectionBox.setValue(AskStroomAiConfig.DEFAULT_DOCK_TYPE);
 
         dockLocationSelectionBox.addItem(DockLocation.RIGHT);
         dockLocationSelectionBox.addItem(DockLocation.LEFT);

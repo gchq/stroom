@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -195,6 +196,21 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             operationId = "getDefaultConfig")
     AskStroomAiConfig getDefaultConfig();
 
+    @PUT
+    @Path("/setAgentMode/{chatId}/{mode}")
+    @Operation(
+            summary = "Set how the agent works in a chat: Agent, Ask or Plan",
+            operationId = "setAiAgentMode")
+    Boolean setAgentMode(@PathParam("chatId") int chatId, @PathParam("mode") AiAgentMode mode);
+
+    @POST
+    @Path("/resetAllUsersConfig")
+    @Operation(
+            summary = "Reset every user's Ask Stroom AI settings (model, prompts, dock position and so on) to the " +
+                      "configured defaults",
+            operationId = "resetAllUsersAskStroomAiConfig")
+    Integer resetAllUsersConfig();
+
     @POST
     @Path("/setDefaultAskStroomAIConfig")
     @Operation(
@@ -206,14 +222,14 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @POST
     @Path("/createChat")
     @Operation(
-            summary = "Create a new AI chat conversation",
+            summary = "Create a new AI chat",
             operationId = "createChat")
     AiChat createChat();
 
     @POST
     @Path("/listChats")
     @Operation(
-            summary = "List all AI chat conversations for the current user",
+            summary = "List all AI chats for the current user",
             operationId = "listChats")
     ResultPage<AiChat> listChats(@Parameter(description = "request", required = true)
                                  FindAiChatHistoryCriteria criteria);
@@ -221,21 +237,21 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @POST
     @Path("/getChat/{chatId}")
     @Operation(
-            summary = "Get an AI chat conversation by ID",
+            summary = "Get an AI chat by ID",
             operationId = "getChat")
     AiChat getChat(@PathParam("chatId") int chatId);
 
     @POST
     @Path("/deleteChat/{chatId}")
     @Operation(
-            summary = "Delete an AI chat conversation",
+            summary = "Delete an AI chat",
             operationId = "deleteChat")
     Boolean deleteChat(@PathParam("chatId") int chatId);
 
     @POST
     @Path("/deleteMessage/{chatId}/{messageId}")
     @Operation(
-            summary = "Delete a message from an AI chat conversation",
+            summary = "Delete a message from an AI chat",
             operationId = "deleteMessage")
     Boolean deleteMessage(@PathParam("chatId") int chatId,
                           @PathParam("messageId") int messageId);
@@ -243,21 +259,21 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @POST
     @Path("/deleteAllMessages/{chatId}")
     @Operation(
-            summary = "Delete all messages and attachments from an AI chat conversation",
+            summary = "Delete all messages and attachments from an AI chat",
             operationId = "deleteAllMessages")
     Boolean deleteAllMessages(@PathParam("chatId") int chatId);
 
     @POST
     @Path("/getMessages/{chatId}")
     @Operation(
-            summary = "Get messages for an AI chat conversation",
+            summary = "Get messages for an AI chat",
             operationId = "getMessages")
     List<AiChatMessage> getMessages(@PathParam("chatId") int chatId);
 
     @POST
     @Path("/updateChatTitle/{chatId}")
     @Operation(
-            summary = "Update the title of an AI chat conversation",
+            summary = "Update the title of an AI chat",
             operationId = "updateChatTitle")
     Boolean updateChatTitle(@PathParam("chatId") int chatId,
                             @Parameter(description = "title", required = true) String title);
@@ -265,7 +281,7 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @POST
     @Path("/pollMessages/{chatId}")
     @Operation(
-            summary = "Poll for new messages in an AI chat conversation since a given message ID",
+            summary = "Poll for new messages in an AI chat since a given message ID",
             operationId = "pollMessages")
     AiChatPollResponse pollMessages(@PathParam("chatId") int chatId,
                                     @Parameter(description = "request", required = true)
@@ -281,7 +297,7 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @POST
     @Path("/downloadChatHistory")
     @Operation(
-            summary = "Download the chat history for a conversation as a Markdown file",
+            summary = "Download the chat history for a chat as a Markdown file",
             operationId = "downloadChatHistory")
     ResourceGeneration downloadChatHistory(
             @Parameter(description = "request", required = true) DownloadChatHistoryRequest request);

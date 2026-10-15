@@ -422,7 +422,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiChat"
           description: default response
-      summary: Create a new AI chat conversation
+      summary: Create a new AI chat
       tags:
       - AI
   /ai/v1/deleteAllMessages/{chatId}:
@@ -442,7 +442,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Delete all messages and attachments from an AI chat conversation
+      summary: Delete all messages and attachments from an AI chat
       tags:
       - AI
   /ai/v1/deleteChat/{chatId}:
@@ -462,7 +462,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Delete an AI chat conversation
+      summary: Delete an AI chat
       tags:
       - AI
   /ai/v1/deleteMemory:
@@ -508,7 +508,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Delete a message from an AI chat conversation
+      summary: Delete a message from an AI chat
       tags:
       - AI
   /ai/v1/downloadChatHistory:
@@ -528,7 +528,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResourceGeneration"
           description: default response
-      summary: Download the chat history for a conversation as a Markdown file
+      summary: Download the chat history for a chat as a Markdown file
       tags:
       - AI
   /ai/v1/editMessage:
@@ -590,7 +590,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiChat"
           description: default response
-      summary: Get an AI chat conversation by ID
+      summary: Get an AI chat by ID
       tags:
       - AI
   /ai/v1/getChatStatuses/{sinceVersion}:
@@ -667,7 +667,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/AiChatMessage"
           description: default response
-      summary: Get messages for an AI chat conversation
+      summary: Get messages for an AI chat
       tags:
       - AI
   /ai/v1/listChats:
@@ -687,7 +687,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResultPageAiChat"
           description: default response
-      summary: List all AI chat conversations for the current user
+      summary: List all AI chats for the current user
       tags:
       - AI
   /ai/v1/listMcpPrompts:
@@ -778,8 +778,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiChatPollResponse"
           description: default response
-      summary: Poll for new messages in an AI chat conversation since a given message
-        ID
+      summary: Poll for new messages in an AI chat since a given message ID
       tags:
       - AI
   /ai/v1/removeToolApproval/{chatId}/{approvalId}:
@@ -807,6 +806,21 @@ paths:
           description: default response
       summary: "Remove a decision the user made about a tool in a chat, so they are\
         \ asked again"
+      tags:
+      - AI
+  /ai/v1/resetAllUsersConfig:
+    post:
+      operationId: resetAllUsersAskStroomAiConfig
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: "Reset every user's Ask Stroom AI settings (model, prompts, dock position\
+        \ and so on) to the configured defaults"
       tags:
       - AI
   /ai/v1/resetToolApprovals/{chatId}:
@@ -869,6 +883,35 @@ paths:
                 $ref: "#/components/schemas/AiMemory"
           description: default response
       summary: Save a piece of memory the user has written or edited
+      tags:
+      - AI
+  /ai/v1/setAgentMode/{chatId}/{mode}:
+    put:
+      operationId: setAiAgentMode
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: mode
+        required: true
+        schema:
+          type: string
+          enum:
+          - AGENT
+          - ASK
+          - PLAN
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Set how the agent works in a chat: Agent, Ask or Plan"
       tags:
       - AI
   /ai/v1/setApproveEverything:
@@ -978,7 +1021,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Update the title of an AI chat conversation
+      summary: Update the title of an AI chat
       tags:
       - AI
   /analyticDataShard/v1/find:
@@ -11207,6 +11250,12 @@ components:
     AiChatStatus:
       type: object
       properties:
+        agentMode:
+          type: string
+          enum:
+          - AGENT
+          - ASK
+          - PLAN
         approveEverything:
           type: boolean
         chatId:
@@ -12020,6 +12069,12 @@ components:
           $ref: "#/components/schemas/AskStroomAiContext"
         message:
           type: string
+        mode:
+          type: string
+          enum:
+          - AGENT
+          - ASK
+          - PLAN
     AskStroomAiResponse:
       type: object
       properties:
@@ -14008,6 +14063,7 @@ components:
           - COLLAPSE_UP
           - CONTENT_STORE
           - COPY
+          - COPY_TEXT
           - DATABASE
           - DELETE
           - DEPENDENCIES
@@ -18561,6 +18617,7 @@ components:
           - COLLAPSE_UP
           - CONTENT_STORE
           - COPY
+          - COPY_TEXT
           - DATABASE
           - DELETE
           - DEPENDENCIES

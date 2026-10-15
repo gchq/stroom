@@ -60,16 +60,27 @@ class TestModelStreamer {
 
     @Test
     void theAnswerAndReasoningAreWrittenAsTheyArriveThenRemoved() {
-        final StreamingChatModel model = slowModel("Thinking about it. ".repeat(4), "The answer is 42.");
+        final String thinking = "Thinking about it. ".repeat(4);
+        final String answer = "The answer is 42.";
+        final StreamingChatModel model = slowModel(thinking, answer);
 
         final ModelStreamer.StreamedResponse streamed = modelStreamer.chat(model, request, 5, true, () -> false);
 
-        assertThat(streamed.response().aiMessage().text()).isEqualTo("The answer is 42.");
+        assertThat(streamed.response().aiMessage().text()).isEqualTo(answer);
         assertThat(streamed.thinkingMs()).isPositive();
-        assertThat(written).anySatisfy(row -> assertThat(row).startsWith("STREAMING_THINKING:Thinking"));
-        assertThat(written).anySatisfy(row -> assertThat(row).startsWith("STREAMING_ANSWER:The"));
+        // Each row holds what had arrived when it was written, which (on a busy machine) may be just a
+        // character or two, so check it is the start of the text rather than some particular amount of it.
+        assertThat(written).anySatisfy(row -> assertStartOf(row, "STREAMING_THINKING:", thinking));
+        assertThat(written).anySatisfy(row -> assertStartOf(row, "STREAMING_ANSWER:", answer));
         // Both rows are removed once the call ends, as the caller stores the finished answer and reasoning.
         Mockito.verify(aiService, Mockito.times(written.size())).deleteMessage(Mockito.anyInt());
+    }
+
+    private static void assertStartOf(final String row, final String prefix, final String text) {
+        assertThat(row).startsWith(prefix);
+        final String written = row.substring(prefix.length());
+        assertThat(written).isNotEmpty();
+        assertThat(text).startsWith(written);
     }
 
     @Test
