@@ -40,8 +40,8 @@ import java.util.UUID;
 
 /**
  * A read-only, idle-evictable local cache of ONE version of ONE archive bucket on the shared store
- * (<sharedPath>/archive/<uuid>/<idx>/<dateLabel>/). The constructor copies the bucket's
- * {@code data.mdb} down into a per-instance generation dir
+ * (<sharedPath>/archive/<uuid>/<idx>/<dateLabel>/). The constructor copies the bucket's data file
+ * down into a per-instance generation dir, decompressing it where it is compressed
  * ({@code archive_cache/<uuid>_<idx>_<dateLabel>/<generation>}) and mmaps the LOCAL copy read-only, so
  * repeat archive reads reuse it instead of re-copying the (large) bucket every query.
  *
@@ -156,15 +156,9 @@ public class ArchiveStoreShard extends AbstractStoreShard {
      * instance nothing can reach yet, so the copy needs no temp file and the open needs no lock.
      */
     private String copyDownAndOpen() {
-        final Path sharedDataFile = archiveBucketDir.resolve(PlanBConstants.DATA_FILE_NAME);
         final Path sharedVersionFile = archiveBucketDir.resolve(PlanBConstants.VERSION_FILE_NAME);
 
         try {
-            if (!Files.exists(sharedDataFile)) {
-                // Bucket vanished (retention) or is incomplete, so this shard cannot be used.
-                throw new RuntimeException("Archive bucket has no data.mdb: " + archiveBucketDir);
-            }
-
             // No .version file at all: either retention deleted the bucket since the locator listed it,
             // or a crash left its first push unversioned (see publishBucketData). A republish does NOT
             // cause this — it rewrites .version in place. Copy on the data file alone and record the
@@ -173,7 +167,14 @@ public class ArchiveStoreShard extends AbstractStoreShard {
             final String bucketVersion = readVersion == null ? "" : readVersion;
 
             LOGGER.debug(() -> "Copying archive bucket " + archiveBucketDir + " to local copy " + shardDir);
-            Files.copy(sharedDataFile, shardDir.resolve(PlanBConstants.DATA_FILE_NAME));
+            // Decompressed on the way down where the bucket is compressed, so what is mmapped is a
+            // plain env either way and nothing below here knows the difference. Asked for rather than
+            // tested first, so retention taking the bucket between the two cannot leave an env opened
+            // on no data.
+            if (!ArchiveData.copyDown(archiveBucketDir, shardDir.resolve(PlanBConstants.DATA_FILE_NAME))) {
+                // Bucket vanished (retention) or is incomplete, so this shard cannot be used.
+                throw new RuntimeException("Archive bucket has no data file: " + archiveBucketDir);
+            }
             Files.writeString(shardDir.resolve(PlanBConstants.VERSION_FILE_NAME), bucketVersion);
             open();
             return bucketVersion;

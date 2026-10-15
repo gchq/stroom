@@ -179,7 +179,7 @@ public class SharedFileStorePublisher {
         final Path localData = localShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
 
         if (Files.exists(localData)) {
-            publishData(localData, sharedShardDir, version);
+            publishData(localData, sharedShardDir, PlanBConstants.DATA_FILE_NAME, version);
         } else {
             // A shard whose work wrote no environment still gets a version, so a reader can tell it
             // was published rather than never written.
@@ -237,14 +237,14 @@ public class SharedFileStorePublisher {
                                       + " has no data file, so its records cannot be pushed");
             }
 
-            final Path existingData = archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
             final Path localData = localDir.resolve(PlanBConstants.DATA_FILE_NAME);
-            if (Files.exists(archiveShardDir.resolve(PlanBConstants.VERSION_FILE_NAME))
-                    && Files.exists(existingData)) {
-                // Seed the local env with the existing bucket, copied DOWN, so the new batch unions
-                // with it rather than replacing it.
-                LOGGER.debug("Merging new archive batch into existing archive shard {}", archiveShardDir);
-                Files.copy(existingData, localData, StandardCopyOption.REPLACE_EXISTING);
+            if (Files.exists(archiveShardDir.resolve(PlanBConstants.VERSION_FILE_NAME))) {
+                // Seed the local env with the existing bucket, copied DOWN and decompressed where it
+                // is compressed, so the new batch unions with it rather than replacing it.
+                if (ArchiveData.copyDown(archiveShardDir, localData)) {
+                    LOGGER.debug("Merging new archive batch into existing archive shard {}",
+                            archiveShardDir);
+                }
             }
 
             // Always merge, even into an empty local env for a brand-new bucket, rather than copying the
@@ -269,7 +269,16 @@ public class SharedFileStorePublisher {
             // locally during the merge (it is recreated on the next open).
             Files.deleteIfExists(localDir.resolve(PlanBConstants.LOCK_FILE_NAME));
 
-            publishData(localData, archiveShardDir, uid);
+            // Compressed on the way up, and only here: a bucket is written once and read by being
+            // copied down again, so this is paid once and saved on every read as well as on disk.
+            final Path localCompressed = localDir.resolve(PlanBConstants.DATA_ZST_FILE_NAME);
+            ArchiveData.compress(localData, localCompressed);
+            publishData(localCompressed, archiveShardDir,
+                    PlanBConstants.DATA_ZST_FILE_NAME, uid);
+            // A bucket that held the plain form still has it beside the compressed one just written.
+            // Dropped only after that one is published and versioned, so a crash between the two
+            // leaves both and a reader prefers the compressed one.
+            Files.deleteIfExists(archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME));
         } finally {
             // Swallow cleanup failures so they cannot mask an in-flight exception from the push. A
             // leftover local dir is harmless: the next startup clears the whole local archive root.
@@ -281,8 +290,10 @@ public class SharedFileStorePublisher {
         }
     }
 
-    // Copies up under a temp name, renames it over data.mdb within the live dir, then writes .version —
-    // so the dir is never renamed away and cannot transiently vanish from a reader holding no lock.
+    // Copies up under a temp name, renames it over targetFileName within the live dir, then writes
+    // .version — so the dir is never renamed away and cannot transiently vanish from a reader holding
+    // no lock. The name to publish under comes from the caller because a live shard and an archive
+    // bucket hold their data in different forms.
     //
     // .version goes last because a reader treats its presence as "this holds something", so writing it
     // first would advertise data that never arrived. Not covered: a crash between the two on a dir's
@@ -290,6 +301,7 @@ public class SharedFileStorePublisher {
     // empty version; for an archive bucket the next run then overwrites it rather than merging into it.
     private static void publishData(final Path localData,
                                     final Path targetDir,
+                                    final String targetFileName,
                                     final String version) throws IOException {
         // The rows this would have carried are already gone locally, so a silent return would drop
         // them. Fail so nothing is published and the next cycle retries.
@@ -306,7 +318,7 @@ public class SharedFileStorePublisher {
                                                + "_" + System.currentTimeMillis() + "_" + UUID.randomUUID());
         try {
             Files.copy(localData, tmpData, StandardCopyOption.REPLACE_EXISTING);
-            SharedFileStore.moveWithAtomicFallback(tmpData, targetDir.resolve(PlanBConstants.DATA_FILE_NAME));
+            SharedFileStore.moveWithAtomicFallback(tmpData, targetDir.resolve(targetFileName));
             Files.writeString(targetDir.resolve(PlanBConstants.VERSION_FILE_NAME), version);
         } finally {
             // A failed copy/rename must not leave a partial temp file behind.

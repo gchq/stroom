@@ -57,6 +57,12 @@ public final class PlanBConstants {
     public static final String SNAPSHOT_INFO_FILE_NAME = "snapshot.txt";
 
     public static final String DATA_FILE_NAME = "data.mdb";
+    /**
+     * What an archive bucket's data file is called when it holds compressed data. Named apart from
+     * {@link #DATA_FILE_NAME} rather than sharing it, so a reader can tell which of the two it has
+     * without opening it, and a bucket holding the plain form is still readable.
+     */
+    public static final String DATA_ZST_FILE_NAME = "data.mdb.zst";
     public static final String DATA_TMP_FILE_NAME = ".tmp_data.mdb";
     public static final String LOCK_FILE_NAME = "lock.mdb";
     public static final String MERGED_FILE_NAME = ".merged";
