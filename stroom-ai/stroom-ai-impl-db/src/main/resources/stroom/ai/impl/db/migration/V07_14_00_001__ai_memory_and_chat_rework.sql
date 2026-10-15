@@ -122,6 +122,8 @@ CALL V07_14_00_001__ai_add_column('ai_chat', 'last_poll_ms', 'bigint DEFAULT NUL
 -- Whether the user has turned on 'approve everything' for this chat (only possible
 -- when an admin has enabled it).
 CALL V07_14_00_001__ai_add_column('ai_chat', 'auto_approve', 'tinyint(1) NOT NULL DEFAULT 0');
+-- How the agent works in the chat: 0 Agent, 1 Ask, 2 Plan.
+CALL V07_14_00_001__ai_add_column('ai_chat', 'agent_mode', 'tinyint NOT NULL DEFAULT 0');
 
 -- Matches the list chats query, which filters by user and sorts by update time.
 CALL V07_14_00_001__ai_add_index('ai_chat', 'idx_ai_chat_user_uuid_update_time', 'user_uuid, update_time_ms');
@@ -288,6 +290,15 @@ CREATE TABLE IF NOT EXISTS ai_tool_approval (
 -- --------------------------------------------------
 -- Tidy up
 -- --------------------------------------------------
+
+-- Chats saved before read tracking (7.13) have never been marked read, so would all show as unread after the
+-- upgrade. Mark everything already in them as read.
+UPDATE ai_chat c
+SET c.last_read_message_id = (
+    SELECT MAX(m.id)
+    FROM ai_chat_message m
+    WHERE m.fk_ai_chat_id = c.id)
+WHERE c.last_read_message_id IS NULL;
 
 DROP PROCEDURE IF EXISTS V07_14_00_001__ai_add_column;
 DROP PROCEDURE IF EXISTS V07_14_00_001__ai_add_index;
