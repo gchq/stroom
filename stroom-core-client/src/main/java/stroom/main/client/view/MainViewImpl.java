@@ -22,6 +22,7 @@ import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -64,7 +65,11 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     private Widget centerWidget;
 
     // Layout state — the single source of truth for how the layout should look.
+    // How long after a splitter drag a size change is still taken to be the user's, as the layout is deferred.
+    private static final long SPLITTER_DRAG_GRACE_MS = 2_000;
+
     private final LayoutState state = new LayoutState();
+    private long lastSplitterDragMs;
 
     private ThinSplitLayoutPanel outerSplitPanel;
 
@@ -311,6 +316,13 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     }
 
     /**
+     * @return True if one of the panel's splitters is being dragged.
+     */
+    private static native boolean isDraggingSplitter(Element element) /*-{
+        return element.querySelector(".thinSplitLayoutPanel-Dragger--dragging") != null;
+    }-*/;
+
+    /**
      * Checks if the dock panel size has changed (via splitter drag)
      * and fires a DockResizeEvent when it does.
      */
@@ -328,13 +340,21 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
                 } else {
                     currentSize = state.dockedWidget.getOffsetHeight();
                 }
+                if (isDraggingSplitter(outerSplitPanel.getElement())) {
+                    lastSplitterDragMs = System.currentTimeMillis();
+                }
                 if (currentSize > 0 && Double.compare(currentSize, state.dockSize) != 0) {
                     state.dockSize = currentSize;
-                    final Size newSize = new Size.Builder()
-                            .width(state.dockedWidget.getOffsetWidth())
-                            .height(state.dockedWidget.getOffsetHeight())
-                            .build();
-                    DockResizeEvent.fire(eventBus::fireEvent, newSize);
+                    // Only a size the user dragged the splitter to is kept. Others come from the layout
+                    // settling (e.g. while the page loads) or the window being resized, and would replace the
+                    // size the user chose.
+                    if (System.currentTimeMillis() - lastSplitterDragMs < SPLITTER_DRAG_GRACE_MS) {
+                        final Size newSize = new Size.Builder()
+                                .width(state.dockedWidget.getOffsetWidth())
+                                .height(state.dockedWidget.getOffsetHeight())
+                                .build();
+                        DockResizeEvent.fire(eventBus::fireEvent, newSize);
+                    }
                 }
             }
         });

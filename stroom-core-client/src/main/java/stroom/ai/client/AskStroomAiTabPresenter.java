@@ -25,15 +25,15 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-/**
- * The 'Ask Stroom AI' chat in a content tab (tab mode). The chat itself is shown by {@link AskStroomAiPresenter};
- * this tab only holds it, so the same chat can move between the panel, a dialog and a tab without losing anything.
- */
+import java.util.Optional;
+
 public class AskStroomAiTabPresenter extends ContentTabPresenter<AskStroomAiTabView> {
 
     public static final String TAB_TYPE = "AskStroomAi";
 
-    private String label = "Ask Stroom AI";
+    private static final String LABEL = "Ask Stroom AI";
+
+    private String chatTitle;
 
     @Inject
     public AskStroomAiTabPresenter(final EventBus eventBus, final AskStroomAiTabView view) {
@@ -48,12 +48,10 @@ public class AskStroomAiTabPresenter extends ContentTabPresenter<AskStroomAiTabV
     }
 
     /**
-     * @param chatTitle The current chat's title, shown in the tab's label, or null.
+     * @param chatTitle The current chat's title, shown in the tab's tooltip (the label is kept short), or null.
      */
     public void setChatTitle(final String chatTitle) {
-        label = chatTitle == null || chatTitle.isEmpty()
-                ? "Ask Stroom AI"
-                : "Ask Stroom AI: " + chatTitle;
+        this.chatTitle = chatTitle;
     }
 
     @Override
@@ -63,7 +61,14 @@ public class AskStroomAiTabPresenter extends ContentTabPresenter<AskStroomAiTabV
 
     @Override
     public String getLabel() {
-        return label;
+        return LABEL;
+    }
+
+    @Override
+    public Optional<String> getTooltip() {
+        return chatTitle == null || chatTitle.isEmpty()
+                ? Optional.of(LABEL)
+                : Optional.of(LABEL + ": " + chatTitle);
     }
 
     @Override
