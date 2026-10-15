@@ -259,6 +259,33 @@ class TestContextAssembler {
     }
 
     @Test
+    void testModelsWithoutToolsAreGivenOnlySoManyRows(@TempDir final Path tempDir) throws IOException {
+        final WorkspaceStore workspaceStore = Mockito.mock(WorkspaceStore.class);
+        final stroom.ai.shared.AskStroomAiConfig config = stroom.ai.shared.AskStroomAiConfig.builder()
+                .tableAnalysisConfig(stroom.ai.shared.TableAnalysisConfig.builder().maxRowsWithoutTools(2).build())
+                .build();
+        final ContextAssembler assembler = new ContextAssembler(() -> config, AiConfig::new, workspaceStore,
+                Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
+                Mockito.mock(ContextUsageTracker.class), null);
+        final AiChatAttachment attachment = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
+                AiAttachmentType.DASHBOARD, "Firewall events", 3, false, null);
+        final Path table = tempDir.resolve("50.md");
+        Files.writeString(table, "| host |\n| --- |\n| fw1 |\n| fw2 |\n| fw3 |\n");
+        Mockito.when(workspaceStore.localFile(50)).thenReturn(table);
+        final List<AiChatMessage> history = List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "Firewall events", 0, null),
+                new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 2, null));
+
+        final String text = ((UserMessage) assembler.assemble(new AskStroomAiRequest(null, null, null, "q"), 1,
+                java.util.Map.of(50, attachment), history, CompactionRecord.NONE, false).get(1)).singleText();
+
+        assertThat(text)
+                .contains("| host |\n| --- |\n| fw1 |\n| fw2 |\n")
+                .doesNotContain("fw3")
+                .contains("Only the first 2 rows are given here");
+    }
+
+    @Test
     void testCurrentTurnIsReplayed() {
         final List<AiChatMessage> history = List.of(
                 message(1, AiMessageType.USER_MESSAGE, "earlier"),

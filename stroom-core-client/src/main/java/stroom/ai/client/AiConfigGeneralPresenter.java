@@ -73,10 +73,6 @@ public class AiConfigGeneralPresenter
                 config,
                 AskStroomAiConfig::getHistorySummaryPrompt,
                 AskStroomAiConfig.DEFAULT_HISTORY_SUMMARY_PROMPT));
-        getView().setMaxHistorySafetyCapMessages(NullSafe.getOrElse(
-                config,
-                AskStroomAiConfig::getMaxHistorySafetyCapMessages,
-                AskStroomAiConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES));
         getView().setEnableDebugDetail(NullSafe.getOrElse(
                 config,
                 AskStroomAiConfig::isEnableDebugDetail,
@@ -95,7 +91,6 @@ public class AiConfigGeneralPresenter
                 .dockLocation(getView().getDockBehaviour().getDockLocation())
                 .chatSystemPrompt(getView().getChatSystemPrompt())
                 .historySummaryPrompt(getView().getHistorySummaryPrompt())
-                .maxHistorySafetyCapMessages(getView().getMaxHistorySafetyCapMessages())
                 .enableDebugDetail(getView().isEnableDebugDetail())
                 .browserNotifications(getView().isBrowserNotifications());
     }
@@ -128,10 +123,6 @@ public class AiConfigGeneralPresenter
         void setChatSystemPrompt(String prompt);
 
         String getChatSystemPrompt();
-
-        void setMaxHistorySafetyCapMessages(int max);
-
-        int getMaxHistorySafetyCapMessages();
 
         void setHistorySummaryPrompt(String prompt);
 

@@ -59,7 +59,7 @@ class TestTableSummariser {
     /**
      * Two rows to a batch, so a handful of rows is several batches.
      */
-    private final TableAnalysisConfig config = new TableAnalysisConfig(100, 2, 2, null, null, null);
+    private final TableAnalysisConfig config = new TableAnalysisConfig(100, 2, 2, null, null, null, null);
 
     private final TableSummariserImpl summariser = new TableSummariserImpl(new ExecutorProvider() {
         @Override
@@ -104,6 +104,31 @@ class TestTableSummariser {
         assertThat(batches).allSatisfy(batch -> assertThat(batch.length()).isLessThanOrEqualTo(2_000));
         // A row too big for any batch still gets one of its own.
         assertThat(summariser.buildBatchesFromMarkdown(file, manyRows, 100)).hasSize(5);
+    }
+
+    @Test
+    void onlySoManyRowsArePutInBatches_andTheModelIsTold() {
+        final TableAnalysisConfig fewRows = TableAnalysisConfig.builder()
+                .maxRowsPerBatch(2)
+                .maxRowsWithoutTools(3)
+                .build();
+        final TableSummariserImpl.Batches batches = summariser.buildBatches(table(5), fewRows, Integer.MAX_VALUE, 3);
+
+        assertThat(batches.capped()).isTrue();
+        assertThat(String.join("", batches.batches())).contains("row3").doesNotContain("row4");
+        assertThat(summariser.buildBatches(table(3), fewRows, Integer.MAX_VALUE, 3).capped()).isFalse();
+
+        final List<String> prompts = Collections.synchronizedList(new ArrayList<>());
+        summariser.summarise(TableSummaryRequest.builder()
+                .source(new TableSource("t", table(5), false))
+                .chatModel(chatModel(prompt -> {
+                    prompts.add(prompt);
+                    return "a finding";
+                }))
+                .config(fewRows)
+                .query("What is going on?")
+                .build());
+        assertThat(prompts.getFirst()).contains("only the first 3 rows of a larger table are given");
     }
 
     @Test
@@ -204,7 +229,7 @@ class TestTableSummariser {
             return "answer";
         }).build());
 
-        assertThat(prompts.getFirst()).contains("truncated to the first 100 rows of a larger result set");
+        assertThat(prompts.getFirst()).contains("only the first 100 rows of a larger table are given");
     }
 
     @Test

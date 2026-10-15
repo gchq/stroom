@@ -44,6 +44,10 @@ public class AiConfigTableAnalysisPresenter
                 config,
                 TableAnalysisConfig::getMaxTotalRows,
                 TableAnalysisConfig.DEFAULT_MAX_TOTAL_ROWS));
+        getView().setMaxRowsWithoutTools(NullSafe.getOrElse(
+                config,
+                TableAnalysisConfig::getMaxRowsWithoutTools,
+                TableAnalysisConfig.DEFAULT_MAX_ROWS_WITHOUT_TOOLS));
         getView().setMaxRowsPerBatch(NullSafe.getOrElse(
                 config,
                 TableAnalysisConfig::getMaxRowsPerBatch,
@@ -77,7 +81,8 @@ public class AiConfigTableAnalysisPresenter
                 getView().getMaxParallelBatches(),
                 getView().getTableQuerySystemPrompt(),
                 getView().getTableQueryUserPrompt(),
-                getView().getMultiSummaryMergePrompt());
+                getView().getMultiSummaryMergePrompt(),
+                getView().getMaxRowsWithoutTools());
     }
 
     public long getAttachmentDownloadTimeoutMs() {
@@ -92,6 +97,10 @@ public class AiConfigTableAnalysisPresenter
         void setMaxTotalRows(int maxTotalRows);
 
         int getMaxTotalRows();
+
+        void setMaxRowsWithoutTools(int maxRowsWithoutTools);
+
+        int getMaxRowsWithoutTools();
 
         void setMaxRowsPerBatch(int maxRowsPerBatch);
 
