@@ -105,8 +105,8 @@ class ColumnSummariser {
             Files.writeString(temp, table, StandardCharsets.UTF_8);
             final TableSummaryResult result = tableSummariser.summarise(TableSummaryRequest.builder()
                     .source(new TableSource("Patterns of column '" + column + "' of " + path, temp, false))
+                    // The run's model, already built (a request takes a model or a model ref, not both).
                     .chatModel(context.getChatModel())
-                    .modelRef(NullSafe.get(context.getModelDoc(), OpenAIModelDoc::asDocRef))
                     .contextWindowTokens(NullSafe.getOrElse(context.getModelDoc(),
                             OpenAIModelDoc::getMaxContextWindowTokens, 0))
                     .config(tableAnalysisConfig())

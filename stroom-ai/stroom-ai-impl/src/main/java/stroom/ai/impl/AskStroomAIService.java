@@ -1392,7 +1392,7 @@ public class AskStroomAIService {
         final List<TableSource> sources = attachments
                 .stream()
                 .map(attachment -> new TableSource(
-                        "attachment " + attachment.getId() + " for chatId=" + chatId,
+                        NullSafe.nonBlankStringElse(attachment.getDescription(), "Attachment " + attachment.getId()),
                         workspaceStore.localFile(attachment.getId()),
                         attachment.isTruncated()))
                 .toList();
