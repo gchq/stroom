@@ -172,6 +172,26 @@ class TestAskStroomAIService {
     }
 
     @Test
+    void testDeleteAllChats_deletesEachOfTheUsersChatsAndLeavesBusyOnes() {
+        Mockito.when(securityContext.getUserRef()).thenReturn(UserRef.builder().uuid("user1").build());
+        Mockito.when(aiDao.getChatIds("user1")).thenReturn(List.of(1, 2, 3));
+        final AiChatRun stuck = new AiChatRun(5, 2, AiChatRunStatus.STOPPING, null, 0L, null, false, null);
+        Mockito.when(runDao.getActive(Mockito.anyInt())).thenReturn(Optional.empty());
+        Mockito.when(runDao.getActive(2)).thenReturn(Optional.of(stuck));
+        final AskStroomAIService service = serviceForDelete();
+        service.setStopWait(java.time.Duration.ofMillis(200));
+
+        assertThat(service.deleteAllChats()).isEqualTo(2);
+
+        Mockito.verify(aiService).deleteChat(1);
+        Mockito.verify(aiService, Mockito.never()).deleteChat(2);
+        Mockito.verify(aiService).deleteChat(3);
+        // Each is checked as deleting one chat is.
+        Mockito.verify(aiService).verifyOwnership(1);
+        Mockito.verify(aiService).verifyOwnership(3);
+    }
+
+    @Test
     void testDeleteChat_anotherUsersChatIsNotTouched() {
         Mockito.doThrow(new RuntimeException("not yours")).when(aiService).verifyOwnership(1);
 
