@@ -102,6 +102,7 @@ public class ContextAssembler {
 
     public static final String PART_SYSTEM_PROMPT = "System prompt";
     public static final String PART_TOOL_DEFINITIONS = "Tool definitions";
+    public static final String PART_SERVER_INSTRUCTIONS = "MCP server instructions";
     public static final String PART_MEMORY = "Memory";
     public static final String PART_EARLIER_TURNS = "Earlier turns (compacted)";
     public static final String PART_CONVERSATION = "Chat history";
@@ -485,6 +486,7 @@ public class ContextAssembler {
         final Map<String, Long> parts = new LinkedHashMap<>();
         parts.put(PART_SYSTEM_PROMPT, (long) ESTIMATOR.estimateTokenCountInText(systemPrompt() + TOOL_GUIDANCE));
         parts.put(PART_TOOL_DEFINITIONS, (long) usageTracker.getToolDefinitionTokens(chatId));
+        parts.put(PART_SERVER_INSTRUCTIONS, (long) usageTracker.getServerInstructionTokens(chatId));
         parts.put(PART_MEMORY, (long) ESTIMATOR.estimateTokenCountInText(NullSafe.string(memory(chatId))));
         parts.put(PART_EARLIER_TURNS, (long) ESTIMATOR.estimateTokenCountInText(
                 NullSafe.string(earlierTurns(history, relevantHistory, compaction))));

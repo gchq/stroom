@@ -69,6 +69,8 @@ public final class McpToolset implements AutoCloseable {
     public static final McpToolset EMPTY = new McpToolset(List.of(), List.of(), true);
     // The tool metadata key a server can use to say which group a tool is in.
     static final String META_GROUP = "group";
+    /// The most of one server's instructions given to the model, so that a server cannot fill the context.
+    static final int MAX_SERVER_INSTRUCTIONS_CHARS = 20_000;
 
     static final String LIST_RESOURCES_TOOL = "list_resources";
     static final String GET_RESOURCE_TOOL = "get_resource";
@@ -112,6 +114,47 @@ public final class McpToolset implements AutoCloseable {
      */
     List<McpServerConnection> getConnections() {
         return connections;
+    }
+
+    /**
+     * The instructions that trusted servers give, when connected, about how to use them, e.g. the order to do
+     * things in. An untrusted server's instructions are left out, as they could tell the model anything.
+     *
+     * @param servers The servers to include, by label: those whose tools the model is offered.
+     * @return The instructions, under a heading per server, or null if no such trusted server gives any.
+     */
+    public String serverInstructions(final Set<String> servers) {
+        final StringBuilder sb = new StringBuilder();
+        for (final McpServerConnection connection : connections) {
+            if (!servers.contains(connection.label())
+                || connection.config() == null
+                || !connection.config().isTrusted()) {
+                continue;
+            }
+            final String instructions;
+            try {
+                instructions = connection.instructions();
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> "Unable to read the instructions of MCP server '" + connection.label() + "'", e);
+                continue;
+            }
+            if (NullSafe.isBlankString(instructions)) {
+                continue;
+            }
+            if (!sb.isEmpty()) {
+                sb.append("\n\n");
+            }
+            sb.append("## Instructions from MCP server ").append(connection.label()).append("\n\n");
+            if (instructions.length() > MAX_SERVER_INSTRUCTIONS_CHARS) {
+                sb.append(instructions, 0, MAX_SERVER_INSTRUCTIONS_CHARS)
+                        .append("\n[The rest of these instructions has been left out, as they are too long.]");
+            } else {
+                sb.append(instructions.strip());
+            }
+        }
+        return sb.isEmpty()
+                ? null
+                : sb.toString();
     }
 
     /**
