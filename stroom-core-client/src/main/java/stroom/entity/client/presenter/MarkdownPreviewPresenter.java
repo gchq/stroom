@@ -24,6 +24,7 @@ import stroom.iframe.client.presenter.IFramePresenter.SandboxOption;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.ui.config.client.UiConfigCache;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Timer;
@@ -74,9 +75,13 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
         codePresenter.setMode(AceEditorMode.MARKDOWN);
 
         iFramePresenter.setId(MARKDOWN_FRAME_ID);
-        iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
+        // Same origin lets this page set the preview's scroll position, to follow the editor. Scripts are still
+        // not allowed, so nothing in the preview can run.
+        iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS, SandboxOption.ALLOW_SAME_ORIGIN);
 
         view.setViews(codePresenter.getView(), iFramePresenter.getView());
+        syncScroll(codePresenter.getView().asWidget().getElement(),
+                iFramePresenter.getView().asWidget().getElement());
 
         delayedConvertTimer = new Timer() {
             @Override
@@ -130,6 +135,55 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
     public HandlerRegistration addFormatHandler(final FormatHandler handler) {
         return codePresenter.addFormatHandler(handler);
     }
+
+    /**
+     * Keeps the preview scrolled to the same place as the editor, as a proportion of the way down, including
+     * after the preview is re-rendered. The Ace editor scrolls a real scroll bar element, whose scroll events
+     * (which do not bubble) are caught on the way down to it.
+     *
+     * @param editorElement  The editor's element.
+     * @param previewElement The preview's element: its iframe, or an element containing it.
+     */
+    private static native void syncScroll(Element editorElement, Element previewElement) /*-{
+        var fraction = 0;
+        var apply = function () {
+            var frame = previewElement.tagName === 'IFRAME'
+                ? previewElement
+                : previewElement.querySelector('iframe');
+            var doc = null;
+            try {
+                doc = frame ? frame.contentDocument : null;
+            } catch (e) {
+                // Not accessible, so the preview cannot follow.
+            }
+            if (!doc) {
+                return;
+            }
+            // The rendered document scrolls inside its container, rather than the page itself scrolling.
+            var candidates = [doc.querySelector('.markdown-container'), doc.scrollingElement, doc.documentElement];
+            for (var i = 0; i < candidates.length; i++) {
+                var scroller = candidates[i];
+                if (scroller && scroller.scrollHeight > scroller.clientHeight) {
+                    // Instantly, as the container scrolls smoothly, which would lag behind the editor.
+                    scroller.scrollTo({
+                        top: fraction * (scroller.scrollHeight - scroller.clientHeight),
+                        behavior: 'instant'
+                    });
+                    return;
+                }
+            }
+        };
+        editorElement.addEventListener('scroll', function (event) {
+            var bar = event.target;
+            if (bar && bar.classList && bar.classList.contains('ace_scrollbar-v')) {
+                var max = bar.scrollHeight - bar.clientHeight;
+                fraction = max > 0 ? bar.scrollTop / max : 0;
+                apply();
+            }
+        }, true);
+        // A re-rendered preview starts at the top, so put it back where the editor is.
+        previewElement.addEventListener('load', apply, true);
+    }-*/;
 
     // --------------------------------------------------------------------------------
 
