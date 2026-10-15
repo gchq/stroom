@@ -152,6 +152,20 @@ _Steps for you_ card. The model can neither make nor click one.
   the user's approval. Users view, edit and undo changes in **Memory…**.
 
 
+## Attached tables
+
+Tables attached to a chat (from a dashboard, query or table) are downloaded into the chat's workspace, up
+to `tableAnalysis.maxTotalRows` rows (default 50,000).
+
+* A model with tools is given each table's profile and where it is, and works out figures with its tools.
+* A model without tools is given the first `tableAnalysis.maxRowsWithoutTools` rows (default 10,000), and
+  told when there are more. If they don't fit its context window, the tables are analysed in batches (no
+  more than `maxRowsPerBatch` rows, or half the context window, each), with the chat so far as compacted,
+  and the partial answers are merged into the answer.
+* These settings, and the batch and merge prompts, apply to everyone. Administrators change them on the
+  **Table Analysis** tab of the chat's **Settings…**, which other users don't see.
+
+
 ## Retention and limits
 
 The _AI Chat Retention_ job (hourly) removes:
