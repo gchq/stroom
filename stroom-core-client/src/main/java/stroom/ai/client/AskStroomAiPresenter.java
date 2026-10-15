@@ -198,6 +198,8 @@ public class AskStroomAiPresenter
     private List<AiChatStatus> chatStatuses = new ArrayList<>();
     // False until the first statuses arrive, so the chats as they were when the page opened are not notified.
     private boolean statusesKnown;
+    // True if the current chat was still working when it was last polled.
+    private boolean currentRunActive;
     private long statusVersion;
     private Timer statusTimer;
     // How the chat is shown: DOCK, DIALOG or TAB, or null if hidden.
@@ -615,9 +617,9 @@ public class AskStroomAiPresenter
                         .command(this::onDownloadChat))
                 .withIconMenuItem(item -> item
                         .icon(SvgImage.DELETE)
-                        .text("Delete All Messages")
+                        .text("Delete Chat")
                         .enabled(hasChat)
-                        .command(this::onDeleteAllMessages))
+                        .command(this::onDeleteChat))
                 .withSeparator()
                 .withIconMenuItem(item -> item
                         .icon(SvgImage.SETTINGS)
@@ -1690,6 +1692,7 @@ public class AskStroomAiPresenter
 
             // Say if the run stopped before finishing, and offer to resume it.
             updateRunStatus(response.getRun());
+            currentRunActive = !response.isComplete();
 
             // Show what the server is currently doing, and take the line away when it is done.
             updateWorkingMessage(response.getWorkingMessage());
@@ -2567,6 +2570,7 @@ public class AskStroomAiPresenter
     public void onNewChat() {
         askStroomAiClient.createChat(chat -> {
             currentChat = chat;
+            currentRunActive = false;
             titleGenerated = false;
             lastSeenMessageId = 0;
             data = null;
@@ -2631,20 +2635,47 @@ public class AskStroomAiPresenter
                 });
     }
 
-    private void onDeleteAllMessages() {
+    /**
+     * Deletes the chat, after asking, and starts a new one in its place.
+     */
+    private void onDeleteChat() {
         if (currentChat == null) {
             return;
         }
+        final AiChat chat = currentChat;
+        final String title = NullSafe.isBlankString(chat.getTitle())
+                ? "this chat"
+                : "“" + chat.getTitle() + "”";
+        final String working = isBusy(chat.getId())
+                ? " It is still working, so it will be stopped first."
+                : "";
         ConfirmEvent.fire(this,
-                "Are you sure you want to delete all messages and attachments in this conversation?",
+                "Delete " + title + "? Its messages, attached data, workspace files, memory and tool approvals "
+                + "are all deleted, and this cannot be undone." + working,
                 ok -> {
                     if (ok) {
-                        askStroomAiClient.deleteAllMessages(
-                                currentChat.getId(),
-                                success -> reloadCurrentChat(),
-                                getView());
+                        askStroomAiClient.deleteChat(chat.getId(), success -> {
+                            // Only move on if the user is still looking at the chat that was deleted.
+                            if (currentChat != null && currentChat.getId() == chat.getId()) {
+                                onNewChat();
+                            }
+                            checkChatStatuses();
+                        }, getView());
                     }
                 });
+    }
+
+    private boolean isBusy(final int chatId) {
+        // The current chat's run is known from its last poll, which is more up to date than the statuses.
+        if (currentRunActive && currentChat != null && currentChat.getId() == chatId) {
+            return true;
+        }
+        for (final AiChatStatus status : chatStatuses) {
+            if (status.getChatId() == chatId) {
+                return status.isBusy() || status.isNeedsYou();
+            }
+        }
+        return false;
     }
 
     private void reloadCurrentChat() {
@@ -2655,6 +2686,7 @@ public class AskStroomAiPresenter
 
     private void loadChat(final AiChat chat) {
         currentChat = chat;
+        currentRunActive = false;
         // A loaded chat already has a title.
         titleGenerated = true;
         lastSeenMessageId = 0;
@@ -2686,6 +2718,7 @@ public class AskStroomAiPresenter
             askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, isLooking(), response -> {
                 updateAttachmentStatuses(response.getAttachments());
                 updateRunStatus(response.getRun());
+                currentRunActive = !response.isComplete();
                 if (!response.isComplete() && currentChat != null && currentChat.getId() == chat.getId()) {
                     getView().setSendButtonLoadingState(true);
                     startPolling();
