@@ -56,6 +56,17 @@ class TestToolConsent {
     }
 
     @Test
+    void testBuiltInToolsThatChangeTheWorkspaceRunWhileTheUserIsAway() {
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
+                ToolSpecification.builder().name("write_file").build(), (request, memoryId) -> ""));
+        Mockito.when(builtInTools.isReadOnly("write_file")).thenReturn(false);
+
+        // They only reach the chat's own workspace and memory, which have their own controls.
+        assertThat(decide("write_file", false).kind()).isEqualTo(Kind.RUN);
+        assertThat(decide("write_file", true).kind()).isEqualTo(Kind.RUN);
+    }
+
+    @Test
     void testToolsThatConfirmThemselvesAreNotAskedAboutTwice() {
         tool(info(true, false, true, null, true, null));
 
