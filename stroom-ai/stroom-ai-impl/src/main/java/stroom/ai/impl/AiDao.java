@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
@@ -150,6 +151,16 @@ public interface AiDao {
      * Turns 'approve everything' on or off for the chat.
      */
     void setApproveEverything(int chatId, boolean enabled);
+
+    /**
+     * @return How the agent works in the chat.
+     */
+    AiAgentMode getAgentMode(int chatId);
+
+    /**
+     * Sets how the agent works in the chat.
+     */
+    void setAgentMode(int chatId, AiAgentMode mode);
 
     /**
      * @param messageType A type of message.

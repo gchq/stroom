@@ -7,7 +7,7 @@
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="includeDataContexts"
                                     identity="downloadChatIncludeDataContexts"
-                                    label="Include data contexts (table/dashboard/query data attached to the conversation)"/>
+                                    label="Include data contexts (table/dashboard/query data attached to the chat)"/>
         </form:FormGroup>
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="includeActivity"

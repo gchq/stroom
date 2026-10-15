@@ -46,15 +46,19 @@ public class AskStroomAiConfigViewImpl
     Button restoreFromDefaults;
     @UiField
     Button setDefaults;
+    @UiField
+    Button resetAllUsers;
 
     private Consumer<TaskMonitorFactory> onRestoreFromDefaultsHandler;
     private Consumer<TaskMonitorFactory> onSetDefaultsHandler;
+    private Consumer<TaskMonitorFactory> onResetAllUsersHandler;
 
     @Inject
     public AskStroomAiConfigViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         restoreFromDefaults.setVisible(true);
         setDefaults.setVisible(false);
+        resetAllUsers.setVisible(false);
     }
 
     @Override
@@ -80,6 +84,12 @@ public class AskStroomAiConfigViewImpl
     @Override
     public void allowSetDefaults(final boolean allow) {
         setDefaults.setVisible(allow);
+        resetAllUsers.setVisible(allow);
+    }
+
+    @Override
+    public void setOnResetAllUsers(final Consumer<TaskMonitorFactory> handler) {
+        this.onResetAllUsersHandler = handler;
     }
 
     @Override
@@ -98,6 +108,13 @@ public class AskStroomAiConfigViewImpl
     public void onSetDefaultsClick(final ClickEvent event) {
         if (onSetDefaultsHandler != null) {
             onSetDefaultsHandler.accept(setDefaults);
+        }
+    }
+
+    @UiHandler("resetAllUsers")
+    public void onResetAllUsersClick(final ClickEvent event) {
+        if (onResetAllUsersHandler != null) {
+            onResetAllUsersHandler.accept(resetAllUsers);
         }
     }
 

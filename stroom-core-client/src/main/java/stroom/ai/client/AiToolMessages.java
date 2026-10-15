@@ -141,9 +141,9 @@ final class AiToolMessages {
                         ? " " + path
                         : "");
             case "read_turn":
-                return "Read turn " + getString(arguments, "turn") + " of the conversation";
+                return "Read turn " + getString(arguments, "turn") + " of the chat";
             case "search_history":
-                return "Searched the conversation for " + quoted(getString(arguments, "text"));
+                return "Searched the chat for " + quoted(getString(arguments, "text"));
             default:
                 // An MCP tool: its name, with the server prefix, plus its first argument.
                 final String first = firstStringArgument(arguments);

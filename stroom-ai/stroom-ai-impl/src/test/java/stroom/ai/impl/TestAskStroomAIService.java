@@ -17,6 +17,8 @@
 package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
+import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
@@ -29,6 +31,7 @@ import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AnswerAiApprovalRequest;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DashboardTableContext;
@@ -40,6 +43,7 @@ import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
@@ -89,6 +93,56 @@ class TestAskStroomAIService {
                 aiDao, AiConfig::new, securityContext, () -> null);
     }
 
+    private static final DocRef CHOSEN_MODEL = new DocRef(OpenAIModelDoc.TYPE, "chosen-uuid", "Chosen");
+    private static final DocRef DEFAULT_MODEL = new DocRef(OpenAIModelDoc.TYPE, "default-uuid", "Default");
+
+    // With a model store and a default config whose model is DEFAULT_MODEL, or none.
+    private AskStroomAIService serviceForModels(final OpenAIModelStore store, final DocRef defaultModel) {
+        final AskStroomAiConfig defaultConfig = AskStroomAiConfig.builder().modelRef(defaultModel).build();
+        return new AskStroomAIService(aiService, null, null, null, store, null, null, () -> defaultConfig,
+                null, null, null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null,
+                compactor, null, toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new,
+                securityContext, () -> null);
+    }
+
+    @Test
+    void testGetModelDoc_usesTheChosenModel() {
+        final OpenAIModelStore store = Mockito.mock(OpenAIModelStore.class);
+        final OpenAIModelDoc chosen = OpenAIModelDoc.builder().uuid("chosen-uuid").name("Chosen").build();
+        Mockito.when(store.readDocument(CHOSEN_MODEL)).thenReturn(chosen);
+
+        assertThat(serviceForModels(store, DEFAULT_MODEL)
+                .getModelDoc(AskStroomAiConfig.builder().modelRef(CHOSEN_MODEL).build()))
+                .isSameAs(chosen);
+    }
+
+    @Test
+    void testGetModelDoc_noModelOrAMissingOneFallsBackToTheDefault() {
+        // Users whose settings were saved before a model was set up have none, and a model can be deleted.
+        final OpenAIModelStore store = Mockito.mock(OpenAIModelStore.class);
+        final OpenAIModelDoc defaultDoc = OpenAIModelDoc.builder().uuid("default-uuid").name("Default").build();
+        Mockito.when(store.readDocument(DEFAULT_MODEL)).thenReturn(defaultDoc);
+        Mockito.when(store.readDocument(CHOSEN_MODEL)).thenReturn(null);
+        final AskStroomAIService service = serviceForModels(store, DEFAULT_MODEL);
+
+        assertThat(service.getModelDoc(AskStroomAiConfig.builder().build())).isSameAs(defaultDoc);
+        assertThat(service.getModelDoc(null)).isSameAs(defaultDoc);
+        assertThat(service.getModelDoc(AskStroomAiConfig.builder().modelRef(CHOSEN_MODEL).build()))
+                .isSameAs(defaultDoc);
+    }
+
+    @Test
+    void testGetModelDoc_noModelAndNoDefaultSaysWhatToDo() {
+        final OpenAIModelStore store = Mockito.mock(OpenAIModelStore.class);
+        final AskStroomAIService service = serviceForModels(store, null);
+
+        assertThatThrownBy(() -> service.getModelDoc(AskStroomAiConfig.builder().build()))
+                .hasMessageContaining("No AI model is set")
+                .hasMessageContaining("Settings");
+        assertThatThrownBy(() -> service.getModelDoc(AskStroomAiConfig.builder().modelRef(CHOSEN_MODEL).build()))
+                .hasMessageContaining("'Chosen' cannot be found");
+    }
+
     @Test
     void testDeleteChat_stopsAWorkingRunBeforeDeleting() {
         final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
@@ -124,6 +178,18 @@ class TestAskStroomAIService {
         assertThatThrownBy(() -> serviceForDelete().deleteChat(1)).hasMessage("not yours");
         Mockito.verifyNoInteractions(runManager);
         Mockito.verify(aiService, Mockito.never()).deleteChat(Mockito.anyInt());
+    }
+
+    @Test
+    void testAskStroomAi_theModeIsKeptWithTheChat() {
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "plan it", AiAgentMode.PLAN));
+        // A request without a mode leaves the chat's mode as it is.
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "and again"));
+
+        Mockito.verify(aiDao, Mockito.times(1)).setAgentMode(1, AiAgentMode.PLAN);
+        Mockito.verify(aiDao, Mockito.times(1)).setAgentMode(Mockito.anyInt(), Mockito.any());
     }
 
     @Test
@@ -458,7 +524,7 @@ class TestAskStroomAIService {
         Mockito.when(securityContext.getUserRef()).thenReturn(UserRef.builder().uuid("u").build());
         Mockito.when(aiDao.getStatusVersion("u")).thenReturn(42L);
         Mockito.when(aiDao.getChatStatuses("u", AskStroomAIService.MAX_CHAT_STATUSES)).thenReturn(List.of(
-                new AiChatStatus(1, "chat", 0L, AiChatRunStatus.WAITING_FOR_USER, true, false, 0L)));
+                new AiChatStatus(1, "chat", 0L, AiChatRunStatus.WAITING_FOR_USER, true, false, 0L, null)));
 
         final AiChatStatusResponse first = service().getChatStatuses(0);
         final AiChatStatusResponse unchanged = service().getChatStatuses(42);
