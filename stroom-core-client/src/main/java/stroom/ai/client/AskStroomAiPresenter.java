@@ -98,6 +98,10 @@ import com.google.gwt.dom.client.TextAreaElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
@@ -156,6 +160,11 @@ public class AskStroomAiPresenter
     private static final String WORKING_MESSAGE_ID = "ai-working-message";
     private static final String WORKING_TEXT_ID = "ai-working-text";
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
+    private static final String USER_ACTION_MESSAGE_ATTRIBUTE = "data-user-action-message";
+    private static final String USER_ACTION_ID_ATTRIBUTE = "data-user-action-id";
+    // A tool result's buttons are shown in a card of their own, outside the turn's activity.
+    private static final String USER_ACTIONS_ID_SUFFIX = "-actions";
+    private static final SafeHtml PRE = SafeHtmlUtils.fromSafeConstant("pre");
     private static final String CHAT_ID_ATTRIBUTE = "data-chat-id";
     private static final String DELETE_CHAT_ATTRIBUTE = "data-delete-chat-id";
     private static final String RUN_STATUS_ID = "ai-run-status";
@@ -331,6 +340,14 @@ public class AskStroomAiPresenter
                     final String retryTurnIdStr = button.getAttribute(RETRY_TURN_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(retryTurnIdStr)) {
                         onRetry(Integer.parseInt(retryTurnIdStr));
+                        return;
+                    }
+
+                    // A step an MCP tool's result left to the user.
+                    final String userActionMessage = button.getAttribute(USER_ACTION_MESSAGE_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(userActionMessage)) {
+                        onUserActionButton(button, Integer.parseInt(userActionMessage),
+                                button.getAttribute(USER_ACTION_ID_ATTRIBUTE));
                         return;
                     }
 
@@ -605,7 +622,8 @@ public class AskStroomAiPresenter
         final DocRef docRef = ChatLinks.openDocTarget(href);
         if (docRef != null) {
             documentTypeCache.fetch(types -> {
-                if (types.getDocumentType(docRef.getType()) != null) {
+                // DocumentTypes' lookup map isn't filled in the browser, so look through the list.
+                if (NullSafe.stream(types.getTypes()).anyMatch(type -> docRef.getType().equals(type.getType()))) {
                     OpenDocumentEvent.fire(this, docRef, true);
                 } else {
                     AlertEvent.fireError(this, "This link is to an unknown type of document, '"
@@ -1112,6 +1130,165 @@ public class AskStroomAiPresenter
         }, Attribute.className("ai-message ai-message--approval" + (pending
                 ? " ai-message--needs-you"
                 : "")));
+    }
+
+    /**
+     * Shows the steps a tool's result says are the user's, as buttons in a card of their own (so they are not
+     * hidden in the turn's activity). Everything in it was written by Stroom, which checked each step; the server's
+     * own text only appears in "Do first" conditions, as plain text.
+     */
+    private void appendUserActionsCard(final Element markdownContainer, final AiChatMessage msg, final long nowMs) {
+        final JSONArray actions = AiToolMessages.getArray(msg.getMessage(), "userActions");
+        if (actions == null || actions.size() == 0) {
+            return;
+        }
+        boolean waiting = false;
+        final HtmlBuilder hb = new HtmlBuilder();
+        final List<Consumer<HtmlBuilder>> rows = new ArrayList<>();
+        for (int i = 0; i < actions.size(); i++) {
+            final JSONObject action = actions.get(i).isObject();
+            if (action != null) {
+                final String json = action.toString();
+                final long expiresMs = AiToolMessages.parseLong(AiToolMessages.getString(json, "expiresMs"));
+                final boolean pending = "PENDING".equals(AiToolMessages.getString(json, "status"))
+                                        && expiresMs > nowMs;
+                waiting |= pending && !UserActionsUi.ELASTICSEARCH_REQUEST.equals(
+                        AiToolMessages.getString(json, "action"));
+                rows.add(row -> userActionRow(row, msg.getId(), json, pending, nowMs));
+            }
+        }
+        final boolean needsYou = waiting;
+        hb.div(card -> {
+            card.div(title -> title.append(needsYou
+                    ? "Steps for you to take"
+                    : "Steps for you"), Attribute.className("ai-approval-title"));
+            rows.forEach(row -> row.accept(card));
+            card.div(footer -> timestamp(footer, msg.getCreateTimeMs(), nowMs),
+                    Attribute.className("ai-message-footer"));
+        }, Attribute.className("ai-message ai-message--approval ai-message--user-actions" + (needsYou
+                ? " ai-message--needs-you"
+                : "")));
+
+        final Element card = parseHtml(hb).getFirstChildElement();
+        final String id = msg.getId() + USER_ACTIONS_ID_SUFFIX;
+        card.setAttribute(MESSAGE_ID_ATTRIBUTE, id);
+        decorateCodeBlocks(card);
+        final Element existing = findMessageElement(markdownContainer, id);
+        if (existing != null) {
+            markdownContainer.replaceChild(card, existing);
+        } else {
+            markdownContainer.appendChild(card);
+            keepProgressLast(markdownContainer);
+        }
+    }
+
+    private void userActionRow(final HtmlBuilder card,
+                               final int messageId,
+                               final String json,
+                               final boolean pending,
+                               final long nowMs) {
+        final String action = NullSafe.string(AiToolMessages.getString(json, "action"));
+        final String status = NullSafe.string(AiToolMessages.getString(json, "status"));
+        card.div(row -> {
+            row.div(text -> text.append(NullSafe.string(AiToolMessages.getString(json, "label"))),
+                    Attribute.className("ai-user-action-label"));
+            final String details = AiToolMessages.getString(json, "details");
+            if (NullSafe.isNonBlankString(details)) {
+                row.div(text -> text.append(details), Attribute.className("ai-user-action-details"));
+            }
+            final String warning = AiToolMessages.getString(json, "warning");
+            if (NullSafe.isNonBlankString(warning)) {
+                row.div(text -> text.append(warning), Attribute.className("ai-user-action-warning"));
+            }
+            final JSONArray after = AiToolMessages.getArray(json, "after");
+            if (after != null && after.size() > 0) {
+                final List<String> items = new ArrayList<>();
+                for (int i = 0; i < after.size(); i++) {
+                    final JSONString item = after.get(i).isString();
+                    if (item != null) {
+                        items.add(item.stringValue());
+                    }
+                }
+                row.div(text -> text.append("Do first: " + String.join("; ", items)),
+                        Attribute.className("ai-user-action-after"));
+            }
+            final String request = AiToolMessages.getString(json, "request");
+            if (UserActionsUi.ELASTICSEARCH_REQUEST.equals(action)) {
+                // Shown for the cluster admin to copy. Stroom never runs it.
+                if (NullSafe.isNonBlankString(request)) {
+                    row.elem(pre -> pre.code(code -> code.append(request)), PRE);
+                }
+            } else if (pending) {
+                row.elem(UserActionsUi.buttonText(action), BUTTON,
+                        Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
+                        new Attribute(USER_ACTION_MESSAGE_ATTRIBUTE, String.valueOf(messageId)),
+                        new Attribute(USER_ACTION_ID_ATTRIBUTE,
+                                NullSafe.string(AiToolMessages.getString(json, "id"))));
+            } else {
+                final String outcome = AiToolMessages.getString(json, "outcome");
+                row.div(text -> text.append(NullSafe.isNonBlankString(outcome)
+                                ? outcome
+                                : "PENDING".equals(status)
+                                        ? "This button has expired."
+                                        : status),
+                        Attribute.className("ai-approval-reason"));
+            }
+        }, Attribute.className("ai-user-action"));
+    }
+
+    private void onUserActionButton(final Element button, final int messageId, final String actionId) {
+        if (currentChat == null) {
+            return;
+        }
+        button.setAttribute("disabled", "disabled");
+        askStroomAiClient.doUserAction(currentChat.getId(), messageId, actionId, result -> {
+            if (result.getOpenDocument() != null) {
+                OpenDocumentEvent.fire(this, result.getOpenDocument(), true);
+                button.removeAttribute("disabled");
+                return;
+            }
+            if (!result.isDone()) {
+                AlertEvent.fireWarn(this, NullSafe.string(result.getMessage()), null);
+            }
+            // The server changed the result in place, which polling doesn't fetch, so show the change here.
+            showUserActionStatus(messageId, actionId, result.isDone()
+                    ? "DONE"
+                    : "FAILED", result.getMessage());
+            // Fetch the note of what was done.
+            pollAfterAnswer();
+        }, this);
+    }
+
+    private void showUserActionStatus(final int messageId,
+                                      final String actionId,
+                                      final String status,
+                                      final String outcome) {
+        final AiChatMessage msg = renderedMessages.get(messageId);
+        if (msg == null) {
+            return;
+        }
+        final JSONObject result = JSONParser.parseStrict(msg.getMessage()).isObject();
+        final JSONArray actions = result != null && result.get("userActions") != null
+                ? result.get("userActions").isArray()
+                : null;
+        if (actions == null) {
+            return;
+        }
+        for (int i = 0; i < actions.size(); i++) {
+            final JSONObject action = actions.get(i).isObject();
+            final JSONString id = action != null && action.get("id") != null
+                    ? action.get("id").isString()
+                    : null;
+            if (id != null && id.stringValue().equals(actionId)) {
+                action.put("status", new JSONString(status));
+                action.put("outcome", new JSONString(NullSafe.string(outcome)));
+            }
+        }
+        final AiChatMessage updated = new AiChatMessage(msg.getId(), msg.getChatId(), msg.getCreateTimeMs(),
+                msg.getMessageType(), msg.getAttachmentId(), result.toString(), msg.getTurnId(),
+                msg.getTokenCount());
+        renderedMessages.put(messageId, updated);
+        appendUserActionsCard(getView().getMarkdownContainer().getElement(), updated, System.currentTimeMillis());
     }
 
     private static String elicitationStatusText(final String status) {
@@ -1886,6 +2063,9 @@ public class AskStroomAiPresenter
                         ? question.getCreateTimeMs()
                         : 0);
                 keepProgressLast(markdownContainer);
+            }
+            if (msg.getMessageType() == AiMessageType.TOOL_RESULT) {
+                appendUserActionsCard(markdownContainer, msg, nowMs);
             }
             return;
         }

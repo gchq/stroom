@@ -1460,6 +1460,49 @@
         "tags" : [ "AI" ]
       }
     },
+    "/ai/v1/userAction/{chatId}/{messageId}/{actionId}" : {
+      "post" : {
+        "operationId" : "doAiUserAction",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "path",
+          "name" : "messageId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "path",
+          "name" : "actionId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiUserActionResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Do what a button that an MCP tool's result offered does, e.g. enable a processor filter, after checking it can still be done",
+        "tags" : [ "AI" ]
+      }
+    },
     "/analyticDataShard/v1/find" : {
       "post" : {
         "operationId" : "findAnalyticDataShards",
@@ -16402,6 +16445,20 @@
           },
           "approveEverythingAllowed" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "AiUserActionResult" : {
+        "type" : "object",
+        "properties" : {
+          "done" : {
+            "type" : "boolean"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "openDocument" : {
+            "$ref" : "#/components/schemas/DocRef"
           }
         }
       },
