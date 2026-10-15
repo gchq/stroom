@@ -88,7 +88,9 @@ public class MarkdownEditPresenter
         this.markdownConverter = markdownConverter;
 
         iFramePresenter.setId(MARKDOWN_FRAME_ID);
-        iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
+        // Same origin lets Stroom's shortcuts (e.g. Alt+W) work while the document has the focus. Scripts are
+        // still not allowed, so nothing in the document can run.
+        iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS, SandboxOption.ALLOW_SAME_ORIGIN);
 //        view.setView(iFramePresenter.getView());
 
         editModeButton = new InlineSvgToggleButton();
