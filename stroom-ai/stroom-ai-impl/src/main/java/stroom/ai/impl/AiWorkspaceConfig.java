@@ -38,6 +38,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     static final int DEFAULT_MAX_CHARS_PER_READ = 20_000;
     static final StroomDuration DEFAULT_TOOL_TIME_LIMIT = StroomDuration.ofSeconds(30);
     static final StroomDuration DEFAULT_QUERY_TIME_LIMIT = StroomDuration.ofMinutes(2);
+    static final int DEFAULT_MAX_QUERY_LENGTH = 10_000;
 
     private final long maxFileBytes;
     private final long maxChatBytes;
@@ -46,6 +47,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     private final int maxCharsPerRead;
     private final StroomDuration toolTimeLimit;
     private final StroomDuration queryTimeLimit;
+    private final int maxQueryLength;
 
     public AiWorkspaceConfig() {
         maxFileBytes = DEFAULT_MAX_FILE_BYTES;
@@ -55,6 +57,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         maxCharsPerRead = DEFAULT_MAX_CHARS_PER_READ;
         toolTimeLimit = DEFAULT_TOOL_TIME_LIMIT;
         queryTimeLimit = DEFAULT_QUERY_TIME_LIMIT;
+        maxQueryLength = DEFAULT_MAX_QUERY_LENGTH;
     }
 
     @JsonCreator
@@ -64,7 +67,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                              @JsonProperty("maxLinesPerRead") final Integer maxLinesPerRead,
                              @JsonProperty("maxCharsPerRead") final Integer maxCharsPerRead,
                              @JsonProperty("toolTimeLimit") final StroomDuration toolTimeLimit,
-                             @JsonProperty("queryTimeLimit") final StroomDuration queryTimeLimit) {
+                             @JsonProperty("queryTimeLimit") final StroomDuration queryTimeLimit,
+                             @JsonProperty("maxQueryLength") final Integer maxQueryLength) {
         this.maxFileBytes = Objects.requireNonNullElse(maxFileBytes, DEFAULT_MAX_FILE_BYTES);
         this.maxChatBytes = Objects.requireNonNullElse(maxChatBytes, DEFAULT_MAX_CHAT_BYTES);
         this.maxUserBytes = Objects.requireNonNullElse(maxUserBytes, DEFAULT_MAX_USER_BYTES);
@@ -72,6 +76,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         this.maxCharsPerRead = Objects.requireNonNullElse(maxCharsPerRead, DEFAULT_MAX_CHARS_PER_READ);
         this.toolTimeLimit = Objects.requireNonNullElse(toolTimeLimit, DEFAULT_TOOL_TIME_LIMIT);
         this.queryTimeLimit = Objects.requireNonNullElse(queryTimeLimit, DEFAULT_QUERY_TIME_LIMIT);
+        this.maxQueryLength = Objects.requireNonNullElse(maxQueryLength, DEFAULT_MAX_QUERY_LENGTH);
     }
 
     @JsonPropertyDescription("The largest a single workspace file may be, in bytes.")
@@ -118,6 +123,12 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         return queryTimeLimit;
     }
 
+    @JsonPropertyDescription("The longest a StroomQL query run by the agent (run_stroomql) may be, in characters.")
+    @JsonProperty("maxQueryLength")
+    public int getMaxQueryLength() {
+        return maxQueryLength;
+    }
+
     @Override
     public String toString() {
         return "AiWorkspaceConfig{" +
@@ -128,6 +139,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                ", maxCharsPerRead=" + maxCharsPerRead +
                ", toolTimeLimit=" + toolTimeLimit +
                ", queryTimeLimit=" + queryTimeLimit +
+               ", maxQueryLength=" + maxQueryLength +
                '}';
     }
 }
