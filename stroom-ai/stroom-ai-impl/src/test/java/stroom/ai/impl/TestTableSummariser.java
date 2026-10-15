@@ -147,6 +147,22 @@ class TestTableSummariser {
     }
 
     @Test
+    void batchesSayWhichTableTheyAreFrom_andTheMergeAnswersTheQuestion() {
+        final List<String> prompts = Collections.synchronizedList(new ArrayList<>());
+
+        summariser.summarise(request(new TableSource("Firewall events", table(3), false), prompt -> {
+            prompts.add(prompt);
+            return "a finding";
+        }).build());
+
+        // Two batches, then the merge.
+        assertThat(prompts.subList(0, 2)).allSatisfy(prompt -> assertThat(prompt).contains("Table: Firewall events"));
+        assertThat(prompts.getLast())
+                .contains("USER QUESTION:\nWhat is going on?")
+                .contains("PARTIAL ANSWERS:");
+    }
+
+    @Test
     void everyBatch_isPutToTheModel() {
         final List<String> prompts = Collections.synchronizedList(new ArrayList<>());
 
