@@ -109,9 +109,11 @@ public final class AnnotationFixtures {
                 .route(RequestMatcher.get("/annotation/v1").withQuery("annotationId=42"),
                         RestReply.json(ANNOTATION))
                 .post("/annotation/v1/getAnnotationEntries", RestReply.json(entries))
-                .route(RequestMatcher.post(TAGS_PATH).withBodyContaining("\"Status\""), RestReply.json(STATUS_TAGS))
-                .route(RequestMatcher.post(TAGS_PATH).withBodyContaining("\"Label\""), RestReply.json(LABEL_TAGS))
-                .route(RequestMatcher.post(TAGS_PATH).withBodyContaining("\"Comment\""),
+                .route(RequestMatcher.post(TAGS_PATH).withJsonBodyContaining("{\"type\": \"STATUS\"}"),
+                        RestReply.json(STATUS_TAGS))
+                .route(RequestMatcher.post(TAGS_PATH).withJsonBodyContaining("{\"type\": \"LABEL\"}"),
+                        RestReply.json(LABEL_TAGS))
+                .route(RequestMatcher.post(TAGS_PATH).withJsonBodyContaining("{\"type\": \"COMMENT\"}"),
                         RestReply.json(COMMENT_TAGS))
                 .post(TAGS_PATH, RestReply.json(page()))
                 .post("/annotation/v1/getLinkedEvents", RestReply.json(events))

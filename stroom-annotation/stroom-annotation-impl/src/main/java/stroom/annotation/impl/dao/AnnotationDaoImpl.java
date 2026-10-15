@@ -73,10 +73,12 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.query.common.v2.FieldProviderImpl;
-import stroom.query.common.v2.SimpleStringExpressionParser;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
@@ -515,20 +517,25 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                                   final Predicate<Annotation> viewPredicate) {
         final List<Condition> conditions = new ArrayList<>();
         final FieldProvider fieldProvider = new FieldProviderImpl(
-                List.of(AnnotationFields.TITLE),
-                List.of(AnnotationFields.ID,
-                        AnnotationFields.UUID,
-                        AnnotationFields.SUBJECT,
-                        AnnotationFields.STATUS,
-                        AnnotationFields.ASSIGNED_TO,
-                        AnnotationFields.LABEL,
-                        AnnotationFields.COLLECTION));
+                List.of(AnnotationFields.TITLE_FIELD),
+                List.of(AnnotationFields.ID_FIELD,
+                        AnnotationFields.UUID_FIELD,
+                        AnnotationFields.SUBJECT_FIELD,
+                        AnnotationFields.STATUS_FIELD,
+                        AnnotationFields.ASSIGNED_TO_FIELD,
+                        AnnotationFields.LABEL_FIELD,
+                        AnnotationFields.COLLECTION_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
-                    .create(fieldProvider, request.getFilter());
+                    .create(fieldProvider, request.getQuickFilter());
             optionalExpressionOperator.ifPresent(expressionOperator ->
                     conditions.add(expressionMapper.apply(expressionOperator)));
             conditions.add(ANNOTATION.DELETED.isFalse());
+        } catch (final TokenException e) {
+            // A rejected filter must not look like a filter that matched nothing, so send the
+            // reason back with the (empty) results. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
             return ResultPage.empty();

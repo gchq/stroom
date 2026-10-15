@@ -24,11 +24,11 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.presenter.UserPermissionReportPresenter.UserPermissionReportView;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.PermissionShowLevel;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -63,7 +63,7 @@ public class UserPermissionReportPresenter
     private final ButtonView docFilter;
     private final ButtonView batchEdit;
     private ExpressionOperator filterExpression;
-    private ExpressionOperator quickFilterExpression;
+    private String quickFilter;
     private ExpressionOperator combinedExpression;
     private ResultPage<FindResultWithPermissions> docs;
     private UserRef userRef;
@@ -77,7 +77,8 @@ public class UserPermissionReportPresenter
                                          final Provider<DocumentUserPermissionsEditPresenter>
                                                  documentUserPermissionsEditPresenterProvider,
                                          final Provider<BatchDocumentPermissionsEditPresenter>
-                                                 batchDocumentPermissionsEditPresenterProvider) {
+                                                 batchDocumentPermissionsEditPresenterProvider,
+                                         final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.documentPermissionsListPresenter = documentPermissionsListPresenter;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
@@ -87,6 +88,11 @@ public class UserPermissionReportPresenter
         view.setPermissionListView(quickFilterPageView);
         quickFilterPageView.setDataView(documentPermissionsListPresenter.getView());
         quickFilterPageView.setUiHandlers(this);
+        // A rejected filter comes back as an empty page like any other, so surface the reason on
+        // the filter box. See ResultPage.filterError.
+        documentPermissionsListPresenter.setFilterErrorConsumer(quickFilterPageView::setFilterError);
+        quickFilterPageView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                DocumentPermissionFields.QUICK_FILTER_CONTEXT, this, this));
         quickFilterPageView.setLabel("Documents");
         quickFilterPageView.setHelpText(new SafeHtmlBuilder()
                 .appendHtmlConstant("<p>")
@@ -98,7 +104,6 @@ public class UserPermissionReportPresenter
                 .appendHtmlConstant("</p>")
                 .toSafeHtml());
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
-        quickFilterExpression = getShowAllExpression();
 
         permissionVisibility = view.getPermissionVisibility();
         permissionVisibility.addItems(PermissionShowLevel.ITEMS);
@@ -197,8 +202,9 @@ public class UserPermissionReportPresenter
         if (filterExpression != null) {
             builder.addOperator(filterExpression);
         }
-        if (quickFilterExpression != null) {
-            builder.addOperator(quickFilterExpression);
+        if (NullSafe.isBlankString(quickFilter)) {
+            // With no user filter, fall back to this screen's "show everything" term.
+            builder.addOperator(getShowAllExpression());
         }
 
         combinedExpression = builder.build();
@@ -219,13 +225,10 @@ public class UserPermissionReportPresenter
 
     @Override
     public void onFilterChange(final String text) {
-        if (NullSafe.isNonBlankString(text)) {
-            quickFilterExpression = QuickFilterExpressionParser.parse(text,
-                    Set.of(DocumentPermissionFields.DOCUMENT_NAME),
-                    DocumentPermissionFields.getAllFieldMap());
-        } else {
-            quickFilterExpression = getShowAllExpression();
-        }
+        // The filter text goes to the server verbatim - see AdvancedDocumentFindRequest. The
+        // show-all term stays an expression: it is this screen's own default, not user input.
+        quickFilter = text;
+        documentPermissionsListPresenter.getCriteriaBuilder().quickFilter(text);
         documentPermissionsListPresenter.resetRange();
         refresh();
     }

@@ -31,6 +31,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.json.JsonUtil;
@@ -39,6 +40,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -50,6 +52,7 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
+import software.amazon.awssdk.services.sqs.model.RequestThrottledException;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import tools.jackson.databind.JsonNode;
@@ -102,6 +105,7 @@ public class S3EventService {
     //    CachedValue<SqsClient, SqsConfig> cachedSqsClient;
     private volatile S3EventConfig lastS3EventConfig = null;
     private volatile ClientState sqsClientState;
+    private volatile Instant lastConfigWarning = Instant.EPOCH;
 
     @Inject
     public S3EventService(
@@ -246,15 +250,43 @@ public class S3EventService {
                             break;
                         }
                     }
+                } catch (final RequestThrottledException e) {
+                    // Swallow and go round again
+                    LOGGER.warn("Request failed due to throttling - {}, will try again immediately. " +
+                                "Debug for stacktrace",
+                            LogUtil.exceptionMessage(e));
+                    LOGGER.debug("Request failed due to throttling - {}, will try again immediately. " +
+                                 "Debug for stacktrace",
+                            LogUtil.exceptionMessage(e), e);
                 } catch (final Throwable e) {
-                    LOGGER.error("Error polling SQS queue {}. Swallowing error - {}",
-                            queueUrl, LogUtil.exceptionMessage(e), e);
+                    throw new RuntimeException(LogUtil.message("Error polling SQS queue {} - {}",
+                            queueUrl, LogUtil.exceptionMessage(e)), e);
                 }
             } else {
-                LOGGER.warn("SQS has not been configured. Nothing to do.");
+                throw new RuntimeException("SQS has not been configured. Nothing to do.");
             }
         } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
+            // Had a failure so no point in immediately retrying, so sleep for a bit
+            final StroomDuration sleepDuration = NullSafe.getOrElse(
+                    getSqsClient(),
+                    ClientState::config,
+                    S3EventConfig::getSleepDurationPostFailure,
+                    S3EventConfig.DEFAULT_SLEEP_DURATION_POST_FAILURE);
+            LOGGER.error("{} Will sleep for {} before trying again.", LogUtil.exceptionMessage(e), sleepDuration, e);
+
+            final long sleepEndTimeEpochMs = Instant.now()
+                    .plus(sleepDuration)
+                    .toEpochMilli();
+
+            do {
+                try {
+                    Thread.sleep(1_000);
+                } catch (final InterruptedException ie) {
+                    LOGGER.debug("Thread interrupted while sleeping");
+                    Thread.currentThread().interrupt();
+                    throw UncheckedInterruptedException.create(ie);
+                }
+            } while (!terminationChecker.isTerminated() && System.currentTimeMillis() < sleepEndTimeEpochMs);
         }
     }
 

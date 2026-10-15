@@ -20,6 +20,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-query:stroom-query-api')
 
     implementation libs.gin
     implementation libs.gwt.user

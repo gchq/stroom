@@ -225,6 +225,10 @@ public enum ConditionSet {
      * </ul>
      * {@code BETWEEN}, {@code IS_NULL} and {@code IS_NOT_NULL} are omitted as meaningless on a
      * text column rather than because SQL cannot express them.
+     * <p>
+     * The four ordering conditions are included: {@code TermHandler:149-160} implements them, and
+     * the quick filter can spell all four ({@code >}, {@code >=}, {@code <}, {@code <=}). Note the
+     * comparison is lexicographic on a text column, so {@code >10} does not order numerically.
      */
     SQL_TEXT(
             Condition.CONTAINS,
@@ -233,6 +237,10 @@ public enum ConditionSet {
             Condition.STARTS_WITH,
             Condition.ENDS_WITH,
             Condition.MATCHES_REGEX,
+            Condition.GREATER_THAN,
+            Condition.GREATER_THAN_OR_EQUAL_TO,
+            Condition.LESS_THAN,
+            Condition.LESS_THAN_OR_EQUAL_TO,
             Condition.IN,
             Condition.IN_DICTIONARY),
 
@@ -245,7 +253,53 @@ public enum ConditionSet {
             Condition.EQUALS,
             Condition.NOT_EQUALS),
 
+    /**
+     * Text fields evaluated in memory by {@code ExpressionMatcher} - the explorer's document
+     * permission screens.
+     * <p>
+     * A third evaluator alongside {@code TermHandler} and {@code ExpressionPredicateFactory}, and
+     * the most limited: its string branch handles only these five conditions and throws on
+     * anything else. In particular it has no {@code STARTS_WITH}, {@code ENDS_WITH} or
+     * {@code MATCHES_REGEX}, so those must not be declared here.
+     * <p>
+     * {@code CONTAINS} matters: without it a bare quick filter term falls back to {@code EQUALS}
+     * and matches exactly, which is not what a quick filter means. Note {@code ExpressionMatcher}
+     * currently routes {@code EQUALS} and {@code CONTAINS} to the same wildcard match, so the two
+     * are indistinguishable there - a separate wart, tracked in the conformance plan.
+     */
+    MATCHER_TEXT(
+            Condition.CONTAINS,
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
+
     // UI Defaults.
+    /**
+     * Text fields evaluated in memory by {@code ExpressionPredicateFactory}.
+     * <p>
+     * {@code WORD_BOUNDARY} is included because the evaluator implements it
+     * ({@code ExpressionPredicateFactory:470}, via {@code StringWordBoundary}), the quick filter
+     * can spell it with {@code ?}, and the quick filter help tooltip documents it. Omitting it
+     * would mean this set under-declares the evaluator, and arming the
+     * {@code CommonExpressionMapper} capability check would start rejecting {@code ?foo} on
+     * surfaces where it works today.
+     * <p>
+     * {@code CHARS_ANYWHERE} is deliberately absent: the parser currently rewrites {@code ~foo}
+     * to {@code MATCHES_REGEX} at parse time, so no term ever carries it. That changes when spec
+     * §5.2 makes it a real condition, at which point it must be added here.
+     * <p>
+     * The four ordering conditions are included: {@code createTextTermPredicate} implements them
+     * with {@code StringGreaterThan} and friends, and the quick filter can spell all four
+     * ({@code >}, {@code >=}, {@code <}, {@code <=}). Note the comparison is lexicographic, so
+     * {@code >10} does not order numerically - a numeric field should declare
+     * {@link #ALL_UI_NUMERIC}.
+     * <p>
+     * Contrast {@link #SQL_TEXT}, which omits {@code WORD_BOUNDARY} because {@code TermHandler}
+     * has no case for it and would throw, and omits the case-sensitive variants by the decision
+     * in the syntax spec §8.2 - the columns use a case-insensitive collation, so declaring them
+     * would promise case sensitivity that is not delivered.
+     */
     ALL_UI_TEXT(
             Condition.CONTAINS,
             Condition.CONTAINS_CASE_SENSITIVE,
@@ -259,6 +313,11 @@ public enum ConditionSet {
             Condition.ENDS_WITH_CASE_SENSITIVE,
             Condition.MATCHES_REGEX,
             Condition.MATCHES_REGEX_CASE_SENSITIVE,
+            Condition.WORD_BOUNDARY,
+            Condition.GREATER_THAN,
+            Condition.GREATER_THAN_OR_EQUAL_TO,
+            Condition.LESS_THAN,
+            Condition.LESS_THAN_OR_EQUAL_TO,
             Condition.IN,
             Condition.IN_DICTIONARY),
     UI_TEXT(

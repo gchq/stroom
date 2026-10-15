@@ -21,6 +21,7 @@ import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.document.asset.impl.DocumentAssetService;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
@@ -38,25 +39,30 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+// Part of "Make the Visualisation Asset system generic" - upstream's VisualisationAsset*
+// classes were generalised into the shared stroom.document.asset subsystem so FloorMap can
+// carry assets too. Upstream still has the visualisation-specific version, so a merge will
+// try to reinstate it; keep this side and re-point any new upstream code at document.asset.
 @Singleton
 class VisualisationStoreImpl
         extends AbstractDocumentStore<VisualisationDoc>
         implements VisualisationStore {
 
-    private final VisualisationAssetService visualisationAssetService;
+    private final DocumentAssetService documentAssetService;
 
     @Inject
     VisualisationStoreImpl(final StoreFactory storeFactory,
                            final SecurityContext securityContext,
                            final VisualisationSerialiser serialiser,
-                           final VisualisationAssetService assetService) {
+                           final DocumentAssetService assetService) {
         super(storeFactory,
                 securityContext,
                 serialiser,
                 VisualisationDoc.TYPE,
                 VisualisationDoc::builder,
                 VisualisationDoc::copy);
-        this.visualisationAssetService = assetService;
+        this.documentAssetService = assetService;
     }
 
     @Override
@@ -71,7 +77,7 @@ class VisualisationStoreImpl
         checkDocumentPermission(docRef, DocumentPermission.VIEW);
         final DocRef copyDocRef = getStore().copyDocument(docRef.getUuid(), newName);
         try {
-            visualisationAssetService.copyAssetsToDoc(docRef, copyDocRef);
+            documentAssetService.copyAssetsToDoc(docRef, copyDocRef);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -82,7 +88,7 @@ class VisualisationStoreImpl
     public void deleteDocument(final DocRef docRef) {
         super.deleteDocument(docRef);
         try {
-            visualisationAssetService.deleteAssetsForDoc(docRef);
+            documentAssetService.deleteAssetsForDoc(docRef);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -104,7 +110,7 @@ class VisualisationStoreImpl
 
         // Import the path assets
         try {
-            visualisationAssetService.setAssetsFromImport(docRef, importExportDocument.getPathAssets());
+            documentAssetService.setAssetsFromImport(docRef, importExportDocument.getPathAssets());
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -121,7 +127,7 @@ class VisualisationStoreImpl
 
         // Get all the assets to be exported to sub-paths
         try {
-            final Collection<ImportExportAsset> assets = visualisationAssetService.getAssetsForExport(docRef);
+            final Collection<ImportExportAsset> assets = documentAssetService.getAssetsForExport(docRef);
             for (final ImportExportAsset asset : assets) {
                 importExportDocument.addPathAsset(asset);
             }

@@ -17,6 +17,7 @@
 package stroom.visualisation.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -29,11 +30,17 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.inject.Provider;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+// Part of "Make the Visualisation Asset system generic" - upstream's VisualisationAsset*
+// classes were generalised into the shared stroom.document.asset subsystem so FloorMap can
+// carry assets too. Upstream still has the visualisation-specific version, so a merge will
+// try to reinstate it; keep this side and re-point any new upstream code at document.asset.
 public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, VisualisationDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
@@ -41,21 +48,21 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final VisualisationAssetsPresenter visualisationAssetsPresenter;
+    private final DocumentAssetPresenter<VisualisationDoc> documentAssetPresenter;
 
     @Inject
     public VisualisationPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
                                   final Provider<VisualisationSettingsPresenter> settingsPresenterProvider,
-                                  final VisualisationAssetsPresenter visualisationAssetsPresenter,
+                                  final DocumentAssetPresenter<VisualisationDoc> documentAssetPresenter,
                                   final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                   final DocumentUserPermissionsTabProvider<VisualisationDoc>
                                           documentUserPermissionsTabProvider) {
         super(eventBus, view);
-        this.visualisationAssetsPresenter = visualisationAssetsPresenter;
+        this.documentAssetPresenter = documentAssetPresenter;
 
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
-        addTab(ASSETS, new DocTabProvider<>(() -> visualisationAssetsPresenter));
+        addTab(ASSETS, new DocTabProvider<>(() -> documentAssetPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -75,6 +82,13 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
 
         selectTab(SETTINGS);
+    }
+
+    @Override
+    protected void afterSelectTab(final PresenterWidget<?> content) {
+        if (content == documentAssetPresenter) {
+            onChange();
+        }
     }
 
     @Override
@@ -100,7 +114,7 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
      */
     @Override
     protected boolean hasAssociatedDirty() {
-        return visualisationAssetsPresenter.isDirty();
+        return super.hasAssociatedDirty() || (documentAssetPresenter != null && documentAssetPresenter.isDirty());
     }
 
     /**
@@ -131,7 +145,7 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
      * @param callback Thing to call when the assets have been saved.
      */
     public void saveAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
-        visualisationAssetsPresenter.onSave(document, callback);
+        documentAssetPresenter.onSave(document, callback);
     }
 
     /**
@@ -141,6 +155,6 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
      * @param callback Thing to call when the assets have been saved.
      */
     public void saveAsAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
-        visualisationAssetsPresenter.onSaveAs(document, callback);
+        documentAssetPresenter.onSaveAs(document, callback);
     }
 }

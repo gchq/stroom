@@ -34,9 +34,12 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.UpdateField;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.IndexFieldFields;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -69,6 +72,7 @@ public class IndexFieldListPresenter
 
     private String filter;
     private DocRef docRef;
+    private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
     private boolean readOnly = true;
 
     @Inject
@@ -76,12 +80,14 @@ public class IndexFieldListPresenter
                                    final QuickFilterPageView view,
                                    final PagerView pagerView,
                                    final RestFactory restFactory,
-                                   final IndexFieldEditPresenter indexFieldEditPresenter) {
+                                   final IndexFieldEditPresenter indexFieldEditPresenter,
+                                   final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         view.setDataView(pagerView);
         view.setUiHandlers(this);
+        this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Index Fields");
@@ -334,6 +340,9 @@ public class IndexFieldListPresenter
     protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
         dataGrid.setTableName("Index '" + docRef.getName() + "' Fields");
         this.docRef = docRef;
+        // Field names are particular to one index, so its recent filters are too.
+        getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                IndexResource.QUICK_FILTER_CONTEXT.withDataSource(docRef), this, this));
         this.readOnly = readOnly;
         enableButtons();
         refresh();
@@ -361,7 +370,13 @@ public class IndexFieldListPresenter
                     restFactory
                             .create(INDEX_RESOURCE)
                             .method(res -> res.findFields(criteria))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(resultPage -> {
+                                // A rejected filter comes back as an empty page like any other, so
+                                // surface the reason on the filter box. See ResultPage.filterError.
+                                getView().setFilterError(
+                                        NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                                dataConsumer.accept(resultPage);
+                            })
                             .onFailure(errorHandler)
                             .taskMonitorFactory(pagerView)
                             .exec();

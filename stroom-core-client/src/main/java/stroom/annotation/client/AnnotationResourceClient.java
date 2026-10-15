@@ -27,13 +27,13 @@ import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.FindAnnotationRequest;
+import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.security.client.presenter.AbstractRestClient;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
@@ -196,7 +196,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void findAnnotationTags(final ExpressionCriteria request,
+    public void findAnnotationTags(final FindAnnotationTagCriteria request,
                                    final Consumer<ResultPage<AnnotationTag>> consumer,
                                    final RestErrorHandler errorHandler,
                                    final TaskMonitorFactory taskMonitorFactory) {

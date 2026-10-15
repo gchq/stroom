@@ -41,8 +41,10 @@ import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
 import stroom.widget.menu.client.presenter.MenuPresenter;
@@ -81,6 +83,7 @@ public class DependenciesPresenter
     private final RestFactory restFactory;
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
+    private Consumer<String> filterErrorConsumer;
     private final MyDataGrid<Dependency> dataGrid;
     private final MenuPresenter menuPresenter;
 
@@ -112,7 +115,16 @@ public class DependenciesPresenter
                 restFactory
                         .create(CONTENT_RESOURCE)
                         .method(res -> res.fetchDependencies(criteria))
-                        .onSuccess(dataConsumer)
+                        .onSuccess(resultPage -> {
+                            // The diagnostic rides back on the successful response rather than as
+                            // an error, because the filter re-queries on a debounce and a
+                            // half-typed term must not interrupt the user.
+                            if (filterErrorConsumer != null) {
+                                filterErrorConsumer.accept(
+                                        NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                            }
+                            dataConsumer.accept(resultPage);
+                        })
                         .onFailure(errorHandler)
                         .taskMonitorFactory(view)
                         .exec();
@@ -351,14 +363,18 @@ public class DependenciesPresenter
         return builder.toSafeHtml();
     }
 
+    void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+        this.filterErrorConsumer = filterErrorConsumer;
+    }
+
     void setFilterInput(final String filterInput) {
-        this.criteria.setPartialName(filterInput);
+        this.criteria.setQuickFilter(filterInput);
         // Changing the filter means any existing offset is wrong, so we need to reset to the initial state
         resetRange();
     }
 
     void clearFilterInput() {
-        this.criteria.setPartialName(null);
+        this.criteria.setQuickFilter(null);
         // Changing the filter means any existing offset is wrong, so we need to reset to the initial state
         resetRange();
     }

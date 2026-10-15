@@ -55,6 +55,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+// Part of adding the SQL Temporal Store, which upstream does not have. FloorMap stores its
+// facts and events in one, so dropping these hunks breaks reference-data lookup, XSLT lookup
+// or the store's Data tab depending on the file. Upstream's version must not simply win here.
 public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
@@ -77,6 +81,12 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     private SourceType sourceType = SourceType.QUERY_UI;
     private Set<String> currentHighlights;
     private final Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
+
+    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+    // No timeout setter exists upstream, so every search is built with QuerySearchRequest's
+    // 1-second default. The floor map's baseline read is a whole-store scan that routinely
+    // exceeds that; losing this field silently returns it to late results and poll churn.
+    private Long timeout;
 
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
@@ -102,6 +112,22 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     public void init(final DocRef queryDocRef) {
         this.queryDocRef = queryDocRef;
+    }
+
+    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. See the `timeout` field.
+    /**
+     * How long the server waits for a search before responding, in milliseconds.
+     *
+     * <p>Unset leaves {@code QuerySearchRequest}'s 1-second default. That is not a data-loss
+     * risk — a non-incremental search past its timeout returns {@code complete=false}, polling
+     * continues, and the rows arrive when the search finishes — but it costs a round trip per
+     * second per slow search, and {@code SearchResponseMapper} strips the timeout message, so the
+     * lateness is invisible. Raise it for a query known to be slow.</p>
+     *
+     * @param timeout milliseconds, or {@code null} for the request default
+     */
+    public void setTimeout(final Long timeout) {
+        this.timeout = timeout;
     }
 
     /**
@@ -172,7 +198,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .additionalQueryExpression(additionalQueryExpression)
                 .build();
 
-        currentSearch = QuerySearchRequest
+        final QuerySearchRequest.Builder searchBuilder = QuerySearchRequest
                 .builder()
                 .searchRequestSource(
                         SearchRequestSource
@@ -185,8 +211,14 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .query(query)
                 .queryContext(currentQueryContext)
                 .incremental(incremental)
-                .queryTablePreferences(queryTablePreferencesSupplier.get())
-                .build();
+                .queryTablePreferences(queryTablePreferencesSupplier.get());
+
+        // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. See the `timeout` field.
+        if (timeout != null) {
+            searchBuilder.timeout(timeout);
+        }
+
+        currentSearch = searchBuilder.build();
 //            }
 //        }
 //

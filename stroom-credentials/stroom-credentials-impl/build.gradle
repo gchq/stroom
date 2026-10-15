@@ -25,6 +25,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
@@ -32,6 +33,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api

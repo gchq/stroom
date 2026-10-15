@@ -32,9 +32,15 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
+// Local change, confirmed deliberate by the author: adds the Data tab (PlanBDataPresenter), second
+// in the tab order after Settings. Settings stays the tab a PlanB document opens on, as upstream
+// has it - the Data tab is for inspecting what a store holds, not the first thing a user wants on
+// opening one. Only the extra tab is local; the selection is upstream's and must stay that way.
 public class PlanBPresenter extends DocTabPresenter<LinkTabPanelView, PlanBDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
@@ -42,13 +48,15 @@ public class PlanBPresenter extends DocTabPresenter<LinkTabPanelView, PlanBDoc> 
     public PlanBPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
+            final Provider<PlanBDataPresenter> planBDataPresenterProvider,
             final Provider<PlanBSettingsPresenter> planBSettingsPresenterProvider,
             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
             final DocumentUserPermissionsTabProvider<PlanBDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(planBSettingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<PlanBDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DATA, new DocTabProvider<>(planBDataPresenterProvider::get));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

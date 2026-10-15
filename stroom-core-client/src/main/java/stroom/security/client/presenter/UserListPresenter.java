@@ -28,9 +28,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
@@ -39,6 +39,7 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.Toolbar;
@@ -96,7 +97,8 @@ public class UserListPresenter
                              final ClientSecurityContext securityContext,
                              final PagerView pagerView,
                              final RestFactory restFactory,
-                             final UiConfigCache uiConfigCache) {
+                             final UiConfigCache uiConfigCache,
+                             final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
         this.securityContext = securityContext;
         this.pagerView = pagerView;
@@ -123,6 +125,8 @@ public class UserListPresenter
 
         userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
+        userListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                UserFields.QUICK_FILTER_CONTEXT, this, this));
     }
 
     @Override
@@ -415,8 +419,9 @@ public class UserListPresenter
             protected void exec(final Range range,
                                 final Consumer<ResultPage<User>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
-                ExpressionOperator expression = QuickFilterExpressionParser
-                        .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
+                // The filter text goes to the server verbatim; only the structural terms this
+                // screen adds on the user's behalf are composed here. See FindUserCriteria.
+                ExpressionOperator expression = ExpressionOperator.builder().build();
 
                 if (additionalTerm != null) {
                     expression = expression.copy()
@@ -429,12 +434,17 @@ public class UserListPresenter
                             .build();
                 }
                 criteriaBuilder.expression(expression);
+                criteriaBuilder.quickFilter(filter);
                 criteriaBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
                 criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
                 restFactory
                         .create(USER_RESOURCE)
                         .method(res -> res.find(criteriaBuilder.build()))
                         .onSuccess(userResultPage -> {
+                            // A rejected filter comes back as an empty page like any other, so
+                            // surface the reason on the filter box. See ResultPage.filterError.
+                            getView().setFilterError(
+                                    NullSafe.get(userResultPage.getFilterError(), TokenError::getText));
 //                            GWT.log(name + " - onSuccess, size: " + userResultPage.size()
 //                                    + ", expr: " + criteriaBuilder.getExpression());
                             dataConsumer.accept(userResultPage);

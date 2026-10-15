@@ -27,6 +27,7 @@ import stroom.node.shared.NodeGroupResource;
 import stroom.node.shared.NodeResource;
 import stroom.pipeline.writer.ExtendedPathCreator;
 import stroom.util.RunnableWrapper;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.io.PathCreator;
@@ -53,6 +54,9 @@ public class NodeModule extends AbstractModule {
                 .bind(NodeGroupResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(NodeGroupCacheImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(NodeGroupCacheImpl.class);
 
         // Provide object info to the logging service.

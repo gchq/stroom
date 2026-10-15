@@ -79,6 +79,7 @@
     <inherits name="stroom.widget.progress.Progress"/>
     <inherits name='stroom.entity.Entity'/>
     <inherits name='stroom.query.Query'/>
+    <inherits name='stroom.quickfilter.QuickFilter'/>
     <inherits name='stroom.ai.AI'/>
     <inherits name='stroom.receive.rules.RuleSet'/>
     <inherits name='stroom.annotation.Annotation'/>

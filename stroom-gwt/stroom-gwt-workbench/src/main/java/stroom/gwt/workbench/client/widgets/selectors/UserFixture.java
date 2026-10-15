@@ -88,7 +88,7 @@ public final class UserFixture {
     /// @param requestJson The request's body, a `FindUserCriteria`.
     /// @return The reply's body, a `ResultPage` of the matching users.
     public String find(final String requestJson) {
-        final String filter = filterText(JsonValues.parse(requestJson));
+        final String filter = quickFilterText(JsonValues.parse(requestJson));
         final List<UserRef> matches = new ArrayList<>();
         for (final UserRef user : users) {
             final String text = (nonNull(user.getDisplayName()) + " " + nonNull(user.getSubjectId()))
@@ -117,8 +117,18 @@ public final class UserFixture {
         return sb.toString();
     }
 
-    /// The quick filter's text: the value of the first term of the request's expression, which
-    /// Stroom's `QuickFilterExpressionParser` builds from it.
+    /// The quick filter's text: the request's `quickFilter`, which Stroom sends verbatim for the
+    /// server to parse, else the value of the first term of the request's expression.
+    private static String quickFilterText(final Object json) {
+        if (json instanceof Map) {
+            final Object quickFilter = ((Map<?, ?>) json).get("quickFilter");
+            if (quickFilter != null && !quickFilter.toString().trim().isEmpty()) {
+                return quickFilter.toString().trim().toLowerCase(Locale.ROOT);
+            }
+        }
+        return filterText(json);
+    }
+
     private static String filterText(final Object json) {
         if (json instanceof Map) {
             final Map<?, ?> map = (Map<?, ?>) json;

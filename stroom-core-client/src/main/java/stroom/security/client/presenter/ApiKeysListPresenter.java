@@ -25,13 +25,12 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.ExpressionOperator;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
@@ -40,6 +39,7 @@ import stroom.util.client.ExpiryFormatter;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -100,7 +100,8 @@ public class ApiKeysListPresenter
                                 final RestFactory restFactory,
                                 final ExpiryFormatter expiryFormatter,
                                 final ClientSecurityContext securityContext,
-                                final UiConfigCache uiConfigCache) {
+                                final UiConfigCache uiConfigCache,
+                                final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, listView);
         this.restFactory = restFactory;
         this.expiryFormatter = expiryFormatter;
@@ -131,6 +132,8 @@ public class ApiKeysListPresenter
 
         listView.setDataView(pagerView);
         listView.setUiHandlers(this);
+        listView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                FindApiKeyCriteria.QUICK_FILTER_CONTEXT, this, this));
 
 //        addButton = new ToolbarButton();
 //        editButton = new ToolbarButton();
@@ -425,10 +428,8 @@ public class ApiKeysListPresenter
                            final Consumer<ResultPage<HashedApiKey>> dataConsumer,
                            final RestErrorHandler errorHandler,
                            final TaskMonitorFactory taskMonitorFactory) {
-        final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(filter, FindApiKeyCriteria.DEFAULT_FIELDS, FindApiKeyCriteria.ALL_FIELDs_MAP);
-
-        criteriaBuilder.expression(expression);
+        // The filter text goes to the server verbatim - see FindApiKeyCriteria.
+        criteriaBuilder.quickFilter(filter);
         criteriaBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
         criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
 
@@ -436,6 +437,10 @@ public class ApiKeysListPresenter
                 .create(API_KEY_RESOURCE)
                 .method(res -> res.find(criteriaBuilder.build()))
                 .onSuccess(response -> {
+                    // A rejected filter comes back as an empty page like any other, so surface
+                    // the reason on the filter box. See ResultPage.filterError.
+                    getView().setFilterError(
+                            NullSafe.get(response.getFilterError(), TokenError::getText));
                     apiKeys.clear();
                     response.stream()
                             .forEach(apiKey -> apiKeys.put(apiKey.getId(), apiKey));

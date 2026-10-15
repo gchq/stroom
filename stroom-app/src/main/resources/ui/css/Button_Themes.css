@@ -6,7 +6,12 @@
   --button-default__background-color--hover: rgba(var(--grey-500-rgb), 0.3); /* material grey 500 30% */
   --button-default__background-color--selected: rgba(var(--grey-500-rgb), 0.2); /* material grey 500 20% */
 
-  --button-default-primary__color: var(--blue-500); /* material blue 500 */
+  /* Primary accent is blue-800, not blue-500. On this theme's white background blue-500
+     is 3.12:1 — below the 4.5:1 that WCAG 1.4.3 requires of button text, and worse over
+     the accent tints below (2.52:1 on the 20% hover tint). blue-800 measures 5.75:1
+     resting, 5.15:1 on the 10% tint and 4.64:1 on the 20% tint. blue-700 is *not*
+     enough: it drops to 3.72:1 on the hover tint. Re-measure before changing. */
+  --button-default-primary__color: var(--blue-800); /* material blue 800 */
   --button-default-primary__background-color--hover: rgba(var(--blue-500-rgb), 0.2); /* material blue 500 20% */
   --button-default-primary__background-color--selected: rgba(var(--blue-500-rgb), 0.1); /* material blue 500 10% */
 
@@ -25,7 +30,7 @@
   --button-outline__background-color--hover: rgba(var(--grey-500-rgb), 0.3); /* material grey 500 30% */
   --button-outline__background-color--selected: rgba(var(--grey-500-rgb), 0.2); /* material grey 500 20% */
 
-  --button-outline-primary__color: var(--blue-500); /* material blue 500  */
+  --button-outline-primary__color: var(--blue-800); /* material blue 800 — see note above */
   --button-outline-primary__border-color: rgba(var(--blue-500-rgb), 0.5); /* material blue 500 50% */
   --button-outline-primary__border-color--hover: rgba(var(--blue-500-rgb), 1.0); /* material blue 500 100% */
   --button-outline-primary__background-color--hover: rgba(var(--blue-500-rgb), 0.2); /* material blue 500 20% */
@@ -47,7 +52,7 @@
   --button-icon__background-color--hover: rgba(var(--grey-500-rgb), 0.3); /* material grey 500 30% */
   --button-icon__background-color--selected: rgba(var(--grey-500-rgb), 0.2); /* material grey 500 20% */
 
-  --button-icon-primary__color: var(--blue-500); /* material blue 500  */
+  --button-icon-primary__color: var(--blue-800); /* material blue 800 — see note above */
   --button-icon-primary__background-color--hover: rgba(var(--blue-500-rgb), 0.2); /* material blue 500 20% */
   --button-icon-primary__background-color--selected: rgba(var(--blue-500-rgb), 0.1); /* material blue 500 10% */
 

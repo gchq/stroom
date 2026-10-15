@@ -33,6 +33,7 @@ dependencies {
 
     implementation libs.dropwizard.validation
     implementation libs.guice
+    implementation libs.jackson.annotations
 
     testImplementation project(':stroom-security:stroom-security-mock')
 

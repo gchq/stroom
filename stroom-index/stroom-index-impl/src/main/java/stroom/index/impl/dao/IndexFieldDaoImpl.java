@@ -22,7 +22,6 @@ import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldDao;
 import stroom.index.impl.db.IndexDbConnProvider;
-import stroom.index.impl.db.jooq.tables.IndexFieldSource;
 import stroom.index.impl.db.jooq.tables.records.IndexFieldRecord;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
@@ -35,9 +34,11 @@ import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.IndexField;
 import stroom.query.api.datasource.IndexFieldFields;
-import stroom.query.common.v2.FieldProviderImpl;
-import stroom.query.common.v2.SimpleStringExpressionParser;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -259,19 +260,24 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
         conditions.add(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(optional.get()));
 
         final FieldProvider fieldProvider = new FieldProviderImpl(
-                List.of(IndexFieldFields.NAME),
-                List.of(IndexFieldFields.NAME,
-                        IndexFieldFields.TYPE,
-                        IndexFieldFields.STORE,
-                        IndexFieldFields.INDEX,
-                        IndexFieldFields.POSITIONS,
-                        IndexFieldFields.ANALYSER,
-                        IndexFieldFields.CASE_SENSITIVE));
+                List.of(IndexFieldFields.NAME_FIELD),
+                List.of(IndexFieldFields.NAME_FIELD,
+                        IndexFieldFields.TYPE_FIELD,
+                        IndexFieldFields.STORE_FIELD,
+                        IndexFieldFields.INDEX_FIELD,
+                        IndexFieldFields.POSITIONS_FIELD,
+                        IndexFieldFields.ANALYSER_FIELD,
+                        IndexFieldFields.CASE_SENSITIVE_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
-                    .create(fieldProvider, criteria.getFilter());
+                    .create(fieldProvider, criteria.getQuickFilter());
             optionalExpressionOperator.ifPresent(expressionOperator ->
                     conditions.add(expressionMapper.apply(expressionOperator)));
+        } catch (final TokenException e) {
+            // A rejected filter must not look like a filter that matched nothing, so send the
+            // reason back with the (empty) results. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
             return ResultPage.empty();

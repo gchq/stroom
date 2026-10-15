@@ -118,12 +118,15 @@
     <inherits name="stroom.dashboard.Dashboard" />
     <inherits name="stroom.pathways.Pathways" />
     <inherits name="stroom.planb.PlanB" />
+    <inherits name="stroom.sqlstore.SqlTemporalStore" />
     <inherits name="stroom.contentstore.ContentStore" />
     <inherits name="stroom.gitrepo.GitRepo" />
     <inherits name="stroom.credentials.Credentials"/>
     <inherits name="stroom.openai.OpenAIModel" />
 
     <inherits name="stroom.query.Query" />
+
+    <inherits name="stroom.quickfilter.QuickFilter" />
 
     <inherits name="stroom.statistics.impl.sql.SqlStatistics"/>
     <inherits name="stroom.benchmark.Benchmark" />
@@ -153,6 +156,8 @@
     <inherits name="stroom.index.Index"/>
     <inherits name="stroom.analytics.Analytics" />
     <inherits name="stroom.datagen.DataGen" />
+    <inherits name="stroom.floormap.FloorMap" />
+    <inherits name="stroom.widget.histogram.Histogram" />
     <inherits name="stroom.view.View" />
     <!--
     <inherits name="stroom.nstat.store.monitoring.StatsMonitoring" />

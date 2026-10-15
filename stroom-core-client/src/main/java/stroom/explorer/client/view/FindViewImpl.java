@@ -19,6 +19,7 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.presenter.FindUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -49,6 +50,16 @@ public class FindViewImpl
     public FindViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         setDialogMode(true);
+    }
+
+    @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        nameFilter.setContextHandler(contextHandler);
     }
 
     @Override

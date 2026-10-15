@@ -337,7 +337,8 @@ public final class PopupContractStories {
                     play.expect("left should be filter.left + 4",
                                     () -> Math.abs(PopupDom.rect(c.getPanel())[0] - (PopupDom.rect(filter)[0] + 4)))
                             .toBeLessThanOrEqual(1);
-                    // Just below the filter, clear of its buttons
+                    // Just below the filter, so clear of the buttons in it (a fixed 26px once
+                    // covered the foot of its 24px help button)
                     play.expect("top should be filter.bottom",
                                     () -> Math.abs(PopupDom.rect(c.getPanel())[1] - PopupDom.rect(filter)[3]))
                             .toBeLessThanOrEqual(1);

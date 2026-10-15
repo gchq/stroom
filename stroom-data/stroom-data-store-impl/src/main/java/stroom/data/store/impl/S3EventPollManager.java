@@ -66,26 +66,26 @@ public class S3EventPollManager {
                         // Don't pass in the end time so that the whole batch of messages from the
                         // poll is processed in full.
                         s3EventService.poll(() ->
-                                shouldContinuePolling(null, taskContext));
-                    } while (shouldContinuePolling(endTime, taskContext));
+                                shouldStopPolling(null, taskContext));
+                    } while (shouldStopPolling(endTime, taskContext));
                 });
 
         runnable.run();
     }
 
-    private boolean shouldContinuePolling(final Instant endTime, final TaskContext taskContext) {
+    private boolean shouldStopPolling(final Instant endTime, final TaskContext taskContext) {
         if (taskContext.isTerminated()) {
             LOGGER.debug("shouldContinuePolling() - task {} terminated", taskContext);
-            return false;
+            return true;
         }
         if (Thread.currentThread().isInterrupted()) {
             LOGGER.debug("shouldContinuePolling() - Thread interrupted");
-            return false;
+            return true;
         }
         if (endTime != null && Instant.now().isAfter(endTime)) {
             LOGGER.debug("shouldContinuePolling() - endTime {} reached", endTime);
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 }

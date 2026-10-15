@@ -52,6 +52,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private static final Set<String> TABLE_SECTIONS = Set.of("THEAD", "TBODY", "TFOOT");
 
     private final CellTable<Item> cellTable;
+    private final ScrollPanel scrollPanel;
     private final Widget widget;
 
     private final MySingleSelectionModel<Item> selectionModel = new MySingleSelectionModel<>();
@@ -75,7 +76,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         cellTable.getElement().getStyle().setProperty("minWidth", 50 + "px");
         cellTable.getElement().getStyle().setProperty("maxWidth", 600 + "px");
 
-        final ScrollPanel scrollPanel = new ScrollPanel(cellTable);
+        scrollPanel = new ScrollPanel(cellTable);
         scrollPanel.getElement().getStyle().setProperty("minWidth", 50 + "px");
         scrollPanel.getElement().getStyle().setProperty("maxWidth", 400 + "px");
         scrollPanel.getElement().getStyle().setProperty("maxHeight", 500 + "px");
@@ -258,6 +259,19 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     @Override
     public void setAllowCloseOnMoveLeft(final boolean allowCloseOnMoveLeft) {
         this.allowCloseOnMoveLeft = allowCloseOnMoveLeft;
+    }
+
+    @Override
+    public void setWidth(final int width) {
+        final String px = width + "px";
+        // Replaces the limits that otherwise fit the menu to its items
+        scrollPanel.getElement().getStyle().setProperty("width", px);
+        scrollPanel.getElement().getStyle().setProperty("minWidth", px);
+        scrollPanel.getElement().getStyle().setProperty("maxWidth", px);
+        cellTable.getElement().getStyle().setProperty("width", "100%");
+        cellTable.getElement().getStyle().setProperty("maxWidth", "none");
+        // Lays the table out to that width, so that long items are cut short rather than widen it
+        cellTable.getElement().addClassName("menuCellTable--fixedWidth");
     }
 
     @Override

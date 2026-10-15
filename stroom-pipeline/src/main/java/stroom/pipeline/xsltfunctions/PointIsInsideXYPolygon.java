@@ -16,6 +16,8 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.floormap.shared.FloorMapGeometry;
+
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Item;
 import net.sf.saxon.om.Sequence;
@@ -27,9 +29,13 @@ import net.sf.saxon.value.NumericValue;
 import java.util.ArrayList;
 import java.util.List;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+// Rewritten for FloorMap area tracking (commit subject "Area tracking"); a net reduction of
+// ~58 lines against upstream. The containment algorithm here is the server-side half of
+// stroom.floormap.shared.FloorMapGeometry and must stay in step with it - the client paints
+// areas with fill-rule="evenodd" and this must agree, or what looks filled does not test as
+// inside. Do not take upstream's version without re-checking FloorMapGeometry.
 class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
-
-    static final String DELIMITER = ",";
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
@@ -91,7 +97,7 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
         final Sequence sequence = arguments[index];
         if (sequence != null) {
             final Item item = sequence.iterate().next();
-            if (item != null && item instanceof NumericValue) {
+            if (item instanceof NumericValue) {
                 value = ((NumericValue) item).getDoubleValue();
             }
         }
@@ -108,48 +114,6 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
         return value;
     }
 
-    Double[] getSafeDelimitedDoubleArray(final String functionName,
-                         final String delimiter,
-                         final XPathContext context,
-                         final Sequence[] arguments,
-                         final int index) throws XPathException {
-        String string = null;
-        final Sequence sequence = arguments[index];
-        if (sequence != null) {
-            final Item item = sequence.iterate().next();
-            if (item != null) {
-                string = item.getStringValue();
-            }
-        }
-
-        if (string == null) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Illegal non string argument found in function ");
-            sb.append(functionName);
-            sb.append("() at position ");
-            sb.append(index);
-            outputWarning(context, sb, null);
-        }
-
-        final String[] tokens = string.split(delimiter);
-        final Double[] result = new Double[tokens.length];
-        for (int i = 0; i < tokens.length; i++) {
-            try {
-                result[i] = Double.parseDouble(tokens[i]);
-            } catch (final NumberFormatException ex) {
-                final StringBuilder sb = new StringBuilder();
-                sb.append("Illegal non numeric token found in delimited string provided to function ");
-                sb.append(functionName);
-                sb.append("() at position ");
-                sb.append(index);
-                outputWarning(context, sb, null);
-                return null;
-            }
-        }
-
-        return result;
-    }
-
     Double[] getSafeDoubleArray(final String functionName,
                                          final XPathContext context,
                                          final Sequence[] arguments,
@@ -160,7 +124,7 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
             final SequenceIterator iterator = sequence.iterate();
             Item item;
             while ((item = iterator.next()) != null) {
-                if (item != null && item instanceof NumericValue) {
+                if (item instanceof NumericValue) {
                     result.add(((NumericValue) item).getDoubleValue());
                 } else {
                     final StringBuilder sb = new StringBuilder();
@@ -173,37 +137,21 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
             }
         }
 
-        return result.toArray(new Double[result.size()]);
+        return result.toArray(new Double[0]);
     }
 
-    //Attribution: https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
+    /**
+     * Delegates to the shared {@link FloorMapGeometry#contains} so this XSLT
+     * function and the FloorMap client's area containment use one algorithm —
+     * an event tagged as inside an area at ingest agrees with what the map
+     * shows the event inside of.
+     */
     private boolean isPointInPolygon(final Point p, final Point[] polygon) {
-        double minX = polygon[ 0 ].x;
-        double maxX = polygon[ 0 ].x;
-        double minY = polygon[ 0 ].y;
-        double maxY = polygon[ 0 ].y;
-        for (int i = 1; i < polygon.length; i++) {
-            final Point q = polygon[i];
-            minX = Math.min(q.x, minX);
-            maxX = Math.max(q.x, maxX);
-            minY = Math.min(q.y, minY);
-            maxY = Math.max(q.y, maxY);
+        final double[][] vertices = new double[polygon.length][];
+        for (int i = 0; i < polygon.length; i++) {
+            vertices[i] = new double[]{polygon[i].x, polygon[i].y};
         }
-
-        if (p.x < minX || p.x > maxX || p.y < minY || p.y > maxY) {
-            return false;
-        }
-
-        boolean inside = false;
-        for (int i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-            if ((polygon[ i ].y > p.y) != (polygon[ j ].y > p.y) &&
-                    p.x < (polygon[ j ].x - polygon[ i ].x) * (p.y - polygon[ i ].y) /
-                            (polygon[ j ].y - polygon[ i ].y) + polygon[ i ].x) {
-                inside = !inside;
-            }
-        }
-
-        return inside;
+        return FloorMapGeometry.contains(vertices, p.x, p.y);
     }
 
     static class Point {

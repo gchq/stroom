@@ -60,6 +60,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+// Part of adding the SQL Temporal Store, which upstream does not have. FloorMap stores its
+// facts and events in one, so dropping these hunks breaks reference-data lookup, XSLT lookup
+// or the store's Data tab depending on the file. Upstream's version must not simply win here.
 public class ReferenceData {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceData.class);
@@ -83,6 +87,7 @@ public class ReferenceData {
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
     private final PlanBLookup planBLookup;
+    private final stroom.pipeline.xsltfunctions.SqlStoreLookup sqlStoreLookup;
 
     @Inject
     ReferenceData(final EffectiveStreamService effectiveStreamService,
@@ -96,7 +101,8 @@ public class ReferenceData {
                   final PipelineStore pipelineStore,
                   final SecurityContext securityContext,
                   final TaskContextFactory taskContextFactory,
-                  @Nullable final PlanBLookup planBLookup) {
+                  @Nullable final PlanBLookup planBLookup,
+                  @Nullable final stroom.pipeline.xsltfunctions.SqlStoreLookup sqlStoreLookup) {
         this.effectiveStreamService = effectiveStreamService;
         this.feedHolder = feedHolder;
         this.metaHolder = metaHolder;
@@ -109,6 +115,7 @@ public class ReferenceData {
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.planBLookup = planBLookup;
+        this.sqlStoreLookup = sqlStoreLookup;
     }
 
     /**
@@ -246,6 +253,15 @@ public class ReferenceData {
 
                 if (mapName.equalsIgnoreCase(pipeline.getName())) {
                     planBLookup.lookup(lookupIdentifier, referenceDataResult);
+                }
+
+            } else if (stroom.sqlstore.shared.SqlTemporalStoreDoc.TYPE.equals(pipeline.getType())) {
+                Objects.requireNonNull(sqlStoreLookup,
+                        "Attempt to perform SQL Store lookup but SQL Store Lookup service is not present");
+                Objects.requireNonNull(pipeline.getName(), "Null name for SQL Store doc ref in lookup");
+
+                if (mapName.equalsIgnoreCase(pipeline.getName())) {
+                    sqlStoreLookup.lookup(lookupIdentifier, referenceDataResult);
                 }
 
             } else if (NullSafe.test(pipelineReference.getStreamType(), StreamTypeNames.CONTEXT::equals)) {

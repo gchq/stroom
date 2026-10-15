@@ -41,19 +41,22 @@ public class ShowMenuEvent
     private final HidePopupEvent.Handler hideHandler;
     private final Element[] autoHidePartners;
     private final boolean allowCloseOnMoveLeft;
+    private final Integer width;
 
     private ShowMenuEvent(final List<Item> items,
                           final PopupPosition popupPosition,
                           final ShowPopupEvent.Handler showHandler,
                           final HidePopupEvent.Handler hideHandler,
                           final Element[] autoHidePartners,
-                          final boolean allowCloseOnMoveLeft) {
+                          final boolean allowCloseOnMoveLeft,
+                          final Integer width) {
         this.items = items;
         this.popupPosition = popupPosition;
         this.autoHidePartners = autoHidePartners;
         this.showHandler = showHandler;
         this.hideHandler = hideHandler;
         this.allowCloseOnMoveLeft = allowCloseOnMoveLeft;
+        this.width = width;
     }
 
     public static Builder builder() {
@@ -96,6 +99,11 @@ public class ShowMenuEvent
         return allowCloseOnMoveLeft;
     }
 
+    /// @return The menu's width in pixels, or null for it to fit its items.
+    public Integer getWidth() {
+        return width;
+    }
+
     @Override
     protected void dispatch(final Handler handler) {
         handler.onShow(this);
@@ -127,6 +135,7 @@ public class ShowMenuEvent
         private HidePopupEvent.Handler hideHandler;
         private final List<Element> autoHidePartners = new ArrayList<>();
         private Boolean allowCloseOnMoveLeft = null;
+        private Integer width = null;
 
         public Builder() {
         }
@@ -180,6 +189,16 @@ public class ShowMenuEvent
             return this;
         }
 
+        /// Gives the menu a fixed width, e.g. that of the field it drops down from, rather than
+        /// fitting it to its items. Items too long for it are cut short with an ellipsis.
+        ///
+        /// @param width The menu's width in pixels.
+        /// @return This builder.
+        public Builder width(final int width) {
+            this.width = width;
+            return this;
+        }
+
         public void fire(final HasHandlers hasHandlers) {
             Element[] elements = null;
             if (!autoHidePartners.isEmpty()) {
@@ -192,7 +211,8 @@ public class ShowMenuEvent
                     showHandler,
                     hideHandler,
                     elements,
-                    Objects.requireNonNullElse(allowCloseOnMoveLeft, false)));
+                    Objects.requireNonNullElse(allowCloseOnMoveLeft, false),
+                    width));
         }
     }
 }

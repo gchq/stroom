@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.widgets.selectors;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
@@ -65,6 +66,11 @@ public class ExplorerGinModule extends AbstractGinModule {
     @Provides
     UiConfigCache provideUiConfigCache() {
         return harness().getUiConfigCache();
+    }
+
+    @Provides
+    QuickFilterContextHandlerFactory provideQuickFilterContextHandlerFactory() {
+        return SelectorWidgets.quickFilterContextHandlerFactory(harness());
     }
 
     private static ScreenHarness harness() {
