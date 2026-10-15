@@ -31,10 +31,6 @@ public enum McpToolPolicy implements HasDisplayValue {
      */
     ALLOW("Allow"),
 
-    /**
-     * The user is asked first, and may allow the tool once or for the rest of the chat.
-     */
-    ASK("Ask"),
 
     /**
      * The user is asked every time. The tool cannot be allowed for the rest of the chat, and is never covered

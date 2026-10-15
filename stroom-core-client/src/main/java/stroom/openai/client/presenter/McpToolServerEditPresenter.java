@@ -21,20 +21,24 @@ import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.client.presenter.CredentialListModel;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
+import stroom.dispatch.client.RestFactory;
 import stroom.http.client.presenter.HttpClientConfigPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.openai.client.presenter.McpToolServerEditPresenter.McpToolServerEditView;
 import stroom.openai.shared.McpAuthMode;
-import stroom.openai.shared.McpToolGroupRule;
-import stroom.openai.shared.McpToolPolicy;
 import stroom.openai.shared.McpToolPolicyRule;
 import stroom.openai.shared.McpToolServerConfig;
+import stroom.openai.shared.OpenAIModelResource;
+import stroom.openai.shared.TestMcpToolServerRequest;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -42,7 +46,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -52,13 +55,18 @@ public class McpToolServerEditPresenter
         extends MyPresenterWidget<McpToolServerEditView>
         implements McpToolServerEditUiHandlers {
 
+    // As on the server (McpToolFilter): tool names are short, so a longer pattern is a mistake.
+    static final int MAX_PATTERN_LENGTH = 500;
+
     private final EventBus eventBus;
     private final CredentialClient credentialClient;
     private final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider;
     private final UiConfigCache uiConfigCache;
+    private final RestFactory restFactory;
 
     private HttpClientConfig httpClientConfiguration;
     private boolean readOnly;
+    private String modelUuid;
 
     @Inject
     public McpToolServerEditPresenter(
@@ -66,9 +74,11 @@ public class McpToolServerEditPresenter
             final McpToolServerEditView view,
             final CredentialClient credentialClient,
             final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider,
-            final UiConfigCache uiConfigCache) {
+            final UiConfigCache uiConfigCache,
+            final RestFactory restFactory) {
         super(eventBus, view);
         this.uiConfigCache = uiConfigCache;
+        this.restFactory = restFactory;
         this.eventBus = eventBus;
         this.credentialClient = credentialClient;
         this.httpClientConfigPresenterProvider = httpClientConfigPresenterProvider;
@@ -76,23 +86,32 @@ public class McpToolServerEditPresenter
         view.getAuthModeSelectionBox().addItems(McpAuthMode.values());
     }
 
+    /// Shows the dialog.
+    ///
+    /// @param config    The server's settings.
+    /// @param readOnly  True if the settings can only be looked at.
+    /// @param modelUuid The AI model the server belongs to, for testing the connection.
+    /// @param consumer  Given the settings when the dialog closes: the edited ones on OK, otherwise the original.
     public void show(final McpToolServerConfig config,
                      final boolean readOnly,
+                     final String modelUuid,
                      final Consumer<McpToolServerConfig> consumer) {
         this.readOnly = readOnly;
+        this.modelUuid = modelUuid;
         read(config);
         getView().onReadOnly(readOnly);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(PopupSize.resizable(640, 560))
                 .caption("Edit MCP Tool Server")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final McpToolServerConfig written;
-                        try {
-                            written = write();
-                        } catch (final IllegalArgumentException ex) {
-                            AlertEvent.fireError(McpToolServerEditPresenter.this, ex.getMessage(), null);
+                        final McpToolServerConfig written = write();
+                        final String policiesError = policiesError(written.getToolPolicies());
+                        if (policiesError != null) {
+                            getView().showToolsTab();
+                            AlertEvent.fireError(McpToolServerEditPresenter.this, policiesError, null);
                             e.reset();
                             return;
                         }
@@ -141,6 +160,33 @@ public class McpToolServerEditPresenter
         updateCredentialModel(getView().getAuthModeSelectionBox().getValue());
         updateAuthModeWarning(getView().getAuthModeSelectionBox().getValue());
         getView().setApiKeyFieldsVisible(getView().getAuthModeSelectionBox().getValue() == McpAuthMode.API_KEY);
+    }
+
+    @Override
+    public void onTest() {
+        final McpToolServerConfig config = write();
+        final String policiesError = policiesError(config.getToolPolicies());
+        final String error = policiesError != null
+                ? policiesError
+                : validate(config);
+        if (error != null) {
+            AlertEvent.fireError(this, error, null);
+            return;
+        }
+        // Created here rather than statically, so the validation in this class can be unit tested.
+        final OpenAIModelResource resource = GWT.create(OpenAIModelResource.class);
+        restFactory
+                .create(resource)
+                .method(res -> res.testMcpToolServer(new TestMcpToolServerRequest(modelUuid, config)))
+                .onSuccess(result -> {
+                    if (result.isOk()) {
+                        AlertEvent.fireInfo(this, "Connection Successful", result.getMessage(), null);
+                    } else {
+                        AlertEvent.fireError(this, "Connection Failed", result.getMessage(), null);
+                    }
+                })
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     @Override
@@ -199,11 +245,8 @@ public class McpToolServerEditPresenter
                 c.getApiKeyHeaderName(), McpToolServerConfig.DEFAULT_API_KEY_HEADER_NAME));
         getView().setApiKeyValuePrefix(c.getApiKeyValuePrefix());
         getView().setApiKeyFieldsVisible(c.getAuthMode() == McpAuthMode.API_KEY);
-        getView().setAllowedTools(joinPatterns(c.getAllowedTools()));
-        getView().setDeniedTools(joinPatterns(c.getDeniedTools()));
         getView().setTrusted(c.isTrusted());
-        getView().setToolPolicies(formatPolicies(c.getToolPolicies()));
-        getView().setToolGroups(formatGroups(c.getToolGroups()));
+        getView().setToolPolicies(c.getToolPolicies());
         this.httpClientConfiguration = c.getHttpClientConfiguration();
     }
 
@@ -218,143 +261,40 @@ public class McpToolServerEditPresenter
                 .apiKeyHeaderName(NullSafe.trim(getView().getApiKeyHeaderName()))
                 .apiKeyValuePrefix(getView().getApiKeyValuePrefix())
                 .httpClientConfiguration(httpClientConfiguration)
-                .allowedTools(splitPatterns(getView().getAllowedTools()))
-                .deniedTools(splitPatterns(getView().getDeniedTools()))
                 .trusted(getView().isTrusted())
-                .toolPolicies(parsePolicies(getView().getToolPolicies()))
-                .toolGroups(parseGroups(getView().getToolGroups()))
+                .toolPolicies(NullSafe.isEmptyCollection(getView().getToolPolicies())
+                        ? null
+                        : getView().getToolPolicies())
                 .build();
     }
 
-    /**
-     * @param text Tool policy rules, one per line, each 'pattern = policy'. The policy can be given by its
-     *             display name (e.g. 'Ask every time') or its constant name (e.g. 'ASK_ALWAYS'), in any case.
-     * @return The rules, or null if there are none.
-     * @throws IllegalArgumentException if a line cannot be understood.
-     */
-    static List<McpToolPolicyRule> parsePolicies(final String text) {
-        if (NullSafe.isBlankString(text)) {
-            return null;
-        }
-        final List<McpToolPolicyRule> rules = new ArrayList<>();
-        for (final String rawLine : text.split("\\n")) {
-            final String line = rawLine.trim();
-            if (line.isEmpty()) {
-                continue;
+    /// @param rules Tool policies.
+    /// @return Why the first policy that cannot be used cannot be, or null if they can all be used.
+    static String policiesError(final List<McpToolPolicyRule> rules) {
+        for (final McpToolPolicyRule rule : NullSafe.list(rules)) {
+            final String pattern = rule.getToolPattern();
+            if (pattern.length() > MAX_PATTERN_LENGTH) {
+                return "The tool policy pattern '" + pattern.substring(0, 40) + "…' is longer than "
+                       + MAX_PATTERN_LENGTH + " characters.";
             }
-            final int idx = line.indexOf('=');
-            final String pattern = idx > 0
-                    ? line.substring(0, idx).trim()
-                    : "";
-            final McpToolPolicy policy = idx > 0
-                    ? parsePolicy(line.substring(idx + 1).trim())
-                    : null;
-            if (pattern.isEmpty() || policy == null) {
-                throw new IllegalArgumentException("The tool policy '" + line + "' is not understood. Each line "
-                                                   + "must be 'pattern = policy', where the policy is Allow, Ask, "
-                                                   + "Ask every time or Deny.");
-            }
-            rules.add(new McpToolPolicyRule(pattern, policy));
-        }
-        return rules.isEmpty()
-                ? null
-                : rules;
-    }
-
-    static String formatPolicies(final List<McpToolPolicyRule> rules) {
-        if (NullSafe.isEmptyCollection(rules)) {
-            return "";
-        }
-        final StringBuilder sb = new StringBuilder();
-        for (final McpToolPolicyRule rule : rules) {
-            if (sb.length() > 0) {
-                sb.append("\n");
-            }
-            sb.append(rule.getToolPattern()).append(" = ").append(rule.getPolicy().getDisplayValue());
-        }
-        return sb.toString();
-    }
-
-    /**
-     * @param text Tool group rules, one per line, each 'pattern = group'. A group of '-' means always offered.
-     * @return The rules, or null if there are none.
-     * @throws IllegalArgumentException if a line cannot be understood.
-     */
-    static List<McpToolGroupRule> parseGroups(final String text) {
-        if (NullSafe.isBlankString(text)) {
-            return null;
-        }
-        final List<McpToolGroupRule> rules = new ArrayList<>();
-        for (final String rawLine : text.split("\\n")) {
-            final String line = rawLine.trim();
-            if (line.isEmpty()) {
-                continue;
-            }
-            final int idx = line.indexOf('=');
-            final String pattern = idx > 0
-                    ? line.substring(0, idx).trim()
-                    : "";
-            final String group = idx > 0
-                    ? line.substring(idx + 1).trim()
-                    : "";
-            if (pattern.isEmpty() || group.isEmpty()) {
-                throw new IllegalArgumentException("The tool group rule '" + line + "' is not understood. Each "
-                                                   + "line must be 'pattern = group', where the group is a name, "
-                                                   + "or '-' to always offer the tools.");
-            }
-            rules.add(new McpToolGroupRule(pattern, group));
-        }
-        return rules.isEmpty()
-                ? null
-                : rules;
-    }
-
-    static String formatGroups(final List<McpToolGroupRule> rules) {
-        if (NullSafe.isEmptyCollection(rules)) {
-            return "";
-        }
-        final StringBuilder sb = new StringBuilder();
-        for (final McpToolGroupRule rule : rules) {
-            if (sb.length() > 0) {
-                sb.append("\n");
-            }
-            sb.append(rule.getToolPattern()).append(" = ").append(rule.getGroup());
-        }
-        return sb.toString();
-    }
-
-    private static McpToolPolicy parsePolicy(final String text) {
-        for (final McpToolPolicy policy : McpToolPolicy.values()) {
-            if (policy.getDisplayValue().equalsIgnoreCase(text) || policy.name().equalsIgnoreCase(text)) {
-                return policy;
+            try {
+                RegExp.compile(pattern);
+            } catch (final RuntimeException e) {
+                return "The tool policy pattern '" + pattern + "' is not a valid regular expression: "
+                       + reason(e);
             }
         }
         return null;
     }
 
-    /**
-     * @param text Tool name patterns separated by commas, spaces or new lines.
-     * @return The patterns, or null if there are none.
-     */
-    static List<String> splitPatterns(final String text) {
-        if (NullSafe.isBlankString(text)) {
-            return null;
-        }
-        final List<String> patterns = new ArrayList<>();
-        for (final String part : text.split("[,\\s]+")) {
-            if (!part.isEmpty()) {
-                patterns.add(part);
-            }
-        }
-        return patterns.isEmpty()
-                ? null
-                : patterns;
-    }
-
-    static String joinPatterns(final List<String> patterns) {
-        return NullSafe.isEmptyCollection(patterns)
-                ? ""
-                : String.join(", ", patterns);
+    // The browser's message repeats the pattern ("Invalid regular expression: /a(/: Unterminated group"), so
+    // keep only the reason at the end.
+    private static String reason(final RuntimeException e) {
+        final String message = NullSafe.nonBlankStringElse(e.getMessage(), e.toString());
+        final int idx = message.lastIndexOf(": ");
+        return idx >= 0 && idx + 2 < message.length()
+                ? message.substring(idx + 2)
+                : message;
     }
 
     public interface McpToolServerEditView
@@ -399,24 +339,17 @@ public class McpToolServerEditPresenter
          */
         void setAuthModeWarning(String warning);
 
-        String getAllowedTools();
-
-        void setAllowedTools(String allowedTools);
-
-        String getDeniedTools();
-
-        void setDeniedTools(String deniedTools);
-
         boolean isTrusted();
 
         void setTrusted(boolean trusted);
 
-        String getToolPolicies();
+        /// @return The tool policies, in order, leaving out any with no pattern.
+        List<McpToolPolicyRule> getToolPolicies();
 
-        void setToolPolicies(String toolPolicies);
+        /// @param rules The tool policies, in order, or null for none.
+        void setToolPolicies(List<McpToolPolicyRule> rules);
 
-        String getToolGroups();
-
-        void setToolGroups(String toolGroups);
+        /// Shows the Tools tab, e.g. to point out a problem with a tool policy.
+        void showToolsTab();
     }
 }

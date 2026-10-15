@@ -26,14 +26,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 /**
- * Sets the {@link McpToolPolicy} for the tools of an MCP tool server whose names match a pattern.
+ * Sets the {@link McpToolPolicy} for the tools of an MCP tool server whose names match a regular expression.
  */
 @JsonPropertyOrder({"toolPattern", "policy"})
 @JsonInclude(Include.NON_NULL)
 public class McpToolPolicyRule {
 
-    @JsonPropertyDescription("The tool names the rule applies to. '*' matches any characters. Matched against " +
-                             "the tool's own name, ignoring case.")
+    @JsonPropertyDescription("A regular expression for the tool names the rule applies to, e.g. 'get_.*'. It " +
+                             "must match the tool's whole name (its own name, not the one the model sees), " +
+                             "ignoring case.")
     @JsonProperty
     private final String toolPattern;
 
@@ -45,7 +46,7 @@ public class McpToolPolicyRule {
     public McpToolPolicyRule(@JsonProperty("toolPattern") final String toolPattern,
                              @JsonProperty("policy") final McpToolPolicy policy) {
         this.toolPattern = toolPattern;
-        this.policy = Objects.requireNonNullElse(policy, McpToolPolicy.ASK);
+        this.policy = Objects.requireNonNullElse(policy, McpToolPolicy.ASK_ALWAYS);
     }
 
     public String getToolPattern() {

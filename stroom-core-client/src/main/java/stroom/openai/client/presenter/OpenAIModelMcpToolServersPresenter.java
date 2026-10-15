@@ -45,6 +45,8 @@ public class OpenAIModelMcpToolServersPresenter
     private final MyDataGrid<McpToolServerConfig> dataGrid;
     private final MultiSelectionModelImpl<McpToolServerConfig> selectionModel;
     private final Provider<McpToolServerEditPresenter> editPresenterProvider;
+    // The model the servers belong to, for testing a server's connection.
+    private String modelUuid;
 
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -116,6 +118,7 @@ public class OpenAIModelMcpToolServersPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final OpenAIModelDoc document, final boolean readOnly) {
+        modelUuid = docRef.getUuid();
         servers.clear();
         servers.addAll(document.getMcpToolServers());
         refresh();
@@ -188,6 +191,7 @@ public class OpenAIModelMcpToolServersPresenter
         editPresenterProvider.get().show(
                 McpToolServerConfig.builder().name("New tool server").build(),
                 false,
+                modelUuid,
                 updated -> {
                     servers.add(updated);
                     refresh();
@@ -203,7 +207,7 @@ public class OpenAIModelMcpToolServersPresenter
             return;
         }
         final int index = servers.indexOf(selected);
-        editPresenterProvider.get().show(selected, isReadOnly(), updated -> {
+        editPresenterProvider.get().show(selected, isReadOnly(), modelUuid, updated -> {
             if (!isReadOnly() && index >= 0 && !updated.equals(selected)) {
                 servers.set(index, updated);
                 refresh();
