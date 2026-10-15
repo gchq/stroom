@@ -190,12 +190,15 @@ public final class PipelineEditorStories {
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}
             }""";
 
+    // The batch change asks the server how many filters it would change, before confirming it
+    private static final String BULK_CHANGE_COUNT_PATH = "/processorFilter/v1/bulkChange/count";
     private static final RestFixtures PROCESSOR_FIXTURES = fixtures(DOC, NO_ROWS, PROCESSOR_ROWS,
             RestFixtures.builder()
                     .post(LAYERS_PATH, RestReply.json(LAYERS))
                     .route(RequestMatcher.post("/processorFilter/v1/find")
                                     .withJsonBodyContaining("{\"expandedRows\": []}"),
-                            RestReply.json(COLLAPSED_PROCESSOR_ROWS)));
+                            RestReply.json(COLLAPSED_PROCESSOR_ROWS))
+                    .post(BULK_CHANGE_COUNT_PATH, RestReply.json("2")));
     // Creating an embedded XSLT fails, e.g. the server refuses it
     private static final RestFixtures EMBED_FAILS_FIXTURES = fixtures(DOC, NO_ROWS, NO_ROWS,
             RestFixtures.builder()
@@ -208,6 +211,7 @@ public final class PipelineEditorStories {
                     .route(RequestMatcher.post("/processorFilter/v1/find")
                                     .withJsonBodyContaining("{\"expandedRows\": []}"),
                             RestReply.json(COLLAPSED_PROCESSOR_ROWS))
+                    .post(BULK_CHANGE_COUNT_PATH, RestReply.json("2"))
                     .post("/processorFilter/v1/bulkChange", RestReply.error(500, "Unable to change the processors")));
     private static final RestFixtures STEPPING_FIXTURES = fixtures(DOC, STREAMS, NO_ROWS,
             RestFixtures.builder().post(LAYERS_PATH, RestReply.json(LAYERS)));
