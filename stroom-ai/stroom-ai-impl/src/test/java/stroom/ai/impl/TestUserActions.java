@@ -70,7 +70,7 @@ class TestUserActions {
         assertThat(actions).singleElement().satisfies(action -> {
             assertThat(action.label()).isEqualTo("Enable processor filter 31 on pipeline 'Acme-Events'");
             assertThat(action.label() + action.details()).doesNotContain("Click me").doesNotContain("Something");
-            assertThat(action.details()).contains("Feed = ACME").contains("at most 4 tasks at a time");
+            assertThat(action.details()).isEqualTo("Processes data where Feed is 'ACME'. At most 4 tasks at a time.");
             assertThat(action.warning()).isNull();
             assertThat(action.filterId()).isEqualTo(31);
             assertThat(action.doc()).isEqualTo(PIPELINE);

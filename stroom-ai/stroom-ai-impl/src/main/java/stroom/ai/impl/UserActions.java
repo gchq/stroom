@@ -20,6 +20,7 @@ import stroom.ai.impl.UserActionRecord.Status;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -285,20 +286,22 @@ public class UserActions {
 
     /// @return What a filter selects and how fast it processes, as Stroom has it.
     private static String describe(final ProcessorFilter filter) {
-        final List<String> parts = new ArrayList<>();
-        NullSafe.consume(NullSafe.get(filter.getQueryData(), queryData -> queryData.getExpression()),
-                expression -> parts.add("Selects " + expression));
-        NullSafe.consume(filter.getMinMetaCreateTimeMs(), ms -> parts.add("created after "
-                                                                          + DateUtil.createNormalDateTimeString(ms)));
-        NullSafe.consume(filter.getMaxMetaCreateTimeMs(), ms -> parts.add("created before "
-                                                                          + DateUtil.createNormalDateTimeString(ms)));
+        final String selection = ExpressionDescriber.describe(
+                NullSafe.get(filter.getQueryData(), QueryData::getExpression));
+        final StringBuilder sb = new StringBuilder(selection == null
+                ? "Processes all data"
+                : "Processes data where " + selection);
+        NullSafe.consume(filter.getMinMetaCreateTimeMs(), ms -> sb.append(", created after ")
+                .append(DateUtil.createNormalDateTimeString(ms)));
+        NullSafe.consume(filter.getMaxMetaCreateTimeMs(), ms -> sb.append(", created before ")
+                .append(DateUtil.createNormalDateTimeString(ms)));
         if (filter.isReprocess()) {
-            parts.add("reprocessing");
+            sb.append(", processing it again");
         }
-        parts.add(filter.getMaxProcessingTasks() > 0
-                ? "at most " + filter.getMaxProcessingTasks() + " tasks at a time"
-                : "no limit on tasks at a time");
-        return truncate(String.join("; ", parts), MAX_DETAILS_CHARS);
+        sb.append(filter.getMaxProcessingTasks() > 0
+                ? ". At most " + filter.getMaxProcessingTasks() + " tasks at a time."
+                : ". No limit on tasks at a time.");
+        return truncate(sb.toString(), MAX_DETAILS_CHARS);
     }
 
     private static DocRef docRef(final Object value) {
