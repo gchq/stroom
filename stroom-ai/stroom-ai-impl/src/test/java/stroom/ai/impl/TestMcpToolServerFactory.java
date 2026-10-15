@@ -29,6 +29,8 @@ import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.util.shared.http.HttpClientConfig;
+import stroom.util.shared.http.HttpHeader;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
@@ -203,6 +205,40 @@ class TestMcpToolServerFactory {
             assertThat(server.authorizationHeaders())
                     .isNotEmpty()
                     .allMatch("Bearer secret-token"::equals);
+        }
+    }
+
+    @Test
+    void configuredHeadersAreSentButAuthenticationWins() throws Exception {
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool()), List.of())) {
+            final McpToolServerConfig serverConfig = serverConfig(
+                    "s", server.endpoint(), McpAuthMode.BEARER_TOKEN, "token")
+                    .copy()
+                    .httpClientConfiguration(HttpClientConfig.builder()
+                            .userAgent("Stroom-Test")
+                            .headers(List.of(
+                                    new HttpHeader("X-Tenant", "acme"),
+                                    new HttpHeader("Authorization", "Bearer configured"),
+                                    // The JDK client won't set this, which must not stop every request.
+                                    new HttpHeader("Host", "elsewhere")))
+                            .build())
+                    .build();
+            final OpenAIModelDoc doc = OpenAIModelDoc.builder()
+                    .uuid("u")
+                    .name("m")
+                    .mcpToolServers(List.of(serverConfig))
+                    .build();
+
+            try (final McpToolset toolset = factory.createToolset(doc)) {
+                assertThat(execute(toolset.tools(), "s__echo", "{\"text\":\"hi\"}"))
+                        .isEqualTo("hi (auth: Bearer secret-token)");
+            }
+            assertThat(server.requestHeaders())
+                    .isNotEmpty()
+                    .allSatisfy(headers -> assertThat(headers)
+                            .containsEntry("x-tenant", "acme")
+                            .containsEntry("user-agent", "Stroom-Test")
+                            .containsEntry("authorization", "Bearer secret-token"));
         }
     }
 

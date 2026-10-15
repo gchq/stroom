@@ -30,6 +30,7 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.cert.SSLConfig;
+import stroom.util.http.HttpClientUtil;
 import stroom.util.http.HttpTlsConfiguration;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -52,6 +53,7 @@ import jakarta.inject.Singleton;
 
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -77,13 +79,15 @@ import javax.net.ssl.X509TrustManager;
  * <p>
  * Connections use the MCP <em>Streamable HTTP</em> transport (JDK {@link java.net.http.HttpClient})
  * pinned to HTTP/1.1, and support both {@code http://} and {@code https://}. Of the tool server's
- * {@link HttpClientConfig} only the timeout and redirect handling are honoured for every endpoint, plus
- * the TLS settings for {@code https://} endpoints; other settings do not map onto that transport.
+ * {@link HttpClientConfig} only the timeout, redirect handling, user agent and headers are honoured for every
+ * endpoint, plus the TLS settings for {@code https://} endpoints; other settings do not map onto that
+ * transport.
  * <p>
- * Authentication headers are added to every request. For the Stroom session token mode the user's
- * identity is captured when the toolset is built, and a current token is asked for on each request, so a
- * token that is refreshed during a long run is picked up. This is needed because requests are sent from
- * the HTTP client's own threads, which do not carry the user's security context.
+ * Authentication headers are added to every request, after the configured headers, so they win. For the
+ * Stroom session token mode the user's identity is captured when the toolset is built, and a current token is
+ * asked for on each request, so a token that is refreshed during a long run is picked up. This is needed
+ * because requests are sent from the HTTP client's own threads, which do not carry the user's security
+ * context.
  */
 @Singleton
 public class McpToolServerFactory {
@@ -212,6 +216,7 @@ public class McpToolServerFactory {
         }
         final AtomicReference<UserIdentity> userIdentityRef = new AtomicReference<>(userIdentity);
         final Supplier<Map<String, String>> authHeaders = authHeadersSupplier(server, label, userIdentityRef);
+        final Map<String, String> configuredHeaders = configuredHeaders(httpClientConfig);
 
         final HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport.builder(endpoint)
                 .connectTimeout(timeout)
@@ -227,8 +232,11 @@ public class McpToolServerFactory {
                         clientBuilder.sslContext(sslContext);
                     }
                 })
-                .httpRequestCustomizer((requestBuilder, method, uri, body, context) ->
-                        authHeaders.get().forEach(requestBuilder::setHeader))
+                .httpRequestCustomizer((requestBuilder, method, uri, body, context) -> {
+                    // The configured headers first, so that the authentication headers win.
+                    configuredHeaders.forEach((name, value) -> setHeader(requestBuilder, name, value, label));
+                    authHeaders.get().forEach(requestBuilder::setHeader);
+                })
                 .build();
 
         // The connection is made after the client, but the client needs to tell it when the tools change.
@@ -276,6 +284,34 @@ public class McpToolServerFactory {
     private static String clientVersion() {
         return NullSafe.nonBlankStringElse(McpToolServerFactory.class.getPackage().getImplementationVersion(),
                 "unknown");
+    }
+
+    /**
+     * @return The headers the configuration says to send: its User-Agent, if it has one, then its headers.
+     */
+    static Map<String, String> configuredHeaders(final HttpClientConfig httpClientConfig) {
+        final Map<String, String> headers = new LinkedHashMap<>();
+        if (NullSafe.isNonBlankString(httpClientConfig.getUserAgent())) {
+            headers.put("User-Agent", httpClientConfig.getUserAgent().strip());
+        }
+        headers.putAll(HttpClientUtil.headers(httpClientConfig));
+        return headers;
+    }
+
+    /**
+     * Sets a configured header, leaving out any the JDK HTTP client does not allow to be set (e.g. 'Host'),
+     * rather than failing every request.
+     */
+    private static void setHeader(final HttpRequest.Builder requestBuilder,
+                                  final String name,
+                                  final String value,
+                                  final String label) {
+        try {
+            requestBuilder.setHeader(name, value);
+        } catch (final IllegalArgumentException e) {
+            LOGGER.debug(() -> "Not sending header '" + name + "' to MCP tool server '" + label + "': "
+                               + e.getMessage());
+        }
     }
 
     // ------------------------------------------------------------------------

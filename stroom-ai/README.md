@@ -16,6 +16,10 @@ This guide covers setting it up and running it safely. See GitHub issue
    * _Tools enabled_: turn off for models that can't call tools.
    * _Show reasoning_: whether users see the model's reasoning, when it returns any. On by default.
    * _Maximum tools per request_: a limit on the tool definitions sent in one request, or 0 for none.
+   * _Set Http Client Config_ → **Headers**: headers sent with every request to the model, e.g.
+     `anthropic-version` for Anthropic's OpenAI-compatible endpoint. Don't put secrets here; the API key
+     belongs in the credential. MCP tool servers have the same setting, and their authentication headers
+     take precedence over it.
 1. Users choose the model in the chat panel's settings, or an administrator sets the default with
    _Set As Default_.
 
