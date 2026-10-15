@@ -24,6 +24,7 @@ import stroom.ai.api.TableSummaryRequest;
 import stroom.ai.impl.ChatCompactor.CompactionMode;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
+import stroom.ai.impl.memory.MemoryPath;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspaceStore;
@@ -196,6 +197,7 @@ public class AskStroomAIService {
     private final ContextUsageTracker usageTracker;
     private final ChatCompactor chatCompactor;
     private final AiMemoryService memoryService;
+    private final ChatTitler chatTitler;
     private final ToolApprovalService toolApprovalService;
     private final AiAuditLog auditLog;
     private final AiDao aiDao;
@@ -233,7 +235,9 @@ public class AskStroomAIService {
                               final AiDao aiDao,
                               final Provider<AiConfig> aiConfigProvider,
                               final SecurityContext securityContext,
-                              final Provider<McpElicitations> mcpElicitationsProvider) {
+                              final Provider<McpElicitations> mcpElicitationsProvider,
+                              final ChatTitler chatTitler) {
+        this.chatTitler = chatTitler;
         this.aiService = aiService;
         this.mcpElicitationsProvider = mcpElicitationsProvider;
         this.attachmentFileStore = attachmentFileStore;
@@ -305,6 +309,7 @@ public class AskStroomAIService {
         if (request.getMessage() != null && !steer(chatId, request.getMessage())) {
             runManager.start(chatId, run -> {
                 aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, request.getMessage());
+                chatTitler.nameFromQuestion(chatId, request.getMessage());
                 answerQuestion(chatId, request);
             });
         }
@@ -345,6 +350,7 @@ public class AskStroomAIService {
             removeMessages(toRemove);
             chatCompactor.onTurnChanged(chatId, question.getTurnId());
             aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, newText);
+            chatTitler.nameFromQuestion(chatId, newText);
             answerQuestion(chatId, edited);
         });
         return new AskStroomAiResponse(null);
@@ -725,6 +731,8 @@ public class AskStroomAIService {
                 aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText);
                 auditLog.answer(chatId, request.getMessage(), responseText, runManager.isUnattended(chatId));
                 chatCompactor.writeDigest(chatId);
+                // Keep the chat's name up to date with what it is about, now it has been answered.
+                chatTitler.retitleIfDue(chatId, getChatModel(getModelDoc(request.getConfig())));
                 final String rt = responseText;
                 LOGGER.debug(() -> "Response stored for chatId=" + chatId
                                    + " responseLength=" + rt.length());
@@ -1851,6 +1859,27 @@ public class AskStroomAIService {
 
         // Clean up attachment files on disk.
         attachmentFileStore.deleteAttachmentFiles(attachmentIds);
+    }
+
+    /**
+     * Clears a chat so it starts afresh: its messages, attached data and workspace files, and its memory, are
+     * deleted, any run is stopped first, and its title goes back to the default so the next question names it.
+     * The chat itself, its mode and its tool approvals are kept, as is the user's own memory.
+     *
+     * @throws AiChatRunManager.AiChatBusyException If the chat's run doesn't stop in time.
+     */
+    public void clearChat(final int chatId) {
+        aiService.verifyOwnership(chatId);
+        stopAndWait(chatId, AiChatRunStopReason.USER);
+        final List<Integer> attachmentIds = aiService.getAttachmentsByChatId(chatId).stream()
+                .map(AiChatAttachment::getId)
+                .toList();
+        aiService.deleteAllChatMessagesAndAttachments(chatId);
+        attachmentFileStore.deleteAttachmentFiles(attachmentIds);
+        memoryService.deleteByUser(chatId, MemoryPath.CHAT_PREFIX, null);
+        runDao.deleteByChat(chatId);
+        usageTracker.forget(chatId);
+        aiDao.resetChatTitle(chatId);
     }
 
     public void updateChatTitle(final int chatId, final String title) {

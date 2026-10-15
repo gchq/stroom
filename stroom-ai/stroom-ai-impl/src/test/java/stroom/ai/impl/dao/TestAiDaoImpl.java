@@ -242,4 +242,30 @@ class TestAiDaoImpl {
         assertThat(aiDao.markAllRead("user1")).isZero();
     }
 
+
+    @Test
+    void automaticTitlesStopOnceTheUserNamesTheChat() {
+        final AiChat chat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final long updated = aiDao.getChatStatuses("user1", 10).getFirst().getUpdateTimeMs();
+
+        final long version = aiDao.getStatusVersion("user1");
+        assertThat(aiDao.setAutoTitle(chat.getId(), "Firewall errors")).isTrue();
+        // So the browser hears about the new title.
+        assertThat(aiDao.getStatusVersion("user1")).isNotEqualTo(version);
+        assertThat(aiDao.getChatStatuses("user1", 10).getFirst())
+                .extracting(AiChatStatus::getTitle, AiChatStatus::getUpdateTimeMs)
+                .containsExactly("Firewall errors", updated);
+
+        assertThat(aiDao.isTitleSetByUser(chat.getId())).isFalse();
+        aiDao.updateChatTitle(chat.getId(), "My name for it");
+        assertThat(aiDao.isTitleSetByUser(chat.getId())).isTrue();
+        assertThat(aiDao.setAutoTitle(chat.getId(), "Something else")).isFalse();
+        assertThat(aiDao.getChatStatuses("user1", 10).getFirst().getTitle()).isEqualTo("My name for it");
+
+        // Clearing the chat lets it be named automatically again.
+        aiDao.resetChatTitle(chat.getId());
+        assertThat(aiDao.getChatStatuses("user1", 10).getFirst().getTitle()).isEqualTo(AiDao.DEFAULT_CHAT_TITLE);
+        assertThat(aiDao.setAutoTitle(chat.getId(), "Disk space")).isTrue();
+    }
+
 }
