@@ -63,6 +63,8 @@ public class TableSummariserImpl implements TableSummariser {
      * stop still has to mean something when the model has stopped responding.
      */
     private static final long CANCELLED_HARVEST_GRACE_MS = 30_000;
+    // A batch is never made smaller than this, however small the model's context window says it is.
+    static final int MIN_BATCH_CHARS = 2_000;
 
     private final ExecutorProvider executorProvider;
     private final Provider<AiService> aiServiceProvider;
@@ -110,7 +112,8 @@ public class TableSummariserImpl implements TableSummariser {
                     throw new RuntimeException("Table data file not found. "
                                                + "Data may have been cleaned up.");
                 }
-                batches.addAll(buildBatchesFromMarkdown(source.markdownFile(), tableAnalysisConfig));
+                batches.addAll(buildBatchesFromMarkdown(source.markdownFile(), tableAnalysisConfig,
+                        maxBatchChars(request.getContextWindowTokens())));
                 if (source.truncated()) {
                     anyTruncated = true;
                 }
@@ -296,13 +299,29 @@ public class TableSummariserImpl implements TableSummariser {
         return TableSummaryResult.summarised(notes.appendTo(merged));
     }
 
-    /**
-     * Reads a markdown table file and splits it into batches,
-     * each respecting the maximum batch size. The header and separator
-     * rows are preserved at the start of each batch.
-     */
+    /// @param contextWindowTokens The model's context window, or 0 if not known.
+    /// @return The most characters of table one batch may hold: half the context window (at about four
+    /// characters a token), leaving the rest for the prompts, the chat so far and the answer. No limit if the
+    /// window is not known.
+    static int maxBatchChars(final int contextWindowTokens) {
+        return contextWindowTokens > 0
+                ? Math.max(MIN_BATCH_CHARS, contextWindowTokens * 2)
+                : Integer.MAX_VALUE;
+    }
+
     List<String> buildBatchesFromMarkdown(final Path mdFile,
                                           final TableAnalysisConfig config) {
+        return buildBatchesFromMarkdown(mdFile, config, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Reads a markdown table file and splits it into batches, each with no more than the maximum rows per batch
+     * and, if it can, no more than the given number of characters (a batch always has at least one row). The
+     * header and separator rows are preserved at the start of each batch.
+     */
+    List<String> buildBatchesFromMarkdown(final Path mdFile,
+                                          final TableAnalysisConfig config,
+                                          final int maxBatchChars) {
         return LOGGER.logDurationIfDebugEnabled(() -> {
             final List<String> batches = new ArrayList<>();
             final int maxRowsPerBatch = config.getMaxRowsPerBatch();
@@ -326,7 +345,8 @@ public class TableSummariserImpl implements TableSummariser {
                     if (line.isEmpty()) {
                         continue;
                     }
-                    if (rowsInBatch >= maxRowsPerBatch && rowsInBatch > 0) {
+                    if (rowsInBatch > 0
+                        && (rowsInBatch >= maxRowsPerBatch || batch.length() + line.length() + 1 > maxBatchChars)) {
                         batches.add(batch.toString());
                         batch.setLength(0);
                         batch.append(mdHeader);
