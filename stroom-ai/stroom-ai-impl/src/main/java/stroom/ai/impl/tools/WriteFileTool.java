@@ -67,4 +67,10 @@ class WriteFileTool extends AbstractWorkspaceTool {
     public boolean readsUntrustedContent() {
         return false;
     }
+
+    /// @return False. It creates or replaces files in the workspace.
+    @Override
+    public boolean isReadOnly() {
+        return false;
+    }
 }

@@ -34,8 +34,8 @@ import java.util.Optional;
 /// Decides whether a tool call the model asks for runs straight away, needs the user's approval first, or is not
 /// run, following VS Code's approvals:
 ///
-/// - built-in tools run (they only reach the chat's own workspace and memory, which have their own controls),
-///   except, while the user is away, any that could change something;
+/// - built-in tools run, while the user is away too (they only reach the chat's own workspace and memory, which
+///   have their own controls);
 /// - an MCP tool with an ALLOW policy runs, ASK_ALWAYS always asks, DENY tools are never offered;
 /// - a trusted server's tool marked `_meta.confirms` runs, even while the user is away, as it asks the user
 ///   itself through a form (unless its policy is ASK_ALWAYS);
@@ -77,9 +77,9 @@ public class ToolConsent {
                           final McpToolset toolset,
                           final boolean unattended) {
         if (builtInTools.toolMap().keySet().stream().anyMatch(spec -> spec.name().equals(toolName))) {
-            return unattended && !builtInTools.isReadOnly(toolName)
-                    ? Verdict.ask(awayReason(), false, false, List.of("can change things"))
-                    : Verdict.RUN;
+            // Even those that change things only reach the chat's own workspace and memory, which have their own
+            // controls (S6, S7), so they run while the user is away too.
+            return Verdict.RUN;
         }
         final McpToolInfo info = toolset.toolInfo(toolName).orElse(null);
         if (info == null) {
