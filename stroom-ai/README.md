@@ -26,7 +26,7 @@ This guide covers setting it up and running it safely. See GitHub issue
 Users who have not changed a chat setting use the configured defaults, so a change to the defaults reaches
 them. A user whose settings have no model, or a model that no longer exists, gets the default model. To put
 everyone back on the defaults (model, prompts, dock position and so on), an administrator (Manage
-Properties) can use _Reset Everyone to Defaults…_ in the chat's **Settings…**.
+Properties) can use _Reset Everyone to Defaults…_ in the chat's **Settings**.
 
 Answers and reasoning stream into the chat as the model writes them.
 
@@ -86,7 +86,7 @@ Before a tool runs, Stroom decides whether to ask the user:
   time_ policy still asks.
 * The user can allow a tool for the rest of the chat, or all of a trusted server's read-only tools.
   A change to a tool's name or description, or to the server's settings, asks again.
-* _Approve everything_ (per chat: the shield beside the model, or **Tool Approvals…**) is off unless
+* _Approve everything_ (per chat: the shield beside the model, or **Tool Approvals**) is off unless
   `allowApproveEverything` is true. The shield is highlighted while it is on.
   Even then it only covers trusted servers' tools that are not destructive or open-world.
 * If no browser has polled the chat for `unattendedAfter`, the run is unattended: only read-only tools
@@ -149,7 +149,7 @@ _Steps for you_ card. The model can neither make nor click one.
   with `/compact [focus]`, and undo the latest compaction.
 * The agent has memory: the user's own (`/memories/`, loaded into every chat) and the chat's
   (`/memories/session/`). Changes to the user's memory from a chat that has read tool output or data need
-  the user's approval. Users view, edit and undo changes in **Memory…**.
+  the user's approval. Users view, edit and undo changes in **Memory**.
 
 
 ## Attached tables
@@ -163,7 +163,7 @@ to `tableAnalysis.maxTotalRows` rows (default 50,000).
   more than `maxRowsPerBatch` rows, or half the context window, each), with the chat so far as compacted,
   and the partial answers are merged into the answer.
 * These settings, and the batch and merge prompts, apply to everyone. Administrators change them on the
-  **Table Analysis** tab of the chat's **Settings…**, which other users don't see.
+  **Table Analysis** tab of the chat's **Settings**, which other users don't see.
 
 
 ## Retention and limits
