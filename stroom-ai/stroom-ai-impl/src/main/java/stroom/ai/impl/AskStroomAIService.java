@@ -1929,6 +1929,18 @@ public class AskStroomAIService {
         return new AiChatStatusResponse(version, aiDao.getChatStatuses(userUuid, MAX_CHAT_STATUSES));
     }
 
+    /**
+     * Marks everything in all the user's chats as read, clearing their unread marks.
+     *
+     * @return How many chats had something unread.
+     */
+    public int markAllChatsRead() {
+        final String userUuid = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
+        return userUuid == null
+                ? 0
+                : aiDao.markAllRead(userUuid);
+    }
+
     // ---------------------------------------------------------------------
     // Config methods
     // ---------------------------------------------------------------------

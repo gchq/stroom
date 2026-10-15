@@ -196,6 +196,13 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             operationId = "getDefaultConfig")
     AskStroomAiConfig getDefaultConfig();
 
+    @POST
+    @Path("/markAllChatsRead")
+    @Operation(
+            summary = "Mark everything in all the user's chats as read, clearing their unread marks",
+            operationId = "markAllAiChatsRead")
+    Integer markAllChatsRead();
+
     @PUT
     @Path("/setAgentMode/{chatId}/{mode}")
     @Operation(

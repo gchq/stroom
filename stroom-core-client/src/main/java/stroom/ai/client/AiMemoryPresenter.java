@@ -151,7 +151,7 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
         }
         final String path = selectedPath;
         final Integer version = selectedVersion;
-        ConfirmEvent.fire(this, "Delete " + path + "?", ok -> {
+        ConfirmEvent.fire(this, deleteMessage(path), ok -> {
             if (ok) {
                 client.deleteMemory(new DeleteAiMemoryRequest(chat, path, version), done -> {
                     selectedPath = null;
@@ -163,10 +163,24 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
         });
     }
 
+    /// @return What deleting a memory note means, in words, e.g. "Delete the note 'preferences.md'? ...".
+    private static String deleteMessage(final String path) {
+        if (path.startsWith(CHAT_PREFIX)) {
+            return "Delete the note '" + path.substring(CHAT_PREFIX.length()) + "' from this chat's memory? "
+                   + "Stroom AI will forget it in this chat. This can't be undone.";
+        }
+        final String name = path.startsWith(USER_PREFIX)
+                ? path.substring(USER_PREFIX.length())
+                : path;
+        return "Delete the note '" + name + "' from your memory? Stroom AI uses your memory in all your chats, "
+               + "so it will forget it in all of them. This can't be undone.";
+    }
+
     @Override
     public void onClearUserMemory() {
-        final String message = "Delete all your memory? It is loaded into all your chats. This chat's memory is "
-                               + "kept.";
+        final String message = "Delete all your memory notes? Stroom AI uses them in all your chats, so it will "
+                               + "forget everything in them. The notes for this chat only are kept. This can't be "
+                               + "undone.";
         ConfirmEvent.fire(this, message, ok -> {
             if (ok) {
                 client.deleteMemory(new DeleteAiMemoryRequest(chat, USER_PREFIX, null), done -> {

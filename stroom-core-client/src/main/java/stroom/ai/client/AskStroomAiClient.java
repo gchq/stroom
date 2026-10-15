@@ -342,6 +342,16 @@ public class AskStroomAiClient {
                 .exec();
     }
 
+    /// Marks everything in all the user's chats as read, clearing their unread marks.
+    void markAllChatsRead(final Consumer<Integer> consumer, final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(AskStroomAiResource::markAllChatsRead)
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
     /// Sets how the agent works in a chat.
     void setAgentMode(final int chatId,
                       final AiAgentMode mode,
