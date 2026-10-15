@@ -35,7 +35,6 @@ import org.apache.hc.client5.http.classic.methods.HttpOptions;
 import org.apache.hc.client5.http.classic.methods.HttpPatch;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
@@ -94,19 +93,12 @@ public class ApacheHttpClient implements HttpClient {
         final ClassicHttpRequest apacheRequest = createApacheRequest(request);
         try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
             final org.apache.hc.client5.http.classic.HttpClient httpClient = httpClientProvider.get();
-
-            if (httpClient instanceof final CloseableHttpClient closeableHttpClient) {
-                httpClient.execute(apacheRequest, response -> {
-                    handleServerSentEvents(response, parser, listener);
-                    closeableHttpClient.close();
-                    return null;
-                });
-            } else {
-                httpClient.execute(apacheRequest, response -> {
-                    handleServerSentEvents(response, parser, listener);
-                    return null;
-                });
-            }
+            // The client is pooled and shared with every other request using the same configuration, so it
+            // must not be closed here; closing the provider (above) hands our reference back to the cache.
+            httpClient.execute(apacheRequest, response -> {
+                handleServerSentEvents(response, parser, listener);
+                return null;
+            });
         } catch (final IOException e) {
             LOGGER.debug("execute() SSE - IOException: {}", e.getMessage(), e);
             listener.onError(e);
@@ -133,7 +125,24 @@ public class ApacheHttpClient implements HttpClient {
             listener.onError(new HttpException(statusCode, body));
             return;
         }
+        // As langchain4j's own clients do: the listener is told the stream has opened, given its events, and
+        // then told it has closed. The OpenAI streaming model only completes its answer on close, so without
+        // that a streamed answer never finishes.
+        listener.onOpen(SuccessfulHttpResponse.builder()
+                .statusCode(statusCode)
+                .headers(headersOf(response))
+                .build());
         parser.parse(response.getEntity().getContent(), listener);
+        listener.onClose();
+    }
+
+    private static Map<String, List<String>> headersOf(final ClassicHttpResponse response) {
+        final Map<String, List<String>> headers = new HashMap<>();
+        for (final Header header : response.getHeaders()) {
+            headers.computeIfAbsent(header.getName(), ignored -> new ArrayList<>())
+                    .add(header.getValue());
+        }
+        return headers;
     }
 
     ClassicHttpRequest createApacheRequest(final HttpRequest request) {
@@ -189,12 +198,7 @@ public class ApacheHttpClient implements HttpClient {
     private SuccessfulHttpResponse convertResponse(final ClassicHttpResponse response) {
         try {
             final int statusCode = response.getCode();
-
-            final Map<String, List<String>> headers = new HashMap<>();
-            for (final Header header : response.getHeaders()) {
-                headers.computeIfAbsent(header.getName(), ignored -> new ArrayList<>())
-                        .add(header.getValue());
-            }
+            final Map<String, List<String>> headers = headersOf(response);
 
             String body = null;
             if (response.getEntity() != null) {
