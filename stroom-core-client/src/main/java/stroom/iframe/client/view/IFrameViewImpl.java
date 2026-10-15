@@ -24,6 +24,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.IFrameElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -52,6 +53,8 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
         frame.getElement().addClassName("iframe-frame");
 
         panel.setWidget(frame);
+        // Each time a document loads into the frame, pass its key presses on, if this page can see into it.
+        frame.addLoadHandler(event -> forwardKeyDowns(frame.getElement()));
 
         final RepeatingCommand updateTitleCommand = () -> {
             final IFrameElement iFrameElement = frame.getElement().cast();
@@ -70,6 +73,32 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
         };
         Scheduler.get().scheduleFixedDelay(updateTitleCommand, 1000);
     }
+
+    private void onFrameKeyDown(final NativeEvent nativeEvent) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onFrameKeyDown(nativeEvent);
+        }
+    }
+
+    /**
+     * Passes key presses in the frame's document to {@link #onFrameKeyDown(NativeEvent)}. Does nothing for a
+     * document from another origin, or in a sandbox without 'allow-same-origin', as this page cannot see into
+     * it.
+     */
+    private native void forwardKeyDowns(Element frameElement) /*-{
+        var self = this;
+        var doc = null;
+        try {
+            doc = frameElement.contentDocument;
+        } catch (e) {
+            // Another origin.
+        }
+        if (doc) {
+            doc.addEventListener('keydown', function (event) {
+                self.@stroom.iframe.client.view.IFrameViewImpl::onFrameKeyDown(*)(event);
+            });
+        }
+    }-*/;
 
     @Override
     public Widget asWidget() {

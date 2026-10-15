@@ -267,3 +267,14 @@ hide the standard control and replace it with something more fancy that we can c
   border: none;
   padding: 0;
 }
+
+/* A rendered document (e.g. an entity's Documentation tab or its preview): room around the page, so text
+   is not crammed against the panel's edges, and a readable line length. */
+.info-page.markdown-container {
+  box-sizing: border-box;
+  padding: 10px 14px 20px;
+}
+
+.info-page.markdown-container > .markdown {
+  max-width: 60em;
+}

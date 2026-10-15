@@ -19,7 +19,9 @@ package stroom.iframe.client.presenter;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.widget.util.client.GlobalKeyHandler;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -30,9 +32,14 @@ import com.gwtplatform.mvp.client.View;
 public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView>
         implements IFrameLoadUiHandlers, HasDirtyHandlers {
 
+    private final GlobalKeyHandler globalKeyHandler;
+
     @Inject
-    public IFramePresenter(final EventBus eventBus, final IFrameView view) {
+    public IFramePresenter(final EventBus eventBus,
+                           final IFrameView view,
+                           final GlobalKeyHandler globalKeyHandler) {
         super(eventBus, view);
+        this.globalKeyHandler = globalKeyHandler;
         view.setUiHandlers(this);
     }
 
@@ -67,6 +74,11 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
     @Override
     public void onTitleChange(final String title) {
         DirtyEvent.fire(this, true);
+    }
+
+    @Override
+    public void onFrameKeyDown(final NativeEvent nativeEvent) {
+        globalKeyHandler.onKeyDown(nativeEvent);
     }
 
     @Override
