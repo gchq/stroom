@@ -234,7 +234,7 @@ public class LmdbWriter {
                 }
             } catch (final InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
-                throw new UncheckedInterruptedException(e);
+                throw UncheckedInterruptedException.create(e);
             }
         } finally {
             // The write txn is closed by this point however we got here. Record that this
