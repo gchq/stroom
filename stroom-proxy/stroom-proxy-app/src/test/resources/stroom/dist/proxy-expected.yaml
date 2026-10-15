@@ -176,7 +176,30 @@ proxyConfig:
     s3Event:
       rePollDuration: "PT5M"
       sleepDurationPostFailure: "PT1M"
-      sqs: null
+      sqs:
+        assumeRole: null
+        awsRegionName: null
+        credentials: null
+        deadLetterQueueUrl: null
+        httpClient:
+          connectionRequestTimeout: "PT3M"
+          connectionTimeout: "PT3M"
+          cookiesEnabled: false
+          followRedirects: true
+          keepAlive: "PT0S"
+          maxConnections: 1024
+          maxConnectionsPerRoute: 1024
+          proxy: null
+          retries: 0
+          timeToLive: "PT1H"
+          timeout: "PT3M"
+          tls: null
+          userAgent: null
+          validateAfterInactivityPeriod: "PT0S"
+        maxNumberOfMessages: 1000
+        pollMaxWaitTime: "PT10S"
+        queueUrl: null
+        visibilityTimeout: "PT3M"
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"

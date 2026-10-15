@@ -41,6 +41,10 @@ public class SqsConfig
         extends AbstractConfig
         implements IsStroomConfig, IsProxyConfig, IsAtomicConfig {
 
+    public static final String PROP_NAME_AWS_REGION_NAME = "awsRegionName";
+    public static final String PROP_NAME_QUEUE_URL = "queueUrl";
+    public static final String PROP_NAME_DEAD_LETTER_QUEUE_URL = "deadLetterQueueUrl";
+
     public static final StroomDuration DEFAULT_POLL_MAX_WAIT_TIME = StroomDuration.ofSeconds(10);
     public static final StroomDuration DEFAULT_VISIBILITY_TIMEOUT = StroomDuration.ofMinutes(3);
     public static final int DEFAULT_MAX_NUMBER_OF_MESSAGES = 1_000;
@@ -80,9 +84,9 @@ public class SqsConfig
     @JsonCreator
     public SqsConfig(@JsonProperty("credentials") final AwsCredentials credentials,
                      @JsonProperty("assumeRole") final AwsAssumeRole assumeRole,
-                     @JsonProperty("awsRegionName") final String awsRegionName,
-                     @JsonProperty("queueUrl") final String queueUrl,
-                     @JsonProperty("deadLetterQueueUrl") final String deadLetterQueueUrl,
+                     @JsonProperty(PROP_NAME_AWS_REGION_NAME) final String awsRegionName,
+                     @JsonProperty(PROP_NAME_QUEUE_URL) final String queueUrl,
+                     @JsonProperty(PROP_NAME_DEAD_LETTER_QUEUE_URL) final String deadLetterQueueUrl,
                      @JsonProperty("pollMaxWaitTime") final StroomDuration pollMaxWaitTime,
                      @JsonProperty("visibilityTimeout") final StroomDuration visibilityTimeout,
                      @JsonProperty("maxNumberOfMessages") final Integer maxNumberOfMessages,

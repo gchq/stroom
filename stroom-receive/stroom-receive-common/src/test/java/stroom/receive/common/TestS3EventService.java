@@ -122,6 +122,7 @@ class TestS3EventService {
         when(receiveDataConfig.getS3Event()).thenReturn(s3EventConfig);
         when(s3EventConfig.getSqs()).thenReturn(sqsConfig);
         when(s3EventConfig.getSleepDurationPostFailure()).thenReturn(StroomDuration.ZERO);
+        when(sqsConfig.getAwsRegionName()).thenReturn("eu-west-2");
         when(sqsConfig.getQueueUrl()).thenReturn("https://sqs.example/queue");
         when(sqsConfig.getDeadLetterQueueUrl()).thenReturn("https://sqs.example/dead-letter");
         when(sqsConfig.getPollMaxWaitTime()).thenReturn(StroomDuration.ofSeconds(10));
@@ -194,6 +195,7 @@ class TestS3EventService {
         when(receiveDataConfigProvider.get()).thenReturn(receiveDataConfig);
         when(receiveDataConfig.getS3Event()).thenReturn(s3EventConfig);
         when(s3EventConfig.getSqs()).thenReturn(sqsConfig);
+        when(sqsConfig.getAwsRegionName()).thenReturn("eu-west-2");
         when(sqsConfig.getQueueUrl()).thenReturn("https://sqs.example/queue");
         when(sqsConfig.getDeadLetterQueueUrl()).thenReturn("");
         when(sqsConfig.getPollMaxWaitTime()).thenReturn(StroomDuration.ofSeconds(10));

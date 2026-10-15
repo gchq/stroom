@@ -85,9 +85,9 @@ public final class AwsSessionCredentials extends AbstractConfig implements AwsCr
     @Override
     public String toString() {
         return "AwsSessionCredentials{" +
-               "accessKeyId='" + accessKeyId + '\'' +
-               ", secretAccessKey='" + secretAccessKey + '\'' +
-               ", sessionToken='" + sessionToken + '\'' +
+               "accessKeyId='***'" +
+               ", secretAccessKey='***'" +
+               ", sessionToken='***'" +
                '}';
     }
 

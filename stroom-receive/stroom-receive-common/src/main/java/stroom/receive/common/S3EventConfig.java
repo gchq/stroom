@@ -45,7 +45,7 @@ public class S3EventConfig extends AbstractConfig implements IsStroomConfig, IsP
 
     public S3EventConfig() {
         this.rePollDuration = DEFAULT_RE_POLL_DURATION;
-        this.sqs = null;
+        this.sqs = new SqsConfig();
         this.sleepDurationPostFailure = DEFAULT_SLEEP_DURATION_POST_FAILURE;
     }
 
@@ -54,7 +54,7 @@ public class S3EventConfig extends AbstractConfig implements IsStroomConfig, IsP
                          @JsonProperty("sqs") final SqsConfig sqs,
                          @JsonProperty("sleepDurationPostFailure") final StroomDuration sleepDurationPostFailure) {
         this.rePollDuration = Objects.requireNonNullElse(rePollDuration, DEFAULT_RE_POLL_DURATION);
-        this.sqs = sqs;
+        this.sqs = Objects.requireNonNullElseGet(sqs, SqsConfig::new);
         this.sleepDurationPostFailure = Objects.requireNonNullElse(
                 sleepDurationPostFailure, DEFAULT_SLEEP_DURATION_POST_FAILURE);
     }
