@@ -204,6 +204,9 @@
        enough to sit with the borders reaches 3:1, so a splitter is found by its cursor and its
        keyboard focus, which is at least 3:1 against the panes beside it (WCAG 1.4.11) */
     --splitter__line-color: var(--border-color);
+    /* A thin splitter's handle, shown on hover, and while dragged */
+    --splitter__handle-color: var(--grey-500);
+    --splitter__handle-color--active: var(--grey-700);
     --splitter__focus-color: var(--blue-800);
 
     /* Main curve tabs */
