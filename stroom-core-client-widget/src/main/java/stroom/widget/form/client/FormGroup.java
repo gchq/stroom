@@ -92,6 +92,7 @@ public class FormGroup extends Composite implements HasWidgets {
     private final FormLabel formLabel = new FormLabel();
     private final HelpButton helpButton = HelpButton.create();
     private final FlowPanel labelPanel = new FlowPanel();
+    private final FlowPanel controlRow = new FlowPanel();
     private final FlowPanel descriptionPanel = new FlowPanel();
     private final Label feedbackLabel = new Label();
 
@@ -112,6 +113,7 @@ public class FormGroup extends Composite implements HasWidgets {
         feedbackLabel.setStyleName("invalid-feedback");
         formGroupPanel.addStyleName("form-group");
         labelPanel.addStyleName("form-group-label-container");
+        controlRow.addStyleName("form-group-control-row");
         formLabel.addStyleName("form-group-label");
         descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_CONTAINER);
         helpButton.addStyleName("form-group-help");
@@ -344,26 +346,40 @@ public class FormGroup extends Composite implements HasWidgets {
 
     private void updateFormGroupPanel() {
         formGroupPanel.clear();
-        formGroupPanel.add(labelPanel);
+        // With no label, the help button goes to the right of the control (e.g. a tick box), not on a line of
+        // its own above it.
+        final boolean helpBesideControl = !hasLabel() && helpButton.hasHelpContent() && childWidget != null;
+        if (labelPanel.getWidgetCount() > 0 && !helpBesideControl) {
+            formGroupPanel.add(labelPanel);
+        }
         if (descriptionHTML != null) {
             formGroupPanel.add(descriptionPanel);
         }
-        if (childWidget != null) {
+        if (helpBesideControl) {
+            controlRow.clear();
+            controlRow.add(childWidget);
+            controlRow.add(helpButton);
+            formGroupPanel.add(controlRow);
+        } else if (childWidget != null) {
             formGroupPanel.add(childWidget);
         }
         formGroupPanel.add(feedbackLabel);
-
     }
 
     private void updateLabelPanel() {
         labelPanel.clear();
-        if (NullSafe.isNonBlankString(formLabel.getLabel())) {
+        if (hasLabel()) {
             labelPanel.add(formLabel);
         }
 
         if (helpButton.hasHelpContent()) {
             labelPanel.add(helpButton);
         }
+        updateFormGroupPanel();
+    }
+
+    private boolean hasLabel() {
+        return NullSafe.isNonBlankString(formLabel.getLabel());
     }
 
     private void updateDescriptionPanel() {

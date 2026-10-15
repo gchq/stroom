@@ -113,7 +113,7 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
     public void onNewMemory() {
         final String message = "Name for the new memory, e.g. preferences.md. Start it with " + CHAT_NAME_PREFIX
                                + " to keep it to this chat.";
-        PromptEvent.fire(this, message, "", name -> {
+        PromptEvent.fire(this, "New Memory", message, "", name -> {
             if (name != null && !name.isBlank()) {
                 final String trimmed = name.strip();
                 selectedPath = trimmed.startsWith(CHAT_NAME_PREFIX)
