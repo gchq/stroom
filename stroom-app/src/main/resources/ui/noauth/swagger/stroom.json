@@ -1082,6 +1082,26 @@
         "tags" : [ "AI" ]
       }
     },
+    "/ai/v1/markAllChatsRead" : {
+      "post" : {
+        "operationId" : "markAllAiChatsRead",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Mark everything in all the user's chats as read, clearing their unread marks",
+        "tags" : [ "AI" ]
+      }
+    },
     "/ai/v1/pollMessages/{chatId}" : {
       "post" : {
         "operationId" : "pollMessages",
