@@ -18,15 +18,17 @@ package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.ui.config.shared.AceEditorTheme;
+import stroom.ui.config.shared.Theme;
 
 import com.google.gwt.user.client.ui.Widget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
-/// Stories for Ace's editor themes: Stroom's default light and dark themes, the dark themes
-/// that are candidates for the default, and the themes Ace 1.44 added. Each shows XML and a Stroom
+/// Stories for the editor themes: Stroom's own default theme, Stroom's earlier defaults, the dark
+/// themes that were candidates for the default, and the themes Ace 1.44 added. Each shows XML and a Stroom
 /// query, so the colours of a theme can be compared, and checked for contrast, before and after an
 /// upgrade of Ace.
 public final class AceEditorThemeStories {
@@ -46,7 +48,11 @@ public final class AceEditorThemeStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Editors & Viewers/AceEditorThemes", AceEditorThemeStories.class)
                 .layout(StoryLayout.CENTERED)
-                // Stroom's defaults
+                // Stroom's default, Stroom Light or Stroom Dark, which take their colours from the
+                // Stroom theme, so are shown in the workbench's theme
+                .story("Stroom", context -> themed(AceEditorTheme.getDefaultEditorTheme(
+                        Theme.getThemeType(StroomThemeDecorator.getStroomThemeName()))))
+                // Stroom's earlier defaults
                 .story("Chrome", context -> themed(AceEditorTheme.CHROME))
                 .story("TomorrowNight", context -> themed(AceEditorTheme.TOMORROW_NIGHT))
                 // Dark themes that are candidates for the default

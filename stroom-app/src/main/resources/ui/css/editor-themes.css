@@ -1,0 +1,256 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Stroom's own Ace editor themes, Stroom Light and Stroom Dark (StroomAceThemes registers them with
+ * Ace). The editor, gutter, active line and selection take their colours from the Stroom theme's
+ * --code-editor__* variables, so that the editor matches Stroom's other controls. The syntax colours
+ * are Chrome's (light) and Cloud Editor Dark's (dark), with those under 4.5:1 contrast darkened or
+ * lightened.
+ */
+
+/* The parts that follow the Stroom theme */
+
+.ace-stroom-light,
+.ace-stroom-dark {
+    background-color: var(--code-editor__background-color);
+    color: var(--code-editor__text-color);
+}
+
+.ace-stroom-light .ace_gutter,
+.ace-stroom-dark .ace_gutter {
+    background: var(--code-editor__gutter-background-color);
+    color: var(--code-editor__gutter-text-color);
+    overflow: hidden;
+}
+
+.ace-stroom-light .ace_gutter-cell,
+.ace-stroom-dark .ace_gutter-cell {
+    color: var(--code-editor__gutter-text-color);
+}
+
+.ace-stroom-light .ace_gutter-active-line,
+.ace-stroom-dark .ace_gutter-active-line {
+    background-color: var(--code-editor__gutter-active-line-background-color);
+}
+
+.ace-stroom-light .ace_marker-layer .ace_active-line,
+.ace-stroom-dark .ace_marker-layer .ace_active-line {
+    background: var(--code-editor__active-line-background-color);
+}
+
+.ace-stroom-light .ace_marker-layer .ace_selection,
+.ace-stroom-dark .ace_marker-layer .ace_selection {
+    background: var(--code-editor__selection-background-color);
+}
+
+.ace-stroom-light.ace_multiselect .ace_selection.ace_start,
+.ace-stroom-dark.ace_multiselect .ace_selection.ace_start {
+    box-shadow: 0 0 3px 0 var(--code-editor__background-color);
+}
+
+.ace-stroom-light .ace_marker-layer .ace_selected-word,
+.ace-stroom-dark .ace_marker-layer .ace_selected-word {
+    background: var(--code-editor__selected-word-background-color);
+}
+
+.ace-stroom-light .ace_marker-layer .ace_bracket,
+.ace-stroom-dark .ace_marker-layer .ace_bracket {
+    margin: -1px 0 0 -1px;
+    border: 1px solid var(--code-editor__bracket-border-color);
+}
+
+.ace-stroom-light .ace_cursor,
+.ace-stroom-dark .ace_cursor {
+    color: var(--code-editor__cursor-color);
+}
+
+.ace-stroom-light .ace_invisible,
+.ace-stroom-dark .ace_invisible {
+    color: var(--code-editor__invisible-color);
+}
+
+.ace-stroom-light .ace_print-margin,
+.ace-stroom-dark .ace_print-margin {
+    width: 1px;
+    background: var(--code-editor__gutter-background-color);
+}
+
+.ace-stroom-light .ace_indent-guide,
+.ace-stroom-dark .ace_indent-guide {
+    background: none;
+    box-shadow: inset -1px 0 var(--code-editor__indent-guide-color);
+}
+
+.ace-stroom-light .ace_indent-guide-active,
+.ace-stroom-dark .ace_indent-guide-active {
+    background: none;
+    box-shadow: inset -1px 0 var(--code-editor__gutter-text-color);
+}
+
+/* Stroom Light's syntax colours */
+
+.ace-stroom-light .ace_storage,
+.ace-stroom-light .ace_keyword,
+.ace-stroom-light .ace_meta.ace_tag {
+    color: #930f80;
+}
+
+.ace-stroom-light .ace_keyword.ace_operator {
+    color: #5a6676;
+}
+
+.ace-stroom-light .ace_constant.ace_buildin {
+    color: #5848f6;
+}
+
+.ace-stroom-light .ace_constant.ace_language {
+    color: #4a4ee0;
+}
+
+.ace-stroom-light .ace_constant.ace_library,
+.ace-stroom-light .ace_support.ace_constant {
+    color: #087a0f;
+}
+
+.ace-stroom-light .ace_constant.ace_numeric {
+    color: #0000cd;
+}
+
+.ace-stroom-light .ace_invalid {
+    background-color: #990000;
+    color: #fff;
+}
+
+.ace-stroom-light .ace_support.ace_function {
+    color: #3c4c72;
+}
+
+.ace-stroom-light .ace_support.ace_type,
+.ace-stroom-light .ace_support.ace_class,
+.ace-stroom-light .ace_support.ace_other {
+    color: #4f5bc4;
+}
+
+.ace-stroom-light .ace_variable {
+    color: #2a7080;
+}
+
+.ace-stroom-light .ace_variable.ace_parameter {
+    font-style: italic;
+    color: #a35200;
+}
+
+.ace-stroom-light .ace_comment {
+    color: #236e24;
+}
+
+.ace-stroom-light .ace_xml-pe {
+    color: #68685b;
+}
+
+.ace-stroom-light .ace_entity.ace_name.ace_function {
+    color: #0000a2;
+}
+
+.ace-stroom-light .ace_entity.ace_other.ace_attribute-name {
+    color: #994409;
+}
+
+.ace-stroom-light .ace_heading {
+    color: #0c07ff;
+}
+
+.ace-stroom-light .ace_list {
+    color: #b90690;
+}
+
+.ace-stroom-light .ace_string {
+    color: #1a1aa6;
+}
+
+.ace-stroom-light .ace_string.ace_regex {
+    color: #c00000;
+}
+
+.ace-stroom-light .ace_marker-layer .ace_step {
+    background: #fcff00;
+}
+
+.ace-stroom-light .ace_marker-layer .ace_stack {
+    background: #a4e565;
+}
+
+/* Stroom Dark's syntax colours */
+
+.ace-stroom-dark .ace_keyword,
+.ace-stroom-dark .ace_storage,
+.ace-stroom-dark .ace_meta.ace_selector {
+    color: #d08ae3;
+}
+
+.ace-stroom-dark .ace_constant,
+.ace-stroom-dark .ace_constant.ace_numeric,
+.ace-stroom-dark .ace_support.ace_class,
+.ace-stroom-dark .ace_xml-pe {
+    color: #e5c383;
+}
+
+.ace-stroom-dark .ace_constant.ace_character.ace_escape {
+    color: #71ccc7;
+}
+
+.ace-stroom-dark .ace_support.ace_function,
+.ace-stroom-dark .ace_entity.ace_name.ace_function,
+.ace-stroom-dark .ace_heading {
+    color: #f08088;
+}
+
+.ace-stroom-dark .ace_invalid.ace_illegal {
+    color: #dcdfe4;
+    background-color: #66b2f0;
+}
+
+.ace-stroom-dark .ace_invalid.ace_deprecated {
+    color: #dcdfe4;
+    background-color: #e5c383;
+}
+
+.ace-stroom-dark .ace_string {
+    color: #6fb342;
+}
+
+.ace-stroom-dark .ace_comment {
+    color: #b5bac0;
+}
+
+.ace-stroom-dark .ace_variable,
+.ace-stroom-dark .ace_doctype,
+.ace-stroom-dark .ace_entity.ace_name.ace_tag,
+.ace-stroom-dark .ace_entity.ace_other.ace_attribute-name,
+.ace-stroom-dark .ace_meta.ace_tag,
+.ace-stroom-dark .ace_string.ace_regexp {
+    color: #66b2f0;
+}
+
+.ace-stroom-dark .ace_fold {
+    background-color: #66b2f0;
+    border-color: #dcdfe4;
+}
+
+.ace-stroom-dark .ace_marker-layer .ace_step {
+    background: #6fb342;
+}

@@ -61,7 +61,7 @@ public class Editor extends Composite implements
     private boolean readOnlyDirty;
     private AceEditorMode mode = AceEditorMode.XML;
     private boolean modeDirty = true;
-    private AceEditorTheme theme = AceEditorTheme.TOMORROW_NIGHT;
+    private AceEditorTheme theme = AceEditorTheme.DEFAULT_DARK_THEME;
     private boolean themeDirty = true;
     private boolean showGutter = true;
     private boolean showGutterDirty;
@@ -98,7 +98,9 @@ public class Editor extends Composite implements
         editor.addAttachHandler(event -> {
             if (event.isAttached()) {
                 if (!started) {
-                    // Can only be started once attached
+                    // Can only be started once attached, and Stroom's themes must be registered
+                    // before it starts with one
+                    StroomAceThemes.register();
                     editor.startEditor(theme.getName());
 
                     // TODO 04/01/2022 AT: This should be made configurable for dev use but can wait till v7.1

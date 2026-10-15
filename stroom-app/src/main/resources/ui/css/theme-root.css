@@ -143,7 +143,21 @@
     --link-tab__text-color: #222;
     --link-tab__text-color--focussed: #000;
 
-    --code-editor-right-bar__background-color: #fbfbfb;
+    /* The Stroom Light editor theme (editor-themes.css) */
+    --code-editor__background-color: var(--control__background-color);
+    --code-editor__text-color: var(--text-color);
+    --code-editor__gutter-background-color: #f3f4f6;
+    --code-editor__gutter-text-color: var(--text-color--muted);
+    --code-editor__active-line-background-color: rgba(0, 0, 0, 0.05);
+    --code-editor__gutter-active-line-background-color: rgba(0, 0, 0, 0.06);
+    --code-editor__selection-background-color: var(--row__background-color--selected);
+    --code-editor__selected-word-background-color: rgba(129, 212, 250, 0.25);
+    --code-editor__bracket-border-color: #a1a1a1;
+    --code-editor__indent-guide-color: rgba(0, 0, 0, 0.1);
+    --code-editor__invisible-color: #b0b0b0;
+    --code-editor__cursor-color: var(--text-color);
+
+    --code-editor-right-bar__background-color: var(--code-editor__gutter-background-color);
     --code-editor__border-color: #a1a1a1;
     --code-editor__border-color--info: #3676c6;
     --code-editor__background-color--info: #378cff;

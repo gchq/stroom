@@ -61,6 +61,11 @@ public enum AceEditorTheme {
     ------- IMPORTANT!!! -------
     */
 
+    // Stroom's own themes, which take their colours from the Stroom theme. They have no theme-*.js
+    // file; StroomAceThemes registers them with Ace and editor-themes.css styles them.
+    STROOM_LIGHT("stroom_light", ThemeType.LIGHT, true),
+    STROOM_DARK("stroom_dark", ThemeType.DARK, true),
+
     AMBIANCE("ambiance", ThemeType.DARK),
     CHAOS("chaos", ThemeType.DARK),
     CHROME("chrome", ThemeType.LIGHT),
@@ -110,8 +115,8 @@ public enum AceEditorTheme {
     VIBRANT_INK("vibrant_ink", ThemeType.DARK),
     XCODE("xcode", ThemeType.LIGHT);
 
-    public static final AceEditorTheme DEFAULT_LIGHT_THEME = AceEditorTheme.CHROME;
-    public static final AceEditorTheme DEFAULT_DARK_THEME = AceEditorTheme.TOMORROW_NIGHT;
+    public static final AceEditorTheme DEFAULT_LIGHT_THEME = AceEditorTheme.STROOM_LIGHT;
+    public static final AceEditorTheme DEFAULT_DARK_THEME = AceEditorTheme.STROOM_DARK;
 
     private static final EnumMap<ThemeType, Set<AceEditorTheme>> TYPE_TO_THEME_MAP = new EnumMap<>(
             ThemeType.class);
@@ -150,10 +155,16 @@ public enum AceEditorTheme {
 
     private final String name;
     private final ThemeType themeType;
+    private final boolean stroomTheme;
 
     AceEditorTheme(final String name, final ThemeType themeType) {
+        this(name, themeType, false);
+    }
+
+    AceEditorTheme(final String name, final ThemeType themeType, final boolean stroomTheme) {
         this.name = Objects.requireNonNull(name);
         this.themeType = Objects.requireNonNull(themeType);
+        this.stroomTheme = stroomTheme;
     }
 
     /**
@@ -173,6 +184,12 @@ public enum AceEditorTheme {
 
     public boolean isLight() {
         return themeType.isLight();
+    }
+
+    /// @return True if this is one of Stroom's own themes (e.g. Stroom Light), which have no Ace
+    /// theme file, rather than one of Ace's.
+    public boolean isStroomTheme() {
+        return stroomTheme;
     }
 
     public static AceEditorTheme fromName(final String name) {
@@ -197,7 +214,8 @@ public enum AceEditorTheme {
     public static List<AceEditorTheme> getThemesByType(final ThemeType themeType) {
         return TYPE_TO_THEME_MAP.get(themeType)
                 .stream()
-                .sorted(Comparator.comparing(AceEditorTheme::getName))
+                .sorted(Comparator.comparing((AceEditorTheme theme) -> !theme.isStroomTheme())
+                        .thenComparing(AceEditorTheme::getName))
                 .collect(Collectors.toList());
     }
 

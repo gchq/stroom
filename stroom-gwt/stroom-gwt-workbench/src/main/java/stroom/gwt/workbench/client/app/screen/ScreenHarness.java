@@ -362,7 +362,7 @@ public final class ScreenHarness {
 
     // As Stroom does when the user logs in, but keeping the page's classes and giving Stroom the
     // workbench's theme. The editor theme is left out, so that Ace follows the theme (as Stroom's
-    // default editor theme does), rather than e.g. the fixture's light 'chrome'.
+    // default editor theme does), rather than e.g. the fixture's light 'stroom_light'.
     private void applyUserPreferences(final UserPreferences preferences) {
         final Element html = Document.get().getDocumentElement();
         final String pageClasses = html.getClassName();

@@ -108,7 +108,7 @@ public final class StartupFixtures {
               "density": "Default",
               "editorKeyBindings": "STANDARD",
               "editorLiveAutoCompletion": "OFF",
-              "editorTheme": "chrome",
+              "editorTheme": "stroom_light",
               "enableTransparency": true,
               "font": "Roboto",
               "fontSize": "Medium",

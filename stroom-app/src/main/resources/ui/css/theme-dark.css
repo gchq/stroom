@@ -132,7 +132,21 @@
     --link-tab__text-color: var(--text-color);
     --link-tab__text-color--focussed: var(--text-color--selected);
 
-    --code-editor-right-bar__background-color: #16181b;
+    /* The Stroom Dark editor theme (editor-themes.css) */
+    --code-editor__background-color: var(--control__background-color);
+    --code-editor__text-color: var(--text-color);
+    --code-editor__gutter-background-color: #22262d;
+    --code-editor__gutter-text-color: var(--text-color--muted);
+    --code-editor__active-line-background-color: rgba(255, 255, 255, 0.04);
+    --code-editor__gutter-active-line-background-color: rgba(255, 255, 255, 0.06);
+    --code-editor__selection-background-color: var(--row__background-color--focussed);
+    --code-editor__selected-word-background-color: rgba(0, 120, 199, 0.25);
+    --code-editor__bracket-border-color: #75777a;
+    --code-editor__indent-guide-color: rgba(255, 255, 255, 0.1);
+    --code-editor__invisible-color: #5c6370;
+    --code-editor__cursor-color: #66b2f0;
+
+    --code-editor-right-bar__background-color: var(--code-editor__gutter-background-color);
     --code-editor__border-color: #000;
     --code-editor__border-color--info: #378cff;
     --code-editor__background-color--info: #378cff;

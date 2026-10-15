@@ -296,11 +296,12 @@ public final class AppShellStories {
                     final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));
                     chooseTheme(play, dialog, "Light");
-                    expectEditorThemes(play, dialog, "Chrome", "Cloud9 day", "Cloud editor", "Github light default",
-                            "Gruvbox light hard");
+                    expectEditorThemes(play, dialog, "Stroom light", "Chrome", "Cloud9 day", "Cloud editor",
+                            "Github light default", "Gruvbox light hard");
                     chooseTheme(play, dialog, "Dark");
-                    expectEditorThemes(play, dialog, "Ambiance", "Cloud9 night", "Cloud9 night low color",
-                            "Cloud editor dark", "Github dark", "Gruvbox dark hard", "One dark");
+                    expectEditorThemes(play, dialog, "Stroom dark", "Ambiance", "Cloud9 night",
+                            "Cloud9 night low color", "Cloud editor dark", "Github dark", "Gruvbox dark hard",
+                            "One dark");
                     expectNoProblems(play);
                 })
                 // The maintenance banner above the shell
@@ -1147,13 +1148,15 @@ public final class AppShellStories {
                 .toHaveTextContent(theme));
     }
 
-    // Opens the Editor tab's Editor Theme list and checks it offers the themes, then closes it
+    // Opens the Editor tab's Editor Theme list and checks it offers the themes, the first (Stroom's own)
+    // first, then closes it
     private static void expectEditorThemes(final Play play, final Play dialog, final String... themes) {
         final Play screen = play.screen();
         play.click(dialog.getByText("Editor", StroomDom.LINK_TAB_LABEL));
         play.click(dialog.querySelector("#userPreferencesEditorTheme .SelectionBox-textBox"));
         final Play list = screen.within(screen.findByText(themes[0], ".selectionItemCell-text")
                 .closest(".SelectionPopup"));
+        play.expect(list.querySelector(".selectionItemCell-text")).toHaveTextContent(themes[0]);
         for (final String theme : themes) {
             play.expect(list.getByText(theme, ".selectionItemCell-text")).toBeInTheDocument();
         }
