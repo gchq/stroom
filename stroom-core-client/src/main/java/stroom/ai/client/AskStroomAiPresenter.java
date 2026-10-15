@@ -18,6 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiApprovalScope;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
@@ -39,6 +40,7 @@ import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.GetAiMcpPromptRequest;
+import stroom.ai.shared.SetAiApproveEverythingRequest;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
@@ -65,6 +67,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
+import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
@@ -92,10 +95,10 @@ import com.google.gwt.dom.client.TextAreaElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
@@ -109,22 +112,24 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class AskStroomAiPresenter
         extends MyPresenter<AskStroomAiView, AskStroomAiProxy>
         implements AskStroomAiUiHandlers, ShowAskStroomAiEvent.Handler, AskStroomAiEvent.Handler {
 
+    // Moment.js patterns for the day a message is from, as a key and as shown in the divider.
+    private static final String DAY_KEY_PATTERN = "YYYYMMDD";
+    private static final String DAY_LABEL_PATTERN = "dddd D MMMM YYYY";
     private static final int ACTIVE_POLL_MS = 1_000;
     private static final int HIDDEN_POLL_MS = 5_000;
     private static final int STATUS_POLL_MS = 15_000;
     private static final int HIDDEN_STATUS_POLL_MS = 60_000;
-    private static final int MAX_SWITCHER_CHATS = 15;
     // For background checks, which should not show a spinner.
     private static final TaskMonitorFactory SILENT = () -> new TaskMonitor() {
         @Override
@@ -147,6 +152,8 @@ public class AskStroomAiPresenter
     private static final String WORKING_MESSAGE_ID = "ai-working-message";
     private static final String WORKING_TEXT_ID = "ai-working-text";
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
+    private static final String CHAT_ID_ATTRIBUTE = "data-chat-id";
+    private static final String DELETE_CHAT_ATTRIBUTE = "data-delete-chat-id";
     private static final String RUN_STATUS_ID = "ai-run-status";
     private static final String RESUME_RUN_ATTRIBUTE = "data-resume-run";
     private static final String RETRY_TURN_ATTRIBUTE = "data-retry-turn-id";
@@ -167,7 +174,7 @@ public class AskStroomAiPresenter
     private static final String COMPACT_COMMAND = "/compact";
     private static final List<AiSlashCommand> SLASH_COMMANDS = List.of(
             new AiSlashCommand(COMPACT_COMMAND, "[focus]",
-                    "Compact the conversation now, optionally saying what the summary should keep"));
+                    "Compact the chat now, optionally saying what the summary should keep"));
     private static final String LIVE_ANSWER_ID = "ai-live-answer";
     private static final int STREAMING_POLL_MS = 500;
     private static final long KEEP_POLLING_AFTER_ANSWER_MS = 15_000;
@@ -177,7 +184,6 @@ public class AskStroomAiPresenter
     private final MarkdownConverter markdownConverter;
     private final AskStroomAiClient askStroomAiClient;
     private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
-    private final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider;
     private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
     private final Provider<AiMemoryPresenter> memoryPresenterProvider;
     private final Provider<AiToolApprovalsPresenter> toolApprovalsPresenterProvider;
@@ -200,6 +206,8 @@ public class AskStroomAiPresenter
     private boolean statusesKnown;
     // True if the current chat was still working when it was last polled.
     private boolean currentRunActive;
+    // True while the list of chats is shown in place of the conversation.
+    private boolean chatListShowing;
     private long statusVersion;
     private Timer statusTimer;
     // How the chat is shown: DOCK, DIALOG or TAB, or null if hidden.
@@ -238,7 +246,6 @@ public class AskStroomAiPresenter
                                 final MarkdownConverter markdownConverter,
                                 final AskStroomAiClient askStroomAiClient,
                                 final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider,
-                                final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider,
                                 final Provider<DownloadChatPresenter> downloadChatPresenterProvider,
                                 final Provider<AiMemoryPresenter> memoryPresenterProvider,
                                 final Provider<AiToolApprovalsPresenter> toolApprovalsPresenterProvider,
@@ -252,7 +259,6 @@ public class AskStroomAiPresenter
         this.markdownConverter = markdownConverter;
         this.askStroomAiClient = askStroomAiClient;
         this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
-        this.aiChatHistoryPresenterProvider = aiChatHistoryPresenterProvider;
         this.downloadChatPresenterProvider = downloadChatPresenterProvider;
         this.memoryPresenterProvider = memoryPresenterProvider;
         this.toolApprovalsPresenterProvider = toolApprovalsPresenterProvider;
@@ -286,6 +292,12 @@ public class AskStroomAiPresenter
         statusTimer.schedule(0);
         registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event ->
                 writeModel()));
+
+        registerHandler(getView().getChatList().addDomHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                onChatListClick(e.getNativeEvent().getEventTarget().cast());
+            }
+        }, ClickEvent.getType()));
 
         registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
@@ -386,20 +398,7 @@ public class AskStroomAiPresenter
                     final String data = button.getAttribute("data");
                     if (NullSafe.isNonBlankString(data)) {
                         if (ClipboardUtil.copy(data)) {
-                            // Code to change label
-                            final Element copyIcon = ElementUtil.findChild(button, "svgIcon");
-                            final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
-                            if (copyLabel != null) {
-                                copyIcon.setInnerHTML(SvgImage.OK.getSvg());
-                                copyLabel.setInnerHTML("Copied");
-                                new com.google.gwt.user.client.Timer() {
-                                    @Override
-                                    public void run() {
-                                        copyIcon.setInnerHTML(SvgImage.COPY.getSvg());
-                                        copyLabel.setInnerHTML("Copy");
-                                    }
-                                }.schedule(2000);
-                            }
+                            flashCopied(button);
                         }
                     }
                 }
@@ -654,6 +653,9 @@ public class AskStroomAiPresenter
                 }
                 statusesKnown = true;
                 fireBadge();
+                if (chatListShowing) {
+                    renderChatList();
+                }
             }
             statusTimer.schedule(DocumentVisibility.isHidden()
                     ? HIDDEN_STATUS_POLL_MS
@@ -714,41 +716,82 @@ public class AskStroomAiPresenter
 
     @Override
     public void onShowSwitcher(final Element target) {
-        final List<Item> items = new ArrayList<>();
-        int priority = 0;
+        // Clicking the title again closes the list.
+        setChatListShowing(!chatListShowing);
+    }
+
+    private void setChatListShowing(final boolean showing) {
+        chatListShowing = showing;
+        getView().setChatListVisible(showing);
+        if (showing) {
+            renderChatList();
+            // Bring it up to date, e.g. with chats made in another browser tab.
+            checkChatStatuses();
+        }
+    }
+
+    /**
+     * Shows the user's chats, most recent first, each with when it was last active and a button to delete it.
+     */
+    private void renderChatList() {
+        final HtmlBuilder hb = new HtmlBuilder();
+        if (chatStatuses.isEmpty()) {
+            hb.div(div -> div.append("You have no chats yet."), Attribute.className("ai-chat-list-empty"));
+        }
         for (final AiChatStatus status : chatStatuses) {
-            if (items.size() >= MAX_SWITCHER_CHATS) {
-                break;
-            }
             final boolean current = currentChat != null && currentChat.getId() == status.getChatId();
-            items.add(new IconMenuItem.Builder()
-                    .priority(priority++)
-                    .icon(switcherIcon(status))
-                    .highlight(current)
-                    .text(NullSafe.nonBlankStringElse(status.getTitle(), "New conversation") + switcherNote(status))
-                    .command(() -> loadChat(new AiChat(status.getChatId(), 0L, status.getUpdateTimeMs(), null,
-                            status.getTitle())))
-                    .build());
+            final String title = NullSafe.nonBlankStringElse(status.getTitle(), "New chat");
+            hb.div(item -> {
+                item.div(iconDiv -> icon(iconDiv, switcherIcon(status)), Attribute.className("ai-chat-list-icon"));
+                item.div(text -> {
+                    text.div(name -> name.append(title), Attribute.className("ai-chat-list-title"),
+                            Attribute.title(title));
+                    final String note = switcherNote(status);
+                    text.div(when -> when.append(dateTimeFormatter.formatRelative(status.getUpdateTimeMs(),
+                                            System.currentTimeMillis())
+                                    + (note.isEmpty()
+                                    ? ""
+                                    : " ·" + note.substring(2))),
+                            Attribute.className("ai-chat-list-when"),
+                            Attribute.title("Last active " + dateTimeFormatter.format(status.getUpdateTimeMs())));
+                }, Attribute.className("ai-chat-list-text"));
+                button(item, SvgImage.DELETE,
+                        iconButtonClassName("ai-chat-list-delete"),
+                        Attribute.title("Delete chat"),
+                        new Attribute(DELETE_CHAT_ATTRIBUTE, String.valueOf(status.getChatId())));
+            }, Attribute.className(current
+                            ? "ai-chat-list-item ai-chat-list-item--current"
+                            : "ai-chat-list-item"),
+                    new Attribute(CHAT_ID_ATTRIBUTE, String.valueOf(status.getChatId())),
+                    Attribute.title("Open " + title));
         }
-        if (!items.isEmpty()) {
-            items.add(new Separator(priority++));
+        getView().getChatList().getElement().setInnerSafeHtml(hb.toSafeHtml());
+    }
+
+    private void onChatListClick(final Element target) {
+        final Element delete = ElementUtil.findParent(target, element ->
+                element.hasAttribute(DELETE_CHAT_ATTRIBUTE), 4);
+        if (delete != null) {
+            final int chatId = Integer.parseInt(delete.getAttribute(DELETE_CHAT_ATTRIBUTE));
+            findStatus(chatId).ifPresent(status -> deleteChat(new AiChat(chatId, 0L, status.getUpdateTimeMs(),
+                    null, status.getTitle())));
+            return;
         }
-        items.add(new IconMenuItem.Builder()
-                .priority(priority++)
-                .icon(SvgImage.ADD)
-                .text("New Conversation")
-                .command(this::onNewChat)
-                .build());
-        items.add(new IconMenuItem.Builder()
-                .priority(priority)
-                .icon(SvgImage.HISTORY)
-                .text("All Conversations…")
-                .command(this::onShowHistory)
-                .build());
-        ShowMenuEvent.builder()
-                .items(items)
-                .popupPosition(new PopupPosition(new Rect(target).grow(3), PopupLocation.BELOW))
-                .fire(this);
+        final Element item = ElementUtil.findParent(target, element ->
+                element.hasAttribute(CHAT_ID_ATTRIBUTE), 5);
+        if (item != null) {
+            final int chatId = Integer.parseInt(item.getAttribute(CHAT_ID_ATTRIBUTE));
+            findStatus(chatId).ifPresent(status -> {
+                setChatListShowing(false);
+                loadChat(new AiChat(chatId, 0L, status.getUpdateTimeMs(), null, status.getTitle()));
+            });
+        }
+    }
+
+    private Optional<AiChatStatus> findStatus(final int chatId) {
+        return chatStatuses.stream()
+                .filter(status -> status.getChatId() == chatId)
+                .findFirst();
     }
 
     private static SvgImage switcherIcon(final AiChatStatus status) {
@@ -790,7 +833,7 @@ public class AskStroomAiPresenter
         if (currentChat == null) {
             return;
         }
-        PromptEvent.fire(this, "Rename Conversation", "Name for this conversation:", currentChat.getTitle(), title -> {
+        PromptEvent.fire(this, "Rename Chat", "Name for this chat:", currentChat.getTitle(), title -> {
             if (title != null && !title.isBlank() && currentChat != null) {
                 setChatTitle(title.strip());
                 titleGenerated = true;
@@ -1147,7 +1190,7 @@ public class AskStroomAiPresenter
         if (currentChat == null) {
             return;
         }
-        final String question = "Compact this conversation now? Earlier messages are kept, but the model will see "
+        final String question = "Compact this chat now? Earlier messages are kept, but the model will see "
                                 + "them as a summary. Optionally, say what the summary should focus on:";
         PromptEvent.fire(this, "Compact Context", question, "",
                 focus -> {
@@ -1163,7 +1206,7 @@ public class AskStroomAiPresenter
         askStroomAiClient.getConfig(config -> askStroomAiClient.compactChat(
                 new CompactAiChatRequest(currentChat, config, focus),
                 response -> startPolling(),
-                error -> showError(error, "Unable to compact the conversation", null),
+                error -> showError(error, "Unable to compact the chat", null),
                 getView()), getView());
     }
 
@@ -1289,7 +1332,7 @@ public class AskStroomAiPresenter
 
         ensureChat(() -> askStroomAiClient.getConfig(config -> {
             final AskStroomAiRequest request = new AskStroomAiRequest(
-                    currentChat, config, data, message);
+                    currentChat, config, data, message, getView().getAgentMode());
             // Clear context so follow-up messages don't re-attach the same data.
             this.data = null;
             requestInFlight = true;
@@ -1312,19 +1355,35 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * Shows that a copy button has copied, for a moment.
+     * Shows, for a moment, that a copy button has copied: its icon becomes a tick, and its label (if it has one)
+     * says so.
      */
     private static void flashCopied(final Element button) {
-        final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
-        if (copyLabel == null) {
-            return;
+        final Element svgIcon = ElementUtil.findChild(button, "svgIcon");
+        final Element icon = svgIcon != null
+                ? svgIcon
+                : ElementUtil.findChild(button, "svg-image");
+        final Element label = ElementUtil.findChild(button, "ai-message-copy-label");
+        final String iconHtml = NullSafe.get(icon, Element::getInnerHTML);
+        final String labelText = NullSafe.get(label, Element::getInnerText);
+        final String title = button.getTitle();
+        if (icon != null) {
+            icon.setInnerHTML(SvgImage.OK.getSvg());
         }
-        final String label = copyLabel.getInnerText();
-        copyLabel.setInnerText("Copied");
+        if (label != null) {
+            label.setInnerText("Copied");
+        }
+        button.setTitle("Copied");
         new Timer() {
             @Override
             public void run() {
-                copyLabel.setInnerText(label);
+                if (icon != null) {
+                    icon.setInnerHTML(iconHtml);
+                }
+                if (label != null) {
+                    label.setInnerText(labelText);
+                }
+                button.setTitle(title);
             }
         }.schedule(2000);
     }
@@ -1821,19 +1880,19 @@ public class AskStroomAiPresenter
         if (timeMs <= 0) {
             return;
         }
-        final DateTimeFormat dayFormat = DateTimeFormat.getFormat("yyyyMMdd");
-        final String day = dayFormat.format(new Date(timeMs));
+        // Days are worked out in the user's preferred time zone, as the message times are.
+        final String day = dateTimeFormatter.format(timeMs, DAY_KEY_PATTERN);
         if (day.equals(lastRenderedDay)) {
             return;
         }
         lastRenderedDay = day;
         final String label;
-        if (day.equals(dayFormat.format(new Date(nowMs)))) {
+        if (day.equals(dateTimeFormatter.format(nowMs, DAY_KEY_PATTERN))) {
             label = "Today";
-        } else if (day.equals(dayFormat.format(new Date(nowMs - 24L * 60 * 60 * 1000)))) {
+        } else if (day.equals(dateTimeFormatter.format(nowMs - 24L * 60 * 60 * 1000, DAY_KEY_PATTERN))) {
             label = "Yesterday";
         } else {
-            label = DateTimeFormat.getFormat("EEEE d MMMM yyyy").format(new Date(timeMs));
+            label = dateTimeFormatter.format(timeMs, DAY_LABEL_PATTERN);
         }
         final Element divider = Document.get().createDivElement();
         divider.setClassName(DAY_DIVIDER_CLASS);
@@ -2116,18 +2175,14 @@ public class AskStroomAiPresenter
 
                 // Add copy buttons: the original markdown, and for answers the text as shown.
                 if (showCopy) {
-                    footer.elem(button ->
-                                    setCopyButtonContent(button, SvgImage.COPY, "Copy"),
-                            BUTTON,
-                            Attribute.className("ai-message-copy"),
-                            Attribute.title("Copy the markdown"),
+                    button(footer, SvgImage.COPY,
+                            iconButtonClassName("ai-message-copy-icon"),
+                            Attribute.title("Copy (as Markdown)"),
                             new Attribute("data", markdownText));
                     if (assistant) {
-                        footer.elem(button ->
-                                        setCopyButtonContent(button, SvgImage.COPY, "Copy as text"),
-                                BUTTON,
-                                Attribute.className("ai-message-copy"),
-                                Attribute.title("Copy the text as shown"),
+                        button(footer, SvgImage.COPY_TEXT,
+                                iconButtonClassName("ai-message-copy-icon"),
+                                Attribute.title("Copy as text"),
                                 new Attribute(COPY_TEXT_ATTRIBUTE, "true"));
                     }
                 }
@@ -2568,6 +2623,11 @@ public class AskStroomAiPresenter
 
     @Override
     public void onNewChat() {
+        setChatListShowing(false);
+        startNewChat();
+    }
+
+    private void startNewChat() {
         askStroomAiClient.createChat(chat -> {
             currentChat = chat;
             currentRunActive = false;
@@ -2578,12 +2638,69 @@ public class AskStroomAiPresenter
             getView().setEmptyState(true);
             getView().clearContextIndicator();
             setChatTitle(chat.getTitle());
+            // A new chat works in the mode last chosen.
+            if (getView().getAgentMode() != AiAgentMode.AGENT) {
+                askStroomAiClient.setAgentMode(chat.getId(), getView().getAgentMode(), this);
+            }
+            refreshAutoApprove();
             getView().focus();
         }, this);
     }
 
-    private void onShowHistory() {
-        aiChatHistoryPresenterProvider.get().show(this::loadChat);
+    @Override
+    public void onAgentModeChange(final AiAgentMode mode) {
+        if (currentChat != null) {
+            askStroomAiClient.setAgentMode(currentChat.getId(), mode, this);
+        }
+    }
+
+    @Override
+    public void onToggleAutoApprove() {
+        if (currentChat == null) {
+            return;
+        }
+        final AiChat chat = currentChat;
+        askStroomAiClient.listToolApprovals(chat.getId(), response -> {
+            if (response.isApproveEverything()) {
+                setAutoApprove(chat, false);
+            } else if (!response.isApproveEverythingAllowed()) {
+                AlertEvent.fireInfo(this, "Auto-approve is not allowed. An administrator can allow it with "
+                                          + "the 'allowApproveEverything' property.", null);
+            } else {
+                final String question = "Auto-approve in this chat? Tool calls on trusted servers will run "
+                                        + "without asking you, including ones that change things.";
+                ConfirmEvent.fire(this, question, ok -> {
+                    if (ok) {
+                        setAutoApprove(chat, true);
+                    }
+                });
+            }
+        }, error -> showError(error, "Unable to check auto-approve", null), this);
+    }
+
+    private void setAutoApprove(final AiChat chat, final boolean on) {
+        askStroomAiClient.setApproveEverything(new SetAiApproveEverythingRequest(chat, on), done -> {
+            refreshAutoApprove();
+            checkChatStatuses();
+        }, error -> showError(error, "Unable to change auto-approve", null), this);
+    }
+
+    /**
+     * Shows whether auto-approve is on in the current chat, and whether it may be turned on.
+     */
+    private void refreshAutoApprove() {
+        if (currentChat == null) {
+            getView().setAutoApprove(false, true);
+            return;
+        }
+        final int chatId = currentChat.getId();
+        askStroomAiClient.listToolApprovals(chatId, response -> {
+            if (currentChat != null && currentChat.getId() == chatId) {
+                getView().setAutoApprove(response.isApproveEverything(), response.isApproveEverythingAllowed());
+            }
+        }, error -> {
+            // Leave the button as it is; the user sees any problem if they click it.
+        }, SILENT);
     }
 
     private void onDownloadChat() {
@@ -2639,10 +2756,15 @@ public class AskStroomAiPresenter
      * Deletes the chat, after asking, and starts a new one in its place.
      */
     private void onDeleteChat() {
-        if (currentChat == null) {
-            return;
+        if (currentChat != null) {
+            deleteChat(currentChat);
         }
-        final AiChat chat = currentChat;
+    }
+
+    /**
+     * Deletes a chat, after asking. If it is the one being looked at, a new chat is started in its place.
+     */
+    private void deleteChat(final AiChat chat) {
         final String title = NullSafe.isBlankString(chat.getTitle())
                 ? "this chat"
                 : "“" + chat.getTitle() + "”";
@@ -2657,7 +2779,7 @@ public class AskStroomAiPresenter
                         askStroomAiClient.deleteChat(chat.getId(), success -> {
                             // Only move on if the user is still looking at the chat that was deleted.
                             if (currentChat != null && currentChat.getId() == chat.getId()) {
-                                onNewChat();
+                                startNewChat();
                             }
                             checkChatStatuses();
                         }, getView());
@@ -2694,6 +2816,10 @@ public class AskStroomAiPresenter
         clearRenderedMessages();
         getView().clearContextIndicator();
         setChatTitle(chat.getTitle());
+        getView().setAgentMode(findStatus(chat.getId())
+                .map(AiChatStatus::getAgentMode)
+                .orElse(AiAgentMode.AGENT));
+        refreshAutoApprove();
 
         // Load messages for the selected chat.
         askStroomAiClient.getMessages(chat.getId(), messages -> {
@@ -2790,6 +2916,22 @@ public class AskStroomAiPresenter
 
         void setEmptyState(boolean empty);
 
+        /// @return The panel the list of chats is shown in.
+        FlowPanel getChatList();
+
+        /// Shows the list of chats in place of the conversation, or the conversation again.
+        void setChatListVisible(boolean visible);
+
+        /// @return How the agent is to work in the chat.
+        AiAgentMode getAgentMode();
+
+        /// @param mode How the agent works in the chat.
+        void setAgentMode(AiAgentMode mode);
+
+        /// @param on      True if auto-approve is on in the chat.
+        /// @param allowed True if an administrator allows it to be turned on.
+        void setAutoApprove(boolean on, boolean allowed);
+
         void setContextIndicator(SvgImage icon, String text);
 
         void clearContextIndicator();
@@ -2835,10 +2977,12 @@ public class AskStroomAiPresenter
     private void getDockBehaviourFromPrefs(final Consumer<DockBehaviour> consumer) {
         askStroomAiClient.getConfig(currentConfig -> {
             if (currentConfig != null) {
-                final DockType type = currentConfig.getDockType() == DockType.FLOAT
-                        ? DockType.DOCK
+                final DockType type = currentConfig.getDockType() == null
+                                      || currentConfig.getDockType() == DockType.FLOAT
+                        ? AskStroomAiConfig.DEFAULT_DOCK_TYPE
                         : currentConfig.getDockType();
-                final DockLocation location = currentConfig.getDockLocation();
+                final DockLocation location = Objects.requireNonNullElse(currentConfig.getDockLocation(),
+                        AskStroomAiConfig.DEFAULT_DOCK_LOCATION);
                 consumer.accept(new DockBehaviour(type, location));
             } else {
                 consumer.accept(DEFAULT_DOCK_BEHAVIOUR);

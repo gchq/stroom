@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentDataPage;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
@@ -58,6 +59,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -89,12 +91,15 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     private final Provider<AskStroomAIService> askStroomAIServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
+    private final Provider<UserPreferencesService> userPreferencesServiceProvider;
 
     @Inject
     AskStroomAiResourceImpl(final Provider<AskStroomAIService> askStroomAIServiceProvider,
-                            final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
+                            final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
+                            final Provider<UserPreferencesService> userPreferencesServiceProvider) {
         this.askStroomAIServiceProvider = askStroomAIServiceProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
+        this.userPreferencesServiceProvider = userPreferencesServiceProvider;
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -269,6 +274,31 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
         return askStroomAIServiceProvider.get().getDefaultConfig();
     }
 
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Boolean setAgentMode(final int chatId, final AiAgentMode mode) {
+        askStroomAIServiceProvider.get().setAgentMode(chatId, mode);
+        return true;
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Integer resetAllUsersConfig() {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "resetAllUsersConfig"))
+                .withDescription("Reset every user's Ask Stroom AI settings to the defaults")
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AskStroomAIConfig")
+                                        .withName("All users")
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> userPreferencesServiceProvider.get().clearAskStroomAiConfigs())
+                .getResultAndLog();
+    }
+
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public Boolean setDefaultAskStroomAIConfig(final AskStroomAiConfig config) {
@@ -301,7 +331,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     public AiChat createChat() {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "createChat"))
-                .withDescription("Create a new AI chat conversation")
+                .withDescription("Create a new AI chat")
                 .withDefaultEventAction(CreateEventAction.builder()
                         .addObject(OtherObject.builder()
                                 .withType("AiChat")
@@ -327,7 +357,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     public ResultPage<AiChat> listChats(final FindAiChatHistoryCriteria criteria) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "listChats"))
-                .withDescription("List AI chat conversations")
+                .withDescription("List AI chats")
                 .withDefaultEventAction(SearchEventAction.builder()
                         .withQuery(Query.builder()
                                 .withRaw(NullSafe.get(criteria,
@@ -352,7 +382,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     public AiChat getChat(final int chatId) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "getChat"))
-                .withDescription("View AI chat conversation " + chatId)
+                .withDescription("View AI chat " + chatId)
                 .withDefaultEventAction(ViewEventAction.builder()
                         .addObject(chatObject(chatId))
                         .build())
@@ -366,7 +396,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     public Boolean deleteChat(final int chatId) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "deleteChat"))
-                .withDescription("Delete AI chat conversation " + chatId)
+                .withDescription("Delete AI chat " + chatId)
                 .withDefaultEventAction(DeleteEventAction.builder()
                         .addObject(chatObject(chatId))
                         .build())

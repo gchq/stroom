@@ -17,6 +17,7 @@
 package stroom.ai.impl.mock;
 
 import stroom.ai.impl.AiDao;
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
@@ -197,6 +198,16 @@ public class MockAiDao implements AiDao {
 
     @Override
     public void setApproveEverything(final int chatId, final boolean enabled) {
+        // Not supported by the mock.
+    }
+
+    @Override
+    public AiAgentMode getAgentMode(final int chatId) {
+        return AiAgentMode.AGENT;
+    }
+
+    @Override
+    public void setAgentMode(final int chatId, final AiAgentMode mode) {
         // Not supported by the mock.
     }
 

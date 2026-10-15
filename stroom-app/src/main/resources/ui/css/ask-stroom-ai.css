@@ -36,6 +36,7 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    gap: 8px;
 }
 
 /* Room around the conversation, so text does not run up against the panel's edges. */
@@ -55,6 +56,55 @@
     border: 1px solid var(--splitter__background-color);
     border-radius: .25rem;
     padding: 5px;
+}
+
+/* While a question is being worked on, the input box gets a glowing border in the app's blues, with a bright
+   highlight that travels round it, as VS Code does. The border is a gradient behind the box, so the box's own clipping does
+   not hide it. */
+@property --ai-glow-angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+}
+
+.askStroomAiViewImpl-bottom-inner--working {
+    border: 2px solid transparent;
+    padding: 4px;
+    background:
+        linear-gradient(var(--page__background-color), var(--page__background-color)) padding-box,
+        conic-gradient(from var(--ai-glow-angle),
+            rgba(var(--blue-500-rgb), 0.45) 0deg,
+            rgba(var(--blue-500-rgb), 0.45) 200deg,
+            var(--blue-300) 270deg,
+            #e3f2fd 310deg,
+            #4fc3f7 330deg,
+            rgba(var(--blue-500-rgb), 0.45) 360deg) border-box;
+    animation:
+        ai-glow-turn 3s linear infinite,
+        ai-glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ai-glow-turn {
+    to {
+        --ai-glow-angle: 360deg;
+    }
+}
+
+@keyframes ai-glow-pulse {
+    0%, 100% {
+        box-shadow: 0 0 4px 0 rgba(var(--blue-500-rgb), 0.35);
+    }
+    50% {
+        box-shadow: 0 0 14px 2px rgba(var(--blue-500-rgb), 0.6);
+    }
+}
+
+/* For people who have asked for less motion: a steady glow instead. */
+@media (prefers-reduced-motion: reduce) {
+    .askStroomAiViewImpl-bottom-inner--working {
+        animation: none;
+        box-shadow: 0 0 8px 1px rgba(var(--blue-500-rgb), 0.5);
+    }
 }
 
 .askStroomAiViewImpl-messagePane {
@@ -99,8 +149,26 @@
     color: #d32f2f;
 }
 
+/* The model picker is as wide as the model's name (up to the room there is), so its drop-down arrow sits
+   beside the name rather than at the far end of the row. */
 .askStroomAiViewImpl-modelPane .dropDownView-container {
-    width: 100%;
+    width: auto;
+    max-width: 100%;
+    padding-right: 22px;
+    box-sizing: border-box;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-label {
+    text-overflow: ellipsis;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-container {
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-container:hover {
+    background: var(--curve-tab__background-color--hover);
 }
 
 .askStroomAiViewImpl-modelPane .dropDownView-button {
@@ -262,17 +330,26 @@
 
 .askStroomAiViewImpl-jumpToLatest {
     position: absolute;
-    bottom: 10px;
+    bottom: 12px;
     left: 50%;
     transform: translateX(-50%);
     cursor: pointer;
-    font-size: 0.85em;
-    padding: 3px 12px;
-    border-radius: 14px;
+    font-size: 1em;
+    font-weight: 600;
+    padding: 6px 18px;
+    border-radius: 18px;
     color: #ffffff;
     background: #1976d2;
     border: none;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.askStroomAiViewImpl-jumpToLatestArrow {
+    font-size: 1.3em;
+    font-weight: 700;
+    line-height: 1;
+    margin-right: 6px;
+    vertical-align: -0.1em;
 }
 
 .askStroomAiViewImpl-jumpToLatest:hover {
@@ -479,23 +556,6 @@
     border-color: var(--control__text-color);
 }
 
-.aiChatHistoryCell {
-}
-
-.aiChatHistoryCell-row {
-    display: flex;
-    flex-direction: row;
-    padding: 5px;
-    gap: 5px;
-}
-
-.aiChatHistoryCell-title {
-    flex-grow: 1;
-}
-
-.aiChatHistoryCell-age {
-    opacity: 0.6;
-}
 
 /* ---- Delete button (visible on hover) ---- */
 
@@ -550,8 +610,17 @@
 }
 
 /* The chat title opens the chat switcher. */
+/* The chat title, which opens the list of chats. It highlights on hover, as a tab does, and while the list is
+   open. */
 .askStroomAiViewImpl-switcher {
     cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.askStroomAiViewImpl-switcher:hover,
+.askStroomAiViewImpl-switcher--open {
+    background: var(--curve-tab__background-color--hover);
 }
 
 .askStroomAiViewImpl-switcher::after {
@@ -564,6 +633,13 @@
 .ai-badge--busy,
 .ai-badge--unread {
     position: relative;
+}
+
+/* Toolbar buttons are dimmed, which would dim the badge too, so a button with a badge is shown in full. */
+.navigation-menu-button.ai-badge--needs-you,
+.navigation-menu-button.ai-badge--busy,
+.navigation-menu-button.ai-badge--unread {
+    opacity: 1;
 }
 
 .ai-badge--needs-you::after,
@@ -589,9 +665,10 @@
     animation: ai-badge-pulse 1.5s ease-in-out infinite;
 }
 
-/* Green, so it stands out from the blue button. */
+/* A bright green with a white ring, so it stands out from the blue button and the dark toolbar alike. */
 .ai-badge--unread::after {
-    background-color: #43a047;
+    background-color: #00e676;
+    box-shadow: 0 0 0 2px #ffffff;
 }
 
 @keyframes ai-badge-pulse {
@@ -1014,4 +1091,137 @@
 .mcpToolServer-policyValue {
     flex: none;
     width: 150px;
+}
+
+/* The "New chat" button in the chat's header: labelled, but compact enough for the header. */
+.askStroomAiViewImpl-newChat.Button {
+    min-width: 0;
+    height: 28px;
+    /* The button is sized from its label alone, so the extra on the left makes room for the icon; the icon
+       and label are then centred, leaving about 14px either side. */
+    padding: 0 18px 0 34px;
+    align-self: center;
+    white-space: nowrap;
+}
+
+.askStroomAiViewImpl-newChat.Button .Button__content {
+    gap: 6px;
+}
+
+/* ---- The list of chats, shown in place of the conversation ---- */
+
+.askStroomAiViewImpl-chatList {
+    overflow: auto;
+    padding: 8px 12px 16px;
+}
+
+.ai-chat-list-empty {
+    padding: 24px 8px;
+    text-align: center;
+    color: var(--control__text-color--disabled);
+}
+
+.ai-chat-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    margin-bottom: 2px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.ai-chat-list-item:hover {
+    background: var(--curve-tab__background-color--hover);
+}
+
+.ai-chat-list-item--current {
+    background: rgba(var(--blue-500-rgb), 0.16);
+}
+
+.ai-chat-list-icon {
+    flex: none;
+    display: flex;
+}
+
+.ai-chat-list-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.ai-chat-list-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ai-chat-list-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.ai-chat-list-when {
+    font-size: var(--ai-font-size--meta);
+    color: var(--control__text-color--disabled);
+}
+
+/* Only shown on the item being pointed at, so the list stays calm. */
+.ai-chat-list-delete {
+    flex: none;
+    visibility: hidden;
+    color: var(--control__text-color--disabled);
+    background: none;
+    border: none;
+}
+
+.ai-chat-list-item:hover .ai-chat-list-delete,
+.ai-chat-list-delete:focus {
+    visibility: visible;
+}
+
+.ai-chat-list-delete:hover {
+    color: var(--text-color--red, #d32f2f);
+}
+
+/* ---- Agent mode and auto-approve, beside the model ---- */
+
+/* As compact as the model picker: no box until pointed at. */
+.askStroomAiViewImpl-agentMode.SelectionBox {
+    flex: none;
+    width: 84px;
+    border-color: transparent;
+    background: none;
+    cursor: pointer;
+}
+
+.askStroomAiViewImpl-agentMode.SelectionBox:hover {
+    background: var(--curve-tab__background-color--hover);
+}
+
+.askStroomAiViewImpl-agentMode input,
+.askStroomAiViewImpl-agentMode .SelectionBox-renderBox {
+    background: transparent;
+    cursor: pointer;
+}
+
+.askStroomAiViewImpl-autoApprove {
+    flex: none;
+    border-radius: 4px;
+    opacity: 0.7;
+}
+
+.askStroomAiViewImpl-autoApprove:hover {
+    opacity: 1;
+    background: var(--curve-tab__background-color--hover);
+}
+
+/* On: the shield is filled with the app's blue, so it is plain that calls run without asking. */
+.askStroomAiViewImpl-autoApprove--on {
+    opacity: 1;
+    background: rgba(var(--blue-500-rgb), 0.2);
+    color: var(--blue-300);
+}
+
+.askStroomAiViewImpl-autoApprove--on svg {
+    color: var(--blue-300);
 }

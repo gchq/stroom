@@ -16,6 +16,7 @@
 
 package stroom.ai.client;
 
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentDataPage;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
@@ -38,7 +39,6 @@ import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DeleteAiMemoryRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
-import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GetAiMcpPromptRequest;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.SaveAiMemoryRequest;
@@ -52,7 +52,6 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
-import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -68,6 +67,8 @@ public class AskStroomAiClient {
 
     private final RestFactory restFactory;
     private final UserPreferencesManager userPreferencesManager;
+    // The configured defaults, once fetched.
+    private AskStroomAiConfig defaultConfig;
 
     @Inject
     public AskStroomAiClient(final RestFactory restFactory,
@@ -86,33 +87,58 @@ public class AskStroomAiClient {
         }, taskMonitorFactory);
     }
 
+    /// Gets the user's Ask Stroom AI settings. A user who has not changed any gets the configured defaults, which
+    /// are not copied into their preferences, so they follow any later change to the defaults. A user whose
+    /// settings have no model (e.g. saved before a model was set up) gets the default model.
     void getConfig(final Consumer<AskStroomAiConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
         final AskStroomAiConfig config = NullSafe.get(userPreferencesManager.getCurrentUserPreferences(),
                 UserPreferences::getAskStroomAiConfig);
-        if (config != null) {
+        if (config != null && config.getModelRef() != null) {
             consumer.accept(config);
         } else {
-            // If the user preferences do not contain an AI config then load the defaults.
-            getDefaultConfig(defaultConfig -> {
-                final AskStroomAiConfig currentUserPrefConfig = NullSafe.get(
-                        userPreferencesManager.getCurrentUserPreferences(), UserPreferences::getAskStroomAiConfig);
-                if (currentUserPrefConfig == null) {
-                    // Establish the user preference default config.
-                    setConfig(defaultConfig, taskMonitorFactory);
-                    consumer.accept(defaultConfig);
-                } else {
-                    consumer.accept(currentUserPrefConfig);
-                }
-            }, taskMonitorFactory);
+            getDefaultConfig(defaultConfig -> consumer.accept(config == null
+                    ? defaultConfig
+                    : config.copy().modelRef(defaultConfig.getModelRef()).build()), taskMonitorFactory);
         }
+    }
+
+    /// Resets every user's Ask Stroom AI settings to the configured defaults. Needs the Manage Properties
+    /// permission.
+    ///
+    /// @param consumer Given how many users' (and default) preference records were changed.
+    void resetAllUsersConfig(final Consumer<Integer> consumer, final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(AskStroomAiResource::resetAllUsersConfig)
+                .onSuccess(count -> {
+                    defaultConfig = null;
+                    // This user's own settings were reset too, so stop using the ones loaded earlier.
+                    final UserPreferences current = userPreferencesManager.getCurrentUserPreferences();
+                    if (current != null) {
+                        userPreferencesManager.setCurrentPreferences(current.copy()
+                                .askStroomAiConfig(null)
+                                .build());
+                    }
+                    consumer.accept(count);
+                })
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     void getDefaultConfig(final Consumer<AskStroomAiConfig> consumer,
                           final TaskMonitorFactory taskMonitorFactory) {
+        // Users who have not changed their settings use the defaults all the time, so keep them.
+        if (defaultConfig != null) {
+            consumer.accept(defaultConfig);
+            return;
+        }
         restFactory
                 .create(RESOURCE)
                 .method(AskStroomAiResource::getDefaultConfig)
-                .onSuccess(consumer)
+                .onSuccess(config -> {
+                    defaultConfig = config;
+                    consumer.accept(config);
+                })
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
@@ -123,7 +149,11 @@ public class AskStroomAiClient {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.setDefaultAskStroomAIConfig(config))
-                .onSuccess(consumer)
+                .onSuccess(result -> {
+                    // Fetch the new defaults next time.
+                    defaultConfig = null;
+                    consumer.accept(result);
+                })
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
@@ -297,6 +327,19 @@ public class AskStroomAiClient {
                 .exec();
     }
 
+    /// Sets how the agent works in a chat.
+    void setAgentMode(final int chatId,
+                      final AiAgentMode mode,
+                      final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.setAgentMode(chatId, mode))
+                .onSuccess(done -> {
+                })
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
     /**
      * Lists the prompts the model's MCP servers offer, as slash commands.
      */
@@ -389,17 +432,6 @@ public class AskStroomAiClient {
         restFactory
                 .create(RESOURCE)
                 .method(AskStroomAiResource::createChat)
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    void listChats(final FindAiChatHistoryCriteria criteria,
-                   final Consumer<ResultPage<AiChat>> consumer,
-                   final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(RESOURCE)
-                .method(res -> res.listChats(criteria))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();

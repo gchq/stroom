@@ -20,6 +20,7 @@ import stroom.ai.api.SimpleTokenCountEstimator;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.jooq.tables.records.AiChatMessageRecord;
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
@@ -47,11 +48,13 @@ import stroom.util.shared.UserRef;
 import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.InsertSetMoreStep;
 import org.jooq.Record;
-import org.jooq.Record4;
+import org.jooq.Record5;
 import org.jooq.impl.DSL;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -111,7 +114,7 @@ public class AiDaoImpl implements AiDao {
         final long now = System.currentTimeMillis();
         final String userName = userRef.toDisplayString();
         final String userUuid = userRef.getUuid();
-        final String title = "New Conversation";
+        final String title = "New chat";
 
         final int id = JooqUtil.contextResult(aiDbConnProvider, context -> context
                 .insertInto(AI_CHAT)
@@ -645,6 +648,26 @@ public class AiDaoImpl implements AiDao {
     }
 
     @Override
+    public AiAgentMode getAgentMode(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .select(AI_CHAT.AGENT_MODE)
+                .from(AI_CHAT)
+                .where(AI_CHAT.ID.eq(chatId))
+                .fetchOptional(AI_CHAT.AGENT_MODE)
+                .map(value -> AiAgentMode.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(value, AiAgentMode.AGENT))
+                .orElse(AiAgentMode.AGENT));
+    }
+
+    @Override
+    public void setAgentMode(final int chatId, final AiAgentMode mode) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.AGENT_MODE, mode.getPrimitiveValue())
+                .where(AI_CHAT.ID.eq(chatId))
+                .execute());
+    }
+
+    @Override
     public void setApproveEverything(final int chatId, final boolean enabled) {
         JooqUtil.context(aiDbConnProvider, context -> context
                 .update(AI_CHAT)
@@ -690,7 +713,7 @@ public class AiDaoImpl implements AiDao {
         return JooqUtil.contextResult(aiDbConnProvider, context -> {
             final List<Record> chats = context
                     .select(AI_CHAT.ID, AI_CHAT.TITLE, AI_CHAT.UPDATE_TIME_MS, AI_CHAT.LAST_READ_MESSAGE_ID,
-                            AI_CHAT.AUTO_APPROVE, AI_CHAT.LAST_OPENED_MS)
+                            AI_CHAT.AUTO_APPROVE, AI_CHAT.LAST_OPENED_MS, AI_CHAT.AGENT_MODE)
                     .from(AI_CHAT)
                     .where(AI_CHAT.USER_UUID.eq(userUuid))
                     .orderBy(AI_CHAT.UPDATE_TIME_MS.desc())
@@ -731,7 +754,9 @@ public class AiDaoImpl implements AiDao {
                                         : AiChatRunStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(runStatus),
                                 lastMessages.getOrDefault(id, 0) > lastRead,
                                 Boolean.TRUE.equals(r.get(AI_CHAT.AUTO_APPROVE)),
-                                r.get(AI_CHAT.LAST_OPENED_MS));
+                                r.get(AI_CHAT.LAST_OPENED_MS),
+                                AiAgentMode.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                                        r.get(AI_CHAT.AGENT_MODE), AiAgentMode.AGENT));
                     })
                     .toList();
         });
@@ -740,11 +765,17 @@ public class AiDaoImpl implements AiDao {
     @Override
     public long getStatusVersion(final String userUuid) {
         return JooqUtil.contextResult(aiDbConnProvider, context -> {
-            final Record4<Long, Long, Integer, Integer> chats = context
+            // Each chat's mode and auto-approve setting, weighted by its id, so that changing either in any one
+            // chat changes the sum.
+            final Field<BigDecimal> settings = DSL.sum(AI_CHAT.ID.mul(
+                    AI_CHAT.AGENT_MODE.cast(Integer.class).plus(1)
+                            .plus(AI_CHAT.AUTO_APPROVE.cast(Integer.class).mul(10))));
+            final Record5<Long, Long, Integer, Integer, BigDecimal> chats = context
                     .select(DSL.max(AI_CHAT.UPDATE_TIME_MS),
                             DSL.max(AI_CHAT.LAST_OPENED_MS),
                             DSL.max(AI_CHAT.LAST_READ_MESSAGE_ID),
-                            DSL.count())
+                            DSL.count(),
+                            settings)
                     .from(AI_CHAT)
                     .where(AI_CHAT.USER_UUID.eq(userUuid))
                     .fetchOne();
@@ -753,11 +784,11 @@ public class AiDaoImpl implements AiDao {
                     .from(AI_CHAT_RUN)
                     .where(AI_CHAT_RUN.USER_UUID.eq(userUuid))
                     .fetchOne(0, Long.class);
-            // Changes when anything that a status shows changes: a chat updated, read, added or deleted, or a run
-            // changed.
+            // Changes when anything that a status shows changes: a chat updated, read, added or deleted, its mode
+            // or auto-approve changed, or a run changed.
             long version = 17;
             for (final Object part : Arrays.asList(chats.value1(), chats.value2(), chats.value3(), chats.value4(),
-                    runs)) {
+                    chats.value5(), runs)) {
                 version = version * 1_000_003L + Objects.hashCode(part);
             }
             return version;

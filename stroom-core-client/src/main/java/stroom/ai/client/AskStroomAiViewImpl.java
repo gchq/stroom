@@ -17,6 +17,8 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.shared.AiAgentMode;
+import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.InlineSvgButton;
@@ -48,15 +50,22 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     private static final String SEND_BUTTON_NORMAL_TEXT = "Send";
     private static final String SEND_BUTTON_CANCEL_TEXT = "Cancel";
     private static final String EMPTY_STYLE = "empty";
+    private static final String SWITCHER_OPEN_CLASS = "askStroomAiViewImpl-switcher--open";
+    private static final String AUTO_APPROVE_ON_CLASS = "askStroomAiViewImpl-autoApprove--on";
+    private static final String WORKING_CLASS = "askStroomAiViewImpl-bottom-inner--working";
+
+    private boolean empty;
     private final Widget widget;
     private boolean sending;
 
+    @UiField
+    FlowPanel inputBox;
     @UiField
     FlowPanel root;
     @UiField
     Label chatTitle;
     @UiField
-    InlineSvgButton newChat;
+    stroom.widget.button.client.Button newChat;
     @UiField
     InlineSvgButton tabToggle;
     @UiField
@@ -66,6 +75,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @UiField
     SimplePanel markdownPreview;
+    @UiField
+    FlowPanel chatList;
     @UiField
     FlowPanel jumpToLatestBar;
     @UiField
@@ -78,6 +89,10 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     TextArea message;
     @UiField
     InlineSvgButton run;
+    @UiField
+    SelectionBox<AiAgentMode> agentMode;
+    @UiField
+    InlineSvgButton autoApprove;
     @UiField
     Label contextIndicator;
     @UiField
@@ -97,9 +112,30 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
             }
         }, ScrollEvent.getType());
 
-        newChat.setText("New Conversation");
-        newChat.setTitle("New Conversation");
-        newChat.setSvg(SvgImage.ADD);
+        // The arrow is its own element, so it can be made to stand out.
+        jumpToLatest.setHTML(SafeHtmlUtils.fromSafeConstant(
+                "<span class=\"askStroomAiViewImpl-jumpToLatestArrow\">↓</span>Latest"));
+
+        agentMode.addItems(AiAgentMode.values());
+        agentMode.setValue(AiAgentMode.AGENT);
+        agentMode.setTitle("Agent: does what you ask with all its tools. Ask: answers questions, and changes "
+                           + "nothing. Plan: works out a plan for what you ask, without carrying it out.");
+        agentMode.addValueChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onAgentModeChange(event.getValue());
+            }
+        });
+        autoApprove.setSvg(SvgImage.SHIELD);
+        setAutoApprove(false, true);
+        autoApprove.addClickHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onToggleAutoApprove();
+            }
+        });
+
+        newChat.setText("New chat");
+        newChat.setTitle("Start a new chat");
+        newChat.setIcon(SvgImage.ADD);
         newChat.setEnabled(true);
 
         setTabMode(false);
@@ -112,7 +148,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
         // The title opens the chat switcher.
         chatTitle.addStyleName("askStroomAiViewImpl-switcher");
-        chatTitle.setTitle("Switch Conversation");
+        chatTitle.setTitle("Show your chats");
         chatTitle.addClickHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onShowSwitcher(chatTitle.getElement());
@@ -148,6 +184,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @Override
     public void setSendButtonLoadingState(final boolean loading) {
+        // A glowing border round the input box while a question is being worked on.
+        inputBox.setStyleName(WORKING_CLASS, loading);
         if (loading) {
             run.setEnabled(true);
             run.setText(SEND_BUTTON_CANCEL_TEXT);
@@ -249,6 +287,29 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         }
     }
 
+    @Override
+    public AiAgentMode getAgentMode() {
+        return agentMode.getValue();
+    }
+
+    @Override
+    public void setAgentMode(final AiAgentMode mode) {
+        agentMode.setValue(mode != null
+                ? mode
+                : AiAgentMode.AGENT);
+    }
+
+    @Override
+    public void setAutoApprove(final boolean on, final boolean allowed) {
+        autoApprove.setStyleName(AUTO_APPROVE_ON_CLASS, on);
+        autoApprove.setTitle(on
+                ? "Auto-approve is on: tool calls on trusted servers run without asking. Click to turn it off."
+                : allowed
+                        ? "Auto-approve: let tool calls on trusted servers run without asking you"
+                        : "Auto-approve is not allowed by your administrator");
+        autoApprove.setEnabled(on || allowed);
+    }
+
     @UiHandler("run")
     public void onRun(final ClickEvent event) {
         if (getUiHandlers() != null) {
@@ -314,11 +375,29 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     }
 
     public void setEmptyState(final boolean empty) {
-        if (empty) {
+        this.empty = empty;
+        // The list of chats takes the conversation's place, so it is not shown as an empty chat.
+        if (empty && !chatList.isVisible()) {
             root.addStyleName(EMPTY_STYLE);
         } else {
             root.removeStyleName(EMPTY_STYLE);
         }
+    }
+
+    @Override
+    public FlowPanel getChatList() {
+        return chatList;
+    }
+
+    @Override
+    public void setChatListVisible(final boolean visible) {
+        chatList.setVisible(visible);
+        markdownPreview.setVisible(!visible);
+        if (visible) {
+            jumpToLatestBar.setVisible(false);
+        }
+        chatTitle.setStyleName(SWITCHER_OPEN_CLASS, visible);
+        setEmptyState(empty);
     }
 
     @Override

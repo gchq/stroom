@@ -46,6 +46,8 @@ public class AiChatStatus {
     private final boolean approveEverything;
     @JsonProperty
     private final long lastOpenedMs;
+    @JsonProperty
+    private final AiAgentMode agentMode;
 
     /**
      * @param chatId            The chat.
@@ -63,7 +65,8 @@ public class AiChatStatus {
                         @JsonProperty("runStatus") final AiChatRunStatus runStatus,
                         @JsonProperty("unread") final Boolean unread,
                         @JsonProperty("approveEverything") final Boolean approveEverything,
-                        @JsonProperty("lastOpenedMs") final Long lastOpenedMs) {
+                        @JsonProperty("lastOpenedMs") final Long lastOpenedMs,
+                        @JsonProperty("agentMode") final AiAgentMode agentMode) {
         this.chatId = Objects.requireNonNullElse(chatId, 0);
         this.title = title;
         this.updateTimeMs = Objects.requireNonNullElse(updateTimeMs, 0L);
@@ -71,6 +74,7 @@ public class AiChatStatus {
         this.unread = Objects.requireNonNullElse(unread, false);
         this.approveEverything = Objects.requireNonNullElse(approveEverything, false);
         this.lastOpenedMs = Objects.requireNonNullElse(lastOpenedMs, 0L);
+        this.agentMode = Objects.requireNonNullElse(agentMode, AiAgentMode.AGENT);
     }
 
     public int getChatId() {
@@ -105,6 +109,13 @@ public class AiChatStatus {
     }
 
     /**
+     * @return How the agent works in the chat.
+     */
+    public AiAgentMode getAgentMode() {
+        return agentMode;
+    }
+
+    /**
      * @return True if the chat is waiting for the user, e.g. to approve something.
      */
     @JsonIgnore
@@ -133,12 +144,14 @@ public class AiChatStatus {
                && unread == that.unread
                && approveEverything == that.approveEverything
                && lastOpenedMs == that.lastOpenedMs
+               && agentMode == that.agentMode
                && Objects.equals(title, that.title)
                && runStatus == that.runStatus;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(chatId, title, updateTimeMs, runStatus, unread, approveEverything, lastOpenedMs);
+        return Objects.hash(chatId, title, updateTimeMs, runStatus, unread, approveEverything, lastOpenedMs,
+                agentMode);
     }
 }

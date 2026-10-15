@@ -19,6 +19,7 @@ package stroom.ai.impl.dao;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatStatus;
@@ -199,5 +200,22 @@ class TestAiDaoImpl {
         // Marking an earlier message read does not go backwards.
         aiDao.markRead(older.getId(), 1);
         assertThat(aiDao.getChatStatuses("user1", 10).getFirst().isUnread()).isFalse();
+    }
+
+    @Test
+    void agentModeIsKeptAndChangesTheStatusVersion() {
+        final AiChat chat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        assertThat(aiDao.getAgentMode(chat.getId())).isEqualTo(AiAgentMode.AGENT);
+        final long version = aiDao.getStatusVersion("user1");
+
+        aiDao.setAgentMode(chat.getId(), AiAgentMode.PLAN);
+
+        assertThat(aiDao.getAgentMode(chat.getId())).isEqualTo(AiAgentMode.PLAN);
+        assertThat(aiDao.getChatStatuses("user1", 10))
+                .singleElement()
+                .extracting(AiChatStatus::getAgentMode)
+                .isEqualTo(AiAgentMode.PLAN);
+        // So the list of chats, and the user's other browser tabs, show the new mode.
+        assertThat(aiDao.getStatusVersion("user1")).isNotEqualTo(version);
     }
 }

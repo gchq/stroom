@@ -27,6 +27,7 @@ import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspaceStore;
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentDataPage;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
@@ -129,6 +130,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -276,6 +278,12 @@ public class AskStroomAIService {
         LOGGER.debug(() -> "askStroomAi: chatId=" + chatId
                            + " hasContext=" + (request.getContext() != null)
                            + " hasMessage=" + (request.getMessage() != null));
+
+        // The mode is kept with the chat, so that a run carried on later (e.g. once the user has approved a tool
+        // call) works in it too.
+        if (request.getMode() != null && chatId != null) {
+            aiDao.setAgentMode(chatId, request.getMode());
+        }
 
         // Stage 1: If context is present, create an attachment (and start async download if needed).
         if (request.getContext() != null) {
@@ -487,6 +495,14 @@ public class AskStroomAIService {
         aiService.verifyOwnership(chatId);
         toolApprovalService.reset(chatId);
         return true;
+    }
+
+    /**
+     * Sets how the agent works in a chat. It applies from the next question, and to a run carried on later.
+     */
+    public void setAgentMode(final int chatId, final AiAgentMode mode) {
+        aiService.verifyOwnership(chatId);
+        aiDao.setAgentMode(chatId, Objects.requireNonNullElse(mode, AiAgentMode.AGENT));
     }
 
     /**
@@ -1263,7 +1279,7 @@ public class AskStroomAIService {
                         // here - nothing has been produced yet - so at least say what was tried.
                         throw new RuntimeException(
                                 "The question is too large for the model's context window, even with the earlier "
-                                + "conversation compacted. Try a shorter question, start a new chat, or raise "
+                                + "messages compacted. Try a shorter question, start a new chat, or raise "
                                 + "'Max Context Window Tokens' on the model document. "
                                 + "The model said: " + e.getMessage(), e);
                     }
@@ -1663,20 +1679,44 @@ public class AskStroomAIService {
         return sb.toString();
     }
 
-    private OpenAIModelDoc getModelDoc(final AskStroomAiConfig config) {
-        if (config == null || config.getModelRef() == null) {
-            throw new RuntimeException("No model specified");
+    /**
+     * @return The user's chosen model, or the default model if they have not chosen one, or the one they chose
+     * no longer exists (e.g. their settings were saved before a model was set up, or the model was deleted).
+     */
+    OpenAIModelDoc getModelDoc(final AskStroomAiConfig config) {
+        final DocRef chosen = NullSafe.get(config, AskStroomAiConfig::getModelRef);
+        final OpenAIModelDoc chosenDoc = readModel(chosen);
+        if (chosenDoc != null) {
+            return chosenDoc;
         }
-        final DocRef docRef = config.getModelRef();
-        if (!OpenAIModelDoc.TYPE.equals(docRef.getType())) {
-            throw new RuntimeException("Default OpenAI API doc ref is incorrect");
+        final DocRef defaultRef = NullSafe.get(getDefaultConfig(), AskStroomAiConfig::getModelRef);
+        final OpenAIModelDoc defaultDoc = readModel(defaultRef);
+        if (defaultDoc != null) {
+            if (chosen != null) {
+                LOGGER.info(() -> "AI model " + chosen + " cannot be found, so using the default model "
+                                  + defaultRef);
+            }
+            return defaultDoc;
         }
+        throw new RuntimeException(chosen != null
+                ? "The AI model '" + NullSafe.nonBlankStringElse(chosen.getName(), chosen.getUuid())
+                  + "' cannot be found, and no default model is set. Choose a model in the chat's "
+                  + "Settings, or ask an administrator to set a default model."
+                : "No AI model is set. Choose a model in the chat's Settings, or ask an administrator to set "
+                  + "a default model.");
+    }
 
-        final OpenAIModelDoc openAIModelDoc = openAIModelStore.readDocument(docRef);
-        if (openAIModelDoc == null) {
-            throw new RuntimeException("Default OpenAI API doc cannot be found");
+    // The model, or null if there is no reference or it does not refer to a model that exists.
+    private OpenAIModelDoc readModel(final DocRef docRef) {
+        if (docRef == null || !OpenAIModelDoc.TYPE.equals(docRef.getType())) {
+            return null;
         }
-        return openAIModelDoc;
+        try {
+            return openAIModelStore.readDocument(docRef);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read AI model " + docRef + ": " + e.getMessage(), e);
+            return null;
+        }
     }
 
     private ChatModel getChatModel(final OpenAIModelDoc openAIModelDoc) {

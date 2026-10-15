@@ -137,11 +137,12 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
             @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL) final Boolean enableDebugDetail,
             @JsonProperty(PROP_NAME_BROWSER_NOTIFICATIONS) final Boolean browserNotifications) {
         this.modelRef = modelRef;
-        // FLOAT is no longer offered; a saved FLOAT falls back to DOCK.
-        this.dockType = dockType == DockType.FLOAT
-                ? DockType.DOCK
+        // FLOAT is no longer offered; a saved FLOAT falls back to DOCK. Settings saved without a dock (which
+        // would show the chat in a dialog) get the default: docked on the right.
+        this.dockType = dockType == null || dockType == DockType.FLOAT
+                ? DEFAULT_DOCK_TYPE
                 : dockType;
-        this.dockLocation = dockLocation;
+        this.dockLocation = Objects.requireNonNullElse(dockLocation, DEFAULT_DOCK_LOCATION);
         this.dockSize = dockSize;
         this.tableAnalysis = tableAnalysis;
         this.chatSystemPrompt = chatSystemPrompt;
@@ -186,7 +187,7 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
         return chatSystemPrompt;
     }
 
-    @JsonPropertyDescription("System prompt used to summarise older conversation history when "
+    @JsonPropertyDescription("System prompt used to summarise older chat history when "
             + "progressive trimming is needed to fit the model's context window.")
     public String getHistorySummaryPrompt() {
         return historySummaryPrompt;

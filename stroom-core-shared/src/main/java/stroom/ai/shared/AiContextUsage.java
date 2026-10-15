@@ -50,7 +50,7 @@ public class AiContextUsage {
      * @param usedTokens          How many tokens the chat would use.
      * @param estimated           True if the figure is only an estimate, not yet checked against what the model
      *                            reported for this chat.
-     * @param parts               Where the tokens go (e.g. "Conversation", "Tool definitions"), in order.
+     * @param parts               Where the tokens go (e.g. "Chat history", "Tool definitions"), in order.
      * @param compactAtPercent    The percentage of the context window at which the chat is compacted
      *                            automatically, or 0 if not known.
      */

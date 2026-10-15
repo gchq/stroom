@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.McpToolCaller;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.workspace.WorkspaceStore;
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
@@ -55,6 +56,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -139,6 +141,7 @@ class McpAgentChat {
 
     private final AiService aiService;
     private final BuiltInTools builtInTools;
+    private final AiDao aiDao;
     private final AiChatRunManager runManager;
     private final WorkspaceStore workspaceStore;
     private final ContextUsageTracker usageTracker;
@@ -158,8 +161,10 @@ class McpAgentChat {
                  final AiAuditLog auditLog,
                  final ModelStreamer modelStreamer,
                  final ToolGroups.Activations toolGroupActivations,
-                 final Provider<AiConfig> aiConfigProvider) {
+                 final Provider<AiConfig> aiConfigProvider,
+                 final AiDao aiDao) {
         this.aiService = aiService;
+        this.aiDao = aiDao;
         this.toolGroupActivations = toolGroupActivations;
         this.aiConfigProvider = aiConfigProvider;
         this.modelStreamer = modelStreamer;
@@ -213,6 +218,11 @@ class McpAgentChat {
         if (modelDoc == null || modelDoc.isToolsEnabled()) {
             builtIns.putAll(builtInTools.toolMap());
             addMcpTools(mcpTools, toolset, builtIns.keySet());
+        }
+        // In Ask and Plan modes, the model may only use the tools that cannot change anything.
+        if (Objects.requireNonNullElse(aiDao.getAgentMode(chatId), AiAgentMode.AGENT).isReadOnly()) {
+            builtIns.keySet().removeIf(specification -> !builtInTools.isReadOnly(specification.name()));
+            mcpTools.keySet().removeIf(specification -> !toolset.isReadOnly(specification.name()));
         }
         // A large set of MCP tools is offered as groups the model turns on when it needs them.
         final ToolGroups toolGroups = ToolGroups.of(mcpTools, toolset, toolGroupThreshold());

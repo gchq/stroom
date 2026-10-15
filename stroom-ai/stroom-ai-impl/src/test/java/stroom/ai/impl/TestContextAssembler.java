@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.ai.impl.workspace.WorkspaceStore;
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatAttachment;
@@ -164,6 +165,29 @@ class TestContextAssembler {
                 .contains("read_turn and search_history");
         assertThat(withoutTools)
                 .isEqualTo(AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT);
+    }
+
+    @Test
+    void testAskAndPlanModesAreExplainedToTheModel() {
+        final AiDao aiDao = Mockito.mock(AiDao.class);
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
+                Mockito.mock(stroom.ai.api.AiService.class), aiDao, Mockito.mock(AiWorkspaceDao.class),
+                Mockito.mock(ContextUsageTracker.class), null);
+        final List<AiChatMessage> history = List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, null));
+        final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
+
+        Mockito.when(aiDao.getAgentMode(1)).thenReturn(AiAgentMode.AGENT);
+        assertThat(((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), history,
+                CompactionRecord.NONE, true).getFirst()).text()).doesNotContain("## Mode");
+
+        Mockito.when(aiDao.getAgentMode(1)).thenReturn(AiAgentMode.ASK);
+        assertThat(((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), history,
+                CompactionRecord.NONE, true).getFirst()).text()).contains(ContextAssembler.ASK_GUIDANCE);
+
+        Mockito.when(aiDao.getAgentMode(1)).thenReturn(AiAgentMode.PLAN);
+        assertThat(((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), history,
+                CompactionRecord.NONE, true).getFirst()).text()).contains(ContextAssembler.PLAN_GUIDANCE);
     }
 
     @Test
