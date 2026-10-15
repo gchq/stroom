@@ -112,6 +112,10 @@ form. The answer goes to the MCP server, never to the model. The tool call keeps
 
 * The prompts MCP servers offer are slash commands in the input box, e.g. `/onboard_data_source feed=ACME`.
   The filled-in prompt is put in the input box for the user to check and send.
+* A link in the chat to a Stroom document (`?action=open-doc&docType=…&docUuid=…`, as FastMCP returns) opens
+  the document in the current Stroom session, whatever host the link names, so set FastMCP's
+  `STROOM_MCP_STROOM_UI_URL` to Stroom's public address for links copied elsewhere. Other links open in a
+  new browser tab.
 * Nothing is uploaded to an MCP server through the chat. Sample files for a new feed go through Stroom's
   own data upload, on the feed's Data tab.
 
