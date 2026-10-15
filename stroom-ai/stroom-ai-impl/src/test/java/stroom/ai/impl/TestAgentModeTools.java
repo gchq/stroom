@@ -26,8 +26,10 @@ import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AskStroomAiConfig;
+import stroom.data.store.api.Store;
 import stroom.query.impl.QueryService;
 import stroom.resource.api.ResourceStore;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 
 import com.google.inject.AbstractModule;
@@ -82,7 +84,9 @@ class TestAgentModeTools {
             Map.entry("pipeline", false),
             Map.entry("run_stroomql", false),
             Map.entry("summarise_column", false),
-            Map.entry("task_list", false)));
+            Map.entry("task_list", false),
+            Map.entry("fetch_events", false),
+            Map.entry("search_events", false)));
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
@@ -94,6 +98,8 @@ class TestAgentModeTools {
             bind(AiMemoryService.class).toInstance(Mockito.mock(AiMemoryService.class));
             bind(QueryService.class).toInstance(Mockito.mock(QueryService.class));
             bind(ResourceStore.class).toInstance(Mockito.mock(ResourceStore.class));
+            bind(Store.class).toInstance(Mockito.mock(Store.class));
+            bind(SecurityContext.class).toInstance(Mockito.mock(SecurityContext.class));
             bind(TableSummariser.class).toInstance(Mockito.mock(TableSummariser.class));
             bind(AskStroomAiConfig.class).toInstance(new AskStroomAiConfig());
         }

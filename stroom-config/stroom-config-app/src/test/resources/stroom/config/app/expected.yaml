@@ -59,6 +59,8 @@ appConfig:
     workspace:
       maxCharsPerRead: 20000
       maxChatBytes: 104857600
+      maxEventBytes: 1048576
+      maxEventsPerFetch: 500
       maxFileBytes: 20971520
       maxLinesPerRead: 500
       maxQueryLength: 10000

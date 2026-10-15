@@ -20538,6 +20538,9 @@
             "type" : "string",
             "enum" : [ "EXCEL", "CSV", "TSV", "MARKDOWN" ]
           },
+          "includeSourceIds" : {
+            "type" : "boolean"
+          },
           "percent" : {
             "type" : "integer",
             "format" : "int32"
@@ -20562,6 +20565,9 @@
           "fileType" : {
             "type" : "string",
             "enum" : [ "EXCEL", "CSV", "TSV", "MARKDOWN" ]
+          },
+          "includeSourceIds" : {
+            "type" : "boolean"
           },
           "percent" : {
             "type" : "integer",
