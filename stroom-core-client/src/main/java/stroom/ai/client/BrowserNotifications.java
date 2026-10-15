@@ -16,13 +16,9 @@
 
 package stroom.ai.client;
 
-import com.google.gwt.dom.client.Document;
-
-/// Lets the user know about their AI chats when they are looking at another browser tab: with a browser
-/// notification, and a count in the tab's title, e.g. "(1) Stroom".
+/// Lets the user know about their AI chats when they are looking at another browser tab, with a browser
+/// notification.
 final class BrowserNotifications {
-
-    private static final String COUNT_PREFIX_PATTERN = "^\\(\\d+\\) ";
 
     private BrowserNotifications() {
         // Static only.
@@ -51,20 +47,4 @@ final class BrowserNotifications {
             notification.close();
         };
     }-*/;
-
-    /// Puts a count at the front of the browser tab's title, e.g. "(2) Stroom", or takes it away.
-    ///
-    /// @param count How many chats need the user or have answers they have not read, or 0.
-    static void setTitleCount(final int count) {
-        final String title = Document.get().getTitle();
-        final String base = title == null
-                ? ""
-                : title.replaceFirst(COUNT_PREFIX_PATTERN, "");
-        final String newTitle = count > 0
-                ? "(" + count + ") " + base
-                : base;
-        if (!newTitle.equals(title)) {
-            Document.get().setTitle(newTitle);
-        }
-    }
 }

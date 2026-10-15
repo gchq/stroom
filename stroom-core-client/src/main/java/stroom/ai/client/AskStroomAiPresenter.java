@@ -743,7 +743,6 @@ public class AskStroomAiPresenter
             }
         }
         AskStroomAiBadgeEvent.fire(this, needsYou, busy, unread);
-        BrowserNotifications.setTitleCount(needsYou + unread);
     }
 
     /**
