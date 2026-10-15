@@ -75,10 +75,6 @@ public class ToolConsent {
                           final McpToolset toolset,
                           final boolean unattended) {
         if (builtInTools.toolMap().keySet().stream().anyMatch(spec -> spec.name().equals(toolName))) {
-            if (builtInTools.alwaysAsks(toolName)) {
-                return Verdict.ask("This sends a workspace file off this Stroom server, to an MCP tool.", false,
-                        false, List.of("sends data out"));
-            }
             return unattended && !builtInTools.isReadOnly(toolName)
                     ? Verdict.ask(awayReason(), false, false, List.of("can change things"))
                     : Verdict.RUN;

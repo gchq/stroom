@@ -79,12 +79,4 @@ public interface BuiltInTool {
     default boolean boundsItsOutput() {
         return false;
     }
-
-    /**
-     * @return True if the user must approve every call, even in a chat where they would not be asked, e.g. as the
-     * tool sends data off the server. Defaults to false.
-     */
-    default boolean alwaysAsks() {
-        return false;
-    }
 }
