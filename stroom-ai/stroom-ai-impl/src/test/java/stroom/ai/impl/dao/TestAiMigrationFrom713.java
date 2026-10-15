@@ -109,9 +109,12 @@ class TestAiMigrationFrom713 {
         assertThat(rows("SELECT id, turn_id FROM ai_chat_message ORDER BY id")).containsExactly(
                 "100,0", "101,101", "102,101", "103,103", "104,103", "105,105", "106,105");
         // New chat columns have their defaults.
-        assertThat(rows("SELECT id, agent_mode, auto_approve, total_input_tokens, total_output_tokens, "
-                        + "COALESCE(last_read_message_id, 'null') FROM ai_chat ORDER BY id"))
-                .containsExactly("1,0,0,0,0,null", "2,0,0,0,0,null", "3,0,0,0,0,null");
+        assertThat(rows("SELECT id, agent_mode, auto_approve, total_input_tokens, total_output_tokens "
+                        + "FROM ai_chat ORDER BY id"))
+                .containsExactly("1,0,0,0,0", "2,0,0,0,0", "3,0,0,0,0");
+        // 7.13 didn't track reading, so everything already in a chat is marked read (3 has no messages).
+        assertThat(rows("SELECT id, COALESCE(last_read_message_id, 'null') FROM ai_chat ORDER BY id"))
+                .containsExactly("1,104", "2,106", "3,null");
         // The attachment is kept, with no file yet.
         assertThat(rows("SELECT id, fk_ai_chat_id, description, COALESCE(path, 'null') FROM ai_chat_attachment"))
                 .containsExactly("10,1,Firewall events,null");
@@ -130,18 +133,20 @@ class TestAiMigrationFrom713 {
     void stroomCanReadTheUpgradedChats() {
         final AiDao aiDao = injector.getInstance(AiDao.class);
 
-        // Most recently changed first, and only the user's own; answered chats show as unread.
+        // Most recently changed first, and only the user's own; none shows as unread.
         assertThat(aiDao.getChatStatuses("user1", 10))
                 .extracting(AiChatStatus::getTitle, AiChatStatus::isUnread)
                 .containsExactly(
-                        tuple("Disk space", true),
-                        tuple("Firewall errors", true));
+                        tuple("Disk space", false),
+                        tuple("Firewall errors", false));
         assertThat(aiDao.getMessages(1))
                 .extracting(message -> message.getTurnId())
                 .containsExactly(0, 101, 101, 103, 103);
-        // Marking a chat read works on old chats.
-        aiDao.markAllRead("user1");
-        assertThat(aiDao.getChatStatuses("user1", 10)).noneMatch(AiChatStatus::isUnread);
+        // An answer after the upgrade shows as unread, as usual.
+        aiDao.storeMessage(2, stroom.ai.shared.AiMessageType.AI_RESPONSE, "A new answer.");
+        assertThat(aiDao.getChatStatuses("user1", 10).getFirst())
+                .extracting(AiChatStatus::getTitle, AiChatStatus::isUnread)
+                .containsExactly("Disk space", true);
     }
 
     private List<String> rows(final String sql) throws SQLException {
