@@ -280,6 +280,12 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
+    public Integer markAllChatsRead() {
+        return askStroomAIServiceProvider.get().markAllChatsRead();
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
     public Boolean setAgentMode(final int chatId, final AiAgentMode mode) {
         askStroomAIServiceProvider.get().setAgentMode(chatId, mode);
         return true;

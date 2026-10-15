@@ -1285,3 +1285,25 @@
 .ai-user-action pre {
     margin: 4px 0;
 }
+
+/* Above the list of chats when any is unread. */
+.ai-chat-list-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 6px;
+}
+
+.ai-chat-list-mark-read {
+    background: none;
+    border: 1px solid var(--ai-border-color, rgba(128, 128, 128, 0.35));
+    border-radius: 4px;
+    color: inherit;
+    font: inherit;
+    font-size: var(--ai-font-size--small);
+    padding: 3px 10px;
+    cursor: pointer;
+}
+
+.ai-chat-list-mark-read:hover {
+    background: var(--curve-tab__background-color--hover);
+}

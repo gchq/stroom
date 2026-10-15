@@ -161,6 +161,7 @@ public class AskStroomAiPresenter
     private static final String WORKING_TEXT_ID = "ai-working-text";
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
     private static final String USER_ACTION_MESSAGE_ATTRIBUTE = "data-user-action-message";
+    private static final String MARK_ALL_READ_ATTRIBUTE = "data-mark-all-read";
     private static final String USER_ACTION_ID_ATTRIBUTE = "data-user-action-id";
     // A tool result's buttons are shown in a card of their own, outside the turn's activity.
     private static final String USER_ACTIONS_ID_SUFFIX = "-actions";
@@ -793,6 +794,13 @@ public class AskStroomAiPresenter
         if (chatStatuses.isEmpty()) {
             hb.div(div -> div.append("You have no chats yet."), Attribute.className("ai-chat-list-empty"));
         }
+        if (chatStatuses.stream().anyMatch(AiChatStatus::isUnread)) {
+            hb.div(header -> header.elem("Mark All as Read", BUTTON,
+                            Attribute.className("allow-focus ai-chat-list-mark-read"),
+                            Attribute.title("Clear the unread mark from all your chats"),
+                            new Attribute(MARK_ALL_READ_ATTRIBUTE, "true")),
+                    Attribute.className("ai-chat-list-header"));
+        }
         for (final AiChatStatus status : chatStatuses) {
             final boolean current = currentChat != null && currentChat.getId() == status.getChatId();
             final String title = NullSafe.nonBlankStringElse(status.getTitle(), "New chat");
@@ -824,6 +832,14 @@ public class AskStroomAiPresenter
     }
 
     private void onChatListClick(final Element target) {
+        if (ElementUtil.findParent(target, element -> element.hasAttribute(MARK_ALL_READ_ATTRIBUTE), 3) != null) {
+            askStroomAiClient.markAllChatsRead(count -> {
+                // Show the change now, rather than at the next check.
+                statusTimer.cancel();
+                checkChatStatuses();
+            }, this);
+            return;
+        }
         final Element delete = ElementUtil.findParent(target, element ->
                 element.hasAttribute(DELETE_CHAT_ATTRIBUTE), 4);
         if (delete != null) {
@@ -2372,15 +2388,6 @@ public class AskStroomAiPresenter
                             new Attribute(EDIT_MESSAGE_ATTRIBUTE, String.valueOf(messageId)));
                 }
 
-                // Add delete button.
-                if (deletable && messageId > 0) {
-                    button(footer,
-                            SvgImage.DELETE,
-                            iconButtonClassName("ai-message-delete"),
-                            Attribute.title("Delete message"),
-                            new Attribute("data-delete-message-id", String.valueOf(messageId)));
-                }
-
                 // Add a button to ask the question again.
                 if (retryTurnId > 0) {
                     button(footer,
@@ -2402,6 +2409,15 @@ public class AskStroomAiPresenter
                                 Attribute.title("Copy as text"),
                                 new Attribute(COPY_TEXT_ATTRIBUTE, "true"));
                     }
+                }
+
+                // Add delete button, last, so it is not clicked by mistake for another.
+                if (deletable && messageId > 0) {
+                    button(footer,
+                            SvgImage.DELETE,
+                            iconButtonClassName("ai-message-delete"),
+                            Attribute.title("Delete message"),
+                            new Attribute("data-delete-message-id", String.valueOf(messageId)));
                 }
 
                 // Add timestamp.

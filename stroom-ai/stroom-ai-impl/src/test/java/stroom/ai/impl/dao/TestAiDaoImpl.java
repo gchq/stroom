@@ -218,4 +218,28 @@ class TestAiDaoImpl {
         // So the list of chats, and the user's other browser tabs, show the new mode.
         assertThat(aiDao.getStatusVersion("user1")).isNotEqualTo(version);
     }
+
+    @Test
+    void markAllReadClearsEveryUnreadMarkOfTheUsersChatsOnly() {
+        final AiChat first = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChat second = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChat others = aiDao.createChat(UserRef.builder().uuid("user2").build());
+        for (final AiChat chat : List.of(first, second, others)) {
+            aiDao.storeMessage(chat.getId(), AiMessageType.USER_MESSAGE, "q");
+            aiDao.storeMessage(chat.getId(), AiMessageType.AI_RESPONSE, "a");
+        }
+        assertThat(aiDao.getChatStatuses("user1", 10)).allMatch(AiChatStatus::isUnread);
+        final long version = aiDao.getStatusVersion("user1");
+
+        assertThat(aiDao.markAllRead("user1")).isEqualTo(2);
+
+        assertThat(aiDao.getChatStatuses("user1", 10)).noneMatch(AiChatStatus::isUnread);
+        // When each was last opened is left alone.
+        assertThat(aiDao.getChatStatuses("user1", 10)).allMatch(status -> status.getLastOpenedMs() == 0);
+        assertThat(aiDao.getStatusVersion("user1")).isNotEqualTo(version);
+        assertThat(aiDao.getChatStatuses("user2", 10)).singleElement().matches(AiChatStatus::isUnread);
+        // Nothing left to mark.
+        assertThat(aiDao.markAllRead("user1")).isZero();
+    }
+
 }
