@@ -16,41 +16,43 @@
 
 package stroom.http.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpClientConfigPresenter.HttpClientConfigView;
 import stroom.util.shared.http.HttpClientConfig;
-import stroom.util.shared.http.HttpTlsConfig;
+import stroom.util.shared.http.HttpHeader;
+import stroom.util.shared.http.HttpProxyConfig;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class HttpClientConfigPresenter
-        extends MyPresenterWidget<HttpClientConfigView>
-        implements HttpClientConfigUiHandlers {
+        extends MyPresenterWidget<HttpClientConfigView> {
 
-    private final Provider<HttpTlsConfigPresenter> httpTlsConfigPresenterProvider;
-    private HttpTlsConfig httpTlsConfig;
+    // Shown on the dialog's TLS tab.
+    private final HttpTlsConfigPresenter httpTlsConfigPresenter;
+    // Not edited here, so kept as it was read rather than lost.
+    private HttpProxyConfig httpProxyConfig;
     private boolean readOnly;
 
     @Inject
     public HttpClientConfigPresenter(
             final EventBus eventBus,
             final HttpClientConfigView view,
-            final Provider<HttpTlsConfigPresenter> httpTlsConfigPresenterProvider) {
+            final HttpTlsConfigPresenter httpTlsConfigPresenter) {
         super(eventBus, view);
-        this.httpTlsConfigPresenterProvider = httpTlsConfigPresenterProvider;
-        view.setUiHandlers(this);
+        this.httpTlsConfigPresenter = httpTlsConfigPresenter;
+        view.setTlsView(httpTlsConfigPresenter.getView());
     }
 
     public void show(final HttpClientConfig httpClientConfig,
@@ -59,12 +61,24 @@ public class HttpClientConfigPresenter
         this.readOnly = readOnly;
         read(httpClientConfig);
         getView().onReadOnly(readOnly);
+        httpTlsConfigPresenter.setReadOnly(readOnly);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(PopupSize.resizable(600, 600))
                 .caption("Edit HTTP Client Configuration")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
+                        final String duplicate = HttpHeader.findDuplicateName(getView().getHeaders());
+                        if (duplicate != null) {
+                            getView().showHeadersTab();
+                            AlertEvent.fireError(this,
+                                    "The header '" + duplicate + "' is given more than once. Header names are "
+                                    + "not case-sensitive, so each can only be given once. Remove or rename "
+                                    + "the duplicate.",
+                                    e::reset);
+                            return;
+                        }
                         consumer.accept(write());
                     } else {
                         consumer.accept(httpClientConfig);
@@ -72,16 +86,6 @@ public class HttpClientConfigPresenter
                     e.hide();
                 })
                 .fire();
-    }
-
-    @Override
-    public void onSetHttpTlsConfig() {
-        final HttpTlsConfigPresenter httpTlsConfigPresenter = httpTlsConfigPresenterProvider.get();
-        httpTlsConfigPresenter.show(httpTlsConfig, readOnly, updated -> {
-            if (!Objects.equals(httpTlsConfig, updated)) {
-                httpTlsConfig = updated;
-            }
-        });
     }
 
     public void read(final HttpClientConfig config) {
@@ -97,7 +101,10 @@ public class HttpClientConfigPresenter
             getView().setKeepAlive(config.getKeepAlive());
             getView().setRetries(config.getRetries());
             getView().setValidateAfterInactivityPeriod(config.getValidateAfterInactivityPeriod());
-            httpTlsConfig = config.getTls();
+            getView().setUserAgent(config.getUserAgent());
+            getView().setHeaders(config.getHeaders());
+            httpTlsConfigPresenter.read(config.getTls());
+            httpProxyConfig = config.getProxy();
         }
     }
 
@@ -115,12 +122,21 @@ public class HttpClientConfigPresenter
                 .keepAlive(getView().getKeepAlive())
                 .retries(getView().getRetries())
                 .validateAfterInactivityPeriod(getView().getValidateAfterInactivityPeriod())
-                .tlsConfiguration(httpTlsConfig)
+                .userAgent(getView().getUserAgent())
+                .headers(getView().getHeaders())
+                .proxyConfig(httpProxyConfig)
+                .tlsConfiguration(httpTlsConfigPresenter.write())
                 .build();
     }
 
     public interface HttpClientConfigView
-            extends View, Focus, ReadOnlyChangeHandler, HasUiHandlers<HttpClientConfigUiHandlers> {
+            extends View, Focus, ReadOnlyChangeHandler {
+
+        /// Shows the Headers tab, e.g. to point out a problem with the headers.
+        void showHeadersTab();
+
+        /// @param tlsView The TLS settings, shown on their own tab.
+        void setTlsView(View tlsView);
 
         void setTimeout(SimpleDuration timeout);
 
@@ -173,5 +189,17 @@ public class HttpClientConfigPresenter
         void setValidateAfterInactivityPeriod(SimpleDuration validateAfterInactivityPeriod);
 
         SimpleDuration getValidateAfterInactivityPeriod();
+
+        /// @param userAgent The User-Agent header to send, or null for the default.
+        void setUserAgent(String userAgent);
+
+        /// @return The User-Agent header to send, or null for the default.
+        String getUserAgent();
+
+        /// @param headers The headers to send with every request, or null for none.
+        void setHeaders(List<HttpHeader> headers);
+
+        /// @return The headers to send with every request, or null for none.
+        List<HttpHeader> getHeaders();
     }
 }

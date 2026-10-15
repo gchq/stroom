@@ -23,10 +23,7 @@ import stroom.credentials.shared.CredentialType;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpTlsConfigPresenter.HttpTlsConfigView;
 import stroom.item.client.SelectionBox;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpTlsConfig;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -36,12 +33,15 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 public class HttpTlsConfigPresenter
         extends MyPresenterWidget<HttpTlsConfigView> {
 
     private final CredentialClient credentialClient;
+    private String keyStoreNameRead;
+    private String trustStoreNameRead;
+    private boolean keyStoreResolved = true;
+    private boolean trustStoreResolved = true;
 
     @Inject
     public HttpTlsConfigPresenter(
@@ -66,43 +66,61 @@ public class HttpTlsConfigPresenter
         view.getTrustStoreSelectionBox().setModel(trustStoreListModel);
     }
 
-    public void show(final HttpTlsConfig httpTlsConfiguration,
-                     final boolean readOnly,
-                     final Consumer<HttpTlsConfig> consumer) {
-        read(httpTlsConfiguration);
+    /// @param readOnly True if the settings can only be looked at.
+    public void setReadOnly(final boolean readOnly) {
         getView().onReadOnly(readOnly);
-//        final PopupSize popupSize = PopupSize.resizable(430, 480);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-//                .popupSize(PopupSize.)
-                .caption("Edit HTTP TLS Configuration")
-                .onShow(e -> getView().focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        consumer.accept(write());
-                    } else {
-                        consumer.accept(httpTlsConfiguration);
-                    }
-                    e.hide();
-                })
-                .fire();
     }
 
-
-    private void setCredential(final SelectionBox<Credential> selectionBox, final String credentialName) {
+    // The store is looked up by name, which takes a moment, and may no longer exist. Until the lookup has
+    // answered, the name read is kept, so that saving straight away (or with a missing credential) does not
+    // lose it.
+    private void setCredential(final SelectionBox<Credential> selectionBox,
+                               final String credentialName,
+                               final boolean keyStore) {
+        setResolved(keyStore, credentialName == null);
+        selectionBox.setValue(null);
         if (credentialName != null) {
-            credentialClient.getCredentialByName(credentialName, selectionBox::setValue, this);
-        } else {
-            selectionBox.setValue(null);
+            credentialClient.getCredentialByName(credentialName, credential -> {
+                if (credential != null) {
+                    selectionBox.setValue(credential);
+                    setResolved(keyStore, true);
+                }
+            }, this);
         }
     }
 
+    private void setResolved(final boolean keyStore, final boolean resolved) {
+        if (keyStore) {
+            keyStoreResolved = resolved;
+        } else {
+            trustStoreResolved = resolved;
+        }
+    }
+
+    // The chosen store's name, or the name read if it has not been looked up yet and nothing else is chosen.
+    private static String storeName(final SelectionBox<Credential> selectionBox,
+                                    final boolean resolved,
+                                    final String nameRead) {
+        final Credential chosen = selectionBox.getValue();
+        if (chosen != null) {
+            return chosen.getName();
+        }
+        return resolved
+                ? null
+                : nameRead;
+    }
+
+    /// Shows the settings.
+    ///
+    /// @param config The settings, or null to leave the form as it is.
     public void read(final HttpTlsConfig config) {
         if (config != null) {
+            keyStoreNameRead = config.getKeyStoreName();
+            trustStoreNameRead = config.getTrustStoreName();
             getView().setProtocol(config.getProtocol());
             getView().setProvider(config.getProvider());
-            setCredential(getView().getKeyStoreSelectionBox(), config.getKeyStoreName());
-            setCredential(getView().getTrustStoreSelectionBox(), config.getTrustStoreName());
+            setCredential(getView().getKeyStoreSelectionBox(), keyStoreNameRead, true);
+            setCredential(getView().getTrustStoreSelectionBox(), trustStoreNameRead, false);
             getView().setTrustSelfSignedCertificates(config.isTrustSelfSignedCertificates());
             getView().setVerifyHostname(config.isVerifyHostname());
             getView().setSupportedProtocols(config.getSupportedProtocols());
@@ -111,21 +129,15 @@ public class HttpTlsConfigPresenter
         }
     }
 
+    /// @return The settings as they are in the form.
     public HttpTlsConfig write() {
         return HttpTlsConfig
                 .builder()
                 .protocol(getView().getProtocol())
                 .provider(getView().getProvider())
-                .keyStoreName(NullSafe.get(
-                        getView(),
-                        HttpTlsConfigView::getKeyStoreSelectionBox,
-                        SelectionBox::getValue,
-                        Credential::getName))
-                .trustStoreName(NullSafe.get(
-                        getView(),
-                        HttpTlsConfigView::getTrustStoreSelectionBox,
-                        SelectionBox::getValue,
-                        Credential::getName))
+                .keyStoreName(storeName(getView().getKeyStoreSelectionBox(), keyStoreResolved, keyStoreNameRead))
+                .trustStoreName(storeName(
+                        getView().getTrustStoreSelectionBox(), trustStoreResolved, trustStoreNameRead))
                 .trustSelfSignedCertificates(getView().isTrustSelfSignedCertificates())
                 .verifyHostname(getView().isVerifyHostname())
                 .supportedProtocols(getView().getSupportedProtocols())

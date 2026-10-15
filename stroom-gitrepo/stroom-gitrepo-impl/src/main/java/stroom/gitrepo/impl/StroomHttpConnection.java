@@ -241,7 +241,9 @@ class StroomHttpConnection implements HttpConnection {
 
     @Override
     public void setRequestProperty(final String name, final String value) {
-        request.addHeader(name, value);
+        // Replaces any value already set, as HttpURLConnection does, so a configured header that JGit also
+        // sets is not sent twice.
+        request.setHeader(name, value);
     }
 
     @Override
