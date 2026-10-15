@@ -29,6 +29,7 @@ import stroom.ai.shared.AiMcpPromptText;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiToolApprovalsResponse;
+import stroom.ai.shared.AiUserActionResult;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -323,6 +324,20 @@ public class AskStroomAiClient {
                 .method(res -> res.setApproveEverything(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Does what a button that an MCP tool's result offered does, once the server has checked it.
+    void doUserAction(final int chatId,
+                      final int messageId,
+                      final String actionId,
+                      final Consumer<AiUserActionResult> consumer,
+                      final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.doUserAction(chatId, messageId, actionId))
+                .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
