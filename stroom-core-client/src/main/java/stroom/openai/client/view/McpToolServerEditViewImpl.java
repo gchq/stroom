@@ -21,7 +21,15 @@ import stroom.item.client.SelectionBox;
 import stroom.openai.client.presenter.McpToolServerEditPresenter.McpToolServerEditView;
 import stroom.openai.client.presenter.McpToolServerEditUiHandlers;
 import stroom.openai.shared.McpAuthMode;
+import stroom.openai.shared.McpToolPolicy;
+import stroom.openai.shared.McpToolPolicyRule;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.view.LinkTabBar;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -29,19 +37,42 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 public class McpToolServerEditViewImpl
         extends ViewWithUiHandlers<McpToolServerEditUiHandlers>
         implements McpToolServerEditView {
 
-    private final Widget widget;
+    // The policies offered for a tool, in the order they are listed.
+    private static final McpToolPolicy[] POLICIES = {
+            McpToolPolicy.ALLOW,
+            McpToolPolicy.ASK_ALWAYS,
+            McpToolPolicy.DENY};
 
+    private final Widget widget;
+    // Each tab and the panel it shows, in order.
+    private final Map<TabData, FlowPanel> tabs = new LinkedHashMap<>();
+    private final TabData toolsTabData;
+    private final FlowPanel policyRows = new FlowPanel();
+    private final InlineSvgButton addPolicy = new InlineSvgButton();
+    private boolean readOnly;
+
+    @UiField
+    LinkTabBar tabBar;
+    @UiField
+    FlowPanel generalTab;
+    @UiField
+    FlowPanel toolsTab;
     @UiField
     CustomCheckBox enabled;
     @UiField
@@ -63,21 +94,44 @@ public class McpToolServerEditViewImpl
     @UiField
     TextBox apiKeyValuePrefix;
     @UiField
-    TextBox allowedTools;
-    @UiField
-    TextBox deniedTools;
-    @UiField
     CustomCheckBox trusted;
     @UiField
-    TextArea toolPolicies;
+    FlowPanel toolPolicies;
     @UiField
-    TextArea toolGroups;
+    Button setHttpClientConfig;
     @UiField
-    stroom.widget.button.client.Button setHttpClientConfig;
+    Button test;
 
     @Inject
     public McpToolServerEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        test.setIcon(SvgImage.OK);
+
+        addTab("General", generalTab);
+        toolsTabData = addTab("Tools", toolsTab);
+        tabBar.addSelectionHandler(event -> selectTab(event.getSelectedItem()));
+        selectTab(tabs.keySet().iterator().next());
+
+        addPolicy.setSvg(SvgImage.ADD);
+        addPolicy.setTitle("Add Tool Policy");
+        addPolicy.addStyleName("allow-focus");
+        addPolicy.addClickHandler(event -> addPolicyRow("", McpToolPolicy.ASK_ALWAYS).focus());
+        toolPolicies.add(policyRows);
+        toolPolicies.add(addPolicy);
+    }
+
+    private TabData addTab(final String text, final FlowPanel panel) {
+        final TabData tab = new TabDataImpl(text, false);
+        tabs.put(tab, panel);
+        tabBar.addTab(tab);
+        return tab;
+    }
+
+    private void selectTab(final TabData selected) {
+        if (selected != null && tabs.containsKey(selected)) {
+            tabBar.selectTab(selected);
+            tabs.forEach((tab, panel) -> panel.setVisible(tab == selected));
+        }
     }
 
     @Override
@@ -92,6 +146,7 @@ public class McpToolServerEditViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
         enabled.setEnabled(!readOnly);
         name.setEnabled(!readOnly);
         endpoint.setEnabled(!readOnly);
@@ -99,12 +154,17 @@ public class McpToolServerEditViewImpl
         credential.setEnabled(!readOnly);
         apiKeyHeaderName.setEnabled(!readOnly);
         apiKeyValuePrefix.setEnabled(!readOnly);
-        allowedTools.setEnabled(!readOnly);
-        deniedTools.setEnabled(!readOnly);
         trusted.setEnabled(!readOnly);
-        toolPolicies.setEnabled(!readOnly);
-        toolGroups.setEnabled(!readOnly);
         setHttpClientConfig.setEnabled(!readOnly);
+        addPolicy.setEnabled(!readOnly);
+        for (int i = 0; i < policyRows.getWidgetCount(); i++) {
+            ((PolicyRow) policyRows.getWidget(i)).setEnabled(!readOnly);
+        }
+    }
+
+    @Override
+    public void showToolsTab() {
+        selectTab(toolsTabData);
     }
 
     @Override
@@ -183,43 +243,33 @@ public class McpToolServerEditViewImpl
     }
 
     @Override
-    public String getToolPolicies() {
-        return toolPolicies.getValue();
+    public List<McpToolPolicyRule> getToolPolicies() {
+        final List<McpToolPolicyRule> rules = new ArrayList<>();
+        for (int i = 0; i < policyRows.getWidgetCount(); i++) {
+            final PolicyRow row = (PolicyRow) policyRows.getWidget(i);
+            final String pattern = row.pattern.getText().trim();
+            if (!pattern.isEmpty()) {
+                rules.add(new McpToolPolicyRule(pattern, row.policy.getValue()));
+            }
+        }
+        return rules;
     }
 
     @Override
-    public void setToolPolicies(final String toolPolicies) {
-        this.toolPolicies.setValue(toolPolicies);
+    public void setToolPolicies(final List<McpToolPolicyRule> rules) {
+        policyRows.clear();
+        if (rules != null) {
+            for (final McpToolPolicyRule rule : rules) {
+                addPolicyRow(rule.getToolPattern(), rule.getPolicy());
+            }
+        }
     }
 
-    @Override
-    public String getToolGroups() {
-        return toolGroups.getValue();
-    }
-
-    @Override
-    public void setToolGroups(final String toolGroups) {
-        this.toolGroups.setValue(toolGroups);
-    }
-
-    @Override
-    public String getAllowedTools() {
-        return allowedTools.getValue();
-    }
-
-    @Override
-    public void setAllowedTools(final String allowedTools) {
-        this.allowedTools.setValue(allowedTools);
-    }
-
-    @Override
-    public String getDeniedTools() {
-        return deniedTools.getValue();
-    }
-
-    @Override
-    public void setDeniedTools(final String deniedTools) {
-        this.deniedTools.setValue(deniedTools);
+    private PolicyRow addPolicyRow(final String pattern, final McpToolPolicy policy) {
+        final PolicyRow row = new PolicyRow(pattern, policy);
+        row.setEnabled(!readOnly);
+        policyRows.add(row);
+        return row;
     }
 
     @Override
@@ -248,7 +298,52 @@ public class McpToolServerEditViewImpl
         }
     }
 
+    @UiHandler("test")
+    public void onTest(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onTest();
+        }
+    }
+
     public interface Binder extends UiBinder<Widget, McpToolServerEditViewImpl> {
 
+    }
+
+    // A tool policy: a pattern for tool names, what to do with them, and a button to remove it.
+    private static final class PolicyRow extends FlowPanel {
+
+        private final TextBox pattern = new TextBox();
+        private final SelectionBox<McpToolPolicy> policy = new SelectionBox<>();
+        private final InlineSvgButton remove = new InlineSvgButton();
+
+        private PolicyRow(final String toolPattern, final McpToolPolicy toolPolicy) {
+            setStyleName("mcpToolServer-policy");
+            pattern.setText(toolPattern);
+            pattern.getElement().setAttribute("placeholder", "Tool name pattern, e.g. find_.*");
+            pattern.setTitle("A regular expression that must match the tool's whole name, ignoring case");
+            pattern.addStyleName("mcpToolServer-policyPattern allow-focus");
+            policy.addItems(POLICIES);
+            policy.setValue(toolPolicy != null
+                    ? toolPolicy
+                    : McpToolPolicy.ASK_ALWAYS);
+            policy.addStyleName("mcpToolServer-policyValue");
+            remove.setSvg(SvgImage.DELETE);
+            remove.setTitle("Remove Tool Policy");
+            remove.addStyleName("allow-focus");
+            remove.addClickHandler(event -> removeFromParent());
+            add(pattern);
+            add(policy);
+            add(remove);
+        }
+
+        private void setEnabled(final boolean enabled) {
+            pattern.setEnabled(enabled);
+            policy.setEnabled(enabled);
+            remove.setEnabled(enabled);
+        }
+
+        private void focus() {
+            pattern.setFocus(true);
+        }
     }
 }

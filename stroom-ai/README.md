@@ -42,17 +42,19 @@ On the model's **MCP Tool Servers** tab, add each server's Streamable HTTP endpo
     server's tools are unavailable, the chat says so, and the dialog warns when this mode is chosen.
   * _None_, _Bearer token_, _Custom API key header_ and _Basic auth_ use one shared credential, so every
     user's calls run as one account. Use them for development, or for servers that do their own checks.
-* **Allowed tools** and **Denied tools**: patterns (`*` matches anything) for the tools to offer.
-* **Trusted**: only trusted servers' tool annotations (read-only, destructive, open-world) are believed.
-  Mark a server trusted only if you control it.
-* **Tool policies**: one rule per line, `pattern = policy`, with policies _Allow_, _Ask_, _Ask every
-  time_ and _Deny_. For example `find_* = Allow` or `reprocess_* = Ask every time`.
+* **Test Connection** (General tab) connects with the settings as they are in the dialog and lists the
+  tools the server would offer. It needs EDIT permission on the model.
+* **Trusted** (Tools tab): only trusted servers' tool annotations (read-only, destructive, open-world) are
+  believed. Mark a server trusted only if you control it.
+* **Tool policies** (Tools tab): a list of a regular expression and a policy, added with **+**. The pattern
+  must match the tool's whole name, ignoring case, e.g. `find_.*` or `(get|list)_feeds?`, and the first
+  policy to match applies: _Allow_ (runs without asking), _Ask every time_, or _Deny_ (never offered to the
+  model). Tools no policy matches run without asking if the server is trusted and the tool is read-only,
+  and otherwise ask.
 * **Tool groups**: when a model would be offered more MCP tools than `toolGroupThreshold`, they are offered
   as groups, each with one `activate_<group>` tool, and a group's tools are only sent to the model once it
   turns the group on. Groups come from the server (`_meta.group`), otherwise from shared name prefixes
-  (e.g. `pipeline_*`), otherwise one per server. Rules here, `pattern = group`, override that, and a group
-  of `-` means the tools are always offered.
-
+  (e.g. `pipeline_*`), otherwise one per server.
 
 ## Approvals
 

@@ -16,7 +16,6 @@
 
 package stroom.ai.impl;
 
-import stroom.openai.shared.McpToolGroupRule;
 import stroom.openai.shared.McpToolPolicy;
 import stroom.openai.shared.McpToolServerConfig;
 import stroom.util.logging.LambdaLogger;
@@ -150,7 +149,7 @@ public final class McpToolset implements AutoCloseable {
                         readOnlyToolNames.add(name);
                     }
                     toolInfos.put(name, toolInfo(connection, tool, name, filter.policyFor(tool.name())));
-                    NullSafe.consume(declaredGroup(filter, tool), group -> declaredGroups.put(name, group));
+                    NullSafe.consume(declaredGroup(tool), group -> declaredGroups.put(name, group));
                 } else {
                     LOGGER.debug(() -> "Tool '" + tool.name() + "' of MCP server '" + connection.label()
                                        + "' is not allowed");
@@ -187,18 +186,13 @@ public final class McpToolset implements AutoCloseable {
 
     /**
      * @param toolName The name of a tool offered by {@link #tools()}.
-     * @return The group an admin's rule, or the tool's server (as {@code _meta.group}), puts the tool in, which
-     * may be {@link McpToolGroupRule#ALWAYS_OFFERED}; or empty if neither does.
+     * @return The group the tool's server puts it in (as {@code _meta.group}), or empty if it does not.
      */
     public Optional<String> declaredGroup(final String toolName) {
         return Optional.ofNullable(declaredGroups.get(toolName));
     }
 
-    private static String declaredGroup(final McpToolFilter filter, final Tool tool) {
-        final String ruleGroup = filter.groupFor(tool.name());
-        if (ruleGroup != null) {
-            return ruleGroup;
-        }
+    private static String declaredGroup(final Tool tool) {
         final Object metaGroup = NullSafe.get(tool.meta(), meta -> meta.get(META_GROUP));
         return metaGroup instanceof final String group && !group.isBlank()
                 ? group.strip()

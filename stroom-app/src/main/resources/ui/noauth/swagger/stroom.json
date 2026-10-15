@@ -9068,6 +9068,36 @@
         "tags" : [ "OpenAI Model" ]
       }
     },
+    "/openAIModel/v1/testMcpToolServer" : {
+      "post" : {
+        "operationId" : "testMcpToolServer",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TestMcpToolServerRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OpenAIModelTestResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Connect to an MCP tool server and list the tools it would offer",
+        "tags" : [ "OpenAI Model" ]
+      }
+    },
     "/openAIModel/v1/validate" : {
       "post" : {
         "operationId" : "validateOpenAIModel",
@@ -25188,23 +25218,12 @@
         },
         "required" : [ "type" ]
       },
-      "McpToolGroupRule" : {
-        "type" : "object",
-        "properties" : {
-          "group" : {
-            "type" : "string"
-          },
-          "toolPattern" : {
-            "type" : "string"
-          }
-        }
-      },
       "McpToolPolicyRule" : {
         "type" : "object",
         "properties" : {
           "policy" : {
             "type" : "string",
-            "enum" : [ "ALLOW", "ASK", "ASK_ALWAYS", "DENY" ]
+            "enum" : [ "ALLOW", "ASK_ALWAYS", "DENY" ]
           },
           "toolPattern" : {
             "type" : "string"
@@ -25214,12 +25233,6 @@
       "McpToolServerConfig" : {
         "type" : "object",
         "properties" : {
-          "allowedTools" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
           "apiKeyHeaderName" : {
             "type" : "string"
           },
@@ -25233,12 +25246,6 @@
           "credentialName" : {
             "type" : "string"
           },
-          "deniedTools" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
           "enabled" : {
             "type" : "boolean"
           },
@@ -25250,12 +25257,6 @@
           },
           "name" : {
             "type" : "string"
-          },
-          "toolGroups" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/McpToolGroupRule"
-            }
           },
           "toolPolicies" : {
             "type" : "array",
@@ -32046,6 +32047,17 @@
         "properties" : {
           "criteria" : {
             "$ref" : "#/components/schemas/FindTaskCriteria"
+          }
+        }
+      },
+      "TestMcpToolServerRequest" : {
+        "type" : "object",
+        "properties" : {
+          "mcpToolServer" : {
+            "$ref" : "#/components/schemas/McpToolServerConfig"
+          },
+          "modelUuid" : {
+            "type" : "string"
           }
         }
       },
