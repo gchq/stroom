@@ -49,7 +49,8 @@ final class McpTestServer implements AutoCloseable {
     private final List<Map<String, String>> requestHeaders = Collections.synchronizedList(new ArrayList<>());
 
     private McpTestServer(final List<SyncToolSpecification> tools,
-                          final List<SyncResourceSpecification> resources) throws Exception {
+                          final List<SyncResourceSpecification> resources,
+                          final String instructions) throws Exception {
         final HttpServletStreamableServerTransportProvider transport = HttpServletStreamableServerTransportProvider
                 .builder()
                 .mcpEndpoint(MCP_PATH)
@@ -78,6 +79,7 @@ final class McpTestServer implements AutoCloseable {
                 .capabilities(capabilities.build())
                 .tools(tools)
                 .resources(resources)
+                .instructions(instructions)
                 .build();
 
         jetty = new Server();
@@ -94,7 +96,13 @@ final class McpTestServer implements AutoCloseable {
     /// Starts a server offering the given tools and resources.
     static McpTestServer start(final List<SyncToolSpecification> tools,
                                final List<SyncResourceSpecification> resources) throws Exception {
-        return new McpTestServer(tools, resources);
+        return new McpTestServer(tools, resources, null);
+    }
+
+    /// Starts a server offering the given tools, which gives the client the given instructions when it connects.
+    static McpTestServer start(final List<SyncToolSpecification> tools,
+                               final String instructions) throws Exception {
+        return new McpTestServer(tools, List.of(), instructions);
     }
 
     /// @return The URL of the server's MCP endpoint.
