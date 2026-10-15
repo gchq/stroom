@@ -23,4 +23,7 @@ public interface McpToolServerEditUiHandlers extends UiHandlers {
     void onAuthModeChange();
 
     void onSetHttpClientConfiguration();
+
+    /// Connects to the server, as set up in the dialog, and says which tools it would offer.
+    void onTest();
 }

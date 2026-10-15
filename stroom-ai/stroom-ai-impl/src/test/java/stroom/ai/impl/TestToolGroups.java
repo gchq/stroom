@@ -16,7 +16,6 @@
 
 package stroom.ai.impl;
 
-import stroom.openai.shared.McpToolGroupRule;
 import stroom.openai.shared.McpToolServerConfig;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -64,25 +63,6 @@ class TestToolGroups {
         assertThat(groups.groupNames()).containsExactly("pipeline", "index", "onboarding", "fastmcp");
         assertThat(names(groups.offered(Set.of(), group -> {
         }))).containsExactly("activate_pipeline", "activate_index", "activate_onboarding", "activate_fastmcp");
-    }
-
-    @Test
-    void anAdminCanRegroupToolsOrAlwaysOfferThem() {
-        final McpToolServerConfig config = McpToolServerConfig.builder()
-                .toolGroups(List.of(
-                        new McpToolGroupRule("whoami", McpToolGroupRule.ALWAYS_OFFERED),
-                        new McpToolGroupRule("index_*", "Searching")))
-                .build();
-        final McpToolset toolset = toolset(config,
-                tool("pipeline_create"),
-                tool("pipeline_step"),
-                tool("index_create", Map.of("group", "ignored")),
-                tool("whoami"));
-
-        final ToolGroups groups = ToolGroups.of(toolset.tools(), toolset, 2);
-
-        assertThat(names(groups.offered(Set.of(), group -> {
-        }))).containsExactly("fastmcp__whoami", "activate_pipeline", "activate_searching");
     }
 
     @Test

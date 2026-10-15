@@ -89,32 +89,19 @@ public class McpToolServerConfig {
     @JsonProperty
     private final HttpClientConfig httpClientConfiguration;
 
-    @JsonPropertyDescription("Patterns for the tools of this server that may be offered to the model. '*' matches " +
-                             "any characters. If empty, all tools are allowed (apart from denied ones).")
-    @JsonProperty
-    private final List<String> allowedTools;
-
-    @JsonPropertyDescription("Patterns for the tools of this server that must never be offered to the model. " +
-                             "'*' matches any characters. Takes precedence over the allowed tools.")
-    @JsonProperty
-    private final List<String> deniedTools;
-
     @JsonPropertyDescription("Whether an admin trusts this server. The MCP tool annotations (e.g. readOnlyHint) of " +
                              "an untrusted server are ignored, so all of its tools ask the user before running, " +
                              "unless a tool policy says otherwise.")
     @JsonProperty
     private final boolean trusted;
 
-    @JsonPropertyDescription("Rules setting what happens when the agent wants to call this server's tools. The " +
-                             "first rule whose pattern matches the tool's name applies.")
+    @JsonPropertyDescription("Rules setting what happens when the agent wants to call this server's tools: " +
+                             "Allow (run without asking), Ask every time, or Deny (never offered to the model). " +
+                             "The first rule whose regular expression matches the whole tool name, ignoring " +
+                             "case, applies. Tools no rule matches run without asking if the server is trusted " +
+                             "and the tool is read-only, and otherwise ask.")
     @JsonProperty
     private final List<McpToolPolicyRule> toolPolicies;
-
-    @JsonPropertyDescription("Rules putting this server's tools into groups, which the agent turns on when it " +
-                             "needs them. They override the groups the server gives. The first rule whose " +
-                             "pattern matches the tool's name applies.")
-    @JsonProperty
-    private final List<McpToolGroupRule> toolGroups;
 
     @JsonCreator
     public McpToolServerConfig(
@@ -126,11 +113,8 @@ public class McpToolServerConfig {
             @JsonProperty("apiKeyHeaderName") final String apiKeyHeaderName,
             @JsonProperty("apiKeyValuePrefix") final String apiKeyValuePrefix,
             @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration,
-            @JsonProperty("allowedTools") final List<String> allowedTools,
-            @JsonProperty("deniedTools") final List<String> deniedTools,
             @JsonProperty("trusted") final Boolean trusted,
-            @JsonProperty("toolPolicies") final List<McpToolPolicyRule> toolPolicies,
-            @JsonProperty("toolGroups") final List<McpToolGroupRule> toolGroups) {
+            @JsonProperty("toolPolicies") final List<McpToolPolicyRule> toolPolicies) {
         this.enabled = Objects.requireNonNullElse(enabled, true);
         this.name = name;
         this.endpoint = endpoint;
@@ -139,11 +123,8 @@ public class McpToolServerConfig {
         this.apiKeyHeaderName = apiKeyHeaderName;
         this.apiKeyValuePrefix = apiKeyValuePrefix;
         this.httpClientConfiguration = httpClientConfiguration;
-        this.allowedTools = allowedTools;
-        this.deniedTools = deniedTools;
         this.trusted = Objects.requireNonNullElse(trusted, false);
         this.toolPolicies = toolPolicies;
-        this.toolGroups = toolGroups;
     }
 
     public boolean isEnabled() {
@@ -179,20 +160,6 @@ public class McpToolServerConfig {
     }
 
     /**
-     * @return Patterns for the tools that may be offered to the model, or null/empty for all of them.
-     */
-    public List<String> getAllowedTools() {
-        return allowedTools;
-    }
-
-    /**
-     * @return Patterns for the tools that must never be offered to the model, or null/empty for none.
-     */
-    public List<String> getDeniedTools() {
-        return deniedTools;
-    }
-
-    /**
      * @return Whether an admin trusts this server, so its tools' MCP annotations are believed.
      */
     public boolean isTrusted() {
@@ -204,13 +171,6 @@ public class McpToolServerConfig {
      */
     public List<McpToolPolicyRule> getToolPolicies() {
         return toolPolicies;
-    }
-
-    /**
-     * @return The tool group rules, in the order they are checked, or null/empty for none.
-     */
-    public List<McpToolGroupRule> getToolGroups() {
-        return toolGroups;
     }
 
     @Override
@@ -230,11 +190,8 @@ public class McpToolServerConfig {
                Objects.equals(apiKeyHeaderName, that.apiKeyHeaderName) &&
                Objects.equals(apiKeyValuePrefix, that.apiKeyValuePrefix) &&
                Objects.equals(httpClientConfiguration, that.httpClientConfiguration) &&
-               Objects.equals(allowedTools, that.allowedTools) &&
-               Objects.equals(deniedTools, that.deniedTools) &&
                trusted == that.trusted &&
-               Objects.equals(toolPolicies, that.toolPolicies) &&
-               Objects.equals(toolGroups, that.toolGroups);
+               Objects.equals(toolPolicies, that.toolPolicies);
     }
 
     @Override
@@ -247,11 +204,8 @@ public class McpToolServerConfig {
                 apiKeyHeaderName,
                 apiKeyValuePrefix,
                 httpClientConfiguration,
-                allowedTools,
-                deniedTools,
                 trusted,
-                toolPolicies,
-                toolGroups);
+                toolPolicies);
     }
 
     @Override
@@ -264,11 +218,8 @@ public class McpToolServerConfig {
                ", credentialName='" + credentialName + '\'' +
                ", apiKeyHeaderName='" + apiKeyHeaderName + '\'' +
                ", httpClientConfiguration=" + httpClientConfiguration +
-               ", allowedTools=" + allowedTools +
-               ", deniedTools=" + deniedTools +
                ", trusted=" + trusted +
                ", toolPolicies=" + toolPolicies +
-               ", toolGroups=" + toolGroups +
                '}';
     }
 
@@ -290,11 +241,8 @@ public class McpToolServerConfig {
         private String apiKeyHeaderName;
         private String apiKeyValuePrefix;
         private HttpClientConfig httpClientConfiguration;
-        private List<String> allowedTools;
-        private List<String> deniedTools;
         private boolean trusted;
         private List<McpToolPolicyRule> toolPolicies;
-        private List<McpToolGroupRule> toolGroups;
 
         private Builder() {
         }
@@ -308,11 +256,8 @@ public class McpToolServerConfig {
             this.apiKeyHeaderName = config.apiKeyHeaderName;
             this.apiKeyValuePrefix = config.apiKeyValuePrefix;
             this.httpClientConfiguration = config.httpClientConfiguration;
-            this.allowedTools = config.allowedTools;
-            this.deniedTools = config.deniedTools;
             this.trusted = config.trusted;
             this.toolPolicies = config.toolPolicies;
-            this.toolGroups = config.toolGroups;
         }
 
         public Builder enabled(final boolean enabled) {
@@ -355,23 +300,8 @@ public class McpToolServerConfig {
             return self();
         }
 
-        public Builder allowedTools(final List<String> allowedTools) {
-            this.allowedTools = allowedTools;
-            return self();
-        }
-
-        public Builder deniedTools(final List<String> deniedTools) {
-            this.deniedTools = deniedTools;
-            return self();
-        }
-
         public Builder trusted(final boolean trusted) {
             this.trusted = trusted;
-            return self();
-        }
-
-        public Builder toolGroups(final List<McpToolGroupRule> toolGroups) {
-            this.toolGroups = toolGroups;
             return self();
         }
 
@@ -395,11 +325,8 @@ public class McpToolServerConfig {
                     apiKeyHeaderName,
                     apiKeyValuePrefix,
                     httpClientConfiguration,
-                    allowedTools,
-                    deniedTools,
                     trusted,
-                    toolPolicies,
-                    toolGroups);
+                    toolPolicies);
         }
     }
 }

@@ -22,9 +22,11 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.openai.shared.McpToolServerConfig;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
 import stroom.openai.shared.OpenAIModelTestResponse;
+import stroom.openai.shared.TestMcpToolServerRequest;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
@@ -35,28 +37,37 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.http.HttpClientConfig;
 
+import dev.langchain4j.agent.tool.ToolSpecification;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @AutoLogged
 public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUuid<OpenAIModelDoc> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenAIModelResourceImpl.class);
 
+    // How many tool names a test of an MCP tool server lists.
+    private static final int MAX_TOOLS_LISTED = 50;
+
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<AiService> aiServiceProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<SecurityContext> securityContextProvider;
+    private final Provider<McpToolServerFactory> mcpToolServerFactoryProvider;
 
     @Inject
     OpenAIModelResourceImpl(
             final Provider<OpenAIModelStore> openAIModelStoreProvider,
             final Provider<AiService> aiServiceProvider,
             final Provider<DocumentResourceHelper> documentResourceHelperProvider,
-            final Provider<SecurityContext> securityContextProvider) {
+            final Provider<SecurityContext> securityContextProvider,
+            final Provider<McpToolServerFactory> mcpToolServerFactoryProvider) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
+        this.mcpToolServerFactoryProvider = mcpToolServerFactoryProvider;
         this.aiServiceProvider = aiServiceProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.securityContextProvider = securityContextProvider;
@@ -110,6 +121,64 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
             LOGGER.debug(e::getMessage, e);
             return new OpenAIModelTestResponse(false, NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
         }
+    }
+
+    @Override
+    @AutoLogged(value = OperationType.PROCESS, verb = "Test MCP tool server")
+    public OpenAIModelTestResponse testMcpToolServer(final TestMcpToolServerRequest request) {
+        final McpToolServerConfig server = NullSafe.get(request, TestMcpToolServerRequest::getMcpToolServer);
+        if (server == null || NullSafe.isBlankString(server.getEndpoint())) {
+            return new OpenAIModelTestResponse(false, "Enter the server's endpoint first.");
+        }
+
+        // The test connects to an endpoint given in the request, with a stored credential named in it, so only
+        // someone who could save these settings on the model may test them.
+        final DocRef docRef = getDocRef(request.getModelUuid());
+        final SecurityContext securityContext = securityContextProvider.get();
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have EDIT permission on AI model " + docRef);
+        }
+
+        final OpenAIModelDoc modelDoc = OpenAIModelDoc.builder()
+                .uuid(docRef.getUuid())
+                .name(docRef.getName())
+                .mcpToolServers(List.of(server.copy().enabled(true).build()))
+                .build();
+        try (final McpToolset toolset = mcpToolServerFactoryProvider.get().createToolset(modelDoc)) {
+            if (!toolset.getWarnings().isEmpty()) {
+                return new OpenAIModelTestResponse(false, String.join("\n", toolset.getWarnings()));
+            }
+            return new OpenAIModelTestResponse(true, describeTools(toolset));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            return new OpenAIModelTestResponse(false, NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
+        }
+    }
+
+    // Says how many tools the server would offer, after its tool policies, and names some of them.
+    private static String describeTools(final McpToolset toolset) {
+        final List<String> names = toolset.tools().keySet().stream()
+                .map(ToolSpecification::name)
+                .map(toolset::toolInfo)
+                .flatMap(Optional::stream)
+                .map(McpToolInfo::toolName)
+                .sorted()
+                .toList();
+        if (names.isEmpty()) {
+            return "Connected, but the server offers no tools (or its tool policies deny them all).";
+        }
+        final List<String> shown = names.size() > MAX_TOOLS_LISTED
+                ? names.subList(0, MAX_TOOLS_LISTED)
+                : names;
+        // One per line, as the message is shown as preformatted detail.
+        return "Connected. " + names.size() + (names.size() == 1
+                ? " tool is"
+                : " tools are")
+               + " offered:\n" + String.join("\n", shown)
+               + (names.size() > shown.size()
+                ? "\n… and " + (names.size() - shown.size()) + " more"
+                : "");
     }
 
     @Override
