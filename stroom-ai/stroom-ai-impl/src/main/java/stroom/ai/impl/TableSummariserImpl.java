@@ -112,8 +112,11 @@ public class TableSummariserImpl implements TableSummariser {
                     throw new RuntimeException("Table data file not found. "
                                                + "Data may have been cleaned up.");
                 }
-                batches.addAll(buildBatchesFromMarkdown(source.markdownFile(), tableAnalysisConfig,
-                        maxBatchChars(request.getContextWindowTokens())));
+                // Each batch says which table it is from, so findings can say so too.
+                final String label = "Table: " + source.description() + "\n";
+                buildBatchesFromMarkdown(source.markdownFile(), tableAnalysisConfig,
+                        maxBatchChars(request.getContextWindowTokens()))
+                        .forEach(batch -> batches.add(label + batch));
                 if (source.truncated()) {
                     anyTruncated = true;
                 }
@@ -290,7 +293,8 @@ public class TableSummariserImpl implements TableSummariser {
             if (cancelled.getAsBoolean()) {
                 progressListener.onCancelledBeforeMerge(summaries.size());
             }
-            merged = new SummaryMerger(chatModel, tableAnalysisConfig, debugLog, debugFormatter)
+            merged = new SummaryMerger(chatModel, tableAnalysisConfig, request.getQuery(), debugLog,
+                    debugFormatter)
                     .merge(summaries, notes);
         }
 
