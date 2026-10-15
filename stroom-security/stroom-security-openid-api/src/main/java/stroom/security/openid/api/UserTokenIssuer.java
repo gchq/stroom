@@ -23,8 +23,9 @@ import java.util.Optional;
 ///
 /// The service checks a token against Stroom's issuer and published keys, and against its own audience. Stroom
 /// accepts the token on its API only if that audience is Stroom's client id or one of its allowed audiences.
-/// Tokens are recorded in the internal identity provider's token inventory, so they show to administrators and
-/// are revoked with the rest of the user's tokens, e.g. when the user signs out.
+/// Tokens are recorded in the internal identity provider's token inventory, so they show to administrators. A
+/// token issued under a sign-in belongs to that sign-in's grant, so it is revoked with it, e.g. when the user signs
+/// out or their session ends.
 public interface UserTokenIssuer {
 
     /// @return True if tokens can be issued: only when Stroom is its own identity provider.
@@ -35,6 +36,8 @@ public interface UserTokenIssuer {
     ///
     /// @param subjectId The user's subject id.
     /// @param audience  Who the token is for.
+    /// @param signInJwt The token the user signed in with, whose grant the issued token joins, or null if there is
+    ///                  none (e.g. a user of an API key), when the token simply runs out.
     /// @return The token, or empty if tokens cannot be issued (see [#isAvailable()]).
-    Optional<String> getAccessToken(String subjectId, String audience);
+    Optional<String> getAccessToken(String subjectId, String audience, String signInJwt);
 }

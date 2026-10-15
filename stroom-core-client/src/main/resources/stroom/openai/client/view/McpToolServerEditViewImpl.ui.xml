@@ -29,7 +29,7 @@
                 </form:FormGroup>
                 <form:FormGroup identity="mcpToolServerAuthMode"
                                 label="Authentication"
-                                helpText="How Stroom proves who it is to the server. 'OAuth2 passthrough' sends each user's own sign-in, so the server acts as them (needs an external identity provider). The other modes send one stored credential for everyone.">
+                                helpText="How Stroom proves who it is to the server. 'OAuth2 passthrough' signs each user in to the server, so the server acts as them: with an external identity provider it sends the user's own sign-in token; with Stroom's internal identity provider it sends a short-lived token Stroom issues (see Token audience). The other modes send one stored credential for everyone.">
                     <g:FlowPanel>
                         <l:SelectionBox ui:field="authMode"/>
                         <g:Label ui:field="authModeWarning" styleName="mcpToolServer-warning"/>
@@ -53,6 +53,13 @@
                                 helpText="Text placed before the key in the header, e.g. 'Bearer ' (with its trailing space). Leave empty to send the key on its own.">
                     <g:TextBox ui:field="apiKeyValuePrefix" addStyleNames="w-100"
                                title="An optional prefix placed before the key value."/>
+                </form:FormGroup>
+                <form:FormGroup ui:field="audienceGroup"
+                                identity="mcpToolServerAudience"
+                                label="Token audience"
+                                helpText="Stroom uses its internal identity provider, so for 'OAuth2 passthrough' it issues each user a short-lived token for this server, with this audience, e.g. stroom-mcp. Configure the server with Stroom's issuer, its JWKS URL and this audience. For the server to call Stroom back as the user, also add the audience to stroom.security.authentication.openId.allowedAudiences. Tokens are only sent to a trusted server over https (or on the same machine).">
+                    <g:TextBox ui:field="audience" addStyleNames="w-100"
+                               title="The audience of the tokens Stroom issues for this server."/>
                 </form:FormGroup>
                 <g:FlowPanel styleName="mcpToolServer-buttons">
                     <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config"
