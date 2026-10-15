@@ -36,6 +36,7 @@ import stroom.security.api.SecurityContext;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.TempDirProvider;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.UserRef;
 import stroom.util.time.StroomDuration;
 
@@ -47,8 +48,12 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -125,6 +130,51 @@ class TestWorkspaceTools {
         workspace.write(chatId, WorkspacePath.parse("/outputs/events.log"), events.toString(), null);
         workspaceStore.createFile(chatId, AiAttachmentType.WORKSPACE_FILE, "/attachments/7.md", null,
                 "| host | n |\n| --- | --- |\n| fw1 | 3 |\n");
+    }
+
+    /// Every workspace tool, given each path or output argument an attacker might try, refuses it: nothing
+    /// outside the chat's workspace is read, written or deleted, whatever the model asks for.
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "SECRET",
+            "file://SECRET",
+            "/outputs/../../../../../../SECRET",
+            "/outputs/%2e%2e/%2e%2e/etc/passwd",
+            "/outputs/..\\..\\etc\\passwd",
+            "../outputs/x",
+            "/etc/passwd",
+            "~/.ssh/id_rsa",
+            "/outputs/./x",
+            "/outputs/x\u0000.txt",
+            "/proc/self/environ"})
+    void noToolReachesOutsideTheWorkspace(final String attempt) throws IOException {
+        final Path secret = tempDir.resolve("secret.txt");
+        Files.writeString(secret, "TOP-SECRET-7f3a");
+        final String path = JsonUtil.writeValueAsString(attempt.replace("SECRET", secret.toAbsolutePath().toString()),
+                false);
+        final TableTool tableTool = tableTool();
+        final List<String> calls = List.of(
+                run(new LsTool(workspace), "{\"path\":" + path + "}"),
+                run(new ReadFileTool(workspace), "{\"path\":" + path + "}"),
+                run(new WcTool(workspace), "{\"path\":" + path + "}"),
+                run(new GrepTool(workspace), "{\"path\":" + path + ",\"pattern\":\"SECRET\"}"),
+                run(new GrepTool(workspace), "{\"path\":\"/outputs/events.log\",\"pattern\":\"ERROR\","
+                                             + "\"out\":" + path + "}"),
+                run(new JqTool(workspace), "{\"path\":" + path + ",\"query\":\".\"}"),
+                run(new XPathTool(workspace), "{\"path\":" + path + ",\"expression\":\"/\"}"),
+                run(tableTool, "{\"path\":" + path + "}"),
+                run(tableTool, "{\"path\":\"/attachments/7.md\",\"out\":" + path + "}"),
+                run(new WriteFileTool(workspace), "{\"path\":" + path + ",\"content\":\"planted\"}"),
+                run(new StrReplaceTool(workspace), "{\"path\":" + path + ",\"oldText\":\"TOP\","
+                                                   + "\"newText\":\"X\"}"),
+                run(new DeleteFileTool(workspace), "{\"path\":" + path + "}"));
+
+        assertThat(calls).allSatisfy(result -> assertThat(result)
+                .startsWith("Error")
+                .doesNotContain("TOP-SECRET-7f3a"));
+        // Nothing was changed outside the workspace.
+        assertThat(Files.readString(secret)).isEqualTo("TOP-SECRET-7f3a");
+        assertThat(tempDir.resolve("x")).doesNotExist();
     }
 
     @Test
