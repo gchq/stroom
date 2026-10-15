@@ -47,6 +47,7 @@ import stroom.util.json.JsonUtil;
 import stroom.util.shared.UserRef;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 import java.util.List;
@@ -74,6 +75,55 @@ class TestAskStroomAIService {
                 null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null, compactor, null,
                 toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext,
                 () -> null);
+    }
+
+    private final AiAttachmentFileStore attachmentFileStore = Mockito.mock(AiAttachmentFileStore.class);
+    private final McpClientCache mcpClientCache = Mockito.mock(McpClientCache.class);
+    private final ContextUsageTracker usageTracker = Mockito.mock(ContextUsageTracker.class);
+
+    // With what deleting a chat needs.
+    private AskStroomAIService serviceForDelete() {
+        return new AskStroomAIService(aiService, attachmentFileStore, null, null, null, null, null, () -> null,
+                null, null, null, null, null, mcpClientCache, null, runManager, runDao, null, null,
+                contextAssembler, usageTracker, compactor, null, toolApprovalService, Mockito.mock(AiAuditLog.class),
+                aiDao, AiConfig::new, securityContext, () -> null);
+    }
+
+    @Test
+    void testDeleteChat_stopsAWorkingRunBeforeDeleting() {
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        // Active until it has been asked to stop.
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running), Optional.of(running), Optional.empty());
+        Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of());
+
+        serviceForDelete().deleteChat(1);
+
+        final InOrder inOrder = Mockito.inOrder(aiService, runManager);
+        inOrder.verify(aiService).verifyOwnership(1);
+        inOrder.verify(runManager).stop(1, AiChatRunStopReason.USER);
+        inOrder.verify(aiService).deleteChat(1);
+        Mockito.verify(mcpClientCache).evictChat(1);
+    }
+
+    @Test
+    void testDeleteChat_aRunThatWillNotStopLeavesTheChat() {
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.STOPPING, null, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running));
+        final AskStroomAIService service = serviceForDelete();
+        service.setStopWait(java.time.Duration.ofMillis(300));
+
+        assertThatThrownBy(() -> service.deleteChat(1))
+                .isInstanceOf(AiChatRunManager.AiChatBusyException.class);
+        Mockito.verify(aiService, Mockito.never()).deleteChat(Mockito.anyInt());
+    }
+
+    @Test
+    void testDeleteChat_anotherUsersChatIsNotTouched() {
+        Mockito.doThrow(new RuntimeException("not yours")).when(aiService).verifyOwnership(1);
+
+        assertThatThrownBy(() -> serviceForDelete().deleteChat(1)).hasMessage("not yours");
+        Mockito.verifyNoInteractions(runManager);
+        Mockito.verify(aiService, Mockito.never()).deleteChat(Mockito.anyInt());
     }
 
     @Test
