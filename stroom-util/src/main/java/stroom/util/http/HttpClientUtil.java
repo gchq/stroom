@@ -19,7 +19,9 @@ package stroom.util.http;
 import stroom.util.cert.SSLConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
+import stroom.util.shared.http.HttpHeader;
 import stroom.util.shared.http.HttpTlsConfig;
 import stroom.util.shared.time.SimpleDuration;
 
@@ -30,7 +32,10 @@ import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -75,6 +80,29 @@ public class HttpClientUtil {
                 .connectionRequestTimeout(timeout)
                 .tlsConfiguration(httpTlsConfig)
                 .build();
+    }
+
+    /// @param httpClientConfig The configuration, or null.
+    /// @return The configuration's headers to send with every request, by name, in order. Headers with a blank
+    /// name are left out, names are trimmed, and a null value is sent as empty. Duplicate names are rejected when
+    /// the configuration is edited (see [HttpHeader#findDuplicateName]), but should one get through, a later
+    /// header replaces an earlier one with the same name in any case, so a header is never sent twice.
+    public static Map<String, String> headers(final HttpClientConfig httpClientConfig) {
+        final List<HttpHeader> headers = httpClientConfig != null
+                ? httpClientConfig.getHeaders()
+                : null;
+        if (headers == null || headers.isEmpty()) {
+            return Map.of();
+        }
+        final Map<String, String> map = new LinkedHashMap<>();
+        for (final HttpHeader header : headers) {
+            if (header != null && NullSafe.isNonBlankString(header.getName())) {
+                final String name = header.getName().strip();
+                map.keySet().removeIf(name::equalsIgnoreCase);
+                map.put(name, Objects.requireNonNullElse(header.getValue(), ""));
+            }
+        }
+        return Collections.unmodifiableMap(map);
     }
 
     public static TlsConfiguration getTlsConfiguration(final SSLConfig sslConfig) {

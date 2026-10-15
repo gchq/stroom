@@ -27,6 +27,7 @@ import dev.langchain4j.http.client.HttpClient;
 import dev.langchain4j.http.client.HttpClientBuilder;
 
 import java.time.Duration;
+import java.util.Map;
 
 /// A langchain4j [HttpClientBuilder] that creates [ApacheHttpClient] instances from the HTTP client
 /// configuration held on an OpenAI Model document.
@@ -41,14 +42,23 @@ public class ApacheHttpClientBuilder implements HttpClientBuilder {
 
     private final HttpClientProviderCache httpClientProviderCache;
     private final HttpClientConfiguration httpClientConfiguration;
+    private final Map<String, String> headers;
 
     /// @param httpClientProviderCache The cache to obtain the underlying Apache HTTP clients from.
     /// @param httpClientConfiguration The HTTP client configuration resolved from the OpenAI Model
     ///                                document. Its timeouts are used as-is for every client built.
     public ApacheHttpClientBuilder(final HttpClientProviderCache httpClientProviderCache,
                                    final HttpClientConfiguration httpClientConfiguration) {
+        this(httpClientProviderCache, httpClientConfiguration, Map.of());
+    }
+
+    /// @param headers Headers to send with every request, unless the request sets them itself.
+    public ApacheHttpClientBuilder(final HttpClientProviderCache httpClientProviderCache,
+                                   final HttpClientConfiguration httpClientConfiguration,
+                                   final Map<String, String> headers) {
         this.httpClientProviderCache = httpClientProviderCache;
         this.httpClientConfiguration = httpClientConfiguration;
+        this.headers = headers;
     }
 
     /// @return The connection timeout from the document's HTTP client configuration.
@@ -98,6 +108,6 @@ public class ApacheHttpClientBuilder implements HttpClientBuilder {
     /// @return A new [ApacheHttpClient] using the document's HTTP client configuration.
     @Override
     public HttpClient build() {
-        return new ApacheHttpClient(httpClientProviderCache, httpClientConfiguration);
+        return new ApacheHttpClient(httpClientProviderCache, httpClientConfiguration, headers);
     }
 }

@@ -16836,6 +16836,10 @@ components:
           type: boolean
         followRedirects:
           type: boolean
+        headers:
+          type: array
+          items:
+            $ref: "#/components/schemas/HttpHeader"
         keepAlive:
           $ref: "#/components/schemas/SimpleDuration"
         maxConnections:
@@ -16872,6 +16876,13 @@ components:
       - timeToLive
       - timeout
       - validateAfterInactivityPeriod
+    HttpHeader:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
     HttpProxyConfig:
       type: object
       properties:
