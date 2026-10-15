@@ -209,7 +209,7 @@ public class QueryEditPresenter
                     from.getColNo(),
                     to.getLineNo() - 1,
                     to.getColNo());
-            final Marker marker = new Marker(range, "err", AceMarkerType.TEXT, true);
+            final Marker marker = new Marker(range, "code-editor__error-underline", AceMarkerType.TEXT, true);
             editorPresenter.setIndicators(indicatorLines);
             editorPresenter.setMarkers(Collections.singletonList(marker));
         });

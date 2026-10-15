@@ -31,7 +31,7 @@ public class IndicatorPopup extends PopupPanel {
 
         setModal(false);
         setAutoHideEnabled(true);
-        setStyleName("codeEditor-indicatorPopup");
+        setStyleName("code-editor-indicator");
 
         setWidget(content);
     }

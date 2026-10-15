@@ -146,7 +146,7 @@
     --code-editor__invisible-color: #5c6370;
     --code-editor__cursor-color: #66b2f0;
 
-    --code-editor-right-bar__background-color: var(--code-editor__gutter-background-color);
+    --code-editor__overview-background-color: var(--code-editor__gutter-background-color);
     --code-editor__border-color: #000;
     --code-editor__border-color--info: #378cff;
     --code-editor__background-color--info: #378cff;

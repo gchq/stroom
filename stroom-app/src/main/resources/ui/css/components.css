@@ -2003,7 +2003,7 @@ button.main-menu svg {
     /*width: 1000px;*/
 }
 
-.AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate .EditorViewImpl {
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate .code-editor {
     height: 60px;
 }
 
@@ -2011,7 +2011,7 @@ button.main-menu svg {
     width: 200px;
 }
 
-.AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .EditorViewImpl {
+.AnalyticEmailDestinationViewImpl #analyticEmailDestinationBodyTemplate .code-editor {
     min-height: 300px;
 }
 

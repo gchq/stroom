@@ -194,26 +194,29 @@ public final class AceEditorFeatureStories {
                     // (test-runner/lib/real-input/ace-editor.mjs)
                     // The overview bar (RightBar) has a marker for each line, and its summary shows
                     // the worst severity
-                    play.waitFor(() -> play.expect(play.querySelectorAll(".codeEditor-marker").count())
+                    play.waitFor(() -> play.expect(play.querySelectorAll(".code-editor__marker").count())
                             .toBe(4));
-                    play.expect(play.querySelector(".codeEditor-summary")).toHaveClass("codeEditor-fatal");
-                    final Query fatalMarker = play.querySelector(".codeEditor-marker.codeEditor-fatal");
+                    play.expect(play.querySelector(".code-editor__summary")).toHaveClass("code-editor__summary--fatal");
+                    final Query fatalMarker = play.querySelector(".code-editor__marker--fatal");
                     play.expect(fatalMarker).toHaveAttribute("lineno", "9");
                     // Hovering a marker in the overview bar says where it is
                     play.hover(fatalMarker);
-                    play.waitFor(() -> play.expect(play.screen().querySelector(".codeEditor-indicatorPopup"))
+                    play.waitFor(() -> play.expect(play.screen().querySelector(".code-editor-indicator"))
                             .toHaveTextContent(TextMatch.containing("at line 9, click to navigate.")));
                 })
-                // Stepping's and the data viewer's highlight of the current record (an "hl" marker)
+                // Stepping's and the data viewer's highlight of the current record (a
+                // "code-editor__highlight" marker)
                 .story("Highlight", context -> {
                     final EditorPresenter editor = editor(AceEditorStories.SAMPLE_XML, AceEditorMode.XML, true);
                     editor.setHighlights(List.of(TextRange.of(DefaultLocation.of(5, 5),
                             DefaultLocation.of(8, 19))));
                     return framed(editor);
                 })
-                .withPlay(play -> play.waitFor(() -> play.expect(play.querySelector(".ace_marker-layer .hl"))
+                .withPlay(play -> play.waitFor(() -> play.expect(
+                                play.querySelector(".ace_marker-layer .code-editor__highlight"))
                         .toBeInTheDocument()))
-                // The query editor's error: an "err" marker under the bad token, and its indicator
+                // The query editor's error: a "code-editor__error-underline" marker under the bad token,
+                // and its indicator
                 .story("QueryErrorMarker", context -> {
                     final EditorPresenter editor = editor(SAMPLE_QUERY, AceEditorMode.STROOM_QUERY, false);
                     editor.getIndicatorsOption().setAvailable(true);
@@ -222,12 +225,13 @@ public final class AceEditorFeatureStories {
                     indicators.add(new StoredError(Severity.ERROR, DefaultLocation.of(5, 12), null,
                             "Unknown function 'floorHour'"));
                     editor.setIndicators(new IndicatorLines(indicators));
-                    editor.setMarkers(List.of(new Marker(AceRange.create(4, 12, 4, 21), "err",
+                    editor.setMarkers(List.of(new Marker(AceRange.create(4, 12, 4, 21), "code-editor__error-underline",
                             AceMarkerType.TEXT, true)));
                     return framed(editor);
                 })
                 .withPlay(play -> {
-                    play.waitFor(() -> play.expect(play.querySelector(".ace_marker-layer .err"))
+                    play.waitFor(() -> play.expect(
+                                    play.querySelector(".ace_marker-layer .code-editor__error-underline"))
                             .toBeInTheDocument());
                     play.waitFor(() -> play.expect(play.querySelector(".ace_gutter-cell.stroom_error"))
                             .toHaveTextContent("5"));

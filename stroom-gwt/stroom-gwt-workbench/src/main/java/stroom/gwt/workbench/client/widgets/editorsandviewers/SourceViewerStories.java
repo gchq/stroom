@@ -205,7 +205,8 @@ public final class SourceViewerStories {
                     // The range is highlighted (an Ace marker). It once never was for a data stream:
                     // DataPresenter.refreshHighlights compared the stream's type with the location's
                     // child type
-                    play.waitFor(() -> play.expect(play.querySelectorAll(".ace_marker-layer .hl").count())
+                    play.waitFor(() -> play.expect(
+                                    play.querySelectorAll(".ace_marker-layer .code-editor__highlight").count())
                             .toBeGreaterThan(0));
                     // The data preview hides the line numbers (it formats the
                     // data), so there is no gutter numbered from the returned first line

@@ -1,36 +1,65 @@
-.editor,
-.editor.ace_editor * {
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The code editor (stroom.editor.client.view): Stroom's parts around and on top of the Ace editor,
+   named BEM style (block, block__element, block--modifier). The block is the editor's view
+   (code-editor), holding the Ace editor (code-editor__ace, code-editor__ace--single-line for a
+   single line editor) and the overview bar to its right (code-editor__overview), with its summary
+   and markers. The highlight and error underline are Ace markers that Stroom adds. The indicator
+   popup and the editor's context menu options are blocks of their own, as they are shown outside
+   the editor. Ace's own classes (ace_*, and the stroom_* annotation classes the Ace wrapper gives
+   the gutter) are styled here only where Stroom changes them; the editor themes are in
+   editor-themes.css.
+*/
+
+.code-editor__ace,
+.code-editor__ace.ace_editor * {
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
 }
 
-.stroom-font-size-small .editor,
-.stroom-font-size-small .editor * {
+.stroom-font-size-small .code-editor__ace,
+.stroom-font-size-small .code-editor__ace * {
     font-size: 12px !important;
     line-height: 14px !important;
 }
 
-.stroom-font-size-medium .editor,
-.stroom-font-size-medium .editor * {
+.stroom-font-size-medium .code-editor__ace,
+.stroom-font-size-medium .code-editor__ace * {
     font-size: .875rem !important;
     line-height: 16px !important;
 }
 
-.stroom-font-size-large .editor,
-.stroom-font-size-large .editor * {
+.stroom-font-size-large .code-editor__ace,
+.stroom-font-size-large .code-editor__ace * {
     font-size: 1rem !important;
     line-height: 18px !important;
 }
 
-.editor.ace_editor {
+.code-editor__ace.ace_editor {
     width: 100%;
     height: 100%;
 }
 
-.ace_gutter-cell {
+/* :where() keeps Ace's themes, e.g. their active line's number, able to override it */
+:where(.code-editor__ace) .ace_gutter-cell {
     color: var(--text-color);
 }
 
-.editor .hl {
+.code-editor__highlight {
     position: absolute;
     /* Your styling options here are limited as the highlight is a separate layer to the text
     so you can't control the text colour, plus the text colour will differ depending
@@ -49,25 +78,25 @@
     */
 }
 
-.editor .err {
+.code-editor__error-underline {
     position: absolute;
     border-bottom: 1px solid red;
     border-radius: 0;
 }
 
-.stroom-font-size-small .editor.single-line-editor {
+.stroom-font-size-small .code-editor__ace--single-line {
     height: 16px;
 }
 
-.stroom-font-size-medium .editor.single-line-editor {
+.stroom-font-size-medium .code-editor__ace--single-line {
     height: 18px;
 }
 
-.stroom-font-size-large .editor.single-line-editor {
+.stroom-font-size-large .code-editor__ace--single-line {
     height: 20px;
 }
 
-.editor .ace_tooltip {
+.code-editor__ace .ace_tooltip {
     background-color: var(--tooltip__background-color);
     color: var(--tooltip__text-color);
     background-image: none;
@@ -113,13 +142,13 @@
     background-color: var(--tooltip__background-color);
 }
 
-.editor .ace_gutter-cell.stroom_info {
+.code-editor__ace .ace_gutter-cell.stroom_info {
     background-image: url(../images/info.svg);
     background-size: 14px 14px;
     background-position-x: 3px;
 }
 
-.editor .ace_gutter-cell.stroom_warning {
+.code-editor__ace .ace_gutter-cell.stroom_warning {
     /* alert.svg takes its colour from a CSS variable, which an SVG used as a background image can't
        see, so it would be all black */
     background-image: url(../images/warning.svg);
@@ -127,25 +156,25 @@
     background-position-x: 3px;
 }
 
-.editor .ace_gutter-cell.stroom_error {
+.code-editor__ace .ace_gutter-cell.stroom_error {
     background-image: url(../images/error.svg);
     background-size: 14px 14px;
     background-position-x: 3px;
 }
 
-.editor .ace_gutter-cell.stroom_fatal_error {
+.code-editor__ace .ace_gutter-cell.stroom_fatal_error {
     background-image: url(../images/fatal.svg);
     background-size: 14px 14px;
     background-position-x: 3px;
 }
 
-.stroom-theme-dark .editor .ace_gutter-cell.stroom_fatal_error {
+.stroom-theme-dark .code-editor__ace .ace_gutter-cell.stroom_fatal_error {
     background-image: url(../images/fatal-dark.svg);
     background-size: 14px 14px;
     background-position-x: 3px;
 }
 
-.editor-error {
+.code-editor__load-error {
     position: relative;
     background-color: #fdd835;
     padding: 10px;
@@ -158,48 +187,147 @@
     overflow-wrap: anywhere;
 }
 
-.editor-error p:first-of-type {
+.code-editor__load-error p:first-of-type {
     font-size: 14px;
     font-weight: bold;
 }
 
-.editor-error p:not(:first-child) {
+.code-editor__load-error p:not(:first-child) {
     font-size: 12px;
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
 }
 
-.editor-menu-option-on {
+.code-editor-menu-option--on {
   color: var(--code-editor-menu-option__color--on);
 }
 
-.cellTableSelectedRowCell .editor-menu-option-on {
+.cellTableSelectedRowCell .code-editor-menu-option--on {
   color: var(--code-editor-menu-option__color--on--selected);
 }
 
-.editor-menu-option-off {
+.code-editor-menu-option--off {
   color: var(--code-editor-menu-option__color--off);
 }
 
-.cellTableSelectedRowCell .editor-menu-option-off {
+.cellTableSelectedRowCell .code-editor-menu-option--off {
   color: var(--code-editor-menu-option__color--off--selected);
 }
 
-.ace-tomorrow-night .ace_marker-layer .ace_selection {
-    background: #4A148C; /* purple 900 */
-    border: none;
+/* The overview bar, its markers and their indicator popup */
+
+.code-editor-indicator {
+	border: 1px solid black;
+	padding: 0px 2px;
+	background-color: var(--tooltip__background-color);
+	color: var(--tooltip__text-color);
+	z-index: 10;
 }
 
-.ace-tomorrow-night .ace_marker-layer .ace_selected-word {
-    background: #1A237E; /* indigo 900 */
-    border: none;
+.code-editor__text {
+    border-bottom: 1px solid transparent; /* Required to allow mouse drag selection on ace editor text inside this panel. */
 }
 
-.ace-tomorrow-night-eighties .ace_marker-layer .ace_selection {
-    background: #4A148C; /* purple 900 */
-    border: none;
+.code-editor__overview {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--code-editor__overview-background-color);
+    /*border-left: solid 1px var(--code-editor__border-color);*/
+    -moz-user-focus: ignore;
+    -moz-user-input: disabled;
+    -moz-user-select: none;
+    -webkit-user-focus: ignore;
+    -webkit-user-input: disabled;
+    -webkit-user-select: none;
+    user-focus: ignore;
+    user-input: disabled;
+    user-select: none;
 }
 
-.ace-tomorrow-night-eighties .ace_marker-layer .ace_selected-word {
-    background: #1A237E; /* indigo 900 */
-    border: none;
+.code-editor__summary-container {
+	width: 12px;
+	height: 13px;
+	border-bottom: 1px solid var(--code-editor__border-color);
+
+	-moz-user-focus: ignore;
+	-moz-user-input: disabled;
+	-moz-user-select: none;
+	-webkit-user-focus: ignore;
+	-webkit-user-input: disabled;
+	-webkit-user-select: none;
+	user-focus: ignore;
+	user-input: disabled;
+	user-select: none;
+}
+
+.code-editor__summary {
+	position: absolute;
+	left: 0px;
+	top: 2px;
+	width: 12px;
+	height: 12px;
+	padding: 0px;
+	margin: 0px;
+
+	cursor: default;
+
+	opacity: 0.9;
+
+	-moz-user-focus: ignore;
+	-moz-user-input: disabled;
+	-moz-user-select: none;
+	-webkit-user-focus: ignore;
+	-webkit-user-input: disabled;
+	-webkit-user-select: none;
+	user-focus: ignore;
+	user-input: disabled;
+	user-select: none;
+}
+
+.code-editor__marker {
+	position: absolute;
+	margin-left: 0px;
+	margin-right: 0px;
+	width: 12px;
+	height: 6px;
+	z-index: 0;
+
+	cursor: pointer;
+
+	opacity: 0.8;
+
+	-moz-user-focus: ignore;
+	-moz-user-input: disabled;
+	-moz-user-select: none;
+	-webkit-user-focus: ignore;
+	-webkit-user-input: disabled;
+	-webkit-user-select: none;
+	user-focus: ignore;
+	user-input: disabled;
+	user-select: none;
+}
+
+.code-editor__summary--info,
+.code-editor__marker--info {
+	border: 1px solid var(--code-editor__border-color--info);
+	background-color: var(--code-editor__background-color--info);
+}
+
+.code-editor__summary--warning,
+.code-editor__marker--warning {
+	border: 1px solid var(--code-editor__border-color--warning);
+	background-color: var(--code-editor__background-color--warning);
+}
+
+.code-editor__summary--error,
+.code-editor__marker--error {
+	border: 1px solid var(--code-editor__border-color--error);
+	background-color: var(--code-editor__background-color--error);
+	opacity: 0.75;
+}
+
+.code-editor__summary--fatal,
+.code-editor__marker--fatal {
+	border: 1px solid var(--code-editor__border-color--fatal);
+	background-color: var(--code-editor__background-color--fatal);
+	opacity: 0.75;
 }

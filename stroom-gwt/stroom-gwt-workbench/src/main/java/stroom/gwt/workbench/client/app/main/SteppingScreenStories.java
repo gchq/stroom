@@ -189,9 +189,9 @@ public final class SteppingScreenStories {
                     // which shows the worst severity, has it
                     play.waitFor(() -> play.expect(play.querySelector(".ace_gutter-cell.stroom_warning"))
                             .toHaveTextContent("1"));
-                    play.expect(play.querySelector(".codeEditor-marker.codeEditor-warning"))
+                    play.expect(play.querySelector(".code-editor__marker--warning"))
                             .toHaveAttribute("lineno", "1");
-                    play.expect(play.querySelector(".codeEditor-summary")).toHaveClass("codeEditor-error");
+                    play.expect(play.querySelector(".code-editor__summary")).toHaveClass("code-editor__summary--error");
                     // Clicking the location label opens the Set Location dialog
                     play.click(play.getAllByText("[1:1:1]").nth(0));
                     final Play jump = screen.within(

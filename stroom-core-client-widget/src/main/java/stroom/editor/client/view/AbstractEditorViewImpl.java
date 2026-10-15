@@ -56,7 +56,7 @@ public abstract class AbstractEditorViewImpl extends ViewImpl {
 
     public AbstractEditorViewImpl() {
         editor = new Editor();
-        editor.getElement().setClassName("editor " + NullSafe.string(getAdditionalClassNames()));
+        editor.getElement().setClassName("code-editor__ace " + NullSafe.string(getAdditionalClassNames()));
     }
 
     protected void initOptions() {

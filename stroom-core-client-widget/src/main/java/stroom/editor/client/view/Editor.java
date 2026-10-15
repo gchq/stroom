@@ -154,7 +154,7 @@ public class Editor extends Composite implements
             }
         });
 
-        editor.getElement().setClassName("editor");
+        editor.getElement().setClassName("code-editor__ace");
         initWidget(editor);
     }
 
