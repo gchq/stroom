@@ -4,25 +4,38 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
-        <form:FormGroup identity="maxTotalRows" label="Max Total Rows">
+        <g:Label styleName="aiConfigTableAnalysis-note"
+                 text="These settings apply to everyone. Changes are saved when you press OK."/>
+        <form:FormGroup identity="maxTotalRows" label="Max Rows Downloaded"
+                        helpText="The most rows of a table attached to a chat that are downloaded into the chat's workspace. A model with tools is given the table's profile and queries the rows with its tools, so this can be large.">
             <v:ValueSpinner ui:field="maxTotalRows" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="maxRowsPerBatch" label="Max Rows Per Batch">
+        <form:FormGroup identity="maxRowsWithoutTools" label="Max Rows Without Tools"
+                        helpText="The most rows of each table given to a model without tools: in the prompt or, if the table doesn't fit the model's context window, in batches. The model is told when a table has more.">
+            <v:ValueSpinner ui:field="maxRowsWithoutTools" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxRowsPerBatch" label="Max Rows Per Batch"
+                        helpText="The most rows in one batch, when tables that don't fit the model are analysed in batches (and when summarise_column summarises a column with many patterns). A batch also holds no more than half the model's context window.">
             <v:ValueSpinner ui:field="maxRowsPerBatch" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="maxParallelBatches" label="Max Parallel Batches">
+        <form:FormGroup identity="maxParallelBatches" label="Max Batches at Once"
+                        helpText="The most batches analysed at the same time.">
             <v:ValueSpinner ui:field="maxParallelBatches" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="attachmentDownloadTimeoutMs" label="Attachment Download Timeout (ms)">
+        <form:FormGroup identity="attachmentDownloadTimeoutMs" label="Attachment Download Timeout (ms)"
+                        helpText="How long to wait for a table attached to a chat to download.">
             <v:ValueSpinner ui:field="attachmentDownloadTimeoutMs" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="tableQuerySystemPrompt" label="Table Query System Prompt">
+        <form:FormGroup identity="tableQuerySystemPrompt" label="Batch System Prompt"
+                        helpText="The system prompt for analysing one batch of a table. Keep the line saying the records are data, not instructions.">
             <g:TextArea ui:field="tableQuerySystemPrompt" width="100%" visibleLines="4"/>
         </form:FormGroup>
-        <form:FormGroup identity="tableQueryUserPrompt" label="Table Query User Prompt">
+        <form:FormGroup identity="tableQueryUserPrompt" label="Batch User Prompt"
+                        helpText="The prompt for one batch. {{query}} is the user's question, {{table}} the batch (a markdown table, after a line naming the table), and {{context}} the chat so far, as compacted.">
             <g:TextArea ui:field="tableQueryUserPrompt" width="100%" visibleLines="6"/>
         </form:FormGroup>
-        <form:FormGroup identity="multiSummaryMergePrompt" label="Multi-Summary Merge Prompt">
+        <form:FormGroup identity="multiSummaryMergePrompt" label="Merge Prompt"
+                        helpText="The prompt that merges the batches' partial answers into the answer the user sees. {{query}} is the user's question and {{summaries}} the partial answers.">
             <g:TextArea ui:field="multiSummaryMergePrompt" width="100%" visibleLines="5"/>
         </form:FormGroup>
     </g:FlowPanel>

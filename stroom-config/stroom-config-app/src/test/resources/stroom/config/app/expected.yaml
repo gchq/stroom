@@ -165,7 +165,7 @@ appConfig:
     dockLocation: "RIGHT"
     dockSize: 300
     tableAnalysis:
-      maxTotalRows: 10000
+      maxTotalRows: 50000
       maxRowsPerBatch: 1000
       maxParallelBatches: 4
       tableQuerySystemPrompt: "You are a data analysis AI. You will answer user questions\
@@ -188,6 +188,7 @@ appConfig:
         \ for tabular results. Drop repeated wording, and ignore partial answers that\
         \ say \"No relevant information.\" If none has relevant information, say so.\n\
         \nPARTIAL ANSWERS:\n{{summaries}}\n"
+      maxRowsWithoutTools: 10000
     chatSystemPrompt: "You are Ask Stroom AI, an assistant in Stroom, a platform for\
       \ receiving, processing, storing and searching log and event data. You help\
       \ users understand and analyse their data, and work with Stroom.\n\n- Answer\

@@ -49,6 +49,7 @@ import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.SaveAiMemoryRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
+import stroom.ai.shared.TableAnalysisConfig;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.ai.shared.UndoAiMemoryChangeRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
@@ -405,6 +406,40 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                         .build())
                 .withSimpleLoggedResult(() ->
                         askStroomAIServiceProvider.get().getChat(chatId))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean setTableAnalysisConfig(final TableAnalysisConfig config) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "setTableAnalysisConfig"))
+                .withDescription("Update the AI table analysis settings")
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("TableAnalysisConfig")
+                                        .withName("AI table analysis settings")
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().setTableAnalysisConfig(config))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Integer deleteAllChats() {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "deleteAllChats"))
+                .withDescription("Delete all the user's AI chats")
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("AiChat")
+                                .withName("All the user's AI chats")
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().deleteAllChats())
                 .getResultAndLog();
     }
 
