@@ -56,6 +56,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -226,6 +227,13 @@ class McpAgentChat {
         final ToolGroups toolGroups = ToolGroups.of(mcpTools, toolset, toolGroupThreshold());
         Map<ToolSpecification, ToolExecutor> tools = offeredTools(chatId, builtIns, toolGroups, modelDoc);
         final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
+        // Trusted servers' instructions on how to use their tools, for the servers whose tools are offered.
+        final String serverInstructions = toolset.serverInstructions(mcpTools.keySet().stream()
+                .map(specification -> toolset.toolInfo(specification.name()).map(McpToolInfo::serverKey))
+                .flatMap(Optional::stream)
+                .collect(Collectors.toSet()));
+        withServerInstructions(conversation, serverInstructions);
+        usageTracker.recordServerInstructions(chatId, serverInstructions);
         if (tools.isEmpty()) {
             LOGGER.debug(() -> "chat: no tools available for chatId=" + chatId + ", making a plain call");
             ChatResponse response = call(chatModel, conversation, null, chatId, modelDoc, budget);
@@ -712,6 +720,23 @@ class McpAgentChat {
             conversation.add(Math.min(1, conversation.size()), SystemMessage.from(note));
         }
         return conversation;
+    }
+
+    /**
+     * Adds MCP servers' instructions to the end of the system prompt, if there are any.
+     *
+     * @param conversation The conversation, which starts with the system prompt. It is changed in place.
+     * @param instructions The instructions, or null.
+     */
+    static void withServerInstructions(final List<ChatMessage> conversation, final String instructions) {
+        if (NullSafe.isBlankString(instructions)) {
+            return;
+        }
+        if (!conversation.isEmpty() && conversation.getFirst() instanceof final SystemMessage systemMessage) {
+            conversation.set(0, SystemMessage.from(systemMessage.text() + "\n\n" + instructions));
+        } else {
+            conversation.addFirst(SystemMessage.from(instructions));
+        }
     }
 
     private String execute(final Map<ToolSpecification, ToolExecutor> tools,
