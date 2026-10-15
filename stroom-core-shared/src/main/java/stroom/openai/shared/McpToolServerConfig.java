@@ -84,6 +84,13 @@ public class McpToolServerConfig {
     @JsonProperty
     private final String apiKeyValuePrefix;
 
+    @JsonPropertyDescription("For 'OAuth2 passthrough' when Stroom is its own identity provider, the audience of " +
+                             "the short-lived token Stroom issues each user for this server, e.g. stroom-mcp. " +
+                             "The server must accept it, and for the server to call Stroom back with the token, " +
+                             "Stroom's allowed audiences must include it.")
+    @JsonProperty
+    private final String audience;
+
     @JsonPropertyDescription("HTTP client settings for connecting to this server. If not set, a default " +
                              "configuration is used.")
     @JsonProperty
@@ -114,7 +121,8 @@ public class McpToolServerConfig {
             @JsonProperty("apiKeyValuePrefix") final String apiKeyValuePrefix,
             @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration,
             @JsonProperty("trusted") final Boolean trusted,
-            @JsonProperty("toolPolicies") final List<McpToolPolicyRule> toolPolicies) {
+            @JsonProperty("toolPolicies") final List<McpToolPolicyRule> toolPolicies,
+            @JsonProperty("audience") final String audience) {
         this.enabled = Objects.requireNonNullElse(enabled, true);
         this.name = name;
         this.endpoint = endpoint;
@@ -125,6 +133,11 @@ public class McpToolServerConfig {
         this.httpClientConfiguration = httpClientConfiguration;
         this.trusted = Objects.requireNonNullElse(trusted, false);
         this.toolPolicies = toolPolicies;
+        this.audience = audience;
+    }
+
+    public String getAudience() {
+        return audience;
     }
 
     public boolean isEnabled() {
@@ -191,7 +204,8 @@ public class McpToolServerConfig {
                Objects.equals(apiKeyValuePrefix, that.apiKeyValuePrefix) &&
                Objects.equals(httpClientConfiguration, that.httpClientConfiguration) &&
                trusted == that.trusted &&
-               Objects.equals(toolPolicies, that.toolPolicies);
+               Objects.equals(toolPolicies, that.toolPolicies) &&
+               Objects.equals(audience, that.audience);
     }
 
     @Override
@@ -205,7 +219,8 @@ public class McpToolServerConfig {
                 apiKeyValuePrefix,
                 httpClientConfiguration,
                 trusted,
-                toolPolicies);
+                toolPolicies,
+                audience);
     }
 
     @Override
@@ -220,6 +235,7 @@ public class McpToolServerConfig {
                ", httpClientConfiguration=" + httpClientConfiguration +
                ", trusted=" + trusted +
                ", toolPolicies=" + toolPolicies +
+               ", audience='" + audience + '\'' +
                '}';
     }
 
@@ -243,6 +259,7 @@ public class McpToolServerConfig {
         private HttpClientConfig httpClientConfiguration;
         private boolean trusted;
         private List<McpToolPolicyRule> toolPolicies;
+        private String audience;
 
         private Builder() {
         }
@@ -258,6 +275,12 @@ public class McpToolServerConfig {
             this.httpClientConfiguration = config.httpClientConfiguration;
             this.trusted = config.trusted;
             this.toolPolicies = config.toolPolicies;
+            this.audience = config.audience;
+        }
+
+        public Builder audience(final String audience) {
+            this.audience = audience;
+            return self();
         }
 
         public Builder enabled(final boolean enabled) {
@@ -326,7 +349,8 @@ public class McpToolServerConfig {
                     apiKeyValuePrefix,
                     httpClientConfiguration,
                     trusted,
-                    toolPolicies);
+                    toolPolicies,
+                    audience);
         }
     }
 }

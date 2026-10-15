@@ -49,11 +49,18 @@ On the model's **MCP Tool Servers** tab, add each server's Streamable HTTP endpo
 `https://fastmcp.example.com/mcp`. Each chat keeps its own connection to each server, closed when idle.
 
 * **Authentication**
-  * _OAuth2 passthrough_ passes the user's own Stroom sign-in through, so the server acts as them. This
-    needs Stroom to use an **external identity provider**
-    (`appConfig.security.authentication.openId.identityProviderType: EXTERNAL_IDP`), and the token's
-    audience must include both Stroom and the MCP server. With the internal identity provider, the
-    server's tools are unavailable, the chat says so, and the dialog warns when this mode is chosen.
+  * _OAuth2 passthrough_ signs each user in to the server, so the server acts as them.
+    * With an **external identity provider**, the user's own sign-in token is passed through. The token's
+      audience must include both Stroom and the MCP server.
+    * With Stroom's **internal identity provider**, Stroom issues each user a short-lived token (5 minutes,
+      reused until it has a minute left) for the server's **Token audience**, e.g. `stroom-mcp`. It is only
+      sent to a trusted server, over https or on the same machine. The token belongs to the grant of the
+      user's sign-in, so it is revoked when they sign out or their session ends, and it shows in the
+      identity provider's token inventory (scope `openid stroom-delegated`). Configure the server (e.g.
+      FastMCP's JWT verifier) with Stroom's issuer and JWKS URL, both given by
+      `<stroom>/api/oauth2/v1/.well-known/openid-configuration` (`issuer`, `jwks_uri`), and the audience.
+      For the server to call Stroom's API back with the token, add the audience to
+      `appConfig.security.authentication.openId.allowedAudiences`.
   * _None_, _Bearer token_, _Custom API key header_ and _Basic auth_ use one shared credential, so every
     user's calls run as one account. Use them for development, or for servers that do their own checks.
 * **Test Connection** (General tab) connects with the settings as they are in the dialog and lists the
@@ -226,7 +233,8 @@ All under `appConfig.ai` unless stated.
 ## Troubleshooting
 
 * **"The tools of MCP tool server ... are unavailable"**: the server could not be reached, or its
-  authentication needs an external identity provider. The chat still works with the built-in tools.
+  authentication isn't set up, e.g. OAuth2 passthrough with the internal identity provider needs a token
+  audience, a trusted server and https. The chat still works with the built-in tools.
 * **A chat shows "Interrupted because the Stroom node running it stopped"**: the node running it went
   away. _Resume_ carries on from the last question.
 * **Nothing streams**: some OpenAI-compatible servers don't stream; the answer then arrives whole.

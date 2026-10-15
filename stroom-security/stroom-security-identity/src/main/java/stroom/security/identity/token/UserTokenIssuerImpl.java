@@ -28,6 +28,9 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.consumer.InvalidJwtException;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -73,18 +76,42 @@ public class UserTokenIssuerImpl implements UserTokenIssuer {
     }
 
     @Override
-    public Optional<String> getAccessToken(final String subjectId, final String audience) {
+    public Optional<String> getAccessToken(final String subjectId, final String audience, final String signInJwt) {
         if (!isAvailable() || NullSafe.isBlankString(subjectId) || NullSafe.isBlankString(audience)) {
             return Optional.empty();
         }
         final long nowMs = System.currentTimeMillis();
-        final MintedToken token = tokens.compute(new Key(subjectId, audience), (key, existing) ->
+        final String familyId = familyOf(signInJwt, nowMs);
+        final MintedToken token = tokens.compute(new Key(subjectId, audience, familyId), (key, existing) ->
                 isReusable(existing, nowMs)
                         ? existing
                         : issue(key, nowMs));
         // Forget tokens that have run out, so the map doesn't grow with users who have gone.
         tokens.values().removeIf(other -> other.expiresMs() <= nowMs);
         return Optional.of(token.token());
+    }
+
+    /// @return The grant family of the token the user signed in with, or null if there is none, or it isn't one
+    /// this identity provider issued.
+    private String familyOf(final String signInJwt, final long nowMs) {
+        if (NullSafe.isBlankString(signInJwt)) {
+            return null;
+        }
+        try {
+            // Only to find which of our tokens it is; it was checked when the user signed in.
+            final String jti = new JwtConsumerBuilder()
+                    .setSkipSignatureVerification()
+                    .setSkipAllValidators()
+                    .build()
+                    .processToClaims(signInJwt)
+                    .getJwtId();
+            return NullSafe.isBlankString(jti)
+                    ? null
+                    : oAuthTokenDao.fetchByJti(jti, nowMs).map(OAuthToken::familyId).orElse(null);
+        } catch (final InvalidJwtException | MalformedClaimException e) {
+            LOGGER.debug(() -> "Unable to read the sign-in token: " + e.getMessage());
+            return null;
+        }
     }
 
     /// @return True if the token has long enough left, and hasn't been revoked (e.g. by the user signing out).
@@ -108,7 +135,8 @@ public class UserTokenIssuerImpl implements UserTokenIssuer {
                 token.jti(),
                 key.subjectId(),
                 key.audience(),
-                null,
+                // The sign-in's grant, so the token is revoked with it.
+                key.familyId(),
                 SCOPE,
                 null,
                 nowMs,
@@ -117,7 +145,7 @@ public class UserTokenIssuerImpl implements UserTokenIssuer {
         return token;
     }
 
-    private record Key(String subjectId, String audience) {
+    private record Key(String subjectId, String audience, String familyId) {
 
     }
 }

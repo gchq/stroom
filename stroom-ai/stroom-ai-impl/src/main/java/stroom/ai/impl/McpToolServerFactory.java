@@ -24,11 +24,13 @@ import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.openai.shared.McpAuthMode;
 import stroom.openai.shared.McpToolServerConfig;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.security.api.HasJwt;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.openid.api.UserTokenIssuer;
 import stroom.util.cert.SSLConfig;
 import stroom.util.http.HttpClientUtil;
 import stroom.util.http.HttpTlsConfiguration;
@@ -64,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -112,6 +115,7 @@ public class McpToolServerFactory {
     private final Provider<McpElicitations> elicitationsProvider;
     private final Provider<AiConfig> aiConfigProvider;
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
+    private final Provider<UserTokenIssuer> userTokenIssuerProvider;
     private final McpClientCache mcpClientCache;
 
     @Inject
@@ -123,8 +127,10 @@ public class McpToolServerFactory {
                          final McpClientCache mcpClientCache,
                          final Provider<McpElicitations> elicitationsProvider,
                          final Provider<AiConfig> aiConfigProvider,
-                         final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
+                         final Provider<OpenIdConfiguration> openIdConfigurationProvider,
+                         final Provider<UserTokenIssuer> userTokenIssuerProvider) {
         this.storedSecretsProvider = storedSecretsProvider;
+        this.userTokenIssuerProvider = userTokenIssuerProvider;
         this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.elicitationsProvider = elicitationsProvider;
         this.aiConfigProvider = aiConfigProvider;
@@ -333,6 +339,11 @@ public class McpToolServerFactory {
     private Supplier<Map<String, String>> authHeadersSupplier(final McpToolServerConfig server,
                                                               final String label,
                                                               final AtomicReference<UserIdentity> userIdentity) {
+        if (server.getAuthMode() == McpAuthMode.STROOM_SESSION_TOKEN
+            && NullSafe.get(openIdConfigurationProvider.get(), OpenIdConfiguration::getIdentityProviderType)
+               == IdpType.INTERNAL_IDP) {
+            return issuedTokenHeadersSupplier(server, label, userIdentity);
+        }
         if (server.getAuthMode() == McpAuthMode.STROOM_SESSION_TOKEN) {
             // Only an external identity provider gives Stroom a token another server can check (U3).
             if (NullSafe.get(openIdConfigurationProvider.get(), OpenIdConfiguration::getIdentityProviderType)
@@ -375,6 +386,67 @@ public class McpToolServerFactory {
         }
         final Map<String, String> fixedHeaders = Map.copyOf(headers);
         return () -> fixedHeaders;
+    }
+
+    /// For 'OAuth2 passthrough' when Stroom is its own identity provider: Stroom has no sign-in token another server
+    /// can check, so it issues each user a short-lived token for the server's audience instead, which the server
+    /// checks against Stroom's issuer and keys. As the token lets the server act as the user, it is only sent to a
+    /// trusted server, over https or on the same machine.
+    private Supplier<Map<String, String>> issuedTokenHeadersSupplier(final McpToolServerConfig server,
+                                                                     final String label,
+                                                                     final AtomicReference<UserIdentity> userIdentity) {
+        final String audience = NullSafe.trim(server.getAudience());
+        if (audience.isEmpty()) {
+            throw new RuntimeException("The tools of MCP tool server '" + label + "' are unavailable: it has no "
+                                       + "token audience set, which Stroom needs to sign you in to it. Ask an "
+                                       + "administrator. Built-in tools still work.");
+        }
+        if (!server.isTrusted()) {
+            throw new RuntimeException("The tools of MCP tool server '" + label + "' are unavailable: Stroom only "
+                                       + "signs you in to a trusted server, as it can then act as you. Ask an "
+                                       + "administrator. Built-in tools still work.");
+        }
+        if (!isSecureEndpoint(server.getEndpoint())) {
+            throw new RuntimeException("The tools of MCP tool server '" + label + "' are unavailable: Stroom only "
+                                       + "signs you in to a server over https (or on the same machine). Ask an "
+                                       + "administrator. Built-in tools still work.");
+        }
+        if (userIdentity.get() == null) {
+            throw new RuntimeException("MCP tool server '" + label
+                                       + "': there is no authenticated Stroom user to sign in as");
+        }
+        // Check a token can be had now, then get a current one for every request.
+        issuedTokenHeaders(userIdentity.get(), audience, label);
+        return () -> issuedTokenHeaders(userIdentity.get(), audience, label);
+    }
+
+    private Map<String, String> issuedTokenHeaders(final UserIdentity userIdentity,
+                                                   final String audience,
+                                                   final String label) {
+        // The token the user signed in with, so the issued one is revoked with it when they sign out.
+        final String signInJwt = userIdentity instanceof final HasJwt hasJwt
+                ? hasJwt.getJwt()
+                : null;
+        final String token = userTokenIssuerProvider.get()
+                .getAccessToken(userIdentity.subjectId(), audience, signInJwt)
+                .orElseThrow(() -> new RuntimeException("MCP tool server '" + label
+                                                        + "': Stroom could not issue a token to sign you in"));
+        return Map.of("Authorization", "Bearer " + token);
+    }
+
+    /// @return True if the endpoint is https, or http on the same machine, where the token doesn't cross a
+    /// network.
+    static boolean isSecureEndpoint(final String endpoint) {
+        try {
+            final URI uri = URI.create(NullSafe.trim(endpoint));
+            final String scheme = NullSafe.string(uri.getScheme()).toLowerCase(Locale.ROOT);
+            final String host = NullSafe.string(uri.getHost()).toLowerCase(Locale.ROOT);
+            return "https".equals(scheme)
+                   || ("http".equals(scheme)
+                       && ("localhost".equals(host) || "127.0.0.1".equals(host) || "[::1]".equals(host)));
+        } catch (final IllegalArgumentException e) {
+            return false;
+        }
     }
 
     /**
