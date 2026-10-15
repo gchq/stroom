@@ -1097,15 +1097,34 @@
 .askStroomAiViewImpl-newChat.Button {
     min-width: 0;
     height: 28px;
-    /* The button is sized from its label alone, so the extra on the left makes room for the icon; the icon
-       and label are then centred, leaving about 14px either side. */
-    padding: 0 18px 0 34px;
+    padding: 0 7px;
     align-self: center;
     white-space: nowrap;
 }
 
 .askStroomAiViewImpl-newChat.Button .Button__content {
     gap: 6px;
+}
+
+/* The button is sized from its (hidden) label, so give the label room for the icon (16px, less the 1px it is
+   pulled left, as the "+" has blank space in its box) and the gap (6px). The icon and label are then centred,
+   with the same space either side. The button never shows its spinner, whose gap would push the icon right,
+   and the label's right padding would leave more space on the right. */
+.askStroomAiViewImpl-newChat.Button .Button__backgroundText {
+    padding-left: 21px;
+    padding-right: 0;
+}
+
+.askStroomAiViewImpl-newChat.Button .Button__icon {
+    margin-left: -1px;
+}
+
+.askStroomAiViewImpl-newChat.Button .Button__text {
+    padding-right: 0;
+}
+
+.askStroomAiViewImpl-newChat.Button .Button__spinner {
+    display: none;
 }
 
 /* ---- The list of chats, shown in place of the conversation ---- */
