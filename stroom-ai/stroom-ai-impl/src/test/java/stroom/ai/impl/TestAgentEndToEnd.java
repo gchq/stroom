@@ -186,7 +186,7 @@ class TestAgentEndToEnd {
         final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
         try (final McpToolset toolset = new McpToolServerFactory(() -> null, null, null, () -> securityContext,
                 () -> null,
-                new McpClientCache(), () -> null, AiConfig::new, this::openIdConfiguration)
+                new McpClientCache(), () -> null, AiConfig::new, this::openIdConfiguration, () -> null)
                 .createToolset(modelDoc)) {
             return agentChat.chat(notStreamed(), modelDoc, CHAT_ID,
                     List.of(new SystemMessage("system prompt"), new UserMessage(question)), toolset, 99,
