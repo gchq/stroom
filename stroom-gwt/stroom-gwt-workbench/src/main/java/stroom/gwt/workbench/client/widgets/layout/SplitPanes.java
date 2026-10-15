@@ -45,6 +45,23 @@ final class SplitPanes {
         return pane("Right panel", "Content goes here");
     }
 
+    /// The top (first) pane of stacked panes.
+    ///
+    /// @param hint The second line of text.
+    /// @return The pane.
+    static Widget topPane(final String hint) {
+        final Widget pane = pane("Top panel", hint);
+        pane.getElement().getStyle().setProperty("background", "var(--row__background-color--even)");
+        return pane;
+    }
+
+    /// The bottom (second) pane of stacked panes.
+    ///
+    /// @return The pane.
+    static Widget bottomPane() {
+        return pane("Bottom panel", "Content goes here");
+    }
+
     /// The stories' frame: 300px high with a rounded border.
     ///
     /// @param split The split pane, which fills the frame.

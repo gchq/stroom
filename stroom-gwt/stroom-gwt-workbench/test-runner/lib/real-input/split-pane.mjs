@@ -115,7 +115,7 @@ function expectContrast(measured, theme) {
 
 export const CHECKS = {
   // A mouse press gives the splitter the focus as the pointer's, not the keyboard's: it shows the
-  // drag highlight while held, not the keyboard focus bar, before and after (once a regression:
+  // dragged handle while held, not the keyboard focus colour, before and after (once a regression:
   // focusing it from script made the press show as keyboard focus)
   'widgets-layout-splitpanecontent--regular-table-and-editor': async (page) => {
     const splitter = page.locator(SPLITTER).first();
@@ -125,10 +125,10 @@ export const CHECKS = {
     const held = await splitter.evaluate((element) => ({
       focused: element === document.activeElement,
       focusVisible: element.matches(':focus-visible'),
-      colour: getComputedStyle(element, '::before').backgroundColor,
+      colour: getComputedStyle(element, '::after').backgroundColor,
       highlight: (() => {
         const probe = document.createElement('div');
-        probe.style.backgroundColor = 'var(--splitter__background-color--highlight)';
+        probe.style.backgroundColor = 'var(--splitter__handle-color--active)';
         document.body.append(probe);
         const colour = getComputedStyle(probe).backgroundColor;
         probe.remove();
@@ -138,7 +138,7 @@ export const CHECKS = {
     await page.mouse.up();
     assert.ok(held.focused, 'a press gives the splitter the focus');
     assert.ok(!held.focusVisible, 'a press doesn\'t show as keyboard focus');
-    assert.equal(held.colour, held.highlight, 'the held splitter shows the drag highlight');
+    assert.equal(held.colour, held.highlight, 'the held splitter shows the dragged handle colour');
     assert.ok(!(await splitter.evaluate((element) => element.matches(':focus-visible'))),
       'after the press it still doesn\'t show as keyboard focus');
   },
