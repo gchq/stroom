@@ -44,7 +44,7 @@ export function readSave(page) {
     const save = btns.find((b) => un(b.getAttribute('title') ?? '') === 'Save'
       || un(b.getAttribute('aria-label') ?? '') === 'Save' || un(b.textContent) === 'Save');
     if (!save) return null;
-    return { enabled: !save.disabled && !save.classList.contains('disabled') };
+    return { enabled: !save.disabled && !save.classList.contains('disabled') && save.getAttribute('aria-disabled') !== 'true' };
   }).catch(() => null);
 }
 

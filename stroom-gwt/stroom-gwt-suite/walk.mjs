@@ -190,6 +190,13 @@ const INVERSE = new Map([
   ['Turn Cell Line Wrapping Off', 'Turn Cell Line Wrapping On'],
   ['Turn Cell Line Wrapping On', 'Turn Cell Line Wrapping Off'],
 ]);
+
+// A toggle that is ON. The toolbar's ToolbarToggleButton says so with `aria-pressed="true"`;
+// the older InlineSvgToggleButton says `.on`. Looking only for `.on` after the toolbar merge
+// (c4b3e53fbd) never saw the AI dock open, so every re-sync into it pressed Ask Stroom AI and
+// CLOSED it, then waited 30s for a `Configure` that was no longer there — r14's doc shards ran
+// for 5h+ against r13's 2h.
+const toggleOn = (label) => `button[title="${label}"].on, button[title="${label}"][aria-pressed="true"]`;
 const looseReported = new Set();
 /** Checker verdicts that failed (lib/checks.mjs) — printed in the summary, filed by the ledger. */
 let checkFails = 0;
@@ -384,7 +391,9 @@ async function clickAffordance(label, timeout = 3000) {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
       const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
+      // A toolbar button (ToolbarButton) disables with aria-disabled and stays focusable.
       const el = [...scope.querySelectorAll('button, [role=button], .Button')].find((b) => b.offsetWidth > 0 && !b.disabled
+        && b.getAttribute('aria-disabled') !== 'true'
         && (norm(b.getAttribute('title')) === wanted || norm(b.getAttribute('aria-label')) === wanted)
         && !b.closest('.navigationTree, .explorerTree, [class*=navigation], [class*=explorer]'));
       if (!el) return null;
@@ -1094,9 +1103,9 @@ async function driveStep(step) {
     // A TOGGLE in a route is a state to be IN, not a click to be made. The Ask Stroom AI dock is not
     // closed by the reset (it is neither a tab nor a dialog), so a replay that re-clicked it closed
     // it — `re-sync after "New Conversation" reached a different state`, and `Conversation History`
-    // was `present when surveyed, not locatable when clicked`. InlineSvgToggleButton says `.on`.
+    // was `present when surveyed, not locatable when clicked`. See toggleOn for how ON reads.
     if (step.post && INVERSE.get(label) === label) {
-      const on = await page.locator(`button[title="${label}"].on`).count().catch(() => 0);
+      const on = await page.locator(toggleOn(label)).count().catch(() => 0);
       if (on) return;
     }
     if (!(await clickAffordance(label, 8000))) throw new Error(`no affordance "${label}"`);
@@ -1222,7 +1231,7 @@ async function driveStep(step) {
     cell = (await findCell()) ?? cell;
     await page.mouse.click(cell.x, cell.y);
     await waitForStableCount(page, () => page.evaluate(() =>
-      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled).length),
+      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: 'select-row', kind: 'content', allowZero: true }).catch(() => {});
   } else if (step.via === 'tick-row') {
     // The first row's TICK BOX (`TickBoxCell` renders `div.tickBox`), a real click — the batch
@@ -1238,7 +1247,7 @@ async function driveStep(step) {
     if (!box) throw new Error('no tick box in a row');
     await page.mouse.click(box.x, box.y);
     await waitForStableCount(page, () => page.evaluate(() =>
-      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled).length),
+      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: 'tick-row', kind: 'content', allowZero: true }).catch(() => {});
   } else if (step.via === 'row-action') {
     // A grid row's ACTION CELL — the `⋮` `ActionCell` renders as `.svgCell-button` in the row — opens
@@ -1386,7 +1395,7 @@ async function driveStep(step) {
     await page.mouse.down();
     await page.mouse.up();
     await waitForStableCount(page, () => page.evaluate(() =>
-      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled).length),
+      [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: 'select-element', kind: 'content', allowZero: true }).catch(() => {});
   } else if (step.via === 'dblclick') {
     // MainPresenter opens the user task manager on a DOUBLE click of the toolbar spinner — a
@@ -1497,16 +1506,23 @@ async function resync(node) {
   const wantsOn = new Set(node.route.filter((st) => st.via === 'button' && st.post && INVERSE.get(st.label) === st.label).map((st) => st.label));
   for (const [label, inverse] of INVERSE) {
     if (inverse !== label || wantsOn.has(label)) continue;
-    if (await page.locator(`button[title="${label}"].on`).count().catch(() => 0)) await clickAffordance(label).catch(() => {});
+    if (await page.locator(toggleOn(label)).count().catch(() => 0)) await clickAffordance(label).catch(() => {});
   }
   const tTabs = Date.now();
-  for (const step of node.route) await driveStep(step);
+  // Each step's time, so a slow route names its slow step: r14's doc shards spent 33s a re-sync
+  // in the route, against 4s in r13, and the total alone could not say where.
+  const stepMs = [];
+  for (const step of node.route) {
+    const tStep = Date.now();
+    await driveStep(step);
+    stepMs.push(`${step.via}:${step.label ?? step.leaf ?? step.type ?? step.what ?? ''}=${Date.now() - tStep}ms`);
+  }
   await discardIfAsked({ wait: 600 });
   const ms = Date.now() - t0;
   // Say where a slow re-sync went. 38s a re-sync on the Navigation shard was invisible until timed.
   if (ms > 8_000) {
     console.log(`      (slow re-sync ${Math.round(ms / 1000)}s: clear ${tClear - t0}ms, tabs ${tTabs - tClear}ms, `
-      + `route ${Date.now() - tTabs}ms over ${node.route.length} step(s))`);
+      + `route ${Date.now() - tTabs}ms over ${node.route.length} step(s): ${stepMs.join(', ')})`);
   }
 }
 
@@ -2651,6 +2667,23 @@ async function walk(node, state, arrivedAt) {
     if (SELF_DESTRUCTIVE.has(label)) {
       affordances.push({ node: id, label, kind: 'button', outcome: 'skipped',
         detail: 'ends the walk session or destroys the seeded row — see SELF_DESTRUCTIVE', rows: [], blocked: [] });
+      continue;
+    }
+    // Disabled by the time its turn came. A toolbar button (ToolbarButton, 2026-10-12) disables with
+    // aria-disabled and stays focusable, and Playwright waits on aria-disabled for the whole click
+    // timeout, so the explorer's buttons, disabled when its selection cleared, read as "did not
+    // accept a click within 3s". A press on a disabled button proves nothing either way.
+    const onlyDisabled = await page.evaluate((wanted) => {
+      const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
+      const named = [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0
+        && (norm(b.getAttribute('title')) === wanted || norm(b.getAttribute('aria-label')) === wanted));
+      const off = (b) => b.disabled || b.getAttribute('aria-disabled') === 'true' || b.classList.contains('disabled');
+      return named.length > 0 && named.every(off);
+    }, label).catch(() => false);
+    if (onlyDisabled) {
+      affordances.push({ node: id, label, kind: 'button', outcome: 'skipped',
+        detail: 'disabled when its turn came', rows: [], blocked: [] });
+      console.log(`      · ${label} — disabled when its turn came`);
       continue;
     }
     // Chrome is app-level — the explorer's New/Delete, the main menu, the AI dock — and is covered

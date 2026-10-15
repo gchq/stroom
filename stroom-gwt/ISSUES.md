@@ -1164,6 +1164,15 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   (`TestCredentialsService`). Found by the suite's credentials cycle (§ B4): two runs left two
   rows, found by looking for permission rows whose document no longer exists; a run since the fix
   leaves none. The two rows have been deleted.
+* #59: Batch Change All Filtered Processors asked to change the wrong number of processors. Its
+  Confirm used the Processors grid's row total (`BatchProcessorFilterEditPresenter.apply`), and that
+  grid lists each processor's row as well as its filters' rows, while `bulkChange` changes only the
+  filters: one filter asked to change "2 processors", and the System root asked about 64. A count
+  from the grid can't be right either, because a collapsed processor row leaves its filters out of
+  the list while `bulkChange` still changes them. The dialog now asks the server
+  (`POST /processorFilter/v1/bulkChange/count`), which counts the filters with the same lookup
+  `bulkChange` uses (`TestProcessorFilterResourceImpl`). Found by the suite's processor batch cycle
+  (§ B4), which now passes only on "Are you sure you want to change this processor?" for one filter.
 * #49 to #56: dialogs left with OK and Cancel disabled after an error, so that only reloading the
   page got rid of them (Escape honours the disabled buttons). OK disables a dialog's buttons, and
   each of these had a failure path that neither closed the dialog nor called

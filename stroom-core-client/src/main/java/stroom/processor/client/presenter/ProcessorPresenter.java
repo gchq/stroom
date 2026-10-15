@@ -42,7 +42,6 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.CountDownAndRun;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -207,7 +206,6 @@ public class ProcessorPresenter
         final BatchProcessorFilterEditPresenter presenter =
                 batchProcessorFilterEditPresenterProvider.get();
         presenter.show(processorListPresenter.getExpression(),
-                NullSafe.get(processorListPresenter.getCurrentResultPageResponse(), ResultPage::getPageResponse),
                 processorListPresenter::refresh);
     }
 

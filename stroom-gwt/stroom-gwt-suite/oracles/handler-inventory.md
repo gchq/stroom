@@ -12,18 +12,18 @@ when a post-action selection state was reached under it. The rest are classified
 
 | | declared | exercised | |
 | --- | ---: | ---: | ---: |
-| **all classes** | 1546 | 822 | 53.2% |
-| **presenters** | 805 | 498 | 61.9% |
+| **all classes** | 1546 | 824 | 53.3% |
+| **presenters** | 803 | 502 | 62.5% |
 
-_68 of the exercised are joined by LABEL alone (a label one or two classes use, clicked somewhere the ledger did not attribute to the class); the rest by the ledger's attribution of the node to the class, a subclass, or a presenter that embeds it._
+_62 of the exercised are joined by LABEL alone (a label one or two classes use, clicked somewhere the ledger did not attribute to the class); the rest by the ledger's attribution of the node to the class, a subclass, or a presenter that embeds it._
 
 | kind | declared | exercised | |
 | --- | ---: | ---: | ---: |
-| click | 473 | 257 | 54.3% |
+| click | 471 | 254 | 53.9% |
 | value | 314 | 120 | 38.2% |
-| command | 212 | 137 | 64.6% |
+| command | 214 | 137 | 64.0% |
 | selection | 158 | 75 | 47.5% |
-| ok | 98 | 75 | 76.5% |
+| ok | 98 | 80 | 81.6% |
 | cancel | 98 | 80 | 81.6% |
 | key | 82 | 21 | 25.6% |
 | hide | 33 | 20 | 60.6% |
@@ -42,17 +42,17 @@ _68 of the exercised are joined by LABEL alone (a label one or two classes use, 
 
 | why | handlers | meaning |
 | --- | ---: | --- |
-| `unreached` | 235 | labelled, in a presenter, and never clicked on a node attributed to it |
+| `unreached` | 233 | labelled, in a presenter, and never clicked on a node attributed to it |
 | `needs-value` | 194 | a value must be typed or chosen (B3) |
-| `widget` | 88 | declared in a widget class — inherited by many presenters, counted once here |
+| `widget` | 90 | declared in a widget class — inherited by many presenters, counted once here |
 | `view` | 67 | declared in a ViewImpl (a @UiHandler) — joined by ui.xml label, none matched |
 | `needs-key` | 61 | a keyboard event (B3) |
-| `unlabelled` | 47 | a click handler on a receiver whose label the miner could not resolve (miner gap) |
+| `unlabelled` | 48 | a click handler on a receiver whose label the miner could not resolve (miner gap) |
 | `needs-dirty` | 10 | an editor made dirty (B3) |
-| `ok-blocked` | 6 | the OK writes, and the guard aborted it (B4) |
+| `absent` | 7 | the class is not in the running application — unreachable, not outstanding |
 | `needs-dom` | 6 | a DOM event the walk has no step for |
 | `needs-close` | 5 | a tab or panel closed |
-| `absent` | 5 | the class is not in the running application — unreachable, not outstanding |
+| `ok-blocked` | 1 | the OK writes, and the guard aborted it (B4) |
 
 ## Per presenter
 
@@ -61,13 +61,13 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | presenter | declared | exercised | unexercised by why |
 | --- | ---: | ---: | --- |
 | `ContentTemplateTabPresenter` | 20 | 6 | unreached 14 |
-| `AnnotationEditPresenter` | 10 | 3 | unreached 6, ok-blocked 1 |
 | `DataRetentionPolicyPresenter` | 19 | 12 | unreached 7 |
 | `AbstractNotificationListPresenter` | 9 | 3 | unreached 6 |
+| `AnnotationEditPresenter` | 10 | 4 | unreached 6 |
 | `TablePresenter` | 13 | 7 | unlabelled 2, unreached 3, needs-close 1 |
 | `SteppingPresenter` | 11 | 5 | unreached 5, needs-value 1 |
 | `NewPropertyPresenter` | 6 | 0 | unreached 1, needs-value 5 |
-| `DataRetentionImpactPresenter` | 8 | 2 | unreached 6 |
+| `DataRetentionImpactPresenter` | 8 | 2 | unreached 5, unlabelled 1 |
 | `AskStroomAiPresenter` | 5 | 0 | unreached 5 |
 | `ProcessorPresenter` | 10 | 5 | unreached 4, unlabelled 1 |
 | `UserAndGroupsPresenter` | 10 | 5 | unreached 5 |
@@ -103,7 +103,6 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `AbstractEditorPresenter` | 3 | 0 | needs-value 1, needs-key 2 |
 | `ActivityEditPresenter` | 2 | 0 | unreached 2 |
 | `SplashPresenter` | 2 | 0 | unreached 2 |
-| `AskStroomAiConfigPresenter` | 3 | 1 | unreached 1, ok-blocked 1 |
 | `AnalyticNotificationEditPresenter` | 2 | 0 | needs-value 2 |
 | `AnnotationLinkPresenter` | 3 | 1 | unreached 2 |
 | `LinkedEventPresenter` | 3 | 1 | unreached 2 |
@@ -114,7 +113,7 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `VisPresenter` | 2 | 0 | unreached 2 |
 | `DataPresenter` | 3 | 1 | unlabelled 1, unreached 1 |
 | `MetaPresenter` | 17 | 15 | unreached 2 |
-| `NavigationPresenter` | 12 | 10 | unreached 1, unlabelled 1 |
+| `NavigationPresenter` | 12 | 10 | unlabelled 1, unreached 1 |
 | `GitRepoSettingsPresenter` | 2 | 0 | unreached 2 |
 | `ExportConfigPresenter` | 4 | 2 | unreached 1, ok-blocked 1 |
 | `ImportConfigConfirmPresenter` | 2 | 0 | unreached 2 |
@@ -135,6 +134,7 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `AppPermissionsPresenter` | 4 | 2 | needs-value 2 |
 | `XMLSchemaPresenter` | 2 | 0 | unreached 1, needs-value 1 |
 | `MenuPresenter` | 2 | 0 | unreached 2 |
+| `AskStroomAiConfigPresenter` | 3 | 2 | unreached 1 |
 | `AbstractProcessingPresenter` | 1 | 0 | needs-value 1 |
 | `AbstractQueryEditPresenter` | 1 | 0 | needs-value 1 |
 | `AnalyticStreamDestinationPresenter` | 1 | 0 | unreached 1 |
@@ -158,19 +158,15 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `TableFilterPresenter` | 3 | 2 | unreached 1 |
 | `BasicVisSettingsPresenter` | 1 | 0 | unreached 1 |
 | `ProcessorTaskListPresenter` | 1 | 0 | unlabelled 1 |
-| `SelectionSummaryPresenter` | 2 | 1 | ok-blocked 1 |
 | `TextPresenter` | 1 | 0 | needs-value 1 |
-| `FsVolumeEditPresenter` | 2 | 1 | ok-blocked 1 |
 | `DataGenSettingsPresenter` | 2 | 1 | needs-value 1 |
 | `DictionarySettingsPresenter` | 1 | 0 | needs-value 1 |
-| `DocTabPresenter` | 4 | 3 | unreached 1 |
 | `InfoDocumentPresenter` | 1 | 0 | unreached 1 |
 | `MarkdownEditPresenter` | 3 | 2 | needs-value 1 |
 | `FindInContentPresenter` | 1 | 0 | unreached 1 |
 | `FindPresenter` | 1 | 0 | unreached 1 |
 | `RecentItemsPresenter` | 1 | 0 | unreached 1 |
 | `TabSessionChooserPresenter` | 1 | 0 | unreached 1 |
-| `IndexVolumeEditPresenter` | 2 | 1 | ok-blocked 1 |
 | `NodeJobListPresenter` | 1 | 0 | unreached 1 |
 | `NodeStatusListPresenter` | 1 | 0 | unreached 1 |
 | `ConstraintEditPresenter` | 1 | 0 | unreached 1 |
@@ -231,17 +227,17 @@ _Every `AlertEvent.fireWarn / fireError / fireInfo`, `ConfirmEvent.fire`, `Error
 - `AnnotationLinkPresenter` (confirm, line 74) — Are you sure you want to remove this reference?
 - `ApiKeysListPresenter` (error, line 443) — Error fetching API Keys: …
 - `AskStroomAiConfigPresenter` (info, line 135) — Default config updated
-- `AskStroomAiPresenter` (confirm, line 913) — Are you sure you want to delete this message?
-- `AskStroomAiPresenter` (confirm, line 930) — Are you sure you want to delete all messages and attachments in this conversation?
+- `AskStroomAiPresenter` (confirm, line 914) — Are you sure you want to delete this message?
+- `AskStroomAiPresenter` (confirm, line 931) — Are you sure you want to delete all messages and attachments in this conversation?
 - `BasicEmbeddedQuerySettingsPresenter` (error, line 178) — Error loading '…'
 - `BasicEmbeddedQuerySettingsPresenter` (info, line 183) — Copy of '…' complete
 - `BatchDocumentPermissionsEditPresenter` (warn, line 175) — No documents are included in the current filter for this permission change.
 - `BatchDocumentPermissionsEditPresenter` (info, line 207) — Successfully changed permissions.
 - `BatchDocumentPermissionsEditPresenter` (error, line 215) — Failed to change permissions.
-- `BatchProcessorFilterEditPresenter` (warn, line 104) — No change selected.
-- `BatchProcessorFilterEditPresenter` (warn, line 110) — No user selected.
-- `BatchProcessorFilterEditPresenter` (info, line 154) — Successfully changed.
-- `BatchProcessorFilterEditPresenter` (error, line 162) — Failed to change.
+- `BatchProcessorFilterEditPresenter` (warn, line 100) — No change selected.
+- `BatchProcessorFilterEditPresenter` (warn, line 106) — No user selected.
+- `BatchProcessorFilterEditPresenter` (info, line 160) — Successfully changed.
+- `BatchProcessorFilterEditPresenter` (error, line 168) — Failed to change.
 - `ConstraintEditPresenter` (validation-exception, line 345) — A constraint must have a name
 - `ContentStoreContentPackDetailsPresenter` (warn, line 310) — No credentials were selected; this content pack cannot be downloaded
 - `ContentStoreContentPackDetailsPresenter` (error, line 323) — This content pack requires credentials, but you don't have permission to access credentials
@@ -328,7 +324,7 @@ _Every `AlertEvent.fireWarn / fireError / fireInfo`, `ConfirmEvent.fire`, `Error
 - `PipelineStructurePresenter` (confirm, line 571) — Are you sure you want to save changes to the underlying JSON?
 - `ProcessorEditPresenter` (confirm, line 216) — You are about to update an existing filter. Any streams that might now be included by this filter but are older than the current tracker position will not be processed. Are you sure you wish to do this?
 - `ProcessorEditPresenter` (confirm, line 363) — You are about to process all stream types. Are you sure you wish to do this?
-- `ProcessorPresenter` (error, line 390) — Unable to load filter
+- `ProcessorPresenter` (error, line 388) — Unable to load filter
 - `ProcessorProfileEditPresenter` (error, line 147) — Processor profile name '…' is already in use by another processor profile.
 - `PropertyListPresenter` (error, line 451) — Unable to create embedded document
 - `QueryFavouritesPresenter` (confirm, line 121) — Are you sure you want to delete this favourite?
@@ -345,8 +341,8 @@ _Every `AlertEvent.fireWarn / fireError / fireInfo`, `ConfirmEvent.fire`, `Error
 - `ResultStoreListPresenter` (info, line 168) — Destroyed store
 - `ResultStoreListPresenter` (warn, line 170) — Failed to destroy store
 - `ResultStoreSettingsPresenter` (warn, line 52) — … must be set, e.g. 10m, 1h or 1d.
-- `RuleSetPresenter` (error, line 128) — Unable to load Receive Data Rules
-- `RuleSetPresenter` (confirm, line 338) — There are unsaved changes. Are you sure you want to close this tab?
+- `RuleSetPresenter` (error, line 132) — Unable to load Receive Data Rules
+- `RuleSetPresenter` (confirm, line 347) — There are unsaved changes. Are you sure you want to close this tab?
 - `RuleSetSettingsPresenter` (error, line 130) — You need to create one or more fields before you can add a rule.
 - `RuleSetSettingsPresenter` (confirm, line 354) — …This rule contains conditions that are not compatible with obfuscated fields. Values in the effected terms will not be obfuscated on Stroom-Proxy. Do you wish to continue?
 - `ScheduledProcessingPresenter` (warn, line 121) — Please ensure all settings are correct and save before adding executions
@@ -365,22 +361,22 @@ _Every `AlertEvent.fireWarn / fireError / fireInfo`, `ConfirmEvent.fire`, `Error
 - `UserPreferencesPresenter` (confirm, line 129) — Are you sure you want to set the current preferences as the defaults for ALL users? This will not change individual users' saved preferences.
 - `UserSessionsListPresenter` (error, line 120) — Error fetching sessions: …
 - `VisPresenter` (error, line 499) — There was an error checking if the visualisation document has an index.html asset: …
-- `VisualisationAssetsPresenter` (error, line 339) — There was an error saving the document to a new document
-- `VisualisationAssetsPresenter` (error, line 345) — There was an error saving the document to a new document: …
-- `VisualisationAssetsPresenter` (error, line 493) — Error reverting to live version
-- `VisualisationAssetsPresenter` (error, line 500) — Error reverting to live version: …
-- `VisualisationAssetsPresenter` (error, line 598) — Error saving assets
-- `VisualisationAssetsPresenter` (error, line 604) — Error saving assets: …
-- `VisualisationAssetsPresenter` (error, line 623) — There was an error creating a new folder
-- `VisualisationAssetsPresenter` (error, line 629) — There was an error creating a new folder: …
-- `VisualisationAssetsPresenter` (error, line 651) — There was an error creating a new file
-- `VisualisationAssetsPresenter` (error, line 657) — There was an error creating a new file: …
-- `VisualisationAssetsPresenter` (error, line 682) — There was an error uploading a new file
-- `VisualisationAssetsPresenter` (error, line 688) — There was an error uploading a new file: …
-- `VisualisationAssetsPresenter` (error, line 775) — There was an error updating content
-- `VisualisationAssetsPresenter` (error, line 781) — There was an error updating content: …
-- `VisualisationAssetsPresenter` (error, line 828) — There was an error getting content for '…': …
-- `VisualisationAssetsPresenter` (error, line 865) — Error downloading assets for this visualisation: …
+- `VisualisationAssetsPresenter` (error, line 344) — There was an error saving the document to a new document
+- `VisualisationAssetsPresenter` (error, line 350) — There was an error saving the document to a new document: …
+- `VisualisationAssetsPresenter` (error, line 498) — Error reverting to live version
+- `VisualisationAssetsPresenter` (error, line 505) — Error reverting to live version: …
+- `VisualisationAssetsPresenter` (error, line 603) — Error saving assets
+- `VisualisationAssetsPresenter` (error, line 609) — Error saving assets: …
+- `VisualisationAssetsPresenter` (error, line 628) — There was an error creating a new folder
+- `VisualisationAssetsPresenter` (error, line 634) — There was an error creating a new folder: …
+- `VisualisationAssetsPresenter` (error, line 656) — There was an error creating a new file
+- `VisualisationAssetsPresenter` (error, line 662) — There was an error creating a new file: …
+- `VisualisationAssetsPresenter` (error, line 687) — There was an error uploading a new file
+- `VisualisationAssetsPresenter` (error, line 693) — There was an error uploading a new file: …
+- `VisualisationAssetsPresenter` (error, line 780) — There was an error updating content
+- `VisualisationAssetsPresenter` (error, line 786) — There was an error updating content: …
+- `VisualisationAssetsPresenter` (error, line 833) — There was an error getting content for '…': …
+- `VisualisationAssetsPresenter` (error, line 870) — Error downloading assets for this visualisation: …
 - `XMLSchemaPresenter` (confirm, line 251) — The XML schema appears to be invalid. Are you sure you want to save?
 
 ## Unreached click handlers in presenters
@@ -417,8 +413,7 @@ _A labelled button in a presenter the walk attributes nodes to, whose label was 
 - `MetaPresenter` · `Restore` (streamListRestore, line 295)
 - `MetaPresenter` · `Restore` (streamRelationListRestore, line 302)
 - `DictionaryListPresenter` · `Remove Import` (removeButton, line 67)
-- `DocTabPresenter` · `Save is not available as this document is read only` (saveButton, line 88)
-- `NavigationPresenter` · `Toggle Alerts` (showAlertsBtn, line 282)
+- `NavigationPresenter` · `Toggle Alerts` (toolbar toggle, line 141)
 - `IndexShardPresenter` · `Flush Selected Shards` (buttonFlush, line 112)
 - `IndexShardPresenter` · `Delete Selected Shards` (buttonDelete, line 119)
 - `NodeJobListPresenter` · `Turn Auto Refresh On` (autoRefreshButton, line 121)
@@ -433,10 +428,10 @@ _A labelled button in a presenter the walk attributes nodes to, whose label was 
 - `SteppingPresenter` · `Toggle Log Pane` (toggleLogPaneButton, line 241)
 - `PipelineReferenceListPresenter` · `Remove Reference` (removeButton, line 124)
 - `FeedDependencyListPresenter` · `Remove Reference` (removeButton, line 85)
-- `ProcessorPresenter` · `Edit Processor` (editButton, line 158)
-- `ProcessorPresenter` · `Duplicate Processor` (duplicateButton, line 167)
-- `ProcessorPresenter` · `Delete Processor` (removeButton, line 176)
-- `ProcessorPresenter` · `Show Tasks` (showTasksButton, line 218)
+- `ProcessorPresenter` · `Edit Processor` (editButton, line 157)
+- `ProcessorPresenter` · `Duplicate Processor` (duplicateButton, line 166)
+- `ProcessorPresenter` · `Delete Processor` (removeButton, line 175)
+- `ProcessorPresenter` · `Show Tasks` (showTasksButton, line 217)
 - `ProcessorProfilePresenter` · `Edit` (openButton, line 63)
 - `ProfilePeriodListPresenter` · `Remove Period` (removeButton, line 82)
 - `ResultStoreListPresenter` · `Terminate Search` (terminateButton, line 139)
@@ -447,12 +442,11 @@ _A labelled button in a presenter the walk attributes nodes to, whose label was 
 - `ContentTemplateTabPresenter` · `Copy template` (copyButton, line 367)
 - `ContentTemplateTabPresenter` · `Edit template` (editButton, line 418)
 - `ContentTemplateTabPresenter` · `Save templates` (saveButton, line 449)
-- `DataRetentionImpactPresenter` · `Run` (runButton, line 251)
-- `DataRetentionImpactPresenter` · `Stop` (stopButton, line 255)
-- `DataRetentionImpactPresenter` · `Filter` (filterButton, line 258)
-- `DataRetentionImpactPresenter` · `Table` (flatNestedToggleButton, line 261)
-- `DataRetentionImpactPresenter` · `Expand All` (expandAllButton, line 266)
-- `DataRetentionImpactPresenter` · `Collapse All` (collapseAllButton, line 270)
+- `DataRetentionImpactPresenter` · `Run` (runButton, line 255)
+- `DataRetentionImpactPresenter` · `Stop` (stopButton, line 259)
+- `DataRetentionImpactPresenter` · `Filter` (filterButton, line 262)
+- `DataRetentionImpactPresenter` · `Expand All` (expandAllButton, line 270)
+- `DataRetentionImpactPresenter` · `Collapse All` (collapseAllButton, line 274)
 - `ApiKeysPresenter` · `Edit API Key` (editButton, line 98)
 - `ApiKeysPresenter` · `Delete API Key` (deleteButton, line 103)
 - `BatchDocumentPermissionsPresenter` · `Edit Permissions For Selected Document` (docEdit, line 124)
@@ -465,6 +459,6 @@ _A labelled button in a presenter the walk attributes nodes to, whose label was 
 - `UserPermissionReportPresenter` · `Edit Permissions For Selected Document` (docEdit, line 120)
 - `UsersPresenter` · `No Selection` (deleteButton, line 86)
 - `TaskManagerListPresenter` · `Delete` (terminateButton, line 163)
-- `VisualisationAssetsPresenter` · `Revert changes` (revertButton, line 191)
+- `VisualisationAssetsPresenter` · `Revert changes` (revertButton, line 195)
 - `XMLSchemaPresenter` · `Alert` (validationIndicator, line 165)
 - `StatisticsCustomMaskListPresenter` · `Remove roll-up permutation` (removeButton, line 69)

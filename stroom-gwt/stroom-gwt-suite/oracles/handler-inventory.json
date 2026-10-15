@@ -1,27 +1,27 @@
 {
- "generated": "2026-10-13T10:07:59.742Z",
+ "generated": "2026-10-13T11:55:07.970Z",
  "declared": 1546,
- "exercised": 822,
+ "exercised": 824,
  "presenters": {
-  "declared": 805,
-  "exercised": 498
+  "declared": 803,
+  "exercised": 502
  },
  "byKind": {
   "command": {
-   "declared": 212,
+   "declared": 214,
    "exercised": 137
   },
   "ok": {
    "declared": 98,
-   "exercised": 75
+   "exercised": 80
   },
   "cancel": {
    "declared": 98,
    "exercised": 80
   },
   "click": {
-   "declared": 473,
-   "exercised": 257
+   "declared": 471,
+   "exercised": 254
   },
   "selection": {
    "declared": 158,
@@ -81,17 +81,17 @@
   }
  },
  "why": {
-  "unreached": 235,
+  "unreached": 233,
   "needs-value": 194,
   "needs-key": 61,
-  "ok-blocked": 6,
   "view": 67,
-  "widget": 88,
+  "widget": 90,
   "needs-dom": 6,
-  "unlabelled": 47,
+  "unlabelled": 48,
   "needs-dirty": 10,
   "needs-close": 5,
-  "absent": 5
+  "ok-blocked": 1,
+  "absent": 7
  },
  "handlers": [
   {
@@ -293,13 +293,12 @@
    "label": "OK",
    "caption": "Configure Ask Stroom AI",
    "line": 109,
-   "exercised": false,
-   "join": "caption",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "alert",
     "vanished"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "AskStroomAiConfigPresenter",
@@ -349,7 +348,7 @@
    "kind": "selection",
    "receiver": "registerHandler(docSelectionBoxPresenter",
    "label": null,
-   "line": 140,
+   "line": 141,
    "exercised": false,
    "why": "unreached"
   },
@@ -360,7 +359,7 @@
    "receiver": "dialog",
    "label": "OK",
    "caption": "Ask Stroom AI",
-   "line": 265,
+   "line": 266,
    "exercised": false,
    "why": "unreached"
   },
@@ -371,7 +370,7 @@
    "receiver": "dialog",
    "label": "OK",
    "caption": "Download Options",
-   "line": 886,
+   "line": 887,
    "exercised": false,
    "why": "unreached"
   },
@@ -381,7 +380,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 886,
+   "line": 887,
    "exercised": false,
    "why": "unreached"
   },
@@ -392,7 +391,7 @@
    "receiver": "dialog",
    "label": "OK",
    "caption": "Ask Stroom AI",
-   "line": 1111,
+   "line": 1112,
    "exercised": false,
    "why": "unreached"
   },
@@ -402,7 +401,7 @@
    "kind": "key",
    "receiver": "message",
    "label": null,
-   "line": 149,
+   "line": 121,
    "via": "UiHandler",
    "exercised": false,
    "why": "needs-key"
@@ -413,7 +412,7 @@
    "kind": "key",
    "receiver": "message",
    "label": null,
-   "line": 158,
+   "line": 130,
    "via": "UiHandler",
    "exercised": false,
    "why": "needs-key"
@@ -423,8 +422,8 @@
    "classKind": "view",
    "kind": "click",
    "receiver": "run",
-   "label": "Run",
-   "line": 163,
+   "label": "Send",
+   "line": 135,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -435,7 +434,7 @@
    "kind": "click",
    "receiver": "configure",
    "label": "Configure",
-   "line": 174,
+   "line": 146,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -449,7 +448,7 @@
    "kind": "click",
    "receiver": "newChat",
    "label": "New Conversation",
-   "line": 181,
+   "line": 153,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -463,7 +462,7 @@
    "kind": "click",
    "receiver": "chatHistory",
    "label": "Conversation History",
-   "line": 188,
+   "line": 160,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -478,7 +477,7 @@
    "kind": "click",
    "receiver": "download",
    "label": "Download",
-   "line": 195,
+   "line": 167,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -489,7 +488,7 @@
    "kind": "click",
    "receiver": "deleteAll",
    "label": "Delete All Messages",
-   "line": 202,
+   "line": 174,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -1811,12 +1810,11 @@
    "label": "OK",
    "caption": "Edit Comment",
    "line": 668,
-   "exercised": false,
-   "join": "caption",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "nothing"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "AnnotationEditPresenter",
@@ -2505,7 +2503,7 @@
    "kind": "click",
    "receiver": "downloadButton",
    "label": "Download",
-   "line": 111,
+   "line": 110,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -2518,7 +2516,7 @@
    "kind": "value",
    "receiver": "registerHandler(editorPresenter",
    "label": null,
-   "line": 65,
+   "line": 64,
    "exercised": true,
    "join": "ace-dirty",
    "outcomes": [
@@ -2708,7 +2706,7 @@
    "kind": "value",
    "receiver": "registerHandler(History",
    "label": null,
-   "line": 86,
+   "line": 88,
    "exercised": false,
    "why": "needs-value"
   },
@@ -3039,7 +3037,7 @@
    "kind": "selection",
    "receiver": "registerHandler(tabBar",
    "label": null,
-   "line": 36,
+   "line": 37,
    "exercised": false,
    "why": "widget"
   },
@@ -3142,7 +3140,7 @@
    "kind": "click",
    "receiver": "editModeButton",
    "label": "Enter Design Mode",
-   "line": 246,
+   "line": 248,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3156,7 +3154,7 @@
    "kind": "click",
    "receiver": "addComponentButton",
    "label": "Add Component",
-   "line": 251,
+   "line": 253,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3169,7 +3167,7 @@
    "kind": "click",
    "receiver": "setConstraintsButton",
    "label": "Set Constraints",
-   "line": 256,
+   "line": 258,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3182,7 +3180,7 @@
    "kind": "click",
    "receiver": "selectionInfoButton",
    "label": "View Current Selection",
-   "line": 261,
+   "line": 263,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3195,7 +3193,7 @@
    "kind": "click",
    "receiver": "maximiseTabsButton",
    "label": "Maximise",
-   "line": 266,
+   "line": 268,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3209,7 +3207,7 @@
    "kind": "click",
    "receiver": "restoreTabsButton",
    "label": "Restore",
-   "line": 273,
+   "line": 275,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3222,7 +3220,7 @@
    "kind": "value",
    "receiver": "presenter",
    "label": null,
-   "line": 294,
+   "line": 296,
    "exercised": false,
    "why": "needs-value"
   },
@@ -3232,7 +3230,7 @@
    "kind": "value",
    "receiver": "hasChangeHandlers",
    "label": null,
-   "line": 598,
+   "line": 600,
    "exercised": false,
    "why": "needs-value"
   },
@@ -3242,7 +3240,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": null,
-   "line": 374,
+   "line": 376,
    "exercised": false,
    "why": "unreached"
   },
@@ -5878,12 +5876,11 @@
    "receiver": "dialog",
    "label": "OK",
    "line": 83,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "alert"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "SelectionSummaryPresenter",
@@ -5914,7 +5911,7 @@
    "kind": "click",
    "receiver": "lblLines",
    "label": null,
-   "line": 224,
+   "line": 216,
    "via": "UiHandler",
    "exercised": false,
    "why": "unlabelled"
@@ -5925,7 +5922,7 @@
    "kind": "click",
    "receiver": "lblCharacters",
    "label": null,
-   "line": 229,
+   "line": 221,
    "via": "UiHandler",
    "exercised": false,
    "why": "unlabelled"
@@ -5936,7 +5933,7 @@
    "kind": "click",
    "receiver": "showHeadCharactersBtn",
    "label": "Show Beginning",
-   "line": 234,
+   "line": 226,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -5947,7 +5944,7 @@
    "kind": "click",
    "receiver": "advanceCharactersBackwardBtn",
    "label": "Advance Range Backwards",
-   "line": 245,
+   "line": 237,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -5958,7 +5955,7 @@
    "kind": "click",
    "receiver": "advanceCharactersForwardBtn",
    "label": "Advance Range Forwards",
-   "line": 254,
+   "line": 246,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -5975,7 +5972,7 @@
     "Pause Update",
     "Not Updating"
    ],
-   "line": 263,
+   "line": 255,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -6038,7 +6035,7 @@
    "kind": "click",
    "receiver": "lblDetail",
    "label": null,
-   "line": 184,
+   "line": 178,
    "via": "UiHandler",
    "exercised": false,
    "why": "unlabelled"
@@ -6048,8 +6045,8 @@
    "classKind": "view",
    "kind": "click",
    "receiver": "firstPageBtn",
-   "label": "First ",
-   "line": 189,
+   "label": "First",
+   "line": 183,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -6059,8 +6056,8 @@
    "classKind": "view",
    "kind": "click",
    "receiver": "previousPageBtn",
-   "label": "Previous ",
-   "line": 199,
+   "label": "Backward",
+   "line": 193,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -6070,8 +6067,8 @@
    "classKind": "view",
    "kind": "click",
    "receiver": "nextPageBtn",
-   "label": "Next ",
-   "line": 207,
+   "label": "Forward",
+   "line": 201,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -6081,8 +6078,8 @@
    "classKind": "view",
    "kind": "click",
    "receiver": "lastPageBtn",
-   "label": "Last ",
-   "line": 215,
+   "label": "Last",
+   "line": 209,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -6099,7 +6096,7 @@
     "Pause Update",
     "Not Updating"
    ],
-   "line": 223,
+   "line": 217,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -6153,12 +6150,11 @@
    "receiver": "dialog",
    "label": "OK",
    "line": 68,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "alert"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "FsVolumeEditPresenter",
@@ -6429,7 +6425,7 @@
    "kind": "click",
    "receiver": "downloadButton",
    "label": "Download Dictionary words",
-   "line": 153,
+   "line": 152,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -6442,7 +6438,7 @@
    "kind": "value",
    "receiver": "registerHandler(editorPresenter",
    "label": null,
-   "line": 88,
+   "line": 87,
    "exercised": true,
    "join": "ace-dirty",
    "outcomes": [
@@ -6910,7 +6906,7 @@
    "kind": "click",
    "receiver": "downloadButton",
    "label": "Download",
-   "line": 83,
+   "line": 82,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -6977,34 +6973,10 @@
   {
    "class": "DocTabPresenter",
    "classKind": "presenter",
-   "kind": "click",
-   "receiver": "saveButton",
-   "label": "Save is not available as this document is read only",
-   "line": 88,
-   "exercised": false,
-   "why": "unreached"
-  },
-  {
-   "class": "DocTabPresenter",
-   "classKind": "presenter",
-   "kind": "click",
-   "receiver": "saveAsButton",
-   "label": "Save As",
-   "line": 89,
-   "exercised": true,
-   "join": "attributed",
-   "outcomes": [
-    "dialog",
-    "unclickable"
-   ]
-  },
-  {
-   "class": "DocTabPresenter",
-   "classKind": "presenter",
    "kind": "selection",
    "receiver": "registerHandler(getView().getTabBar()",
    "label": null,
-   "line": 75,
+   "line": 85,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -7017,7 +6989,7 @@
    "kind": "dirty",
    "receiver": "registerHandler(tabContentProvider",
    "label": null,
-   "line": 106,
+   "line": 118,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -7443,115 +7415,9 @@
    "class": "NavigationPresenter",
    "classKind": "presenter",
    "kind": "click",
-   "receiver": "collapseAll",
-   "label": "Collapse All",
-   "line": 269,
-   "exercised": true,
-   "join": "attributed",
-   "outcomes": [
-    "unclickable",
-    "nothing"
-   ]
-  },
-  {
-   "class": "NavigationPresenter",
-   "classKind": "presenter",
-   "kind": "click",
-   "receiver": "expandAll",
-   "label": "Expand All",
-   "line": 273,
-   "exercised": true,
-   "join": "attributed",
-   "outcomes": [
-    "unclickable",
-    "nothing"
-   ]
-  },
-  {
-   "class": "NavigationPresenter",
-   "classKind": "presenter",
-   "kind": "click",
-   "receiver": "locate",
-   "label": "Locate Current Item",
-   "line": 277,
-   "exercised": true,
-   "join": "attributed",
-   "outcomes": [
-    "nothing"
-   ]
-  },
-  {
-   "class": "NavigationPresenter",
-   "classKind": "presenter",
-   "kind": "click",
-   "receiver": "find",
-   "label": "Find In Content",
-   "line": 278,
-   "exercised": true,
-   "join": "attributed",
-   "outcomes": [
-    "unclickable"
-   ]
-  },
-  {
-   "class": "NavigationPresenter",
-   "classKind": "presenter",
-   "kind": "click",
-   "receiver": "add",
-   "label": "New",
-   "line": 279,
-   "exercised": true,
-   "join": "attributed",
-   "outcomes": [
-    "dialog",
-    "menu"
-   ]
-  },
-  {
-   "class": "NavigationPresenter",
-   "classKind": "presenter",
-   "kind": "click",
-   "receiver": "delete",
-   "label": "Delete",
-   "line": 280,
-   "exercised": true,
-   "join": "attributed",
-   "outcomes": [
-    "nothing",
-    "dialog"
-   ]
-  },
-  {
-   "class": "NavigationPresenter",
-   "classKind": "presenter",
-   "kind": "click",
-   "receiver": "filter",
-   "label": "Filter Types",
-   "line": 281,
-   "exercised": true,
-   "join": "attributed",
-   "outcomes": [
-    "unclickable",
-    "nothing"
-   ]
-  },
-  {
-   "class": "NavigationPresenter",
-   "classKind": "presenter",
-   "kind": "click",
-   "receiver": "showAlertsBtn",
-   "label": "Toggle Alerts",
-   "line": 282,
-   "exercised": false,
-   "why": "unreached"
-  },
-  {
-   "class": "NavigationPresenter",
-   "classKind": "presenter",
-   "kind": "click",
    "receiver": "activityButton",
    "label": null,
-   "line": 325,
+   "line": 263,
    "exercised": false,
    "why": "unlabelled"
   },
@@ -7561,7 +7427,7 @@
    "kind": "selection",
    "receiver": "registerHandler(typeFilterPresenter",
    "label": null,
-   "line": 308,
+   "line": 246,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -7574,7 +7440,7 @@
    "kind": "selection",
    "receiver": "registerHandler(explorerTree.getSelectionModel()",
    "label": null,
-   "line": 312,
+   "line": 250,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -7587,11 +7453,125 @@
    "kind": "context",
    "receiver": "registerHandler(explorerTree",
    "label": null,
-   "line": 323,
+   "line": 261,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
     "menu"
+   ]
+  },
+  {
+   "class": "NavigationPresenter",
+   "classKind": "presenter",
+   "kind": "click",
+   "receiver": "toolbar button",
+   "label": "New",
+   "line": 137,
+   "via": "Toolbar",
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "dialog",
+    "menu"
+   ]
+  },
+  {
+   "class": "NavigationPresenter",
+   "classKind": "presenter",
+   "kind": "click",
+   "receiver": "toolbar button",
+   "label": "Delete",
+   "line": 139,
+   "via": "Toolbar",
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "nothing",
+    "dialog"
+   ]
+  },
+  {
+   "class": "NavigationPresenter",
+   "classKind": "presenter",
+   "kind": "click",
+   "receiver": "toolbar toggle",
+   "label": "Toggle Alerts",
+   "line": 141,
+   "via": "Toolbar",
+   "exercised": false,
+   "why": "unreached"
+  },
+  {
+   "class": "NavigationPresenter",
+   "classKind": "presenter",
+   "kind": "click",
+   "receiver": "toolbar button",
+   "label": "Locate Current Item",
+   "line": 142,
+   "via": "Toolbar",
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "nothing"
+   ]
+  },
+  {
+   "class": "NavigationPresenter",
+   "classKind": "presenter",
+   "kind": "click",
+   "receiver": "toolbar button",
+   "label": "Expand All",
+   "line": 144,
+   "via": "Toolbar",
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "unclickable",
+    "nothing"
+   ]
+  },
+  {
+   "class": "NavigationPresenter",
+   "classKind": "presenter",
+   "kind": "click",
+   "receiver": "toolbar button",
+   "label": "Collapse All",
+   "line": 145,
+   "via": "Toolbar",
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "unclickable",
+    "nothing"
+   ]
+  },
+  {
+   "class": "NavigationPresenter",
+   "classKind": "presenter",
+   "kind": "click",
+   "receiver": "toolbar toggle",
+   "label": "Filter Types",
+   "line": 146,
+   "via": "Toolbar",
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "unclickable",
+    "nothing"
+   ]
+  },
+  {
+   "class": "NavigationPresenter",
+   "classKind": "presenter",
+   "kind": "click",
+   "receiver": "toolbar button",
+   "label": "Find In Content",
+   "line": 148,
+   "via": "Toolbar",
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "unclickable"
    ]
   },
   {
@@ -7792,7 +7772,7 @@
    "kind": "key",
    "receiver": "pattern",
    "label": null,
-   "line": 90,
+   "line": 81,
    "via": "UiHandler",
    "exercised": false,
    "why": "needs-key"
@@ -7803,7 +7783,7 @@
    "kind": "key",
    "receiver": "pattern",
    "label": null,
-   "line": 95,
+   "line": 86,
    "via": "UiHandler",
    "exercised": false,
    "why": "needs-key"
@@ -7814,7 +7794,7 @@
    "kind": "value",
    "receiver": "pattern",
    "label": null,
-   "line": 102,
+   "line": 93,
    "via": "UiHandler",
    "exercised": false,
    "why": "needs-value"
@@ -7825,7 +7805,7 @@
    "kind": "click",
    "receiver": "toggleMatchCase",
    "label": "Match case",
-   "line": 111,
+   "line": 102,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -7839,7 +7819,7 @@
    "kind": "click",
    "receiver": "toggleRegex",
    "label": "Regex",
-   "line": 116,
+   "line": 107,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -7875,7 +7855,7 @@
    "kind": "click",
    "receiver": "logo",
    "label": null,
-   "line": 74,
+   "line": 75,
    "via": "UiHandler",
    "exercised": false,
    "why": "unlabelled"
@@ -7886,7 +7866,7 @@
    "kind": "value",
    "receiver": "nameFilter",
    "label": null,
-   "line": 82,
+   "line": 83,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -7900,7 +7880,7 @@
    "kind": "click",
    "receiver": "mainMenuButton",
    "label": "Main Menu",
-   "line": 87,
+   "line": 88,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -8277,7 +8257,7 @@
    "kind": "click",
    "receiver": "filter",
    "label": "Filter Types",
-   "line": 98,
+   "line": 91,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8290,7 +8270,7 @@
    "kind": "selection",
    "receiver": "registerHandler(typeFilterPresenter",
    "label": null,
-   "line": 95,
+   "line": 88,
    "exercised": false,
    "why": "unreached"
   },
@@ -8301,7 +8281,7 @@
    "receiver": "dialog",
    "label": "OK",
    "caption": "Export",
-   "line": 135,
+   "line": 128,
    "exercised": false,
    "join": "caption",
    "outcomes": [
@@ -8315,7 +8295,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 135,
+   "line": 128,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8549,12 +8529,11 @@
    "receiver": "dialog",
    "label": "OK",
    "line": 64,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "alert"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "IndexVolumeEditPresenter",
@@ -8890,7 +8869,7 @@
    "kind": "click",
    "receiver": "downloadButton",
    "label": "Download",
-   "line": 111,
+   "line": 110,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8903,7 +8882,7 @@
    "kind": "value",
    "receiver": "registerHandler(editorPresenter",
    "label": null,
-   "line": 65,
+   "line": 64,
    "exercised": true,
    "join": "ace-dirty",
    "outcomes": [
@@ -8916,7 +8895,7 @@
    "kind": "click",
    "receiver": "getSpinner()",
    "label": null,
-   "line": 104,
+   "line": 107,
    "exercised": false,
    "why": "unlabelled"
   },
@@ -8926,7 +8905,7 @@
    "kind": "key",
    "receiver": "KeyDownEvent",
    "label": null,
-   "line": 75,
+   "line": 76,
    "via": "addDomHandler",
    "exercised": false,
    "why": "needs-key"
@@ -8937,7 +8916,7 @@
    "kind": "key",
    "receiver": "KeyUpEvent",
    "label": null,
-   "line": 78,
+   "line": 79,
    "via": "addDomHandler",
    "exercised": false,
    "why": "needs-key"
@@ -8948,7 +8927,7 @@
    "kind": "click",
    "receiver": "menu",
    "label": "Show Menu",
-   "line": 50,
+   "line": 47,
    "via": "UiHandler",
    "exercised": true,
    "join": "label",
@@ -8962,7 +8941,7 @@
    "kind": "click",
    "receiver": "showAi",
    "label": "Ask Stroom AI",
-   "line": 57,
+   "line": 54,
    "via": "UiHandler",
    "exercised": false,
    "why": "widget"
@@ -10177,7 +10156,7 @@
    "kind": "click",
    "receiver": "filterButton",
    "label": "Manage Step Filters",
-   "line": 112,
+   "line": 88,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -10191,7 +10170,7 @@
    "kind": "click",
    "receiver": "firstButton",
    "label": "Step To First",
-   "line": 119,
+   "line": 95,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -10202,7 +10181,7 @@
    "kind": "click",
    "receiver": "backwardButton",
    "label": "Step Backward",
-   "line": 126,
+   "line": 102,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -10213,7 +10192,7 @@
    "kind": "click",
    "receiver": "forwardButton",
    "label": "Step Forward",
-   "line": 133,
+   "line": 109,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -10224,7 +10203,7 @@
    "kind": "click",
    "receiver": "lastButton",
    "label": "Step To Last",
-   "line": 140,
+   "line": 116,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -10235,7 +10214,7 @@
    "kind": "click",
    "receiver": "refreshButton",
    "label": "Refresh Current Step",
-   "line": 147,
+   "line": 123,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -10667,7 +10646,7 @@
    "kind": "click",
    "receiver": "add",
    "label": "Add New Pipeline Element",
-   "line": 105,
+   "line": 95,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -10681,7 +10660,7 @@
    "kind": "click",
    "receiver": "remove",
    "label": "Remove Pipeline Element",
-   "line": 112,
+   "line": 102,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -10695,7 +10674,7 @@
    "kind": "click",
    "receiver": "edit",
    "label": "Edit Pipeline Element",
-   "line": 119,
+   "line": 109,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -10709,7 +10688,7 @@
    "kind": "click",
    "receiver": "restore",
    "label": "Restore Pipeline Element",
-   "line": 126,
+   "line": 116,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -10723,7 +10702,7 @@
    "kind": "click",
    "receiver": "viewSource",
    "label": "View Source",
-   "line": 133,
+   "line": 123,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -11577,9 +11556,9 @@
    "receiver": "dialog",
    "label": "OK",
    "caption": "Batch Change All Filtered Processors",
-   "line": 78,
+   "line": 74,
    "exercised": true,
-   "join": "caption",
+   "join": "cycle",
    "outcomes": [
     "nothing",
     "dialog",
@@ -11592,7 +11571,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 78,
+   "line": 74,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -11756,7 +11735,7 @@
    "kind": "click",
    "receiver": "addButton",
    "label": "Add Processor",
-   "line": 149,
+   "line": 148,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -11769,7 +11748,7 @@
    "kind": "click",
    "receiver": "editButton",
    "label": "Edit Processor",
-   "line": 158,
+   "line": 157,
    "exercised": false,
    "why": "unreached"
   },
@@ -11779,7 +11758,7 @@
    "kind": "click",
    "receiver": "duplicateButton",
    "label": "Duplicate Processor",
-   "line": 167,
+   "line": 166,
    "exercised": false,
    "why": "unreached"
   },
@@ -11789,7 +11768,7 @@
    "kind": "click",
    "receiver": "removeButton",
    "label": "Delete Processor",
-   "line": 176,
+   "line": 175,
    "exercised": false,
    "why": "unreached"
   },
@@ -11799,7 +11778,7 @@
    "kind": "click",
    "receiver": "filterButton",
    "label": "Filter Processors",
-   "line": 196,
+   "line": 195,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -11813,7 +11792,7 @@
    "kind": "click",
    "receiver": "batchEditButton",
    "label": "Batch Edit Current Processors",
-   "line": 207,
+   "line": 206,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -11826,7 +11805,7 @@
    "kind": "click",
    "receiver": "showTasksButton",
    "label": "Show Tasks",
-   "line": 218,
+   "line": 217,
    "exercised": false,
    "why": "unreached"
   },
@@ -11836,7 +11815,7 @@
    "kind": "click",
    "receiver": "OpenLinkUtil",
    "label": null,
-   "line": 334,
+   "line": 332,
    "exercised": false,
    "why": "unlabelled"
   },
@@ -11846,7 +11825,7 @@
    "kind": "selection",
    "receiver": "registerHandler(processorListPresenter.getSelectionModel()",
    "label": null,
-   "line": 314,
+   "line": 312,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -11860,7 +11839,7 @@
    "receiver": "dialog",
    "label": "OK",
    "caption": "Filter Processors",
-   "line": 267,
+   "line": 265,
    "exercised": true,
    "join": "caption",
    "outcomes": [
@@ -12478,7 +12457,7 @@
    "kind": "click",
    "receiver": "createRuleButton",
    "label": "Create Rule",
-   "line": 103,
+   "line": 108,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -12491,7 +12470,7 @@
    "kind": "click",
    "receiver": "createReportButton",
    "label": "Create Report",
-   "line": 104,
+   "line": 109,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -12504,7 +12483,7 @@
    "kind": "value",
    "receiver": "registerHandler(queryEditPresenter",
    "label": null,
-   "line": 102,
+   "line": 107,
    "exercised": false,
    "why": "needs-value"
   },
@@ -12719,7 +12698,7 @@
    "kind": "value",
    "receiver": "tablePresenter",
    "label": null,
-   "line": 177,
+   "line": 182,
    "exercised": false,
    "why": "needs-value"
   },
@@ -12963,13 +12942,8 @@
    "label": "Backward",
    "line": 40,
    "via": "UiHandler",
-   "exercised": true,
-   "join": "label",
-   "outcomes": [
-    "grid-reordered",
-    "changed",
-    "nothing"
-   ]
+   "exercised": false,
+   "why": "absent"
   },
   {
    "class": "NavButtons",
@@ -12979,15 +12953,8 @@
    "label": "Forward",
    "line": 47,
    "via": "UiHandler",
-   "exercised": true,
-   "join": "label",
-   "outcomes": [
-    "changed",
-    "grid-reordered",
-    "unclickable",
-    "grid-rows",
-    "nothing"
-   ]
+   "exercised": false,
+   "why": "absent"
   },
   {
    "class": "QueryButtons",
@@ -13013,7 +12980,7 @@
    "kind": "click",
    "receiver": "copyButton",
    "label": "Copy",
-   "line": 75,
+   "line": 71,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -13024,7 +12991,7 @@
    "kind": "click",
    "receiver": "insertButton",
    "label": "Insert",
-   "line": 80,
+   "line": 76,
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
@@ -13433,7 +13400,7 @@
    "kind": "click",
    "receiver": "runButton",
    "label": "Run",
-   "line": 251,
+   "line": 255,
    "exercised": false,
    "why": "unreached"
   },
@@ -13443,7 +13410,7 @@
    "kind": "click",
    "receiver": "stopButton",
    "label": "Stop",
-   "line": 255,
+   "line": 259,
    "exercised": false,
    "why": "unreached"
   },
@@ -13453,7 +13420,7 @@
    "kind": "click",
    "receiver": "filterButton",
    "label": "Filter",
-   "line": 258,
+   "line": 262,
    "exercised": false,
    "why": "unreached"
   },
@@ -13462,10 +13429,10 @@
    "classKind": "presenter",
    "kind": "click",
    "receiver": "flatNestedToggleButton",
-   "label": "Table",
-   "line": 261,
+   "label": null,
+   "line": 265,
    "exercised": false,
-   "why": "unreached"
+   "why": "unlabelled"
   },
   {
    "class": "DataRetentionImpactPresenter",
@@ -13473,7 +13440,7 @@
    "kind": "click",
    "receiver": "expandAllButton",
    "label": "Expand All",
-   "line": 266,
+   "line": 270,
    "exercised": false,
    "why": "unreached"
   },
@@ -13483,7 +13450,7 @@
    "kind": "click",
    "receiver": "collapseAllButton",
    "label": "Collapse All",
-   "line": 270,
+   "line": 274,
    "exercised": false,
    "why": "unreached"
   },
@@ -13494,7 +13461,7 @@
    "receiver": "dialog",
    "label": "OK",
    "caption": "Query Filter",
-   "line": 290,
+   "line": 294,
    "exercised": true,
    "join": "caption",
    "outcomes": [
@@ -13507,7 +13474,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 290,
+   "line": 294,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -13828,7 +13795,7 @@
    "kind": "click",
    "receiver": "saveButton",
    "label": "Save all rules",
-   "line": 150,
+   "line": 154,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -13841,7 +13808,7 @@
    "kind": "click",
    "receiver": "warningButton",
    "label": "Show Warnings",
-   "line": 154,
+   "line": 158,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -13854,7 +13821,7 @@
    "kind": "selection",
    "receiver": "registerHandler(getView().getTabBar()",
    "label": null,
-   "line": 185,
+   "line": 189,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -13867,7 +13834,7 @@
    "kind": "dirty",
    "receiver": "registerHandler(this.ruleSetSettingsPresenter",
    "label": null,
-   "line": 91,
+   "line": 95,
    "exercised": false,
    "why": "needs-dirty"
   },
@@ -13877,7 +13844,7 @@
    "kind": "dirty",
    "receiver": "registerHandler(markdownEditPresenter",
    "label": null,
-   "line": 102,
+   "line": 106,
    "exercised": false,
    "why": "needs-dirty"
   },
@@ -13887,7 +13854,7 @@
    "kind": "dirty",
    "receiver": "registerHandler(ruleSetSettingsPresenter",
    "label": null,
-   "line": 179,
+   "line": 183,
    "exercised": false,
    "why": "needs-dirty"
   },
@@ -13897,7 +13864,7 @@
    "kind": "dirty",
    "receiver": "registerHandler(fieldListPresenter",
    "label": null,
-   "line": 182,
+   "line": 186,
    "exercised": false,
    "why": "needs-dirty"
   },
@@ -16360,7 +16327,7 @@
    "kind": "click",
    "receiver": "revertButton",
    "label": "Revert changes",
-   "line": 191,
+   "line": 195,
    "exercised": false,
    "why": "unreached"
   },
@@ -16370,7 +16337,7 @@
    "kind": "click",
    "receiver": "deleteButton",
    "label": "Delete",
-   "line": 200,
+   "line": 204,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -16384,7 +16351,7 @@
    "kind": "click",
    "receiver": "editButton",
    "label": "Rename",
-   "line": 205,
+   "line": 209,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -16397,7 +16364,7 @@
    "kind": "click",
    "receiver": "viewButton",
    "label": "View in browser",
-   "line": 210,
+   "line": 214,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -16410,7 +16377,7 @@
    "kind": "click",
    "receiver": "addButton",
    "label": "Add file",
-   "line": 263,
+   "line": 268,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -16423,7 +16390,7 @@
    "kind": "selection",
    "receiver": "tree",
    "label": null,
-   "line": 143,
+   "line": 145,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -16436,7 +16403,7 @@
    "kind": "value",
    "receiver": "editorPresenter",
    "label": null,
-   "line": 230,
+   "line": 235,
    "exercised": true,
    "join": "ace-dirty",
    "outcomes": [
@@ -16449,7 +16416,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Add New Folder",
-   "line": 244,
+   "line": 249,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -16462,7 +16429,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Add New File",
-   "line": 251,
+   "line": 256,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -16475,7 +16442,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Upload File",
-   "line": 259,
+   "line": 264,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -16488,7 +16455,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 367,
+   "line": 372,
    "exercised": false,
    "why": "unreached"
   },
@@ -16498,7 +16465,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 367,
+   "line": 372,
    "exercised": false,
    "why": "unreached"
   },
@@ -16508,7 +16475,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 436,
+   "line": 441,
    "exercised": false,
    "why": "unreached"
   },
@@ -16518,7 +16485,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 436,
+   "line": 441,
    "exercised": false,
    "why": "unreached"
   },
@@ -16882,14 +16849,12 @@
    "kind": "click",
    "receiver": "first",
    "label": "First",
-   "line": 93,
+   "line": 88,
    "via": "UiHandler",
    "exercised": true,
-   "join": "label",
+   "join": "screen",
    "outcomes": [
-    "grid-reordered",
-    "changed",
-    "nothing"
+    "changed"
    ]
   },
   {
@@ -16898,14 +16863,12 @@
    "kind": "click",
    "receiver": "prev",
    "label": "Backward",
-   "line": 99,
+   "line": 94,
    "via": "UiHandler",
    "exercised": true,
-   "join": "label",
+   "join": "screen",
    "outcomes": [
-    "grid-reordered",
-    "changed",
-    "nothing"
+    "changed"
    ]
   },
   {
@@ -16914,16 +16877,12 @@
    "kind": "click",
    "receiver": "next",
    "label": "Forward",
-   "line": 105,
+   "line": 100,
    "via": "UiHandler",
    "exercised": true,
-   "join": "label",
+   "join": "screen",
    "outcomes": [
-    "changed",
-    "grid-reordered",
-    "unclickable",
-    "grid-rows",
-    "nothing"
+    "changed"
    ]
   },
   {
@@ -16932,15 +16891,12 @@
    "kind": "click",
    "receiver": "last",
    "label": "Last",
-   "line": 111,
+   "line": 106,
    "via": "UiHandler",
    "exercised": true,
-   "join": "label",
+   "join": "screen",
    "outcomes": [
-    "changed",
-    "grid-reordered",
-    "grid-rows",
-    "nothing"
+    "changed"
    ]
   },
   {
@@ -16955,7 +16911,7 @@
     "Pause Update",
     "Not Updating"
    ],
-   "line": 117,
+   "line": 112,
    "via": "UiHandler",
    "exercised": true,
    "join": "widget-under-all",
@@ -16969,7 +16925,7 @@
    "kind": "key",
    "receiver": "txtFrom",
    "label": null,
-   "line": 123,
+   "line": 118,
    "via": "UiHandler",
    "exercised": true,
    "join": "range",
@@ -16983,7 +16939,7 @@
    "kind": "key",
    "receiver": "txtTo",
    "label": null,
-   "line": 130,
+   "line": 125,
    "via": "UiHandler",
    "exercised": true,
    "join": "range",
@@ -16996,6 +16952,20 @@
    "classKind": "widget",
    "kind": "dom",
    "receiver": "txtFrom",
+   "label": null,
+   "line": 132,
+   "via": "UiHandler",
+   "exercised": true,
+   "join": "range",
+   "outcomes": [
+    "changed"
+   ]
+  },
+  {
+   "class": "Pager",
+   "classKind": "widget",
+   "kind": "dom",
+   "receiver": "txtTo",
    "label": null,
    "line": 137,
    "via": "UiHandler",
@@ -17009,7 +16979,7 @@
    "class": "Pager",
    "classKind": "widget",
    "kind": "dom",
-   "receiver": "txtTo",
+   "receiver": "txtFrom",
    "label": null,
    "line": 142,
    "via": "UiHandler",
@@ -17023,23 +16993,9 @@
    "class": "Pager",
    "classKind": "widget",
    "kind": "dom",
-   "receiver": "txtFrom",
-   "label": null,
-   "line": 147,
-   "via": "UiHandler",
-   "exercised": true,
-   "join": "range",
-   "outcomes": [
-    "changed"
-   ]
-  },
-  {
-   "class": "Pager",
-   "classKind": "widget",
-   "kind": "dom",
    "receiver": "txtTo",
    "label": null,
-   "line": 152,
+   "line": 147,
    "via": "UiHandler",
    "exercised": true,
    "join": "range",
@@ -17053,7 +17009,7 @@
    "kind": "click",
    "receiver": "lblFrom",
    "label": "?",
-   "line": 157,
+   "line": 152,
    "via": "UiHandler",
    "exercised": true,
    "join": "range",
@@ -17067,7 +17023,7 @@
    "kind": "click",
    "receiver": "lblTo",
    "label": "?",
-   "line": 163,
+   "line": 158,
    "via": "UiHandler",
    "exercised": true,
    "join": "range",
@@ -17081,7 +17037,7 @@
    "kind": "click",
    "receiver": "button",
    "label": "Refresh",
-   "line": 104,
+   "line": 101,
    "exercised": false,
    "why": "widget"
   },
@@ -18116,6 +18072,26 @@
    "why": "widget"
   },
   {
+   "class": "SplitPane",
+   "classKind": "widget",
+   "kind": "command",
+   "receiver": "menu item",
+   "label": "Restore",
+   "line": 612,
+   "exercised": false,
+   "why": "widget"
+  },
+  {
+   "class": "SplitPane",
+   "classKind": "widget",
+   "kind": "command",
+   "receiver": "menu item",
+   "label": "Restore",
+   "line": 624,
+   "exercised": false,
+   "why": "widget"
+  },
+  {
    "class": "LineColInput",
    "classKind": "widget",
    "kind": "key",
@@ -18957,7 +18933,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "… - …",
-    "line": 448,
+    "line": 449,
     "observed": null,
     "why": "template too short to join"
    },
@@ -18966,7 +18942,7 @@
     "classKind": "presenter",
     "kind": "confirm",
     "template": "Are you sure you want to delete this message?",
-    "line": 913,
+    "line": 914,
     "observed": false
    },
    {
@@ -18974,7 +18950,7 @@
     "classKind": "presenter",
     "kind": "confirm",
     "template": "Are you sure you want to delete all messages and attachments in this conversation?",
-    "line": 930,
+    "line": 931,
     "observed": false
    },
    {
@@ -19413,7 +19389,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "You cannot remove or hide all tabs",
-    "line": 845,
+    "line": 847,
     "observed": true
    },
    {
@@ -19982,7 +19958,7 @@
     "classKind": "presenter",
     "kind": "warn",
     "template": "No folders have been selected for export",
-    "line": 163,
+    "line": 156,
     "observed": true
    },
    {
@@ -20310,7 +20286,7 @@
     "classKind": "presenter",
     "kind": "warn",
     "template": "No change selected.",
-    "line": 104,
+    "line": 100,
     "observed": false
    },
    {
@@ -20318,7 +20294,7 @@
     "classKind": "presenter",
     "kind": "warn",
     "template": "No user selected.",
-    "line": 110,
+    "line": 106,
     "observed": false
    },
    {
@@ -20326,7 +20302,7 @@
     "classKind": "presenter",
     "kind": "warn",
     "template": "No processors are included in the current filter.",
-    "line": 124,
+    "line": 130,
     "observed": true
    },
    {
@@ -20334,7 +20310,7 @@
     "classKind": "presenter",
     "kind": "info",
     "template": "Successfully changed.",
-    "line": 154,
+    "line": 160,
     "observed": false
    },
    {
@@ -20342,7 +20318,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Failed to change.",
-    "line": 162,
+    "line": 168,
     "observed": false
    },
    {
@@ -20390,7 +20366,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Unable to load filter",
-    "line": 390,
+    "line": 388,
     "observed": false
    },
    {
@@ -20558,7 +20534,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Unable to load Receive Data Rules",
-    "line": 128,
+    "line": 132,
     "observed": false
    },
    {
@@ -20566,7 +20542,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Unable to save Receive Data Rules",
-    "line": 249,
+    "line": 258,
     "observed": true
    },
    {
@@ -20574,7 +20550,7 @@
     "classKind": "presenter",
     "kind": "confirm",
     "template": "There are unsaved changes. Are you sure you want to close this tab?",
-    "line": 338,
+    "line": 347,
     "observed": false
    },
    {
@@ -21031,7 +21007,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error saving the document to a new document",
-    "line": 339,
+    "line": 344,
     "observed": false
    },
    {
@@ -21039,7 +21015,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error saving the document to a new document: …",
-    "line": 345,
+    "line": 350,
     "observed": false
    },
    {
@@ -21047,7 +21023,7 @@
     "classKind": "presenter",
     "kind": "warn",
     "template": "Item name not set",
-    "line": 386,
+    "line": 391,
     "observed": true
    },
    {
@@ -21055,7 +21031,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Error reverting to live version",
-    "line": 493,
+    "line": 498,
     "observed": false
    },
    {
@@ -21063,7 +21039,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Error reverting to live version: …",
-    "line": 500,
+    "line": 505,
     "observed": false
    },
    {
@@ -21071,7 +21047,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Error saving assets",
-    "line": 598,
+    "line": 603,
     "observed": false
    },
    {
@@ -21079,7 +21055,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Error saving assets: …",
-    "line": 604,
+    "line": 609,
     "observed": false
    },
    {
@@ -21087,7 +21063,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error creating a new folder",
-    "line": 623,
+    "line": 628,
     "observed": false
    },
    {
@@ -21095,7 +21071,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error creating a new folder: …",
-    "line": 629,
+    "line": 634,
     "observed": false
    },
    {
@@ -21103,7 +21079,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error creating a new file",
-    "line": 651,
+    "line": 656,
     "observed": false
    },
    {
@@ -21111,7 +21087,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error creating a new file: …",
-    "line": 657,
+    "line": 662,
     "observed": false
    },
    {
@@ -21119,7 +21095,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error uploading a new file",
-    "line": 682,
+    "line": 687,
     "observed": false
    },
    {
@@ -21127,7 +21103,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error uploading a new file: …",
-    "line": 688,
+    "line": 693,
     "observed": false
    },
    {
@@ -21135,7 +21111,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error deleting an item",
-    "line": 714,
+    "line": 719,
     "observed": true
    },
    {
@@ -21143,7 +21119,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error deleting an item: …",
-    "line": 720,
+    "line": 725,
     "observed": true
    },
    {
@@ -21151,7 +21127,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error renaming an item",
-    "line": 743,
+    "line": 748,
     "observed": true
    },
    {
@@ -21159,7 +21135,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error renaming an item: …",
-    "line": 749,
+    "line": 754,
     "observed": true
    },
    {
@@ -21167,7 +21143,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error updating content",
-    "line": 775,
+    "line": 780,
     "observed": false
    },
    {
@@ -21175,7 +21151,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error updating content: …",
-    "line": 781,
+    "line": 786,
     "observed": false
    },
    {
@@ -21183,7 +21159,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "There was an error getting content for '…': …",
-    "line": 828,
+    "line": 833,
     "observed": false
    },
    {
@@ -21191,7 +21167,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Error downloading assets for this visualisation: …",
-    "line": 865,
+    "line": 870,
     "observed": false
    },
    {
