@@ -1123,9 +1123,10 @@ public class AskStroomAIService {
                         .map(ComponentResultRequest::getComponentId)
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("No table component found"));
+                // With each row's stream and event ids, so the agent can look at the events behind the rows.
                 final DownloadSearchResultsRequest downloadRequest = new DownloadSearchResultsRequest(
                         limitedSearchRequest, componentId, DownloadSearchResultFileType.MARKDOWN,
-                        false, false, 100);
+                        false, false, 100, true);
                 return dashboardService.downloadSearchResults(downloadRequest);
             };
         } else if (context instanceof final QueryTableContext ctx) {
@@ -1135,7 +1136,7 @@ public class AskStroomAIService {
                         .requestedRange(probeRange)
                         .build();
                 final DownloadQueryResultsRequest downloadRequest = new DownloadQueryResultsRequest(
-                        limitedSearchRequest, DownloadSearchResultFileType.MARKDOWN, false, 100);
+                        limitedSearchRequest, DownloadSearchResultFileType.MARKDOWN, false, 100, true);
                 return queryService.downloadSearchResults(downloadRequest);
             };
         }
