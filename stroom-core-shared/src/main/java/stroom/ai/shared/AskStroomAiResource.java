@@ -204,6 +204,15 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     Boolean setTableAnalysisConfig(@Parameter(description = "config", required = true) TableAnalysisConfig config);
 
     @POST
+    @Path("/searchChats")
+    @Operation(
+            summary = "Search the user's chats by their titles and the user's questions in them, most recently "
+                      + "active first",
+            operationId = "searchAiChats")
+    List<AiChatSearchHit> searchChats(@Parameter(description = "request", required = true)
+                                      SearchAiChatsRequest request);
+
+    @POST
     @Path("/clearChat/{chatId}")
     @Operation(
             summary = "Clear a chat so it starts afresh: its messages, attached data, workspace files and memory are "

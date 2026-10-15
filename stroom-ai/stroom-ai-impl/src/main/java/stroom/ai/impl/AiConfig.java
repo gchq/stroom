@@ -42,6 +42,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     static final int DEFAULT_TOOL_GROUP_THRESHOLD = 24;
     static final StroomDuration DEFAULT_ELICITATION_TIMEOUT = StroomDuration.ofMinutes(10);
     static final int DEFAULT_MAX_ELICITATIONS_PER_NODE = 5;
+    static final int DEFAULT_MAX_CHAT_TITLE_WORDS = 12;
 
     private final AiDbConfig dbConfig;
     private final CacheConfig chatResponseCache;
@@ -58,6 +59,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final StroomDuration elicitationTimeout;
     private final int maxElicitationsPerNode;
     private final boolean askReadOnlyToolsAfterUntrustedContent;
+    private final int maxChatTitleWords;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -78,6 +80,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         elicitationTimeout = DEFAULT_ELICITATION_TIMEOUT;
         maxElicitationsPerNode = DEFAULT_MAX_ELICITATIONS_PER_NODE;
         askReadOnlyToolsAfterUntrustedContent = false;
+        maxChatTitleWords = DEFAULT_MAX_CHAT_TITLE_WORDS;
     }
 
     @SuppressWarnings("unused")
@@ -97,7 +100,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("elicitationTimeout") final StroomDuration elicitationTimeout,
                     @JsonProperty("maxElicitationsPerNode") final Integer maxElicitationsPerNode,
                     @JsonProperty("askReadOnlyToolsAfterUntrustedContent")
-                    final Boolean askReadOnlyToolsAfterUntrustedContent) {
+                    final Boolean askReadOnlyToolsAfterUntrustedContent,
+                    @JsonProperty("maxChatTitleWords") final Integer maxChatTitleWords) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -116,6 +120,15 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 DEFAULT_MAX_ELICITATIONS_PER_NODE);
         this.askReadOnlyToolsAfterUntrustedContent = Objects.requireNonNullElse(
                 askReadOnlyToolsAfterUntrustedContent, false);
+        this.maxChatTitleWords = Math.max(1, Objects.requireNonNullElse(maxChatTitleWords,
+                DEFAULT_MAX_CHAT_TITLE_WORDS));
+    }
+
+    @JsonPropertyDescription("The most words in the title the chat's model is asked for, to name a chat after what "
+                             + "it is about. Longer titles are cut short with an ellipsis where they are shown.")
+    @JsonProperty("maxChatTitleWords")
+    public int getMaxChatTitleWords() {
+        return maxChatTitleWords;
     }
 
     @JsonPropertyDescription("If true, once a chat's run has read data from tools or attached tables (which could "
@@ -250,6 +263,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", elicitationTimeout=" + elicitationTimeout +
                ", maxElicitationsPerNode=" + maxElicitationsPerNode +
                ", askReadOnlyToolsAfterUntrustedContent=" + askReadOnlyToolsAfterUntrustedContent +
+               ", maxChatTitleWords=" + maxChatTitleWords +
                '}';
     }
 }

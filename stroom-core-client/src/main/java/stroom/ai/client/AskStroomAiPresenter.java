@@ -25,6 +25,7 @@ import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
+import stroom.ai.shared.AiChatSearchHit;
 import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMcpPrompt;
@@ -111,6 +112,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -156,7 +158,8 @@ public class AskStroomAiPresenter
     private static final DockBehaviour DEFAULT_DOCK_BEHAVIOUR = new DockBehaviour(DockType.DOCK, DockLocation.RIGHT);
     private static final int DEFAULT_DOCK_WIDTH = 350;
     private static final int DEFAULT_DOCK_HEIGHT = 250;
-    private static final int MAX_TITLE_LENGTH = 60;
+    // As the server keeps; where the title is shown, it is cut short to fit with an ellipsis.
+    private static final int MAX_TITLE_LENGTH = 200;
     private static final SafeHtml SUMMARY = SafeHtmlUtils.fromSafeConstant("summary");
     private static final SafeHtml DETAILS = SafeHtmlUtils.fromSafeConstant("details");
     private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
@@ -165,6 +168,11 @@ public class AskStroomAiPresenter
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
     private static final String USER_ACTION_MESSAGE_ATTRIBUTE = "data-user-action-message";
     private static final String DEFAULT_CHAT_TITLE = "New chat";
+    private static final SafeHtml MARK = SafeHtmlUtils.fromSafeConstant("mark");
+    // Searching the list of chats: how long to wait after the last key, and the shortest text searched for (as the
+    // server finds nothing for less).
+    private static final int SEARCH_DELAY_MS = 300;
+    private static final int MIN_SEARCH_CHARS = 2;
     private static final String MARK_ALL_READ_ATTRIBUTE = "data-mark-all-read";
     private static final String DELETE_ALL_CHATS_ATTRIBUTE = "data-delete-all-chats";
     private static final String USER_ACTION_ID_ATTRIBUTE = "data-user-action-id";
@@ -223,6 +231,18 @@ public class AskStroomAiPresenter
     private boolean currentRunActive;
     // True while the list of chats is shown in place of the conversation.
     private boolean chatListShowing;
+    // Searching the list of chats: what is in the box, the text the hits are for, the hits (null when not
+    // searching), and a count so that a slow answer to an earlier search is ignored.
+    private String searchText = "";
+    private String searchedText;
+    private List<AiChatSearchHit> searchHits;
+    private int searchSequence;
+    private final Timer searchTimer = new Timer() {
+        @Override
+        public void run() {
+            runChatSearch();
+        }
+    };
     private long statusVersion;
     private Timer statusTimer;
     // How the chat is shown: DOCK, DIALOG or TAB, or null if hidden.
@@ -802,8 +822,15 @@ public class AskStroomAiPresenter
     private void setChatListShowing(final boolean showing) {
         chatListShowing = showing;
         getView().setChatListVisible(showing);
+        // Each time the list is shown it starts unsearched.
+        searchTimer.cancel();
+        searchText = "";
+        searchedText = null;
+        searchHits = null;
+        getView().clearChatSearch();
         if (showing) {
             renderChatList();
+            getView().focusChatSearch();
             // Bring it up to date, e.g. with chats made in another browser tab.
             checkChatStatuses();
         }
@@ -813,54 +840,139 @@ public class AskStroomAiPresenter
      * Shows the user's chats, most recent first, each with when it was last active and a button to delete it.
      */
     private void renderChatList() {
+        renderChatListActions();
         final HtmlBuilder hb = new HtmlBuilder();
-        if (chatStatuses.isEmpty()) {
-            hb.div(div -> div.append("You have no chats yet."), Attribute.className("ai-chat-list-empty"));
+        if (searchHits != null) {
+            if (searchHits.isEmpty()) {
+                hb.div(div -> div.append("No chats match \u201c" + searchedText + "\u201d."),
+                        Attribute.className("ai-chat-list-empty"));
+            }
+            for (final AiChatSearchHit hit : searchHits) {
+                final AiChatStatus status = findStatus(hit.getChatId()).orElse(null);
+                chatListItem(hb, hit.getChatId(), hit.getTitle(), hit.getUpdateTimeMs(), status, hit.getSnippet(),
+                        searchedText);
+            }
+        } else {
+            if (chatStatuses.isEmpty()) {
+                hb.div(div -> div.append("You have no chats yet."), Attribute.className("ai-chat-list-empty"));
+            }
+            for (final AiChatStatus status : chatStatuses) {
+                chatListItem(hb, status.getChatId(), status.getTitle(), status.getUpdateTimeMs(), status, null, null);
+            }
         }
+        getView().getChatListItems().setHTML(hb.toSafeHtml());
+    }
+
+    /// The buttons above the list of chats.
+    private void renderChatListActions() {
+        final HtmlBuilder hb = new HtmlBuilder();
         if (!chatStatuses.isEmpty()) {
-            final boolean anyUnread = chatStatuses.stream().anyMatch(AiChatStatus::isUnread);
-            hb.div(header -> {
-                if (anyUnread) {
-                    header.elem("Mark All as Read", BUTTON,
-                            Attribute.className("allow-focus ai-chat-list-action"),
-                            Attribute.title("Clear the unread mark from all your chats"),
-                            new Attribute(MARK_ALL_READ_ATTRIBUTE, "true"));
-                }
-                header.elem("Delete All Chats", BUTTON,
+            if (chatStatuses.stream().anyMatch(AiChatStatus::isUnread)) {
+                hb.elem("Mark All as Read", BUTTON,
                         Attribute.className("allow-focus ai-chat-list-action"),
-                        Attribute.title("Delete all your chats"),
-                        new Attribute(DELETE_ALL_CHATS_ATTRIBUTE, "true"));
-            }, Attribute.className("ai-chat-list-header"));
+                        Attribute.title("Clear the unread mark from all your chats"),
+                        new Attribute(MARK_ALL_READ_ATTRIBUTE, "true"));
+            }
+            hb.elem("Delete All Chats", BUTTON,
+                    Attribute.className("allow-focus ai-chat-list-action"),
+                    Attribute.title("Delete all your chats"),
+                    new Attribute(DELETE_ALL_CHATS_ATTRIBUTE, "true"));
         }
-        for (final AiChatStatus status : chatStatuses) {
-            final boolean current = currentChat != null && currentChat.getId() == status.getChatId();
-            final String title = NullSafe.nonBlankStringElse(status.getTitle(), "New chat");
-            hb.div(item -> {
-                item.div(iconDiv -> icon(iconDiv, AiChatTexts.statusIcon(status)),
-                        Attribute.className("ai-chat-list-icon"));
-                item.div(text -> {
-                    text.div(name -> name.append(title), Attribute.className("ai-chat-list-title"),
-                            Attribute.title(title));
-                    final String note = AiChatTexts.statusNote(status);
-                    text.div(when -> when.append(dateTimeFormatter.formatRelative(status.getUpdateTimeMs(),
-                                            System.currentTimeMillis())
-                                    + (note.isEmpty()
-                                    ? ""
-                                    : " · " + note)),
-                            Attribute.className("ai-chat-list-when"),
-                            Attribute.title("Last active " + dateTimeFormatter.format(status.getUpdateTimeMs())));
-                }, Attribute.className("ai-chat-list-text"));
-                button(item, SvgImage.DELETE,
-                        iconButtonClassName("ai-chat-list-delete"),
-                        Attribute.title("Delete chat"),
-                        new Attribute(DELETE_CHAT_ATTRIBUTE, String.valueOf(status.getChatId())));
-            }, Attribute.className(current
-                            ? "ai-chat-list-item ai-chat-list-item--current"
-                            : "ai-chat-list-item"),
-                    new Attribute(CHAT_ID_ATTRIBUTE, String.valueOf(status.getChatId())),
-                    Attribute.title("Open " + title));
+        getView().getChatListActions().setHTML(hb.toSafeHtml());
+    }
+
+    /// One chat in the list: its state, title, when it was last active and, when searching, part of the matching
+    /// question, with the matches highlighted.
+    ///
+    /// @param status  The chat's status, or null if not known (e.g. an older chat found by searching).
+    /// @param snippet Part of a matching question, or null.
+    /// @param query   The text searched for, to highlight, or null.
+    private void chatListItem(final HtmlBuilder hb,
+                              final int chatId,
+                              final String chatTitle,
+                              final long updateTimeMs,
+                              final AiChatStatus status,
+                              final String snippet,
+                              final String query) {
+        final boolean current = currentChat != null && currentChat.getId() == chatId;
+        final String title = NullSafe.nonBlankStringElse(chatTitle, DEFAULT_CHAT_TITLE);
+        hb.div(item -> {
+            item.div(iconDiv -> icon(iconDiv, status != null
+                            ? AiChatTexts.statusIcon(status)
+                            : SvgImage.AI),
+                    Attribute.className("ai-chat-list-icon"));
+            item.div(text -> {
+                text.div(name -> highlight(name, title, query), Attribute.className("ai-chat-list-title"),
+                        Attribute.title(title));
+                final String note = status != null
+                        ? AiChatTexts.statusNote(status)
+                        : "";
+                text.div(when -> when.append(dateTimeFormatter.formatRelative(updateTimeMs,
+                                        System.currentTimeMillis())
+                                + (note.isEmpty()
+                                ? ""
+                                : " · " + note)),
+                        Attribute.className("ai-chat-list-when"),
+                        Attribute.title("Last active " + dateTimeFormatter.format(updateTimeMs)));
+                if (snippet != null) {
+                    text.div(part -> highlight(part, snippet, query), Attribute.className("ai-chat-list-snippet"));
+                }
+            }, Attribute.className("ai-chat-list-text"));
+            button(item, SvgImage.DELETE,
+                    iconButtonClassName("ai-chat-list-delete"),
+                    Attribute.title("Delete chat"),
+                    new Attribute(DELETE_CHAT_ATTRIBUTE, String.valueOf(chatId)));
+        }, Attribute.className(current
+                        ? "ai-chat-list-item ai-chat-list-item--current"
+                        : "ai-chat-list-item"),
+                new Attribute(CHAT_ID_ATTRIBUTE, String.valueOf(chatId)),
+                Attribute.title("Open " + title));
+    }
+
+    /// Appends the text, with each match of the query (ignoring case) marked.
+    private static void highlight(final HtmlBuilder hb, final String text, final String query) {
+        for (final ChatSearchText.Part part : ChatSearchText.split(text, query)) {
+            if (part.match()) {
+                hb.elem(part.text(), MARK, Attribute.className("ai-chat-list-hit"));
+            } else {
+                hb.append(part.text());
+            }
         }
-        getView().getChatList().getElement().setInnerSafeHtml(hb.toSafeHtml());
+    }
+
+    @Override
+    public void onChatSearch(final String text) {
+        final String trimmed = NullSafe.string(text).strip();
+        if (trimmed.equals(searchText)) {
+            return;
+        }
+        searchText = trimmed;
+        searchTimer.cancel();
+        if (trimmed.length() < MIN_SEARCH_CHARS) {
+            // Back to the whole list.
+            searchHits = null;
+            searchedText = null;
+            renderChatList();
+        } else {
+            // Wait for a pause in the typing, so the server is asked once rather than per key.
+            searchTimer.schedule(SEARCH_DELAY_MS);
+        }
+    }
+
+    /// Searches for what is in the box now, and shows the chats found, unless the user has typed on since.
+    private void runChatSearch() {
+        final String text = searchText;
+        if (text.length() < MIN_SEARCH_CHARS) {
+            return;
+        }
+        final int search = ++searchSequence;
+        askStroomAiClient.searchChats(text, hits -> {
+            if (search == searchSequence && text.equals(searchText) && chatListShowing) {
+                searchHits = NullSafe.list(hits);
+                searchedText = text;
+                renderChatList();
+            }
+        }, SILENT);
     }
 
     private void onChatListClick(final Element target) {
@@ -3248,6 +3360,18 @@ public class AskStroomAiPresenter
 
         /// @return The panel the list of chats is shown in.
         FlowPanel getChatList();
+
+        /// @return Where the buttons above the list of chats go.
+        HTML getChatListActions();
+
+        /// @return Where the chats in the list go.
+        HTML getChatListItems();
+
+        /// Empties the box for searching the list of chats.
+        void clearChatSearch();
+
+        /// Puts the cursor in the box for searching the list of chats.
+        void focusChatSearch();
 
         /// Shows the list of chats in place of the conversation, or the conversation again.
         void setChatListVisible(boolean visible);
