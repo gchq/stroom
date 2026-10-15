@@ -74,8 +74,7 @@ On the model's **MCP Tool Servers** tab, add each server's Streamable HTTP endpo
 
 Before a tool runs, Stroom decides whether to ask the user:
 
-* Built-in tools run without asking, except `upload_file` (which sends a workspace file to an MCP tool,
-  so always asks).
+* Built-in tools run without asking.
 * MCP tools on untrusted servers always ask. On trusted servers, read-only tools run without asking and
   others ask, unless a tool policy says otherwise.
 * The user can allow a tool for the rest of the chat, or all of a trusted server's read-only tools.
@@ -106,8 +105,8 @@ form. The answer goes to the MCP server, never to the model. The tool call keeps
 
 * The prompts MCP servers offer are slash commands in the input box, e.g. `/onboard_data_source feed=ACME`.
   The filled-in prompt is put in the input box for the user to check and send.
-* `upload_file` sends a workspace file (up to 5 MB) to an MCP tool that takes data, such as the FastMCP
-  sample upload tool. The user approves every upload.
+* Nothing is uploaded to an MCP server through the chat. Sample files for a new feed go through Stroom's
+  own data upload, on the feed's Data tab.
 
 
 ## Context, memory and compaction
