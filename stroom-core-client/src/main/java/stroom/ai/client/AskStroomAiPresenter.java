@@ -90,6 +90,8 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.TextAreaElement;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -402,6 +404,30 @@ public class AskStroomAiPresenter
             }
         }, ClickEvent.getType()));
 
+        // In a question being edited, Escape cancels the edit and Ctrl+Enter sends it.
+        registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
+            final Element target = e.getNativeEvent().getEventTarget().cast();
+            if (!target.hasClassName("ai-edit-text")) {
+                return;
+            }
+            final Element editor = ElementUtil.findParent(target, element ->
+                    element.hasAttribute(MESSAGE_ID_ATTRIBUTE), 3);
+            final String idStr = editor != null
+                    ? editor.getAttribute(MESSAGE_ID_ATTRIBUTE)
+                    : null;
+            if (NullSafe.isBlankString(idStr)) {
+                return;
+            }
+            if (e.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
+                e.preventDefault();
+                e.stopPropagation();
+                onCancelEdit(Integer.parseInt(idStr));
+            } else if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && e.isControlKeyDown()) {
+                e.preventDefault();
+                onSendEdit(Integer.parseInt(idStr));
+            }
+        }, KeyDownEvent.getType()));
+
         // Listen for dock splitter resize events to persist the new size.
         addRegisteredHandler(DockResizeEvent.getType(), event -> {
             if (docked) {
@@ -465,6 +491,7 @@ public class AskStroomAiPresenter
     public void onShow(final ShowAskStroomAiEvent event) {
         getDockSize(dockSize -> {
             getDockBehaviourFromPrefs(dockBehaviour -> {
+                PanelState.setOpen(event.isShow());
                 if (event.isShow()) {
                     if (shownAs == null) {
                         showAs(dockBehaviour, dockSize);
@@ -497,6 +524,7 @@ public class AskStroomAiPresenter
             contentManager.open(closeEvent -> {
                 // Closed by the user.
                 shownAs = null;
+                PanelState.setOpen(false);
                 closeEvent.getCallback().closeTab(true);
                 ShowAskStroomAiEvent.fire(this, false);
             }, tab, tab);
@@ -760,7 +788,7 @@ public class AskStroomAiPresenter
         if (currentChat == null) {
             return;
         }
-        PromptEvent.fire(this, "Name for this conversation", currentChat.getTitle(), title -> {
+        PromptEvent.fire(this, "Rename Conversation", "Name for this conversation:", currentChat.getTitle(), title -> {
             if (title != null && !title.isBlank() && currentChat != null) {
                 setChatTitle(title.strip());
                 titleGenerated = true;
@@ -1117,8 +1145,9 @@ public class AskStroomAiPresenter
         if (currentChat == null) {
             return;
         }
-        PromptEvent.fire(this, "Compact this conversation now? Earlier messages are kept, but the model will see "
-                               + "them as a summary. Optionally, say what the summary should focus on:", "",
+        final String question = "Compact this conversation now? Earlier messages are kept, but the model will see "
+                                + "them as a summary. Optionally, say what the summary should focus on:";
+        PromptEvent.fire(this, "Compact Context", question, "",
                 focus -> {
                     if (focus != null && currentChat != null) {
                         compact(focus.isBlank()
@@ -1411,7 +1440,7 @@ public class AskStroomAiPresenter
             return;
         }
         if (!approved && AiToolMessages.isToolRequest(request.getMessage())) {
-            PromptEvent.fire(this, "Why not? This is optional, and the model is told.", "", reason -> {
+            PromptEvent.fire(this, "Deny", "Why not? This is optional, and the model is told.", "", reason -> {
                 // Cancelling the prompt leaves the request unanswered.
                 if (reason != null) {
                     onAnswerApproval(messageId, false, scope, callId, reason.isBlank()
@@ -1908,10 +1937,9 @@ public class AskStroomAiPresenter
 
     @Override
     public void onConversationScrolled() {
+        // Scrolled up, so stop following the conversation, and offer to jump back to the latest message.
         followBottom = isAtBottom();
-        if (followBottom) {
-            getView().setJumpToLatestVisible(false);
-        }
+        getView().setJumpToLatestVisible(!followBottom);
     }
 
     @Override
