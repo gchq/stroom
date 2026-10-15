@@ -32,16 +32,29 @@ public class AskStroomAiRequest {
     private final AskStroomAiContext context;
     @JsonProperty
     private final String message;
+    @JsonProperty
+    private final AiAgentMode mode;
 
+    /// A request in the chat's current mode.
+    public AskStroomAiRequest(final AiChat aiChat,
+                              final AskStroomAiConfig config,
+                              final AskStroomAiContext context,
+                              final String message) {
+        this(aiChat, config, context, message, null);
+    }
+
+    /// @param mode How the agent works in the chat from now on, or null to keep the chat's current mode.
     @JsonCreator
     public AskStroomAiRequest(@JsonProperty("aiChat") final AiChat aiChat,
                               @JsonProperty("config") final AskStroomAiConfig config,
                               @JsonProperty("context") final AskStroomAiContext context,
-                              @JsonProperty("message") final String message) {
+                              @JsonProperty("message") final String message,
+                              @JsonProperty("mode") final AiAgentMode mode) {
         this.aiChat = aiChat;
         this.config = config;
         this.context = context;
         this.message = message;
+        this.mode = mode;
     }
 
     public AiChat getAiChat() {
@@ -58,5 +71,10 @@ public class AskStroomAiRequest {
 
     public String getMessage() {
         return message;
+    }
+
+    /// @return How the agent works in the chat from now on, or null to keep the chat's current mode.
+    public AiAgentMode getMode() {
+        return mode;
     }
 }

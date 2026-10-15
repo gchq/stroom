@@ -23,7 +23,21 @@ This guide covers setting it up and running it safely. See GitHub issue
 1. Users choose the model in the chat panel's settings, or an administrator sets the default with
    _Set As Default_.
 
+Users who have not changed a chat setting use the configured defaults, so a change to the defaults reaches
+them. A user whose settings have no model, or a model that no longer exists, gets the default model. To put
+everyone back on the defaults (model, prompts, dock position and so on), an administrator (Manage
+Properties) can use _Reset Everyone to Defaults…_ in the chat's **Settings…**.
+
 Answers and reasoning stream into the chat as the model writes them.
+
+Each chat has a mode, chosen beside the model:
+
+* _Agent_: does what is asked, with all the tools it is given.
+* _Ask_: answers questions, with only the tools that cannot change anything.
+* _Plan_: works out a step-by-step plan, with only the tools that cannot change anything, without
+  carrying it out. The user can then switch to _Agent_ to do it.
+
+A run carried on later (after an approval, a form or a resume) keeps the chat's mode.
 
 For testing without a model, set the model ID to `__stub__`. The stub answers instantly, and a question can
 include `[[think]]` (to get some reasoning) or `[[tool:NAME {json arguments}]]` (to call a tool first).
@@ -66,7 +80,8 @@ Before a tool runs, Stroom decides whether to ask the user:
   others ask, unless a tool policy says otherwise.
 * The user can allow a tool for the rest of the chat, or all of a trusted server's read-only tools.
   A change to a tool's name or description, or to the server's settings, asks again.
-* _Approve everything_ (per chat, in **Tool Approvals…**) is off unless `allowApproveEverything` is true.
+* _Approve everything_ (per chat: the shield beside the model, or **Tool Approvals…**) is off unless
+  `allowApproveEverything` is true. The shield is highlighted while it is on.
   Even then it only covers trusted servers' tools that are not destructive or open-world.
 * If no browser has polled the chat for `unattendedAfter`, the run is unattended: only read-only tools
   run, and anything else waits for the user.

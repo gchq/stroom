@@ -16,6 +16,7 @@
 
 package stroom.ai.client;
 
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AskStroomAiContext;
 
 import com.google.gwt.dom.client.Element;
@@ -59,6 +60,12 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
      * Called when the user scrolls the conversation, to stop or start following new messages.
      */
     void onConversationScrolled();
+
+    /// The user chose how the agent works in the chat.
+    void onAgentModeChange(AiAgentMode mode);
+
+    /// The user clicked the auto-approve button.
+    void onToggleAutoApprove();
 
     /**
      * Shows how the chat's context window is used, with a way to compact it, below or above an element.

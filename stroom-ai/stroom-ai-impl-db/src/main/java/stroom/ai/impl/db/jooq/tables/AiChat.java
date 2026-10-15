@@ -140,6 +140,11 @@ public class AiChat extends TableImpl<AiChatRecord> {
      */
     public final TableField<AiChatRecord, Boolean> AUTO_APPROVE = createField(DSL.name("auto_approve"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>stroom.ai_chat.agent_mode</code>.
+     */
+    public final TableField<AiChatRecord, Byte> AGENT_MODE = createField(DSL.name("agent_mode"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
+
     private AiChat(Name alias, Table<AiChatRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

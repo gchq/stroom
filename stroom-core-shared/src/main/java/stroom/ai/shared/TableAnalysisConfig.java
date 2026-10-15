@@ -142,7 +142,7 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
 
     @JsonPropertyDescription(
             "User prompt template for table queries. Use {{query}} for the user's question, " +
-            "{{table}} for the markdown table data, and {{context}} for prior conversation history")
+            "{{table}} for the markdown table data, and {{context}} for prior chat history")
     public String getTableQueryUserPrompt() {
         return tableQueryUserPrompt;
     }

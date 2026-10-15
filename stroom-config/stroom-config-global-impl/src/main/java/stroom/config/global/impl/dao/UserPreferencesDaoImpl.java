@@ -30,6 +30,7 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Optional;
 
 import static stroom.config.impl.db.jooq.tables.Preferences.PREFERENCES;
@@ -163,6 +164,26 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
             LOGGER.error(e.getMessage(), e);
             throw e;
         }
+    }
+
+    @Override
+    public int clearAskStroomAiConfigs(final UserRef userRef) {
+        final List<String> userUuids = JooqUtil.contextResult(connProvider, context ->
+                context
+                        .select(PREFERENCES.USER_UUID)
+                        .from(PREFERENCES)
+                        .fetch(PREFERENCES.USER_UUID));
+        int changed = 0;
+        for (final String userUuid : userUuids) {
+            final UserPreferences userPreferences = fetch(userUuid).orElse(null);
+            if (userPreferences != null && userPreferences.getAskStroomAiConfig() != null) {
+                changed += update(userRef, userUuid, userPreferences.copy()
+                        .askStroomAiConfig(null)
+                        .build());
+            }
+        }
+        LOGGER.info("Cleared the Ask Stroom AI settings from {} preference record(s)", changed);
+        return changed;
     }
 
     @Override

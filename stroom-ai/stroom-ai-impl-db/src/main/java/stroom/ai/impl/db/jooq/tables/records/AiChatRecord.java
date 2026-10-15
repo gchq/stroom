@@ -256,6 +256,20 @@ public class AiChatRecord extends UpdatableRecordImpl<AiChatRecord> {
         return (Boolean) get(16);
     }
 
+    /**
+     * Setter for <code>stroom.ai_chat.agent_mode</code>.
+     */
+    public void setAgentMode(Byte value) {
+        set(17, value);
+    }
+
+    /**
+     * Getter for <code>stroom.ai_chat.agent_mode</code>.
+     */
+    public Byte getAgentMode() {
+        return (Byte) get(17);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -279,7 +293,7 @@ public class AiChatRecord extends UpdatableRecordImpl<AiChatRecord> {
     /**
      * Create a detached, initialised AiChatRecord
      */
-    public AiChatRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String userUuid, String title, String modelDocUuid, Integer contextWindowTokens, Integer lastInputTokens, Long totalInputTokens, Long totalOutputTokens, Long lastOpenedMs, Integer lastReadMessageId, Long lastPollMs, Boolean autoApprove) {
+    public AiChatRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String userUuid, String title, String modelDocUuid, Integer contextWindowTokens, Integer lastInputTokens, Long totalInputTokens, Long totalOutputTokens, Long lastOpenedMs, Integer lastReadMessageId, Long lastPollMs, Boolean autoApprove, Byte agentMode) {
         super(AiChat.AI_CHAT);
 
         setId(id);
@@ -299,6 +313,7 @@ public class AiChatRecord extends UpdatableRecordImpl<AiChatRecord> {
         setLastReadMessageId(lastReadMessageId);
         setLastPollMs(lastPollMs);
         setAutoApprove(autoApprove);
+        setAgentMode(agentMode);
         resetTouchedOnNotNull();
     }
 }

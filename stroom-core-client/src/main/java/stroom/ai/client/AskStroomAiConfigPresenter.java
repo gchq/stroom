@@ -21,9 +21,11 @@ import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -98,6 +100,9 @@ public class AskStroomAiConfigPresenter
 
     // ---------------------------------------------------------------------
 
+    // True once every user's settings have been reset, so that closing the dialog saves nothing.
+    private boolean resetAllDone;
+
     public void show(final AskStroomAiConfig currentConfig,
                      final Consumer<AskStroomAiConfig> configConsumer,
                      final DockBehaviour snapshotDockBehaviour,
@@ -111,6 +116,8 @@ public class AskStroomAiConfigPresenter
         getView().allowSetDefaults(isAdmin);
         getView().setOnSetDefaults(isAdmin ? this::onSetDefaults
                 : null);
+        getView().setOnResetAllUsers(isAdmin ? this::onResetAllUsers
+                : null);
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -121,6 +128,12 @@ public class AskStroomAiConfigPresenter
                     generalPresenter.getView().focus();
                 })
                 .onHideRequest(e -> {
+                    if (resetAllDone) {
+                        // Everyone's settings were just reset, so save nothing back, not even the dock.
+                        resetAllDone = false;
+                        e.hide();
+                        return;
+                    }
                     if (e.isOk()) {
                         final AskStroomAiConfig config = write();
                         dockBehaviourConsumer.accept(generalPresenter.getDockBehaviour());
@@ -148,6 +161,29 @@ public class AskStroomAiConfigPresenter
         askStroomAiClient.setDefaultAskStroomAIConfig(config, success ->
                 AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default config updated", null),
                 taskMonitorFactory);
+    }
+
+    private void onResetAllUsers(final TaskMonitorFactory taskMonitorFactory) {
+        ConfirmEvent.fire(this,
+                "Reset every user's Ask Stroom AI settings (model, prompts, dock position and so on) to the "
+                + "defaults? Their own choices are lost. Users with Stroom open get the defaults when they "
+                + "next load it.",
+                ok -> {
+                    if (ok) {
+                        askStroomAiClient.resetAllUsersConfig(count -> {
+                            // Close without saving, as saving would store this user's settings again.
+                            resetAllDone = true;
+                            HidePopupRequestEvent.builder(AskStroomAiConfigPresenter.this).fire();
+                            AlertEvent.fireInfo(AskStroomAiConfigPresenter.this,
+                                    "Reset the Ask Stroom AI settings in " + count + " preference "
+                                    + (count == 1
+                                            ? "record"
+                                            : "records")
+                                    + ". Everyone now uses the defaults. Reload Stroom to see them yourself.",
+                                    null);
+                        }, taskMonitorFactory);
+                    }
+                });
     }
 
     private void read(final AskStroomAiConfig config,
@@ -181,6 +217,9 @@ public class AskStroomAiConfigPresenter
         void setRestoreFromDefaults(Consumer<TaskMonitorFactory> handler);
 
         void allowSetDefaults(boolean allow);
+
+        /// @param handler Resets every user's settings to the defaults, or null if this user cannot.
+        void setOnResetAllUsers(Consumer<TaskMonitorFactory> handler);
 
         void setOnSetDefaults(Consumer<TaskMonitorFactory> handler);
     }
