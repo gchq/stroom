@@ -49,8 +49,8 @@ public class PopupUtil {
             popupPanel.setGlassEnabled(isModal);
         }
 
-        // Attach the popup to the DOM.
-        CurrentFocus.push();
+        // Attach the popup to the DOM, returning the focus to where it is now when it closes
+        CurrentFocus.remember(popupPanel);
         popupPanel.show();
         // Defer the command to position and make visible because we need the
         // popup to size first.
