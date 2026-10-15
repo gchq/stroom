@@ -627,6 +627,34 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void stoppingDuringAToolCallEndsTheRunWithoutAskingTheModelAgain() {
+        final AtomicBoolean cancelled = new AtomicBoolean(false);
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        // The user stops the run while the tool is working.
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class))).thenAnswer(invocation -> {
+            cancelled.set(true);
+            return CallToolResult.builder().content(List.of(new TextContent("42 errors"))).build();
+        });
+        final McpToolset toolset = toolset(client, searchTool());
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("test__search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("never given"));
+
+        assertThatThrownBy(() -> agentChat.chat(model, null, 7, messages, toolset, 99, cancelled, taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN))
+                .isInstanceOf(stroom.task.api.TaskTerminatedException.class);
+
+        // The call finished and its result was kept, but the model wasn't asked again.
+        assertThat(model.requests).hasSize(1);
+        Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.TOOL_RESULT),
+                Mockito.contains("42 errors"));
+    }
+
+    @Test
     void steeringMessagesArePickedUp() {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
