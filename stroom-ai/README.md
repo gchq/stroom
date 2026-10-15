@@ -136,9 +136,13 @@ _Steps for you_ card. The model can neither make nor click one.
 ## Commands, prompts and uploads
 
 * Typing `/` in the input box lists the commands. The chat's own are `/compact [focus]`,
-  `/mode agent|ask|plan`, `/plan <task>` (switches to Plan mode and asks), `/new [question]`,
-  `/remember <fact>` (adds the fact to the user's memory, in `remembered.md`) and `/help`. A message
-  starting with `//` is sent as it is, starting with `/`.
+  `/mode agent|ask|plan`, `/plan <task>` (switches to Plan mode and asks), `/new [question]`, `/clear`
+  (deletes the chat's messages, attached data, workspace files and memory, keeping the chat, its mode and
+  its tool approvals), `/remember <fact>` (adds the fact to the user's memory, in `remembered.md`) and
+  `/help`. A message starting with `//` is sent as it is, starting with `/`.
+* A chat is named after its first question, then, after the answers to its 1st, 3rd, 6th and 10th questions
+  (and every 10th after), the chat's model is asked for a title of a few words. Only the user's questions
+  are sent. Once the user renames a chat, it is no longer named automatically; `/clear` lets it be again.
 * The prompts MCP servers offer are slash commands too, e.g. `/onboard_data_source feed=ACME`.
   The filled-in prompt is put in the input box for the user to check and send.
 * A link in the chat to a Stroom document (`?action=open-doc&docType=…&docUuid=…`, as FastMCP returns) opens

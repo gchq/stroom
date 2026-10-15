@@ -124,6 +124,8 @@ CALL V07_14_00_001__ai_add_column('ai_chat', 'last_poll_ms', 'bigint DEFAULT NUL
 CALL V07_14_00_001__ai_add_column('ai_chat', 'auto_approve', 'tinyint(1) NOT NULL DEFAULT 0');
 -- How the agent works in the chat: 0 Agent, 1 Ask, 2 Plan.
 CALL V07_14_00_001__ai_add_column('ai_chat', 'agent_mode', 'tinyint NOT NULL DEFAULT 0');
+-- 1 once the user has named the chat themselves, so it is no longer named automatically.
+CALL V07_14_00_001__ai_add_column('ai_chat', 'title_set_by_user', 'tinyint(1) NOT NULL DEFAULT 0');
 
 -- Matches the list chats query, which filters by user and sorts by update time.
 CALL V07_14_00_001__ai_add_index('ai_chat', 'idx_ai_chat_user_uuid_update_time', 'user_uuid, update_time_ms');
