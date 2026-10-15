@@ -69,6 +69,7 @@ public final class McpToolset implements AutoCloseable {
     public static final McpToolset EMPTY = new McpToolset(List.of(), List.of(), true);
     // The tool metadata key a server can use to say which group a tool is in.
     static final String META_GROUP = "group";
+    static final String META_CONFIRMS = "confirms";
     /// The most of one server's instructions given to the model, so that a server cannot fill the context.
     static final int MAX_SERVER_INSTRUCTIONS_CHARS = 20_000;
 
@@ -256,6 +257,7 @@ public final class McpToolset implements AutoCloseable {
                 NullSafe.get(tool.annotations(), ToolAnnotations::readOnlyHint),
                 NullSafe.get(tool.annotations(), ToolAnnotations::destructiveHint),
                 NullSafe.get(tool.annotations(), ToolAnnotations::openWorldHint),
+                Boolean.TRUE.equals(NullSafe.get(tool.meta(), meta -> meta.get(META_CONFIRMS))),
                 policy,
                 McpToolInfo.hash(endpoint, String.valueOf(trusted), tool.name(), tool.description(),
                         String.valueOf(tool.inputSchema())),

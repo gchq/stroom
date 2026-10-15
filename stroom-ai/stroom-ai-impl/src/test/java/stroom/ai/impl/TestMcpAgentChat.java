@@ -537,6 +537,24 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void toolsSayWhetherTheyConfirmThemselves() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        final Tool confirming = Tool.builder()
+                .name("create_feed")
+                .inputSchema(Map.of("type", "object"))
+                .meta(Map.of("confirms", true))
+                .build();
+        Mockito.when(client.listTools()).thenReturn(new ListToolsResult(List.of(confirming, searchTool()), null));
+        final McpToolset toolset = new McpToolset(List.of(
+                new McpServerConnection("good", trustedConfig("good"), client, null)), List.of(), true);
+
+        toolset.tools();
+
+        assertThat(toolset.toolInfo("good__create_feed")).get().extracting(McpToolInfo::confirms).isEqualTo(true);
+        assertThat(toolset.toolInfo("good__search")).get().extracting(McpToolInfo::confirms).isEqualTo(false);
+    }
+
+    @Test
     void longServerInstructionsAreCut() {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.getServerInstructions())
