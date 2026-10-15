@@ -29,6 +29,8 @@ import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMcpPrompt;
 import stroom.ai.shared.AiMcpPromptArgument;
+import stroom.ai.shared.AiMemory;
+import stroom.ai.shared.AiMemoryScope;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -40,6 +42,7 @@ import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.GetAiMcpPromptRequest;
+import stroom.ai.shared.SaveAiMemoryRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.alert.client.event.AlertCallback;
@@ -186,10 +189,6 @@ public class AskStroomAiPresenter
     private static final String ELICITATION_ATTRIBUTE = "data-elicitation-id";
     private static final int DEFAULT_COMPACT_AT_PERCENT = 80;
     private static final int WARN_BELOW_COMPACT_AT_PERCENT = 10;
-    private static final String COMPACT_COMMAND = "/compact";
-    private static final List<AiSlashCommand> SLASH_COMMANDS = List.of(
-            new AiSlashCommand(COMPACT_COMMAND, "[focus]",
-                    "Compact the chat now, optionally saying what the summary should keep"));
     private static final String LIVE_ANSWER_ID = "ai-live-answer";
     private static final int STREAMING_POLL_MS = 500;
     private static final long KEEP_POLLING_AFTER_ANSWER_MS = 15_000;
@@ -949,7 +948,7 @@ public class AskStroomAiPresenter
      * @return The chat's own commands, then the MCP servers' prompts.
      */
     private List<AiSlashCommand> slashCommands() {
-        final List<AiSlashCommand> commands = new ArrayList<>(SLASH_COMMANDS);
+        final List<AiSlashCommand> commands = new ArrayList<>(AiSlashCommands.COMMANDS);
         for (final AiMcpPrompt prompt : NullSafe.list(mcpPrompts)) {
             final StringBuilder arguments = new StringBuilder();
             for (final AiMcpPromptArgument argument : NullSafe.list(prompt.getArguments())) {
@@ -1034,28 +1033,100 @@ public class AskStroomAiPresenter
                     : "");
             return true;
         }
-        if (mcpPrompts == null && !COMPACT_COMMAND.equals(parts[0])) {
+        final String rest = parts.length > 1
+                ? parts[1].strip()
+                : "";
+        if (AiSlashCommands.isOwn(parts[0])) {
+            runOwnCommand(parts[0], rest);
+            return true;
+        }
+        if (mcpPrompts == null) {
             // It may be an MCP prompt, so fetch them and try again.
             fetchPrompts(() -> runSlashCommand(message));
             return true;
         }
-        if (COMPACT_COMMAND.equals(parts[0])) {
-            if (currentChat == null) {
-                AlertEvent.fireWarn(this, "There is nothing to compact yet.", null);
-            } else {
-                compact(parts.length > 1
-                        ? parts[1].strip()
-                        : null);
-            }
-            return true;
-        }
-        final StringBuilder known = new StringBuilder();
-        for (final AiSlashCommand command : slashCommands()) {
-            known.append("\n").append(command.getName()).append(" ").append(command.getArguments());
-        }
-        AlertEvent.fireWarn(this, "Unknown command " + parts[0] + ". The commands are:" + known
-                                  + "\n\nTo send a message starting with /, start it with //.", null);
+        AlertEvent.fireWarn(this, "Unknown command " + parts[0] + ".\n\n" + AiSlashCommands.help(slashCommands()),
+                null);
         return true;
+    }
+
+    /// Runs one of the chat's own commands.
+    ///
+    /// @param command The command, with its \`/\`.
+    /// @param rest    What the user typed after it, trimmed.
+    private void runOwnCommand(final String command, final String rest) {
+        switch (command) {
+            case AiSlashCommands.COMPACT -> {
+                if (currentChat == null) {
+                    AlertEvent.fireWarn(this, "There is nothing to compact yet.", null);
+                } else {
+                    compact(rest.isEmpty()
+                            ? null
+                            : rest);
+                }
+            }
+            case AiSlashCommands.MODE -> {
+                final AiAgentMode mode = AiSlashCommands.parseMode(rest);
+                if (mode == null) {
+                    AlertEvent.fireInfo(this, "This chat is in " + getView().getAgentMode().getDisplayValue()
+                                              + " mode. Use /mode agent, /mode ask or /mode plan to change it.",
+                            null);
+                } else {
+                    switchMode(mode);
+                }
+            }
+            case AiSlashCommands.PLAN -> {
+                if (rest.isEmpty()) {
+                    AlertEvent.fireWarn(this, "Say what to plan, e.g. /plan onboard feed ACME.", null);
+                } else {
+                    switchMode(AiAgentMode.PLAN);
+                    sendMessage(rest);
+                }
+            }
+            case AiSlashCommands.NEW -> {
+                setChatListShowing(false);
+                startNewChat(() -> {
+                    if (!rest.isEmpty()) {
+                        sendMessage(rest);
+                    }
+                });
+            }
+            case AiSlashCommands.REMEMBER -> {
+                if (rest.isEmpty()) {
+                    AlertEvent.fireWarn(this, "Say what to remember, e.g. /remember our firewall feeds start "
+                                              + "with FW-.", null);
+                } else {
+                    ensureChat(() -> remember(rest));
+                }
+            }
+            default -> AlertEvent.fireInfo(this, AiSlashCommands.help(slashCommands()), null);
+        }
+    }
+
+    /// Switches the chat to a mode, as choosing it in the mode list does.
+    private void switchMode(final AiAgentMode mode) {
+        getView().setAgentMode(mode);
+        onAgentModeChange(mode);
+    }
+
+    /// Adds a fact to the user's own memory note for remembered facts, which is loaded into all their chats.
+    private void remember(final String fact) {
+        final AiChat chat = currentChat;
+        askStroomAiClient.listMemory(chat.getId(), response -> {
+            final AiMemory note = NullSafe.list(response.getMemories()).stream()
+                    .filter(memory -> memory.getScope() == AiMemoryScope.USER
+                                      && AiSlashCommands.REMEMBER_NOTE.equals(memory.getName()))
+                    .findFirst()
+                    .orElse(null);
+            askStroomAiClient.saveMemory(new SaveAiMemoryRequest(chat, "/memories/" + AiSlashCommands.REMEMBER_NOTE,
+                            AiSlashCommands.addFact(NullSafe.get(note, AiMemory::getContent), fact),
+                            NullSafe.get(note, AiMemory::getVersion)),
+                    saved -> AlertEvent.fireInfo(this, "Remembered. It's in your memory ("
+                                                       + AiSlashCommands.REMEMBER_NOTE
+                                                       + "), which is loaded into all your chats.", null),
+                    error -> showError(error, "Unable to remember that", null),
+                    this);
+        }, error -> showError(error, "Unable to read your memory", null), this);
     }
 
     /**
@@ -2841,6 +2912,12 @@ public class AskStroomAiPresenter
     }
 
     private void startNewChat() {
+        startNewChat(() -> {
+        });
+    }
+
+    /// Starts a new chat, then does something with it, e.g. asks its first question.
+    private void startNewChat(final Runnable then) {
         askStroomAiClient.createChat(chat -> {
             currentChat = chat;
             currentRunActive = false;
@@ -2857,6 +2934,7 @@ public class AskStroomAiPresenter
             }
             refreshAutoApprove();
             getView().focus();
+            then.run();
         }, this);
     }
 
