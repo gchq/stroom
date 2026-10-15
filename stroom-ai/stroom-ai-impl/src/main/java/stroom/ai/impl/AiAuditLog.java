@@ -37,6 +37,7 @@ public class AiAuditLog {
 
     static final String TOOL_CALL_TYPE_ID = "AskStroomAi.toolCall";
     static final String ANSWER_TYPE_ID = "AskStroomAi.answer";
+    static final String USER_ACTION_TYPE_ID = "AskStroomAi.userAction";
     static final int MAX_TEXT = 1_000;
 
     private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
@@ -92,6 +93,32 @@ public class AiAuditLog {
                                 .build())
                         .addData(data("ChatId", String.valueOf(chatId)))
                         .addData(data("Unattended", String.valueOf(unattended)))
+                        .build());
+    }
+
+    /// Records the user clicking a button that an MCP tool's result suggested, e.g. to enable a processor filter.
+    ///
+    /// @param chatId  The chat.
+    /// @param action  The kind of action, e.g. enable_processor_filter.
+    /// @param label   What the button said, as Stroom wrote it.
+    /// @param outcome What happened.
+    /// @param success False if it was not done.
+    public void userAction(final int chatId,
+                           final String action,
+                           final String label,
+                           final String outcome,
+                           final boolean success) {
+        log(USER_ACTION_TYPE_ID, "User did a step suggested in Ask Stroom AI chat " + chatId + ": " + label,
+                ProcessEventAction.builder()
+                        .withAction(ProcessAction.EXECUTE)
+                        .withCommand(action)
+                        .withArguments(shorten(label))
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(success)
+                                .withDescription(shorten(outcome))
+                                .build())
+                        .addData(data("ChatId", String.valueOf(chatId)))
+                        .addData(data("Source", "A suggestion in the chat, from an MCP tool"))
                         .build());
     }
 

@@ -29,6 +29,7 @@ import stroom.ai.shared.AiMcpPromptText;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiToolApprovalsResponse;
+import stroom.ai.shared.AiUserActionResult;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -92,11 +93,14 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     private final Provider<AskStroomAIService> askStroomAIServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<UserPreferencesService> userPreferencesServiceProvider;
+    private final Provider<UserActionService> userActionServiceProvider;
 
     @Inject
     AskStroomAiResourceImpl(final Provider<AskStroomAIService> askStroomAIServiceProvider,
                             final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
-                            final Provider<UserPreferencesService> userPreferencesServiceProvider) {
+                            final Provider<UserPreferencesService> userPreferencesServiceProvider,
+                            final Provider<UserActionService> userActionServiceProvider) {
+        this.userActionServiceProvider = userActionServiceProvider;
         this.askStroomAIServiceProvider = askStroomAIServiceProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.userPreferencesServiceProvider = userPreferencesServiceProvider;
@@ -279,6 +283,13 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     public Boolean setAgentMode(final int chatId, final AiAgentMode mode) {
         askStroomAIServiceProvider.get().setAgentMode(chatId, mode);
         return true;
+    }
+
+    // Logged by UserActionService, as coming from a suggestion in the chat.
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AiUserActionResult doUserAction(final int chatId, final int messageId, final String actionId) {
+        return userActionServiceProvider.get().doUserAction(chatId, messageId, actionId);
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)

@@ -1225,3 +1225,44 @@
 .askStroomAiViewImpl-autoApprove--on svg {
     color: var(--blue-300);
 }
+
+/* Steps an MCP tool's result left to the user, each with a button. */
+.ai-user-action {
+    padding: 8px 0;
+    border-top: 1px solid var(--ai-border-color, rgba(128, 128, 128, 0.25));
+}
+
+.ai-user-action:first-of-type {
+    border-top: none;
+}
+
+.ai-user-action-label {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.ai-user-action-details,
+.ai-user-action-after {
+    font-size: var(--ai-font-size--small);
+    color: var(--control__text-color--disabled);
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.ai-user-action-after {
+    font-style: italic;
+}
+
+.ai-user-action-warning {
+    font-size: var(--ai-font-size--small);
+    color: #e65100;
+    margin-bottom: 4px;
+}
+
+.ai-user-action .ai-approval-button {
+    margin-top: 4px;
+}
+
+.ai-user-action pre {
+    margin: 4px 0;
+}

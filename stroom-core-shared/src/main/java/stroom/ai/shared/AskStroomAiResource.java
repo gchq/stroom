@@ -204,6 +204,16 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     Boolean setAgentMode(@PathParam("chatId") int chatId, @PathParam("mode") AiAgentMode mode);
 
     @POST
+    @Path("/userAction/{chatId}/{messageId}/{actionId}")
+    @Operation(
+            summary = "Do what a button that an MCP tool's result offered does, e.g. enable a processor filter, after "
+                      + "checking it can still be done",
+            operationId = "doAiUserAction")
+    AiUserActionResult doUserAction(@PathParam("chatId") int chatId,
+                                    @PathParam("messageId") int messageId,
+                                    @PathParam("actionId") String actionId);
+
+    @POST
     @Path("/resetAllUsersConfig")
     @Operation(
             summary = "Reset every user's Ask Stroom AI settings (model, prompts, dock position and so on) to the " +

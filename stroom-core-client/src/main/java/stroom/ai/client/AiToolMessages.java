@@ -42,7 +42,7 @@ final class AiToolMessages {
      */
     static String getString(final String json, final String name) {
         final JSONValue value = getValue(json, name);
-        if (value == null) {
+        if (value == null || value.isNull() != null) {
             return null;
         }
         final JSONString string = value.isString();
@@ -62,6 +62,18 @@ final class AiToolMessages {
                 ? value.isBoolean()
                 : null;
         return bool != null && bool.booleanValue();
+    }
+
+    /**
+     * @param json A JSON object.
+     * @param name The name of one of its members.
+     * @return The member, if it is an array, or null.
+     */
+    static JSONArray getArray(final String json, final String name) {
+        final JSONValue value = getValue(json, name);
+        return value != null
+                ? value.isArray()
+                : null;
     }
 
     private static JSONValue getValue(final String json, final String name) {
@@ -262,7 +274,7 @@ final class AiToolMessages {
                 : oneLine;
     }
 
-    private static long parseLong(final String text) {
+    static long parseLong(final String text) {
         try {
             return (long) Double.parseDouble(text);
         } catch (final RuntimeException e) {
@@ -426,13 +438,6 @@ final class AiToolMessages {
      */
     static boolean allowsServerReadOnly(final String json) {
         return getBoolean(json, "allowServerReadOnly");
-    }
-
-    private static JSONArray getArray(final String json, final String name) {
-        final JSONValue value = getValue(json, name);
-        return value != null
-                ? value.isArray()
-                : null;
     }
 
     private static String text(final JSONObject object, final String name) {
