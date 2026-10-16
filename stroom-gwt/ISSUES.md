@@ -706,6 +706,32 @@ and the old panels, their CSS, their stories and the comparison stories are dele
 stories in `Widgets/Layout/SplitPane` now drag split panes alone, checking each follows the mouse to
 the pixel.
 
+### Dashboard splitters out of reach of the keyboard
+
+**Fixed.** A dashboard's splitters (`FlexLayout`'s `Splitter`) couldn't be reached or moved from
+the keyboard (WCAG 2.1.1) and had no role or name. The panels and splitters were added to the page
+in a hash map's order, which happened to put the panels in layout order and every splitter after
+them. They are now focusable separators (`role="separator"`, the
+WAI-ARIA window splitter pattern), added in layout order (each after the last panel before it, the
+dashboard's own width and height splitters last), named for the panels either side ("Resize Query
+and Table") with their position as a value ("40% of the width"); the arrow keys along a splitter
+move it 10px (50px with Shift), and Home and End to its limits. See "Dashboard splitters" in
+`COMPONENT_MODEL_DESIGN.md`.
+
+Also: maximising or restoring a panel from its menu rebuilt the layout and lost the focus (the
+closing menu gave it back to the removed tab), so a keyboard user started again from the top of the
+page (WCAG 2.4.3). `FocusMemory` puts it back on the panel's tab, or the splitter it was on; a single
+deferred restore ran before the menu had closed, so it retries while the focus is in a popup. The
+splitter, glass and marker CSS moved from `dashboard.css` to `flex-layout.css` under BEM names, and
+the layout's sizing to `LayoutSizes` (`TestLayoutSizes`).
+
+Checked by stories `App/Editors/DashboardEditor`: `TabOrder*` (side by side, stacked, nested,
+deeply nested, tabbed, after docking), `SplitterKeyboardResize`, `SplitterKeyboardResizeStacked`,
+`FocusKeptWhenMaximised` (which fails without `FocusMemory`), `SplitterFocused`, `SplitterDragging`,
+and `SplitterAboveVisualisation` (the splitter stays above a visualisation's frame). Known gaps:
+drags are mouse only; Tab from inside a visualisation's frame goes to the end of the page; a
+splitter's name isn't refreshed when a tab is renamed while it has the focus.
+
 ### Keyboard trap in the code editor
 
 Tab in an editable code editor inserts an indent, so keyboard users can't leave it (WCAG 2.1.2).
