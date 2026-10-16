@@ -110,7 +110,7 @@ class TestFollowUpSuggester {
         turn(AiMessageType.USER_MESSAGE, "question");
         turn(AiMessageType.AI_RESPONSE, "answer");
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, false);
+                null, null, false, null);
         suggester.suggest(1, model("anything"));
 
         assertThat(requests).isEmpty();

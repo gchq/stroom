@@ -309,7 +309,7 @@ class TestDataPipelineTools {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
                 new AiWorkspaceConfig(null, null, null, null, null, null, StroomDuration.ofMillis(800),
                         null, null, null), null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
         Mockito.when(queryService.search(Mockito.any())).thenReturn(response(new QueryKey("q"), false, null));
         assertThat(run(tool, "{\"query\":\"from x\"}")).startsWith("Error: This took too long");
 
@@ -317,7 +317,7 @@ class TestDataPipelineTools {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
                 new AiWorkspaceConfig(null, null, null, null, null, null, null, 20, null, null),
                         null, null, null, null, null,
-                        null, null);
+                        null, null, null);
         assertThat(run(tool, "{\"query\":\"from x select a, b, c, d\"}"))
                 .isEqualTo("Error: The query may be at most 20 characters.");
         Mockito.clearInvocations(queryService);

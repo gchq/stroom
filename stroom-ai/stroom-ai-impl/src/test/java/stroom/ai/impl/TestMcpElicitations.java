@@ -209,7 +209,7 @@ class TestMcpElicitations {
 
     private McpElicitations elicitations(final StroomDuration timeout, final int maxPerNode) {
         final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null,
-                timeout, maxPerNode, null, null, null);
+                timeout, maxPerNode, null, null, null, null);
         return new McpElicitations(aiDao, runDao, runManager, () -> config);
     }
 

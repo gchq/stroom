@@ -43,6 +43,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     static final StroomDuration DEFAULT_ELICITATION_TIMEOUT = StroomDuration.ofMinutes(10);
     static final int DEFAULT_MAX_ELICITATIONS_PER_NODE = 5;
     static final int DEFAULT_MAX_CHAT_TITLE_WORDS = 12;
+    static final int DEFAULT_MAX_TOOL_ITERATIONS = 100;
 
     private final AiDbConfig dbConfig;
     private final CacheConfig chatResponseCache;
@@ -61,6 +62,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final boolean askReadOnlyToolsAfterUntrustedContent;
     private final int maxChatTitleWords;
     private final boolean suggestFollowUps;
+    private final int maxToolIterations;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -83,6 +85,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         askReadOnlyToolsAfterUntrustedContent = false;
         maxChatTitleWords = DEFAULT_MAX_CHAT_TITLE_WORDS;
         suggestFollowUps = true;
+        maxToolIterations = DEFAULT_MAX_TOOL_ITERATIONS;
     }
 
     @SuppressWarnings("unused")
@@ -104,7 +107,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("askReadOnlyToolsAfterUntrustedContent")
                     final Boolean askReadOnlyToolsAfterUntrustedContent,
                     @JsonProperty("maxChatTitleWords") final Integer maxChatTitleWords,
-                    @JsonProperty("suggestFollowUps") final Boolean suggestFollowUps) {
+                    @JsonProperty("suggestFollowUps") final Boolean suggestFollowUps,
+                    @JsonProperty("maxToolIterations") final Integer maxToolIterations) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -126,6 +130,16 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.maxChatTitleWords = Math.max(1, Objects.requireNonNullElse(maxChatTitleWords,
                 DEFAULT_MAX_CHAT_TITLE_WORDS));
         this.suggestFollowUps = Objects.requireNonNullElse(suggestFollowUps, true);
+        this.maxToolIterations = Math.max(1, Objects.requireNonNullElse(maxToolIterations,
+                DEFAULT_MAX_TOOL_ITERATIONS));
+    }
+
+    @JsonPropertyDescription("The most calls to the model the agent may make for one question while it uses "
+                             + "tools. On the last it is offered no tools, so it sums up what it has done; the user "
+                             + "can reply 'continue' for it to carry on. Stops a model looping for ever.")
+    @JsonProperty("maxToolIterations")
+    public int getMaxToolIterations() {
+        return maxToolIterations;
     }
 
     @JsonPropertyDescription("If true, after each answer the chat's model is asked for up to three things the user "
@@ -277,6 +291,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", askReadOnlyToolsAfterUntrustedContent=" + askReadOnlyToolsAfterUntrustedContent +
                ", maxChatTitleWords=" + maxChatTitleWords +
                ", suggestFollowUps=" + suggestFollowUps +
+               ", maxToolIterations=" + maxToolIterations +
                '}';
     }
 }
