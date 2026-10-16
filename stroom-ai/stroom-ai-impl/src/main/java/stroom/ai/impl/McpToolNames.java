@@ -57,8 +57,21 @@ final class McpToolNames {
 
     /// @param serverPrefix The server part, from [#serverPrefix(String)].
     /// @param toolName     The tool's name, as given by its server.
+    /// @param usedNames    Names already taken, e.g. by built-in tools or other servers' tools. The returned name
+    ///                     is not one of them.
+    /// @return The name to show the model for the tool: its own name (made safe), or, only if that is taken, the
+    /// name with its server's prefix, e.g. 'start_build', or 'stroom__start_build' if another server has one.
+    static String modelName(final String serverPrefix, final String toolName, final Set<String> usedNames) {
+        final String own = fit(sanitise(toolName), toolName);
+        return own.isEmpty() || usedNames.contains(own)
+                ? prefixedName(serverPrefix, toolName, usedNames)
+                : own;
+    }
+
+    /// @param serverPrefix The server part, from [#serverPrefix(String)].
+    /// @param toolName     The tool's name, as given by its server.
     /// @param usedNames    Names already given out in this toolset. The returned name is not one of them.
-    /// @return The name to show the model for the tool.
+    /// @return The tool's name with its server's prefix.
     static String prefixedName(final String serverPrefix, final String toolName, final Set<String> usedNames) {
         final String candidate = fit(serverPrefix + SEPARATOR + sanitise(toolName), toolName);
         String name = candidate;

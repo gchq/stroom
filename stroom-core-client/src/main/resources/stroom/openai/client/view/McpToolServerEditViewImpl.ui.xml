@@ -22,7 +22,7 @@
                 </form:FormGroup>
                 <form:FormGroup identity="mcpToolServerName"
                                 label="Name"
-                                helpText="A short name for this tool server. It is shown to users, starts the names of its tools as the model sees them (e.g. 'fastmcp__find_feeds'), and appears in error messages.">
+                                helpText="A short name for this tool server. It is shown to users and appears in error messages. If one of its tools has the same name as a built-in tool or another server's tool, the model sees that tool's name prefixed with this one (e.g. 'fastmcp__find_feeds').">
                     <g:TextBox ui:field="name" addStyleNames="w-100"
                                title="A short name for this tool server."/>
                 </form:FormGroup>
