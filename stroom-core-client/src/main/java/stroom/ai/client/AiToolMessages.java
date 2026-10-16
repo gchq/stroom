@@ -287,7 +287,7 @@ final class AiToolMessages {
      */
     static String callMarkdown(final String json) {
         final String arguments = getString(json, "arguments");
-        return "Arguments:\n\n~~~json\n" + (arguments != null
+        return "Arguments:\n\n~~~\n" + prettyArguments(arguments != null
                 ? arguments
                 : "{}") + "\n~~~";
     }
@@ -415,9 +415,9 @@ final class AiToolMessages {
             if (decision != null) {
                 sb.append(" - *").append(decisionText(decision, text(call, "note"))).append("*");
             }
-            sb.append("\n\n~~~json\n").append(text(call, "arguments") != null
+            sb.append("\n\n~~~\n").append(prettyArguments(text(call, "arguments") != null
                     ? text(call, "arguments")
-                    : "{}").append("\n~~~");
+                    : "{}")).append("\n~~~");
         }
         final String status = getString(json, "status");
         if ("EXPIRED".equals(status)) {
@@ -600,12 +600,82 @@ final class AiToolMessages {
         }
     }
 
-    /**
-     * @return The JSON laid out over several lines, or the text as it is if it is not JSON.
-     */
-    static native String prettyJson(String json) /*-{
+    /// Lays a tool call's arguments out to read: as JSON over several lines, except that a string that is itself
+    /// JSON is laid out as JSON rather than escaped, and text over several lines (e.g. XSLT or a query) is shown as
+    /// an indented block after "|", as in YAML, rather than with "\n"s.
+    ///
+    /// @param json The arguments, as JSON.
+    /// @return The arguments laid out, or the text as it is if it is not JSON.
+    static native String prettyArguments(String json) /*-{
+        var pad = function (depth) {
+            return new Array(depth + 1).join("  ");
+        };
+        // Entries are separated by commas, except after a block of text, where one would read as part of it.
+        var join = function (entries) {
+            var out = "";
+            for (var e = 0; e < entries.length; e++) {
+                if (e > 0) {
+                    out += (entries[e - 1].block ? "\n" : ",\n");
+                }
+                out += entries[e].text;
+            }
+            return out;
+        };
+        var isBlock = function (text) {
+            return text.charAt(0) === "|";
+        };
+        var format = function (value, depth) {
+            if (typeof value === "string") {
+                var trimmed = value.trim();
+                if ((trimmed.charAt(0) === "{" && trimmed.charAt(trimmed.length - 1) === "}")
+                    || (trimmed.charAt(0) === "[" && trimmed.charAt(trimmed.length - 1) === "]")) {
+                    try {
+                        var parsed = JSON.parse(trimmed);
+                        if (parsed !== null && typeof parsed === "object") {
+                            return format(parsed, depth);
+                        }
+                    } catch (e) {
+                        // Not JSON, so shown as text.
+                    }
+                }
+                if (value.indexOf("\n") >= 0) {
+                    var lines = value.replace(/\r\n/g, "\n").split("\n");
+                    var block = "|";
+                    for (var i = 0; i < lines.length; i++) {
+                        block += "\n" + pad(depth + 1) + lines[i];
+                    }
+                    return block;
+                }
+                return JSON.stringify(value);
+            }
+            if (value === null || typeof value !== "object") {
+                return JSON.stringify(value);
+            }
+            if (Array.isArray(value)) {
+                if (value.length === 0) {
+                    return "[]";
+                }
+                var items = [];
+                for (var j = 0; j < value.length; j++) {
+                    var item = format(value[j], depth + 1);
+                    items.push({text: pad(depth + 1) + item, block: isBlock(item)});
+                }
+                return "[\n" + join(items) + "\n" + pad(depth) + "]";
+            }
+            var keys = Object.keys(value);
+            if (keys.length === 0) {
+                return "{}";
+            }
+            var entries = [];
+            for (var k = 0; k < keys.length; k++) {
+                var formatted = format(value[keys[k]], depth + 1);
+                entries.push({text: pad(depth + 1) + JSON.stringify(keys[k]) + ": " + formatted,
+                    block: isBlock(formatted)});
+            }
+            return "{\n" + join(entries) + "\n" + pad(depth) + "}";
+        };
         try {
-            return JSON.stringify(JSON.parse(json), null, 2);
+            return format(JSON.parse(json), 0);
         } catch (e) {
             return json;
         }
