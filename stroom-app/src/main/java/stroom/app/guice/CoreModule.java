@@ -157,7 +157,7 @@ public class CoreModule extends AbstractModule {
         // both stroom and proxy.
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(S3EventNotificationsRunnable.class, builder -> builder
-                        .name("S3 Event Notifications Poll")
+                        .name(S3EventPollManager.JOB_NAME)
                         .description("Polls an AWS SQS for S3 event notifications.")
                         .frequencySchedule("1s") // Essentially to run continuously
                         .enabled(false)

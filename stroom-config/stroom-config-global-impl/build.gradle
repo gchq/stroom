@@ -22,6 +22,7 @@ dependencies {
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-contentstore:stroom-contentstore-impl')
+    implementation project(':stroom-aws:stroom-aws-client')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cluster:stroom-cluster-api')
@@ -87,6 +88,7 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
+    implementation libs.jackson.databind
     implementation libs.jakarta.validation.api
     implementation libs.jooq
     implementation libs.restygwt
