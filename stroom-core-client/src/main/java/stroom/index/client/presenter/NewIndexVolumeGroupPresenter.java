@@ -63,7 +63,7 @@ public class NewIndexVolumeGroupPresenter
         getView().setName(name);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-                .caption("New")
+                .caption("New Index Volume Group")
                 .onShow(e -> getView().focus())
                 .onHideRequest(this)
                 .fire();

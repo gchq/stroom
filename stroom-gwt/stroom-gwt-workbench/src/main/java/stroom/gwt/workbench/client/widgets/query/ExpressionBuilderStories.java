@@ -64,7 +64,9 @@ public final class ExpressionBuilderStories {
 
     private static final String ON_CHANGE = "onChange";
     private static final String FIELD_SOURCE = "fieldSource";
-    private static final List<String> TOOLBAR = List.of("Add Term", "Add Operator", "Copy", "Disable", "Delete");
+    private static final String DUPLICATE = "Duplicate Selected Expression Item";
+    private static final List<String> TOOLBAR = List.of("Add Term", "Add Operator", DUPLICATE,
+            "Disable Selected Expression Item", "Delete Selected Expression Item");
     private static final String POPUP = ".SelectionPopup";
     // The field picker of the selected term (a Stroom SelectionBox), and its parts
     private static final String FIELD_PICKER = ".termEditor-item.field";
@@ -165,7 +167,7 @@ public final class ExpressionBuilderStories {
         // Nothing is selected yet, so the selection's buttons are disabled and the others not
         play.expect(play.getByTitle("Add Term")).not().toHaveAttribute("aria-disabled");
         // Disabled with aria-disabled, not the disabled attribute, so it can still be reached
-        play.expect(play.getByTitle("Copy")).toHaveAttribute("aria-disabled", "true");
+        play.expect(play.getByTitle(DUPLICATE)).toHaveAttribute("aria-disabled", "true");
         play.expect(play.getByTitle("Add Term")).not().toHaveAttribute("disabled");
         // Focusable means focusable
         final Query addTerm = play.getByTitle("Add Term");

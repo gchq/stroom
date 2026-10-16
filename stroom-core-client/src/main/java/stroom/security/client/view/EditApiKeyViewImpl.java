@@ -101,7 +101,7 @@ public class EditApiKeyViewImpl
         prefixTextBox.setEnabled(false);
         expiresOnDateBox.setUtc(userPreferencesManager.isUtc());
         // When the copy btn is clicked show a label to give feedback to user, but then remove it after a time
-        apiKeyButtonPanel.button(SvgImage.COPY, "Copy API Key to clipboard", () -> {
+        apiKeyButtonPanel.button(SvgImage.COPY, "Copy API Key to Clipboard", () -> {
             ClipboardUtil.copy(apiKeyTextArea.getText());
             copyToClipboardLabel.setText("API Key copied to clipboard");
             final Timer timer = new Timer() {

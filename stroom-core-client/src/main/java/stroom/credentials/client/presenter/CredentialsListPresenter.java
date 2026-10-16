@@ -150,10 +150,12 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         this.gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
 
         this.getView().getToolbar().setName("Credential actions");
-        btnAdd = this.getView().getToolbar().button(SvgImage.ADD, "Add", this::handleAddButtonClick);
-        btnDelete = this.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::handleDeleteButtonClick);
+        btnAdd = this.getView().getToolbar().button(SvgImage.ADD, "New Credential", this::handleAddButtonClick);
+        btnDelete = this.getView().getToolbar().button(SvgImage.DELETE, "Delete Selected Credential",
+                this::handleDeleteButtonClick);
         btnDelete.setEnabled(false);
-        btnEdit = this.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::handleEditButtonClick);
+        btnEdit = this.getView().getToolbar().button(SvgImage.EDIT, "Edit Selected Credential",
+                this::handleEditButtonClick);
         btnEdit.setEnabled(false);
 
         this.initColumns(dataGrid);

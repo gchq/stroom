@@ -208,7 +208,7 @@ async function freshTree() {
   await closeDialogs(page);
   await dismissMenus(page).catch(() => {});
   await settleExplorer(page, { label: 'reload' }).catch(() => {});
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand' }).catch(() => {});
 }
 
@@ -330,7 +330,7 @@ for (const it of INTERACTIONS) {
     await ipage.goto(URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
     await gwt.signInFully(ipage, credentials());
     await settleExplorer(ipage, { label: 'reload' }).catch(() => {});
-    await ipage.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+    await ipage.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
     await settleExplorer(ipage, { label: 'expand' }).catch(() => {});
     await gwt.openDocByName(ipage, it.label, it.type);
     await ipage.waitForTimeout(5000);

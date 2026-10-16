@@ -52,6 +52,8 @@ public final class AnnotationEditorStories {
     private static final String CHANGE_PATH = "/annotation/v1/change";
     // FindAnnotationPresenter's warning for OK with no annotation selected
     private static final String NOTHING_SELECTED = "No annotation has been selected";
+    // The comment entry's actions button, and the menu it opens
+    private static final String COMMENT_ACTIONS = "Actions for history entry 'Comment' by Alice";
 
     private static final String ENTRIES = "["
             + AnnotationFixtures.entry(1, "STATUS", "Alice", 1700000000000L, "Open", null)
@@ -187,8 +189,9 @@ public final class AnnotationEditorStories {
                     final Play screen = play.screen();
                     play.findByText("Looking into it.");
                     play.fireEvent().mouseDown(play.querySelectorAll(".annotationHistoryCommentHeader").nth(0));
-                    play.click(screen.findByText("Edit Entry"));
-                    final Play dialog = screen.within(screen.findByText("Edit Comment").closest(StroomDom.DIALOG));
+                    play.click(screen.findByText("Edit Comment", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("Edit Comment", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
                     final Query text = dialog.getByRole("textbox");
                     play.clear(text);
                     play.type(text, "Updated comment");
@@ -205,8 +208,9 @@ public final class AnnotationEditorStories {
                     play.findByText("Looking into it.");
                     // Pressing an entry's header (here the comment's) shows its menu
                     play.fireEvent().mouseDown(play.querySelectorAll(".annotationHistoryCommentHeader").nth(0));
-                    play.click(screen.findByText("Edit Entry"));
-                    final Play dialog = screen.within(screen.findByText("Edit Comment").closest(StroomDom.DIALOG));
+                    play.click(screen.findByText("Edit Comment", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("Edit Comment", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
                     final Query text = dialog.getByRole("textbox");
                     play.clear(text);
                     play.type(text, "Updated comment");
@@ -223,6 +227,40 @@ public final class AnnotationEditorStories {
                             .getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/annotation/v1/deleteAnnotationEntry").toSpyMatcher()));
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // An entry's menu also opens from the keyboard: each entry's actions icon is a button,
+                // named for the entry, that opens the menu with Enter or Space, or Shift+F10 or the
+                // context menu key, and the menu takes the focus. It could only be opened with the
+                // mouse
+                .story("EntryActionsByKeyboard", context -> render(context, fixtures(ENTRIES).build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Looking into it.");
+                    final Query comment = play.getByRole("button", COMMENT_ACTIONS);
+                    play.expect(comment).toHaveAttribute("tabindex", "0");
+                    play.expect(comment).toHaveAttribute("aria-haspopup", "menu");
+                    play.run("focus the comment's actions button", () -> comment.element().get().focus());
+                    play.keyboard("{Enter}");
+                    screen.findByRole("menu", COMMENT_ACTIONS);
+                    play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Edit Comment")).toHaveFocus());
+                    play.expect(comment).toHaveAttribute("aria-expanded", "true");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
+                    play.expect(comment).toHaveAttribute("aria-expanded", "false");
+                    // The status entry's menu, with Shift+F10 and then the context menu key
+                    final Query status = play.getByRole("button", "Actions for history entry 'Status' by Alice");
+                    play.run("focus the status entry's actions button", () -> status.element().get().focus());
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    screen.findByRole("menu", "Actions for history entry 'Status' by Alice");
+                    play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Delete Entry")).toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
+                    play.run("focus the status entry's actions button", () -> status.element().get().focus());
+                    play.keyboard("{ContextMenu}");
+                    screen.findByRole("menu", "Actions for history entry 'Status' by Alice");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // Consecutive entries of one group collapse into a header that expands on click

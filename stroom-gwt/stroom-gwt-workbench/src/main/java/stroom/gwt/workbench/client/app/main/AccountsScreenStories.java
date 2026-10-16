@@ -94,10 +94,10 @@ public final class AccountsScreenStories {
                 .story("UserIdCommandLink", AccountsScreenStories::render)
                 .withPlay(play -> {
                     play.findByText("admin");
-                    // Only the open icon fires the command; clicking the text selects the row
+                    // Only the open button fires the command; clicking the text selects the row.
+                    // The button is named for what it opens
                     final Play row = play.within(play.getByText("admin").closest("tr"));
-                    final Query open = row.querySelector(StroomDom.COMMAND_LINK_OPEN);
-                    play.expect(open.closest("[title]")).toHaveAttribute("title",
+                    final Query open = row.getByRole("button",
                             "Open account 'admin' on the Users and Groups screen.");
                     play.click(open);
                     play.waitFor(() -> play.expect(play.spy(OPEN_SCREEN))
@@ -112,8 +112,9 @@ public final class AccountsScreenStories {
                     play.findByText("admin");
                     final Play row = play.within(play.getByText("admin").closest("tr"));
                     // Stroom's grid always has somewhere to open the user (the
-                    // Users and Groups screen), so the User Id cell always has its open icon
-                    play.expect(row.querySelector(StroomDom.COMMAND_LINK_OPEN)).toBeInTheDocument();
+                    // Users and Groups screen), so the User Id cell always has its open button
+                    play.expect(row.getByRole("button", "Open account 'admin' on the Users and Groups screen."))
+                            .toBeInTheDocument();
                     expectNoProblems(play);
                 })
                 // The account states have a column each; editing sends only the changed values

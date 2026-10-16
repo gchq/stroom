@@ -176,7 +176,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         // Help
         dataGrid.addColumn(
                 DataGridUtil.cellIconColumnBuilder(true, (JobWrapper job) ->
-                                CellIcon.of(SvgImage.HELP, "Help"))
+                                CellIcon.of(SvgImage.HELP, "Help (opens in new tab)"))
                         .enabledWhen(job ->
                                 NullSafe.getOrElse(job, JobWrapper::getJob, Job::isEnabled, false))
                         .withBrowserEventHandler((context, elem, row, event) -> {

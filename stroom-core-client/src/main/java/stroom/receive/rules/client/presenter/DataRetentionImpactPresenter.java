@@ -69,11 +69,11 @@ public class DataRetentionImpactPresenter
     private static final NumberFormat COMMA_INTEGER_FORMAT = NumberFormat.getFormat("#,##0");
 
     private static final String BTN_TITLE_RUN_QUERY = "Run Query";
-    private static final String BTN_TITLE_STOP_QUERY = "Abort Query";
+    private static final String BTN_TITLE_STOP_QUERY = "Stop Query";
     private static final String BTN_TITLE_SET_FILTER = "Set Query Filter";
-    private static final String BTN_TITLE_NESTED_TABLE = "View Nested Results";
-    private static final String BTN_TITLE_EXPAND_ALL = "Expand all";
-    private static final String BTN_TITLE_COLLAPSE_ALL = "Collapse all";
+    private static final String BTN_TITLE_NESTED_TABLE = "Nested Results";
+    private static final String BTN_TITLE_EXPAND_ALL = "Expand All Results";
+    private static final String BTN_TITLE_COLLAPSE_ALL = "Collapse All Results";
 
     private static final List<QueryField> FILTERABLE_FIELDS = new ArrayList<>();
 

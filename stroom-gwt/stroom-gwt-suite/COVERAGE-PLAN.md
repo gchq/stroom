@@ -486,8 +486,9 @@ was reached too but needed the miner; it is one of the two below, and the withdr
   `private void showSummary(…, final String caption, …) { selectionSummaryPresenterProvider.get()
   .show(…, caption, …) }`. When a show-site argument is a bare parameter of the enclosing method
   NAMED `caption`/`title`, every same-file call contributes what it passes there. Six captions for
-  `SelectionSummaryPresenter`, and `Add Volume` / `Edit Volume` for the two volume editors, whose
-  edges had been captionless.
+  `SelectionSummaryPresenter`, and `New Data Volume` / `Edit Data Volume` and `New Index Volume` /
+  `Edit Index Volume` (once `Add Volume` / `Edit Volume`) for the two volume editors, whose edges
+  had been captionless.
 
 **What the pass could not do, and why — the next worklist:**
 

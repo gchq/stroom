@@ -91,7 +91,7 @@ public class ExportConfigPresenter
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
 
-        filter = getView().getToolbar().toggle(SvgImage.FILTER, "Filter Types", null);
+        filter = getView().getToolbar().toggle(SvgImage.FILTER, "Filter Document Types", null);
         filter.setPressed(hasActiveFilter);
 
         view.setTreeView(treePresenter.getView());

@@ -22,11 +22,18 @@ import stroom.alert.client.event.PromptEvent;
 import stroom.alert.client.presenter.PromptPresenter;
 import stroom.alert.client.view.PromptViewImpl;
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
@@ -55,6 +62,42 @@ public final class AlertDialogStories {
                 .layout(StoryLayout.CENTERED)
                 // Info / Warning / Error alerts (Close button only)
                 .story("Alerts_", "Alerts (info / warn / error)", AlertDialogStories::alertsStory)
+                // An alert's detail is shown and hidden by a 'Show Detail' button (it was a link
+                // that added a browser history entry), which says whether the detail is shown
+                // (aria-expanded) and which area it shows (aria-controls). A stack trace starts
+                // hidden
+                .story("ShowDetail", AlertDialogStories::alertsStory)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Value<Integer> historyBefore = play.capture("history length",
+                            AlertDialogStories::historyLength);
+                    play.click(play.getByRole("button", "Error + detail"));
+                    final Play dialog = screen.within(screen.findByText("Save failed").closest(StroomDom.DIALOG));
+                    final Query showDetail = dialog.getByRole("button", "Show Detail");
+                    final Query detail = dialog.getByText(TextMatch.containing("RuntimeException: boom"));
+                    play.expect(showDetail).toHaveAttribute("aria-expanded", "false");
+                    play.expect(detail).not().toBeVisible();
+                    play.expect("the area it controls holds the detail", () -> {
+                        final Element controlled = Document.get().getElementById(
+                                showDetail.element().get().getAttribute("aria-controls"));
+                        return controlled != null && controlled.isOrHasChild(detail.element().get());
+                    }).toBe(true);
+                    // From the keyboard: Enter shows the detail, Space hides it; the name stays
+                    play.tab(true);
+                    play.expect(showDetail).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(showDetail).toHaveAttribute("aria-expanded", "true"));
+                    play.expect(detail).toBeVisible();
+                    play.expect(dialog.getByRole("button", "Show Detail")).toHaveFocus();
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(showDetail).toHaveAttribute("aria-expanded", "false"));
+                    play.expect(detail).not().toBeVisible();
+                    // A click toggles it too, and none of it adds a browser history entry
+                    play.click(showDetail);
+                    play.waitFor(() -> play.expect(detail).toBeVisible());
+                    play.expect("the history length", () -> historyLength() - historyBefore.get()).toBe(0);
+                    play.click(dialog.getByRole("button", StroomDom.button("Close")));
+                })
                 // Confirmation dialogs — OK / Cancel, callback receives the boolean result
                 .story("Confirm", AlertDialogStories::confirm)
                 // Queued alerts — trigger several at once; they show sequentially
@@ -122,6 +165,10 @@ public final class AlertDialogStories {
                         : "Got: " + value)));
         return StoryPanels.column(12, button, result);
     }
+
+    private static native int historyLength() /*-{
+        return $wnd.history.length;
+    }-*/;
 
     private static HasHandlers alertHandlers(final StoryContext context) {
         return DialogWidgets.handlers(StoryPopups.create(context).withAlerts().getEventBus());

@@ -292,11 +292,11 @@ export function feedbackShown(after) {
 // ── Which dialogs the Filter check applies to ───────────────────────────────
 /**
  * `Filter › OK must not grow the rows` is a real rule, but only for a dialog that FILTERS. The
- * walker matched any opener containing the word — and `Add XPath Filter`, inside `Manage Step
- * Filters`, adds a row by design, so filtering was accused of growing the grid 100 → 101.
+ * walker matched any opener containing the word — and `New XPath Filter` (once `Add XPath Filter`),
+ * inside `Manage Step Filters`, adds a row by design, so filtering was accused of growing the grid 100 → 101.
  *
  * An opener that begins with Add / New / Create is an ADD whatever else its name says; `Manage …`
- * opens a manager, not a filter. What is left — `Filter`, `Filter Documents …`, `Quick Filter` —
+ * opens a manager, not a filter. What is left — `Filter Streams`, `Filter Documents …`, `Quick Filter` —
  * is the rule's subject.
  */
 export function isFilterAction(label) {
@@ -307,15 +307,22 @@ export function isFilterAction(label) {
 
 // ── Which pairs the toggle round-trip applies to ────────────────────────────
 /**
- * `Expand All` / `Collapse All` are each other's counterpart for POPPING — clicking one after the
- * other puts the tree back into a sane state — but they are not INVERSES. Both are absolute:
- * `Collapse All` collapses everything, including the folders that were open before `Expand All`
- * ran, so the pair restores the previous state only if the tree began fully collapsed. The walker
+ * `Expand All Folders` / `Collapse All Folders` are each other's counterpart for POPPING — clicking
+ * one after the other puts the tree back into a sane state — but they are not INVERSES. Both are
+ * absolute: `Collapse All Folders` collapses everything, including the folders that were open before
+ * `Expand All Folders` ran, so the pair restores the previous state only if the tree began fully collapsed. The walker
  * calls `expandExplorer()` for its document steps, so it never does, and the toggle checker
  * reported five failures against a control doing exactly what its name says.
  *
  * A genuine toggle is one whose second application undoes the first: a self-inverse
- * (`Ask Stroom AI`), or an explicit On/Off pair.
+ * (`Ask Stroom AI`, `Auto Refresh`), or an explicit On/Off pair. The task and data retention trees'
+ * Expand All / Collapse All are absolute in the same way.
  */
-export const ABSOLUTE_PAIRS = new Set(['Expand All', 'Collapse All']);
+export const ABSOLUTE_PAIRS = new Set([
+  // The explorer's, as runs before #5406 recorded them
+  'Expand All', 'Collapse All',
+  'Expand All Folders', 'Collapse All Folders',
+  'Expand All Tasks', 'Collapse All Tasks',
+  'Expand All Results', 'Collapse All Results',
+]);
 export const togglesRoundTrip = (label) => !ABSOLUTE_PAIRS.has(String(label ?? '').trim());

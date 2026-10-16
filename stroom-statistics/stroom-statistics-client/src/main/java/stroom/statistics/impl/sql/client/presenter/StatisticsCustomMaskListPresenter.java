@@ -63,10 +63,12 @@ public class StatisticsCustomMaskListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-        newButton = view.getToolbar().button(SvgImage.ADD, "New", this::onAdd);
-        autoGenerateButton = view.getToolbar().button(SvgImage.GENERATE, "Auto-generate roll-up permutations",
+        view.getToolbar().setName("Roll-up actions");
+        newButton = view.getToolbar().button(SvgImage.ADD, "New Roll-up Permutation", this::onAdd);
+        autoGenerateButton = view.getToolbar().button(SvgImage.GENERATE, "Auto-generate Roll-up Permutations",
                 this::onAutoGenerate);
-        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove Selected Roll-up Permutation",
+                this::onRemove);
         removeButton.setEnabled(false);
     }
 
@@ -87,15 +89,12 @@ public class StatisticsCustomMaskListPresenter
         final Mask selectedElement = selectionModel.getSelected();
         removeButton.setEnabled(!isReadOnly() && selectedElement != null);
 
-        if (isReadOnly()) {
-            newButton.setTitle("New roll-up permutation disabled as read only");
-            autoGenerateButton.setTitle("Auto-generate roll-up permutations disabled as read only");
-            removeButton.setTitle("Remove roll-up permutation disabled as read only");
-        } else {
-            newButton.setTitle("New roll-up permutation");
-            autoGenerateButton.setTitle("Auto-generate roll-up permutations");
-            removeButton.setTitle("Remove roll-up permutation");
-        }
+        final String reason = isReadOnly()
+                ? " (read only)"
+                : "";
+        newButton.setTitle("New Roll-up Permutation" + reason);
+        autoGenerateButton.setTitle("Auto-generate Roll-up Permutations" + reason);
+        removeButton.setTitle("Remove Selected Roll-up Permutation" + reason);
     }
 
     private void addColumns() {

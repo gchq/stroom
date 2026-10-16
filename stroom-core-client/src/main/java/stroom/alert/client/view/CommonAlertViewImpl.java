@@ -18,18 +18,18 @@ package stroom.alert.client.view;
 
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.popup.client.view.PopupUtil;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -40,11 +40,15 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
     private static final int MAX_MESSAGE_LENGTH = 1000;
     // Regex is testing html, hence the <br>
     private static RegExp STACK_TRACE_PATTERN = RegExp.compile("<br>(\\sat |Caused by: )");
+    // The button's text and name, whether the detail is shown or not: whether it is shown is the
+    // button's expanded state, which screen readers announce and its arrow shows
+    private static final SafeHtml SHOW_DETAIL_HTML = SafeHtmlUtils.fromSafeConstant(
+            "<span class=\"alert-showHide-arrow\" aria-hidden=\"true\"></span>Show Detail");
 
     private final FlowPanel layout = new FlowPanel();
     private final SimplePanel image = new SimplePanel();
     private final HTML message = new HTML();
-    private final Hyperlink showHideDetail = new Hyperlink();
+    private final LinkButton showHideDetail = new LinkButton();
     private final SimplePanel detail = new SimplePanel();
     private boolean detailVisible = false;
 
@@ -59,7 +63,12 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
         image.setStyleName("alert-icon");
         message.setStyleName("alert-message");
         showHideDetail.addStyleName("alert-showHide");
+        showHideDetail.setHTML(SHOW_DETAIL_HTML);
         detail.setStyleName("alert-detail");
+        // The button shows and hides the detail
+        final String detailId = DOM.createUniqueId();
+        detail.getElement().setId(detailId);
+        showHideDetail.getElement().setAttribute("aria-controls", detailId);
 
         layout.setStyleName("alert-layout");
         layout.add(image);
@@ -76,11 +85,8 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
             }
         });
 
-        showHideDetail.addHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                showDetail(!detailVisible);
-            }
-        }, ClickEvent.getType());
+        // A button, so this is a click, Enter or Space
+        showHideDetail.addClickHandler(event -> showDetail(!detailVisible));
     }
 
     // The message, or the detail if the message was too long to show and so is in the detail instead
@@ -155,12 +161,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
     private void showDetail(final boolean show) {
         this.detailVisible = show;
         showHideDetail.setVisible(true);
-        if (show) {
-            showHideDetail.setText("Hide Detail");
-            setDetailVisible(true);
-        } else {
-            showHideDetail.setText("Show Detail");
-            setDetailVisible(false);
-        }
+        showHideDetail.getElement().setAttribute("aria-expanded", String.valueOf(show));
+        setDetailVisible(show);
     }
 }

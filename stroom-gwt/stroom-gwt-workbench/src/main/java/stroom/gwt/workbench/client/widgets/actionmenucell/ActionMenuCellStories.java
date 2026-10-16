@@ -56,22 +56,24 @@ public final class ActionMenuCellStories {
                 .layout(StoryLayout.CENTERED)
                 // No arg types: the items are functions, the title is ActionMenuCell's tooltip
                 // extractor (left as Stroom's default, "Actions...") and the cell has no enabled state
-                // The "Actions..." ellipsis opens the row menu on a left-click
+                // The "Actions..." ellipsis opens the row menu on a left-click. Given no name, the
+                // menu is named for its row
                 .story("Actions", context -> {
                     final Spy clicked = context.fn(CLICKED);
                     final List<Item> items = new ArrayList<>();
-                    items.add(menuItem(1, "Add new rule above", SvgImage.ADD_ABOVE, () -> clicked.call("add")));
-                    items.add(menuItem(2, "Copy Rule", SvgImage.COPY, () -> clicked.call("copy")));
+                    items.add(menuItem(1, "Add Rule Above", SvgImage.ADD_ABOVE, () -> clicked.call("add")));
+                    items.add(menuItem(2, "Duplicate Rule", SvgImage.COPY, () -> clicked.call("copy")));
                     items.add(menuItem(3, "Delete Rule", SvgImage.DELETE, () -> clicked.call("delete")));
                     return actionMenuCell(context, items);
                 })
                 .withPlay(play -> {
                     final Play body = play.screen();
                     play.click(play.getByTitle("Actions..."));
-                    play.waitFor(() -> play.expect(body.getByText("Copy Rule")).toBeVisible());
-                    play.expect(body.getByText("Add new rule above")).toBeVisible();
+                    play.waitFor(() -> play.expect(body.getByText("Duplicate Rule")).toBeVisible());
+                    play.expect(body.getByRole("menu", "Actions for row 1")).toBeInTheDocument();
+                    play.expect(body.getByText("Add Rule Above")).toBeVisible();
 
-                    play.click(body.getByText("Copy Rule"));
+                    play.click(body.getByText("Duplicate Rule"));
                     play.waitFor(() -> play.expect(play.spy(CLICKED)).toHaveBeenCalledTimes(1));
                     play.expect(play.spy(CLICKED)).toHaveBeenCalledWith("copy");
                 })

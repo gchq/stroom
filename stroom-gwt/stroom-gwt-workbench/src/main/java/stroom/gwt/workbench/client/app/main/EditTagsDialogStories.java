@@ -121,7 +121,7 @@ public final class EditTagsDialogStories {
                     // The known tags are a list box, whose selected tags are added with the arrow
                     // button
                     play.selectOptions(screen.getByTitle("All tags currently in use across all documents"), "x");
-                    play.click(screen.getByTitle("Add selected tags from 'All Known Tags'"));
+                    play.click(screen.getByTitle("Add Selected Tags from All Known Tags"));
                     play.click(okButton(screen));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(ADD_TAGS_PATH)

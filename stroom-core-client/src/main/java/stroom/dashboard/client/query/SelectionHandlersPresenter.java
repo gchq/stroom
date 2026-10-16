@@ -107,18 +107,24 @@ public class SelectionHandlersPresenter
 //        expressionPresenter.setSelectionModel(null);
 
         listPresenter.getToolbar().setName("Selection handler actions");
-        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "Add", this::add);
-        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit", this::onEdit);
+        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "New Selection Handler", this::add);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Selection Handler",
+                this::onEdit);
         editButton.setEnabled(false);
-        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Copy", this::onCopy);
+        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Duplicate Selected Selection Handler",
+                this::onCopy);
         copyButton.setEnabled(false);
-        disableButton = listPresenter.getToolbar().button(SvgImage.DISABLE, "Disable", this::onDisable);
+        disableButton = listPresenter.getToolbar().button(SvgImage.DISABLE, "Disable Selected Selection Handler",
+                this::onDisable);
         disableButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete", this::confirmDelete);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Selection Handler",
+                this::confirmDelete);
         deleteButton.setEnabled(false);
-        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Up", this::onMoveUp);
+        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move Selection Handler Up",
+                this::onMoveUp);
         moveUpButton.setEnabled(false);
-        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Down", this::onMoveDown);
+        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Selection Handler Down",
+                this::onMoveDown);
         moveDownButton.setEnabled(false);
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
@@ -423,9 +429,9 @@ public class SelectionHandlersPresenter
         }
 
         if (selection != null && selection.isEnabled()) {
-            disableButton.setTitle("Disable");
+            disableButton.setTitle("Disable Selected Selection Handler");
         } else {
-            disableButton.setTitle("Enable");
+            disableButton.setTitle("Enable Selected Selection Handler");
         }
 
         addButton.setEnabled(loadedPolicy);

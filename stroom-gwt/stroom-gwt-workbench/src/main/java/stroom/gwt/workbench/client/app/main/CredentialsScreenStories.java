@@ -137,11 +137,11 @@ public final class CredentialsScreenStories {
                 });
     }
 
-    /// Opens the 'New Credentials' dialog with the list's Add button.
+    /// Opens the 'New Credentials' dialog with the list's New Credential button.
     ///
     /// @return The dialog.
     private static Play openNewCredentials(final Play play) {
-        play.click(play.getByTitle("Add"));
+        play.click(play.getByTitle("New Credential"));
         // Stroom's dialogs have no role="dialog"
         final Play screen = play.screen();
         return screen.within(screen.findByText("New Credentials").closest(StroomDom.DIALOG));

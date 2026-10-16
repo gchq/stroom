@@ -88,10 +88,10 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         dataProvider.setCompleteList(list);
 
         view.getToolbar().setName("Notification actions");
-        addButton = view.getToolbar().button(SvgImage.ADD, "Add", this::add);
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        addButton = view.getToolbar().button(SvgImage.ADD, "New Notification", this::add);
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit Selected Notification", this::edit);
         editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.DELETE, "Delete", this::remove);
+        removeButton = view.getToolbar().button(SvgImage.DELETE, "Remove Selected Notification", this::remove);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -314,9 +314,6 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         addButton.setEnabled(editable);
         editButton.setEnabled(editable && hasSelection);
         removeButton.setEnabled(editable && hasSelection);
-        addButton.setTitle("Add Notification");
-        editButton.setTitle("Edit Notification");
-        removeButton.setTitle("Remove Notification");
     }
 
     /**

@@ -69,12 +69,12 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
         view.setList(listPresenter.getView());
 
         listPresenter.getToolbar().setName("Signing key actions");
-        revokeButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Revoke the selected signing key",
+        revokeButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Revoke Selected Signing Key",
                 this::revokeSelected);
         revokeButton.setEnabled(false);
         // Always enabled: it acts on every key rather than the selected one, so setButtonStates() —
         // which is driven by the selection — has nothing to say about it.
-        revokeAllButton = listPresenter.getToolbar().button(SvgImage.CLEAR, "Revoke every signing key still in use",
+        revokeAllButton = listPresenter.getToolbar().button(SvgImage.CLEAR, "Revoke All Signing Keys Still in Use",
                 this::revokeAll);
     }
 

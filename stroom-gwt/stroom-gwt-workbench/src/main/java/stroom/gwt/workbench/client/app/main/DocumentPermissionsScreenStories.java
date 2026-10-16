@@ -101,7 +101,7 @@ public final class DocumentPermissionsScreenStories {
                 .story("FilterDialog", DocumentPermissionsScreenStories::render)
                 .withPlay(play -> {
                     play.findByText("Alpha Dictionary");
-                    play.click(play.getByTitle("Filter Documents To Apply Permissions Changes On"));
+                    play.click(play.getByTitle("Filter Documents to Apply Permission Changes To"));
                     play.screen().findByText("Filter Documents");
                     SecurityPlays.expectNoProblems(play);
                 });

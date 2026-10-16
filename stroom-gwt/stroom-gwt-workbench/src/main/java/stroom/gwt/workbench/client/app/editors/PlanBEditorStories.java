@@ -175,7 +175,7 @@ public final class PlanBEditorStories {
                 .story("ReadOnly", context -> render(context, "planb-STATE", true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveAttribute("readonly"));
-                    play.expect(play.getByRole("button", "Save is not available as this document is read only"))
+                    play.expect(play.getByRole("button", "Save (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })

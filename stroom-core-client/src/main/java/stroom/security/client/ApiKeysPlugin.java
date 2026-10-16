@@ -39,7 +39,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
 
-    public static final String SCREEN_NAME = "Manage API Keys";
+    public static final String SCREEN_NAME = "API Keys";
     public static final SvgImage ICON = SvgImage.KEY;
 
     @Inject

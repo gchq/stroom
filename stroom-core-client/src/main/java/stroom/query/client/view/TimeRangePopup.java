@@ -18,6 +18,7 @@ package stroom.query.client.view;
 
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.GWT;
@@ -27,6 +28,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
@@ -139,16 +141,21 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
         final Label label = new Label(name, false);
         label.addStyleName("timeRange-quickSettingPanel-title");
         panel.add(label);
+        // A group of buttons named by its title
+        final String labelId = DOM.createUniqueId();
+        label.getElement().setId(labelId);
+        panel.getElement().setAttribute("role", "group");
+        panel.getElement().setAttribute("aria-labelledby", labelId);
         return panel;
     }
 
-    private Label createLabel(final TimeRange timeRange) {
-        final Label label = new Label(timeRange.getName(), false);
-        label.addStyleName("timeRange-quickSetting");
-        label.addClickHandler(event -> {
+    private LinkButton createLabel(final TimeRange timeRange) {
+        final LinkButton button = new LinkButton(timeRange.getName());
+        button.addStyleName("timeRange-quickSetting");
+        button.addClickHandler(event -> {
             setValue(timeRange, true);
         });
-        return label;
+        return button;
     }
 
     public Widget asWidget() {

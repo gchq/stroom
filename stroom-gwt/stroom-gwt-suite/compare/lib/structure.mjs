@@ -195,6 +195,9 @@ export async function readButtons(page, scopeSelector) {
       const out = [];
       let order = 0;
       for (const el of els) {
+        // A grid cell's buttons (an 'open' icon, marked data-row-action) are its rows' content,
+        // named for each row's data, not toolbar structure; the grid reader reads the rows
+        if (el.hasAttribute('data-row-action')) continue;
         const label = norm(el.getAttribute('title') || el.getAttribute('aria-label') || el.textContent);
         if (!label) continue;
         const cls = String(el.className || '');
@@ -462,8 +465,8 @@ async function pointOf(page, containerSelector, label) {
  * reveals to settle.
  *
  * Screens and doc-editor tabs gate their real actions on a selection — with nothing selected, API
- * Keys offers only a disabled "Edit API Key", and the Lucene index's Fields tab only a disabled
- * "Edit Field" — so a sweep that never selects captures a toolbar of greyed-out buttons and no
+ * Keys offers only a disabled "Edit Selected API Key", and the Lucene index's Fields tab only a
+ * disabled "Edit Selected Index Field" — so a sweep that never selects captures a toolbar of greyed-out buttons and no
  * dialogs at all. A5b's first run did exactly that: 0 dialogs across 32 screens.
  *
  * Located via the first visible column HEADER on the page — the explorer tree has no column
@@ -681,7 +684,7 @@ async function clickInertPoint(page) {
  * panel, a hover card.
  *
  * This exists because A5c's first full run captured zero dialogs from `New Field` and `Edit Field`
- * on GWT, having captured both a run earlier. Nothing had regressed: the sweep clicks the tab's
+ * (now `New Index Field` and `Edit Selected Index Field`) on GWT, having captured both a run earlier. Nothing had regressed: the sweep clicks the tab's
  * quick-filter help immediately before them, and GWT's help tooltip (`.quickFilter-tooltip >
  * .popupContent`) takes neither Escape nor `closeDialogs` nor `dismissMenus` — the last only acts
  * when a `.menuItem-outer` is visible. The tooltip simply stayed up, physically over the next

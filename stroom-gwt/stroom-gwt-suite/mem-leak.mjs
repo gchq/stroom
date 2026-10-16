@@ -62,7 +62,7 @@ const MODE = env('MODE', 'doc');
 const CLASSES = env('CLASSES', '0') === '1';
 let classesBefore = null;
 const MENU_GROUP = env('MENU_GROUP', 'Navigation');
-const MENU_LEAF = env('MENU_LEAF', 'Find');
+const MENU_LEAF = env('MENU_LEAF', 'Find by Name');
 
 const browser = await chromium.launch({ headless: env('HEADLESS', '1') !== '0' });
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
@@ -117,7 +117,7 @@ const show = (r) => {
 };
 
 async function expandExplorer() {
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand', budget: 5_000 }).catch(() => {});
 }
 

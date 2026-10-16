@@ -41,6 +41,14 @@ public abstract class AbstractSelectionEventManager<T>
         final NativeEvent nativeEvent = event.getNativeEvent();
         final String type = nativeEvent.getType();
 
+        if (isKeyEvent(type) && RowActions.isRowActionEvent(nativeEvent)) {
+            // A button or link in a cell has the focus: its keys are its own, not the table's
+            if (BrowserEvents.KEYDOWN.equals(type)) {
+                onRowActionKeyDown(event);
+            }
+            return;
+        }
+
 //        GWT.log("AbstractSelectionEventManager calling cellPreview test");
         final Action action = KeyBinding.test(nativeEvent);
         if (action != null) {
@@ -174,6 +182,20 @@ public abstract class AbstractSelectionEventManager<T>
         }
     }
 
+
+    private static boolean isKeyEvent(final String type) {
+        return BrowserEvents.KEYDOWN.equals(type)
+               || BrowserEvents.KEYPRESS.equals(type)
+               || BrowserEvents.KEYUP.equals(type);
+    }
+
+    /// Called for a key pressed on a row action (see [RowActions]), e.g. Enter on a link in a
+    /// cell, which the table otherwise leaves alone. A cell's buttons act on their own keys in
+    /// their cell; this is for row actions that no cell handles.
+    ///
+    /// @param e The key down event.
+    protected void onRowActionKeyDown(final CellPreviewEvent<T> e) {
+    }
 
     protected void onMoveRight(final CellPreviewEvent<T> e) {
     }

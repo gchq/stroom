@@ -27,6 +27,8 @@ import org.junit.jupiter.api.Test;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestFunctions {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestFunctions.class);
@@ -41,5 +43,22 @@ class TestFunctions {
 
         final String asciiTable = AsciiTable.fromCollection(completionItems);
         LOGGER.info("\n{}", asciiTable);
+    }
+
+    @Test
+    void functionHelpLinksToItsDocumentationInANewTab() {
+        final Functions functions = new Functions(UiConfig::new);
+        final CompletionItem countCompletion = functions.buildFunctionCompletions()
+                .stream()
+                .filter(completionItem -> completionItem.getCaption().startsWith("count ("))
+                .findFirst()
+                .orElseThrow();
+
+        // The link names the function, and says it opens a new tab
+        assertThat(countCompletion.getTooltip())
+                .contains("For more information see the <a href=\"")
+                .contains("\" target=\"_blank\" rel=\"noopener noreferrer\">count documentation"
+                          + "<span class=\"sr-only\"> (opens in new tab)</span></a>.")
+                .doesNotContain("Help Documentation");
     }
 }

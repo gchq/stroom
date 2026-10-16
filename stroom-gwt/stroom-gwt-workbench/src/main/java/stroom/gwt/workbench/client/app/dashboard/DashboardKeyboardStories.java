@@ -306,7 +306,7 @@ public final class DashboardKeyboardStories {
                     play.waitFor(() -> play.expect(currentTab(play, "B")).toHaveFocus());
 
                     openPanelMenu(play, "B");
-                    play.click(DashboardPlays.menuItem(screen, "Restore"));
+                    play.click(DashboardPlays.menuItem(screen, "Restore Pane Layout"));
                     play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.PANEL)).toHaveLength(3));
                     play.waitFor(() -> play.expect(currentTab(play, "B")).toHaveFocus());
                     DashboardPlays.expectNoProblems(play);

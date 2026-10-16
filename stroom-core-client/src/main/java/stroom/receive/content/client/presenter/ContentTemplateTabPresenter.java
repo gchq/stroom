@@ -120,25 +120,25 @@ public class ContentTemplateTabPresenter
         expressionPresenter.setSelectionModel(null);
 
         listPresenter.getToolbar().setName("Content template actions");
-        saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save templates", this::onSave);
+        saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save Templates", this::onSave);
         saveButton.setEnabled(false);
         addAboveButton = listPresenter.getToolbar().button(
                 SvgImage.ADD_ABOVE,
-                "Add new template above the selected one",
+                "Add Template Above",
                 this::onAddAbove);
         addBelowButton = listPresenter.getToolbar().button(
                 SvgImage.ADD_BELOW,
-                "Add new template below the selected one",
+                "Add Template Below",
                 this::onAddBelow);
-        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit template", this::onEdit);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Template", this::onEdit);
         editButton.setEnabled(false);
-        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Copy template", this::onCopy);
+        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Duplicate Selected Template", this::onCopy);
         copyButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete template", this::onDelete);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Template", this::onDelete);
         deleteButton.setEnabled(false);
-        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move template up", this::onMoveUp);
+        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move Template Up", this::onMoveUp);
         moveUpButton.setEnabled(false);
-        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move template down", this::onMoveDown);
+        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Template Down", this::onMoveDown);
         moveDownButton.setEnabled(false);
 
         listPresenter.getView()
@@ -270,31 +270,31 @@ public class ContentTemplateTabPresenter
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.ADD_ABOVE)
-                                .text("Add new template above")
+                                .text("Add Template Above")
                                 .command(() ->
                                         addNewRule(contentTemplate.getTemplateIndex())))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.ADD_BELOW)
-                                .text("Add new template below")
+                                .text("Add Template Below")
                                 .command(() ->
                                         addNewRule(contentTemplate.getTemplateNumber())))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.EDIT)
-                                .text("Edit template")
+                                .text("Edit Template")
                                 .command(() ->
                                         editRule(contentTemplate)))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.COPY)
-                                .text("Copy template")
+                                .text("Duplicate Template")
                                 .command(() ->
                                         copyRule(contentTemplate)))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.DELETE)
-                                .text("Delete template")
+                                .text("Delete Template")
                                 .command(() ->
                                         deleteRule(contentTemplate)))
 //                .withIconMenuItem(itemBuilder ->
@@ -306,14 +306,14 @@ public class ContentTemplateTabPresenter
                 .withIconMenuItemIf(contentTemplate.getTemplateNumber() > 1, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.UP)
-                                .text("Move template Up")
+                                .text("Move Template Up")
                                 .command(() ->
                                         moveRuleUp(contentTemplate)))
                 .withIconMenuItemIf(contentTemplate.getTemplateNumber() < getTemplateCount(),
                         itemBuilder ->
                                 itemBuilder
                                         .icon(SvgImage.DOWN)
-                                        .text("Move template Down")
+                                        .text("Move Template Down")
                                         .command(() ->
                                                 moveRuleDown(contentTemplate)))
                 .build();

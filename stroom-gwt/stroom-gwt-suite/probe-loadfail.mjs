@@ -60,7 +60,7 @@ await page.route((u) => u.pathname.startsWith(ENDPOINT), async (route) => {
     body: JSON.stringify({ code: 500, message: JACKSON, details: JACKSON }) });
 });
 
-await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
 await settleExplorer(page, { label: 'expand', budget: 8_000 }).catch(() => {});
 
 const name = await page.evaluate((t) => {

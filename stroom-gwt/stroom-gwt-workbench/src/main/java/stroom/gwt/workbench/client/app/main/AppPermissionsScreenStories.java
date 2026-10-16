@@ -114,10 +114,10 @@ public final class AppPermissionsScreenStories {
                     play.findByText("Alice Anderson");
                     final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
                     play.click(row.getByTitle(StroomDom.ACTIONS_TITLE));
-                    // The menu omits a link back to App Permissions; open the user in Manage API Keys
-                    play.expect(screen.findByText("Show user on the Manage API Keys screen")).toBeInTheDocument();
-                    play.expect(screen.queryByText("Show user on the Application Permissions screen")).toBeNull();
-                    play.click(screen.getByText("Show user on the Manage API Keys screen"));
+                    // The menu omits a link back to App Permissions; open the user in API Keys
+                    play.expect(screen.findByText("Show in API Keys")).toBeInTheDocument();
+                    play.expect(screen.queryByText("Show in Application Permissions")).toBeNull();
+                    play.click(screen.getByText("Show in API Keys"));
                     play.waitFor(() -> play.expect(play.spy(OPEN_SCREEN))
                             .toHaveBeenCalledWith("ApiKeys: Alice Anderson"));
                     // The quick filter narrows the list (the server applies it)

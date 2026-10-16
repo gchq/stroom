@@ -95,7 +95,7 @@ public final class QuickFilterHistoryStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alice Anderson");
-                    play.click(play.getByTitle("Recent Filters"));
+                    play.click(play.getByTitle("Show Recent Filters"));
                     play.expect(screen.findByText("display:\"Bob Brown\"")).toBeInTheDocument();
                     // The menu is as wide as the filter, as a combo box's list is, and lined up
                     // with it, however long its filters
@@ -136,7 +136,7 @@ public final class QuickFilterHistoryStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alice Anderson");
-                    play.click(play.getByTitle("Recent Filters"));
+                    play.click(play.getByTitle("Show Recent Filters"));
                     play.expect(screen.findByText("No recent filters")).toBeInTheDocument();
                     play.expect(screen.getByText("Advanced Query...")).toBeInTheDocument();
                     expectNoProblems(play);
@@ -147,7 +147,7 @@ public final class QuickFilterHistoryStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Alice Anderson");
-                    play.click(play.getByTitle("Recent Filters"));
+                    play.click(play.getByTitle("Show Recent Filters"));
                     play.expect(screen.findByText("Could not load recent filters")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
@@ -175,7 +175,7 @@ public final class QuickFilterHistoryStories {
                     final Query filter = play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);
                     play.findByText("Alice Anderson");
                     play.type(filter, RECENT_FILTER + "{Enter}");
-                    play.click(play.getByTitle("Recent Filters"));
+                    play.click(play.getByTitle("Show Recent Filters"));
                     play.click(screen.findByText("Advanced Query..."));
                     final Play dialog = screen.within(
                             screen.findByText("Advanced Query", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
@@ -199,7 +199,7 @@ public final class QuickFilterHistoryStories {
                     final Query filter = play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);
                     play.findByText("Alice Anderson");
                     play.type(filter, REJECTED_FILTER + "{Enter}");
-                    play.click(play.getByTitle("Recent Filters"));
+                    play.click(play.getByTitle("Show Recent Filters"));
                     play.click(screen.findByText("Advanced Query..."));
                     final Play dialog = screen.within(
                             screen.findByText("Advanced Query", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));

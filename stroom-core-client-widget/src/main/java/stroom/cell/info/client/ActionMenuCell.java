@@ -51,7 +51,28 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
 
     private final Function<R, String> tooltipExtractor;
     private final Function<R, List<Item>> menuCreator;
+    private final Function<R, String> menuNameExtractor;
     private final HasHandlers hasHandlers;
+
+    /// @param menuCreator       Function to create the menu items to display.
+    /// @param tooltipExtractor  Function to supply the tooltip for the ellipses icon, or null for
+    ///                          'Actions...'.
+    /// @param menuNameExtractor Function to supply the menu's accessible name for a row as plain
+    ///                          text, e.g. "Actions for user 'jbloggs'" (see
+    ///                          [ShowMenuEvent.Builder#name]), or null (or a function giving null)
+    ///                          for "Actions for row N".
+    /// @param hasHandlers       What the menu's [ShowMenuEvent] is fired on.
+    public ActionMenuCell(final Function<R, List<Item>> menuCreator,
+                          final Function<R, String> tooltipExtractor,
+                          final Function<R, String> menuNameExtractor,
+                          final HasHandlers hasHandlers) {
+        super(BrowserEvents.MOUSEDOWN);
+
+        this.menuCreator = menuCreator;
+        this.tooltipExtractor = tooltipExtractor;
+        this.menuNameExtractor = menuNameExtractor;
+        this.hasHandlers = hasHandlers;
+    }
 
     /**
      * @param menuCreator      Function to create the menu items to display
@@ -60,11 +81,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
     public ActionMenuCell(final Function<R, List<Item>> menuCreator,
                           final Function<R, String> tooltipExtractor,
                           final HasHandlers hasHandlers) {
-        super(BrowserEvents.MOUSEDOWN);
-
-        this.menuCreator = menuCreator;
-        this.tooltipExtractor = tooltipExtractor;
-        this.hasHandlers = hasHandlers;
+        this(menuCreator, tooltipExtractor, null, hasHandlers);
     }
 
     /**
@@ -104,7 +121,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
         if (ElementUtil.hasClassName(element, ACTION_MENU_CELL_CLASS_NAME, 5)) {
             final List<Item> items = NullSafe.get(menuCreator, mc -> mc.apply(row));
             if (NullSafe.hasItems(items)) {
-                showActionMenu(row, event);
+                showActionMenu(context, row, event);
             }
         }
         if (valueUpdater != null) {
@@ -112,7 +129,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
         }
     }
 
-    private void showActionMenu(final R row, final NativeEvent event) {
+    private void showActionMenu(final Context context, final R row, final NativeEvent event) {
         Objects.requireNonNull(menuCreator);
         final List<Item> items = menuCreator.apply(row);
         final PopupPosition popupPosition = new PopupPosition(
@@ -120,6 +137,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                 event.getClientY() + 10);
         ShowMenuEvent
                 .builder()
+                .name(getMenuName(NullSafe.get(menuNameExtractor, func -> func.apply(row)), context))
                 .items(items)
                 .popupPosition(popupPosition)
 //                    .onShow(e -> {
@@ -128,6 +146,22 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
 //                    })
                 .allowCloseOnMoveLeft()
                 .fire(hasHandlers);
+    }
+
+    /// The accessible name of a row's menu: the name given, or else "Actions for row N", where N
+    /// is the row's number counting from 1, so that no row's menu is unnamed.
+    ///
+    /// @param name    The menu's name, or null or blank for none.
+    /// @param context The cell's context, giving the row's index.
+    /// @return The menu's name.
+    static String getMenuName(final String name, final Context context) {
+        if (NullSafe.isNonBlankString(name)) {
+            return name;
+        }
+        final int index = context == null
+                ? 0
+                : context.getIndex();
+        return "Actions for row " + (index + 1);
     }
 
     @Override
