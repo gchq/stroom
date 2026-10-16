@@ -502,14 +502,16 @@ class McpAgentChat {
 
     static ToolApprovalRequest approvalRequest(final List<PendingCall> pending,
                                                final List<ToolConsent.Verdict> verdicts) {
+        // Only what the card's classifications and trust icons don't already say.
         final Set<String> reasons = verdicts.stream()
-                .map(ToolConsent.Verdict::reason)
+                .map(ToolConsent.Verdict::cardReason)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         return new ToolApprovalRequest(
                 ToolApprovalRequest.KIND,
                 ToolApprovalRequest.Status.PENDING,
-                reasons.size() == 1
-                        ? reasons.iterator().next()
+                reasons.isEmpty()
+                        ? null
                         : String.join(" ", reasons),
                 pending,
                 verdicts.stream().allMatch(ToolConsent.Verdict::allowForChat),
