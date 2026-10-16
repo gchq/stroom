@@ -1931,8 +1931,8 @@ button.main-menu svg {
     opacity: 0.8;
 }
 
-.selectionList-links .gwt-HyperLink:hover {
-    text-decoration: underline;
+.selectionList-links .selectionList-pathLink {
+    color: var(--link__text-color);
 }
 
 .selectionItemCell {
@@ -2233,6 +2233,11 @@ button.main-menu svg {
 .contentstore-scroll-y {
     overflow-y: auto;
 }
+/* The details take the keyboard focus, to be scrolled with it */
+.contentstore-scroll-y:focus-visible {
+    outline: none;
+    box-shadow: inset var(--focus-shadow);
+}
 /* Details title */
 .contentstore-details .contentstore-details-heading {
     font-size: 120%;
@@ -2258,6 +2263,11 @@ button.main-menu svg {
 }
 .contentstore-details .contentstore-details-list > * {
     padding: 5px;
+}
+/* The URL shown after a link to it */
+.contentstore-details .contentstore-details-url {
+    margin-left: 0.5em;
+    overflow-wrap: anywhere;
 }
 /* Overall width of details table */
 .contentstore-details .contentstore-details-vertical {

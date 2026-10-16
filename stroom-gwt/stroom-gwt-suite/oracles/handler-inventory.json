@@ -1,6 +1,6 @@
 {
  "generated": "2026-10-13T11:55:07.970Z",
- "declared": 1546,
+ "declared": 1547,
  "exercised": 824,
  "presenters": {
   "declared": 804,
@@ -20,7 +20,7 @@
    "exercised": 80
   },
   "click": {
-   "declared": 470,
+   "declared": 471,
    "exercised": 254
   },
   "selection": {
@@ -87,7 +87,7 @@
   "view": 67,
   "widget": 90,
   "needs-dom": 6,
-  "unlabelled": 47,
+  "unlabelled": 48,
   "needs-dirty": 10,
   "needs-close": 5,
   "ok-blocked": 1,
@@ -17322,6 +17322,16 @@
    "line": 59,
    "exercised": false,
    "why": "needs-value"
+  },
+  {
+   "class": "SelectionList",
+   "classKind": "widget",
+   "kind": "click",
+   "receiver": "button",
+   "label": null,
+   "line": 515,
+   "exercised": false,
+   "why": "unlabelled"
   },
   {
    "class": "SelectionPopup",

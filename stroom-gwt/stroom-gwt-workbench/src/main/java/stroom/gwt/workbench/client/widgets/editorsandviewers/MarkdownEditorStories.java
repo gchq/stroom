@@ -72,7 +72,7 @@ public final class MarkdownEditorStories {
             ## Highlights
 
             - **Bold** and *italic* and `inline code`
-            - A [link to the docs](https://example.com) (opens in a new tab)
+            - A [link to the docs](https://example.com)
             - ~~Struck-through~~ text
 
             ### A code block
@@ -127,10 +127,13 @@ public final class MarkdownEditorStories {
                     final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
                     return markdownEditor(harness, SAMPLE_MARKDOWN, true);
                 })
-                // The rendered document says it is in English, for screen readers (gchq/stroom#5408)
+                // The rendered document says it is in English, for screen readers (gchq/stroom#5408),
+                // and its link, which opens in a new tab, says so (gchq/stroom#5406)
                 .withPlay(play -> {
                     final Query frame = play.querySelector("iframe#markdown-frame");
                     play.waitFor(() -> play.expect(FrameDocuments.language(frame)).toBe("en"));
+                    play.expect(FrameDocuments.newTabLinks(frame))
+                            .toBe("link to the docs (opens in new tab) | noopener noreferrer");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 })
                 // With no help URL configured, "Help with Documentation" shows "Help is not configured!"

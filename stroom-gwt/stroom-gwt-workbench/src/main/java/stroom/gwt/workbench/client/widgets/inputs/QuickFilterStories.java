@@ -108,6 +108,21 @@ public final class QuickFilterStories {
                             "https://gchq.github.io/stroom-docs/"));
                     return InputWidgets.maxWidth(quickFilter, MAX_WIDTH);
                 })
+                // The help ends with a link to the quick filter's documentation, which says what it
+                // is and, to screen readers, that it opens a new tab (gchq/stroom#5406)
+                .withPlay(play -> {
+                    play.click(play.getByTitle("Quick Filter Syntax Help"));
+                    final Query docsLink = play.screen().findByRole("link",
+                            "quick filter documentation (opens in new tab)");
+                    play.expect(docsLink).toHaveAttribute("href", "https://gchq.github.io/stroom-docs/");
+                    play.expect(docsLink).toHaveAttribute("target", "_blank");
+                    play.expect(docsLink).toHaveAttribute("rel", "noopener noreferrer");
+                    // Sighted users see only the link's text
+                    play.expect(play.screen().getByText("quick filter documentation")).toBeVisible();
+                    play.expect(play.screen().getByText(TextMatch.containing("(opens in new tab)")))
+                            .toHaveClass("sr-only");
+                    play.keyboard("{Escape}");
+                })
                 // QuickFilter with no debounce - onChange fires on every keystroke
                 .story("NoDebounce", context -> {
                     // QuickFilter's 400ms debounce can't be turned off, so the value below changes

@@ -347,6 +347,9 @@
   "app-main-contentstorescreen--install": [
     "image-alt"
   ],
+  "app-main-contentstorescreen--links": [
+    "image-alt"
+  ],
   "app-main-contentstorescreen--upgrade-check-promotes-row": [
     "image-alt"
   ],

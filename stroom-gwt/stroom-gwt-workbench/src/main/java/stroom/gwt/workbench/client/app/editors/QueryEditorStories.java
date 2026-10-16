@@ -194,6 +194,14 @@ public final class QueryEditorStories {
     // The text of a query help item
     private static final String HELP_ITEM = ".selectionItemCell-text";
 
+    // The help detail of 'count' (as JSON string content), ending with the link to its
+    // documentation that Stroom's server adds (Functions), which says it opens a new tab
+    private static final String COUNT_HELP = "# count\\n\\nHelp for **count**.\\n\\n"
+            + "For more information see the <a href=\\\"https://gchq.github.io/stroom-docs/7.13/docs/"
+            + "reference-section/expressions/aggregate#count\\\" target=\\\"_blank\\\" "
+            + "rel=\\\"noopener noreferrer\\\">count documentation"
+            + "<span class=\\\"sr-only\\\"> (opens in new tab)</span></a>.";
+
     private static final String FIND_TAGS_PATH = "/annotation/v1/findAnnotationTags";
     private static final String BATCH_CHANGE_PATH = "/annotation/v1/batchChange";
 
@@ -374,21 +382,39 @@ public final class QueryEditorStories {
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The query help: the root rows load, expanding one loads its children and
-                // selecting a row shows its documentation and enables Insert into Query
+                // selecting a row shows its documentation and enables Insert into Query. The
+                // documentation's link says what it is for and that it opens a new tab, and the
+                // breadcrumb above the rows goes back to the top (gchq/stroom#5406)
                 .story("QueryHelp", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     // The help rows are grid cells, not buttons
                     play.waitFor(() -> play.expect(play.getByText("Functions", HELP_ITEM)).toBeInTheDocument());
                     play.expect(play.getByText("Fields", HELP_ITEM)).toBeInTheDocument();
+                    final Query breadcrumb = play.getByRole("navigation", "Breadcrumb");
+                    play.expect(play.within(breadcrumb).getByText("Help Contents"))
+                            .toHaveAttribute("aria-current", "page");
                     play.click(play.getByText("Functions", HELP_ITEM));
                     play.waitFor(() -> play.expect(play.getByText("count", HELP_ITEM)).toBeInTheDocument());
                     play.click(play.getByText("count", HELP_ITEM));
                     play.waitFor(() -> play.expect(play.getByRole("button", "Insert into Query"))
                             .not().toHaveAttribute("aria-disabled"));
-                    // The documentation is shown in an iframe, so the check is that it was fetched
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/query/v1/fetchDetail")
                                     .withJsonBodyContaining("{\"title\": \"count\"}").toSpyMatcher());
+                    // The server's link already says it opens a new tab, and the Markdown
+                    // rendering doesn't say it again
+                    final Query docsLink = play.findByRole("link", "count documentation (opens in new tab)");
+                    play.expect(docsLink).toHaveAttribute("target", "_blank");
+                    play.expect(docsLink).toHaveAttribute("rel", "noopener noreferrer");
+                    // The breadcrumb: the level shown is the current one, those above are buttons
+                    play.expect(play.within(breadcrumb).getByText("Functions"))
+                            .toHaveAttribute("aria-current", "page");
+                    play.click(play.within(breadcrumb).getByRole("button", "Help Contents"));
+                    play.waitFor(() -> play.expect(play.queryByText("count", HELP_ITEM)).toBeNull());
+                    play.expect(play.getByText("Fields", HELP_ITEM)).toBeInTheDocument();
+                    play.expect(play.within(breadcrumb).getByText("Help Contents"))
+                            .toHaveAttribute("aria-current", "page");
+                    play.expect(play.within(breadcrumb).queryByRole("button", "Help Contents")).toBeNull();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The query help pages each level: a full page (100 rows) offers the next page
@@ -939,7 +965,7 @@ public final class QueryEditorStories {
                 // The help detail: the row's title as its documentation and insert text
                 .route(RequestMatcher.post("/query/v1/fetchDetail")
                                 .withJsonBodyContaining("{\"title\": \"count\"}"),
-                        RestReply.json("{\"documentation\": \"# count\\n\\nHelp for **count**.\", "
+                        RestReply.json("{\"documentation\": \"" + COUNT_HELP + "\", "
                                        + "\"insertText\": \"count\", \"insertType\": \"PLAIN_TEXT\"}"));
     }
 

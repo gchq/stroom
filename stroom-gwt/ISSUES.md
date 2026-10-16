@@ -905,6 +905,26 @@ These were found by the review and fixed in the same change:
     `aria-controls` (`widgets-dialogs-alertdialog--show-detail`), and the pipeline's View Source
     link is a toolbar button.
   * The annotation chooser's "clear selection" link had no callers and is removed.
+* **Links whose purpose was unclear** (WCAG 2.4.4):
+  * Links that open a new browser tab didn't say so (or said it only in a title). Each now ends
+    with the visually hidden text " (opens in new tab)" and has `rel="noopener noreferrer"`
+    (`NewTabLink`): the quick filter help's link, the server's function and keyword help links,
+    every link in rendered Markdown (documentation, query help, Content Store details, Ask Stroom
+    AI) and the Content Store links (`widgets-inputs-quickfilter--with-help`,
+    `widgets-editors-viewers-markdowneditor--read-only-preview`).
+  * "Help Documentation" now says what it documents: "quick filter documentation",
+    "count documentation", "from keyword documentation".
+  * The Content Store's licence and Git links were the bare URL, and empty with no pack; they are
+    now "View licence" and "View Git repository", followed by the URL, and absent when there is
+    no URL (`app-main-contentstorescreen--links`). The empty links had been the only thing the
+    keyboard could reach in a pack's scrolling details (with both buttons disabled), so the
+    details are now a focusable region named "Content pack details", which the keyboard can
+    scroll (`app-main-contentstorescreen--install`).
+  * The query help's and column picker's path was GWT `Hyperlink`s (adding browser history
+    entries) whose root "Help" read as if it opened help. It is now a `nav` named "Breadcrumb",
+    the levels above are buttons ("Help Contents", "All Columns"), the level shown is
+    `aria-current="page"` and the separators are hidden from screen readers
+    (`app-editors-queryeditor--query-help`).
 * **The HTTP client's User Agent was never saved.** `HttpClientConfigPresenter` now reads and writes
   it (blank means the client's own user agent); the OpenAI model editor's play checks it is kept.
 * **Elastic's response timeout was ignored**: the response timeout was set from the connection
