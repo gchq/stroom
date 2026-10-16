@@ -403,6 +403,18 @@ public class AiDaoImpl implements AiDao {
     }
 
     @Override
+    public void askAsQuestion(final int messageId, final String question) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT_MESSAGE)
+                .set(AI_CHAT_MESSAGE.MESSAGE_TYPE, (int) AiMessageType.USER_MESSAGE.getPrimitiveValue())
+                .set(AI_CHAT_MESSAGE.MESSAGE, question)
+                // A question starts its own turn.
+                .set(AI_CHAT_MESSAGE.TURN_ID, messageId)
+                .where(AI_CHAT_MESSAGE.ID.eq(messageId))
+                .execute());
+    }
+
+    @Override
     public void deleteMessage(final int messageId) {
         JooqUtil.transaction(aiDbConnProvider, context -> {
             // Null out any attachment reference first (FK RESTRICT).

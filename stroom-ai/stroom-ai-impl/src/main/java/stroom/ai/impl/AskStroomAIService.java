@@ -207,6 +207,7 @@ public class AskStroomAIService {
     private final ChatCompactor chatCompactor;
     private final AiMemoryService memoryService;
     private final ChatTitler chatTitler;
+    private final FollowUpSuggester followUpSuggester;
     private final ToolApprovalService toolApprovalService;
     private final AiAuditLog auditLog;
     private final AiDao aiDao;
@@ -245,8 +246,10 @@ public class AskStroomAIService {
                               final Provider<AiConfig> aiConfigProvider,
                               final SecurityContext securityContext,
                               final Provider<McpElicitations> mcpElicitationsProvider,
-                              final ChatTitler chatTitler) {
+                              final ChatTitler chatTitler,
+                              final FollowUpSuggester followUpSuggester) {
         this.chatTitler = chatTitler;
+        this.followUpSuggester = followUpSuggester;
         this.aiService = aiService;
         this.mcpElicitationsProvider = mcpElicitationsProvider;
         this.attachmentFileStore = attachmentFileStore;
@@ -733,15 +736,20 @@ public class AskStroomAIService {
      */
     private void answerQuestion(final int chatId, final AskStroomAiRequest request) {
         String responseText;
+        // The last message of the answer (or error), so anything the user sends after it can be found.
+        int answeredUpTo = 0;
         try {
             responseText = processQuestion(request);
 
             if (responseText != null && !CANCELLED_MESSAGE.equals(responseText)) {
-                aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText);
+                answeredUpTo = aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText).getId();
                 auditLog.answer(chatId, request.getMessage(), responseText, runManager.isUnattended(chatId));
                 chatCompactor.writeDigest(chatId);
+                final ChatModel model = getChatModel(getModelDoc(request.getConfig()));
                 // Keep the chat's name up to date with what it is about, now it has been answered.
-                chatTitler.retitleIfDue(chatId, getChatModel(getModelDoc(request.getConfig())));
+                chatTitler.retitleIfDue(chatId, model);
+                // Last, so the run ends as soon as they are offered.
+                followUpSuggester.suggest(chatId, model);
                 final String rt = responseText;
                 LOGGER.debug(() -> "Response stored for chatId=" + chatId
                                    + " responseLength=" + rt.length());
@@ -759,8 +767,36 @@ public class AskStroomAIService {
             } else {
                 responseText = e.getMessage();
             }
-            aiService.storeMessage(chatId, AiMessageType.ERROR, responseText);
+            answeredUpTo = aiService.storeMessage(chatId, AiMessageType.ERROR, responseText).getId();
         }
+        if (answeredUpTo > 0) {
+            answerLateMessages(chatId, request, answeredUpTo);
+        }
+    }
+
+    /**
+     * Answers anything the user sent after the answer was given but while the run was still finishing (e.g.
+     * naming the chat). It was taken as steering the run, which no longer reads it, so it becomes the next
+     * question instead, answered in this run. It is changed in place, so the chat shows it once.
+     */
+    private void answerLateMessages(final int chatId, final AskStroomAiRequest request, final int answeredUpTo) {
+        final List<AiChatMessage> late = aiService.getMessagesSince(chatId, answeredUpTo).stream()
+                .filter(message -> message.getMessageType() == AiMessageType.STEER_MESSAGE)
+                .toList();
+        if (late.isEmpty()) {
+            return;
+        }
+        // Suggestions for the last answer no longer apply.
+        aiService.getMessagesSince(chatId, answeredUpTo).stream()
+                .filter(message -> message.getMessageType() == AiMessageType.SUGGESTIONS)
+                .forEach(message -> aiService.deleteMessage(message.getId()));
+        final String question = late.stream()
+                .map(AiChatMessage::getMessage)
+                .collect(Collectors.joining("\n\n"));
+        LOGGER.debug(() -> "Answering " + late.size() + " message(s) sent as chatId=" + chatId + " was finishing");
+        aiService.askAsQuestion(late.getFirst().getId(), question);
+        late.stream().skip(1).forEach(message -> aiService.deleteMessage(message.getId()));
+        answerQuestion(chatId, new AskStroomAiRequest(request.getAiChat(), request.getConfig(), null, question));
     }
 
     // ---------------------------------------------------------------------

@@ -311,4 +311,24 @@ class TestAiDaoImpl {
         assertThat(aiDao.searchChats("user1", "!", 10)).isEmpty();
     }
 
+
+    @Test
+    void aLateSteerBecomesAQuestionOfItsOwn() {
+        final AiChat chat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChatMessage question = aiDao.storeMessage(chat.getId(), AiMessageType.USER_MESSAGE, "first");
+        aiDao.storeMessage(chat.getId(), AiMessageType.AI_RESPONSE, "answer");
+        final AiChatMessage steer = aiDao.storeMessage(chat.getId(), AiMessageType.STEER_MESSAGE, "and fw2?");
+        assertThat(steer.getTurnId()).isEqualTo(question.getId());
+
+        aiDao.askAsQuestion(steer.getId(), "and fw2?");
+
+        final AiChatMessage asked = aiDao.getMessages(chat.getId()).getLast();
+        assertThat(asked.getId()).isEqualTo(steer.getId());
+        assertThat(asked.getMessageType()).isEqualTo(AiMessageType.USER_MESSAGE);
+        assertThat(asked.getTurnId()).isEqualTo(steer.getId());
+        // What follows belongs to its turn.
+        assertThat(aiDao.storeMessage(chat.getId(), AiMessageType.AI_RESPONSE, "fw2 too").getTurnId())
+                .isEqualTo(steer.getId());
+    }
+
 }

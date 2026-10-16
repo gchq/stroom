@@ -84,7 +84,7 @@ class TestAskStroomAIService {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, () -> null, null, null,
                 null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null, compactor, null,
                 toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext,
-                () -> null, chatTitler);
+                () -> null, chatTitler, null);
     }
 
     private final AiAttachmentFileStore attachmentFileStore = Mockito.mock(AiAttachmentFileStore.class);
@@ -96,7 +96,7 @@ class TestAskStroomAIService {
         return new AskStroomAIService(aiService, attachmentFileStore, null, null, null, null, null, () -> null,
                 null, null, null, null, null, mcpClientCache, null, runManager, runDao, null, null,
                 contextAssembler, usageTracker, compactor, memoryService, toolApprovalService,
-                Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext, () -> null, chatTitler);
+                Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext, () -> null, chatTitler, null);
     }
 
     private static final DocRef CHOSEN_MODEL = new DocRef(OpenAIModelDoc.TYPE, "chosen-uuid", "Chosen");
@@ -108,7 +108,7 @@ class TestAskStroomAIService {
         return new AskStroomAIService(aiService, null, null, null, store, null, null, () -> defaultConfig,
                 null, null, null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null,
                 compactor, null, toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new,
-                securityContext, () -> null, chatTitler);
+                securityContext, () -> null, chatTitler, null);
     }
 
     @Test

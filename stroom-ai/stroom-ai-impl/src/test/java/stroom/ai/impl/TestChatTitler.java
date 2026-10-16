@@ -96,7 +96,7 @@ class TestChatTitler {
     void theModelIsAskedForUpToTheConfiguredNumberOfWords() {
         questions("one");
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, 4);
+                null, 4, null);
 
         titler.retitleIfDue(1, model("Firewall errors on hosts fw1 and fw2"));
 

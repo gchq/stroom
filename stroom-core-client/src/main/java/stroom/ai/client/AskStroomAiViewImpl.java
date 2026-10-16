@@ -102,6 +102,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     SpinnerSmall spinner;
     @UiField
+    FlowPanel followUps;
+    @UiField
     TextBox chatSearch;
     @UiField
     HTML chatListActions;
@@ -114,6 +116,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         jumpToLatestBar.setVisible(false);
         contextMeter.setVisible(false);
         commandSuggestions.setVisible(false);
+        followUps.setVisible(false);
         markdownPreview.addDomHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onConversationScrolled();
@@ -412,6 +415,24 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         } else {
             root.removeStyleName(EMPTY_STYLE);
         }
+    }
+
+    @Override
+    public void setFollowUps(final List<String> suggestions) {
+        followUps.clear();
+        for (final String suggestion : suggestions) {
+            final Button button = new Button();
+            button.setStyleName("allow-focus askStroomAiViewImpl-followUp");
+            button.setText(suggestion);
+            button.setTitle("Ask this");
+            button.addClickHandler(event -> {
+                if (getUiHandlers() != null) {
+                    getUiHandlers().onFollowUp(suggestion);
+                }
+            });
+            followUps.add(button);
+        }
+        followUps.setVisible(!suggestions.isEmpty());
     }
 
     @Override
