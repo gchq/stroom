@@ -32,6 +32,14 @@
         </g:FlowPanel>
         <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
             <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
+            <g:FlowPanel ui:field="commandReference" styleName="dock-min askStroomAiViewImpl-commandReference">
+                <g:SimplePanel ui:field="commandReferenceResize"
+                               styleName="askStroomAiViewImpl-commandReference-resize"/>
+                <p:InlineSvgButton ui:field="commandReferenceClose"
+                                   addStyleNames="allow-focus askStroomAiViewImpl-commandReference-close"/>
+                <g:HTML ui:field="commandReferenceContent"
+                        styleName="markdown askStroomAiViewImpl-commandReference-content"/>
+            </g:FlowPanel>
             <g:FlowPanel ui:field="followUps" styleName="dock-min askStroomAiViewImpl-followUps"/>
             <g:FlowPanel ui:field="inputBox"
                          styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">

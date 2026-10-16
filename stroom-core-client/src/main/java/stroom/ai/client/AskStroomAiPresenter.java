@@ -235,6 +235,8 @@ public class AskStroomAiPresenter
     private boolean currentRunActive;
     // True while the list of chats is shown in place of the conversation.
     private boolean chatListShowing;
+    // The command whose reference is shown, or null.
+    private String referenceCommand;
     // The latest suggested follow-ups, while the answer they follow is the latest thing in the chat.
     private List<String> followUps = List.of();
     // Searching the list of chats: what is in the box, the text the hits are for, the hits (null when not
@@ -956,6 +958,30 @@ public class AskStroomAiPresenter
     }
 
     @Override
+    public void onCommandPicked(final AiSlashCommand command) {
+        referenceCommand = command.getName();
+        // MCP servers write their prompts' descriptions, so the reference is treated as untrusted.
+        getView().showCommandReference(markdownConverter.convertUntrustedMarkdownToHtml(command.getReference()));
+    }
+
+    @Override
+    public void onCloseCommandReference() {
+        referenceCommand = null;
+        getView().hideCommandReference();
+    }
+
+    /// Hides the command reference once the input no longer starts with its command, e.g. the user deleted it.
+    private void checkCommandReference(final String text) {
+        if (referenceCommand == null) {
+            return;
+        }
+        final String trimmed = NullSafe.string(text).trim();
+        if (!(trimmed.equals(referenceCommand) || trimmed.startsWith(referenceCommand + " "))) {
+            onCloseCommandReference();
+        }
+    }
+
+    @Override
     public void onFollowUp(final String text) {
         if (!currentRunActive && !requestInFlight && text != null && !text.isBlank()) {
             sendMessage(text);
@@ -1099,6 +1125,7 @@ public class AskStroomAiPresenter
      */
     @Override
     public void onInputChanged(final String text) {
+        checkCommandReference(text);
         final String trimmed = NullSafe.string(text).trim();
         if (trimmed.startsWith("/") && !trimmed.contains(" ")) {
             if (mcpPrompts == null) {
@@ -1132,8 +1159,24 @@ public class AskStroomAiPresenter
                         ? argument.getName() + "=…"
                         : "[" + argument.getName() + "=…]");
             }
+            final StringBuilder reference = new StringBuilder("A prompt from the MCP server ")
+                    .append(prompt.getServer())
+                    .append(". The filled-in prompt is put in the input box for you to check and send.");
+            if (!NullSafe.list(prompt.getArguments()).isEmpty()) {
+                reference.append("\n");
+                for (final AiMcpPromptArgument argument : prompt.getArguments()) {
+                    reference.append("\n- *").append(argument.getName()).append("*")
+                            .append(argument.isRequired()
+                                    ? " (required)"
+                                    : "")
+                            .append(NullSafe.isBlankString(argument.getDescription())
+                                    ? ""
+                                    : ": " + argument.getDescription());
+                }
+            }
             commands.add(new AiSlashCommand(prompt.getCommand(), arguments.toString(),
-                    NullSafe.string(prompt.getDescription()) + " (from " + prompt.getServer() + ")"));
+                    NullSafe.string(prompt.getDescription()) + " (from " + prompt.getServer() + ")",
+                    reference.toString()));
         }
         return commands;
     }
@@ -1844,6 +1887,8 @@ public class AskStroomAiPresenter
     }
 
     private void sendMessage(final String message) {
+        // The command has been used.
+        onCloseCommandReference();
         followUps = List.of();
         getView().setFollowUps(List.of());
         getView().setSendButtonLoadingState(true);
@@ -3512,6 +3557,12 @@ public class AskStroomAiPresenter
 
         /// Shows things the user might ask next, as links above the input, or none.
         void setFollowUps(List<String> suggestions);
+
+        /// Shows a command's reference above the input, until hidden.
+        void showCommandReference(SafeHtml html);
+
+        /// Hides the command reference.
+        void hideCommandReference();
 
         /// @return The panel the list of chats is shown in.
         FlowPanel getChatList();

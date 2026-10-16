@@ -24,6 +24,14 @@ import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AskStroomAiUiHandlers extends UiHandlers {
 
+    /// Called when the user picks a command from the list of commands, to show its reference.
+    ///
+    /// @param command The command.
+    void onCommandPicked(AiSlashCommand command);
+
+    /// Called when the user closes the command reference.
+    void onCloseCommandReference();
+
     /// Called when the user clicks a suggested follow-up, to ask it.
     ///
     /// @param text The suggestion.

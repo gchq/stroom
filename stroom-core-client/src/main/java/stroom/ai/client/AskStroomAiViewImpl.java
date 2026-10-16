@@ -25,18 +25,21 @@ import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.spinner.client.SpinnerSmall;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -46,6 +49,7 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
@@ -61,6 +65,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     private static final String WORKING_CLASS = "askStroomAiViewImpl-bottom-inner--working";
 
     private boolean empty;
+    private static final int MIN_REFERENCE_HEIGHT = 60;
+
     private final Widget widget;
     private boolean sending;
 
@@ -110,6 +116,18 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     FlowPanel followUps;
     @UiField
+    FlowPanel commandReference;
+    @UiField
+    SimplePanel commandReferenceResize;
+    @UiField
+    InlineSvgButton commandReferenceClose;
+    @UiField
+    HTML commandReferenceContent;
+    // While the reference is being resized: where the drag started, and the height then.
+    private HandlerRegistration referenceDrag;
+    private int referenceDragStartY;
+    private int referenceDragStartHeight;
+    @UiField
     TextBox chatSearch;
     @UiField
     HTML chatListActions;
@@ -128,6 +146,16 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         contextMeter.addMouseOutHandler(event -> contextDetails.setVisible(false));
         commandSuggestions.setVisible(false);
         followUps.setVisible(false);
+        commandReference.setVisible(false);
+        commandReferenceClose.setSvg(SvgImage.CLOSE);
+        commandReferenceClose.setTitle("Close the command reference");
+        commandReferenceClose.addClickHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onCloseCommandReference();
+            }
+        });
+        commandReferenceResize.setTitle("Drag to resize");
+        commandReferenceResize.addDomHandler(this::startReferenceResize, MouseDownEvent.getType());
         markdownPreview.addDomHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onConversationScrolled();
@@ -332,6 +360,9 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
                     + " <span class=\"askStroomAiViewImpl-commandDescription\">"
                     + SafeHtmlUtils.htmlEscape(command.getDescription()) + "</span>");
             button.addClickHandler(event -> {
+                if (getUiHandlers() != null) {
+                    getUiHandlers().onCommandPicked(command);
+                }
                 message.setText(command.getName() + " ");
                 message.setFocus(true);
                 message.setCursorPos(message.getText().length());
@@ -445,6 +476,50 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         } else {
             root.removeStyleName(EMPTY_STYLE);
         }
+    }
+
+    @Override
+    public void showCommandReference(final SafeHtml html) {
+        commandReferenceContent.setHTML(html);
+        commandReference.setVisible(true);
+    }
+
+    @Override
+    public void hideCommandReference() {
+        commandReference.setVisible(false);
+    }
+
+    /// Resizes the reference as its top edge is dragged: up to make it taller, taking the room from the messages.
+    private void startReferenceResize(final MouseDownEvent event) {
+        event.preventDefault();
+        referenceDragStartY = event.getClientY();
+        referenceDragStartHeight = commandReference.getOffsetHeight();
+        if (referenceDrag != null) {
+            referenceDrag.removeHandler();
+        }
+        referenceDrag = Event.addNativePreviewHandler(preview -> {
+            final NativeEvent nativeEvent = preview.getNativeEvent();
+            switch (preview.getTypeInt()) {
+                case Event.ONMOUSEMOVE -> {
+                    final int height = Math.max(MIN_REFERENCE_HEIGHT, Math.min(maxReferenceHeight(),
+                            referenceDragStartHeight + referenceDragStartY - nativeEvent.getClientY()));
+                    commandReference.getElement().getStyle().setHeight(height, Unit.PX);
+                    preview.cancel();
+                }
+                case Event.ONMOUSEUP -> {
+                    referenceDrag.removeHandler();
+                    referenceDrag = null;
+                }
+                default -> {
+                    // Nothing else is affected.
+                }
+            }
+        });
+    }
+
+    /// @return The most the reference may take: most of the chat, leaving room for some of the messages.
+    private int maxReferenceHeight() {
+        return Math.max(MIN_REFERENCE_HEIGHT, (int) (widget.getOffsetHeight() * 0.7));
     }
 
     @Override

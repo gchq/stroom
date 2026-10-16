@@ -37,19 +37,52 @@ final class AiSlashCommands {
 
     static final List<AiSlashCommand> COMMANDS = List.of(
             new AiSlashCommand(COMPACT, "[focus]",
-                    "Compact the chat now, optionally saying what the summary should keep"),
+                    "Compact the chat now, optionally saying what the summary should keep",
+                    """
+                    Earlier turns are replaced, in what the model sees, by short digests and a summary the model \
+                    writes, so the chat uses less of its context window. Nothing is deleted: the model can still \
+                    look turns up, and the compaction can be undone from its card.
+
+                    - *focus*: what the summary should concentrate on.
+
+                    Example: `/compact keep the firewall findings`"""),
             new AiSlashCommand(MODE, "agent|ask|plan",
-                    "Switch this chat to Agent, Ask or Plan mode"),
+                    "Switch this chat to Agent, Ask or Plan mode",
+                    """
+                    - **agent**: does what you ask, with all its tools.
+                    - **ask**: answers questions, and changes nothing.
+                    - **plan**: works out a plan for what you ask, without carrying it out.
+
+                    Example: `/mode ask`"""),
             new AiSlashCommand(PLAN, "<task>",
-                    "Switch to Plan mode and ask for a plan for the task"),
+                    "Switch to Plan mode and ask for a plan for the task",
+                    """
+                    The same as `/mode plan`, then asking for the task. Switch back to Agent mode \
+                    (`/mode agent`) to carry the plan out.
+
+                    Example: `/plan onboard feed ACME-EVENTS`"""),
             new AiSlashCommand(NEW, "[question]",
-                    "Start a new chat, optionally asking its first question"),
+                    "Start a new chat, optionally asking its first question",
+                    """
+                    If this chat has nothing in it yet, it is used rather than starting another.
+
+                    Example: `/new how many events did ACME send yesterday?`"""),
             new AiSlashCommand(CLEAR, "",
-                    "Clear this chat's messages, attached data, files and memory, so it starts afresh"),
+                    "Clear this chat's messages, attached data, files and memory, so it starts afresh",
+                    """
+                    Asks first, and stops anything the chat is doing. The chat itself, its mode and its tool \
+                    approvals are kept, as is your own memory. This can't be undone."""),
             new AiSlashCommand(REMEMBER, "<fact>",
-                    "Add a fact to your memory, which is loaded into all your chats"),
+                    "Add a fact to your memory, which is loaded into all your chats",
+                    """
+                    The fact is added to the note `remembered.md` in your memory, which you can see and edit from \
+                    the chat menu's **Memory**.
+
+                    Example: `/remember our firewall feeds all start with FW-`"""),
             new AiSlashCommand(HELP, "",
-                    "List the commands"));
+                    "List the commands",
+                    """
+                    To send a message that starts with `/` as it is, start it with `//`."""));
 
     private AiSlashCommands() {
         // Static methods only.
