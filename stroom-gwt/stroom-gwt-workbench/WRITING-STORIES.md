@@ -911,5 +911,7 @@ Also:
   check to the component's file in `test-runner/lib/real-input/` (see
   [Real input checks](test-runner/README.md#real-input-checks)).
 * `stroom.gwt.workbench.client.a11y` measures keyboard access: `TabStops.names(region)` (the tab
-  stops in order, as a browser counts them) and `ButtonRuns.of(region)` (runs of adjacent icon
-  buttons and the tab stops each costs).
+  stops in order, as a browser counts them), `ButtonRuns.of(region)` (runs of adjacent icon
+  buttons and the tab stops each costs) and `FocusRingClipping.cuts(control)` (where a control's
+  focus ring is cut off by something around it that hides its overflow; show the ring with
+  pseudo-state classes, as `App/Main/TopBar` `FocusRings` does).

@@ -116,6 +116,7 @@ import stroom.gwt.workbench.client.app.main.SigningKeysScreenStories;
 import stroom.gwt.workbench.client.app.main.StepFilterDialogStories;
 import stroom.gwt.workbench.client.app.main.SteppingScreenStories;
 import stroom.gwt.workbench.client.app.main.TabSessionChooserDialogStories;
+import stroom.gwt.workbench.client.app.main.TopBarStories;
 import stroom.gwt.workbench.client.app.main.TracesScreenStories;
 import stroom.gwt.workbench.client.app.main.UserAccessScreenStories;
 import stroom.gwt.workbench.client.app.main.UserGroupsScreenStories;
@@ -266,6 +267,8 @@ public final class AppStories {
         SteppingScreenStories.addTo(registry);
         // App/Main/TabSessionChooserDialog
         TabSessionChooserDialogStories.addTo(registry);
+        // App/Main/TopBar
+        TopBarStories.addTo(registry);
         // App/Main/TracesScreen
         TracesScreenStories.addTo(registry);
         // App/Main/UserAccessScreen

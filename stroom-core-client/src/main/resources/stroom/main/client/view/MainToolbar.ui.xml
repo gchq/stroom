@@ -5,7 +5,7 @@
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="mainToolbar">
         <s:Spinner ui:field="spinner" styleName="spinner mainViewImpl-spinner"/>
-        <b:Toolbar name="Application" addStyleNames="toolbar--header toolbar--quiet">
+        <b:Toolbar name="Application" addStyleNames="toolbar--quiet">
             <b:ToolbarToggleButton ui:field="showAi" svg="AI" title="Ask Stroom AI"/>
             <b:ToolbarButton ui:field="menu" svg="ELLIPSES_VERTICAL" title="Show Main Menu" opensMenu="true"/>
         </b:Toolbar>
