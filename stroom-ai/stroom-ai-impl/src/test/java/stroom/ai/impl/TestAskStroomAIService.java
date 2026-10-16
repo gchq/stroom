@@ -612,7 +612,7 @@ class TestAskStroomAIService {
                 streamed));
         Mockito.when(aiService.getStreamingMessages(1)).thenReturn(List.of(streamed));
 
-        final AiChatPollResponse response = service().pollMessages(1, new AiChatPollRequest(2, false));
+        final AiChatPollResponse response = service().pollMessages(1, new AiChatPollRequest(2, false, null));
 
         assertThat(response.getNewMessages()).extracting(AiChatMessage::getId).containsExactly(3);
         assertThat(response.getStreamingMessages()).containsExactly(streamed);
@@ -625,10 +625,31 @@ class TestAskStroomAIService {
         Mockito.when(aiService.getWorkingMessage(1)).thenReturn(Optional.empty());
         Mockito.when(aiService.getMessagesSince(1, 2)).thenReturn(List.of());
 
-        final AiChatPollResponse response = service().pollMessages(1, new AiChatPollRequest(2, false));
+        final AiChatPollResponse response = service().pollMessages(1, new AiChatPollRequest(2, false, null));
 
         assertThat(response.getStreamingMessages()).isEmpty();
         Mockito.verify(aiService, Mockito.never()).getStreamingMessages(1);
+    }
+
+    @Test
+    void testPollMessages_watchedFormsAreSentAsTheyNowStand() {
+        Mockito.when(runDao.getLatest(1)).thenReturn(Optional.empty());
+        Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of());
+        Mockito.when(aiService.getWorkingMessage(1)).thenReturn(Optional.empty());
+        Mockito.when(aiService.getMessagesSince(1, 9)).thenReturn(List.of());
+        // A form cancelled as the run stopped, and a message that isn't a form.
+        final AiChatMessage cancelled = message(4, AiMessageType.ELICITATION, "{\"status\":\"CANCELLED\"}");
+        Mockito.when(aiDao.getMessagesSince(1, 3)).thenReturn(List.of(
+                cancelled,
+                message(6, AiMessageType.TOOL_RESULT, "secret")));
+
+        final AiChatPollResponse response = service().pollMessages(1,
+                new AiChatPollRequest(9, false, List.of(4, 6)));
+
+        assertThat(response.getWatchedMessages()).containsExactly(cancelled);
+        // Nothing watched, nothing looked up.
+        assertThat(service().pollMessages(1, new AiChatPollRequest(9, false, List.of())).getWatchedMessages())
+                .isNull();
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final String text) {

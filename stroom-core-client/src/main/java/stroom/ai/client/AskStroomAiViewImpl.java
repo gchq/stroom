@@ -68,7 +68,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     private static final int MIN_REFERENCE_HEIGHT = 60;
 
     private final Widget widget;
-    private boolean sending;
+    // True while the chat is working, so the run button is a Stop button.
+    private boolean working;
 
     @UiField
     FlowPanel inputBox;
@@ -268,6 +269,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public void setSendButtonLoadingState(final boolean loading) {
         // A glowing border round the input box while a question is being worked on.
         inputBox.setStyleName(WORKING_CLASS, loading);
+        working = loading;
         if (loading) {
             run.setEnabled(true);
             run.setText(SEND_BUTTON_CANCEL_TEXT);
@@ -275,7 +277,6 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
             run.addStyleName("stop");
             run.removeStyleName("play");
         } else {
-            sending = false;
             run.setEnabled(!message.getText().isEmpty());
             run.setText(SEND_BUTTON_NORMAL_TEXT);
             run.setSvg(SvgImage.PLAY);
@@ -305,7 +306,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @UiHandler("message")
     public void onMessageKeyUp(final KeyUpEvent event) {
-        run.setEnabled(sending || !message.getText().isEmpty());
+        run.setEnabled(working || !message.getText().isEmpty());
         if (getUiHandlers() != null) {
             getUiHandlers().onInputChanged(message.getText());
         }
@@ -417,7 +418,9 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiHandler("run")
     public void onRun(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            if (sending) {
+            // Whatever the button shows: Stop while the chat works (e.g. after a refresh, or once polling has
+            // picked the run up), Send otherwise.
+            if (working) {
                 getUiHandlers().onCancelProcessing();
             } else {
                 sendMessage();
@@ -642,7 +645,6 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     private void sendMessage() {
         // While the AI is working on a question, a message steers it rather than asking a new question.
         if (!message.getText().isEmpty()) {
-            sending = true;
             getUiHandlers().onSendMessage(getMessage());
             message.setText(null);
         }

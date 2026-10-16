@@ -36,6 +36,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,6 +53,8 @@ class TestMcpElicitations {
     private final AiDao aiDao = Mockito.mock(AiDao.class);
     private final AiChatRunDao runDao = Mockito.mock(AiChatRunDao.class);
     private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
+    // The stop flag of the run that made the tool call.
+    private final AtomicBoolean stopFlag = new AtomicBoolean(false);
     private final Map<Integer, AiChatMessage> messages = new ConcurrentHashMap<>();
     private final AtomicInteger nextId = new AtomicInteger(100);
     private final AiChatRun run = new AiChatRun(9, CHAT_ID, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
@@ -59,6 +62,7 @@ class TestMcpElicitations {
             AiChatRunStopReason.NEEDS_INPUT, 0L, null, false, null);
 
     {
+        Mockito.when(runManager.stopFlag(CHAT_ID)).thenReturn(stopFlag);
         Mockito.when(aiDao.storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString())).thenAnswer(inv -> {
             final AiChatMessage message = new AiChatMessage(nextId.getAndIncrement(), inv.getArgument(0), 0L,
                     inv.getArgument(1), null, inv.getArgument(2), 1, null);
@@ -151,7 +155,7 @@ class TestMcpElicitations {
 
     @Test
     void stoppingTheRunCancelsTheForm() {
-        Mockito.when(runManager.isStopRequested(CHAT_ID)).thenReturn(true);
+        stopFlag.set(true);
         final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
 
         final ElicitResult result = elicitations.handle(CHAT_ID, "fastmcp",
@@ -159,6 +163,29 @@ class TestMcpElicitations {
 
         assertThat(result.action()).isEqualTo(Action.CANCEL);
         assertThat(status(messages.values().iterator().next())).isEqualTo(ElicitationRecord.Status.CANCELLED);
+    }
+
+    @Test
+    void aFormIsCancelledWhenItsRunStopsAndEndsWhileItWaits() {
+        // Seen: Stop while a form waited gave up on the tool call, so the run ended, and the chat no longer had a
+        // run to say it had been stopped: the form waited on until it expired, shown as needing the user.
+        Mockito.when(runManager.isStopRequested(CHAT_ID)).thenReturn(false);
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        final Thread stopper = Thread.ofVirtual().start(() -> {
+            try {
+                Thread.sleep(300);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            stopFlag.set(true);
+        });
+
+        final ElicitResult result = elicitations.handle(CHAT_ID, "fastmcp",
+                new ElicitFormRequest("Which feed?", FORM, null));
+
+        assertThat(result.action()).isEqualTo(Action.CANCEL);
+        assertThat(status(messages.values().iterator().next())).isEqualTo(ElicitationRecord.Status.CANCELLED);
+        assertThat(stopper.isAlive()).isFalse();
     }
 
     @Test

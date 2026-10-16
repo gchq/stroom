@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /// Handles the forms MCP tools ask users to fill in while they run (MCP elicitation).
@@ -91,6 +92,8 @@ public class McpElicitations {
             return new ElicitResult(Action.DECLINE, null);
         }
         try {
+            // The run that made the tool call: its stop request is kept once it has ended, unlike the chat's.
+            final AtomicBoolean stop = runManager.stopFlag(chatId);
             final long expiresMs = System.currentTimeMillis() + config.getElicitationTimeout().toMillis();
             final ElicitationRecord record = new ElicitationRecord(ElicitationRecord.KIND, Status.PENDING, server,
                     null, request.message(), request.requestedSchema(), expiresMs, null);
@@ -102,7 +105,7 @@ public class McpElicitations {
                     List.of(AiChatRunStatus.RUNNING), AiChatRunStatus.WAITING_FOR_USER,
                     AiChatRunStopReason.NEEDS_INPUT, null);
             try {
-                return await(chatId, message.getId(), expiresMs);
+                return await(chatId, message.getId(), expiresMs, stop);
             } finally {
                 if (paused) {
                     runDao.compareAndSetStatus(run.getId(), List.of(AiChatRunStatus.WAITING_FOR_USER),
@@ -163,7 +166,10 @@ public class McpElicitations {
         return waiting.get();
     }
 
-    private ElicitResult await(final int chatId, final int messageId, final long expiresMs) {
+    private ElicitResult await(final int chatId,
+                               final int messageId,
+                               final long expiresMs,
+                               final AtomicBoolean stop) {
         while (true) {
             final AiChatMessage message = find(chatId, messageId).orElse(null);
             final ElicitationRecord record = message != null
@@ -184,7 +190,8 @@ public class McpElicitations {
                 default:
                     break;
             }
-            final boolean stopped = runManager.isStopRequested(chatId);
+            // Stopped, including when the run has given up on the tool call and ended.
+            final boolean stopped = stop.get();
             if (stopped || System.currentTimeMillis() > expiresMs) {
                 final Status status = stopped
                         ? Status.CANCELLED

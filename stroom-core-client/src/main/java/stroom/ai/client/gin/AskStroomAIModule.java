@@ -40,9 +40,6 @@ import stroom.ai.client.AskStroomAiViewImpl;
 import stroom.ai.client.DownloadChatPresenter;
 import stroom.ai.client.DownloadChatPresenter.DownloadChatView;
 import stroom.ai.client.DownloadChatViewImpl;
-import stroom.ai.client.McpElicitationPresenter;
-import stroom.ai.client.McpElicitationPresenter.McpElicitationView;
-import stroom.ai.client.McpElicitationViewImpl;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
@@ -83,9 +80,5 @@ public class AskStroomAIModule extends AbstractPresenterModule {
                 AiToolApprovalsPresenter.class,
                 AiToolApprovalsView.class,
                 AiToolApprovalsViewImpl.class);
-        bindPresenterWidget(
-                McpElicitationPresenter.class,
-                McpElicitationView.class,
-                McpElicitationViewImpl.class);
     }
 }
