@@ -156,6 +156,15 @@ _Steps for you_ card. The model can neither make nor click one.
   words (12 by default; a longer reply is cut to that many). Titles are cut short with an ellipsis only where
   they would not fit on one line. Only the user's questions
   are sent. Once the user renames a chat, it is no longer named automatically; `/clear` lets it be again.
+* After an answer, up to three things the user might ask next are offered as links just above the input;
+  clicking one sends it. They come from one small call to the chat's model, given only the question and the
+  start of the answer, and are kept (as a `SUGGESTIONS` message, never shown in the conversation or sent to
+  the model) so they survive a refresh. None are offered while the chat is working, once the user asks
+  something else, or after a turn in which the agent asked the user for something (a form, an approval, or
+  steps to carry out). `stroom.ai.suggestFollowUps: false` turns them off.
+* A message sent just after an answer appears, while the run is still finishing (e.g. naming the chat), is
+  answered as the next question in the same run, rather than being taken as steering a run that has
+  already answered.
 * The prompts MCP servers offer are slash commands too, e.g. `/onboard_data_source feed=ACME`.
   The filled-in prompt is put in the input box for the user to check and send.
 * A link in the chat to a Stroom document (`?action=open-doc&docType=…&docUuid=…`, as FastMCP returns) opens
