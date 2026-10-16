@@ -118,7 +118,7 @@ public final class ManageGlobalPropertyEditPresenter
                 SvgImage.INFO, "Show Cluster Values (all nodes have the same effective value)",
                 this::onOpenClusterValues);
         this.dataTypeHelpButton = view.getDataTypeToolbar().button(
-                SvgImage.HELP, "Help on Data Types", () -> showHelp("Data Types"));
+                SvgImage.HELP, "Help on Data Types (opens in new tab)", () -> showHelp("Data Types"));
 
         this.effectiveValueWarningsButton.setVisible(false);
         this.effectiveValueInfoButton.setVisible(false);

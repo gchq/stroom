@@ -257,6 +257,53 @@ public final class AppShellStories {
                     play.expect(menuItem(screen, "Help")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
+                // A user who may manage nodes, but nothing that the Administration group holds, has
+                // no Administration group. The Node Groups and Processor Profiles plugins added an
+                // empty one, as well as their items in Monitoring
+                .story("MainMenuNoEmptyGroup", context -> render(context, TreeFixtures.fixtureTree(),
+                        routes -> {
+                        }, builder -> builder.appPermissions(AppPermission.MANAGE_NODES_PERMISSION), null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Monitoring")).toBeInTheDocument());
+                    play.expect(menuItem(screen, "Administration")).toBeNull();
+                    play.hover(menuItem(screen, "Monitoring"));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Node Groups")).toBeInTheDocument());
+                    play.expect(menuItem(screen, "Processor Profiles")).toBeInTheDocument();
+                    expectNoProblems(play);
+                })
+                // The Help group's items open pages in a new browser tab, which their names say
+                // (in hidden text, after their visible text)
+                .story("HelpMenu", context -> render(context, TreeFixtures.fixtureTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Help")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "Help"));
+                    final Query help = screen.findByRole("menuitem", "Help (opens in new tab)");
+                    play.expect(help).not().toHaveAttribute("aria-disabled");
+                    play.expect(screen.getByRole("menuitem", "API Specification (opens in new tab)"))
+                            .toBeInTheDocument();
+                    expectNoProblems(play);
+                })
+                // With no help URL configured, the Help group's 'Help is not configured!' is shown
+                // disabled, as other unavailable items are, rather than as an item that does nothing
+                .story("HelpNotConfigured", context -> render(context, TreeFixtures.fixtureTree(),
+                        routes -> {
+                        }, builder -> builder.uiConfig(StartupFixtures.DEFAULT_UI_CONFIG
+                                .replace("\"helpUrl\": \"https://gchq.github.io/stroom-docs/7.13/docs\",", "")),
+                        null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Help")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "Help"));
+                    final Query notConfigured = screen.findByRole("menuitem", "Help is not configured!");
+                    play.expect(notConfigured).toHaveAttribute("aria-disabled", "true");
+                    play.expect(menuItem(screen, "Help is not configured!")).toHaveClass(MENU_ITEM_DISABLED);
+                    expectNoProblems(play);
+                })
                 // The menu shows the keyboard shortcuts, and 'g' then 'u' opens the preferences
                 .story("GotoShortcut", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
@@ -574,13 +621,13 @@ public final class AppShellStories {
                     play.expect(play.findByText("Words", StroomDom.LINK_TAB_LABEL)).toBeInTheDocument();
                     expectNoProblems(play);
                 })
-                // The System root isn't a document: Copy, Move, Rename and Delete are disabled
+                // The System root isn't a document: Copy To..., Move, Rename and Delete are disabled
                 .story("ContextMenuOnSystemRoot", context -> render(context, AppShellFixtures.rootedTree()))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     rightClick(play, navTree(play, "System").getByText("System"));
                     play.expect(screen.findByText("Copy to Clipboard", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
-                    for (final String name : List.of("Copy", "Move", "Rename", "Delete")) {
+                    for (final String name : List.of("Copy To...", "Move", "Rename", "Delete")) {
                         play.waitFor(() -> play.expect(menuItem(screen, name)).toHaveClass(MENU_ITEM_DISABLED));
                     }
                     play.expect(menuItem(screen, "Edit Permissions")).not().toHaveClass(MENU_ITEM_DISABLED);
@@ -831,12 +878,12 @@ public final class AppShellStories {
                             "delete these 2 items"))).toBeNull());
                     expectNoProblems(play);
                 })
-                // Copy of one item: a name box filled with its name, and its folder chosen
+                // Copy To... of one item: a name box filled with its name, and its folder chosen
                 .story("CopyDocument", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     rightClick(play, navTree(play).getByText("Countries"));
-                    play.click(screen.findByText("Copy", StroomDom.MENU_ITEM_TEXT));
+                    play.click(screen.findByText("Copy To...", StroomDom.MENU_ITEM_TEXT));
                     screen.findByText("Copy Countries", StroomDom.DIALOG_TITLE);
                     final Query name = screen.getByLabelText("Name");
                     play.waitFor(() -> play.expect(name).toHaveValue("Countries"));
@@ -874,7 +921,7 @@ public final class AppShellStories {
                     rightClick(play, navTree(play).getByText("Countries"));
                     play.waitFor(() -> play.expect(menuItem(screen, "Delete")).toHaveClass(MENU_ITEM_DISABLED));
                     play.expect(menuItem(screen, "Rename")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Copy")).not().toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Copy To...")).not().toHaveClass(MENU_ITEM_DISABLED);
                     expectNoProblems(play);
                 })
                 // A deep link opens its document at start-up; Alt+W closes it

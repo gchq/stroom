@@ -60,6 +60,8 @@ public final class DocumentationEditorStories {
 
     // Stroom's Ace editor has a text area with the class ace_text-input too
     private static final String ACE_INPUT = ".ace_text-input";
+    // The Help with Documentation button's name, which says that it opens a new browser tab
+    private static final String HELP_BUTTON = "Help with Documentation (opens in new tab)";
 
     private DocumentationEditorStories() {
         // Static utility
@@ -86,10 +88,12 @@ public final class DocumentationEditorStories {
                 })
                 // The markdown Edit Documentation / Help with Documentation buttons are on the
                 // editor's toolbar (HasToolbar); Edit Documentation toggles into the edit view (an
-                // Ace editor) and is marked 'on'
+                // Ace editor) and is marked 'on'. Help opens the docs in a new browser tab, which its
+                // name says
                 .story("EditModeToggle", context -> render(context, false))
                 .withPlay(play -> {
                     final Query edit = play.findByRole("button", "Edit Documentation");
+                    play.expect(play.getByRole("button", HELP_BUTTON)).toBeInTheDocument();
                     // Loads in preview mode (non-blank body): no Ace editor, Edit not pressed
                     play.expect(edit).toHaveAttribute("aria-pressed", "false");
                     play.expect(play.querySelector(ACE_INPUT)).toBeNull();
@@ -105,7 +109,7 @@ public final class DocumentationEditorStories {
                     play.findByRole("button", "Save (read only)");
                     play.waitFor(() -> play.expect(play.querySelector(PREVIEW)).toBeInTheDocument());
                     play.expect(play.queryByRole("button", "Edit Documentation")).toBeNull();
-                    play.expect(play.queryByRole("button", "Help with Documentation")).toBeNull();
+                    play.expect(play.queryByRole("button", HELP_BUTTON)).toBeNull();
                     play.expect(play.getByRole("button", "Save (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);

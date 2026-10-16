@@ -133,8 +133,8 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     /**
      * Button to view stuff
      */
-    private final ToolbarButton viewButton = toolbar.button(SvgImage.EYE, "View Selected Asset in Browser",
-            this::onViewAsset);
+    private final ToolbarButton viewButton = toolbar.button(SvgImage.EYE,
+            "View Selected Asset in Browser (opens in new tab)", this::onViewAsset);
 
     /**
      * Dialog that appears when user wants to upload a file

@@ -195,6 +195,9 @@
   "app-main-annotationeditor--entry-actions": [
     "label"
   ],
+  "app-main-annotationeditor--entry-actions-by-keyboard": [
+    "label"
+  ],
   "app-main-annotationeditor--failed-comment-change-keeps-dialog-usable": [
     "label"
   ],
@@ -277,6 +280,12 @@
   "app-main-appshell--goto-shortcut": [
     "button-name"
   ],
+  "app-main-appshell--help-menu": [
+    "button-name"
+  ],
+  "app-main-appshell--help-not-configured": [
+    "button-name"
+  ],
   "app-main-appshell--info-dialog": [
     "button-name"
   ],
@@ -287,6 +296,10 @@
     "button-name"
   ],
   "app-main-appshell--main-menu": [
+    "button-name",
+    "target-size"
+  ],
+  "app-main-appshell--main-menu-no-empty-group": [
     "button-name",
     "target-size"
   ],

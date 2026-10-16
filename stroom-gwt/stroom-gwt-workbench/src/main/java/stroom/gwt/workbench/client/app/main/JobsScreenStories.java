@@ -160,6 +160,8 @@ public final class JobsScreenStories {
                     final Play screen = play.screen();
                     play.findByText("Data Retention");
                     play.findByText("XX Processor");
+                    // A job's help opens the docs in a new browser tab, which its name says
+                    play.expect(play.getAllByTitle("Help (opens in new tab)").count()).toBeGreaterThanOrEqual(1);
                     // Select the job: the bottom per-node grid loads
                     play.click(play.getByText("Data Retention"));
                     play.findByText("node1");
@@ -248,9 +250,11 @@ public final class JobsScreenStories {
                     // button, named for what it opens, runs its command
                     play.click(play.getByRole("button", OPEN_NODE1));
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_NODE)).toHaveBeenCalledWith("node1"));
-                    // The row's action menu: GWT's buildActionMenu yields four items in this order
+                    // The row's action menu: GWT's buildActionMenu yields four items in this order.
+                    // The menu is named for its job and node, and takes the focus
                     play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(0));
-                    play.expect(screen.findByText("Edit Schedule")).toBeInTheDocument();
+                    screen.findByRole("menu", "Actions for job 'Data Retention' on node 'node1'");
+                    play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Edit Schedule")).toHaveFocus());
                     play.expect(screen.getByText("Run Job on 'node1' Now")).toBeInTheDocument();
                     play.click(screen.findByText("Show in Server Tasks (node1)"));
                     // The spy records OpenTaskManagerEvent's node and task names;

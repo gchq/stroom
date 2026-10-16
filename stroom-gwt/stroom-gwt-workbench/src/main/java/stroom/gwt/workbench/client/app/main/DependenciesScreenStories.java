@@ -30,6 +30,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -97,8 +98,10 @@ public final class DependenciesScreenStories {
                     play.findByText("Alpha XSLT");
                     // The action buttons: [row1 From, row1 To, row2 From, row2 To]. Open row1's To
                     play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(1));
-                    // All five GWT items are present
-                    screen.findByText("Show Info");
+                    // The menu is named for its document, and takes the focus. All five GWT items
+                    // are present
+                    screen.findByRole("menu", TextMatch.regex("^Actions for .+ 'Alpha XSLT'$"));
+                    play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Show Info")).toHaveFocus());
                     screen.findByText("Locate in Explorer");
                     screen.findByText("Show Dependants");
                     play.expect(screen.getByText("Delete")).toBeInTheDocument();

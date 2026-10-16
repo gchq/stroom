@@ -111,6 +111,15 @@ public final class NewTabLink {
         anchor.setHTML(content(text));
     }
 
+    /// The visually hidden hint on its own, " (opens in new tab)" in the `sr-only` class, for
+    /// content that opens a new browser tab without being a link, e.g. a menu item. Put it at the
+    /// end of the content that names the control.
+    ///
+    /// @return The hint as HTML.
+    public static SafeHtml hiddenHint() {
+        return SafeHtmlUtils.fromSafeConstant(HIDDEN_HINT_HTML);
+    }
+
     /// A name for a control that opens a page in a new browser tab, e.g. a button's title, as
     /// "Help on Data Types (opens in new tab)".
     ///

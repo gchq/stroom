@@ -47,12 +47,11 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TokenError;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -85,15 +84,13 @@ public class DependenciesPresenter
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
     private Consumer<String> filterErrorConsumer;
     private final MyDataGrid<Dependency> dataGrid;
-    private final MenuPresenter menuPresenter;
 
     private Set<String> openableTypes = new HashSet<>();
 
     @Inject
     public DependenciesPresenter(final EventBus eventBus,
                                  final PagerView view,
-                                 final RestFactory restFactory,
-                                 final MenuPresenter menuPresenter) {
+                                 final RestFactory restFactory) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this, 100);
@@ -131,7 +128,6 @@ public class DependenciesPresenter
             }
         };
         dataProvider.addDataDisplay(dataGrid);
-        this.menuPresenter = menuPresenter;
         initColumns();
     }
 
@@ -219,14 +215,24 @@ public class DependenciesPresenter
         dataGrid.addColumn(actionColumn, name, width);
     }
 
+    // Shown as Stroom's other menus are, so that it is named and takes the focus
     private void showActionMenu(final DocRef docRef, final NativeEvent event) {
-
         final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
-        menuPresenter.setData(buildActionMenu(docRef));
-        ShowPopupEvent.builder(menuPresenter)
-                .popupType(PopupType.POPUP)
+        final Element opener = Element.is(event.getEventTarget())
+                ? Element.as(event.getEventTarget())
+                : null;
+        ShowMenuEvent.builder()
+                .name("Actions for " + getDisplayType(docRef) + " '" + docRef.getName() + "'")
+                .items(buildActionMenu(docRef))
                 .popupPosition(popupPosition)
-                .fire();
+                .opener(opener)
+                .fire(this);
+    }
+
+    // A document type as users see it, e.g. 'XSLT Translation'
+    private static String getDisplayType(final DocRef docRef) {
+        final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+        return NullSafe.getOrElse(documentType, DocumentType::getDisplayType, docRef.getType());
     }
 
     private List<Item> buildActionMenu(final DocRef docRef) {

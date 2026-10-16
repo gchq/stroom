@@ -1001,6 +1001,35 @@ These were found by the review and fixed in the same change:
   arrow keys now stop on disabled items, but Enter, Space, a click and Arrow Right do nothing on
   them, and moving onto one closes the sub menu the previous item opened
   (`widgets-menu-menupanel--keyboard`, `widgets-menu-menupanel--submenus`).
+* **Menus that were empty, unnamed, opened twice, mouse only or unclear**:
+  * A user who could manage nodes but nothing in Administration saw an empty Administration
+    group: `NodeGroupsPlugin` and `ProcessorProfilePlugin` added the group, though their items go
+    in Monitoring. They no longer add it, and `MenuItems` leaves out any group with nothing in it
+    (`app-main-appshell--main-menu-no-empty-group`).
+  * The Help group's 'Help is not configured!' was an enabled item that did nothing; it is now
+    disabled, as other unavailable items are (`app-main-appshell--help-not-configured`).
+  * A right click on a feed in a grid opened `FeedRefCell`'s own menu and then the grid's, which
+    replaced it, so the cell's Open Feed and Copy Feed Details were lost. The cell now gives its
+    items to the grid's menu, as `DocRefCell` does (`widgets-cell-renderers-feedrefcell--context-menu`).
+  * The Jobs and Dependencies screens' row action menus were shown as plain popups, so they had no
+    name and the focus stayed behind; they are now shown as other menus are, named for their row,
+    with the focus in the menu (`app-main-jobsscreen--cross-navigation`,
+    `app-main-dependenciesscreen--action-menu`). A row's "Actions..." menu given no name is named
+    "Actions for row N" (`widgets-actionmenucell--actions`).
+  * An annotation history entry's menu opened only on a mouse press. Its actions icon is now a
+    button named for the entry, which opens the menu with Enter, Space, Shift+F10 or the context
+    menu key (`app-main-annotationeditor--entry-actions-by-keyboard`). The floor map editor's
+    canvas also opens its menu with Shift+F10 and the context menu key, as well as Enter and Space
+    (no story: the floor map has none).
+  * The code editor's options read "Wrap Lines (OFF)"; they are now check items
+    (`menuitemcheckbox`, `aria-checked`) with a tick while on, and no "(ON)" or "(OFF)"
+    (`CheckMenuItem`, `widgets-editors-viewers-aceeditorfeatures--context-menu`).
+  * The explorer's 'Copy', which opens a dialog to choose where to copy to, is 'Copy To...'.
+  * Menu items and buttons that open a new browser tab didn't say so: the Help group's Help and API
+    Specification end their names with the hidden text " (opens in new tab)"
+    (`app-main-appshell--help-menu`), and the titles of Help with Documentation, Help on Data Types,
+    a job's Help and View Selected Asset in Browser end with " (opens in new tab)"
+    (`app-editors-documentationeditor--edit-mode-toggle`, `app-main-jobsscreen--job-schedule`).
 * **Tick box labels and help**: a tick box had either a bold label above it or a label beside it,
   and a beside label's help went on an empty line above the box, where it looked like the help of
   the field before (e.g. Follow Redirects above Cookies Enabled). Every tick box now has its label

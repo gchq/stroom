@@ -197,22 +197,6 @@
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
 }
 
-.code-editor-menu-option--on {
-  color: var(--code-editor-menu-option__color--on);
-}
-
-.cellTableSelectedRowCell .code-editor-menu-option--on {
-  color: var(--code-editor-menu-option__color--on--selected);
-}
-
-.code-editor-menu-option--off {
-  color: var(--code-editor-menu-option__color--off);
-}
-
-.cellTableSelectedRowCell .code-editor-menu-option--off {
-  color: var(--code-editor-menu-option__color--off--selected);
-}
-
 /* The overview bar, its markers and their indicator popup */
 
 .code-editor-indicator {

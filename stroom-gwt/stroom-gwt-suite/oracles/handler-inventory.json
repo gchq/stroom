@@ -1,15 +1,15 @@
 {
  "generated": "2026-10-13T11:55:07.970Z",
- "declared": 1547,
- "exercised": 824,
+ "declared": 1546,
+ "exercised": 823,
  "presenters": {
   "declared": 804,
   "exercised": 502
  },
  "byKind": {
   "command": {
-   "declared": 214,
-   "exercised": 137
+   "declared": 213,
+   "exercised": 136
   },
   "ok": {
    "declared": 98,
@@ -2624,7 +2624,7 @@
    "classKind": "presenter",
    "kind": "click",
    "receiver": "dataTypeHelpButton",
-   "label": "Help on Data Types",
+   "label": "Help on Data Types (opens in new tab)",
    "line": 126,
    "exercised": true,
    "join": "attributed",
@@ -5546,21 +5546,6 @@
    "classKind": "widget",
    "kind": "command",
    "receiver": "menu item",
-   "label": "Copy",
-   "line": 139,
-   "exercised": true,
-   "join": "attributed",
-   "outcomes": [
-    "dialog",
-    "menu",
-    "nothing"
-   ]
-  },
-  {
-   "class": "FeedRefCell",
-   "classKind": "widget",
-   "kind": "command",
-   "receiver": "menu item",
    "label": "Name",
    "line": 269,
    "exercised": true,
@@ -6716,7 +6701,7 @@
    "classKind": "widget",
    "kind": "command",
    "receiver": "menu item",
-   "label": "Copy",
+   "label": "Copy To...",
    "line": 1664,
    "exercised": true,
    "join": "attributed",
@@ -7061,7 +7046,7 @@
    "classKind": "presenter",
    "kind": "click",
    "receiver": "helpButton",
-   "label": "Help with Documentation",
+   "label": "Help with Documentation (opens in new tab)",
    "line": 121,
    "exercised": true,
    "join": "attributed",
@@ -16351,7 +16336,7 @@
    "classKind": "presenter",
    "kind": "click",
    "receiver": "viewButton",
-   "label": "View Selected Asset in Browser",
+   "label": "View Selected Asset in Browser (opens in new tab)",
    "line": 214,
    "exercised": true,
    "join": "attributed",

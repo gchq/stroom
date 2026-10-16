@@ -51,14 +51,14 @@ import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.Column;
 
@@ -77,7 +77,6 @@ public class JobNodeListHelper {
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
     private final SchedulePopup schedulePresenter;
-    private final MenuPresenter menuPresenter;
 
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final TaskMonitorFactory taskMonitorFactory;
@@ -89,7 +88,6 @@ public class JobNodeListHelper {
     public JobNodeListHelper(final DateTimeFormatter dateTimeFormatter,
                              final RestFactory restFactory,
                              final SchedulePopup schedulePresenter,
-                             final MenuPresenter menuPresenter,
                              final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
                              final TaskMonitorFactory taskMonitorFactory,
                              final HasHandlers hasHandlers,
@@ -97,7 +95,6 @@ public class JobNodeListHelper {
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
         this.schedulePresenter = schedulePresenter;
-        this.menuPresenter = menuPresenter;
         this.selectionModel = selectionModel;
         this.taskMonitorFactory = taskMonitorFactory;
         this.hasHandlers = hasHandlers;
@@ -510,18 +507,25 @@ public class JobNodeListHelper {
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder(
                                 Function.identity(),
-                                () -> new ActionCell<JobNodeAndInfo>((jobNodeAndInfo, event) -> {
-                                    selectionModel.setSelected(jobNodeAndInfo);
-                                    final PopupPosition popupPosition = new PopupPosition(
-                                            event.getClientX() + 10, event.getClientY());
-                                    final List<Item> menuItems = buildActionMenu(jobNodeAndInfo);
-                                    menuPresenter.setData(menuItems);
-                                    ShowPopupEvent.builder(menuPresenter)
-                                            .popupType(PopupType.POPUP)
-                                            .popupPosition(popupPosition)
-                                            .fire();
-                                })
+                                () -> new ActionCell<JobNodeAndInfo>(this::showActionMenu)
                         )
                         .build(), "", 40);
+    }
+
+    // Shown as Stroom's other menus are, so that it is named and takes the focus
+    private void showActionMenu(final JobNodeAndInfo jobNodeAndInfo, final NativeEvent event) {
+        selectionModel.setSelected(jobNodeAndInfo);
+        final PopupPosition popupPosition = new PopupPosition(
+                event.getClientX() + 10, event.getClientY());
+        final Element opener = Element.is(event.getEventTarget())
+                ? Element.as(event.getEventTarget())
+                : null;
+        ShowMenuEvent.builder()
+                .name("Actions for job '" + jobNodeAndInfo.getJobName()
+                      + "' on node '" + jobNodeAndInfo.getNodeName() + "'")
+                .items(buildActionMenu(jobNodeAndInfo))
+                .popupPosition(popupPosition)
+                .opener(opener)
+                .fire(hasHandlers);
     }
 }

@@ -566,7 +566,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -731,7 +731,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -1091,7 +1091,7 @@
     "LinkedEventPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation",
+    "Help with Documentation (opens in new tab)",
     "Add Annotation Link",
     "Remove Annotation Link",
     "Add Event Link",
@@ -1452,7 +1452,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [
@@ -1613,7 +1613,7 @@
    "viaChildren": [
     "Show Cluster Values",
     "Show Cluster Values (all nodes have the same effective value)",
-    "Help on Data Types",
+    "Help on Data Types (opens in new tab)",
     "OK",
     "Cancel"
    ],
@@ -1664,7 +1664,7 @@
      "enabled": true
     },
     {
-     "title": "Help on Data Types",
+     "title": "Help on Data Types (opens in new tab)",
      "enabled": true
     },
     {
@@ -2136,7 +2136,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -4145,7 +4145,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -4228,7 +4228,7 @@
     "WordListPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [
@@ -4356,7 +4356,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [
@@ -4495,7 +4495,7 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Help with Documentation",
+     "title": "Help with Documentation (opens in new tab)",
      "enabled": true
     }
    ],
@@ -4512,7 +4512,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -4934,7 +4934,7 @@
     "Filter Streams",
     "Restore Selected Related Streams",
     "Restore Selected Streams",
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -5097,7 +5097,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -5518,7 +5518,7 @@
     "Delete Selected Index Fields",
     "Delete Selected Index Shards",
     "Flush Selected Index Shards",
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -5800,7 +5800,7 @@
    ],
    "buttons": [
     {
-     "title": "Help",
+     "title": "Help (opens in new tab)",
      "enabled": true
     }
    ],
@@ -5848,7 +5848,7 @@
     "JobNodeListPresenter"
    ],
    "viaChildren": [
-    "Help"
+    "Help (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -5891,7 +5891,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [
@@ -6259,7 +6259,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6520,7 +6520,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6617,7 +6617,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6739,7 +6739,7 @@
     "Upload Data to Feed",
     "Restore Selected Related Streams",
     "Restore Selected Streams",
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6771,7 +6771,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6802,7 +6802,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -7215,7 +7215,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -7800,7 +7800,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -8554,7 +8554,7 @@
     "New Field",
     "Edit Selected Field",
     "Delete Selected Fields",
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [
@@ -8746,7 +8746,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -8840,7 +8840,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -8888,7 +8888,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -9025,7 +9025,7 @@
     "Edit Selected Index Field",
     "Delete Selected Expression Item",
     "Delete Selected Index Field",
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -10510,7 +10510,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -10683,7 +10683,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -10756,7 +10756,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [
@@ -11088,7 +11088,7 @@
     "Remove Selected Roll-up Permutation",
     "Remove Selected Statistic Field",
     "Auto-generate Roll-up Permutations",
-    "Help with Documentation"
+    "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -11563,7 +11563,7 @@
     "Add selected tags from 'All Known Tags'",
     "Document Tags - Click for help",
     "OK (illegal text in \"Add/Filter Tag(s)\")",
-    "Copy",
+    "Copy To...",
     "OK (illegal text in \"Name\")",
     "OK (cleared \"Name\")",
     "Copy to Clipboard",
@@ -11587,22 +11587,21 @@
     "right-click a grid row",
     "typed in the editor \"Dashboard\"",
     "right-click the editor",
-    "Syntax Highlighting (ON)",
-    "Line Numbers (ON)",
-    "Wrap Lines (OFF)",
-    "Show Indent Guides (ON)",
-    "Show Hidden Characters (OFF)",
-    "Highlight Active Line (ON)",
-    "Vim Key Bindings (OFF)",
-    "Basic Auto Completion (ON)",
-    "Snippets (ON)",
-    "Live Auto Completion (OFF)",
+    "Syntax Highlighting",
+    "Line Numbers",
+    "Wrap Lines",
+    "Show Indent Guides",
+    "Show Hidden Characters",
+    "Highlight Active Line",
+    "Vim Key Bindings",
+    "Basic Auto Completion",
+    "Snippets",
+    "Live Auto Completion",
     "Format",
     "Add to Annotation",
     "Disable",
     "Add Term",
     "Add Operator",
-    "Wrap Lines (ON)",
     "User ID - Click for help",
     "Email - Click for help",
     "First Name - Click for help",

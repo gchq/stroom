@@ -385,6 +385,8 @@
     height: 0.8rem !important;
 }
 
+/* An entry's actions button also shows while it has the focus */
+.annotationHistoryActions:focus,
 .annotationHistoryItem:hover .setting-block-icon,
 .annotationHistoryGroupHeader:hover .setting-block-icon,
 .annotationHistoryCommentHeader:hover .setting-block-icon,

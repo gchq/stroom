@@ -1729,7 +1729,8 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy")
+                // Opens a dialog to choose the folder to copy to
+                .text("Copy To...")
                 .enabled(enabled)
                 .command(command)
                 .build();

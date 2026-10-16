@@ -47,6 +47,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private static final int SUBMENU_SHOW_DELAY_MILLIS = 400;
     private static final String ROLE = "role";
     private static final String ROLE_NONE = "none";
+    private static final String ARIA_CHECKED = "aria-checked";
     private static final String ARIA_DISABLED = "aria-disabled";
     private static final String ARIA_HAS_POPUP = "aria-haspopup";
     private static final String ARIA_LABEL = "aria-label";
@@ -138,7 +139,14 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     private static void setItemAria(final Element element, final Item item) {
         if (item instanceof final MenuItem menuItem) {
-            element.setAttribute(ROLE, "menuitem");
+            if (item instanceof final CheckMenuItem checkMenuItem) {
+                // A setting that is on or off, read as a ticked or unticked check box
+                element.setAttribute(ROLE, "menuitemcheckbox");
+                element.setAttribute(ARIA_CHECKED, String.valueOf(checkMenuItem.isChecked()));
+            } else {
+                element.setAttribute(ROLE, "menuitem");
+                element.removeAttribute(ARIA_CHECKED);
+            }
             if (menuItem.isEnabled()) {
                 element.removeAttribute(ARIA_DISABLED);
             } else {

@@ -41,7 +41,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ToolbarToggleButton;
-import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -81,7 +80,6 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
                                 final PagerViewWithHeading view,
                                 final RestFactory restFactory,
                                 final SchedulePopup schedulePresenter,
-                                final MenuPresenter menuPresenter,
                                 final DateTimeFormatter dateTimeFormatter,
                                 final NodeClient nodeClient) {
         super(eventBus, view);
@@ -96,7 +94,6 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
                 dateTimeFormatter,
                 restFactory,
                 schedulePresenter,
-                menuPresenter,
                 selectionModel,
                 getView(),
                 NodeJobListPresenter.this,

@@ -56,7 +56,8 @@ public final class ActionMenuCellStories {
                 .layout(StoryLayout.CENTERED)
                 // No arg types: the items are functions, the title is ActionMenuCell's tooltip
                 // extractor (left as Stroom's default, "Actions...") and the cell has no enabled state
-                // The "Actions..." ellipsis opens the row menu on a left-click
+                // The "Actions..." ellipsis opens the row menu on a left-click. Given no name, the
+                // menu is named for its row
                 .story("Actions", context -> {
                     final Spy clicked = context.fn(CLICKED);
                     final List<Item> items = new ArrayList<>();
@@ -69,6 +70,7 @@ public final class ActionMenuCellStories {
                     final Play body = play.screen();
                     play.click(play.getByTitle("Actions..."));
                     play.waitFor(() -> play.expect(body.getByText("Duplicate Rule")).toBeVisible());
+                    play.expect(body.getByRole("menu", "Actions for row 1")).toBeInTheDocument();
                     play.expect(body.getByText("Add Rule Above")).toBeVisible();
 
                     play.click(body.getByText("Duplicate Rule"));

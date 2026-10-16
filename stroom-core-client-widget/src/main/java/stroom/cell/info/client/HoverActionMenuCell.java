@@ -80,7 +80,8 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
     ///                          clicked (see the other constructor).
     /// @param menuNameExtractor Function to supply the menu's accessible name for a value as plain
     ///                          text (see [ShowMenuEvent.Builder#name]), or null to name it
-    ///                          "Actions for '<cell text>'".
+    ///                          "Actions for '<cell text>'" (or "Actions for row N" if the cell
+    ///                          has no text). A function giving null also names it by its row.
     /// @param hasHandlers       What the menu's [ShowMenuEvent] is fired on.
     public HoverActionMenuCell(final Function<T, String> cellTextExtractor,
                                final Function<T, List<Item>> menuCreator,
@@ -134,7 +135,7 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                     ((MenuItem) items.get(0)).getCommand().execute();
                 } else {
                     // Build the menu popup
-                    showActionMenu(value, event);
+                    showActionMenu(context, value, event);
                 }
             }
         }
@@ -143,7 +144,7 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
         }
     }
 
-    private void showActionMenu(final T value, final NativeEvent event) {
+    private void showActionMenu(final Context context, final T value, final NativeEvent event) {
         Objects.requireNonNull(menuCreator);
         final List<Item> items = menuCreator.apply(value);
         final PopupPosition popupPosition = new PopupPosition(
@@ -151,20 +152,23 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                 event.getClientY());
         ShowMenuEvent
                 .builder()
-                .name(getMenuName(value))
+                .name(getMenuName(context, value))
                 .items(items)
                 .popupPosition(popupPosition)
                 .fire(hasHandlers);
     }
 
-    private String getMenuName(final T value) {
+    // The name given for the value, else one from the cell's text, else "Actions for row N"
+    private String getMenuName(final Context context, final T value) {
         if (menuNameExtractor != null) {
-            return menuNameExtractor.apply(value);
+            return ActionMenuCell.getMenuName(menuNameExtractor.apply(value), context);
         }
         final String cellText = NullSafe.get(cellTextExtractor, func -> func.apply(value));
-        return NullSafe.isBlankString(cellText)
-                ? "Actions"
-                : "Actions for '" + cellText + "'";
+        return ActionMenuCell.getMenuName(
+                NullSafe.isBlankString(cellText)
+                        ? null
+                        : "Actions for '" + cellText + "'",
+                context);
     }
 
     @Override

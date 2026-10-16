@@ -109,7 +109,7 @@ public class MarkdownEditPresenter
             }
             editModeButton = toolbar.toggle(SvgImage.EDIT, "Edit Documentation", pressed -> toggleEditMode());
             editModeButton.setPressed(editMode);
-            toolbar.button(SvgImage.HELP, "Help with Documentation", this::showHelp);
+            toolbar.button(SvgImage.HELP, "Help with Documentation (opens in new tab)", this::showHelp);
         }
         return toolbar;
     }

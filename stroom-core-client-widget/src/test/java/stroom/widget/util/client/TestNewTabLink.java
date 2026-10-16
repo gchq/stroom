@@ -72,6 +72,12 @@ class TestNewTabLink {
     }
 
     @Test
+    void hiddenHintIsTheHintAlone() {
+        assertThat(NewTabLink.hiddenHint().asString())
+                .isEqualTo(HIDDEN_HINT);
+    }
+
+    @Test
     void nameWithHintAddsTheHintOnce() {
         assertThat(NewTabLink.nameWithHint("Help on Data Types"))
                 .isEqualTo("Help on Data Types (opens in new tab)");

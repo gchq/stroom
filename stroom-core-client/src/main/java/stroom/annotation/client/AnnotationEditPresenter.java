@@ -68,10 +68,13 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -79,8 +82,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
@@ -108,6 +111,9 @@ public class AnnotationEditPresenter
     private static final String ENTRY_ID_ATTRIBUTE = "entryId";
     private static final String ENTRY_TYPE_ATTRIBUTE = "entryType";
     private static final String GROUP_ID_ATTRIBUTE = "groupId";
+    // The class of an entry's actions button, which opens the entry's menu
+    private static final String ENTRY_ACTIONS_CLASS = "annotationHistoryActions";
+    private static final String ARIA_LABEL_ATTRIBUTE = "aria-label";
 
     private static final SafeHtml ELLIPSES = SafeHtmlUtils.fromTrustedString(
             "<div class=\"setting-block-icon icon-colour__grey svgIcon\">" +
@@ -538,12 +544,18 @@ public class AnnotationEditPresenter
 
             final HTML panel = new HTML(html.toSafeHtml());
             panel.setStyleName("dock-max annotationHistoryOuter");
-            // Enter on an event or annotation reference follows it, as a mouse press does
+            // Enter on an event or annotation reference follows it, as a mouse press does. Enter,
+            // Space, Shift+F10 or the context menu key on an entry's actions button opens the
+            // entry's menu, as pressing the entry does
             panel.addDomHandler(e -> {
                 final Element target = e.getNativeEvent().getEventTarget().cast();
                 if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && target.hasTagName("u")) {
                     e.preventDefault();
                     followLink(target);
+                } else if (ElementUtil.hasClassName(target, ENTRY_ACTIONS_CLASS) && isMenuKey(e)) {
+                    e.preventDefault();
+                    showEntryEditMenu(target, new PopupPosition(
+                            new Rect(target).grow(3), PopupLocation.BELOW));
                 }
             }, KeyDownEvent.getType());
             panel.addMouseDownHandler(e -> {
@@ -578,9 +590,7 @@ public class AnnotationEditPresenter
                         }
                         updateHistory();
                     } else if (NullSafe.isNonBlankString(id) && NullSafe.isNonBlankString(type)) {
-                        final AnnotationEntryType entryType =
-                                AnnotationEntryType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(Byte.parseByte(type));
-                        showEntryEditMenu(e, Long.parseLong(id), entryType);
+                        showEntryEditMenu(target, new PopupPosition(e.getClientX(), e.getClientY()));
                     }
                 }
             });
@@ -619,9 +629,41 @@ public class AnnotationEditPresenter
         }
     }
 
-    private void showEntryEditMenu(final MouseDownEvent event,
-                                   final long id,
-                                   final AnnotationEntryType entryType) {
+    // Whether a key opens an entry's menu from its actions button: Enter or Space, as for any
+    // button, or Shift+F10 or the context menu key, as for any context menu
+    private static boolean isMenuKey(final KeyDownEvent event) {
+        final int keyCode = event.getNativeKeyCode();
+        return keyCode == KeyCodes.KEY_ENTER
+               || keyCode == KeyCodes.KEY_SPACE
+               || keyCode == KeyCodes.KEY_CONTEXT_MENU
+               || (keyCode == KeyCodes.KEY_F10 && event.isShiftKeyDown());
+    }
+
+    // Shows the menu of the history entry that an element (the entry, or something in it) is in
+    private void showEntryEditMenu(final Element element, final PopupPosition popupPosition) {
+        Element entryElement = element;
+        while (entryElement != null && NullSafe.isBlankString(entryElement.getAttribute(ENTRY_TYPE_ATTRIBUTE))) {
+            entryElement = entryElement.getParentElement();
+        }
+        if (entryElement == null || NullSafe.isBlankString(entryElement.getAttribute(ENTRY_ID_ATTRIBUTE))) {
+            return;
+        }
+        final long id = Long.parseLong(entryElement.getAttribute(ENTRY_ID_ATTRIBUTE));
+        final AnnotationEntryType entryType = AnnotationEntryType.PRIMITIVE_VALUE_CONVERTER
+                .fromPrimitiveValue(Byte.parseByte(entryElement.getAttribute(ENTRY_TYPE_ATTRIBUTE)));
+        // The entry's actions button names the menu, and is what the menu was opened from
+        final Element actionsButton = ElementUtil.findChild(entryElement, ENTRY_ACTIONS_CLASS);
+        final String name = actionsButton != null
+                ? actionsButton.getAttribute(ARIA_LABEL_ATTRIBUTE)
+                : "Actions for history entry '" + entryType.getDisplayValue() + "'";
+        showEntryEditMenu(id, entryType, name, actionsButton, popupPosition);
+    }
+
+    private void showEntryEditMenu(final long id,
+                                   final AnnotationEntryType entryType,
+                                   final String name,
+                                   final Element opener,
+                                   final PopupPosition popupPosition) {
         // A read-only annotation's entries can't be edited or deleted
         if (isReadOnly()) {
             return;
@@ -643,12 +685,12 @@ public class AnnotationEditPresenter
                 .build();
         menuItems.add(deleteItem);
 
-        final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
         ShowMenuEvent
                 .builder()
-                .name("Actions for history entry '" + entryType.getDisplayValue() + "'")
+                .name(name)
                 .items(menuItems)
                 .popupPosition(popupPosition)
+                .opener(opener)
                 .fire(this);
     }
 
@@ -831,6 +873,25 @@ public class AnnotationEditPresenter
         return userRef.toDisplayString();
     }
 
+    // An entry's actions icon. While the entry's menu can be used (the annotation isn't read only)
+    // it is a button that opens the menu, named for the entry, so that the menu can be reached
+    // from the keyboard as well as by pressing the entry
+    private SafeHtml getEntryActions(final AnnotationEntry entry) {
+        if (isReadOnly()) {
+            return ELLIPSES;
+        }
+        final String name = "Actions for history entry '" + entry.getEntryType().getDisplayValue()
+                            + "' by " + getUserName(entry.getEntryUser());
+        final String startTag = "<div class=\"setting-block-icon icon-colour__grey svgIcon "
+                                + ENTRY_ACTIONS_CLASS + "\" role=\"button\" tabindex=\"0\" "
+                                + "aria-haspopup=\"menu\" aria-expanded=\"false\" aria-label=\"";
+        return new SafeHtmlBuilder()
+                .append(SafeHtmlUtils.fromTrustedString(startTag))
+                .appendEscaped(name)
+                .append(SafeHtmlUtils.fromTrustedString("\">" + SvgImage.ELLIPSES_VERTICAL.getSvg() + "</div>"))
+                .toSafeHtml();
+    }
+
     private Attribute[] getEntryIdAttributes(final Attribute className,
                                              final AnnotationEntry entry) {
         return new Attribute[]{
@@ -962,7 +1023,7 @@ public class AnnotationEditPresenter
                         }, HISTORY_LABEL);
 
                         // Add change icon.
-                        header.append(ELLIPSES);
+                        header.append(getEntryActions(entry));
 
                     }, getEntryIdAttributes(HISTORY_COMMENT_HEADER, entry));
                     border.div(body -> decorateComment(body, entryUiValue), HISTORY_COMMENT_BODY);
@@ -995,7 +1056,7 @@ public class AnnotationEditPresenter
                     }, HISTORY_LABEL);
 
                     // Add change icon.
-                    item.append(ELLIPSES);
+                    item.append(getEntryActions(entry));
                 }, getEntryIdAttributes(HISTORY_ITEM, entry));
 
                 added = true;
@@ -1022,7 +1083,7 @@ public class AnnotationEditPresenter
                             }, HISTORY_LABEL);
 
                             // Add change icon.
-                            header.append(ELLIPSES);
+                            header.append(getEntryActions(entry));
 
                         }, getEntryIdAttributes(HISTORY_COMMENT_HEADER, entry));
 
@@ -1074,7 +1135,7 @@ public class AnnotationEditPresenter
                         }, HISTORY_LABEL);
 
                         // Add change icon.
-                        item.append(ELLIPSES);
+                        item.append(getEntryActions(entry));
                     }, getEntryIdAttributes(HISTORY_ITEM, entry));
                     added = true;
                 }
@@ -1102,7 +1163,7 @@ public class AnnotationEditPresenter
                         }, HISTORY_LABEL);
 
                         // Add change icon.
-                        item.append(ELLIPSES);
+                        item.append(getEntryActions(entry));
                     }, getEntryIdAttributes(HISTORY_ITEM, entry));
                     added = true;
                 }
@@ -1144,7 +1205,7 @@ public class AnnotationEditPresenter
                     }, HISTORY_LABEL);
 
                     // Add change icon.
-                    item.append(ELLIPSES);
+                    item.append(getEntryActions(entry));
                 }, getEntryIdAttributes(HISTORY_ITEM, entry));
                 added = true;
             }

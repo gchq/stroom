@@ -2053,10 +2053,11 @@ button.main-menu svg {
     color: var(--text-color);
 }
 
-/* Keyboard focus on a button or link in a table cell, or an annotation's event or annotation
-   reference */
+/* Keyboard focus on a button or link in a table cell, an annotation's event or annotation
+   reference, or an annotation history entry's actions button */
 [data-row-action]:focus-visible,
-.annotationLink:focus-visible {
+.annotationLink:focus-visible,
+.annotationHistoryActions:focus-visible {
     outline: none;
     box-shadow: var(--focus-shadow);
     border-radius: .25rem;
