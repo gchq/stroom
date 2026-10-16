@@ -1476,3 +1476,29 @@ mark.ai-chat-list-hit {
     margin-bottom: 10px;
     color: var(--control__text-color--disabled);
 }
+
+/* ---- Smooth expanding and collapsing in the chat ---- */
+
+/* Sections that open and close (activity, reasoning, tool calls, details) slide rather than jump, where the
+   browser supports animating them; elsewhere they open at once. */
+.askStroomAiViewImpl {
+    interpolate-size: allow-keywords;
+}
+
+.askStroomAiViewImpl details::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    opacity: 0;
+    transition: block-size 0.2s ease, opacity 0.2s ease, content-visibility 0.2s allow-discrete;
+}
+
+.askStroomAiViewImpl details[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .askStroomAiViewImpl details::details-content {
+        transition: none;
+    }
+}
