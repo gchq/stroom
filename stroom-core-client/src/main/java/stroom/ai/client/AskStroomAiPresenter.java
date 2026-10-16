@@ -2831,7 +2831,7 @@ public class AskStroomAiPresenter
                 ? "{}"
                 : call.getArguments();
         // The arguments are shown in full, never cut short, so the user sees exactly what will be sent.
-        callDiv.elem(pre -> pre.append(AiToolMessages.prettyJson(arguments)),
+        callDiv.elem(pre -> pre.append(AiToolMessages.prettyArguments(arguments)),
                 SafeHtmlUtils.fromSafeConstant("pre"), Attribute.className("ai-approval-args"));
         callDiv.div(size -> size.append(arguments.length() + " characters of arguments"),
                 Attribute.className("ai-approval-size"));
