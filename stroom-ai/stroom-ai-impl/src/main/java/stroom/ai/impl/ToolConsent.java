@@ -145,7 +145,8 @@ public class ToolConsent {
                 return Verdict.RUN;
             }
         }
-        return Verdict.ask(reason(info), !askAlways, !askAlways && info.claimsReadOnly(), risks);
+        return Verdict.ask(reason(info), cardReason(info), !askAlways, !askAlways && info.claimsReadOnly(),
+                risks);
     }
 
     // True if read-only tools are to ask because the run has read data that could hold planted instructions.
@@ -193,6 +194,20 @@ public class ToolConsent {
         return risks;
     }
 
+    /// @return What the approval card says about why the call needs approval, or null if the card's
+    /// classifications (e.g. "can modify", "destructive") and the trust icon beside the server already say it.
+    private static String cardReason(final McpToolInfo info) {
+        if (info.trusted() && (Boolean.TRUE.equals(info.destructiveHint())
+                               || Boolean.TRUE.equals(info.openWorldHint()))) {
+            return null;
+        }
+        if (info.policy() == McpToolPolicy.ASK_ALWAYS || (info.trusted() && !info.isRisky())) {
+            // Set by an administrator, or because the chat has read data: not shown otherwise.
+            return reason(info);
+        }
+        return null;
+    }
+
     private static String reason(final McpToolInfo info) {
         if (!info.trusted()) {
             return "Its server, " + info.serverKey() + ", is not trusted, so anything it says about the tool cannot "
@@ -223,21 +238,33 @@ public class ToolConsent {
     /// @param risks               Why the call might matter.
     public record Verdict(Kind kind,
                           String reason,
+                          String cardReason,
                           boolean allowForChat,
                           boolean allowServerReadOnly,
                           List<String> risks) {
 
-        public static final Verdict RUN = new Verdict(Kind.RUN, null, false, false, List.of());
+        public static final Verdict RUN = new Verdict(Kind.RUN, null, null, false, false, List.of());
 
         static Verdict ask(final String reason,
                            final boolean allowForChat,
                            final boolean allowServerReadOnly,
                            final List<String> risks) {
-            return new Verdict(Kind.ASK, reason, allowForChat, allowServerReadOnly, risks);
+            return ask(reason, reason, allowForChat, allowServerReadOnly, risks);
+        }
+
+        /// @param reason     Why the call needs approval, e.g. for the log.
+        /// @param cardReason What the approval card says, or null if its classifications and trust icon already
+        ///                   say it.
+        static Verdict ask(final String reason,
+                           final String cardReason,
+                           final boolean allowForChat,
+                           final boolean allowServerReadOnly,
+                           final List<String> risks) {
+            return new Verdict(Kind.ASK, reason, cardReason, allowForChat, allowServerReadOnly, risks);
         }
 
         static Verdict deny(final String reason) {
-            return new Verdict(Kind.DENY, reason, false, false, List.of());
+            return new Verdict(Kind.DENY, reason, reason, false, false, List.of());
         }
     }
 
