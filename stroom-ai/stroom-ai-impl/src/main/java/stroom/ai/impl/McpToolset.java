@@ -171,6 +171,13 @@ public final class McpToolset implements AutoCloseable {
         return tools(Set.of());
     }
 
+    /// @return True if any of the servers is not trusted.
+    public boolean hasUntrustedServer() {
+        return connections.stream()
+                .anyMatch(connection ->
+                        !NullSafe.getOrElse(connection.config(), McpToolServerConfig::isTrusted, false));
+    }
+
     /// Lists every server's tools as the servers give them, including any a tool policy denies, so an
     /// administrator can look through them.
     ///

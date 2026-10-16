@@ -88,8 +88,9 @@ Before a tool runs, Stroom decides whether to ask the user:
 * Built-in tools run without asking.
 * MCP tools on untrusted servers always ask. On trusted servers, read-only tools run without asking, and so
   do tools that modify data but aren't destructive and don't reach outside Stroom, until the run has read
-  data from tools or attached tables that could hold planted instructions; destructive and open-world tools
-  ask. A tool policy can say otherwise.
+  an untrusted MCP server's output, which could hold planted instructions (output from trusted servers,
+  built-in tools and attached tables doesn't count); destructive and open-world tools ask. A tool policy can
+  say otherwise.
 * Approval cards classify each tool (read-only, can modify, destructive, reaches outside Stroom, untrusted
   server, after reading data); each chip's tooltip explains what it means.
 * A trusted server's tool marked `_meta.confirms` (it asks the user itself, through a form, as FastMCP's
@@ -99,7 +100,8 @@ Before a tool runs, Stroom decides whether to ask the user:
   A change to a tool's name or description, or to the server's settings, asks again.
 * _Approve everything_ (per chat: the shield beside the model, or **Tool Approvals**) is off unless
   `allowApproveEverything` is true. The shield is highlighted while it is on. It lets trusted servers'
-  tools that modify data keep running without asking after the run has read data; it never covers
+  tools that modify data keep running without asking after the run has read an untrusted server's output; it
+  never covers
   destructive or open-world tools.
 * If no browser has polled the chat for `unattendedAfter`, the run is unattended: only read-only tools
   run, and anything else waits for the user.

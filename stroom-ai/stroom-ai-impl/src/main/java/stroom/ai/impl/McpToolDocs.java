@@ -77,8 +77,8 @@ final class McpToolDocs {
     private static String policyText(final McpToolPolicy policy) {
         if (policy == null) {
             return "none matches, so on a trusted server it runs without asking unless it is destructive or "
-                   + "reaches outside Stroom (or, if it can modify data, once the chat has read data from tools); "
-                   + "on an untrusted server it always asks";
+                   + "reaches outside Stroom (or, if it can modify data, once the chat has read an untrusted "
+                   + "server's output); on an untrusted server it always asks";
         }
         return switch (policy) {
             case ALLOW -> "Allow (runs without asking)";

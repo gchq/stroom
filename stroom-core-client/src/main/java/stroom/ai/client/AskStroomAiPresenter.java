@@ -3359,7 +3359,7 @@ public class AskStroomAiPresenter
             } else {
                 final String question = "Auto-approve in this chat?\n"
                                         + "Trusted servers' tools that modify data already run without asking, "
-                                        + "until the chat reads data from tools or attached tables.\n"
+                                        + "until the chat reads an untrusted MCP server's output.\n"
                                         + "With auto-approve, they keep running without asking after that.\n"
                                         + "Destructive tools, and ones that reach outside Stroom, still ask.";
                 ConfirmEvent.fire(this, question, ok -> {

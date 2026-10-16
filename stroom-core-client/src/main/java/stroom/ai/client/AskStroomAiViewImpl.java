@@ -403,13 +403,13 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         autoApprove.setStyleName(AUTO_APPROVE_ON_CLASS, on);
         autoApprove.setTitle(on
                 ? "Auto-approve is on.\n"
-                  + "Trusted servers' tools that modify data run without asking, even after this chat has read "
-                  + "data.\n"
+                  + "Trusted servers' tools that modify data run without asking, even after this chat has read an "
+                  + "untrusted MCP server's output.\n"
                   + "Click to turn it off."
                 : allowed
                         ? "Auto-approve.\n"
                           + "Lets trusted servers' tools that modify data run without asking, even after this chat "
-                          + "has read data from tools or attached tables."
+                          + "has read an untrusted MCP server's output."
                         : "Auto-approve isn't allowed by your administrator.");
         autoApprove.setEnabled(on || allowed);
     }
