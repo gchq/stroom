@@ -964,6 +964,12 @@
     border: 1px solid #ed6c02;
     color: #ed6c02;
     white-space: nowrap;
+    cursor: help;
+}
+
+.ai-risk-badge.ai-risk-badge--safe {
+    border-color: var(--control__border-color);
+    color: var(--control__text-color--disabled);
 }
 
 .ai-approval-decision {
