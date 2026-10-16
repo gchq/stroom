@@ -605,30 +605,6 @@
   "widgets-inputs-tickbox--no-label": [
     "label"
   ],
-  "widgets-inputs-valuespinner--arrows-clamp-at-the-boundary": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--basic": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--decimals-and-exponents-are-rejected": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--disabled": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--non-numeric-text-is-rejected": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--out-of-bounds-typed-value-is-rejected": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--step": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--valid-value-commits-as-a-number": [
-    "label"
-  ],
   "widgets-inputs-viewstates--tables-and-editors": [
     "label"
   ],

@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+/* The data grid's spinner (stroom.cell.valuespinner.client.ValueSpinnerCell). The ValueSpinner
+   widget is styled by value-spinner.css. */
+
 .valueSpinner {
 	display: inline-block;
 	position: relative;

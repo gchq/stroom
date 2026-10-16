@@ -123,18 +123,16 @@ public final class OpenAiModelEditorStories {
                 .story("SpinnersAndHelpText", context -> render(context, null, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    // A ValueSpinner's field is a plain text box, with no spinbutton role or
-                    // aria-valuemin/max (see ISSUES.md), so the play checks its value
-                    final Query context = play.within(play.querySelector(MAX_CONTEXT)).getByRole("textbox");
+                    // A ValueSpinner's field is a spin button, with its value and bounds
+                    final Query context = play.within(play.querySelector(MAX_CONTEXT)).getByRole("spinbutton");
                     final Query dimensions = play.within(play.querySelector(EMBEDDING_DIMENSIONS))
-                            .getByRole("textbox");
+                            .getByRole("spinbutton");
                     play.waitFor(() -> play.expect(context).toHaveValue("128000"));
                     play.expect(dimensions).toHaveValue("1536");
-                    // The up arrow increments by one and makes the document dirty.
-                    // The arrow is a div with no button role or name, and steps on its mousedown
+                    // The increase arrow steps by one and makes the document dirty
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
-                    play.click(play.within(play.querySelector(MAX_CONTEXT)).querySelector(".valueSpinner-arrowUp"));
+                    play.click(play.within(play.querySelector(MAX_CONTEXT)).getByTitle("Increase value"));
                     play.waitFor(() -> play.expect(context).toHaveValue("128001"));
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     // Every settings FormGroup has GWT's help text, so a help button

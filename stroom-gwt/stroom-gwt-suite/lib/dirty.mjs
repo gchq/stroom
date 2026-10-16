@@ -149,12 +149,13 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       // A VALUE SPINNER before any text box: its value IS an <input type=text>, but typing into
       // one is the wrong gesture. The box rejects anything non-numeric, so the dirty driver's
       // `${value}x` changed nothing and reported `unchecked` on every spinner it ever met — which
-      // read like a missing handler and is not. The arrow is the gesture (lib/mouse.mjs), and
-      // pressing it fires the same ValueChangeEvent while also exercising `Spinner`'s mousedown.
-      const spin = group.querySelector('.valueSpinner');
-      if (spin && spin.offsetWidth > 0 && !spin.querySelector('[class*=arrowUpDisabled]')) {
-        const up = spin.querySelector('[class*=arrowUp]');
-        const down = spin.querySelector('[class*=arrowDown]');
+      // read like a missing handler and is not. The increase arrow is the gesture (lib/mouse.mjs),
+      // and pressing it fires the same ValueChangeEvent while also exercising its mousedown.
+      const spin = group.querySelector('.value-spinner');
+      const spinInput = spin?.querySelector('input');
+      if (spin && spin.offsetWidth > 0 && spinInput && !spinInput.disabled && !spinInput.readOnly) {
+        const up = spin.querySelector('[title="Increase value"]');
+        const down = spin.querySelector('[title="Decrease value"]');
         if (up) {
           out.push({ label, kind: 'spinner', value: String(spin.querySelector('input')?.value ?? ''),
             ...at(up), down: down ? at(down) : null });

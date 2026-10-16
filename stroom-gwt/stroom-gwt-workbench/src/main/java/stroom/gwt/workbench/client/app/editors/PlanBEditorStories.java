@@ -102,7 +102,7 @@ public final class PlanBEditorStories {
                     play.expect(maxStoreSize(play)).toHaveValue("1G");
                     // Retain For is a group of an amount and its unit, each named
                     final Play retainFor = play.within(play.getByRole("group", "Retain For"));
-                    play.expect(retainFor.getByRole("textbox", "Amount")).toBeInTheDocument();
+                    play.expect(retainFor.getByRole("spinbutton", "Amount")).toBeInTheDocument();
                     play.expect(retainFor.getByRole("combobox", "Unit")).toBeInTheDocument();
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);

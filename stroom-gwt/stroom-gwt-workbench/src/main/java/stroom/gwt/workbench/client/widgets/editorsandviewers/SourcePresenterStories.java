@@ -119,7 +119,7 @@ public final class SourcePresenterStories {
                     final Play dialog = screen.within(screen.findByText("Set Source Range", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));
                     // The range opens as character offsets from 1; a range that ends where it starts
-                    final Query to = dialog.querySelectorAll(".valueSpinner input").nth(1);
+                    final Query to = dialog.querySelectorAll(".value-spinner input").nth(1);
                     play.clear(to);
                     play.type(to, "1");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));

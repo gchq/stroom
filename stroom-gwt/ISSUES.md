@@ -811,12 +811,8 @@ best done in `ShowMenuEvent` with a named opener rather than one place at a time
 
 **Reported.**
 
-* Dashboard table settings: the maximum string field length spinner has no label at all
-  (`BasicTableSettingsViewImpl.ui.xml`).
 * Node: the jobs list's group has no label because its `setLabel` call is commented out
   (`NodeViewImpl`).
-* Time Zone Offset: the hours and minutes spinners share one label (`TimeZoneWidget.ui.xml`, and the
-  time preferences); the minutes spinner is also hidden by a FIXME.
 * The explorer's Stroom logo (`navigation-logo`, a `Button` holding an SVG) has no name and is a tab
   stop (`NavigationViewImpl`).
 * Ask Stroom AI: the message box has only a placeholder ("How can I help?") (`AskStroomAiViewImpl`).
@@ -848,8 +844,6 @@ best done in `ShowMenuEvent` with a named opener rather than one place at a time
 * Dialogs have no `role="dialog"`, `aria-modal` or `aria-labelledby` (`Dialog`).
 * Tabs: neither the content tabs (`CurveTabBar`) nor link tabs (`LinkTabPanelView`, e.g. document
   sub-tabs and dashboard component tabs) have `tablist`/`tab` roles or `aria-selected`.
-* `ValueSpinner`: the field is a plain text box (no `spinbutton` role, `aria-valuemin`/`-max` or
-  `-now`), and its arrows are `div`s with no role or name that step on mousedown.
 * The sign-in page (`LoginViewImpl`) has no `<h1>`, no `main` landmark, no `aria-live` region for
   its messages and no `autocomplete` hints on its fields.
 * The password strength meter has no `meter` role or `aria-valuenow`, and the policy message no role
@@ -1383,6 +1377,24 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   ignores the reply to an earlier click. It also added another link click handler to the tooltip
   each time it was shown, so a feed or stream link fired once per tooltip shown so far; it now adds
   one: `ProcessorTaskList` `InfoOfTwoRowsClickedQuickly` and `InfoFeedLinkOpensTheFeedOnce`.
+* **The value spinner wasn't a spin button, and rejected values without a word** (`ValueSpinner`):
+  its field was a plain text box (no `spinbutton` role, `aria-valuemin`/`-max` or `-now`), its
+  arrows were `div`s about 9px high with no role or name that stepped on mousedown, and a typed
+  value that wasn't a whole number within its bounds was quietly put back. The field is now a
+  WAI-ARIA spin button (`role="spinbutton"`, `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, and
+  `aria-valuetext` when a subclass's `formatValue` shows the value other than as the number): Up and
+  Down step it, Page Up and Page Down take ten steps, Home and End go to its bounds, and every step
+  starts from what has been typed. The arrows (down, then up) are 24px targets inside the end of its
+  border, for the pointer only, as the pattern allows (no tab stop, hidden from screen readers): they
+  work with a mouse, a finger or a pen, hold to repeat, and are dimmed when the field is disabled or
+  read only. A rejected value is put back and explained (WCAG 3.3.1): the field is marked invalid
+  and described by why, e.g. `"500" isn't allowed. Enter a whole number from 0 to 100.`, shown in
+  its form group's feedback (`FormGroup.setFeedback`, as #5409's dialogs do) or under the field,
+  and announced, until a value is accepted. It has its own BEM stylesheet, `value-spinner.css`. The
+  data grid's `ValueSpinnerCell` is unchanged. The dashboard table settings' Maximum String Field
+  Length spinner, which had no label at all, is now named by `AccessibleName` (the tick box above it
+  says what it is, so it has no visible label of its own) (`BasicTableSettingsViewImpl`). Workbench:
+  `Widgets/Inputs/ValueSpinner`; real input: `value-spinner.mjs`.
 
 ## Checked and not bugs
 
