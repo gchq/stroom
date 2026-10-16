@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -81,6 +82,12 @@ public final class FindInContentDialogStories {
                     + "\"text\": \"PIPELINEPREVIEW reads XML\", \"highlights\": [{\"offset\": 0, \"length\": 15}]}"))
             .build();
 
+    // As the server replies to a regex that is invalid (see RegexPatternValidator)
+    private static final String INVALID_REGEX_MESSAGE = "Invalid regular expression: expected ')' at position 6";
+    private static final RestFixtures INVALID_REGEX_FIXTURES = RestFixtures.builder()
+            .post(FIND_IN_CONTENT_PATH, RestReply.error(500, INVALID_REGEX_MESSAGE))
+            .build();
+
     private FindInContentDialogStories() {
         // Static utility
     }
@@ -91,13 +98,19 @@ public final class FindInContentDialogStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/FindInContentDialog", FindInContentDialogStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                .story("Default", FindInContentDialogStories::render)
+                .story("Default", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.expect(screen.findByText("Find In Content")).toBeInTheDocument();
-                    // Type a pattern: the matching documents appear (debounced 750ms).
-                    // GWT's pattern box is a text area with no label
-                    play.type(screen.querySelector(".FindViewImpl-top textarea"), "events");
+                    // The pattern box is named, and says what may be typed in it, which is shown
+                    // under it too (#5409)
+                    final Query pattern = screen.getByRole("textbox", "Find in content");
+                    play.expect(pattern).toHaveAccessibleDescription(
+                            TextMatch.startingWith("Finds documents whose content contains the text."));
+                    play.expect(screen.getByText(TextMatch.startingWith("Finds documents whose content")))
+                            .toBeVisible();
+                    // Type a pattern: the matching documents appear (debounced 750ms)
+                    play.type(pattern, "events");
                     play.waitFor(4000, () -> play.expect(screen.getByText("Events Pipeline")).toBeInTheDocument());
                     play.expect(screen.getByText("Events Dictionary")).toBeInTheDocument();
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -112,12 +125,32 @@ public final class FindInContentDialogStories {
                     play.expect(screen.getByTitle("Match case")).toBeInTheDocument();
                     play.expect(screen.getByTitle("Regex")).toBeInTheDocument();
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // An invalid regex says why under the pattern box, rather than matching nothing and
+                // saying nothing (#5409)
+                .story("InvalidRegex", context -> render(context, INVALID_REGEX_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.expect(screen.findByText("Find In Content")).toBeInTheDocument();
+                    final Query pattern = screen.getByRole("textbox", "Find in content");
+                    // The guidance changes to say what a regex may be
+                    play.click(screen.getByTitle("Regex"));
+                    play.expect(pattern).toHaveAccessibleDescription(
+                            TextMatch.startingWith("A regular expression, found anywhere"));
+                    play.type(pattern, "(event");
+                    play.waitFor(4000, () -> play.expect(pattern).toHaveAttribute("aria-invalid", "true"));
+                    // Read first, then the guidance; shown in a live region as the focus stays in the box
+                    play.expect(pattern).toHaveAccessibleDescription(TextMatch.startingWith(INVALID_REGEX_MESSAGE));
+                    play.expect(screen.getByText(INVALID_REGEX_MESSAGE)).toHaveAttribute("aria-live", "polite");
+                    play.expect(pattern).toHaveFocus();
+                    // Said under the box, not in an alert
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 });
     }
 
-    private static Widget render(final StoryContext context) {
+    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
         final ContentScreenGinjector injector = GWT.create(ContentScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .build();
         harness.afterStartUp(() -> {

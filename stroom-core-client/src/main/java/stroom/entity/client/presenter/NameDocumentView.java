@@ -27,4 +27,12 @@ public interface NameDocumentView extends View, Focus, HasUiHandlers<DialogActio
     String getName();
 
     void setName(String name);
+
+    /// Shows why the name is invalid, under the name field, and focuses the field.
+    ///
+    /// @param message What is wrong with the name.
+    void setNameInvalid(String message);
+
+    /// Clears any message about the name being invalid.
+    void setNameValid();
 }

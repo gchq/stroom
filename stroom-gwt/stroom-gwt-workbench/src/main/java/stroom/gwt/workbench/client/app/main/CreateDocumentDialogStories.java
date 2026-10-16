@@ -28,6 +28,7 @@ import stroom.gwt.workbench.client.widgets.tree.ExplorerFixture;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -81,6 +82,35 @@ public final class CreateDocumentDialogStories {
                     final Play picker = dialog.within(dialog.querySelectorAll(":scope > .form-group").nth(0));
                     play.expect(picker.querySelector(QUICK_FILTER)).toBeInTheDocument();
                     picker.findByText("System");
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // OK with no name says why under the Name field, rather than in an alert that a screen
+                // reader doesn't read (#5409)
+                .story("NoName", context -> {
+                    // Given a document, the picker selects its folder, so the folder is chosen and
+                    // only the name is missing
+                    final ExplorerFixture tree = TreeFixtures.fixtureTree();
+                    return render(context, tree, "New Dictionary", tree.toExplorerNode("TEST_FEED"), "");
+                })
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("New Dictionary").closest(StroomDom.DIALOG));
+                    final Query feeds = dialog.findByText("Feeds");
+                    play.waitFor(() -> play.expect(feeds.closest("." + TREE_SELECTED_ROW)).toBeInTheDocument());
+                    final Query name = dialog.getByRole("textbox", "Name");
+                    play.expect(name).toHaveAttribute("aria-required", "true");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    // Marked invalid, described by the message (read before its help) and focused
+                    play.waitFor(() -> play.expect(name).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(name).toHaveAccessibleDescription(
+                            TextMatch.startingWith("You must provide a name for the new dictionary"));
+                    play.expect(name).toHaveFocus();
+                    play.expect(dialog.getByText("You must provide a name for the new dictionary"))
+                            .toBeInTheDocument();
+                    // Typing a name clears it
+                    play.type(name, "My Dictionary");
+                    play.waitFor(() -> play.expect(name).not().toHaveAttribute("aria-invalid"));
+                    play.expect(dialog.queryByText("You must provide a name for the new dictionary")).toBeNull();
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // Save As gives the picker the source document; GWT's selectParentIfNotFound selects

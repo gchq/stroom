@@ -23,12 +23,10 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.DescriptionHTML;
-import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -93,25 +91,20 @@ public final class FormGroupStories {
                 .story("Feedback", context -> {
                     final FormGroup formGroup = formGroup("fg-validated", "Username");
                     final TextBox textBox = InputWidgets.textBox(context, "", "Choose a username…");
-                    // GWT's FormGroup has no feedback setter (its form-group__feedback label is private
-                    // and always empty). Stroom's views (e.g. ChangePasswordViewImpl) add their own
-                    // "feedback" label under the control and mark the control with FieldValidity,
-                    // so this story does the same. The message updates when the text box reports
-                    // its value, on leaving it.
-                    final Label feedback = new Label();
-                    feedback.setStyleName("feedback");
-                    textBox.addValueChangeHandler(event -> validate(textBox, feedback));
-                    validate(textBox, feedback);
-                    final FlowPanel control = new FlowPanel();
-                    control.add(textBox);
-                    control.add(feedback);
-                    formGroup.add(control);
+                    // The group shows the message under its control, which it marks invalid and
+                    // described by the message (as e.g. CreateDocumentViewImpl does). The message
+                    // updates when the text box reports its value, on leaving it.
+                    formGroup.setRequired(true);
+                    formGroup.add(textBox);
+                    textBox.addValueChangeHandler(event -> validate(formGroup, textBox));
+                    validate(formGroup, textBox);
                     return InputWidgets.maxWidth(formGroup, MAX_WIDTH);
                 })
                 .withPlay(play -> {
-                    // The label names the text box in the panel, which is marked invalid and
-                    // described by its feedback
+                    // The label names the text box, which is marked required, invalid and described
+                    // by its feedback
                     final Query username = play.getByLabelText("Username");
+                    play.expect(username).toHaveAttribute("aria-required", "true");
                     play.expect(username).toHaveAttribute("aria-invalid", "true");
                     play.expect(username).toHaveAccessibleDescription("This field is required.");
                     play.expect(play.getByText("This field is required.")).toBeInTheDocument();
@@ -224,17 +217,13 @@ public final class FormGroupStories {
     }
 
     /// The story's rule: required, then at least 3 characters.
-    private static void validate(final TextBox textBox, final Label feedback) {
+    private static void validate(final FormGroup formGroup, final TextBox textBox) {
         final String value = textBox.getValue();
         final String message = value.isEmpty()
                 ? "This field is required."
                 : value.length() < 3
                         ? "Must be at least 3 characters."
-                        : "";
-        if (message.isEmpty()) {
-            FieldValidity.setValid(textBox, feedback);
-        } else {
-            FieldValidity.setInvalid(textBox, feedback, message);
-        }
+                        : null;
+        formGroup.setFeedback(message);
     }
 }

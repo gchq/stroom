@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.FakeRestFactory;
 import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
 import stroom.security.shared.User;
+import stroom.security.shared.UserResource;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
@@ -30,6 +31,9 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -88,6 +92,39 @@ class TestCreateMultipleUsersPresenter {
                 .hasSize(1);
         assertThat(alerts)
                 .isEmpty();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\n\n"})
+    void noUsersSaysSoAndKeepsTheDialogOpen(final String usersCsvData) {
+        // Regression test: OK with no users closed the dialog, as Cancel does, saying nothing
+        final CreateMultipleUsersView view = Mockito.mock(CreateMultipleUsersView.class);
+        Mockito.when(view.getUsersCsvData()).thenReturn(usersCsvData);
+        final CreateMultipleUsersPresenter presenter = new CreateMultipleUsersPresenter(eventBus, view, restFactory);
+
+        presenter.create(created::add, okPressed, Mockito.mock(TaskMonitorFactory.class));
+
+        Mockito.verify(view).setUsersCsvDataInvalid("You must provide at least one user");
+        Mockito.verify(okPressed).reset();
+        Mockito.verify(okPressed, Mockito.never()).hide();
+        assertThat(restFactory.getRequests())
+                .isEmpty();
+    }
+
+    @Test
+    void usersAreCreatedFromTheirCsv() {
+        final CreateMultipleUsersView view = Mockito.mock(CreateMultipleUsersView.class);
+        Mockito.when(view.getUsersCsvData()).thenReturn("carol\ndave");
+        final CreateMultipleUsersPresenter presenter = new CreateMultipleUsersPresenter(eventBus, view, restFactory);
+
+        presenter.create(created::add, okPressed, Mockito.mock(TaskMonitorFactory.class));
+
+        final UserResource userResource = Mockito.mock(UserResource.class);
+        restFactory.getLastRequest().callOn(userResource);
+        Mockito.verify(userResource).createUsersFromCsv("carol\ndave");
+        Mockito.verify(view, Mockito.never()).setUsersCsvDataInvalid(Mockito.anyString());
+        Mockito.verify(okPressed, Mockito.never()).reset();
     }
 
     // Creates 'carol', who was deleted, and agrees to restore her.

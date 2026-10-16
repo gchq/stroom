@@ -17,10 +17,12 @@
 package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.NameDocumentView;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -32,6 +34,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 public class NameDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHandlers> implements NameDocumentView {
 
     private final Widget widget;
+    @UiField
+    FormGroup nameGroup;
     @UiField
     TextBox name;
 
@@ -61,10 +65,29 @@ public class NameDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHandl
         this.name.setText(name);
     }
 
+    @Override
+    public void setNameInvalid(final String message) {
+        nameGroup.setFeedback(message);
+        name.setFocus(true);
+    }
+
+    @Override
+    public void setNameValid() {
+        nameGroup.clearFeedback();
+    }
+
     @UiHandler("name")
     void onKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
             getUiHandlers().onDialogAction(DialogAction.OK);
+        }
+    }
+
+    @UiHandler("name")
+    void onKeyUp(final KeyUpEvent event) {
+        // Once a name has been typed the feedback no longer applies
+        if (nameGroup.getFeedback() != null && !name.getText().trim().isEmpty()) {
+            nameGroup.clearFeedback();
         }
     }
 

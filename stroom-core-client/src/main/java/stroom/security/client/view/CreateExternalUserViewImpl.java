@@ -17,11 +17,13 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -36,6 +38,8 @@ public class CreateExternalUserViewImpl
 
     private final Widget widget;
 
+    @UiField
+    FormGroup subjectIdGroup;
     @UiField
     TextBox subjectId;
     @UiField
@@ -79,11 +83,26 @@ public class CreateExternalUserViewImpl
         this.subjectId.setText("");
         this.displayName.setText("");
         this.fullName.setText("");
+        subjectIdGroup.clearFeedback();
+    }
+
+    @Override
+    public void setSubjectIdInvalid(final String message) {
+        subjectIdGroup.setFeedback(message);
+        subjectId.setFocus(true);
     }
 
     @UiHandler("subjectId")
     void onUserIdentityKeyDown(final KeyDownEvent event) {
         handleKeyDown(event);
+    }
+
+    @UiHandler("subjectId")
+    void onUserIdentityKeyUp(final KeyUpEvent event) {
+        // Once an identity has been typed the feedback no longer applies
+        if (subjectIdGroup.getFeedback() != null && !subjectId.getText().trim().isEmpty()) {
+            subjectIdGroup.clearFeedback();
+        }
     }
 
     @UiHandler("displayName")

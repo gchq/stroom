@@ -34,6 +34,8 @@ public class PopupUtil {
     private static final int POPUP_SHADOW_WIDTH = 9;
     private static final String ROLE = "role";
     private static final String DIALOG_ROLE = "dialog";
+    private static final String ALERT_DIALOG_ROLE = "alertdialog";
+    private static final String ARIA_DESCRIBED_BY = "aria-describedby";
     private static final String ARIA_MODAL = "aria-modal";
     // The least room left between a dialog and each edge of the window
     private static final int WINDOW_MARGIN = 10;
@@ -48,6 +50,44 @@ public class PopupUtil {
         }
         popup.setAttribute(ROLE, DIALOG_ROLE);
         popup.setAttribute("aria-labelledby", title.getId());
+    }
+
+    /// Makes the dialog holding some content an alert dialog for screen readers, described by its
+    /// message, so that a screen reader reads the message as soon as the dialog opens, even though
+    /// the focus goes to its buttons. Call it once the content is in the dialog (e.g. when it is
+    /// attached).
+    ///
+    /// @param content The element of the dialog's content.
+    /// @param message The element holding the message, or null to describe the dialog by nothing.
+    /// @return True if the content is in a dialog, which is now an alert dialog.
+    public static boolean setAlertDialogRole(final Element content, final Element message) {
+        final Element dialog = findDialog(content);
+        if (dialog == null) {
+            return false;
+        }
+        dialog.setAttribute(ROLE, ALERT_DIALOG_ROLE);
+        if (message == null) {
+            dialog.removeAttribute(ARIA_DESCRIBED_BY);
+        } else {
+            if (message.getId() == null || message.getId().isEmpty()) {
+                message.setId(DOM.createUniqueId());
+            }
+            dialog.setAttribute(ARIA_DESCRIBED_BY, message.getId());
+        }
+        return true;
+    }
+
+    // The dialog (or alert dialog) the element is in, or null if it isn't in one
+    private static Element findDialog(final Element element) {
+        Element current = element;
+        while (current != null) {
+            final String role = current.getAttribute(ROLE);
+            if (DIALOG_ROLE.equals(role) || ALERT_DIALOG_ROLE.equals(role)) {
+                return current;
+            }
+            current = current.getParentElement();
+        }
+        return null;
     }
 
     public static void showPopup(final Popup popup,
@@ -70,7 +110,8 @@ public class PopupUtil {
         }
         // A dialog shown modal tells screen readers that the rest of the page can't be used
         final Element element = popupPanel.getElement();
-        if (DIALOG_ROLE.equals(element.getAttribute(ROLE))) {
+        final String role = element.getAttribute(ROLE);
+        if (DIALOG_ROLE.equals(role) || ALERT_DIALOG_ROLE.equals(role)) {
             if (isModal) {
                 element.setAttribute(ARIA_MODAL, "true");
             } else {

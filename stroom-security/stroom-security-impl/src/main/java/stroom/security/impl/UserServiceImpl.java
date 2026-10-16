@@ -101,6 +101,9 @@ class UserServiceImpl implements UserService, ContentPackUserService {
 
     @Override
     public User getOrCreateUser(final UserDesc userDesc, final Consumer<User> onCreateAction) {
+        if (NullSafe.isBlankString(NullSafe.get(userDesc, UserDesc::getSubjectId))) {
+            throw new IllegalArgumentException("A user must have a unique identity");
+        }
         final Optional<User> optional = userDao.getUserBySubjectId(userDesc.getSubjectId());
         return optional.orElseGet(() -> {
             final String subjectId = userDesc.getSubjectId();
@@ -127,6 +130,9 @@ class UserServiceImpl implements UserService, ContentPackUserService {
 
     @Override
     public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
+        if (NullSafe.isBlankString(name)) {
+            throw new IllegalArgumentException("A user group must have a name");
+        }
         final Optional<User> optional = userDao.getGroupByName(name);
         return optional.orElseGet(() -> {
             final User user = User
