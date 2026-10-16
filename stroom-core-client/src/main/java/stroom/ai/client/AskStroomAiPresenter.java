@@ -56,6 +56,9 @@ import stroom.core.client.LocationManager;
 import stroom.data.client.event.AskStroomAiBadgeEvent;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
+import stroom.data.client.presenter.DataViewType;
+import stroom.data.client.presenter.DisplayMode;
+import stroom.data.client.presenter.ShowDataEvent;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestError;
 import stroom.docref.DocRef;
@@ -66,6 +69,7 @@ import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -654,6 +658,18 @@ public class AskStroomAiPresenter
                                                + docRef.getType() + "'.", null);
                 }
             }, this);
+        } else if (ChatLinks.openStreamTarget(href) != null) {
+            final ChatLinks.StreamTarget stream = ChatLinks.openStreamTarget(href);
+            // In a Stroom tab, at the event if there is one.
+            ShowDataEvent.fire(this,
+                    SourceLocation.builder(stream.streamId())
+                            .withPartIndex(0L)
+                            .withRecordIndex(stream.recordNo() == null
+                                    ? 0L
+                                    : stream.recordNo() - 1)
+                            .build(),
+                    DataViewType.PREVIEW,
+                    DisplayMode.STROOM_TAB);
         } else if (ChatLinks.isExternal(href)) {
             Window.open(href.trim(), "_blank", "noopener,noreferrer");
         } else if (href != null && href.startsWith("#") && href.length() > 1) {
@@ -2353,6 +2369,7 @@ public class AskStroomAiPresenter
         final String messageId = String.valueOf(msg.getId());
         messageElement.setAttribute(MESSAGE_ID_ATTRIBUTE, messageId);
         decorateCodeBlocks(messageElement);
+        decorateStroomLinks(messageElement);
 
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
         if (AiActivityGroups.isActivity(msg.getMessageType())) {
@@ -2436,6 +2453,20 @@ public class AskStroomAiPresenter
     /**
      * Gives each code block a header with its language and a button to copy it.
      */
+    /// Marks links that open something in Stroom (a document or a stream), so they show a forward icon.
+    private static void decorateStroomLinks(final Element element) {
+        final NodeList<Element> links = element.getElementsByTagName("a");
+        for (int i = 0; i < links.getLength(); i++) {
+            final Element link = links.getItem(i);
+            if (ChatLinks.isStroomLink(link.getAttribute("href"))) {
+                link.addClassName("ai-stroom-link");
+                if (link.getTitle() == null || link.getTitle().isEmpty()) {
+                    link.setTitle("Open in Stroom");
+                }
+            }
+        }
+    }
+
     private static void decorateCodeBlocks(final Element messageElement) {
         final NodeList<Element> blocks = messageElement.getElementsByTagName("pre");
         for (int i = 0; i < blocks.getLength(); i++) {

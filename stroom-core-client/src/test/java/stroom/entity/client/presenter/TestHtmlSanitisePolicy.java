@@ -60,7 +60,9 @@ class TestHtmlSanitisePolicy {
             "  https://example.com  ",
             "HTTPS://EXAMPLE.COM",
             "mailto:someone@example.com",
-            "#heading"
+            "#heading",
+            "?action=open-doc&docType=Feed&docUuid=4a2f6a1e-0f6e-4c55-9d0c-123456789abc",
+            "?action=open-stream&id=12"
     })
     void testSafeLinkUrls(final String url) {
         assertThat(HtmlSanitisePolicy.isSafeLinkUrl(url)).isTrue();

@@ -145,8 +145,9 @@ public final class HtmlSanitisePolicy {
     }
 
     /// @param url A URL from an `href` attribute.
-    /// @return True if a link to this URL is safe to show. Only absolute http, https and mailto URLs, and links
-    /// to anchors within the page, are allowed.
+    /// @return True if a link to this URL is safe to show. Only absolute http, https and mailto URLs, links to
+    /// anchors within the page, and links to the page itself with a query (such as Stroom's own
+    /// `?action=open-doc&...`, which the chat opens in the current session) are allowed.
     public static boolean isSafeLinkUrl(final String url) {
         if (url == null) {
             return false;
@@ -155,7 +156,8 @@ public final class HtmlSanitisePolicy {
         if (trimmed.isEmpty()) {
             return false;
         }
-        if (trimmed.startsWith("#")) {
+        if (trimmed.startsWith("#") || trimmed.startsWith("?")) {
+            // The page itself, so no scheme that could run anything.
             return true;
         }
         // Browsers ignore tabs, new lines and control characters within a scheme, e.g. "java\tscript:".
