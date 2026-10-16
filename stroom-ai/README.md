@@ -161,6 +161,10 @@ _Steps for you_ card. The model can neither make nor click one.
   words (12 by default; a longer reply is cut to that many). Titles are cut short with an ellipsis only where
   they would not fit on one line. Only the user's questions
   are sent. Once the user renames a chat, it is no longer named automatically; `/clear` lets it be again.
+* For work with several steps, the agent keeps a task list with its `task_list` tool (as VS Code's agent
+  does): it is shown above the input, with how many are done, and each step as not started, in progress or
+  completed, and can be folded away. Each update is kept (as a `TASK_LIST` message, never sent to the model), so
+  it survives a refresh; a new question clears it.
 * After an answer, up to three things the user might ask next are offered as links just above the input;
   clicking one sends it. They come from one small call to the chat's model, given only the question and the
   start of the answer, and are kept (as a `SUGGESTIONS` message, never shown in the conversation or sent to
