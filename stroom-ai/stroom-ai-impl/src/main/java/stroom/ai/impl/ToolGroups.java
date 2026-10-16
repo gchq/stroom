@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -115,6 +116,16 @@ final class ToolGroups {
             }
         });
         return offered;
+    }
+
+    /// @param toolName A tool's name.
+    /// @return The group the tool is in, or empty if it isn't in one.
+    Optional<String> groupOf(final String toolName) {
+        return groups.entrySet().stream()
+                .filter(entry -> entry.getValue().keySet().stream()
+                        .anyMatch(specification -> specification.name().equals(toolName)))
+                .map(Map.Entry::getKey)
+                .findFirst();
     }
 
     /// @param toolName A tool's name.

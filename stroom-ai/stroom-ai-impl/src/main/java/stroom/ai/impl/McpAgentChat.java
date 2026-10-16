@@ -20,6 +20,7 @@ import stroom.ai.api.AiService;
 import stroom.ai.impl.ToolApprovalRequest.Decision;
 import stroom.ai.impl.ToolApprovalRequest.PendingCall;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.tools.TaskListReminder;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
@@ -268,6 +269,7 @@ class McpAgentChat {
 
 
         final int maxIterations = maxToolIterations();
+        final TaskListReminder taskListReminder = new TaskListReminder();
         ChatResponse response = null;
         for (int iteration = 1; iteration <= maxIterations; iteration++) {
             if (cancelled.get() || taskContext.isTerminated()) {
@@ -341,6 +343,14 @@ class McpAgentChat {
                         JsonUtil.writeValueAsString(new ToolCallRecord(toolRequest.id(), toolRequest.name(),
                                 toolRequest.arguments(), aiMessage.text()), false));
                 final boolean unattended = runManager.isUnattended(chatId);
+                // A tool that isn't offered (e.g. a name the model made up) can't run, so the user isn't asked
+                // about it, and the model is told at once.
+                if (!isOffered(tools, toolRequest.name())) {
+                    conversation.add(ToolExecutionResultMessage.from(toolRequest,
+                            recordNotRun(chatId, toolRequest, notOfferedReason(toolRequest.name(), toolGroups),
+                                    unattended, "No such tool")));
+                    continue;
+                }
                 // Turning on a group of tools changes nothing, so needs no approval.
                 final ToolConsent.Verdict verdict = ToolGroups.isActivationTool(toolRequest.name())
                                                     && toolGroups.isGrouped()
@@ -360,6 +370,9 @@ class McpAgentChat {
                         askVerdicts.add(verdict);
                     }
                 }
+            }
+            if (taskListReminder.afterStep(toolRequests)) {
+                remindAboutTaskList(conversation);
             }
             if (!pending.isEmpty()) {
                 // Stop here, giving up the thread and the slot, until the user answers. The run carries on from
@@ -749,6 +762,28 @@ class McpAgentChat {
                 group -> toolGroupActivations.activate(chatId, group)));
         limitTools(tools, NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getMaxToolDefinitions, 0), chatId);
         return tools;
+    }
+
+    /// Adds the task list reminder to the last tool result, so the model sees it before its next step.
+    private static void remindAboutTaskList(final List<ChatMessage> conversation) {
+        final int last = conversation.size() - 1;
+        if (last >= 0 && conversation.get(last) instanceof final ToolExecutionResultMessage result) {
+            conversation.set(last, ToolExecutionResultMessage.from(result.id(), result.toolName(),
+                    result.text() + "\n\n" + TaskListReminder.REMINDER));
+        }
+    }
+
+    private static boolean isOffered(final Map<ToolSpecification, ToolExecutor> tools, final String toolName) {
+        return tools.keySet().stream().anyMatch(specification -> specification.name().equals(toolName));
+    }
+
+    /// @return What the model is told when it calls a tool it isn't offered: how to turn the tool on, if it is
+    /// in a group that is off.
+    static String notOfferedReason(final String toolName, final ToolGroups toolGroups) {
+        return toolGroups.groupOf(toolName)
+                .map(group -> "Error: '" + toolName + "' is one of the '" + group + "' tools, which aren't on. "
+                              + "Call " + ToolGroups.ACTIVATE_PREFIX + group + " first.")
+                .orElseGet(() -> "Error: no such tool '" + toolName + "'. Call only the tools you are offered.");
     }
 
     /**
