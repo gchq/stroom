@@ -1317,7 +1317,7 @@ async function driveStep(step) {
       const box = [...document.querySelectorAll(selector)].find((e) => e.offsetWidth > 0);
       // The ICON, not the text box: a click on the text box calls showPopup() and then bubbles to
       // the box's own click handler, which calls it again — and the second call HIDES the popup.
-      const el = box?.querySelector('.svgIconBox-icon') ?? box;
+      const el = box?.querySelector('.svg-icon-box__icon') ?? box;
       if (!el) return null;
       const r = el.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };

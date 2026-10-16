@@ -425,6 +425,17 @@ Stories `Widgets/Inputs/ValueSpinner` (`ValueSpinnerStories`): the role, value a
 
 Not yet done: it hasn't been tried with a screen reader, and VoiceOver on iOS may not step a custom spin button by swiping (the value can still be typed); screens are to be checked for the wider default width when it is rolled out; and the grid's spinner can't be reached from the keyboard (its field is `tabindex="-1"`), is named by its column but not its row, changes a typed value silently (non-digits dropped, then kept within its bounds), and doesn't repeat while a finger is held. Those wait on the data grid's keyboard pattern and event handling.
 
+## Icon boxes
+
+`SvgIconBox` (`stroom.svg.client`, styled by `svg-icon-box.css`) is a field with an icon inside the end of its border that opens what the field chooses from: a selection box's drop-down arrow, a date box's calendar, a time or schedule box's clock. The icon is a picture, not a button: the field opens the same thing from the keyboard (Enter, and a click on a selection box that can't be typed in), so it is hidden from screen readers (`aria-hidden`) and is no tab stop, though a click on it opens it too. It has no hover or focus states.
+
+- **Names.** The block is `svg-icon-box`; the field (the wrapped widget's first input) is `svg-icon-box__field`, padded clear of the icon; the icon is `svg-icon-box__icon` (a 26px strip over the end of the field) holding `svg-icon-box__image`.
+- **Drop-down arrow.** `setDropDownWidget` gives the box the value spinner's arrow (`ARROW_DOWN`), 10px, in `--icon-colour__black`, as the date picker's month and year arrows' size (`svg-icon-box--drop-down`, a variant with no ARIA meaning). Every "opens a list" arrow in a field looks the same: the selection box's, QuickFilter's Recent Filters (a toolbar button, so a tab stop, with the same icon) and, as a pair, the value spinner's. `SvgImage.DROP_DOWN`, which drew a smaller, thinner arrow, is deleted.
+- **Other icons** (the calendar and clock) are 16px (`--icon-width`) in `--icon-colour__grey`, as before.
+- **Read only.** `setReadonly` dims the icon and stops it opening anything (`svg-icon-box--readonly`, a state with no ARIA attribute on the box, so a modifier): the selection, date, time and schedule boxes set it when their field is disabled or read only.
+
+Not yet done: the selection box's combobox keys (Alt+Down and Alt+Up, typing to jump) and its rendered value's padding, and the rest of `SelectionBox.css` (`SelectionBox-*`, `SelectionPopup-*`), are the selection box's own work.
+
 ## CSS for new widgets
 
 New widgets get their own stylesheet, named after the widget's block, in `stroom-app/src/main/resources/ui/css/` and imported by `app.css` (after `stroom-button.css`, whose styles they may build on), e.g. `toolbar.css`, `focus-tooltip.css`, `split-pane.css` and `tab-bar.css`. Existing stylesheets (e.g. the 3,000 lines of `components.css`) are left as they are, and a widget's rules move into a file of its own when it is next changed.

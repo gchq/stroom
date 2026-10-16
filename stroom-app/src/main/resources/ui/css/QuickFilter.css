@@ -48,8 +48,14 @@
 /* Its icons are in the colour of a form group's help icon */
 .quickFilter-toolbar .toolbar-button__icon {
 	color: var(--navigation-icon-button__color);
-	/* The drop-down arrow is drawn in black rather than currentColor; give it the same colour */
-	--icon-colour__black: currentColor;
+}
+
+/* ... except the recent filters' drop-down arrow, which is every field's drop-down arrow (a selection
+   box's, and the value spinner's): small, and in the drop-down arrow's colour */
+.quickFilter-toolbar .quickFilter-recentFilters .toolbar-button__icon {
+	width: 10px;
+	height: 10px;
+	color: var(--icon-colour__black);
 }
 
 /* With a recent-filters drop-down: [text][clear][drop-down][help]. The drop-down is always shown,

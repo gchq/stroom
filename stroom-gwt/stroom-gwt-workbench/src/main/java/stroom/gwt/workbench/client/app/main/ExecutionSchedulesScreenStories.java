@@ -33,6 +33,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.security.shared.AppPermission;
+import stroom.svg.client.SvgIconBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -270,17 +271,17 @@ public final class ExecutionSchedulesScreenStories {
                     play.click(play.getByTitle("Batch Edit Schedules"));
                     final Play dialog = dialog(screen, "Batch Change Selected Schedules");
                     final Query schedule = dialog.querySelector(".ScheduleBox-textBox");
-                    final Query icon = dialog.querySelector(".ScheduleBox .svgIconBox-icon-outer");
+                    final Query icon = dialog.querySelector(".ScheduleBox .svg-icon-box__icon");
                     play.expect(schedule).toBeDisabled();
-                    play.expect(dialog.querySelector(".ScheduleBox .svgIconBox-icon-inner"))
-                            .toHaveClass("svgIconBox-readonly");
+                    play.expect(dialog.querySelector(".ScheduleBox.svg-icon-box"))
+                            .toHaveClass(SvgIconBox.ICON_BOX_READONLY_CLASS_NAME);
                     play.click(icon);
                     play.expect(screen.queryByText("Change Schedule", StroomDom.DIALOG_TITLE)).toBeNull();
                     // Ticking the schedule's check box (after Name, Enabled's two and Node) enables both
                     play.click(dialog.getAllByRole("checkbox").nth(4));
                     play.expect(schedule).toBeEnabled();
-                    play.expect(dialog.querySelector(".ScheduleBox .svgIconBox-icon-inner"))
-                            .not().toHaveClass("svgIconBox-readonly");
+                    play.expect(dialog.querySelector(".ScheduleBox.svg-icon-box"))
+                            .not().toHaveClass(SvgIconBox.ICON_BOX_READONLY_CLASS_NAME);
                     expectNoErrors(play);
                 })
                 // Editing a schedule renames it, enables it and saves it

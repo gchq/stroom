@@ -62,51 +62,8 @@ input.gwt-TextBox.SelectionBox-textBox {
     margin-bottom: 4px;
 }
 
-.SelectionPopup-layout .svgIconBox {
-    padding: .2rem;
-}
-
 .SelectionPopup-layout {
     display : flex;
-    flex-direction: column;
-}
-
-.svgIconBox {
-    position: relative;
-}
-
-.svgIconBox input {
-    height: 100%;
-    width: 100%;
-    padding-right: 26px;
-    min-width: 200px;
-}
-
-.svgIconBox-icon-outer {
-    position: absolute;
-    top: 0;
-    right: 0px;
-    height: 100%;
-    width: 26px;
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    cursor: pointer;
-}
-
-.svgIconBox-icon-outer:has(.svgIconBox-icon-inner.svgIconBox-readonly),
-.svgIconBox-icon-inner.svgIconBox-readonly {
-    cursor: default;
-}
-
-.svgIconBox-icon-inner.svgIconBox-readonly svg {
-    opacity: var(--disabled-opacity);
-}
-
-.svgIconBox-icon-inner {
-    width: 100%;
-    display: flex;
-    align-items: center;
     flex-direction: column;
 }
 

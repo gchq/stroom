@@ -1406,6 +1406,15 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   Length spinner, which had no label at all, is now named by `AccessibleName` (the tick box above it
   says what it is, so it has no visible label of its own) (`BasicTableSettingsViewImpl`). Workbench:
   `Widgets/Inputs/ValueSpinner`, `Widgets/Cell Renderers/ValueSpinnerCell`; real input: `value-spinner.mjs`.
+* **Drop-down arrows that didn't match, and field icons screen readers met unnamed** (`SvgIconBox`):
+  a selection box's arrow (`SvgImage.DROP_DOWN`) was a smaller, thinner arrow than the value
+  spinner's beside it, and the icon at the end of a selection, date, time or schedule box was a
+  `div` with no name that a screen reader could find. The selection box's arrow, and QuickFilter's
+  Recent Filters arrow, are now the value spinner's (`ARROW_DOWN`, 10px, in the drop-down arrow's
+  colour), and `DROP_DOWN` is deleted; the icons are pictures hidden from screen readers
+  (`aria-hidden`), as the field opens the same thing from the keyboard, with their own BEM stylesheet
+  (`svg-icon-box.css`). The date picker's year and month boxes touched, so a focused box's ring
+  covered the other; they are now 4px apart.
 
 ## Checked and not bugs
 

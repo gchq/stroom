@@ -552,7 +552,7 @@ const mouseProven = new Map();
  * What a completed SELECTION also proves beyond the popup closing: the CLICK that opened it.
  *
  * `BaseSelectionBox:44` registers a click handler on `svgIconBox`, and that icon is exactly what the
- * field driver presses to open the popup (lib/dirty.mjs's `select` nudge targets `.svgIconBox-icon`,
+ * field driver presses to open the popup (lib/dirty.mjs's `select` nudge targets `.svg-icon-box__icon`,
  * because a SelectionBox does not open from its text box). So a selection that completed went through
  * this handler. `ScheduleBox`, `DateTimeBox` and `TimeBox` have an `svgIconBox` too and are NOT
  * credited: nothing opens those.

@@ -17,7 +17,6 @@
 package stroom.item.client;
 
 import stroom.svg.client.SvgIconBox;
-import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.dom.client.Element;
@@ -91,7 +90,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
         svgIconBox = new SvgIconBox();
         svgIconBox.addStyleName("SelectionBox");
-        svgIconBox.setWidget(outer, SvgImage.DROP_DOWN);
+        svgIconBox.setDropDownWidget(outer);
 
         initWidget(svgIconBox);
         setAllowTextEntry(false);

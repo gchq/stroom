@@ -43,8 +43,8 @@ public final class DateTimePickerStories {
 
     private static final String ON_CHANGE = DateTimeWidgets.ON_CHANGE;
     // The calendar icon, and the element its read-only class is on
-    private static final String ICON_OUTER = ".svgIconBox-icon-outer";
-    private static final String ICON_INNER = ".svgIconBox-icon-inner";
+    private static final String ICON_OUTER = ".svg-icon-box__icon";
+    private static final String ICON_INNER = ".svg-icon-box";
     /// 2024-01-15T09:50:00.000Z.
     private static final long VALUE_MS = 1705312200000L;
 

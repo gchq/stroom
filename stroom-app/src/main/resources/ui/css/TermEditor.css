@@ -52,10 +52,6 @@
     min-width: auto;
 }
 
-.termEditor-item .svgIconBox-icon {
-    right: 1px;
-}
-
 .termEditor-item.wide {
 	width: 400px;
 	min-width: 300px;

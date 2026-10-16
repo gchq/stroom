@@ -949,7 +949,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
 export async function chooseInSelectionBox(page, label, item, settle) {
   const scope = page.locator('.dialog-popup, .resizableDialog-popup').last();
   const group = scope.locator('.form-group').filter({ has: page.locator('.form-group__label', { hasText: label }) }).first();
-  await group.locator('.SelectionBox .svgIconBox-icon-outer').first().click({ timeout: 5_000 });
+  await group.locator('.SelectionBox .svg-icon-box__icon').first().click({ timeout: 5_000 });
   await settle(600);
   const at = await page.evaluate((wanted) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();

@@ -117,11 +117,11 @@ public final class PopupContractStories {
                 .panel(".simplePopup-popup:has(.popover-body)")
                 .insideTarget(".popover-body"));
         cases.add(PopupCase.of("SelectionBox", PopupHarnesses::selectionBox)
-                .opener(".svgIconBox-icon-outer")
+                .opener(".svg-icon-box__icon")
                 // Both of GWT's partners (BaseSelectionBox: the text box and the icon box), each
                 // with an inner child
-                .partners(".SelectionBox-outer", ".SelectionBox-renderBox", ".svgIconBox-icon-outer",
-                        ".svgIconBox-icon-inner")
+                .partners(".SelectionBox-outer", ".SelectionBox-renderBox", ".svg-icon-box__icon",
+                        ".svg-icon-box__image")
                 .panel(".SelectionPopup")
                 .insideTarget(".selectionList")
                 // SelectionPopup positions itself with a shadow width of 4
