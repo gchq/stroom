@@ -434,6 +434,13 @@ last closed dialog for a moment only.
   tab stop (`AnnotationEditViewImpl.ui.xml`).
 * The schedule's and the time range's Quick Settings presets are plain labels with click handlers
   (`ScheduleViewImpl`, `TimeRangePopup.ui.xml`).
+* A grid's spinners (Jobs' Max Tasks, Nodes' and Processors' Priority) can't be reached from the
+  keyboard: the field is `tabindex="-1"`, and Enter on a row doesn't go into it
+  (`ValueSpinnerCell`). Once it has the focus (by a click), its keys work. It also changes a typed
+  value without saying so: non-digits are dropped and the rest kept within its bounds (`500`
+  becomes `100`). Both wait on the data grid's keyboard pattern. A held finger doesn't repeat its
+  arrows (a tap steps once), as the grid hands a cell its events after the browser has handled
+  them (`AbstractHasData.onBrowserEvent`), so touch events don't reach it.
 
 ### Toolbars are a tab stop per button
 
@@ -1391,10 +1398,14 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   and described by why, e.g. `"500" isn't allowed. Enter a whole number from 0 to 100.`, shown in
   its form group's feedback (`FormGroup.setFeedback`, as #5409's dialogs do) or under the field,
   and announced, until a value is accepted. It has its own BEM stylesheet, `value-spinner.css`. The
-  data grid's `ValueSpinnerCell` is unchanged. The dashboard table settings' Maximum String Field
+  data grid's `ValueSpinnerCell` now looks the same (the widget's markup and stylesheet, in 110px
+  columns, `ColumnSizeConstants.VALUE_SPINNER_COL`, with its rows still 28px), and its field is a spin
+  button named by its column (a name is now required), with the same keys while it has the focus;
+  `valuespinner.css` is deleted. Naming it removed the `label` violations from the Jobs, Nodes and
+  Processors stories. The dashboard table settings' Maximum String Field
   Length spinner, which had no label at all, is now named by `AccessibleName` (the tick box above it
   says what it is, so it has no visible label of its own) (`BasicTableSettingsViewImpl`). Workbench:
-  `Widgets/Inputs/ValueSpinner`; real input: `value-spinner.mjs`.
+  `Widgets/Inputs/ValueSpinner`, `Widgets/Cell Renderers/ValueSpinnerCell`; real input: `value-spinner.mjs`.
 
 ## Checked and not bugs
 

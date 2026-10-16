@@ -322,7 +322,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
 
         // Priority.
         dataGrid.addColumn(
-                DataGridUtil.valueSpinnerColumnBuilder(NodeStatusListPresenter::extractNodePriority,
+                DataGridUtil.valueSpinnerColumnBuilder("Priority", NodeStatusListPresenter::extractNodePriority,
                                 1L,
                                 100L)
                         .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
@@ -339,7 +339,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
                                      "assigning a master. The larger the number the more chance it will become " +
                                      "the master.")
                         .build(),
-                80);
+                ColumnSizeConstants.VALUE_SPINNER_COL);
 
         // Enabled
         dataGrid.addColumn(

@@ -58,6 +58,18 @@ async function touchHold(page, point, millis) {
   }
 }
 
+// Presses a key, then waits (up to a second) for the field to show the value it should
+async function pressFor(page, field, key, expected, message) {
+  await page.keyboard.press(key);
+  const deadline = Date.now() + 1000;
+  let actual = await field.inputValue();
+  while (actual !== expected && Date.now() < deadline) {
+    await page.waitForTimeout(25);
+    actual = await field.inputValue();
+  }
+  assert.equal(actual, expected, message);
+}
+
 export const CHECKS = {
   // The real mouse: a click steps once and leaves the focus in the field; held, an arrow keeps
   // stepping, faster and faster, and stops when let go; Tab passes the arrows by
@@ -107,6 +119,44 @@ export const CHECKS = {
     assert.equal(await value(page), '100', 'End goes to the maximum');
     await page.keyboard.press('PageDown');
     assert.equal(await value(page), '90', 'Page Down takes ten steps');
+  },
+  // The data grid's spinner (ValueSpinnerCell), with the real mouse: a click steps once and a press
+  // keeps stepping while held, committing when let go; a real finger's tap steps once (the grid
+  // hands a cell its events after the browser has handled them, so a held finger doesn't repeat)
+  'widgets-cell-renderers-valuespinnercell--arrows-step-and-commit': async (page) => {
+    const row = page.locator('tr', { hasText: 'Alpha' });
+    const field = row.getByRole('spinbutton');
+    const box = await row.locator(INCREASE).boundingBox();
+    const up = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    const start = Number(await field.inputValue());
+    await page.mouse.click(up.x, up.y);
+    assert.equal(Number(await field.inputValue()), start + 1, 'a real click steps once');
+    await page.mouse.move(up.x, up.y);
+    await page.mouse.down();
+    await page.waitForTimeout(1500);
+    await page.mouse.up();
+    const held = Number(await field.inputValue());
+    assert.ok(held > start + 10, `holding the arrow keeps stepping (to ${held})`);
+    assert.equal(await field.getAttribute('aria-valuenow'), String(held), 'the value is told as it steps');
+    await page.waitForTimeout(400);
+    assert.equal(Number(await field.inputValue()), held, 'letting go stops the stepping');
+    await page.mouse.move(0, 0);
+    const down = await row.locator('[title="Decrease value"]').boundingBox();
+    await touchHold(page, { x: down.x + down.width / 2, y: down.y + down.height / 2 }, 50);
+    await page.waitForTimeout(200);
+    assert.equal(Number(await field.inputValue()), held - 1, 'a tap steps once');
+  },
+  // The grid spinner's keys, pressed for real while its field has the focus (clicked in its text,
+  // clear of the arrows)
+  'widgets-cell-renderers-valuespinnercell--keys-while-focused': async (page) => {
+    const field = page.locator('tr', { hasText: 'Bravo' }).getByRole('spinbutton');
+    await field.click({ position: { x: 10, y: 12 } });
+    // The grid hands the cell its key events a moment after they happen, so wait for each value
+    await pressFor(page, field, 'End', '100', 'End goes to the maximum');
+    await pressFor(page, field, 'PageDown', '90', 'Page Down takes ten steps');
+    await pressFor(page, field, 'ArrowDown', '89', 'Down takes one step');
+    assert.ok(await field.evaluate((element) => element === document.activeElement),
+      'the focus stays in the field');
   },
   // A disabled spinner's arrows do nothing when clicked or tapped
   'widgets-inputs-valuespinner--disabled': async (page) => {

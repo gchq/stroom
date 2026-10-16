@@ -20,7 +20,6 @@ import stroom.cell.valuespinner.shared.Editable;
 import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -30,46 +29,40 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
+/// The data grid's spinner: a number that a row's value lets be changed, shown as the ValueSpinner
+/// widget is (its markup and value-spinner.css, with the `value-spinner--cell` modifier for the grid).
+/// Its field is a WAI-ARIA spin button whose keys work while it has the focus, and its arrows step
+/// it while pressed with the mouse (a finger's tap steps once). A typed value is committed on Enter or when the field
+/// loses the focus, and an arrow's or a key's at once; what can't be a number within the bounds is
+/// made into one (non-digits dropped, then kept within the bounds).
 public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerCell.ViewData>
         implements HasSpinnerConstraints {
 
     private static volatile Template template;
-    private static final SafeHtml arrowUpHtml = new SafeHtmlBuilder()
-            .appendHtmlConstant("<div class=\"valueSpinner-arrow valueSpinner-arrowUp\">")
-            .append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_UP))
-            .appendHtmlConstant("</div>")
-            .toSafeHtml();
-//    private static final SafeHtml arrowUpHtml = SvgImageUtil.toSafeHtml(
-//            SvgImage.ARROW_UP, "valueSpinner-arrow", "valueSpinner-arrowUp");
-
-    //    private static final SafeHtml arrowDownHtml =
-//            SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowDown\">" +
-//                    SvgImage.ARROW_DOWN.getSvg() +
-//                    "</div>");
-//    private static final SafeHtml arrowDownHtml = SvgImageUtil.toSafeHtml(
-//            SvgImage.ARROW_DOWN, "valueSpinner-arrow", "valueSpinner-arrowDown");
-    private static final SafeHtml arrowDownHtml = new SafeHtmlBuilder()
-            .appendHtmlConstant("<div class=\"valueSpinner-arrow valueSpinner-arrowDown\">")
-            .append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN))
-            .appendHtmlConstant("</div>")
-            .toSafeHtml();
-
-    // A read-only spinner's arrows, greyed and doing nothing
-    private static final SafeHtml readOnlyArrowsHtml = new SafeHtmlBuilder()
-            .appendHtmlConstant("<div class=\"valueSpinner-arrow valueSpinner-arrowUpDisabled\">")
-            .append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_UP))
-            .appendHtmlConstant("</div>")
-            .appendHtmlConstant("<div class=\"valueSpinner-arrow valueSpinner-arrowDownDisabled\">")
-            .append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN))
+    // The block's classes, shared with the ValueSpinner widget (value-spinner.css)
+    private static final String BLOCK = "value-spinner";
+    private static final String STEP_CLASS = BLOCK + "__step";
+    private static final String STEP_ATTRIBUTE = "data-step";
+    private static final String UP = "up";
+    // The steps Page Up and Page Down take
+    private static final int PAGE_STEPS = 10;
+    // The arrows (down, then up), inside the end of the field's border: for the pointer only, as
+    // the keys in the field do what they do, so hidden from screen readers and no tab stop
+    private static final SafeHtml STEPS_HTML = new SafeHtmlBuilder()
+            .appendHtmlConstant("<div class=\"" + BLOCK + "__steps\">")
+            .append(stepHtml(SvgImage.ARROW_DOWN, "Decrease value", "down"))
+            .append(stepHtml(SvgImage.ARROW_UP, "Increase value", UP))
             .appendHtmlConstant("</div>")
             .toSafeHtml();
 
     private static volatile Spinner spinner;
+    private final String name;
     private long min = 0;
     private long max = 100;
     private int step = 1;
@@ -79,24 +72,30 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
      */
     private Object focusedKey;
 
-    public ValueSpinnerCell() {
-        this(0, 100, 1, 99);
+    /// @param name What the value is, naming each row's field for screen readers, as the column's
+    ///             heading does, e.g. `Priority`.
+    /// @param min  The smallest value, unless a value has its own bounds.
+    /// @param max  The largest value, unless a value has its own bounds.
+    public ValueSpinnerCell(final String name, final long min, final long max) {
+        this(name, min, max, 1, 99);
     }
 
-    public ValueSpinnerCell(final long min, final long max) {
-        this(min, max, 1, 99);
-    }
-
-    public ValueSpinnerCell(final long min, final long max, final int step, final int maxStep) {
+    /// @param name    What the value is, naming each row's field for screen readers, as the column's
+    ///                heading does, e.g. `Priority`.
+    /// @param min     The smallest value, unless a value has its own bounds.
+    /// @param max     The largest value, unless a value has its own bounds.
+    /// @param step    The step of each change.
+    /// @param maxStep The largest step an arrow takes as it speeds up while held.
+    public ValueSpinnerCell(final String name, final long min, final long max, final int step, final int maxStep) {
         super(BrowserEvents.FOCUS,
                 BrowserEvents.BLUR,
                 BrowserEvents.KEYDOWN,
                 BrowserEvents.KEYUP,
                 BrowserEvents.CHANGE,
-                BrowserEvents.MOUSEOVER,
                 BrowserEvents.MOUSEOUT,
                 BrowserEvents.MOUSEDOWN,
                 BrowserEvents.MOUSEUP);
+        this.name = name;
         this.min = min;
         this.max = max;
         this.step = step;
@@ -147,7 +146,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
             }
 
             // The input has changed so finish editing.
-            finishEditing(parent, value, context.getKey(), valueUpdater);
+            finishEditing(parent, value, context.getKey(), valueUpdater, true);
 
         } else if ("keyup".equals(eventType)) {
             // Ignore key up events that don't target the input.
@@ -166,81 +165,109 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
             vd.setCurrentValue(input.getValue());
 
+        } else if (BrowserEvents.KEYDOWN.equals(eventType)) {
+            onKeyDown(context, parent, value, event, valueUpdater);
+
         } else {
-            final Element upArrow = getByClassName(parent, "valueSpinner-arrowUp");
-            final Element downArrow = getByClassName(parent, "valueSpinner-arrowDown");
-
-            if (upArrow != null && upArrow.isOrHasChild(target)) {
-                if (BrowserEvents.MOUSEOVER.equals(eventType)) {
-                    upArrow.setClassName("valueSpinner-arrow valueSpinner-arrowUp valueSpinner-arrowUp--hover");
-
-                } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
-                    upArrow.setClassName("valueSpinner-arrow valueSpinner-arrowUp");
-                    stopSpinning(context, parent, value, valueUpdater);
-
-                } else if (BrowserEvents.MOUSEUP.equals(eventType)) {
-                    upArrow.setClassName("valueSpinner-arrow valueSpinner-arrowUp valueSpinner-arrowUp--hover");
-                    stopSpinning(context, parent, value, valueUpdater);
-
-                } else if (BrowserEvents.MOUSEDOWN.equals(eventType)) {
-                    upArrow.setClassName("valueSpinner-arrow valueSpinner-arrowUp valueSpinner-arrowUp--pressed");
-                    ensureSpinner();
-
-                    // Get the object that we are going to use to apply
-                    // value constraints.
-                    HasSpinnerConstraints constraints = this;
-                    if (value instanceof HasSpinnerConstraints) {
-                        constraints = (HasSpinnerConstraints) value;
-                    }
-
-                    final InputElement input = getInputElement(parent);
-                    if (input == null) {
-                        spinner.start(constraints, true, 0, input);
-                    } else {
-                        final String constrainedValue = constrainValue(constraints, input.getValue());
-                        spinner.start(constraints, true, Long.parseLong(constrainedValue), input);
-                    }
-                }
-            } else if (downArrow != null && downArrow.isOrHasChild(target)) {
-                if (BrowserEvents.MOUSEOVER.equals(eventType)) {
-                    downArrow.setClassName("valueSpinner-arrow valueSpinner-arrowDown valueSpinner-arrowDown--hover");
-
-                } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
-                    downArrow.setClassName("valueSpinner-arrow valueSpinner-arrowDown");
-                    stopSpinning(context, parent, value, valueUpdater);
-
-                } else if (BrowserEvents.MOUSEUP.equals(eventType)) {
-                    downArrow.setClassName("valueSpinner-arrow valueSpinner-arrowDown valueSpinner-arrowDown--hover");
-                    stopSpinning(context, parent, value, valueUpdater);
-
-                } else if (BrowserEvents.MOUSEDOWN.equals(eventType)) {
-                    downArrow.setClassName("valueSpinner-arrow valueSpinner-arrowDown valueSpinner-arrowDown--pressed");
-                    ensureSpinner();
-
-                    // Get the object that we are going to use to apply
-                    // value constraints.
-                    HasSpinnerConstraints constraints = this;
-                    if (value instanceof HasSpinnerConstraints) {
-                        constraints = (HasSpinnerConstraints) value;
-                    }
-
-                    final InputElement input = getInputElement(parent);
-                    final String constrainedValue = constrainValue(constraints, input.getValue());
-                    spinner.start(constraints, false, Long.parseLong(constrainedValue), input);
-                }
+            final Element step = findStep(parent, target);
+            if (step != null) {
+                onStepEvent(context, parent, value, event, valueUpdater, step);
             }
         }
     }
 
-    private Element getByClassName(final Element parent, final String className) {
-        final NodeList<Element> nodes = parent.getElementsByTagName("div");
-        for (int i = 0; i < nodes.getLength(); i++) {
-            final Element child = nodes.getItem(i);
-            if (ElementUtil.hasClassName(child, className)) {
-                return child;
+    // A press on an arrow with the main mouse button steps at once and keeps stepping while held;
+    // letting go, or the mouse leaving the arrow, stops it and commits the value. A tap with a finger
+    // steps once, by the mouse events the browser makes for it: the grid hands a cell its events
+    // after the browser has handled them (AbstractHasData), so a cell can't take a touch for itself
+    // (preventing the mouse events that follow it), and touch events don't reach it
+    private void onStepEvent(final Context context,
+                             final Element parent,
+                             final Number value,
+                             final NativeEvent event,
+                             final ValueUpdater<Number> valueUpdater,
+                             final Element step) {
+        final String eventType = event.getType();
+        if (BrowserEvents.MOUSEDOWN.equals(eventType) && event.getButton() == NativeEvent.BUTTON_LEFT) {
+            ensureSpinner();
+            final HasSpinnerConstraints constraints = constraintsOf(value);
+            final InputElement input = getInputElement(parent);
+            final long start = Long.parseLong(constrainValue(constraints, input.getValue()));
+            spinner.start(constraints, UP.equals(step.getAttribute(STEP_ATTRIBUTE)), start, input);
+
+        } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
+            // Moving onto the arrow's icon isn't leaving it
+            final Element to = event.getRelatedEventTarget() == null
+                    ? null
+                    : event.getRelatedEventTarget().cast();
+            if (to == null || !step.isOrHasChild(to)) {
+                stopSpinning(context, parent, value, valueUpdater);
             }
+
+        } else if (BrowserEvents.MOUSEUP.equals(eventType)) {
+            stopSpinning(context, parent, value, valueUpdater);
+        }
+    }
+
+    // The keys of the WAI-ARIA spin button, while the field has the focus: Up and Down step it, Page
+    // Up and Page Down take ten steps, and Home and End go to its bounds. Each commits the value,
+    // leaving the focus in the field
+    private void onKeyDown(final Context context,
+                           final Element parent,
+                           final Number value,
+                           final NativeEvent event,
+                           final ValueUpdater<Number> valueUpdater) {
+        final InputElement input = getInputElement(parent);
+        final Element target = event.getEventTarget().cast();
+        if (input == null || !input.isOrHasChild(target)) {
+            return;
+        }
+        final HasSpinnerConstraints constraints = constraintsOf(value);
+        final long current = Long.parseLong(constrainValue(constraints, input.getValue()));
+        final long stepped;
+        switch (event.getKeyCode()) {
+            case KeyCodes.KEY_UP:
+                stepped = current + constraints.getStep();
+                break;
+            case KeyCodes.KEY_DOWN:
+                stepped = current - constraints.getStep();
+                break;
+            case KeyCodes.KEY_PAGEUP:
+                stepped = current + (long) PAGE_STEPS * constraints.getStep();
+                break;
+            case KeyCodes.KEY_PAGEDOWN:
+                stepped = current - (long) PAGE_STEPS * constraints.getStep();
+                break;
+            case KeyCodes.KEY_HOME:
+                stepped = constraints.getMin();
+                break;
+            case KeyCodes.KEY_END:
+                stepped = constraints.getMax();
+                break;
+            default:
+                return;
+        }
+        input.setValue(String.valueOf(Math.max(constraints.getMin(), Math.min(constraints.getMax(), stepped))));
+        finishEditing(parent, value, context.getKey(), valueUpdater, false);
+    }
+
+    // The arrow the event is on, or null if it isn't on one
+    private static Element findStep(final Element parent, final Element target) {
+        Element element = target;
+        while (element != null && element != parent) {
+            if (ElementUtil.hasClassName(element, STEP_CLASS)) {
+                return element;
+            }
+            element = element.getParentElement();
         }
         return null;
+    }
+
+    // What constrains the value: the value's own bounds, if it has them, else the cell's
+    private HasSpinnerConstraints constraintsOf(final Number value) {
+        return value instanceof HasSpinnerConstraints
+                ? (HasSpinnerConstraints) value
+                : this;
     }
 
     private void ensureSpinner() {
@@ -260,7 +287,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
             if (spinner.hasChanged()) {
                 // The input has changed so finish editing.
-                finishEditing(parent, value, context.getKey(), valueUpdater);
+                finishEditing(parent, value, context.getKey(), valueUpdater, true);
             }
         }
     }
@@ -273,7 +300,7 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
             final Element target = event.getEventTarget().cast();
             final Object key = context.getKey();
             if (getInputElement(parent).isOrHasChild(target)) {
-                finishEditing(parent, value, key, valueUpdater);
+                finishEditing(parent, value, key, valueUpdater, true);
             } else {
                 focusedKey = key;
                 input.focus();
@@ -287,7 +314,8 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
         // read-only spinner (the normal field, its value and arrows greyed)
         if (value != null) {
             if (isReadOnly(value)) {
-                sb.append(template.readOnlyInput(String.valueOf(value), readOnlyArrowsHtml));
+                sb.append(template.readOnlyInput(String.valueOf(value), name, bound(value, true),
+                        bound(value, false), STEPS_HTML));
 
             } else if (!(value instanceof Editable)) {
                 sb.append(SafeHtmlUtils.fromString(String.valueOf(value)));
@@ -314,11 +342,11 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
                     }
                 }
 
-                if (viewData != null) {
-                    sb.append(template.input(viewData.getCurrentValue(), arrowUpHtml, arrowDownHtml));
-                } else {
-                    sb.append(template.input(String.valueOf(value), arrowUpHtml, arrowDownHtml));
-                }
+                final String text = viewData != null
+                        ? viewData.getCurrentValue()
+                        : String.valueOf(value);
+                sb.append(template.input(text, String.valueOf(value), name, bound(value, true),
+                        bound(value, false), STEPS_HTML));
             }
         } else {
             sb.append(SafeHtmlUtils.fromSafeConstant("<br/>"));
@@ -340,25 +368,19 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     private void finishEditing(final Element parent, final Number value, final Object key,
-                               final ValueUpdater<Number> valueUpdater) {
+                               final ValueUpdater<Number> valueUpdater, final boolean blur) {
         // Get the input element.
         final InputElement input = getInputElement(parent);
         if (input != null) {
             final String newValue = input.getValue();
 
-            // Get the object that we are going to use to apply value
-            // constraints.
-            HasSpinnerConstraints constraints = this;
-            if (value instanceof HasSpinnerConstraints) {
-                constraints = (HasSpinnerConstraints) value;
-            }
-
-            final String constrainedValue = constrainValue(constraints, newValue);
+            final String constrainedValue = constrainValue(constraintsOf(value), newValue);
             // Set the value back if it has been constrained by the
             // constrainValue() method.
             if (!newValue.equals(constrainedValue)) {
                 input.setValue(constrainedValue);
             }
+            input.setAttribute("aria-valuenow", constrainedValue);
 
             // Get the view data.
             ViewData vd = getViewData(key);
@@ -375,9 +397,10 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
             }
         }
 
-        // Blur the element.
-        focusedKey = null;
-        getInputElement(parent).blur();
+        if (blur) {
+            focusedKey = null;
+            getInputElement(parent).blur();
+        }
     }
 
     private String constrainValue(final HasSpinnerConstraints constraints, final String value) {
@@ -397,28 +420,31 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     private InputElement getInputElement(final Element parent) {
-        Element vsDiv = null;
-        if (parent.hasTagName("div") && ElementUtil.hasClassName(parent, "valueSpinner")) {
-            vsDiv = parent;
-        } else {
-            final NodeList<Element> divs = parent.getElementsByTagName("div");
-            for (int i = 0; i < divs.getLength(); i++) {
-                final Element div = divs.getItem(i);
-                if (ElementUtil.hasClassName(div, "valueSpinner")) {
-                    vsDiv = div;
-                    break;
-                }
-            }
-        }
+        final NodeList<Element> inputs = parent.getElementsByTagName("input");
+        return inputs.getLength() == 0
+                ? null
+                : inputs.getItem(0).cast();
+    }
 
-        if (vsDiv != null) {
-            final Element inputElement = vsDiv.getFirstChildElement();
-            if (inputElement != null) {
-                return inputElement.cast();
-            }
-        }
+    // The value's lower or upper bound, as text
+    private String bound(final Number value, final boolean lower) {
+        final HasSpinnerConstraints constraints = constraintsOf(value);
+        return String.valueOf(lower
+                ? constraints.getMin()
+                : constraints.getMax());
+    }
 
-        return null;
+    // An arrow: its icon marked as decoration, the arrow hidden from screen readers, its title
+    // naming it for the mouse
+    private static SafeHtml stepHtml(final SvgImage icon, final String name, final String direction) {
+        final String svg = icon.getSvg().replaceFirst("<svg ",
+                "<svg class=\"" + BLOCK + "__icon\" aria-hidden=\"true\" ");
+        return new SafeHtmlBuilder()
+                .appendHtmlConstant("<div class=\"" + STEP_CLASS + "\" title=\"" + name + "\" aria-hidden=\"true\" "
+                                    + STEP_ATTRIBUTE + "=\"" + direction + "\">")
+                .append(SafeHtmlUtils.fromTrustedString(svg))
+                .appendHtmlConstant("</div>")
+                .toSafeHtml();
     }
 
     @Override
@@ -452,17 +478,19 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"valueSpinner\">" +
-                "<input class=\"gwt-TextBox\" type=\"text\" value=\"{0}\" tabindex=\"-1\"></input>" +
-                "<div class=\"arrows\">{1}{2}</div>" +
-                "</div>")
-        SafeHtml input(String value, SafeHtml imgUp, SafeHtml imgDown);
+        // The ValueSpinner widget's markup (value-spinner.css), with the grid's modifier: a spin
+        // button (WAI-ARIA) that the grid's keyboard doesn't reach yet (tabindex -1)
+        @Template("<div class=\"value-spinner value-spinner--cell\"><div class=\"value-spinner__field\">"
+                  + "<input class=\"gwt-TextBox value-spinner__input\" type=\"text\" role=\"spinbutton\""
+                  + " value=\"{0}\" aria-valuenow=\"{1}\" aria-label=\"{2}\" aria-valuemin=\"{3}\""
+                  + " aria-valuemax=\"{4}\" tabindex=\"-1\"></input>{5}</div></div>")
+        SafeHtml input(String text, String value, String name, String min, String max, SafeHtml steps);
 
-        @Template("<div class=\"valueSpinner\">" +
-                "<input class=\"gwt-TextBox\" type=\"text\" value=\"{0}\" tabindex=\"-1\" readonly></input>" +
-                "<div class=\"arrows\">{1}</div>" +
-                "</div>")
-        SafeHtml readOnlyInput(String value, SafeHtml arrows);
+        @Template("<div class=\"value-spinner value-spinner--cell\"><div class=\"value-spinner__field\">"
+                  + "<input class=\"gwt-TextBox value-spinner__input\" type=\"text\" role=\"spinbutton\""
+                  + " value=\"{0}\" aria-valuenow=\"{0}\" aria-label=\"{1}\" aria-valuemin=\"{2}\""
+                  + " aria-valuemax=\"{3}\" tabindex=\"-1\" readonly></input>{4}</div></div>")
+        SafeHtml readOnlyInput(String value, String name, String min, String max, SafeHtml steps);
     }
 
 

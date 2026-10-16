@@ -321,12 +321,13 @@ public final class ViewStateStories {
                 DataGridUtil.headingBuilder("Job").build(),
                 110);
         grid.addColumn(DataGridUtil.valueSpinnerColumnBuilder(
+                                "Max Tasks",
                                 (Job job) -> maxTasks(job, editable),
                                 0L, 100L)
                         .enabledWhen(Job::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Max Tasks").build(),
-                80);
+                ColumnSizeConstants.VALUE_SPINNER_COL);
         grid.addColumn(DataGridUtil.cellIconColumnBuilder(true,
                                 (Job job) -> CellIcon.of(SvgImage.DELETE, "Delete", editable))
                         .build(),

@@ -461,50 +461,11 @@
   "app-main-findincontentdialog--default": [
     "label"
   ],
-  "app-main-jobsscreen--cross-navigation": [
-    "label"
-  ],
-  "app-main-jobsscreen--edit-schedule": [
-    "label"
-  ],
-  "app-main-jobsscreen--job-schedule": [
-    "label"
-  ],
   "app-main-manageactivitydialog--validation-blocks-save": [
     "label",
     "scrollable-region-focusable"
   ],
-  "app-main-nodesscreen--node-grid": [
-    "label"
-  ],
-  "app-main-nodesscreen--node-jobs": [
-    "label"
-  ],
-  "app-main-nodesscreen--preselect-node": [
-    "label"
-  ],
-  "app-main-nodesscreen--server-side-sorting": [
-    "label"
-  ],
   "app-main-pipelineeditor--embedded-property": [
-    "label"
-  ],
-  "app-main-pipelineeditor--failed-batch-change-keeps-dialog-usable": [
-    "label"
-  ],
-  "app-main-pipelineeditor--processors": [
-    "label"
-  ],
-  "app-main-processorfilterlist--expander-tree": [
-    "label"
-  ],
-  "app-main-processorfilterlist--info-omits-delay-row-when-unset": [
-    "label"
-  ],
-  "app-main-processorfilterlist--info-shows-backoff-rows": [
-    "label"
-  ],
-  "app-main-processorfilterlist--info-shows-unlimited-tasks": [
     "label"
   ],
   "app-main-resultstoresdialog--settings": [
@@ -603,9 +564,6 @@
     "label"
   ],
   "widgets-inputs-tickbox--no-label": [
-    "label"
-  ],
-  "widgets-inputs-viewstates--tables-and-editors": [
     "label"
   ],
   "widgets-popuppositioner-popup-contract--arrow-left-closes-only-the-current-level": [

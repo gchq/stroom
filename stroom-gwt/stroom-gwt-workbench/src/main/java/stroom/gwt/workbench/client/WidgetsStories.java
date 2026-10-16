@@ -34,6 +34,7 @@ import stroom.gwt.workbench.client.widgets.cellrenderers.FeedRefCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.SvgCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.TickBoxCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.UserRefCellStories;
+import stroom.gwt.workbench.client.widgets.cellrenderers.ValueSpinnerCellStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.CalendarGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.CustomDateBoxStories;
@@ -229,6 +230,8 @@ public final class WidgetsStories {
         TickBoxCellStories.addTo(registry);
         // Widgets/Cell Renderers/UserRefCell
         UserRefCellStories.addTo(registry);
+        // Widgets/Cell Renderers/ValueSpinnerCell
+        ValueSpinnerCellStories.addTo(registry);
         // Widgets/Selectors/DocSelectionBox
         DocSelectionBoxStories.addTo(registry);
         // Widgets/Selectors/DropDownSelector

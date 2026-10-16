@@ -383,7 +383,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
     private void addPriorityColumn() {
         final Column<ProcessorListRow, Number> priorityColumn = new Column<ProcessorListRow, Number>(
-                new ValueSpinnerCell(ProcessorFilter.MIN_PRIORITY, ProcessorFilter.MAX_PRIORITY)) {
+                new ValueSpinnerCell("Priority", ProcessorFilter.MIN_PRIORITY, ProcessorFilter.MAX_PRIORITY)) {
             @Override
             public Number getValue(final ProcessorListRow row) {
                 Number priority = null;
@@ -407,7 +407,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 }
             });
         }
-        dataGrid.addColumn(priorityColumn, "Priority", ColumnSizeConstants.MEDIUM_COL);
+        dataGrid.addColumn(priorityColumn, "Priority", ColumnSizeConstants.VALUE_SPINNER_COL);
     }
 
 //    private void addMaxProcessingTasksColumn() {

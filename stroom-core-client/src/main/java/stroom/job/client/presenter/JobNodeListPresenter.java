@@ -18,6 +18,7 @@ package stroom.job.client.presenter;
 
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.valuespinner.shared.EditableInteger;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
@@ -301,7 +302,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
         // Max.
         dataGrid.addColumn(
-                DataGridUtil.valueSpinnerColumnBuilder(this::getTaskLimit, 1L, 9999L)
+                DataGridUtil.valueSpinnerColumnBuilder("Max Tasks", this::getTaskLimit, 1L, 9999L)
                         .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
                         .withFieldUpdater((rowIndex, jobNodeAndInfo, value) -> {
                             if (jobNodeAndInfo != null) {
@@ -320,7 +321,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                 DataGridUtil.headingBuilder("Max Tasks")
                         .withToolTip("The task limit for this job on this node")
                         .build(),
-                80);
+                ColumnSizeConstants.VALUE_SPINNER_COL);
 
         // Current Tasks (Cur).
         dataGrid.addColumn(

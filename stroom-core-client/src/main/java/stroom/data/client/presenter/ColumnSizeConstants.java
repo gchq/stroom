@@ -34,6 +34,8 @@ public final class ColumnSizeConstants {
      * Column with the heading 'Enabled'
      */
     public static final int ENABLED_COL = 66;
+    /// A column of spinners (`ValueSpinnerCell`): room for a value and its two 24px arrows.
+    public static final int VALUE_SPINNER_COL = 110;
 
     private ColumnSizeConstants() {
         // Constants.
