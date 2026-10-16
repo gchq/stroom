@@ -53,6 +53,8 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
     private static final String CHAT_PREFIX = "/memories/session/";
     private static final String CHAT_NAME_PREFIX = "session/";
     private static final String UNDO_ATTRIBUTE = "data-undo-memory";
+    // Marks a note in the list that has changes not yet saved, including a new one.
+    static final String UNSAVED_PREFIX = "[Unsaved] ";
 
     private final AskStroomAiClient client;
     private AiChat chat;
@@ -61,6 +63,10 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
     private String selectedPath;
     // The version of the memory being edited, or null if it is new.
     private Integer selectedVersion;
+    // The memory being edited as it was last saved ("" if it is new), to tell if it has been changed.
+    private String savedContent = "";
+    // Whether the list shows the memory being edited as unsaved, so the list is only redrawn when that changes.
+    private boolean shownUnsaved;
 
     @Inject
     public AiMemoryPresenter(final EventBus eventBus,
@@ -76,54 +82,136 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
     /// @param chat The chat whose memory, and whose user's memory, to show.
     public void show(final AiChat chat) {
         this.chat = chat;
-        selectedPath = null;
-        selectedVersion = null;
+        select(null, null, "");
         getView().setContent("", false);
         refresh();
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(PopupSize.resizable(800, 600))
                 .caption("Memory")
+                .onHideRequest(e -> {
+                    if (!isUnsaved()) {
+                        e.hide();
+                        return;
+                    }
+                    // Every path that doesn't close must reset the dialog, or it is left unusable.
+                    ConfirmEvent.fire(this, discardMessage("Close without saving"), ok -> {
+                        if (ok) {
+                            e.hide();
+                        } else {
+                            e.reset();
+                        }
+                    });
+                })
                 .fire();
+    }
+
+    /// Makes a note the one being edited.
+    private void select(final String path, final Integer version, final String content) {
+        selectedPath = path;
+        selectedVersion = version;
+        savedContent = content;
+    }
+
+    /// @return True if the note being edited is new, or has changes, that haven't been saved.
+    boolean isUnsaved() {
+        return selectedPath != null
+               && (selectedVersion == null || !getView().getContent().equals(savedContent));
+    }
+
+    /// @return A question asking whether to lose the unsaved note, e.g. "Close without saving 'notes.md'? ...".
+    private String discardMessage(final String action) {
+        return action + " '" + name(selectedPath) + "'? " + (selectedVersion == null
+                ? "The new note will be lost."
+                : "Your changes to it will be lost.");
+    }
+
+    /// Asks before losing an unsaved note, then does something if the user agrees (or there was nothing to lose).
+    private void unlessUnsaved(final String action, final Runnable then, final Runnable otherwise) {
+        if (!isUnsaved()) {
+            then.run();
+            return;
+        }
+        ConfirmEvent.fire(this, discardMessage(action), ok -> {
+            if (ok) {
+                then.run();
+            } else {
+                otherwise.run();
+            }
+        });
+    }
+
+    /// Shows the list of notes, with the one being edited (and any new one) marked if unsaved.
+    private void showList() {
+        shownUnsaved = isUnsaved();
+        final List<String> labels = new ArrayList<>();
+        int selectedIndex = -1;
+        for (final AiMemory memory : memories) {
+            final boolean selected = path(memory).equals(selectedPath);
+            if (selected) {
+                selectedIndex = labels.size();
+            }
+            labels.add((selected && shownUnsaved
+                    ? UNSAVED_PREFIX
+                    : "") + label(memory.getScope(), memory.getName()));
+        }
+        if (selectedPath != null && selectedIndex < 0) {
+            // A new note, not saved yet.
+            selectedIndex = labels.size();
+            labels.add(UNSAVED_PREFIX + label(selectedPath.startsWith(CHAT_PREFIX)
+                    ? AiMemoryScope.CHAT
+                    : AiMemoryScope.USER, name(selectedPath)));
+        }
+        getView().setMemories(labels, selectedIndex);
+    }
+
+    @Override
+    public void onContentChanged() {
+        if (isUnsaved() != shownUnsaved) {
+            showList();
+        }
     }
 
     private void refresh() {
         client.listMemory(chat.getId(), response -> {
             memories = new ArrayList<>(response.getMemories());
-            int selectedIndex = -1;
-            for (int i = 0; i < memories.size(); i++) {
-                if (path(memories.get(i)).equals(selectedPath)) {
-                    selectedIndex = i;
-                }
-            }
-            getView().setMemories(labels(), selectedIndex);
+            showList();
             getView().setChanges(changesHtml(response.getChanges()));
         }, this::showError, this);
     }
 
     @Override
     public void onMemorySelected(final int index) {
+        if (index >= memories.size() || path(memories.get(index)).equals(selectedPath)) {
+            // The note being edited, e.g. the new one.
+            return;
+        }
         final AiMemory memory = memories.get(index);
-        selectedPath = path(memory);
-        selectedVersion = memory.getVersion();
-        getView().setContent(memory.getContent(), true);
+        unlessUnsaved("Open another note without saving", () -> {
+            select(path(memory), memory.getVersion(), memory.getContent());
+            getView().setContent(memory.getContent(), true);
+            showList();
+        }, this::showList);
     }
 
     @Override
     public void onNewMemory() {
         final String message = "Name for the new memory, e.g. preferences.md. Start it with " + CHAT_NAME_PREFIX
                                + " to keep it to this chat.";
-        PromptEvent.fire(this, "New Memory", message, "", name -> {
-            if (name != null && !name.isBlank()) {
-                final String trimmed = name.strip();
-                selectedPath = trimmed.startsWith(CHAT_NAME_PREFIX)
-                        ? CHAT_PREFIX + trimmed.substring(CHAT_NAME_PREFIX.length())
-                        : USER_PREFIX + trimmed;
-                selectedVersion = null;
-                getView().setMemories(labels(), -1);
-                getView().setContent("", true);
-            }
-        });
+        unlessUnsaved("Start a new note without saving", () ->
+                PromptEvent.fire(this, "New Memory", message, "", name -> {
+                    if (name != null && !name.isBlank()) {
+                        final String trimmed = name.strip();
+                        select(trimmed.startsWith(CHAT_NAME_PREFIX)
+                                ? CHAT_PREFIX + trimmed.substring(CHAT_NAME_PREFIX.length())
+                                : USER_PREFIX + trimmed, null, "");
+                        getView().setContent("", true);
+                        // Shown in the list straight away, marked unsaved, so it is clear it needs saving.
+                        showList();
+                    }
+                }), () -> {
+                    // Keep editing the unsaved note.
+                });
     }
 
     @Override
@@ -131,9 +219,11 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
         if (selectedPath == null) {
             return;
         }
-        client.saveMemory(new SaveAiMemoryRequest(chat, selectedPath, getView().getContent(), selectedVersion),
+        final String content = getView().getContent();
+        client.saveMemory(new SaveAiMemoryRequest(chat, selectedPath, content, selectedVersion),
                 memory -> {
                     selectedVersion = memory.getVersion();
+                    savedContent = content;
                     refresh();
                 }, this::showError, this);
     }
@@ -145,8 +235,9 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
         }
         if (selectedVersion == null) {
             // Never saved, so there is nothing to delete.
-            selectedPath = null;
+            select(null, null, "");
             getView().setContent("", false);
+            showList();
             return;
         }
         final String path = selectedPath;
@@ -154,8 +245,7 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
         ConfirmEvent.fire(this, deleteMessage(path), ok -> {
             if (ok) {
                 client.deleteMemory(new DeleteAiMemoryRequest(chat, path, version), done -> {
-                    selectedPath = null;
-                    selectedVersion = null;
+                    select(null, null, "");
                     getView().setContent("", false);
                     refresh();
                 }, this::showError, this);
@@ -185,8 +275,7 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
             if (ok) {
                 client.deleteMemory(new DeleteAiMemoryRequest(chat, USER_PREFIX, null), done -> {
                     if (selectedPath != null && !selectedPath.startsWith(CHAT_PREFIX)) {
-                        selectedPath = null;
-                        selectedVersion = null;
+                        select(null, null, "");
                         getView().setContent("", false);
                     }
                     refresh();
@@ -205,14 +294,20 @@ public class AiMemoryPresenter extends MyPresenterWidget<AiMemoryPresenter.AiMem
         });
     }
 
-    private List<String> labels() {
-        final List<String> labels = new ArrayList<>();
-        for (final AiMemory memory : memories) {
-            labels.add((memory.getScope() == AiMemoryScope.USER
-                    ? "Yours: "
-                    : "This chat: ") + memory.getName());
+    private static String label(final AiMemoryScope scope, final String name) {
+        return (scope == AiMemoryScope.USER
+                ? "Yours: "
+                : "This chat: ") + name;
+    }
+
+    /// @return The note's name, without where it is kept.
+    private static String name(final String path) {
+        if (path.startsWith(CHAT_PREFIX)) {
+            return path.substring(CHAT_PREFIX.length());
         }
-        return labels;
+        return path.startsWith(USER_PREFIX)
+                ? path.substring(USER_PREFIX.length())
+                : path;
     }
 
     private static String path(final AiMemory memory) {
