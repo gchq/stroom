@@ -55,6 +55,8 @@ public class ToolConsent {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ToolConsent.class);
 
+    // The classification of an untrusted server's tools, which the chat shows as a warning beside the server.
+    static final String UNTRUSTED_SERVER = "untrusted server";
     static final String DATA_WAS_READ_REASON = "This tool only reads, but this chat has read data from tools or "
                                                + "attached tables, which could tell the model to put that data in "
                                                + "this call, and the tool's server would receive it.";
@@ -176,7 +178,7 @@ public class ToolConsent {
     static List<String> risks(final McpToolInfo info) {
         final List<String> risks = new ArrayList<>();
         if (!info.trusted()) {
-            risks.add("untrusted server");
+            risks.add(UNTRUSTED_SERVER);
         }
         // What the tool does, as its server says.
         risks.add(Boolean.TRUE.equals(info.readOnlyHint())

@@ -24,6 +24,8 @@ import stroom.svg.shared.SvgImage;
 /// tested without a browser.
 final class AiChatTexts {
 
+    // The classification an untrusted server's tools have on approval cards.
+    static final String UNTRUSTED_SERVER = "untrusted server";
     // The context pill turns yellow, then red, as the context window fills.
     static final int CONTEXT_WARN_PERCENT = 75;
     static final int CONTEXT_OVER_PERCENT = 90;
@@ -61,6 +63,18 @@ final class AiChatTexts {
         return percent >= CONTEXT_WARN_PERCENT
                 ? "warn"
                 : null;
+    }
+
+    /// @param trusted True if the tool's server is trusted.
+    /// @return What the trust icon beside the server's name means, a sentence to a line.
+    static String trustExplanation(final boolean trusted) {
+        return trusted
+                ? "Trusted server.\n"
+                  + "An administrator trusts it, so what it says about its tools, e.g. that one only reads, is "
+                  + "relied on."
+                : "Untrusted server.\n"
+                  + "An administrator hasn't marked it trusted, so what it says about its tools isn't relied on, "
+                  + "and each of its tools asks before running.";
     }
 
     /// @param risk A classification of a tool on an approval card, e.g. "can modify".
