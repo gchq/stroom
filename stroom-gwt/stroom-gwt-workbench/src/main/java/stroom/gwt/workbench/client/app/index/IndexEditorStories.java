@@ -193,7 +193,7 @@ public final class IndexEditorStories {
                             .closest(StroomDom.DIALOG));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
-                            .toHaveBeenCalledWith("WARN: An index field must have a name"));
+                            .toHaveBeenCalledWith("ERROR: An index field must have a name"));
                     play.click(screen.findByRole("button", StroomDom.button("Close")));
                     // The dialog can be used again: Cancel closes it, and nothing was added
                     play.click(dialog.getByRole("button", StroomDom.button("Cancel")));

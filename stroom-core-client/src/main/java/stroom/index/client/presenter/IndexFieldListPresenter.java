@@ -252,61 +252,37 @@ public class IndexFieldListPresenter
 
     private void onAdd() {
         indexFieldEditPresenter.read(IndexFieldImpl.builder().build());
-        indexFieldEditPresenter.show("New Field", e -> {
-            if (e.isOk()) {
-                final IndexFieldImpl indexField = indexFieldEditPresenter.write();
-                if (indexField == null) {
-                    // Not valid: write() has said why, so let the dialog be used again
-                    e.reset();
-                } else {
-                    restFactory
-                            .create(INDEX_RESOURCE)
-                            .method(res -> res.addField(new AddField(docRef, indexField)))
-                            .onSuccess(response -> {
-                                selectionModel.setSelected(indexField);
-                                refresh();
-                                e.hide();
-                            })
-                            .onFailure(new DefaultErrorHandler(this, e::reset))
-                            .taskMonitorFactory(pagerView)
-                            .exec();
-                }
-            } else {
-                e.hide();
-            }
-        });
+        indexFieldEditPresenter.show("New Field", (indexField, e) -> restFactory
+                .create(INDEX_RESOURCE)
+                .method(res -> res.addField(new AddField(docRef, indexField)))
+                .onSuccess(response -> {
+                    selectionModel.setSelected(indexField);
+                    refresh();
+                    e.hide();
+                })
+                .onFailure(new DefaultErrorHandler(this, e::reset))
+                .taskMonitorFactory(pagerView)
+                .exec());
     }
 
     private void onEdit() {
         final IndexFieldImpl existingField = selectionModel.getSelected();
         if (existingField != null) {
             indexFieldEditPresenter.read(existingField);
-            indexFieldEditPresenter.show("Edit Field", e -> {
-                if (e.isOk()) {
-                    final IndexFieldImpl indexField = indexFieldEditPresenter.write();
-                    if (indexField == null) {
-                        // Not valid: write() has said why, so let the dialog be used again
-                        e.reset();
-                    } else {
-                        restFactory
-                                .create(INDEX_RESOURCE)
-                                .method(res -> res.updateField(new UpdateField(
-                                        docRef,
-                                        existingField.getFldName(),
-                                        indexField)))
-                                .onSuccess(response -> {
-                                    selectionModel.setSelected(indexField);
-                                    refresh();
-                                    e.hide();
-                                })
-                                .onFailure(new DefaultErrorHandler(this, e::reset))
-                                .taskMonitorFactory(pagerView)
-                                .exec();
-                    }
-                } else {
-                    e.hide();
-                }
-            });
+            indexFieldEditPresenter.show("Edit Field", (indexField, e) -> restFactory
+                    .create(INDEX_RESOURCE)
+                    .method(res -> res.updateField(new UpdateField(
+                            docRef,
+                            existingField.getFldName(),
+                            indexField)))
+                    .onSuccess(response -> {
+                        selectionModel.setSelected(indexField);
+                        refresh();
+                        e.hide();
+                    })
+                    .onFailure(new DefaultErrorHandler(this, e::reset))
+                    .taskMonitorFactory(pagerView)
+                    .exec());
         }
     }
 

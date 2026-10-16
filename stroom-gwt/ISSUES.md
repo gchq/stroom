@@ -1310,10 +1310,10 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   (`TestRefreshInterval`).
 * #40: OK on a new Lucene index field with a blank name left the New Field dialog with OK and Cancel
   disabled and no message: `IndexFieldEditPresenter.write()` threw a `ValidationException` that
-  `IndexFieldListPresenter.onAdd()` didn't catch. `write()` now warns "An index field must have a
-  name" and returns `null`, as the Solr version does, and both `onAdd()` and `onEdit()` let the
-  dialog be used again (`TestIndexFieldEditPresenter`, the workbench's `App/Index/IndexEditor`
-  `NewFieldWithoutName`).
+  `IndexFieldListPresenter.onAdd()` didn't catch. `IndexFieldEditPresenter` now handles OK itself
+  (`onHideRequest`): it shows the error and lets the dialog be used again once the error is closed,
+  and passes only a valid field to `onAdd()` and `onEdit()` (`TestIndexFieldEditPresenter`, the
+  workbench's `App/Index/IndexEditor` `NewFieldWithoutName`).
 * #41: the batch edit dialogs' validation messages were never shown, so OK did nothing and said
   nothing for Batch Edit Current Processors with no change, no Run As user or no processors in the
   filter, and for Batch Edit Permissions For Filtered Documents with no documents in the filter.
