@@ -22,6 +22,7 @@ import stroom.data.client.presenter.DataPreviewTabPresenter;
 import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessChoicePresenter;
+import stroom.data.client.presenter.ProcessorTaskListPresenter;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -99,6 +100,9 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
 
     /// @return The 'Process Search Results' dialog, as `QueryPresenter` shows it.
     ProcessorLimitsPresenter getProcessorLimitsPresenter();
+
+    /// @return The task list in the lower pane of a folder's 'Active Tasks' tab.
+    ProcessorTaskListPresenter getProcessorTaskListPresenter();
 
     // Data
 

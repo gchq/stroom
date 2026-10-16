@@ -1319,6 +1319,12 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   any such failure now ends the search, see below).
 * `MySingleSelectionModel` counted two quick list refreshes as a double select, which closed the
   Query Favourites dialog: `DashboardComponent` `QueryHistoryAndFavourites`.
+* Active Tasks' Info icon showed nothing when a second row's Info was clicked before the first
+  row's stream lookup replied (gh-2598): the first reply showed the tooltip and the second hid it,
+  as `PopupManager.show` toggles a popup that is already showing. `ProcessorTaskListPresenter` now
+  ignores the reply to an earlier click. It also added another link click handler to the tooltip
+  each time it was shown, so a feed or stream link fired once per tooltip shown so far; it now adds
+  one: `ProcessorTaskList` `InfoOfTwoRowsClickedQuickly` and `InfoFeedLinkOpensTheFeedOnce`.
 
 ## Checked and not bugs
 
