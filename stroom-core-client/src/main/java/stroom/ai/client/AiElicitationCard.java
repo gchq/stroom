@@ -47,22 +47,11 @@ final class AiElicitationCard {
     static final String FIELD_ATTRIBUTE = "data-form-field";
     /// On each input: how to read it (text, choice, flag or several).
     static final String KIND_ATTRIBUTE = "data-form-kind";
-    /// On each answer to click: the answer.
-    static final String OPTION_ATTRIBUTE = "data-question-option";
-    /// On each Back button.
-    static final String BACK_ATTRIBUTE = "data-question-back";
-    /// The class of a question.
-    static final String QUESTION_CLASS = "ai-question";
-    /// The class of the box for the user's own answer.
-    static final String CUSTOM_ANSWER_CLASS = "ai-question-custom";
-    /// The class of a question not being shown.
-    static final String LATER_CLASS = "ai-question--later";
 
     private static final SafeHtml INPUT = SafeHtmlUtils.fromSafeConstant("input");
     private static final SafeHtml SELECT = SafeHtmlUtils.fromSafeConstant("select");
     private static final SafeHtml OPTION = SafeHtmlUtils.fromSafeConstant("option");
     private static final SafeHtml LABEL = SafeHtmlUtils.fromSafeConstant("label");
-    private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
     private static final String TEXT = "text";
     private static final String CHOICE = "choice";
     private static final String FLAG = "flag";
@@ -106,7 +95,7 @@ final class AiElicitationCard {
             }
         } else if (flag) {
             checkBox(row, field.getTitle() + required, field, FLAG, "true", "true".equals(field.getDefault()));
-        } else if (!field.getValues().isEmpty() && !field.isCustom()) {
+        } else if (!field.getValues().isEmpty()) {
             row.elem(select -> {
                 if (!field.isRequired()) {
                     select.elem("", OPTION, new Attribute("value", ""));
@@ -165,64 +154,6 @@ final class AiElicitationCard {
         return "";
     }
 
-    /// Adds questions from Stroom AI's agent (its ask_user tool), shown one at a time: each with its answers to
-    /// click (the recommended one marked), a box for the user's own answer if they may give one, and Back.
-    /// Choosing an answer moves on to the next question, and after the last, sends the answers.
-    ///
-    /// @param hb     Where to add them.
-    /// @param fields The questions, as the form's fields.
-    static void appendQuestions(final HtmlBuilder hb, final List<AiElicitationForm.Field> fields) {
-        hb.div(all -> {
-            for (int i = 0; i < fields.size(); i++) {
-                final AiElicitationForm.Field field = fields.get(i);
-                final int number = i + 1;
-                final boolean first = i == 0;
-                all.div(question -> {
-                    if (fields.size() > 1) {
-                        question.div("Question " + number + " of " + fields.size(),
-                                Attribute.className("ai-question-progress"));
-                    }
-                    question.div(field.getTitle(), Attribute.className("ai-question-text"));
-                    question.div(options -> {
-                        for (int j = 0; j < field.getValues().size(); j++) {
-                            final String value = field.getValues().get(j);
-                            final boolean recommended = value.equals(field.getDefault());
-                            final String label = field.getLabels().get(j);
-                            options.elem(option -> {
-                                option.span(label);
-                                if (recommended) {
-                                    option.span("Recommended", Attribute.className("ai-question-recommended"));
-                                }
-                            }, BUTTON, Attribute.className("allow-focus ai-question-option"
-                                                           + (recommended
-                                    ? " ai-question-option--recommended"
-                                    : "")),
-                                    new Attribute(OPTION_ATTRIBUTE, value));
-                        }
-                    }, Attribute.className("ai-question-options"));
-                    if (field.isCustom() || field.getValues().isEmpty()) {
-                        question.elem(INPUT, Attribute.className("allow-focus ai-elicitation-input "
-                                                                 + CUSTOM_ANSWER_CLASS),
-                                new Attribute("type", "text"),
-                                new Attribute("placeholder", field.getValues().isEmpty()
-                                        ? "Type your answer, then press Enter"
-                                        : "Or type your own answer, then press Enter"));
-                    }
-                    if (!first) {
-                        question.elem("Back", BUTTON, Attribute.className("allow-focus ai-question-back"),
-                                new Attribute(BACK_ATTRIBUTE, "true"));
-                    }
-                    // Holds the answer given, which is what is sent.
-                    question.elem(INPUT, new Attribute("type", "hidden"),
-                            new Attribute(FIELD_ATTRIBUTE, field.getName()),
-                            new Attribute(KIND_ATTRIBUTE, TEXT));
-                }, Attribute.className("ai-question" + (first
-                        ? ""
-                        : " ai-question--later")));
-            }
-        }, Attribute.className("ai-questions"));
-    }
-
     /// @param message  What the server said.
     /// @param fallback What to use if it says nothing.
     /// @return Its first line with text in it, without Markdown heading or emphasis marks, e.g. "Records to
@@ -272,16 +203,10 @@ final class AiElicitationCard {
         }
         hb.div(answer -> {
             for (final String[] row : rows) {
-                if (row[0].endsWith("?")) {
-                    // A question: its answer below it.
-                    answer.div(row[0], Attribute.className("ai-elicitation-answer-title"));
-                    answer.div(row[1], Attribute.className("ai-elicitation-answer-value"));
-                } else {
-                    answer.div(line -> {
-                        line.span(row[0] + ": ", Attribute.className("ai-elicitation-answer-title"));
-                        line.span(row[1]);
-                    });
-                }
+                answer.div(line -> {
+                    line.span(row[0] + ": ", Attribute.className("ai-elicitation-answer-title"));
+                    line.span(row[1]);
+                });
             }
         }, Attribute.className("ai-elicitation-answer"));
         return true;

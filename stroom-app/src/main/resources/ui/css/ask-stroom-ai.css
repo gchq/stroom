@@ -1232,86 +1232,6 @@
     font: inherit;
 }
 
-/* Questions from the agent (ask_user), one at a time, as VS Code shows them. */
-.ai-questions {
-    margin: 6px 0 8px;
-}
-
-.ai-question--later {
-    display: none;
-}
-
-.ai-question-progress {
-    font-size: var(--ai-font-size--meta);
-    color: var(--text-color--secondary);
-    margin-bottom: 2px;
-}
-
-.ai-question-text {
-    white-space: pre-wrap;
-    word-break: break-word;
-    margin-bottom: 8px;
-}
-
-.ai-question-options {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-bottom: 6px;
-}
-
-.ai-question-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    text-align: left;
-    padding: 5px 10px;
-    border: 1px solid var(--control__border-color);
-    border-radius: 4px;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    cursor: pointer;
-}
-
-.ai-question-option:hover,
-.ai-question-option:focus-visible {
-    background: var(--curve-tab__background-color--hover);
-    border-color: var(--blue-300);
-}
-
-.ai-question-option--recommended {
-    border-color: rgba(var(--blue-500-rgb), 0.7);
-}
-
-.ai-question-option--chosen {
-    background: rgba(var(--blue-500-rgb), 0.18);
-}
-
-.ai-question-recommended {
-    margin-left: auto;
-    font-size: var(--ai-font-size--meta);
-    padding: 0 6px;
-    border-radius: 999px;
-    color: var(--blue-300);
-    border: 1px solid rgba(var(--blue-500-rgb), 0.5);
-    white-space: nowrap;
-}
-
-.ai-question-custom {
-    margin-bottom: 6px;
-}
-
-.ai-question-back {
-    border: none;
-    background: none;
-    padding: 0;
-    color: var(--link__text-color);
-    font: inherit;
-    cursor: pointer;
-}
-
 /* What the user answered, once a form has been submitted. */
 .ai-elicitation-answer {
     margin: 4px 0 6px;
@@ -1320,10 +1240,6 @@
 
 .ai-elicitation-answer-title {
     font-weight: 600;
-}
-
-.ai-elicitation-answer-value {
-    margin: 0 0 6px 12px;
 }
 
 .ai-elicitation-check {
