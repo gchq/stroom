@@ -376,7 +376,7 @@ public class McpToolServerEditPresenter
         /// @param rules The tool policies, in order, or null for none.
         void setToolPolicies(List<McpToolPolicyRule> rules);
 
-        /// Shows the Tools tab, e.g. to point out a problem with a tool policy.
+        /// Shows the Tool Policies tab, e.g. to point out a problem with a tool policy.
         void showToolsTab();
     }
 }

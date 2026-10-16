@@ -111,7 +111,7 @@ public class McpToolServerEditViewImpl
         test.setIcon(SvgImage.OK);
 
         addTab("General", generalTab);
-        toolsTabData = addTab("Tools", toolsTab);
+        toolsTabData = addTab("Tool Policies", toolsTab);
         tabBar.addSelectionHandler(event -> selectTab(event.getSelectedItem()));
         selectTab(tabs.keySet().iterator().next());
 
