@@ -402,6 +402,17 @@
     border-color: var(--control__border-color--focused);
 }
 
+/* Deny, Deny all and Reject, in red. */
+.ai-approval-button.ai-approval-button--deny {
+    border-color: #d32f2f;
+    color: #d32f2f;
+}
+
+.ai-approval-button.ai-approval-button--deny:hover {
+    background-color: rgba(211, 47, 47, 0.12);
+    border-color: #d32f2f;
+}
+
 /* The progress line lines up with the turns' activity lines ("Worked for ..."), rather than being indented
    like a message. */
 .ai-message.ai-message--working {
@@ -800,7 +811,8 @@
     font-size: var(--ai-font-size--meta);
     font-variant-numeric: tabular-nums;
     padding: 1px 8px;
-    margin: 0 4px;
+    /* Right up against the Send button (the toolbar puts a gap between its items). */
+    margin: 0 -3px 0 4px;
     border-radius: 999px;
     color: var(--control__text-color--disabled);
     background: rgba(128, 128, 128, 0.15);
@@ -1065,10 +1077,6 @@
     border-radius: 4px;
 }
 
-.ai-approval-size {
-    font-size: var(--ai-font-size--meta);
-    color: var(--control__text-color--disabled);
-}
 
 .ai-approval-buttons {
     display: flex;

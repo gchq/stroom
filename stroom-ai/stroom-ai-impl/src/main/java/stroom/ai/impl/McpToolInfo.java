@@ -39,6 +39,7 @@ import java.util.HexFormat;
 /// @param hash            A hash of the server's endpoint and trust, and the tool's name, description and input
 ///                        schema, so approvals of a tool are asked again if it, or its server, changes.
 /// @param serverHash      A hash of the server's endpoint and trust, for approvals covering the server.
+/// @param description     The tool's description, as its server gives it, or null.
 public record McpToolInfo(String prefixedName,
                           String serverKey,
                           String toolName,
@@ -49,7 +50,42 @@ public record McpToolInfo(String prefixedName,
                           boolean confirms,
                           McpToolPolicy policy,
                           String hash,
-                          String serverHash) {
+                          String serverHash,
+                          String description) {
+
+    /// As the canonical constructor, without a description.
+    public McpToolInfo(final String prefixedName,
+                       final String serverKey,
+                       final String toolName,
+                       final boolean trusted,
+                       final Boolean readOnlyHint,
+                       final Boolean destructiveHint,
+                       final Boolean openWorldHint,
+                       final boolean confirms,
+                       final McpToolPolicy policy,
+                       final String hash,
+                       final String serverHash) {
+        this(prefixedName, serverKey, toolName, trusted, readOnlyHint, destructiveHint, openWorldHint, confirms,
+                policy, hash, serverHash, null);
+    }
+
+    /// @return The first sentence of the tool's description, kept short, or null if it has none.
+    public String briefDescription() {
+        if (description == null || description.isBlank()) {
+            return null;
+        }
+        final String oneLine = description.strip().replaceAll("\\s+", " ");
+        final int end = oneLine.indexOf(". ");
+        final String sentence = end > 0
+                ? oneLine.substring(0, end + 1)
+                : oneLine;
+        return sentence.length() > MAX_BRIEF_DESCRIPTION
+                ? sentence.substring(0, MAX_BRIEF_DESCRIPTION - 1) + "…"
+                : sentence;
+    }
+
+    // The most of a description shown when the tool's name is pointed at.
+    static final int MAX_BRIEF_DESCRIPTION = 200;
 
     /// @return True if the tool says it cannot change anything (whether or not the server is trusted).
     public boolean claimsReadOnly() {
