@@ -81,6 +81,7 @@ public record ToolApprovalRequest(String kind,
     /// @param serverHash The server's hash (see [McpToolInfo]), or null.
     /// @param decision   What was decided, or null if not yet.
     /// @param note       Why it was denied, given by the user, or null.
+    /// @param description The tool's description, kept short, to show when its name is pointed at, or null.
     public record PendingCall(String callId,
                               String tool,
                               String serverKey,
@@ -90,17 +91,32 @@ public record ToolApprovalRequest(String kind,
                               String toolHash,
                               String serverHash,
                               Decision decision,
-                              String note) {
+                              String note,
+                              String description) {
         public PendingCall {
             risks = risks == null
                     ? List.of()
                     : List.copyOf(risks);
         }
 
+        /// As the canonical constructor, without a description.
+        public PendingCall(final String callId,
+                           final String tool,
+                           final String serverKey,
+                           final String serverTool,
+                           final String arguments,
+                           final List<String> risks,
+                           final String toolHash,
+                           final String serverHash,
+                           final Decision decision,
+                           final String note) {
+            this(callId, tool, serverKey, serverTool, arguments, risks, toolHash, serverHash, decision, note, null);
+        }
+
         /// @return A copy with the decision made.
         public PendingCall decided(final Decision decision, final String note) {
             return new PendingCall(callId, tool, serverKey, serverTool, arguments, risks, toolHash, serverHash,
-                    decision, note);
+                    decision, note, description);
         }
     }
 }
