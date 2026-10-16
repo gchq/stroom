@@ -203,6 +203,9 @@ public class AskStroomAiPresenter
     private static final String UNDO_COMPACTION_ATTRIBUTE = "data-undo-compaction";
     private static final String ELICITATION_ATTRIBUTE = "data-elicitation-id";
     private static final String ELICITATION_ACTION_ATTRIBUTE = "data-elicitation-action";
+    // On the Yes and No buttons of a yes or no question: the question's field, and the answer each gives.
+    private static final String ELICITATION_FIELD_ATTRIBUTE = "data-elicitation-field";
+    private static final String ELICITATION_VALUE_ATTRIBUTE = "data-elicitation-value";
     private static final int DEFAULT_COMPACT_AT_PERCENT = 80;
     private static final String LIVE_ANSWER_ID = "ai-live-answer";
     private static final int STREAMING_POLL_MS = 500;
@@ -1565,11 +1568,19 @@ public class AskStroomAiPresenter
         final String server = AiToolMessages.getString(json, "server");
         final boolean pending = "PENDING".equals(status);
         final String message = NullSafe.string(AiToolMessages.getString(json, "message"));
+        final List<AiElicitationForm.Field> fields = pending
+                ? AiElicitationForm.fields(json)
+                : List.of();
+        final AiElicitationForm.Field yesNo = AiElicitationCard.yesNoQuestion(fields);
         hb.div(card -> {
             if (pending) {
                 card.div(server + " needs your input", Attribute.className("ai-approval-title"));
                 card.div(message, Attribute.className("ai-elicitation-message"));
-                AiElicitationCard.appendFields(card, AiElicitationForm.fields(json));
+                if (yesNo != null) {
+                    AiElicitationCard.appendYesNoQuestion(card, yesNo, message);
+                } else {
+                    AiElicitationCard.appendFields(card, fields);
+                }
             } else {
                 card.div(AiElicitationCard.firstLine(message, "A form from " + server),
                         Attribute.className("ai-approval-title"),
@@ -1577,7 +1588,21 @@ public class AskStroomAiPresenter
             }
             final boolean answerShown = "ACCEPTED".equals(status) && AiElicitationCard.appendAnswer(card, json);
             card.div(footer -> {
-                if (pending) {
+                if (pending && yesNo != null) {
+                    // A single yes or no question is answered with a button for each.
+                    footer.elem("Yes", BUTTON,
+                            Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
+                            new Attribute(ELICITATION_ATTRIBUTE, String.valueOf(msg.getId())),
+                            new Attribute(ELICITATION_ACTION_ATTRIBUTE, "ACCEPT"),
+                            new Attribute(ELICITATION_FIELD_ATTRIBUTE, yesNo.getName()),
+                            new Attribute(ELICITATION_VALUE_ATTRIBUTE, "true"));
+                    footer.elem("No", BUTTON,
+                            Attribute.className("allow-focus ai-approval-button ai-approval-button--deny"),
+                            new Attribute(ELICITATION_ATTRIBUTE, String.valueOf(msg.getId())),
+                            new Attribute(ELICITATION_ACTION_ATTRIBUTE, "ACCEPT"),
+                            new Attribute(ELICITATION_FIELD_ATTRIBUTE, yesNo.getName()),
+                            new Attribute(ELICITATION_VALUE_ATTRIBUTE, "false"));
+                } else if (pending) {
                     footer.elem("Submit", BUTTON,
                             Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
                             new Attribute(ELICITATION_ATTRIBUTE, String.valueOf(msg.getId())),
@@ -1608,9 +1633,16 @@ public class AskStroomAiPresenter
             return;
         }
         final boolean accept = "ACCEPT".equals(action);
-        final Map<String, String> values = accept
-                ? AiElicitationCard.values(card)
-                : null;
+        final Map<String, String> values;
+        if (!accept) {
+            values = null;
+        } else if (button.hasAttribute(ELICITATION_VALUE_ATTRIBUTE)) {
+            // The Yes or No of a yes or no question.
+            values = Map.of(button.getAttribute(ELICITATION_FIELD_ATTRIBUTE),
+                    button.getAttribute(ELICITATION_VALUE_ATTRIBUTE));
+        } else {
+            values = AiElicitationCard.values(card);
+        }
         setFormButtonsEnabled(card, false);
         askStroomAiClient.answerElicitation(new AnswerAiElicitationRequest(currentChat, messageId, action, values),
                 done -> {
@@ -2938,7 +2970,7 @@ public class AskStroomAiPresenter
                 if (showCopy) {
                     button(footer, SvgImage.COPY,
                             iconButtonClassName("ai-message-copy-icon"),
-                            Attribute.title("Copy (as Markdown)"),
+                            Attribute.title("Copy as Markdown"),
                             new Attribute("data", markdownText));
                     if (assistant) {
                         button(footer, SvgImage.COPY_TEXT,

@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.tools.TaskListReminder;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
@@ -381,6 +382,87 @@ class TestMcpAgentChat {
 
         Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.eq(AiMessageType.WARNING),
                 Mockito.anyString());
+    }
+
+    @Test
+    void aToolThatIsNotOfferedIsNotAskedAboutAndFailsAtOnce() {
+        final McpToolset toolset = toolset(Mockito.mock(McpSyncClient.class), searchTool());
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("describe_event_logging_schema")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("I'll use another tool."));
+
+        agentChat.chat(model, null, 7, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        // The user isn't asked to allow a tool that doesn't exist.
+        Mockito.verify(toolConsent, Mockito.never()).decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
+                Mockito.any(), Mockito.anyBoolean());
+        assertThat(lastToolResult(model.requests.get(1)))
+                .isEqualTo("Error: no such tool 'describe_event_logging_schema'. Call only the tools you are "
+                           + "offered.");
+    }
+
+    @Test
+    void aToolInAGroupThatIsOffSaysHowToTurnItOn() {
+        final McpToolset toolset = toolset(Mockito.mock(McpSyncClient.class), namedTool("pipeline_create"),
+                namedTool("pipeline_step"), namedTool("index_create"), namedTool("index_status"));
+        final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, 2,
+                null, null, null, null, null, null);
+        final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
+                usageTracker, toolConsent, auditLog, new ModelStreamer(aiService),
+                new ToolGroups.Activations(), () -> config, aiDao, userActions);
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("pipeline_create")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("I'll turn the group on."));
+
+        groupingChat.chat(model, null, 7, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(lastToolResult(model.requests.get(1)))
+                .isEqualTo("Error: 'pipeline_create' is one of the 'pipeline' tools, which aren't on. Call "
+                           + "activate_pipeline first.");
+    }
+
+    @Test
+    void theModelIsRemindedAboutATaskListItHasNotUpdated() {
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
+                ToolSpecification.builder().name("task_list").build(), (request, memoryId) -> "Task list updated"));
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder()
+                        .content(List.of(new TextContent("42 errors")))
+                        .isError(false)
+                        .build());
+        final McpToolset toolset = toolset(client, searchTool());
+        final AiMessage search = AiMessage.from(List.of(ToolExecutionRequest.builder()
+                .id("2")
+                .name("search")
+                .arguments("{\"query\":\"level:ERROR\"}")
+                .build()));
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("task_list")
+                        .arguments("{\"tasks\": [{\"title\": \"Count\", \"status\": \"in_progress\"}]}")
+                        .build())),
+                search, search, search, search, search,
+                AiMessage.from("42 errors."));
+
+        agentChat.chat(model, null, 7, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        // Five steps after the list was written, the model is reminded, and not before.
+        assertThat(model.requests).hasSize(7);
+        assertThat(lastToolResult(model.requests.get(5))).isEqualTo("42 errors");
+        assertThat(lastToolResult(model.requests.get(6))).isEqualTo("42 errors\n\n" + TaskListReminder.REMINDER);
     }
 
     @Test
@@ -970,6 +1052,15 @@ class TestMcpAgentChat {
                 taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
 
         Mockito.verifyNoInteractions(workspaceStore);
+    }
+
+    // The text of the last tool result the model was sent.
+    private static String lastToolResult(final ChatRequest request) {
+        return request.messages().stream()
+                .filter(message -> message instanceof ToolExecutionResultMessage)
+                .map(message -> ((ToolExecutionResultMessage) message).text())
+                .reduce((first, second) -> second)
+                .orElse(null);
     }
 
     private static Tool namedTool(final String name) {
