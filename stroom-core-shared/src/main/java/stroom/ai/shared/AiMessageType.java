@@ -89,7 +89,13 @@ public enum AiMessageType implements HasPrimitiveValue {
      * links above the input while the answer is the latest thing in the chat; never shown in the conversation or
      * sent to the model.
      */
-    SUGGESTIONS(21);
+    SUGGESTIONS(21),
+    /**
+     * The agent's task list for the turn, as JSON ({@code {"tasks":[{"title":..,"status":..}]}}), written with its
+     * task_list tool. The latest is shown above the input while its turn is the latest; never sent to the model
+     * (the tool call and result are).
+     */
+    TASK_LIST(22);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());

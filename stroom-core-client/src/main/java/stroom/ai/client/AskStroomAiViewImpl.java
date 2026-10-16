@@ -116,6 +116,14 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     FlowPanel followUps;
     @UiField
+    FlowPanel taskList;
+    @UiField
+    Button taskListHeader;
+    @UiField
+    HTML taskListItems;
+    // Whether the user has folded the task list away, kept as it is updated.
+    private boolean taskListCollapsed;
+    @UiField
     FlowPanel commandReference;
     @UiField
     SimplePanel commandReferenceResize;
@@ -147,6 +155,11 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         commandSuggestions.setVisible(false);
         followUps.setVisible(false);
         commandReference.setVisible(false);
+        taskList.setVisible(false);
+        taskListHeader.addClickHandler(event -> {
+            taskListCollapsed = !taskListCollapsed;
+            showTaskListCollapsed();
+        });
         commandReferenceClose.setSvg(SvgImage.CLOSE);
         commandReferenceClose.setTitle("Close the command reference");
         commandReferenceClose.addClickHandler(event -> {
@@ -476,6 +489,26 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         } else {
             root.removeStyleName(EMPTY_STYLE);
         }
+    }
+
+    @Override
+    public void setTaskList(final String heading, final SafeHtml items) {
+        if (heading == null) {
+            taskList.setVisible(false);
+            return;
+        }
+        taskListHeader.setText(heading);
+        taskListItems.setHTML(items);
+        taskList.setVisible(true);
+        showTaskListCollapsed();
+    }
+
+    private void showTaskListCollapsed() {
+        taskListItems.setVisible(!taskListCollapsed);
+        taskList.setStyleName("askStroomAiViewImpl-taskList--collapsed", taskListCollapsed);
+        taskListHeader.setTitle(taskListCollapsed
+                ? "Show the agent's tasks"
+                : "Hide the agent's tasks");
     }
 
     @Override

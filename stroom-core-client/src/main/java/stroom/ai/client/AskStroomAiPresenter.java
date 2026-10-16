@@ -995,6 +995,51 @@ public class AskStroomAiPresenter
                 : followUps);
     }
 
+    /// Shows the agent's task list: a heading with how many are done, and each task with an icon for its status.
+    ///
+    /// @param json A TASK_LIST message: `{"tasks":[{"title":..,"status":..}]}`.
+    private void showTaskList(final String json) {
+        final JSONArray tasks;
+        try {
+            final JSONObject object = JSONParser.parseStrict(json).isObject();
+            tasks = object == null || object.get("tasks") == null
+                    ? null
+                    : object.get("tasks").isArray();
+        } catch (final RuntimeException e) {
+            return;
+        }
+        if (tasks == null || tasks.size() == 0) {
+            return;
+        }
+        final HtmlBuilder hb = new HtmlBuilder();
+        int done = 0;
+        for (int i = 0; i < tasks.size(); i++) {
+            final JSONObject task = tasks.get(i).isObject();
+            if (task == null) {
+                continue;
+            }
+            final String title = task.get("title") != null && task.get("title").isString() != null
+                    ? task.get("title").isString().stringValue()
+                    : "";
+            final String status = task.get("status") != null && task.get("status").isString() != null
+                    ? task.get("status").isString().stringValue()
+                    : "not_started";
+            if ("completed".equals(status)) {
+                done++;
+            }
+            hb.div(row -> {
+                row.span(icon -> icon.append("completed".equals(status)
+                                ? "✓"
+                                : "in_progress".equals(status)
+                                        ? "●"
+                                        : "○"),
+                        Attribute.className("ai-task-icon ai-task-icon--" + status));
+                row.span(text -> text.append(title), Attribute.className("ai-task-title"));
+            }, Attribute.className("ai-task ai-task--" + status));
+        }
+        getView().setTaskList("Tasks " + done + "/" + tasks.size(), hb.toSafeHtml());
+    }
+
     /// @param json A SUGGESTIONS message: a JSON array of strings.
     /// @return The suggestions in it, at most three, or none if it can't be read.
     private static List<String> parseFollowUps(final String json) {
@@ -2387,10 +2432,19 @@ public class AskStroomAiPresenter
             refreshFollowUps();
             return;
         }
+        if (msg.getMessageType() == AiMessageType.TASK_LIST) {
+            // Not part of the conversation: shown above the input, as the latest for the turn.
+            showTaskList(msg.getMessage());
+            return;
+        }
         if (msg.getMessageType() == AiMessageType.USER_MESSAGE
             || msg.getMessageType() == AiMessageType.STEER_MESSAGE) {
             followUps = List.of();
             refreshFollowUps();
+        }
+        if (msg.getMessageType() == AiMessageType.USER_MESSAGE) {
+            // A new question has a task list of its own, if any.
+            getView().setTaskList(null, SafeHtmlUtils.EMPTY_SAFE_HTML);
         }
         renderedMessages.put(msg.getId(), msg);
         final HtmlBuilder hb = new HtmlBuilder();
@@ -2551,6 +2605,7 @@ public class AskStroomAiPresenter
      */
     private void clearRenderedMessages() {
         getView().clearMessages();
+        getView().setTaskList(null, SafeHtmlUtils.EMPTY_SAFE_HTML);
         followUps = List.of();
         refreshFollowUps();
         renderedMessages.clear();
@@ -3557,6 +3612,12 @@ public class AskStroomAiPresenter
 
         /// Shows things the user might ask next, as links above the input, or none.
         void setFollowUps(List<String> suggestions);
+
+        /// Shows the agent's task list above the input.
+        ///
+        /// @param heading Its heading, e.g. "Tasks 2/5", or null to hide it.
+        /// @param items   The tasks.
+        void setTaskList(String heading, SafeHtml items);
 
         /// Shows a command's reference above the input, until hidden.
         void showCommandReference(SafeHtml html);
