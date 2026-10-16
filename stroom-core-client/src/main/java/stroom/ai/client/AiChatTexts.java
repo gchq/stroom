@@ -24,6 +24,10 @@ import stroom.svg.shared.SvgImage;
 /// tested without a browser.
 final class AiChatTexts {
 
+    // The context pill turns yellow, then red, as the context window fills.
+    static final int CONTEXT_WARN_PERCENT = 75;
+    static final int CONTEXT_OVER_PERCENT = 90;
+
     private AiChatTexts() {
         // Static methods only.
     }
@@ -45,6 +49,18 @@ final class AiChatTexts {
             return SvgImage.DOT;
         }
         return SvgImage.AI;
+    }
+
+    /// @param percent How full the model's context window is.
+    /// @return The context pill's colour: none (grey), "warn" (yellow) from [#CONTEXT_WARN_PERCENT], or "over"
+    /// (red) from [#CONTEXT_OVER_PERCENT].
+    static String contextLevel(final int percent) {
+        if (percent >= CONTEXT_OVER_PERCENT) {
+            return "over";
+        }
+        return percent >= CONTEXT_WARN_PERCENT
+                ? "warn"
+                : null;
     }
 
     /// @param risk A classification of a tool on an approval card, e.g. "can modify".
