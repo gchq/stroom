@@ -28,21 +28,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/// Writes an MCP tool's documentation as Markdown, from what its server says about it: its title and
-/// description, what it says the tool does (read-only, destructive, reaches outside Stroom), the tool policy that
-/// applies to it, and its parameters.
+/// Describes an MCP tool from what its server says about it: what it does (read-only, can modify, destructive,
+/// reaches outside Stroom), and documentation as Markdown (its title and description, the tool policy that
+/// applies to it, and its parameters).
 final class McpToolDocs {
 
     private McpToolDocs() {
         // Static methods only.
     }
 
-    /// @param tool    The tool, as its server gives it.
-    /// @param policy  The tool policy that applies to it, or null if none does.
-    /// @param trusted True if its server is trusted, so what it says about the tool is relied on.
-    /// @return The tool's documentation, as Markdown.
-    static String markdown(final Tool tool, final McpToolPolicy policy, final boolean trusted) {
-        final StringBuilder sb = new StringBuilder("## ").append(escape(tool.name())).append("\n\n");
+    /// @param tool   The tool, as its server gives it.
+    /// @param policy The tool policy that applies to it, or null if none does.
+    /// @return The tool's documentation, as Markdown, without its name, which is shown with its classifications.
+    static String markdown(final Tool tool, final McpToolPolicy policy) {
+        final StringBuilder sb = new StringBuilder();
         final String title = NullSafe.isNonBlankString(tool.title())
                 ? tool.title()
                 : NullSafe.get(tool.annotations(), ToolAnnotations::title);
@@ -52,38 +51,27 @@ final class McpToolDocs {
         if (NullSafe.isNonBlankString(tool.description())) {
             sb.append(tool.description().strip()).append("\n\n");
         }
-        final List<String> says = hints(tool.annotations());
-        sb.append("**What its server says it does:** ")
-                .append(says.isEmpty()
-                        ? "nothing"
-                        : String.join(", ", says))
-                .append(trusted
-                        ? ""
-                        : " (the server isn't trusted, so this isn't relied on)")
-                .append("\n\n");
         sb.append("**Policy:** ").append(policyText(policy)).append("\n\n");
         appendParameters(sb, tool.inputSchema());
         return sb.toString().strip() + "\n";
     }
 
-    private static List<String> hints(final ToolAnnotations annotations) {
-        final List<String> hints = new ArrayList<>();
-        if (annotations == null) {
-            return hints;
-        }
-        hints.add(Boolean.TRUE.equals(annotations.readOnlyHint())
+    /// @param tool The tool, as its server gives it.
+    /// @return What its server says it does, as the chat classifies tools: "read-only" or "can modify", then
+    /// "destructive" and "reaches outside Stroom" if they apply.
+    static List<String> classifications(final Tool tool) {
+        final ToolAnnotations annotations = tool.annotations();
+        final List<String> classifications = new ArrayList<>();
+        classifications.add(annotations != null && Boolean.TRUE.equals(annotations.readOnlyHint())
                 ? "read-only"
                 : "can modify");
-        if (Boolean.TRUE.equals(annotations.destructiveHint())) {
-            hints.add("destructive");
+        if (annotations != null && Boolean.TRUE.equals(annotations.destructiveHint())) {
+            classifications.add("destructive");
         }
-        if (Boolean.TRUE.equals(annotations.idempotentHint())) {
-            hints.add("idempotent");
+        if (annotations != null && Boolean.TRUE.equals(annotations.openWorldHint())) {
+            classifications.add("reaches outside Stroom");
         }
-        if (Boolean.TRUE.equals(annotations.openWorldHint())) {
-            hints.add("reaches outside Stroom");
-        }
-        return hints;
+        return classifications;
     }
 
     private static String policyText(final McpToolPolicy policy) {

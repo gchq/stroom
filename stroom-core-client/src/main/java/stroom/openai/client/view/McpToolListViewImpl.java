@@ -18,6 +18,7 @@ package stroom.openai.client.view;
 
 import stroom.openai.client.presenter.McpToolListPresenter.McpToolListView;
 import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -29,12 +30,15 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/// A server's tools: a tool strip, the tools on the left, and the selected tool's documentation on the right.
+/// A server's tools: a tool strip with a quick filter, the tools, and below them the selected tool's
+/// documentation.
 public class McpToolListViewImpl extends ViewImpl implements McpToolListView {
 
     private final Widget widget;
     @UiField
     ButtonPanel buttons;
+    @UiField
+    QuickFilter filter;
     @UiField
     Label status;
     @UiField
@@ -55,6 +59,11 @@ public class McpToolListViewImpl extends ViewImpl implements McpToolListView {
     @Override
     public ButtonPanel getButtons() {
         return buttons;
+    }
+
+    @Override
+    public QuickFilter getFilter() {
+        return filter;
     }
 
     @Override

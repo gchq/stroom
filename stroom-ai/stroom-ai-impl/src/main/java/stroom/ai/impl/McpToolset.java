@@ -267,7 +267,9 @@ public final class McpToolset implements AutoCloseable {
         return Optional.ofNullable(declaredGroups.get(toolName));
     }
 
-    private static String declaredGroup(final Tool tool) {
+    /// @param tool A tool, as its server gives it.
+    /// @return The group its server puts it in (as `_meta.group`), or null if it does not.
+    static String declaredGroup(final Tool tool) {
         final Object metaGroup = NullSafe.get(tool.meta(), meta -> meta.get(META_GROUP));
         return metaGroup instanceof final String group && !group.isBlank()
                 ? group.strip()
