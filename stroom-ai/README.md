@@ -86,16 +86,21 @@ On the model's **MCP Tool Servers** tab, add each server's Streamable HTTP endpo
 Before a tool runs, Stroom decides whether to ask the user:
 
 * Built-in tools run without asking.
-* MCP tools on untrusted servers always ask. On trusted servers, read-only tools run without asking and
-  others ask, unless a tool policy says otherwise.
+* MCP tools on untrusted servers always ask. On trusted servers, read-only tools run without asking, and so
+  do tools that modify data but aren't destructive and don't reach outside Stroom, until the run has read
+  data from tools or attached tables that could hold planted instructions; destructive and open-world tools
+  ask. A tool policy can say otherwise.
+* Approval cards classify each tool (read-only, can modify, destructive, reaches outside Stroom, untrusted
+  server, after reading data); each chip's tooltip explains what it means.
 * A trusted server's tool marked `_meta.confirms` (it asks the user itself, through a form, as FastMCP's
   changing tools do) runs without Stroom asking as well, so the user isn't asked twice. An _Ask every
   time_ policy still asks.
 * The user can allow a tool for the rest of the chat, or all of a trusted server's read-only tools.
   A change to a tool's name or description, or to the server's settings, asks again.
 * _Approve everything_ (per chat: the shield beside the model, or **Tool Approvals**) is off unless
-  `allowApproveEverything` is true. The shield is highlighted while it is on.
-  Even then it only covers trusted servers' tools that are not destructive or open-world.
+  `allowApproveEverything` is true. The shield is highlighted while it is on. It lets trusted servers'
+  tools that modify data keep running without asking after the run has read data; it never covers
+  destructive or open-world tools.
 * If no browser has polled the chat for `unattendedAfter`, the run is unattended: only read-only tools
   run, and anything else waits for the user.
 * A read-only tool changes nothing, but its arguments still go to its server. Set

@@ -146,7 +146,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         });
 
         chatSearch.getElement().setAttribute("placeholder", "Search chats");
-        chatSearch.setTitle("Search your chats' titles and your questions in them. Escape clears the search.");
+        chatSearch.setTitle("Search your chats' titles and your questions in them.\nEscape clears the search.");
         chatSearch.addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE && !chatSearch.getText().isEmpty()) {
                 // Clears the search, rather than doing what Escape does elsewhere.
@@ -333,10 +333,15 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public void setAutoApprove(final boolean on, final boolean allowed) {
         autoApprove.setStyleName(AUTO_APPROVE_ON_CLASS, on);
         autoApprove.setTitle(on
-                ? "Auto-approve is on: tool calls on trusted servers run without asking. Click to turn it off."
+                ? "Auto-approve is on.\n"
+                  + "Trusted servers' tools that modify data run without asking, even after this chat has read "
+                  + "data.\n"
+                  + "Click to turn it off."
                 : allowed
-                        ? "Auto-approve: let tool calls on trusted servers run without asking you"
-                        : "Auto-approve is not allowed by your administrator");
+                        ? "Auto-approve.\n"
+                          + "Lets trusted servers' tools that modify data run without asking, even after this chat "
+                          + "has read data from tools or attached tables."
+                        : "Auto-approve isn't allowed by your administrator.");
         autoApprove.setEnabled(on || allowed);
     }
 

@@ -47,6 +47,32 @@ final class AiChatTexts {
         return SvgImage.AI;
     }
 
+    /// @param risk A classification of a tool on an approval card, e.g. "can modify".
+    /// @return What it means, a sentence to a line, for its tooltip, or null if it is not one Stroom gives.
+    static String riskExplanation(final String risk) {
+        if (risk == null) {
+            return null;
+        }
+        return switch (risk) {
+            case "read-only" -> "The tool's server says it only reads.\n"
+                                + "It can look things up, but not create, change or delete anything.";
+            case "can modify" -> "The tool can create or change things, such as feeds, pipelines, processor "
+                                 + "filters, indexes or dashboards, depending on what it is for.\n"
+                                 + "Check its arguments below to see what it will do.";
+            case "destructive" -> "The tool's server says it can delete or overwrite things.\n"
+                                  + "That may not be possible to undo.";
+            case "reaches outside Stroom" -> "The tool's server says it contacts systems outside Stroom.\n"
+                                             + "What is in its arguments may leave Stroom.";
+            case "untrusted server" -> "An administrator hasn't marked this tool's server as trusted.\n"
+                                       + "So what it says about its tools, e.g. that one only reads, isn't "
+                                       + "relied on.";
+            case "after reading data" -> "This chat has read data from tools or attached tables.\n"
+                                         + "That data could hold instructions planted to make the model misuse "
+                                         + "this tool, or put data in its arguments.";
+            default -> null;
+        };
+    }
+
     /// @param status A chat's status.
     /// @return A note on the chat's state, e.g. "needs you", or an empty string if there is nothing to say.
     static String statusNote(final AiChatStatus status) {
