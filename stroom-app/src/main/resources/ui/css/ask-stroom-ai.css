@@ -793,30 +793,77 @@
 
 /* ---- Context meter, next to the model ---- */
 
+/* How full the model's context window is, as a pill: grey, then yellow from 75%, then red from 90%. */
 .askStroomAiViewImpl-contextMeter {
     cursor: pointer;
     white-space: nowrap;
     font-size: var(--ai-font-size--meta);
-    padding: 1px 6px;
+    font-variant-numeric: tabular-nums;
+    padding: 1px 8px;
     margin: 0 4px;
-    border-radius: 10px;
+    border-radius: 999px;
     color: var(--control__text-color--disabled);
-    background: none;
-    border: 1px solid var(--control__border-color);
+    background: rgba(128, 128, 128, 0.15);
+    border: 1px solid rgba(128, 128, 128, 0.35);
 }
 
 .askStroomAiViewImpl-contextMeter:hover {
     color: var(--control__text-color);
 }
 
-.askStroomAiViewImpl-contextMeter--warn {
-    color: #ed6c02;
-    border-color: #ed6c02;
+.askStroomAiViewImpl-contextMeter--warn,
+.askStroomAiViewImpl-contextMeter--warn:hover {
+    color: #b58105;
+    background: rgba(249, 168, 37, 0.18);
+    border-color: rgba(249, 168, 37, 0.7);
 }
 
-.askStroomAiViewImpl-contextMeter--over {
+.askStroomAiViewImpl-contextMeter--over,
+.askStroomAiViewImpl-contextMeter--over:hover {
     color: #d32f2f;
-    border-color: #d32f2f;
+    background: rgba(211, 47, 47, 0.15);
+    border-color: rgba(211, 47, 47, 0.7);
+}
+
+/* The pill's details, shown above it on hover. */
+.askStroomAiViewImpl-contextDetails {
+    position: fixed;
+    z-index: 1000;
+    min-width: 200px;
+    max-width: 320px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--control__border-color);
+    background: var(--page__background-color);
+    color: var(--control__text-color);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    font-size: var(--ai-font-size--small);
+    pointer-events: none;
+}
+
+.ai-context-details-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.ai-context-details-parts {
+    margin: 6px 0;
+}
+
+.ai-context-details-part {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.ai-context-details-value {
+    font-variant-numeric: tabular-nums;
+    color: var(--control__text-color--disabled);
+}
+
+.ai-context-details-note {
+    color: var(--control__text-color--disabled);
+    font-size: var(--ai-font-size--meta);
 }
 
 /* ---- Commands suggested as the user types "/" ---- */

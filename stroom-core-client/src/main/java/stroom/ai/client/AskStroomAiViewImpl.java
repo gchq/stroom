@@ -24,11 +24,15 @@ import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.spinner.client.SpinnerSmall;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.ScrollEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -86,6 +90,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     Button contextMeter;
     @UiField
+    HTML contextDetails;
+    @UiField
     Button jumpToLatest;
     @UiField
     TextArea message;
@@ -115,6 +121,11 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         widget = binder.createAndBindUi(this);
         jumpToLatestBar.setVisible(false);
         contextMeter.setVisible(false);
+        contextDetails.setVisible(false);
+        // The details show above the pill while the pointer is over it. They are placed on the page (fixed),
+        // as the input area clips anything that overflows it.
+        contextMeter.addMouseOverHandler(event -> showContextDetails());
+        contextMeter.addMouseOutHandler(event -> contextDetails.setVisible(false));
         commandSuggestions.setVisible(false);
         followUps.setVisible(false);
         markdownPreview.addDomHandler(event -> {
@@ -267,18 +278,32 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     }
 
     @Override
-    public void setContextMeter(final String text, final String title, final String level) {
+    public void setContextMeter(final String text, final SafeHtml details, final String level) {
         if (text == null) {
             contextMeter.setVisible(false);
+            contextDetails.setVisible(false);
             return;
         }
         contextMeter.setText(text);
-        contextMeter.setTitle(title);
+        contextDetails.setHTML(details);
         contextMeter.setStyleName("allow-focus askStroomAiViewImpl-contextMeter");
         if (level != null) {
             contextMeter.addStyleName("askStroomAiViewImpl-contextMeter--" + level);
         }
         contextMeter.setVisible(true);
+    }
+
+    private void showContextDetails() {
+        final Element pill = contextMeter.getElement();
+        final Style style = contextDetails.getElement().getStyle();
+        contextDetails.setVisible(true);
+        // Above the pill, its right edge in line with the pill's, kept on screen.
+        final int width = contextDetails.getElement().getOffsetWidth();
+        final int height = contextDetails.getElement().getOffsetHeight();
+        final int left = Math.max(4, pill.getAbsoluteRight() - width);
+        final int top = Math.max(4, pill.getAbsoluteTop() - height - 6);
+        style.setLeft(left, Unit.PX);
+        style.setTop(top, Unit.PX);
     }
 
     @Override
