@@ -223,7 +223,7 @@ class TestEventTools {
         // An event over the size limit is left out.
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
                 new AiWorkspaceConfig(null, null, null, null, null, null, null, null, null, 120),
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
         assertThat(run(fetchTool(), "{\"path\":\"/attachments/5.md\",\"out\":\"/outputs/small.xml\"}"))
                 .contains("too large to fetch");
     }

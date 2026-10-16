@@ -336,6 +336,54 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void theLastStepOffersNoToolsAndTellsTheModelAndTheUser() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder()
+                        .content(List.of(new TextContent("42 errors")))
+                        .isError(false)
+                        .build());
+        final McpToolset toolset = toolset(client, searchTool());
+        final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, 3);
+        final McpAgentChat cappedChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
+                usageTracker, toolConsent, auditLog, new ModelStreamer(aiService),
+                new ToolGroups.Activations(), () -> config, aiDao, userActions);
+        final AiMessage toolCall = AiMessage.from(List.of(ToolExecutionRequest.builder()
+                .id("1")
+                .name("search")
+                .arguments("{\"query\":\"level:ERROR\"}")
+                .build()));
+        final StubToolCallingModel model = new StubToolCallingModel(toolCall, toolCall,
+                AiMessage.from("I searched twice; next I'd count the errors."));
+
+        final ChatResponse response = cappedChat.chat(model, null, 7, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(response.aiMessage().text()).isEqualTo("I searched twice; next I'd count the errors.");
+        assertThat(model.requests).hasSize(3);
+        assertThat(model.requests.get(1).toolSpecifications()).isNotEmpty();
+        // On the last step the model gets no tools, and is told why.
+        final ChatRequest last = model.requests.get(2);
+        assertThat(last.toolSpecifications()).isEmpty();
+        assertThat(last.messages().getLast()).isEqualTo(UserMessage.from(McpAgentChat.LAST_STEP_NOTE));
+        // The user is told the run stopped at the limit, and how to carry on.
+        Mockito.verify(aiService).storeMessage(7, AiMessageType.WARNING,
+                "Stopped after 3 steps, the most for one question. Reply 'continue' to carry on.");
+    }
+
+    @Test
+    void anAnswerWithinTheStepLimitHasNoNote() {
+        final McpToolset toolset = toolset(Mockito.mock(McpSyncClient.class), searchTool());
+
+        agentChat.chat(new StubChatModel(), null, 1, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.eq(AiMessageType.WARNING),
+                Mockito.anyString());
+    }
+
+    @Test
     void aGroupOfToolsIsOfferedOnceTheModelTurnsItOn() {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
@@ -346,7 +394,7 @@ class TestMcpAgentChat {
         final McpToolset toolset = toolset(client, namedTool("pipeline_create"), namedTool("pipeline_step"),
                 namedTool("index_create"), namedTool("index_status"));
         final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, 2,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService),
                 new ToolGroups.Activations(), () -> config, aiDao, userActions);
