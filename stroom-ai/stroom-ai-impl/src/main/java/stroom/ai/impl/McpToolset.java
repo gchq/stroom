@@ -171,6 +171,23 @@ public final class McpToolset implements AutoCloseable {
         return tools(Set.of());
     }
 
+    /// Lists every server's tools as the servers give them, including any a tool policy denies, so an
+    /// administrator can look through them.
+    ///
+    /// @return Each tool with its server and the policy that applies to it, in the order the servers are
+    /// configured.
+    /// @throws RuntimeException if a server's tools can't be listed.
+    public List<ServerTool> listServerTools() {
+        final List<ServerTool> listed = new ArrayList<>();
+        for (final McpServerConnection connection : connections) {
+            final McpToolFilter filter = McpToolFilter.forServer(connection.config());
+            for (final Tool tool : connection.tools()) {
+                listed.add(new ServerTool(connection.config(), tool, filter.policyFor(tool.name())));
+            }
+        }
+        return listed;
+    }
+
     /**
      * Lists every server's tools, and adds the resource tools if any server has resources.
      *
@@ -474,6 +491,15 @@ public final class McpToolset implements AutoCloseable {
      * @param prompt The prompt.
      */
     public record ServerPrompt(String server, Prompt prompt) {
+
+    }
+
+    /// A server's tool, as the server gives it.
+    ///
+    /// @param server The server's settings.
+    /// @param tool   The tool.
+    /// @param policy The tool policy that applies to it, or null if none does.
+    public record ServerTool(McpToolServerConfig server, Tool tool, McpToolPolicy policy) {
 
     }
 }

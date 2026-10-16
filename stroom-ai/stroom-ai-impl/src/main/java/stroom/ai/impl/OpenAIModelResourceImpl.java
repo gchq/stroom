@@ -22,6 +22,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.openai.shared.ListMcpToolsResponse;
+import stroom.openai.shared.McpToolDescription;
+import stroom.openai.shared.McpToolPolicy;
 import stroom.openai.shared.McpToolServerConfig;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
@@ -153,6 +156,41 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
             return new OpenAIModelTestResponse(false, NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
+        }
+    }
+
+    @Override
+    public ListMcpToolsResponse listMcpTools(final TestMcpToolServerRequest request) {
+        final McpToolServerConfig server = NullSafe.get(request, TestMcpToolServerRequest::getMcpToolServer);
+        if (server == null || NullSafe.isBlankString(server.getEndpoint())) {
+            return new ListMcpToolsResponse(List.of(), "The server has no endpoint.");
+        }
+        // As for testing a server: it connects to an endpoint, with a credential, given in the request.
+        final DocRef docRef = getDocRef(request.getModelUuid());
+        final SecurityContext securityContext = securityContextProvider.get();
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have EDIT permission on AI model " + docRef);
+        }
+        final OpenAIModelDoc modelDoc = OpenAIModelDoc.builder()
+                .uuid(docRef.getUuid())
+                .name(docRef.getName())
+                .mcpToolServers(List.of(server.copy().enabled(true).build()))
+                .build();
+        try (final McpToolset toolset = mcpToolServerFactoryProvider.get().createToolset(modelDoc)) {
+            if (!toolset.getWarnings().isEmpty()) {
+                return new ListMcpToolsResponse(List.of(), String.join("\n", toolset.getWarnings()));
+            }
+            final List<McpToolDescription> tools = toolset.listServerTools().stream()
+                    .map(serverTool -> new McpToolDescription(
+                            serverTool.tool().name(),
+                            serverTool.policy() != McpToolPolicy.DENY,
+                            McpToolDocs.markdown(serverTool.tool(), serverTool.policy(), server.isTrusted())))
+                    .toList();
+            return new ListMcpToolsResponse(tools, null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            return new ListMcpToolsResponse(List.of(), NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
         }
     }
 
