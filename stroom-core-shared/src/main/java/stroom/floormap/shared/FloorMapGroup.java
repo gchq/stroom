@@ -123,11 +123,16 @@ public class FloorMapGroup {
         return colour;
     }
 
-    /// The group's colour, or [#DEFAULT_COLOUR] when it has none.
+    /// The group's colour, or [#DEFAULT_COLOUR] when it has none or it is not a hex colour.
+    ///
+    /// The colour is document data that can be hand-edited, and is drawn into the canvas SVG, so it is
+    /// held to the same rule as every other colour there - see [TypeStyle#isValidColour(String)].
     ///
     /// Name structured to avoid triggering TestJsonSerialisation.testNoExtraProps()
+    ///
+    /// @return A hex colour to draw the group with; never `null`.
     public String findColourOrDefault() {
-        return NullSafe.isNonEmptyString(colour)
+        return TypeStyle.isValidColour(colour)
                 ? colour
                 : DEFAULT_COLOUR;
     }

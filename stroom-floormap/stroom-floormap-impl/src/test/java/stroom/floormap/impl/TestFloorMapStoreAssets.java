@@ -164,7 +164,56 @@ class TestFloorMapStoreAssets {
 
         floorMapStore.copyDocument(DOC_REF, "Ground Floor", true, Set.of());
 
-        Mockito.verify(documentAssetService).copyAssetsToDoc(DOC_REF, copyDocRef);
+        Mockito.verify(documentAssetService).copyAssetsToNewDoc(DOC_REF, copyDocRef);
+    }
+
+    /// Regression test: copy used `copyAssetsToDoc`, which requires EDIT on the destination. The
+    /// explorer only grants permissions on the copy after `copyDocument` returns, so for anyone but
+    /// an administrator the copy failed part-way and left an orphaned document behind.
+    @Test
+    void testCopyDoesNotRequirePermissionOnTheNewDocument() throws IOException {
+        final DocRef copyDocRef = new DocRef("FloorMap", "doc-uuid-2", "Ground Floor (copy)");
+        Mockito.when(store.readDocument(DOC_REF)).thenReturn(sourceDoc());
+        Mockito.when(store.createDocument(Mockito.anyString(), Mockito.any()))
+                .thenReturn(copyDocRef);
+        // The user can see the source, but holds nothing at all on the copy yet.
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.eq(copyDocRef), Mockito.any()))
+                .thenReturn(false);
+
+        assertThat(floorMapStore.copyDocument(DOC_REF, "Ground Floor", true, Set.of()))
+                .isEqualTo(copyDocRef);
+        Mockito.verify(documentAssetService, Mockito.never()).copyAssetsToDoc(Mockito.any(), Mockito.any());
+    }
+
+    /// Regression test: an import preview (CREATE_CONFIRMATION) writes nothing, but the assets were
+    /// still replaced - and `setAssetsFromImport` deletes every existing asset first, so merely
+    /// previewing an import wiped and rewrote the live floor map's graphics.
+    @Test
+    void testImportPreviewLeavesTheLiveAssetsAlone() throws IOException {
+        final ImportExportDocument incoming = new ImportExportDocument();
+        incoming.addPathAsset(asset("plan.png"));
+        Mockito.when(store.importDocument(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(DOC_REF);
+
+        floorMapStore.importDocument(
+                DOC_REF, incoming, new ImportState(DOC_REF, "Ground Floor"), ImportSettings.createConfirmation());
+
+        Mockito.verify(documentAssetService, Mockito.never()).setAssetsFromImport(Mockito.any(), Mockito.any());
+    }
+
+    /// Nor may an item the user chose not to import touch the live assets.
+    @Test
+    void testUntickedImportItemLeavesTheLiveAssetsAlone() throws IOException {
+        final ImportExportDocument incoming = new ImportExportDocument();
+        incoming.addPathAsset(asset("plan.png"));
+        Mockito.when(store.importDocument(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(DOC_REF);
+        final ImportState importState = new ImportState(DOC_REF, "Ground Floor");
+        importState.setAction(false);
+
+        floorMapStore.importDocument(DOC_REF, incoming, importState, ImportSettings.actionConfirmation());
+
+        Mockito.verify(documentAssetService, Mockito.never()).setAssetsFromImport(Mockito.any(), Mockito.any());
     }
 
     /// Copy reads the source document, so it must be authorised by VIEW on the source.

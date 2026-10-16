@@ -25,3 +25,8 @@ dependencies {
 
     implementation libs.jackson.annotations
 }
+
+dependencies {
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
+}

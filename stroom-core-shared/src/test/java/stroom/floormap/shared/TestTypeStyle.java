@@ -235,4 +235,32 @@ class TestTypeStyle {
 
         assertThat(result.getFirst().hasGraphic()).isFalse();
     }
+
+    @Test
+    void testValidColoursAreHexLiterals() {
+        assertThat(TypeStyle.isValidColour("#abc")).isTrue();
+        assertThat(TypeStyle.isValidColour("#A1B2C3")).isTrue();
+        assertThat(TypeStyle.isValidColour("#a1b2c3d4")).isTrue();
+
+        assertThat(TypeStyle.isValidColour(null)).isFalse();
+        assertThat(TypeStyle.isValidColour("")).isFalse();
+        assertThat(TypeStyle.isValidColour("red")).isFalse();
+        assertThat(TypeStyle.isValidColour("#ab")).isFalse();
+        assertThat(TypeStyle.isValidColour("#abcdef123")).isFalse();
+        assertThat(TypeStyle.isValidColour("#ggg")).isFalse();
+        assertThat(TypeStyle.isValidColour("url(#x)")).isFalse();
+        assertThat(TypeStyle.isValidColour("#fff\"/><script>")).isFalse();
+    }
+
+    /// Regression test: a type colour was used as it stood, so a hand-edited document could put
+    /// any paint value, such as a `url(...)` reference, into the canvas SVG.
+    @Test
+    void testAnInvalidTypeColourFallsBackToTheDefault() {
+        assertThat(TypeStyle.colourForType("gate",
+                List.of(new TypeStyle("gate", null, "url(https://example.com/x.svg#p)"))))
+                .isEqualTo(TypeStyle.DEFAULT_COLOUR);
+        assertThat(TypeStyle.colourForType("person",
+                List.of(new TypeStyle("person", null, "not a colour"))))
+                .isEqualTo(TypeStyle.DEFAULT_PERSON_COLOUR);
+    }
 }

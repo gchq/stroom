@@ -17,6 +17,7 @@
 package stroom.sqlstore.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
@@ -29,6 +30,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description(
+        """
+        Defines a SQL-backed store of versioned key-value entries.
+        Each entry is identified by a key and an effective time, and the full history of versions is kept \
+        for each key, so the value that was in effect at any point in time can be retrieved.
+        Unlike reference data, entries can be created, updated and deleted individually after they have \
+        been loaded.
+
+        Data is loaded into the store using the {{< pipe-elm "SqlStoreFilter" >}} pipeline element.
+        """)
 @JsonPropertyOrder({
         "type",
         "uuid",

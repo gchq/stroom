@@ -397,16 +397,11 @@ public class QueryEditPresenter
         }
     }
 
-    // STROOMWORKS-LOCAL: signature diverges from upstream — KEEP LOCAL ON MERGE FROM master.
-    // Upstream declares run(boolean incremental, boolean storeHistory, Function<...>) and passes
-    // (true, true) from all three of its call sites, so neither flag was ever variable; they are
-    // hardcoded at the startNewSearch call below instead. The change is behaviour-preserving, so
-    // taking upstream's signature back would only reintroduce two constants — but if upstream
-    // ever starts passing something other than true, restore the parameters and thread them
-    // through.
-    // The expressionDecorator parameter below is unused, here and upstream (always called with
-    // Function.identity()). Left in place deliberately: removing it would be a third rewrite of
-    // a shared signature for no behavioural gain, and is better fixed upstream.
+    // The incremental and storeHistory flags are always true, so they are hardcoded at the
+    // startNewSearch call below rather than taken as parameters. If a caller ever needs to pass
+    // something other than true, restore the parameters and thread them through.
+    // The expressionDecorator parameter below is unused (it is always called with
+    // Function.identity()).
     @SuppressWarnings("unused")
     private void run(final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
         // Clear the table selection and any markers.
@@ -417,10 +412,9 @@ public class QueryEditPresenter
         // Destroy any previous query.
         queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
 
-        // STROOMWORKS-LOCAL: added for FloorMap in commit d2ecee9a35 — KEEP LOCAL ON MERGE FROM
-        // master. Upstream passes no params here at all. Dropping this breaks FloorMap's
-        // param('FactStore') / param('EventStore') references, which are how a floor map selects
-        // its temporal stores, so upstream's version must NOT win here.
+        // The query variables are passed as Params. FloorMap's param('FactStore') /
+        // param('EventStore') references, which are how a floor map selects its temporal stores,
+        // depend on them.
         //
         // The query text is sent exactly as written. It used to be rewritten first — every
         // param('key') replaced by its quoted value — because the from clause accepted only a

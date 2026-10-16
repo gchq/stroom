@@ -74,8 +74,8 @@ class CeilingTime extends AbstractRoundDateTime {
         };
     }
 
-    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. See AbstractRoundDateTime.constantString -
-    // upstream reads the argument with param.toString(), which silently breaks param('key') here.
+    // Reads the argument via AbstractRoundDateTime.constantString; reading it with
+    // param.toString() would silently break param('key') here.
     private Duration parseDuration(final Param param, final String paramName) {
         if (param == null) {
             return Duration.ZERO;

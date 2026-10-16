@@ -44,10 +44,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
-// TODO STROOMWORKS-LOCAL WORKAROUND - PREFER UPSTREAM ON MERGE FROM master
-// Local change from "Provisional fix to Authentication Exception". The commit message calls it
-// provisional, so treat it as a stopgap: if upstream has addressed the same authentication
-// exception, take their fix and delete this. Diff against origin/master before resolving.
 @Singleton
 class SecurityContextImpl implements SecurityContext {
 
