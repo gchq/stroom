@@ -408,7 +408,7 @@
     height: 12px;
 }
 
-/* The drop down chevron, holding the ring round it */
+/* The drop down chevron, holding the badge on it */
 .pipeline-path__caret-target {
     position: relative;
     display: flex;
@@ -416,57 +416,47 @@
     justify-content: center;
 }
 
-/* A 2px ring round the drop down chevron, in the colour of the worst severity in the branches not
-   shown, as a chevron's inner border is */
-.pipeline-path__ring {
+/* The standard icon of an element's severity (warnings or worse), after its name */
+.pipeline-path__severity {
+    flex: 0 0 auto;
+    width: var(--icon-width);
+    height: var(--icon-height);
+}
+
+/* The icon of the worst severity in the branches not shown: a badge on the drop down chevron's top
+   right corner, so that it isn't taken for its element's own */
+.pipeline-path__branch-severity {
     position: absolute;
-    inset: -2px;
-    box-sizing: border-box;
-    border: 2px solid var(--pipeline-path__warn);
-    border-radius: 50%;
+    top: -4px;
+    right: -4px;
+    width: 11px;
+    height: 11px;
     pointer-events: none;
 }
 
-.pipeline-path__ring--error {
-    border-color: var(--error);
+.pipeline-path__branch-severity svg {
+    width: 11px;
+    height: 11px;
 }
 
-.pipeline-path__ring--fatal {
-    border-color: var(--pipeline-element-box__border-color--fatal-error);
-}
-
-/* A new or worse error in the branches not shown pulses the ring, as an inner border pulses */
-.pipeline-path__ring--pulse {
+/* A new or worse error in the branches not shown pulses their icon, as an inner border pulses */
+.pipeline-path__branch-severity--pulse {
     animation: pipeline-path-pulse 1.4s ease-in-out 3;
 }
 
-/* Those who would rather not see movement see the inner borders and rings, but no pulse */
+/* Those who would rather not see movement see the inner borders and icons, but no pulse */
 @media (prefers-reduced-motion: reduce) {
     .pipeline-path__segment--pulse .pipeline-path__band,
-    .pipeline-path__ring--pulse {
+    .pipeline-path__branch-severity--pulse {
         animation: none;
     }
 }
 
-/* A ring after a branch's name in a drop down list, in the colour of the worst severity in it, as
-   the drop down chevron's ring */
-.pipeline-path__menu-ring {
-    display: inline-block;
-    box-sizing: border-box;
-    width: 12px;
-    height: 12px;
+/* The icon of a branch's worst severity after its name in a drop down list, as on a chevron */
+.pipeline-path__menu-severity {
+    display: inline-flex;
     margin-left: 8px;
-    border: 2px solid var(--pipeline-path__warn);
-    border-radius: 50%;
     vertical-align: middle;
-}
-
-.pipeline-path__menu-ring--error {
-    border-color: var(--error);
-}
-
-.pipeline-path__menu-ring--fatal {
-    border-color: var(--pipeline-element-box__border-color--fatal-error);
 }
 
 /* The filter icons: an element's, the branches' not shown, and a branch's in a drop down list */
@@ -486,8 +476,8 @@
 /* Forced colours (e.g. Windows High Contrast), which would drop the background colours the chevrons
    are drawn with. The bar keeps its own colours there (forced-color-adjust), all of them the user's
    system colours: the chevron's border is CanvasText; hover and focus Highlight; the selected
-   element Highlight with HighlightText; problems (the inner border and the drop down chevron's
-   ring) CanvasText, as forced colours have no warning or error colour (its name still says which);
+   element Highlight with HighlightText; problems' inner border CanvasText, as forced colours have
+   no warning or error colour (their icons, which keep their own colours, and names say which);
    and an element that can't be stepped GrayText */
 @media (forced-colors: active) {
     .pipeline-path__segment {

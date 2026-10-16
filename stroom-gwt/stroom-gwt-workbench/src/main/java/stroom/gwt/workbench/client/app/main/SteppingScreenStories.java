@@ -293,8 +293,10 @@ public final class SteppingScreenStories {
                     play.expect(play.getByRole("button", TextMatch.startingWith("appenderT2"))
                                     .closest(".pipeline-path__segment"))
                             .toHaveClass("pipeline-path__segment--error", "pipeline-path__segment--pulse");
-                    // jsonWriter's warning, in a branch not shown, rings textWriter's drop down chevron
-                    play.expect(play.querySelector(".pipeline-path__ring--warn")).toBeInTheDocument();
+                    // jsonWriter's warning, in a branch not shown, is a warning icon by textWriter's drop
+                    // down chevron
+                    play.expect(play.querySelector(".pipeline-path__segment[data-element-id='textWriter'] "
+                                                   + ".pipeline-path__branch-severity")).toBeInTheDocument();
                     // textWriter's drop down chevron is a menu button of its own (its chevron's button
                     // selects it), whose name says jsonWriter's branch, not shown, has a warning
                     play.expect(play.getByRole("button", TextMatch.startingWith("textWriter")))
@@ -337,11 +339,11 @@ public final class SteppingScreenStories {
                     // It opens on the current branch, as a menu that chooses one of its items does
                     play.waitFor(() -> play.expect(screen.querySelector("[role='menuitem']:focus"))
                             .toHaveTextContent(TextMatch.startingWith("jsonWriter, current branch")));
-                    // The branch with the error (textWriter's, to appenderT2) has the error's ring, and
-                    // says so to screen readers
+                    // The branch with the error (textWriter's, to appenderT2) has the error's icon, and
+                    // says to screen readers that it is the branch (not textWriter itself) that has it
                     play.expect(screen.getByText("textWriter", StroomDom.MENU_ITEM_TEXT))
-                            .toHaveTextContent("textWriter, has errors");
-                    play.expect(screen.querySelector(".pipeline-path__menu-ring--error")).toBeInTheDocument();
+                            .toHaveTextContent(TextMatch.containing(", branch has errors"));
+                    play.expect(screen.querySelectorAll(".pipeline-path__menu-severity")).toHaveLength(2);
                     play.expect(play.getByRole("button", TextMatch.startingWith("Choose branch, jsonWriter")))
                             .toHaveAttribute("aria-expanded", "true");
                     play.keyboard("{Escape}");
@@ -372,8 +374,8 @@ public final class SteppingScreenStories {
                 })
                 // Problems, with no play so that they can be looked at: xsltFilter has a warning's inner
                 // border, appenderT2's new error's inner border pulses three times then stays, and a
-                // ring round textWriter's drop down chevron shows jsonWriter's warning, in a branch not
-                // shown
+                // warning icon by textWriter's drop down chevron shows jsonWriter's warning, in a branch
+                // not shown
                 .story("SteppingProblems", context -> render(context, BRANCH_LAYERS, null, PROBLEMS_STEP_RESULT))
                 // A pipeline too long for the bar: the chevrons away from the selection collapse into …
                 .story("SteppingLongPipeline", context -> render(context, longLayers(), null,

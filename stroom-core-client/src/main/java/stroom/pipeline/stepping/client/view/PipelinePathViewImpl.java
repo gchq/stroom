@@ -91,8 +91,9 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private static final String FILL_CLASS = BASE_CLASS + "__fill";
     private static final String BAND_CLASS = BASE_CLASS + "__band";
     private static final String PULSE_CLASS = SEGMENT_CLASS + "--pulse";
-    private static final String RING_CLASS = BASE_CLASS + "__ring";
-    private static final String RING_PULSE_CLASS = RING_CLASS + "--pulse";
+    private static final String SEVERITY_CLASS = BASE_CLASS + "__severity";
+    private static final String BRANCH_SEVERITY_CLASS = BASE_CLASS + "__branch-severity";
+    private static final String BRANCH_SEVERITY_PULSE_CLASS = BRANCH_SEVERITY_CLASS + "--pulse";
     private static final String BUTTON_CLASS = BASE_CLASS + "__button";
     private static final String CONTENT_CLASS = BASE_CLASS + "__content";
     private static final String CARET_CLASS = BASE_CLASS + "__caret";
@@ -103,7 +104,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private static final String FILTER_CLASS = BASE_CLASS + "__filter";
     private static final String BRANCH_FILTER_CLASS = BASE_CLASS + "__branch-filter";
     private static final String MENU_FILTER_CLASS = BASE_CLASS + "__menu-filter";
-    private static final String MENU_RING_CLASS = BASE_CLASS + "__menu-ring";
+    private static final String MENU_SEVERITY_CLASS = BASE_CLASS + "__menu-severity";
 
     private static final String INDEX_ATTRIBUTE = "data-index";
     private static final String ELEMENT_ID_ATTRIBUTE = "data-element-id";
@@ -433,6 +434,10 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
             content.appendChild(createIcon(icon, ICON_CLASS));
         }
         content.appendChild(createLabel(element.getDisplayName()));
+        final SvgImage severityIcon = getSeverityIcon(severity);
+        if (severityIcon != null) {
+            content.appendChild(createIcon(severityIcon, SEVERITY_CLASS));
+        }
         if (filters) {
             content.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS));
         }
@@ -440,7 +445,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         segment.appendChild(button);
 
         if (step.isAfterFork()) {
-            // The branches not shown having filters is for sight only here: the drop down
+            // Whether the branches not shown have filters is for sight only here: the drop down
             // chevron's name says so
             if (step.hiddenFilters()) {
                 segment.appendChild(createIcon(SvgImage.FILTER, BRANCH_FILTER_CLASS));
@@ -514,8 +519,9 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     }
 
     // The drop down chevron of an element after a fork: a menu button listing the branches the
-    // path could follow there, ringed in the colour of the worst severity in the branches not
-    // shown.
+    // path could follow there. The icon of the worst severity in the branches not shown is a badge
+    // on it, so that it isn't taken for its element's own; it is for sight only, as its name says
+    // so.
     private Element createCaret(final Step step) {
         final Element caret = createButton(describeCaret(step));
         caret.setClassName(CARET_CLASS);
@@ -524,16 +530,15 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         final Element arrow = createContent(describeCaret(step));
         arrow.setClassName(CARET_CLASS + "-target");
         arrow.appendChild(createIcon(SvgImage.DROP_DOWN, CARET_CLASS + "-arrow"));
-        final String severityClass = getSeverityClass(RING_CLASS, step.hiddenSeverity());
-        if (severityClass != null) {
-            final Element ring = Document.get().createSpanElement();
-            ring.setClassName(RING_CLASS + " " + severityClass);
+        final SvgImage hiddenSeverityIcon = getSeverityIcon(step.hiddenSeverity());
+        if (hiddenSeverityIcon != null) {
+            final Element badge = createIcon(hiddenSeverityIcon, BRANCH_SEVERITY_CLASS);
             final double pulseElapsed = getHiddenPulseElapsed(step);
             if (pulseElapsed >= 0) {
-                ring.addClassName(RING_PULSE_CLASS);
-                ring.getStyle().setProperty("animationDelay", -Math.round(pulseElapsed) + "ms");
+                badge.addClassName(BRANCH_SEVERITY_PULSE_CLASS);
+                badge.getStyle().setProperty("animationDelay", -Math.round(pulseElapsed) + "ms");
             }
-            arrow.appendChild(ring);
+            arrow.appendChild(badge);
         }
         caret.appendChild(arrow);
         return caret;
@@ -551,6 +556,20 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
             }
         }
         return latest;
+    }
+
+    // The standard icon for a severity of warnings or worse, as the stepping screen's list of
+    // markers uses (a fatal error's in the form that shows on dark backgrounds too), or null for
+    // none or information
+    private static SvgImage getSeverityIcon(final Severity severity) {
+        if (severity == null || severity.lessThan(Severity.WARNING)) {
+            return null;
+        }
+        return switch (severity) {
+            case WARNING -> SvgImage.ALERT;
+            case ERROR -> SvgImage.ERROR;
+            default -> SvgImage.FATAL_DARK;
+        };
     }
 
     // The class for a severity of warnings or worse, or null for none or information
@@ -713,6 +732,10 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         button.setAttribute(ARIA_EXPANDED, "false");
         final Element content = createContent(description.toString());
         content.appendChild(createLabel(ELLIPSIS_TEXT));
+        final SvgImage severityIcon = getSeverityIcon(worst);
+        if (severityIcon != null) {
+            content.appendChild(createIcon(severityIcon, SEVERITY_CLASS));
+        }
         if (filters) {
             content.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS));
         }
@@ -862,7 +885,8 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
                     .text(getMenuText(alternative,
                             path.getBranchSeverity(alternative),
                             path.hasBranchFilters(alternative),
-                            current))
+                            current,
+                            true))
                     .highlight(current)
                     .command(() -> follow(parent, alternative))
                     .build();
@@ -890,6 +914,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
                     .text(getMenuText(element,
                             severities.get(element.getElementId().getId()),
                             hasActiveFilters(element),
+                            false,
                             false))
                     .enabled(!isDisabled(element))
                     .command(() -> {
@@ -936,29 +961,36 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         return null;
     }
 
-    // The element's name, then, as on a chevron, a filter icon if it has filters and a ring in the
-    // colour of a severity of warnings or worse. Each is in words for screen readers, as is whether
-    // it is the branch the path follows (the menu's highlight is only seen).
+    // The element's name, then, as on a chevron, the icon of a severity of warnings or worse and a
+    // filter icon if it has filters. Each is in words for screen readers, as is whether it is the
+    // branch the path follows (the menu's highlight is only seen). For a branch (a branch menu's
+    // item), the severity and filters are those anywhere in the branch, which the words say, so
+    // that they aren't taken for the element's own.
     private static SafeHtml getMenuText(final PipelineElement element,
                                         final Severity severity,
                                         final boolean filters,
-                                        final boolean current) {
+                                        final boolean current,
+                                        final boolean branch) {
+        final String has = branch
+                ? ", branch has "
+                : ", has ";
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         builder.appendEscaped(element.getDisplayName());
         if (current) {
             appendScreenReaderText(builder, ", current branch");
         }
+        final SvgImage severityIcon = getSeverityIcon(severity);
+        if (severityIcon != null) {
+            builder.appendHtmlConstant("<span class=\"" + MENU_SEVERITY_CLASS + "\" aria-hidden=\"true\">");
+            builder.append(SvgImageUtil.toSafeHtml(severityIcon, "svgIcon"));
+            builder.appendHtmlConstant("</span>");
+            appendScreenReaderText(builder, has + severity.getSummaryValue().toLowerCase());
+        }
         if (filters) {
             builder.appendHtmlConstant("<span class=\"" + MENU_FILTER_CLASS + "\" aria-hidden=\"true\">");
             builder.append(SvgImageUtil.toSafeHtml(SvgImage.FILTER, "svgIcon"));
             builder.appendHtmlConstant("</span>");
-            appendScreenReaderText(builder, ", has stepping filters");
-        }
-        final String severityClass = getSeverityClass(MENU_RING_CLASS, severity);
-        if (severityClass != null) {
-            builder.appendHtmlConstant("<span class=\"" + MENU_RING_CLASS + " " + severityClass
-                                       + "\" aria-hidden=\"true\"></span>");
-            appendScreenReaderText(builder, ", has " + severity.getSummaryValue().toLowerCase());
+            appendScreenReaderText(builder, has + "stepping filters");
         }
         return builder.toSafeHtml();
     }
