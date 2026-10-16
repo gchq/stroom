@@ -58,6 +58,13 @@ final class AiElicitationForm {
                 final List<String> values = new ArrayList<>();
                 final List<String> labels = new ArrayList<>();
                 options(optionSource, values, labels);
+                // What the server suggests, e.g. a proposed name: a list for a choice of several.
+                final List<String> defaults = definition.get("default") != null
+                                              && definition.get("default").isArray() != null
+                        ? strings(definition.get("default"))
+                        : text(definition, "default") != null
+                                ? List.of(text(definition, "default"))
+                                : List.of();
                 fields.add(new Field(name,
                         text(definition, "title") != null
                                 ? text(definition, "title")
@@ -68,7 +75,8 @@ final class AiElicitationForm {
                         required.contains(name),
                         multi,
                         values,
-                        labels));
+                        labels,
+                        defaults));
             }
         } catch (final RuntimeException e) {
             // Not a form that can be shown.
@@ -156,6 +164,7 @@ final class AiElicitationForm {
         private final boolean multi;
         private final List<String> values;
         private final List<String> labels;
+        private final List<String> defaults;
 
         private Field(final String name,
                       final String title,
@@ -165,7 +174,8 @@ final class AiElicitationForm {
                       final boolean required,
                       final boolean multi,
                       final List<String> values,
-                      final List<String> labels) {
+                      final List<String> labels,
+                      final List<String> defaults) {
             this.name = name;
             this.title = title;
             this.description = description;
@@ -175,6 +185,7 @@ final class AiElicitationForm {
             this.multi = multi;
             this.values = values;
             this.labels = labels;
+            this.defaults = defaults;
         }
 
         String getName() {
@@ -214,6 +225,18 @@ final class AiElicitationForm {
         /// @return A label for each value.
         List<String> getLabels() {
             return labels;
+        }
+
+        /// @return The value the server suggests (several for a choice of several), or an empty list if none.
+        List<String> getDefaults() {
+            return defaults;
+        }
+
+        /// @return The value the server suggests, or null if none.
+        String getDefault() {
+            return defaults.isEmpty()
+                    ? null
+                    : defaults.get(0);
         }
     }
 }

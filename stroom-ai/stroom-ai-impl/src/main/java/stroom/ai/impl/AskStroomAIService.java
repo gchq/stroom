@@ -2305,6 +2305,7 @@ public class AskStroomAIService {
                         label = "**You (while it was working)**";
                         break;
                     case AI_RESPONSE:
+                    case INTERIM_RESPONSE:
                         label = "**AI**";
                         break;
                     case ERROR:

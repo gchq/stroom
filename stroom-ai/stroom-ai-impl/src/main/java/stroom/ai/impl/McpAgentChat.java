@@ -308,6 +308,11 @@ class McpAgentChat {
             appendDebugRationale(debugLog, attempt, currentIteration, aiMessage.text());
 
             conversation.add(aiMessage);
+            // Shown in its place, before anything the tools then ask the user (e.g. a form), rather than only
+            // while it streams.
+            if (NullSafe.isNonBlankString(aiMessage.text())) {
+                aiService.storeMessage(chatId, AiMessageType.INTERIM_RESPONSE, aiMessage.text().strip());
+            }
             final List<ToolExecutionRequest> toolRequests = aiMessage.toolExecutionRequests();
             final List<PendingCall> pending = new ArrayList<>();
             final List<ToolConsent.Verdict> askVerdicts = new ArrayList<>();
