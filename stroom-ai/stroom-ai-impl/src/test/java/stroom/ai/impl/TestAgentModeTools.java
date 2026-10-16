@@ -81,7 +81,8 @@ class TestAgentModeTools {
             Map.entry("table", false),
             Map.entry("pipeline", false),
             Map.entry("run_stroomql", false),
-            Map.entry("summarise_column", false)));
+            Map.entry("summarise_column", false),
+            Map.entry("task_list", false)));
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);

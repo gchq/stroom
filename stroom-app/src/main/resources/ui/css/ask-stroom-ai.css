@@ -1627,3 +1627,83 @@ a.ai-stroom-link::after {
 .askStroomAiViewImpl-commandReference-content p:first-child {
     margin-top: 0;
 }
+
+/* ---- The agent's task list, above the input ---- */
+
+.askStroomAiViewImpl-taskList {
+    margin-bottom: 6px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 6px;
+    background: rgba(128, 128, 128, 0.08);
+    font-size: var(--ai-font-size--small);
+}
+
+.askStroomAiViewImpl-taskList-header {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 4px 10px;
+    border: none;
+    background: none;
+    color: var(--control__text-color);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* A chevron, as on the chat's other sections: down while open, right while folded away. */
+.askStroomAiViewImpl-taskList-header::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin: 0 8px 2px 0;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 0.15s;
+}
+
+.askStroomAiViewImpl-taskList--collapsed .askStroomAiViewImpl-taskList-header::before {
+    transform: rotate(-45deg);
+}
+
+.askStroomAiViewImpl-taskList-items {
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 0 10px 6px;
+}
+
+.ai-task {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    padding: 1px 0;
+}
+
+.ai-task-icon {
+    flex: none;
+    width: 1em;
+    text-align: center;
+}
+
+.ai-task-icon--completed {
+    color: #2e7d32;
+}
+
+.ai-task-icon--in_progress {
+    color: #1976d2;
+}
+
+.ai-task-icon--not_started {
+    color: var(--control__text-color--disabled);
+}
+
+.ai-task--completed .ai-task-title {
+    color: var(--control__text-color--disabled);
+    text-decoration: line-through;
+}
+
+.ai-task--in_progress .ai-task-title {
+    font-weight: 600;
+}
