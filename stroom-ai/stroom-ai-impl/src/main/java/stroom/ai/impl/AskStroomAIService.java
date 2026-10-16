@@ -150,6 +150,8 @@ import java.util.stream.Collectors;
 public class AskStroomAIService {
 
     static final int MAX_CHAT_STATUSES = 100;
+    // The most messages a poll may ask to watch.
+    static final int MAX_WATCHED_MESSAGES = 20;
     // Searching chats: the shortest text searched for (shorter matches too much to be useful), and the most chats
     // returned.
     static final int MIN_SEARCH_CHARS = 2;
@@ -2036,7 +2038,24 @@ public class AskStroomAIService {
                 ? aiService.getStreamingMessages(chatId)
                 : List.of();
         return new AiChatPollResponse(newMessages, attachments, workingMessage, complete, run, contextUsage,
-                streamingMessages);
+                streamingMessages, watchedMessages(chatId, request.getWatchedMessageIds()));
+    }
+
+    /// @return The chat's forms among the given messages, as they now stand (e.g. cancelled when the run was
+    /// stopped), or null if none were asked for.
+    private List<AiChatMessage> watchedMessages(final int chatId, final List<Integer> messageIds) {
+        if (NullSafe.isEmptyCollection(messageIds)) {
+            return null;
+        }
+        final Set<Integer> wanted = messageIds.stream()
+                .filter(Objects::nonNull)
+                .limit(MAX_WATCHED_MESSAGES)
+                .collect(Collectors.toSet());
+        final int first = wanted.stream().mapToInt(Integer::intValue).min().orElse(0);
+        return aiDao.getMessagesSince(chatId, first - 1).stream()
+                .filter(message -> wanted.contains(message.getId())
+                                   && message.getMessageType() == AiMessageType.ELICITATION)
+                .toList();
     }
 
     /**

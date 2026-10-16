@@ -55,6 +55,11 @@ public class AiChatPollResponse {
      */
     @JsonProperty
     private final List<AiChatMessage> streamingMessages;
+    /**
+     * The messages the client asked to watch, as they now stand, or null.
+     */
+    @JsonProperty
+    private final List<AiChatMessage> watchedMessages;
 
     @JsonCreator
     public AiChatPollResponse(@JsonProperty("newMessages") final List<AiChatMessage> newMessages,
@@ -63,7 +68,8 @@ public class AiChatPollResponse {
                               @JsonProperty("complete") final Boolean complete,
                               @JsonProperty("run") final AiChatRun run,
                               @JsonProperty("contextUsage") final AiContextUsage contextUsage,
-                              @JsonProperty("streamingMessages") final List<AiChatMessage> streamingMessages) {
+                              @JsonProperty("streamingMessages") final List<AiChatMessage> streamingMessages,
+                              @JsonProperty("watchedMessages") final List<AiChatMessage> watchedMessages) {
         this.newMessages = newMessages;
         this.attachments = attachments;
         this.workingMessage = workingMessage;
@@ -71,6 +77,7 @@ public class AiChatPollResponse {
         this.run = run;
         this.contextUsage = contextUsage;
         this.streamingMessages = streamingMessages;
+        this.watchedMessages = watchedMessages;
     }
 
     public List<AiChatMessage> getNewMessages() {
@@ -105,5 +112,12 @@ public class AiChatPollResponse {
      */
     public List<AiChatMessage> getStreamingMessages() {
         return streamingMessages;
+    }
+
+    /**
+     * @return The messages the client asked to watch, as they now stand, or null.
+     */
+    public List<AiChatMessage> getWatchedMessages() {
+        return watchedMessages;
     }
 }

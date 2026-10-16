@@ -575,12 +575,14 @@ public class AskStroomAiClient {
     void pollMessages(final int chatId,
                       final int lastSeenMessageId,
                       final boolean markRead,
+                      final List<Integer> watchedMessageIds,
                       final Consumer<AiChatPollResponse> consumer,
                       final RestErrorHandler errorHandler,
                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
-                .method(res -> res.pollMessages(chatId, new AiChatPollRequest(lastSeenMessageId, markRead)))
+                .method(res -> res.pollMessages(chatId, new AiChatPollRequest(lastSeenMessageId, markRead,
+                        watchedMessageIds)))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
