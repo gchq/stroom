@@ -30,6 +30,10 @@ import java.util.Map;
 /// acted on.
 public final class ChatLinks {
 
+    /// The action of a link to a stream (and optionally one of its events), as the model is told to write them.
+    static final String OPEN_STREAM_ACTION = "open-stream";
+    static final String STREAM_ID_PARAM = "id";
+    static final String RECORD_NO_PARAM = "recordNo";
     // A doc type is a short name, e.g. 'Pipeline' or 'XMLSchema'.
     private static final String DOC_TYPE_PATTERN = "[A-Za-z][A-Za-z0-9]{0,63}";
     private static final String UUID_PATTERN =
@@ -56,6 +60,44 @@ public final class ChatLinks {
             return null;
         }
         return new DocRef(type, uuid.toLowerCase());
+    }
+
+    /// @param href A link's `href`.
+    /// @return The stream (and event) the link opens, if it is a chat open-stream link
+    /// (`?action=open-stream&id=…`, with an optional 1-based `recordNo`), or null otherwise.
+    public static StreamTarget openStreamTarget(final String href) {
+        if (href == null) {
+            return null;
+        }
+        final Map<String, String> query = query(href.trim());
+        if (query == null || !OPEN_STREAM_ACTION.equals(query.get(UrlParameters.ACTION))) {
+            return null;
+        }
+        final Long id = positive(query.get(STREAM_ID_PARAM));
+        if (id == null) {
+            return null;
+        }
+        final String recordNo = query.get(RECORD_NO_PARAM);
+        final Long record = positive(recordNo);
+        if (recordNo != null && record == null) {
+            return null;
+        }
+        return new StreamTarget(id, record);
+    }
+
+    /// @return True if the link opens something in Stroom: a document or a stream.
+    public static boolean isStroomLink(final String href) {
+        return openDocTarget(href) != null || openStreamTarget(href) != null;
+    }
+
+    private static Long positive(final String value) {
+        if (value == null || !value.matches("[0-9]{1,18}")) {
+            return null;
+        }
+        final long number = Long.parseLong(value);
+        return number > 0
+                ? number
+                : null;
     }
 
     /// @param href A link's `href`.
@@ -96,5 +138,13 @@ public final class ChatLinks {
             }
         }
         return params;
+    }
+
+    /// A stream, and optionally one of its events, that a chat link opens.
+    ///
+    /// @param streamId The stream's id.
+    /// @param recordNo The event's number in the stream, from 1, or null for the stream as a whole.
+    public record StreamTarget(long streamId, Long recordNo) {
+
     }
 }

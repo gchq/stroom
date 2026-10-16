@@ -77,4 +77,21 @@ class TestChatLinks {
         assertThat(ChatLinks.isExternal("javascript:alert(1)")).isFalse();
         assertThat(ChatLinks.isExternal("#footnote-1")).isFalse();
     }
+
+    @Test
+    void streamLinksOpenTheStreamOrEvent() {
+        assertThat(ChatLinks.openStreamTarget("?action=open-stream&id=1234"))
+                .isEqualTo(new ChatLinks.StreamTarget(1234L, null));
+        assertThat(ChatLinks.openStreamTarget("http://mcp.internal/?action=open-stream&id=12&recordNo=5"))
+                .isEqualTo(new ChatLinks.StreamTarget(12L, 5L));
+        assertThat(ChatLinks.isStroomLink("?action=open-stream&id=12")).isTrue();
+        // Nothing else is acted on.
+        assertThat(ChatLinks.openStreamTarget("?action=open-stream&id=0")).isNull();
+        assertThat(ChatLinks.openStreamTarget("?action=open-stream&id=x")).isNull();
+        assertThat(ChatLinks.openStreamTarget("?action=open-stream&id=12&recordNo=-1")).isNull();
+        assertThat(ChatLinks.openStreamTarget("?action=open-stream&id=12&id=13")).isNull();
+        assertThat(ChatLinks.openStreamTarget("?action=delete&id=12")).isNull();
+        assertThat(ChatLinks.isStroomLink("https://example.com/?id=12")).isFalse();
+    }
+
 }
