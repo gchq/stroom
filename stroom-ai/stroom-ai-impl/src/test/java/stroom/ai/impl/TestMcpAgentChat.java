@@ -132,6 +132,13 @@ class TestMcpAgentChat {
 
         assertThat(response.aiMessage().text()).isEqualTo("There were 42 errors today.");
 
+        // What the model said alongside the call is shown in its place: stored before the call, so before
+        // anything the tool asks the user (e.g. a form).
+        final InOrder inOrder = Mockito.inOrder(aiService);
+        inOrder.verify(aiService).storeMessage(7, AiMessageType.INTERIM_RESPONSE,
+                "I need to check today's error count.");
+        inOrder.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.TOOL_CALL), Mockito.anyString());
+
         // The progress message names the tool and carries the model's reason for calling it.
         final ArgumentCaptor<String> progress = ArgumentCaptor.forClass(String.class);
         Mockito.verify(aiService, Mockito.atLeastOnce()).updateMessageText(Mockito.eq(99), progress.capture());

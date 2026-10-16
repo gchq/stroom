@@ -95,7 +95,13 @@ public enum AiMessageType implements HasPrimitiveValue {
      * task_list tool. The latest is shown above the input while its turn is the latest; never sent to the model
      * (the tool call and result are).
      */
-    TASK_LIST(22);
+    TASK_LIST(22),
+    /**
+     * What the model wrote alongside its tool calls, before they ran (e.g. what it is about to do, or text a
+     * tool's result asked it to show the user). Shown to the user in its place in the conversation, e.g. above a
+     * form the tool then asks them to fill in; never sent to the model (the tool call keeps it as its rationale).
+     */
+    INTERIM_RESPONSE(23);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());
