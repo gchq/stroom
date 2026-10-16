@@ -213,7 +213,9 @@ to `tableAnalysis.maxTotalRows` rows (default 50,000).
 ### The events behind the rows
 
 A dashboard or StroomQL table that isn't grouped is attached with each row's `StreamId` and `EventId` (from
-the hidden columns Stroom adds), as are the agent's own `run_stroomql` results. The agent can then look into
+the hidden columns Stroom adds), as are the agent's own `run_stroomql` results. Where they are empty in every
+row (a data source without streams, such as reference data), they are left out. A table that already shows its
+own StreamId or EventId column isn't given a second. The agent can then look into
 the events themselves, e.g. for a value the table doesn't show:
 
 * `fetch_events` reads the event behind each row of a table (or of a CSV made from one with the `table`

@@ -21,6 +21,7 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /// The file the agent's source events are written to by fetch_events, and read from by search_events: one XML
@@ -44,6 +45,8 @@ public final class EventsFile {
     public static final String EVENT_ID_ATTRIBUTE = "eventId";
     public static final String FORMAT_ATTRIBUTE = "format";
     public static final String TEXT_FORMAT = "text";
+    /// The columns a table's rows carry their stream and event ids in, so the events behind them can be fetched.
+    public static final Set<String> SOURCE_ID_COLUMNS = Set.of("StreamId", "EventId");
 
     private static final Pattern XML_DECLARATION = Pattern.compile("^\\uFEFF?\\s*<\\?xml[^>]*\\?>");
 
