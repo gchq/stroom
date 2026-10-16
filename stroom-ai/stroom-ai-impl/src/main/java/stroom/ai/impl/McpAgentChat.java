@@ -900,15 +900,41 @@ class McpAgentChat {
      * {@code limit} characters.
      */
     private static String concise(final String text, final int limit) {
-        if (NullSafe.isBlankString(text)) {
+        final String firstLine = firstPlainLine(text);
+        if (firstLine == null) {
             return null;
         }
-        String t = text.strip().replaceAll("\\s+", " ");
+        String t = firstLine.replaceAll("\\s+", " ");
         final int firstSentenceEnd = t.indexOf(". ");
         if (firstSentenceEnd > 0 && firstSentenceEnd < limit) {
             t = t.substring(0, firstSentenceEnd + 1);
         }
         return truncate(t, limit);
+    }
+
+    /// @param text Markdown, e.g. what the model wrote alongside its tool calls.
+    /// @return Its first line with text in it, as plain text (without heading, list or quote marks, emphasis,
+    /// code marks or link targets), e.g. "Records to translate" from `**Records to translate**`, or null if it
+    /// has none.
+    static String firstPlainLine(final String text) {
+        if (text == null) {
+            return null;
+        }
+        for (final String line : text.split("\\R")) {
+            final String plain = line
+                    // Heading, quote and list marks at the start.
+                    .replaceAll("^\\s*(?:#{1,6}\\s+|>\\s*|[-*+]\\s+|\\d+[.)]\\s+)+", "")
+                    // Images and links: just their text.
+                    .replaceAll("!?\\[([^\\]]*)]\\([^)]*\\)", "$1")
+                    // Bold, italics, strike-through and code marks.
+                    .replaceAll("(\\*\\*|__|~~|`)", "")
+                    .replaceAll("(?<![\\w*])[*_](\\S(?:.*?\\S)?)[*_](?![\\w*])", "$1")
+                    .strip();
+            if (!plain.isEmpty()) {
+                return plain;
+            }
+        }
+        return null;
     }
 
     private static String truncate(final String text, final int limit) {
