@@ -16,8 +16,18 @@
 
 package stroom.ai.impl.workspace;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /// Reads the markdown tables that table attachments are stored as: a header row, a separator row of dashes, then
 /// one row per line. Cells are separated by `|`, and a `|` inside a cell is escaped as `\|`.
@@ -73,5 +83,75 @@ public final class MarkdownTables {
             }
         }
         return true;
+    }
+
+    /// Removes the named columns from a Markdown table file if they are empty in every row, e.g. the stream and
+    /// event ids of a table from a data source that has none.
+    ///
+    /// @param file  A file holding one Markdown table: a header row, a separator row, then the rows.
+    /// @param names The columns to remove if empty, by their headings.
+    /// @return True if the file was changed.
+    /// @throws UncheckedIOException if the file can't be read or written.
+    public static boolean dropEmptyColumns(final Path file, final Set<String> names) {
+        try {
+            final List<String> header;
+            try (final BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+                header = parseRow(reader.readLine());
+            }
+            final Set<Integer> empty = new HashSet<>();
+            for (int i = 0; i < header.size(); i++) {
+                if (names.contains(header.get(i))) {
+                    empty.add(i);
+                }
+            }
+            if (empty.isEmpty()) {
+                return false;
+            }
+            try (final BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+                reader.readLine();
+                reader.readLine();
+                String line;
+                while (!empty.isEmpty() && (line = reader.readLine()) != null) {
+                    final List<String> cells = parseRow(line);
+                    empty.removeIf(index -> index < cells.size() && !cells.get(index).isBlank());
+                }
+            }
+            if (empty.isEmpty()) {
+                return false;
+            }
+            final Path rewritten = file.resolveSibling(file.getFileName() + ".tmp");
+            try (final BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8);
+                    final BufferedWriter writer = Files.newBufferedWriter(rewritten, StandardCharsets.UTF_8)) {
+                writer.write(row(without(parseRow(reader.readLine()), empty)));
+                reader.readLine();
+                writer.write("|" + " --- |".repeat(header.size() - empty.size()) + "\n");
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    writer.write(row(without(parseRow(line), empty)));
+                }
+            }
+            Files.move(rewritten, file, StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static List<String> without(final List<String> cells, final Set<Integer> indexes) {
+        final List<String> kept = new ArrayList<>();
+        for (int i = 0; i < cells.size(); i++) {
+            if (!indexes.contains(i)) {
+                kept.add(cells.get(i));
+            }
+        }
+        return kept;
+    }
+
+    private static String row(final List<String> cells) {
+        final StringBuilder sb = new StringBuilder("|");
+        for (final String cell : cells) {
+            sb.append(' ').append(cell.replace("|", "\\|")).append(" |");
+        }
+        return sb.append('\n').toString();
     }
 }

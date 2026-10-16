@@ -17,6 +17,12 @@
 package stroom.ai.impl.workspace;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,4 +47,53 @@ class TestMarkdownTables {
         assertThat(MarkdownTables.isSeparatorRow("| a | --- |")).isFalse();
         assertThat(MarkdownTables.isSeparatorRow("|  |")).isFalse();
     }
+
+    @Test
+    void emptyIdColumnsAreDropped(@TempDir final Path dir) throws IOException {
+        final Path file = dir.resolve("table.md");
+        // From a data source without streams, e.g. reference data: the ids are always empty.
+        Files.writeString(file, """
+                | Key | Value \\| note | StreamId | EventId |
+                | --- | --- | --- | --- |
+                | a | 1 |  |  |
+                | b | 2 |  |  |
+                """);
+
+        assertThat(MarkdownTables.dropEmptyColumns(file, Set.of("StreamId", "EventId"))).isTrue();
+
+        assertThat(Files.readString(file)).isEqualTo("""
+                | Key | Value \\| note |
+                | --- | --- |
+                | a | 1 |
+                | b | 2 |
+                """);
+    }
+
+    @Test
+    void idColumnsWithAnyValueAreKept(@TempDir final Path dir) throws IOException {
+        final Path file = dir.resolve("table.md");
+        // Stream ids, but no event ids, e.g. a table of streams.
+        final String table = """
+                | Feed | StreamId | EventId |
+                | --- | --- | --- |
+                | ACME | 12 |  |
+                | ACME |  |  |
+                """;
+        Files.writeString(file, table);
+
+        assertThat(MarkdownTables.dropEmptyColumns(file, Set.of("StreamId", "EventId"))).isTrue();
+        assertThat(Files.readString(file)).isEqualTo("""
+                | Feed | StreamId |
+                | --- | --- |
+                | ACME | 12 |
+                | ACME |  |
+                """);
+
+        // Nothing to drop leaves the file as it is.
+        Files.writeString(file, table.replace("| ACME |  |  |", "| ACME | 13 | 4 |"));
+        final String before = Files.readString(file);
+        assertThat(MarkdownTables.dropEmptyColumns(file, Set.of("StreamId", "EventId"))).isFalse();
+        assertThat(Files.readString(file)).isEqualTo(before);
+    }
+
 }

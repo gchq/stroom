@@ -25,6 +25,8 @@ import stroom.ai.impl.ChatCompactor.CompactionMode;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.memory.MemoryPath;
+import stroom.ai.impl.workspace.EventsFile;
+import stroom.ai.impl.workspace.MarkdownTables;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspaceStore;
@@ -1002,6 +1004,9 @@ public class AskStroomAIService {
                             final Path tempFile = resourceStore.getTempFile(resourceKey);
                             final Path targetFile = attachmentFileStore.createAttachmentFile(attachmentId);
                             Files.move(tempFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                            // A data source without streams (e.g. reference data) gives empty ids, which only
+                            // mislead.
+                            MarkdownTables.dropEmptyColumns(targetFile, EventsFile.SOURCE_ID_COLUMNS);
 
                             // Count rows by streaming the markdown file
                             // (skip header line and separator line).
