@@ -116,17 +116,6 @@ Before a tool runs, Stroom decides whether to ask the user:
 Every tool call and every decision is event-logged.
 
 
-## Questions for the user (`ask_user`)
-
-When the agent needs the user's decisions to carry on, it asks them with its built-in `ask_user` tool, as VS Code's
-agent does, rather than listing questions in its answer. The chat shows them in a card one at a time ("Question 1 of
-4"), each with the agent's answers to click (the one it recommends marked) and, unless it says only those make sense,
-a box for the user's own answer (Enter to give it). _Back_ returns to the previous question; _Skip these questions_
-declines them. After the last answer, the answers are the tool's result, and the card shrinks to the questions and
-answers. The questions use the same machinery as forms from MCP tools (below): the run waits, Stop cancels them, and
-they expire after `elicitationTimeout`. An unattended run isn't asked; the agent is told to put the questions in its
-answer instead.
-
 ## Forms from MCP tools (elicitation)
 
 An MCP tool can ask the user to fill in a form while it runs. The chat shows the form in a card, below what the
