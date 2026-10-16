@@ -17,6 +17,8 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.EventsFile;
+import stroom.ai.impl.workspace.MarkdownTables;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
@@ -53,7 +55,7 @@ import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-
+import java.util.Set;
 
 /**
  * {@code run_stroomql} - runs a StroomQL query as the chat's user (so only data they can see), and writes the
@@ -153,6 +155,8 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         }
         final ResourceStore resourceStore = resourceStoreProvider.get();
         try {
+            // A data source without streams gives empty ids, which only mislead.
+            MarkdownTables.dropEmptyColumns(resourceStore.getTempFile(resourceKey), EventsFile.SOURCE_ID_COLUMNS);
             workspace.write(chatId, out, resourceStore.getTempFile(resourceKey), sourceDocUuid);
         } finally {
             resourceStore.deleteTempFile(resourceKey);
