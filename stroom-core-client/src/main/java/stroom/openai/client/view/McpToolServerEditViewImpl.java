@@ -38,7 +38,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -82,8 +81,6 @@ public class McpToolServerEditViewImpl
     @UiField
     SelectionBox<McpAuthMode> authMode;
     @UiField
-    Label authModeWarning;
-    @UiField
     SelectionBox<Credential> credential;
     @UiField
     FormGroup apiKeyHeaderNameGroup;
@@ -93,6 +90,8 @@ public class McpToolServerEditViewImpl
     FormGroup apiKeyValuePrefixGroup;
     @UiField
     TextBox apiKeyValuePrefix;
+    @UiField
+    FormGroup credentialGroup;
     @UiField
     FormGroup audienceGroup;
     @UiField
@@ -278,12 +277,6 @@ public class McpToolServerEditViewImpl
     }
 
     @Override
-    public void setAuthModeWarning(final String warning) {
-        authModeWarning.setText(warning);
-        authModeWarning.setVisible(warning != null);
-    }
-
-    @Override
     public String getAudience() {
         return audience.getValue();
     }
@@ -291,6 +284,11 @@ public class McpToolServerEditViewImpl
     @Override
     public void setAudience(final String audience) {
         this.audience.setValue(audience);
+    }
+
+    @Override
+    public void setCredentialVisible(final boolean visible) {
+        credentialGroup.setVisible(visible);
     }
 
     @Override
