@@ -137,6 +137,22 @@
     align-items: center;
 }
 
+/* In a narrow panel the model's name gives way (cut short with an ellipsis), so the context pill and the
+   Send/Stop button always stay in view. */
+.askStroomAiViewImpl-modelPane > .dock-max {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.askStroomAiViewImpl-modelPane > :not(.dock-max) {
+    flex-shrink: 0;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-label {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 .askStroomAiViewImpl-modelPane .play svg {
     color: #4caf50;
 }
@@ -1187,17 +1203,40 @@
     margin: 4px 0 6px;
 }
 
-.aiElicitation-message {
-    white-space: pre-wrap;
-    margin-bottom: 6px;
+.ai-elicitation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 6px 0 8px;
 }
 
-.aiElicitation-form {
-    overflow: auto;
+.ai-elicitation-label {
+    font-weight: 600;
+    margin-bottom: 2px;
 }
 
-.aiElicitation-field {
-    margin-bottom: 10px;
+.ai-elicitation-description {
+    color: var(--text-color--secondary);
+    margin-bottom: 4px;
+}
+
+.ai-elicitation-input {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 420px;
+    padding: 4px 6px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 4px;
+    background: var(--control__background-color);
+    color: inherit;
+    font: inherit;
+}
+
+.ai-elicitation-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
 }
 
 /* ---- Edit MCP Tool Server dialog ---- */

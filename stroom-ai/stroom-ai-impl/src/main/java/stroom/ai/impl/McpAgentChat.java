@@ -49,6 +49,7 @@ import dev.langchain4j.service.tool.ToolExecutor;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -123,6 +124,11 @@ class McpAgentChat {
      * How many of the latest tool results are kept as they are when the conversation is getting too large.
      */
     static final int RECENT_RESULTS_KEPT = 2;
+
+    /**
+     * How often a running MCP tool call looks to see if the run has been stopped.
+     */
+    private static final Duration STOP_CHECK_INTERVAL = Duration.ofMillis(200);
     /**
      * Tool results shorter than this are never shortened.
      */
@@ -378,7 +384,7 @@ class McpAgentChat {
             runManager.markReadUntrustedServer(chatId);
         }
         final long startMs = System.currentTimeMillis();
-        final String result = execute(tools, toolRequest, toolRequest.name(), chatId);
+        final String result = execute(tools, toolRequest, toolRequest.name(), chatId, !isBuiltIn(toolRequest.name()));
         final long durationMs = System.currentTimeMillis() - startMs;
         runManager.addUsage(chatId, 0, 0, 1);
         LOGGER.trace(() -> "Tool '" + toolRequest.name() + "' result:\n" + result);
@@ -534,8 +540,7 @@ class McpAgentChat {
     /// @return True if the tool is an untrusted MCP server's, or one of the resource tools while any server is
     /// untrusted (as they read from all of them).
     private boolean isUntrustedServerTool(final McpToolset toolset, final String toolName) {
-        if (toolset == null || toolName == null || builtInTools.toolMap().keySet().stream()
-                .anyMatch(spec -> spec.name().equals(toolName))) {
+        if (toolset == null || toolName == null || isBuiltIn(toolName)) {
             return false;
         }
         return toolset.toolInfo(toolName)
@@ -543,6 +548,10 @@ class McpAgentChat {
                 .orElseGet(() -> toolset.hasUntrustedServer()
                                  && (McpToolset.LIST_RESOURCES_TOOL.equals(toolName)
                                      || McpToolset.GET_RESOURCE_TOOL.equals(toolName)));
+    }
+
+    private boolean isBuiltIn(final String toolName) {
+        return builtInTools.toolMap().keySet().stream().anyMatch(spec -> spec.name().equals(toolName));
     }
 
     private static <T> T read(final AiChatMessage message, final Class<T> type) {
@@ -781,10 +790,14 @@ class McpAgentChat {
         }
     }
 
+    /// @param stoppable True if the tool is to be given up on as soon as the run is stopped, rather than when it
+    ///                  returns: an MCP server's, which can take as long as the server likes (e.g. while the user
+    ///                  fills in its form). Built-in tools rely on the run's thread, and limit their own time.
     private String execute(final Map<ToolSpecification, ToolExecutor> tools,
                            final ToolExecutionRequest toolRequest,
                            final String toolName,
-                           final int chatId) {
+                           final int chatId,
+                           final boolean stoppable) {
         final ToolExecutor executor = tools.entrySet().stream()
                 .filter(entry -> entry.getKey().name().equals(toolName))
                 .map(Map.Entry::getValue)
@@ -793,8 +806,17 @@ class McpAgentChat {
         if (executor == null) {
             return "Error: no such tool '" + toolName + "'";
         }
+        final AtomicBoolean stop = stoppable
+                ? runManager.stopFlag(chatId)
+                : null;
         try {
-            return executor.execute(toolRequest, chatId);
+            return stop != null
+                    ? StoppableCall.run(() -> executor.execute(toolRequest, chatId), stop, STOP_CHECK_INTERVAL)
+                    : executor.execute(toolRequest, chatId);
+        } catch (final StoppableCall.StoppedException e) {
+            LOGGER.debug(() -> "Tool '" + toolName + "' given up on for chatId=" + chatId + " as the run was stopped");
+            return "Error calling tool '" + toolName + "': the user stopped the chat before it finished (its server "
+                   + "may still finish what it started).";
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Tool '" + toolName + "' failed for chatId=" + chatId, e);
             return "Error calling tool '" + toolName + "': "
