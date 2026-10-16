@@ -279,9 +279,9 @@ class TestMcpToolServerFactory {
                 // Tool names are prefixed with their server's name.
                 assertThat(tools.keySet())
                         .extracting(ToolSpecification::name)
-                        .containsExactly("s__echo");
+                        .containsExactly("echo");
 
-                final String result = execute(tools, "s__echo", "{\"text\":\"hello\"}");
+                final String result = execute(tools, "echo", "{\"text\":\"hello\"}");
                 assertThat(result).isEqualTo("hello (auth: Bearer secret-token)");
             }
             // Every request carried the credential.
@@ -313,7 +313,7 @@ class TestMcpToolServerFactory {
                     .build();
 
             try (final McpToolset toolset = factory.createToolset(doc)) {
-                assertThat(execute(toolset.tools(), "s__echo", "{\"text\":\"hi\"}"))
+                assertThat(execute(toolset.tools(), "echo", "{\"text\":\"hi\"}"))
                         .isEqualTo("hi (auth: Bearer secret-token)");
             }
             assertThat(server.requestHeaders())
@@ -340,7 +340,7 @@ class TestMcpToolServerFactory {
                 // Requests are sent from the HTTP client's threads, where there is no security context, so
                 // the identity must have been captured when the toolset was built.
                 Mockito.when(securityContext.getUserIdentity()).thenReturn(null);
-                execute(toolset.tools(), "s__echo", "{\"text\":\"hi\"}");
+                execute(toolset.tools(), "echo", "{\"text\":\"hi\"}");
             }
             assertThat(server.authorizationHeaders())
                     .contains("Bearer jwt-2")
@@ -367,7 +367,7 @@ class TestMcpToolServerFactory {
                 final Map<ToolSpecification, ToolExecutor> tools = toolset.tools();
                 assertThat(tools.keySet())
                         .extracting(ToolSpecification::name)
-                        .containsExactly("s__echo", McpToolset.LIST_RESOURCES_TOOL, McpToolset.GET_RESOURCE_TOOL);
+                        .containsExactly("echo", McpToolset.LIST_RESOURCES_TOOL, McpToolset.GET_RESOURCE_TOOL);
 
                 assertThat(execute(tools, McpToolset.LIST_RESOURCES_TOOL, "{}"))
                         .contains("stroom://guide/xslt")
@@ -394,7 +394,7 @@ class TestMcpToolServerFactory {
                 // The server that is up is still used.
                 assertThat(toolset.tools().keySet())
                         .extracting(ToolSpecification::name)
-                        .containsExactly("up__echo");
+                        .containsExactly("echo");
                 assertThat(toolset.getWarnings())
                         .singleElement(org.assertj.core.api.InstanceOfAssertFactories.STRING)
                         .contains("'down' could not be reached");
@@ -421,7 +421,7 @@ class TestMcpToolServerFactory {
             try (final McpToolset toolset = factory.createToolset(doc)) {
                 assertThat(toolset.tools().keySet())
                         .extracting(ToolSpecification::name)
-                        .containsExactly("s__echo");
+                        .containsExactly("echo");
             }
         }
     }

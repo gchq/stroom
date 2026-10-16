@@ -121,7 +121,7 @@ class TestMcpAgentChat {
                 AiMessage.from("I need to check today's error count.",
                         List.of(ToolExecutionRequest.builder()
                                 .id("1")
-                                .name("test__search")
+                                .name("search")
                                 .arguments("{\"query\":\"level:ERROR AND @timestamp>now-1d\"}")
                                 .build())),
                 AiMessage.from("There were 42 errors today."));
@@ -146,7 +146,7 @@ class TestMcpAgentChat {
                 .contains("Attempt 2 — Tool Use")
                 .contains("Model rationale:")
                 .contains("check today's error count")
-                .contains("`test__search`")
+                .contains("`search`")
                 .contains("level:ERROR AND @timestamp>now-1d")
                 .contains("42 errors");
     }
@@ -252,7 +252,7 @@ class TestMcpAgentChat {
                         .thinking("I should search first.")
                         .toolExecutionRequests(List.of(ToolExecutionRequest.builder()
                                 .id("1")
-                                .name("test__search")
+                                .name("search")
                                 .arguments("{}")
                                 .build()))
                         .build(),
@@ -334,7 +334,7 @@ class TestMcpAgentChat {
                         .build())),
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("2")
-                        .name("test__pipeline_create")
+                        .name("pipeline_create")
                         .arguments("{}")
                         .build())),
                 AiMessage.from("Created it."));
@@ -345,9 +345,9 @@ class TestMcpAgentChat {
         assertThat(response.aiMessage().text()).isEqualTo("Created it.");
         assertThat(model.requests.get(0).toolSpecifications()).extracting(ToolSpecification::name)
                 .contains("activate_pipeline", "activate_index")
-                .doesNotContain("test__pipeline_create");
+                .doesNotContain("pipeline_create");
         assertThat(model.requests.get(1).toolSpecifications()).extracting(ToolSpecification::name)
-                .contains("test__pipeline_create", "test__pipeline_step", "activate_index")
+                .contains("pipeline_create", "pipeline_step", "activate_index")
                 .doesNotContain("activate_pipeline");
         // Turning a group on changes nothing, so the user is not asked.
         Mockito.verify(toolConsent, Mockito.never()).decide(Mockito.anyInt(), Mockito.eq("activate_pipeline"),
@@ -379,7 +379,7 @@ class TestMcpAgentChat {
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
                 .thenReturn(CallToolResult.builder().content(List.of(new TextContent("found"))).build());
         final McpToolset toolset = toolset(client, searchTool());
-        Mockito.when(toolConsent.decide(Mockito.eq(7), Mockito.eq("test__search"), Mockito.any(), Mockito.any(),
+        Mockito.when(toolConsent.decide(Mockito.eq(7), Mockito.eq("search"), Mockito.any(), Mockito.any(),
                         Mockito.anyBoolean()))
                 .thenReturn(ToolConsent.Verdict.RUN,
                         new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", true, false,
@@ -387,9 +387,9 @@ class TestMcpAgentChat {
                         new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", true, false,
                                 List.of("untrusted server")));
         final ChatModel model = new StubToolCallingModel(AiMessage.from(List.of(
-                ToolExecutionRequest.builder().id("1").name("test__search").arguments("{\"q\":1}").build(),
-                ToolExecutionRequest.builder().id("2").name("test__search").arguments("{\"q\":2}").build(),
-                ToolExecutionRequest.builder().id("3").name("test__search").arguments("{\"q\":3}").build())));
+                ToolExecutionRequest.builder().id("1").name("search").arguments("{\"q\":1}").build(),
+                ToolExecutionRequest.builder().id("2").name("search").arguments("{\"q\":2}").build(),
+                ToolExecutionRequest.builder().id("3").name("search").arguments("{\"q\":3}").build())));
 
         assertThatThrownBy(() -> agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false),
                 taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN))
@@ -405,7 +405,7 @@ class TestMcpAgentChat {
         assertThat(approval.calls()).extracting(ToolApprovalRequest.PendingCall::callId).containsExactly("2", "3");
         assertThat(approval.calls().getFirst().arguments()).isEqualTo("{\"q\":2}");
         assertThat(approval.allowForChat()).isTrue();
-        Mockito.verify(auditLog).toolCall(7, "test__search", "{\"q\":1}", "Run", true, false);
+        Mockito.verify(auditLog).toolCall(7, "search", "{\"q\":1}", "Run", true, false);
     }
 
     @Test
@@ -415,7 +415,7 @@ class TestMcpAgentChat {
                 Mockito.anyBoolean())).thenReturn(new ToolConsent.Verdict(ToolConsent.Kind.DENY,
                 "You chose not to allow this tool in this chat.", false, false, List.of()));
         final StubToolCallingModel model = new StubToolCallingModel(
-                AiMessage.from(List.of(ToolExecutionRequest.builder().id("1").name("test__search").arguments("{}")
+                AiMessage.from(List.of(ToolExecutionRequest.builder().id("1").name("search").arguments("{}")
                         .build())),
                 AiMessage.from("ok"));
 
@@ -429,9 +429,9 @@ class TestMcpAgentChat {
 
     @Test
     void approvedCallsRunWhenTheRunCarriesOn() {
-        final ToolApprovalRequest.PendingCall allowed = new ToolApprovalRequest.PendingCall("a", "test__search",
+        final ToolApprovalRequest.PendingCall allowed = new ToolApprovalRequest.PendingCall("a", "search",
                 "test", "search", "{}", List.of(), null, null, ToolApprovalRequest.Decision.ALLOWED, null);
-        final ToolApprovalRequest.PendingCall denied = new ToolApprovalRequest.PendingCall("b", "test__search",
+        final ToolApprovalRequest.PendingCall denied = new ToolApprovalRequest.PendingCall("b", "search",
                 "test", "search", "{}", List.of(), null, null, ToolApprovalRequest.Decision.DENIED, "not now");
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
@@ -439,10 +439,10 @@ class TestMcpAgentChat {
         Mockito.when(aiService.getMessages(7)).thenReturn(List.of(
                 new AiChatMessage(10, 7, 0L, AiMessageType.USER_MESSAGE, null, "make it", 10, null),
                 new AiChatMessage(11, 7, 0L, AiMessageType.TOOL_CALL, null,
-                        JsonUtil.writeValueAsString(new ToolCallRecord("a", "test__search", "{}", null), false), 10,
+                        JsonUtil.writeValueAsString(new ToolCallRecord("a", "search", "{}", null), false), 10,
                         null),
                 new AiChatMessage(12, 7, 0L, AiMessageType.TOOL_CALL, null,
-                        JsonUtil.writeValueAsString(new ToolCallRecord("b", "test__search", "{}", null), false), 10,
+                        JsonUtil.writeValueAsString(new ToolCallRecord("b", "search", "{}", null), false), 10,
                         null),
                 new AiChatMessage(13, 7, 0L, AiMessageType.APPROVAL_REQUEST, null,
                         JsonUtil.writeValueAsString(new ToolApprovalRequest(ToolApprovalRequest.KIND,
@@ -461,7 +461,7 @@ class TestMcpAgentChat {
                 .map(m -> ((ToolExecutionResultMessage) m).text())
                 .toList())
                 .containsExactly("created", "Not run: the user did not allow this call. They said: not now");
-        Mockito.verify(auditLog).toolCall(7, "test__search", "{}", "Denied by the user", false, false);
+        Mockito.verify(auditLog).toolCall(7, "search", "{}", "Denied by the user", false, false);
     }
 
     @Test
@@ -487,7 +487,7 @@ class TestMcpAgentChat {
         final ChatModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
-                        .name("test__search")
+                        .name("search")
                         .arguments("{}")
                         .build())),
                 AiMessage.from("done"));
@@ -554,8 +554,8 @@ class TestMcpAgentChat {
 
         toolset.tools();
 
-        assertThat(toolset.toolInfo("good__create_feed")).get().extracting(McpToolInfo::confirms).isEqualTo(true);
-        assertThat(toolset.toolInfo("good__search")).get().extracting(McpToolInfo::confirms).isEqualTo(false);
+        assertThat(toolset.toolInfo("create_feed")).get().extracting(McpToolInfo::confirms).isEqualTo(true);
+        assertThat(toolset.toolInfo("search")).get().extracting(McpToolInfo::confirms).isEqualTo(false);
     }
 
     @Test
@@ -612,7 +612,7 @@ class TestMcpAgentChat {
         final ChatModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
-                        .name("test__search")
+                        .name("search")
                         .arguments("{}")
                         .build())),
                 AiMessage.from("done"));
@@ -639,7 +639,7 @@ class TestMcpAgentChat {
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
-                        .name("test__search")
+                        .name("search")
                         .arguments("{}")
                         .build())),
                 AiMessage.from("never given"));
@@ -669,7 +669,7 @@ class TestMcpAgentChat {
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
-                        .name("test__search")
+                        .name("search")
                         .arguments("{}")
                         .build())),
                 AiMessage.from("There were 3 firewall errors."));
@@ -713,7 +713,7 @@ class TestMcpAgentChat {
         final ChatModel model = new StubToolCallingModel(
                 AiMessage.from("Counting.", List.of(ToolExecutionRequest.builder()
                         .id("call-1")
-                        .name("test__search")
+                        .name("search")
                         .arguments("{\"query\":\"errors\"}")
                         .build())),
                 AiMessage.from("42."));
@@ -724,7 +724,7 @@ class TestMcpAgentChat {
         final ArgumentCaptor<String> call = ArgumentCaptor.forClass(String.class);
         Mockito.verify(aiService).storeMessage(Mockito.eq(7), Mockito.eq(AiMessageType.TOOL_CALL),
                 call.capture());
-        assertThat(call.getValue()).contains("\"tool\":\"test__search\"").contains("errors").contains("Counting.");
+        assertThat(call.getValue()).contains("\"tool\":\"search\"").contains("errors").contains("Counting.");
         final ArgumentCaptor<String> result = ArgumentCaptor.forClass(String.class);
         Mockito.verify(aiService).storeMessage(Mockito.eq(7),
                 Mockito.eq(AiMessageType.TOOL_RESULT), result.capture());
@@ -742,7 +742,7 @@ class TestMcpAgentChat {
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("call-1")
-                        .name("test__search")
+                        .name("search")
                         .arguments("{}")
                         .build())),
                 AiMessage.from("done"));
@@ -801,7 +801,7 @@ class TestMcpAgentChat {
                     case 1, 2 -> ChatResponse.builder().aiMessage(AiMessage.from(List.of(
                             ToolExecutionRequest.builder()
                                     .id("call-" + requests.size())
-                                    .name("test__search")
+                                    .name("search")
                                     .arguments("{}")
                                     .build()))).build();
                     case 3 -> throw new RuntimeException("This model's maximum context length is 10 tokens");
@@ -847,11 +847,11 @@ class TestMcpAgentChat {
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("call-1")
-                        .name("test__search")
+                        .name("search")
                         .arguments("{}")
                         .build())),
                 AiMessage.from("done"));
-        Mockito.when(builtInTools.readsUntrustedContent("test__search")).thenReturn(true);
+        Mockito.when(builtInTools.readsUntrustedContent("search")).thenReturn(true);
 
         agentChat.chat(model, null, 7, messages, toolset(client, searchTool()), 99, new AtomicBoolean(false),
                 taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
@@ -884,11 +884,11 @@ class TestMcpAgentChat {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
                 .thenReturn(CallToolResult.builder().content(List.of(new TextContent(bigOutput))).build());
-        Mockito.when(builtInTools.boundsItsOutput("test__search")).thenReturn(true);
+        Mockito.when(builtInTools.boundsItsOutput("search")).thenReturn(true);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("call-1")
-                        .name("test__search")
+                        .name("search")
                         .arguments("{}")
                         .build())),
                 AiMessage.from("done"));
