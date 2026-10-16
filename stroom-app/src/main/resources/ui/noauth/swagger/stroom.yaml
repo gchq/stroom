@@ -6196,6 +6196,27 @@ paths:
       summary: Get default HTTP client configuration
       tags:
       - OpenAI Model
+  /openAIModel/v1/listMcpTools:
+    post:
+      operationId: listMcpTools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestMcpToolServerRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListMcpToolsResponse"
+          description: default response
+      summary: "Connect to an MCP tool server and list all its tools, with their documentation\
+        \ and whether its tool policies enable them"
+      tags:
+      - OpenAI Model
   /openAIModel/v1/testMcpToolServer:
     post:
       operationId: testMcpToolServer
@@ -17759,6 +17780,15 @@ components:
             type: array
             items:
               type: string
+    ListMcpToolsResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        tools:
+          type: array
+          items:
+            $ref: "#/components/schemas/McpToolDescription"
     Location:
       type: object
       discriminator:
@@ -17962,6 +17992,15 @@ components:
           type: string
       required:
       - type
+    McpToolDescription:
+      type: object
+      properties:
+        documentation:
+          type: string
+        enabled:
+          type: boolean
+        name:
+          type: string
     McpToolPolicyRule:
       type: object
       properties:

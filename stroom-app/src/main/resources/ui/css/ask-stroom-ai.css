@@ -1502,3 +1502,30 @@ mark.ai-chat-list-hit {
         transition: none;
     }
 }
+
+/* ---- A model's MCP Tool Servers tab: the selected server's tools ---- */
+
+.mcpToolList-toolbar {
+    align-items: center;
+    gap: 8px;
+    padding: 2px 6px;
+    border-bottom: 1px solid var(--control__border-color);
+}
+
+.mcpToolList-status {
+    font-size: var(--ai-font-size--small, 0.9em);
+    color: var(--control__text-color--disabled);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mcpToolList-details {
+    overflow: auto;
+    padding: 8px 16px;
+    box-sizing: border-box;
+}
+
+.mcpToolList-details h2 {
+    margin-top: 0;
+}
