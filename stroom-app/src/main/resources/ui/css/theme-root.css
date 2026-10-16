@@ -34,6 +34,8 @@
        band of it at 30% around the control, so focus changes the control's shape as well as its colour */
     --focus-border: var(--blue-800);
     --focus-shadow: 0 0 0 4px rgba(21, 101, 192, .3); /* blue-800 */
+    /* The focus shadow's colour, for a focus ring drawn as a shape (e.g. PipelinePath.css) */
+    --focus-ring__color: rgba(21, 101, 192, .3);
     --focus-border--valid: var(--valid);
     --focus-shadow--valid: 0 0 0 4px rgba(var(--valid-rgb), .3);
     --focus-border--invalid: var(--invalid);

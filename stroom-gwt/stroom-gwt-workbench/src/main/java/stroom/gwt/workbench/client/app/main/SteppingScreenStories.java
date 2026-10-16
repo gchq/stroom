@@ -86,6 +86,23 @@ public final class SteppingScreenStories {
             .replace("EXTRA_ELEMENT", ", {\"id\": \"recordCount\", \"type\": \"XMLWriter\"}")
             .replace("EXTRA_LINK", ", {\"from\": \"xmlWriter\", \"to\": \"recordCount\"}");
 
+    // SteppingBranches: Source -> xsltFilter -> (xmlWriter -> appenderA, jsonWriter,
+    // textWriter -> (appenderT1, appenderT2))
+    private static final String BRANCH_LAYERS = """
+            [{"sourcePipeline": {"type": "Pipeline", "uuid": "p1", "name": "P"},
+              "pipelineData": {
+                "elements": {"add": [{"id": "xsltFilter", "type": "XSLTFilter"},
+                  {"id": "xmlWriter", "type": "XMLWriter"}, {"id": "jsonWriter", "type": "XMLWriter"},
+                  {"id": "textWriter", "type": "XMLWriter"}, {"id": "appenderA", "type": "StreamAppender"},
+                  {"id": "appenderT1", "type": "StreamAppender"}, {"id": "appenderT2", "type": "StreamAppender"}]},
+                "links": {"add": [{"from": "Source", "to": "xsltFilter"},
+                  {"from": "xsltFilter", "to": "xmlWriter"}, {"from": "xsltFilter", "to": "jsonWriter"},
+                  {"from": "xsltFilter", "to": "textWriter"}, {"from": "xmlWriter", "to": "appenderA"},
+                  {"from": "textWriter", "to": "appenderT1"}, {"from": "textWriter", "to": "appenderT2"}]}}}]""";
+
+    // SteppingLongPipeline: Source -> f01 -> ... -> f30 -> xmlWriter, too long for the bar
+    private static final int LONG_FILTER_COUNT = 30;
+
     private static final String DATA = """
             {"type": "data", "feedName": "MY_FEED", "streamTypeName": "Raw Events",
               "sourceLocation": {"metaId": 1, "partIndex": 0, "recordIndex": 0,
@@ -111,6 +128,34 @@ public final class SteppingScreenStories {
                       {"type": "storedError", "severity": "WARNING", "errorType": "OUTPUT",
                         "message": "Deprecated element", "location": {"type": "default", "lineNo": 1, "colNo": 1}}
                     ]}}}}}""";
+
+    // SteppingBranches: jsonWriter has a warning and appenderT2 an error
+    private static final String BRANCH_STEP_RESULT = """
+            {"sessionUuid": "sess-1", "complete": true, "foundRecord": true,
+              "foundLocation": {"metaId": 1, "partIndex": 0, "recordIndex": RECORD},
+              "stepData": {"sourceLocation": {"metaId": 1, "partIndex": 0, "recordIndex": RECORD},
+                "elementMap": {
+                  "xsltFilter": {"input": "<in/>", "output": "<out/>"},
+                  "jsonWriter": {"input": "<out/>", "output": "{}",
+                    "indicators": {"errorCount": {"WARNING": 1}, "errorList": [
+                      {"type": "storedError", "severity": "WARNING", "errorType": "OUTPUT",
+                        "message": "Deprecated element", "location": {"type": "default", "lineNo": 1, "colNo": 1}}
+                    ]}},
+                  "appenderT2": {"input": "<out/>", "output": "",
+                    "indicators": {"errorCount": {"ERROR": 1}, "errorList": [
+                      {"type": "storedError", "severity": "ERROR", "errorType": "OUTPUT",
+                        "message": "Cannot append", "location": {"type": "default", "lineNo": 1, "colNo": 1}}
+                    ]}}}}}""";
+
+    // SteppingProblems: xsltFilter has a warning, appenderT2 an error, and jsonWriter (in a branch
+    // not shown) a warning
+    private static final String PROBLEMS_STEP_RESULT = BRANCH_STEP_RESULT.replace("""
+                  "xsltFilter": {"input": "<in/>", "output": "<out/>"},""", """
+                  "xsltFilter": {"input": "<in/>", "output": "<out/>",
+                    "indicators": {"errorCount": {"WARNING": 1}, "errorList": [
+                      {"type": "storedError", "severity": "WARNING", "errorType": "OUTPUT",
+                        "message": "Deprecated function", "location": {"type": "default", "lineNo": 1, "colNo": 1}}
+                    ]}},""");
 
     private SteppingScreenStories() {
         // Static utility
@@ -165,20 +210,19 @@ public final class SteppingScreenStories {
                             .toBeGreaterThanOrEqual(3);
                     expectNoProblems(play);
                 })
-                // With the pipeline structure, the left panel is the element tree with severities
+                // The pipeline is a bar of chevrons, coloured by the elements' severities
                 .story("SteppingWithTree", context -> render(context, STEP_LAYERS, null))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Source");
                     play.findByText("xsltFilter");
                     play.findByText("xmlWriter");
-                    // xmlWriter has an error: the box's hover tip and severity class
-                    play.waitFor(() -> play.expect(play.getByTitle(TextMatch.containing("xmlWriter' has errors")))
-                            .toHaveClass("pipelineElementBox-severityError"));
-                    // The pipeline's pane fits its boxes, rather than cutting off their bottoms
-                    final Value<Double> boxBottom = play.getByTitle(TextMatch.containing("xmlWriter' has errors"))
+                    // xmlWriter has an error: the chevron's name says so
+                    play.findByRole("button", TextMatch.startingWith("xmlWriter, XML Writer, has errors"));
+                    // The pipeline's pane fits its chevrons, rather than cutting off their bottoms
+                    final Value<Double> boxBottom = play.getByRole("button", TextMatch.startingWith("xmlWriter"))
                             .bottom();
-                    final Value<Double> paneBottom = play.querySelector(".steppingViewImpl-treeContainer").bottom();
+                    final Value<Double> paneBottom = play.querySelector(".stepping-screen__pipeline").bottom();
                     play.waitFor(() -> play.expect("the box's bottom below its pane's",
                             () -> boxBottom.get() - paneBottom.get()).toBeLessThanOrEqual(0));
                     // Selecting it shows its log pane toggle
@@ -234,7 +278,148 @@ public final class SteppingScreenStories {
                     play.keyboard("{Control>}{End}{/Control} EDITED");
                     play.findByText("ORIGINAL XSLT CODE EDITED");
                     expectNoProblems(play);
+                })
+                // A pipeline with branches: the bar shows one path, with a drop down at each fork
+                .story("SteppingBranches", context -> render(context, BRANCH_LAYERS, null, BRANCH_STEP_RESULT))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    // Once stepped, the path follows the branch with the error, to appenderT2
+                    play.findByRole("button", TextMatch.startingWith("appenderT2, Stream Appender, has errors"));
+                    // The step's new problems are told to screen readers, in pipeline order; the new
+                    // error pulses and the warning glows
+                    final Query status = play.querySelector(".pipeline-path ~ [role='status']");
+                    play.waitFor(() -> play.expect(status)
+                            .toHaveTextContent("jsonWriter has warnings. appenderT2 has errors."));
+                    play.expect(play.getByRole("button", TextMatch.startingWith("appenderT2"))
+                                    .closest(".pipeline-path__segment"))
+                            .toHaveClass("pipeline-path__segment--error", "pipeline-path__segment--pulse");
+                    // jsonWriter's warning, in a branch not shown, rings textWriter's drop down chevron
+                    play.expect(play.querySelector(".pipeline-path__ring--warn")).toBeInTheDocument();
+                    // textWriter's drop down chevron is a menu button of its own (its chevron's button
+                    // selects it), whose name says jsonWriter's branch, not shown, has a warning
+                    play.expect(play.getByRole("button", TextMatch.startingWith("textWriter")))
+                            .not().toHaveAttribute("aria-haspopup");
+                    final Query textWriterBranches = play.getByRole("button",
+                            TextMatch.regex("^Choose branch, textWriter is 2 of 3.*other branches have warnings"));
+                    play.expect(textWriterBranches).toHaveAttribute("aria-haspopup", "menu");
+                    play.expect(textWriterBranches).toHaveAttribute("aria-expanded", "false");
+                    play.expect(play.queryByRole("button", TextMatch.startingWith("jsonWriter"))).toBeNull();
+
+                    // Following jsonWriter's branch from the drop down selects it
+                    play.click(textWriterBranches);
+                    play.click(screen.findByText(TextMatch.startingWith("jsonWriter"), StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect(play.getByRole("button", TextMatch.startingWith("jsonWriter")))
+                            .toHaveAttribute("aria-current", "true"));
+                    play.expect(play.queryByRole("button", TextMatch.startingWith("appenderT2"))).toBeNull();
+                    // The error is now in a branch not shown
+                    play.expect(play.getByRole("button",
+                                    TextMatch.regex("^Choose branch, jsonWriter.*other branches have errors")))
+                            .toBeInTheDocument();
+                    play.waitFor(() -> play.expect(play.getByRole("button", TextMatch.startingWith("jsonWriter")))
+                            .toHaveFocus());
+
+                    // Down opens the drop down from the keyboard; Escape closes it, back on the chevron
+                    play.keyboard("{ArrowDown}");
+                    screen.findByText(TextMatch.startingWith("textWriter"), StroomDom.MENU_ITEM_TEXT);
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.getByRole("button", TextMatch.startingWith("jsonWriter")))
+                            .toHaveFocus());
+
+                    // Right moves to its drop down chevron, which Enter opens; the menu says which branch
+                    // is the current one (its highlight is only seen). Escape closes it, back on the
+                    // drop down chevron, which says it is expanded only while the menu is open
+                    play.keyboard("{ArrowRight}");
+                    final Query jsonWriterBranches = play.getByRole("button",
+                            TextMatch.startingWith("Choose branch, jsonWriter"));
+                    play.expect(jsonWriterBranches).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    screen.findByText(", current branch");
+                    // It opens on the current branch, as a menu that chooses one of its items does
+                    play.waitFor(() -> play.expect(screen.querySelector("[role='menuitem']:focus"))
+                            .toHaveTextContent(TextMatch.startingWith("jsonWriter, current branch")));
+                    // The branch with the error (textWriter's, to appenderT2) has the error's ring, and
+                    // says so to screen readers
+                    play.expect(screen.getByText("textWriter", StroomDom.MENU_ITEM_TEXT))
+                            .toHaveTextContent("textWriter, has errors");
+                    play.expect(screen.querySelector(".pipeline-path__menu-ring--error")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", TextMatch.startingWith("Choose branch, jsonWriter")))
+                            .toHaveAttribute("aria-expanded", "true");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.getByRole("button",
+                            TextMatch.startingWith("Choose branch, jsonWriter"))).toHaveFocus());
+                    play.expect(play.getByRole("button", TextMatch.startingWith("Choose branch, jsonWriter")))
+                            .toHaveAttribute("aria-expanded", "false");
+
+                    // Left (twice, past jsonWriter's button) moves to xsltFilter and Enter selects it;
+                    // the path still follows jsonWriter
+                    play.keyboard("{ArrowLeft}");
+                    play.keyboard("{ArrowLeft}");
+                    play.expect(play.getByRole("button", TextMatch.startingWith("xsltFilter"))).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.getByRole("button", TextMatch.startingWith("xsltFilter")))
+                            .toHaveAttribute("aria-current", "true"));
+                    play.expect(play.getByRole("button", TextMatch.startingWith("jsonWriter"))).toBeInTheDocument();
+
+                    // The bar is one tab stop
+                    play.expect(play.getByRole("toolbar", "Pipeline")).toBeInTheDocument();
+                    play.expect(play.querySelectorAll(".pipeline-path [tabindex='0']")).toHaveLength(1);
+
+                    // Shift+F10 opens the element's context menu
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    screen.findByText("Manage step filters", StroomDom.MENU_ITEM_TEXT);
+                    play.keyboard("{Escape}");
+                    expectNoProblems(play);
+                })
+                // Problems, with no play so that they can be looked at: xsltFilter has a warning's inner
+                // border, appenderT2's new error's inner border pulses three times then stays, and a
+                // ring round textWriter's drop down chevron shows jsonWriter's warning, in a branch not
+                // shown
+                .story("SteppingProblems", context -> render(context, BRANCH_LAYERS, null, PROBLEMS_STEP_RESULT))
+                // A pipeline too long for the bar: the chevrons away from the selection collapse into …
+                .story("SteppingLongPipeline", context -> render(context, longLayers(), null,
+                        STEP_RESULT.replace("\"xsltFilter\":", "\"f01\":")))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query ellipsis = play.findByRole("button", TextMatch.regex("^\\d+ more elements"));
+                    play.expect(ellipsis).toHaveAttribute("aria-haspopup", "menu");
+                    // The ends are always shown
+                    play.expect(play.getByRole("button", TextMatch.startingWith("Source"))).toBeVisible();
+                    play.expect(play.getByRole("button", TextMatch.startingWith("xmlWriter"))).toBeVisible();
+                    // The bar doesn't overflow its pane
+                    final Value<Double> lastRight = play.getByRole("button", TextMatch.startingWith("xmlWriter"))
+                            .right();
+                    final Value<Double> barRight = play.querySelector(".pipeline-path").right();
+                    play.expect("the last chevron's right beyond the bar's",
+                            () -> lastRight.get() - barRight.get()).toBeLessThanOrEqual(0);
+                    // Choosing a collapsed element from the … list selects and shows it
+                    play.click(ellipsis);
+                    play.click(screen.findByText("f25", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect(play.getByRole("button", TextMatch.startingWith("f25")))
+                            .toHaveAttribute("aria-current", "true"));
+                    play.expect(play.getByRole("button", TextMatch.startingWith("f25"))).toBeVisible();
+                    play.expect(play.getByRole("button", TextMatch.startingWith("Source"))).toBeVisible();
+                    expectNoProblems(play);
                 });
+    }
+
+    // Source -> f01 -> ... -> f30 -> xmlWriter
+    private static String longLayers() {
+        final StringBuilder elements = new StringBuilder();
+        final StringBuilder links = new StringBuilder();
+        String previous = "Source";
+        for (int i = 1; i <= LONG_FILTER_COUNT; i++) {
+            final String id = (i < 10
+                    ? "f0"
+                    : "f") + i;
+            elements.append("{\"id\": \"").append(id).append("\", \"type\": \"XSLTFilter\"}, ");
+            links.append("{\"from\": \"").append(previous).append("\", \"to\": \"").append(id).append("\"}, ");
+            previous = id;
+        }
+        elements.append("{\"id\": \"xmlWriter\", \"type\": \"XMLWriter\"}");
+        links.append("{\"from\": \"").append(previous).append("\", \"to\": \"xmlWriter\"}");
+        return "[{\"sourcePipeline\": {\"type\": \"Pipeline\", \"uuid\": \"p1\", \"name\": \"P\"}, "
+               + "\"pipelineData\": {\"elements\": {\"add\": [" + elements + "]}, "
+               + "\"links\": {\"add\": [" + links + "]}}}]";
     }
 
     // The number of step requests sent with the server's session
@@ -252,7 +437,7 @@ public final class SteppingScreenStories {
 
     // The mock stepping server: the first poll of a step (no session) is incomplete; then FIRST ->
     // record 0, FORWARD -> +1, BACKWARD -> -1, LAST -> 4, REFRESH -> the same record
-    private static RestReply step(final String body) {
+    private static RestReply step(final String body, final String stepResult) {
         final Map<?, ?> request = (Map<?, ?>) JsonValues.parse(body);
         final Map<?, ?> location = (Map<?, ?>) request.get("stepLocation");
         final int current = location == null || location.get("recordIndex") == null
@@ -276,7 +461,7 @@ public final class SteppingScreenStories {
         } else {
             record = current;
         }
-        return RestReply.json(STEP_RESULT.replace("RECORD", String.valueOf(record)));
+        return RestReply.json(stepResult.replace("RECORD", String.valueOf(record)));
     }
 
     private static void expectNoProblems(final Play play) {
@@ -286,13 +471,13 @@ public final class SteppingScreenStories {
 
     // The stepping server's fixtures; elementDoc is the document findElementDoc finds (the XSLT
     // of an element with code), or null for none
-    private static RestFixtures fixtures(final String layers, final String elementDoc) {
+    private static RestFixtures fixtures(final String layers, final String elementDoc, final String stepResult) {
         final RestFixtures.Builder builder = RestFixtures.builder();
         if (elementDoc != null) {
             StoryDocumentPlugins.documentRoutes(builder, XSLT_PATH, XSLT);
         }
         return builder
-                .post(STEP_PATH, request -> step(request.getBody()))
+                .post(STEP_PATH, request -> step(request.getBody(), stepResult))
                 .post("/stepping/v1/terminateStepping", RestReply.json("true"))
                 .post("/stepping/v1/findElementDoc", RestReply.json(elementDoc == null
                         ? "null"
@@ -307,8 +492,15 @@ public final class SteppingScreenStories {
     }
 
     private static Widget render(final StoryContext context, final String layers, final String elementDoc) {
+        return render(context, layers, elementDoc, STEP_RESULT);
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final String layers,
+                                 final String elementDoc,
+                                 final String stepResult) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, fixtures(layers, elementDoc))
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures(layers, elementDoc, stepResult))
                 .injector(injector)
                 .build();
         if (elementDoc != null) {

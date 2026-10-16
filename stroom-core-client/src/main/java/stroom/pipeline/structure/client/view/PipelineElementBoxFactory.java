@@ -42,7 +42,7 @@ public class PipelineElementBoxFactory {
     /// @param elementType The type of the element. Can be null.
     /// @return The type's display name, else its type name if it has no display name, else null
     /// if there is no type.
-    static String getIconName(final PipelineElementType elementType) {
+    public static String getIconName(final PipelineElementType elementType) {
         if (elementType == null) {
             return null;
         }

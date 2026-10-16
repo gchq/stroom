@@ -21,6 +21,7 @@
        on the dark surfaces) and a crisp 4px band of it at 30% around the control */
     --focus-border: var(--blue-300);
     --focus-shadow: 0 0 0 4px rgba(100, 181, 246, .3); /* blue-300 */
+    --focus-ring__color: rgba(100, 181, 246, .3);
     --focus-border--valid: var(--valid);
     --focus-shadow--valid: 0 0 0 4px rgba(var(--valid-rgb), .3);
     --focus-border--invalid: var(--invalid);

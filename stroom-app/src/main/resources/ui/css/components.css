@@ -1112,10 +1112,6 @@
     padding: 6px 8px;
 }
 
-.stepToolbar {
-    align-items: center;
-}
-
 .steppingFilterViewImpl {
 }
 
@@ -1138,16 +1134,6 @@
 
 .stepLocationLink--disabled:hover {
     text-decoration: none;
-}
-
-.stepLocationViewImpl-left {
-}
-
-.stepLocationViewImpl-right {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
 }
 
 .stepLocationViewImpl-layout {
