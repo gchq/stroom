@@ -33,7 +33,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/DataVolumesScreen`, showing Stroom's real [FsVolumeGroupPresenter] (the
-/// 'Data Volumes' tab, its 'Edit Volume Group' dialog and 'Add Volume' dialog) with fake REST
+/// 'Data Volumes' tab, its 'Edit Data Volume Group' dialog and 'New Data Volume' dialog) with fake REST
 /// replies.
 ///
 /// The stories answer Stroom's `FsVolumeGroupResource` (`/fsVolume/volumeGroup/v2`: `findExtended`,
@@ -52,6 +52,8 @@ public final class DataVolumesScreenStories {
               ],
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}
             }""";
+
+    private static final String NEW_VOLUME = "New Data Volume";
 
     private static final RestFixtures FIXTURES = RestFixtures.builder()
             .post("/fsVolume/volumeGroup/v2/findExtended", RestReply.json(
@@ -75,19 +77,20 @@ public final class DataVolumesScreenStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/DataVolumesScreen", DataVolumesScreenStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // Group list → group dialog (Type/Status volume grid) → Add Volume creates a volume
+                // Group list → group dialog (Type/Status volume grid) → New Data Volume dialog creates a volume
                 .story("Volumes", DataVolumesScreenStories::render)
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.dblClick(play.findByText("Default"));
-                    final Play groupDialog = screen.within(screen.findByText("Edit Volume Group - Default")
+                    final Play groupDialog = screen.within(screen.findByText("Edit Data Volume Group - Default")
                             .closest(StroomDom.DIALOG));
                     groupDialog.findByText("/data1");
                     groupDialog.findByText("Standard");
                     groupDialog.findByText("Active");
-                    // New volume → "Add Volume" → set the path → OK (validated, then created)
-                    play.click(groupDialog.getByTitle("New Data Volume"));
-                    final Play volumeDialog = screen.within(screen.findByText("Add Volume").closest(StroomDom.DIALOG));
+                    // New volume → "New Data Volume" → set the path → OK (validated, then created)
+                    play.click(groupDialog.getByTitle(NEW_VOLUME));
+                    final Play volumeDialog = screen.within(screen.findByText(NEW_VOLUME, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
                     play.type(volumeDialog.getByLabelText("Path"), "/data2");
                     play.click(volumeDialog.getByRole("button", StroomDom.button("OK")));
                     // GWT's volume holds its group, not a group id

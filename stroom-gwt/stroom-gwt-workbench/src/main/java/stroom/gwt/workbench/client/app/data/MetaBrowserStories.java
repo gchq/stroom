@@ -141,7 +141,7 @@ public final class MetaBrowserStories {
                     // The feed is a document link (titled 'Open Feed ... in new tab') and the copy
                     // text cells have a 'Copy value' icon
                     play.expect(play.getByText("Events Pipeline").closest(".docRefLinkContainer")).not().toBeNull();
-                    play.expect(play.getAllByTitle("Open Feed EVENTS in new tab").count()).toBeGreaterThan(0);
+                    play.expect(play.getAllByTitle("Open Feed EVENTS").count()).toBeGreaterThan(0);
                     play.expect(play.getAllByTitle("Copy value 'Raw Events' to clipboard").count())
                             .toBeGreaterThan(0);
                     // Only the stream produced by a processor names a pipeline

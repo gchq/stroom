@@ -139,7 +139,9 @@ public final class SolrIndexEditorStories {
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.getByText("TempField")).toBeInTheDocument());
                     play.click(play.getByText("TempField"));
-                    play.click(play.getByRole("button", "Delete Selected Index Field"));
+                    play.click(play.getByRole("button", "Remove Selected Index Fields"));
+                    play.expect(screen.findByText("Are you sure you want to remove the selected field?"))
+                            .toBeInTheDocument();
                     play.click(screen.findByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.queryByText("TempField")).toBeNull());
 

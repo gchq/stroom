@@ -161,15 +161,15 @@ public final class StatisticStoreEditorStories {
                     openTab(play, "Fields");
                     play.expect(play.findByRole("button", "Edit Selected Statistic Field"))
                             .toHaveAttribute("aria-disabled", "true");
-                    play.expect(play.getByRole("button", "Remove Selected Statistic Field"))
+                    play.expect(play.getByRole("button", "Remove Selected Statistic Fields"))
                             .toHaveAttribute("aria-disabled", "true");
                     play.dblClick(play.findByText("user"));
                     play.expect(nameInput(screen)).toHaveValue("user");
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
                     play.click(play.getByText("host"));
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Remove Selected Statistic Field"))
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Remove Selected Statistic Fields"))
                             .not().toHaveAttribute("aria-disabled"));
-                    play.click(play.getByRole("button", "Remove Selected Statistic Field"));
+                    play.click(play.getByRole("button", "Remove Selected Statistic Fields"));
                     play.waitFor(() -> play.expect(play.queryByText("host")).toBeNull());
                     play.expect(screen.queryByText(TextMatch.containingIgnoreCase("are you sure"))).toBeNull();
                     DocumentEditors.expectNoProblems(play);

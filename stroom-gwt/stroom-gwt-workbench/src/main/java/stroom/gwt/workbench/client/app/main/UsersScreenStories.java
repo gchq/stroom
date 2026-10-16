@@ -161,7 +161,7 @@ public final class UsersScreenStories {
                     play.findByText("Alice Anderson");
                     final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
                     // The cell's open icon: GWT shows it to a MANAGE_USERS holder (or on your own row)
-                    play.expect(row.getByTitle(TextMatch.containing("Open user Alice Anderson in new tab")))
+                    play.expect(row.getByTitle(TextMatch.containing("Open user Alice Anderson")))
                             .toBeInTheDocument();
                     // GWT's shared ActionMenuCell: an ellipsis titled 'Actions...'
                     final Query actions = row.getByTitle(StroomDom.ACTIONS_TITLE);

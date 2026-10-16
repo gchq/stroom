@@ -22,6 +22,7 @@ import stroom.datagen.client.presenter.DataGenPresenter;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter;
 import stroom.documentation.client.presenter.DocumentationPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
+import stroom.floormap.client.presenter.FloorMapEditorPresenter;
 import stroom.folder.client.FolderPresenter;
 import stroom.folder.client.FolderRootPresenter;
 import stroom.gitrepo.client.presenter.GitRepoPresenter;
@@ -76,6 +77,7 @@ import com.google.gwt.inject.client.GinModules;
         ElasticClusterScreenModule.class,
         ElasticIndexScreenModule.class,
         FeedScreenModule.class,
+        FloorMapScreenModule.class,
         FolderScreenModule.class,
         GitRepoScreenModule.class,
         HttpScreenModule.class,
@@ -102,6 +104,10 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     /// @return An Elastic Cluster's editor tab, as `ElasticClusterPlugin` creates it.
     ElasticClusterPresenter getElasticClusterPresenter();
+
+    /// @return A Floor Map's 'Editor' tab (the map canvas, its timeline and its Layers panel), as
+    /// `FloorMapPresenter` creates it.
+    FloorMapEditorPresenter getFloorMapEditorPresenter();
 
     /// @return A Git Repository's editor tab, as `GitRepoPlugin` creates it.
     GitRepoPresenter getGitRepoPresenter();

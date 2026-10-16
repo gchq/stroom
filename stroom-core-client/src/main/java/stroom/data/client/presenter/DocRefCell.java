@@ -241,7 +241,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                             HOVER_ICON_CLASS_NAME);
                     sb.append(RowActions.button(
                             OPEN_CLASS_NAME,
-                            "Open " + docRef.getType() + " " + docRef.getName() + " in new tab",
+                            "Open " + docRef.getType() + " " + docRef.getName(),
                             open));
                 }
             }

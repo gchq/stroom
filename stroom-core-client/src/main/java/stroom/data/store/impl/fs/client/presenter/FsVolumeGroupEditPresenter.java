@@ -120,7 +120,7 @@ public class FsVolumeGroupEditPresenter
         final FsVolume fsVolume = FsVolume.builder()
                 .volumeGroup(volumeGroup)
                 .build();
-        editVolume(fsVolume, "Add Volume");
+        editVolume(fsVolume, "New Data Volume");
     }
 
     private void edit() {
@@ -129,7 +129,7 @@ public class FsVolumeGroupEditPresenter
             restFactory
                     .create(FS_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
-                    .onSuccess(result -> editVolume(result, "Edit Volume"))
+                    .onSuccess(result -> editVolume(result, "Edit Data Volume"))
                     .taskMonitorFactory(this)
                     .exec();
         }

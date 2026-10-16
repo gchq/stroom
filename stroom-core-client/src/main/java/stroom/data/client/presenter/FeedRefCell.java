@@ -236,7 +236,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                         HOVER_ICON_CLASS_NAME);
                 sb.append(RowActions.button(
                         OPEN_CLASS_NAME,
-                        "Open " + FeedDoc.TYPE + " " + name + " in new tab",
+                        "Open " + FeedDoc.TYPE + " " + name,
                         open));
             }
 

@@ -36,7 +36,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/IndexVolumesScreen`, showing Stroom's real [IndexVolumeGroupPresenter] (the
-/// 'Index Volumes' tab, its 'Edit Volume Group' dialog and 'Add Volume' dialog) with fake REST
+/// 'Index Volumes' tab, its 'Edit Index Volume Group' dialog and 'New Index Volume' dialog) with fake REST
 /// replies.
 ///
 /// The stories answer Stroom's `IndexVolumeGroupResource` (`/index/volumeGroup/v2`: `find`,
@@ -81,7 +81,8 @@ public final class IndexVolumesScreenStories {
             .addAll(FIXTURES)
             .build();
 
-    private static final String EDIT_GROUP = "Edit Volume Group - Default";
+    private static final String EDIT_GROUP = "Edit Index Volume Group - Default";
+    private static final String NEW_VOLUME = "New Index Volume";
 
     private IndexVolumesScreenStories() {
         // Static utility
@@ -93,7 +94,7 @@ public final class IndexVolumesScreenStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/IndexVolumesScreen", IndexVolumesScreenStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // Group list → group dialog (volume list) → Add Volume dialog creates a volume
+                // Group list → group dialog (volume list) → New Index Volume dialog creates a volume
                 .story("Volumes", IndexVolumesScreenStories::render)
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -101,9 +102,10 @@ public final class IndexVolumesScreenStories {
                     final Play groupDialog = screen.within(screen.findByText(EDIT_GROUP).closest(StroomDom.DIALOG));
                     groupDialog.findByText("/vol1");
                     groupDialog.findByText("Active");
-                    // New volume → "Add Volume" → set the path → OK (validated, then created)
-                    play.click(groupDialog.getByTitle("New Index Volume"));
-                    final Play volumeDialog = screen.within(screen.findByText("Add Volume").closest(StroomDom.DIALOG));
+                    // New volume → "New Index Volume" → set the path → OK (validated, then created)
+                    play.click(groupDialog.getByTitle(NEW_VOLUME));
+                    final Play volumeDialog = screen.within(screen.findByText(NEW_VOLUME, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
                     play.type(volumeDialog.getByLabelText("Path"), "/newvol");
                     play.click(volumeDialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -120,14 +122,15 @@ public final class IndexVolumesScreenStories {
                     play.dblClick(play.findByText("Default"));
                     final Play groupDialog = screen.within(screen.findByText(EDIT_GROUP).closest(StroomDom.DIALOG));
                     groupDialog.findByText("/vol1");
-                    play.click(groupDialog.getByTitle("New Index Volume"));
-                    final Play volumeDialog = screen.within(screen.findByText("Add Volume").closest(StroomDom.DIALOG));
+                    play.click(groupDialog.getByTitle(NEW_VOLUME));
+                    final Play volumeDialog = screen.within(screen.findByText(NEW_VOLUME, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
                     play.type(volumeDialog.getByLabelText("Path"), "/newvol");
                     play.click(volumeDialog.getByRole("button", StroomDom.button("OK")));
                     play.click(screen.within(screen.findByText(TextMatch.containing("The path doesn't exist"))
                             .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("Cancel")));
                     play.click(volumeDialog.getByRole("button", StroomDom.button("Cancel")));
-                    play.waitFor(() -> play.expect(screen.queryByText("Add Volume")).toBeNull());
+                    play.waitFor(() -> play.expect(screen.queryByText(NEW_VOLUME, StroomDom.DIALOG_TITLE)).toBeNull());
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post("/index/volume/v2").toSpyMatcher());
                 })

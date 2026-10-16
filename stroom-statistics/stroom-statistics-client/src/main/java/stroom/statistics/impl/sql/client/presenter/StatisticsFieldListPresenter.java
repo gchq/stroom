@@ -69,7 +69,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
         editButton = view.getToolbar().button(SvgImage.EDIT, "Edit Selected Statistic Field",
                 this::onEdit);
         editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove Selected Statistic Field",
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove Selected Statistic Fields",
                 this::onRemove);
         removeButton.setEnabled(false);
 
@@ -100,7 +100,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
                 : "";
         newButton.setTitle("New Statistic Field" + reason);
         editButton.setTitle("Edit Selected Statistic Field" + reason);
-        removeButton.setTitle("Remove Selected Statistic Field" + reason);
+        removeButton.setTitle("Remove Selected Statistic Fields" + reason);
     }
 
     private void addColumns() {

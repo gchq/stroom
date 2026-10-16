@@ -131,7 +131,9 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
 
     private void edit(final IndexVolumeGroup indexVolumeGroup) {
         final IndexVolumeGroupEditPresenter editor = editProvider.get();
-        editor.show(indexVolumeGroup, "Edit Volume Group - " + indexVolumeGroup.getName(), result -> refresh());
+        editor.show(indexVolumeGroup,
+                "Edit Index Volume Group - " + indexVolumeGroup.getName(),
+                result -> refresh());
     }
 
     private void delete() {

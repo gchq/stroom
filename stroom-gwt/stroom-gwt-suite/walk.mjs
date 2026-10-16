@@ -230,8 +230,8 @@ function undouble(label) {
 // signature every sorted screen read as a different node afterwards. The sort is an expected
 // change the classifier records on the click; it is not part of what the screen IS.
 // A DIALOG is also identified by the screen it was opened from. Two presenters can wear one face:
-// Data Volumes' and Index Volumes' `Edit Selected … Volume Group` both read "Edit Volume Group -
-// Default Volume Group" with the same body, so the second was filed as a duplicate and never
+// Data Volumes' and Index Volumes' `Edit Selected … Volume Group` both used to read "Edit Volume
+// Group - Default Volume Group" (now "Edit Data/Index Volume Group - …") with the same body, so the second was filed as a duplicate and never
 // descended — and its own `New Index Volume` (IndexVolumeEditPresenter) was never clicked. The root of the route (menu leaf, document
 // type or name) is the cheapest fact that separates them; an alert is left as it was, since every
 // alert is the one AlertPresenter and re-walking each per screen buys nothing.
@@ -1862,8 +1862,8 @@ if (DIRECTED.includes('fields')) {
   // The field lists that fill CLIENT-SIDE from their own New (the handler inventory's unreached
   // Edit / Remove): a Lucene index's Fields tab and a Solr index's. `New Index Field` › OK is
   // a validation alert on a blank form; the walker fills the name and presses OK again, the row
-  // appears, and the selection rule reaches Edit Selected Index Field / Delete Selected Index Field(s)
-  // on it.
+  // appears, and the selection rule reaches Edit Selected Index Field / Delete Selected Index Fields
+  // (Lucene) or Remove Selected Index Fields (Solr) on it.
   for (const [type, presenter] of [['LuceneIndex', 'IndexFieldListPresenter'], ['SolrIndex', 'SolrIndexFieldListPresenter']]) {
     seeds.push({ kind: 'editor-tab', presenter, seedDepth: 2, path: [`${type} (document)`, 'Fields'],
       route: [{ via: 'docType', type }, { via: 'tab', label: 'Fields', nth: 0 }] });

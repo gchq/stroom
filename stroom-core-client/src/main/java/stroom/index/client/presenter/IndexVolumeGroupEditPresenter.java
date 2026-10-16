@@ -132,7 +132,7 @@ public class IndexVolumeGroupEditPresenter
 
     private void create() {
         final IndexVolume indexVolume = IndexVolume.builder().indexVolumeGroupId(volumeGroup.getId()).build();
-        editVolume(indexVolume, "Add Volume");
+        editVolume(indexVolume, "New Index Volume");
     }
 
     private void edit() {
@@ -141,7 +141,7 @@ public class IndexVolumeGroupEditPresenter
             restFactory
                     .create(INDEX_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
-                    .onSuccess(result -> editVolume(result, "Edit Volume"))
+                    .onSuccess(result -> editVolume(result, "Edit Index Volume"))
                     .taskMonitorFactory(volumeStatusListPresenter.getTaskListener())
                     .exec();
         }

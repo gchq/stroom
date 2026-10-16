@@ -104,10 +104,11 @@ const SPECS = [
   },
   {
     name: 'data volume group',
-    // The create dialog is `NewFsVolumeGroupPresenter:59` ("New"), as the index volume group's is.
+    // The create dialog is `NewFsVolumeGroupPresenter:59` ("New Data Volume Group"), as the index
+    // volume group's is ("New Index Volume Group").
     okPresenters: ['FsVolumeGroupEditPresenter', 'NewFsVolumeGroupPresenter', 'FsVolumeEditPresenter'],   // onHideRequest at :203
-    // FsVolumeEditPresenter's OK (:68) is the volume's own dialog, Add Volume, inside the group's.
-    provedBy: { FsVolumeEditPresenter: '\\(Add Volume\\)$' },
+    // FsVolumeEditPresenter's OK (:68) is the volume's own dialog, New Data Volume, inside the group's.
+    provedBy: { FsVolumeEditPresenter: '\\(New Data Volume\\)$' },
     steps: volumeSteps({ path: `${VOLUME_SCRATCH}/${STAMP}-data`, labels: {
       editGroup: 'Edit Selected Data Volume Group',
       newVolume: 'New Data Volume',
@@ -149,8 +150,8 @@ const SPECS = [
   {
     name: 'index volume group',
     okPresenters: ['IndexVolumeGroupEditPresenter', 'NewIndexVolumeGroupPresenter', 'IndexVolumeEditPresenter'], // :217 and :65
-    // IndexVolumeEditPresenter's OK (:64), Add Volume; an index volume also names its node.
-    provedBy: { IndexVolumeEditPresenter: '\\(Add Volume\\)$' },
+    // IndexVolumeEditPresenter's OK (:64), New Index Volume; an index volume also names its node.
+    provedBy: { IndexVolumeEditPresenter: '\\(New Index Volume\\)$' },
     steps: volumeSteps({ path: `${VOLUME_SCRATCH}/${STAMP}-index`, fields: { Node: { choose: 'node1a' } }, labels: {
       editGroup: 'Edit Selected Index Volume Group',
       newVolume: 'New Index Volume',

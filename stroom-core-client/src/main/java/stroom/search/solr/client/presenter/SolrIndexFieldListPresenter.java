@@ -92,7 +92,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit Selected Index Field",
                 this::onEditClicked);
         editButton.setEnabled(false);
-        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete Selected Index Field",
+        removeButton = pagerView.getToolbar().button(SvgImage.REMOVE, "Remove Selected Index Fields",
                 this::onRemoveClicked);
         removeButton.setEnabled(false);
 
@@ -149,7 +149,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
                 : "";
         newButton.setTitle("New Index Field" + reason);
         editButton.setTitle("Edit Selected Index Field" + reason);
-        removeButton.setTitle("Delete Selected Index Field" + reason);
+        removeButton.setTitle("Remove Selected Index Fields" + reason);
     }
 
     private void addColumns() {
@@ -285,9 +285,9 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         final List<SolrIndexField> list = selectionModel.getSelectedItems();
         //noinspection SizeReplaceableByIsEmpty
         if (list != null && list.size() > 0) {
-            String message = "Are you sure you want to delete the selected field?";
+            String message = "Are you sure you want to remove the selected field?";
             if (list.size() > 1) {
-                message = "Are you sure you want to delete the selected fields?";
+                message = "Are you sure you want to remove the selected fields?";
             }
 
             ConfirmEvent.fire(this, message, result -> {

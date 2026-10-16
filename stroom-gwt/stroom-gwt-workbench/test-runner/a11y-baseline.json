@@ -507,6 +507,9 @@
   "app-query-queryresultstable--column-filter-row": [
     "target-size"
   ],
+  "app-query-queryresultstable--url-link-named-by-host-and-path": [
+    "target-size"
+  ],
   "widgets-date-time-calendargrid--basic": [
     "aria-allowed-attr",
     "label"

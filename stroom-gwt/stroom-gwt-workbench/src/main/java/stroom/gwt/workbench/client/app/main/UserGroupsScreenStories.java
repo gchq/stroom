@@ -153,12 +153,12 @@ public final class UserGroupsScreenStories {
                     // its row's open buttons (row actions)
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
                             "input", "Show Recent Filters", "Create Group", "First", "div",
-                            "Open group Administrators in new tab",
+                            "Open group Administrators",
                             "Users and groups",
                             "input", "Show Recent Filters", "Add to Group", "First",
                             "Members",
                             "input", "Show Recent Filters", "Add Member to Group", "First", "div",
-                            "Open user Alice Anderson in new tab", "Open user Alice A Anderson in new tab"));
+                            "Open user Alice Anderson", "Open user Alice A Anderson"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group
                 .story("EditGroup", UserGroupsScreenStories::render)

@@ -85,9 +85,9 @@ public final class DocRefCellStories {
                 .withPlay(play -> {
                     // The broken ref can be copied but not opened (DocRefCell once only hid the open
                     // button for a null UUID, which a DocRef can't have)
-                    play.expect(play.getByTitle("Open Pipeline Event Processing in new tab")).toBeInTheDocument();
+                    play.expect(play.getByTitle("Open Pipeline Event Processing")).toBeInTheDocument();
                     play.expect(play.getByTitle("Copy name 'Deleted Pipeline' to clipboard")).toBeInTheDocument();
-                    play.expect(play.queryByTitle("Open Pipeline Deleted Pipeline in new tab")).toBeNull();
+                    play.expect(play.queryByTitle("Open Pipeline Deleted Pipeline")).toBeNull();
                 })
                 // In a grid, as Stroom's lists show it: the open icon is a button, named for what it
                 // opens, which Tab reaches from its row (only the row with the keyboard focus has
@@ -95,8 +95,8 @@ public final class DocRefCellStories {
                 // a mouse could press
                 .story("OpenByKeyboard", DocRefCellStories::grid)
                 .withPlay(play -> {
-                    final Query openFeed = play.getByRole("button", "Open Feed TEST_FEED in new tab");
-                    final Query openPipeline = play.getByRole("button", "Open Pipeline Event Processing in new tab");
+                    final Query openFeed = play.getByRole("button", "Open Feed TEST_FEED");
+                    final Query openPipeline = play.getByRole("button", "Open Pipeline Event Processing");
                     // Pressing a row's text gives the row the keyboard focus
                     play.click(play.getByText("TEST_FEED"));
                     play.waitFor(() -> play.expect(openFeed).toHaveAttribute("tabindex", "0"));

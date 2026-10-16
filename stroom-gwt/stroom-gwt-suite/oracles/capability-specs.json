@@ -8999,13 +8999,13 @@
      "enabled": false
     },
     {
-     "title": "Delete Selected Index Field",
+     "title": "Remove Selected Index Fields",
      "enabled": false
     }
    ],
    "disabledAtRest": [
     "Edit Selected Index Field",
-    "Delete Selected Index Field"
+    "Remove Selected Index Fields"
    ],
    "columns": []
   },
@@ -9024,7 +9024,7 @@
     "New Index Field",
     "Edit Selected Index Field",
     "Delete Selected Expression Item",
-    "Delete Selected Index Field",
+    "Remove Selected Index Fields",
     "Help with Documentation (opens in new tab)"
    ],
    "popupTypes": [],
@@ -11086,7 +11086,7 @@
     "New Statistic Field",
     "Edit Selected Statistic Field",
     "Remove Selected Roll-up Permutation",
-    "Remove Selected Statistic Field",
+    "Remove Selected Statistic Fields",
     "Auto-generate Roll-up Permutations",
     "Help with Documentation (opens in new tab)"
    ],
@@ -11161,13 +11161,13 @@
      "enabled": false
     },
     {
-     "title": "Remove Selected Statistic Field",
+     "title": "Remove Selected Statistic Fields",
      "enabled": false
     }
    ],
    "disabledAtRest": [
     "Edit Selected Statistic Field",
-    "Remove Selected Statistic Field"
+    "Remove Selected Statistic Fields"
    ],
    "columns": [
     "Name"
@@ -12753,12 +12753,12 @@
    "missing": [
     "New Index Field",
     "Edit Selected Index Field",
-    "Delete Selected Index Field"
+    "Remove Selected Index Fields"
    ],
    "extra": [
     "Save",
     "Edit Selected Index Field",
-    "Delete Selected Index Field",
+    "Remove Selected Index Fields",
     "First",
     "Backward",
     "Forward",
@@ -13352,9 +13352,9 @@
     "Not Updating",
     "Edit Notification",
     "Remove Notification",
-    "Edit Execution Schedule",
-    "Remove Execution Schedule",
-    "Replay Execution",
+    "Edit Selected Execution Schedule",
+    "Delete Selected Execution Schedule",
+    "Replay Selected Execution",
     "Edit Permissions For Selected User",
     "Execute Query",
     "Refresh",
@@ -13829,13 +13829,13 @@
    "seenCount": 48,
    "missing": [],
    "extra": [
-    "Edit Execution Schedule",
-    "Remove Execution Schedule",
+    "Edit Selected Execution Schedule",
+    "Delete Selected Execution Schedule",
     "First",
     "Backward",
     "Forward",
     "Last",
-    "Replay Execution",
+    "Replay Selected Execution",
     "Edit Permissions For Selected User",
     "typed in the editor \"Template\"",
     "Destination Feed - Click for help",
@@ -14004,7 +14004,7 @@
    "missing": [],
    "extra": [
     "Edit Selected Index Field",
-    "Delete Selected Index Field",
+    "Remove Selected Index Fields",
     "First",
     "Backward",
     "Forward",
@@ -14125,7 +14125,7 @@
    "missing": [],
    "extra": [
     "Edit Selected Statistic Field",
-    "Remove Selected Statistic Field",
+    "Remove Selected Statistic Fields",
     "First",
     "Backward",
     "Forward",
@@ -14427,9 +14427,9 @@
     "Not Updating",
     "Edit Notification",
     "Remove Notification",
-    "Edit Execution Schedule",
-    "Remove Execution Schedule",
-    "Replay Execution",
+    "Edit Selected Execution Schedule",
+    "Delete Selected Execution Schedule",
+    "Replay Selected Execution",
     "Edit Permissions For Selected User",
     "typed in the editor \"Query\"",
     "right-click an explorer row",

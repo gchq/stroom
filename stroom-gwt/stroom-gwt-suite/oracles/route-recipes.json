@@ -1374,22 +1374,22 @@
    "shower": "ProcessChoicePresenter"
   },
   {
-   "caption": "Add Volume",
+   "caption": "New Data Volume",
    "presenter": "FsVolumeEditPresenter",
    "shower": "FsVolumeGroupEditPresenter"
   },
   {
-   "caption": "Edit Volume",
+   "caption": "Edit Data Volume",
    "presenter": "FsVolumeEditPresenter",
    "shower": "FsVolumeGroupEditPresenter"
   },
   {
-   "caption": "Edit Volume Group - …",
+   "caption": "Edit Data Volume Group - …",
    "presenter": "FsVolumeGroupEditPresenter",
    "shower": "FsVolumeGroupPresenter"
   },
   {
-   "caption": "New",
+   "caption": "New Data Volume Group",
    "presenter": "NewFsVolumeGroupPresenter",
    "shower": "NewFsVolumeGroupPresenter"
   },
@@ -1519,22 +1519,22 @@
    "shower": "IndexFieldListPresenter"
   },
   {
-   "caption": "Add Volume",
+   "caption": "New Index Volume",
    "presenter": "IndexVolumeEditPresenter",
    "shower": "IndexVolumeGroupEditPresenter"
   },
   {
-   "caption": "Edit Volume",
+   "caption": "Edit Index Volume",
    "presenter": "IndexVolumeEditPresenter",
    "shower": "IndexVolumeGroupEditPresenter"
   },
   {
-   "caption": "Edit Volume Group - …",
+   "caption": "Edit Index Volume Group - …",
    "presenter": "IndexVolumeGroupEditPresenter",
    "shower": "IndexVolumeGroupPresenter"
   },
   {
-   "caption": "New",
+   "caption": "New Index Volume Group",
    "presenter": "NewIndexVolumeGroupPresenter",
    "shower": "NewIndexVolumeGroupPresenter"
   },
@@ -2478,12 +2478,12 @@
   {
    "shower": "FsVolumeGroupEditPresenter",
    "presenter": "FsVolumeEditPresenter",
-   "caption": "Add Volume"
+   "caption": "New Data Volume"
   },
   {
    "shower": "FsVolumeGroupEditPresenter",
    "presenter": "FsVolumeEditPresenter",
-   "caption": "Edit Volume"
+   "caption": "Edit Data Volume"
   },
   {
    "shower": "FsVolumeGroupPresenter",
@@ -2492,12 +2492,12 @@
   {
    "shower": "FsVolumeGroupPresenter",
    "presenter": "FsVolumeGroupEditPresenter",
-   "caption": "Edit Volume Group - …"
+   "caption": "Edit Data Volume Group - …"
   },
   {
    "shower": "NewFsVolumeGroupPresenter",
    "presenter": "NewFsVolumeGroupPresenter",
-   "caption": "New"
+   "caption": "New Data Volume Group"
   },
   {
    "shower": "CopyDocumentPresenter",
@@ -2695,12 +2695,12 @@
   {
    "shower": "IndexVolumeGroupEditPresenter",
    "presenter": "IndexVolumeEditPresenter",
-   "caption": "Add Volume"
+   "caption": "New Index Volume"
   },
   {
    "shower": "IndexVolumeGroupEditPresenter",
    "presenter": "IndexVolumeEditPresenter",
-   "caption": "Edit Volume"
+   "caption": "Edit Index Volume"
   },
   {
    "shower": "IndexVolumeGroupPresenter",
@@ -2709,12 +2709,12 @@
   {
    "shower": "IndexVolumeGroupPresenter",
    "presenter": "IndexVolumeGroupEditPresenter",
-   "caption": "Edit Volume Group - …"
+   "caption": "Edit Index Volume Group - …"
   },
   {
    "shower": "NewIndexVolumeGroupPresenter",
    "presenter": "NewIndexVolumeGroupPresenter",
-   "caption": "New"
+   "caption": "New Index Volume Group"
   },
   {
    "shower": "JobNodeListHelper",

@@ -197,7 +197,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                             SvgImage.OPEN, ICON_CLASS_NAME, HOVER_ICON_CLASS_NAME);
                     sb.append(RowActions.button(
                             OPEN_CLASS_NAME,
-                            "Open " + userRef.getType(CaseType.LOWER) + " " + cellPlainText + " in new tab",
+                            "Open " + userRef.getType(CaseType.LOWER) + " " + cellPlainText,
                             openSvg));
                 }
 
