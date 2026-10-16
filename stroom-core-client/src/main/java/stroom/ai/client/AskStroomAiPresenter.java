@@ -2907,10 +2907,10 @@ public class AskStroomAiPresenter
                                       final long timeMs,
                                       final long nowMs) {
         hb.elem(details -> {
-            details.elem(summary -> {
-                button(summary, SvgImage.INFO, iconButtonClassName("ai-message-summary-icon"));
-                summary.span(text -> text.append(workingText(msg)), new Attribute("id", WORKING_TEXT_ID));
-            }, SUMMARY, Attribute.className("ai-message-header"));
+            // Lined up with the turns' activity lines ("Worked for ..."), so no icon.
+            details.elem(summary ->
+                            summary.span(text -> text.append(workingText(msg)), new Attribute("id", WORKING_TEXT_ID)),
+                    SUMMARY, Attribute.className("ai-message-header"));
 
             details.div(footer ->
                 timestamp(footer, timeMs, nowMs), Attribute.className("ai-message-footer"));
@@ -3181,7 +3181,7 @@ public class AskStroomAiPresenter
                                           + "the 'allowApproveEverything' property.", null);
             } else {
                 final String question = "Auto-approve in this chat? Tool calls on trusted servers will run "
-                                        + "without asking you, including ones that change things.";
+                                        + "without asking you, including ones that can modify data.";
                 ConfirmEvent.fire(this, question, ok -> {
                     if (ok) {
                         setAutoApprove(chat, true);

@@ -671,7 +671,8 @@ class McpAgentChat {
         final Set<String> names = builtIns.stream()
                 .map(ToolSpecification::name)
                 .collect(Collectors.toSet());
-        toolset.tools().forEach((specification, executor) -> {
+        // Named so as not to clash with the built-in tools.
+        toolset.tools(Set.copyOf(names)).forEach((specification, executor) -> {
             if (names.add(specification.name())) {
                 tools.put(specification, executor);
             } else {

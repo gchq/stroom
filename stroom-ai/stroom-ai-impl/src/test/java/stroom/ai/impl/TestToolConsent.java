@@ -200,6 +200,8 @@ class TestToolConsent {
     @Test
     void testApproveEverything() {
         Mockito.when(aiDao.isApproveEverything(1)).thenReturn(true);
+        // Only matters once the run has read data, as trusted tools that modify data otherwise run anyway.
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
         tool(info(true, false, null, null, null));
         // Not allowed by the administrator.
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
@@ -214,6 +216,37 @@ class TestToolConsent {
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
         tool(info(true, false, null, true, null));
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
+    }
+
+    @Test
+    void testTrustedToolsThatModifyDataRunUnlessRiskyOrDataWasRead() {
+        tool(info(true, false, null, null, null));
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.RUN);
+
+        // Not once the run has read data that could hold planted instructions.
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
+        assertThat(decide("s__t", false).reason()).contains("read data").contains("can modify data");
+        Mockito.when(runManager.isTainted(1)).thenReturn(false);
+
+        // Nor destructive or open-world ones, or when set to ask every time.
+        tool(info(true, false, true, null, null));
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
+        tool(info(true, false, null, true, null));
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
+        tool(info(true, false, null, null, McpToolPolicy.ASK_ALWAYS));
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
+        // Nor an untrusted server's.
+        tool(info(false, false, null, null, null));
+        assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
+        assertThat(decide("s__t", false).risks()).containsExactly("untrusted server", "can modify");
+    }
+
+    @Test
+    void testWhatEachToolDoesIsShown() {
+        assertThat(ToolConsent.risks(info(true, true, null, null, null))).containsExactly("read-only");
+        assertThat(ToolConsent.risks(info(true, false, true, true, null)))
+                .containsExactly("can modify", "destructive", "reaches outside Stroom");
     }
 
     @Test

@@ -134,6 +134,11 @@ public class ToolConsent {
             if (info.trusted() && info.claimsReadOnly()) {
                 return Verdict.ask(DATA_WAS_READ_REASON, true, false, List.of("after reading data"));
             }
+            // A trusted server's tool that can modify data, but is not destructive and stays within Stroom, runs
+            // without asking, unless the run has read data that could hold instructions planted to misuse it.
+            if (info.trusted() && !info.isRisky() && !runManagerProvider.get().isTainted(chatId)) {
+                return Verdict.RUN;
+            }
             if (info.trusted() && !info.isRisky() && approveEverything(chatId)) {
                 return Verdict.RUN;
             }
@@ -173,9 +178,10 @@ public class ToolConsent {
         if (!info.trusted()) {
             risks.add("untrusted server");
         }
-        if (!Boolean.TRUE.equals(info.readOnlyHint())) {
-            risks.add("can change things");
-        }
+        // What the tool does, as its server says.
+        risks.add(Boolean.TRUE.equals(info.readOnlyHint())
+                ? "read-only"
+                : "can modify");
         if (Boolean.TRUE.equals(info.destructiveHint())) {
             risks.add("destructive");
         }
@@ -196,11 +202,14 @@ public class ToolConsent {
         } else if (info.policy() == McpToolPolicy.ASK_ALWAYS) {
             return "An administrator has set this tool to ask every time.";
         }
-        return "The tool can change things.";
+        return info.trusted() && !info.isRisky()
+                ? "This chat has read data from tools or attached tables, which could tell the model to misuse "
+                  + "this tool, and it can modify data."
+                : "This tool can modify data.";
     }
 
     private static String awayReason() {
-        return "You were away when the agent wanted to do this, and it could change something.";
+        return "You were away when the agent wanted to do this, and the tool can modify data.";
     }
 
     /// What to do about a tool call.
