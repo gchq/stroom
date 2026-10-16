@@ -143,9 +143,9 @@ if (!['reach', 'dom', 'pixel'].includes(DEPTH)) {
 
 // ── Shared with crawl.mjs: labels, signatures, affordance clicking ───────────
 const CHROME = new Set([
-  'Main Menu', 'Show Menu', 'Expand All', 'Collapse All', 'Locate Current Item', 'Find In Content',
-  'Toggle Alerts', 'Ask Stroom AI', 'Filter Types', 'Clear Filter', 'Quick Filter Syntax Help',
-  'New', 'Delete',
+  'Main Menu', 'Show Main Menu', 'Expand All Folders', 'Collapse All Folders', 'Locate Current Item', 'Find in Content',
+  'Show Alerts', 'Ask Stroom AI', 'Filter Document Types', 'Clear Filter', 'Quick Filter Syntax Help',
+  'New Document', 'Delete Selected Documents',
   // The navigation logo and the tab bar's sidebar toggle (CurveTabLayoutViewImpl's `Hide Sidebar`)
   // are chrome; the names are listed in case either is given an `aria-label`. Walking the toggle
   // put a post-action state under every node.
@@ -155,11 +155,11 @@ const chromeDone = new Set();
 // A directed run walks the precondition it was given, not the app's chrome — the main menu, the
 // explorer's New/Delete and the AI dock are covered by the area shards.
 if (DIRECTED.length) for (const c of CHROME) chromeDone.add(c);
-// `Delete Store` is not a mutation the guard blocks — `result-store/v1/destroy` is a client's own
+// `Delete Selected Result Store` is not a mutation the guard blocks — `result-store/v1/destroy` is a client's own
 // search lifecycle and is allowed — but on the Search Result Stores dialog its OK destroys the ONE
-// store `seed-data.mjs` left, and with the row gone the node's remaining buttons (Store Settings)
+// store `seed-data.mjs` left, and with the row gone the node's remaining buttons (Edit Result Store Settings)
 // cannot be re-synced to. Confirm/OK is still walked everywhere the guard blocks the delete.
-const SELF_DESTRUCTIVE = new Set(['Sign Out', 'Sign Out Other Sessions', 'Delete Store']);
+const SELF_DESTRUCTIVE = new Set(['Sign Out', 'Sign Out Other Sessions', 'Delete Selected Result Store']);
 /**
  * Context-menu items that take the browser somewhere else, or start a download.
  *
@@ -179,16 +179,16 @@ const LEAVES_THE_PAGE = new Set(['Follow URL', 'Open In New Tab', 'Open In This 
  */
 const INVERSE = new Map([
   ['Ask Stroom AI', 'Ask Stroom AI'],
-  ['Toggle Alerts', 'Toggle Alerts'],
-  ['Turn Auto Refresh On', 'Turn Auto Refresh Off'],
-  ['Turn Auto Refresh Off', 'Turn Auto Refresh On'],
-  ['Expand All', 'Collapse All'],
-  ['Collapse All', 'Expand All'],
-  // The label that appears does not share words with the one clicked, so the twin heuristic in
-  // walk() cannot find it.
-  ['Toggle wrapping', 'Turn Cell Line Wrapping Off'],
-  ['Turn Cell Line Wrapping Off', 'Turn Cell Line Wrapping On'],
-  ['Turn Cell Line Wrapping On', 'Turn Cell Line Wrapping Off'],
+  ['Show Alerts', 'Show Alerts'],
+  ['Auto Refresh', 'Auto Refresh'],
+  ['Expand All Folders', 'Collapse All Folders'],
+  ['Collapse All Folders', 'Expand All Folders'],
+  ['Expand All Tasks', 'Collapse All Tasks'],
+  ['Collapse All Tasks', 'Expand All Tasks'],
+  // A toggle keeps one name whatever its state (its pressed state says which), so no new label
+  // appears for the twin heuristic in walk() to find: these are toggles, and undo themselves.
+  ['Wrap Text', 'Wrap Text'],
+  ['Show Only Enabled Jobs', 'Show Only Enabled Jobs'],
 ]);
 
 // A toggle that is ON. The toolbar's ToolbarToggleButton says so with `aria-pressed="true"`;
@@ -229,9 +229,9 @@ function undouble(label) {
 // signature every sorted screen read as a different node afterwards. The sort is an expected
 // change the classifier records on the click; it is not part of what the screen IS.
 // A DIALOG is also identified by the screen it was opened from. Two presenters can wear one face:
-// Data Volumes' and Index Volumes' `Edit` both read "Edit Volume Group - Default Volume Group" with
-// the same buttons and body, so the second was filed as a duplicate and never descended — and its
-// own `New` (IndexVolumeEditPresenter) was never clicked. The root of the route (menu leaf, document
+// Data Volumes' and Index Volumes' `Edit Selected … Volume Group` both read "Edit Volume Group -
+// Default Volume Group" with the same body, so the second was filed as a duplicate and never
+// descended — and its own `New Index Volume` (IndexVolumeEditPresenter) was never clicked. The root of the route (menu leaf, document
 // type or name) is the cheapest fact that separates them; an alert is left as it was, since every
 // alert is the one AlertPresenter and re-walking each per screen buys nothing.
 const rootOf = (node) => {
@@ -382,9 +382,9 @@ async function clickAffordance(label, timeout = 3000) {
   // Dependencies screen, and unescaped they broke the button regex and were reported `vanished` —
   // 17 times on one shard. A header without a sort index is still a header, so the header locator
   // is tried for every label, LAST, where a real button of the same name still wins.
-  // A chrome label that a SCREEN also uses — `New`, `Delete` — must click the screen's button, not
-  // the explorer's, which comes first in the DOM: the Pathways list's `New` (→ PathwayEditPresenter)
-  // and every pager's `New` were reaching the explorer's create dialog instead. This is the
+  // A chrome label that a SCREEN also uses must click the screen's button, not the explorer's, which
+  // comes first in the DOM: when both were plain `New`, the Pathways list's (→ PathwayEditPresenter)
+  // and every pager's were reaching the explorer's create dialog instead. This is the
   // `create` class in door-preconditions.md.
   if (CHROME.has(label)) {
     const box = await page.evaluate((wanted) => {
@@ -445,9 +445,9 @@ async function clickAffordance(label, timeout = 3000) {
  */
 let columnScope = { selector: '.dashboard-panel .dataGridWidget th, .dashboard-panel [role=columnheader]', design: true };
 async function readDesignHeaders() {
-  return page.evaluate(({ selector, design }) => {
+  return page.evaluate(({ selector, design, designOn }) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    if (design && !document.querySelector('button[title="Exit Design Mode"]')) return [];
+    if (design && !document.querySelector(designOn)) return [];
     return [...document.querySelectorAll(selector)]
       .filter((th) => th.offsetWidth > 30)
       .map((th) => {
@@ -456,7 +456,7 @@ async function readDesignHeaders() {
         return { name: norm(th.querySelector('.column-label')?.textContent ?? th.textContent), ok: th.contains(hit) };
       })
       .filter((h) => h.name && h.ok).map((h) => h.name);
-  }, columnScope).catch(() => []);
+  }, { ...columnScope, designOn: toggleOn('Design Mode') }).catch(() => []);
 }
 
 async function clickDesignHeader(name) {
@@ -491,7 +491,7 @@ async function tabBarOf(tab) {
     const bar = lab?.closest('.tabLayout-barOuter');
     if (!bar) return null;
     const r = bar.getBoundingClientRect();
-    const settings = [...bar.querySelectorAll('button[title="Settings"]')].find((b) => b.offsetWidth > 0);
+    const settings = [...bar.querySelectorAll('button[title="Tab Actions"]')].find((b) => b.offsetWidth > 0);
     const s = settings?.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2,
       settings: s ? { x: s.x + s.width / 2, y: s.y + s.height / 2 } : null };
@@ -910,7 +910,7 @@ async function waitForDocOpen() {
 }
 
 async function expandExplorer() {
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand', budget: 5_000 }).catch(() => {});
 }
 
@@ -1414,10 +1414,10 @@ async function driveStep(step) {
     await gwt.waitForSignIn(page).catch(() => {});
     await page.waitForTimeout(800);
   } else if (step.via === 'tab-menu') {
-    // A dashboard component tab's own menu (the `Settings` button on its tab bar): Rename, Settings,
+    // A dashboard component tab's own menu (the `Tab Actions` button on its tab bar): Rename, Settings,
     // Hide, Duplicate, Remove, Maximise. Used to MAXIMISE a pane so its headers can be clicked.
     const bar = await tabBarOf(step.tab);
-    if (!bar?.settings) throw new Error(`no tab bar with a Settings button for "${step.tab}"`);
+    if (!bar?.settings) throw new Error(`no tab bar with a Tab Actions button for "${step.tab}"`);
     await page.mouse.click(bar.settings.x, bar.settings.y);
     await waitForMenu(page, { budget: 1_500, label: `tab-menu:${step.tab}` }).catch(() => {});
     if (!(await clickMenuItem(page, step.item))) throw new Error(`no "${step.item}" in the "${step.tab}" tab menu`);
@@ -1607,9 +1607,9 @@ if (DIRECTED.includes('dashboard')) {
   // document (discarding), so every seed starts from the stored dashboard.
   const design = [
     { via: 'docType', type: 'Dashboard' },
-    { via: 'button', label: 'Enter Design Mode', post: true, opens: 'changed' },
+    { via: 'button', label: 'Design Mode', post: true, opens: 'changed' },
   ];
-  const path = ['Dashboard (document)', 'after Enter Design Mode'];
+  const path = ['Dashboard (document)', 'after Design Mode'];
   // No `seedDepth` here on purpose: the route's own post steps spend POSTDEPTH, so a column menu's
   // `changed` items (sorts, moves, Hide, Remove) are recorded but NOT descended — each of those
   // states is the dashboard's whole toolbar again, which the document shard walks.
@@ -1718,13 +1718,13 @@ if (DIRECTED.includes('results')) {
     { kind: 'post-action', presenter: 'QueryResultTablePresenter', seedDepth: 3,
       path: ['Query (document)', 'after query with results (toolbar)'], route: withResults },
     { kind: 'menu', presenter: 'QueryResultTablePresenter', seedDepth: 4,
-      path: ['Query (document)', 'after annotations query', 'after select row', 'Annotate'],
-      route: [...annotations, { via: 'select-row', post: true, opens: 'changed' }, { via: 'button', label: 'Annotate', opens: 'menu' }] },
+      path: ['Query (document)', 'after annotations query', 'after select row', 'Annotate Selected Rows'],
+      route: [...annotations, { via: 'select-row', post: true, opens: 'changed' }, { via: 'button', label: 'Annotate Selected Rows', opens: 'menu' }] },
   );
-  console.log('  + 3 directed results seed(s): a query with rows — its column menu, its toolbar, and the Annotate menu on a selected annotation row');
+  console.log('  + 3 directed results seed(s): a query with rows — its column menu, its toolbar, and the Annotate Selected Rows menu on a selected annotation row');
 }
 if (DIRECTED.includes('annotation')) {
-  // The annotation EDITOR, opened from a selected annotation row's Annotate › Edit Annotation. Its
+  // The annotation EDITOR, opened from a selected annotation row's Annotate Selected Rows › Edit Annotation. Its
   // sub-tabs walk as an editor's do (Events › Add → AddEventLinkPresenter); its own surface adds two
   // things the button reader cannot see: the `Change Retention Period` setting block
   // (DurationPresenter) and a comment entry's mousedown menu (Edit Entry → CommentEditPresenter).
@@ -1734,7 +1734,7 @@ if (DIRECTED.includes('annotation')) {
     { via: 'button', label: 'Execute Query', post: true, opens: 'changed' },
     // The annotation `seed-data.mjs` gave a comment entry, by title: `entry: comment` needs one.
     { via: 'select-row', text: SEED_DATA.annotation.title, post: true, opens: 'changed' },
-    { via: 'button', label: 'Annotate', opens: 'menu' },
+    { via: 'button', label: 'Annotate Selected Rows', opens: 'menu' },
     { via: 'button', match: '^Edit Annotation', post: true, opens: 'changed' },
   ];
   seeds.push({ kind: 'editor', presenter: 'AnnotationPresenter', seedDepth: 6,
@@ -1754,9 +1754,9 @@ if (DIRECTED.includes('cf')) {
   const scope = { selector: '.dataGridWidget th, [role=columnheader]', design: false };
   seeds.push(
     { kind: 'post-action', presenter: 'RulePresenter', seedDepth: 7, columnScope: scope,
-      path: ['Query (document)', 'after query with results', 'column: StreamId', 'Conditional Formatting', 'Add', 'after Formatting Type = Custom'],
+      path: ['Query (document)', 'after query with results', 'column: StreamId', 'Conditional Formatting', 'New Formatting Rule', 'after Formatting Type = Custom'],
       route: [...results, { via: 'button', label: `${COLUMN_MENU}StreamId`, opens: 'menu' }, { via: 'button', label: 'Conditional Formatting', opens: 'dialog' },
-        { via: 'button', label: 'Add', opens: 'dialog' }, { via: 'set-select', selector: '.conditionalFormatTypeSelection', value: 'Custom', post: true, opens: 'changed' }] },
+        { via: 'button', label: 'New Formatting Rule', opens: 'dialog' }, { via: 'set-select', selector: '.conditionalFormatTypeSelection', value: 'Custom', post: true, opens: 'changed' }] },
     { kind: 'post-action', presenter: 'ColumnValuesFilterPresenter', seedDepth: 4, columnScope: scope,
       path: ['Query (document)', 'after query with results', 'column: StreamId (value filter icon)'],
       route: [...results, { via: 'click-in-header', column: 'StreamId', child: '.column-valueFilterIcon', opens: 'dialog' }] },
@@ -1783,7 +1783,7 @@ if (DIRECTED.includes('pathways')) {
   console.log('  + 1 directed pathways seed');
 }
 if (DIRECTED.includes('stepping')) {
-  // STEPPING MODE on a pipeline: `Enter Stepping Mode` swaps the Structure tab for SteppingPresenter,
+  // STEPPING MODE on a pipeline: `Stepping Mode` swaps the Structure tab for SteppingPresenter,
   // whose meta list finds ONE stream for the seed pipeline and so auto-selects it and steps
   // (`addChangeDataHandler` → `beginStepping` when the page has a single row). `POST /stepping/v1/step`
   // was BLOCKED by the read-only guard until triaged (2026-09-21): it captures element IO into a
@@ -1798,7 +1798,7 @@ if (DIRECTED.includes('stepping')) {
   const stepping = [
     { via: 'docType', type: 'Pipeline' },
     { via: 'tab', label: 'Structure', nth: 0 },
-    { via: 'button', label: 'Enter Stepping Mode', post: true, opens: 'changed' },
+    { via: 'button', label: 'Stepping Mode', post: true, opens: 'changed' },
   ];
   // The meta list finds 100 streams here and its first row is an ERROR stream: selecting it runs
   // `step` (200, `Content is not allowed in prolog`, foundRecord:false) and the step controls stay
@@ -1808,11 +1808,11 @@ if (DIRECTED.includes('stepping')) {
   // The location label (`selector: .stepLocationLink` → Set Location) is offered by the survey
   // itself (CLICKABLE_LABELS); it used to be an `extra` on these two seeds.
   seeds.push({ kind: 'post-action', presenter: 'SteppingPresenter', seedDepth: 3,
-    path: ['Pipeline (document)', 'Structure', 'after Enter Stepping Mode'], route: stepping });
+    path: ['Pipeline (document)', 'Structure', 'after Stepping Mode'], route: stepping });
   seeds.push({ kind: 'post-action', presenter: 'SteppingPresenter', seedDepth: 4,
-    path: ['Pipeline (document)', 'Structure', 'after Enter Stepping Mode', 'after select stream (Events)'], route: onStream });
+    path: ['Pipeline (document)', 'Structure', 'after Stepping Mode', 'after select stream (Events)'], route: onStream });
   seeds.push({ kind: 'post-action', presenter: 'ElementPresenter', seedDepth: 5,
-    path: ['Pipeline (document)', 'Structure', 'after Enter Stepping Mode', 'after select stream (Events)', 'after select element (xsltFilter)'],
+    path: ['Pipeline (document)', 'Structure', 'after Stepping Mode', 'after select stream (Events)', 'after select element (xsltFilter)'],
     route: [...onStream, { via: 'select-element', match: 'xslt', post: true, opens: 'changed' }] });
   console.log('  + 3 directed stepping seed(s): stepping mode at rest, stepping on an Events stream, its XSLT element');
 }
@@ -1840,17 +1840,17 @@ if (DIRECTED.includes('datalink')) {
 if (DIRECTED.includes('settings')) {
   // A component's Settings DIALOG, whose own tabs the walk now descends: the Table's is Basic /
   // Conditional Formatting / Selection Filter and the Query's is Basic / Selection Query, and each
-  // Selection tab's Add opens `Add New Selection Handler` (SelectionHandlerPresenter) — a `create`
+  // Selection tab's New Selection Handler opens `Add New Selection Handler` (SelectionHandlerPresenter) — a `create`
   // path on a list that is empty here, one tab across from where the document shard stood.
   const design = [
     { via: 'docType', type: 'Dashboard' },
-    { via: 'button', label: 'Enter Design Mode', post: true, opens: 'changed' },
+    { via: 'button', label: 'Design Mode', post: true, opens: 'changed' },
   ];
   // The dialog IS the component's settings presenter; the selection-handler and rules lists are
   // what it embeds, and the handler inventory joins through that embedding.
   for (const [tab, presenter] of [['Table', 'TableSettingsPresenter'], ['Query', 'QuerySettingsPresenter']]) {
     seeds.push({ kind: 'dialog', presenter, seedDepth: 3,
-      path: ['Dashboard (document)', 'after Enter Design Mode', tab, 'Settings'],
+      path: ['Dashboard (document)', 'after Design Mode', tab, 'Settings'],
       route: [...design, { via: 'tab-menu', tab, item: 'Settings', opens: 'dialog' }] });
   }
   console.log('  + 2 directed settings seeds: the Table and Query components\' Settings dialogs');
@@ -1866,9 +1866,10 @@ if (DIRECTED.includes('gitrepo')) {
 }
 if (DIRECTED.includes('fields')) {
   // The field lists that fill CLIENT-SIDE from their own New (the handler inventory's unreached
-  // Edit / Remove): a Lucene index's Fields tab and a Solr index's. `New Field` › OK is a
-  // validation alert on a blank form; the walker fills the name and presses OK again, the row
-  // appears, and the selection rule reaches Edit Field / Remove Field on it.
+  // Edit / Remove): a Lucene index's Fields tab and a Solr index's. `New Index Field` › OK is
+  // a validation alert on a blank form; the walker fills the name and presses OK again, the row
+  // appears, and the selection rule reaches Edit Selected Index Field / Delete Selected Index Field(s)
+  // on it.
   for (const [type, presenter] of [['LuceneIndex', 'IndexFieldListPresenter'], ['SolrIndex', 'SolrIndexFieldListPresenter']]) {
     seeds.push({ kind: 'editor-tab', presenter, seedDepth: 2, path: [`${type} (document)`, 'Fields'],
       route: [{ via: 'docType', type }, { via: 'tab', label: 'Fields', nth: 0 }] });
@@ -2963,7 +2964,7 @@ async function walk(node, state, arrivedAt) {
     // this click's doing — a leaf chosen from a menu, a screen a button opened — and is closed
     // before the check, or the next node is surveyed over the wrong screen.
     // A toggle without an entry: the click made exactly one new button appear whose label shares
-    // its opening words with the click (`Click to show all jobs` -> `Click to show enabled jobs`).
+    // its opening words with the click (`Expand Groups to Level 2` -> `Expand Groups to Level 3`).
     // Bounded — one candidate, same prefix — and the signature check decides whether it worked.
     const grew = after ? after.buttons.filter((b) => !before.buttons.includes(b)) : [];
     const twin = grew.length === 1 && grew[0].split(' ').slice(0, 2).join(' ') === label.split(' ').slice(0, 2).join(' ')
@@ -3106,7 +3107,7 @@ async function walk(node, state, arrivedAt) {
   }
 
   // ── A selection is a precondition (door-preconditions.md, class `selection`) ──
-  // `Edit` on the volume-group, node-group, result-store and user screens is DISABLED until a row
+  // `Edit Selected …` on the volume-group, node-group, result-store and user screens is DISABLED until a row
   // is selected, so no click on the screen at rest can open those dialogs. Select the first row
   // and walk ONLY what that newly enabled — the rest of the screen was walked above. Bounded by
   // POSTDEPTH like any other post-action state, and skipped when the selection enabled nothing.
@@ -3148,8 +3149,8 @@ async function walk(node, state, arrivedAt) {
       }
     }
     // A TICK is a different selection: a stream grid's first column is a `TickBoxCell`, and
-    // ticking a row is what enables the BATCH buttons — Download, Restore, Delete, Process,
-    // `Selection summary` (MetaPresenter's, all unreached in the handler inventory) — while a
+    // ticking a row is what enables the BATCH buttons — Download, Restore, Delete and Process
+    // Selected Streams, `Show Summary of Selected Streams` (MetaPresenter's, all unreached in the handler inventory) — while a
     // click on the row selects it for the preview. Same shape as above, on the tick.
     const hasTick = await page.evaluate(() => [...document.querySelectorAll('.dataGridWidget tbody tr .tickBox, [role=grid] [role=row] .tickBox')]
       .some((e) => e.offsetWidth > 0)).catch(() => false);

@@ -183,7 +183,7 @@ public final class AppShellStories {
                 .layout(StoryLayout.FULLSCREEN)
                 // The full shell over the rich fixture tree (Explorer left, empty content right)
                 .story("Default", context -> render(context, TreeFixtures.fixtureTree()))
-                // The explorer's Filter Types button opens the type filter (the document types);
+                // The explorer's Filter Document Types button opens the type filter (the document types);
                 // turning a type off restricts the tree and lights the button
                 .story("ExplorerTypeFilter", context -> render(context, AppShellFixtures.dictTree(),
                         routes -> routes.get(StartupFixtures.DOCUMENT_TYPES_PATH,
@@ -192,7 +192,7 @@ public final class AppShellStories {
                         }, null))
                 .withPlay(play -> {
                     final Play nav = navTree(play);
-                    final Query filter = nav.getByRole("button", "Filter Types");
+                    final Query filter = nav.getByRole("button", "Filter Document Types");
                     // The toggle button says whether a filter is set with aria-pressed
                     play.expect(filter).toHaveAttribute("aria-pressed", "false");
                     play.click(filter);
@@ -204,7 +204,7 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(filter).toHaveAttribute("aria-pressed", "true"));
                     expectNoProblems(play);
                 })
-                // The Toggle Alerts button shows only when dependency warnings are enabled
+                // The Show Alerts button shows only when dependency warnings are enabled
                 .story("ExplorerToggleAlerts", context -> render(context, AppShellFixtures.dictTree(),
                         routes -> {
                         },
@@ -214,7 +214,7 @@ public final class AppShellStories {
                         null))
                 .withPlay(play -> {
                     final Play nav = navTree(play);
-                    final Query alerts = nav.getByRole("button", "Toggle Alerts");
+                    final Query alerts = nav.getByRole("button", "Show Alerts");
                     play.expect(alerts).toHaveAttribute("aria-pressed", "false");
                     play.click(alerts);
                     play.waitFor(() -> play.expect(alerts).toHaveAttribute("aria-pressed", "true"));
@@ -419,19 +419,19 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
-                            "Ask Stroom AI, Show Menu: 1 tab stop",
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "New, Delete, Locate Current Item, Expand All, Collapse All, Filter Types, "
-                            + "Find In Content: 1 tab stop"));
+                            "Ask Stroom AI, Show Main Menu: 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "New Document, Delete Selected Documents, Locate Current Item, Expand All Folders, "
+                            + "Collapse All Folders, Filter Document Types, Find in Content: 1 tab stop"));
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeInTheDocument());
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
-                            "Ask Stroom AI, Show Menu: 1 tab stop",
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Save, Save As, Download Dictionary words: 1 tab stop",
-                            "New, Delete, Locate Current Item, Expand All, Collapse All, "
-                            + "Filter Types, Find In Content: 1 tab stop"));
+                            "Ask Stroom AI, Show Main Menu: 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Save, Save As, Download Dictionary Words: 1 tab stop",
+                            "New Document, Delete Selected Documents, Locate Current Item, Expand All Folders, "
+                            + "Collapse All Folders, Filter Document Types, Find in Content: 1 tab stop"));
                 })
                 // The main toolbar is shown at the right of the content's tab row, over the content,
                 // but comes first in the page, so the Tab key reaches it before the explorer and the
@@ -689,9 +689,9 @@ public final class AppShellStories {
                     // The quick filter has no label, only its placeholder
                     play.expect(play.within(dialog).findByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER))
                             .toBeInTheDocument();
-                    final Query typeFilter = play.within(dialog).getByRole("button", "Filter Types");
+                    final Query typeFilter = play.within(dialog).getByRole("button", "Filter Document Types");
                     play.expect(typeFilter).toHaveAttribute("aria-pressed", "false");
-                    // The Filter Types button is beside the quick filter, in the same row.
+                    // The Filter Document Types button is beside the quick filter, in the same row.
                     // The row is ExportConfigViewImpl's '.exportConfigViewImpl-filter'
                     play.expect(typeFilter.closest(".exportConfigViewImpl-filter")).not().toBeNull();
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
@@ -765,12 +765,12 @@ public final class AppShellStories {
                     expectDeleted(play, "dict-countries");
                     expectNoProblems(play);
                 })
-                // The toolbar's Delete is enabled by a selection, and deletes it
+                // The toolbar's Delete Selected Documents is enabled by a selection, and deletes it
                 .story("ToolbarDelete", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     final Play nav = navTree(play);
-                    final Query delete = nav.getByRole("button", "Delete");
+                    final Query delete = nav.getByRole("button", "Delete Selected Documents");
                     play.expect(delete).toHaveAttribute("aria-disabled", "true");
                     play.click(nav.getByText("Countries"));
                     play.waitFor(() -> play.expect(delete).not().toHaveAttribute("aria-disabled"));
@@ -783,7 +783,7 @@ public final class AppShellStories {
                     expectDeleted(play, "dict-countries");
                     expectNoProblems(play);
                 })
-                // New: the document types menu, the create dialog, and the new document opens
+                // New Document: the document types menu, the create dialog, and the new document opens
                 .story("CreateDocument", context -> render(context, AppShellFixtures.dictTree(),
                         routes -> routes.get(StartupFixtures.DOCUMENT_TYPES_PATH, RestReply.json(DICTIONARY_TYPES))
                                 .get(DICTIONARY_PATH + "new-doc", RestReply.json(newDoc("Regions"))),
@@ -792,7 +792,7 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     final Play nav = navTree(play);
-                    final Query newButton = nav.getByRole("button", "New");
+                    final Query newButton = nav.getByRole("button", "New Document");
                     play.waitFor(() -> play.expect(newButton).toHaveAttribute("aria-disabled", "true"));
                     play.click(nav.getByText("Dictionaries"));
                     play.waitFor(() -> play.expect(newButton).not().toHaveAttribute("aria-disabled"));
@@ -1240,7 +1240,7 @@ public final class AppShellStories {
     private static void removeImport(final Play play, final String name) {
         final Play screen = play.screen();
         play.click(play.findByText(name));
-        play.click(play.getByTitle("Remove Import"));
+        play.click(play.getByTitle("Remove Imported Dictionary"));
         play.click(screen.findByRole("button", StroomDom.button("OK")));
     }
 

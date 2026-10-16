@@ -133,9 +133,9 @@ public final class VisualisationEditorStories {
                     play.click(play.getByText("main.js"));
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
                     play.expect(placeholder).not().toBeVisible();
-                    // 'Add file' opens a menu (Add New Folder, Add New File, Upload File); 'Add New
-                    // File' opens the name dialog
-                    play.click(play.getByRole("button", "Add file"));
+                    // 'Add File or Folder' opens a menu (Add New Folder, Add New File, Upload File);
+                    // 'Add New File' opens the name dialog
+                    play.click(play.getByRole("button", "Add File or Folder"));
                     // The menu's items, by their text
                     final Value<List<String>> items = screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT).textContents();
                     play.waitFor(() -> play.expect("the menu's items", items)
@@ -148,7 +148,7 @@ public final class VisualisationEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelector(FUNCTION_NAME)).toHaveAttribute("readonly"));
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).toHaveAttribute("readonly"));
-                    play.expect(play.getByRole("button", "Save is not available as this document is read only"))
+                    play.expect(play.getByRole("button", "Save (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
@@ -175,7 +175,8 @@ public final class VisualisationEditorStories {
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Assets")).toBeInTheDocument());
                     play.click(DocEditors.tab(play, "Assets"));
                     // GWT's toolbar, with no Save button of its own
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Revert changes")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Revert Asset Changes"))
+                            .toBeInTheDocument());
                     play.expect(play.queryByRole("button", "Save assets to live")).toBeNull();
                     play.expect(play.queryByRole("button", "Revert assets to live")).toBeNull();
 

@@ -59,8 +59,8 @@ public final class UserAccessScreenStories {
     /// The name of the spy recording the users opened with 'Open this user'.
     static final String OPEN_SCREEN = "openScreen";
 
-    private static final String REVOKE_TITLE = "End this user's sessions and revoke their tokens";
-    private static final String OPEN_USER_TITLE = "Open this user, where they can be disabled";
+    private static final String REVOKE_TITLE = "End Sessions and Revoke Tokens for Selected User";
+    private static final String OPEN_USER_TITLE = "Open Selected User (to disable them)";
 
     // UserAccessResource.find(): the second row is a subject with no stroom user
     private static final String ROWS = """
@@ -219,7 +219,7 @@ public final class UserAccessScreenStories {
                     final Play screen = play.screen();
                     play.click(play.findByText("Alice Smith"));
                     play.click(play.findByText("curl/8.5.0"));
-                    play.click(play.getByRole("button", "End this session"));
+                    play.click(play.getByRole("button", "End Selected Session"));
                     screen.findByText(TextMatch.containing("end this session for 'Alice Smith' on node 'node2'?"));
                     play.expect(screen.getByText(TextMatch.containing("their other sessions will be left alone")))
                             .toBeInTheDocument();
@@ -253,7 +253,7 @@ public final class UserAccessScreenStories {
 
     /// @return The selected user's sessions grid (with its toolbar and pager).
     private static Play sessionsGrid(final Play play) {
-        return play.within(play.getByTitle("End this session").closest(".dock-container-vertical"));
+        return play.within(play.getByTitle("End Selected Session").closest(".dock-container-vertical"));
     }
 
     private static Widget render(final StoryContext context, final boolean externalIdp) {

@@ -75,7 +75,7 @@ public final class StepFilterDialogStories {
                     // 'filterOn' class (hidden by 'filterOff')
                     play.expect(screen.querySelector(FILTER_ON)).toBeNull();
                     // Add an XPath filter: the default match type (Exists) needs no value
-                    play.click(screen.getByTitle("Add XPath Filter"));
+                    play.click(screen.getByTitle("New XPath Filter"));
                     final Play addDialog = dialog(screen, "Add XPath Filter");
                     play.click(addDialog.getByRole("button", StroomDom.button("OK")));
                     // The filter is listed and the element shows the active indicator

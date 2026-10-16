@@ -106,7 +106,7 @@ public final class ContentTemplatesScreenStories {
                     play.type(name, "My template");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText(EDIT_TEMPLATE)).toBeNull());
-                    // Nothing was saved: the document is only saved by "Save templates"
+                    // Nothing was saved: the document is only saved by "Save Templates"
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.put(PATH).toSpyMatcher());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
@@ -166,7 +166,7 @@ public final class ContentTemplatesScreenStories {
                     play.expect(screen.queryByText("Move template Down")).toBeNull();
                     ContentStorySupport.expectNoProblems(play);
                 })
-                // Editing a template (rename) dirties the document; Save templates saves it
+                // Editing a template (rename) dirties the document; Save Templates saves it
                 .story("Templates", ContentTemplatesScreenStories::render)
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -180,7 +180,7 @@ public final class ContentTemplatesScreenStories {
                     play.type(name, "Renamed template");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Renamed template");
-                    final Query save = play.getByTitle("Save templates");
+                    final Query save = play.getByTitle("Save Templates");
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(

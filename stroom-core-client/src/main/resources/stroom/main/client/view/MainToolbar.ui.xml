@@ -7,7 +7,7 @@
         <s:Spinner ui:field="spinner" styleName="spinner mainViewImpl-spinner"/>
         <b:Toolbar name="Application" addStyleNames="toolbar--header toolbar--quiet">
             <b:ToolbarToggleButton ui:field="showAi" svg="AI" title="Ask Stroom AI"/>
-            <b:ToolbarButton ui:field="menu" svg="ELLIPSES_VERTICAL" title="Show Menu"/>
+            <b:ToolbarButton ui:field="menu" svg="ELLIPSES_VERTICAL" title="Show Main Menu"/>
         </b:Toolbar>
     </g:FlowPanel>
 </ui:UiBinder>

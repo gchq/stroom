@@ -80,7 +80,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
         toolbar.setName("User actions");
         toolbar.button(SvgImage.ADD, "Create User", this::onCreateUserOrGroup);
 //        editButton = toolbar.button(SvgImage.EDIT, "Edit User", this::onEditUserOrGroup);
-        deleteButton = toolbar.button(SvgImage.DELETE, "Delete User", this::onDelete);
+        deleteButton = toolbar.button(SvgImage.DELETE, "Delete Selected User", this::onDelete);
         deleteButton.setEnabled(false);
 
         /// Initialise state.
@@ -124,15 +124,14 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
             deleteButton.setTitle("Delete " + getDescription(selected));
             deleteButton.setEnabled(true);
         } else {
-//            editButton.setTitle("No Selection");
 //            editButton.setEnabled(false);
-            deleteButton.setTitle("No Selection");
+            deleteButton.setTitle("Delete Selected User");
             deleteButton.setEnabled(false);
         }
     }
 
     private String getDescription(final User user) {
-        return "user '" + user.asRef().toDisplayString() + "'";
+        return "User '" + user.asRef().toDisplayString() + "'";
     }
 
     @Override

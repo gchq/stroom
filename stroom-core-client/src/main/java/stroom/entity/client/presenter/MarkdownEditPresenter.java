@@ -107,9 +107,9 @@ public class MarkdownEditPresenter
             if (addButtonsFirst != null) {
                 addButtonsFirst.accept(toolbar);
             }
-            editModeButton = toolbar.toggle(SvgImage.EDIT, "Edit", pressed -> toggleEditMode());
+            editModeButton = toolbar.toggle(SvgImage.EDIT, "Edit Documentation", pressed -> toggleEditMode());
             editModeButton.setPressed(editMode);
-            toolbar.button(SvgImage.HELP, "Documentation help", this::showHelp);
+            toolbar.button(SvgImage.HELP, "Help with Documentation", this::showHelp);
         }
         return toolbar;
     }

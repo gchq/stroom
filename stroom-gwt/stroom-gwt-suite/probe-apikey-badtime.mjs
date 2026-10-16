@@ -66,7 +66,7 @@ await clickMenuItem(page, 'Security');
 await settle(500);
 await clickMenuItem(page, 'Manage API Keys');
 await settle(2200);
-if (!(await press('Add new API Key'))) { console.log('Add new API Key is not available'); await browser.close(); process.exit(0); }
+if (!(await press('New API Key'))) { console.log('New API Key is not available'); await browser.close(); process.exit(0); }
 
 const form = await readFields(page);
 console.log(`dialog: "${form?.caption}"`);

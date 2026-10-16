@@ -66,10 +66,13 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         this.newFsVolumeGroupPresenterProvider = newFsVolumeGroupPresenterProvider;
 
         volumeStatusListPresenter.getView().getToolbar().setName("Volume group actions");
-        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::add);
-        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+                "New Data Volume Group", this::add);
+        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+                "Edit Selected Data Volume Group", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+                "Delete Selected Data Volume Group", this::delete);
         deleteButton.setEnabled(false);
 
         view.setView(volumeStatusListPresenter.getView());

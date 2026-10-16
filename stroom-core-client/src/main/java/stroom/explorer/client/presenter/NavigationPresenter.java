@@ -153,18 +153,18 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         // The explorer's buttons: one toolbar, so one tab stop
         final Toolbar toolbar = getView().getToolbar();
-        add = toolbar.button(SvgImage.ADD, "New", this::onNew);
+        add = toolbar.button(SvgImage.ADD, "New Document", this::onNew);
         add.setEnabled(false);
-        delete = toolbar.button(SvgImage.DELETE, "Delete", this::deleteItem);
+        delete = toolbar.button(SvgImage.DELETE, "Delete Selected Documents", this::deleteItem);
         delete.setEnabled(false);
-        showAlertsBtn = toolbar.toggle(SvgImage.EXCLAMATION, "Toggle Alerts", this::onShowAlerts);
+        showAlertsBtn = toolbar.toggle(SvgImage.EXCLAMATION, "Show Alerts", this::onShowAlerts);
         locate = toolbar.button(SvgImage.LOCATE, "Locate Current Item", this::onLocate);
         locate.setEnabled(false);
-        expandAll = toolbar.button(SvgImage.EXPAND_ALL, "Expand All", this::onExpandAll);
-        collapseAll = toolbar.button(SvgImage.COLLAPSE_ALL, "Collapse All", this::onCollapseAll);
-        filter = toolbar.toggle(SvgImage.FILTER, "Filter Types", this::onFilter);
+        expandAll = toolbar.button(SvgImage.EXPAND_ALL, "Expand All Folders", this::onExpandAll);
+        collapseAll = toolbar.button(SvgImage.COLLAPSE_ALL, "Collapse All Folders", this::onCollapseAll);
+        filter = toolbar.toggle(SvgImage.FILTER, "Filter Document Types", this::onFilter);
         filter.setPressed(hasActiveFilter);
-        find = toolbar.button(SvgImage.FIND, "Find In Content", this::onFind);
+        find = toolbar.button(SvgImage.FIND, "Find in Content", this::onFind);
 
         view.setUiHandlers(this);
 

@@ -110,28 +110,31 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     // The tab's buttons, for its document's toolbar
     private final Toolbar toolbar = new Toolbar("Asset actions");
     private final ToolbarButton revertButton =
-            toolbar.button(SvgImage.REFRESH, "Revert changes", this::onRevertButtonClick);
+            toolbar.button(SvgImage.REFRESH, "Revert Asset Changes", this::onRevertButtonClick);
 
     /**
      * Button to add stuff to the tree
      */
-    private final ToolbarButton addButton = toolbar.button(SvgImage.ADD, "Add file", this::showAddMenu);
+    private final ToolbarButton addButton = toolbar.button(SvgImage.ADD, "Add File or Folder",
+            this::showAddMenu);
 
     /**
      * Button to delete stuff from the tree
      */
     private final ToolbarButton deleteButton =
-            toolbar.button(SvgImage.DELETE, "Delete", this::onDeleteButtonClick);
+            toolbar.button(SvgImage.DELETE, "Delete Selected Asset", this::onDeleteButtonClick);
 
     /**
      * Button to edit stuff from the tree
      */
-    private final ToolbarButton editButton = toolbar.button(SvgImage.EDIT, "Rename", this::onEditFilename);
+    private final ToolbarButton editButton = toolbar.button(SvgImage.EDIT, "Rename Selected Asset",
+            this::onEditFilename);
 
     /**
      * Button to view stuff
      */
-    private final ToolbarButton viewButton = toolbar.button(SvgImage.EYE, "View in browser", this::onViewAsset);
+    private final ToolbarButton viewButton = toolbar.button(SvgImage.EYE, "View Selected Asset in Browser",
+            this::onViewAsset);
 
     /**
      * Dialog that appears when user wants to upload a file

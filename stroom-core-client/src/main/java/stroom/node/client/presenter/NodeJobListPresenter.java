@@ -64,8 +64,6 @@ import java.util.stream.Collectors;
 public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading> implements Refreshable {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
-    private static final String AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off";
-    private static final String AUTO_REFRESH_OFF_TITLE = "Turn Auto Refresh On";
 
     private final JobNodeListHelper jobNodeListHelper;
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
@@ -108,7 +106,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         this.showEnabledToggleBtn = jobNodeListHelper.addJobFilterButton(view.getToolbar());
 
         autoRefresh = false;
-        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, AUTO_REFRESH_OFF_TITLE,
+        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Auto Refresh",
                 pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
 
@@ -130,10 +128,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
     private void onAutoRefreshToggled() {
         autoRefresh = !autoRefresh;
         if (autoRefresh) {
-            autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
             internalRefresh();
-        } else {
-            autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
         }
     }
 

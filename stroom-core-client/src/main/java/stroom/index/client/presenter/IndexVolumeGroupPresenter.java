@@ -64,10 +64,13 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
         this.newIndexVolumeGroupPresenterProvider = newIndexVolumeGroupPresenterProvider;
 
         volumeStatusListPresenter.getView().getToolbar().setName("Volume group actions");
-        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::add);
-        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+                "New Index Volume Group", this::add);
+        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+                "Edit Selected Index Volume Group", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+                "Delete Selected Index Volume Group", this::delete);
         deleteButton.setEnabled(false);
 
         view.setView(volumeStatusListPresenter.getView());

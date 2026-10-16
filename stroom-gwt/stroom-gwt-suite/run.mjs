@@ -159,7 +159,7 @@ async function shootAndScore(page, t, { wait = 4500 } = {}) {
  */
 async function openDoc(page, t) {
   await settleExplorer(page, { label: 'reload' }).catch(() => {});
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand' }).catch(() => {});
   await gwt.openDocByName(page, t.label, t.type);
   await closeDialogs(page).catch(() => {});

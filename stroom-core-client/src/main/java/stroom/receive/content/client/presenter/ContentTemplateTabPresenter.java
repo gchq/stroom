@@ -120,25 +120,25 @@ public class ContentTemplateTabPresenter
         expressionPresenter.setSelectionModel(null);
 
         listPresenter.getToolbar().setName("Content template actions");
-        saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save templates", this::onSave);
+        saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save Templates", this::onSave);
         saveButton.setEnabled(false);
         addAboveButton = listPresenter.getToolbar().button(
                 SvgImage.ADD_ABOVE,
-                "Add new template above the selected one",
+                "Add Template Above",
                 this::onAddAbove);
         addBelowButton = listPresenter.getToolbar().button(
                 SvgImage.ADD_BELOW,
-                "Add new template below the selected one",
+                "Add Template Below",
                 this::onAddBelow);
-        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit template", this::onEdit);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Template", this::onEdit);
         editButton.setEnabled(false);
-        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Copy template", this::onCopy);
+        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Duplicate Selected Template", this::onCopy);
         copyButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete template", this::onDelete);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Template", this::onDelete);
         deleteButton.setEnabled(false);
-        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move template up", this::onMoveUp);
+        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move Template Up", this::onMoveUp);
         moveUpButton.setEnabled(false);
-        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move template down", this::onMoveDown);
+        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Template Down", this::onMoveDown);
         moveDownButton.setEnabled(false);
 
         listPresenter.getView()

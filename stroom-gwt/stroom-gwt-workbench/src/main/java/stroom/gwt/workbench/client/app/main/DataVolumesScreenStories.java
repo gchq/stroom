@@ -86,7 +86,7 @@ public final class DataVolumesScreenStories {
                     groupDialog.findByText("Standard");
                     groupDialog.findByText("Active");
                     // New volume → "Add Volume" → set the path → OK (validated, then created)
-                    play.click(groupDialog.getByTitle("New"));
+                    play.click(groupDialog.getByTitle("New Data Volume"));
                     final Play volumeDialog = screen.within(screen.findByText("Add Volume").closest(StroomDom.DIALOG));
                     play.type(volumeDialog.getByLabelText("Path"), "/data2");
                     play.click(volumeDialog.getByRole("button", StroomDom.button("OK")));

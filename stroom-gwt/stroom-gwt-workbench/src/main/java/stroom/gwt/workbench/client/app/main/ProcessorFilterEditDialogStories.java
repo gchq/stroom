@@ -248,10 +248,12 @@ public final class ProcessorFilterEditDialogStories {
                     // read only, with or without a selection
                     play.expect(deps.getByRole("columnheader", "Feed")).toBeInTheDocument();
                     play.expect(deps.getByRole("columnheader", "Type")).toBeInTheDocument();
-                    play.expect(deps.getByTitle("Edit Reference")).not().toHaveAttribute("aria-disabled");
-                    play.expect(deps.getByTitle("Remove Reference")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(deps.getByTitle("Edit Selected Feed Dependency"))
+                            .not().toHaveAttribute("aria-disabled");
+                    play.expect(deps.getByTitle("Remove Selected Feed Dependency"))
+                            .toHaveAttribute("aria-disabled", "true");
                     // Add opens the editor popup
-                    play.click(deps.getByTitle("New Reference"));
+                    play.click(deps.getByTitle("New Feed Dependency"));
                     final Play editor = dialog(screen, "New Feed Dependency");
                     // GWT refuses to close with no feed
                     play.click(editor.getByRole("button", StroomDom.button("OK")));
@@ -271,7 +273,7 @@ public final class ProcessorFilterEditDialogStories {
                     // The row lands in the grid, and selecting it enables Edit/Remove
                     deps.findByText("MY_FEED");
                     play.click(deps.getByText("MY_FEED"));
-                    play.waitFor(() -> play.expect(deps.getByTitle("Remove Reference"))
+                    play.waitFor(() -> play.expect(deps.getByTitle("Remove Selected Feed Dependency"))
                             .not().toHaveAttribute("aria-disabled"));
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });

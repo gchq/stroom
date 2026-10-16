@@ -163,7 +163,7 @@ public final class MetaBrowserStories {
                     play.waitFor(() -> play.expect(play.getAllByTitle("Ticked").count()).toBeGreaterThan(0));
                     // Info summarises the ticked selection.
                     // Stroom's icon buttons are found by their title
-                    play.click(play.getByTitle("Selection summary"));
+                    play.click(play.getByTitle("Show Summary of Selected Streams"));
                     final Play summary = dialog(screen, "Selection Summary");
                     play.expect(summary.getByText(TextMatch.containing("That are associated with:")))
                             .toBeInTheDocument();
@@ -171,7 +171,7 @@ public final class MetaBrowserStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Selection Summary", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     // Delete shows a selection summary that doubles as the confirmation
-                    play.click(play.getAllByTitle("Delete").nth(0));
+                    play.click(play.getAllByTitle("Delete Selected Streams").nth(0));
                     confirmSelectAll(play, screen, "delete");
                     final Play confirm = dialog(screen, "Confirm Delete");
                     play.expect(confirm.getByText(TextMatch.containingIgnoreCase("are you sure you want to delete")))
@@ -179,8 +179,8 @@ public final class MetaBrowserStories {
                     play.click(confirm.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Confirm Delete", StroomDom.DIALOG_TITLE))
                             .toBeNull());
-                    // Filter: the button titled 'Filter' opens 'Filter Streams'
-                    play.click(play.getByTitle("Filter"));
+                    // Filter: the button titled 'Filter Streams' opens the dialog of the same caption
+                    play.click(play.getByTitle("Filter Streams"));
                     final Play filter = dialog(screen, "Filter Streams");
                     play.click(filter.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Filter Streams", StroomDom.DIALOG_TITLE))
@@ -195,7 +195,7 @@ public final class MetaBrowserStories {
                     // Select all with the header tick box (match all, so the filter is sent)
                     play.click(play.getAllByTitle("Not Ticked").nth(0));
                     play.waitFor(() -> play.expect(play.getAllByTitle("Ticked").count()).toBeGreaterThan(0));
-                    play.click(play.getAllByTitle("Process").nth(0));
+                    play.click(play.getAllByTitle("Process Selected Streams").nth(0));
                     final Play choice = dialog(screen, "Create Processors");
                     // Tick "Reprocess data" [1] so no pipeline is needed, then OK
                     play.click(choice.getAllByRole("checkbox").nth(1));

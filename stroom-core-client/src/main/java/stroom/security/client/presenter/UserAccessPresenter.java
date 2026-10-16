@@ -84,13 +84,13 @@ public class UserAccessPresenter
         listPresenter.getToolbar().setName("User access actions");
         revokeButton = listPresenter.getToolbar().button(
                 SvgImage.DELETE,
-                "End this user's sessions and revoke their tokens",
+                "End Sessions and Revoke Tokens for Selected User",
                 this::revokeSelected);
         revokeButton.setEnabled(false);
         // Revoking does not stop someone coming back, and under an external identity provider it barely
         // slows them down. Disabling is what does, so it belongs next to it rather than on a screen an
         // administrator has to know to go and find.
-        openUserButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Open this user, where they can be disabled",
+        openUserButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Open Selected User (to disable them)",
                 this::openSelectedUser);
         openUserButton.setEnabled(false);
 

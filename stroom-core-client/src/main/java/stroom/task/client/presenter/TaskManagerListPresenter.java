@@ -166,22 +166,24 @@ public class TaskManagerListPresenter
         view.setDataWidget(dataGrid);
 
         getView().getToolbar().setName("Task actions");
-        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Turn Auto Refresh Off",
+        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Auto Refresh",
                 pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
 
-        final ButtonView terminateButton = getView().getToolbar().button(SvgImage.DELETE, "Terminate Task",
+        final ButtonView terminateButton = getView().getToolbar().button(SvgImage.DELETE, "Terminate Selected Tasks",
                 this::endSelectedTask);
 
-        expandAllButton = getView().getToolbar().button(SvgImage.EXPAND_ALL, "Expand All", this::onExpandAll);
+        expandAllButton = getView().getToolbar().button(SvgImage.EXPAND_ALL, "Expand All Tasks",
+                this::onExpandAll);
         expandAllButton.setEnabled(false);
-        collapseAllButton = getView().getToolbar().button(SvgImage.COLLAPSE_ALL, "Collapse All", this::onCollapseAll);
+        collapseAllButton = getView().getToolbar().button(SvgImage.COLLAPSE_ALL, "Collapse All Tasks",
+                this::onCollapseAll);
         collapseAllButton.setEnabled(false);
 
-        wrapToggleButton = getView().getToolbar().toggle(SvgImage.TEXT_WRAP, "Toggle wrapping of Info column",
+        wrapToggleButton = getView().getToolbar().toggle(SvgImage.TEXT_WRAP, "Wrap Text",
                 this::onWrapToggled);
 
-        warningsButton = getView().getToolbar().button(SvgImage.ALERT, "Show Warnings", this::showWarnings);
+        warningsButton = getView().getToolbar().button(SvgImage.ALERT, "Show Task Warnings", this::showWarnings);
         warningsButton.setVisible(false);
 
         updateButtonStates();
@@ -210,19 +212,11 @@ public class TaskManagerListPresenter
     private void onAutoRefreshToggled() {
         autoRefresh = !autoRefresh;
         if (autoRefresh) {
-            autoRefreshButton.setTitle("Turn Auto Refresh Off");
             internalRefresh();
-        } else {
-            autoRefreshButton.setTitle("Turn Auto Refresh On");
         }
     }
 
     private void onWrapToggled(final boolean wrap) {
-        if (wrap) {
-            wrapToggleButton.setTitle("Turn Cell Line Wrapping Off");
-        } else {
-            wrapToggleButton.setTitle("Turn Cell Line Wrapping On");
-        }
         dataGrid.setMultiLine(wrap);
     }
 

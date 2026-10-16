@@ -48,6 +48,9 @@ final class DashboardPlays {
     /// A Query component's own Execute Query button.
     static final String QUERY_RUN_BUTTON = ".QueryViewImpl .QueryButtons-button";
 
+    /// The dashboard toolbar's design mode toggle, whose `aria-pressed` says whether it is on.
+    static final String DESIGN_MODE = "Design Mode";
+
     private DashboardPlays() {
         // Static utility
     }
@@ -103,14 +106,15 @@ final class DashboardPlays {
         play.click(toolbarButton(play, "Execute Query"));
     }
 
-    /// Enters (or leaves) design mode with the toolbar's toggle.
+    /// Enters (or leaves) design mode with the toolbar's toggle, `Design Mode`, which keeps its name
+    /// and says whether it is on with `aria-pressed`.
     ///
     /// @param play  The play.
     /// @param enter Whether to enter design mode.
     static void designMode(final Play play, final boolean enter) {
-        play.click(play.getByTitle(enter
-                ? "Enter Design Mode"
-                : "Exit Design Mode"));
+        final Query toggle = play.getByTitle(DESIGN_MODE);
+        play.expect(toggle).toHaveAttribute("aria-pressed", String.valueOf(!enter));
+        play.click(toggle);
     }
 
     /// Selects a component's tab, if it isn't selected, by clicking it.

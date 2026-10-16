@@ -73,8 +73,6 @@ import java.util.stream.Collectors;
 public class JobNodeListHelper {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
-    private static final String FILTER_BTN_TITLE_ON = "Click to show all jobs";
-    private static final String FILTER_BTN_TITLE_OFF = "Click to show only enabled jobs";
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
@@ -346,15 +344,10 @@ public class JobNodeListHelper {
     /// @param toolbar The list's toolbar, to add the button to.
     /// @return The button, whose state the list reads when it fetches its rows.
     public ToolbarToggleButton addJobFilterButton(final Toolbar toolbar) {
-        final ToolbarToggleButton showEnabledToggleBtn = toolbar.toggle(SvgImage.FILTER, FILTER_BTN_TITLE_OFF, null);
-        showEnabledToggleBtn.setOnToggle(showEnabled -> {
-            if (showEnabled) {
-                showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_ON);
-            } else {
-                showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_OFF);
-            }
-            refreshFunc.run();
-        });
+        // One name; whether it is on is the button's pressed state
+        final ToolbarToggleButton showEnabledToggleBtn = toolbar.toggle(
+                SvgImage.FILTER, "Show Only Enabled Jobs", null);
+        showEnabledToggleBtn.setOnToggle(showEnabled -> refreshFunc.run());
         return showEnabledToggleBtn;
     }
 

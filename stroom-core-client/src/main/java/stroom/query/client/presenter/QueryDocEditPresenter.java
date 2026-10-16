@@ -85,7 +85,7 @@ public class QueryDocEditPresenter
         this.uiConfigCache = uiConfigCache;
 
         toolbar = new Toolbar("Query actions");
-        toolbar.button(SvgImage.DOCUMENT_ANALYTIC_RULE, "Create Rule", this::createRule);
+        toolbar.button(SvgImage.DOCUMENT_ANALYTIC_RULE, "Create Analytic Rule", this::createRule);
         toolbar.button(SvgImage.DOCUMENT_REPORT, "Create Report", this::createReport);
     }
 

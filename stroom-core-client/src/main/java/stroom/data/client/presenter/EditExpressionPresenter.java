@@ -84,11 +84,12 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         addTermButton = view.getToolbar().button(SvgImage.ADD, "Add Term", this::addTerm);
         addOperatorButton = view.getToolbar().button(SvgImage.OPERATOR, "Add Operator", this::addOperator);
-        copyButton = view.getToolbar().button(SvgImage.COPY, "Copy", this::copy);
+        copyButton = view.getToolbar().button(SvgImage.COPY, "Duplicate Selected Expression Item", this::copy);
         copyButton.setEnabled(false);
-        disableItemButton = view.getToolbar().button(SvgImage.DISABLE, "Disable", this::disable);
+        disableItemButton = view.getToolbar().button(SvgImage.DISABLE,
+                "Disable Selected Expression Item", this::disable);
         disableItemButton.setEnabled(false);
-        deleteItemButton = view.getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteItemButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Expression Item", this::delete);
         deleteItemButton.setEnabled(false);
     }
 
@@ -144,10 +145,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         final boolean canChangeItem = !readOnly && getSelectedItem() != null;
         copyButton.setEnabled(canChangeItem);
         disableItemButton.setEnabled(canChangeItem);
-        // The titles are the buttons' names, so they stay when the buttons are disabled
-        disableItemButton.setTitle(getEnableDisableText());
+        // The title is the button's name, so it stays when the button is disabled; it follows the
+        // selected item, enabling a disabled one
+        disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
         deleteItemButton.setEnabled(canChangeItem);
-        deleteItemButton.setTitle("Delete");
     }
 
     /**

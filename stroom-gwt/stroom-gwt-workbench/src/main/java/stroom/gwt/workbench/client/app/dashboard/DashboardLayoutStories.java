@@ -120,8 +120,8 @@ public final class DashboardLayoutStories {
                 }))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    play.expect(play.getByRole("button", "Enter Design Mode")).toBeInTheDocument();
-                    play.expect(play.queryByRole("button", "Exit Design Mode")).toBeNull();
+                    play.expect(play.getByRole("button", DashboardPlays.DESIGN_MODE))
+                            .toHaveAttribute("aria-pressed", "false");
                     play.expect(play.queryByRole("button", "Add Component")).toBeNull();
                     DashboardPlays.expectNoProblems(play);
                 })
@@ -130,7 +130,8 @@ public final class DashboardLayoutStories {
                 }))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    play.expect(play.getByRole("button", "Enter Design Mode")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", DashboardPlays.DESIGN_MODE))
+                            .toHaveAttribute("aria-pressed", "false");
                     play.expect(play.queryByRole("button", "Add Component")).toBeNull();
                     DashboardPlays.expectNoProblems(play);
                 })
@@ -143,7 +144,8 @@ public final class DashboardLayoutStories {
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DashboardPlays.designMode(play, true);
-                    play.expect(play.getByRole("button", "Exit Design Mode")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", DashboardPlays.DESIGN_MODE))
+                            .toHaveAttribute("aria-pressed", "true");
                     // The toggle makes the document dirty (Save is enabled), and saving it sends the
                     // flag
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
@@ -398,8 +400,8 @@ public final class DashboardLayoutStories {
                                     () -> items.get().indexOf("Maximise") > items.get().indexOf("Remove"))
                             .toBe(true);
                     play.click(DashboardPlays.menuItem(screen, "Maximise"));
-                    // The toolbar's Restore (shown only while maximised) restores the tabs
-                    play.click(play.findByRole("button", "Restore"));
+                    // The toolbar's Restore Pane Layout (shown only while maximised) restores the tabs
+                    play.click(play.findByRole("button", "Restore Pane Layout"));
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "The Table")).toBeInTheDocument());
                     DashboardPlays.openTabMenu(play, "The Table 2");
                     play.click(DashboardPlays.menuItem(screen, "Hide"));

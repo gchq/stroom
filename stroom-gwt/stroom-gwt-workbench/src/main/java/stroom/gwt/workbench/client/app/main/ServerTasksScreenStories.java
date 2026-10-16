@@ -142,7 +142,7 @@ public final class ServerTasksScreenStories {
                     // Tick child A (a TickBoxCell, not an <input>) and terminate it
                     play.click(play.within(play.getByText("Stream Processor A").closest("tr"))
                             .querySelector(".tickBox"));
-                    play.click(play.getByRole("button", "Terminate Task"));
+                    play.click(play.getByRole("button", "Terminate Selected Tasks"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/task/v1/terminate/node1")
                                     .withJsonBodyContaining("{\"criteria\": {\"idSet\": [{\"id\": \"c1\"}]}}")

@@ -143,7 +143,7 @@ public final class AnalyticRuleEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Notifications");
-                    play.click(play.findByRole("button", "Add Notification"));
+                    play.click(play.findByRole("button", "New Notification"));
                     // The dialog is captioned 'Add Notification'
                     final Play dialog = dialog(screen, "Add Notification");
                     play.expect(dialog.getByText("Destination Type")).toBeInTheDocument();
@@ -160,7 +160,7 @@ public final class AnalyticRuleEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Notifications");
-                    play.click(play.findByRole("button", "Add Notification"));
+                    play.click(play.findByRole("button", "New Notification"));
                     final Play dialog = dialog(screen, "Add Notification");
                     // It is labelled 'Maximum Notifications'
                     play.expect(dialog.getByText("Maximum Notifications")).toBeInTheDocument();
@@ -180,8 +180,8 @@ public final class AnalyticRuleEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Execution");
-                    // The button is titled 'Add Execution Schedule'
-                    play.click(play.findByRole("button", "Add Execution Schedule"));
+                    // The button is titled 'New Execution Schedule'
+                    play.click(play.findByRole("button", "New Execution Schedule"));
                     play.waitFor(() -> play.expect(screen.getByDisplayValue("node9")).toBeInTheDocument());
                     expectNoProblems(play);
                 })
@@ -297,7 +297,7 @@ public final class AnalyticRuleEditorStories {
     // Opens the Notifications tab and waits for its list
     private static void showNotifications(final Play play, final boolean readOnly) {
         openTab(play, "Notifications");
-        play.waitFor(() -> play.expect(play.getByRole("button", "Add Notification")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByRole("button", "New Notification")).toBeInTheDocument());
         expectReadOnlyNote(play, readOnly);
         expectNoProblems(play);
     }
@@ -306,7 +306,7 @@ public final class AnalyticRuleEditorStories {
     private static void showExecution(final Play play, final boolean readOnly) {
         openTab(play, "Execution");
         play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
-        play.waitFor(() -> play.expect(play.getByRole("button", "Add Execution Schedule")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByRole("button", "New Execution Schedule")).toBeInTheDocument());
         expectReadOnlyNote(play, readOnly);
         expectNoProblems(play);
     }

@@ -112,7 +112,7 @@ public final class ViewEditorStories {
                 .story("ReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("My DataSource")).toBeInTheDocument());
-                    play.expect(play.getByRole("button", "Save is not available as this document is read only"))
+                    play.expect(play.getByRole("button", "Save (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     // The settings can't be changed (they once could, and the edits were thrown away)
                     play.expect(play.getByRole("button", TextMatch.startingWith("Data Source My DataSource")))

@@ -184,25 +184,29 @@ public class QueryPresenter
             }
         });
 
-        addTermButton = view.getExpressionToolbar().button(SvgImage.ADD, "Add", this::addTerm);
-        addTermButton.setTitle("Add Term");
+        addTermButton = view.getExpressionToolbar().button(SvgImage.ADD, "Add Term", this::addTerm);
         addOperatorButton = view.getExpressionToolbar().button(SvgImage.OPERATOR, "Add Operator",
                 this::addOperator);
-        addOperatorButton.setTitle("Add Operator");
-        copyButton = view.getExpressionToolbar().button(SvgImage.COPY, "Copy", this::copy);
+        copyButton = view.getExpressionToolbar().button(SvgImage.COPY, "Duplicate Selected Expression Item",
+                this::copy);
         copyButton.setEnabled(false);
-        disableItemButton = view.getExpressionToolbar().button(SvgImage.DISABLE, "Disable", this::disable);
+        disableItemButton = view.getExpressionToolbar().button(SvgImage.DISABLE,
+                "Disable Selected Expression Item", this::disable);
         disableItemButton.setEnabled(false);
-        deleteItemButton = view.getExpressionToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteItemButton = view.getExpressionToolbar().button(SvgImage.DELETE,
+                "Delete Selected Expression Item", this::delete);
         deleteItemButton.setEnabled(false);
-        historyButton = view.getExpressionToolbar().button(SvgImage.HISTORY, "History", this::onHistory);
-        favouriteButton = view.getExpressionToolbar().button(SvgImage.FAVOURITES, "Favourites", this::onFavourite);
-        downloadQueryButton = view.getExpressionToolbar().button(SvgImage.DOWNLOAD, "Download",
+        historyButton = view.getExpressionToolbar().button(SvgImage.HISTORY, "Show Query History",
+                this::onHistory);
+        favouriteButton = view.getExpressionToolbar().button(SvgImage.FAVOURITES,
+                "Show Favourite Queries", this::onFavourite);
+        downloadQueryButton = view.getExpressionToolbar().button(SvgImage.DOWNLOAD, "Download Query",
                 this::downloadQuery);
         downloadQueryButton.setEnabled(false);
 
         if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            processButton = view.getExpressionToolbar().button(SvgImage.PROCESS, "Process", this::choosePipeline);
+            processButton = view.getExpressionToolbar().button(SvgImage.PROCESS,
+                    "Process Query with Pipeline", this::choosePipeline);
         }
 
         // Its icon and name are set by the messages it shows
@@ -338,7 +342,7 @@ public class QueryPresenter
             errorsButton.setTitle("Show Errors");
         } else if (Severity.WARNING.equals(severity)) {
             errorsButton.setSvg(SvgImage.ALERT);
-            errorsButton.setTitle("Show Warning");
+            errorsButton.setTitle("Show Warnings");
         } else if (Severity.INFO.equals(severity)) {
             errorsButton.setSvg(SvgImage.INFO);
             errorsButton.setTitle("Show Messages");
@@ -359,18 +363,16 @@ public class QueryPresenter
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
             // The title is the button's name, so it stays when the button is disabled
-            disableItemButton.setTitle(getEnableDisableText());
+            disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
 
             deleteItemButton.setEnabled(false);
-            deleteItemButton.setTitle("Delete");
 
             copyButton.setEnabled(false);
         } else {
             disableItemButton.setEnabled(true);
-            disableItemButton.setTitle(getEnableDisableText());
+            disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
 
             deleteItemButton.setEnabled(true);
-            deleteItemButton.setTitle("Delete");
 
             copyButton.setEnabled(true);
         }

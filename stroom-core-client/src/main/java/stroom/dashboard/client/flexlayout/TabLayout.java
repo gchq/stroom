@@ -112,7 +112,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         buttons.addStyleName("dock-min tabLayout-buttons icon-colour__grey");
         barOuter.add(buttons);
 
-        settings = buttons.button(SvgImage.ELLIPSES_VERTICAL, "Settings", null);
+        settings = buttons.button(SvgImage.ELLIPSES_VERTICAL, "Tab Actions", null);
         settings.addStyleName("tabLayout-settingsButton");
 
         final LayerContainerImpl layerContainerImpl = new LayerContainerImpl();

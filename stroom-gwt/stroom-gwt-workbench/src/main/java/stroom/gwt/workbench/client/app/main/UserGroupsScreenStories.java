@@ -123,14 +123,14 @@ public final class UserGroupsScreenStories {
                     play.waitFor(() -> play.expect(play.querySelector("[inert]")).toBeNull());
                     play.findByText("Members of group \"Administrators\":");
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Create Group, Edit group 'Administrators', Delete group 'Administrators': 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Create Group, Edit Group 'Administrators', Delete Group 'Administrators': 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Add, Remove: 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Add to Group, Remove from Selected Group: 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
-                            "Add, Remove: 1 tab stop",
+                            "Add Member to Group, Remove Selected Member From Group: 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop"));
                 })
                 // #5405: Tab reads the panes as they are laid out, the master list, then the left
@@ -151,11 +151,11 @@ public final class UserGroupsScreenStories {
                     // then Member Of's, then Members', with the splitter (named by the pane it
                     // resizes) between each
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
-                            "input", "Recent Filters", "Create Group", "First", "div",
+                            "input", "Show Recent Filters", "Create Group", "First", "div",
                             "Users and groups",
-                            "input", "Recent Filters", "Add", "First",
+                            "input", "Show Recent Filters", "Add to Group", "First",
                             "Members",
-                            "input", "Recent Filters", "Add", "First", "div"));
+                            "input", "Show Recent Filters", "Add Member to Group", "First", "div"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group
                 .story("EditGroup", UserGroupsScreenStories::render)
@@ -177,15 +177,16 @@ public final class UserGroupsScreenStories {
                     // Create, Edit, Delete in the master grid's pager toolbar
                     final Query edit = play.within(play.getByTitle("Create Group").closest(".toolbar"))
                             .querySelectorAll("button").nth(1);
-                    play.expect(edit).toHaveAttribute("title", "No Selection");
+                    play.expect(edit).toHaveAttribute("title", "Edit Selected Group");
                     play.expect(edit).toHaveAttribute("aria-disabled", "true");
                     // A user: disabled, with GWT's reason
                     play.click(play.getByText("Alice Anderson"));
-                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "User editing is not supported"));
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title",
+                            "Edit Selected Group (users cannot be edited here)"));
                     play.expect(edit).toHaveAttribute("aria-disabled", "true");
                     // A group: enabled
                     play.click(play.getAllByText("Administrators").nth(0));
-                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "Edit group 'Administrators'"));
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "Edit Group 'Administrators'"));
                     play.expect(edit).not().toHaveAttribute("aria-disabled");
                     // Edit, rename, OK: the subject id and display name are both changed
                     play.click(edit);

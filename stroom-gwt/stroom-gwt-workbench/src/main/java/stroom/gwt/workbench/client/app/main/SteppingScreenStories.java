@@ -183,7 +183,7 @@ public final class SteppingScreenStories {
                             () -> boxBottom.get() - paneBottom.get()).toBeLessThanOrEqual(0));
                     // Selecting it shows its log pane toggle
                     play.click(play.getByText("xmlWriter"));
-                    play.findByTitle(TextMatch.containing("Toggle Log Pane (1 Error"));
+                    play.findByTitle(TextMatch.containing("Log Pane (1 Error"));
                     // Its output's warning (line 1) is in the editor's gutter and overview bar; its
                     // error (line 3) is past the one line of output, so only the overview's summary,
                     // which shows the worst severity, has it

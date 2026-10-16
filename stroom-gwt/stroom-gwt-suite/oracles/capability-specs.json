@@ -90,9 +90,9 @@
     "ManageActivityPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete",
+    "New Activity",
+    "Edit Selected Activity",
+    "Delete Selected Activity",
     "Close"
    ],
    "popupTypes": [],
@@ -128,15 +128,15 @@
    ],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Activity",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Activity",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Activity",
      "enabled": false
     },
     {
@@ -145,8 +145,8 @@
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Activity",
+    "Delete Selected Activity"
    ],
    "columns": []
   },
@@ -389,7 +389,7 @@
     "DuplicateManagementListPresenter"
    ],
    "viaChildren": [
-    "Delete"
+    "Delete Selected Duplicate Check Rows"
    ],
    "popupTypes": [],
    "resources": [],
@@ -410,21 +410,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Add",
+     "title": "New Notification",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Notification",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Remove Selected Notification",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Notification",
+    "Remove Selected Notification"
    ],
    "columns": [
     "Enabled",
@@ -463,9 +463,9 @@
     "QueryResultTablePresenter"
    ],
    "viaChildren": [
-    "Download",
+    "Download Results",
     "Undo",
-    "Annotate",
+    "Annotate Selected Rows",
     "Ask Stroom AI"
    ],
    "popupTypes": [],
@@ -486,7 +486,7 @@
     "DuplicateManagementListPresenter"
    ],
    "viaChildren": [
-    "Delete"
+    "Delete Selected Duplicate Check Rows"
    ],
    "popupTypes": [],
    "resources": [],
@@ -526,21 +526,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Add",
+     "title": "New Notification",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Notification",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Remove Selected Notification",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Notification",
+    "Remove Selected Notification"
    ],
    "columns": [
     "Enabled",
@@ -566,7 +566,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -623,12 +623,12 @@
    ],
    "buttons": [
     {
-     "title": "Delete",
+     "title": "Delete Selected Duplicate Check Rows",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Delete"
+    "Delete Selected Duplicate Check Rows"
    ],
    "columns": []
   },
@@ -693,21 +693,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Add",
+     "title": "New Notification",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Notification",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Remove Selected Notification",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Notification",
+    "Remove Selected Notification"
    ],
    "columns": [
     "Enabled",
@@ -731,7 +731,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -795,7 +795,7 @@
    ],
    "buttons": [
     {
-     "title": "Rerun",
+     "title": "Replay Selected Execution",
      "enabled": true
     }
    ],
@@ -818,21 +818,21 @@
    ],
    "buttons": [
     {
-     "title": "Add",
+     "title": "New Execution Schedule",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Execution Schedule",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Execution Schedule",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Execution Schedule",
+    "Delete Selected Execution Schedule"
    ],
    "columns": [
     "Enabled"
@@ -849,10 +849,10 @@
     "ScheduledProcessEditPresenter"
    ],
    "viaChildren": [
-    "Add",
-    "Edit",
-    "Delete",
-    "Rerun",
+    "New Execution Schedule",
+    "Edit Selected Execution Schedule",
+    "Delete Selected Execution Schedule",
+    "Replay Selected Execution",
     "OK",
     "Cancel"
    ],
@@ -875,10 +875,10 @@
     "ProcessorPresenter"
    ],
    "viaChildren": [
-    "Add Processor",
-    "Edit Processor",
-    "Duplicate Processor",
-    "Delete Processor"
+    "New Processor",
+    "Edit Selected Processor",
+    "Duplicate Selected Processor",
+    "Delete Selected Processors"
    ],
    "popupTypes": [],
    "resources": [
@@ -938,9 +938,9 @@
     "AnnotationTagPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Annotation Tag",
+    "Edit Selected Annotation Tag",
+    "Delete Selected Annotation Tag"
    ],
    "popupTypes": [],
    "resources": [],
@@ -959,9 +959,9 @@
     "AnnotationTagPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Annotation Tag",
+    "Edit Selected Annotation Tag",
+    "Delete Selected Annotation Tag"
    ],
    "popupTypes": [],
    "resources": [],
@@ -984,7 +984,7 @@
    "viaChildren": [
     "OK",
     "Cancel",
-    "Save"
+    "Save Annotation Description"
    ],
    "popupTypes": [],
    "resources": [],
@@ -999,7 +999,7 @@
     "AnnotationPresenter"
    ],
    "viaChildren": [
-    "Save"
+    "Save Annotation Description"
    ],
    "popupTypes": [],
    "resources": [],
@@ -1018,9 +1018,9 @@
     "AnnotationTagPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Annotation Tag",
+    "Edit Selected Annotation Tag",
+    "Delete Selected Annotation Tag"
    ],
    "popupTypes": [],
    "resources": [],
@@ -1039,7 +1039,7 @@
     "AnnotationPresenter"
    ],
    "viaChildren": [
-    "Save"
+    "Save Annotation Description"
    ],
    "popupTypes": [],
    "resources": [],
@@ -1068,9 +1068,9 @@
     "AnnotationTagPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Annotation Tag",
+    "Edit Selected Annotation Tag",
+    "Delete Selected Annotation Tag"
    ],
    "popupTypes": [],
    "resources": [],
@@ -1091,7 +1091,7 @@
     "LinkedEventPresenter"
    ],
    "viaChildren": [
-    "Documentation help",
+    "Help with Documentation",
     "Add Annotation Link",
     "Remove Annotation Link",
     "Add Event Link",
@@ -1101,7 +1101,7 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Save",
+     "title": "Save Annotation Description",
      "enabled": false
     },
     {
@@ -1110,7 +1110,7 @@
     }
    ],
    "disabledAtRest": [
-    "Save",
+    "Save Annotation Description",
     "Save As"
    ],
    "columns": []
@@ -1155,9 +1155,9 @@
     "AnnotationTagPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Annotation Tag",
+    "Edit Selected Annotation Tag",
+    "Delete Selected Annotation Tag"
    ],
    "popupTypes": [],
    "resources": [],
@@ -1262,21 +1262,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Annotation Tag",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Annotation Tag",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Annotation Tag",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Annotation Tag",
+    "Delete Selected Annotation Tag"
    ],
    "columns": []
   },
@@ -1398,7 +1398,7 @@
    "viaChildren": [
     "OK",
     "Cancel",
-    "Save"
+    "Save Annotation Description"
    ],
    "popupTypes": [],
    "resources": [],
@@ -1430,7 +1430,7 @@
     "DocumentPluginEventManager"
    ],
    "viaChildren": [
-    "Download"
+    "Download S3 Configuration"
    ],
    "popupTypes": [],
    "resources": [
@@ -1452,7 +1452,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [
@@ -1468,14 +1468,14 @@
      "enabled": false
     },
     {
-     "title": "Download",
+     "title": "Download S3 Configuration",
      "enabled": false
     }
    ],
    "disabledAtRest": [
     "Save",
     "Save As",
-    "Download"
+    "Download S3 Configuration"
    ],
    "columns": []
   },
@@ -1611,9 +1611,9 @@
     "ManageGlobalPropertyEditPresenter"
    ],
    "viaChildren": [
-    "Click to see cluster values",
-    "All nodes have the same effective value",
-    "Help",
+    "Show Cluster Values",
+    "Show Cluster Values (all nodes have the same effective value)",
+    "Help on Data Types",
     "OK",
     "Cancel"
    ],
@@ -1621,7 +1621,7 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Edit",
+     "title": "Edit Selected Property",
      "enabled": false
     },
     {
@@ -1630,7 +1630,7 @@
     }
    ],
    "disabledAtRest": [
-    "Edit"
+    "Edit Selected Property"
    ],
    "columns": []
   },
@@ -1656,15 +1656,15 @@
    ],
    "buttons": [
     {
-     "title": "Click to see cluster values",
+     "title": "Show Cluster Values",
      "enabled": true
     },
     {
-     "title": "All nodes have the same effective value",
+     "title": "Show Cluster Values (all nodes have the same effective value)",
      "enabled": true
     },
     {
-     "title": "Help",
+     "title": "Help on Data Types",
      "enabled": true
     },
     {
@@ -1793,21 +1793,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Add",
+     "title": "New Credential",
      "enabled": true
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Credential",
      "enabled": false
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Credential",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Delete",
-    "Edit"
+    "Delete Selected Credential",
+    "Edit Selected Credential"
    ],
    "columns": [
     "Name",
@@ -1825,9 +1825,9 @@
     "CredentialsListPresenter"
    ],
    "viaChildren": [
-    "Add",
-    "Delete",
-    "Edit"
+    "New Credential",
+    "Delete Selected Credential",
+    "Edit Selected Credential"
    ],
    "popupTypes": [
     "OK_CANCEL_DIALOG"
@@ -1856,9 +1856,9 @@
     "CredentialsListPresenter"
    ],
    "viaChildren": [
-    "Add",
-    "Delete",
-    "Edit"
+    "New Credential",
+    "Delete Selected Credential",
+    "Edit Selected Credential"
    ],
    "popupTypes": [],
    "resources": [],
@@ -1875,9 +1875,9 @@
     "CredentialsListPresenter"
    ],
    "viaChildren": [
-    "Add",
-    "Delete",
-    "Edit"
+    "New Credential",
+    "Delete Selected Credential",
+    "Edit Selected Credential"
    ],
    "popupTypes": [],
    "resources": [],
@@ -1921,9 +1921,9 @@
     "QueryInfo"
    ],
    "viaChildren": [
-    "Download",
+    "Download Results",
     "Undo",
-    "Annotate",
+    "Annotate Selected Rows",
     "Ask Stroom AI"
    ],
    "popupTypes": [],
@@ -1944,13 +1944,25 @@
     "SelectionHandlersPresenter"
    ],
    "viaChildren": [
-    "Add",
-    "Edit",
-    "Copy",
-    "Disable",
-    "Delete",
-    "Up",
-    "Down"
+    "New Formatting Rule",
+    "New Selection Handler",
+    "Edit Selected Activity",
+    "Edit Selected Formatting Rule",
+    "Edit Selected Selection Handler",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Duplicate Selected Selection Handler",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Disable Selected Selection Handler",
+    "Delete Selected Activity",
+    "Delete Selected Expression Item",
+    "Delete Selected Formatting Rule",
+    "Delete Selected Selection Handler",
+    "Move Formatting Rule Up",
+    "Move Selection Handler Up",
+    "Move Formatting Rule Down",
+    "Move Selection Handler Down"
    ],
    "popupTypes": [],
    "resources": [
@@ -2003,13 +2015,16 @@
     "RulesPresenter"
    ],
    "viaChildren": [
-    "Add",
-    "Edit",
-    "Copy",
-    "Disable",
-    "Delete",
-    "Up",
-    "Down"
+    "New Formatting Rule",
+    "Edit Selected Formatting Rule",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Delete Selected Expression Item",
+    "Delete Selected Formatting Rule",
+    "Move Formatting Rule Up",
+    "Move Formatting Rule Down"
    ],
    "popupTypes": [],
    "resources": [],
@@ -2071,8 +2086,10 @@
     "TablePresenter"
    ],
    "viaChildren": [
-    "Download",
-    "Annotate",
+    "Download Query",
+    "Download Results",
+    "Download Table Results",
+    "Annotate Selected Rows",
     "Add Column",
     "Ask Stroom AI"
    ],
@@ -2119,7 +2136,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -2236,13 +2253,21 @@
    "viaChildren": [
     "OK",
     "Cancel",
-    "Copy",
-    "Disable",
-    "Delete",
-    "History",
-    "Favourites",
-    "Download",
-    "Process",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Duplicate Selected Selection Handler",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Disable Selected Selection Handler",
+    "Delete Selected Activity",
+    "Delete Selected Expression Item",
+    "Delete Selected Formatting Rule",
+    "Delete Selected Selection Handler",
+    "Show Query History",
+    "Show Favourite Queries",
+    "Download Query",
+    "Download Results",
+    "Process Query with Pipeline",
     "Add Term",
     "Add Operator"
    ],
@@ -2291,13 +2316,21 @@
     "QueryPresenter"
    ],
    "viaChildren": [
-    "Copy",
-    "Disable",
-    "Delete",
-    "History",
-    "Favourites",
-    "Download",
-    "Process",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Duplicate Selected Selection Handler",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Disable Selected Selection Handler",
+    "Delete Selected Activity",
+    "Delete Selected Expression Item",
+    "Delete Selected Formatting Rule",
+    "Delete Selected Selection Handler",
+    "Show Query History",
+    "Show Favourite Queries",
+    "Download Query",
+    "Download Results",
+    "Process Query with Pipeline",
     "Add Term",
     "Add Operator"
    ],
@@ -2412,31 +2445,31 @@
    ],
    "buttons": [
     {
-     "title": "Copy",
+     "title": "Duplicate Selected Expression Item",
      "enabled": false
     },
     {
-     "title": "Disable",
+     "title": "Disable Selected Expression Item",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Expression Item",
      "enabled": false
     },
     {
-     "title": "History",
+     "title": "Show Query History",
      "enabled": false
     },
     {
-     "title": "Favourites",
+     "title": "Show Favourite Queries",
      "enabled": false
     },
     {
-     "title": "Download",
+     "title": "Download Query",
      "enabled": false
     },
     {
-     "title": "Process",
+     "title": "Process Query with Pipeline",
      "enabled": false
     },
     {
@@ -2449,13 +2482,13 @@
     }
    ],
    "disabledAtRest": [
-    "Copy",
-    "Disable",
-    "Delete",
-    "History",
-    "Favourites",
-    "Download",
-    "Process"
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item",
+    "Show Query History",
+    "Show Favourite Queries",
+    "Download Query",
+    "Process Query with Pipeline"
    ],
    "columns": []
   },
@@ -2470,13 +2503,25 @@
     "SelectionHandlersPresenter"
    ],
    "viaChildren": [
-    "Add",
-    "Edit",
-    "Copy",
-    "Disable",
-    "Delete",
-    "Up",
-    "Down"
+    "New Formatting Rule",
+    "New Selection Handler",
+    "Edit Selected Activity",
+    "Edit Selected Formatting Rule",
+    "Edit Selected Selection Handler",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Duplicate Selected Selection Handler",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Disable Selected Selection Handler",
+    "Delete Selected Activity",
+    "Delete Selected Expression Item",
+    "Delete Selected Formatting Rule",
+    "Delete Selected Selection Handler",
+    "Move Formatting Rule Up",
+    "Move Selection Handler Up",
+    "Move Formatting Rule Down",
+    "Move Selection Handler Down"
    ],
    "popupTypes": [],
    "resources": [],
@@ -2511,9 +2556,9 @@
    ],
    "viaChildren": [
     "Add Operator",
-    "Copy",
-    "Disable",
-    "Delete",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item",
     "Add Term"
    ],
    "popupTypes": [],
@@ -2535,50 +2580,50 @@
     "QueryResultTablePresenter"
    ],
    "viaChildren": [
-    "Download",
+    "Download Results",
     "Undo",
-    "Annotate",
+    "Annotate Selected Rows",
     "Ask Stroom AI"
    ],
    "popupTypes": [],
    "resources": [],
    "buttons": [
     {
-     "title": "Add",
+     "title": "New Selection Handler",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Selection Handler",
      "enabled": false
     },
     {
-     "title": "Copy",
+     "title": "Duplicate Selected Selection Handler",
      "enabled": false
     },
     {
-     "title": "Disable",
+     "title": "Disable Selected Selection Handler",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Selection Handler",
      "enabled": false
     },
     {
-     "title": "Up",
+     "title": "Move Selection Handler Up",
      "enabled": false
     },
     {
-     "title": "Down",
+     "title": "Move Selection Handler Down",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Copy",
-    "Disable",
-    "Delete",
-    "Up",
-    "Down"
+    "Edit Selected Selection Handler",
+    "Duplicate Selected Selection Handler",
+    "Disable Selected Selection Handler",
+    "Delete Selected Selection Handler",
+    "Move Selection Handler Up",
+    "Move Selection Handler Down"
    ],
    "columns": []
   },
@@ -2619,8 +2664,10 @@
     "TablePresenter"
    ],
    "viaChildren": [
-    "Download",
-    "Annotate",
+    "Download Query",
+    "Download Results",
+    "Download Table Results",
+    "Annotate Selected Rows",
     "Add Column",
     "Ask Stroom AI"
    ],
@@ -2655,8 +2702,10 @@
     "ColumnValuesFilterPresenter"
    ],
    "viaChildren": [
-    "Download",
-    "Annotate",
+    "Download Query",
+    "Download Results",
+    "Download Table Results",
+    "Annotate Selected Rows",
     "Add Column",
     "Ask Stroom AI",
     "OK",
@@ -2745,8 +2794,10 @@
     "TablePresenter"
    ],
    "viaChildren": [
-    "Download",
-    "Annotate",
+    "Download Query",
+    "Download Results",
+    "Download Table Results",
+    "Annotate Selected Rows",
     "Add Column",
     "Ask Stroom AI"
    ],
@@ -2827,8 +2878,10 @@
     "TablePresenter"
    ],
    "viaChildren": [
-    "Download",
-    "Annotate",
+    "Download Query",
+    "Download Results",
+    "Download Table Results",
+    "Annotate Selected Rows",
     "Add Column",
     "Ask Stroom AI"
    ],
@@ -2859,13 +2912,22 @@
    "viaChildren": [
     "OK",
     "Cancel",
-    "Copy",
-    "Disable",
-    "Delete",
-    "History",
-    "Favourites",
-    "Download",
-    "Process",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Duplicate Selected Selection Handler",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Disable Selected Selection Handler",
+    "Delete Selected Activity",
+    "Delete Selected Expression Item",
+    "Delete Selected Formatting Rule",
+    "Delete Selected Selection Handler",
+    "Show Query History",
+    "Show Favourite Queries",
+    "Download Query",
+    "Download Results",
+    "Download Table Results",
+    "Process Query with Pipeline",
     "Add Term",
     "Add Operator"
    ],
@@ -2875,11 +2937,11 @@
    ],
    "buttons": [
     {
-     "title": "Download",
+     "title": "Download Table Results",
      "enabled": false
     },
     {
-     "title": "Annotate",
+     "title": "Annotate Selected Rows",
      "enabled": true
     },
     {
@@ -2892,7 +2954,7 @@
     }
    ],
    "disabledAtRest": [
-    "Download"
+    "Download Table Results"
    ],
    "columns": []
   },
@@ -2908,13 +2970,25 @@
     "SelectionHandlersPresenter"
    ],
    "viaChildren": [
-    "Add",
-    "Edit",
-    "Copy",
-    "Disable",
-    "Delete",
-    "Up",
-    "Down"
+    "New Formatting Rule",
+    "New Selection Handler",
+    "Edit Selected Activity",
+    "Edit Selected Formatting Rule",
+    "Edit Selected Selection Handler",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Duplicate Selected Selection Handler",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Disable Selected Selection Handler",
+    "Delete Selected Activity",
+    "Delete Selected Expression Item",
+    "Delete Selected Formatting Rule",
+    "Delete Selected Selection Handler",
+    "Move Formatting Rule Up",
+    "Move Selection Handler Up",
+    "Move Formatting Rule Down",
+    "Move Selection Handler Down"
    ],
    "popupTypes": [],
    "resources": [],
@@ -2963,15 +3037,15 @@
      "enabled": true
     },
     {
-     "title": "Copy",
+     "title": "Duplicate Selected Expression Item",
      "enabled": false
     },
     {
-     "title": "Disable",
+     "title": "Disable Selected Expression Item",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Expression Item",
      "enabled": false
     },
     {
@@ -2980,9 +3054,9 @@
     }
    ],
    "disabledAtRest": [
-    "Copy",
-    "Disable",
-    "Delete"
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item"
    ],
    "columns": []
   },
@@ -3014,9 +3088,9 @@
    ],
    "viaChildren": [
     "Add Operator",
-    "Copy",
-    "Disable",
-    "Delete",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item",
     "Add Term"
    ],
    "popupTypes": [],
@@ -3040,41 +3114,41 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Add",
+     "title": "New Formatting Rule",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Formatting Rule",
      "enabled": false
     },
     {
-     "title": "Copy",
+     "title": "Duplicate Selected Formatting Rule",
      "enabled": false
     },
     {
-     "title": "Disable",
+     "title": "Disable Selected Formatting Rule",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Formatting Rule",
      "enabled": false
     },
     {
-     "title": "Up",
+     "title": "Move Formatting Rule Up",
      "enabled": false
     },
     {
-     "title": "Down",
+     "title": "Move Formatting Rule Down",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Copy",
-    "Disable",
-    "Delete",
-    "Up",
-    "Down"
+    "Edit Selected Formatting Rule",
+    "Duplicate Selected Formatting Rule",
+    "Disable Selected Formatting Rule",
+    "Delete Selected Formatting Rule",
+    "Move Formatting Rule Up",
+    "Move Formatting Rule Down"
    ],
    "columns": []
   },
@@ -3108,8 +3182,10 @@
     "TablePresenter"
    ],
    "viaChildren": [
-    "Download",
-    "Annotate",
+    "Download Query",
+    "Download Results",
+    "Download Table Results",
+    "Annotate Selected Rows",
     "Add Column",
     "Ask Stroom AI"
    ],
@@ -3133,16 +3209,25 @@
     "QueryPresenter"
    ],
    "viaChildren": [
-    "Download",
-    "Annotate",
+    "Download Query",
+    "Download Results",
+    "Download Table Results",
+    "Annotate Selected Rows",
     "Add Column",
     "Ask Stroom AI",
-    "Copy",
-    "Disable",
-    "Delete",
-    "History",
-    "Favourites",
-    "Process",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Duplicate Selected Selection Handler",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Disable Selected Selection Handler",
+    "Delete Selected Activity",
+    "Delete Selected Expression Item",
+    "Delete Selected Formatting Rule",
+    "Delete Selected Selection Handler",
+    "Show Query History",
+    "Show Favourite Queries",
+    "Process Query with Pipeline",
     "Add Term",
     "Add Operator"
    ],
@@ -3287,13 +3372,18 @@
     "MetaPresenter"
    ],
    "viaChildren": [
-    "Process",
-    "Delete",
-    "Selection summary",
-    "Download",
-    "Upload",
-    "Filter",
-    "Restore"
+    "Process Selected Related Streams",
+    "Process Selected Streams",
+    "Delete Selected Expression Item",
+    "Delete Selected Related Streams",
+    "Delete Selected Streams",
+    "Show Summary of Selected Streams",
+    "Download Selected Related Streams",
+    "Download Selected Streams",
+    "Upload Data to Feed",
+    "Filter Streams",
+    "Restore Selected Related Streams",
+    "Restore Selected Streams"
    ],
    "popupTypes": [
     "OK_CANCEL_DIALOG"
@@ -3324,9 +3414,9 @@
    ],
    "viaChildren": [
     "Add Operator",
-    "Copy",
-    "Disable",
-    "Delete",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item",
     "Add Term"
    ],
    "popupTypes": [],
@@ -3485,39 +3575,59 @@
    ],
    "buttons": [
     {
-     "title": "Process",
+     "title": "Process Selected Streams",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Process Selected Related Streams",
      "enabled": false
     },
     {
-     "title": "Selection summary",
-     "enabled": true
-    },
-    {
-     "title": "Download",
+     "title": "Delete Selected Streams",
      "enabled": false
     },
     {
-     "title": "Upload",
+     "title": "Delete Selected Related Streams",
+     "enabled": false
+    },
+    {
+     "title": "Show Summary of Selected Streams",
      "enabled": true
     },
     {
-     "title": "Filter",
+     "title": "Download Selected Streams",
+     "enabled": false
+    },
+    {
+     "title": "Download Selected Related Streams",
+     "enabled": false
+    },
+    {
+     "title": "Upload Data to Feed",
      "enabled": true
     },
     {
-     "title": "Restore",
+     "title": "Filter Streams",
+     "enabled": true
+    },
+    {
+     "title": "Restore Selected Streams",
+     "enabled": false
+    },
+    {
+     "title": "Restore Selected Related Streams",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Process",
-    "Delete",
-    "Download",
-    "Restore"
+    "Process Selected Streams",
+    "Process Selected Related Streams",
+    "Delete Selected Streams",
+    "Delete Selected Related Streams",
+    "Download Selected Streams",
+    "Download Selected Related Streams",
+    "Restore Selected Streams",
+    "Restore Selected Related Streams"
    ],
    "columns": []
   },
@@ -3787,9 +3897,12 @@
     "FsVolumeGroupPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Data Volume",
+    "New Data Volume Group",
+    "Edit Selected Data Volume",
+    "Edit Selected Data Volume Group",
+    "Delete Selected Data Volume Group",
+    "Delete Selected Data Volumes"
    ],
    "popupTypes": [],
    "resources": [],
@@ -3852,19 +3965,19 @@
    ],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Data Volume",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Data Volume",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Data Volumes",
      "enabled": false
     },
     {
-     "title": "Rescan Volumes",
+     "title": "Rescan Data Volumes",
      "enabled": true
     },
     {
@@ -3877,8 +3990,8 @@
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Data Volume",
+    "Delete Selected Data Volumes"
    ],
    "columns": []
   },
@@ -3913,10 +4026,10 @@
     "NewFsVolumeGroupPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete",
-    "Rescan Volumes",
+    "New Data Volume",
+    "Edit Selected Data Volume",
+    "Delete Selected Data Volumes",
+    "Rescan Data Volumes",
     "OK",
     "Cancel"
    ],
@@ -3927,21 +4040,21 @@
    ],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Data Volume Group",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Data Volume Group",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Data Volume Group",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Data Volume Group",
+    "Delete Selected Data Volume Group"
    ],
    "columns": []
   },
@@ -4032,7 +4145,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -4065,7 +4178,7 @@
     "DocumentPluginEventManager"
    ],
    "viaChildren": [
-    "Download Dictionary words"
+    "Download Dictionary Words"
    ],
    "popupTypes": [],
    "resources": [
@@ -4089,16 +4202,16 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Add",
+     "title": "Add Imported Dictionary",
      "enabled": true
     },
     {
-     "title": "Delete",
+     "title": "Remove Imported Dictionary",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Delete"
+    "Remove Imported Dictionary"
    ],
    "columns": []
   },
@@ -4115,7 +4228,7 @@
     "WordListPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [
@@ -4131,14 +4244,14 @@
      "enabled": false
     },
     {
-     "title": "Download Dictionary words",
+     "title": "Download Dictionary Words",
      "enabled": false
     }
    ],
    "disabledAtRest": [
     "Save",
     "Save As",
-    "Download Dictionary words"
+    "Download Dictionary Words"
    ],
    "columns": []
   },
@@ -4153,8 +4266,8 @@
     "WordListPresenter"
    ],
    "viaChildren": [
-    "Add",
-    "Delete"
+    "Add Imported Dictionary",
+    "Remove Imported Dictionary"
    ],
    "popupTypes": [],
    "resources": [],
@@ -4222,7 +4335,7 @@
     "DocumentPluginEventManager"
    ],
    "viaChildren": [
-    "Download"
+    "Download Documentation"
    ],
    "popupTypes": [],
    "resources": [
@@ -4243,7 +4356,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [
@@ -4259,14 +4372,14 @@
      "enabled": false
     },
     {
-     "title": "Download",
+     "title": "Download Documentation",
      "enabled": false
     }
    ],
    "disabledAtRest": [
     "Save",
     "Save As",
-    "Download"
+    "Download Documentation"
    ],
    "columns": []
   },
@@ -4382,7 +4495,7 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Documentation help",
+     "title": "Help with Documentation",
      "enabled": true
     }
    ],
@@ -4399,7 +4512,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -4759,24 +4872,24 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Add selected tags from 'All Known Tags'",
+     "title": "Add Selected Tags from All Known Tags",
      "enabled": true
     },
     {
-     "title": "Remove selected tags",
+     "title": "Remove Selected Tags",
      "enabled": true
     },
     {
-     "title": "Clear entered tag(s)",
+     "title": "Clear Entered Tags",
      "enabled": false
     },
     {
-     "title": "Add entered tag(s)",
+     "title": "Add Entered Tags",
      "enabled": true
     }
    ],
    "disabledAtRest": [
-    "Clear entered tag(s)"
+    "Clear Entered Tags"
    ],
    "columns": []
   },
@@ -4809,14 +4922,19 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Process",
-    "Delete",
-    "Selection summary",
-    "Download",
-    "Upload",
-    "Filter",
-    "Restore",
-    "Documentation help"
+    "Process Selected Related Streams",
+    "Process Selected Streams",
+    "Delete Selected Expression Item",
+    "Delete Selected Related Streams",
+    "Delete Selected Streams",
+    "Show Summary of Selected Streams",
+    "Download Selected Related Streams",
+    "Download Selected Streams",
+    "Upload Data to Feed",
+    "Filter Streams",
+    "Restore Selected Related Streams",
+    "Restore Selected Streams",
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -4864,17 +4982,22 @@
     "ProcessorTaskPresenter"
    ],
    "viaChildren": [
-    "Process",
-    "Delete",
-    "Selection summary",
-    "Download",
-    "Upload",
-    "Filter",
-    "Restore",
-    "Add Processor",
-    "Edit Processor",
-    "Duplicate Processor",
-    "Delete Processor"
+    "Process Selected Related Streams",
+    "Process Selected Streams",
+    "Delete Selected Expression Item",
+    "Delete Selected Related Streams",
+    "Delete Selected Streams",
+    "Show Summary of Selected Streams",
+    "Download Selected Related Streams",
+    "Download Selected Streams",
+    "Upload Data to Feed",
+    "Filter Streams",
+    "Restore Selected Related Streams",
+    "Restore Selected Streams",
+    "New Processor",
+    "Edit Selected Processor",
+    "Duplicate Selected Processor",
+    "Delete Selected Processors"
    ],
    "popupTypes": [],
    "resources": [],
@@ -4894,17 +5017,22 @@
     "ProcessorTaskPresenter"
    ],
    "viaChildren": [
-    "Process",
-    "Delete",
-    "Selection summary",
-    "Download",
-    "Upload",
-    "Filter",
-    "Restore",
-    "Add Processor",
-    "Edit Processor",
-    "Duplicate Processor",
-    "Delete Processor"
+    "Process Selected Related Streams",
+    "Process Selected Streams",
+    "Delete Selected Expression Item",
+    "Delete Selected Related Streams",
+    "Delete Selected Streams",
+    "Show Summary of Selected Streams",
+    "Download Selected Related Streams",
+    "Download Selected Streams",
+    "Upload Data to Feed",
+    "Filter Streams",
+    "Restore Selected Related Streams",
+    "Restore Selected Streams",
+    "New Processor",
+    "Edit Selected Processor",
+    "Duplicate Selected Processor",
+    "Delete Selected Processors"
    ],
    "popupTypes": [],
    "resources": [],
@@ -4969,7 +5097,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -5262,9 +5390,12 @@
     "IndexVolumeGroupPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Index Volume",
+    "New Index Volume Group",
+    "Edit Selected Index Volume",
+    "Edit Selected Index Volume Group",
+    "Delete Selected Index Volume Group",
+    "Delete Selected Index Volumes"
    ],
    "popupTypes": [],
    "resources": [],
@@ -5349,21 +5480,21 @@
    ],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Index Field",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Index Field",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Index Fields",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Index Field",
+    "Delete Selected Index Fields"
    ],
    "columns": [
     "Case Sensitive"
@@ -5382,11 +5513,12 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete",
-    "Flush Selected Shards",
-    "Documentation help"
+    "New Index Field",
+    "Edit Selected Index Field",
+    "Delete Selected Index Fields",
+    "Delete Selected Index Shards",
+    "Flush Selected Index Shards",
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -5442,17 +5574,17 @@
    ],
    "buttons": [
     {
-     "title": "Flush Selected Shards",
+     "title": "Flush Selected Index Shards",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Index Shards",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Flush Selected Shards",
-    "Delete"
+    "Flush Selected Index Shards",
+    "Delete Selected Index Shards"
    ],
    "columns": [
     "Path",
@@ -5513,19 +5645,19 @@
    ],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Index Volume",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Index Volume",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Index Volumes",
      "enabled": false
     },
     {
-     "title": "Rescan Volumes",
+     "title": "Rescan Index Volumes",
      "enabled": true
     },
     {
@@ -5538,8 +5670,8 @@
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Index Volume",
+    "Delete Selected Index Volumes"
    ],
    "columns": []
   },
@@ -5572,10 +5704,10 @@
     "NewIndexVolumeGroupPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete",
-    "Rescan Volumes",
+    "New Index Volume",
+    "Edit Selected Index Volume",
+    "Delete Selected Index Volumes",
+    "Rescan Index Volumes",
     "OK",
     "Cancel"
    ],
@@ -5586,21 +5718,21 @@
    ],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Index Volume Group",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Index Volume Group",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Index Volume Group",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Index Volume Group",
+    "Delete Selected Index Volume Group"
    ],
    "columns": []
   },
@@ -5737,7 +5869,7 @@
     "DocumentPluginEventManager"
    ],
    "viaChildren": [
-    "Download"
+    "Download Kafka Config"
    ],
    "popupTypes": [],
    "resources": [
@@ -5759,7 +5891,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [
@@ -5775,14 +5907,14 @@
      "enabled": false
     },
     {
-     "title": "Download",
+     "title": "Download Kafka Config",
      "enabled": false
     }
    ],
    "disabledAtRest": [
     "Save",
     "Save As",
-    "Download"
+    "Download Kafka Config"
    ],
    "columns": []
   },
@@ -5796,9 +5928,9 @@
     "NodeGroupPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Node Group",
+    "Edit Selected Node Group",
+    "Delete Selected Node Group"
    ],
    "popupTypes": [],
    "resources": [],
@@ -5816,9 +5948,11 @@
     "ProcessorProfilePresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Processor Profile",
+    "New Profile Period",
+    "Edit Selected Processor Profile",
+    "Edit Selected Profile Period",
+    "Delete Selected Processor Profiles"
    ],
    "popupTypes": [],
    "resources": [],
@@ -5879,7 +6013,7 @@
     "GlobalPropertyTabPresenter"
    ],
    "viaChildren": [
-    "Edit",
+    "Edit Selected Property",
     "Show Warnings"
    ],
    "popupTypes": [],
@@ -6010,21 +6144,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Node Group",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Node Group",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Node Group",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Node Group",
+    "Delete Selected Node Group"
    ],
    "columns": []
   },
@@ -6125,7 +6259,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6251,21 +6385,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Constraint",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Constraint",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Constraints",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Constraint",
+    "Delete Selected Constraints"
    ],
    "columns": []
   },
@@ -6279,9 +6413,12 @@
     "ConstraintListPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Constraint",
+    "New Path",
+    "Edit Selected Constraint",
+    "Edit Selected Path",
+    "Delete Selected Constraints",
+    "Delete Selected Path"
    ],
    "popupTypes": [
     "OK_CANCEL_DIALOG"
@@ -6322,21 +6459,21 @@
    ],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Pathway",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Pathway",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Pathways",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Pathway",
+    "Delete Selected Pathways"
    ],
    "columns": [
     "Root"
@@ -6353,21 +6490,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Path",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Path",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Path",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Path",
+    "Delete Selected Path"
    ],
    "columns": []
   },
@@ -6383,7 +6520,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6414,9 +6551,15 @@
     "PathwayTreePresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Constraint",
+    "New Path",
+    "New Pathway",
+    "Edit Selected Constraint",
+    "Edit Selected Path",
+    "Edit Selected Pathway",
+    "Delete Selected Constraints",
+    "Delete Selected Path",
+    "Delete Selected Pathways"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6474,7 +6617,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6580,18 +6723,23 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Add Processor",
-    "Edit Processor",
-    "Duplicate Processor",
-    "Delete Processor",
-    "Filter",
-    "Process",
-    "Delete",
-    "Selection summary",
-    "Download",
-    "Upload",
-    "Restore",
-    "Documentation help"
+    "New Processor",
+    "Edit Selected Processor",
+    "Duplicate Selected Processor",
+    "Delete Selected Processors",
+    "Filter Streams",
+    "Process Selected Related Streams",
+    "Process Selected Streams",
+    "Delete Selected Expression Item",
+    "Delete Selected Related Streams",
+    "Delete Selected Streams",
+    "Show Summary of Selected Streams",
+    "Download Selected Related Streams",
+    "Download Selected Streams",
+    "Upload Data to Feed",
+    "Restore Selected Related Streams",
+    "Restore Selected Streams",
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6623,7 +6771,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6654,7 +6802,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -6714,15 +6862,15 @@
      "enabled": true
     },
     {
-     "title": "Add XPath Filter",
+     "title": "New XPath Filter",
      "enabled": true
     },
     {
-     "title": "Edit XPath Filter",
+     "title": "Edit Selected XPath Filter",
      "enabled": false
     },
     {
-     "title": "Delete XPath Filter",
+     "title": "Delete Selected XPath Filters",
      "enabled": false
     },
     {
@@ -6735,8 +6883,8 @@
     }
    ],
    "disabledAtRest": [
-    "Edit XPath Filter",
-    "Delete XPath Filter"
+    "Edit Selected XPath Filter",
+    "Delete Selected XPath Filters"
    ],
    "columns": []
   },
@@ -6757,9 +6905,9 @@
    ],
    "viaChildren": [
     "Has active filter(s)",
-    "Add XPath Filter",
-    "Edit XPath Filter",
-    "Delete XPath Filter",
+    "New XPath Filter",
+    "Edit Selected XPath Filter",
+    "Delete Selected XPath Filters",
     "OK",
     "Cancel"
    ],
@@ -6770,7 +6918,7 @@
    ],
    "buttons": [
     {
-     "title": "Filter",
+     "title": "Filter Streams",
      "enabled": true
     }
    ],
@@ -6919,21 +7067,21 @@
    ],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Pipeline Reference",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Pipeline Reference",
      "enabled": false
     },
     {
-     "title": "Remove",
+     "title": "Remove Selected Pipeline Reference",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Remove"
+    "Edit Selected Pipeline Reference",
+    "Remove Selected Pipeline Reference"
    ],
    "columns": [
     "Pipeline",
@@ -6959,9 +7107,10 @@
    "viaChildren": [
     "OK",
     "Cancel",
-    "Edit",
-    "New",
-    "Remove"
+    "Edit Selected Pipeline Reference",
+    "Edit Selected Property",
+    "New Pipeline Reference",
+    "Remove Selected Pipeline Reference"
    ],
    "popupTypes": [],
    "resources": [
@@ -6988,12 +7137,12 @@
    ],
    "buttons": [
     {
-     "title": "Edit",
+     "title": "Edit Selected Property",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit"
+    "Edit Selected Property"
    ],
    "columns": [
     "Property Name"
@@ -7066,7 +7215,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -7206,21 +7355,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Feed Dependency",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Feed Dependency",
      "enabled": false
     },
     {
-     "title": "Remove",
+     "title": "Remove Selected Feed Dependency",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Remove"
+    "Edit Selected Feed Dependency",
+    "Remove Selected Feed Dependency"
    ],
    "columns": [
     "Type"
@@ -7235,9 +7384,9 @@
     "FeedDependencyListPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Remove"
+    "New Feed Dependency",
+    "Edit Selected Feed Dependency",
+    "Remove Selected Feed Dependency"
    ],
    "popupTypes": [
     "OK_CANCEL_DIALOG"
@@ -7268,9 +7417,9 @@
    ],
    "viaChildren": [
     "Add Operator",
-    "Copy",
-    "Disable",
-    "Delete",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item",
     "Add Term",
     "OK",
     "Cancel"
@@ -7355,26 +7504,26 @@
    ],
    "buttons": [
     {
-     "title": "Add Processor",
+     "title": "New Processor",
      "enabled": true
     },
     {
-     "title": "Edit Processor",
+     "title": "Edit Selected Processor",
      "enabled": false
     },
     {
-     "title": "Duplicate Processor",
+     "title": "Duplicate Selected Processor",
      "enabled": false
     },
     {
-     "title": "Delete Processor",
+     "title": "Delete Selected Processors",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit Processor",
-    "Duplicate Processor",
-    "Delete Processor"
+    "Edit Selected Processor",
+    "Duplicate Selected Processor",
+    "Delete Selected Processors"
    ],
    "columns": []
   },
@@ -7405,9 +7554,9 @@
     "ProfilePeriodListPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Remove"
+    "New Profile Period",
+    "Edit Selected Profile Period",
+    "Remove Selected Profile Period"
    ],
    "popupTypes": [
     "OK_CANCEL_DIALOG"
@@ -7444,21 +7593,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Processor Profile",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Processor Profile",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Processor Profiles",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Processor Profile",
+    "Delete Selected Processor Profiles"
    ],
    "columns": []
   },
@@ -7502,21 +7651,21 @@
    "resources": [],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Profile Period",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Profile Period",
      "enabled": false
     },
     {
-     "title": "Remove",
+     "title": "Remove Selected Profile Period",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Remove"
+    "Edit Selected Profile Period",
+    "Remove Selected Profile Period"
    ],
    "columns": [
     "Days",
@@ -7651,7 +7800,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -7728,13 +7877,16 @@
    "viaChildren": [
     "OK",
     "Cancel",
-    "Add",
-    "Edit",
-    "Copy",
-    "Disable",
-    "Delete",
-    "Up",
-    "Down"
+    "New Formatting Rule",
+    "Edit Selected Formatting Rule",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Delete Selected Expression Item",
+    "Delete Selected Formatting Rule",
+    "Move Formatting Rule Up",
+    "Move Formatting Rule Down"
    ],
    "popupTypes": [],
    "resources": [
@@ -7743,7 +7895,7 @@
    ],
    "buttons": [
     {
-     "title": "Download",
+     "title": "Download Results",
      "enabled": false
     },
     {
@@ -7751,7 +7903,7 @@
      "enabled": false
     },
     {
-     "title": "Annotate",
+     "title": "Annotate Selected Rows",
      "enabled": true
     },
     {
@@ -7760,7 +7912,7 @@
     }
    ],
    "disabledAtRest": [
-    "Download",
+    "Download Results",
     "Undo"
    ],
    "columns": []
@@ -7776,9 +7928,9 @@
     "QueryResultVisPresenter"
    ],
    "viaChildren": [
-    "Download",
+    "Download Results",
     "Undo",
-    "Annotate",
+    "Annotate Selected Rows",
     "Ask Stroom AI"
    ],
    "popupTypes": [],
@@ -7829,19 +7981,22 @@
     "ColumnValuesFilterPresenter"
    ],
    "viaChildren": [
-    "Download",
+    "Download Results",
     "Undo",
-    "Annotate",
+    "Annotate Selected Rows",
     "Ask Stroom AI",
     "OK",
     "Cancel",
-    "Add",
-    "Edit",
-    "Copy",
-    "Disable",
-    "Delete",
-    "Up",
-    "Down"
+    "New Formatting Rule",
+    "Edit Selected Formatting Rule",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Delete Selected Expression Item",
+    "Delete Selected Formatting Rule",
+    "Move Formatting Rule Up",
+    "Move Formatting Rule Down"
    ],
    "popupTypes": [],
    "resources": [],
@@ -7869,16 +8024,16 @@
      "enabled": true
     },
     {
-     "title": "Delete Store",
+     "title": "Delete Selected Result Store",
      "enabled": false
     },
     {
-     "title": "Store Settings",
+     "title": "Edit Result Store Settings",
      "enabled": true
     }
    ],
    "disabledAtRest": [
-    "Delete Store"
+    "Delete Selected Result Store"
    ],
    "columns": [
     "User Display Name"
@@ -7910,8 +8065,8 @@
    ],
    "viaChildren": [
     "Terminate Search",
-    "Delete Store",
-    "Store Settings"
+    "Delete Selected Result Store",
+    "Edit Result Store Settings"
    ],
    "popupTypes": [
     "CLOSE_DIALOG"
@@ -7974,9 +8129,9 @@
    ],
    "viaChildren": [
     "Add Operator",
-    "Copy",
-    "Disable",
-    "Delete",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item",
     "Add Term"
    ],
    "popupTypes": [],
@@ -8028,45 +8183,45 @@
    ],
    "buttons": [
     {
-     "title": "Delete template",
+     "title": "Delete Selected Template",
      "enabled": false
     },
     {
-     "title": "Add new template above the selected one",
+     "title": "Add Template Above",
      "enabled": true
     },
     {
-     "title": "Add new template below the selected one",
+     "title": "Add Template Below",
      "enabled": true
     },
     {
-     "title": "Copy template",
+     "title": "Duplicate Selected Template",
      "enabled": false
     },
     {
-     "title": "Edit template",
+     "title": "Edit Selected Template",
      "enabled": false
     },
     {
-     "title": "Move template up",
+     "title": "Move Template Up",
      "enabled": false
     },
     {
-     "title": "Move template down",
+     "title": "Move Template Down",
      "enabled": false
     },
     {
-     "title": "Save templates",
+     "title": "Save Templates",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Delete template",
-    "Copy template",
-    "Edit template",
-    "Move template up",
-    "Move template down",
-    "Save templates"
+    "Delete Selected Template",
+    "Duplicate Selected Template",
+    "Edit Selected Template",
+    "Move Template Up",
+    "Move Template Down",
+    "Save Templates"
    ],
    "columns": []
   },
@@ -8080,14 +8235,14 @@
     "ContentTemplateTabPresenter"
    ],
    "viaChildren": [
-    "Delete template",
-    "Add new template above the selected one",
-    "Add new template below the selected one",
-    "Copy template",
-    "Edit template",
-    "Move template up",
-    "Move template down",
-    "Save templates"
+    "Delete Selected Template",
+    "Add Template Above",
+    "Add Template Below",
+    "Duplicate Selected Template",
+    "Edit Selected Template",
+    "Move Template Up",
+    "Move Template Down",
+    "Save Templates"
    ],
    "popupTypes": [],
    "resources": [],
@@ -8105,7 +8260,7 @@
     "RuleSetPresenter"
    ],
    "viaChildren": [
-    "Save all rules",
+    "Save Rules",
     "Show Warnings"
    ],
    "popupTypes": [],
@@ -8124,9 +8279,9 @@
    ],
    "viaChildren": [
     "Add Operator",
-    "Copy",
-    "Disable",
-    "Delete",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item",
     "Add Term"
    ],
    "popupTypes": [],
@@ -8156,11 +8311,11 @@
      "enabled": true
     },
     {
-     "title": "Expand All",
+     "title": "Expand All Results",
      "enabled": true
     },
     {
-     "title": "Collapse All",
+     "title": "Collapse All Results",
      "enabled": true
     }
    ],
@@ -8204,41 +8359,41 @@
    ],
    "buttons": [
     {
-     "title": "Delete rule",
+     "title": "Delete Selected Rule",
      "enabled": false
     },
     {
-     "title": "Add new rule above the selected one",
+     "title": "Add Rule Above",
      "enabled": true
     },
     {
-     "title": "Copy rule",
+     "title": "Duplicate Selected Rule",
      "enabled": false
     },
     {
-     "title": "Edit rule",
+     "title": "Edit Selected Rule",
      "enabled": false
     },
     {
-     "title": "Move rule up",
+     "title": "Move Rule Up",
      "enabled": false
     },
     {
-     "title": "Move rule down",
+     "title": "Move Rule Down",
      "enabled": false
     },
     {
-     "title": "Save rules",
+     "title": "Save Rules",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Delete rule",
-    "Copy rule",
-    "Edit rule",
-    "Move rule up",
-    "Move rule down",
-    "Save rules"
+    "Delete Selected Rule",
+    "Duplicate Selected Rule",
+    "Edit Selected Rule",
+    "Move Rule Up",
+    "Move Rule Down",
+    "Save Rules"
    ],
    "columns": []
   },
@@ -8253,13 +8408,13 @@
     "DataRetentionImpactPresenter"
    ],
    "viaChildren": [
-    "Delete rule",
-    "Add new rule above the selected one",
-    "Copy rule",
-    "Edit rule",
-    "Move rule up",
-    "Move rule down",
-    "Save rules",
+    "Delete Selected Rule",
+    "Add Rule Above",
+    "Duplicate Selected Rule",
+    "Edit Selected Rule",
+    "Move Rule Up",
+    "Move Rule Down",
+    "Save Rules",
     "Run",
     "Stop",
     "Filter",
@@ -8284,9 +8439,9 @@
    ],
    "viaChildren": [
     "Add Operator",
-    "Copy",
-    "Disable",
-    "Delete",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item",
     "Add Term"
    ],
    "popupTypes": [],
@@ -8340,17 +8495,17 @@
      "enabled": true
     },
     {
-     "title": "Edit Field",
+     "title": "Edit Selected Field",
      "enabled": false
     },
     {
-     "title": "Remove Field",
+     "title": "Delete Selected Fields",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit Field",
-    "Remove Field"
+    "Edit Selected Field",
+    "Delete Selected Fields"
    ],
    "columns": [
     "Name",
@@ -8389,17 +8544,17 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Add new rule",
-    "Edit selected rule",
-    "Copy selected rule",
-    "Disable/enable selected rule",
-    "Delete selected rule",
-    "Move selected rule up",
-    "Move selected rule down",
+    "New Rule",
+    "Edit Selected Rule",
+    "Duplicate Selected Rule",
+    "Enable or Disable Selected Rules",
+    "Delete Selected Rules",
+    "Move Rule Up",
+    "Move Rule Down",
     "New Field",
-    "Edit Field",
-    "Remove Field",
-    "Documentation help"
+    "Edit Selected Field",
+    "Delete Selected Fields",
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [
@@ -8407,7 +8562,7 @@
    ],
    "buttons": [
     {
-     "title": "Save all rules",
+     "title": "Save Rules",
      "enabled": false
     },
     {
@@ -8416,7 +8571,7 @@
     }
    ],
    "disabledAtRest": [
-    "Save all rules"
+    "Save Rules"
    ],
    "columns": []
   },
@@ -8434,48 +8589,48 @@
    ],
    "viaChildren": [
     "New Field",
-    "Edit Field",
-    "Remove Field"
+    "Edit Selected Field",
+    "Delete Selected Fields"
    ],
    "popupTypes": [],
    "resources": [],
    "buttons": [
     {
-     "title": "Add new rule",
+     "title": "New Rule",
      "enabled": true
     },
     {
-     "title": "Edit selected rule",
+     "title": "Edit Selected Rule",
      "enabled": false
     },
     {
-     "title": "Copy selected rule",
+     "title": "Duplicate Selected Rule",
      "enabled": false
     },
     {
-     "title": "Disable/enable selected rule",
+     "title": "Enable or Disable Selected Rules",
      "enabled": false
     },
     {
-     "title": "Delete selected rule",
+     "title": "Delete Selected Rules",
      "enabled": false
     },
     {
-     "title": "Move selected rule up",
+     "title": "Move Rule Up",
      "enabled": false
     },
     {
-     "title": "Move selected rule down",
+     "title": "Move Rule Down",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit selected rule",
-    "Copy selected rule",
-    "Disable/enable selected rule",
-    "Delete selected rule",
-    "Move selected rule up",
-    "Move selected rule down"
+    "Edit Selected Rule",
+    "Duplicate Selected Rule",
+    "Enable or Disable Selected Rules",
+    "Delete Selected Rules",
+    "Move Rule Up",
+    "Move Rule Down"
    ],
    "columns": []
   },
@@ -8551,16 +8706,16 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Add",
+     "title": "Add Script Dependency",
      "enabled": true
     },
     {
-     "title": "Remove",
+     "title": "Remove Selected Script Dependency",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Remove"
+    "Remove Selected Script Dependency"
    ],
    "columns": []
   },
@@ -8591,7 +8746,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -8621,8 +8776,8 @@
     "ScriptDependencyListPresenter"
    ],
    "viaChildren": [
-    "Add",
-    "Remove"
+    "Add Script Dependency",
+    "Remove Selected Script Dependency"
    ],
    "popupTypes": [],
    "resources": [],
@@ -8685,7 +8840,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -8733,7 +8888,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -8836,21 +8991,21 @@
    ],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Index Field",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Index Field",
      "enabled": false
     },
     {
-     "title": "Delete",
+     "title": "Delete Selected Index Field",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Delete"
+    "Edit Selected Index Field",
+    "Delete Selected Index Field"
    ],
    "columns": []
   },
@@ -8866,10 +9021,11 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Delete",
-    "Documentation help"
+    "New Index Field",
+    "Edit Selected Index Field",
+    "Delete Selected Expression Item",
+    "Delete Selected Index Field",
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -8901,9 +9057,9 @@
    ],
    "viaChildren": [
     "Add Operator",
-    "Copy",
-    "Disable",
-    "Delete",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item",
     "Add Term"
    ],
    "popupTypes": [],
@@ -8924,9 +9080,9 @@
     "ApiKeysPresenter"
    ],
    "viaChildren": [
-    "Add new API Key",
-    "Edit API Key",
-    "Delete API Key"
+    "New API Key",
+    "Edit Selected API Key",
+    "Delete Selected API Key"
    ],
    "popupTypes": [],
    "resources": [],
@@ -9040,7 +9196,7 @@
     "SigningKeyPresenter"
    ],
    "viaChildren": [
-    "Revoke the selected signing key",
+    "Revoke Selected Signing Key",
     "Clear"
    ],
    "popupTypes": [],
@@ -9064,8 +9220,8 @@
     "UserAccessPresenter"
    ],
    "viaChildren": [
-    "End this user's sessions and revoke their tokens",
-    "Open this user, where they can be disabled"
+    "End Sessions and Revoke Tokens for Selected User",
+    "Open Selected User (to disable them)"
    ],
    "popupTypes": [],
    "resources": [],
@@ -9135,8 +9291,8 @@
    ],
    "viaChildren": [
     "Create Group",
-    "Edit Group",
-    "Delete Group",
+    "Edit Selected Group",
+    "Delete Selected Group",
     "Add",
     "Remove"
    ],
@@ -9162,7 +9318,7 @@
    ],
    "viaChildren": [
     "Create User",
-    "Delete User"
+    "Delete Selected User"
    ],
    "popupTypes": [],
    "resources": [],
@@ -9218,21 +9374,21 @@
    ],
    "buttons": [
     {
-     "title": "Add new API Key",
+     "title": "New API Key",
      "enabled": true
     },
     {
-     "title": "Edit API Key",
+     "title": "Edit Selected API Key",
      "enabled": false
     },
     {
-     "title": "Delete API Key",
+     "title": "Delete Selected API Key",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit API Key",
-    "Delete API Key"
+    "Edit Selected API Key",
+    "Delete Selected API Key"
    ],
    "columns": []
   },
@@ -9621,7 +9777,7 @@
    ],
    "buttons": [
     {
-     "title": "Revoke the selected signing key",
+     "title": "Revoke Selected Signing Key",
      "enabled": false
     },
     {
@@ -9630,7 +9786,7 @@
     }
    ],
    "disabledAtRest": [
-    "Revoke the selected signing key",
+    "Revoke Selected Signing Key",
     "Clear"
    ],
    "columns": []
@@ -9665,7 +9821,7 @@
     "UserSessionsListPresenter"
    ],
    "viaChildren": [
-    "End this session"
+    "End Selected Session"
    ],
    "popupTypes": [],
    "resources": [
@@ -9673,17 +9829,17 @@
    ],
    "buttons": [
     {
-     "title": "End this user's sessions and revoke their tokens",
+     "title": "End Sessions and Revoke Tokens for Selected User",
      "enabled": false
     },
     {
-     "title": "Open this user, where they can be disabled",
+     "title": "Open Selected User (to disable them)",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "End this user's sessions and revoke their tokens",
-    "Open this user, where they can be disabled"
+    "End Sessions and Revoke Tokens for Selected User",
+    "Open Selected User (to disable them)"
    ],
    "columns": []
   },
@@ -9744,26 +9900,35 @@
      "enabled": true
     },
     {
-     "title": "Edit Group",
+     "title": "Edit Selected Group",
      "enabled": false
     },
     {
-     "title": "Delete Group",
+     "title": "Delete Selected Group",
      "enabled": false
     },
     {
-     "title": "Add",
+     "title": "Add to Group",
      "enabled": true
     },
     {
-     "title": "Remove",
+     "title": "Add Member to Group",
+     "enabled": true
+    },
+    {
+     "title": "Remove from Selected Group",
+     "enabled": false
+    },
+    {
+     "title": "Remove Selected Member From Group",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit Group",
-    "Delete Group",
-    "Remove"
+    "Edit Selected Group",
+    "Delete Selected Group",
+    "Remove from Selected Group",
+    "Remove Selected Member From Group"
    ],
    "columns": []
   },
@@ -9900,12 +10065,12 @@
    ],
    "buttons": [
     {
-     "title": "End this session",
+     "title": "End Selected Session",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "End this session"
+    "End Selected Session"
    ],
    "columns": [
     "Node"
@@ -9926,12 +10091,12 @@
     "UserAndGroupsPresenter"
    ],
    "viaChildren": [
-    "Add new API Key",
-    "Edit API Key",
-    "Delete API Key",
+    "New API Key",
+    "Edit Selected API Key",
+    "Delete Selected API Key",
     "Create Group",
-    "Edit Group",
-    "Delete Group",
+    "Edit Selected Group",
+    "Delete Selected Group",
     "Add",
     "Remove"
    ],
@@ -9964,12 +10129,12 @@
      "enabled": true
     },
     {
-     "title": "Delete User",
+     "title": "Delete Selected User",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Delete User"
+    "Delete Selected User"
    ],
    "columns": []
   },
@@ -9986,12 +10151,12 @@
    "resources": [],
    "buttons": [
     {
-     "title": "Copy API Key to clipboard",
+     "title": "Copy API Key to Clipboard",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Copy API Key to clipboard"
+    "Copy API Key to Clipboard"
    ],
    "columns": []
   },
@@ -10232,24 +10397,24 @@
    ],
    "buttons": [
     {
-     "title": "Delete",
+     "title": "Terminate Selected Tasks",
      "enabled": false
     },
     {
-     "title": "Expand All",
+     "title": "Expand All Tasks",
      "enabled": true
     },
     {
-     "title": "Collapse All",
+     "title": "Collapse All Tasks",
      "enabled": true
     },
     {
-     "title": "Show Warnings",
+     "title": "Show Task Warnings",
      "enabled": true
     }
    ],
    "disabledAtRest": [
-    "Delete"
+    "Terminate Selected Tasks"
    ],
    "columns": []
   },
@@ -10263,10 +10428,10 @@
     "TaskManagerListPresenter"
    ],
    "viaChildren": [
-    "Delete",
-    "Expand All",
-    "Collapse All",
-    "Show Warnings"
+    "Terminate Selected Tasks",
+    "Expand All Tasks",
+    "Collapse All Tasks",
+    "Show Task Warnings"
    ],
    "popupTypes": [],
    "resources": [],
@@ -10345,7 +10510,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -10377,9 +10542,9 @@
    ],
    "viaChildren": [
     "Add Operator",
-    "Copy",
-    "Disable",
-    "Delete",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
+    "Delete Selected Expression Item",
     "Add Term"
    ],
    "popupTypes": [],
@@ -10518,7 +10683,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -10591,7 +10756,7 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "Documentation help"
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [
@@ -10887,20 +11052,20 @@
    "resources": [],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Roll-up Permutation",
      "enabled": true
     },
     {
-     "title": "Auto-generate roll-up permutations",
+     "title": "Auto-generate Roll-up Permutations",
      "enabled": true
     },
     {
-     "title": "Remove",
+     "title": "Remove Selected Roll-up Permutation",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Remove"
+    "Remove Selected Roll-up Permutation"
    ],
    "columns": []
   },
@@ -10917,11 +11082,13 @@
     "MarkdownEditPresenter"
    ],
    "viaChildren": [
-    "New",
-    "Edit",
-    "Remove",
-    "Auto-generate roll-up permutations",
-    "Documentation help"
+    "New Roll-up Permutation",
+    "New Statistic Field",
+    "Edit Selected Statistic Field",
+    "Remove Selected Roll-up Permutation",
+    "Remove Selected Statistic Field",
+    "Auto-generate Roll-up Permutations",
+    "Help with Documentation"
    ],
    "popupTypes": [],
    "resources": [],
@@ -10978,29 +11145,29 @@
    "viaChildren": [
     "OK",
     "Cancel",
-    "New",
-    "Auto-generate roll-up permutations",
-    "Remove"
+    "New Roll-up Permutation",
+    "Auto-generate Roll-up Permutations",
+    "Remove Selected Roll-up Permutation"
    ],
    "popupTypes": [],
    "resources": [],
    "buttons": [
     {
-     "title": "New",
+     "title": "New Statistic Field",
      "enabled": true
     },
     {
-     "title": "Edit",
+     "title": "Edit Selected Statistic Field",
      "enabled": false
     },
     {
-     "title": "Remove",
+     "title": "Remove Selected Statistic Field",
      "enabled": false
     }
    ],
    "disabledAtRest": [
-    "Edit",
-    "Remove"
+    "Edit Selected Statistic Field",
+    "Remove Selected Statistic Field"
    ],
    "columns": [
     "Name"
@@ -11527,7 +11694,7 @@
     "OK",
     "Cancel",
     "Ctrl+Enter",
-    "Enable"
+    "Enable Selected Expression Item"
    ],
    "explained": 0
   },
@@ -11595,7 +11762,7 @@
     "Backward",
     "Forward",
     "Last",
-    "Show Tasks",
+    "Show Tasks for Selected Processor",
     "Edit Permissions For Selected User",
     "Refresh",
     "Created 1",
@@ -11603,7 +11770,7 @@
     "Feed",
     "Pipeline",
     "Filter Processors",
-    "Batch Edit Current Processors",
+    "Batch Edit Filtered Processors",
     "Priority",
     "Status",
     "Count",
@@ -11645,7 +11812,7 @@
     "Last",
     "Apply to Selection",
     "Apply to Filtered",
-    "Enable",
+    "Enable Selected Expression Item",
     "Refresh",
     "right-click a grid row",
     "type a row number in the pager"
@@ -11687,7 +11854,7 @@
     "Backward",
     "Last",
     "Forward",
-    "Show Tasks",
+    "Show Tasks for Selected Processor",
     "Edit Permissions For Selected User",
     "Refresh",
     "Created 1",
@@ -11695,7 +11862,7 @@
     "Feed",
     "Pipeline",
     "Filter Processors",
-    "Batch Edit Current Processors",
+    "Batch Edit Filtered Processors",
     "Priority",
     "Status",
     "Count",
@@ -11778,14 +11945,14 @@
    "extra": [
     "Save",
     "Edit Pipeline Element",
-    "Edit Property",
+    "Edit Selected Property",
     "First",
     "Backward",
     "Forward",
     "Last",
-    "New Reference",
-    "Edit Reference",
-    "Remove Reference",
+    "New Pipeline Reference",
+    "Edit Selected Pipeline Reference",
+    "Remove Selected Pipeline Reference",
     "Save As",
     "Enter Stepping Mode",
     "Add New Pipeline Element",
@@ -11832,7 +11999,7 @@
     "Choose Comment",
     "Delete Annotation",
     "Refresh",
-    "Edit",
+    "Edit Documentation",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
     "/",
@@ -11914,8 +12081,8 @@
     "Create Report",
     "Execute Query",
     "Refresh",
-    "Filter Values",
-    "Reset table customisation",
+    "Column Filters",
+    "Reset Table Customisation",
     "selector: .dataGridWidget tbody u[link]",
     "Time range to apply to all queries in this dashboard. The selected time range applies to the time field applicable to each query's data source.",
     "column: StreamId",
@@ -12031,12 +12198,12 @@
    "missing": [],
    "extra": [
     "Close",
-    "New path disabled as read only",
-    "Edit path disabled as read only",
-    "Remove path disabled as read only",
+    "New Path (read only)",
+    "Edit Selected Path (read only)",
+    "Delete Selected Path (read only)",
     "View Matching Traces",
-    "Edit Pathway",
-    "Remove Pathway",
+    "Edit Selected Pathway",
+    "Delete Selected Pathways",
     "First",
     "Backward",
     "Forward",
@@ -12048,7 +12215,8 @@
     "Create Time",
     "Update Time",
     "Last Used",
-    "Edit",
+    "Edit Selected Constraint",
+    "Edit Selected Path",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
     "/",
@@ -12155,7 +12323,7 @@
    "extra": [
     "Expand",
     "Collapse",
-    "Download",
+    "Download Results",
     "First",
     "Backward",
     "Forward",
@@ -12259,7 +12427,9 @@
    "seenCount": 34,
    "missing": [],
    "extra": [
-    "Enable",
+    "Enable Selected Expression Item",
+    "Enable Selected Formatting Rule",
+    "Enable Selected Selection Handler",
     "First",
     "Backward",
     "Forward",
@@ -12313,7 +12483,9 @@
    "seenCount": 19,
    "missing": [],
    "extra": [
-    "Enable",
+    "Enable Selected Expression Item",
+    "Enable Selected Formatting Rule",
+    "Enable Selected Selection Handler",
     "First",
     "Backward",
     "Forward",
@@ -12360,7 +12532,7 @@
     "Last",
     "Content Store - Click for help",
     "Content Pack name - Click for help",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -12552,20 +12724,20 @@
    "expected": 3,
    "seenCount": 17,
    "missing": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Index Field",
+    "Edit Selected Index Field",
+    "Delete Selected Index Fields"
    ],
    "extra": [
     "Save",
-    "Edit Field",
-    "Remove Field",
+    "Edit Selected Index Field",
+    "Delete Selected Index Fields",
     "First",
     "Backward",
     "Forward",
     "Last",
     "Save As",
-    "New Field",
+    "New Index Field",
     "Refresh",
     "Name 1",
     "Type",
@@ -12582,20 +12754,20 @@
    "expected": 3,
    "seenCount": 10,
    "missing": [
-    "New",
-    "Edit",
-    "Delete"
+    "New Index Field",
+    "Edit Selected Index Field",
+    "Delete Selected Index Field"
    ],
    "extra": [
     "Save",
-    "Edit Field",
-    "Remove Field",
+    "Edit Selected Index Field",
+    "Delete Selected Index Field",
     "First",
     "Backward",
     "Forward",
     "Last",
     "Save As",
-    "New Field",
+    "New Index Field",
     "Refresh"
    ],
    "explained": 0
@@ -12674,7 +12846,7 @@
     "column: StreamId",
     "column: EventTime",
     "column: UserId",
-    "Create Rule",
+    "Create Analytic Rule",
     "Create Report",
     "Execute Query",
     "Refresh",
@@ -12687,7 +12859,7 @@
     "right-click the editor",
     "Time range to apply to all queries in this dashboard. The selected time range applies to the time field applicable to each query's data source.",
     "typed in the editor \"Documentation\"",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -12871,11 +13043,11 @@
    "missing": [],
    "extra": [
     "Save",
-    "Revert changes",
+    "Revert Asset Changes",
     "Save As",
-    "Add file",
-    "Rename",
-    "View in browser"
+    "Add File or Folder",
+    "Rename Selected Asset",
+    "View Selected Asset in Browser"
    ],
    "explained": 0
   },
@@ -13121,12 +13293,12 @@
    "seenCount": 42,
    "missing": [],
    "extra": [
-    "Remove Period",
+    "Remove Selected Profile Period",
     "First",
     "Backward",
     "Forward",
     "Last",
-    "New Period",
+    "New Profile Period",
     "Active Days - Click for help",
     "Start Time - Click for help",
     "End Time - Click for help",
@@ -13135,7 +13307,7 @@
     "Limit Total Cluster Threads - Click for help",
     "Max Cluster Threads - Click for help",
     "Close",
-    "Edit Period",
+    "Edit Selected Profile Period",
     "Refresh",
     "Enter",
     "OK (illegal time in \"Start Time\")",
@@ -13175,10 +13347,11 @@
     "Forward",
     "Last",
     "Insert",
-    "Copy",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
     "Expand",
     "Collapse",
-    "Download",
+    "Download Results",
     "Not Updating",
     "Edit Notification",
     "Remove Notification",
@@ -13188,9 +13361,9 @@
     "Edit Permissions For Selected User",
     "Execute Query",
     "Refresh",
-    "Filter Values",
-    "Reset table customisation",
-    "Annotate",
+    "Column Filters",
+    "Reset Table Customisation",
+    "Annotate Selected Rows",
     "chose \"Low\" \"Level\"",
     "Level - Click for help",
     "Status - Click for help",
@@ -13216,7 +13389,7 @@
     "Suppress Duplicate Notifications - Click for help",
     "Choose Columns - Click for help",
     "Columns - Click for help",
-    "Edit",
+    "Edit Selected Formatting Rule",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13321,18 +13494,20 @@
    "seenCount": 47,
    "missing": [],
    "extra": [
-    "Copy",
+    "Duplicate Selected Expression Item",
+    "Duplicate Selected Formatting Rule",
+    "Duplicate Selected Selection Handler",
     "Expand",
     "Collapse",
-    "Download",
+    "Download Results",
     "First",
     "Backward",
     "Forward",
     "Last",
     "Not Updating",
     "Edit Permissions For Selected User",
-    "Enter Design Mode",
-    "Maximise",
+    "Design Mode",
+    "Maximise All Panes",
     "Execute Query",
     "Settings",
     "Add Term",
@@ -13343,8 +13518,10 @@
     "Process",
     "Add Column",
     "Show Column Filters",
-    "Annotate",
-    "Edit",
+    "Annotate Selected Rows",
+    "Edit Selected Activity",
+    "Edit Selected Formatting Rule",
+    "Edit Selected Selection Handler",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13358,7 +13535,9 @@
     "Duplicate",
     "Duplicate To...",
     "Remove",
-    "Disable",
+    "Disable Selected Expression Item",
+    "Disable Selected Formatting Rule",
+    "Disable Selected Selection Handler",
     "Select a row to step through its source",
     "typed in the editor \"Dashboard\"",
     "right-click an explorer row",
@@ -13374,20 +13553,20 @@
    "seenCount": 39,
    "missing": [],
    "extra": [
-    "Remove Import",
+    "Remove Imported Dictionary",
     "First",
     "Backward",
     "Forward",
     "Last",
     "Edit Permissions For Selected User",
     "Imports - Click for help",
-    "Add Import",
+    "Add Imported Dictionary",
     "Refresh",
     "Effective Words - Click for help",
     "Word",
     "Type",
     "Source Dictionary",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13423,7 +13602,7 @@
     "Backward",
     "Forward",
     "Last",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13472,7 +13651,7 @@
     "Data Schema - Click for help",
     "Data Schema Version - Click for help",
     "Volume Group - Click for help",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13534,7 +13713,7 @@
     "Backward",
     "Forward",
     "Last",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13572,7 +13751,7 @@
     "Embedding model dimensions - Click for help",
     "Set Http Client Config",
     "Test Model",
-    "Edit",
+    "Edit Documentation",
     "chose \"[ none ]\" \"API Key (optional)\"",
     "typed \"Model ID\"",
     "stepped the spinner \"Maximum context window tokens\"",
@@ -13676,7 +13855,7 @@
     "Effective Execution Time",
     "Status",
     "Message",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13715,7 +13894,7 @@
     "typed in the editor \"Conversion\"",
     "chose \"Data Splitter\" \"Converter Type\"",
     "typed in the editor \"Documentation\"",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13752,7 +13931,7 @@
     "Last",
     "typed in the editor \"XSLT\"",
     "typed in the editor \"Documentation\"",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13794,7 +13973,7 @@
     "mouseup on \"Scroll size\" spinner",
     "Test Connection",
     "Refresh",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13827,16 +14006,16 @@
    "seenCount": 41,
    "missing": [],
    "extra": [
-    "Edit Field",
-    "Remove Field",
+    "Edit Selected Index Field",
+    "Delete Selected Index Field",
     "First",
     "Backward",
     "Forward",
     "Last",
-    "Copy",
-    "Disable",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
     "Edit Permissions For Selected User",
-    "New Field",
+    "New Index Field",
     "Refresh",
     "typed \"Collection\"",
     "chose \"Solr Cloud\" \"Instance Type\"",
@@ -13873,9 +14052,9 @@
    "seenCount": 30,
    "missing": [],
    "extra": [
-    "Revert changes",
-    "Rename",
-    "View in browser",
+    "Revert Asset Changes",
+    "Rename Selected Asset",
+    "View Selected Asset in Browser",
     "Edit Permissions For Selected User",
     "First",
     "Backward",
@@ -13883,8 +14062,8 @@
     "Last",
     "typed \"Function Name\"",
     "typed in the editor \"Settings\"",
-    "Add file",
-    "Edit",
+    "Add File or Folder",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13916,12 +14095,12 @@
     "Backward",
     "Forward",
     "Last",
-    "Schema is valid",
+    "Show Validation Result (schema is valid)",
     "typed in the editor \"Text\"",
     "typed \"Namespace URI\"",
     "typed \"System Id\"",
     "typed \"Schema Group\"",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13948,20 +14127,20 @@
    "seenCount": 33,
    "missing": [],
    "extra": [
-    "Edit Field",
-    "Remove Field",
+    "Edit Selected Statistic Field",
+    "Remove Selected Statistic Field",
     "First",
     "Backward",
     "Forward",
     "Last",
-    "Remove roll-up permutation",
+    "Remove Selected Roll-up Permutation",
     "Edit Permissions For Selected User",
     "chose \"Value\" \"Statistic Type\"",
     "chose \"Second\" \"Precision\"",
     "chose \"None\" \"Roll Up Type\"",
-    "New Field",
+    "New Statistic Field",
     "Refresh",
-    "New roll-up permutation",
+    "New Roll-up Permutation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -13993,11 +14172,14 @@
     "Remove Pipeline Element",
     "Edit Pipeline Element",
     "Restore Pipeline Element",
-    "Edit Property",
-    "New Reference",
-    "Edit Reference",
-    "Remove Reference",
-    "Show Tasks",
+    "Edit Selected Property",
+    "New Feed Dependency",
+    "New Pipeline Reference",
+    "Edit Selected Feed Dependency",
+    "Edit Selected Pipeline Reference",
+    "Remove Selected Feed Dependency",
+    "Remove Selected Pipeline Reference",
+    "Show Tasks for Selected Processor",
     "Edit Permissions For Selected User",
     "Refresh",
     "Created 1",
@@ -14005,9 +14187,9 @@
     "Feed",
     "Pipeline",
     "right-click a pipeline element",
-    "Enter Stepping Mode",
+    "Stepping Mode",
     "Filter Processors",
-    "Batch Edit Current Processors",
+    "Batch Edit Filtered Processors",
     "Priority",
     "Status",
     "Count",
@@ -14016,7 +14198,6 @@
     "Start Time",
     "End Time",
     "typed in the editor \"Documentation\"",
-    "Edit",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -14054,7 +14235,7 @@
    "seenCount": 51,
    "missing": [],
    "extra": [
-    "Remove Reference",
+    "Remove Selected Feed Dependency",
     "First",
     "Backward",
     "Forward",
@@ -14070,11 +14251,11 @@
     "Limit Task Creation Delay - Click for help",
     "Max Task Creation Delay - Click for help",
     "Set Feed Dependencies",
-    "New Reference",
+    "New Feed Dependency",
     "Feed - Click for help",
     "Type - Click for help",
     "Close",
-    "Edit Reference",
+    "Edit Selected Feed Dependency",
     "Refresh",
     "Enable Minimum Processing Delay - Click for help",
     "Minimum Processing Delay - Click for help",
@@ -14137,7 +14318,7 @@
     "State Value Type - Click for help",
     "typed in the editor \"Documentation\"",
     "right-click the editor",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -14178,7 +14359,7 @@
    "seenCount": 26,
    "missing": [],
    "extra": [
-    "Remove Dependency",
+    "Remove Selected Script Dependency",
     "First",
     "Backward",
     "Forward",
@@ -14187,9 +14368,9 @@
     "typed in the editor \"Script\"",
     "right-click the editor",
     "Dependencies - Click for help",
-    "Add Dependency",
+    "Add Script Dependency",
     "Refresh",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -14210,8 +14391,8 @@
    "seenCount": 21,
    "missing": [],
    "extra": [
-    "Copy",
-    "Disable",
+    "Duplicate Selected Expression Item",
+    "Disable Selected Expression Item",
     "Edit Permissions For Selected User",
     "First",
     "Backward",
@@ -14223,7 +14404,7 @@
     "Meta Filter - Click for help",
     "Add Term",
     "Add Operator",
-    "Edit",
+    "Edit Documentation",
     "chose \"Example Dynamic Index\" \"Data Source\"",
     "OK",
     "Cancel",
@@ -14284,7 +14465,7 @@
     "Effective Execution Time",
     "Status",
     "Message",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -14325,7 +14506,7 @@
     "Last",
     "typed in the editor \"Config\"",
     "right-click the editor",
-    "Edit",
+    "Edit Documentation",
     "chose \"Show Effective\" \"Permission Visibility\"",
     "Permission Visibility - Click for help",
     "Users and Groups - Click for help",
@@ -14354,13 +14535,13 @@
    "seenCount": 72,
    "missing": [],
    "extra": [
-    "Delete Selected Shards",
+    "Delete Selected Index Shards",
     "First",
     "Backward",
     "Forward",
     "Last",
-    "Edit Field",
-    "Remove Field",
+    "Edit Selected Index Field",
+    "Delete Selected Index Fields",
     "Edit Permissions For Selected User",
     "Refresh",
     "Node",
@@ -14369,7 +14550,7 @@
     "Doc Count",
     "File Size",
     "Last Commit",
-    "New Field",
+    "New Index Field",
     "Name 1",
     "Type",
     "Store",
@@ -14597,8 +14778,8 @@
     "Forward",
     "Last",
     "Refresh",
-    "Click to show only enabled jobs",
-    "Turn Auto Refresh On",
+    "Show Only Enabled Jobs",
+    "Auto Refresh",
     "Enabled",
     "Node"
    ],
@@ -14709,7 +14890,7 @@
    "seenCount": 14,
    "missing": [],
    "extra": [
-    "Select one or more rules with the same enabled state to enable/disable them.",
+    "Enable or Disable Selected Rules",
     "First",
     "Backward",
     "Forward",
@@ -14731,7 +14912,7 @@
     "Edit Permissions For Selected Document",
     "First",
     "Backward",
-    "Filter Documents To Apply Permissions Changes On",
+    "Filter Documents to Apply Permission Changes To",
     "Batch Edit Permissions For Filtered Documents",
     "Forward",
     "Last",
@@ -14760,9 +14941,9 @@
     "Backward",
     "Forward",
     "Last",
-    "Turn Auto Refresh Off",
-    "Terminate Task",
-    "Toggle wrapping of Info column",
+    "Auto Refresh",
+    "Terminate Selected Tasks",
+    "Wrap Text",
     "Refresh",
     "Node",
     "Name",

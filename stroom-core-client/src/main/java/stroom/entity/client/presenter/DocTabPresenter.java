@@ -281,7 +281,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         // Set on every read, so a document read again as editable gets its plain name back
         if (saveButton != null) {
             saveButton.setTitle(readOnly
-                    ? "Save is not available as this document is read only"
+                    ? "Save (read only)"
                     : "Save");
         }
         setReadOnlyStatus(readOnly);

@@ -95,7 +95,7 @@ public final class DataRetentionScreenStories {
 
     // The Impact Summary's toolbar buttons
     private static final String RUN_QUERY = "Run Query";
-    private static final String ABORT_QUERY = "Abort Query";
+    private static final String STOP_QUERY = "Stop Query";
     private static final String SET_FILTER = "Set Query Filter";
 
     // The expression panel has no class of its own; it is the expression tree's
@@ -131,7 +131,7 @@ public final class DataRetentionScreenStories {
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Keep a month");
                     // Save -> PUT the rules (the retain-all rule excluded) with the renamed rule
-                    final Query save = play.getByTitle("Save rules");
+                    final Query save = play.getByTitle("Save Rules");
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -195,31 +195,31 @@ public final class DataRetentionScreenStories {
                     play.click(play.getByTitle(RUN_QUERY));
                     // GWT's nested view (its default) shows the feeds once
                     // expanded; the rules start expanded down to their types
-                    play.click(play.findByTitle("Expand all"));
+                    play.click(play.findByTitle("Expand All Results"));
                     play.findByText("TEST_FEED");
                     play.expect(play.getByText("42")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
-                // A query in flight disables Run/Filter and enables Abort, which cancels it by queryId
+                // A query in flight disables Run/Filter and enables Stop, which cancels it by queryId
                 .story("ImpactAbort", context -> render(context, ABORT_FIXTURES))
                 .withPlay(play -> {
                     openImpactSummary(play);
-                    // Idle: Run enabled, Abort disabled
-                    play.expect(play.getByTitle(ABORT_QUERY)).toHaveAttribute("aria-disabled", "true");
+                    // Idle: Run enabled, Stop disabled
+                    play.expect(play.getByTitle(STOP_QUERY)).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByTitle(RUN_QUERY)).not().toHaveAttribute("aria-disabled");
                     // In flight: the gating inverts (updateButtonStates)
                     play.click(play.getByTitle(RUN_QUERY));
-                    play.waitFor(() -> play.expect(play.getByTitle(ABORT_QUERY))
+                    play.waitFor(() -> play.expect(play.getByTitle(STOP_QUERY))
                             .not().toHaveAttribute("aria-disabled"));
                     play.expect(play.getByTitle(RUN_QUERY)).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByTitle(SET_FILTER)).toHaveAttribute("aria-disabled", "true");
-                    // Abort cancels the same queryId the run was issued with
-                    play.click(play.getByTitle(ABORT_QUERY));
+                    // Stop cancels the same queryId the run was issued with
+                    play.click(play.getByTitle(STOP_QUERY));
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("the query ids run and cancelled",
                                     () -> runAndCancelledIds(requests))
                             .toSatisfy("one run, cancelled by its id", DataRetentionScreenStories::isCancelledRun));
-                    play.waitFor(() -> play.expect(play.getByTitle(ABORT_QUERY))
+                    play.waitFor(() -> play.expect(play.getByTitle(STOP_QUERY))
                             .toHaveAttribute("aria-disabled", "true"));
                     play.expect(play.getByTitle(RUN_QUERY)).not().toHaveAttribute("aria-disabled");
                     // The aborted run's late response must not fill the cleared table
@@ -233,7 +233,7 @@ public final class DataRetentionScreenStories {
                     openImpactSummary(play);
                     play.click(play.getByTitle(RUN_QUERY));
                     // GWT's default nested view shows the feeds once expanded
-                    play.click(play.findByTitle("Expand all"));
+                    play.click(play.findByTitle("Expand All Results"));
                     play.findByText("LONG_FEED");
                     // Ascending by Rule Age -> 30 Days (rule 1) before 5 Years (rule 2)
                     final Query rows = play.querySelector("tbody");
@@ -264,8 +264,8 @@ public final class DataRetentionScreenStories {
                     // row is 'Keep 5 years' (an active rule nothing is deleted by)
                     play.expect(play.queryByText("Default Retain All Forever Rule")).toBeNull();
                     play.expect(play.getByText("Keep 5 years")).toBeInTheDocument();
-                    // Expand all -> the feed rows show
-                    play.click(play.getByTitle("Expand all"));
+                    // Expand All Results -> the feed rows show
+                    play.click(play.getByTitle("Expand All Results"));
                     play.findByText("TEST_FEED");
                     play.expect(play.getByText("OTHER_FEED")).toBeInTheDocument();
                     expectNoProblems(play);
@@ -285,7 +285,7 @@ public final class DataRetentionScreenStories {
                                     .withJsonBodyContaining(
                                             "{\"criteria\": {\"expression\": {\"type\": \"operator\"}}}")
                                     .toSpyMatcher()));
-                    play.click(play.findByTitle("Expand all"));
+                    play.click(play.findByTitle("Expand All Results"));
                     play.findByText("TEST_FEED");
                     play.expect(play.queryByTitle("Clear Filter")).toBeNull();
                     expectNoProblems(play);

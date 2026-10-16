@@ -219,20 +219,21 @@ public class QueryResultTablePresenter
 
         // Download
         pagerView.getToolbar().setName("Table actions");
-        downloadButton = pagerView.getToolbar().button(SvgImage.DOWNLOAD, "Download", this::onDownload);
+        downloadButton = pagerView.getToolbar().button(SvgImage.DOWNLOAD, "Download Results", this::onDownload);
         downloadButton.setEnabled(false);
         downloadButton.setVisible(securityContext.hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Filter values
-        valueFilterButton = pagerView.getToolbar().toggle(SvgImage.FILTER, "Filter Values",
+        valueFilterButton = pagerView.getToolbar().toggle(SvgImage.FILTER, "Column Filters",
                 pressed -> toggleShowValueFilters());
 
         // Reset button
-        resetButton = pagerView.getToolbar().button(SvgImage.UNDO, "Reset table customisation",
+        resetButton = pagerView.getToolbar().button(SvgImage.UNDO, "Reset Table Customisation",
                 this::resetTableCustomisation);
 
         // Annotate
-        annotateButton = pagerView.getToolbar().button(SvgImage.EDIT, "Annotate", this::showAnnotationMenu);
+        annotateButton = pagerView.getToolbar().button(SvgImage.EDIT, "Annotate Selected Rows",
+                this::showAnnotationMenu);
         annotateButton.setVisible(annotationManager.isEnabled());
 
         // Ask AI

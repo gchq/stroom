@@ -97,7 +97,7 @@ public class QuickFilter extends FlowPanel
         clearButton = toolbar.button(SvgImage.TAB_CLOSE, "Clear Filter", this::onClear);
         // Between clear and help: clear and the drop-down both act on the text, like a combo
         // box, and help stays outermost as it is on every screen. Hidden until a handler is set.
-        dropDownButton = toolbar.button(SvgImage.DROP_DOWN, "Recent Filters", this::showRecentFilters);
+        dropDownButton = toolbar.button(SvgImage.DROP_DOWN, "Show Recent Filters", this::showRecentFilters);
         dropDownButton.setVisible(false);
         helpButton = toolbar.button(SvgImage.HELP_OUTLINE, "Quick Filter Syntax Help", this::showHelpPopup);
 

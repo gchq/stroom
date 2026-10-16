@@ -82,7 +82,7 @@ public final class DataReceiptRulesScreenStories {
             + ",\"maxApiKeyExpiryAgeMs\":31536000000,\"obfuscatedFields\":[\"Feed\"]"
             + ",\"receiptCheckMode\":\"FEED_STATUS\",\"lastAnnotationChangeTime\":0}";
 
-    private static final String SAVE = "Save all rules";
+    private static final String SAVE = "Save Rules";
     // The expression panel has no class of its own; it is the expression tree's
     // view (ExpressionTreeViewImpl)
     private static final String EXPRESSION_PANEL = ".ExpressionTreeViewImpl-layoutPanel";
@@ -102,7 +102,7 @@ public final class DataReceiptRulesScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.click(play.findByText("Reject test feeds"));
-                    play.click(play.getByTitle("Edit selected rule"));
+                    play.click(play.getByTitle("Edit Selected Rule"));
                     final Play dialog = dialog(screen, "Edit Rule");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.getByText(
@@ -141,7 +141,7 @@ public final class DataReceiptRulesScreenStories {
                     play.expect("a heading whose tool tip is its label", () -> headingEchoingItself(headerRow))
                             .toBe(false);
                     // Add a rule -> "Edit Rule" dialog (GWT's caption for an add too) -> name -> OK
-                    play.click(play.getByTitle("Add new rule"));
+                    play.click(play.getByTitle("New Rule"));
                     final Play dialog = dialog(screen, "Edit Rule");
                     // The field's id is its FormGroup's identity
                     play.type(dialog.querySelector("#ruleRuleName"), "Drop everything else");

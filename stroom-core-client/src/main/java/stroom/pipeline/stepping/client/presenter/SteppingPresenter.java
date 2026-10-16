@@ -111,6 +111,7 @@ public class SteppingPresenter
         implements HasChangeHandlers, ClassificationUiHandlers {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
+    private static final String LOG_PANE_TITLE = "Log Pane";
 
     private final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
     private final PipelineTreePresenter pipelineTreePresenter;
@@ -199,7 +200,7 @@ public class SteppingPresenter
         stepLocationLinkPresenter.setEnabled(false);
 
         leftButtons = new Toolbar("Log pane");
-        toggleLogPaneButton = leftButtons.toggle(SvgImage.EXCLAMATION, "Toggle Log Pane", this::onToggleLogPane);
+        toggleLogPaneButton = leftButtons.toggle(SvgImage.EXCLAMATION, LOG_PANE_TITLE, this::onToggleLogPane);
         toggleLogPaneButton.setOn();
 
         sourcePresenter.setClassificationUiHandlers(this);
@@ -213,7 +214,7 @@ public class SteppingPresenter
         getView().addWidgetLeft(stepToolbar);
 
         steppingMetaListPresenter.getToolbar().setName("Stream actions");
-        streamListFilter = steppingMetaListPresenter.getToolbar().button(SvgImage.FILTER, "Filter",
+        streamListFilter = steppingMetaListPresenter.getToolbar().button(SvgImage.FILTER, "Filter Streams",
                 this::onStreamListFilter);
 
         sourcePresenter.getView().setMetaListContainerView(steppingMetaListPresenter.getWidget());
@@ -653,7 +654,7 @@ public class SteppingPresenter
             } else {
                 type = "Message";
             }
-            final String msg = "Toggle Log Pane ("
+            final String msg = LOG_PANE_TITLE + " ("
                                + count + " " + type + plural + ")";
             toggleLogPaneButton.setTitle(msg);
         }

@@ -102,7 +102,7 @@ public final class IndexVolumesScreenStories {
                     groupDialog.findByText("/vol1");
                     groupDialog.findByText("Active");
                     // New volume → "Add Volume" → set the path → OK (validated, then created)
-                    play.click(groupDialog.getByTitle("New"));
+                    play.click(groupDialog.getByTitle("New Index Volume"));
                     final Play volumeDialog = screen.within(screen.findByText("Add Volume").closest(StroomDom.DIALOG));
                     play.type(volumeDialog.getByLabelText("Path"), "/newvol");
                     play.click(volumeDialog.getByRole("button", StroomDom.button("OK")));
@@ -120,7 +120,7 @@ public final class IndexVolumesScreenStories {
                     play.dblClick(play.findByText("Default"));
                     final Play groupDialog = screen.within(screen.findByText(EDIT_GROUP).closest(StroomDom.DIALOG));
                     groupDialog.findByText("/vol1");
-                    play.click(groupDialog.getByTitle("New"));
+                    play.click(groupDialog.getByTitle("New Index Volume"));
                     final Play volumeDialog = screen.within(screen.findByText("Add Volume").closest(StroomDom.DIALOG));
                     play.type(volumeDialog.getByLabelText("Path"), "/newvol");
                     play.click(volumeDialog.getByRole("button", StroomDom.button("OK")));

@@ -106,19 +106,19 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         expressionPresenter.setSelectionModel(null);
 
         listPresenter.getToolbar().setName("Retention rule actions");
-        saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save rules", this::onSave);
+        saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save Rules", this::onSave);
         saveButton.setEnabled(false);
-        addButton = listPresenter.getToolbar().button(SvgImage.ADD_ABOVE, "Add new rule above the selected one",
+        addButton = listPresenter.getToolbar().button(SvgImage.ADD_ABOVE, "Add Rule Above",
                 this::onAdd);
-        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit rule", this::onEdit);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Rule", this::onEdit);
         editButton.setEnabled(false);
-        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Copy rule", this::onCopy);
+        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Duplicate Selected Rule", this::onCopy);
         copyButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete rule", this::onDelete);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Rule", this::onDelete);
         deleteButton.setEnabled(false);
-        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move rule up", this::onMoveUp);
+        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move Rule Up", this::onMoveUp);
         moveUpButton.setEnabled(false);
-        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move rule down", this::onMoveDown);
+        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Rule Down", this::onMoveDown);
         moveDownButton.setEnabled(false);
 
         listPresenter.getView()

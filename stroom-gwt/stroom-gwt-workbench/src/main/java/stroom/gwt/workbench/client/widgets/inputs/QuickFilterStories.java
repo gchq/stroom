@@ -138,7 +138,7 @@ public final class QuickFilterStories {
                 .story("RecentFilters", context -> withContext(context, quickFilter(context)))
                 .withPlay(play -> {
                     final Query textBox = play.querySelector(".quickFilter-textBox");
-                    play.click(play.getByTitle("Recent Filters"));
+                    play.click(play.getByTitle("Show Recent Filters"));
                     play.expect(play.spy(ON_SHOW_RECENT_FILTERS)).toHaveBeenCalledTimes(1);
                     play.expect(textBox).toHaveValue(RECENT_FILTER);
                     play.expect(play.spy(InputWidgets.ON_CHANGE)).toHaveBeenCalledWith(RECENT_FILTER);
@@ -202,7 +202,7 @@ public final class QuickFilterStories {
                     return widget;
                 })
                 .withPlay(play -> {
-                    final Query recentFilters = play.getByTitle("Recent Filters");
+                    final Query recentFilters = play.getByTitle("Show Recent Filters");
                     play.expect(recentFilters).toHaveAttribute("aria-disabled", "true");
                     play.click(recentFilters);
                     play.expect(play.spy(ON_SHOW_RECENT_FILTERS)).not().toHaveBeenCalled();

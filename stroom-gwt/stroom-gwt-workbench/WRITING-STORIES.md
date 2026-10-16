@@ -404,7 +404,7 @@ that bypassed `RestFactory` would reach neither the network nor another harness'
   and confirmations (`ConfirmEvent`) by `CONFIRM_SPY`. They are not shown, and a confirmation is
   never answered, unless the harness is built with `realAlerts()`, which shows Stroom's real alert
   dialog (`AlertPlugin`/`CommonAlertPresenter`). Use it for a story that answers a confirmation
-  (e.g. 'Run Now', 'Remove Import', terminating a task) or closes an alert: alerts are shown in a
+  (e.g. 'Run Now', 'Remove Imported Dictionary', terminating a task) or closes an alert: alerts are shown in a
   `CLOSE_DIALOG` (caption 'Alert', closed with its 'Close' button); confirmations have OK and
   Cancel.
 * `RestReply.delayed(millis)` shows a screen loading; a pending reply is cancelled on re-render.

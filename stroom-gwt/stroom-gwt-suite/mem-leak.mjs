@@ -117,7 +117,7 @@ const show = (r) => {
 };
 
 async function expandExplorer() {
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand', budget: 5_000 }).catch(() => {});
 }
 

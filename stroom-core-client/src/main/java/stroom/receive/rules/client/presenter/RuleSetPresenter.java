@@ -122,7 +122,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         this.hasSaveRegistry = hasSaveRegistry;
         hasSaveRegistry.register(this);
         toolbar = new Toolbar("Document actions");
-        saveButton = toolbar.button(SvgImage.SAVE, "Save all rules", this::save);
+        saveButton = toolbar.button(SvgImage.SAVE, "Save Rules", this::save);
         saveButton.setEnabled(false);
         uiConfigCache.get(extendedUiConfig -> {
             addWarningButton(extendedUiConfig.getReceiptCheckMode());

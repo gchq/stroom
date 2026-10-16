@@ -186,8 +186,8 @@ public final class DashboardComponentStories {
                     DashboardPlays.opened(play);
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Download")).toBeEnabled());
-                    play.click(play.getByRole("button", "Download"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Download Table Results")).toBeEnabled());
+                    play.click(play.getByRole("button", "Download Table Results"));
                     final Play dialog = DashboardPlays.dialog(screen, "Download Options");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     // Stroom opens the resource with the location manager, recorded by the download
@@ -299,15 +299,18 @@ public final class DashboardComponentStories {
                     final Play settings = DashboardPlays.dialog(screen, "Settings");
                     // The selection query's handlers are a tab of the settings
                     play.click(settings.getByText("Selection Query", StroomDom.LINK_TAB_LABEL));
-                    // The grid's Enabled column has no header text, and the toolbar's buttons have
-                    // Stroom's plain titles (Add, Edit, Copy, Delete, Enable, Up, Down)
+                    // The grid's Enabled column has no header text, and the toolbar's buttons are
+                    // SelectionHandlersPresenter's, each named for what it acts on
                     play.waitFor(() -> play.expect(settings.getByText("Expression", "th")).toBeInTheDocument());
                     play.expect(settings.querySelectorAll("th")).toHaveLength(2);
-                    for (final String title : List.of("Add", "Edit", "Copy", "Delete", "Up", "Down")) {
+                    for (final String title : List.of("New Selection Handler", "Edit Selected Selection Handler",
+                            "Duplicate Selected Selection Handler", "Delete Selected Selection Handler",
+                            "Move Selection Handler Up", "Move Selection Handler Down")) {
                         play.expect(settings.getAllByTitle(title).count()).toBeGreaterThan(0);
                     }
-                    play.expect(settings.getAllByTitle("Edit").nth(0)).toHaveAttribute("aria-disabled", "true");
-                    play.click(settings.getAllByTitle("Add").nth(0));
+                    play.expect(settings.getAllByTitle("Edit Selected Selection Handler").nth(0))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.click(settings.getAllByTitle("New Selection Handler").nth(0));
                     // The caption is 'Add New Selection Handler'
                     play.expect(screen.findByText("Add New Selection Handler", StroomDom.DIALOG_TITLE))
                             .toBeInTheDocument();
@@ -339,7 +342,7 @@ public final class DashboardComponentStories {
                     final Play settings = DashboardPlays.dialog(screen, "Settings");
                     // The rules are a tab of the settings dialog, not a dialog of their own
                     play.click(settings.getByText("Conditional Formatting", StroomDom.LINK_TAB_LABEL));
-                    play.waitFor(() -> play.expect(settings.getByTitle("Add")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(settings.getByTitle("New Formatting Rule")).toBeInTheDocument());
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A visualisation's settings show the controls its settings define
@@ -454,15 +457,16 @@ public final class DashboardComponentStories {
                     // (one tab stop); the stepping button (a
                     // FabButton) is one tab stop (it was once two: its outer element and its button)
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
-                            "Save, Save As, Enter Design Mode, Maximise: 1 tab stop",
+                            "Save, Save As, Design Mode, Maximise All Panes: 1 tab stop",
                             "Execute Query: 1 tab stop",
-                            "Settings: 1 tab stop",
-                            "Settings: 1 tab stop",
-                            "Settings: 1 tab stop",
-                            "Add Term, Add Operator, Copy, Disable, Delete, History, Favourites, "
-                            + "Download Query: 1 tab stop",
+                            "Tab Actions: 1 tab stop",
+                            "Tab Actions: 1 tab stop",
+                            "Tab Actions: 1 tab stop",
+                            "Add Term, Add Operator, Duplicate Selected Expression Item, "
+                            + "Disable Selected Expression Item, Delete Selected Expression Item, "
+                            + "Show Query History, Show Favourite Queries, Download Query: 1 tab stop",
                             "Execute Query: 1 tab stop",
-                            "Add Column, Expand, Collapse, Download, Show Column Filters, "
+                            "Add Column, Expand Groups, Collapse Groups, Download Table Results, Column Filters, "
                             + "Ask Stroom AI: 1 tab stop",
                             "First, Backward, Forward, Last, Not Updating: 1 tab stop",
                             "Enter Stepping Mode: 1 tab stop"));
@@ -510,15 +514,15 @@ public final class DashboardComponentStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     DashboardPlays.opened(play);
-                    // The Query's toolbar button is titled 'History'
-                    play.click(play.getByRole("button", "History"));
+                    // The Query's toolbar button is titled 'Show Query History'
+                    play.click(play.getByRole("button", "Show Query History"));
                     final Play history = DashboardPlays.dialog(screen, "Query History");
                     // The first query is selected as the dialog opens, so clicking it again chooses it
                     play.click(history.findByText(TextMatch.containing("Name = alpha"), ".queryCell-expression"));
                     play.waitFor(() -> play.expect(screen.queryByText("Query History", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.waitFor(() -> play.expect(play.getByText("Name = alpha")).toBeInTheDocument());
-                    play.click(play.getByRole("button", "Favourites"));
+                    play.click(play.getByRole("button", "Show Favourite Queries"));
                     final Play favourites = DashboardPlays.dialog(screen, "Query Favourites");
                     // A favourite is named in a dialog of its own
                     play.click(favourites.getByTitle("Create Favourite From Current Query"));

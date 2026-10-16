@@ -172,7 +172,7 @@ public final class DictionaryEditorStories {
                 // Read only (no EDIT permission): DocTabPresenter.onRead retitles the Save button
                 .story("ReadOnly", context -> render(context, true))
                 .withPlay(play -> {
-                    play.findByRole("button", "Save is not available as this document is read only");
+                    play.findByRole("button", "Save (read only)");
                     // Save As stays available even read only, so the document can still be copied
                     play.expect(play.getByRole("button", "Save As")).not().toHaveAttribute("aria-disabled");
                     // The Words editor is read only
@@ -220,20 +220,20 @@ public final class DictionaryEditorStories {
                             .querySelector(StroomDom.COMMAND_LINK_OPEN));
                     play.waitFor(() -> play.expect(play.spy(OPEN_DOC)).toHaveBeenCalledWith("dict-cities"));
                     // Remove is enabled (a row is selected by default) and confirms first
-                    play.click(play.getByRole("button", "Remove Import"));
+                    play.click(play.getByRole("button", "Remove Imported Dictionary"));
                     play.click(screen.findByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(grid.queryByText("Cities")).toBeNull());
                     expectNoProblems(play);
                 })
-                // Add Import is a toolbar button of the imports list, which opens the chooser
+                // Add Imported Dictionary is a toolbar button of the imports list, which opens the chooser
                 // captioned 'Import a dictionary'
                 .story("AddImportFromToolbar", context -> render(context, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(tab(play, "Imports")).toBeInTheDocument());
                     play.click(tab(play, "Imports"));
-                    // Imports are added with the 'Add Import' button
-                    play.click(play.getByRole("button", "Add Import"));
+                    // Imports are added with the 'Add Imported Dictionary' button
+                    play.click(play.getByRole("button", "Add Imported Dictionary"));
                     // Stroom's dialogs have no role="dialog", so the caption is found as the
                     // dialog's title text
                     play.expect(screen.findByText("Import a dictionary", StroomDom.DIALOG_TITLE)).toBeInTheDocument();

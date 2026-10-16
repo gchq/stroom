@@ -88,10 +88,12 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
 
         view.setDataGridView(pagerView);
         pagerView.getToolbar().setName("Field actions");
-        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New", this::onNew);
-        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit", this::onEditClicked);
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New Index Field", this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit Selected Index Field",
+                this::onEditClicked);
         editButton.setEnabled(false);
-        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete", this::onRemoveClicked);
+        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete Selected Index Field",
+                this::onRemoveClicked);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -142,15 +144,12 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
             removeButton.setEnabled(false);
         }
 
-        if (isReadOnly()) {
-            newButton.setTitle("New field disabled as index is read only");
-            editButton.setTitle("Edit field disabled as index is read only");
-            removeButton.setTitle("Remove field disabled as index is read only");
-        } else {
-            newButton.setTitle("New Field");
-            editButton.setTitle("Edit Field");
-            removeButton.setTitle("Remove Field");
-        }
+        final String reason = isReadOnly()
+                ? " (index is read only)"
+                : "";
+        newButton.setTitle("New Index Field" + reason);
+        editButton.setTitle("Edit Selected Index Field" + reason);
+        removeButton.setTitle("Delete Selected Index Field" + reason);
     }
 
     private void addColumns() {
