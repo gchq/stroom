@@ -159,6 +159,23 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void theWorkingLineShowsTheModelsFirstLineWithoutMarkdown() {
+        assertThat(McpAgentChat.firstPlainLine("""
+                **Records to translate as Unknown events**
+
+                - 1942 of the 1942 sample records""")).isEqualTo("Records to translate as Unknown events");
+        assertThat(McpAgentChat.firstPlainLine("\n## Check the `ACME` feed's [pipeline](?action=open-doc)"))
+                .isEqualTo("Check the ACME feed's pipeline");
+        assertThat(McpAgentChat.firstPlainLine("- *Then* look at _stream_ 7 ~~now~~"))
+                .isEqualTo("Then look at stream 7 now");
+        // Not emphasis: kept as written.
+        assertThat(McpAgentChat.firstPlainLine("2 * 3 = 6, see file_name_here"))
+                .isEqualTo("2 * 3 = 6, see file_name_here");
+        assertThat(McpAgentChat.firstPlainLine(" \n**\n")).isNull();
+        assertThat(McpAgentChat.firstPlainLine(null)).isNull();
+    }
+
+    @Test
     void unavailableServersAreMentionedToTheModel() {
         final List<ChatMessage> conversation = McpAgentChat.withUnavailableServersNote(messages,
                 List.of("MCP tool server 'elastic' could not be reached"));
