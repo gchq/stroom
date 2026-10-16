@@ -165,7 +165,7 @@ class TestToolConsent {
         assertThat(decide("s__t", true).kind()).isEqualTo(Kind.RUN);
 
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                true, null);
+                true, null, null);
         final Verdict verdict = decide("s__t", false);
         assertThat(verdict.kind()).isEqualTo(Kind.ASK);
         assertThat(verdict.reason()).isEqualTo(ToolConsent.DATA_WAS_READ_REASON);
@@ -182,7 +182,7 @@ class TestToolConsent {
     @Test
     void testAfterDataIsReadOnlyApprovalsOfTheToolItselfCount() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                true, null);
+                true, null, null);
         Mockito.when(runManager.isTainted(1)).thenReturn(true);
         tool(info(true, true, null, null, null));
 
@@ -205,7 +205,7 @@ class TestToolConsent {
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
 
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null, null, null,
-                null, null);
+                null, null, null);
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.RUN);
         // Never untrusted, destructive or open-world tools (S4).
         tool(info(false, false, null, null, null));
@@ -219,7 +219,7 @@ class TestToolConsent {
     @Test
     void testWhileTheUserIsAwayOnlyTrustedReadOnlyToolsRun() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, true, null, null, null,
-                null, null);
+                null, null, null);
         Mockito.when(aiDao.isApproveEverything(1)).thenReturn(true);
         Mockito.when(approvalDao.find(1, "s", "t"))
                 .thenReturn(Optional.of(new Approval(9, "s", "t", "hash", AiToolApprovalDecision.ALLOW)));

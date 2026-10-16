@@ -654,6 +654,11 @@ public class AiServiceImpl implements AiService {
         aiDao.updateMessageText(messageId, message);
     }
 
+    @Override
+    public void askAsQuestion(final int messageId, final String question) {
+        aiDao.askAsQuestion(messageId, question);
+    }
+
     // No ownership check — internal-only, called from background processing.
     @Override
     public void deleteMessage(final int messageId) {

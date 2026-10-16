@@ -814,6 +814,36 @@
 
 /* ---- Commands suggested as the user types "/" ---- */
 
+/* Things the user might ask next, offered above the input after an answer. */
+.askStroomAiViewImpl-followUps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 0 6px;
+}
+
+.askStroomAiViewImpl-followUp {
+    max-width: 100%;
+    padding: 3px 10px;
+    border: 1px solid var(--splitter__background-color);
+    border-radius: 12px;
+    background: var(--page__background-color);
+    color: var(--link__text-color);
+    font: inherit;
+    font-size: var(--ai-font-size--small);
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.askStroomAiViewImpl-followUp:hover,
+.askStroomAiViewImpl-followUp:focus-visible {
+    background: var(--curve-tab__background-color--hover);
+    text-decoration: underline;
+}
+
 .askStroomAiViewImpl-commands {
     display: flex;
     flex-direction: column;

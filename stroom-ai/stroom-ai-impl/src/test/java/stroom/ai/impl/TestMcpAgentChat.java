@@ -322,7 +322,7 @@ class TestMcpAgentChat {
         final McpToolset toolset = toolset(client, namedTool("pipeline_create"), namedTool("pipeline_step"),
                 namedTool("index_create"), namedTool("index_status"));
         final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, 2,
-                null, null, null, null);
+                null, null, null, null, null);
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService),
                 new ToolGroups.Activations(), () -> config, aiDao, userActions);

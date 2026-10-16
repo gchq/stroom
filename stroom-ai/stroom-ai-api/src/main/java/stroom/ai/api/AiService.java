@@ -123,6 +123,13 @@ public interface AiService {
 
     void updateMessageText(int messageId, String message);
 
+    /// Makes a message the user sent into a question that starts a turn of its own, e.g. one sent to steer a run
+    /// that had already given its answer.
+    ///
+    /// @param messageId The message.
+    /// @param question  The question's text.
+    void askAsQuestion(int messageId, String question);
+
     void deleteMessage(int messageId);
 
     void deleteAttachment(int attachmentId);

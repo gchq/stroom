@@ -60,6 +60,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final int maxElicitationsPerNode;
     private final boolean askReadOnlyToolsAfterUntrustedContent;
     private final int maxChatTitleWords;
+    private final boolean suggestFollowUps;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -81,6 +82,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         maxElicitationsPerNode = DEFAULT_MAX_ELICITATIONS_PER_NODE;
         askReadOnlyToolsAfterUntrustedContent = false;
         maxChatTitleWords = DEFAULT_MAX_CHAT_TITLE_WORDS;
+        suggestFollowUps = true;
     }
 
     @SuppressWarnings("unused")
@@ -101,7 +103,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("maxElicitationsPerNode") final Integer maxElicitationsPerNode,
                     @JsonProperty("askReadOnlyToolsAfterUntrustedContent")
                     final Boolean askReadOnlyToolsAfterUntrustedContent,
-                    @JsonProperty("maxChatTitleWords") final Integer maxChatTitleWords) {
+                    @JsonProperty("maxChatTitleWords") final Integer maxChatTitleWords,
+                    @JsonProperty("suggestFollowUps") final Boolean suggestFollowUps) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -122,6 +125,15 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 askReadOnlyToolsAfterUntrustedContent, false);
         this.maxChatTitleWords = Math.max(1, Objects.requireNonNullElse(maxChatTitleWords,
                 DEFAULT_MAX_CHAT_TITLE_WORDS));
+        this.suggestFollowUps = Objects.requireNonNullElse(suggestFollowUps, true);
+    }
+
+    @JsonPropertyDescription("If true, after each answer the chat's model is asked for up to three things the user "
+                             + "might ask next, shown as links above the input. One small extra call to the model "
+                             + "per answer; not made when the agent asked the user for something during the turn.")
+    @JsonProperty("suggestFollowUps")
+    public boolean isSuggestFollowUps() {
+        return suggestFollowUps;
     }
 
     @JsonPropertyDescription("The most words in the title the chat's model is asked for, to name a chat after what "
@@ -264,6 +276,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", maxElicitationsPerNode=" + maxElicitationsPerNode +
                ", askReadOnlyToolsAfterUntrustedContent=" + askReadOnlyToolsAfterUntrustedContent +
                ", maxChatTitleWords=" + maxChatTitleWords +
+               ", suggestFollowUps=" + suggestFollowUps +
                '}';
     }
 }

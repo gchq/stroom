@@ -286,6 +286,11 @@ public class MockAiService implements AiService {
     }
 
     @Override
+    public void askAsQuestion(final int messageId, final String question) {
+
+    }
+
+    @Override
     public void deleteMessage(final int messageId) {
 
     }
