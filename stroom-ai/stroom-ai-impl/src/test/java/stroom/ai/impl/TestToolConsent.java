@@ -201,7 +201,7 @@ class TestToolConsent {
     void testApproveEverything() {
         Mockito.when(aiDao.isApproveEverything(1)).thenReturn(true);
         // Only matters once the run has read data, as trusted tools that modify data otherwise run anyway.
-        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+        Mockito.when(runManager.hasReadUntrustedServer(1)).thenReturn(true);
         tool(info(true, false, null, null, null));
         // Not allowed by the administrator.
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
@@ -219,15 +219,15 @@ class TestToolConsent {
     }
 
     @Test
-    void testTrustedToolsThatModifyDataRunUnlessRiskyOrDataWasRead() {
+    void testTrustedToolsThatModifyDataRunUnlessRiskyOrAnUntrustedServerWasRead() {
         tool(info(true, false, null, null, null));
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.RUN);
 
-        // Not once the run has read data that could hold planted instructions.
-        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+        // Not once the run has read an untrusted server's output, which could hold planted instructions.
+        Mockito.when(runManager.hasReadUntrustedServer(1)).thenReturn(true);
         assertThat(decide("s__t", false).kind()).isEqualTo(Kind.ASK);
-        assertThat(decide("s__t", false).reason()).contains("read data").contains("can modify data");
-        Mockito.when(runManager.isTainted(1)).thenReturn(false);
+        assertThat(decide("s__t", false).reason()).contains("untrusted MCP server").contains("can modify data");
+        Mockito.when(runManager.hasReadUntrustedServer(1)).thenReturn(false);
 
         // Nor destructive or open-world ones, or when set to ask every time.
         tool(info(true, false, true, null, null));
@@ -254,9 +254,9 @@ class TestToolConsent {
         // Not shown otherwise.
         tool(info(true, false, null, null, McpToolPolicy.ASK_ALWAYS));
         assertThat(decide("s__t", false).cardReason()).contains("administrator");
-        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+        Mockito.when(runManager.hasReadUntrustedServer(1)).thenReturn(true);
         tool(info(true, false, null, null, null));
-        assertThat(decide("s__t", false).cardReason()).contains("read data");
+        assertThat(decide("s__t", false).cardReason()).contains("untrusted MCP server");
         assertThat(decide("s__t", true).cardReason()).contains("You were away");
     }
 

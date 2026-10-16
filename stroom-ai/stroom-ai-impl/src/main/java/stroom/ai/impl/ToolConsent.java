@@ -137,8 +137,9 @@ public class ToolConsent {
                 return Verdict.ask(DATA_WAS_READ_REASON, true, false, List.of("after reading data"));
             }
             // A trusted server's tool that can modify data, but is not destructive and stays within Stroom, runs
-            // without asking, unless the run has read data that could hold instructions planted to misuse it.
-            if (info.trusted() && !info.isRisky() && !runManagerProvider.get().isTainted(chatId)) {
+            // without asking, unless the run has read an untrusted server's output, which could hold instructions
+            // planted to misuse it.
+            if (info.trusted() && !info.isRisky() && !runManagerProvider.get().hasReadUntrustedServer(chatId)) {
                 return Verdict.RUN;
             }
             if (info.trusted() && !info.isRisky() && approveEverything(chatId)) {
@@ -220,7 +221,7 @@ public class ToolConsent {
             return "An administrator has set this tool to ask every time.";
         }
         return info.trusted() && !info.isRisky()
-                ? "This chat has read data from tools or attached tables, which could tell the model to misuse "
+                ? "This chat has read the output of an untrusted MCP server, which could tell the model to misuse "
                   + "this tool, and it can modify data."
                 : "This tool can modify data.";
     }
