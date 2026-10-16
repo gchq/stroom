@@ -301,12 +301,17 @@ public class GlobalConfigService implements GlobalConfig {
         // a value to satisfy the validation.
 
         final PropertyPath propertyPath = configProperty.getName();
+        final OverrideValue<String> databaseOverrideValue = configProperty.getDatabaseOverrideValue();
         final String effectiveValueStr = configProperty.getEffectiveValue().orElse(null);
+        final String valueToValidate = databaseOverrideValue.isHasOverride()
+                ? databaseOverrideValue.getValue()
+                : effectiveValueStr;
+
         try {
-            configMapper.validateValueSerialisation(propertyPath, effectiveValueStr);
+            configMapper.validateValueSerialisation(propertyPath, valueToValidate);
         } catch (final Exception e) {
             throw new ConfigPropertyValidationException(LogUtil.message("Error parsing [{}]: {}",
-                    effectiveValueStr, e.getMessage(), e));
+                    valueToValidate, e.getMessage(), e));
         }
 
         final PropertyUtil.Prop prop = configMapper.getProp(propertyPath)

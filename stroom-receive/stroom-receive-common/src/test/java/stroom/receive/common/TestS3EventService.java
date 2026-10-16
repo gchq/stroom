@@ -65,7 +65,8 @@ class TestS3EventService {
     @Test
     void testHandleEventSecuresAndConsumesEvent() throws Exception {
         final S3EventService service = createService();
-        final S3Location s3Location = new S3Location("eu-west-2", "bucket", "path/file.txt");
+        final S3Location s3Location = new S3Location(
+                "eu-west-2", "bucket", "path/file.txt");
         final AtomicReference<S3CreateEvent> consumedEvent = new AtomicReference<>();
         final Map<String, String> metadata = Map.of("Custom", "value");
 
