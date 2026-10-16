@@ -1232,6 +1232,16 @@
     font: inherit;
 }
 
+/* What the user answered, once a form has been submitted. */
+.ai-elicitation-answer {
+    margin: 4px 0 6px;
+    word-break: break-word;
+}
+
+.ai-elicitation-answer-title {
+    font-weight: 600;
+}
+
 .ai-elicitation-check {
     display: flex;
     align-items: center;
