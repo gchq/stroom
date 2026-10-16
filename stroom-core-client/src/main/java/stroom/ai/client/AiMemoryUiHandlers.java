@@ -26,6 +26,9 @@ public interface AiMemoryUiHandlers extends UiHandlers {
     /// @param index Its position in the list.
     void onMemorySelected(int index);
 
+    /// Called as the user edits the memory, so it can be marked as unsaved.
+    void onContentChanged();
+
     /// Starts a new piece of memory.
     void onNewMemory();
 
