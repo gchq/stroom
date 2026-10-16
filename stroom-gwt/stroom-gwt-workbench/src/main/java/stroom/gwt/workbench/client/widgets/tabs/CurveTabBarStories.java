@@ -48,7 +48,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /// Stories for Stroom's [CurveTabBar], in the tab bar row of `CurveTabLayoutViewImpl`
-/// (`tabBarContainer` > optional `navigation-menu-button` > `curveTabLayoutViewImpl-tabBarOuter` >
+/// (`tabBarContainer` > optional sidebar toggle toolbar > `curveTabLayoutViewImpl-tabBarOuter` >
 /// `tab-bar--curved`).
 /// The stories without the sidebar toggle build that row as the view does; the one with it uses
 /// the real [CurveTabLayoutViewImpl]. The overflow selector shows Stroom's real menu.

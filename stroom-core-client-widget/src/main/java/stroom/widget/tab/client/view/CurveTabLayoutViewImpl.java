@@ -17,10 +17,10 @@
 package stroom.widget.tab.client.view;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.event.ShowTabMenuEvent.Handler;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabBar;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -29,7 +29,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FocusFlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -46,7 +45,7 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
     @UiField(provided = true)
     FocusFlowPanel layout;
     @UiField
-    Button menu;
+    ToolbarButton menu;
     @UiField
     SimplePanel tabBarOuter;
     @UiField
@@ -66,10 +65,6 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
         };
         widget = binder.createAndBindUi(this);
         tabBar.setTabPanel(layerContainer.getElement());
-        SvgImageUtil.setSvgAsInnerHtml(menu, HIDE_SIDEBAR_TITLE, SvgImage.HIDE_MENU);
-        // The title is on the icon, so the button is named for screen readers too
-        menu.getElement().setAttribute("aria-label", HIDE_SIDEBAR_TITLE);
-
         menuVisible = true;
     }
 
@@ -105,14 +100,15 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
 
     @UiHandler("menu")
     void onMenu(final ClickEvent event) {
+        // The button is named by its title, so it says what pressing it will do
         if (menuVisible) {
             menuVisible = false;
-            SvgImageUtil.setSvgAsInnerHtml(menu, SHOW_SIDEBAR_TITLE, SvgImage.SHOW_MENU);
-            menu.getElement().setAttribute("aria-label", SHOW_SIDEBAR_TITLE);
+            menu.setSvg(SvgImage.SHOW_MENU);
+            menu.setTitle(SHOW_SIDEBAR_TITLE);
         } else {
             menuVisible = true;
-            SvgImageUtil.setSvgAsInnerHtml(menu, HIDE_SIDEBAR_TITLE, SvgImage.HIDE_MENU);
-            menu.getElement().setAttribute("aria-label", HIDE_SIDEBAR_TITLE);
+            menu.setSvg(SvgImage.HIDE_MENU);
+            menu.setTitle(HIDE_SIDEBAR_TITLE);
         }
         getUiHandlers().maximise();
     }

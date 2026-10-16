@@ -137,24 +137,6 @@
     margin: 0;
 }
 
-/* The application's toolbar, at the top right of the page (Ask Stroom AI and the main menu):
-   larger buttons (quiet, with toolbar--quiet), with a border that shows the keyboard focus */
-.toolbar--header {
-    margin: 0;
-    gap: 0;
-}
-
-.toolbar--header .toolbar-button {
-    width: 32px;
-    height: 32px;
-    border: 1px solid transparent;
-    border-radius: .2rem;
-}
-
-.toolbar--header .toolbar-button:focus-visible:not([data-pointer-focus]) {
-    border-color: var(--focus-border);
-}
-
 /* Quieter buttons, in the text colour and faded until disabled (which fades them in its own way),
    e.g. the application's toolbar and Ask Stroom AI's */
 .toolbar--quiet .toolbar-button:not([aria-disabled="true"]) {

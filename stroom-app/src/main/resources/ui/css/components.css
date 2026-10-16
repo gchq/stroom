@@ -251,7 +251,14 @@
 
 .tabBarContainer {
     display: flex;
+    align-items: center;
     border-bottom: 1px solid var(--border-color);
+}
+
+/* The Hide Sidebar button's toolbar, with room before it for its focus ring, which the pane it is
+   in would otherwise cut off */
+.tabBarContainer > .toolbar {
+    margin: 0 2px 0 6px;
 }
 
 .curveTabLayoutViewImpl-layout {
@@ -953,14 +960,18 @@
     overflow: hidden;
 }
 
+/* At the top right, as high as the tab bar's row (less its border) with its buttons centred in it,
+   leaving room around them for their focus rings, which the page would otherwise cut off */
 .mainToolbar {
     position: absolute;
     top: 0;
-    right: 0px;
+    right: 0;
     z-index: 1;
-    padding: 1px;
+    height: 33px;
+    padding: 0 4px 0 0;
+    box-sizing: border-box;
     display: flex;
-    gap: 0px;
+    gap: 0;
     align-items: center;
 }
 
@@ -1281,6 +1292,13 @@
 .navigation-title-bar {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+}
+
+/* The Main Menu button's toolbar, with room after it for its focus ring, which the explorer would
+   otherwise cut off */
+.navigation-title-bar > .toolbar {
+    margin: 0 6px 0 0;
 }
 
 .navigation .explorerTreeViewImpl-nameFilterPanel {
@@ -1308,20 +1326,6 @@
     margin-top: .25rem;
 }
 
-button.main-menu {
-    background-color: transparent;
-    /*color: var(--navigation-icon-button__color);*/
-    color: var(--text-color);
-    opacity: 0.6;
-}
-
-button.main-menu svg {
-    width: 18px;
-    height: 18px;
-    margin-top: 6px;
-    margin-right: 12px;
-}
-
 .top-right-menu {
     position: absolute;
     top: 2px;
@@ -1329,15 +1333,6 @@ button.main-menu svg {
     width: 32px;
     height: 32px;
     z-index: 1;
-}
-
-.navigation-menu-button {
-    background-color: transparent;
-    opacity: 0.6;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .navigation-header {

@@ -323,8 +323,7 @@
     "button-name"
   ],
   "app-main-appshell--main-menu": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--main-toolbar-tab-order": [
     "button-name"
@@ -512,6 +511,12 @@
   ],
   "app-main-resultstoresdialog--stores": [
     "scrollable-region-focusable"
+  ],
+  "app-main-topbar--focus-rings": [
+    "button-name"
+  ],
+  "app-main-topbar--keyboard": [
+    "button-name"
   ],
   "app-main-visualisationassets--upload-deduplicates-name": [
     "aria-required-parent",

@@ -880,6 +880,36 @@ token that doesn't exist, and is fixed):
 
 They are in `test-runner/a11y-baseline.json` until they are fixed.
 
+### Top bar focus rings cut off
+
+**Fixed.** The keyboard focus ring of every control along the top of the app shell was partly
+hidden (WCAG 2.4.7, Focus Visible): each ring is a 1px border with a 4px `--focus-shadow` band
+outside it, and each control sat against the edge of an element that hides its overflow, at the top
+of the window with no room above it:
+
+| Control | Was | Cut off | By |
+|---|---|---|---|
+| Main Menu, beside the logo (`NavigationViewImpl`) | a plain `Button`, 44 x 41 | top 4px, right 4px | `.navigation` |
+| Hide Sidebar, left of the document tabs (`CurveTabLayoutViewImpl`) | a plain `Button`, 30 x 33 | top 4px, left 4px | `.split-pane__pane` |
+| Ask Stroom AI (`MainToolbar`) | a `toolbar--header` button, 32 x 32 | top 3px | `.mainViewImpl` |
+| Show Menu (`MainToolbar`) | a `toolbar--header` button, 32 x 32 | top 3px, right 3px | `.mainViewImpl` |
+
+Ask Stroom AI and Show Menu also drew their focus border twice: `toolbar--header` gave the button a
+1px border of its own that turned the focus colour, inside which the standard toolbar button's
+`::before` drew its own.
+
+Main Menu and Hide Sidebar are now toolbar buttons, each in a toolbar of its own (Hide Sidebar swaps
+its icon and title as the sidebar is hidden and shown), and `toolbar--header` is gone, so all four
+are standard 24px toolbar buttons with the one `::before` focus border. Each bar centres its buttons
+(the tab bar's row and the application's toolbar are 33px high, the explorer's title bar 41px), and
+each toolbar keeps at least 4px from the edge beside it. The old `main-menu` and
+`navigation-menu-button` styles are removed.
+
+Checked by stories `App/Main/TopBar`: `FocusRings` (every ring shown with pseudo-state classes and
+measured with `FocusRingClipping`) and `Keyboard` (the real keyboard reaches each control and draws
+its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/Main/AppShell`
+`ToolbarTabStops` counts Main Menu and Hide Sidebar as one tab stop each.
+
 ## Copy-paste mistakes and typos
 
 **Reported.**

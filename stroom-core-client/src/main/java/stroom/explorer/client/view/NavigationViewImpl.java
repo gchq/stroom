@@ -21,6 +21,7 @@ import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.spinner.client.SpinnerSmall;
@@ -51,7 +52,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @UiField
     Button logo;
     @UiField
-    Button mainMenuButton;
+    ToolbarButton mainMenuButton;
     @UiField
     QuickFilter nameFilter;
     @UiField
@@ -71,10 +72,6 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         logo.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(
                 SvgImage.LOGO,
                 "navigation-logo-image"));
-
-        mainMenuButton.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(
-                SvgImage.MENU,
-                "main-menu"));
     }
 
     @Override
