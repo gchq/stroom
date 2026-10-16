@@ -24627,11 +24627,20 @@
       "McpToolDescription" : {
         "type" : "object",
         "properties" : {
+          "classifications" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "documentation" : {
             "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
+          },
+          "group" : {
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
