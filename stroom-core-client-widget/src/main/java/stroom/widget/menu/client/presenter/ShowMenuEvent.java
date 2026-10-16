@@ -42,6 +42,7 @@ public class ShowMenuEvent
     private final Element[] autoHidePartners;
     private final boolean allowCloseOnMoveLeft;
     private final Integer width;
+    private final Item focusItem;
 
     private ShowMenuEvent(final List<Item> items,
                           final PopupPosition popupPosition,
@@ -49,7 +50,8 @@ public class ShowMenuEvent
                           final HidePopupEvent.Handler hideHandler,
                           final Element[] autoHidePartners,
                           final boolean allowCloseOnMoveLeft,
-                          final Integer width) {
+                          final Integer width,
+                          final Item focusItem) {
         this.items = items;
         this.popupPosition = popupPosition;
         this.autoHidePartners = autoHidePartners;
@@ -57,6 +59,7 @@ public class ShowMenuEvent
         this.hideHandler = hideHandler;
         this.allowCloseOnMoveLeft = allowCloseOnMoveLeft;
         this.width = width;
+        this.focusItem = focusItem;
     }
 
     public static Builder builder() {
@@ -93,6 +96,11 @@ public class ShowMenuEvent
 
     public Element[] getAutoHidePartners() {
         return autoHidePartners;
+    }
+
+    /// @return The item to focus when the menu is shown, or null for its first.
+    public Item getFocusItem() {
+        return focusItem;
     }
 
     public boolean isAllowCloseOnMoveLeft() {
@@ -136,6 +144,7 @@ public class ShowMenuEvent
         private final List<Element> autoHidePartners = new ArrayList<>();
         private Boolean allowCloseOnMoveLeft = null;
         private Integer width = null;
+        private Item focusItem = null;
 
         public Builder() {
         }
@@ -199,6 +208,16 @@ public class ShowMenuEvent
             return this;
         }
 
+        /// Focuses an item when the menu is shown, rather than its first, e.g. the current choice
+        /// of a menu that chooses one of its items.
+        ///
+        /// @param focusItem The item to focus, one of the menu's items, or null for its first.
+        /// @return This builder.
+        public Builder focusItem(final Item focusItem) {
+            this.focusItem = focusItem;
+            return this;
+        }
+
         public void fire(final HasHandlers hasHandlers) {
             Element[] elements = null;
             if (!autoHidePartners.isEmpty()) {
@@ -212,7 +231,8 @@ public class ShowMenuEvent
                     hideHandler,
                     elements,
                     Objects.requireNonNullElse(allowCloseOnMoveLeft, false),
-                    width));
+                    width,
+                    focusItem));
         }
     }
 }
