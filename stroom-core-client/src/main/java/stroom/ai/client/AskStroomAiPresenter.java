@@ -34,6 +34,7 @@ import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryScope;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AnswerAiApprovalRequest;
+import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.ai.shared.AskStroomAiConfig.DockType;
@@ -201,6 +202,7 @@ public class AskStroomAiPresenter
     private static final String PENDING_MESSAGE_ID = "pending";
     private static final String UNDO_COMPACTION_ATTRIBUTE = "data-undo-compaction";
     private static final String ELICITATION_ATTRIBUTE = "data-elicitation-id";
+    private static final String ELICITATION_ACTION_ATTRIBUTE = "data-elicitation-action";
     private static final int DEFAULT_COMPACT_AT_PERCENT = 80;
     private static final String LIVE_ANSWER_ID = "ai-live-answer";
     private static final int STREAMING_POLL_MS = 500;
@@ -214,7 +216,6 @@ public class AskStroomAiPresenter
     private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
     private final Provider<AiMemoryPresenter> memoryPresenterProvider;
     private final Provider<AiToolApprovalsPresenter> toolApprovalsPresenterProvider;
-    private final Provider<McpElicitationPresenter> elicitationPresenterProvider;
     private final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider;
     private final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider;
     private final ContentManager contentManager;
@@ -293,7 +294,6 @@ public class AskStroomAiPresenter
                                 final Provider<DownloadChatPresenter> downloadChatPresenterProvider,
                                 final Provider<AiMemoryPresenter> memoryPresenterProvider,
                                 final Provider<AiToolApprovalsPresenter> toolApprovalsPresenterProvider,
-                                final Provider<McpElicitationPresenter> elicitationPresenterProvider,
                                 final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
                                 final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider,
                                 final ContentManager contentManager,
@@ -307,7 +307,6 @@ public class AskStroomAiPresenter
         this.downloadChatPresenterProvider = downloadChatPresenterProvider;
         this.memoryPresenterProvider = memoryPresenterProvider;
         this.toolApprovalsPresenterProvider = toolApprovalsPresenterProvider;
-        this.elicitationPresenterProvider = elicitationPresenterProvider;
         this.aiAttachmentDataPresenterProvider = aiAttachmentDataPresenterProvider;
         this.askStroomAiTabPresenterProvider = askStroomAiTabPresenterProvider;
         this.contentManager = contentManager;
@@ -384,7 +383,8 @@ public class AskStroomAiPresenter
                     // Answering a form from an MCP tool.
                     final String elicitationStr = button.getAttribute(ELICITATION_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(elicitationStr)) {
-                        onRespondToForm(Integer.parseInt(elicitationStr));
+                        onAnswerForm(button, Integer.parseInt(elicitationStr),
+                                button.getAttribute(ELICITATION_ACTION_ATTRIBUTE));
                         return;
                     }
 
@@ -756,6 +756,7 @@ public class AskStroomAiPresenter
                 }
                 statusesKnown = true;
                 showRenamedChatTitle();
+                pollIfCurrentChatChanged(previous);
                 fireBadge();
                 if (chatListShowing) {
                     renderChatList();
@@ -765,6 +766,26 @@ public class AskStroomAiPresenter
                     ? HIDDEN_STATUS_POLL_MS
                     : STATUS_POLL_MS);
         }, SILENT);
+    }
+
+    /**
+     * Polls the chat being shown if it has started or stopped working, or needing the user, somewhere other than
+     * here, e.g. stopped from another tab while a form waits, which this tab stopped polling for.
+     */
+    private void pollIfCurrentChatChanged(final List<AiChatStatus> previous) {
+        if (currentChat == null || previous == null) {
+            return;
+        }
+        final int chatId = currentChat.getId();
+        final AiChatStatus before = previous.stream()
+                .filter(status -> status.getChatId() == chatId)
+                .findFirst()
+                .orElse(null);
+        final AiChatStatus now = findStatus(chatId).orElse(null);
+        if (before != null && now != null
+            && (before.isBusy() != now.isBusy() || before.isNeedsYou() != now.isNeedsYou())) {
+            startPolling();
+        }
     }
 
     private void fireBadge() {
@@ -1519,7 +1540,7 @@ public class AskStroomAiPresenter
 
     /**
      * Renders a form an MCP tool asked the user to fill in: what the server said, as plain text, and while it
-     * waits, a Respond… button; once answered, what became of it.
+     * waits, its fields with Submit and Decline; once answered, what became of it.
      */
     private void appendElicitationCard(final HtmlBuilder hb,
                                        final AiChatMessage msg,
@@ -1535,11 +1556,19 @@ public class AskStroomAiPresenter
                     : "A form from " + server), Attribute.className("ai-approval-title"));
             card.div(text -> text.append(NullSafe.string(AiToolMessages.getString(json, "message"))),
                     Attribute.className("ai-elicitation-message"));
+            if (pending) {
+                AiElicitationCard.appendFields(card, AiElicitationForm.fields(json));
+            }
             card.div(footer -> {
                 if (pending) {
-                    footer.elem("Respond…", BUTTON,
+                    footer.elem("Submit", BUTTON,
                             Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
-                            new Attribute(ELICITATION_ATTRIBUTE, String.valueOf(msg.getId())));
+                            new Attribute(ELICITATION_ATTRIBUTE, String.valueOf(msg.getId())),
+                            new Attribute(ELICITATION_ACTION_ATTRIBUTE, "ACCEPT"));
+                    footer.elem("Decline", BUTTON,
+                            Attribute.className("allow-focus ai-approval-button ai-approval-button--deny"),
+                            new Attribute(ELICITATION_ATTRIBUTE, String.valueOf(msg.getId())),
+                            new Attribute(ELICITATION_ACTION_ATTRIBUTE, "DECLINE"));
                 } else {
                     footer.span(text -> text.append(AiChatTexts.formStatus(status)),
                             Attribute.className("ai-approval-reason"));
@@ -1551,18 +1580,78 @@ public class AskStroomAiPresenter
                 : "")));
     }
 
-    private void onRespondToForm(final int messageId) {
+    /**
+     * Sends the user's answer to a form shown in the chat. If it is refused (e.g. a required field is empty), the
+     * form stays as it is, to be put right.
+     */
+    private void onAnswerForm(final Element button, final int messageId, final String action) {
         final AiChatMessage msg = renderedMessages.get(messageId);
-        if (msg == null || currentChat == null) {
+        final Element card = ElementUtil.findParent(button, element -> element.hasClassName("ai-message"), 6);
+        if (msg == null || currentChat == null || card == null) {
             return;
         }
-        elicitationPresenterProvider.get().show(currentChat, msg, status -> {
-            appendMessage(new AiChatMessage(msg.getId(), msg.getChatId(), msg.getCreateTimeMs(),
-                    msg.getMessageType(), msg.getAttachmentId(), AiToolMessages.withStatus(msg.getMessage(), status),
-                    msg.getTurnId(), msg.getTokenCount()), System.currentTimeMillis());
-            // The tool carries on with the answer.
-            pollAfterAnswer();
+        final boolean accept = "ACCEPT".equals(action);
+        final Map<String, String> values = accept
+                ? AiElicitationCard.values(card)
+                : null;
+        setFormButtonsEnabled(card, false);
+        askStroomAiClient.answerElicitation(new AnswerAiElicitationRequest(currentChat, messageId, action, values),
+                done -> {
+                    final String status = accept
+                            ? "ACCEPTED"
+                            : "DECLINED";
+                    appendMessage(new AiChatMessage(msg.getId(), msg.getChatId(), msg.getCreateTimeMs(),
+                            msg.getMessageType(), msg.getAttachmentId(),
+                            AiToolMessages.withStatus(msg.getMessage(), status), msg.getTurnId(),
+                            msg.getTokenCount()), System.currentTimeMillis());
+                    // The tool carries on with the answer.
+                    pollAfterAnswer();
+                },
+                error -> {
+                    setFormButtonsEnabled(card, true);
+                    AlertEvent.fireError(this, error.getMessage(), null);
+                    // E.g. the form was cancelled when the run stopped: show it as it now stands.
+                    pollAfterAnswer();
+                }, getView());
+    }
+
+    private static void setFormButtonsEnabled(final Element card, final boolean enabled) {
+        final NodeList<Element> buttons = card.getElementsByTagName("button");
+        for (int i = 0; i < buttons.getLength(); i++) {
+            if (buttons.getItem(i).hasAttribute(ELICITATION_ATTRIBUTE)) {
+                buttons.getItem(i).setPropertyBoolean("disabled", !enabled);
+            }
+        }
+    }
+
+    /**
+     * @return The forms shown as waiting for the user, which the server may cancel (e.g. when the run stops).
+     */
+    private List<Integer> pendingFormIds() {
+        final List<Integer> ids = new ArrayList<>();
+        renderedMessages.values().forEach(msg -> {
+            if (msg.getMessageType() == AiMessageType.ELICITATION
+                && "PENDING".equals(AiToolMessages.getString(msg.getMessage(), "status"))) {
+                ids.add(msg.getId());
+            }
         });
+        return ids;
+    }
+
+    /**
+     * Shows the forms the server has changed since they were shown, e.g. cancelled as the run stopped.
+     */
+    private void updateWatchedMessages(final List<AiChatMessage> messages) {
+        if (messages == null) {
+            return;
+        }
+        final long nowMs = System.currentTimeMillis();
+        for (final AiChatMessage msg : messages) {
+            final AiChatMessage shown = renderedMessages.get(msg.getId());
+            if (shown != null && !Objects.equals(shown.getMessage(), msg.getMessage())) {
+                appendMessage(msg, nowMs);
+            }
+        }
     }
 
     /**
@@ -2274,6 +2363,9 @@ public class AskStroomAiPresenter
                         // Server will set the cancellation flag; the poll loop will pick up
                         // partial results and stop. Reset UI now so the user can type again.
                         getView().setSendButtonLoadingState(false);
+                        // Polling may have paused while the run waited for the user (e.g. to fill in a form),
+                        // so look again to see it stop.
+                        pollAfterAnswer();
                     }, getView());
         }
     }
@@ -2319,7 +2411,7 @@ public class AskStroomAiPresenter
             return;
         }
         final int chatId = currentChat.getId();
-        askStroomAiClient.pollMessages(chatId, lastSeenMessageId, isLooking(), response -> {
+        askStroomAiClient.pollMessages(chatId, lastSeenMessageId, isLooking(), pendingFormIds(), response -> {
             if (currentChat == null || currentChat.getId() != chatId) {
                 // The user has moved to another chat since this poll was sent. Rendering the reply
                 // now would put one chat's messages into another's.
@@ -2347,6 +2439,8 @@ public class AskStroomAiPresenter
 
             // Update attachment status elements in-place.
             updateAttachmentStatuses(response.getAttachments());
+            // And forms the server has answered for the user, e.g. cancelled as the run stopped.
+            updateWatchedMessages(response.getWatchedMessages());
 
             // Say if the run stopped before finishing, and offer to resume it.
             updateRunStatus(response.getRun());
@@ -3532,7 +3626,7 @@ public class AskStroomAiPresenter
             // For historical chats, attachments are already in their final state (READY/ERROR).
             // Also picks up an agent run that is still working on a question, e.g. after the page was
             // refreshed, and carries on following it.
-            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, isLooking(), response -> {
+            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, isLooking(), null, response -> {
                 updateAttachmentStatuses(response.getAttachments());
                 updateRunStatus(response.getRun());
                 currentRunActive = !response.isComplete();
