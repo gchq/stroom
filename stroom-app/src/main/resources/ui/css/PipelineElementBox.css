@@ -96,10 +96,16 @@
 }
 
 /* An element detached (with the elements after it) to be attached to another parent, with the
-   keyboard or the context menu: faded, with a dashed border, until it is attached or put back */
+   keyboard or the context menu: faded, with a dashed border, until it is attached or put back. They
+   are faded as one, with the connectors into them (PipelineTreePanel's faded group), so that
+   nothing faded shows through anything else faded, e.g. a line through a dot; to 75%, at which
+   their names are still at least 4.5:1 */
 .pipelineElementBox-detached {
 	border-style: dashed;
-	opacity: .5;
+}
+
+.treePanel-faded {
+	opacity: .75;
 }
 
 /* An element under the pointer that won't accept what is dragged over it (e.g. it can't have a

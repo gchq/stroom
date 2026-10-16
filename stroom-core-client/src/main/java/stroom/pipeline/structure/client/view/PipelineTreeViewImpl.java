@@ -114,6 +114,8 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         layoutPanel.setHeight("100%");
         layoutPanel.addDomHandler(this::onKeyDown, KeyDownEvent.getType());
         treePanel.setAfterRefresh(this::afterRefresh);
+        // A detached element and those after it are faded, with the connectors into them
+        treePanel.setFaded(element -> detached != null && isInBranch(element, detached));
 
         liveRegion = Document.get().createDivElement();
         liveRegion.setClassName("sr-only pipelineTree-status");
@@ -202,7 +204,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
             return;
         }
         detached = element;
-        showDetached();
+        redrawDetached();
         final int count = countElements(element);
         announce(element.getDisplayName() + (count > 1
                 ? " and the " + (count - 1) + (count == 2
@@ -235,7 +237,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         }
         final PipelineElement parent = getTree().getParent(child);
         detached = null;
-        showDetached();
+        redrawDetached();
         focusAfterRedraw = child;
         if (target.equals(parent)) {
             // Put back where it was
@@ -255,7 +257,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         if (detached != null) {
             final PipelineElement element = detached;
             detached = null;
-            showDetached();
+            redrawDetached();
             announce(element.getDisplayName() + " put back.");
         }
     }
@@ -377,7 +379,14 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         }
     }
 
-    // Fades the detached element and the elements after it, and shows whether the selected
+    // Redraws the tree, which fades the detached element (if any) and the elements after it, with
+    // the connectors into them, and marks them
+    private void redrawDetached() {
+        treePanel.refresh();
+        showDetached();
+    }
+
+    // Marks the detached element and the elements after it, and shows whether the selected
     // element would take it: green if so, red if not
     private void showDetached() {
         final DefaultTreeForTreeLayout<PipelineElement> tree = getTree();

@@ -28,24 +28,36 @@ import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.CssColor;
 import com.google.gwt.dom.client.Element;
 
+import java.util.function.Predicate;
+
 /// Draws the pipeline tree's connectors as lines from the right of an element to the left of each
 /// of its children, coloured by what flows along them: what the element they come from outputs
 /// (see [#getFlow(PipelineElementType)]). The port dots at their ends are the boxes' own (see
 /// [PipelineElementBox#setPorts]), so that they sit over the boxes' borders. The colours are the
 /// theme's (`--pipeline-connector__*` in the theme's CSS), read when each connector is drawn, so
-/// that they follow a change of theme.
+/// that they follow a change of theme. A connector into a faded element is drawn on the faded
+/// context instead (one faded as a whole with the faded elements' boxes, see [PipelineTreePanel]).
 public class PipelineConnectorRenderer implements ConnectorRenderer<PipelineElement> {
 
     private static final double LINE_WIDTH = 2;
     private static final String FALLBACK_COLOUR = "grey";
 
     private final Context2d ctx;
+    private final Context2d fadedCtx;
+    private final Predicate<PipelineElement> faded;
     private final PipelineModel pipelineModel;
 
     /// @param ctx           The context to draw on.
+    /// @param fadedCtx      The context to draw the connectors into faded elements on.
+    /// @param faded         Whether an element is faded.
     /// @param pipelineModel The pipeline, for its elements' types.
-    public PipelineConnectorRenderer(final Context2d ctx, final PipelineModel pipelineModel) {
+    public PipelineConnectorRenderer(final Context2d ctx,
+                                     final Context2d fadedCtx,
+                                     final Predicate<PipelineElement> faded,
+                                     final PipelineModel pipelineModel) {
         this.ctx = ctx;
+        this.fadedCtx = fadedCtx;
+        this.faded = faded;
         this.pipelineModel = pipelineModel;
     }
 
@@ -57,7 +69,7 @@ public class PipelineConnectorRenderer implements ConnectorRenderer<PipelineElem
                        final double y2,
                        final boolean firstChild,
                        final boolean lastChild) {
-        draw(Flow.RAW, x1, y1, x2, y2);
+        draw(ctx, Flow.RAW, x1, y1, x2, y2);
     }
 
     @Override
@@ -70,7 +82,10 @@ public class PipelineConnectorRenderer implements ConnectorRenderer<PipelineElem
                        final double y2,
                        final boolean firstChild,
                        final boolean lastChild) {
-        draw(getFlow(pipelineModel.getElementType(parent)), x1, y1, x2, y2);
+        final Context2d context = faded.test(child)
+                ? fadedCtx
+                : ctx;
+        draw(context, getFlow(pipelineModel.getElementType(parent)), x1, y1, x2, y2);
     }
 
     /// Gets what an element of a type outputs.
@@ -90,7 +105,12 @@ public class PipelineConnectorRenderer implements ConnectorRenderer<PipelineElem
         };
     }
 
-    private void draw(final Flow flow, final double x1, final double y1, final double x2, final double y2) {
+    private static void draw(final Context2d ctx,
+                             final Flow flow,
+                             final double x1,
+                             final double y1,
+                             final double x2,
+                             final double y2) {
         final String colour = getColour(ctx.getCanvas(), flow.getProperty());
         final CssColor cssColour = CssColor.make(NullSafe.isBlankString(colour)
                 ? FALLBACK_COLOUR

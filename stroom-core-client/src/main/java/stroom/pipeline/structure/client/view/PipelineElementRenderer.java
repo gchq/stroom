@@ -35,12 +35,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public final class PipelineElementRenderer
         implements CellRenderer2<PipelineElement>, NodeExtentProvider<PipelineElement> {
 
     private final PipelineElementBoxFactory pipelineElementBoxFactory;
     private final FlowPanel panel;
+    // Where a faded element's box goes, and which are faded
+    private final FlowPanel fadedPanel;
+    private final Predicate<PipelineElement> faded;
     private final List<PipelineElementBox> boxes = new ArrayList<>();
 
     // Cache the PipelineElementBox objects so we don't need to keep creating them.
@@ -53,9 +57,17 @@ public final class PipelineElementRenderer
     private DefaultTreeForTreeLayout<PipelineElement> tree;
     private SelectionModel<PipelineElement> selectionModel;
 
+    /// @param panel                     Where the boxes go.
+    /// @param fadedPanel                Where the boxes of faded elements go instead.
+    /// @param faded                     Whether an element is faded.
+    /// @param pipelineElementBoxFactory Makes the boxes.
     public PipelineElementRenderer(final FlowPanel panel,
+                                   final FlowPanel fadedPanel,
+                                   final Predicate<PipelineElement> faded,
                                    final PipelineElementBoxFactory pipelineElementBoxFactory) {
         this.panel = panel;
+        this.fadedPanel = fadedPanel;
+        this.faded = faded;
         this.pipelineElementBoxFactory = pipelineElementBoxFactory;
     }
 
@@ -76,7 +88,11 @@ public final class PipelineElementRenderer
         style.setTop(bounds.getY(), Unit.PX);
         style.setWidth(bounds.getWidth(), Unit.PX);
 
-        panel.add(pipelineElementBox);
+        if (faded.test(pipelineElement)) {
+            fadedPanel.add(pipelineElementBox);
+        } else {
+            panel.add(pipelineElementBox);
+        }
         boxes.add(pipelineElementBox);
     }
 
