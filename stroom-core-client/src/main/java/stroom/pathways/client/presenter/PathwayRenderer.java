@@ -55,6 +55,25 @@ interface PathwayRenderer {
     }
 
     /**
+     * Which part of the drawing the model is in, or null where that is the whole of it. What the view
+     * fits to the panel and centres, rather than the drawing's own size — the two part company on a
+     * drawing that keeps its box while the model within it shrinks.
+     */
+    default DrawnArea drawnArea() {
+        return null;
+    }
+
+    /**
+     * Brings the drawing up to date with how far it is being scaled, without drawing it again. Called
+     * whenever the view's scale changes, which happens without the model changing at all.
+     *
+     * <p>For what a drawing measures in screen pixels rather than in its own units — a stroke thinner
+     * than a pixel is drawn faint rather than thin, and vanishes in stretches.
+     */
+    default void rescale(final Element element, final double zoom) {
+    }
+
+    /**
      * Whether the drawing opens in the middle rather than at its top left. A drawing that puts the
      * root in the middle of the canvas shows nothing much in the corner the view would otherwise
      * start at.

@@ -198,6 +198,12 @@ public class PathwayTreePresenter
         // is neither, so it hangs off the panel rather than off the drawing.
         html.getElement().getStyle().setPosition(Position.RELATIVE);
         viewport = new PathwayViewport(html);
+        // Asked of whichever drawing is on show rather than of the one on show now, because the
+        // toolbar swaps them and fitting is a button press that can come at any time after that.
+        viewport.setArea(() -> renderer.drawnArea());
+        // Scaling the drawing does not draw it again, so what it measures in screen pixels rather
+        // than in its own units is put right here instead.
+        viewport.setScaleHandler(() -> renderer.rescale(html.getElement(), viewport.scale()));
         view.setDataWidget(html);
     }
 
@@ -766,7 +772,8 @@ public class PathwayTreePresenter
                 // and says nothing about the rest, so nothing is faded for one.
                 highlightedPath
                         ? wanted.keySet()
-                        : Collections.emptySet());
+                        : Collections.emptySet(),
+                viewport.scale());
 
         // Changed in place where the drawing on the screen is of the same model laid out the same
         // way, which is what stepping through the history is: only how large each node is, what

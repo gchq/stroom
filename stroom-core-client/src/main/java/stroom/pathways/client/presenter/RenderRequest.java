@@ -38,6 +38,7 @@ class RenderRequest {
     private final long usageCeiling;
     private final boolean legendVisible;
     private final Set<String> onPath;
+    private final double zoom;
 
     RenderRequest(final Pathway pathway,
                   final PathNode layout,
@@ -47,7 +48,8 @@ class RenderRequest {
                   final long changeCeiling,
                   final long usageCeiling,
                   final boolean legendVisible,
-                  final Set<String> onPath) {
+                  final Set<String> onPath,
+                  final double zoom) {
         this.pathway = pathway;
         this.layout = layout;
         this.changes = changes;
@@ -57,6 +59,7 @@ class RenderRequest {
         this.usageCeiling = usageCeiling;
         this.legendVisible = legendVisible;
         this.onPath = onPath;
+        this.zoom = zoom;
     }
 
     /**
@@ -76,12 +79,16 @@ class RenderRequest {
     }
 
     /**
-     * Every node the model has ever held, which is what the positions are worked out from rather than
-     * only the nodes being shown. A node's place would otherwise move every time a neighbour appeared
-     * — each one takes a share of its parent's arc, so one node arriving re-slices its whole branch.
+     * Every node the model has ever held, which is the set of nodes the drawing is made of rather
+     * than only the ones being shown. Which of them the picture gives room to is a separate question,
+     * answered by the model being shown — this is what says which elements exist at all, and keeping
+     * that the same from one step to the next is what lets a step be eased rather than drawn again.
      *
-     * <p>Nodes in here that the model being shown does not hold are drawn faintly: a gap says nothing,
-     * whereas a node that has not been learnt yet says what is about to happen.
+     * <p>Nodes in here that the model being shown does not do — it has not learnt them yet, or the
+     * work no longer does them — are kept but drawn at nothing, and placed on top of whatever they
+     * hang off rather than given room of their own. So the picture holds only the work being done at
+     * the moment being looked at, while the drawing holds the same nodes throughout and every step
+     * through the history can be eased rather than drawn again.
      */
     PathNode getLayout() {
         return layout;
@@ -125,6 +132,15 @@ class RenderRequest {
      */
     boolean isLegendVisible() {
         return legendVisible;
+    }
+
+    /**
+     * How far the drawing is being scaled to be seen, where 1 is the size it is drawn at. What the
+     * drawing measures in its own units has to be held against this wherever the screen, rather than
+     * the model, is what sets the limit.
+     */
+    double getZoom() {
+        return zoom;
     }
 
     /**

@@ -26,12 +26,14 @@ import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -163,6 +165,32 @@ class PathwayGraphRenderer implements PathwayRenderer {
     static final String WALK_BADGE_TEXT_CLASS = "pathway-graph-walk-badge-text";
 
     @Override
+    public DrawnArea drawnArea() {
+        return drawnArea;
+    }
+
+    @Override
+    public void rescale(final Element element, final double zoom) {
+        final int was = minEdge;
+        minEdge = minEdge(zoom);
+        if (minEdge == was || element == null) {
+            return;
+        }
+        final Element curves = byClass(element, "pathway-curves");
+        if (curves == null) {
+            return;
+        }
+        final NodeList<Element> drawn = curves.getElementsByTagName("line");
+        for (int i = 0; i < drawn.getLength(); i++) {
+            final Element line = drawn.getItem(i);
+            final EdgeAppearance want = edgeAppearance.get(line.getAttribute("edge"));
+            if (want != null) {
+                line.setAttribute("stroke-width", String.valueOf(width(want)));
+            }
+        }
+    }
+
+    @Override
     public boolean opensCentred() {
         // The root sits in the middle of the drawing and the rings grow out around it, so a view
         // starting at the top left would be looking at empty space in a corner.
@@ -212,17 +240,59 @@ class PathwayGraphRenderer implements PathwayRenderer {
     // than its colours: whether the key is open, and whether a path is being watched — which is what
     // puts a veil over every node. Neither is part of a node's appearance, so neither can be changed
     // in place; a drawing that wants either of them different has to be built again.
+    // How long a line takes to reach where it is going. Has to be what `--pathway-step-ease` in the
+    // stylesheet gives the nodes, because the two move together and nothing holds the number for
+    // both — a line is drawn in svg, where its ends are attributes rather than properties, so the
+    // stylesheet cannot reach it.
+    private static final int EASE_MILLIS = 600;
+    // The four numbers behind the curve css calls `ease`, which is the curve the stylesheet moves the
+    // nodes along.
+    private static final double EASE_X1 = 0.25;
+    private static final double EASE_Y1 = 0.1;
+    private static final double EASE_X2 = 0.25;
+    private static final double EASE_Y2 = 1.0;
+    // Reading the curve means closing in on an answer rather than working it out. Both of these are
+    // far past what a screen can show: the run is a few hundred pixels and a step of it is under a
+    // thousandth of one.
+    private static final int EASE_STEPS = 8;
+    private static final double EASE_CLOSE_ENOUGH = 0.000001;
+
     private boolean drawnLegend;
     private boolean drawnVeiled;
+    // The one run of a step's movement — the nodes and the lines together — stopped when another
+    // step arrives before it has finished. Null while nothing is moving.
+    private Animation stepEase;
+    // The box the drawing on the screen was built in, so that a step taken in place can be laid out
+    // in the same one rather than in a box of its own. Null before anything has been drawn.
+    private Size drawnSize;
+    // Which part of that box the model came to. Null before anything has been drawn.
+    private DrawnArea drawnArea;
+    // The thinnest a line may be drawn at the scale the drawing is being shown at. Kept because the
+    // scale changes without the drawing being made again.
+    private int minEdge = MIN_EDGE;
 
-    private record Appearance(String className, String style, String dotStyle, String title) {
+    private record Appearance(String className,
+                              String style,
+                              String dotStyle,
+                              String title,
+                              double cx,
+                              double cy,
+                              double size) {
+
+    }
+
+    // Where a node stands at one moment: the middle of it, and how far across it is. The middle
+    // rather than the corner, because the middle is what a line joins and what has to be worked out
+    // once for both.
+    private record Spot(double cx, double cy, double size) {
 
     }
 
     // What the last pass gave each line, by the uuid of the node it arrives at — which names a line,
     // because a node is arrived at from one parent. Start and end are the two ends of its gradient,
     // which is held apart from the line and has to be brought up to date with it.
-    private record EdgeAppearance(String className,
+    private record EdgeAppearance(String parent,
+                                  String className,
                                   int x1,
                                   int y1,
                                   int x2,
@@ -235,6 +305,20 @@ class PathwayGraphRenderer implements PathwayRenderer {
     }
 
     private record Painted(Size size, SafeHtml curves, SafeHtml markers, SafeHtml badges) {
+
+    }
+
+    // A line on its way from where it was to where it now belongs, with the gradient that paints it
+    // carried along. The two are held apart in the markup and share a pair of ends, so a gradient
+    // left behind would light the line from somewhere the line no longer runs.
+    // A line on its way, named by the two nodes it joins. It keeps no ends of its own: where it runs
+    // is read off those two nodes every frame, so it cannot say anything different from them.
+    private record MovingLine(Element line, Element paint, String parent, String child) {
+
+    }
+
+    // A node on its way from where it stood to where it now belongs.
+    private record MovingNode(Element node, Element dot, String uuid, Spot from, Spot to) {
 
     }
 
@@ -255,7 +339,8 @@ class PathwayGraphRenderer implements PathwayRenderer {
         }
         appearance.clear();
         edgeAppearance.clear();
-        final Painted painted = paint(request, root);
+        final Painted painted = paint(request, root, null);
+        drawnSize = painted.size();
         drawnLegend = request.isLegendVisible();
         drawnVeiled = !NullSafe.set(request.getOnPath()).isEmpty();
 
@@ -296,8 +381,10 @@ class PathwayGraphRenderer implements PathwayRenderer {
      *
      * <p>What this is for is the model being stepped through its own history: the drawing is remade
      * every step and a drawing remade is a drawing that flickers, loses the reader's scroll and
-     * starts all of its animation again. Nothing moves between steps but how large each node is, what
-     * colour it is and whether it is there yet.
+     * starts all of its animation again. The same nodes stand from one step to the next whatever the
+     * model held at it, so every step is a matter of moving and recolouring what is already there —
+     * which is what lets a node growing, fading, or sliding as its branch re-slices be eased rather
+     * than jumped.
      *
      * <p>Refuses where the drawing is laid out differently from the one on the screen, or where it
      * cannot find what it expects. The caller then builds the whole thing, which is always correct.
@@ -321,7 +408,13 @@ class PathwayGraphRenderer implements PathwayRenderer {
 
         appearance.clear();
         edgeAppearance.clear();
-        final Painted painted = paint(request, root);
+        // Laid out in the box the drawing on the screen already has. The box and the corner it is
+        // measured from are worked out from where the nodes came to, and the nodes move from one step
+        // to the next, so working them out again would shift the corner — and every node with it, by
+        // the same amount. The drawing would wander about the panel as it was stepped through. The
+        // box is the one the model as it stands needs, and every step of a replay holds a part of
+        // that model, so it is big enough for all of them.
+        final Painted painted = paint(request, root, drawnSize);
 
         // Every node the drawing now wants has to be one already on the screen. Anything else means a
         // different layout, and moving what happens to match would leave the rest of it stale.
@@ -339,10 +432,16 @@ class PathwayGraphRenderer implements PathwayRenderer {
             return false;
         }
 
+        // Where everything stands at this moment, read before any of it is written over. What is
+        // written below is where the step ends; this is where it starts from, and the two are what
+        // the run between them is worked out from.
+        final Map<String, Spot> stood = standing(onScreen);
+
         // The lines are left where they are and brought up to date, so a join arriving or going can
-        // ease the way the nodes do. Not while a path is being watched: that lays a second run of
-        // lines and a set of badges over these, none of which are named, so the layer goes back to
-        // being drawn again.
+        // ease the way the nodes do. Where that cannot be done — a path being watched lays a second
+        // run of lines and a set of badges over these, none of which are named — the layer is drawn
+        // again instead. Either way the run below takes the lines from where they stood, so a layer
+        // drawn again does not arrive ahead of the nodes.
         if (!onPath.isEmpty() || !changeEdges(curves, painted.size())) {
             curves.setInnerHTML(painted.curves().asString());
         }
@@ -357,6 +456,8 @@ class PathwayGraphRenderer implements PathwayRenderer {
                 dot.setAttribute("style", want.dotStyle());
             }
         });
+
+        move(onScreen, curves, stood);
         return true;
     }
 
@@ -368,14 +469,7 @@ class PathwayGraphRenderer implements PathwayRenderer {
         if (svg == null) {
             return false;
         }
-        final Map<String, Element> lines = new HashMap<>();
-        final NodeList<Element> drawn = curves.getElementsByTagName("line");
-        for (int i = 0; i < drawn.getLength(); i++) {
-            final Element line = drawn.getItem(i);
-            if ((" " + line.getAttribute("class") + " ").contains(" " + EDGE_CLASS + " ")) {
-                lines.put(line.getAttribute("edge"), line);
-            }
-        }
+        final Map<String, Element> lines = edgeLines(curves);
         if (!lines.keySet().equals(edgeAppearance.keySet())) {
             return false;
         }
@@ -394,23 +488,257 @@ class PathwayGraphRenderer implements PathwayRenderer {
 
         svg.setAttribute("width", String.valueOf(size.width));
         svg.setAttribute("height", String.valueOf(size.height));
+
+        // Everything about a line but where it runs. How wide it is and whether it is there at all
+        // are properties, so the stylesheet eases them; the colours it is painted with are read off
+        // as it is drawn.
         edgeAppearance.forEach((uuid, want) -> {
             final Element line = lines.get(uuid);
             line.setAttribute("class", want.className());
-            line.setAttribute("x1", String.valueOf(want.x1()));
-            line.setAttribute("y1", String.valueOf(want.y1()));
-            line.setAttribute("x2", String.valueOf(want.x2()));
-            line.setAttribute("y2", String.valueOf(want.y2()));
-            line.setAttribute("stroke-width", String.valueOf(want.width()));
+            line.setAttribute("stroke-width", String.valueOf(width(want)));
             final Element paint = paints.get(uuid);
-            paint.setAttribute("x1", String.valueOf(want.x1()));
-            paint.setAttribute("y1", String.valueOf(want.y1()));
-            paint.setAttribute("x2", String.valueOf(want.x2()));
-            paint.setAttribute("y2", String.valueOf(want.y2()));
             Element.as(paint.getChild(0)).setAttribute("stop-color", want.start());
             Element.as(paint.getChild(1)).setAttribute("stop-color", want.end());
         });
         return true;
+    }
+
+    // Walks every line that has somewhere new to be from where it is to where it now belongs, over
+    // the same time and along the same curve the stylesheet moves the nodes by.
+    //
+    // Where an svg line runs is held in attributes rather than properties, and nothing in css reaches
+    // an attribute. Left to itself a line arrives the instant a step is taken while the node it points
+    // at is still a drawing's width away, so the nodes are seen sliding up to lines already waiting
+    // for them.
+    // Walks the nodes and the lines between them from where they stand to where this step wants
+    // them, as one run on one clock.
+    //
+    // Both together rather than the lines here and the nodes left to the stylesheet. A line is drawn
+    // in svg, where its ends are attributes that no rule can reach, so the two were being moved by
+    // different things — and whichever of them set off first arrived first, which is a line reaching
+    // its place while the node it joins is still sliding up to meet it. Moved from here, there is one
+    // clock and one curve, and a line's ends are not its own at all: they are read off the middles of
+    // the two nodes it joins, worked out once a frame and used by both. A line cannot come away from
+    // a node it takes its own ends from.
+    private void move(final Map<String, Element> onScreen,
+                      final Element curves,
+                      final Map<String, Spot> stood) {
+        if (stepEase != null) {
+            // Left wherever it had got to. What replaces it has already read that, and carries on
+            // from there rather than from where the step before was headed.
+            stepEase.cancel();
+            stepEase = null;
+        }
+
+        final List<MovingNode> movingNodes = new ArrayList<>();
+        appearance.forEach((uuid, want) -> {
+            final Element node = onScreen.get(uuid);
+            if (node == null) {
+                return;
+            }
+            final Spot from = stood.getOrDefault(uuid, new Spot(want.cx(), want.cy(), want.size()));
+            movingNodes.add(new MovingNode(node, byClass(node, "pathway-graph-dot"), uuid,
+                    from, new Spot(want.cx(), want.cy(), want.size())));
+        });
+
+        final List<MovingLine> movingLines = new ArrayList<>();
+        final Map<String, Element> lines = edgeLines(curves);
+        edgeAppearance.forEach((uuid, want) -> {
+            final Element line = lines.get(uuid);
+            final Element paint = Document.get().getElementById(gradientId(uuid));
+            if (line != null && paint != null) {
+                movingLines.add(new MovingLine(line, paint, want.parent(), uuid));
+            }
+        });
+
+        final Runner runner = new Runner(movingNodes, movingLines);
+        // The first frame now rather than at the next one. The lines may have just been drawn again
+        // at where they are going, and a frame of them sitting there before the run starts is the
+        // jump this is here to stop.
+        runner.at(0);
+        if (runner.settled()) {
+            return;
+        }
+        stepEase = new Animation() {
+            @Override
+            protected double interpolate(final double progress) {
+                return ease(progress);
+            }
+
+            @Override
+            protected void onUpdate(final double progress) {
+                runner.at(progress);
+            }
+
+            @Override
+            protected void onCancel() {
+                // Left where it stands; see above.
+            }
+
+            @Override
+            protected void onComplete() {
+                runner.at(1);
+                stepEase = null;
+            }
+        };
+        stepEase.run(EASE_MILLIS);
+    }
+
+    // One step's worth of movement. Holds the nodes and the lines together because the lines are
+    // worked out from the nodes: every frame places each node first, then runs each line between the
+    // two it joins.
+    private static final class Runner {
+
+        private final List<MovingNode> nodes;
+        private final List<MovingLine> lines;
+        private final Map<String, Spot> placed = new HashMap<>();
+
+        private Runner(final List<MovingNode> nodes, final List<MovingLine> lines) {
+            this.nodes = nodes;
+            this.lines = lines;
+        }
+
+        private boolean settled() {
+            for (final MovingNode node : nodes) {
+                if (!same(node.from(), node.to())) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static boolean same(final Spot a, final Spot b) {
+            return Math.round(a.cx()) == Math.round(b.cx())
+                   && Math.round(a.cy()) == Math.round(b.cy())
+                   && Math.round(a.size()) == Math.round(b.size());
+        }
+
+        private void at(final double progress) {
+            placed.clear();
+            for (final MovingNode moving : nodes) {
+                final Spot from = moving.from();
+                final Spot to = moving.to();
+                final Spot now = new Spot(
+                        between(from.cx(), to.cx(), progress),
+                        between(from.cy(), to.cy(), progress),
+                        between(from.size(), to.size(), progress));
+                placed.put(moving.uuid(), now);
+
+                final int size = (int) Math.round(now.size());
+                // Placed by its corner, which is its middle less half of how far across it is. Worked
+                // out from the middle rather than the corner being walked in its own right, so that
+                // the middle a line is drawn to is the middle the node is actually at.
+                moving.node().getStyle().setPropertyPx("left", (int) Math.round(now.cx()) - (size / 2));
+                moving.node().getStyle().setPropertyPx("top", (int) Math.round(now.cy()) - (size / 2));
+                if (moving.dot() != null) {
+                    moving.dot().getStyle().setPropertyPx("width", size);
+                    moving.dot().getStyle().setPropertyPx("height", size);
+                }
+            }
+
+            for (final MovingLine line : lines) {
+                final Spot from = placed.get(line.parent());
+                final Spot to = placed.get(line.child());
+                if (from == null || to == null) {
+                    continue;
+                }
+                put(line, "x1", from.cx());
+                put(line, "y1", from.cy());
+                put(line, "x2", to.cx());
+                put(line, "y2", to.cy());
+            }
+        }
+
+        private static void put(final MovingLine line, final String name, final double value) {
+            final String at = String.valueOf((int) Math.round(value));
+            line.line().setAttribute(name, at);
+            // The gradient is held away from the line and shares its two ends, so one left behind
+            // would light the line from somewhere the line no longer runs.
+            line.paint().setAttribute(name, at);
+        }
+
+        private static double between(final double from, final double to, final double progress) {
+            return from + ((to - from) * progress);
+        }
+    }
+
+    // Where every node stands at this moment, read off the drawing rather than remembered. A step
+    // taken while the one before it is still running has to set off from where things actually are.
+    private static Map<String, Spot> standing(final Map<String, Element> onScreen) {
+        final Map<String, Spot> stood = new HashMap<>();
+        onScreen.forEach((uuid, node) -> {
+            final Element dot = byClass(node, "pathway-graph-dot");
+            final double size = dot == null
+                    ? 0
+                    : px(dot.getStyle().getProperty("width"));
+            stood.put(uuid, new Spot(
+                    px(node.getStyle().getProperty("left")) + (size / 2),
+                    px(node.getStyle().getProperty("top")) + (size / 2),
+                    size));
+        });
+        return stood;
+    }
+
+    // A length the drawing wrote itself, as a number. Anything that will not read as one means the
+    // markup is not what it was left as, and nought moves the node from the corner rather than
+    // throwing; the run ends in the right place either way.
+    private static double px(final String value) {
+        try {
+            return Double.parseDouble(value.replace("px", "").trim());
+        } catch (final RuntimeException e) {
+            return 0;
+        }
+    }
+
+    // The lines this drawing made, by the node each arrives at. Told apart from the ones a walk lays
+    // over them by the class they carry.
+    private static Map<String, Element> edgeLines(final Element curves) {
+        final Map<String, Element> lines = new HashMap<>();
+        final NodeList<Element> drawn = curves.getElementsByTagName("line");
+        for (int i = 0; i < drawn.getLength(); i++) {
+            final Element line = drawn.getItem(i);
+            if ((" " + line.getAttribute("class") + " ").contains(" " + EDGE_CLASS + " ")) {
+                lines.put(line.getAttribute("edge"), line);
+            }
+        }
+        return lines;
+    }
+
+    // How far along a run from one place to another, which is the curve css calls `ease` — the one
+    // the stylesheet moves the nodes along. Worked out again here because a line cannot be moved by
+    // the stylesheet, and two layers of one drawing travelling along different curves pull apart in
+    // the middle of every step even when they set off and arrive together.
+    private static double ease(final double progress) {
+        if (progress <= 0 || progress >= 1) {
+            return progress;
+        }
+        // The curve gives how far along and how far through against a third quantity rather than one
+        // against the other, so how far through has to be turned back into that before how far along
+        // can be read off it.
+        double point = progress;
+        for (int i = 0; i < EASE_STEPS; i++) {
+            final double off = curve(EASE_X1, EASE_X2, point) - progress;
+            final double slope = slope(EASE_X1, EASE_X2, point);
+            if (Math.abs(off) < EASE_CLOSE_ENOUGH || slope == 0) {
+                break;
+            }
+            point -= off / slope;
+        }
+        return curve(EASE_Y1, EASE_Y2, point);
+    }
+
+    private static double curve(final double first, final double second, final double point) {
+        final double rest = 1 - point;
+        return (3 * rest * rest * point * first)
+               + (3 * rest * point * point * second)
+               + (point * point * point);
+    }
+
+    private static double slope(final double first, final double second, final double point) {
+        final double rest = 1 - point;
+        return (3 * rest * rest * first)
+               + (6 * rest * point * (second - first))
+               + (3 * point * point * (1 - second));
     }
 
     private static Element firstChild(final Element element) {
@@ -448,7 +776,8 @@ class PathwayGraphRenderer implements PathwayRenderer {
     // up to date, so there is no second idea of what a drawing looks like to fall out of step. What
     // each node and each line should look like is written down as it goes, which is what updating one
     // already on the screen reads back.
-    private Painted paint(final RenderRequest request, final PathNode root) {
+    private Painted paint(final RenderRequest request, final PathNode root, final Size box) {
+        minEdge = minEdge(request.getZoom());
         final PathNode shown = NullSafe.get(request.getPathway(), Pathway::getRoot);
         final Map<String, PathNode> shownNodes = new HashMap<>();
         collect(shown, shownNodes);
@@ -458,13 +787,26 @@ class PathwayGraphRenderer implements PathwayRenderer {
         final Map<String, NodeUsage> usage = request.getUsage();
         leftOfCentre.clear();
         final Map<String, Point> places = new HashMap<>();
-        place(root, 0, 0, 2 * Math.PI, places, 0);
+        place(root, 0, 0, 2 * Math.PI, places, 0, shownNodes);
 
         // Only part of the outermost ring is ever occupied — a branch that goes deep reaches it, the
-        // rest stop short — so a canvas sized to the ring is mostly empty. Sized to what was actually
-        // placed instead, with room for the names that hang off it.
-        final Size size = new Size(places);
+        // rest stop short — so a canvas sized to the ring is mostly empty. Measured to what was
+        // actually placed instead, with room for the names that hang off it.
+        final Size fitted = new Size(places);
+        // Laid out in that, unless the caller has a box already, in which case the drawing goes in
+        // the one it has.
+        final Size size = box == null
+                ? fitted
+                : box;
         places.replaceAll((uuid, at) -> new Point(at.getX() - size.left, at.getY() - size.top));
+        // Where the model came to within the box, which is the whole of it only when the box was cut
+        // to fit. Kept because fitting the drawing to the panel has to frame the model rather than
+        // the room it was laid out in.
+        drawnArea = new DrawnArea(
+                (int) Math.round(fitted.left - size.left),
+                (int) Math.round(fitted.top - size.top),
+                fitted.width,
+                fitted.height);
 
         gradients = new HtmlBuilder();
         final HtmlBuilder edges = new HtmlBuilder();
@@ -563,27 +905,79 @@ class PathwayGraphRenderer implements PathwayRenderer {
                        final double from,
                        final double to,
                        final Map<String, Point> places,
-                       final int centre) {
+                       final int centre,
+                       final Map<String, PathNode> shownNodes) {
         final double angle = (from + to) / 2;
         final int radius = depth * RING;
-        places.put(node.getUuid(), new Point(
+        final Point at = new Point(
                 centre + (radius * Math.cos(angle)),
-                centre + (radius * Math.sin(angle))));
+                centre + (radius * Math.sin(angle)));
+        places.put(node.getUuid(), at);
         // Which side of the diagram the node sits on, so its name can be written away from the middle
         // rather than across whatever is next to it.
-        leftOfCentre.put(node.getUuid(), Math.cos(angle) < 0);
+        final boolean left = Math.cos(angle) < 0;
+        leftOfCentre.put(node.getUuid(), left);
 
         final List<PathNode> children = NullSafe.list(node.getChildren());
         if (children.isEmpty()) {
             return;
         }
 
-        final int total = leaves(node);
+        final int total = leaves(node, shownNodes);
         double start = from;
         for (final PathNode child : children) {
-            final double share = (to - from) * ((double) leaves(child) / total);
-            place(child, depth + 1, start, start + share, places, centre);
-            start += share;
+            // A node the model does not do at this moment takes no share of its parent's arc. Given
+            // one it would hold a wedge of the drawing that it is not drawn in, so a model with much
+            // churn is drawn around holes nothing can ever fill.
+            if (onDrawing(child, shownNodes)) {
+                final double share = (to - from) * ((double) leaves(child, shownNodes) / total);
+                place(child, depth + 1, start, start + share, places, centre, shownNodes);
+                start += share;
+            } else {
+                gather(child, places, at, left);
+            }
+        }
+    }
+
+    // How wide a line is actually drawn: what the traffic through it says, but never so thin that the
+    // screen cannot hold it.
+    private int width(final EdgeAppearance want) {
+        return Math.max(want.width(), minEdge);
+    }
+
+    // The thinnest a line is drawn, in the drawing's own units rather than the screen's.
+    //
+    // A stroke thinner than a screen pixel is not drawn thin, it is drawn faint: the browser spreads
+    // what little of it there is over the pixels it falls between, and a line crossing a pixel
+    // boundary fades out along the stretches where it falls unluckily. At a scale of about a half, a
+    // third of the links in one model came out broken or missing altogether. So the floor is held at
+    // a whole pixel on the screen, whatever the drawing is scaled to.
+    private static int minEdge(final double zoom) {
+        return zoom <= 0 || zoom >= 1
+                ? MIN_EDGE
+                : (int) Math.ceil(MIN_EDGE / zoom);
+    }
+
+    // Whether the model being shown does this node, which is what decides whether it takes a share of
+    // its parent's arc. A node the model has not learnt yet and one the work no longer does are alike
+    // here: neither is drawn, so neither holds a wedge of the picture that nothing is drawn in.
+    private static boolean onDrawing(final PathNode node, final Map<String, PathNode> shownNodes) {
+        final PathNode asShown = shownNodes.get(node.getUuid());
+        return asShown != null && !asShown.isRetired();
+    }
+
+    // Where a node with no share of the arc goes, along with everything beneath it: on top of the node
+    // it hangs off. Left where it last stood it would sit among the nodes that have since taken its
+    // room; put here it grows out of its parent as the model learns it and folds back into it as the
+    // work stops doing it, which is the same movement either way round.
+    private void gather(final PathNode node,
+                        final Map<String, Point> places,
+                        final Point at,
+                        final boolean left) {
+        places.put(node.getUuid(), at);
+        leftOfCentre.put(node.getUuid(), left);
+        for (final PathNode child : NullSafe.list(node.getChildren())) {
+            gather(child, places, at, left);
         }
     }
 
@@ -629,7 +1023,8 @@ class PathwayGraphRenderer implements PathwayRenderer {
         // colour, both of which the key explains, so a tooltip saying them again is a second answer to
         // a question the drawing has already given.
         final String title = node.getName();
-        appearance.put(node.getUuid(), new Appearance(nodeClass, nodeStyle, dotStyle, title));
+        appearance.put(node.getUuid(), new Appearance(nodeClass, nodeStyle, dotStyle, title,
+                (int) at.getX(), (int) at.getY(), radius * 2));
 
         markers.div(marker -> {
             marker.div("", Attribute.className("pathway-graph-dot"),
@@ -656,17 +1051,27 @@ class PathwayGraphRenderer implements PathwayRenderer {
             // traffic last came through, on the same scale as the nodes. So the thick bright lines
             // are the paths being taken now and the thin dim ones are the paths that have stopped.
             //
-            // Drawn between the two circles rather than between their middles. A line runs as wide as
-            // its traffic says and a node is as large as its changes say, so a line can be wider than
-            // what it joins; ending at the middle, it would show either side of the circle meant to
-            // be hiding it. Ending at the rim, neither has to be held back for the other.
-            final Point from = toward(at, childAt, radius);
-            final Point to = toward(childAt, at, scale.radius(changes.get(child.getUuid())));
+            // Drawn between the middles of the two nodes rather than between their rims, and hidden
+            // under them for the part that is inside. A node is drawn over the lines and is never
+            // smaller than the widest line that can reach it — the smallest node is 12 across and
+            // wears a 2 ring either side, against a widest line of MAX_EDGE — so nothing of the line
+            // shows past the circle meant to be covering it.
+            //
+            // Which middle a node is at is the one thing about it that moves exactly as the
+            // stylesheet moves the node itself: a rim point is the middle plus an offset that turns
+            // as the two nodes swing round, and an offset that turns cannot be walked in a straight
+            // line. Lines drawn to the rim came away from their nodes while a step was being taken,
+            // by as much as the node's own width, and the more the model rearranged the worse it
+            // looked. Drawn to the middle there is nothing to come away: the end of the line is the
+            // middle of the node, wherever the node has got to.
+            final Point from = at;
+            final Point to = childAt;
             // Lighter where it leaves the parent, full strength where it arrives, so a link reads in
             // the direction the work flows without needing an arrow head on it.
             final int edgeWidth = scale.edge(timesUsed(child, usage));
             final PathNode childShown = shownNodes.get(child.getUuid());
             final EdgeAppearance want = new EdgeAppearance(
+                    node.getUuid(),
                     edgeClass(childShown != null,
                             ran(child),
                             childShown != null && childShown.isRetired()),
@@ -792,19 +1197,8 @@ class PathwayGraphRenderer implements PathwayRenderer {
         return "pathwayEdge" + drawingId + "-" + uuid;
     }
 
-    // The point on a node's rim facing the other end of the line, which is where the line starts.
-    private static Point toward(final Point from, final Point to, final int radius) {
-        final double dx = to.getX() - from.getX();
-        final double dy = to.getY() - from.getY();
-        final double length = Math.sqrt((dx * dx) + (dy * dy));
-        if (length <= 0) {
-            return from;
-        }
-        return new Point(from.getX() + ((dx / length) * radius),
-                from.getY() + ((dy / length) * radius));
-    }
 
-    private static void line(final HtmlBuilder svg, final String uuid, final EdgeAppearance want) {
+    private void line(final HtmlBuilder svg, final String uuid, final EdgeAppearance want) {
         svg.elem(SafeHtmlUtil.from("line"),
                 // Which node this line arrives at, so the line can be found again rather than drawn
                 // again when the drawing is brought up to date.
@@ -813,7 +1207,7 @@ class PathwayGraphRenderer implements PathwayRenderer {
                 new Attribute("y1", String.valueOf(want.y1())),
                 new Attribute("x2", String.valueOf(want.x2())),
                 new Attribute("y2", String.valueOf(want.y2())),
-                new Attribute("stroke-width", String.valueOf(want.width())),
+                new Attribute("stroke-width", String.valueOf(width(want))),
                 new Attribute("stroke", want.stroke()),
                 Attribute.className(want.className()));
     }
@@ -897,16 +1291,19 @@ class PathwayGraphRenderer implements PathwayRenderer {
         return BANDS.get(BANDS.size() - 1);
     }
 
-    private static int leaves(final PathNode node) {
-        final List<PathNode> children = NullSafe.list(node.getChildren());
-        if (children.isEmpty()) {
-            return 1;
-        }
+    // How many of the nodes beneath this one are on the drawing, which is what its share of its
+    // parent's arc is worked out from. One where none of them is, because the node itself still needs
+    // room whether or not anything hangs off it.
+    private static int leaves(final PathNode node, final Map<String, PathNode> shownNodes) {
         int count = 0;
-        for (final PathNode child : children) {
-            count += leaves(child);
+        for (final PathNode child : NullSafe.list(node.getChildren())) {
+            if (onDrawing(child, shownNodes)) {
+                count += leaves(child, shownNodes);
+            }
         }
-        return count;
+        return count == 0
+                ? 1
+                : count;
     }
 
 

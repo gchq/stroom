@@ -55,6 +55,15 @@ class PathwayViewport {
     private static final int DRAG_THRESHOLD = 3;
 
     private final HTML panel;
+    // Where the drawing on show has put the model. Asked rather than given, because fitting is a
+    // button press and the answer is different at every step of a replay — and because which drawing
+    // is on show changes under this. Answering null means the whole drawing, which is what a drawing
+    // that does not keep its box between steps always means.
+    private Supplier<DrawnArea> area = () -> null;
+    // Told whenever the drawing is scaled, so that whatever is drawn in screen pixels rather than in
+    // the drawing's own units can be put right. Scaling does not redraw anything, so nothing else
+    // would ever hear about it.
+    private Runnable scaleHandler;
 
     private double zoom = 1;
     private int scrollLeft;
@@ -92,6 +101,24 @@ class PathwayViewport {
                 rememberBeforeAway();
             }
         });
+    }
+
+    /**
+     * Where to ask what part of the drawing the model is in, which is what fitting and centring work
+     * from. Given once; which drawing is on show is the caller's business.
+     */
+    double scale() {
+        return zoom;
+    }
+
+    void setScaleHandler(final Runnable scaleHandler) {
+        this.scaleHandler = scaleHandler;
+    }
+
+    void setArea(final Supplier<DrawnArea> area) {
+        this.area = area == null
+                ? () -> null
+                : area;
     }
 
     private void rememberBeforeAway() {
@@ -330,9 +357,17 @@ class PathwayViewport {
             return false;
         }
 
-        // The drawing's own size, which is what it measures however far it has been scaled.
-        final int width = canvas.getOffsetWidth();
-        final int height = canvas.getOffsetHeight();
+        // What the model takes up, which is not always the whole drawing: a step taken in place keeps
+        // the box the drawing already had, so a model that has shrunk since leaves room in it that
+        // nothing is drawn in. Fitted to the box instead, a model that had shrunk would be shown too
+        // small and pushed to whichever side of the room it happened to occupy.
+        final DrawnArea drawn = area.get();
+        final int width = drawn == null
+                ? canvas.getOffsetWidth()
+                : drawn.width();
+        final int height = drawn == null
+                ? canvas.getOffsetHeight()
+                : drawn.height();
         final int across = scroller.getClientWidth();
         final int down = scroller.getClientHeight();
         if (width <= 0 || height <= 0 || across <= 0 || down <= 0) {
@@ -435,6 +470,9 @@ class PathwayViewport {
                 "translate(" + slackX() + "px, " + slackY() + "px) scale(" + zoom + ")");
         canvas.getParentElement().getStyle().setWidth((width * zoom) + (slackX() * 2), Unit.PX);
         canvas.getParentElement().getStyle().setHeight((height * zoom) + (slackY() * 2), Unit.PX);
+        if (scaleHandler != null) {
+            scaleHandler.run();
+        }
     }
 
     // How far the drawing is moved over inside the box that holds it, which is half the room to spare
@@ -491,17 +529,25 @@ class PathwayViewport {
         // On the thing asked for rather than on the middle of the drawing. The drawing is only as
         // large as what was placed in it, and a model that reaches further one way than another does
         // not put its root in the middle of that.
+        //
+        // Nothing asked for falls back to where the model came to, and only to the middle of the box
+        // where the drawing cannot say. Centring on the box leaves a model that has shrunk sitting
+        // off to one side of the room it was laid out in.
         final Element on = centreOn == null
                 ? null
                 : centreOn.get();
-        if (on == null) {
+        final DrawnArea at = on == null
+                ? area.get()
+                : new DrawnArea(on.getOffsetLeft(), on.getOffsetTop(),
+                        on.getOffsetWidth(), on.getOffsetHeight());
+        if (at == null) {
             scroller.setScrollLeft((scroller.getScrollWidth() - scroller.getClientWidth()) / 2);
             scroller.setScrollTop((scroller.getScrollHeight() - scroller.getClientHeight()) / 2);
         } else {
-            // Scaled, because what an element measures is what it was drawn at rather than what it is
-            // shown at.
-            final double x = ((on.getOffsetLeft() + (on.getOffsetWidth() / 2.0)) * zoom) + slackX();
-            final double y = ((on.getOffsetTop() + (on.getOffsetHeight() / 2.0)) * zoom) + slackY();
+            // Scaled, because what is measured here is what the drawing was laid out at rather than
+            // what it is shown at.
+            final double x = ((at.left() + (at.width() / 2.0)) * zoom) + slackX();
+            final double y = ((at.top() + (at.height() / 2.0)) * zoom) + slackY();
             scroller.setScrollLeft((int) Math.round(x - (scroller.getClientWidth() / 2.0)));
             scroller.setScrollTop((int) Math.round(y - (scroller.getClientHeight() / 2.0)));
         }

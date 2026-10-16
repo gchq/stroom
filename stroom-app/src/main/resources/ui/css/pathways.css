@@ -13,7 +13,14 @@
 
        Playing a history steps every second and a half, so there is room to go slower than this; what
        it cannot do is reach the next step, or a drawing left part way would be taken somewhere else
-       before it arrived. */
+       before it arrived.
+
+       Fading and recolouring are what still read this. Moving does not: where an svg line runs is
+       held in attributes that no rule here can reach, so the renderer has to walk the lines itself —
+       and a node walked by a rule here while the line joining it is walked there is a node and a line
+       on two clocks, whichever of them sets off first arriving first. So the renderer walks the nodes
+       too, and keeps its own copy of this number and of the curve `ease` stands for. Change one and
+       change the other, or a node will fade on a different beat from the one it moves on. */
     --pathway-step-ease: 0.6s;
 }
 
@@ -788,13 +795,14 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    /* So a model stepped through its own history grows and recolours rather than jumping. Not
-       box-shadow's job alone: the ring says when the node last changed and moves band by band, so it
-       eases too. The pulse put on a node is an outline rather than a shadow, which is why it does not
-       fight any of this. */
-    transition: width var(--pathway-step-ease) ease,
-                height var(--pathway-step-ease) ease,
-                background-color var(--pathway-step-ease) ease,
+    /* So a model stepped through its own history recolours rather than jumping. Not background's job
+       alone: the ring says when the node last changed and moves band by band, so it eases too. The
+       pulse put on a node is an outline rather than a shadow, which is why it does not fight this.
+
+       How far across the dot is, is not here. PathwayGraphRenderer walks that itself, along with
+       where the node sits and where the lines between them run, so that all three move on one clock;
+       a rule here would ease towards every frame it wrote and the dot would crawl after it. */
+    transition: background-color var(--pathway-step-ease) ease,
                 box-shadow var(--pathway-step-ease) ease;
 }
 
@@ -836,6 +844,24 @@
     padding: 0;
 }
 
+/* The lines and the badges are drawn in svg, which clips to its own width and height. The nodes are
+   html, which does not. So a drawing that comes to more than the box it was laid out in showed the
+   nodes that spilled over it and dropped the lines to them — or drew the half of a line that was
+   still inside, which is where a link half drawn came from.
+
+   A drawing can come to more than its box because a step taken in place keeps the box it already
+   has, so that the corner everything is measured from cannot shift and carry the whole picture with
+   it. The model inside it still moves: nodes the model does not do at that moment give up their
+   share of the arc, so winding back re-slices the angles and can swing a deep branch further out
+   than anything in the model as it stands reaches.
+
+   Both layers now reach past the box, the way the nodes always did, so the three say the same thing.
+   What keeps the drawing inside the panel is the scrolling box around it, which clips there. */
+.pathway-graph .pathway-curves svg,
+.pathway-graph .pathway-badges svg {
+    overflow: visible;
+}
+
 /* A node is placed by its top left corner and drawn from its middle, so growing moves it. Eased over
    the same time as the growing, or the two would pull apart and the node would drift.
 
@@ -844,9 +870,7 @@
    faded rather than removed. Without this it switches between two opacities in one frame, which reads
    as the node appearing from nowhere rather than arriving. */
 .pathway-graph .pathway-graph-node {
-    transition: left var(--pathway-step-ease) ease,
-                top var(--pathway-step-ease) ease,
-                opacity var(--pathway-step-ease) ease;
+    transition: opacity var(--pathway-step-ease) ease;
 }
 
 /* Dragged to move around and scaled with the wheel, the way a map is. Selecting text while dragging
@@ -974,50 +998,44 @@
     border-top: 1px solid var(--border-color);
 }
 
-/* Nodes and joins the model being shown does not hold yet — the drawing is placed from the model as
- * it stands now, so that winding back does not move everything that is left. Drawn faintly rather
- * than left out: a gap says nothing, whereas something the model has not learnt yet says what is
- * about to happen. */
-.pathway-graph-node--absent {
-    opacity: 0.22;
-}
+/* The two ways the model being shown can not do a node: it has not learnt it yet, and it no longer
+   does it. They are drawn alike, because on the picture they are the same thing — work that is not
+   being done at the moment being looked at.
 
-.pathway-graph-node--absent .pathway-graph-dot {
-    background-color: transparent !important;
-    box-shadow: 0 0 0 2px currentColor !important;
-}
+   Kept in the drawing but given no share of the arc, and put on top of the node it hangs off instead.
+   Dropped outright it would be a different set of nodes from one step to the next, and the step would
+   have to be drawn again rather than eased — which is the one thing that makes a replay watchable.
+   Given a share it would hold a wedge of the picture that nothing is drawn in, which is what made a
+   model with much churn look moth-eaten. Holding neither, a node grows out of its parent as the model
+   learns it and folds back into it as the work stops doing it, while its siblings close over the room
+   it leaves — and every part of that eases.
 
-/* A node the work no longer does: nothing within the document's observation window carried it. Placed
-   but not shown — the drawing is laid out from every node the pathway has ever held, so leaving it out
-   of the layout would move everything the reader was looking at, while showing it would put work on
-   the picture that the work no longer does. Taken to nothing rather than hidden outright, so that
-   going and coming back ease like every other change in a step; pointer events go with it, so nothing
-   can be hovered or clicked that is not there to be read. It comes back the moment a trace carries it
-   again, and winding the changes back to before it went shows it as it was then. */
+   Taken to nothing rather than hidden outright, so that going and coming back ease at all; pointer
+   events go with it, so nothing can be hovered or clicked that is not there to be read. */
+.pathway-graph-node--absent,
 .pathway-graph-node--retired {
     opacity: 0;
     pointer-events: none;
 }
 
 /* Lines are kept from one step to the next rather than drawn again, so a join arriving or going eases
-   the way the node at its end does. Only what the browser treats as a property can ease: the ends of
-   a line are attributes, so an endpoint shifting a few pixels as a node grows still goes there at
-   once. That is a few pixels against a join fading in, which is the part that was jumping. */
+   the way the node at its end does. Only what the browser treats as a property can ease, and of a
+   line that is how wide it is and whether it is there at all — which is what these two are. Where it
+   runs is held in attributes instead, and a node can move the width of the drawing in one step, so
+   PathwayGraphRenderer walks the ends of every line itself over the same time and along the same
+   curve. Left to the browser the lines arrive at once and the nodes are seen sliding up to meet
+   them. */
 .pathway-graph .pathway-curves svg line.pathway-graph-edge {
     transition: opacity var(--pathway-step-ease) ease,
                 stroke-width var(--pathway-step-ease) ease;
 }
 
-/* The join goes with it, or a line is left running out to nothing. Taken to nothing rather than
+/* The join goes with the node, or a line is left running out to nothing. Taken to nothing rather than
    hidden outright, so it fades with the node it points at instead of vanishing a step ahead of it. */
+.pathway-graph .pathway-curves svg line.pathway-graph-edge--absent,
 .pathway-graph .pathway-curves svg line.pathway-graph-edge--retired {
     opacity: 0;
     pointer-events: none;
-}
-
-.pathway-graph .pathway-curves svg line.pathway-graph-edge--absent {
-    stroke-dasharray: 3 4;
-    opacity: 0.18;
 }
 
 /* What the path being looked at did not run. Faded rather than taken out: where every node sits and
@@ -1116,9 +1134,8 @@
  * lines beneath are held at so they do not compete with the nodes. */
 .pathway-graph .pathway-curves svg line.pathway-graph-walk {
     stroke: rgb(255, 77, 200);
-    /* Cut off square, unlike the lines beneath. A round end reaches half the line's width past where
-       the line was put, and a line is put on the rim of the node it joins — so a round one puts a
-       magenta tip inside the node, which is the one place it has nothing to say. */
+    /* Cut off square, like the lines beneath it runs along. Both now end at the middle of the node
+       and are covered from the rim in, so what the end looks like does not show either way. */
     stroke-linecap: butt;
     opacity: 1;
 }
@@ -1295,8 +1312,9 @@
  * them. Held back a little so the joins do not compete with the nodes they join. */
 .pathway-graph .pathway-curves svg line {
     opacity: 0.6;
-    /* Rounded, because a line now stops at the rim of the node it joins rather than under it, so its
-       end is on show. A flat end reads as a cut-off pipe where a round one reads as a join. */
+    /* A line runs to the middle of each node it joins and is covered from the rim inwards, so neither
+       end is ever on show and the shape of the end cannot be seen. Left round because that is what it
+       would want to be if an end were ever uncovered; nothing here depends on it. */
     stroke-linecap: round;
 }
 
