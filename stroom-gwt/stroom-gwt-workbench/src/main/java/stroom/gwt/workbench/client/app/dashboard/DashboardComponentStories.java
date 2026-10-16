@@ -156,6 +156,24 @@ public final class DashboardComponentStories {
                     play.waitFor(() -> play.expect(FrameDocuments.language(visFrame)).toBe("en"));
                     DashboardPlays.expectNoProblems(play);
                 })
+                // The splitter beside a visualisation is above its frame (which is on the page's body,
+                // over the panel), so its grab area, handle and focus ring are not hidden by it
+                .story("SplitterAboveVisualisation", DashboardSupport.story(DashboardDocs.QUERY_TABLE_VIS_SPLIT,
+                        DashboardComponentStories::visRoutes))
+                .withPlay(play -> {
+                    DashboardPlays.opened(play);
+                    final Query visFrame = play.screen().querySelector("iframe.VisFrame-frame");
+                    play.waitFor(() -> play.expect(visFrame).toBeVisible());
+                    final Query splitter = play.getByRole("separator", "Resize T and Chart");
+                    play.run("focus the splitter", () -> splitter.element().get().focus());
+                    // Just right of its line, over the visualisation: its grab area (and its focus
+                    // ring) is on top there
+                    play.expect("what is on top just right of the splitter's line",
+                            () -> topmostBeside(splitter.element().get(), 3)).toBe("splitter");
+                    play.expect("what is on top a little further right",
+                            () -> topmostBeside(splitter.element().get(), 20)).toBe("visualisation");
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // A component's settings rename it
                 .story("ComponentSettings", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
                 }))
@@ -550,6 +568,23 @@ public final class DashboardComponentStories {
                     DashboardPlays.expectNoProblems(play);
                 });
     }
+
+    // What is on top at the point the offset given right of the middle of an element: a dashboard
+    // splitter, a visualisation's frame, something else, or nothing
+    private static native String topmostBeside(Element element, double dx) /*-{
+        var rect = element.getBoundingClientRect();
+        var hit = $doc.elementFromPoint(rect.left + rect.width / 2 + dx, rect.top + rect.height / 2);
+        if (!hit) {
+            return 'nothing';
+        }
+        if (hit.closest('.flex-layout__splitter')) {
+            return 'splitter';
+        }
+        if (hit.closest('.VisFrame-container') || hit.tagName === 'IFRAME') {
+            return 'visualisation';
+        }
+        return 'something else (' + hit.className + ')';
+    }-*/;
 
     // Filters the table's Name column to 'alpha' with its values filter: run the query, open the
     // header's values filter, Select None, then tick 'alpha'.

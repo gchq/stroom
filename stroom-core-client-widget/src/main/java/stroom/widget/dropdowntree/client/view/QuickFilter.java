@@ -19,10 +19,12 @@ package stroom.widget.dropdowntree.client.view;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.form.client.FieldValidity;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -34,6 +36,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Timer;
@@ -41,6 +44,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -52,6 +56,7 @@ public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
     private static final int DEBOUNCE_DELAY_MS = 400;
+    private static final String ARIA_LABEL = "aria-label";
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
             .bold("Quick Filter")
             .br()
@@ -60,6 +65,12 @@ public class QuickFilter extends FlowPanel
             .toSafeHtml();
 
     private final TextBox textBox = new TextBox();
+    // Hidden, the description of the text box, saying what to type, read when it is focused
+    private final Label description = new Label();
+    // Why the server rejected the filter, for screen readers only (sighted users have the box's
+    // invalid styling and hover text). A live region, as the focus stays in the box while typing,
+    // and the box's description, so it is read again when the box is focused.
+    private final Label errorMessage = new Label();
     private final ToolbarButton clearButton;
     private final ToolbarButton dropDownButton;
     private final ToolbarButton helpButton;
@@ -101,8 +112,17 @@ public class QuickFilter extends FlowPanel
         dropDownButton.setVisible(false);
         helpButton = toolbar.button(SvgImage.HELP_OUTLINE, "Quick Filter Syntax Help", this::showHelpPopup);
 
+        description.setVisible(false);
+        description.getElement().setId(DOM.createUniqueId());
+        // Not hidden (display: none), which would hide it from screen readers too
+        errorMessage.setStyleName("sr-only");
+        errorMessage.getElement().setId(DOM.createUniqueId());
+        errorMessage.getElement().setAttribute("aria-live", "polite");
+
         add(textBox);
         add(toolbar);
+        add(description);
+        add(errorMessage);
 
         textBox.addValueChangeHandler(event -> onValueChange());
         textBox.addKeyDownHandler(this::onKeyDown);
@@ -177,14 +197,22 @@ public class QuickFilter extends FlowPanel
         this.filterError = filterError;
 
         // Reuse the app-wide invalid styling rather than inventing one - it is already themed for
-        // light and dark, and already handles the focused state.
+        // light and dark, and already handles the focused state. FieldValidity also marks the box
+        // aria-invalid, so assistive technology is told too.
+        final Element textBoxElement = textBox.getElement();
+        final String errorMessageId = errorMessage.getElement().getId();
         if (filterError == null) {
-            textBox.removeStyleName("invalid");
-            textBox.getElement().removeAttribute("title");
+            FieldValidity.setInvalid(textBoxElement, false);
+            FieldValidity.removeDescribedBy(textBoxElement, errorMessageId);
+            errorMessage.setText("");
+            textBoxElement.removeAttribute("title");
         } else {
-            textBox.addStyleName("invalid");
+            FieldValidity.setInvalid(textBoxElement, true);
+            // Read before what may be typed (see setDescription)
+            FieldValidity.addDescribedBy(textBoxElement, errorMessageId, true);
+            errorMessage.setText(filterError);
             // Native title so it is discoverable on hover without opening the help popup.
-            textBox.getElement().setAttribute("title", filterError);
+            textBoxElement.setAttribute("title", filterError);
         }
         // If the popup is already open, reopen it so it picks up the change.
         if (helpPopup != null) {
@@ -318,6 +346,35 @@ public class QuickFilter extends FlowPanel
         historyTracker.cleared();
         applyFilterError(null);
         onChange(true);
+    }
+
+    /// Names the filter's text box for screen readers, in place of its placeholder, which is only a
+    /// hint and is lost once something is typed.
+    ///
+    /// @param accessibleName What the filter is for, e.g. `Find by name`, or null or blank to name it
+    ///                       by its placeholder.
+    public void setAccessibleName(final String accessibleName) {
+        if (accessibleName == null || accessibleName.isBlank()) {
+            textBox.getElement().removeAttribute(ARIA_LABEL);
+        } else {
+            textBox.getElement().setAttribute(ARIA_LABEL, accessibleName);
+        }
+    }
+
+    /// Says what may be typed in the filter, so a screen reader reads it when the text box is
+    /// focused. The syntax help button gives the full detail.
+    ///
+    /// @param descriptionText What may be typed, or null or blank for nothing.
+    public void setDescription(final String descriptionText) {
+        final Element textBoxElement = textBox.getElement();
+        final String id = description.getElement().getId();
+        FieldValidity.removeDescribedBy(textBoxElement, id);
+        if (descriptionText == null || descriptionText.isBlank()) {
+            description.setText("");
+        } else {
+            description.setText(descriptionText);
+            FieldValidity.addDescribedBy(textBoxElement, id, false);
+        }
     }
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {

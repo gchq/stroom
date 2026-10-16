@@ -129,6 +129,10 @@ public class FormGroup extends Composite implements HasWidgets {
     private boolean required;
     // The control marked as required, or null for none
     private Element requiredControl;
+    // What is wrong with the control's value, or null if nothing is
+    private String feedback;
+    // The control (or group) marked invalid and described by the feedback, or null for none
+    private Element invalidControl;
     // The names of the controls in a group of several, in the order they are shown
     private List<String> controlNames = List.of();
     // The form control the label is for, or null if there is none (or several)
@@ -243,6 +247,7 @@ public class FormGroup extends Composite implements HasWidgets {
         }
         updateHelpDescription();
         updateRequired();
+        updateFeedback();
     }
 
     private void updateRequired() {
@@ -253,6 +258,26 @@ public class FormGroup extends Composite implements HasWidgets {
         if (required && labelledControl != null) {
             requiredControl = labelledControl;
             requiredControl.setAttribute(ARIA_REQUIRED, "true");
+        }
+    }
+
+    // Shows the feedback under the control, and marks the control (or group) invalid and described
+    // by the feedback, so that a screen reader reads what is wrong when the control is focused
+    private void updateFeedback() {
+        if (invalidControl != null) {
+            FieldValidity.setInvalid(invalidControl, false);
+            FieldValidity.removeDescribedBy(invalidControl, feedbackLabel.getElement().getId());
+            invalidControl = null;
+        }
+        feedbackLabel.setText(NullSafe.string(feedback));
+        final Element target = labelledControl != null
+                ? labelledControl
+                : groupElement;
+        if (feedback != null && target != null) {
+            invalidControl = target;
+            FieldValidity.setInvalid(invalidControl, true);
+            // The message is read first, before any help the control also has
+            FieldValidity.addDescribedBy(invalidControl, ensureId(feedbackLabel.getElement()), true);
         }
     }
 
@@ -438,6 +463,30 @@ public class FormGroup extends Composite implements HasWidgets {
     public void setRequired(final boolean required) {
         this.required = required;
         updateRequired();
+    }
+
+    /// Shows what is wrong with the control's value, under the control. The control is marked invalid
+    /// (`aria-invalid`) and described by the message (`aria-describedby`), so that a screen reader
+    /// reads the message when the control is focused. Focus the control after calling this so the
+    /// user goes straight to what needs fixing.
+    ///
+    /// @param feedback What is wrong with the value, e.g. `You must provide a name`, or null or blank
+    ///                 to clear it (see [#clearFeedback()]).
+    public void setFeedback(final String feedback) {
+        this.feedback = NullSafe.isBlankString(feedback)
+                ? null
+                : feedback;
+        updateFeedback();
+    }
+
+    /// Clears any feedback, marking the control valid again.
+    public void clearFeedback() {
+        setFeedback(null);
+    }
+
+    /// @return What is wrong with the control's value, or null if nothing is.
+    public String getFeedback() {
+        return feedback;
     }
 
     /// Names the controls of a group that has several (e.g. a number and its unit), which the label

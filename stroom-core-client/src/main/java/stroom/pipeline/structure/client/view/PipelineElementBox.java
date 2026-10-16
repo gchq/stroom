@@ -50,6 +50,12 @@ public class PipelineElementBox extends Box<PipelineElement> {
     private static final String SEVERITY_ERROR_CLASS = BASE_CLASS + "-severityError";
     private static final String SEVERITY_FATAL_ERROR_CLASS = BASE_CLASS + "-severityFatalError";
     private static final String BULLET = "•";
+    private static final String ROLE = "role";
+    private static final String ROLE_IMG = "img";
+    private static final String ARIA_LABEL = "aria-label";
+    private static final String EMBEDDED_ICON_NAME = "Has embedded document";
+    private static final String INHERITED_EMBEDDED_ICON_NAME = "Has embedded document inherited from parent pipeline";
+    private static final String ACTIVE_FILTERS_NAME = "Has active stepping filters";
 
     private static final Map<String, String> severityNameToClassMap = new HashMap<>();
 
@@ -67,7 +73,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
     public PipelineElementBox(final PipelineModel pipelineModel,
                               final PipelineElement pipelineElement,
-                              final SvgImage icon) {
+                              final SvgImage icon,
+                              final String iconName) {
 //        GWT.log("Creating pipe element " + pipelineElement.getId());
         this.pipelineModel = pipelineModel;
         this.pipelineElement = pipelineElement;
@@ -90,6 +97,9 @@ public class PipelineElementBox extends Box<PipelineElement> {
                     icon,
                     "svgIcon",
                     BASE_CLASS + "-image");
+            // Give the type icon a text alternative so a screen reader can say what type of
+            // element this is
+            nameImage(image, iconName);
             background.add(image);
         }
 
@@ -109,10 +119,11 @@ public class PipelineElementBox extends Box<PipelineElement> {
                         embeddedProperty.get())) {
                 SvgImageUtil.setSvgAsInnerHtml(embeddedIcon, SvgImage.CODE, "svgIcon",
                         BASE_CLASS + " icon-colour__blue");
-
+                nameImage(embeddedIcon, EMBEDDED_ICON_NAME);
             } else {
                 SvgImageUtil.setSvgAsInnerHtml(embeddedIcon, SvgImage.EXPLORER, "svgIcon",
                         BASE_CLASS + " icon-colour__blue");
+                nameImage(embeddedIcon, INHERITED_EMBEDDED_ICON_NAME);
             }
             background.add(embeddedIcon);
         }
@@ -155,11 +166,29 @@ public class PipelineElementBox extends Box<PipelineElement> {
         if (pipelineElement != null && pipelineModel != null && pipelineModel.hasActiveFilters(pipelineElement)) {
             filterIcon.addStyleName(BASE_CLASS + "-filterOn");
             filterIcon.removeStyleName(BASE_CLASS + "-filterOff");
-            filterIcon.setTitle(buildFilterIconTitle());
+            final String filterIconTitle = buildFilterIconTitle();
+            filterIcon.setTitle(filterIconTitle);
+            filterIcon.getElement().setAttribute(ROLE, ROLE_IMG);
+            filterIcon.getElement().setAttribute(ARIA_LABEL, NullSafe.isBlankString(filterIconTitle)
+                    ? ACTIVE_FILTERS_NAME
+                    : filterIconTitle);
         } else {
+            // Only the icon inside is hidden, so the empty holder mustn't be an image either
             filterIcon.addStyleName(BASE_CLASS + "-filterOff");
             filterIcon.removeStyleName(BASE_CLASS + "-filterOn");
             filterIcon.setTitle(null);
+            filterIcon.getElement().removeAttribute(ROLE);
+            filterIcon.getElement().removeAttribute(ARIA_LABEL);
+        }
+    }
+
+    // Exposes an icon to assistive technology as an image with the given name, and shows the
+    // name as a hover tip
+    private static void nameImage(final Widget image, final String name) {
+        if (!NullSafe.isBlankString(name)) {
+            image.getElement().setAttribute(ROLE, ROLE_IMG);
+            image.getElement().setAttribute(ARIA_LABEL, name);
+            image.setTitle(name);
         }
     }
 

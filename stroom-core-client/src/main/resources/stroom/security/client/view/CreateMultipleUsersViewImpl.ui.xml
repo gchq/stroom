@@ -5,8 +5,10 @@
 
     <g:FlowPanel styleName="createMultipleUsersViewImpl dock-container-vertical h-100">
 
-        <form:FormGroup identity="subjectId"
+        <form:FormGroup ui:field="userBatchGroup"
+                        identity="userBatch"
                         label="Users to add"
+                        required="true"
                         addStyleNames="dock-min form"
                         screenReaderText="One user per line: user ID, optional display name, optional full name.">
 

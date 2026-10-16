@@ -23,6 +23,7 @@ import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMulti
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -54,7 +55,11 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                        final HidePopupRequestEvent event,
                        final TaskMonitorFactory taskMonitorFactory) {
         final String usersCsvData = getView().getUsersCsvData();
-        if (usersCsvData != null && !usersCsvData.isEmpty()) {
+        if (NullSafe.isBlankString(usersCsvData)) {
+            // Said under the field, which is focused, so a screen reader reads it
+            getView().setUsersCsvDataInvalid("You must provide at least one user");
+            event.reset();
+        } else {
             restFactory
                     .create(USER_RESOURCE)
                     .method(res -> res.createUsersFromCsv(usersCsvData))
@@ -88,8 +93,6 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                     .onFailure(RestErrorHandler.forPopup(this, event))
                     .taskMonitorFactory(taskMonitorFactory)
                     .exec();
-        } else {
-            event.hide();
         }
     }
 
@@ -122,6 +125,12 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
 
         void focus();
 
+        /// Clears the users and any message about them being invalid.
         void clear();
+
+        /// Shows why the users are invalid, under their field, and focuses the field.
+        ///
+        /// @param message What is wrong with the users.
+        void setUsersCsvDataInvalid(String message);
     }
 }

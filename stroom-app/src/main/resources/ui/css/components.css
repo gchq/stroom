@@ -1698,6 +1698,11 @@ button.main-menu svg {
     height: 6.3rem;
 }
 
+/* What may be typed in the pattern, and what is wrong with it, under the pattern */
+.FindViewImpl-guidance {
+    margin: 0.2rem 0 0.4rem 0;
+}
+
 .FindViewImpl-bottom {
     position: relative;
     overflow: hidden;

@@ -167,130 +167,8 @@
 .dashboard-panel {
 }
 
-.flexLayout-glass {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	margin: 0px;
-	padding: 0px;
-	border-width: 0px;
-	/* We need to set the background color or mouse events will go right */
-	/* through the glassElem. If the layout contains an iframe, the */
-	/* iframe will capture the event and the slider will stop moving. */
-	background-color: white;
-	opacity: 0;
-	z-index: 10;
-}
-
-.flexLayout-glassVisible {
-}
-
-.flexLayout-marker {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	margin: 0px;
-	padding: 0px;
-	/*
-	border-width: 1px;
-	border-style: solid;
-	border-color: var(--splitter__border-color);
-	*/
-	background: var(--splitter__background-color--highlight);
-	opacity: 0.6;
-	z-index: 5;
-}
-
-.flexLayout-markerVisible {
-}
-
-.flexLayout-marker-tab {
-   	opacity: 0.8;
-}
-
-.flexLayout-splitter {
-	position: absolute;
-    background-color: var(--splitter__background-color);
-    z-index: 6;
-}
-/*
-.dashboard__designMode .flexLayout-splitter {
-	display: block;
-}
-
-.dashboard__designMode .flexLayout-splitter:hover {
-	display: block;
-	opacity: 1;
-}
-
-.flexLayout-splitterVisible {
-	display: block;
-	opacity: 1;
-}
-*/
-.flexLayout-splitterDown {
-    width: 100%;
-	height: 1px;
-}
-
-.flexLayout-splitterAcross {
-    width: 1px;
-	height: 100%;
-}
-
-.flexLayout-splitter-dragger {
-	/*display: none;*/
-    position: absolute;
-}
-
-/*
-.dashboard__designMode .flexLayout-splitter-dragger {
-	display: block;
-}
-*/
-/*
-.dashboard__designMode .flexLayout-splitter-dragger:hover, .flexLayout-splitterVisible .flexLayout-splitter-dragger {
-	opacity: 1;
-	background: red;
-}
-*/
-
-.flexLayout-markerVisible .marker {
-    position: absolute;
-	background: var(--splitter__background-color--highlight);
-}
-
-
-.flexLayout-markerVisible.flexLayout-splitterAcross .marker {
-    width: var(--split__size) !important;
-	height: 100%;
-	left: var(--split__offset);
-	cursor: col-resize;
-}
-
-.flexLayout-markerVisible.flexLayout-splitterDown .marker {
-    width: 100%;
-	height: var(--split__size) !important;
-	top: var(--split__offset);
-	cursor: row-resize;
-}
-
-
-.flexLayout-splitterAcross .flexLayout-splitter-dragger {
-    width: var(--split__size);
-	height: 100%;
-	left: var(--split__offset);
-	cursor: col-resize;
-}
-
-.flexLayout-splitterDown .flexLayout-splitter-dragger {
-    width: 100%;
-	height: var(--split__size);
-	top: var(--split__offset);
-	cursor: row-resize;
-}
-
-
+/* A dashboard's splitters, and the glass and marker FlexLayout shows while dragging, are in
+   flex-layout.css */
 
 .flexLayout-selected {
     text-decoration: underline;
@@ -622,14 +500,6 @@
 
 .tabLayout .tabLayout-contentInner {
     background-color: blue;
-}
-
-.flexLayout-splitterAcross {
-	background: red;
-}
-
-.flexLayout-splitterDown {
-    background: green;
 }
 */
 

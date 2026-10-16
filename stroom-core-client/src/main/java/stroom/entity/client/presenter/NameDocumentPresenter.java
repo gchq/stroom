@@ -16,7 +16,6 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.entity.client.presenter.NameDocumentPresenter.NameDocumentProxy;
@@ -80,6 +79,7 @@ public class NameDocumentPresenter
     protected void revealInParent() {
         final String caption = "Rename " + entity.getDisplayValue();
         getView().setName(entity.getDisplayValue());
+        getView().setNameValid();
         final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -100,9 +100,11 @@ public class NameDocumentPresenter
             }
 
             if (entityName == null || entityName.length() == 0) {
-                AlertEvent.fireWarn(NameDocumentPresenter.this,
-                        "You must provide a new name for " + entity.getDisplayValue(), e::reset);
+                // Said under the field, which is focused, so a screen reader reads it
+                getView().setNameInvalid("You must provide a new name for " + entity.getDisplayValue());
+                e.reset();
             } else {
+                getView().setNameValid();
                 RenameDocumentEvent.fire(NameDocumentPresenter.this,
                         e,
                         entity,

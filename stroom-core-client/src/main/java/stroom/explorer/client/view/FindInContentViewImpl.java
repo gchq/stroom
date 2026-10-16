@@ -20,6 +20,7 @@ import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView
 import stroom.explorer.client.presenter.FindInContentUiHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.form.client.FieldValidity;
 import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -29,8 +30,10 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
@@ -42,10 +45,21 @@ public class FindInContentViewImpl
         extends ViewWithUiHandlers<FindInContentUiHandlers>
         implements FindInContentView {
 
+    // What may be typed, shown under the pattern and read when it is focused
+    private static final String TEXT_HINT = "Finds documents whose content contains the text. "
+                                            + "Add tag:name to only search documents with that tag.";
+    private static final String REGEX_HINT = "A regular expression, found anywhere in a document's content "
+                                             + "(^ and $ are not supported). "
+                                             + "Add tag:name to only search documents with that tag.";
+
     private final Widget widget;
 
     @UiField
     TextArea pattern;
+    @UiField
+    Label patternFeedback;
+    @UiField
+    Label patternHint;
     @UiField
     SimplePanel resultContainer;
     @UiField
@@ -62,6 +76,14 @@ public class FindInContentViewImpl
         widget = binder.createAndBindUi(this);
 
         spinner.setVisible(false);
+
+        pattern.getElement().setAttribute("aria-label", "Find in content");
+        // The pattern keeps the focus while the user types, so a screen reader is told of the
+        // feedback as it changes
+        patternFeedback.getElement().setAttribute("aria-live", "polite");
+        patternHint.getElement().setId(DOM.createUniqueId());
+        FieldValidity.addDescribedBy(pattern.getElement(), patternHint.getElement().getId(), false);
+        updateHint();
     }
 
     @Override
@@ -92,6 +114,23 @@ public class FindInContentViewImpl
         });
     }
 
+    @Override
+    public void setPatternInvalid(final String message) {
+        // Not focused, as the user is still typing in it; the feedback is a live region instead
+        FieldValidity.setInvalid(pattern, patternFeedback, message);
+    }
+
+    @Override
+    public void setPatternValid() {
+        FieldValidity.setValid(pattern, patternFeedback);
+    }
+
+    private void updateHint() {
+        patternHint.setText(toggleRegex.getState()
+                ? REGEX_HINT
+                : TEXT_HINT);
+    }
+
     @UiHandler("pattern")
     void onPatternKeyUp(final KeyUpEvent e) {
         getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
@@ -120,6 +159,7 @@ public class FindInContentViewImpl
 
     @UiHandler("toggleRegex")
     void onToggleRegex(final ClickEvent e) {
+        updateHint();
         getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
     }
 

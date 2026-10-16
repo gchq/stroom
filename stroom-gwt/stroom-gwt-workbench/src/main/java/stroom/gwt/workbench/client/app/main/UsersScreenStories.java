@@ -112,6 +112,55 @@ public final class UsersScreenStories {
                                     .toSpyMatcher()));
                     expectNoProblems(play);
                 })
+                // OK with no unique identity says why under the field and keeps the dialog open, rather
+                // than asking the server to create a user with no identity (#5409)
+                .story("NoUserIdentity", context -> render(context, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Alice Anderson");
+                    play.click(play.getByTitle("Create User"));
+                    final Play dialog = screen.within(
+                            screen.findByText("Add External User(s)").closest(StroomDom.DIALOG));
+                    final Query identity = dialog.getByLabelText("Unique User Identity");
+                    play.expect(identity).toHaveAttribute("aria-required", "true");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(identity).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(identity).toHaveAccessibleDescription(
+                            TextMatch.startingWith("You must provide the user's unique identity"));
+                    play.expect(identity).toHaveFocus();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/users/v1/createUser").toSpyMatcher());
+                    // Still open, and a name can now be given
+                    play.type(identity, "bob");
+                    play.waitFor(() -> play.expect(identity).not().toHaveAttribute("aria-invalid"));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/users/v1/createUser")
+                                    .withJsonBodyContaining("{\"subjectId\": \"bob\"}")
+                                    .toSpyMatcher()));
+                    expectNoProblems(play);
+                })
+                // OK with no users to add says why, rather than closing the dialog as Cancel does (#5409)
+                .story("NoUsersToAdd", context -> render(context, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Alice Anderson");
+                    play.click(play.getByTitle("Create User"));
+                    final Play dialog = screen.within(
+                            screen.findByText("Add External User(s)").closest(StroomDom.DIALOG));
+                    play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Add Multiple Identity Provider Users"));
+                    final Query users = dialog.getByLabelText("Users to add");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(users).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(users).toHaveAccessibleDescription(
+                            TextMatch.startingWith("You must provide at least one user"));
+                    play.expect(users).toHaveFocus();
+                    play.expect(screen.getByText("Add External User(s)")).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/users/v1/createUsers").toSpyMatcher());
+                    expectNoProblems(play);
+                })
                 // Bulk create: switch the type to 'Multiple', paste a user list: createUsers with the CSV
                 .story("BulkCreate", context -> render(context, null))
                 .withPlay(play -> {

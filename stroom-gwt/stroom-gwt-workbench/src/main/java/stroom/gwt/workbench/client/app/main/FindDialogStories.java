@@ -28,6 +28,8 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -79,9 +81,14 @@ public final class FindDialogStories {
                     play.expect(screen.queryByText("Countries")).toBeNull();
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post(FIND_PATH).toSpyMatcher());
-                    // Type a filter: the matching documents appear (debounced).
-                    // GWT's quick filter has no id, only a placeholder
-                    play.type(screen.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER), "Events");
+                    // The quick filter is named for what it finds, and says what may be typed in it,
+                    // not just its "Quick Filter" placeholder (#5409)
+                    final Query filter = screen.getByRole("textbox", "Find by name");
+                    play.expect(filter).toHaveAttribute("placeholder", StroomDom.QUICK_FILTER_PLACEHOLDER);
+                    play.expect(filter).toHaveAccessibleDescription(
+                            TextMatch.startingWith("Finds items whose name contains the text."));
+                    // Type a filter: the matching documents appear (debounced)
+                    play.type(filter, "Events");
                     play.waitFor(3000, () -> play.expect(screen.getByText("EVENTS")).toBeInTheDocument());
                     play.expect(screen.getByText("Events Pipeline")).toBeInTheDocument();
                     play.expect(screen.queryByText("Countries")).toBeNull();

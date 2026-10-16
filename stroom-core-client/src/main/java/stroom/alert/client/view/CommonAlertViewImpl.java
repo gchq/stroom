@@ -19,8 +19,10 @@ package stroom.alert.client.view;
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.LinkButton;
+import stroom.widget.popup.client.view.PopupUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -75,7 +77,26 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
         showHideDetail.setVisible(false);
         setDetailVisible(false);
 
+        // Once in its dialog, make the dialog an alert dialog described by the message, so a screen
+        // reader reads the message when the dialog opens, rather than just the button it focuses
+        layout.addAttachHandler(event -> {
+            if (event.isAttached()) {
+                PopupUtil.setAlertDialogRole(layout.getElement(), getDescription());
+            }
+        });
+
+        // A button, so this is a click, Enter or Space
         showHideDetail.addClickHandler(event -> showDetail(!detailVisible));
+    }
+
+    // The message, or the detail if the message was too long to show and so is in the detail instead
+    private Element getDescription() {
+        if (!message.getText().trim().isEmpty()) {
+            return message.getElement();
+        }
+        return detail.getElement().hasChildNodes()
+                ? detail.getElement()
+                : null;
     }
 
     private void setDetailVisible(final boolean visible) {

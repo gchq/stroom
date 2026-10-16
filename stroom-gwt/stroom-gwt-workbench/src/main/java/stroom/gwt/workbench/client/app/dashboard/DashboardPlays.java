@@ -43,7 +43,7 @@ final class DashboardPlays {
     static final String PANEL = ".tabLayout";
 
     /// A splitter between panels.
-    static final String SPLITTER = ".flexLayout-splitter";
+    static final String SPLITTER = ".flex-layout__splitter";
 
     /// A Query component's own Execute Query button.
     static final String QUERY_RUN_BUTTON = ".QueryViewImpl .QueryButtons-button";
@@ -225,6 +225,28 @@ final class DashboardPlays {
                         1);
             }
             dispatchMouse(sourceElement.getOwnerDocument().getBody(), "mouseup", end[0], end[1], 0);
+        });
+    }
+
+    /// Presses the main button at the centre of an element and moves the mouse by the offset given,
+    /// as the start of `drag`, without releasing it, e.g. to show what a drag looks like.
+    ///
+    /// @param play The play.
+    /// @param from The element to press, e.g. a splitter.
+    /// @param dx   How far to move right, in pixels.
+    /// @param dy   How far to move down, in pixels.
+    static void press(final Play play, final Query from, final double dx, final double dy) {
+        final Query source = from;
+        play.run("press " + from.describe() + " and move by " + dx + ", " + dy, () -> {
+            final Element sourceElement = source.element().get();
+            final double[] start = point(sourceElement, 0.5, 0.5, 0, 0);
+            dispatchMouse(sourceElement, "mousedown", start[0], start[1], 1);
+            for (int i = 1; i <= 5; i++) {
+                dispatchMouse(sourceElement.getOwnerDocument().getBody(), "mousemove",
+                        start[0] + dx * i / 5,
+                        start[1] + dy * i / 5,
+                        1);
+            }
         });
     }
 
