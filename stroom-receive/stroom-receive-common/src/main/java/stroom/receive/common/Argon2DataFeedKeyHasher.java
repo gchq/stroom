@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Objects;
 
+// There are subtle differences between this and Argon2Hasher, e.g. how the salt is generated and
+// the encoding of the hash, so we can't delegate to it.
 @Singleton // For thread safe SecureRandom
 class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
 

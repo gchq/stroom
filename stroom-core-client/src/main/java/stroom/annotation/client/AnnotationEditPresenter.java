@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -874,17 +874,7 @@ public class AnnotationEditPresenter
             }
         }
         final UserRef userRef = user;
-
-        final int count = group.getEntries().size();
-        final String actionText = switch (entryType) {
-            case TITLE, SUBJECT, STATUS, ASSIGNED, COMMENT, RETENTION_PERIOD, DESCRIPTION, DELETE ->
-                    entryType.getActionText();
-            case ADD_TABLE_DATA -> "added table data";
-            case LINK_EVENT, UNLINK_EVENT -> "changed " + count + " linked events";
-            case ADD_TO_COLLECTION, REMOVE_FROM_COLLECTION -> "changed " + count + " collections";
-            case ADD_LABEL, REMOVE_LABEL -> "changed " + count + " labels";
-            case LINK_ANNOTATION, UNLINK_ANNOTATION -> "changed " + count + " linked annotations";
-        };
+        final String actionText = getActionText(group, entryType);
 
         html.append(line);
         html.div(border -> {
@@ -922,6 +912,25 @@ public class AnnotationEditPresenter
         }, HISTORY_COMMENT_BORDER);
 
         return true;
+    }
+
+    private static String getActionText(final AnnotationEntryGroup group, final AnnotationEntryType entryType) {
+        final int count = group.getEntries().size();
+        return switch (entryType) {
+            case TITLE,
+                 SUBJECT,
+                 STATUS,
+                 ASSIGNED,
+                 COMMENT,
+                 RETENTION_PERIOD,
+                 DESCRIPTION,
+                 DELETE -> entryType.getActionText();
+            case ADD_TABLE_DATA -> "added table data";
+            case LINK_EVENT, UNLINK_EVENT -> "changed " + count + " linked events";
+            case ADD_TO_COLLECTION, REMOVE_FROM_COLLECTION -> "changed " + count + " collections";
+            case ADD_LABEL, REMOVE_LABEL -> "changed " + count + " labels";
+            case LINK_ANNOTATION, UNLINK_ANNOTATION -> "changed " + count + " linked annotations";
+        };
     }
 
     private boolean addEntryHtml(final HtmlBuilder html,

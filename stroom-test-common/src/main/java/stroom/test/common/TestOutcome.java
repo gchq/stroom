@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,10 @@ public class TestOutcome<I, O> {
         return testCase.getExpectedThrowableType() != null;
     }
 
+    public String getThrowableMessageSubString() {
+        return testCase.getThrowableMessageSubString();
+    }
+
     public String buildFailMessage() {
         return buildFailMessage(this);
     }
@@ -77,9 +81,9 @@ public class TestOutcome<I, O> {
     @Override
     public String toString() {
         return "TestOutcome{" +
-                "testCase=" + testCase +
-                ", actualOutput=" + actualOutput +
-                ", throwable=" + actualThrowable +
-                '}';
+               "testCase=" + testCase +
+               ", actualOutput=" + actualOutput +
+               ", throwable=" + actualThrowable +
+               '}';
     }
 }

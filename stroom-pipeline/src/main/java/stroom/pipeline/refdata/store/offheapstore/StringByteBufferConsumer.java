@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
                 str, ByteBufferUtils.byteBufferInfo(byteBuffer)));
 
         try {
-            // Not sure why we use WHOLE_TEXT_NODE as we are potentially calling characters() multiple times for a
-            // bitmap lookup. Maybe that is what is adding the space between bitmaplookup values.
+            // For a bitmap lookup characters() is called once per matched bit position; the
+            // space delimiting of those values is done by the receiver.
             receiver.characters(str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
         } catch (final XPathException e) {
             throw new RuntimeException(LogUtil.message("Error passing string {} to receiver", str), e);

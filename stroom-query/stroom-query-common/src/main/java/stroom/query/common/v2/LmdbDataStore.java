@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -354,9 +354,10 @@ public class LmdbDataStore implements DataStore {
                                         insert(writeTxn, db, lmdbKV);
                                         uncommittedCount++;
                                     }
-                                    case final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem ->
-                                            currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
-                                                    .mergeExisting(currentDbState);
+                                    case final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem -> {
+                                        currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
+                                                .mergeExisting(currentDbState);
+                                    }
                                     case final Sync sync -> {
                                         commit(writeTxn, currentDbState);
                                         sync.sync();
@@ -877,40 +878,40 @@ public class LmdbDataStore implements DataStore {
             readTxnLock.lock();
             try {
                 env.read(readTxn ->
-                    SimpleMetrics.measure("fetch", () -> {
-                        try {
-                            final FetchState fetchState = new FetchState();
-                            fetchState.countRows = totalRowCountConsumer != null;
-                            fetchState.reachedRowLimit = fetchState.length >= enforcedRange.getLength();
-                            fetchState.keepGoing = fetchState.justCount || !fetchState.reachedRowLimit;
+                        SimpleMetrics.measure("fetch", () -> {
+                            try {
+                                final FetchState fetchState = new FetchState();
+                                fetchState.countRows = totalRowCountConsumer != null;
+                                fetchState.reachedRowLimit = fetchState.length >= enforcedRange.getLength();
+                                fetchState.keepGoing = fetchState.justCount || !fetchState.reachedRowLimit;
 
-                            final LmdbReadContext readContext = new LmdbReadContext(
-                                    LmdbDataStore.this,
-                                    db,
-                                    readTxn,
-                                    timeFilter);
+                                final LmdbReadContext readContext = new LmdbReadContext(
+                                        LmdbDataStore.this,
+                                        db,
+                                        readTxn,
+                                        timeFilter);
 
-                            getChildren(
-                                    readContext,
-                                    Key.ROOT_KEY,
-                                    0,
-                                    maxResultSizes.size(0),
-                                    false,
-                                    openGroups,
-                                    timeFilter,
-                                    mapper,
-                                    enforcedRange,
-                                    fetchState,
-                                    resultConsumer);
+                                getChildren(
+                                        readContext,
+                                        Key.ROOT_KEY,
+                                        0,
+                                        maxResultSizes.size(0),
+                                        false,
+                                        openGroups,
+                                        timeFilter,
+                                        mapper,
+                                        enforcedRange,
+                                        fetchState,
+                                        resultConsumer);
 
-                            if (totalRowCountConsumer != null) {
-                                totalRowCountConsumer.accept(fetchState.totalRowCount);
+                                if (totalRowCountConsumer != null) {
+                                    totalRowCountConsumer.accept(fetchState.totalRowCount);
+                                }
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e::getMessage, e);
+                                throw e;
                             }
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e::getMessage, e);
-                            throw e;
-                        }
-                    }));
+                        }));
             } finally {
                 readTxnLock.unlock();
             }

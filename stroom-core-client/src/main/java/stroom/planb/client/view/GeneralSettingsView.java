@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,4 @@ public interface GeneralSettingsView extends ReadOnlyChangeHandler, HasUiHandler
 
     void setMaxStoreSize(Long maxStoreSize);
 
-    Boolean getSynchroniseMerge();
-
-    void setSynchroniseMerge(Boolean synchroniseMerge);
-
-    Boolean getOverwrite();
-
-    void setOverwrite(Boolean overwrite);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.util.shared;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +48,32 @@ class TestPrimitiveValueConverterArrayImpl {
         // Out of bounds
         assertThat(CONVERTER.fromPrimitiveValue((byte) 999))
                 .isNull();
+    }
+
+    @Test
+    void testAsPrimitiveByteOrThrow() {
+
+        // Test all enum values
+        for (final MyEnum myEnum : MyEnum.values()) {
+            final byte primitiveValue = myEnum.getPrimitiveValue();
+
+            final MyEnum myEnum2 = CONVERTER.fromPrimitiveValueOrThrow(primitiveValue);
+
+            assertThat(myEnum2)
+                    .isEqualTo(myEnum);
+        }
+
+        // Out of bounds
+        Assertions.assertThatThrownBy(() -> CONVERTER.fromPrimitiveValueOrThrow((byte) -1))
+                .isInstanceOf(RuntimeException.class);
+
+        // Unknown primitiveValue
+        Assertions.assertThatThrownBy(() -> CONVERTER.fromPrimitiveValueOrThrow((byte) 3))
+                .isInstanceOf(RuntimeException.class);
+
+        // Out of bounds
+        Assertions.assertThatThrownBy(() -> CONVERTER.fromPrimitiveValueOrThrow((byte) 999))
+                .isInstanceOf(RuntimeException.class);
     }
 
     @Test

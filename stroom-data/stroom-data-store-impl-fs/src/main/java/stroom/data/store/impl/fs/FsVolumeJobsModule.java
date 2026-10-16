@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
 public class FsVolumeJobsModule extends AbstractModule {
+
     @Override
     protected void configure() {
         super.configure();
@@ -35,8 +36,9 @@ public class FsVolumeJobsModule extends AbstractModule {
     }
 
     private static class FileVolumeStatus extends RunnableWrapper {
+
         @Inject
-        FileVolumeStatus(final FsVolumeService volumeService) {
+        FileVolumeStatus(final FsVolumeServiceImpl volumeService) {
             super(volumeService::updateStatus);
         }
     }

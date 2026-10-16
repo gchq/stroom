@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,5 +201,45 @@ class TestDataFeedIdentities {
         // Now try it with a salt value
         assertThat(hasher2.verify(key2, hashedDataFeedKey2.getHash(), hashOutput2.salt()))
                 .isTrue();
+    }
+
+    @Test
+    void generateDataFeedKey_Bcrypt() {
+        final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
+                "123",
+                Map.of(
+                        "MetaKey1", "MetaKey1Val",
+                        "MetaKey2", "MetaKey2Val-"),
+                Instant.now().plus(365, ChronoUnit.DAYS),
+                DataFeedKeyHashAlgorithm.BCRYPT_2A);
+
+        logKeyWithHash(keyWithHash);
+    }
+
+    @Test
+    void generateDataFeedKey_Argon2() {
+        final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
+                "456",
+                Map.of(
+                        "MetaKey1", "MetaKey1Val",
+                        "MetaKey2", "MetaKey2Val-"),
+                Instant.now().plus(365, ChronoUnit.DAYS),
+                DataFeedKeyHashAlgorithm.ARGON2);
+
+        logKeyWithHash(keyWithHash);
+    }
+
+    private static void logKeyWithHash(final KeyWithHash keyWithHash) {
+        LOGGER.info("""
+                        Data Feed Key
+                        key:  {}
+                        salt: {}
+                        hash: {}
+                        algo: {}
+                        """,
+                keyWithHash.key(),
+                keyWithHash.hashedDataFeedKey().getSalt(),
+                keyWithHash.hashedDataFeedKey().getHash(),
+                keyWithHash.hashedDataFeedKey().getHashAlgorithm().name());
     }
 }

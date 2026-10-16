@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import stroom.proxy.app.guice.ProxyCoreModule;
 import stroom.proxy.app.handler.ForwardFileDestinationFactory;
 import stroom.proxy.app.handler.ForwardHttpPostDestinationFactory;
 import stroom.proxy.app.handler.ForwardHttpPostDestinationFactoryImpl;
+import stroom.proxy.app.handler.ForwardS3DestinationFactory;
 import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
+import stroom.proxy.app.handler.MockForwardS3DestinationFactory;
 import stroom.test.common.MockMetrics;
 import stroom.util.metrics.Metrics;
 
@@ -62,5 +64,6 @@ public class ProxyTestModule extends AbstractModule {
 
         bind(ForwardHttpPostDestinationFactory.class).to(ForwardHttpPostDestinationFactoryImpl.class);
         bind(ForwardFileDestinationFactory.class).to(MockForwardFileDestinationFactory.class);
+        bind(ForwardS3DestinationFactory.class).to(MockForwardS3DestinationFactory.class);
     }
 }

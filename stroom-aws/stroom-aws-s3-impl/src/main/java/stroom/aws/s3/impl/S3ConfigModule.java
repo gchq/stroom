@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@ package stroom.aws.s3.impl;
 
 import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.docstore.api.DocumentStoreBinder;
-import stroom.pipeline.factory.PipelineElementModule;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
-public class S3ConfigModule extends PipelineElementModule {
+import com.google.inject.AbstractModule;
+
+public class S3ConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
@@ -37,10 +38,5 @@ public class S3ConfigModule extends PipelineElementModule {
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(S3ClientConfigCache.class);
-    }
-
-    @Override
-    protected void configureElements() {
-        bindElement(S3Appender.class);
     }
 }

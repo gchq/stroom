@@ -15,7 +15,7 @@
  */
 
 plugins {
-    id "com.gradle.develocity" version "4.2.2"
+    id "com.gradle.develocity" version "4.4.1"
 }
 
 // Accept the T&Cs for publishing build scans
@@ -57,6 +57,7 @@ include 'stroom-contentstore:stroom-contentstore-api'
 include 'stroom-contentstore:stroom-contentstore-impl'
 
 // AWS
+include 'stroom-aws:stroom-aws-client'
 include 'stroom-aws:stroom-aws-s3-impl'
 
 // App.

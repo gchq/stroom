@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import stroom.planb.impl.dao.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.dao.rangestate.RangeStateDb;
 import stroom.planb.impl.dao.rangestate.RangeStateFields;
 import stroom.planb.impl.dao.rangestate.RangeStateRequest;
-import stroom.planb.impl.data.RangeState;
-import stroom.planb.impl.data.RangeState.Key;
+import stroom.planb.impl.data.value.RangeState;
+import stroom.planb.impl.data.value.RangeState.Key;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangeKeySchema;
 import stroom.planb.shared.RangeStateSettings;

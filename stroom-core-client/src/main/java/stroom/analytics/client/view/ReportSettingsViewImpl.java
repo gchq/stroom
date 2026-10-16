@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -43,6 +44,12 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<SettingsUiHandler
     SelectionBox<DownloadSearchResultFileType> fileType;
     @UiField
     CustomCheckBox sendEmptyReports;
+    @UiField
+    CustomCheckBox aiSummaryEnabled;
+    @UiField
+    SimplePanel aiSummaryModel;
+    @UiField
+    TextArea aiSummaryPrompt;
     @UiField
     SimplePanel errorFeed;
     @UiField
@@ -108,8 +115,43 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<SettingsUiHandler
         getUiHandlers().onChange();
     }
 
+    @Override
+    public boolean isAiSummaryEnabled() {
+        return aiSummaryEnabled.getValue();
+    }
+
+    @Override
+    public void setAiSummaryEnabled(final boolean aiSummaryEnabled) {
+        this.aiSummaryEnabled.setValue(aiSummaryEnabled);
+    }
+
+    @Override
+    public void setAiSummaryModelView(final View view) {
+        aiSummaryModel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public String getAiSummaryPrompt() {
+        return aiSummaryPrompt.getText();
+    }
+
+    @Override
+    public void setAiSummaryPrompt(final String aiSummaryPrompt) {
+        this.aiSummaryPrompt.setText(aiSummaryPrompt);
+    }
+
     @UiHandler("sendEmptyReports")
     public void onSendEmptyReports(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("aiSummaryEnabled")
+    public void onAiSummaryEnabled(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("aiSummaryPrompt")
+    public void onAiSummaryPrompt(final ValueChangeEvent<String> event) {
         getUiHandlers().onChange();
     }
 

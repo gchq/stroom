@@ -26,7 +26,7 @@
 
         <form:FormGroup identity="analyticProcessingErrorFeed"
                         label="Feed For Errors"
-                        helpText="The Feed to write any errors that occur during execution to.">
+                        helpText="The Feed to write to for any errors that occur during execution.">
             <g:FlowPanel styleName="button-group">
                 <g:SimplePanel ui:field="errorFeed"/>
                 <b:Button ui:field="setDefaultErrorFeed"

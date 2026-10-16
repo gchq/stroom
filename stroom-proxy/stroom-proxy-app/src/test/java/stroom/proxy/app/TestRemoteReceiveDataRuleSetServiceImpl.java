@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.api.HashFunction;
-import stroom.security.common.impl.HashFunctionFactoryImpl;
+import stroom.security.common.impl.hash.HashFunctionFactoryImpl;
 import stroom.security.mock.MockCommonSecurityContext;
 import stroom.security.shared.HashAlgorithm;
 import stroom.test.common.TemporaryPathCreator;

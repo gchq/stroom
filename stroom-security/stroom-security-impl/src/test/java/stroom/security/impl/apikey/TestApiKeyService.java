@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.ApiKeyGenerator;
+import stroom.security.common.impl.hash.HashFunctionFactoryImpl;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.AuthorisationConfig;
 import stroom.security.impl.HashedApiKeyParts;
@@ -105,18 +106,20 @@ class TestApiKeyService {
                 new CacheManagerImpl(),
                 AuthenticationConfig::new,
                 userCache,
-                mockEntityEventBus);
+                mockEntityEventBus,
+                new ApiKeyHasherFactoryImpl(new HashFunctionFactoryImpl()));
     }
 
     @Test
     void verifyApiKey_validKey_returnsUserDescription() {
         final String apiKey = apiKeyGenerator.generateRandomApiKey();
         final User owner = createUser("mySubjectId");
+        final String apiKeyHash = apiKeyService.computeApiKeyHash(apiKey);
 
         Mockito.when(mockApiKeyDao.fetchApiKeysByPrefix(Mockito.anyString()))
                 .thenReturn(List.of(HashedApiKey.builder()
                         .owner(owner.asRef())
-                        .apiKeyHash(apiKeyService.computeApiKeyHash(apiKey))
+                        .apiKeyHash(apiKeyHash)
                         .apiKeyPrefix(ApiKeyGenerator.extractPrefixPart(apiKey))
                         .enabled(true)
                         .build()));
@@ -156,14 +159,16 @@ class TestApiKeyService {
                 new CacheManagerImpl(),
                 AuthenticationConfig::new,
                 userCache,
-                mockEntityEventBus);
+                mockEntityEventBus,
+                new ApiKeyHasherFactoryImpl(new HashFunctionFactoryImpl()));
 
         final String apiKey = apiKeyGenerator.generateRandomApiKey();
         final User owner = createUser("mySubjectId");
+        final String apiKeyHash = apiKeyService.computeApiKeyHash(apiKey);
         Mockito.when(mockApiKeyDao.fetchApiKeysByPrefix(Mockito.anyString()))
                 .thenReturn(List.of(HashedApiKey.builder()
                         .owner(owner.asRef())
-                        .apiKeyHash(apiKeyService.computeApiKeyHash(apiKey))
+                        .apiKeyHash(apiKeyHash)
                         .apiKeyPrefix(ApiKeyGenerator.extractPrefixPart(apiKey))
                         .enabled(true)
                         .build()));
@@ -810,4 +815,5 @@ class TestApiKeyService {
 
         LOGGER.info("clashCount: {}, prefixes: {}", clashCount, prefixes.size());
     }
+
 }

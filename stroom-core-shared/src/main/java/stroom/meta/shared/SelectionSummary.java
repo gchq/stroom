@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ public class SelectionSummary {
     private final Set<String> distinctStatuses;
     @JsonProperty
     private final Range<Long> ageRange;
+    @JsonProperty
+    private final Long readOnlyCount;
 
     @JsonCreator
     public SelectionSummary(@JsonProperty("itemCount") final Long itemCount,
@@ -64,7 +66,8 @@ public class SelectionSummary {
                             @JsonProperty("pipelineCount") final Long pipelineCount,
                             @JsonProperty("statusCount") final Long statusCount,
                             @JsonProperty("distinctStatuses") final Set<String> distinctStatuses,
-                            @JsonProperty("ageRange") final Range<Long> ageRange) {
+                            @JsonProperty("ageRange") final Range<Long> ageRange,
+                            @JsonProperty("readOnlyCount") final Long readOnlyCount) {
         this.itemCount = Objects.requireNonNullElse(itemCount, 0L);
         this.feedCount = Objects.requireNonNullElse(feedCount, 0L);
         this.distinctFeeds = distinctFeeds;
@@ -75,6 +78,30 @@ public class SelectionSummary {
         this.statusCount = Objects.requireNonNullElse(statusCount, 0L);
         this.distinctStatuses = distinctStatuses;
         this.ageRange = ageRange;
+        this.readOnlyCount = readOnlyCount;
+    }
+
+    public SelectionSummary(final long itemCount,
+                            final long feedCount,
+                            final Set<String> distinctFeeds,
+                            final long typeCount,
+                            final Set<String> distinctTypes,
+                            final long processorCount,
+                            final long pipelineCount,
+                            final long statusCount,
+                            final Set<String> distinctStatuses,
+                            final Range<Long> ageRange) {
+        this.itemCount = itemCount;
+        this.feedCount = feedCount;
+        this.distinctFeeds = distinctFeeds;
+        this.typeCount = typeCount;
+        this.distinctTypes = distinctTypes;
+        this.processorCount = processorCount;
+        this.pipelineCount = pipelineCount;
+        this.statusCount = statusCount;
+        this.distinctStatuses = distinctStatuses;
+        this.ageRange = ageRange;
+        this.readOnlyCount = null;
     }
 
     public long getItemCount() {
@@ -132,18 +159,38 @@ public class SelectionSummary {
         return ageRange;
     }
 
+    public long getReadOnlyCount() {
+        return NullSafe.getLong(readOnlyCount);
+    }
+
     @Override
     public String toString() {
         return "SelectionSummary{" +
-                "itemCount=" + itemCount +
-                ", feedCount=" + feedCount +
-                ", distinctFeeds=" + distinctFeeds +
-                ", typeCount=" + typeCount +
-                ", distinctTypes=" + distinctTypes +
-                ", processorCount=" + processorCount +
-                ", pipelineCount=" + pipelineCount +
-                ", statusCount=" + statusCount +
-                ", ageRange=" + ageRange +
-                '}';
+               "itemCount=" + itemCount +
+               ", feedCount=" + feedCount +
+               ", distinctFeeds=" + distinctFeeds +
+               ", typeCount=" + typeCount +
+               ", distinctTypes=" + distinctTypes +
+               ", processorCount=" + processorCount +
+               ", pipelineCount=" + pipelineCount +
+               ", statusCount=" + statusCount +
+               ", ageRange=" + ageRange +
+               ", readOnlyCount=" + readOnlyCount +
+               '}';
+    }
+
+    public SelectionSummary withReadOnlyCount(final long readOnlyCount) {
+        return new SelectionSummary(
+                itemCount,
+                feedCount,
+                distinctFeeds,
+                typeCount,
+                distinctTypes,
+                processorCount,
+                pipelineCount,
+                statusCount,
+                distinctStatuses,
+                ageRange,
+                readOnlyCount);
     }
 }

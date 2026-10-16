@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,10 +141,10 @@ public class ThreadUtil {
                                                   final Consumer<Throwable> throwableConsumer) {
         if (throwableConsumer != null) {
             final Throwable cause = switch (throwable) {
-                case final CompletionException completionException ->
-                        Objects.requireNonNullElse(completionException.getCause(), throwable);
-                case final ExecutionException executionException ->
-                        Objects.requireNonNullElse(executionException.getCause(), throwable);
+                case final CompletionException completionException -> Objects.requireNonNullElse(
+                        completionException.getCause(), throwable);
+                case final ExecutionException executionException -> Objects.requireNonNullElse(
+                        executionException.getCause(), throwable);
                 case null, default -> throwable;
             };
             if (cause != null) {

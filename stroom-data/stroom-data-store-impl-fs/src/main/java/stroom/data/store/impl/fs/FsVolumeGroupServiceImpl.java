@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.entityevent.EntityAction;
@@ -27,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -71,6 +74,12 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     public List<FsVolumeGroup> getAll() {
         ensureDefaultVolumes();
         return securityContext.secureResult(volumeGroupDao::getAll);
+    }
+
+    @Override
+    public ResultPage<FsVolumeGroupRow> findExtended(final ExpressionCriteria criteria) {
+        ensureDefaultVolumes();
+        return securityContext.secureResult(() -> volumeGroupDao.findExtended(criteria));
     }
 
     @Override
@@ -154,8 +163,15 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     }
 
     @Override
-    public Optional<String> getDefaultVolumeGroup() {
-        return Optional.ofNullable(volumeConfigProvider.get().getDefaultStreamVolumeGroupName());
+    public Optional<FsVolumeGroup> getOrCreateDefaultVolumeGroup() {
+        return getDefaultVolumeGroupName()
+                .map(this::getOrCreate);
+    }
+
+    @Override
+    public Optional<String> getDefaultVolumeGroupName() {
+        return Optional.ofNullable(volumeConfigProvider.get().getDefaultStreamVolumeGroupName())
+                .filter(NullSafe::isNonBlankString);
     }
 
     private synchronized void createDefaultVolumes() {
@@ -174,7 +190,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
                             final FsVolumeGroup newGroup = volumeGroupDao.getOrCreate(volumeGroup);
 
                             // Default volumes are created in
-                            // stroom.data.store.impl.fs.FsVolumeService#createDefaultVolumes
+                            // stroom.data.store.impl.fs.FsVolumeServiceImpl#createDefaultVolumes
 
                         } else {
                             LOGGER.warn(() -> "Unable to create default index " +

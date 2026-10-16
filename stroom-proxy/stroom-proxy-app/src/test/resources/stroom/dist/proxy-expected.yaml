@@ -107,6 +107,7 @@ proxyConfig:
       queueAndRetryEnabled: true
       retryDelay: "PT10M"
       retryDelayGrowthFactor: 1.0
+  forwardS3Destinations: []
   fsync:
     aggregateInputQueueMode: "ENABLED"
     forwardingInputQueueMode: "ENABLED"
@@ -172,6 +173,10 @@ proxyConfig:
     - "Test Events"
     - "Test Reference"
     receiptCheckMode: "FEED_STATUS"
+    s3Event:
+      rePollDuration: "PT5M"
+      sleepDurationPostFailure: "PT1M"
+      sqs: null
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"

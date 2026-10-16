@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,9 @@ class TestPlanBDocStoreImplCreate {
         final MockSecurityContext securityContext = new MockSecurityContext();
         return new PlanBDocStoreImpl(
                 new StoreFactoryImpl(new MemoryPersistence(), null, securityContext, null, () -> null),
+                new PlanBDocSerialiser(new Serialiser2FactoryImpl()),
                 securityContext,
-                new PlanBDocSerialiser(new Serialiser2FactoryImpl()));
+                () -> null);
     }
 
     @Test

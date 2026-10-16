@@ -1,0 +1,460 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.data.store.impl.fs.standard;
+
+import stroom.data.store.api.DataException;
+import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.impl.fs.OutputStreamProviderImpl;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.Status;
+import stroom.query.api.datasource.QueryField;
+import stroom.util.io.FileSyncUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
+import stroom.util.io.SeekableOutputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * A file system implementation of Target.
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
+ */
+public final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsTarget.class);
+
+    private final MetaService metaService;
+    private final FsPathHelper fileSystemStreamPathHelper;
+    /**
+     * streamTypeName => {@link FsTarget}
+     */
+    private final Map<String, FsTarget> childMap = new HashMap<>();
+    /**
+     * streamTypeName => {@link SegmentOutputStreamProvider}
+     */
+    private final Map<String, SegmentOutputStreamProvider> outputStreamMap = new HashMap<>(10);
+    private final Path volumePath;
+    private final String streamType;
+    private final FsTarget parent;
+
+    private AttributeMap attributeMap;
+    private OutputStream outputStream;
+    private Path file;
+    private Meta meta;
+    private boolean closed;
+    private boolean deleted;
+    private final FsyncMode fsyncMode;
+    private long index;
+
+    private FsTarget(final MetaService metaService,
+                     final FsPathHelper fileSystemStreamPathHelper,
+                     final Meta requestMetaData,
+                     final Path volumePath,
+                     final FsyncMode fsyncMode) {
+        this.metaService = metaService;
+        this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
+        this.meta = requestMetaData;
+        this.volumePath = volumePath;
+        this.parent = null;
+        this.streamType = meta.getTypeName();
+        this.fsyncMode = fsyncMode;
+
+        validate();
+    }
+
+    private FsTarget(final MetaService metaService,
+                     final FsPathHelper fileSystemStreamPathHelper,
+                     final FsTarget parent,
+                     final String streamType,
+                     final Path file) {
+        this.metaService = metaService;
+        this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
+        this.meta = parent.meta;
+        this.volumePath = parent.volumePath;
+        this.parent = parent;
+        this.streamType = streamType;
+        this.file = file;
+        this.fsyncMode = parent.fsyncMode;
+        validate();
+    }
+
+    /**
+     * Creates a new file system stream target.
+     *
+     * @return A new file system target.
+     */
+    public static FsTarget create(final MetaService metaService,
+                                  final FsPathHelper fileSystemStreamPathHelper,
+                                  final Meta meta,
+                                  final Path rootPath,
+                                  final FsyncMode fsyncMode) {
+        LOGGER.debug(() -> LogUtil.message("create() - metaId: {}, rootPath: {}, streamType: {}",
+                meta.getId(), rootPath, meta.getTypeName()));
+        return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath, fsyncMode);
+    }
+
+    private void validate() {
+        if (streamType == null) {
+            throw new IllegalStateException("Must have a stream type");
+        }
+    }
+
+    @Override
+    public Meta getMeta() {
+        return meta;
+    }
+
+    @Override
+    public AttributeMap getAttributes() {
+        if (parent != null) {
+            return parent.getAttributes();
+        }
+        attributeMap = Objects.requireNonNullElseGet(attributeMap, AttributeMap::new);
+        return attributeMap;
+    }
+
+    private void writeManifest() {
+        try {
+            final Path manifestFile = fileSystemStreamPathHelper.getChildPath(getFile(),
+                    InternalStreamTypeNames.MANIFEST);
+            // No manifest done yet ... output one if the parent dir's exist
+            if (Files.isDirectory(getFile().getParent())) {
+                try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(
+                        InternalStreamTypeNames.MANIFEST,
+                        manifestFile)) {
+                    AttributeMapUtil.write(getAttributes(), outputStream);
+                }
+            } else {
+                LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
+            }
+        } catch (final IOException e) {
+            LOGGER.error(() -> "closeStreamTarget() - Error on writing Manifest " + this, e);
+        }
+    }
+
+    private void updateAttribute(final FsTarget target, final QueryField key, final String value) {
+        if (!target.getAttributes().containsKey(key.getFldName())) {
+            target.getAttributes().put(key.getFldName(), value);
+        }
+    }
+
+    Path getFile() {
+        if (file == null) {
+            if (parent == null) {
+                file = fileSystemStreamPathHelper.getRootPath(volumePath, meta, streamType);
+            } else {
+                file = fileSystemStreamPathHelper.getChildPath(parent.getFile(), streamType);
+            }
+            LOGGER.debug(() -> "getFile() " + FileUtil.getCanonicalPath(file));
+        }
+        return file;
+    }
+
+    @Override
+    public void close() {
+        if (closed) {
+            throw new DataException("Target already closed");
+        }
+
+        try {
+            if (!deleted) {
+                // If we get error on closing the stream we must return it to the caller
+                RuntimeException streamCloseException = null;
+                try {
+                    closeStreams();
+                    if (fsyncMode.isEnabledForFiles()) {
+                        // Force this target's own data file. Children force theirs in their own
+                        // close(), which closeStreams() has just driven.
+                        FileSyncUtil.syncFileIfExists(getFile());
+                    }
+                } catch (final RuntimeException e) {
+                    streamCloseException = e;
+                } catch (final IOException e) {
+                    streamCloseException = new UncheckedIOException(e);
+                } finally {
+                    // Only write meta for the root target.
+                    if (parent == null) {
+                        // Update attributes and write the manifest.
+                        updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(getStreamSize()));
+                        updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(getTotalFileSize()));
+                        writeManifest();
+
+                        if (streamCloseException == null) {
+                            if (fsyncMode.isAnyFsyncEnabled()) {
+                                // Everything this stream wrote must be durable before the database
+                                // is told the stream is valid, otherwise a power failure can leave
+                                // metadata referring to a stream whose contents never reached disk.
+                                syncManifestAndDir(fsyncMode);
+                            }
+
+                            // Unlock will update the meta data so set it back on the stream
+                            // target so the client has the up to date copy
+                            unlock(getMeta(), getAttributes());
+                        } else {
+                            throw streamCloseException;
+                        }
+                    }
+                }
+            }
+        } finally {
+            outputStream = null;
+            closed = true;
+        }
+    }
+
+    /// Forces the manifest and the directories holding this stream's files to durable storage.
+    ///
+    /// The data files themselves are forced as each target closes. The directories are forced here
+    /// because each file was written to a `.lock` path and renamed into place by
+    /// {@link BlockGZIPOutputFile} or {@link LockingFileOutputStream}, and a rename is not durable
+    /// until the directory holding it has been forced. The walk goes all the way up to the volume
+    /// because {@link FileSystemUtil#mkdirs} may have created a whole new branch of date and id
+    /// directories, and forcing only the leaf would leave that branch losable.
+    ///
+    /// A failure to force the manifest fails the close, so that the database is never told the
+    /// stream is unlocked. Note that a failure to force a *directory* does not, as not every
+    /// platform allows a directory to be opened as a channel; see {@link FileSyncUtil#syncDir}.
+    private void syncManifestAndDir(final FsyncMode fsyncMode) {
+        // Sync the manifest file
+        if (fsyncMode.isEnabledForFiles()) {
+            try {
+                FileSyncUtil.syncFileIfExists(fileSystemStreamPathHelper.getChildPath(
+                        getFile(), InternalStreamTypeNames.MANIFEST));
+            } catch (final IOException e) {
+                // If we cannot make the stream durable we must not let the database record it as
+                // unlocked, so fail the close instead.
+                LOGGER.error(() -> "syncManifestAndDir() - Unable to sync " + this, e);
+                throw new UncheckedIOException(e);
+            }
+        }
+        // Sync all the dirs above the manifest file
+        if (fsyncMode.isEnabledForDirs()) {
+            FileSyncUtil.syncDirTree(getFile().getParent(), volumePath);
+        }
+    }
+
+    private void unlock(final Meta meta, final AttributeMap attributeMap) {
+        if (Status.UNLOCKED.equals(meta.getStatus())) {
+            throw new IllegalStateException("Attempt to unlock data that is already unlocked");
+        }
+
+        // Write the meta data
+        if (!attributeMap.isEmpty()) {
+            try {
+                metaService.addAttributes(meta, attributeMap);
+            } catch (final RuntimeException e) {
+                LOGGER.error("unlock() - Failed to persist attributes in new transaction... will ignore");
+            }
+        }
+
+        LOGGER.debug("unlock() - meta: {}", meta);
+        this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
+    }
+
+    @Override
+    public void logicallyDelete() {
+        if (deleted) {
+            throw new DataException("Target already deleted");
+        }
+
+        try {
+            // Close the stream target.
+            closeStreams();
+        } finally {
+            try {
+                // Only delete the root target.
+                if (parent == null) {
+                    // Mark the target meta as deleted.
+                    this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
+                }
+            } finally {
+                outputStream = null;
+                deleted = true;
+            }
+        }
+    }
+
+    private void closeStreams() {
+        RuntimeException exception = null;
+
+        // Close the stream target.
+        if (outputStream != null) {
+            try {
+                outputStream.close();
+            } catch (final IOException e) {
+                LOGGER.error(() -> "closeStreams() - Error on closing stream " + this, e);
+                exception = new UncheckedIOException(e);
+            }
+        }
+
+        // Close off any open kids .... closing the parent
+        // closes kids (the caller can also close the kid off if they like).
+        for (final FsTarget child : childMap.values()) {
+            try {
+                child.close();
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> "closeStreams() - Error on closing child stream " + this, e);
+                if (exception == null) {
+                    exception = e;
+                }
+            }
+        }
+        childMap.clear();
+
+        if (exception != null) {
+            throw exception;
+        }
+    }
+
+    private Long getStreamSize() {
+        try {
+            long total = 0;
+            if (outputStream != null) {
+                total += ((SeekableOutputStream) outputStream).getSize();
+            }
+            return total;
+        } catch (final IOException ioEx) {
+            // Wrap it
+            throw new RuntimeException(ioEx);
+        }
+    }
+
+    private Long getTotalFileSize() {
+        long total = 0;
+        final Path file = getFile();
+        try {
+            if (Files.isRegularFile(file)) {
+                total += Files.size(file);
+            }
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+        return total;
+    }
+
+    @Override
+    public OutputStreamProvider next() {
+        LOGGER.debug("next() - meta: {}, index: {}", meta, index);
+        final OutputStreamProvider outputStreamProvider = new OutputStreamProviderImpl(meta, this, index);
+        index++;
+        return outputStreamProvider;
+    }
+
+    @Override
+    public SegmentOutputStreamProvider getSegmentOutputStreamProvider(final String streamTypeName) {
+        return outputStreamMap.computeIfAbsent(streamTypeName, aStreamTypeName -> {
+            final FsTarget target = getChild(aStreamTypeName);
+            if (target == null) {
+                return null;
+            }
+            return new SegmentOutputStreamProvider(target, aStreamTypeName);
+        });
+    }
+
+    private FsTarget getChild(final String streamTypeName) {
+        if (closed) {
+            throw new RuntimeException("Closed");
+        }
+
+        if (streamTypeName == null) {
+            return this;
+        }
+
+        return childMap.computeIfAbsent(streamTypeName, this::child);
+    }
+
+    private FsTarget child(final String streamTypeName) {
+        final Path childFile = fileSystemStreamPathHelper.getChildPath(getFile(), streamTypeName);
+        return new FsTarget(metaService, fileSystemStreamPathHelper, this, streamTypeName, childFile);
+    }
+
+    @Override
+    public String toString() {
+        return "id=" + meta.getId();
+    }
+
+    // ---------------------------------------------------------------------
+    // START INTERNAL TARGET
+    // ---------------------------------------------------------------------
+
+    /**
+     * Gets the output stream for this stream target.
+     */
+    @Override
+    public OutputStream getOutputStream() {
+        if (outputStream == null) {
+            try {
+                // Get the file.
+                file = getFile();
+
+                // Make sure the parent path exists.
+                if (!FileSystemUtil.mkdirs(volumePath, file.getParent())) {
+                    // Unable to create path
+                    throw new DataException("Unable to create directory for file " + file);
+                }
+
+                // If the file already exists then delete it.
+                if (Files.exists(file)) {
+                    LOGGER.warn(() -> "About to overwrite file: " + FileUtil.getCanonicalPath(file));
+                    if (!FileSystemUtil.deleteAnyPath(file)) {
+                        LOGGER.error(() -> "getOutputStream() - Unable to delete existing files for new stream target");
+                        throw new DataException("Unable to delete existing files for new stream target " + file);
+                    }
+                }
+
+                outputStream = fileSystemStreamPathHelper.getOutputStream(streamType, file);
+                LOGGER.debug(() -> LogUtil.message("getOutputStream() - metaId: {}, streamType: {}, file: {}",
+                        meta.getId(), streamType, file));
+            } catch (final IOException ioEx) {
+                LOGGER.error(() -> "getOutputStream() - " + ioEx.getMessage());
+                // No reason to get a IO on opening the out stream .... fail in
+                // a heap
+                throw new DataException(ioEx);
+            }
+        }
+        return outputStream;
+    }
+
+    @Override
+    public OutputStream getChildOutputStream(final String type) {
+        final InternalTarget childTarget = getChild(type);
+        if (childTarget != null) {
+            LOGGER.debug(() -> LogUtil.message("getOutputStream(type) - metaId: {}, streamType: {}",
+                    meta.getId(), streamType));
+            return childTarget.getOutputStream();
+        }
+        return null;
+    }
+
+    // ---------------------------------------------------------------------
+    // END INTERNAL TARGET
+    // ---------------------------------------------------------------------
+}

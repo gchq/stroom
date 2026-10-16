@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -888,8 +888,8 @@ class TestMetaServiceImpl {
 
     private void unlockAllLockedStreams() {
         JooqUtil.context(metaDbConnProvider, context -> {
-            final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
-            final byte lockedId = MetaStatusId.getPrimitiveValue(Status.LOCKED);
+            final byte unlockedId = Status.UNLOCKED.getPrimitiveValue();
+            final byte lockedId = Status.LOCKED.getPrimitiveValue();
             final int count = context.update(MetaDaoImpl.META_M)
                     .set(MetaDaoImpl.META_M.STATUS, unlockedId)
                     .set(MetaDaoImpl.META_M.STATUS_TIME, Instant.now().toEpochMilli())

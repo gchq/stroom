@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -795,7 +795,6 @@ class SearchExpressionQueryBuilder {
     private Query getSubQuery(final IndexField field,
                               final String value,
                               final Set<String> terms) {
-        Query query = null;
 
         // Store terms for hit highlighting.
         String highlight = value;
@@ -810,6 +809,7 @@ class SearchExpressionQueryBuilder {
         // modify the query so that each word becomes a new term in a boolean
         // query.
         String val = value.trim();
+        Query query = null;
         if (!AnalyzerType.KEYWORD.equals(field.getAnalyzerType())) {
             // If the field has been analysed then we need to analyse the search
             // query to create matching terms.

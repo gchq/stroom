@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.proxy.app.guice;
 
+import stroom.aws.s3.shared.S3ClientConfigService;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyConfigMonitor;
 import stroom.util.config.ConfigLocation;
@@ -58,5 +59,7 @@ public class ProxyConfigModule extends AbstractModule {
         // get hold of it via guice
         bind(ConfigLocation.class)
                 .toInstance(new ConfigLocation(proxyConfigHolder.getConfigFile()));
+
+        bind(S3ClientConfigService.class).to(ProxyS3ClientConfigService.class);
     }
 }

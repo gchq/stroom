@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@
 package stroom.processor.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.processor.impl.db.jooq.tables.ProcessorTask;
+import stroom.processor.impl.ProgressMonitor;
+import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.datasource.QueryField;
@@ -32,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -96,49 +100,86 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(countOwned(null)).isEqualTo(3);
     }
 
+    /**
+     * gh-5699. The reaper's condition: a PROCESSING task whose heartbeat has gone un-renewed past
+     * the lease is dead and goes back to CREATED; anything else is left alone. The version bump is
+     * the fence that stops the original owner writing over it afterwards.
+     */
     @Test
-    void testRetainOwnedTasks() {
-        assertThat(getProcessorCount(null)).isZero();
-        assertThat(countTasks()).isZero();
-        assertThat(countOwned(NODE1)).isZero();
-        assertThat(countOwned(NODE2)).isZero();
-
+    void testReapDeadTasks() {
         processor1 = createProcessor();
-
-        assertThat(getProcessorCount(null)).isOne();
-
         processorFilter1a = createProcessorFilter(processor1);
-        assertThat(getProcessorFilterCount(null)).isOne();
 
-        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE2, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE2, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE2, FEED);
+        final Instant now = Instant.now();
+        final Instant stale = now.minus(20, ChronoUnit.MINUTES);
+        final Instant fresh = now.minus(1, ChronoUnit.MINUTES);
 
-        assertThat(countTasks()).isEqualTo(6);
-        assertThat(countOwned(NODE1)).isEqualTo(3);
-        assertThat(countOwned(NODE2)).isEqualTo(3);
+        final long dead = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED, stale);
+        final long alive = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED, fresh);
+        final long queued = createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED, stale);
+        final long complete = createProcessorTask(processorFilter1a, TaskStatus.COMPLETE, NODE1, FEED, stale);
+        final int deadVersionBefore = getTaskVersion(dead);
 
-        processorTaskDao.retainOwnedTasks(Set.of(NODE1, NODE2), Instant.now());
+        assertThat(processorTaskDao.reapDeadTasks(now.minus(10, ChronoUnit.MINUTES))).isEqualTo(1);
 
-        assertThat(countTasks()).isEqualTo(6);
-        assertThat(countOwned(NODE1)).isEqualTo(3);
-        assertThat(countOwned(NODE2)).isEqualTo(3);
+        assertThat(getTaskStatus(dead)).isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskNodeId(dead))
+                .describedAs("a reaped task must be unowned so any node can claim it")
+                .isNull();
+        assertThat(getTaskVersion(dead))
+                .describedAs("the version bump is what fences the original owner")
+                .isEqualTo(deadVersionBefore + 1);
 
-        processorTaskDao.retainOwnedTasks(Set.of(NODE1), Instant.now().minusSeconds(10));
+        assertThat(getTaskStatus(alive))
+                .describedAs("a heartbeat within the lease means the node is alive")
+                .isEqualTo(TaskStatus.PROCESSING);
+        assertThat(getTaskNodeId(alive)).isNotNull();
+        assertThat(getTaskStatus(queued))
+                .describedAs("only PROCESSING rows are dead task candidates")
+                .isEqualTo(TaskStatus.QUEUED);
+        assertThat(getTaskStatus(complete)).isEqualTo(TaskStatus.COMPLETE);
+    }
 
-        assertThat(countTasks()).isEqualTo(6);
-        assertThat(countOwned(NODE1)).isEqualTo(3);
-        assertThat(countOwned(NODE2)).isEqualTo(3);
+    /**
+     * gh-5699. A failed version check means we lost the lease, so the write is abandoned rather
+     * than forced - forcing it is exactly how a half dead node stamps COMPLETE over a task another
+     * node now owns.
+     */
+    @Test
+    void testChangeTaskStatusAbandonsOnLostLease() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
 
-        processorTaskDao.retainOwnedTasks(Set.of(NODE1), Instant.now().plusSeconds(10));
+        final Instant now = Instant.now();
+        final long taskId = createProcessorTask(
+                processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED, now.minus(20, ChronoUnit.MINUTES));
 
-        assertThat(countTasks()).isEqualTo(6);
-        assertThat(countOwned(NODE1)).isEqualTo(3);
-        assertThat(countOwned(NODE2)).isZero();
-        assertThat(countOwned(null)).isEqualTo(3);
+        final ProcessorTask taskAsOwned = processorTaskDao.find(new ExpressionCriteria())
+                .getValues()
+                .getFirst();
+        assertThat(taskAsOwned.getId()).isEqualTo(taskId);
+
+        // The reaper takes the task from us: version bumps, so our copy is now stale.
+        assertThat(processorTaskDao.reapDeadTasks(now.minus(10, ChronoUnit.MINUTES))).isEqualTo(1);
+
+        // Our belated attempt to complete it must be abandoned...
+        final ProcessorTask result = processorTaskDao.changeTaskStatus(
+                taskAsOwned, NODE1, TaskStatus.COMPLETE, now.toEpochMilli(), now.toEpochMilli());
+
+        assertThat(result).isNull();
+        // ...leaving the row as the reaper set it, not stamped COMPLETE.
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskNodeId(taskId)).isNull();
+
+        // A write with the current version still succeeds - abandonment is about lost leases,
+        // not a general write freeze.
+        final ProcessorTask current = processorTaskDao.find(new ExpressionCriteria())
+                .getValues()
+                .getFirst();
+        final ProcessorTask updated = processorTaskDao.changeTaskStatus(
+                current, NODE1, TaskStatus.PROCESSING, now.toEpochMilli(), null);
+        assertThat(updated).isNotNull();
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.PROCESSING);
     }
 
     @Test
@@ -378,6 +419,65 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
                 .isEqualTo(0);
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
                 .isEqualTo(1);
+    }
+
+    @Test
+    void testTrackerDoesNotMoveBackwards() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+
+        // A poll that creates no tasks moves the tracker on to just past the max meta id it was given.
+        assertThat(pollWithNoTasks(processorFilter1a, 99L).getMinMetaId())
+                .isEqualTo(100);
+
+        // Simulate a filter that has part processed the events within a stream.
+        final ProcessorFilterTracker tracker = fetchTracker(processorFilter1a);
+        tracker.setMinEventId(5L);
+        processorFilterTrackerDao.update(tracker);
+
+        // A poll bounded by a lower max meta id must leave the tracker alone. Winding it back would
+        // re-scan meta we have already created tasks for, and there is no unique constraint on
+        // (filter, meta) to stop the duplicates.
+        ProcessorFilterTracker result = pollWithNoTasks(processorFilter1a, 49L);
+        assertThat(result.getMinMetaId()).isEqualTo(100);
+        assertThat(result.getMinEventId()).isEqualTo(5);
+
+        // The same max meta id is not greater either, so it must not reset the event position within
+        // the stream we are part way through.
+        result = pollWithNoTasks(processorFilter1a, 99L);
+        assertThat(result.getMinMetaId()).isEqualTo(100);
+        assertThat(result.getMinEventId()).isEqualTo(5);
+
+        // A higher max meta id still moves the tracker on, and starts the new stream from its first event.
+        result = pollWithNoTasks(processorFilter1a, 149L);
+        assertThat(result.getMinMetaId()).isEqualTo(150);
+        assertThat(result.getMinEventId()).isZero();
+    }
+
+    /**
+     * Create tasks for a filter that has no meta to create tasks for, returning the persisted tracker.
+     */
+    private ProcessorFilterTracker pollWithNoTasks(final ProcessorFilter filter,
+                                                   final long maxMetaId) {
+        final FilterProgressMonitor filterProgressMonitor = new ProgressMonitor(1)
+                .logFilter(filter, 0);
+        // Re-fetch the tracker as each poll would, so that its version matches the DB.
+        final int createdTasks = processorTaskDao.createNewTasks(
+                filter,
+                fetchTracker(filter),
+                filterProgressMonitor,
+                System.currentTimeMillis(),
+                Map.of(),
+                maxMetaId,
+                false);
+        assertThat(createdTasks).isZero();
+        return fetchTracker(filter);
+    }
+
+    private ProcessorFilterTracker fetchTracker(final ProcessorFilter filter) {
+        return processorFilterTrackerDao
+                .fetch(filter.getProcessorFilterTracker().getId())
+                .orElseThrow();
     }
 
     @Test

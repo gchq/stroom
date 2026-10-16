@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import stroom.planb.impl.dao.UidLookupDb;
 import stroom.planb.impl.dao.UidLookupRecorder;
 import stroom.planb.impl.dao.UsedLookupsRecorder;
 import stroom.planb.impl.dao.UsedLookupsRecorderProxy;
-import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.value.Session;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.val.ValSerdeUtil;
@@ -114,7 +114,8 @@ public class UidLookupSessionSerde implements SessionSerde {
         });
 
         return ValSerdeUtil.write(session.getPrefix().getVal(), byteBuffers, valueByteBuffer -> {
-            // We are going to store as a lookup so take off the variable type prefix.
+            // The lookup is keyed on the session key alone, so take off the start/end times written
+            // as the suffix above.
             final ByteBuffer slice = valueByteBuffer.slice(0, valueByteBuffer.remaining() - timeLength);
             KeyLength.check(slice,  Db.MAX_KEY_LENGTH);
 

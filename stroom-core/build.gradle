@@ -17,6 +17,8 @@
 ext.moduleName = 'stroom.core'
 
 dependencies {
+    implementation project(':stroom-aws:stroom-aws-s3-impl')
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-cluster:stroom-cluster-task-api')

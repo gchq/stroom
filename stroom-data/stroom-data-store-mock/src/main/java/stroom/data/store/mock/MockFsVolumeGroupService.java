@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package stroom.data.store.mock;
 
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +34,11 @@ public class MockFsVolumeGroupService implements FsVolumeGroupService {
 
     @Override
     public List<FsVolumeGroup> getAll() {
+        return null;
+    }
+
+    @Override
+    public ResultPage<FsVolumeGroupRow> findExtended(final ExpressionCriteria criteria) {
         return null;
     }
 
@@ -70,7 +78,7 @@ public class MockFsVolumeGroupService implements FsVolumeGroupService {
     }
 
     @Override
-    public Optional<String> getDefaultVolumeGroup() {
+    public Optional<String> getDefaultVolumeGroupName() {
         return Optional.empty();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
-import stroom.util.shared.StringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.widget.form.client.CustomFileUpload;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -97,7 +97,7 @@ public class ImportConfigPresenter
                     currentHidePopupRequestEvent = e;
                     if (e.isOk()) {
                         final String filename = getView().getFileUpload().getFilename();
-                        if (!StringUtil.isBlank(filename)) {
+                        if (NullSafe.isNonBlankString(filename)) {
                             getView().getFileUpload().submit();
                         } else {
                             error("You must select a file to import.");

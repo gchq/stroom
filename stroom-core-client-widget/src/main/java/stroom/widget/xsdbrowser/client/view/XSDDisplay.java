@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -510,7 +510,6 @@ public class XSDDisplay extends Composite {
             Widget image = null;
             XSDNodeLabel lblName = null;
             Label lblOccurrence = null;
-            Label lblType = null;
 
             String name = node.getName();
             String valueType = null;
@@ -553,9 +552,10 @@ public class XSDDisplay extends Composite {
             if (name != null) {
                 lblName = new XSDNodeLabel(name, map, model, node, refNode);
             }
-            if (valueType != null) {
-                lblType = new Label(valueType, false);
-            }
+
+            final Label lblType = valueType != null
+                    ? new Label(valueType, false)
+                    : null;
 
             final int colCount = layout.getColumnCount();
 

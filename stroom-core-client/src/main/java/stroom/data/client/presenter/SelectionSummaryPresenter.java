@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,14 @@ public class SelectionSummaryPresenter
                 "statuses",
                 result.getStatusCount(),
                 result.getDistinctStatuses(),
-                2);
+                1);
+
+        if (result.getReadOnlyCount() > 0) {
+            appendRow(sb, "read-only item", "read-only items", result.getReadOnlyCount());
+            sb.appendHtmlConstant("</br>");
+        }
+        sb.appendHtmlConstant("</br>");
+
         sb.appendEscaped("That are associated with:");
         sb.appendHtmlConstant("</br>");
         appendRow(sb, "pipeline", "pipelines", result.getPipelineCount());

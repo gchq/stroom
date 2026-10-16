@@ -61,6 +61,7 @@ do_gradle_build() {
 
 do_docker_builds() {
   DOCKER_IMAGE_TAG="local-SNAPSHOT"
+  GIT_TAG="${DOCKER_IMAGE_TAG}"
   CURRENT_GIT_COMMIT="$(git rev-parse HEAD)"
 
   echo -e "${GREEN}Building stroom docker image" \
@@ -70,7 +71,7 @@ do_docker_builds() {
   docker build \
     --tag gchq/stroom:${DOCKER_IMAGE_TAG} \
     --build-arg GIT_COMMIT="${CURRENT_GIT_COMMIT}" \
-    --build-arg GIT_TAG="${DOCKER_IMAGE_TAG}" \
+    --build-arg GIT_TAG="${GIT_TAG}" \
     ./stroom-app/docker
 
   echo -e "${GREEN}Building stroom-proxy docker image" \
@@ -80,7 +81,7 @@ do_docker_builds() {
   docker build \
     --tag gchq/stroom-proxy:${DOCKER_IMAGE_TAG} \
     --build-arg GIT_COMMIT="${CURRENT_GIT_COMMIT}" \
-    --build-arg GIT_TAG="${DOCKER_IMAGE_TAG}" \
+    --build-arg GIT_TAG="${GIT_TAG}" \
     ./stroom-proxy/stroom-proxy-app/docker
 }
 
@@ -102,11 +103,7 @@ main() {
   if [ "$mode" = "skipGradle" ]; then
     echo -e "${GREEN}Skipping gradle build${NC}"
   else
-    do_gradle_build
-  fi
-
-  if [ $? -ne 0 ]; then
-    exit 1
+    do_gradle_build || exit 1
   fi
 
   do_docker_builds

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import stroom.util.shared.PrimitiveValueConverter;
 public enum ValueType implements HasPrimitiveValue {
     STRING(0),
     BOOLEAN(1),
-    INTEGER(2),
+    // These numbers are the type marker stored with each value, so they are fixed and must not be
+    // reassigned. 2 is unused: an OTLP intValue is a 64-bit integer and is stored as LONG.
     DOUBLE(3),
     ARRAY_VALUE(4),
     KEY_VALUE_LIST(5),

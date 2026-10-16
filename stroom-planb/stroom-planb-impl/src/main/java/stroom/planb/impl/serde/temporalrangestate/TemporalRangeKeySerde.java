@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.planb.impl.serde.temporalrangestate;
 
-import stroom.planb.impl.data.TemporalRangeState.Key;
+import stroom.planb.impl.data.value.TemporalRangeState.Key;
 import stroom.planb.impl.serde.KeySerde;
 
 import java.nio.ByteBuffer;
