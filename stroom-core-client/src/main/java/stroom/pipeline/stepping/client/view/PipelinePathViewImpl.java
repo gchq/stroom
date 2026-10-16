@@ -43,6 +43,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -96,8 +97,11 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private static final String CARET_CLASS = BASE_CLASS + "__caret";
     private static final String ICON_CLASS = BASE_CLASS + "__icon";
     private static final String LABEL_CLASS = BASE_CLASS + "__label";
+    private static final String LABEL_TEXT_CLASS = BASE_CLASS + "__label-text";
+    private static final String DATA_TEXT_ATTRIBUTE = "data-text";
     private static final String FILTER_CLASS = BASE_CLASS + "__filter";
-    private static final String MENU_BADGE_CLASS = BASE_CLASS + "__menu-badge";
+    private static final String BRANCH_FILTER_CLASS = BASE_CLASS + "__branch-filter";
+    private static final String MENU_FILTER_CLASS = BASE_CLASS + "__menu-filter";
     private static final String MENU_RING_CLASS = BASE_CLASS + "__menu-ring";
 
     private static final String INDEX_ATTRIBUTE = "data-index";
@@ -117,6 +121,9 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private static final String ELLIPSIS_TEXT = "…";
     // The gap between the menu and the chevron it drops down from
     private static final int MENU_GAP = 2;
+    // How far in from a menu's left its items' icons are, so that a menu can line them up under a
+    // chevron's icon
+    private static final int MENU_ICON_INSET = 8;
     // How long an element pulses when a step gives it an error: three pulses of 1.4s, as the
     // pulse animations in pipeline-path.css
     private static final double PULSE_MILLIS = 3 * 1400;
@@ -422,16 +429,18 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         if (icon != null) {
             button.appendChild(createIcon(icon, ICON_CLASS));
         }
-        final Element label = Document.get().createSpanElement();
-        label.setClassName(LABEL_CLASS);
-        label.setInnerText(element.getDisplayName());
-        button.appendChild(label);
+        button.appendChild(createLabel(element.getDisplayName()));
         if (filters) {
-            button.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS + " icon-colour__green"));
+            button.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS));
         }
         segment.appendChild(button);
 
         if (step.isAfterFork()) {
+            // The branches not shown having filters is for sight only here: the drop down
+            // chevron's name says so
+            if (step.hiddenFilters()) {
+                segment.appendChild(createIcon(SvgImage.FILTER, BRANCH_FILTER_CLASS));
+            }
             segment.appendChild(createCaret(step));
         }
         return segment;
@@ -446,6 +455,19 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         button.setAttribute(ARIA_LABEL, description);
         button.setTitle(description);
         return button;
+    }
+
+    // A chevron's name. It holds its text in data-text too, so that it can keep room for its text
+    // in bold (see pipeline-path.css)
+    private static Element createLabel(final String text) {
+        final Element label = Document.get().createSpanElement();
+        label.setClassName(LABEL_CLASS);
+        label.setAttribute(DATA_TEXT_ATTRIBUTE, text);
+        final Element labelText = Document.get().createSpanElement();
+        labelText.setClassName(LABEL_TEXT_CLASS);
+        labelText.setInnerText(text);
+        label.appendChild(labelText);
+        return label;
     }
 
     // The chevron's shape, under its content: its border, then its fill, inside which its inner
@@ -479,16 +501,13 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     }
 
     // The drop down chevron of an element after a fork: a menu button listing the branches the
-    // path could follow there. It is after a filter icon if the branches not shown have active
-    // filters, and ringed in the colour of the worst severity in those branches.
+    // path could follow there, ringed in the colour of the worst severity in the branches not
+    // shown.
     private Element createCaret(final Step step) {
         final Element caret = createButton(describeCaret(step));
         caret.setClassName(CARET_CLASS);
         caret.setAttribute(ARIA_HAS_POPUP, "menu");
         caret.setAttribute(ARIA_EXPANDED, "false");
-        if (step.hiddenFilters()) {
-            caret.appendChild(createIcon(SvgImage.FILTER, CARET_CLASS + "-filter icon-colour__green"));
-        }
         final Element arrow = Document.get().createSpanElement();
         arrow.setClassName(CARET_CLASS + "-target");
         arrow.appendChild(createIcon(SvgImage.DROP_DOWN, CARET_CLASS + "-arrow"));
@@ -679,12 +698,9 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         final Element button = createButton(description.toString());
         button.setAttribute(ARIA_HAS_POPUP, "menu");
         button.setAttribute(ARIA_EXPANDED, "false");
-        final Element label = Document.get().createSpanElement();
-        label.setClassName(LABEL_CLASS);
-        label.setInnerText(ELLIPSIS_TEXT);
-        button.appendChild(label);
+        button.appendChild(createLabel(ELLIPSIS_TEXT));
         if (filters) {
-            button.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS + " icon-colour__green"));
+            button.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS));
         }
         ellipsis.appendChild(button);
         return ellipsis;
@@ -841,7 +857,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
             }
         }
         // As a menu that chooses one of its items, it starts on the current choice
-        openMenu(caret, items, currentItem);
+        openMenu(segment, caret, items, currentItem);
     }
 
     // Lists the elements a `…` chevron collapses
@@ -867,23 +883,47 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
                     })
                     .build());
         }
-        openMenu(getButton(ellipsis), items, null);
+        openMenu(ellipsis, getButton(ellipsis), items, null);
     }
 
-    // Opens a menu below its menu button, which says it is expanded until the menu closes
-    private void openMenu(final Element opener, final List<Item> items, final Item focusItem) {
+    // Opens a menu below a chevron, from its menu button, which says it is expanded until the menu
+    // closes. The menu's icons line up under the chevron's icon (or, with none, its name).
+    private void openMenu(final Element segment,
+                          final Element opener,
+                          final List<Item> items,
+                          final Item focusItem) {
         opener.setAttribute(ARIA_EXPANDED, "true");
+        Element alignTo = getDescendant(segment, ICON_CLASS);
+        if (alignTo == null) {
+            alignTo = getDescendant(segment, LABEL_CLASS);
+        }
+        final Rect segmentRect = new Rect(segment);
+        final double left = (alignTo != null
+                ? alignTo.getAbsoluteLeft()
+                : segmentRect.getLeft()) - MENU_ICON_INSET;
+        final Rect below = new Rect(segmentRect.getTop(), segmentRect.getBottom(), left, left + 1)
+                .growY(MENU_GAP);
         pathUiHandlers.onShowMenu(
                 items,
-                new PopupPosition(new Rect(opener).growY(MENU_GAP), PopupLocation.BELOW),
+                new PopupPosition(below, PopupLocation.BELOW),
                 opener,
                 focusItem,
                 () -> opener.setAttribute(ARIA_EXPANDED, "false"));
     }
 
-    // The element's name; for screen readers (as the menu's highlight is only seen) whether it is
-    // the branch the path follows; a ring in the colour of a severity of warnings or worse, as the
-    // drop down chevron's, with its words for screen readers; and whether it has filters
+    private static Element getDescendant(final Element element, final String className) {
+        final NodeList<Element> found = element.getElementsByTagName("*");
+        for (int i = 0; i < found.getLength(); i++) {
+            if (found.getItem(i).hasClassName(className)) {
+                return found.getItem(i);
+            }
+        }
+        return null;
+    }
+
+    // The element's name, then, as on a chevron, a filter icon if it has filters and a ring in the
+    // colour of a severity of warnings or worse. Each is in words for screen readers, as is whether
+    // it is the branch the path follows (the menu's highlight is only seen).
     private static SafeHtml getMenuText(final PipelineElement element,
                                         final Severity severity,
                                         final boolean filters,
@@ -891,25 +931,27 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         builder.appendEscaped(element.getDisplayName());
         if (current) {
-            builder.appendHtmlConstant("<span class=\"sr-only\">");
-            builder.appendEscaped(", current branch");
+            appendScreenReaderText(builder, ", current branch");
+        }
+        if (filters) {
+            builder.appendHtmlConstant("<span class=\"" + MENU_FILTER_CLASS + "\" aria-hidden=\"true\">");
+            builder.append(SvgImageUtil.toSafeHtml(SvgImage.FILTER, "svgIcon"));
             builder.appendHtmlConstant("</span>");
+            appendScreenReaderText(builder, ", has stepping filters");
         }
         final String severityClass = getSeverityClass(MENU_RING_CLASS, severity);
         if (severityClass != null) {
             builder.appendHtmlConstant("<span class=\"" + MENU_RING_CLASS + " " + severityClass
                                        + "\" aria-hidden=\"true\"></span>");
-            builder.appendHtmlConstant("<span class=\"sr-only\">");
-            builder.appendEscaped(", has " + severity.getSummaryValue().toLowerCase());
-            builder.appendHtmlConstant("</span>");
-        }
-        if (filters) {
-            builder.appendHtmlConstant("<span class=\"" + MENU_BADGE_CLASS + " " + MENU_BADGE_CLASS
-                                       + "--filter\">");
-            builder.appendEscaped("Filtered");
-            builder.appendHtmlConstant("</span>");
+            appendScreenReaderText(builder, ", has " + severity.getSummaryValue().toLowerCase());
         }
         return builder.toSafeHtml();
+    }
+
+    private static void appendScreenReaderText(final SafeHtmlBuilder builder, final String text) {
+        builder.appendHtmlConstant("<span class=\"sr-only\">");
+        builder.appendEscaped(text);
+        builder.appendHtmlConstant("</span>");
     }
 
     // Follows another branch at a fork, selecting its element (or, if it can't be selected, the

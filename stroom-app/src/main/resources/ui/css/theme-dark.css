@@ -127,6 +127,11 @@
     --pipeline-element-box__border-color--selected: #a1a1a1;
     --pipeline-element-box__border-color--info: #378cff;
     --pipeline-element-box__border-color--warn: yellow;
+    --pipeline-path__warn: var(--warn);
+    --pipeline-path__background-color--selected: var(--row__background-color--selected);
+    --pipeline-path__background-color--selected--hover: var(--row__background-color--selected--hovered);
+    --pipeline-path__text-color--selected: var(--text-color--selected);
+    --pipeline-path__filter: var(--icon-colour__green);
     --pipeline-element-box__border-color--error: orangered;
     --pipeline-element-box__border-color--fatal-error: red;
     --pipeline-element-box__border-color--fatal-error-dark: #c60000;

@@ -250,26 +250,30 @@
     --pipeline-path__fill: var(--icon-button__background-color--active-outside);
 }
 
-/* The selected element (its button is aria-current), with a button's 'on' fill (pressing it darkens
-   it) and white text in both themes, as the dark theme's 'on' text colour is too dark for the blue */
+/* The selected element (its button is aria-current), as a selected row is: the selected-row colour
+   (pressing it darkens it), and a bold name, so that it isn't told from the others by colour
+   alone. Its element's icon and drop down chevron keep their own colours */
 .pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]) {
-    --pipeline-path__fill: var(--icon-button__background-color--on);
-    color: var(--white);
+    --pipeline-path__fill: var(--pipeline-path__background-color--selected);
+    color: var(--pipeline-path__text-color--selected);
+}
+
+.pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]):hover {
+    --pipeline-path__fill: var(--pipeline-path__background-color--selected--hover);
 }
 
 .pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]):active:not(:has(.pipeline-path__caret:active)) {
-    --pipeline-path__fill: var(--icon-button__background-color--on);
-    --pipeline-path__shade: rgba(0, 0, 0, .2);
+    --pipeline-path__fill: var(--pipeline-path__background-color--selected--hover);
+    --pipeline-path__shade: rgba(0, 0, 0, .15);
 }
 
 .pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]):active:not(:hover) {
+    --pipeline-path__fill: var(--pipeline-path__background-color--selected);
     --pipeline-path__shade: rgba(0, 0, 0, .1);
 }
 
-/* A selected element's drop down chevron is white, as its text is (its element's icon keeps its own
-   colours) */
-.pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]) .pipeline-path__caret-arrow {
-    --icon-colour__black: var(--white);
+.pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]) .pipeline-path__label-text {
+    font-weight: bold;
 }
 
 /* An element that can't be stepped (its button is aria-disabled): faded, and not hovered or pressed */
@@ -292,7 +296,7 @@
 
 /* Warnings and worse have a thin inner border in their colour */
 .pipeline-path__segment--warn {
-    --pipeline-path__band: var(--warn);
+    --pipeline-path__band: var(--pipeline-path__warn);
 }
 
 .pipeline-path__segment--error {
@@ -330,14 +334,34 @@
     height: var(--icon-height);
 }
 
+/* A chevron's name. It is as wide as its name in bold, so that the bar doesn't shift when the
+   selection (whose name is bold) moves: an invisible bold copy of the name (::after, from its
+   data-text) shares its one column */
 .pipeline-path__label {
+    display: inline-grid;
     max-width: 16em;
+}
+
+.pipeline-path__label::after {
+    content: attr(data-text);
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.pipeline-path__label-text {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .pipeline-path__segment--ellipsis .pipeline-path__label {
     padding: 0 2px;
+}
+
+.pipeline-path__segment--ellipsis .pipeline-path__label-text {
     font-weight: bold;
 }
 
@@ -372,7 +396,8 @@
     box-shadow: inset 0 0 0 1px var(--focus-border), var(--focus-shadow);
 }
 
-.pipeline-path__caret-filter svg {
+/* A filter icon before the drop down chevron if the branches not shown have filters */
+.pipeline-path__branch-filter svg {
     width: 12px;
     height: 12px;
 }
@@ -391,7 +416,7 @@
     position: absolute;
     inset: -2px;
     box-sizing: border-box;
-    border: 2px solid var(--warn);
+    border: 2px solid var(--pipeline-path__warn);
     border-radius: 50%;
     pointer-events: none;
 }
@@ -425,7 +450,7 @@
     width: 12px;
     height: 12px;
     margin-left: 8px;
-    border: 2px solid var(--warn);
+    border: 2px solid var(--pipeline-path__warn);
     border-radius: 50%;
     vertical-align: middle;
 }
@@ -438,15 +463,16 @@
     border-color: var(--pipeline-element-box__border-color--fatal-error);
 }
 
-/* That a branch has filters, in a drop down list */
-.pipeline-path__menu-badge {
-    margin-left: 8px;
-    padding: 0 5px;
-    border: 1px solid currentColor;
-    border-radius: 8px;
-    font-size: 0.85em;
+/* The filter icons: an element's, the branches' not shown, and a branch's in a drop down list */
+.pipeline-path__filter svg,
+.pipeline-path__branch-filter svg,
+.pipeline-path__menu-filter svg {
+    color: var(--pipeline-path__filter);
 }
 
-.pipeline-path__menu-badge--filter {
-    color: var(--icon-colour__green);
+/* A filter icon after a branch's name in a drop down list, if it has filters, as on a chevron */
+.pipeline-path__menu-filter {
+    display: inline-flex;
+    margin-left: 8px;
+    vertical-align: middle;
 }
