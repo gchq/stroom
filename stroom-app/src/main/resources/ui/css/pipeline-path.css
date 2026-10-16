@@ -113,12 +113,18 @@
     user-select: none;
 }
 
-/* A chevron's button: its element's icon, name and filter icon, or a `…` chevron's ellipsis */
+/* A chevron's button, and what it shows (its element's icon, name and filter icon, or a `…`
+   chevron's ellipsis), which has the hover tip but is hidden from screen readers */
 .pipeline-path__button {
     display: flex;
     align-items: center;
-    gap: 5px;
     outline: none;
+}
+
+.pipeline-path__content {
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 /* The focus ring */
@@ -475,4 +481,51 @@
     display: inline-flex;
     margin-left: 8px;
     vertical-align: middle;
+}
+
+/* Forced colours (e.g. Windows High Contrast), which would drop the background colours the chevrons
+   are drawn with. The bar keeps its own colours there (forced-color-adjust), all of them the user's
+   system colours: the chevron's border is CanvasText; hover and focus Highlight; the selected
+   element Highlight with HighlightText; problems (the inner border and the drop down chevron's
+   ring) CanvasText, as forced colours have no warning or error colour (its name still says which);
+   and an element that can't be stepped GrayText */
+@media (forced-colors: active) {
+    .pipeline-path__segment {
+        forced-color-adjust: none;
+        --page__background-color: Canvas;
+        --pipeline-path__border: CanvasText;
+        --pipeline-element-box__text-color: CanvasText;
+        --icon-button__background-color--hover: Canvas;
+        --icon-button__background-color--active: Canvas;
+        --icon-button__background-color--active-outside: Canvas;
+        --pipeline-path__background-color--selected: Highlight;
+        --pipeline-path__background-color--selected--hover: Highlight;
+        --pipeline-path__text-color--selected: HighlightText;
+        --pipeline-path__warn: CanvasText;
+        --error: CanvasText;
+        --pipeline-element-box__border-color--fatal-error: CanvasText;
+        --focus-border: Highlight;
+        --focus-ring__color: Highlight;
+        --focus-shadow: 0 0 0 2px Highlight;
+        --icon-colour__black: CanvasText;
+    }
+
+    .pipeline-path__segment:hover {
+        --pipeline-path__border: Highlight;
+    }
+
+    .pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]) {
+        --pipeline-path__border: Highlight;
+        --icon-colour__black: HighlightText;
+    }
+
+    .pipeline-path__segment:has(> .pipeline-path__button[aria-disabled="true"]) {
+        color: GrayText;
+    }
+
+    /* The drop down chevron, pressed or open, is outlined rather than filled */
+    .pipeline-path__caret:active,
+    .pipeline-path__caret[aria-expanded="true"] {
+        outline: 1px solid Highlight;
+    }
 }

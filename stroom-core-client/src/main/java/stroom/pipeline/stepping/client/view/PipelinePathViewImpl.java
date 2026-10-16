@@ -94,6 +94,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private static final String RING_CLASS = BASE_CLASS + "__ring";
     private static final String RING_PULSE_CLASS = RING_CLASS + "--pulse";
     private static final String BUTTON_CLASS = BASE_CLASS + "__button";
+    private static final String CONTENT_CLASS = BASE_CLASS + "__content";
     private static final String CARET_CLASS = BASE_CLASS + "__caret";
     private static final String ICON_CLASS = BASE_CLASS + "__icon";
     private static final String LABEL_CLASS = BASE_CLASS + "__label";
@@ -418,7 +419,9 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         segment.appendChild(createShape());
         setSeverity(segment, severity, getPulseElapsed(element));
 
-        final Element button = createButton(describe(element, severity, filters, disabled));
+        final String description = describe(element, severity, filters, disabled);
+        final Element button = createButton(description);
+        final Element content = createContent(description);
         if (element.equals(selected)) {
             button.setAttribute(ARIA_CURRENT, "true");
         }
@@ -427,12 +430,13 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         }
         final SvgImage icon = NullSafe.get(getElementType(element), PipelineElementType::getIcon);
         if (icon != null) {
-            button.appendChild(createIcon(icon, ICON_CLASS));
+            content.appendChild(createIcon(icon, ICON_CLASS));
         }
-        button.appendChild(createLabel(element.getDisplayName()));
+        content.appendChild(createLabel(element.getDisplayName()));
         if (filters) {
-            button.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS));
+            content.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS));
         }
+        button.appendChild(content);
         segment.appendChild(button);
 
         if (step.isAfterFork()) {
@@ -446,15 +450,24 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         return segment;
     }
 
-    // A control of the bar, named (and given a hover tip) by its description
+    // A control of the bar, named by its description
     private static Element createButton(final String description) {
         final Element button = Document.get().createSpanElement();
         button.setClassName(BUTTON_CLASS);
         button.setAttribute(ROLE, "button");
         button.setAttribute(TABINDEX, "-1");
         button.setAttribute(ARIA_LABEL, description);
-        button.setTitle(description);
         return button;
+    }
+
+    // What a control shows, with its description as a hover tip. It is hidden from screen readers,
+    // as a title on the control itself would be read again after its name, as its description.
+    private static Element createContent(final String description) {
+        final Element content = Document.get().createSpanElement();
+        content.setClassName(CONTENT_CLASS);
+        content.setAttribute(ARIA_HIDDEN, "true");
+        content.setTitle(description);
+        return content;
     }
 
     // A chevron's name. It holds its text in data-text too, so that it can keep room for its text
@@ -508,7 +521,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         caret.setClassName(CARET_CLASS);
         caret.setAttribute(ARIA_HAS_POPUP, "menu");
         caret.setAttribute(ARIA_EXPANDED, "false");
-        final Element arrow = Document.get().createSpanElement();
+        final Element arrow = createContent(describeCaret(step));
         arrow.setClassName(CARET_CLASS + "-target");
         arrow.appendChild(createIcon(SvgImage.DROP_DOWN, CARET_CLASS + "-arrow"));
         final String severityClass = getSeverityClass(RING_CLASS, step.hiddenSeverity());
@@ -698,10 +711,12 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         final Element button = createButton(description.toString());
         button.setAttribute(ARIA_HAS_POPUP, "menu");
         button.setAttribute(ARIA_EXPANDED, "false");
-        button.appendChild(createLabel(ELLIPSIS_TEXT));
+        final Element content = createContent(description.toString());
+        content.appendChild(createLabel(ELLIPSIS_TEXT));
         if (filters) {
-            button.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS));
+            content.appendChild(createIcon(SvgImage.FILTER, FILTER_CLASS));
         }
+        button.appendChild(content);
         ellipsis.appendChild(button);
         return ellipsis;
     }
