@@ -198,7 +198,6 @@ public class AskStroomAiPresenter
     private static final String UNDO_COMPACTION_ATTRIBUTE = "data-undo-compaction";
     private static final String ELICITATION_ATTRIBUTE = "data-elicitation-id";
     private static final int DEFAULT_COMPACT_AT_PERCENT = 80;
-    private static final int WARN_BELOW_COMPACT_AT_PERCENT = 10;
     private static final String LIVE_ANSWER_ID = "ai-live-answer";
     private static final int STREAMING_POLL_MS = 500;
     private static final long KEEP_POLLING_AFTER_ANSWER_MS = 15_000;
@@ -1334,24 +1333,51 @@ public class AskStroomAiPresenter
                 ? "≈"
                 : "";
         final int percent = usage.getPercentUsed();
-        if (percent < 0) {
-            getView().setContextMeter(approx + kilo(usage.getUsedTokens()) + " tokens",
-                    "How many tokens of context this chat uses. The model's context window is not known yet. "
-                    + "Click for details.", null);
-            return;
-        }
         final int compactAt = usage.getCompactAtPercent() > 0
                 ? usage.getCompactAtPercent()
                 : DEFAULT_COMPACT_AT_PERCENT;
-        final String level = percent >= compactAt
-                ? "over"
-                : percent >= compactAt - WARN_BELOW_COMPACT_AT_PERCENT
-                        ? "warn"
-                        : null;
-        getView().setContextMeter(approx + percent + "% · " + kilo(usage.getUsedTokens()) + " / "
-                                  + kilo(usage.getContextWindowTokens()),
-                "How much of the model's context window this chat uses. Earlier messages are compacted "
-                + "automatically at " + compactAt + "%. Click for details.", level);
+        if (percent < 0) {
+            // The model's context window isn't known, so there is no percentage.
+            getView().setContextMeter(approx + kilo(usage.getUsedTokens()), contextDetails(usage, compactAt),
+                    null);
+            return;
+        }
+        getView().setContextMeter(approx + percent + "%", contextDetails(usage, compactAt),
+                AiChatTexts.contextLevel(percent));
+    }
+
+    /// @return What the pill shows on hover: how much of the context window is used, by what, and when the chat
+    /// is compacted.
+    private static SafeHtml contextDetails(final AiContextUsage usage, final int compactAt) {
+        final HtmlBuilder hb = new HtmlBuilder();
+        hb.div(title -> title.append("Context window"), Attribute.className("ai-context-details-title"));
+        final String approx = usage.isEstimated()
+                ? "about "
+                : "";
+        hb.div(used -> used.append(usage.getPercentUsed() >= 0
+                        ? "Using " + approx + kilo(usage.getUsedTokens()) + " of "
+                          + kilo(usage.getContextWindowTokens()) + " tokens (" + usage.getPercentUsed() + "%)"
+                        : "Using " + approx + kilo(usage.getUsedTokens()) + " tokens; the model's context window "
+                          + "isn't known yet"),
+                Attribute.className("ai-context-details-row"));
+        final List<Map.Entry<String, Long>> parts = usage.getParts().entrySet().stream()
+                .filter(part -> part.getValue() > 0)
+                .toList();
+        if (!parts.isEmpty()) {
+            hb.div(table -> {
+                for (final Map.Entry<String, Long> part : parts) {
+                    table.div(row -> {
+                        row.span(name -> name.append(part.getKey()));
+                        row.span(value -> value.append(kilo(part.getValue())),
+                                Attribute.className("ai-context-details-value"));
+                    }, Attribute.className("ai-context-details-part"));
+                }
+            }, Attribute.className("ai-context-details-parts"));
+        }
+        hb.div(note -> note.append("Earlier messages are compacted automatically at " + compactAt + "%."),
+                Attribute.className("ai-context-details-note"));
+        hb.div(note -> note.append("Click to compact now."), Attribute.className("ai-context-details-note"));
+        return hb.toSafeHtml();
     }
 
     private static String kilo(final long tokens) {
@@ -3491,7 +3517,7 @@ public class AskStroomAiPresenter
          * @param title The meter's tooltip.
          * @param level "warn" near the point where the chat is compacted, "over" past it, or null.
          */
-        void setContextMeter(String text, String title, String level);
+        void setContextMeter(String text, SafeHtml details, String level);
 
         /**
          * Shows commands that match what the user is typing, or hides them.

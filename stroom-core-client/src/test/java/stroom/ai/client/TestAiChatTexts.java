@@ -114,4 +114,15 @@ class TestAiChatTexts {
         assertThat(AiChatTexts.riskExplanation("something else")).isNull();
     }
 
+
+    @Test
+    void theContextPillIsGreyThenYellowThenRed() {
+        assertThat(AiChatTexts.contextLevel(0)).isNull();
+        assertThat(AiChatTexts.contextLevel(74)).isNull();
+        assertThat(AiChatTexts.contextLevel(75)).isEqualTo("warn");
+        assertThat(AiChatTexts.contextLevel(89)).isEqualTo("warn");
+        assertThat(AiChatTexts.contextLevel(90)).isEqualTo("over");
+        assertThat(AiChatTexts.contextLevel(120)).isEqualTo("over");
+    }
+
 }
