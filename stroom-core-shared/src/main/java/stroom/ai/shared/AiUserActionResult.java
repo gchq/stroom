@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 /// What happened when the user clicked a button an MCP tool's result offered (see `UserActions`).
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
@@ -40,10 +42,10 @@ public class AiUserActionResult {
     /// @param message      What happened, or why it was not done.
     /// @param openDocument A document for the browser to open, or null.
     @JsonCreator
-    public AiUserActionResult(@JsonProperty("done") final boolean done,
+    public AiUserActionResult(@JsonProperty("done") final Boolean done,
                               @JsonProperty("message") final String message,
                               @JsonProperty("openDocument") final DocRef openDocument) {
-        this.done = done;
+        this.done = Objects.requireNonNullElse(done, false);
         this.message = message;
         this.openDocument = openDocument;
     }
