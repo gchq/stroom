@@ -39,6 +39,9 @@
   "app-editors-dashboardeditor--embedded-query-settings-fields": [
     "label"
   ],
+  "app-editors-dashboardeditor--focus-kept-when-maximised": [
+    "label"
+  ],
   "app-editors-dashboardeditor--inner-split-dock": [
     "label"
   ],
@@ -54,7 +57,43 @@
   "app-editors-dashboardeditor--migrate-legacy-dashboard": [
     "label"
   ],
+  "app-editors-dashboardeditor--splitter-above-visualisation": [
+    "frame-title"
+  ],
+  "app-editors-dashboardeditor--splitter-dragging": [
+    "label"
+  ],
+  "app-editors-dashboardeditor--splitter-focused": [
+    "label"
+  ],
   "app-editors-dashboardeditor--splitter-keeps-third-panel": [
+    "label"
+  ],
+  "app-editors-dashboardeditor--splitter-keyboard-resize": [
+    "label"
+  ],
+  "app-editors-dashboardeditor--splitter-keyboard-resize-stacked": [
+    "label"
+  ],
+  "app-editors-dashboardeditor--tab-order-after-docking-left": [
+    "label"
+  ],
+  "app-editors-dashboardeditor--tab-order-deeply-nested": [
+    "label"
+  ],
+  "app-editors-dashboardeditor--tab-order-nested-column": [
+    "label"
+  ],
+  "app-editors-dashboardeditor--tab-order-nested-row": [
+    "label"
+  ],
+  "app-editors-dashboardeditor--tab-order-side-by-side": [
+    "label"
+  ],
+  "app-editors-dashboardeditor--tab-order-stacked": [
+    "label"
+  ],
+  "app-editors-dashboardeditor--tab-order-tabbed": [
     "label"
   ],
   "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [

@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.gwt.workbench.client.app.dashboard.DashboardComponentStories;
+import stroom.gwt.workbench.client.app.dashboard.DashboardKeyboardStories;
 import stroom.gwt.workbench.client.app.dashboard.DashboardLayoutStories;
 import stroom.gwt.workbench.client.app.dashboard.DashboardSearchStories;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -28,7 +29,8 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 ///
 /// The stories are in the dashboard batch's package (`client.app.dashboard`), by what they show:
 /// `DashboardSearchStories` (searches, parameters and inputs), `DashboardLayoutStories` (tabs,
-/// panels and design mode) and `DashboardComponentStories` (the components' settings, tables,
+/// panels and design mode), `DashboardKeyboardStories` (the order Tab visits panels and splitters
+/// in, and resizing panels with the keyboard) and `DashboardComponentStories` (the components' settings, tables,
 /// visualisations and text). See `DashboardSupport` for how a dashboard is opened and its
 /// fixtures.
 public final class DashboardEditorStories {
@@ -42,6 +44,7 @@ public final class DashboardEditorStories {
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
         DashboardLayoutStories.addTo(registry);
+        DashboardKeyboardStories.addTo(registry);
         DashboardSearchStories.addTo(registry);
         DashboardComponentStories.addTo(registry);
     }

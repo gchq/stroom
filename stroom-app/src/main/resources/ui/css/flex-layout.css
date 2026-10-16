@@ -1,0 +1,178 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   A dashboard's layout (stroom.dashboard.client.flexlayout.FlexLayout): its splitters, and the
+   glass and marker it shows while a splitter or tab is dragged, named BEM style (block,
+   block__element, block--modifier). A splitter's states come from ARIA attributes and
+   pseudo-classes; the marker, which isn't a control, has modifiers for what it is showing.
+
+   A splitter is drawn as SplitPane draws a thin splitter (see split-pane.css): a 1px line, with a
+   handle across its middle while it is hovered, and the line and handle in the focus colour,
+   ringed, with the keyboard focus. FlexLayout only resizes the panels when a dragged splitter is
+   released, so while it is dragged the marker is drawn as the dragged splitter.
+*/
+
+/* A splitter: a focusable separator, its line a vertical one (aria-orientation="vertical")
+   between panels side by side, or a horizontal one between stacked panels */
+.flex-layout__splitter {
+    position: absolute;
+    background-color: var(--splitter__background-color);
+    z-index: 6;
+    outline: none;
+}
+
+.flex-layout__splitter[aria-orientation="vertical"] {
+    width: 1px;
+    height: 100%;
+}
+
+.flex-layout__splitter[aria-orientation="horizontal"] {
+    width: 100%;
+    height: 1px;
+}
+
+/* What can be grabbed: wider than the line, across it */
+.flex-layout__dragger {
+    position: absolute;
+}
+
+.flex-layout__splitter[aria-orientation="vertical"] > .flex-layout__dragger {
+    width: var(--split__size);
+    height: 100%;
+    left: var(--split__offset);
+    cursor: col-resize;
+}
+
+.flex-layout__splitter[aria-orientation="horizontal"] > .flex-layout__dragger {
+    width: 100%;
+    height: var(--split__size);
+    top: var(--split__offset);
+    cursor: row-resize;
+}
+
+/* A splitter's handle (and the dragged marker's): a short rounded bar, 5px across (an odd width,
+   so it is centred on the 1px line, 2px either side), up to 56px long */
+.flex-layout__splitter::after,
+.flex-layout__marker--splitter::after {
+    content: "";
+    position: absolute;
+    border-radius: 2.5px;
+    background-color: var(--splitter__handle-color);
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.flex-layout__splitter[aria-orientation="vertical"]::after,
+.flex-layout__marker--across::after {
+    top: calc(50% - min(56px, 100%) / 2);
+    left: calc(50% - 2.5px);
+    width: 5px;
+    height: min(56px, 100%);
+}
+
+.flex-layout__splitter[aria-orientation="horizontal"]::after,
+.flex-layout__marker--down::after {
+    top: calc(50% - 2.5px);
+    left: calc(50% - min(56px, 100%) / 2);
+    width: min(56px, 100%);
+    height: 5px;
+}
+
+.flex-layout__splitter:hover::after {
+    visibility: visible;
+}
+
+.flex-layout__splitter:focus-visible {
+    background-color: var(--splitter__focus-color);
+    box-shadow: var(--focus-shadow);
+}
+
+.flex-layout__splitter:focus-visible::after {
+    visibility: visible;
+    background-color: var(--splitter__focus-color);
+}
+
+/* The glass over the whole page while a splitter or tab is dragged, so the mouse is caught over
+   iframes (e.g. visualisations), which would otherwise take its events and stop the drag. It needs
+   a background for the mouse to be caught, so it is transparent instead */
+.flex-layout__glass {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    background-color: white;
+    opacity: 0;
+    z-index: 10;
+}
+
+/* The marker: where a dragged tab would be dropped (a highlighted area), or the dragged splitter */
+.flex-layout__marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    background: var(--splitter__background-color--highlight);
+    opacity: 0.6;
+    z-index: 5;
+}
+
+/* Where a dragged tab would go in a tab bar */
+.flex-layout__marker--tab {
+    opacity: 0.8;
+}
+
+/* The dragged splitter: its line, with its handle lighter (darker in the light theme), as
+   SplitPane's dragged splitter */
+.flex-layout__marker--splitter {
+    background: var(--splitter__line-color);
+    opacity: 1;
+}
+
+.flex-layout__marker--splitter::after {
+    visibility: visible;
+    background-color: var(--splitter__handle-color--active);
+}
+
+.flex-layout__marker--across {
+    cursor: col-resize;
+}
+
+.flex-layout__marker--down {
+    cursor: row-resize;
+}
+
+/* In forced colours (e.g. Windows high contrast) backgrounds are replaced, which would leave the
+   line and handle invisible, so they are drawn in system colours instead */
+@media (forced-colors: active) {
+    .flex-layout__splitter,
+    .flex-layout__splitter::after,
+    .flex-layout__marker--splitter {
+        forced-color-adjust: none;
+        background-color: CanvasText;
+    }
+
+    .flex-layout__splitter:focus-visible,
+    .flex-layout__splitter:focus-visible::after,
+    .flex-layout__marker--splitter::after {
+        forced-color-adjust: none;
+        background-color: Highlight;
+        box-shadow: none;
+    }
+}

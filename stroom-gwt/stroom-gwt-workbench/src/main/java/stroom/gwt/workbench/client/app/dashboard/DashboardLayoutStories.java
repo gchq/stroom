@@ -349,10 +349,10 @@ public final class DashboardLayoutStories {
                     DashboardPlays.designMode(play, true);
                     DashboardPlays.openTabMenu(play, "The Table");
                     play.click(DashboardPlays.menuItem(screen, "Duplicate"));
-                    play.waitFor(() -> play.expect(screen.querySelector(".flexLayout-glassVisible"))
+                    play.waitFor(() -> play.expect(screen.querySelector(".flex-layout__glass"))
                             .toBeInTheDocument());
                     play.keyboard("{Escape}");
-                    play.waitFor(() -> play.expect(screen.querySelectorAll(".flexLayout-glassVisible").count())
+                    play.waitFor(() -> play.expect(screen.querySelectorAll(".flex-layout__glass").count())
                             .toBe(0));
                     play.expect(play.queryByText("The Table 2", DashboardPlays.COMPONENT_TAB)).toBeNull();
                     DashboardPlays.expectNoProblems(play);
@@ -367,11 +367,11 @@ public final class DashboardLayoutStories {
                     DashboardPlays.designMode(play, true);
                     DashboardPlays.openTabMenu(play, "The Table");
                     play.click(DashboardPlays.menuItem(screen, "Duplicate"));
-                    play.waitFor(() -> play.expect(screen.querySelector(".flexLayout-glassVisible"))
+                    play.waitFor(() -> play.expect(screen.querySelector(".flex-layout__glass"))
                             .toBeInTheDocument());
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "The Table 2")).toBeInTheDocument());
-                    play.expect(screen.querySelectorAll(".flexLayout-glassVisible").count()).toBe(0);
+                    play.expect(screen.querySelectorAll(".flex-layout__glass").count()).toBe(0);
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A tab's menu duplicates, maximises (then restores) and hides components
