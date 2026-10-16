@@ -22,6 +22,8 @@ import stroom.svg.shared.SvgImage;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestAiChatTexts {
@@ -101,4 +103,15 @@ class TestAiChatTexts {
                                        final boolean approveEverything) {
         return new AiChatStatus(1, "t", 0L, runStatus, unread, approveEverything, 0L, null);
     }
+
+    @Test
+    void eachToolClassificationIsExplained() {
+        for (final String risk : List.of("read-only", "can modify", "destructive", "reaches outside Stroom",
+                "untrusted server", "after reading data")) {
+            assertThat(AiChatTexts.riskExplanation(risk)).as(risk).isNotBlank().contains("\n");
+        }
+        assertThat(AiChatTexts.riskExplanation("can modify")).contains("feeds, pipelines");
+        assertThat(AiChatTexts.riskExplanation("something else")).isNull();
+    }
+
 }
