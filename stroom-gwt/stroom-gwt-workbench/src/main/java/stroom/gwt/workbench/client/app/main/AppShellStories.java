@@ -267,14 +267,14 @@ public final class AppShellStories {
                     // GWT shows a group's items (with their shortcuts) only
                     // while the group is hovered, so each group is hovered in turn
                     play.hover(menuItem(screen, "User"));
-                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("gu"));
+                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("G U"));
                     play.hover(menuItem(screen, "Tools"));
-                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("gd"));
+                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("G D"));
                     play.hover(menuItem(screen, "Navigation"));
-                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("Alt+Shift+f"));
-                    play.expect(shortcuts(play)).toContain("Ctrl+Shift+f");
-                    play.expect(shortcuts(play)).toContain("Ctrl+e");
-                    play.expect(shortcuts(play)).toContain("Alt+l");
+                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("Alt+Shift+F"));
+                    play.expect(shortcuts(play)).toContain("Ctrl+Shift+F");
+                    play.expect(shortcuts(play)).toContain("Ctrl+E");
+                    play.expect(shortcuts(play)).toContain("Alt+L");
                     play.keyboard("{Escape}");
                     // GWT's key sequences complete on the keys' release, so
                     // the keys are pressed and released rather than only pressed
@@ -307,6 +307,86 @@ public final class AppShellStories {
                     expectEditorThemes(play, dialog, "Stroom dark", "Ambiance", "Cloud9 night",
                             "Cloud9 night low color", "Cloud editor dark", "Github dark", "Gruvbox dark hard",
                             "One dark");
+                    expectNoProblems(play);
+                })
+                // The Keyboard Shortcuts tab lists each action the user can bind, one row per
+                // shortcut, with the built-in arrow keys that can't be changed
+                .story("KeyboardShortcutPreferences", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play dialog = openKeyboardShortcuts(play);
+                    play.expect(dialog.getByText("Recent items")).toBeInTheDocument();
+                    play.expect(dialog.getByText("Ctrl+E")).toBeInTheDocument();
+                    play.expect(dialog.getByText("G U")).toBeInTheDocument();
+                    play.expect(dialog.getAllByText("Built in").count()).toBeGreaterThan(0);
+                    play.expect(dialog.getByRole("checkbox", "Enable Character Key Shortcuts")).toBeChecked();
+                    expectNoProblems(play);
+                })
+                // Pressing new keys for 'Recent items' saves them in the preferences, and the
+                // Navigation menu then shows them
+                .story("ChangeKeyboardShortcut", context -> render(context, AppShellFixtures.dictTree(),
+                        AppShellStories::savePreferencesRoute, builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = openKeyboardShortcuts(play);
+                    final Play recorder = recordShortcut(play, dialog, "Recent items");
+                    play.keyboard("{Control>}{Shift>}e{/Shift}{/Control}");
+                    play.waitFor(() -> play.expect(recorder.getByLabelText("Keys for 'Recent items'"))
+                            .toHaveValue("Ctrl+Shift+E"));
+                    // Enter accepts the keys, as the recorder says
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(dialog.getByText("Ctrl+Shift+E")).toBeInTheDocument());
+                    play.expect(dialog.getByText("Changed")).toBeInTheDocument();
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/preferences/v1")
+                                    .withJsonBodyContaining("{\"keyBindings\": {\"RECENT_ITEMS\": [\"Ctrl+Shift+E\"]}}")
+                                    .toSpyMatcher()));
+                    play.click(play.getByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Navigation")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "Navigation"));
+                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("Ctrl+Shift+E"));
+                    play.expect(shortcuts(play)).not().toContain("Ctrl+E");
+                    expectNoProblems(play);
+                })
+                // Keys another action uses are moved from it, after the recorder says so, and keys
+                // that can't be changed are refused
+                .story("RecordClashingShortcut", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play dialog = openKeyboardShortcuts(play);
+                    final Play recorder = recordShortcut(play, dialog, "Locate in explorer");
+                    play.keyboard("{Control>}a{/Control}");
+                    play.waitFor(() -> play.expect(recorder.getByText(TextMatch.containing(
+                            "Ctrl+A is used for 'Select all', which can't be changed"))).toBeInTheDocument());
+                    play.keyboard("{Control>}e{/Control}");
+                    play.waitFor(() -> play.expect(recorder.getByText(TextMatch.containing(
+                            "Ctrl+E clashes with the shortcut for 'Recent items' (Ctrl+E)"))).toBeInTheDocument());
+                    expectNoProblems(play);
+                })
+                // Turning character key shortcuts off marks them as off, and the menu no longer
+                // shows them
+                .story("CharacterKeyShortcutsOff", context -> render(context, AppShellFixtures.dictTree(),
+                        AppShellStories::savePreferencesRoute, builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = openKeyboardShortcuts(play);
+                    play.click(dialog.getByRole("checkbox", "Enable Character Key Shortcuts"));
+                    play.waitFor(() -> play.expect(dialog.getAllByText("Default, turned off").count())
+                            .toBeGreaterThan(0));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/preferences/v1")
+                                    .withJsonBodyContaining("{\"enableCharacterKeyShortcuts\": false}")
+                                    .toSpyMatcher()));
+                    play.click(play.getByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Navigation")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "Navigation"));
+                    play.waitFor(() -> play.expect(shortcuts(play)).toContain("Ctrl+E"));
+                    play.hover(menuItem(screen, "User"));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Preferences")).toBeInTheDocument());
+                    play.expect(shortcuts(play)).not().toContain("G U");
+                    play.keyboard("{Escape}");
                     expectNoProblems(play);
                 })
                 // The maintenance banner above the shell
@@ -608,8 +688,8 @@ public final class AppShellStories {
                             "Move Last", "Locate in Explorer", "Add to Favourites")) {
                         play.expect(menuItem(screen, name)).toBeInTheDocument();
                     }
-                    for (final String accelerator : List.of("Alt+w", "Alt+Shift+w", "Ctrl+s", "Ctrl+Shift+s",
-                            "Alt+l")) {
+                    for (final String accelerator : List.of("Alt+W", "Alt+Shift+W", "Ctrl+S", "Ctrl+Shift+S",
+                            "Alt+L")) {
                         play.expect(shortcuts(play)).toContain(accelerator);
                     }
                     play.expect(menuItem(screen, "Close Tabs to the Left")).toHaveClass(MENU_ITEM_DISABLED);
@@ -988,8 +1068,8 @@ public final class AppShellStories {
                     play.hover(menuItem(screen, "Security"));
                     play.expect(screen.findByText("User Access", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
                     play.expect(screen.findByText("Signing Keys", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
-                    play.expect(shortcuts(play)).toContain("gw");
-                    play.expect(shortcuts(play)).toContain("gy");
+                    play.expect(shortcuts(play)).toContain("G W");
+                    play.expect(shortcuts(play)).toContain("G Y");
                     expectNoProblems(play);
                 })
                 // Locate in Explorer is offered only for a tab the explorer can hold, as the
@@ -1223,6 +1303,31 @@ public final class AppShellStories {
         }
         play.keyboard("{Escape}");
         play.waitFor(() -> play.expect(screen.querySelector(".SelectionPopup")).toBeNull());
+    }
+
+    // Answers the save of the user's preferences
+    private static void savePreferencesRoute(final RestFixtures.Builder routes) {
+        routes.post(StartupFixtures.USER_PREFERENCES_PATH, RestReply.json("true"));
+    }
+
+    // Opens the preferences with 'g' then 'u', and their Keyboard Shortcuts tab
+    private static Play openKeyboardShortcuts(final Play play) {
+        final Play screen = play.screen();
+        play.findByText("Dictionaries");
+        play.keyboard("gu");
+        final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                .closest(StroomDom.DIALOG));
+        play.click(dialog.getByText("Keyboard Shortcuts", StroomDom.LINK_TAB_LABEL));
+        play.waitFor(() -> play.expect(dialog.getByText("Recent items")).toBeInTheDocument());
+        return dialog;
+    }
+
+    // Opens the recorder for the action's (first) shortcut, by double-clicking its row
+    private static Play recordShortcut(final Play play, final Play dialog, final String action) {
+        final Play screen = play.screen();
+        play.dblClick(dialog.getAllByText(action).first());
+        return screen.within(screen.findByText("Change Keyboard Shortcut", StroomDom.DIALOG_TITLE)
+                .closest(StroomDom.DIALOG));
     }
 
     private static Query menuItem(final Play screen, final String title) {

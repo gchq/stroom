@@ -217,7 +217,7 @@ public final class SplitPaneContentStories {
                     play.expect(screen.getByText("Maximise Content", MENU_ITEM_TEXT)).toBeInTheDocument();
                     // From the splitter, Alt+M maximises the pane it resizes
                     play.expect(menuItem(screen, "Maximise Properties"))
-                            .toHaveTextContent(TextMatch.containing("Alt+m"));
+                            .toHaveTextContent(TextMatch.containing("Alt+M"));
                     play.expect(menuItem(screen, "Maximise Content"))
                             .not().toHaveTextContent(TextMatch.containing("Alt"));
                     play.expect(menuItem(screen, "Restore")).toHaveClass(MENU_ITEM_DISABLED);

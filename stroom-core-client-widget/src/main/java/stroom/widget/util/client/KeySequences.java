@@ -18,35 +18,23 @@ package stroom.widget.util.client;
 
 import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
+/// Recognises sequences of two keys pressed one after the other, e.g. `G U`, and gives the
+/// action bound to the sequence.
 public class KeySequences {
 
     private static final int KEY_SEQUENCE_TIMER_DELAY = 500;
 
     private final List<KeyRec> currentKeySequence = new ArrayList<>();
-    private final Map<Action, KeySequence> actionKeySequenceMap = new HashMap<>();
-    private Object[] keySequences;
+    private Object[] keySequences = new Object[0];
 
     void addKeySequence(final Action action,
                         final int keyCode1,
                         final int keyCode2) {
-        final KeySequence keySequence = new KeySequence(keyCode1, keyCode2);
-        final KeySequence existingKeySequence = actionKeySequenceMap.put(action, keySequence);
-        if (existingKeySequence != null) {
-            throw new RuntimeException("Action " + action
-                    + " is already bound to key sequence " + existingKeySequence + ". "
-                    + "Tyring to bind it to " + keySequence);
-        }
         keySequences = growArr(keySequences, keyCode1);
         Object[] actions = (Object[]) keySequences[keyCode1];
         actions = growArr(actions, keyCode2);
@@ -54,9 +42,9 @@ public class KeySequences {
 
         final Action existingAction = (Action) actions[keyCode2];
         if (existingAction != null) {
-            throw new RuntimeException("Key sequence " + keySequence
+            throw new RuntimeException("Key sequence " + KeyShortcut.sequence(keyCode1, keyCode2)
                     + " is already bound to action " + existingAction + ". "
-                    + "Tyring to bind it to " + action);
+                    + "Trying to bind it to " + action);
         }
         actions[keyCode2] = action;
     }
@@ -77,7 +65,7 @@ public class KeySequences {
     }
 
     boolean onKeyDown(final NativeEvent e) {
-        final int keycode = e.getKeyCode();
+        final int keycode = KeyStroke.normaliseKeyCode(e.getKeyCode());
 
         currentKeySequence.add(0, new KeyRec(keycode, true, System.currentTimeMillis()));
         trim();
@@ -119,7 +107,7 @@ public class KeySequences {
     }
 
     Action onKeyUp(final NativeEvent e) {
-        final int keycode = e.getKeyCode();
+        final int keycode = KeyStroke.normaliseKeyCode(e.getKeyCode());
         currentKeySequence.add(0, new KeyRec(keycode, false, System.currentTimeMillis()));
         trim();
 
@@ -160,16 +148,6 @@ public class KeySequences {
         }
     }
 
-    public String getShortcut(final Action action) {
-        // Try key sequences instead
-        final KeySequence keySequence = actionKeySequenceMap.get(action);
-        if (keySequence != null) {
-            return keySequence.toString();
-        }
-
-        return null;
-    }
-
     private static class KeyRec {
 
         private final int keycode;
@@ -184,44 +162,9 @@ public class KeySequences {
 
         @Override
         public String toString() {
-            return KeyBinding.keyCodeToString(keycode) + " (" + ((down)
+            return KeyStroke.keyCodeToName(keycode) + " (" + ((down)
                     ? "down"
                     : "up") + ")";
-        }
-    }
-
-    private static class KeySequence {
-
-        private final List<Integer> keyCodes;
-
-        // For the moment only support sequences of two shortcuts, e.g. 'g,p'
-        private KeySequence(final int keycode1,
-                            final int keycode2) {
-            this.keyCodes = Arrays.asList(keycode1, keycode2);
-        }
-
-        @Override
-        public String toString() {
-            return keyCodes.stream()
-                    .map(keycode -> KeyBinding.keyCodeToString(keycode))
-                    .collect(Collectors.joining(""));
-        }
-
-        @Override
-        public boolean equals(final Object object) {
-            if (this == object) {
-                return true;
-            }
-            if (object == null || getClass() != object.getClass()) {
-                return false;
-            }
-            final KeySequence that = (KeySequence) object;
-            return Objects.equals(keyCodes, that.keyCodes);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(keyCodes);
         }
     }
 }

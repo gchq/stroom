@@ -258,6 +258,12 @@
   "app-main-appshell--banner": [
     "button-name"
   ],
+  "app-main-appshell--change-keyboard-shortcut": [
+    "button-name"
+  ],
+  "app-main-appshell--character-key-shortcuts-off": [
+    "button-name"
+  ],
   "app-main-appshell--context-menu": [
     "button-name"
   ],
@@ -316,6 +322,9 @@
   "app-main-appshell--info-dialog": [
     "button-name"
   ],
+  "app-main-appshell--keyboard-shortcut-preferences": [
+    "button-name"
+  ],
   "app-main-appshell--live-explorer": [
     "button-name"
   ],
@@ -344,6 +353,9 @@
     "button-name"
   ],
   "app-main-appshell--opens-feed": [
+    "button-name"
+  ],
+  "app-main-appshell--record-clashing-shortcut": [
     "button-name"
   ],
   "app-main-appshell--rename-document": [
