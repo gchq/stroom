@@ -28,6 +28,8 @@ import stroom.util.shared.Severity;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.SvgImageUtil;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -44,12 +46,16 @@ public class PipelineElementBox extends Box<PipelineElement> {
     private static final String BASE_CLASS = "pipelineElementBox";
     private static final String SELECTED_CLASS = BASE_CLASS + "-backgroundSelected";
     private static final String HOTSPOT_CLASS = BASE_CLASS + "-hotspot";
+    private static final String REFUSED_CLASS = BASE_CLASS + "-refused";
+    private static final String DETACHED_CLASS = BASE_CLASS + "-detached";
     private static final String DISABLED_CLASS = BASE_CLASS + "-disabled";
     private static final String SEVERITY_INFO_CLASS = BASE_CLASS + "-severityInfo";
     private static final String SEVERITY_WARN_CLASS = BASE_CLASS + "-severityWarn";
     private static final String SEVERITY_ERROR_CLASS = BASE_CLASS + "-severityError";
     private static final String SEVERITY_FATAL_ERROR_CLASS = BASE_CLASS + "-severityFatalError";
     private static final String BULLET = "•";
+    private static final String PORT_CLASS = BASE_CLASS + "-port";
+    private static final String PORT_FLOW_ATTRIBUTE = "data-flow";
     private static final String ROLE = "role";
     private static final String ROLE_IMG = "img";
     private static final String ARIA_LABEL = "aria-label";
@@ -70,6 +76,12 @@ public class PipelineElementBox extends Box<PipelineElement> {
     private PipelineElement pipelineElement;
     private final Widget filterIcon;
     private final Label label;
+    // The dots over the box's left and right borders, where its connectors join it
+    private final Element inPort;
+    private final Element outPort;
+    // The element's type, for its name as a tree item, e.g. "XSLT Filter"
+    private final String typeName;
+    private boolean detached;
 
     public PipelineElementBox(final PipelineModel pipelineModel,
                               final PipelineElement pipelineElement,
@@ -78,13 +90,14 @@ public class PipelineElementBox extends Box<PipelineElement> {
 //        GWT.log("Creating pipe element " + pipelineElement.getId());
         this.pipelineModel = pipelineModel;
         this.pipelineElement = pipelineElement;
+        this.typeName = iconName;
 
         final FlowPanel background = new FlowPanel();
         background.setStyleName(BASE_CLASS + "-background");
 
-        final String labelText = pipelineElement.getDisplayName();
-        label = new Label(labelText, false);
+        label = new Label("", false);
         label.addStyleName(BASE_CLASS + "-label");
+        setLabelText(pipelineElement.getDisplayName());
 
         label.getElement().setAttribute("title", pipelineElement.getDescription() != null
                 ? pipelineElement.getDescription()
@@ -138,17 +151,85 @@ public class PipelineElementBox extends Box<PipelineElement> {
         background.add(filterIcon);
         updateFilterState();
 
+        inPort = createPort(PORT_CLASS + "--in");
+        outPort = createPort(PORT_CLASS + "--out");
+        background.getElement().appendChild(inPort);
+        background.getElement().appendChild(outPort);
+
         initWidget(background);
+        updateName();
     }
 
     @Override
     public void setSelected(final boolean selected) {
         toggleClass(SELECTED_CLASS, selected);
+        getElement().setAttribute("aria-selected", String.valueOf(selected));
+    }
+
+    /// Makes the box an item of the tree for assistive technology (`role="treeitem"`), named by its
+    /// element's name and type, at its place in the tree, and whether it is the tree's one tab
+    /// stop.
+    ///
+    /// @param level       Its depth in the tree, from 1 for the source.
+    /// @param position    Its position among its siblings, from 1.
+    /// @param count       How many siblings it has, itself included.
+    /// @param hasChildren Whether it has children (which are always shown).
+    /// @param tabStop     Whether it is the tree's tab stop.
+    public void setTreeItem(final int level,
+                            final int position,
+                            final int count,
+                            final boolean hasChildren,
+                            final boolean tabStop) {
+        final Element element = getElement();
+        element.setAttribute("role", "treeitem");
+        element.setAttribute("aria-level", String.valueOf(level));
+        element.setAttribute("aria-posinset", String.valueOf(position));
+        element.setAttribute("aria-setsize", String.valueOf(count));
+        if (hasChildren) {
+            element.setAttribute("aria-expanded", "true");
+        } else {
+            element.removeAttribute("aria-expanded");
+        }
+        element.setAttribute("tabindex", tabStop
+                ? "0"
+                : "-1");
+        updateName();
+    }
+
+    /// Shows (or stops showing) that the element is detached, to be attached to another parent:
+    /// faded, with a dashed border, and said so in its name.
+    ///
+    /// @param detached Whether it is detached.
+    public void setDetached(final boolean detached) {
+        this.detached = detached;
+        toggleClass(DETACHED_CLASS, detached);
+        updateName();
+    }
+
+    // e.g. "translation, XSLT Filter" or "rawWriter, XML Writer, detached"
+    private void updateName() {
+        if (getWidget() == null) {
+            // Not built yet: the constructor names it once it is
+            return;
+        }
+        final StringBuilder sb = new StringBuilder(NullSafe.string(label.getText()));
+        if (NullSafe.isNonBlankString(typeName) && !typeName.equals(label.getText())) {
+            sb.append(", ").append(typeName);
+        }
+        if (detached) {
+            sb.append(", detached");
+        }
+        getElement().setAttribute("aria-label", sb.toString());
     }
 
     @Override
     public void showHotspot(final boolean show) {
         toggleClass(HOTSPOT_CLASS, show);
+    }
+
+    @Override
+    public void showRefused(final boolean refused) {
+        toggleClass(REFUSED_CLASS, refused);
     }
 
     public void setDisabled(final boolean disabled) {
@@ -245,15 +326,54 @@ public class PipelineElementBox extends Box<PipelineElement> {
         return null;
     }
 
+    /// Shows the dots where the box's connectors join it, over its borders, coloured by what flows
+    /// along them (see [PipelineConnectorRenderer#getFlow]): one on its left if it has a parent,
+    /// and one on its right if it has children.
+    ///
+    /// @param hasChildren Whether the element has children in the tree shown.
+    public void setPorts(final boolean hasChildren) {
+        final PipelineElement parent = NullSafe.get(pipelineModel.getParentMap(), map -> map.get(pipelineElement));
+        setPort(inPort, parent == null
+                ? null
+                : PipelineConnectorRenderer.getFlow(pipelineModel.getElementType(parent)));
+        setPort(outPort, hasChildren
+                ? PipelineConnectorRenderer.getFlow(pipelineModel.getElementType(pipelineElement))
+                : null);
+    }
+
+    // A port dot, for sight only (the tree's structure is the connectors')
+    private static Element createPort(final String className) {
+        final Element port = Document.get().createSpanElement();
+        port.setClassName(PORT_CLASS + " " + className);
+        port.setAttribute("aria-hidden", "true");
+        return port;
+    }
+
+    private static void setPort(final Element port, final PipelineConnectorRenderer.Flow flow) {
+        port.setAttribute(PORT_FLOW_ATTRIBUTE, flow == null
+                ? ""
+                : flow.getName());
+    }
+
     public void refresh(final PipelineElement pipelineElement) {
         this.pipelineElement = pipelineElement;
-        label.setText(pipelineElement.getName() != null
+        setLabelText(pipelineElement.getName() != null
                 ? pipelineElement.getName()
                 : pipelineElement.getId());
         label.getElement().setAttribute("title", pipelineElement.getDescription() != null
                 ? pipelineElement.getDescription()
                 : "");
         updateFilterState();
+    }
+
+    // The element's name, also in data-text, so that the label keeps room for it in bold (see
+    // PipelineElementBox.css)
+    private void setLabelText(final String text) {
+        label.setText(text);
+        label.getElement().setAttribute("data-text", text == null
+                ? ""
+                : text);
+        updateName();
     }
 
     private void toggleClass(final String className, final boolean isSet) {

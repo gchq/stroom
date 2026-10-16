@@ -22,4 +22,28 @@ public interface ConnectorRenderer<T> {
 
     void render(TreeLayout<T> treeLayout, double x1, double y1, double x2, double y2, boolean firstChild,
                 boolean lastChild);
+
+    /// Draws the connector from a parent to one of its children, e.g. to colour it by what flows
+    /// along it. By default the items are ignored.
+    ///
+    /// @param treeLayout The tree's layout.
+    /// @param parent     The item the connector comes from.
+    /// @param child      The item the connector goes to.
+    /// @param x1         Where the connector starts, at the parent's right.
+    /// @param y1         Where the connector starts, at the parent's middle.
+    /// @param x2         Where the connector ends, at the child's left.
+    /// @param y2         Where the connector ends, at the child's middle.
+    /// @param firstChild Whether the child is the parent's first.
+    /// @param lastChild  Whether the child is the parent's last.
+    default void render(final TreeLayout<T> treeLayout,
+                        final T parent,
+                        final T child,
+                        final double x1,
+                        final double y1,
+                        final double x2,
+                        final double y2,
+                        final boolean firstChild,
+                        final boolean lastChild) {
+        render(treeLayout, x1, y1, x2, y2, firstChild, lastChild);
+    }
 }

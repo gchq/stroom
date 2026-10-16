@@ -18,11 +18,18 @@
 	position: absolute;
 	left: -100000;
 	top: -100000;
+	/* The tree sets a box's width (that of the widest box in its column) including its border and
+	   padding */
+	box-sizing: border-box;
+	/* The colours of the stepping screen's pipeline bar (pipeline-path.css): its border, a fill
+	   over the elements' background in the toolbar buttons' states, and its selected colours */
+	--pipeline-element-box__fill: transparent;
 	border: 1px solid var(--pipeline-element-box__border-color);
 	background-color: var(--pipeline-element-box__background-color);
-	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+	background-image: linear-gradient(var(--pipeline-element-box__fill), var(--pipeline-element-box__fill));
 	color: var(--pipeline-element-box__text-color);
-	border-radius: 50px;
+	/* The rounded corners of the stepping screen's pipeline bar's first and last chevrons */
+	border-radius: .25rem;
 	padding: 5px 5px 5px 10px;
 	display: flex;
 	flex-direction: row;
@@ -38,25 +45,69 @@
 }
 
 .pipelineElementBox-background:hover {
-	background-color: var(--pipeline-element-box__background-color--hover);
-	background-image: none;
+	--pipeline-element-box__fill: var(--icon-button__background-color--hover);
 }
 
+.pipelineElementBox-background:active {
+	--pipeline-element-box__fill: var(--icon-button__background-color--active);
+}
+
+/* The selected element, as the pipeline bar's: the selected-row colour, and a bold name */
 .pipelineElementBox-backgroundSelected {
-	background-color: var(--pipeline-element-box__background-color--selected);
-	background-image: none;
-	border-color: var(--pipeline-element-box__border-color--selected);
+	--pipeline-element-box__fill: var(--pipeline-path__background-color--selected);
+	color: var(--pipeline-path__text-color--selected);
 }
 
-.pipelineElementBox-backgroundSelected:hover {
-	background-color: var(--pipeline-element-box__background-color--selected--hover);
-	background-image: none;
+.pipelineElementBox-backgroundSelected:hover,
+.pipelineElementBox-backgroundSelected:active {
+	--pipeline-element-box__fill: var(--pipeline-path__background-color--selected--hover);
 }
 
-.pipelineElementBox-hotspot {
-    /* Negative margin is to account for the increased border width which is bigger by 1px */
-    margin: -1px;
-    border: 2px solid var(--pipeline-element-box__border-color--hotspot);
+/* Keyboard focus: the focus border and ring used elsewhere (and in the pipeline bar) */
+.pipelineElementBox-background:focus-visible {
+	outline: none;
+	border-color: var(--focus-border);
+	box-shadow: var(--focus-shadow);
+}
+
+/* Where a dragged element would be dropped: a 2px border in a colour of its own, as the pipeline
+   bar's for a warning or error (with 1px less padding, so that what is inside doesn't move). A
+   focused one (as when moving with the keyboard) keeps its colour, with the focus ring */
+.pipelineElementBox-hotspot,
+.pipelineElementBox-refused {
+	border-width: 2px;
+	padding: 4px 4px 4px 9px;
+}
+
+.pipelineElementBox-hotspot,
+.pipelineElementBox-hotspot:focus-visible {
+	border-color: var(--pipeline-element-box__drop-target);
+}
+
+/* The dots where the connectors join stay centred on the thicker border */
+.pipelineElementBox-hotspot .pipelineElementBox-port--in,
+.pipelineElementBox-refused .pipelineElementBox-port--in {
+	left: -4px;
+}
+
+.pipelineElementBox-hotspot .pipelineElementBox-port--out,
+.pipelineElementBox-refused .pipelineElementBox-port--out {
+	right: -4px;
+}
+
+/* An element detached (with the elements after it) to be attached to another parent, with the
+   keyboard or the context menu: faded, with a dashed border, until it is attached or put back */
+.pipelineElementBox-detached {
+	border-style: dashed;
+	opacity: .5;
+}
+
+/* An element under the pointer that won't accept what is dragged over it (e.g. it can't have a
+   child of its type): the same border, in red. The drop still goes to the drop target */
+.pipelineElementBox-refused,
+.pipelineElementBox-refused:focus-visible {
+	border-color: var(--pipeline-element-box__drop-refused);
+	cursor: not-allowed;
 }
 
 .pipelineElementBox-severityInfo {
@@ -111,15 +162,26 @@
 	cursor: pointer;
 }
 
+/* An element's name. It is as wide as its name in bold, so that its column (whose width is that of
+   its widest box) doesn't change when it is selected: an invisible bold copy of the name (::after,
+   from its data-text) shares its one column */
 .pipelineElementBox-label {
+	display: inline-grid;
 	padding: 0 8px;
 	cursor: pointer;
-	color: var(--pipeline-element-box__text-color);
 }
 
-.pipelineElementBox-backgroundSelected .pipelineElementBox-label,
-.pipelineElementBox-hotspot .pipelineElementBox-label {
-	color: var(--pipeline-element-box__text-color--selected);
+.pipelineElementBox-label::after {
+	content: attr(data-text);
+	height: 0;
+	overflow: hidden;
+	visibility: hidden;
+	font-weight: bold;
+	white-space: nowrap;
+}
+
+.pipelineElementBox-backgroundSelected .pipelineElementBox-label {
+	font-weight: bold;
 }
 
 .pipelineElementBox-filterOff .pipelineElementBox-filterImage.svgIcon {
@@ -138,4 +200,39 @@
 
 .pipelineElementBox-disabled * {
   pointer-events: inherit;
+}
+/* The dots where a box's connectors join it, centred on its left and right borders, coloured by
+   what flows along them (PipelineElementBox.setPorts); with no flow (data-flow empty) there's none */
+.pipelineElementBox-port {
+	position: absolute;
+	top: 50%;
+	width: 6px;
+	height: 6px;
+	margin-top: -3px;
+	border-radius: 50%;
+	pointer-events: none;
+}
+
+.pipelineElementBox-port--in {
+	left: -3px;
+}
+
+.pipelineElementBox-port--out {
+	right: -3px;
+}
+
+.pipelineElementBox-port[data-flow=""] {
+	display: none;
+}
+
+.pipelineElementBox-port[data-flow="raw"] {
+	background-color: var(--pipeline-connector__raw);
+}
+
+.pipelineElementBox-port[data-flow="xml"] {
+	background-color: var(--pipeline-connector__xml);
+}
+
+.pipelineElementBox-port[data-flow="bytes"] {
+	background-color: var(--pipeline-connector__bytes);
 }

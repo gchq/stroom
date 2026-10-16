@@ -22,6 +22,8 @@ import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
 import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 import stroom.widget.htree.client.treelayout.TreeLayout;
+import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -44,6 +46,11 @@ public final class PipelineElementRenderer
     // Cache the PipelineElementBox objects so we don't need to keep creating them.
     // This avoids flickr as we can just change their style rather than creating new and adding style.
     private final Map<String, PipelineElementBox> elementIdToBoxMap = new HashMap<>();
+    // The width of each element's box: the widest in its column (its depth in the tree), so that the
+    // boxes of a column line up on both sides and no connector crosses into a box. Worked out again
+    // before each layout, as names (and so widths) can change.
+    private final Map<PipelineElement, Double> columnWidths = new HashMap<>();
+    private DefaultTreeForTreeLayout<PipelineElement> tree;
     private SelectionModel<PipelineElement> selectionModel;
 
     public PipelineElementRenderer(final FlowPanel panel,
@@ -59,26 +66,99 @@ public final class PipelineElementRenderer
         final boolean selected = selectionModel != null && selectionModel.isSelected(pipelineElement);
         final PipelineElementBox pipelineElementBox = createBox(pipelineElement);
         pipelineElementBox.setSelected(selected);
+        final List<PipelineElement> children = treeLayout.getTree().getChildren(pipelineElement);
+        final boolean hasChildren = children != null && !children.isEmpty();
+        pipelineElementBox.setPorts(hasChildren);
+        setTreeItem(pipelineElementBox, pipelineElement, hasChildren, selected);
 
         final Style style = pipelineElementBox.getElement().getStyle();
         style.setLeft(bounds.getX(), Unit.PX);
         style.setTop(bounds.getY(), Unit.PX);
+        style.setWidth(bounds.getWidth(), Unit.PX);
 
         panel.add(pipelineElementBox);
         boxes.add(pipelineElementBox);
     }
 
+    // The box's place in the tree, for assistive technology, and whether it is the tree's tab stop:
+    // the selected element, else the source when nothing is selected
+    private void setTreeItem(final PipelineElementBox pipelineElementBox,
+                             final PipelineElement pipelineElement,
+                             final boolean hasChildren,
+                             final boolean selected) {
+        int level = 1;
+        PipelineElement parent = tree == null
+                ? null
+                : tree.getParent(pipelineElement);
+        final List<PipelineElement> siblings = parent == null
+                ? List.of(pipelineElement)
+                : tree.getChildrenList(parent);
+        while (parent != null) {
+            level++;
+            parent = tree.getParent(parent);
+        }
+        final boolean nothingSelected = !(selectionModel instanceof final MySingleSelectionModel<PipelineElement> model)
+                                        || model.getSelectedObject() == null;
+        final boolean tabStop = selected || (nothingSelected && level == 1);
+        pipelineElementBox.setTreeItem(level,
+                siblings.indexOf(pipelineElement) + 1,
+                siblings.size(),
+                hasChildren,
+                tabStop);
+    }
+
     @Override
     public Dimension getExtents(final PipelineElement pipelineElement) {
-        double width = 0;
-        double height = 0;
+        final Dimension size = measure(pipelineElement);
+        if (columnWidths.isEmpty()) {
+            setColumnWidths();
+        }
+        final Double columnWidth = columnWidths.get(pipelineElement);
+        return new Dimension(columnWidth != null
+                ? columnWidth
+                : size.getWidth(), size.getHeight());
+    }
 
+    /// Sets the tree whose elements are drawn, so that each column can be as wide as its widest
+    /// element.
+    ///
+    /// @param tree The tree. Can be null.
+    public void setTree(final DefaultTreeForTreeLayout<PipelineElement> tree) {
+        this.tree = tree;
+        columnWidths.clear();
+    }
+
+    // The width of each element: the widest at its depth in the tree
+    private void setColumnWidths() {
+        if (tree == null || tree.getRoot() == null) {
+            return;
+        }
+        final Map<PipelineElement, Integer> depths = new HashMap<>();
+        addDepths(tree.getRoot(), 0, depths);
+        final Map<Integer, Double> widestAtDepth = new HashMap<>();
+        depths.forEach((element, depth) ->
+                widestAtDepth.merge(depth, measure(element).getWidth(), Math::max));
+        depths.forEach((element, depth) -> columnWidths.put(element, widestAtDepth.get(depth)));
+    }
+
+    private void addDepths(final PipelineElement element,
+                           final int depth,
+                           final Map<PipelineElement, Integer> depths) {
+        depths.put(element, depth);
+        for (final PipelineElement child : tree.getChildrenList(element)) {
+            addDepths(child, depth + 1, depths);
+        }
+    }
+
+    // An element's box's own size, at the width its content needs
+    private Dimension measure(final PipelineElement pipelineElement) {
         final PipelineElementBox pipelineElementBox = createBox(pipelineElement);
+        pipelineElementBox.getElement().getStyle().clearWidth();
         RootPanel.get().add(pipelineElementBox);
-        width += pipelineElementBox.getElement().getScrollWidth();
-        height += pipelineElementBox.getElement().getScrollHeight();
+        // Its own size, not its scroll size, which would count the port dots over its borders
+        final double width = pipelineElementBox.getElement().getOffsetWidth();
+        final double height = pipelineElementBox.getElement().getOffsetHeight();
         RootPanel.get().remove(pipelineElementBox);
-
         return new Dimension(width, height);
     }
 
@@ -97,6 +177,7 @@ public final class PipelineElementRenderer
 
     public void clear() {
         boxes.clear();
+        columnWidths.clear();
     }
 
     public List<PipelineElementBox> getBoxes() {

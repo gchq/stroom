@@ -89,7 +89,6 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private static final String ELLIPSIS_CLASS = SEGMENT_CLASS + "--ellipsis";
     private static final String SHAPE_CLASS = BASE_CLASS + "__shape";
     private static final String FILL_CLASS = BASE_CLASS + "__fill";
-    private static final String BAND_CLASS = BASE_CLASS + "__band";
     private static final String PULSE_CLASS = SEGMENT_CLASS + "--pulse";
     private static final String SEVERITY_CLASS = BASE_CLASS + "__severity";
     private static final String BRANCH_SEVERITY_CLASS = BASE_CLASS + "__branch-severity";
@@ -244,7 +243,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         final Map<String, Severity> newSeverities = NullSafe.map(elementIdToSeveritiesMap);
         final Set<String> worsened = SeverityChanges.getWorsened(severities, newSeverities, Severity.WARNING);
 
-        // New or worse errors pulse; warnings have a steady inner border
+        // New or worse errors pulse; warnings have a steady border
         final double now = System.currentTimeMillis();
         for (final String elementId : worsened) {
             if (newSeverities.get(elementId).greaterThanOrEqual(Severity.ERROR)) {
@@ -488,22 +487,18 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         return label;
     }
 
-    // The chevron's shape, under its content: its border, then its fill, inside which its inner
-    // border holds the fill's middle (see pipeline-path.css)
+    // The chevron's shape, under its content: its border, then its fill (see pipeline-path.css)
     private static Element createShape() {
         final Element shape = Document.get().createSpanElement();
         shape.setClassName(SHAPE_CLASS);
         shape.setAttribute(ARIA_HIDDEN, "true");
         final Element fill = Document.get().createSpanElement();
         fill.setClassName(FILL_CLASS);
-        final Element band = Document.get().createSpanElement();
-        band.setClassName(BAND_CLASS);
-        fill.appendChild(band);
         shape.appendChild(fill);
         return shape;
     }
 
-    // Gives a chevron an inner border in the colour of a severity of warnings or worse, pulsing if
+    // Gives a chevron a thicker border in the colour of a severity of warnings or worse, pulsing if
     // it began pulsing the given number of milliseconds ago (or not if negative). The pulse is
     // carried on from where it had got to, as the chevron may have been redrawn while it pulsed.
     private static void setSeverity(final Element segment, final Severity severity, final double pulseElapsed) {
@@ -512,8 +507,8 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
             segment.addClassName(severityClass);
             if (pulseElapsed >= 0) {
                 segment.addClassName(PULSE_CLASS);
-                final Element band = segment.getFirstChildElement().getFirstChildElement().getFirstChildElement();
-                band.getStyle().setProperty("animationDelay", -Math.round(pulseElapsed) + "ms");
+                final Element shape = segment.getFirstChildElement();
+                shape.getStyle().setProperty("animationDelay", -Math.round(pulseElapsed) + "ms");
             }
         }
     }
@@ -721,7 +716,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
             description.append(", with stepping filters");
         }
 
-        // It has the inner border of the worst severity it collapses, and pulses if any of it pulses.
+        // It has the border of the worst severity it collapses, and pulses if any of it pulses.
         // Its button is a menu button, listing the elements it collapses.
         final Element ellipsis = Document.get().createDivElement();
         ellipsis.setClassName(SEGMENT_CLASS + " " + ELLIPSIS_CLASS);

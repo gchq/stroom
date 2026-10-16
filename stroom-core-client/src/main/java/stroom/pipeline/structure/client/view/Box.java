@@ -24,5 +24,12 @@ public abstract class Box<E> extends Composite {
 
     public abstract void showHotspot(boolean show);
 
+    /// Shows (or stops showing) that the box refuses what is being dragged over it, e.g. as an
+    /// element can't have a child of its type. By default nothing is shown.
+    ///
+    /// @param refused Whether it refuses it.
+    public void showRefused(final boolean refused) {
+    }
+
     public abstract E getItem();
 }

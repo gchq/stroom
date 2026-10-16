@@ -142,15 +142,26 @@
     --pipeline-element-box__background-color--hover: #f7fbff;
     --pipeline-element-box__background-color--selected: var(--row__background-color--selected);
     --pipeline-element-box__background-color--selected--hover: var(--row__background-color--selected--hovered);
-    --pipeline-element-box__text-color: #666;
+    --pipeline-element-box__text-color: #444;
     --pipeline-element-box__text-color--selected: #000;
     --pipeline-element-box__border-color: #918e8c;
     --pipeline-element-box__border-color--selected: #717e7c;
     --pipeline-element-box__border-color--info: #378cff;
     --pipeline-element-box__border-color--warn: yellow;
-    /* The pipeline bar's warning colour (pipeline-path.css): a deep orange, at least 3:1 against
-       white for a meaningful graphic (WCAG 1.4.11), where the usual amber is 1.6:1 */
+    /* The pipeline bar's borders for a warning and an error (pipeline-path.css), at least 3:1
+       against the page for a meaningful graphic (WCAG 1.4.11): the error icon's red, and for a
+       warning orange, as the warning icon's yellow is 1.5:1 */
     --pipeline-path__warn: var(--orange-900);
+    --pipeline-path__error: var(--icon-colour__red);
+    /* The pipeline tree's connectors (PipelineConnectorRenderer), by what flows along them, each
+       at least 3:1 against the page */
+    --pipeline-connector__raw: var(--orange-900);
+    --pipeline-connector__xml: var(--purple-600);
+    --pipeline-connector__bytes: var(--blue-700);
+    /* The pipeline tree's drop target's border (PipelineElementBox.css), and that of an element
+       that refuses what is dropped, at least 3:1 against the page as the bar's */
+    --pipeline-element-box__drop-target: var(--icon-colour__dark-green);
+    --pipeline-element-box__drop-refused: var(--pipeline-path__error);
     /* The pipeline bar's selected element (pipeline-path.css), as a selected row */
     --pipeline-path__background-color--selected: var(--row__background-color--selected);
     --pipeline-path__background-color--selected--hover: var(--row__background-color--selected--hovered);

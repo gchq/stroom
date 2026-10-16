@@ -20,7 +20,6 @@ import stroom.data.grid.client.MouseHelper;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.util.shared.Severity;
-import stroom.widget.htree.client.ArrowConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
 import stroom.widget.htree.client.TreeRenderer;
@@ -44,7 +43,8 @@ import java.util.Objects;
 
 public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
-    private static final double HORIZONTAL_SEPARATION = 20;
+    // Room between columns for the connectors' dots and curves
+    private static final double HORIZONTAL_SEPARATION = 40;
     private static final double VERTICAL_SEPARATION = 10;
     private final FlowPanel panel;
     private LayeredCanvas canvas;
@@ -55,6 +55,8 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     private PipelineElementRenderer cellRenderer;
     private DefaultTreeForTreeLayout<PipelineElement> tree;
     private SelectionModel<PipelineElement> selectionModel;
+    // Told when a redraw is complete, e.g. to put the keyboard focus back on a box
+    private Runnable afterRefresh;
 
     public PipelineTreePanel() {
         panel = new FlowPanel();
@@ -112,6 +114,9 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
         boxPanel = new FlowPanel();
         boxPanel.setStyleName("treePanel-boxPanel");
+        // The boxes are the tree's items (PipelineElementRenderer), for assistive technology
+        boxPanel.getElement().setAttribute("role", "tree");
+        boxPanel.getElement().setAttribute("aria-label", "Pipeline structure");
 
         // setup the tree layout configuration.
         canvas = LayeredCanvas.createIfSupported();
@@ -121,8 +126,8 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             final PipelineElementBoxFactory pipelineElementBoxFactory = new PipelineElementBoxFactory(pipelineModel);
             cellRenderer = new PipelineElementRenderer(boxPanel, pipelineElementBoxFactory);
             cellRenderer.setSelectionModel(selectionModel);
-            final ConnectorRenderer<PipelineElement> connectorRenderer = new ArrowConnectorRenderer<>(
-                    arrowContext);
+            final ConnectorRenderer<PipelineElement> connectorRenderer = new PipelineConnectorRenderer(
+                    arrowContext, pipelineModel);
 
             // Setup the tree layout configuration
             final DefaultConfiguration<PipelineElement> layoutConfig = new DefaultConfiguration<>(
@@ -161,20 +166,55 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     @Override
     public void refresh(final RefreshCallback callback) {
         if (renderer != null) {
+            // Drawing replaces the boxes, so the focus is put back on the same element's box (or
+            // keys pressed before the redraw below would be lost)
+            final PipelineElement focused = getFocusedItem();
             boxPanel.clear();
             cellRenderer.clear();
             renderer.draw();
+            focus(focused);
             pendingOperation.scheduleOperation(() -> {
+                final PipelineElement stillFocused = getFocusedItem();
                 boxPanel.clear();
                 if (renderer != null) {
                     cellRenderer.clear();
                     renderer.draw();
+                    focus(stillFocused);
 
                     if (callback != null) {
                         callback.onRefresh();
                     }
+                    if (afterRefresh != null) {
+                        afterRefresh.run();
+                    }
                 }
             });
+        }
+    }
+
+    // The element whose box has the focus, if any
+    private PipelineElement getFocusedItem() {
+        final com.google.gwt.dom.client.Element active = getActiveElement();
+        if (active != null) {
+            for (final PipelineElementBox box : cellRenderer.getBoxes()) {
+                if (box.getElement().isOrHasChild(active)) {
+                    return box.getItem();
+                }
+            }
+        }
+        return null;
+    }
+
+    private static native com.google.gwt.dom.client.Element getActiveElement() /*-{
+        return $doc.activeElement;
+    }-*/;
+
+    private void focus(final PipelineElement item) {
+        if (item != null) {
+            final Box<PipelineElement> box = getBox(item);
+            if (box != null) {
+                box.getElement().focus();
+            }
         }
     }
 
@@ -186,9 +226,20 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     @Override
     public void setTree(final DefaultTreeForTreeLayout<PipelineElement> tree) {
         this.tree = tree;
+        if (cellRenderer != null) {
+            cellRenderer.setTree(tree);
+        }
         if (treeLayout != null) {
             treeLayout.setTree(tree);
         }
+    }
+
+    /// Sets what to do when a redraw is complete, e.g. to put the keyboard focus back on a box
+    /// (as redrawing replaces them).
+    ///
+    /// @param afterRefresh What to do, or null for nothing.
+    public void setAfterRefresh(final Runnable afterRefresh) {
+        this.afterRefresh = afterRefresh;
     }
 
     public int getTreeHeight() {

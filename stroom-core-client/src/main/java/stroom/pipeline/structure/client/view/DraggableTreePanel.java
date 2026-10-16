@@ -42,6 +42,9 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
     private final FlowPanel layoutPanel;
     private Box<E> box;
     private Box<E> targetBox;
+    // The box under the pointer that refuses what is being dragged, if any (the drop still goes to
+    // targetBox, the last that would accept it)
+    private Box<E> refusedBox;
     private int startX = -1;
     private int startY = -1;
     private int offsetX = -1;
@@ -70,6 +73,9 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
             onMouseDown(event);
         } else if (Event.ONMOUSEUP == eventType) {
             onMouseUp(event);
+        } else {
+            // e.g. key presses, for handlers added with addDomHandler
+            super.onBrowserEvent(event);
         }
     }
 
@@ -80,6 +86,7 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         offsetY = -1;
         box = null;
         targetBox = null;
+        setRefusedBox(null);
         dragging = false;
         mouseDownElement = null;
     }
@@ -230,6 +237,22 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
             target.showHotspot(true);
             targetBox.showHotspot(false);
             targetBox = target;
+        }
+        // A box that won't accept what is dragged over it says so, while the pointer is over it
+        setRefusedBox(target != null && target != targetBox
+                ? target
+                : null);
+    }
+
+    private void setRefusedBox(final Box<E> refused) {
+        if (refused != refusedBox) {
+            if (refusedBox != null) {
+                refusedBox.showRefused(false);
+            }
+            refusedBox = refused;
+            if (refusedBox != null) {
+                refusedBox.showRefused(true);
+            }
         }
     }
 

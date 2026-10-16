@@ -375,8 +375,8 @@ public final class SteppingScreenStories {
                     play.keyboard("{Escape}");
                     expectNoProblems(play);
                 })
-                // Problems, with no play so that they can be looked at: xsltFilter has a warning's inner
-                // border, appenderT2's new error's inner border pulses three times then stays, and a
+                // Problems, with no play so that they can be looked at: xsltFilter has a warning's
+                // border, appenderT2's new error's border pulses three times then stays, and a
                 // warning icon by textWriter's drop down chevron shows jsonWriter's warning, in a branch
                 // not shown
                 .story("SteppingProblems", context -> render(context, BRANCH_LAYERS, null, PROBLEMS_STEP_RESULT))

@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class PipelineTreePresenter
@@ -49,6 +50,8 @@ public class PipelineTreePresenter
     private PipelineModel pipelineModel;
     private PipelineTreeBuilder pipelineTreeBuilder;
     private List<PipelineElement> disabledElements = new ArrayList<>();
+    // What to do when the tree asks for an element to be removed, e.g. with the Delete key
+    private Consumer<PipelineElement> removeHandler;
 
     @Inject
     public PipelineTreePresenter(final EventBus eventBus, final PipelineTreeView view) {
@@ -89,6 +92,50 @@ public class PipelineTreePresenter
                 AlertEvent.fireError(PipelineTreePresenter.this, e.getMessage(), null);
             }
         }
+    }
+
+    @Override
+    public void onRemove(final PipelineElement element) {
+        if (removeHandler != null) {
+            removeHandler.accept(element);
+        }
+    }
+
+    /// Sets what to do when the tree asks for an element to be removed, e.g. with the Delete key.
+    ///
+    /// @param removeHandler What to do, or null for nothing.
+    public void setRemoveHandler(final Consumer<PipelineElement> removeHandler) {
+        this.removeHandler = removeHandler;
+    }
+
+    /// @return The element detached (to be attached to another parent), or null for none.
+    public PipelineElement getDetached() {
+        return getView().getDetached();
+    }
+
+    /// Detaches an element and the elements after it, to be attached to another parent.
+    ///
+    /// @param element The element.
+    public void detach(final PipelineElement element) {
+        getView().detach(element);
+    }
+
+    /// @param target An element.
+    /// @return Whether the detached element can be attached to it.
+    public boolean canAttach(final PipelineElement target) {
+        return getView().canAttach(target);
+    }
+
+    /// Attaches the detached element to another, if it can be.
+    ///
+    /// @param target The element to attach it to.
+    public void attach(final PipelineElement target) {
+        getView().attach(target);
+    }
+
+    /// Puts the detached element back where it was.
+    public void cancelDetach() {
+        getView().cancelDetach();
     }
 
     private void refresh() {
@@ -182,5 +229,33 @@ public class PipelineTreePresenter
         void setDisabledElements(final List<PipelineElement> disabledElements);
 
         void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap);
+
+        /// @return The element detached (to be attached to another parent), or null for none.
+        default PipelineElement getDetached() {
+            return null;
+        }
+
+        /// Detaches an element and the elements after it, to be attached to another parent, if
+        /// the tree can be changed.
+        ///
+        /// @param element The element.
+        default void detach(final PipelineElement element) {
+        }
+
+        /// @param target An element.
+        /// @return Whether the detached element can be attached to it.
+        default boolean canAttach(final PipelineElement target) {
+            return false;
+        }
+
+        /// Attaches the detached element to another, if it can be.
+        ///
+        /// @param target The element to attach it to.
+        default void attach(final PipelineElement target) {
+        }
+
+        /// Puts the detached element back where it was.
+        default void cancelDetach() {
+        }
     }
 }
