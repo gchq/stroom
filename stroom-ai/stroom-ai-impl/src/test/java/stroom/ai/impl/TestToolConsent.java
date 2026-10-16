@@ -243,6 +243,24 @@ class TestToolConsent {
     }
 
     @Test
+    void theCardOnlySaysWhatItsClassificationsDont() {
+        // Shown by the "can modify" chip, the "destructive" chip, or the untrusted icon.
+        tool(info(false, false, null, null, null));
+        assertThat(decide("s__t", false).cardReason()).isNull();
+        tool(info(true, false, true, null, null));
+        assertThat(decide("s__t", false).cardReason()).isNull();
+        assertThat(decide("s__t", false).reason()).isNotNull();
+
+        // Not shown otherwise.
+        tool(info(true, false, null, null, McpToolPolicy.ASK_ALWAYS));
+        assertThat(decide("s__t", false).cardReason()).contains("administrator");
+        Mockito.when(runManager.isTainted(1)).thenReturn(true);
+        tool(info(true, false, null, null, null));
+        assertThat(decide("s__t", false).cardReason()).contains("read data");
+        assertThat(decide("s__t", true).cardReason()).contains("You were away");
+    }
+
+    @Test
     void testWhatEachToolDoesIsShown() {
         assertThat(ToolConsent.risks(info(true, true, null, null, null))).containsExactly("read-only");
         assertThat(ToolConsent.risks(info(true, false, true, true, null)))
