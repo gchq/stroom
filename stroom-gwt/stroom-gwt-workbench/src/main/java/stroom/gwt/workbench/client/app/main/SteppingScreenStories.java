@@ -182,6 +182,9 @@ public final class SteppingScreenStories {
                     // Step Forward twice -> [1:1:3]; Back is now enabled
                     play.click(play.getByTitle("Step Forward"));
                     play.findAllByText("[1:1:2]");
+                    // Screen readers are told where the step got to, in words
+                    play.waitFor(() -> play.expect(play.querySelector(".stepping-screen__progress [role='status']"))
+                            .toHaveTextContent("Stream 1, part 1, record 2"));
                     play.click(play.getByTitle("Step Forward"));
                     play.findAllByText("[1:1:3]");
                     play.waitFor(() -> play.expect(play.getByTitle("Step Backward"))

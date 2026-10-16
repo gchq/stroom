@@ -79,6 +79,8 @@ import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -116,6 +118,9 @@ public class SteppingPresenter
     private final SourcePresenter sourcePresenter;
     private final Provider<ElementPresenter> elementPresenterProvider;
     private final SimplePanel stepMessage;
+    // Tells screen reader users that a step has begun and where it got to (the progress message
+    // above changes too often, while searching, to be announced)
+    private final Element stepAnnouncement;
     private final StepLocationLinkPresenter stepLocationLinkPresenter;
     private final StepControlPresenter stepControlPresenter;
     private final SteppingFilterPresenter steppingFilterPresenter;
@@ -210,6 +215,11 @@ public class SteppingPresenter
         stepToolbar.addStyleName("stepping-screen__progress dock-container-horizontal dock-min");
         stepToolbar.add(logPaneButtons);
         stepToolbar.add(stepMessage);
+        stepAnnouncement = Document.get().createDivElement();
+        stepAnnouncement.setClassName("sr-only");
+        stepAnnouncement.setAttribute("role", "status");
+        stepAnnouncement.setAttribute("aria-live", "polite");
+        stepToolbar.getElement().appendChild(stepAnnouncement);
         view.addWidgetRight(stepToolbar);
         view.addWidgetRight(stepLocationLinkPresenter.getView().asWidget());
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
@@ -857,6 +867,7 @@ public class SteppingPresenter
 
             busyTranslating = true;
             setStepMessage("Stepping...");
+            announceStep("Stepping");
             stepMessage.setVisible(true);
             terminateButton.setEnabled(true);
 
@@ -961,6 +972,9 @@ public class SteppingPresenter
     }
 
     public void terminate() {
+        if (busyTranslating) {
+            announceStep("Stepping terminated");
+        }
         stop();
         final PipelineStepRequest request = requestBuilder.build();
         if (request.getSessionUuid() != null) {
@@ -985,6 +999,21 @@ public class SteppingPresenter
     private void setStepMessage(final String message) {
         stepMessage.getElement().setInnerText(message);
         stepMessage.setTitle(message);
+    }
+
+    // Tells screen reader users about a step, emptying the announcement first so that the same one
+    // (e.g. "Stepping" for each step) is announced again
+    private void announceStep(final String message) {
+        stepAnnouncement.setInnerText("");
+        Scheduler.get().scheduleDeferred(() -> stepAnnouncement.setInnerText(message));
+    }
+
+    // A step's location in words, e.g. "Stream 1, part 1, record 3", as "[1:1:3]" would be read as
+    // punctuation
+    private static String describeStepLocation(final StepLocation stepLocation) {
+        return "Stream " + stepLocation.getMetaId()
+               + ", part " + (stepLocation.getPartIndex() + 1)
+               + ", record " + (stepLocation.getRecordIndex() + 1);
     }
 
     private SharedStepData getEffectiveStepData() {
@@ -1083,6 +1112,10 @@ public class SteppingPresenter
                     sourcePresenter.setSourceLocationUsingHighlight(result.getStepData().getSourceLocation());
                 }
             }
+
+            announceStep(foundRecord && result.getFoundLocation() != null
+                    ? describeStepLocation(result.getFoundLocation())
+                    : "No record found");
 
             if (result.getFoundLocation() != null) {
                 // We found a record so update the display to indicate the
