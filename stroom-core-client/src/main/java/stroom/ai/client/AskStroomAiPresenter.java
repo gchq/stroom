@@ -2791,11 +2791,24 @@ public class AskStroomAiPresenter
                                     final boolean pending) {
         callDiv.div(header -> {
             header.elem(code -> code.append(call.getTool()), SafeHtmlUtils.fromSafeConstant("code"));
+            // An untrusted server always has this classification, so it shows whether the server is trusted.
+            final boolean trusted = !call.getRisks().contains(AiChatTexts.UNTRUSTED_SERVER);
             if (call.getServer() != null) {
                 header.span(server -> server.append(" on " + call.getServer()),
                         Attribute.className("ai-approval-server"));
+                header.span(icon -> icon(icon, trusted
+                                ? SvgImage.TICK
+                                : SvgImage.WARNING),
+                        Attribute.className(trusted
+                                ? "ai-trust-icon ai-trust-icon--trusted"
+                                : "ai-trust-icon ai-trust-icon--untrusted"),
+                        Attribute.title(AiChatTexts.trustExplanation(trusted)));
             }
             for (final String risk : call.getRisks()) {
+                if (AiChatTexts.UNTRUSTED_SERVER.equals(risk)) {
+                    // Shown by the icon beside the server.
+                    continue;
+                }
                 final String explanation = AiChatTexts.riskExplanation(risk);
                 // Read-only is not a risk, so it isn't shown as one.
                 final Attribute className = Attribute.className("read-only".equals(risk)

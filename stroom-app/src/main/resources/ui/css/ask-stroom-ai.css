@@ -1014,6 +1014,24 @@
     cursor: help;
 }
 
+/* Whether the tool's server is trusted: a green tick, or a yellow warning triangle. */
+.ai-trust-icon {
+    display: inline-flex;
+    vertical-align: -2px;
+    margin: 0 6px 0 3px;
+    cursor: help;
+}
+
+.ai-trust-icon .svgIcon,
+.ai-trust-icon svg {
+    width: 13px;
+    height: 13px;
+}
+
+.ai-trust-icon--trusted svg path {
+    fill: #2e7d32 !important;
+}
+
 .ai-risk-badge.ai-risk-badge--safe {
     border-color: var(--control__border-color);
     color: var(--control__text-color--disabled);

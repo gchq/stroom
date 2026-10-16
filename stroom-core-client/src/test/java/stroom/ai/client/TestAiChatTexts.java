@@ -125,4 +125,11 @@ class TestAiChatTexts {
         assertThat(AiChatTexts.contextLevel(120)).isEqualTo("over");
     }
 
+
+    @Test
+    void theTrustIconIsExplained() {
+        assertThat(AiChatTexts.trustExplanation(true)).startsWith("Trusted server.\n");
+        assertThat(AiChatTexts.trustExplanation(false)).startsWith("Untrusted server.\n").contains("asks before");
+    }
+
 }
