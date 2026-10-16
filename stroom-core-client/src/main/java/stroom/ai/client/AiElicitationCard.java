@@ -61,6 +61,36 @@ final class AiElicitationCard {
         // Static only.
     }
 
+    /// @param fields A form's fields, from [AiElicitationForm#fields(String)].
+    /// @return The form's one field if it is a single yes or no question, to answer with Yes and No buttons as
+    /// VS Code does, or null if the form has other fields.
+    static AiElicitationForm.Field yesNoQuestion(final List<AiElicitationForm.Field> fields) {
+        if (fields.size() != 1) {
+            return null;
+        }
+        final AiElicitationForm.Field field = fields.get(0);
+        return "boolean".equals(field.getType()) && !field.isMulti()
+                ? field
+                : null;
+    }
+
+    /// Adds what a yes or no question says beyond the form's message: its title, if it isn't the message's first
+    /// line, and its description.
+    ///
+    /// @param hb       Where to add it.
+    /// @param field    The question, from [#yesNoQuestion(List)].
+    /// @param message  The form's message, already shown.
+    static void appendYesNoQuestion(final HtmlBuilder hb,
+                                    final AiElicitationForm.Field field,
+                                    final String message) {
+        if (field.getTitle() != null && !field.getTitle().equals(firstLine(message, null))) {
+            hb.div(field.getTitle(), Attribute.className("ai-elicitation-label"));
+        }
+        if (field.getDescription() != null) {
+            hb.div(field.getDescription(), Attribute.className("ai-elicitation-description"));
+        }
+    }
+
     /// Adds the form's fields.
     ///
     /// @param hb     Where to add them.
