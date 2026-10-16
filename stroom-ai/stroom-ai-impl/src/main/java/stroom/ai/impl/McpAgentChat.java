@@ -80,11 +80,12 @@ class McpAgentChat {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(McpAgentChat.class);
 
     /**
-     * How many model round-trips the loop will make for a single question before it stops offering tools
-     * and takes whatever the model says next. A misbehaving model or server cannot make the chat loop
-     * forever.
+     * What the model is told on its last step of a question, when it is no longer offered tools.
      */
-    private static final int MAX_ITERATIONS = 12;
+    static final String LAST_STEP_NOTE = "You have used all the steps allowed for this question, so you can't "
+                                         + "call any more tools now. Without saying you'll do anything else "
+                                         + "first, summarise what you have done and found, and what is left "
+                                         + "to do. The user can reply 'continue' for you to carry on.";
 
     /**
      * How much of a tool's arguments / result to keep in the persistent request detail before truncating.
@@ -266,8 +267,9 @@ class McpAgentChat {
         resumePending(chatId, conversation, tools, toolset, debugLog);
 
 
+        final int maxIterations = maxToolIterations();
         ChatResponse response = null;
-        for (int iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
+        for (int iteration = 1; iteration <= maxIterations; iteration++) {
             if (cancelled.get() || taskContext.isTerminated()) {
                 throw new TaskTerminatedException();
             }
@@ -283,9 +285,15 @@ class McpAgentChat {
                                        .map(ToolSpecification::name)
                                        .collect(Collectors.joining(", ")));
 
-            final List<ToolSpecification> offered = iteration < MAX_ITERATIONS
-                    ? toolSpecifications
-                    : null;
+            // On the last step no tools are offered, so the model has to answer in words. It is told why, so
+            // that it sums up rather than saying what it will do next.
+            final List<ToolSpecification> offered;
+            if (iteration < maxIterations) {
+                offered = toolSpecifications;
+            } else {
+                offered = null;
+                conversation.add(UserMessage.from(LAST_STEP_NOTE));
+            }
 
             final int currentIteration = iteration;
             response = LOGGER.logDurationIfDebugEnabled(
@@ -296,8 +304,11 @@ class McpAgentChat {
             final AiMessage aiMessage = response.aiMessage();
             if (!aiMessage.hasToolExecutionRequests()) {
                 // If the user added something while the model worked, carry on with it.
-                if (iteration < MAX_ITERATIONS && steerFeed.addTo(conversation, aiMessage)) {
+                if (iteration < maxIterations && steerFeed.addTo(conversation, aiMessage)) {
                     continue;
+                }
+                if (iteration == maxIterations) {
+                    noteStepLimit(chatId, maxIterations);
                 }
                 return response;
             }
@@ -361,7 +372,7 @@ class McpAgentChat {
         }
 
         // Loop cap hit. Make one final call with no tools so the model has to answer in words.
-        LOGGER.info(() -> "chat: hit the tool iteration cap for chatId=" + chatId);
+        noteStepLimit(chatId, maxIterations);
         if (response != null && response.aiMessage().hasToolExecutionRequests()) {
             return call(chatModel, conversation, null, chatId, modelDoc, budget);
         }
@@ -738,6 +749,21 @@ class McpAgentChat {
                 group -> toolGroupActivations.activate(chatId, group)));
         limitTools(tools, NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getMaxToolDefinitions, 0), chatId);
         return tools;
+    }
+
+    /**
+     * Tells the user the run stopped at the step limit, and how to carry on.
+     */
+    private void noteStepLimit(final int chatId, final int maxIterations) {
+        LOGGER.info("chat: hit the tool iteration cap of {} for chatId={}", maxIterations, chatId);
+        aiService.storeMessage(chatId, AiMessageType.WARNING, "Stopped after " + maxIterations
+                                                              + " steps, the most for one question. Reply "
+                                                              + "'continue' to carry on.");
+    }
+
+    private int maxToolIterations() {
+        return Math.max(1, NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getMaxToolIterations,
+                AiConfig.DEFAULT_MAX_TOOL_ITERATIONS));
     }
 
     private int toolGroupThreshold() {
