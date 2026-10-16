@@ -33,6 +33,9 @@ import stroom.pipeline.refdata.store.RefDataValueConverter;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStoreEntry;
+import stroom.pipeline.refdata.store.offheapstore.DelegatingRefDataOffHeapStore;
+import stroom.pipeline.refdata.store.offheapstore.OffHeapStoreInfo;
+import stroom.pipeline.refdata.store.offheapstore.OffHeapStoreInfoCache;
 import stroom.pipeline.shared.ReferenceDataFields;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.DateTimeSettings;
@@ -135,7 +138,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             Map.entry(ReferenceDataFields.PIPELINE_VERSION_FIELD.getFldName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion()));
 
-    private final RefDataStore refDataStore;
+    private final DelegatingRefDataOffHeapStore refDataStore;
     private final RefDataStoreFactory refDataStoreFactory;
     private final SecurityContext securityContext;
     private final Provider<ReferenceData> referenceDataProvider;
@@ -147,6 +150,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final NodeService nodeService;
     private final WordListProvider wordListProvider;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
+    private final OffHeapStoreInfoCache offHeapStoreInfoCache;
     private final Executor executor;
     private final DocFinder docFinder;
 
@@ -163,7 +167,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final WordListProvider wordListProvider,
                                     final FieldInfoResultPageFactory fieldInfoResultPageFactory,
                                     final ExecutorProvider executorProvider,
-                                    final DocFinder docFinder) {
+                                    final DocFinder docFinder,
+                                    final OffHeapStoreInfoCache offHeapStoreInfoCache) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.refDataStoreFactory = refDataStoreFactory;
         this.securityContext = securityContext;
@@ -176,6 +181,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         this.nodeService = nodeService;
         this.wordListProvider = wordListProvider;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
+        this.offHeapStoreInfoCache = offHeapStoreInfoCache;
         this.executor = executorProvider.get();
         this.docFinder = docFinder;
     }
@@ -248,6 +254,19 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             }
             return entries;
         });
+    }
+
+    @Override
+    public List<OffHeapStoreInfo> storeInfo(final String nodeName) {
+        if (NullSafe.isNonBlankString(nodeName)) {
+            return offHeapStoreInfoCache.getStoreInfo(nodeName);
+        } else {
+            return nodeService.getEnabledNodes()
+                    .stream()
+                    .map(offHeapStoreInfoCache::getStoreInfo)
+                    .flatMap(List::stream)
+                    .toList();
+        }
     }
 
     @Override

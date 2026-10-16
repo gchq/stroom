@@ -26,6 +26,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -58,6 +59,11 @@ public class MockNodeService implements NodeService {
     @Override
     public List<String> getEnabledNodesByPriority() {
         return Collections.singletonList(nodeInfo.getThisNodeName());
+    }
+
+    @Override
+    public Set<String> getEnabledNodes() {
+        return Collections.singleton(nodeInfo.getThisNodeName());
     }
 
     @Override

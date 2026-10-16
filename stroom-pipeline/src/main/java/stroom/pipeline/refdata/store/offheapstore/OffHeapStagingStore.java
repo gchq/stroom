@@ -26,6 +26,7 @@ import stroom.lmdb.PutOutcome;
 import stroom.lmdb.UnSortedDupKey;
 import stroom.lmdb.UnSortedDupKey.UnsortedDupKeyFactory;
 import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.RefDataEntryType;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStagingDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeValueStagingDb;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -55,6 +57,9 @@ import java.util.stream.Stream;
  * with the aim of doing the least work possible inside the main ref store write txn. Also, as the entries
  * in this store are in the same key order as the main store we can transfer them into the main store
  * in sorted key order which can speed up the load significantly.
+ * <p>
+ * This store is not thread safe and is designed to be create, used and closed by a pipeline process.
+ * </p>
  */
 public class OffHeapStagingStore implements AutoCloseable {
 
@@ -76,6 +81,8 @@ public class OffHeapStagingStore implements AutoCloseable {
     private final UnsortedDupKeyFactory<KeyValueStoreKey> keyValueStoreKeyFactory;
     private final UnsortedDupKeyFactory<RangeStoreKey> rangeStoreKeyFactory;
     private boolean isComplete = false;
+    private long keyValueEntryCount = 0;
+    private long rangeValueEntryCount = 0;
 
     OffHeapStagingStore(final LmdbEnv stagingLmdbEnv,
                         final KeyValueStagingDb keyValueStagingDb,
@@ -86,7 +93,6 @@ public class OffHeapStagingStore implements AutoCloseable {
         this.keyValueStagingDb = keyValueStagingDb;
         this.rangeValueStagingDb = rangeValueStagingDb;
         this.mapDefinitionUIDStore = mapDefinitionUIDStore;
-
 
         // get buffers to (re)use for the life of this store
         this.keyPooledKeyBuffer = keyValueStagingDb.getPooledKeyBuffer();
@@ -126,6 +132,7 @@ public class OffHeapStagingStore implements AutoCloseable {
         final ByteBuffer keyBuffer = keyPooledKeyBuffer.getByteBuffer();
 
         doPut(wrappedKey, keyBuffer, stagingValue, keyValueStagingDb);
+        keyValueEntryCount++;
     }
 
     /**
@@ -151,6 +158,7 @@ public class OffHeapStagingStore implements AutoCloseable {
         final ByteBuffer keyBuffer = rangePooledKeyBuffer.getByteBuffer();
 
         doPut(wrappedKey, keyBuffer, stagingValue, rangeValueStagingDb);
+        rangeValueEntryCount++;
     }
 
     private <K> void doPut(final K key,
@@ -200,7 +208,7 @@ public class OffHeapStagingStore implements AutoCloseable {
 
     /**
      * Loop over all entries in the key/value store. There may be multiple values for the
-     * same key. Looping is done in key order, NOT in the oder they were originally put.
+     * same key. Looping is done in key order, NOT in the order they were originally put.
      * REMEMBER, the entries contain buffers used by LMDB so if you want to do anything with the entries
      * outside of the consumer you need to copy!
      */
@@ -228,6 +236,20 @@ public class OffHeapStagingStore implements AutoCloseable {
                 entryStreamConsumer.accept(Map.entry(key, stagingValue));
             });
         });
+    }
+
+    Optional<RefDataEntryType> getLoadedRefDataEntryType() {
+        final RefDataEntryType refDataEntryType;
+        if (keyValueEntryCount > 0 && rangeValueEntryCount > 0) {
+            refDataEntryType = RefDataEntryType.MIXED;
+        } else if (keyValueEntryCount > 0) {
+            refDataEntryType = RefDataEntryType.KEY_VALUE;
+        } else if (rangeValueEntryCount > 0) {
+            refDataEntryType = RefDataEntryType.KEY_VALUE;
+        } else {
+            refDataEntryType = null;
+        }
+        return Optional.ofNullable(refDataEntryType);
     }
 
     public void logAllContents(final Consumer<String> logEntryConsumer) {
@@ -326,5 +348,17 @@ public class OffHeapStagingStore implements AutoCloseable {
     long getSizeOnDisk() {
         return stagingLmdbEnv.getSizeOnDisk();
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
+//    record LoadFacts(
+//            int totalKeyValueEntryCount,
+//            int totalRangeValueEntryCount,
+//            Map<>
+//
+//
+//    )
 
 }
