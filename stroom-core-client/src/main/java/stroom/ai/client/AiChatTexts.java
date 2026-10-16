@@ -22,7 +22,7 @@ import stroom.svg.shared.SvgImage;
 
 /// What the chat panel says and shows about chats and their parts, kept out of the presenter so it can be
 /// tested without a browser.
-final class AiChatTexts {
+public final class AiChatTexts {
 
     // The classification an untrusted server's tools have on approval cards.
     static final String UNTRUSTED_SERVER = "untrusted server";
@@ -79,7 +79,7 @@ final class AiChatTexts {
 
     /// @param risk A classification of a tool on an approval card, e.g. "can modify".
     /// @return What it means, a sentence to a line, for its tooltip, or null if it is not one Stroom gives.
-    static String riskExplanation(final String risk) {
+    public static String riskExplanation(final String risk) {
         if (risk == null) {
             return null;
         }
