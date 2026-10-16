@@ -169,6 +169,7 @@ public class AskStroomAiPresenter
     private static final String USER_ACTION_MESSAGE_ATTRIBUTE = "data-user-action-message";
     private static final String DEFAULT_CHAT_TITLE = "New chat";
     private static final SafeHtml MARK = SafeHtmlUtils.fromSafeConstant("mark");
+    private static final int MAX_FOLLOW_UPS = 3;
     // Searching the list of chats: how long to wait after the last key, and the shortest text searched for (as the
     // server finds nothing for less).
     private static final int SEARCH_DELAY_MS = 300;
@@ -231,6 +232,8 @@ public class AskStroomAiPresenter
     private boolean currentRunActive;
     // True while the list of chats is shown in place of the conversation.
     private boolean chatListShowing;
+    // The latest suggested follow-ups, while the answer they follow is the latest thing in the chat.
+    private List<String> followUps = List.of();
     // Searching the list of chats: what is in the box, the text the hits are for, the hits (null when not
     // searching), and a count so that a slow answer to an earlier search is ignored.
     private String searchText = "";
@@ -938,6 +941,38 @@ public class AskStroomAiPresenter
     }
 
     @Override
+    public void onFollowUp(final String text) {
+        if (!currentRunActive && !requestInFlight && text != null && !text.isBlank()) {
+            sendMessage(text);
+        }
+    }
+
+    /// Shows the suggested follow-ups, but only while nothing is working on the chat.
+    private void refreshFollowUps() {
+        getView().setFollowUps(currentRunActive || requestInFlight
+                ? List.of()
+                : followUps);
+    }
+
+    /// @param json A SUGGESTIONS message: a JSON array of strings.
+    /// @return The suggestions in it, at most three, or none if it can't be read.
+    private static List<String> parseFollowUps(final String json) {
+        final List<String> suggestions = new ArrayList<>();
+        try {
+            final JSONArray array = JSONParser.parseStrict(json).isArray();
+            for (int i = 0; array != null && i < array.size() && suggestions.size() < MAX_FOLLOW_UPS; i++) {
+                final JSONString value = array.get(i).isString();
+                if (value != null && !value.stringValue().isBlank()) {
+                    suggestions.add(value.stringValue().strip());
+                }
+            }
+        } catch (final RuntimeException e) {
+            // Nothing to offer.
+        }
+        return suggestions;
+    }
+
+    @Override
     public void onChatSearch(final String text) {
         final String trimmed = NullSafe.string(text).strip();
         if (trimmed.equals(searchText)) {
@@ -1247,6 +1282,7 @@ public class AskStroomAiPresenter
                 askStroomAiClient.clearChat(chat.getId(), done -> {
                     if (currentChat != null && currentChat.getId() == chat.getId()) {
                         currentRunActive = false;
+                        refreshFollowUps();
                         titleGenerated = false;
                         lastSeenMessageId = 0;
                         data = null;
@@ -1766,6 +1802,8 @@ public class AskStroomAiPresenter
     }
 
     private void sendMessage(final String message) {
+        followUps = List.of();
+        getView().setFollowUps(List.of());
         getView().setSendButtonLoadingState(true);
         getView().setEmptyState(false);
         getView().clearContextIndicator();
@@ -2192,6 +2230,7 @@ public class AskStroomAiPresenter
             // Say if the run stopped before finishing, and offer to resume it.
             updateRunStatus(response.getRun());
             currentRunActive = !response.isComplete();
+            refreshFollowUps();
 
             // Show what the server is currently doing, and take the line away when it is done.
             updateWorkingMessage(response.getWorkingMessage());
@@ -2266,6 +2305,17 @@ public class AskStroomAiPresenter
      * it is replaced where it stands, otherwise the new element is added to the end of the conversation.
      */
     private void appendMessage(final AiChatMessage msg, final long nowMs) {
+        if (msg.getMessageType() == AiMessageType.SUGGESTIONS) {
+            // Not part of the conversation: offered above the input instead.
+            followUps = parseFollowUps(msg.getMessage());
+            refreshFollowUps();
+            return;
+        }
+        if (msg.getMessageType() == AiMessageType.USER_MESSAGE
+            || msg.getMessageType() == AiMessageType.STEER_MESSAGE) {
+            followUps = List.of();
+            refreshFollowUps();
+        }
         renderedMessages.put(msg.getId(), msg);
         final HtmlBuilder hb = new HtmlBuilder();
         renderMessage(hb, msg, nowMs);
@@ -2410,6 +2460,8 @@ public class AskStroomAiPresenter
      */
     private void clearRenderedMessages() {
         getView().clearMessages();
+        followUps = List.of();
+        refreshFollowUps();
         renderedMessages.clear();
         activityGroups.clear();
         contextUsage = null;
@@ -3090,6 +3142,7 @@ public class AskStroomAiPresenter
         askStroomAiClient.createChat(chat -> {
             currentChat = chat;
             currentRunActive = false;
+            refreshFollowUps();
             titleGenerated = false;
             lastSeenMessageId = 0;
             data = null;
@@ -3261,6 +3314,7 @@ public class AskStroomAiPresenter
     private void loadChat(final AiChat chat) {
         currentChat = chat;
         currentRunActive = false;
+        refreshFollowUps();
         // A loaded chat already has a title, unless it has no question yet (see below).
         titleGenerated = true;
         lastSeenMessageId = 0;
@@ -3302,6 +3356,7 @@ public class AskStroomAiPresenter
                 updateAttachmentStatuses(response.getAttachments());
                 updateRunStatus(response.getRun());
                 currentRunActive = !response.isComplete();
+                refreshFollowUps();
                 if (!response.isComplete() && currentChat != null && currentChat.getId() == chat.getId()) {
                     getView().setSendButtonLoadingState(true);
                     startPolling();
@@ -3374,6 +3429,9 @@ public class AskStroomAiPresenter
 
         /// @return True if the chat being shown has nothing in it yet.
         boolean isEmptyState();
+
+        /// Shows things the user might ask next, as links above the input, or none.
+        void setFollowUps(List<String> suggestions);
 
         /// @return The panel the list of chats is shown in.
         FlowPanel getChatList();

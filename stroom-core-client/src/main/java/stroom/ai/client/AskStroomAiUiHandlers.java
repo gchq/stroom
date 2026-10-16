@@ -24,6 +24,11 @@ import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AskStroomAiUiHandlers extends UiHandlers {
 
+    /// Called when the user clicks a suggested follow-up, to ask it.
+    ///
+    /// @param text The suggestion.
+    void onFollowUp(String text);
+
     /// Called as the user types in the box for searching the list of chats.
     ///
     /// @param text What is in the box.

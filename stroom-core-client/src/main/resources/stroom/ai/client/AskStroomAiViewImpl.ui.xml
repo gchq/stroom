@@ -32,6 +32,7 @@
         </g:FlowPanel>
         <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
             <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
+            <g:FlowPanel ui:field="followUps" styleName="dock-min askStroomAiViewImpl-followUps"/>
             <g:FlowPanel ui:field="inputBox"
                          styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
                 <g:FlowPanel ui:field="commandSuggestions" styleName="dock-min askStroomAiViewImpl-commands"/>

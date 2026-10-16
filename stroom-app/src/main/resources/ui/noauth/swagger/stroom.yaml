@@ -11525,6 +11525,7 @@ components:
           - STREAMING_ANSWER
           - STREAMING_THINKING
           - ELICITATION
+          - SUGGESTIONS
         tokenCount:
           type: integer
           format: int32

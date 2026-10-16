@@ -103,6 +103,11 @@ public class MockAiDao implements AiDao {
     }
 
     @Override
+    public void askAsQuestion(final int messageId, final String question) {
+
+    }
+
+    @Override
     public void deleteMessage(final int messageId) {
 
     }

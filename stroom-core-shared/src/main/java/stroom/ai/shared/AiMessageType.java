@@ -83,7 +83,13 @@ public enum AiMessageType implements HasPrimitiveValue {
      * {@code ElicitationRecord}): the server's message and form, and once answered, the answer. The answer goes to
      * the MCP server, never to the model, so these messages are never sent to the model.
      */
-    ELICITATION(20);
+    ELICITATION(20),
+    /**
+     * Up to three things the user might ask next, as a JSON array of strings, suggested after an answer. Shown as
+     * links above the input while the answer is the latest thing in the chat; never shown in the conversation or
+     * sent to the model.
+     */
+    SUGGESTIONS(21);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());
