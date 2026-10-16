@@ -177,6 +177,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
                                 ShowMenuEvent
                                         .builder()
+                                        .name("Options for column '" + column.getName() + "'")
                                         .items(menuItems)
                                         .popupPosition(popupPosition)
                                         .addAutoHidePartner(th)

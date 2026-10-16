@@ -849,9 +849,21 @@ public class QueryPresenter
                           final PopupPosition popupPosition) {
         ShowMenuEvent
                 .builder()
+                .name(getMenuName())
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);
+    }
+
+    // The context menu's accessible name, saying which term or operator it acts on
+    private String getMenuName() {
+        final stroom.query.client.Item selectedItem = getSelectedItem();
+        final String text = selectedItem != null
+                ? selectedItem.toString().trim()
+                : "";
+        return text.isEmpty()
+                ? "Expression Actions"
+                : "Actions for expression item '" + text + "'";
     }
 
     private void downloadQuery() {

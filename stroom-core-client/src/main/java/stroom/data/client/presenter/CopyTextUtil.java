@@ -88,9 +88,7 @@ public class CopyTextUtil {
                             COPY_CLASS_NAME,
                             HOVER_ICON_CLASS_NAME);
                     // Cell values could be huge so truncate big ones
-                    final String truncatedStr = str.length() > TRUNCATE_THRESHOLD
-                            ? (str.substring(0, TRUNCATE_THRESHOLD) + "...")
-                            : str;
+                    final String truncatedStr = truncate(str);
                     div.div(d -> d.append(copy),
                             Attribute.title("Copy value '" + truncatedStr + "' to clipboard"));
 
@@ -106,6 +104,21 @@ public class CopyTextUtil {
                 });
             }, Attribute.className(containerClasses));
         }
+    }
+
+    /// The accessible name of the menu for a value, e.g. "Actions for value 'abc'", with big
+    /// values cut short.
+    ///
+    /// @param value The value the menu acts on.
+    /// @return The menu's name.
+    public static String getValueMenuName(final String value) {
+        return "Actions for value '" + truncate(NullSafe.trim(value)) + "'";
+    }
+
+    private static String truncate(final String str) {
+        return str.length() > TRUNCATE_THRESHOLD
+                ? (str.substring(0, TRUNCATE_THRESHOLD) + "...")
+                : str;
     }
 
     public static void onClick(final NativeEvent e,
@@ -151,6 +164,7 @@ public class CopyTextUtil {
                     }
                     ShowMenuEvent
                             .builder()
+                            .name(getValueMenuName(text))
                             .items(menuItems)
                             .popupPosition(new PopupPosition(e.getClientX(), e.getClientY()))
                             .fire(hasHandlers);

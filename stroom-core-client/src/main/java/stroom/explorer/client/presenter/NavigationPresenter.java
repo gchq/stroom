@@ -356,6 +356,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         if (NullSafe.hasItems(items)) {
             ShowMenuEvent
                     .builder()
+                    // Named here, as it may be opened from the logo, which names nothing
+                    .name("Main")
                     .items(items)
                     .popupPosition(popupPosition)
                     .opener(autoHidePartner)

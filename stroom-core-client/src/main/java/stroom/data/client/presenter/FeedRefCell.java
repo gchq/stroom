@@ -134,6 +134,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
 
                     ShowMenuEvent
                             .builder()
+                            .name("Actions for " + type + " '" + name + "'")
                             .items(menuItems)
                             .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
                             .fire(this);
@@ -159,6 +160,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                             .build());
                     ShowMenuEvent
                             .builder()
+                            .name(CopyTextUtil.getValueMenuName(text))
                             .items(menuItems)
                             .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
                             .fire(this);

@@ -43,6 +43,7 @@ public class ShowMenuEvent
     private final boolean allowCloseOnMoveLeft;
     private final Integer width;
     private final Element opener;
+    private final String name;
 
     private ShowMenuEvent(final List<Item> items,
                           final PopupPosition popupPosition,
@@ -51,7 +52,8 @@ public class ShowMenuEvent
                           final Element[] autoHidePartners,
                           final boolean allowCloseOnMoveLeft,
                           final Integer width,
-                          final Element opener) {
+                          final Element opener,
+                          final String name) {
         this.items = items;
         this.popupPosition = popupPosition;
         this.autoHidePartners = autoHidePartners;
@@ -60,6 +62,7 @@ public class ShowMenuEvent
         this.allowCloseOnMoveLeft = allowCloseOnMoveLeft;
         this.width = width;
         this.opener = opener;
+        this.name = name;
     }
 
     public static Builder builder() {
@@ -107,6 +110,12 @@ public class ShowMenuEvent
         return opener;
     }
 
+    /// @return The menu's accessible name, e.g. "Actions for Feed 'MyFeed'", or null for the menu to
+    /// be named by its [#getOpener] if that was marked as opening a menu.
+    public String getName() {
+        return name;
+    }
+
     /// @return The menu's width in pixels, or null for it to fit its items.
     public Integer getWidth() {
         return width;
@@ -145,6 +154,7 @@ public class ShowMenuEvent
         private Boolean allowCloseOnMoveLeft = null;
         private Integer width = null;
         private Element opener;
+        private String name;
 
         public Builder() {
         }
@@ -179,6 +189,17 @@ public class ShowMenuEvent
             if (opener != null) {
                 addAutoHidePartner(opener);
             }
+            return this;
+        }
+
+        /// Sets the menu's accessible name, which screen readers announce on entering it, e.g.
+        /// "Actions for Feed 'MyFeed'". Don't include the word "menu"; the menu's role says that.
+        /// The name is plain text, never HTML. It overrides naming the menu by its [#opener].
+        ///
+        /// @param name The menu's name, or null to name it by its opener.
+        /// @return This builder.
+        public Builder name(final String name) {
+            this.name = name;
             return this;
         }
 
@@ -236,7 +257,8 @@ public class ShowMenuEvent
                     elements,
                     Objects.requireNonNullElse(allowCloseOnMoveLeft, false),
                     width,
-                    opener));
+                    opener,
+                    name));
         }
     }
 }

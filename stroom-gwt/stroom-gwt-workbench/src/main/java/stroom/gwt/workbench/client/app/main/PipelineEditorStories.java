@@ -496,9 +496,11 @@ public final class PipelineEditorStories {
                     // GWT puts the class on the cell's text, not on the cell
                     play.waitFor(() -> play.expect(play.getByText("REF_FEED"))
                             .toHaveClass("pipelineStructureViewImpl-property-removed"));
-                    // Remove again restores it
+                    // Remove again restores it, which the button's title then says
                     play.click(play.getByText("REF_FEED"));
-                    play.click(play.getByTitle("Remove Selected Pipeline Reference"));
+                    play.waitFor(() -> play.expect(play.queryByTitle("Remove Selected Pipeline Reference"))
+                            .toBeNull());
+                    play.click(play.getByTitle("Restore Selected Pipeline Reference"));
                     play.waitFor(() -> play.expect(play.getByText("REF_FEED"))
                             .toHaveClass("pipelineStructureViewImpl-property-inherited"));
                     expectNoProblems(play);

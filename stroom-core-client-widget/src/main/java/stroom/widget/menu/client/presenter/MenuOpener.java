@@ -17,6 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
 
 /// Tells screen readers that a button opens a menu (`aria-haspopup="menu"`) and whether that menu
 /// is open (`aria-expanded`), as the ARIA menu button pattern asks.
@@ -48,6 +49,27 @@ public final class MenuOpener {
         element.removeAttribute(ARIA_EXPANDED);
     }
 
+    /// Whether an element was marked with [#mark] as a button that opens a menu.
+    ///
+    /// @param element The element, or null.
+    /// @return True if the element is marked.
+    public static boolean isMarked(final Element element) {
+        return element != null && element.hasAttribute(ARIA_HAS_POPUP);
+    }
+
+    /// Gives an element a unique id if it has none, so that a menu can refer to it (e.g. with
+    /// `aria-labelledby`). An existing id is kept.
+    ///
+    /// @param element The element.
+    /// @return The element's id.
+    public static String ensureId(final Element element) {
+        final String id = element.getId();
+        if (id == null || id.isEmpty()) {
+            element.setId(DOM.createUniqueId());
+        }
+        return element.getId();
+    }
+
     /// Says whether a marked button's menu is open. Elements that weren't marked are left alone, so
     /// that an element which merely positions a menu (e.g. a logo or a table cell) isn't announced as
     /// a collapsed menu button.
@@ -55,7 +77,7 @@ public final class MenuOpener {
     /// @param element  The element the menu was opened from, or null.
     /// @param expanded Whether its menu is open.
     public static void setExpanded(final Element element, final boolean expanded) {
-        if (element != null && element.hasAttribute(ARIA_HAS_POPUP)) {
+        if (isMarked(element)) {
             element.setAttribute(ARIA_EXPANDED, String.valueOf(expanded));
         }
     }

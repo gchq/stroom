@@ -42,6 +42,7 @@ public class EditorMenuPresenter {
         this.xmlEditorPresenter = xmlEditorPresenter;
         ShowMenuEvent
                 .builder()
+                .name("Editor Options")
                 .items(getMenuItems())
                 .popupPosition(popupPosition)
                 .fire(xmlEditorPresenter);

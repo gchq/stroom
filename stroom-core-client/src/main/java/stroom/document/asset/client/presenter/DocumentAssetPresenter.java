@@ -321,6 +321,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         final Rect relativeRect = new Rect(addButton.getElement()).grow(3);
         final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
         ShowMenuEvent.builder()
+                .name("Add")
                 .items(menuItems)
                 .popupPosition(position)
                 .opener(addButton.getElement())

@@ -19,6 +19,7 @@ package stroom.widget.menu.client.presenter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -52,6 +53,7 @@ public class Menu {
             menuPresenter = menuPresenterProvider.get();
             menuPresenter.setData(event.getItems());
             menuPresenter.setAllowCloseOnMoveLeft(event.isAllowCloseOnMoveLeft());
+            setName(menuPresenter, event);
             if (event.getWidth() != null) {
                 menuPresenter.setWidth(event.getWidth());
             }
@@ -80,6 +82,19 @@ public class Menu {
                         currentItems = null;
                     })
                     .fire();
+        }
+    }
+
+    // Names the menu for screen readers: by the name it was given, else by the menu button that
+    // opened it. Other openers (e.g. table cells or logos) are only where the menu is shown and
+    // may be redrawn, so aren't referred to
+    private static void setName(final MenuPresenter menuPresenter, final ShowMenuEvent event) {
+        if (event.getName() != null) {
+            menuPresenter.setName(event.getName());
+        } else if (MenuOpener.isMarked(event.getOpener())) {
+            menuPresenter.setLabelledBy(MenuOpener.ensureId(event.getOpener()));
+        } else if (!GWT.isProdMode()) {
+            GWT.log("Menu shown with no accessible name; give it one with ShowMenuEvent.Builder#name");
         }
     }
 

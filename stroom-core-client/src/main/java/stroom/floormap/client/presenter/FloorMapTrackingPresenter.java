@@ -285,6 +285,7 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         final Rect relativeRect = new Rect(
                 addToGroupButton.getElement()).grow(3);
         ShowMenuEvent.builder()
+                .name("Add '" + selected.getDisplayName() + "' to Group")
                 .items(items)
                 .popupPosition(new PopupPosition(relativeRect, PopupLocation.BELOW))
                 .fire(this);

@@ -360,6 +360,7 @@ public class DashboardPresenter
 
         ShowMenuEvent
                 .builder()
+                .name("Add Component")
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .opener(target)

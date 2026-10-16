@@ -1414,9 +1414,12 @@ public class FloorMapEditorPresenter
         }
 
         final List<Item> menuItems = new ArrayList<>();
+        // The menu's accessible name, saying what it acts on
+        final String menuName;
 
         if (vertexIndex >= 0) {
             // ---- Right-clicked an area vertex handle ----
+            menuName = "Actions for area vertex " + (vertexIndex + 1);
             menuItems.add(new IconMenuItem.Builder()
                     .priority(1)
                     .icon(SvgImage.DELETE)
@@ -1425,6 +1428,7 @@ public class FloorMapEditorPresenter
                     .build());
         } else if (objectId == null) {
             // ---- Right-clicked on empty canvas ----
+            menuName = "Map Actions";
             menuItems.add(new IconMenuItem.Builder()
                     .priority(1)
                     .icon(SvgImage.ADD)
@@ -1449,6 +1453,7 @@ public class FloorMapEditorPresenter
             // ---- Right-clicked within a multi-selection: group actions ----
             final List<String> keys = new ArrayList<>(model.getSelectedFactKeys());
             final int n = keys.size();
+            menuName = "Actions for " + n + " selected objects";
             menuItems.add(new IconMenuItem.Builder()
                     .priority(1)
                     .icon(SvgImage.COPY)
@@ -1469,6 +1474,7 @@ public class FloorMapEditorPresenter
                     .build());
         } else {
             // ---- Right-clicked on a single object ----
+            menuName = "Actions for object '" + floorMapCanvasPresenter.displayNameOrId(objectId) + "'";
 
             // Edit Properties
             menuItems.add(new IconMenuItem.Builder()
@@ -1584,6 +1590,7 @@ public class FloorMapEditorPresenter
         final PopupPosition popupPosition = new PopupPosition(clientX, clientY);
         ShowMenuEvent
                 .builder()
+                .name(menuName)
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);

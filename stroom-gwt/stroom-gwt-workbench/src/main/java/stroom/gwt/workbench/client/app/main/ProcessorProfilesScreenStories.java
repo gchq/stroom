@@ -123,6 +123,9 @@ public final class ProcessorProfilesScreenStories {
                     // days to an empty Days, whose toString is 'None')
                     play.expect(periodRow).toHaveTextContent(TextMatch.containing("None"));
                     play.expect(periodRow).not().toHaveTextContent(TextMatch.containing("00:00:00"));
+                    // Edit is disabled until a period is selected (ProfilePeriodListPresenter)
+                    play.expect(profile.getByTitle("Edit Selected Profile Period"))
+                            .toHaveAttribute("aria-disabled", "true");
                     // Add a period
                     play.click(profile.getByTitle("New Profile Period"));
                     final Play period = screen.within(screen.findByText(PERIOD_CAPTION, StroomDom.DIALOG_TITLE)

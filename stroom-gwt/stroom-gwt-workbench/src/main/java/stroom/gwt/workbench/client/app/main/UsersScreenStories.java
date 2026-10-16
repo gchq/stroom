@@ -167,7 +167,10 @@ public final class UsersScreenStories {
                     final Query actions = row.getByTitle(StroomDom.ACTIONS_TITLE);
                     play.expect(row.queryByTitle("Actions")).toBeNull();
                     play.click(actions);
-                    screen.findByText("Actions for user 'Alice Anderson':");
+                    // The menu is named for the user, rather than having a heading item that does
+                    // nothing
+                    screen.findByRole("menu", "Actions for user 'Alice Anderson'");
+                    play.expect(screen.queryByText(TextMatch.containing("Actions for user"))).toBeNull();
                     // The menu omits a link back to Users; App Permissions opens it focused on Alice
                     play.click(screen.getByText("Show user on the Application Permissions screen"));
                     play.waitFor(() -> play.expect(play.spy(OPEN_SCREEN))

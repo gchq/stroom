@@ -141,6 +141,7 @@ public class AnnotationManager implements HasHandlers {
             final List<Item> menuItems = getMenuItems(selectedItems);
             ShowMenuEvent
                     .builder()
+                    .name("Annotate")
                     .items(menuItems)
                     .popupPosition(popupPosition)
                     .opener(target)

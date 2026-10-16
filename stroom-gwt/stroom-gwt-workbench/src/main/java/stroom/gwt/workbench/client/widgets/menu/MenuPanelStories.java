@@ -56,6 +56,7 @@ public final class MenuPanelStories {
     private static final String ACTIVE_ROW = ".menuCellTable tr[class*='KeyboardSelectedRow']";
     private static final String NO_ACTION = "(no action yet)";
     private static final String ON_CHOSEN = "onChosen";
+    private static final String OPTIONS_ID = "menuPanelStories-options";
 
     private MenuPanelStories() {
         // Static utility
@@ -121,6 +122,21 @@ public final class MenuPanelStories {
                             .toHaveAttribute("aria-haspopup", "menu");
                     play.expect(play.within(menu).getByRole("menuitem", TextMatch.containing("New")))
                             .not().toHaveAttribute("aria-haspopup");
+
+                    // A sub menu is named by its parent item's text, without its arrow
+                    play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", TextMatch.containing("New")))
+                            .toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    // The root menu is the first: the sub menu may open once its item is reached
+                    play.waitFor(() -> play.expect(play.within(play.screen().getAllByRole("menu").first())
+                            .getByRole("menuitem", TextMatch.containing("Export as"))).toHaveFocus());
+                    play.keyboard("{ArrowRight}");
+                    final Query subMenu = play.screen().findByRole("menu", "Export as…");
+                    play.expect(subMenu).toHaveAttribute("aria-label", "Export as…");
+                    play.expect(subMenu).not().toHaveAttribute("aria-labelledby");
+                    play.expect(play.within(subMenu).getByRole("menuitem", "CSV")).toBeInTheDocument();
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
                 })
                 // Display-only info rows above interactive items
                 .story("Info", context -> demo(context, "Open Menu",
@@ -211,6 +227,11 @@ public final class MenuPanelStories {
                     play.click(actions);
                     final Query menu = play.screen().findByRole("menu");
                     play.waitFor(() -> play.expect(actions).toHaveAttribute("aria-expanded", "true"));
+                    // The menu is named by the button that opened it, which is given an id for it
+                    play.expect(actions).toHaveAttribute("id");
+                    play.expect(menu).toHaveAttribute("aria-labelledby");
+                    play.expect(menu).not().toHaveAttribute("aria-label");
+                    play.expect(play.screen().getByRole("menu", "Show Actions")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", "Copy"))
                             .toHaveFocus());
                     play.keyboard("{Escape}");
@@ -243,15 +264,38 @@ public final class MenuPanelStories {
                     play.expect(actions).toHaveAttribute("aria-expanded", "false");
                     play.expect(plain).not().toHaveAttribute("aria-expanded");
                     play.expect(plain).not().toHaveAttribute("aria-haspopup");
+                    // An unmarked opener doesn't name its menu (Stroom names such menus explicitly)
+                    play.expect(play.screen().getByRole("menu")).not().toHaveAttribute("aria-labelledby");
+                    play.expect(play.screen().getByRole("menu")).not().toHaveAttribute("aria-label");
                     play.keyboard("{Escape}");
                     play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
                     play.expect(plain).not().toHaveAttribute("aria-expanded");
+
+                    // A button that already has an id keeps it, and names its menu by it
+                    final Query options = play.getByRole("button", "Options");
+                    play.click(options);
+                    final Query optionsMenu = play.screen().findByRole("menu", "Options");
+                    play.expect(options).toHaveAttribute("id", OPTIONS_ID);
+                    play.expect(optionsMenu).toHaveAttribute("aria-labelledby", OPTIONS_ID);
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
+
+                    // A menu given a name is named by it rather than by its (marked) button
+                    final Query add = play.getByRole("button", "Add Thing");
+                    play.click(add);
+                    final Query addMenu = play.screen().findByRole("menu", "Add");
+                    play.expect(addMenu).toHaveAttribute("aria-label", "Add");
+                    play.expect(addMenu).not().toHaveAttribute("aria-labelledby");
+                    play.expect(add).toHaveAttribute("aria-expanded", "true");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
                 });
     }
 
     /// A toolbar whose 'Show Actions' button is marked as opening a menu, and a plain Stroom
     /// `Button` that opens another menu with itself as the opener but isn't marked (as a logo or a
-    /// table cell that only positions a menu).
+    /// table cell that only positions a menu). The toolbar's 'Options' button already has an id,
+    /// and its 'Add Thing' button's menu is given a name of its own.
     private static Widget menuButton(final StoryContext context) {
         final StoryPopups popups = StoryPopups.create(context).withMenus();
         final Spy onChosen = context.fn(ON_CHOSEN);
@@ -273,6 +317,32 @@ public final class MenuPanelStories {
                 .opener(actions.getElement())
                 .fire(popups.getEventBus()::fireEvent));
         actions.setOpensMenu(true);
+
+        final List<Item> optionItems = Arrays.asList(
+                MenuWidgets.simple("Wrap Lines", () -> onChosen.call("Wrap Lines")));
+        final ToolbarButton options = toolbar.button(SvgImage.SETTINGS, "Options", () -> {
+            // Set below, once the button exists
+        });
+        options.getElement().setId(OPTIONS_ID);
+        options.setOnClick(() -> ShowMenuEvent.builder()
+                .items(optionItems)
+                .popupPosition(new PopupPosition(new Rect(options.getElement()), PopupLocation.BELOW))
+                .opener(options.getElement())
+                .fire(popups.getEventBus()::fireEvent));
+        options.setOpensMenu(true);
+
+        final List<Item> addItems = Arrays.asList(
+                MenuWidgets.simple("Folder", () -> onChosen.call("Folder")));
+        final ToolbarButton add = toolbar.button(SvgImage.ADD, "Add Thing", () -> {
+            // Set below, once the button exists
+        });
+        add.setOnClick(() -> ShowMenuEvent.builder()
+                .name("Add")
+                .items(addItems)
+                .popupPosition(new PopupPosition(new Rect(add.getElement()), PopupLocation.BELOW))
+                .opener(add.getElement())
+                .fire(popups.getEventBus()::fireEvent));
+        add.setOpensMenu(true);
         panel.add(toolbar);
 
         final List<Item> plainItems = Arrays.asList(

@@ -259,11 +259,8 @@ public class UserAndGroupHelper {
         if (userRef == null) {
             return Collections.emptyList();
         } else {
-            final MenuBuilder builder = MenuBuilder.builder()
-                    .withSimpleMenuItem(itemBuilder ->
-                            itemBuilder.text(buildActionsForMsg(userRef) + ":")
-                                    .build())
-                    .withSeparator();
+            // The menu is named by buildActionsForMsg, so has no heading item
+            final MenuBuilder builder = MenuBuilder.builder();
             if (screens.contains(UserScreen.USER)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(userRef.isGroup()

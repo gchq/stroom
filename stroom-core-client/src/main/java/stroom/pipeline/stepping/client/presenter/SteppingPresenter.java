@@ -349,7 +349,9 @@ public class SteppingPresenter
             if (!PipelineModel.SOURCE_ELEMENT.getId().equals(selectedPipeElement.getId())) {
                 final List<Item> menuItems = buildContextMenu();
                 if (NullSafe.hasItems(menuItems)) {
-                    showMenu(menuItems, event.getPopupPosition());
+                    showMenu("Step filters for element '" + selectedPipeElement.getDisplayName() + "'",
+                            menuItems,
+                            event.getPopupPosition());
                 }
             }
         }));
@@ -473,10 +475,12 @@ public class SteppingPresenter
         pipelineTreePresenter.getView().refresh();
     }
 
-    private void showMenu(final List<Item> menuItems,
+    private void showMenu(final String name,
+                          final List<Item> menuItems,
                           final PopupPosition popupPosition) {
         ShowMenuEvent
                 .builder()
+                .name(name)
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);

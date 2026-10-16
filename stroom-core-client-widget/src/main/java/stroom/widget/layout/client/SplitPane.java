@@ -637,7 +637,7 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
                         : null)
                 .command(() -> toggleMaximised(maximised))
                 .build());
-        MenuRequest.fire(splitter, items, new PopupPosition(x, y));
+        MenuRequest.fire(splitter, "Pane Layout", items, new PopupPosition(x, y));
     }
 
     // A pane's name, else where it is beside the splitter, e.g. "the left pane"

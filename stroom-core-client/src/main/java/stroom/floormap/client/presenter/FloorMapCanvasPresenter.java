@@ -1754,8 +1754,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 : null;
     }
 
-    /// [#displayName] with the id as the last resort, for use in a list.
-    private String displayNameOrId(final String id) {
+    /// [#displayName] with the id as the last resort, for use in a list or a menu name.
+    ///
+    /// @param id The entity's id.
+    /// @return The entity's name, else its id.
+    String displayNameOrId(final String id) {
         final String name = displayName(id);
         return name != null
                 ? name

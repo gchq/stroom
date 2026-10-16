@@ -208,6 +208,8 @@ public class MainPresenter
         if (items != null && !items.isEmpty()) {
             ShowMenuEvent
                     .builder()
+                    // Named here, as the button that opens it is titled "Show Main Menu"
+                    .name("Main")
                     .items(items)
                     .popupPosition(popupPosition)
                     .opener(autoHidePartner)

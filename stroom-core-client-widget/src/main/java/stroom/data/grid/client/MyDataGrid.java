@@ -441,9 +441,35 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         menuItems.add(aiSupport.createContextMenu(rowIndex, colIndex));
 
         ShowMenuEvent.builder()
+                .name(getContextMenuName(rowIndex, colIndex))
                 .items(menuItems)
                 .popupPosition(new PopupPosition(x, y))
                 .fire(globalEventBus);
+    }
+
+    // The context menu's accessible name, saying which cell it is for, e.g.
+    // "Actions for column 'Name', row 3"
+    private String getContextMenuName(final int rowIndex, final int colIndex) {
+        if (rowIndex < 0 || colIndex < 0) {
+            return "Table Actions";
+        }
+        final String row = "row " + (getPageStart() + rowIndex + 1);
+        final String heading = getHeadingText(colIndex);
+        return heading.isEmpty()
+                ? "Actions for " + row
+                : "Actions for column '" + heading + "', " + row;
+    }
+
+    // The text of a column's heading, or "" if it has none
+    private String getHeadingText(final int colIndex) {
+        final TableSectionElement head = getTableHeadElement();
+        if (head != null && head.getRows().getLength() > 0) {
+            final TableRowElement headerRow = head.getRows().getItem(0);
+            if (colIndex < headerRow.getCells().getLength()) {
+                return normalizeWhitespace(headerRow.getCells().getItem(colIndex).getInnerText());
+            }
+        }
+        return "";
     }
 
     String getCellText(final int row, final int col) {

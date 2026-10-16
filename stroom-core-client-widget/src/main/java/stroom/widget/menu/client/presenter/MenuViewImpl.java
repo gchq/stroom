@@ -49,6 +49,8 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private static final String ROLE_NONE = "none";
     private static final String ARIA_DISABLED = "aria-disabled";
     private static final String ARIA_HAS_POPUP = "aria-haspopup";
+    private static final String ARIA_LABEL = "aria-label";
+    private static final String ARIA_LABELLED_BY = "aria-labelledby";
     private static final Set<String> TABLE_SECTIONS = Set.of("THEAD", "TBODY", "TFOOT");
 
     private final CellTable<Item> cellTable;
@@ -272,6 +274,30 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         cellTable.getElement().getStyle().setProperty("maxWidth", "none");
         // Lays the table out to that width, so that long items are cut short rather than widen it
         cellTable.getElement().addClassName("menuCellTable--fixedWidth");
+    }
+
+    @Override
+    public void setName(final String name) {
+        // The name goes on the element with the menu role, which screen readers announce as focus
+        // moves into it
+        final Element menu = cellTable.getElement();
+        menu.removeAttribute(ARIA_LABELLED_BY);
+        if (name == null || name.isEmpty()) {
+            menu.removeAttribute(ARIA_LABEL);
+        } else {
+            menu.setAttribute(ARIA_LABEL, name);
+        }
+    }
+
+    @Override
+    public void setLabelledBy(final String id) {
+        final Element menu = cellTable.getElement();
+        menu.removeAttribute(ARIA_LABEL);
+        if (id == null || id.isEmpty()) {
+            menu.removeAttribute(ARIA_LABELLED_BY);
+        } else {
+            menu.setAttribute(ARIA_LABELLED_BY, id);
+        }
     }
 
     @Override

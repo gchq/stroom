@@ -199,6 +199,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
                                 ShowMenuEvent
                                         .builder()
+                                        .name("Options for column '" + column.getName() + "'")
                                         .items(menuItems)
                                         .popupPosition(popupPosition)
                                         .addAutoHidePartner(th)

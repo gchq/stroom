@@ -648,6 +648,7 @@ public class AnnotationEditPresenter
         final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
         ShowMenuEvent
                 .builder()
+                .name("Actions for history entry '" + entryType.getDisplayValue() + "'")
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);

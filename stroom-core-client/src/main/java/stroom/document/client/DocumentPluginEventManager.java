@@ -563,6 +563,7 @@ public class DocumentPluginEventManager extends Plugin {
 
             ShowMenuEvent
                     .builder()
+                    .name("Actions for tab '" + event.getTabData().getLabel() + "'")
                     .items(menuItems)
                     .popupPosition(event.getPopupPosition())
                     .fire(this);
@@ -588,11 +589,26 @@ public class DocumentPluginEventManager extends Plugin {
 
                     ShowMenuEvent
                             .builder()
+                            .name(getItemContextMenuName(selectedItems, primarySelection))
                             .items(menuItems)
                             .popupPosition(event.getPopupPosition())
                             .allowCloseOnMoveLeft() // Right arrow opens menu, left closes it
                             .fire(this);
                 }, explorerListener), explorerListener);
+    }
+
+    // The explorer context menu's accessible name, saying what it acts on, e.g.
+    // "Actions for Feed 'MY_FEED'" or "Actions for 3 selected items"
+    private static String getItemContextMenuName(final List<ExplorerNode> selectedItems,
+                                                 final ExplorerNode primarySelection) {
+        if (selectedItems.size() != 1 || primarySelection == null) {
+            return "Actions for " + selectedItems.size() + " selected items";
+        }
+        final DocumentType documentType = DocumentTypeRegistry.get(primarySelection.getType());
+        final String type = documentType != null
+                ? documentType.getDisplayType()
+                : primarySelection.getType();
+        return "Actions for " + type + " '" + primarySelection.getDisplayValue() + "'";
     }
 
     private void renameItems(final List<ExplorerNode> explorerNodeList) {

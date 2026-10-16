@@ -170,7 +170,9 @@ public class PipelineStructurePresenter
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
                 if (NullSafe.hasItems(menuItems)) {
-                    showMenu(menuItems, event.getPopupPosition());
+                    showMenu("Actions for element '" + selectedElement.getDisplayName() + "'",
+                            menuItems,
+                            event.getPopupPosition());
                 }
             }
         }));
@@ -263,14 +265,14 @@ public class PipelineStructurePresenter
     @Override
     public void onAdd(final ClickEvent event) {
         if (addMenuItems != null && !addMenuItems.isEmpty()) {
-            showMenu(event, addMenuItems);
+            showMenu(event, "Add Pipeline Element", addMenuItems);
         }
     }
 
     @Override
     public void onRestore(final ClickEvent event) {
         if (restoreMenuItems != null && !restoreMenuItems.isEmpty()) {
-            showMenu(event, restoreMenuItems);
+            showMenu(event, "Restore Pipeline Element", restoreMenuItems);
         }
     }
 
@@ -490,18 +492,20 @@ public class PipelineStructurePresenter
         return menuItems;
     }
 
-    private void showMenu(final ClickEvent event, final List<Item> menuItems) {
+    private void showMenu(final ClickEvent event, final String name, final List<Item> menuItems) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
         Rect relativeRect = new Rect(target);
         relativeRect = relativeRect.grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
-        showMenu(menuItems, popupPosition);
+        showMenu(name, menuItems, popupPosition);
     }
 
-    private void showMenu(final List<Item> menuItems,
+    private void showMenu(final String name,
+                          final List<Item> menuItems,
                           final PopupPosition popupPosition) {
         ShowMenuEvent
                 .builder()
+                .name(name)
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);

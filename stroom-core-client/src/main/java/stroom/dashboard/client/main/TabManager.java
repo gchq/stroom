@@ -96,6 +96,7 @@ public class TabManager {
                 currentTabConfig = tabConfig;
                 ShowMenuEvent
                         .builder()
+                        .name("Actions for tab '" + component.getComponentConfig().getName() + "'")
                         .items(menuItems)
                         .opener(target)
                         .popupPosition(popupPosition)

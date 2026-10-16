@@ -51,7 +51,27 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
 
     private final Function<R, String> tooltipExtractor;
     private final Function<R, List<Item>> menuCreator;
+    private final Function<R, String> menuNameExtractor;
     private final HasHandlers hasHandlers;
+
+    /// @param menuCreator       Function to create the menu items to display.
+    /// @param tooltipExtractor  Function to supply the tooltip for the ellipses icon, or null for
+    ///                          'Actions...'.
+    /// @param menuNameExtractor Function to supply the menu's accessible name for a row as plain
+    ///                          text, e.g. "Actions for user 'jbloggs'", or null for none (see
+    ///                          [ShowMenuEvent.Builder#name]).
+    /// @param hasHandlers       What the menu's [ShowMenuEvent] is fired on.
+    public ActionMenuCell(final Function<R, List<Item>> menuCreator,
+                          final Function<R, String> tooltipExtractor,
+                          final Function<R, String> menuNameExtractor,
+                          final HasHandlers hasHandlers) {
+        super(BrowserEvents.MOUSEDOWN);
+
+        this.menuCreator = menuCreator;
+        this.tooltipExtractor = tooltipExtractor;
+        this.menuNameExtractor = menuNameExtractor;
+        this.hasHandlers = hasHandlers;
+    }
 
     /**
      * @param menuCreator      Function to create the menu items to display
@@ -60,11 +80,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
     public ActionMenuCell(final Function<R, List<Item>> menuCreator,
                           final Function<R, String> tooltipExtractor,
                           final HasHandlers hasHandlers) {
-        super(BrowserEvents.MOUSEDOWN);
-
-        this.menuCreator = menuCreator;
-        this.tooltipExtractor = tooltipExtractor;
-        this.hasHandlers = hasHandlers;
+        this(menuCreator, tooltipExtractor, null, hasHandlers);
     }
 
     /**
@@ -120,6 +136,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                 event.getClientY() + 10);
         ShowMenuEvent
                 .builder()
+                .name(NullSafe.get(menuNameExtractor, func -> func.apply(row)))
                 .items(items)
                 .popupPosition(popupPosition)
 //                    .onShow(e -> {
