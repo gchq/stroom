@@ -1608,8 +1608,8 @@ public class AskStroomAiPresenter
                 if (!AiToolMessages.getBoolean(json, "stale")) {
                     footer.elem("Undo", BUTTON,
                             Attribute.className("allow-focus ai-approval-button"),
-                            Attribute.title("Undo this compaction, so the model sees the earlier messages in full "
-                                            + "again"),
+                            Attribute.title("Undo this compaction.\n"
+                                            + "The model will see the earlier messages in full again."),
                             new Attribute(UNDO_COMPACTION_ATTRIBUTE, String.valueOf(msg.getId())));
                 }
                 timestamp(footer, timeMs, nowMs);
@@ -2770,7 +2770,16 @@ public class AskStroomAiPresenter
                         Attribute.className("ai-approval-server"));
             }
             for (final String risk : call.getRisks()) {
-                header.span(badge -> badge.append(risk), Attribute.className("ai-risk-badge"));
+                final String explanation = AiChatTexts.riskExplanation(risk);
+                // Read-only is not a risk, so it isn't shown as one.
+                final Attribute className = Attribute.className("read-only".equals(risk)
+                        ? "ai-risk-badge ai-risk-badge--safe"
+                        : "ai-risk-badge");
+                if (explanation != null) {
+                    header.span(badge -> badge.append(risk), className, Attribute.title(explanation));
+                } else {
+                    header.span(badge -> badge.append(risk), className);
+                }
             }
             if (call.getDecision() != null) {
                 header.span(decision -> decision.append(AiToolMessages.decisionLabel(call.getDecision(),
@@ -3180,8 +3189,11 @@ public class AskStroomAiPresenter
                 AlertEvent.fireInfo(this, "Auto-approve is not allowed. An administrator can allow it with "
                                           + "the 'allowApproveEverything' property.", null);
             } else {
-                final String question = "Auto-approve in this chat? Tool calls on trusted servers will run "
-                                        + "without asking you, including ones that can modify data.";
+                final String question = "Auto-approve in this chat?\n"
+                                        + "Trusted servers' tools that modify data already run without asking, "
+                                        + "until the chat reads data from tools or attached tables.\n"
+                                        + "With auto-approve, they keep running without asking after that.\n"
+                                        + "Destructive tools, and ones that reach outside Stroom, still ask.";
                 ConfirmEvent.fire(this, question, ok -> {
                     if (ok) {
                         setAutoApprove(chat, true);
