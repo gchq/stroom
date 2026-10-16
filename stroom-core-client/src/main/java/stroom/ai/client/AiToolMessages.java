@@ -287,9 +287,17 @@ final class AiToolMessages {
      */
     static String callMarkdown(final String json) {
         final String arguments = getString(json, "arguments");
-        return "Arguments:\n\n~~~\n" + prettyArguments(arguments != null
-                ? arguments
-                : "{}") + "\n~~~";
+        if (!hasArguments(arguments)) {
+            return "*No arguments.*";
+        }
+        return "Arguments:\n\n~~~\n" + prettyArguments(arguments) + "\n~~~";
+    }
+
+    /// @param arguments A tool call's arguments, as JSON.
+    /// @return True if there are any: not none, blank, or an empty object.
+    static boolean hasArguments(final String arguments) {
+        return arguments != null && !arguments.replaceAll("\\s", "").isEmpty()
+               && !"{}".equals(arguments.replaceAll("\\s", ""));
     }
 
     /**
@@ -415,9 +423,9 @@ final class AiToolMessages {
             if (decision != null) {
                 sb.append(" - *").append(decisionText(decision, text(call, "note"))).append("*");
             }
-            sb.append("\n\n~~~\n").append(prettyArguments(text(call, "arguments") != null
-                    ? text(call, "arguments")
-                    : "{}")).append("\n~~~");
+            if (hasArguments(text(call, "arguments"))) {
+                sb.append("\n\n~~~\n").append(prettyArguments(text(call, "arguments"))).append("\n~~~");
+            }
         }
         final String status = getString(json, "status");
         if ("EXPIRED".equals(status)) {
@@ -543,7 +551,8 @@ final class AiToolMessages {
                     }
                 }
                 list.add(new ApprovalCall(text(call, "callId"), text(call, "tool"), text(call, "serverKey"), risks,
-                        text(call, "arguments"), text(call, "decision"), text(call, "note")));
+                        text(call, "arguments"), text(call, "decision"), text(call, "note"),
+                        text(call, "description")));
             }
         }
         return list;
@@ -697,6 +706,7 @@ final class AiToolMessages {
         private final String arguments;
         private final String decision;
         private final String note;
+        private final String description;
 
         private ApprovalCall(final String callId,
                              final String tool,
@@ -704,7 +714,9 @@ final class AiToolMessages {
                              final List<String> risks,
                              final String arguments,
                              final String decision,
-                             final String note) {
+                             final String note,
+                             final String description) {
+            this.description = description;
             this.callId = callId;
             this.tool = tool;
             this.server = server;
@@ -740,6 +752,11 @@ final class AiToolMessages {
 
         String getNote() {
             return note;
+        }
+
+        /// @return The tool's description, kept short, or null.
+        String getDescription() {
+            return description;
         }
     }
 }

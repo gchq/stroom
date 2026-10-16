@@ -497,7 +497,8 @@ class McpAgentChat {
                 NullSafe.get(info, McpToolInfo::hash),
                 NullSafe.get(info, McpToolInfo::serverHash),
                 null,
-                null);
+                null,
+                NullSafe.get(info, McpToolInfo::briefDescription));
     }
 
     static ToolApprovalRequest approvalRequest(final List<PendingCall> pending,

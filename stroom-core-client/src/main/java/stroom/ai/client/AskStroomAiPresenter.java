@@ -2008,7 +2008,7 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * Answers a request for approval. Denying tool calls first asks the user why, which the model is told.
+     * Answers a request for approval.
      *
      * @param callId The tool call answered, or null for all those not yet answered.
      */
@@ -2020,18 +2020,7 @@ public class AskStroomAiPresenter
         if (request == null) {
             return;
         }
-        if (!approved && AiToolMessages.isToolRequest(request.getMessage())) {
-            PromptEvent.fire(this, "Deny", "Why not? This is optional, and the model is told.", "", reason -> {
-                // Cancelling the prompt leaves the request unanswered.
-                if (reason != null) {
-                    onAnswerApproval(messageId, false, scope, callId, reason.isBlank()
-                            ? null
-                            : reason.strip());
-                }
-            });
-        } else {
-            onAnswerApproval(messageId, approved, scope, callId, null);
-        }
+        onAnswerApproval(messageId, approved, scope, callId, null);
     }
 
     private void onAnswerApproval(final int messageId,
@@ -2787,13 +2776,17 @@ public class AskStroomAiPresenter
         final long undecided = calls.stream().filter(call -> call.getDecision() == null).count();
         final String reason = AiToolMessages.getString(json, "reason");
         hb.div(card -> {
-            card.div(title -> title.append(pending
+            final String titleText = pending
                     ? "The agent wants to use " + (calls.size() == 1
                     ? "a tool that needs"
                     : calls.size() + " tools that need") + " your approval"
-                    : "Tool calls the agent asked to use"), Attribute.className("ai-approval-title"));
+                    : "Tool calls the agent asked to use";
+            // Why it asks is in the title's tooltip, rather than a line of its own.
             if (pending && reason != null) {
-                card.div(text -> text.append(reason), Attribute.className("ai-approval-reason"));
+                card.div(title -> title.append(titleText), Attribute.className("ai-approval-title"),
+                        Attribute.title(reason));
+            } else {
+                card.div(title -> title.append(titleText), Attribute.className("ai-approval-title"));
             }
             for (final AiToolMessages.ApprovalCall call : calls) {
                 card.div(callDiv -> appendApprovalCall(callDiv, msg, json, call, pending),
@@ -2802,7 +2795,7 @@ public class AskStroomAiPresenter
             card.div(footer -> {
                 if (pending && undecided > 1) {
                     approvalButton(footer, msg, "Allow all", true, AiApprovalScope.ONCE, null);
-                    approvalButton(footer, msg, "Deny all…", false, AiApprovalScope.ONCE, null);
+                    approvalButton(footer, msg, "Deny all", false, AiApprovalScope.ONCE, null);
                 }
                 if ("EXPIRED".equals(AiToolMessages.getString(json, "status"))) {
                     footer.span(text -> text.append("Not answered in time, so nothing was run."),
@@ -2821,7 +2814,13 @@ public class AskStroomAiPresenter
                                     final AiToolMessages.ApprovalCall call,
                                     final boolean pending) {
         callDiv.div(header -> {
-            header.elem(code -> code.append(call.getTool()), SafeHtmlUtils.fromSafeConstant("code"));
+            // What the tool does, when its name is pointed at.
+            if (call.getDescription() != null) {
+                header.elem(code -> code.append(call.getTool()), SafeHtmlUtils.fromSafeConstant("code"),
+                        Attribute.title(call.getDescription()));
+            } else {
+                header.elem(code -> code.append(call.getTool()), SafeHtmlUtils.fromSafeConstant("code"));
+            }
             // An untrusted server always has this classification, so it shows whether the server is trusted.
             final boolean trusted = !call.getRisks().contains(AiChatTexts.UNTRUSTED_SERVER);
             if (call.getServer() != null) {
@@ -2858,14 +2857,13 @@ public class AskStroomAiPresenter
                                             + call.getDecision().toLowerCase()));
             }
         }, Attribute.className("ai-approval-call-header"));
-        final String arguments = NullSafe.isBlankString(call.getArguments())
-                ? "{}"
-                : call.getArguments();
-        // The arguments are shown in full, never cut short, so the user sees exactly what will be sent.
-        callDiv.elem(pre -> pre.append(AiToolMessages.prettyArguments(arguments)),
-                SafeHtmlUtils.fromSafeConstant("pre"), Attribute.className("ai-approval-args"));
-        callDiv.div(size -> size.append(arguments.length() + " characters of arguments"),
-                Attribute.className("ai-approval-size"));
+        final String arguments = call.getArguments();
+        // The arguments are shown in full, never cut short, so the user sees exactly what will be sent. A call
+        // with none has no box.
+        if (AiToolMessages.hasArguments(arguments)) {
+            callDiv.elem(pre -> pre.append(AiToolMessages.prettyArguments(arguments)),
+                    SafeHtmlUtils.fromSafeConstant("pre"), Attribute.className("ai-approval-args"));
+        }
         if (pending && call.getDecision() == null) {
             callDiv.div(buttons -> {
                 approvalButton(buttons, msg, "Allow once", true, AiApprovalScope.ONCE, call.getCallId());
@@ -2877,7 +2875,7 @@ public class AskStroomAiPresenter
                     approvalButton(buttons, msg, "Allow this server's read-only tools", true,
                             AiApprovalScope.SERVER_READ_ONLY, call.getCallId());
                 }
-                approvalButton(buttons, msg, "Deny…", false, AiApprovalScope.ONCE, call.getCallId());
+                approvalButton(buttons, msg, "Deny", false, AiApprovalScope.ONCE, call.getCallId());
             }, Attribute.className("ai-approval-buttons"));
         }
     }
@@ -2891,7 +2889,7 @@ public class AskStroomAiPresenter
         footer.elem(label, BUTTON,
                 Attribute.className(approve
                         ? "allow-focus ai-approval-button ai-approval-button--approve"
-                        : "allow-focus ai-approval-button"),
+                        : "allow-focus ai-approval-button ai-approval-button--deny"),
                 new Attribute(APPROVAL_ID_ATTRIBUTE, String.valueOf(msg.getId())),
                 new Attribute(APPROVAL_ANSWER_ATTRIBUTE, approve
                         ? "approve"

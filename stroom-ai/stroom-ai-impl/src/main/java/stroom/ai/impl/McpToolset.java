@@ -292,7 +292,8 @@ public final class McpToolset implements AutoCloseable {
                 policy,
                 McpToolInfo.hash(endpoint, String.valueOf(trusted), tool.name(), tool.description(),
                         String.valueOf(tool.inputSchema())),
-                McpToolInfo.hash(endpoint, String.valueOf(trusted)));
+                McpToolInfo.hash(endpoint, String.valueOf(trusted)),
+                tool.description());
     }
 
     static boolean isReadOnly(final McpServerConnection connection, final Tool tool) {
