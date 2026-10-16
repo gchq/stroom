@@ -43,7 +43,7 @@ import javax.inject.Singleton;
 @Singleton
 public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
 
-    public static final String SCREEN_NAME = "Manage Accounts";
+    public static final String SCREEN_NAME = "Accounts";
     public static final SvgImage ICON = SvgImage.USER;
 
     final Provider<UiConfigCache> uiConfigCacheProvider;

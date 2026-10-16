@@ -158,7 +158,8 @@ public final class ServerTasksScreenStories {
                     // Every item the task info's keys allow is shown; the per-cell items come first,
                     // before the grid's own items
                     play.waitFor(() -> play.expect(firstMenuItems(screen, 4)).toEqual(
-                            Arrays.asList("Open Feed", "Show Filter Tasks", "Open Pipeline", "Open Stream")));
+                            Arrays.asList("Open Feed", "Show Processor Filter Tasks", "Open Pipeline",
+                                    "Open Stream")));
                     play.click(screen.getByText("Open Pipeline"));
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_DOC)).toHaveBeenCalledWith("Pipeline:pipe-uuid-1"));
                     // Open Feed looks the feed up by name and opens the doc ref found (a DocRef
@@ -180,14 +181,15 @@ public final class ServerTasksScreenStories {
                     play.rightClick(infoCell(play, "Pipeline Processor"));
                     // GWT's buildMenuItems order
                     play.waitFor(() -> play.expect(firstMenuItems(screen, 4)).toEqual(
-                            Arrays.asList("Open Feed", "Show Filter Tasks", "Open Pipeline", "Open Stream")));
+                            Arrays.asList("Open Feed", "Show Processor Filter Tasks", "Open Pipeline",
+                                    "Open Stream")));
                     // meta_id=5 → the INFO view in a Stroom tab, exactly GWT's ShowDataEvent arguments
                     play.click(screen.findByText("Open Stream"));
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_DATA))
                             .toHaveBeenCalledWith("data:5:INFO:STROOM_TAB"));
                     // 'filter id=7' → the filter's own task tab
                     play.rightClick(infoCell(play, "Pipeline Processor"));
-                    play.click(screen.findByText("Show Filter Tasks"));
+                    play.click(screen.findByText("Show Processor Filter Tasks"));
                     play.waitFor(() -> play.expect(play.spy(ON_SHOW_FILTER_TASKS))
                             .toHaveBeenCalledWith("filterTasks:7"));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
@@ -214,7 +216,7 @@ public final class ServerTasksScreenStories {
                     play.rightClick(infoCell(play, "Stream Processor A"));
                     play.sleep(200);
                     play.expect(screen.queryByText("Open Stream")).toBeNull();
-                    play.expect(screen.queryByText("Show Filter Tasks")).toBeNull();
+                    play.expect(screen.queryByText("Show Processor Filter Tasks")).toBeNull();
                     play.expect(screen.queryByText("Open Feed")).toBeNull();
                     expectNoProblems(play);
                 })

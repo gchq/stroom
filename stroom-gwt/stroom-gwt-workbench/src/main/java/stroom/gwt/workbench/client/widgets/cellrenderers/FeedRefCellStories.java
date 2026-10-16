@@ -65,7 +65,7 @@ public final class FeedRefCellStories {
                 .layout(StoryLayout.CENTERED)
                 // No args: every story has its own render
                 // A feed row (icon + name, hover to reveal copy / open, right-click for the "Open
-                // Feed / Copy As" menu) and a non-feed row (no name: plain text and a "Copy" menu)
+                // Feed / Copy Feed Details" menu) and a non-feed row (no name: plain text and a "Copy" menu)
                 .story("Basic", FeedRefCellStories::basic)
                 // With and without the feed type icon
                 .story("IconToggle", context -> StoryPanels.column(8,

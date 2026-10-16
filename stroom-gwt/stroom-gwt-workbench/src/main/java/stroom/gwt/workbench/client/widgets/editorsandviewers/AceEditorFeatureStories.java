@@ -254,9 +254,10 @@ public final class AceEditorFeatureStories {
                     final Value<List<String>> items = screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT)
                             .textContents();
                     play.waitFor(() -> play.expect("the menu's items", () -> String.join(", ", items.get()))
-                            .toBe("Styles (ON), Line Numbers (ON), Wrap Lines (OFF), Show Indent Guides (ON), "
-                                  + "Show Hidden Characters (OFF), Highlight Active Line (ON), "
-                                  + "Vim Key Bindings (OFF), Auto Completion (ON), Snippets (ON), "
+                            .toBe("Syntax Highlighting (ON), Line Numbers (ON), Wrap Lines (OFF), "
+                                  + "Show Indent Guides (ON), Show Hidden Characters (OFF), "
+                                  + "Highlight Active Line (ON), Vim Key Bindings (OFF), "
+                                  + "Basic Auto Completion (ON), Snippets (ON), "
                                   + "Live Auto Completion (OFF), Format"));
                     play.click(screen.getByText(TextMatch.containing("Line Numbers"), StroomDom.MENU_ITEM_TEXT));
                     play.waitFor(() -> play.expect(gutter).not().toBeVisible());

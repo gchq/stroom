@@ -434,13 +434,13 @@ public final class QueryEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.DOWNLOAD_SPY)).toHaveBeenCalled());
                     DocumentEditors.expectNoProblems(play);
                 })
-                // The column menu's Hide hides the column, searching again with the column marked
+                // The column menu's Hide Column hides the column, searching again with the column marked
                 // as not visible in the table's preferences
                 .story("ColumnMenu", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     executeAndOpenColumnMenu(play, "Count");
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
-                    play.click(play.screen().findByText("Hide", StroomDom.MENU_ITEM_TEXT));
+                    play.click(play.screen().findByText("Hide Column", StroomDom.MENU_ITEM_TEXT));
                     // Stroom hides the column at once, without searching again; the preference is
                     // kept on the document, which is now dirty, and is sent with the next search
                     play.waitFor(() -> play.expect(play.queryByText("Count", ".column-top .column-label")).toBeNull());
@@ -535,7 +535,7 @@ public final class QueryEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     executeAndOpenColumnMenu(play, "Count");
-                    play.click(screen.findByText("Conditional Formatting", StroomDom.MENU_ITEM_TEXT));
+                    play.click(screen.findByText("Edit Conditional Formatting for Table", StroomDom.MENU_ITEM_TEXT));
                     // The rules dialog is captioned 'Settings'
                     final Play list = dialog(screen, "Settings");
                     play.click(list.getByRole("button", "New Formatting Rule"));
@@ -696,7 +696,7 @@ public final class QueryEditorStories {
                     play.click(play.findByText("alpha"));
                     // The actions are in the 'Annotate Selected Rows' button's menu
                     play.click(play.getByRole("button", "Annotate Selected Rows"));
-                    play.click(screen.findByText("Create Annotation", StroomDom.MENU_ITEM_TEXT));
+                    play.click(screen.findByText("New Annotation", StroomDom.MENU_ITEM_TEXT));
                     // Stroom fires CreateAnnotationEvent, which Stroom's annotation plugin (not part
                     // of this screen) handles by creating and opening it
                     play.waitFor(() -> play.expect(play.spy(CREATE_ANNOTATION)).toHaveBeenCalledWith("[1001:5]"));
@@ -740,7 +740,7 @@ public final class QueryEditorStories {
                     execute(play);
                     play.click(play.findByText("beta"));
                     play.click(play.getByRole("button", "Annotate Selected Rows"));
-                    play.click(screen.findByText("Change Assigned To", StroomDom.MENU_ITEM_TEXT));
+                    play.click(screen.findByText("Change Assignee", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Change Assigned To");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -749,7 +749,7 @@ public final class QueryEditorStories {
                                     + "\"userRef\": null}}").toSpyMatcher()));
                     DocumentEditors.expectNoProblems(play);
                 })
-                // Add To Annotation: choose an existing annotation, link the row's event to it and
+                // Add to Annotation: choose an existing annotation, link the row's event to it and
                 // open it
                 .story("AddToAnnotation", context -> render(context, ANNOTATION_FIXTURES, null, false, true,
                         QueryEditorStories::findAnnotation))
@@ -758,7 +758,7 @@ public final class QueryEditorStories {
                     execute(play);
                     play.click(play.findByText("alpha"));
                     play.click(play.getByRole("button", "Annotate Selected Rows"));
-                    play.click(screen.findByText("Add To Annotation", StroomDom.MENU_ITEM_TEXT));
+                    play.click(screen.findByText("Add to Annotation", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Choose Annotation");
                     // Stroom doesn't select the first annotation (the list only selects it when the
                     // filter changes), so OK with none selected warns and keeps the chooser open;
@@ -983,7 +983,7 @@ public final class QueryEditorStories {
         execute(play);
         play.click(play.findByText("beta"));
         play.click(play.getByRole("button", "Annotate Selected Rows"));
-        play.click(screen.findByText("Change Assigned To", StroomDom.MENU_ITEM_TEXT));
+        play.click(screen.findByText("Change Assignee", StroomDom.MENU_ITEM_TEXT));
         final Play dialog = dialog(screen, "Change Assigned To");
         play.click(dialog.getByText("Assign Yourself"));
         play.click(dialog.getByRole("button", StroomDom.button("OK")));

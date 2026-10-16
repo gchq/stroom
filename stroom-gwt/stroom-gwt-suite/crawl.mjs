@@ -418,8 +418,8 @@ async function navigate(node) {
       }
       await page.waitForTimeout(600);
     } else if (step.via === 'tab-context') {
-      // The CONTENT TAB's own menu — Close / Close Others / Close Saved / Close All / Save / Save
-      // All / Locate / Add To Favourites — which is a separate menu built from `event.getTabData()`
+      // The CONTENT TAB's own menu — Close / Close Other Tabs / Close Saved Tabs / Close All Tabs /
+      // Save / Save All Tabs / Locate / Add To Favourites — which is a separate menu built from `event.getTabData()`
       // and is not reachable from the explorer at all.
       if (!(await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', step.label))) {
         throw new Error(`no content tab "${step.label}" to right-click`);

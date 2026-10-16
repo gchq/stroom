@@ -211,9 +211,9 @@ public final class UserGroupsScreenStories {
                     final Play masterRow = play.within(play.getByText("Alice Anderson").closest("tr"));
                     play.click(masterRow.getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containingIgnoreCase(
-                            "Show user on the Users screen"))).toBeVisible());
+                            "Show in Users"))).toBeVisible());
                     play.expect(screen.queryByText(TextMatch.containingIgnoreCase(
-                            "Show user on the User Groups screen"))).toBeNull();
+                            "Show in User Groups"))).toBeNull();
                     play.keyboard("{Escape}");
                     // Select the group so the membership panes are shown
                     play.click(play.getAllByText("Administrators").nth(0));
@@ -224,7 +224,7 @@ public final class UserGroupsScreenStories {
                     final Play memberRow = play.within(members.findAllByText("Alice Anderson").nth(0).closest("tr"));
                     play.click(memberRow.getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containingIgnoreCase(
-                            "Show user on the User Groups screen"))).toBeVisible());
+                            "Show in User Groups"))).toBeVisible());
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The action menu's 'Copy ... from' opens the user picker for the row's user
@@ -235,7 +235,7 @@ public final class UserGroupsScreenStories {
                     final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
                     play.click(row.getByTitle(StroomDom.ACTIONS_TITLE));
                     // The item ends with three dots, not an ellipsis
-                    play.click(screen.findByText("Copy user groups and permissions from..."));
+                    play.click(screen.findByText("Copy User Groups and Permissions from..."));
                     screen.findByText("Select User");
                     // The picker lists the users (not groups) to copy from
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(

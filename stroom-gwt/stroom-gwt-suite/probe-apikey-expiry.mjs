@@ -41,10 +41,10 @@ const click = async (name) => {
   await el.click({ timeout: 10_000 });
   await page.waitForTimeout(900);
 };
-// Security › Manage API Keys, by the main menu.
+// Security › API Keys, by the main menu.
 await click('Main Menu');
 await click('Security');
-await click('Manage API Keys');
+await click('API Keys');
 await page.waitForTimeout(1500);
 await click('New API Key');
 await page.waitForTimeout(1200);

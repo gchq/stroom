@@ -270,31 +270,31 @@ public class ContentTemplateTabPresenter
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.ADD_ABOVE)
-                                .text("Add new template above")
+                                .text("Add Template Above")
                                 .command(() ->
                                         addNewRule(contentTemplate.getTemplateIndex())))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.ADD_BELOW)
-                                .text("Add new template below")
+                                .text("Add Template Below")
                                 .command(() ->
                                         addNewRule(contentTemplate.getTemplateNumber())))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.EDIT)
-                                .text("Edit template")
+                                .text("Edit Template")
                                 .command(() ->
                                         editRule(contentTemplate)))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.COPY)
-                                .text("Copy template")
+                                .text("Duplicate Template")
                                 .command(() ->
                                         copyRule(contentTemplate)))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.DELETE)
-                                .text("Delete template")
+                                .text("Delete Template")
                                 .command(() ->
                                         deleteRule(contentTemplate)))
 //                .withIconMenuItem(itemBuilder ->
@@ -306,14 +306,14 @@ public class ContentTemplateTabPresenter
                 .withIconMenuItemIf(contentTemplate.getTemplateNumber() > 1, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.UP)
-                                .text("Move template Up")
+                                .text("Move Template Up")
                                 .command(() ->
                                         moveRuleUp(contentTemplate)))
                 .withIconMenuItemIf(contentTemplate.getTemplateNumber() < getTemplateCount(),
                         itemBuilder ->
                                 itemBuilder
                                         .icon(SvgImage.DOWN)
-                                        .text("Move template Down")
+                                        .text("Move Template Down")
                                         .command(() ->
                                                 moveRuleDown(contentTemplate)))
                 .build();

@@ -528,7 +528,8 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                         SortIcon.SORT_DESCENDING_ICON,
                         SortIcon.SORT_DESCENDING,
                         SortDirection.DESCENDING));
-        menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, SortIcon.UNSORTED, null));
+        // An action, so not SortIcon.UNSORTED, which names the state
+        menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, "Clear Sort", null));
         return new IconParentMenuItem.Builder()
                 .priority(2)
                 .icon(SortIcon.SORT_ASCENDING_ICON)
@@ -682,7 +683,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return new IconMenuItem.Builder()
                 .priority(7)
                 .icon(SvgImage.STEP_BACKWARD)
-                .text("Move First")
+                .text("Move Column to Start")
                 .command(() -> moveFirst(column))
                 .build();
     }
@@ -691,7 +692,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return new IconMenuItem.Builder()
                 .priority(8)
                 .icon(SvgImage.STEP_FORWARD)
-                .text("Move Last")
+                .text("Move Column to End")
                 .command(() -> moveLast(column))
                 .build();
     }
@@ -709,7 +710,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return new IconMenuItem.Builder()
                 .priority(10)
                 .icon(SvgImage.HIDE)
-                .text("Hide")
+                .text("Hide Column")
                 .command(() -> hideColumn(column))
                 .build();
     }
@@ -737,7 +738,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return new IconParentMenuItem.Builder()
                 .priority(11)
                 .icon(SvgImage.SHOW)
-                .text("Show")
+                .text("Show Hidden Column")
                 .children(menuItems)
                 .build();
     }
@@ -746,7 +747,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         return new IconMenuItem.Builder()
                 .priority(12)
                 .icon(SvgImage.FORMAT)
-                .text("Conditional Formatting")
+                .text("Edit Conditional Formatting for Table")
                 .command(() -> {
                     final QueryTablePreferences queryTablePreferences = tablePresenter.getQueryTablePreferences();
                     final RulesPresenter rulesPresenter = rulesPresenterProvider.get();

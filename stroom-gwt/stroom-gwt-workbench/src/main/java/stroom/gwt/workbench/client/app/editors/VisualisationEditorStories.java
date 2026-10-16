@@ -133,8 +133,8 @@ public final class VisualisationEditorStories {
                     play.click(play.getByText("main.js"));
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
                     play.expect(placeholder).not().toBeVisible();
-                    // 'Add File or Folder' opens a menu (Add New Folder, Add New File, Upload File);
-                    // 'Add New File' opens the name dialog
+                    // 'Add File or Folder' opens a menu (New Folder, New File, Upload File);
+                    // 'New File' opens the name dialog
                     // It is a menu button, which says whether its menu is open
                     final Query add = play.getByRole("button", "Add File or Folder");
                     play.expect(add).toHaveAttribute("aria-haspopup", "menu");
@@ -143,9 +143,9 @@ public final class VisualisationEditorStories {
                     // The menu's items, by their text
                     final Value<List<String>> items = screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT).textContents();
                     play.waitFor(() -> play.expect("the menu's items", items)
-                            .toEqual(List.of("Add New Folder", "Add New File", "Upload File")));
+                            .toEqual(List.of("New Folder", "New File", "Upload File")));
                     play.waitFor(() -> play.expect(add).toHaveAttribute("aria-expanded", "true"));
-                    play.click(screen.getByText("Add New File", StroomDom.MENU_ITEM_TEXT));
+                    play.click(screen.getByText("New File", StroomDom.MENU_ITEM_TEXT));
                     play.waitFor(() -> play.expect(add).toHaveAttribute("aria-expanded", "false"));
                     play.waitFor(() -> play.expect(screen.querySelector(ASSET_NAME)).not().toBeNull());
                     DocEditors.expectNoProblems(play);

@@ -295,7 +295,7 @@ public class AnnotationManager implements HasHandlers {
         return new IconMenuItem.Builder()
                 .priority(0)
                 .icon(SvgImage.EDIT)
-                .text("Create Annotation")
+                .text("New Annotation")
                 .command(() -> createAnnotation(table, eventIdList, annotationIdList))
                 .build();
     }
@@ -306,7 +306,7 @@ public class AnnotationManager implements HasHandlers {
         return new IconMenuItem.Builder()
                 .priority(1)
                 .icon(SvgImage.EDIT)
-                .text("Add To Annotation")
+                .text("Add to Annotation")
                 .command(() -> addToAnnotation(table, eventIdList, annotationIdList))
                 .build();
     }
@@ -333,7 +333,7 @@ public class AnnotationManager implements HasHandlers {
         return new IconMenuItem.Builder()
                 .priority(5)
                 .icon(SvgImage.EDIT)
-                .text("Change Assigned To")
+                .text("Change Assignee")
                 .command(() -> changeAssignedTo(annotationIdList))
                 .build();
     }

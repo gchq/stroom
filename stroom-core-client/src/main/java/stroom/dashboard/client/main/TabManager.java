@@ -252,7 +252,7 @@ public class TabManager {
         return new IconMenuItem.Builder()
                 .priority(6)
                 .icon(SvgImage.HIDE)
-                .text("Hide")
+                .text("Hide Tab")
                 .command(() -> hideTab(tabLayoutConfig, tabConfig))
                 .build();
     }
@@ -283,7 +283,7 @@ public class TabManager {
         return new IconParentMenuItem.Builder()
                 .priority(7)
                 .icon(SvgImage.SHOW)
-                .text("Show")
+                .text("Show Hidden Tab")
                 .children(menuItems)
                 .build();
     }
@@ -301,7 +301,7 @@ public class TabManager {
         return new IconMenuItem.Builder()
                 .priority(8)
                 .icon(SvgImage.COPY)
-                .text("Duplicate To...")
+                .text("Duplicate to Another Dashboard...")
                 .command(() -> duplicateTabTo(tabLayoutConfig, tabConfig))
                 .build();
     }
@@ -310,7 +310,7 @@ public class TabManager {
         return new IconMenuItem.Builder()
                 .priority(9)
                 .icon(SvgImage.COPY)
-                .text("Duplicate All")
+                .text("Duplicate All Tabs in Pane")
                 .command(() -> duplicateTabPanel(tabLayoutConfig))
                 .build();
     }
@@ -328,7 +328,7 @@ public class TabManager {
         return new IconMenuItem.Builder()
                 .priority(11)
                 .icon(SvgImage.DELETE)
-                .text("Remove All")
+                .text("Remove All Tabs in Pane")
                 .command(() -> removeTabPanel(tabLayoutConfig))
                 .build();
     }
@@ -346,7 +346,7 @@ public class TabManager {
         return new IconMenuItem.Builder()
                 .priority(10)
                 .icon(SvgImage.MINIMISE)
-                .text("Restore")
+                .text("Restore Pane Layout")
                 .command(this::restoreTabs)
                 .build();
     }

@@ -808,7 +808,7 @@ public class QueryPresenter
         menuItems.add(new IconMenuItem.Builder()
                 .priority(3)
                 .icon(SvgImage.COPY)
-                .text("Copy")
+                .text("Duplicate")
                 .command(this::copy)
                 .enabled(hasSelection)
                 .build());

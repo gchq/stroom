@@ -149,21 +149,21 @@ public final class ContentTemplatesScreenStories {
                     // Row 1 of 2: the full set, Move Down but no Move Up
                     play.click(play.within(play.getByText("My template").closest("tr"))
                             .getByTitle(StroomDom.ACTIONS_TITLE));
-                    play.waitFor(() -> play.expect(screen.getByText("Edit template")).toBeVisible());
-                    for (final String label : new String[]{"Add new template above", "Add new template below",
-                            "Edit template", "Copy template", "Delete template"}) {
+                    play.waitFor(() -> play.expect(screen.getByText("Edit Template")).toBeVisible());
+                    for (final String label : new String[]{"Add Template Above", "Add Template Below",
+                            "Edit Template", "Duplicate Template", "Delete Template"}) {
                         play.expect(screen.getByText(label)).toBeVisible();
                     }
-                    play.expect(screen.queryByText("Move template Up")).toBeNull();
-                    play.expect(screen.getByText("Move template Down")).toBeVisible();
-                    // Copy acts on that row and names the copy "<name> (copy)"
-                    play.click(screen.getByText("Copy template"));
+                    play.expect(screen.queryByText("Move Template Up")).toBeNull();
+                    play.expect(screen.getByText("Move Template Down")).toBeVisible();
+                    // Duplicate acts on that row and names the copy "<name> (copy)"
+                    play.click(screen.getByText("Duplicate Template"));
                     play.waitFor(() -> play.expect(play.getByText("My template (copy)")).toBeInTheDocument());
                     // The last row has Move Up but no Move Down
                     play.click(play.within(play.getByText("Undescribed").closest("tr"))
                             .getByTitle(StroomDom.ACTIONS_TITLE));
-                    play.waitFor(() -> play.expect(screen.getByText("Move template Up")).toBeVisible());
-                    play.expect(screen.queryByText("Move template Down")).toBeNull();
+                    play.waitFor(() -> play.expect(screen.getByText("Move Template Up")).toBeVisible());
+                    play.expect(screen.queryByText("Move Template Down")).toBeNull();
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // Editing a template (rename) dirties the document; Save Templates saves it

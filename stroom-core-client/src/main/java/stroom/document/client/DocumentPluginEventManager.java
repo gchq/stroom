@@ -1456,7 +1456,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close Others")
+                .text("Close Other Tabs")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseOtherTabsEvent.fire(DocumentPluginEventManager.this, selectedTab))
                 .build();
@@ -1467,7 +1467,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close Saved")
+                .text("Close Saved Tabs")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this))
                 .build();
@@ -1478,7 +1478,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close All")
+                .text("Close All Tabs")
                 .action(Action.ITEM_CLOSE_ALL)
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseAllTabsEvent.fire(DocumentPluginEventManager.this))
@@ -1523,7 +1523,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.STEP_BACKWARD)
-                .text("Move First")
+                .text("Move Tab to Start")
                 .enabled(isTabItemSelected(selectedTab) && !isFirstTab)
                 .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, 0))
                 .build();
@@ -1535,7 +1535,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.STEP_FORWARD)
-                .text("Move Last")
+                .text("Move Tab to End")
                 .enabled(isTabItemSelected(selectedTab) && !isLastTab)
                 .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, tabs.size() - 1))
                 .build();
@@ -1572,7 +1572,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SAVE)
-                .text("Save All")
+                .text("Save All Tabs")
                 .action(Action.ITEM_SAVE_ALL)
                 .enabled(hasSaveRegistry.isDirty())
                 .command(hasSaveRegistry::save)
@@ -1654,7 +1654,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.INFO)
-                .text("Info")
+                .text("Show Info")
                 .enabled(enabled && explorerNode != null)
                 .command(command)
                 .build();
@@ -1715,7 +1715,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SHARE)
-                .text("Copy Link to Clipboard")
+                .text("Link")
                 .command(() -> ClipboardUtil.copy(docUrl))
                 .build();
     }
@@ -1743,7 +1743,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconParentMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy As")
+                .text("Copy to Clipboard")
                 .children(children)
                 .enabled(true)
                 .build();
@@ -1762,7 +1762,7 @@ public class DocumentPluginEventManager extends Plugin {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Name to Clipboard")
+                    .text("Name")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, "\n"))
                     .build());
@@ -1771,7 +1771,7 @@ public class DocumentPluginEventManager extends Plugin {
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUID to Clipboard")
+                        .text("UUID")
                         .enabled(true)
                         .command(() -> copyAs(allNodes, ExplorerNode::getUuid, "\n"))
                         .build());
@@ -1781,14 +1781,14 @@ public class DocumentPluginEventManager extends Plugin {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Names to Clipboard (lines)")
+                    .text("Names (One per Line)")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, "\n"))
                     .build());
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Names to Clipboard (comma delimited)")
+                    .text("Names (Comma Separated)")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, ","))
                     .build());
@@ -1797,14 +1797,14 @@ public class DocumentPluginEventManager extends Plugin {
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUIDs to Clipboard (lines)")
+                        .text("UUIDs (One per Line)")
                         .enabled(true)
                         .command(() -> copyAs(readableNodes, ExplorerNode::getUuid, "\n"))
                         .build());
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUIDs to Clipboard (comma delimited)")
+                        .text("UUIDs (Comma Separated)")
                         .enabled(true)
                         .command(() -> copyAs(readableNodes, ExplorerNode::getUuid, ","))
                         .build());
@@ -1891,7 +1891,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.LOCKED)
-                .text("Permissions")
+                .text("Edit Permissions")
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -1901,7 +1901,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.UPLOAD)
-                .text("Import")
+                .text("Import Content")
                 .command(() -> ImportConfigEvent.fire(DocumentPluginEventManager.this))
                 .build();
     }
@@ -1920,7 +1920,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
-                .text("Dependants")
+                .text("Show Dependants")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
                         docRef,
@@ -1932,7 +1932,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
-                .text("Dependencies")
+                .text("Show Dependencies")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
                         docRef,

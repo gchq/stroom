@@ -163,13 +163,14 @@ const SELF_DESTRUCTIVE = new Set(['Sign Out', 'Sign Out Other Sessions', 'Delete
 /**
  * Context-menu items that take the browser somewhere else, or start a download.
  *
- * `MyDataGrid`'s menu offers `Follow URL` and `Open In New Tab` on a cell that holds a link: clicking
+ * `MyDataGrid`'s menu offers `Open Link` and `Open Link in New Tab` on a cell that holds a link: clicking
  * either navigates away or opens a tab the walker is not tracking, and the walk cannot get back to
  * where it was. `Export Table` streams a file. None of them is destructive — the guard would not even
  * be involved — but all of them END the walk's grip on the page, which is worse than a write it can
  * abort. Recorded as affordances and never clicked, exactly as SELF_DESTRUCTIVE is.
  */
-const LEAVES_THE_PAGE = new Set(['Follow URL', 'Open In New Tab', 'Open In This Tab', 'Export Table', 'Download']);
+const LEAVES_THE_PAGE = new Set(['Open Link', 'Open Link in New Tab', 'Open Link in This Tab', 'Export Table',
+  'Download']);
 /**
  * Clicks whose state change is UNDONE by a known click, not by closing anything. The Ask Stroom AI
  * dock is the case that forced this: it stays open across the whole walk, and its buttons —
@@ -326,7 +327,7 @@ const LINK = 'link: ';
  *  blocks (`SettingBlock`, `title="Change Retention Period"`) open their choosers on a click. */
 const TITLED = 'titled: ';
 /** `entry: comment` — a MOUSEDOWN on an annotation history entry (`[entryType]`, COMMENT = 4) opens
- *  its Edit Entry / Delete Entry menu (`AnnotationEditPresenter.showEntryEditMenu`). */
+ *  its Edit Comment / Delete Entry menu (`AnnotationEditPresenter.showEntryEditMenu`). */
 const ENTRY = 'entry: ';
 const ENTRY_TYPES = { comment: '4' };
 /** `selector: <css>` — a clickable whose TEXT is data, so no label can name it: the stepping toolbar's
@@ -700,7 +701,7 @@ const contentTabs = () => page.evaluate(() => [...document.querySelectorAll('.ta
  * Close EVERY content tab bar Welcome — the client-side "fresh" a reload used to deliver, without
  * the reload. A route that runs through a menu chain opens the LAST leaf's screen, not the first's,
  * so closing the route's first tab left `Properties` open with its paging intact and `Data Receipt
- * Rules` sitting under every later root. Best effort: the tab's own `Close All`, then one by one.
+ * Rules` sitting under every later root. Best effort: the tab's own `Close All Tabs`, then one by one.
  */
 /**
  * Close any DIRTY content tab before opening another document.
@@ -726,10 +727,10 @@ async function closeAllContentTabs() {
     if (!open.length) return true;
     if (attempt === 0 && await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', open[0]).catch(() => false)) {
       const before = (await contentTabs()).length;
-      if (await clickMenuItem(page, 'Close All').catch(() => false)) {
-        // Close All closes tab by tab and may ask once per dirty document.
+      if (await clickMenuItem(page, 'Close All Tabs').catch(() => false)) {
+        // Close All Tabs closes tab by tab and may ask once per dirty document.
         let rounds = 0;
-        while (rounds < 6 && await settleTabClose(before, 'Close All')) {
+        while (rounds < 6 && await settleTabClose(before, 'Close All Tabs')) {
           rounds += 1;
           if (!(await contentTabs()).some((t) => t && !/Welcome/.test(t))) break;
         }
@@ -754,7 +755,7 @@ async function closeAllContentTabs() {
   }
   if (survived.length && !tabsSurvivedReported) {
     tabsSurvivedReported = true;
-    console.log(`      (tabs survived Close All: ${await whereAmI()})`);
+    console.log(`      (tabs survived Close All Tabs: ${await whereAmI()})`);
     // What readDialogs — the reader discardIfAsked polls — sees, against a raw DOM read of the
     // Confirm: caption, root class, buttons, and why the title might fail the visibility test.
     const seen = await readDialogs(page).catch((e) => `threw: ${e.message.slice(0, 80)}`);
@@ -1727,7 +1728,7 @@ if (DIRECTED.includes('annotation')) {
   // The annotation EDITOR, opened from a selected annotation row's Annotate Selected Rows › Edit Annotation. Its
   // sub-tabs walk as an editor's do (Events › Add → AddEventLinkPresenter); its own surface adds two
   // things the button reader cannot see: the `Change Retention Period` setting block
-  // (DurationPresenter) and a comment entry's mousedown menu (Edit Entry → CommentEditPresenter).
+  // (DurationPresenter) and a comment entry's mousedown menu (Edit Comment → CommentEditPresenter).
   const annotations = [
     { via: 'docType', type: 'Query' },
     { via: 'set-ace', text: 'from "Annotations" select Id, Title, Status', post: true, opens: 'changed' },
@@ -1754,8 +1755,8 @@ if (DIRECTED.includes('cf')) {
   const scope = { selector: '.dataGridWidget th, [role=columnheader]', design: false };
   seeds.push(
     { kind: 'post-action', presenter: 'RulePresenter', seedDepth: 7, columnScope: scope,
-      path: ['Query (document)', 'after query with results', 'column: StreamId', 'Conditional Formatting', 'New Formatting Rule', 'after Formatting Type = Custom'],
-      route: [...results, { via: 'button', label: `${COLUMN_MENU}StreamId`, opens: 'menu' }, { via: 'button', label: 'Conditional Formatting', opens: 'dialog' },
+      path: ['Query (document)', 'after query with results', 'column: StreamId', 'Edit Conditional Formatting for Table', 'New Formatting Rule', 'after Formatting Type = Custom'],
+      route: [...results, { via: 'button', label: `${COLUMN_MENU}StreamId`, opens: 'menu' }, { via: 'button', label: 'Edit Conditional Formatting for Table', opens: 'dialog' },
         { via: 'button', label: 'New Formatting Rule', opens: 'dialog' }, { via: 'set-select', selector: '.conditionalFormatTypeSelection', value: 'Custom', post: true, opens: 'changed' }] },
     { kind: 'post-action', presenter: 'ColumnValuesFilterPresenter', seedDepth: 4, columnScope: scope,
       path: ['Query (document)', 'after query with results', 'column: StreamId (value filter icon)'],

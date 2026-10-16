@@ -631,7 +631,7 @@ public class AnnotationEditPresenter
         final List<Item> menuItems = new ArrayList<>();
         if (AnnotationEntryType.COMMENT.equals(entryType)) {
             final IconMenuItem editItem = new IconMenuItem.Builder()
-                    .text("Edit Entry")
+                    .text("Edit Comment")
                     .icon(SvgImage.EDIT)
                     .command(() -> editComment(id))
                     .build();

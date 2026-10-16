@@ -172,7 +172,7 @@ public final class UsersScreenStories {
                     screen.findByRole("menu", "Actions for user 'Alice Anderson'");
                     play.expect(screen.queryByText(TextMatch.containing("Actions for user"))).toBeNull();
                     // The menu omits a link back to Users; App Permissions opens it focused on Alice
-                    play.click(screen.getByText("Show user on the Application Permissions screen"));
+                    play.click(screen.getByText("Show in Application Permissions"));
                     play.waitFor(() -> play.expect(play.spy(OPEN_SCREEN))
                             .toHaveBeenCalledWith("ApplicationPermissions: Alice Anderson"));
                     expectNoProblems(play);

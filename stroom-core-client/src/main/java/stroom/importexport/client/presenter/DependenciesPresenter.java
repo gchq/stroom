@@ -234,7 +234,7 @@ public class DependenciesPresenter
         return MenuBuilder.builder()
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.INFO)
-                        .text("Properties")
+                        .text("Show Info")
                         .command(() -> onDocInfo(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DELETE)
@@ -246,11 +246,11 @@ public class DependenciesPresenter
                         .command(() -> onLocateDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DEPENDENCIES)
-                        .text("Show dependencies")
+                        .text("Show Dependencies")
                         .command(() -> onShowDependencies(docRef, DependencyType.DEPENDENCY)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DEPENDENCIES)
-                        .text("Show dependants")
+                        .text("Show Dependants")
                         .command(() -> onShowDependencies(docRef, DependencyType.DEPENDANT)))
                 .build();
     }

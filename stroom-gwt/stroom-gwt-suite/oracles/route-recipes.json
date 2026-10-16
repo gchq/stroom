@@ -36,10 +36,10 @@
     {
      "via": "menu",
      "group": "Annotations",
-     "leaf": "Create New Annotation"
+     "leaf": "New Annotation"
     }
    ],
-   "label": "Main Menu > Annotations > Create New Annotation",
+   "label": "Main Menu > Annotations > New Annotation",
    "resolved": false
   },
   {
@@ -134,10 +134,10 @@
     {
      "via": "menu",
      "group": "Security",
-     "leaf": "Credentials Manager"
+     "leaf": "Credentials"
     }
    ],
-   "label": "Main Menu > Security > Credentials Manager",
+   "label": "Main Menu > Security > Credentials",
    "resolved": true
   },
   {
@@ -162,10 +162,10 @@
     {
      "via": "menu",
      "group": "Navigation",
-     "leaf": "Find"
+     "leaf": "Find by Name"
     }
    ],
-   "label": "Main Menu > Navigation > Find",
+   "label": "Main Menu > Navigation > Find by Name",
    "resolved": true
   },
   {
@@ -526,10 +526,10 @@
     {
      "via": "menu",
      "group": "Security",
-     "leaf": "Manage API Keys"
+     "leaf": "API Keys"
     }
    ],
-   "label": "Main Menu > Security > Manage API Keys",
+   "label": "Main Menu > Security > API Keys",
    "resolved": true
   },
   {
@@ -666,10 +666,10 @@
     {
      "via": "menu",
      "group": "Security",
-     "leaf": "Manage Accounts"
+     "leaf": "Accounts"
     }
    ],
-   "label": "Main Menu > Security > Manage Accounts",
+   "label": "Main Menu > Security > Accounts",
    "resolved": true
   },
   {

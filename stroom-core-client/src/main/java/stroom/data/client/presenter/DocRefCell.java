@@ -140,7 +140,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                         .command(() -> OpenDocumentEvent.fire(this, docRef, true))
                         .build());
             }
-            menuItems.add(createCopyAsMenuItem(docRef, priority++));
+            menuItems.add(createCopyAsMenuItem(docRef, type, priority++));
 
         }
         return menuItems.isEmpty()
@@ -246,12 +246,14 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
     }
 
     private MenuItem createCopyAsMenuItem(final DocRef docRef,
+                                          final String type,
                                           final int priority) {
         final List<Item> children = createCopyAsChildMenuItems(docRef);
+        // Says what is copied, as this can sit beside the grid's own 'Copy' submenu
         return new IconParentMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy As")
+                .text("Copy " + type + " Details")
                 .children(children)
                 .enabled(true)
                 .build();
@@ -267,7 +269,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Name to Clipboard")
+                    .text("Name")
                     .enabled(true)
                     .command(() -> ClipboardUtil.copy(docRef.getName()))
                     .build());
@@ -276,7 +278,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy UUID to Clipboard")
+                    .text("UUID")
                     .enabled(true)
                     .command(() -> ClipboardUtil.copy(docRef.getUuid()))
                     .build());
@@ -297,7 +299,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SHARE)
-                .text("Copy Link to Clipboard")
+                .text("Link")
                 .command(() -> ClipboardUtil.copy(docUrl))
                 .build();
     }

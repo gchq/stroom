@@ -130,7 +130,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                             .text("Open " + type)
                             .command(() -> OpenFeedEvent.fire(this, name, true))
                             .build());
-                    menuItems.add(createCopyAsMenuItem(name, priority++));
+                    menuItems.add(createCopyAsMenuItem(name, type, priority++));
 
                     ShowMenuEvent
                             .builder()
@@ -264,12 +264,13 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
     }
 
     private MenuItem createCopyAsMenuItem(final String name,
+                                          final String type,
                                           final int priority) {
         final List<Item> children = createCopyAsChildMenuItems(name);
         return new IconParentMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy As")
+                .text("Copy " + type + " Details")
                 .children(children)
                 .enabled(true)
                 .build();
@@ -285,7 +286,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Name to Clipboard")
+                    .text("Name")
                     .enabled(true)
                     .command(() -> ClipboardUtil.copy(name))
                     .build());
@@ -298,7 +299,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SHARE)
-                .text("Copy Link to Clipboard")
+                .text("Link")
                 .command(() -> CopyFeedUrlEvent.fire(this, name))
                 .build();
     }

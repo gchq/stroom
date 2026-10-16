@@ -630,7 +630,7 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
         items.add(new IconMenuItem.Builder()
                 .priority(++priority)
                 .icon(SvgImage.MINIMISE)
-                .text("Restore")
+                .text("Restore Pane Sizes")
                 .enabled(maximised >= 0)
                 .action(maximised >= 0
                         ? Action.MAXIMISE_PANE
@@ -640,7 +640,7 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
         MenuRequest.fire(splitter, "Pane Layout", items, new PopupPosition(x, y));
     }
 
-    // A pane's name, else where it is beside the splitter, e.g. "the left pane"
+    // A pane's name, else where it is beside the splitter, e.g. "Left Pane"
     private String paneLabel(final int index, final int splitterIndex) {
         final String name = nameOf(index);
         if (!name.isEmpty()) {
@@ -650,14 +650,14 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
         final String side;
         if (vertical) {
             side = before
-                    ? "top"
-                    : "bottom";
+                    ? "Top"
+                    : "Bottom";
         } else {
             side = before != isReversed()
-                    ? "left"
-                    : "right";
+                    ? "Left"
+                    : "Right";
         }
-        return "the " + side + " pane";
+        return side + " Pane";
     }
 
     private void resized() {

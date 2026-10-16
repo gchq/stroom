@@ -64,7 +64,7 @@ await gwt.openMainMenu(page);
 await settle(400);
 await clickMenuItem(page, 'Security');
 await settle(500);
-await clickMenuItem(page, 'Manage API Keys');
+await clickMenuItem(page, 'API Keys');
 await settle(2200);
 if (!(await press('New API Key'))) { console.log('New API Key is not available'); await browser.close(); process.exit(0); }
 

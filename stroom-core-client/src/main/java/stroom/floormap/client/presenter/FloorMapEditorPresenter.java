@@ -1392,7 +1392,7 @@ public class FloorMapEditorPresenter
     ///   - "Edit Properties" — selects the object and opens the property editor
     ///   - "Add Time Version" — creates a new effective time entry at the scrubber
     ///     position, cloned from the current version
-    ///   - "Duplicate Object" — clones the object with a new key, offset slightly
+    ///   - "Duplicate" — clones the object with a new key, offset slightly
     ///   - "Delete From This Time" — confirms and stages a version at the scrubber
     ///     position that marks the object deleted, keeping its history
     ///   - "Erase History" — confirms and stages deletion of all time entries
@@ -1457,19 +1457,19 @@ public class FloorMapEditorPresenter
             menuItems.add(new IconMenuItem.Builder()
                     .priority(1)
                     .icon(SvgImage.COPY)
-                    .text("Duplicate Selected (" + n + ")")
+                    .text("Duplicate")
                     .command(() -> onDuplicateObjects(keys))
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .priority(2)
                     .icon(SvgImage.REMOVE)
-                    .text("Delete Selected From This Time (" + n + ")")
+                    .text("Delete From This Time")
                     .command(() -> onEndFacts(keys))
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .priority(3)
                     .icon(SvgImage.DELETE)
-                    .text("Erase History of Selected (" + n + ")")
+                    .text("Erase History")
                     .command(() -> onDeleteObjects(keys))
                     .build());
         } else {
@@ -1540,11 +1540,11 @@ public class FloorMapEditorPresenter
                     })
                     .build());
 
-            // Duplicate Object
+            // Duplicate
             menuItems.add(new IconMenuItem.Builder()
                     .priority(3)
                     .icon(SvgImage.COPY)
-                    .text("Duplicate Object")
+                    .text("Duplicate")
                     .command(() -> onDuplicateObject(objectId))
                     .build());
 

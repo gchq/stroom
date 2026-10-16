@@ -60,18 +60,18 @@ public final class ActionMenuCellStories {
                 .story("Actions", context -> {
                     final Spy clicked = context.fn(CLICKED);
                     final List<Item> items = new ArrayList<>();
-                    items.add(menuItem(1, "Add new rule above", SvgImage.ADD_ABOVE, () -> clicked.call("add")));
-                    items.add(menuItem(2, "Copy Rule", SvgImage.COPY, () -> clicked.call("copy")));
+                    items.add(menuItem(1, "Add Rule Above", SvgImage.ADD_ABOVE, () -> clicked.call("add")));
+                    items.add(menuItem(2, "Duplicate Rule", SvgImage.COPY, () -> clicked.call("copy")));
                     items.add(menuItem(3, "Delete Rule", SvgImage.DELETE, () -> clicked.call("delete")));
                     return actionMenuCell(context, items);
                 })
                 .withPlay(play -> {
                     final Play body = play.screen();
                     play.click(play.getByTitle("Actions..."));
-                    play.waitFor(() -> play.expect(body.getByText("Copy Rule")).toBeVisible());
-                    play.expect(body.getByText("Add new rule above")).toBeVisible();
+                    play.waitFor(() -> play.expect(body.getByText("Duplicate Rule")).toBeVisible());
+                    play.expect(body.getByText("Add Rule Above")).toBeVisible();
 
-                    play.click(body.getByText("Copy Rule"));
+                    play.click(body.getByText("Duplicate Rule"));
                     play.waitFor(() -> play.expect(play.spy(CLICKED)).toHaveBeenCalledTimes(1));
                     play.expect(play.spy(CLICKED)).toHaveBeenCalledWith("copy");
                 })

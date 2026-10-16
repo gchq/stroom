@@ -271,13 +271,13 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.ADD_ABOVE)
-                                .text("Add new rule above")
+                                .text("Add Rule Above")
                                 .command(() ->
                                         addNewRule(rule.getRuleNumber() - 1)))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.ADD_BELOW)
-                                .text("Add new rule below")
+                                .text("Add Rule Below")
                                 .command(() ->
                                         addNewRule(rule.getRuleNumber())))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
@@ -289,7 +289,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.COPY)
-                                .text("Copy Rule")
+                                .text("Duplicate Rule")
                                 .command(() ->
                                         copyRule(rule)))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->

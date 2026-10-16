@@ -62,7 +62,7 @@ const MODE = env('MODE', 'doc');
 const CLASSES = env('CLASSES', '0') === '1';
 let classesBefore = null;
 const MENU_GROUP = env('MENU_GROUP', 'Navigation');
-const MENU_LEAF = env('MENU_LEAF', 'Find');
+const MENU_LEAF = env('MENU_LEAF', 'Find by Name');
 
 const browser = await chromium.launch({ headless: env('HEADLESS', '1') !== '0' });
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });

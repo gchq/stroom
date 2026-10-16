@@ -566,7 +566,7 @@ public final class AppShellStories {
                     final Play screen = play.screen();
                     final Play nav = navTree(play);
                     rightClick(play, nav.getByText("Countries"));
-                    play.expect(screen.findByText("Copy As", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
+                    play.expect(screen.findByText("Copy to Clipboard", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
                     play.expect(screen.getByText("Add to Favourites", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
                     play.expect(screen.queryByText("Open", StroomDom.MENU_ITEM_TEXT)).toBeNull();
                     play.keyboard("{Escape}");
@@ -579,11 +579,11 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     rightClick(play, navTree(play, "System").getByText("System"));
-                    play.expect(screen.findByText("Copy As", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
+                    play.expect(screen.findByText("Copy to Clipboard", StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
                     for (final String name : List.of("Copy", "Move", "Rename", "Delete")) {
                         play.waitFor(() -> play.expect(menuItem(screen, name)).toHaveClass(MENU_ITEM_DISABLED));
                     }
-                    play.expect(menuItem(screen, "Permissions")).not().toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Edit Permissions")).not().toHaveClass(MENU_ITEM_DISABLED);
                     expectNoProblems(play);
                 })
                 // A tab's context menu, with positional enablement on the first of two tabs
@@ -597,10 +597,11 @@ public final class AppShellStories {
                     play.waitFor(5000, () -> play.expect(tabs(play)).toHaveLength(2));
                     // The menu is shown on a secondary button's mouseup on a tab
                     play.fireEvent().mouseUp(play.getByText("Countries", TAB_LABEL), EventInit.create().button(2));
-                    play.waitFor(() -> play.expect(menuItem(screen, "Close Others")).toBeInTheDocument());
-                    for (final String name : List.of("Close", "Close Others", "Close Saved", "Close All",
-                            "Close Tabs to the Left", "Close Tabs to the Right", "Save", "Save All", "Move First",
-                            "Move Last", "Locate in Explorer", "Add to Favourites")) {
+                    play.waitFor(() -> play.expect(menuItem(screen, "Close Other Tabs")).toBeInTheDocument());
+                    for (final String name : List.of("Close", "Close Other Tabs", "Close Saved Tabs",
+                            "Close All Tabs", "Close Tabs to the Left", "Close Tabs to the Right", "Save",
+                            "Save All Tabs", "Move Tab to Start", "Move Tab to End", "Locate in Explorer",
+                            "Add to Favourites")) {
                         play.expect(menuItem(screen, name)).toBeInTheDocument();
                     }
                     for (final String accelerator : List.of("Alt+w", "Alt+Shift+w", "Ctrl+s", "Ctrl+Shift+s",
@@ -609,11 +610,11 @@ public final class AppShellStories {
                     }
                     play.expect(menuItem(screen, "Close Tabs to the Left")).toHaveClass(MENU_ITEM_DISABLED);
                     play.expect(menuItem(screen, "Close Tabs to the Right")).not().toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Move First")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Move Last")).not().toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Move Tab to Start")).toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Move Tab to End")).not().toHaveClass(MENU_ITEM_DISABLED);
                     play.expect(menuItem(screen, "Save")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.expect(menuItem(screen, "Save All")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.click(menuItem(screen, "Close Others"));
+                    play.expect(menuItem(screen, "Save All Tabs")).toHaveClass(MENU_ITEM_DISABLED);
+                    play.click(menuItem(screen, "Close Other Tabs"));
                     play.waitFor(() -> play.expect(tabs(play)).toHaveLength(1));
                     play.expect(tabs(play).nth(0)).toHaveTextContent(TextMatch.containing("Countries"));
                     expectNoProblems(play);
@@ -633,13 +634,13 @@ public final class AppShellStories {
                     play.click(countries);
                     play.expect(countries).toHaveFocus();
                     play.keyboard("{Shift>}{F10}{/Shift}");
-                    play.waitFor(() -> play.expect(menuItem(screen, "Close Others")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(menuItem(screen, "Close Other Tabs")).toBeInTheDocument());
                     play.keyboard("{Escape}");
-                    play.waitFor(() -> play.expect(screen.queryByText("Close Others", StroomDom.MENU_ITEM_TEXT))
+                    play.waitFor(() -> play.expect(screen.queryByText("Close Other Tabs", StroomDom.MENU_ITEM_TEXT))
                             .toBeNull());
                     play.waitFor(() -> play.expect(countries).toHaveFocus());
                     play.keyboard("{ContextMenu}");
-                    play.waitFor(() -> play.expect(menuItem(screen, "Close Others")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(menuItem(screen, "Close Other Tabs")).toBeInTheDocument());
                     play.keyboard("{Escape}");
                     play.waitFor(() -> play.expect(countries).toHaveFocus());
                     play.keyboard("{ArrowRight}");
@@ -654,7 +655,7 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     rightClick(play, navTree(play, "System").getByText("Favourites"));
                     play.sleep(250);
-                    play.expect(play.screen().queryByText("Copy As", StroomDom.MENU_ITEM_TEXT)).toBeNull();
+                    play.expect(play.screen().queryByText("Copy to Clipboard", StroomDom.MENU_ITEM_TEXT)).toBeNull();
                     expectNoProblems(play);
                 })
                 // Info shows the document's identity, audit history and tags
@@ -662,7 +663,7 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     rightClick(play, navTree(play).getByText("Countries"));
-                    play.click(screen.findByText("Info", StroomDom.MENU_ITEM_TEXT));
+                    play.click(screen.findByText("Show Info", StroomDom.MENU_ITEM_TEXT));
                     // GWT bolds the key and appends the ': ' after it
                     play.waitFor(() -> play.expect(screen.getByText("UUID")).toBeInTheDocument());
                     play.expect(screen.getByText("Type")).toBeInTheDocument();

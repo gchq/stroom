@@ -295,14 +295,14 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                 .priority(0)
                 .icon(SvgImage.FOLDER)
                 .iconColour(IconColour.BLUE)
-                .text("Add New Folder")
+                .text("New Folder")
                 .command(() -> this.onCreateNewItem(false))
                 .enabled(true)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(1)
                 .icon(SvgImage.FILE)
-                .text("Add New File")
+                .text("New File")
                 .command(() -> this.onCreateNewItem(true))
                 .enabled(true)
                 .build());

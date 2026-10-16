@@ -215,7 +215,7 @@ for (const [type, displayValue, name, tagText] of SEED.tags) {
 }
 
 // ── An annotation WITH A COMMENT: the editor's history holds a comment entry whose mousedown menu
-// offers Edit Entry (CommentEditPresenter). The walk's `annotation` seed selects it by title.
+// offers Edit Comment (CommentEditPresenter). The walk's `annotation` seed selects it by title.
 await item('annotation', `annotation "${SEED.annotation.title}"`, {
   // The annotation without its comment counts as absent: `create` adds the comment to it.
   have: async () => {

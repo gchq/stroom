@@ -912,8 +912,8 @@ for (const h of handlers) {
   else if (h.kind === 'command' && h.label) {
     // A menu item is usually clicked on a `menu` node, but not always: a tab's context menu is
     // reached through `tab-context` and its items are recorded on the node the menu was opened
-    // from. So fall back to the same distinctive-label rule clicks use — `Close Others`,
-    // `Close Saved` and `Close All` are each registered by one class and were all clicked.
+    // from. So fall back to the same distinctive-label rule clicks use — `Close Other Tabs`,
+    // `Close Saved Tabs` and `Close All Tabs` are each registered by one class and were all clicked.
     hit = menuClicked.get('*')?.get(h.label)
       ?? ((classesByLabel.get(h.label)?.size ?? 99) <= 2 && everClicked.has(h.label)
         ? { ...everClicked.get(h.label), join: 'label' } : null);

@@ -302,7 +302,7 @@ public final class DashboardLayoutStories {
                     DashboardPlays.designMode(play, true);
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "The Query")).toBeInTheDocument());
                     DashboardPlays.openTabMenu(play, "The Query");
-                    play.click(DashboardPlays.menuItem(screen, "Remove All"));
+                    play.click(DashboardPlays.menuItem(screen, "Remove All Tabs in Pane"));
                     play.click(screen.findByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.queryByText("The Query", DashboardPlays.COMPONENT_TAB))
                             .toBeNull());
@@ -392,8 +392,8 @@ public final class DashboardLayoutStories {
                     DashboardPlays.openTabMenu(play, "The Query");
                     final Value<List<String>> items = play.capture("items",
                             screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT).textContents());
-                    for (final String item : List.of("Rename", "Settings", "Hide", "Duplicate", "Duplicate To...",
-                            "Remove", "Maximise")) {
+                    for (final String item : List.of("Rename", "Settings", "Hide Tab", "Duplicate",
+                            "Duplicate to Another Dashboard...", "Remove", "Maximise")) {
                         play.expect(items).toContain(item);
                     }
                     play.expect("index of Maximise after Remove",
@@ -404,7 +404,7 @@ public final class DashboardLayoutStories {
                     play.click(play.findByRole("button", "Restore Pane Layout"));
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "The Table")).toBeInTheDocument());
                     DashboardPlays.openTabMenu(play, "The Table 2");
-                    play.click(DashboardPlays.menuItem(screen, "Hide"));
+                    play.click(DashboardPlays.menuItem(screen, "Hide Tab"));
                     play.waitFor(() -> play.expect(play.queryByText("The Table 2", DashboardPlays.COMPONENT_TAB))
                             .toBeNull());
                     DashboardPlays.expectNoProblems(play);
@@ -470,7 +470,7 @@ public final class DashboardLayoutStories {
                     DashboardPlays.opened(play);
                     DashboardPlays.designMode(play, true);
                     DashboardPlays.openTabMenu(play, "The Table");
-                    play.click(DashboardPlays.menuItem(screen, "Duplicate To..."));
+                    play.click(DashboardPlays.menuItem(screen, "Duplicate to Another Dashboard..."));
                     play.expect(screen.findByText("Choose Dashboard", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                     DashboardPlays.expectNoProblems(play);
                 });

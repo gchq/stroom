@@ -173,7 +173,7 @@ const SPECS = [
     name: 'credentials',
     // CredentialEditPresenter's onHideRequest (:92), for both New Credentials and the edit dialog.
     okPresenters: ['CredentialEditPresenter'],
-    menu: ['Security', 'Credentials Manager'],
+    menu: ['Security', 'Credentials'],
     create: 'New Credential',
     edit: 'Edit Selected Credential',
     remove: 'Delete Selected Credential',
@@ -196,7 +196,7 @@ const SPECS = [
     // Edit Account. The User ID is the account's identity, and changing it would make the account a
     // second Stroom user, so the edit is its First Name.
     okPresenters: ['EditAccountPresenter'],
-    menu: ['Security', 'Manage Accounts'],
+    menu: ['Security', 'Accounts'],
     create: 'New Account',
     edit: 'Edit Selected Account',
     remove: 'Delete Selected Account',

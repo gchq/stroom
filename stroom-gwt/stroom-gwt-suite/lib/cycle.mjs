@@ -1070,7 +1070,7 @@ export function permissionSteps({ user = 'admin', from = 'Owner', to = 'View', c
   };
   return [
     ['open its Permissions', async (ctx) => {
-      await ctx.menuPath(ctx.name, ['Permissions']);
+      await ctx.menuPath(ctx.name, ['Edit Permissions']);
       await ctx.settle(1500);
       const row = await readBack(ctx);
       if (row['Explicit Permission'] !== from) throw new Error(`"${user}" starts as "${row['Explicit Permission']}", not "${from}"`);
@@ -1091,9 +1091,9 @@ export function permissionSteps({ user = 'admin', from = 'Owner', to = 'View', c
  * back to "never had a status", and each change adds history, so the cycle makes an annotation of
  * its own and deletes it rather than changing the seeded one:
  *
- *     Create Annotation on an event row -> read its id from the editor tab (`#<id> <title>`)
+ *     New Annotation on an event row -> read its id from the editor tab (`#<id> <title>`)
  *     -> `from "Annotations"` -> select its row -> Change Status -> re-run, read the status
- *     -> Change Assigned To (Assign Yourself) -> re-run, read the assignee
+ *     -> Change Assignee (Assign Yourself) -> re-run, read the assignee
  *     -> Delete Annotation in its editor -> re-run, read it absent
  *
  * `spec.query` names any Query document: its text is replaced in the browser and never saved.
@@ -1175,7 +1175,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     })) return rec;
 
     const allowedBefore = (guard.allowed ?? []).length;
-    const madeIt = await phase('create an annotation on an event (Create Annotation)', async () => {
+    const madeIt = await phase('create an annotation on an event (New Annotation)', async () => {
       await runQuery(spec.eventQuery);
       const first = (await readRows(page))[0];
       if (!first) throw new Error(`"${spec.eventQuery}" returned no rows`);
@@ -1183,7 +1183,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       await settle(500);
       if (!(await clickButton(page, 'Annotate Selected Rows'))) throw new Error('no Annotate Selected Rows button');
       await settle(800);
-      if (!(await clickMenuItem(page, 'Create Annotation'))) throw new Error('no "Create Annotation" in the Annotate menu');
+      if (!(await clickMenuItem(page, 'New Annotation'))) throw new Error('no "New Annotation" in the Annotate menu');
       await settle(3000);
       const said = await alertText();
       if (said) throw new Error(`the create was refused: "${String(said).slice(0, 300)}"`);
@@ -1219,8 +1219,8 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       return `"${spec.status}" after re-running the query`;
     })) return rec;
 
-    await phase('change it to assigned to me (Change Assigned To)', async () => {
-      await annotate('Change Assigned To');
+    await phase('change it to assigned to me (Change Assignee)', async () => {
+      await annotate('Change Assignee');
       const dlg = page.locator('.dialog-popup, .resizableDialog-popup').last();
       await dlg.locator('.annotationAssignYourself').first().click({ timeout: 5_000 });
       await settle(600);
@@ -1262,7 +1262,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       return `"${comment}" in the history after reopening the editor`;
     })) {
       await phase('change the comment (Edit Comment)', async () => {
-        // A MOUSEDOWN on the entry opens its Edit Entry / Delete Entry menu (showEntryEditMenu);
+        // A MOUSEDOWN on the entry opens its Edit Comment / Delete Entry menu (showEntryEditMenu);
         // COMMENT is entry type 4.
         const box = await page.evaluate(() => {
           const el = [...document.querySelectorAll('[entryType="4"]')].find((e) => e.offsetWidth > 0);
@@ -1276,7 +1276,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
         await page.mouse.down();
         await page.mouse.up();
         await settle(600);
-        if (!(await clickMenuItem(page, 'Edit Entry'))) throw new Error('no "Edit Entry" in the entry\'s menu');
+        if (!(await clickMenuItem(page, 'Edit Comment'))) throw new Error('no "Edit Comment" in the entry\'s menu');
         await settle(1200);
         // The dialog's text is an Ace editor (CommentEditPresenter's editorPresenter), whose textarea
         // is only Ace's input catcher; and the query's own Ace editor is on the page behind it.

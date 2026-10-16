@@ -187,8 +187,9 @@ public final class AnnotationEditorStories {
                     final Play screen = play.screen();
                     play.findByText("Looking into it.");
                     play.fireEvent().mouseDown(play.querySelectorAll(".annotationHistoryCommentHeader").nth(0));
-                    play.click(screen.findByText("Edit Entry"));
-                    final Play dialog = screen.within(screen.findByText("Edit Comment").closest(StroomDom.DIALOG));
+                    play.click(screen.findByText("Edit Comment", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("Edit Comment", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
                     final Query text = dialog.getByRole("textbox");
                     play.clear(text);
                     play.type(text, "Updated comment");
@@ -205,8 +206,9 @@ public final class AnnotationEditorStories {
                     play.findByText("Looking into it.");
                     // Pressing an entry's header (here the comment's) shows its menu
                     play.fireEvent().mouseDown(play.querySelectorAll(".annotationHistoryCommentHeader").nth(0));
-                    play.click(screen.findByText("Edit Entry"));
-                    final Play dialog = screen.within(screen.findByText("Edit Comment").closest(StroomDom.DIALOG));
+                    play.click(screen.findByText("Edit Comment", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = screen.within(screen.findByText("Edit Comment", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
                     final Query text = dialog.getByRole("textbox");
                     play.clear(text);
                     play.type(text, "Updated comment");

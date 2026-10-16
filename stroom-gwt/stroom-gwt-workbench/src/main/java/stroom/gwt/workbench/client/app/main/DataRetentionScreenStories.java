@@ -169,23 +169,23 @@ public final class DataRetentionScreenStories {
                     play.click(play.within(row(play, "Keep 30 days")).getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(menuItem(screen, "Edit Rule")).toBeVisible());
                     for (final String label : new String[]{
-                            "Add new rule above", "Add new rule below", "Edit Rule", "Copy Rule", "Delete Rule"}) {
+                            "Add Rule Above", "Add Rule Below", "Edit Rule", "Duplicate Rule", "Delete Rule"}) {
                         play.expect(menuItem(screen, label)).toBeVisible();
                     }
                     // Row 1 of 2: no Move Up, but Move Down
                     play.expect(screen.queryByText("Move Rule Up", StroomDom.MENU_ITEM_TEXT)).toBeNull();
                     play.expect(menuItem(screen, "Move Rule Down")).toBeVisible();
-                    // Copy Rule acts on that row -> a second rule appears
-                    play.click(menuItem(screen, "Copy Rule"));
+                    // Duplicate Rule acts on that row -> a second rule appears
+                    play.click(menuItem(screen, "Duplicate Rule"));
                     play.waitFor(() -> play.expect(play.getAllByText("Keep 30 days").count()).toBe(2));
-                    // The default retain-all row: only Add above and Copy
+                    // The default retain-all row: only Add above and Duplicate
                     play.click(play.within(row(play, "Default Retain All Forever Rule"))
                             .getByTitle(StroomDom.ACTIONS_TITLE));
-                    play.waitFor(() -> play.expect(menuItem(screen, "Add new rule above")).toBeVisible());
-                    play.expect(menuItem(screen, "Copy Rule")).toBeVisible();
+                    play.waitFor(() -> play.expect(menuItem(screen, "Add Rule Above")).toBeVisible());
+                    play.expect(menuItem(screen, "Duplicate Rule")).toBeVisible();
                     play.expect(screen.queryByText("Edit Rule", StroomDom.MENU_ITEM_TEXT)).toBeNull();
                     play.expect(screen.queryByText("Delete Rule", StroomDom.MENU_ITEM_TEXT)).toBeNull();
-                    play.expect(screen.queryByText("Add new rule below", StroomDom.MENU_ITEM_TEXT)).toBeNull();
+                    play.expect(screen.queryByText("Add Rule Below", StroomDom.MENU_ITEM_TEXT)).toBeNull();
                     expectNoProblems(play);
                 })
                 // The Impact Summary tab: Run Query fetches the per-rule deletion counts

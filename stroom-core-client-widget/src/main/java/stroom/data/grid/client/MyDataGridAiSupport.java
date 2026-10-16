@@ -84,7 +84,7 @@ public class MyDataGridAiSupport<T> {
 
             menuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.AI)
-                    .text("Column For Selected Rows")
+                    .text("Column for Selected Rows")
                     .command(() -> aiColumnForSelectedRows(col))
                     .build());
         }

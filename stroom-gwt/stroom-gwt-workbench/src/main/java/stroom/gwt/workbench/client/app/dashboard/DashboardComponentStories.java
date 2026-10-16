@@ -208,16 +208,16 @@ public final class DashboardComponentStories {
                     DashboardPlays.clickHeader(play, DashboardPlays.header(play, "Name"));
                     play.waitFor(() -> play.expect(screen.getByText("Rename", StroomDom.MENU_ITEM_TEXT))
                             .toBeInTheDocument());
-                    for (final String item : List.of("Expression", "Group", "Duplicate", "Remove")) {
+                    for (final String item : List.of("Edit Expression", "Group", "Duplicate", "Remove")) {
                         play.expect(screen.getByText(item, StroomDom.MENU_ITEM_TEXT)).toBeInTheDocument();
                     }
                     final Value<List<String>> labels = play.capture("labels",
                             screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT).textContents());
-                    play.expect("the items' order", () -> inOrder(labels.get(), List.of("Rename", "Expression",
-                            "Sort", "Group", "Format", "Filter", "Move First", "Move Last", "Duplicate", "Hide",
-                            "Remove"))).toBe(true);
-                    play.expect("index of Remove after Hide",
-                                    () -> labels.get().indexOf("Remove") > labels.get().indexOf("Hide"))
+                    play.expect("the items' order", () -> inOrder(labels.get(), List.of("Rename", "Edit Expression",
+                            "Sort", "Group", "Format", "Filter", "Move Column to Start", "Move Column to End",
+                            "Duplicate", "Hide Column", "Remove"))).toBe(true);
+                    play.expect("index of Remove after Hide Column",
+                                    () -> labels.get().indexOf("Remove") > labels.get().indexOf("Hide Column"))
                             .toBe(true);
                     play.expect(labels).not().toContain("Column Filter");
                     play.click(screen.getByText("Rename", StroomDom.MENU_ITEM_TEXT));

@@ -328,7 +328,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.OPEN)
-                    .text("Follow URL")
+                    .text("Open Link")
                     .command(() -> HyperlinkEvent.fire(
                             globalEventBus,
                             finalHyperlink,
@@ -339,7 +339,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 if ("self".equals(hyperlink.getTarget())) {
                     menuItems.add(new Builder()
                             .icon(SvgImage.OPEN)
-                            .text("Open In New Tab")
+                            .text("Open Link in New Tab")
                             .command(() -> HyperlinkEvent.fire(
                                     globalEventBus,
                                     finalHyperlink.copy().target("tab").build(),
@@ -348,7 +348,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 } else {
                     menuItems.add(new Builder()
                             .icon(SvgImage.OPEN)
-                            .text("Open In This Tab")
+                            .text("Open Link in This Tab")
                             .command(() -> HyperlinkEvent.fire(
                                     globalEventBus,
                                     finalHyperlink.copy().target("self").build(),
@@ -415,14 +415,14 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
             copyMenuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.COPY)
-                    .text("Column For Selected Rows")
+                    .text("Column for Selected Rows")
                     .command(() -> exportColumnForSelectedRows(colIndex))
                     .build());
         }
 
         copyMenuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.COPY)
-                .text("Table")
+                .text("Current Page")
                 .command(this::copyTableAsCSV)
                 .build());
 

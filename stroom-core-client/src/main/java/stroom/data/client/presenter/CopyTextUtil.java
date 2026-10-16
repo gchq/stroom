@@ -158,7 +158,7 @@ public class CopyTextUtil {
                         menuItems.add(new IconMenuItem.Builder()
                                 .priority(2)
                                 .icon(SvgImage.INSERT)
-                                .text("Insert")
+                                .text("Insert into Expression")
                                 .command(() -> insertHandler.accept(text.trim()))
                                 .build());
                     }

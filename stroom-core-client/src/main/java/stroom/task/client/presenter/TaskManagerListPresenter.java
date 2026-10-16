@@ -473,7 +473,7 @@ public class TaskManagerListPresenter
                 menuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.OPEN)
-                        .text("Show Filter Tasks")
+                        .text("Show Processor Filter Tasks")
                         .enabled(true)
                         .command(() -> OpenProcessorTaskEvent.fire(this, processorFilter))
                         .build());

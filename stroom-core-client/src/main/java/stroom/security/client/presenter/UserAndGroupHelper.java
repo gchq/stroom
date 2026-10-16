@@ -266,43 +266,43 @@ public class UserAndGroupHelper {
                         .icon(userRef.isGroup()
                                 ? UserTabPlugin.GROUP_ICON
                                 : UserTabPlugin.USER_ICON)
-                        .text("Open " + userRef.getType(CaseType.LOWER)
-                              + " '" + userRef.toDisplayString() + "'")
+                        // The menu name gives the user/group name
+                        .text("Open " + userRef.getType(CaseType.SENTENCE))
                         .command(() ->
                                 OpenUserEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && screens.contains(UserScreen.USERS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(UsersPlugin.ICON)
-                        .text(buildMenuItemText(userRef, UsersPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(UsersPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenUsersScreenEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && !isExternalIdp && screens.contains(UserScreen.ACCOUNTS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(AccountsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, AccountsPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(AccountsPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenAccountEvent.fire(hasHandlers, userRef.getSubjectId())));
             }
             if (screens.contains(UserScreen.USER_GROUPS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(UsersAndGroupsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, UsersAndGroupsPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(UsersAndGroupsPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenUsersAndGroupsScreenEvent.fire(hasHandlers, userRef)));
             }
             if (screens.contains(UserScreen.APP_PERMISSIONS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(AppPermissionsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, AppPermissionsPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(AppPermissionsPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenAppPermissionsScreenEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && screens.contains(UserScreen.API_KEYS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(ApiKeysPlugin.ICON)
-                        .text(buildMenuItemText(userRef, ApiKeysPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(ApiKeysPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenApiKeysScreenEvent.fire(hasHandlers, userRef)));
             }
@@ -311,7 +311,7 @@ public class UserAndGroupHelper {
 
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(UserTabPlugin.USER_ICON)
-                        .text("Copy user groups and permissions from...")
+                        .text("Copy User Groups and Permissions from...")
                         .command(() -> {
                             copyPermissionsPopupFunction.apply(userRef).show("Select User");
                         }));
@@ -321,8 +321,9 @@ public class UserAndGroupHelper {
         }
     }
 
-    private static String buildMenuItemText(final UserRef userRef, final String screenName) {
-        return "Show " + userRef.getType(CaseType.LOWER) + " on the " + screenName + " screen";
+    private static String buildMenuItemText(final String screenName) {
+        // The menu name gives the user/group, so only the screen is needed
+        return "Show in " + screenName;
     }
 
     public static String buildActionsForMsg(final User user) {
