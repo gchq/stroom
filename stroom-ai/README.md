@@ -71,7 +71,7 @@ On the model's **MCP Tool Servers** tab, add each server's Streamable HTTP endpo
 * **Server instructions**: what a trusted server says, when connected, about how to use it (for FastMCP,
   the order of work and its rules) is added to the system prompt while the model is offered any of its
   tools, up to 20,000 characters per server. The context meter shows what it takes.
-* **Tool policies** (Tools tab): a list of a regular expression and a policy, added with **+**. The pattern
+* **Tool policies** (Tool Policies tab): a list of a regular expression and a policy, added with **+**. The pattern
   must match the tool's whole name, ignoring case, e.g. `find_.*` or `(get|list)_feeds?`, and the first
   policy to match applies: _Allow_ (runs without asking), _Ask every time_, or _Deny_ (never offered to the
   model). Tools no policy matches run without asking if the server is trusted and the tool is read-only,
