@@ -513,6 +513,12 @@
   "app-main-resultstoresdialog--stores": [
     "scrollable-region-focusable"
   ],
+  "app-main-topbar--focus-rings": [
+    "button-name"
+  ],
+  "app-main-topbar--keyboard": [
+    "button-name"
+  ],
   "app-main-visualisationassets--upload-deduplicates-name": [
     "aria-required-parent",
     "image-alt"

@@ -1011,7 +1011,12 @@ public final class AppShellStories {
     // --------------------------------------------------------------------------------
     // Rendering
 
-    private static Widget render(final StoryContext context, final ExplorerFixture tree) {
+    /// Renders the app shell over a tree, with the routes every app shell story answers.
+    ///
+    /// @param context The story's context.
+    /// @param tree    The explorer's tree.
+    /// @return The shell, started.
+    static Widget render(final StoryContext context, final ExplorerFixture tree) {
         return render(context, tree, routes -> {
         }, builder -> {
         }, null);
