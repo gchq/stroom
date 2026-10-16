@@ -39,99 +39,124 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Command;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/// The keyboard shortcuts of the user interface, and the handling of key events to find the
+/// [Action] a key press is bound to.
+///
+/// There are two kinds of binding:
+///
+/// * Fixed bindings, which the user can't change, e.g. the arrow keys to move around a list, or
+///   Escape to close a dialog. These follow the conventions that assistive technology expects.
+/// * Configurable bindings, which have defaults that the user can change in their preferences
+///   (see [#applyUserBindings(Map, boolean)]), e.g. `Ctrl+S` to save. Only actions with an
+///   [Action#getCategory()] are configurable.
+///
+/// The user can also turn off all character key shortcuts, e.g. `W` to move up a list or `G U`
+/// to go to the user preferences, so that speech input users don't trigger them by accident
+/// (WCAG 2.1.4).
 public class KeyBinding {
 
-    private static final Map<Shortcut, Action> SHORTCUT_TO_ACTION_MAP = new HashMap<>();
-    private static final Map<Action, List<Shortcut>> ACTION_TO_SHORTCUTS_MAP = new HashMap<>();
+    // Built-in bindings that can't be changed, by action
+    private static final Map<Action, List<KeyStroke>> FIXED_BINDINGS = new LinkedHashMap<>();
+    // The default bindings of the configurable actions, which the user can change
+    private static final Map<Action, List<KeyShortcut>> DEFAULT_BINDINGS = new LinkedHashMap<>();
 
     private static final Map<Action, Command> COMMANDS = new HashMap<>();
 
     private static final Map<String, Action> DOC_TYPE_TO_ACTION_MAP = new HashMap<>();
 
-    private static final int GOTO_FIRST_KEY = KeyCodes.KEY_G;
-    private static final int CREATE_DOC_FIRST_KEY = KeyCodes.KEY_C;
-//    private static final int SUB_TAB_FIRST_KEY = KeyCodes.KEY_T;
+    // The bindings in use, made from the fixed and default bindings and the user's changes
+    private static final Map<KeyStroke, Action> KEY_STROKE_TO_ACTION_MAP = new HashMap<>();
+    private static final Map<Action, List<KeyShortcut>> ACTION_TO_SHORTCUTS_MAP = new HashMap<>();
+    private static KeySequences keySequences = new KeySequences();
 
-    private static final KeySequences KEY_SEQUENCES = new KeySequences();
+    // Whether a key recorder has the focus, see #setRecording
+    private static boolean recording;
 
     static {
-        add(Action.MOVE_UP, KeyCodes.KEY_W, KeyCodes.KEY_K, KeyCodes.KEY_UP);
-        add(Action.MOVE_DOWN, KeyCodes.KEY_S, KeyCodes.KEY_J, KeyCodes.KEY_DOWN);
-        add(Action.MOVE_LEFT, KeyCodes.KEY_A, KeyCodes.KEY_H, KeyCodes.KEY_LEFT);
-        add(Action.MOVE_RIGHT, KeyCodes.KEY_D, KeyCodes.KEY_L, KeyCodes.KEY_RIGHT);
-        add(Action.MOVE_PAGE_DOWN, KeyCodes.KEY_PAGEDOWN);
-        add(Action.MOVE_PAGE_UP, KeyCodes.KEY_PAGEUP);
-        add(Action.MOVE_START, KeyCodes.KEY_HOME);
-        add(Action.MOVE_END, KeyCodes.KEY_END);
-        add(Action.CLOSE, KeyCodes.KEY_ESCAPE);
-//        add(Action.EDIT, KeyCodes.KEY_E);
-        add(Action.EXECUTE, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n');
-        add(Action.SELECT, KeyCodes.KEY_SPACE);
-        add(Action.SELECT_ALL, Shortcut.builder().ctrl().keyCode(KeyCodes.KEY_A).build());
-        add(Action.MENU, Shortcut.builder().alt().keyCode(KeyCodes.KEY_CONTEXT_MENU).build());
-        add(Action.OK, true, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n');
+        addFixed(Action.MOVE_UP, KeyCodes.KEY_UP);
+        addFixed(Action.MOVE_DOWN, KeyCodes.KEY_DOWN);
+        addFixed(Action.MOVE_LEFT, KeyCodes.KEY_LEFT);
+        addFixed(Action.MOVE_RIGHT, KeyCodes.KEY_RIGHT);
+        addFixed(Action.MOVE_PAGE_DOWN, KeyCodes.KEY_PAGEDOWN);
+        addFixed(Action.MOVE_PAGE_UP, KeyCodes.KEY_PAGEUP);
+        addFixed(Action.MOVE_START, KeyCodes.KEY_HOME);
+        addFixed(Action.MOVE_END, KeyCodes.KEY_END);
+        addFixed(Action.CLOSE, KeyCodes.KEY_ESCAPE);
+        addFixed(Action.EXECUTE, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n');
+        addFixed(Action.SELECT, KeyCodes.KEY_SPACE);
+        addFixed(Action.SELECT_ALL, KeyStroke.builder().ctrl().keyCode(KeyCodes.KEY_A).build());
+        addFixed(Action.MENU, KeyStroke.builder().alt().keyCode(KeyCodes.KEY_CONTEXT_MENU).build());
+        addFixed(Action.OK,
+                KeyStroke.builder().ctrl().keyCode(KeyCodes.KEY_ENTER).build(),
+                KeyStroke.builder().ctrl().keyCode(KeyCodes.KEY_MAC_ENTER).build(),
+                KeyStroke.builder().ctrl().keyCode('\n').build());
 
-        add(Action.ITEM_SAVE, Shortcut.builder().ctrl().keyCode(KeyCodes.KEY_S).build());
-        add(Action.ITEM_SAVE_ALL, Shortcut.builder().shift().ctrl().keyCode(KeyCodes.KEY_S).build());
-        add(Action.ITEM_CLOSE, Shortcut.builder().alt().keyCode(KeyCodes.KEY_W).build());
-        add(Action.ITEM_CLOSE_ALL, Shortcut.builder().shift().alt().keyCode(KeyCodes.KEY_W).build());
+        // Character keys to move around lists, which the user can change or turn off
+        addDefault(Action.MOVE_UP, "W", "K");
+        addDefault(Action.MOVE_DOWN, "S", "J");
+        addDefault(Action.MOVE_LEFT, "A", "H");
+        addDefault(Action.MOVE_RIGHT, "D", "L");
 
-        add(Action.FIND, Shortcut.builder().alt().shift().keyCode(KeyCodes.KEY_F).build());
-        add(Action.FIND_IN_CONTENT, Shortcut.builder().ctrl().shift().keyCode(KeyCodes.KEY_F).build());
-        add(Action.RECENT_ITEMS, Shortcut.builder().ctrl().keyCode(KeyCodes.KEY_E).build());
-        add(Action.LOCATE, Shortcut.builder().alt().keyCode(KeyCodes.KEY_L).build());
-        add(Action.MAXIMISE_PANE, Shortcut.builder().alt().keyCode(KeyCodes.KEY_M).build());
-        add(Action.HELP, Shortcut.builder().keyCode(KeyCodes.KEY_F1).build());
-        add(Action.SHOW_KEY_BINDS, Shortcut.builder().keyCode(MyKeyCodes.KEY_QUESTION_MARK).build());
-        add(Action.INFO, Shortcut.builder().keyCode(KeyCodes.KEY_I).build());
-        add(Action.FOCUS_FILTER, Shortcut.builder().keyCode(MyKeyCodes.KEY_FORWARD_SLASH).build());
-        add(Action.FOCUS_EXPLORER_FILTER, Shortcut.builder().ctrl().keyCode(MyKeyCodes.KEY_FORWARD_SLASH).build());
+        addDefault(Action.ITEM_SAVE, "Ctrl+S");
+        addDefault(Action.ITEM_SAVE_ALL, "Ctrl+Shift+S");
+        addDefault(Action.ITEM_CLOSE, "Alt+W");
+        addDefault(Action.ITEM_CLOSE_ALL, "Alt+Shift+W");
 
-        KEY_SEQUENCES.addKeySequence(Action.FIND, KeyCodes.KEY_SHIFT, KeyCodes.KEY_SHIFT);
+        addDefault(Action.FIND, "Alt+Shift+F", "Shift Shift");
+        addDefault(Action.FIND_IN_CONTENT, "Ctrl+Shift+F");
+        addDefault(Action.RECENT_ITEMS, "Ctrl+E");
+        addDefault(Action.LOCATE, "Alt+L");
+        addDefault(Action.MAXIMISE_PANE, "Alt+M");
+        addDefault(Action.HELP, "F1");
+        addDefault(Action.FOCUS_FILTER, "/");
+        addDefault(Action.FOCUS_EXPLORER_FILTER, "Ctrl+/");
 
         // Binds for Going To a single instance screen. Sort these by 2nd key
-        addGotoKeySequence(Action.GOTO_APP_PERMS, KeyCodes.KEY_A);
-        addGotoKeySequence(Action.GOTO_ANNOTATIONS, KeyCodes.KEY_B);
-        addGotoKeySequence(Action.GOTO_CACHES, KeyCodes.KEY_C);
-        addGotoKeySequence(Action.GOTO_DEPENDENCIES, KeyCodes.KEY_D);
-        addGotoKeySequence(Action.GOTO_EXPLORER_TREE, KeyCodes.KEY_E);
-        addGotoKeySequence(Action.GOTO_INDEX_VOLUMES, KeyCodes.KEY_I);
-        addGotoKeySequence(Action.GOTO_JOBS, KeyCodes.KEY_J);
-        addGotoKeySequence(Action.GOTO_API_KEYS, KeyCodes.KEY_K);
-        addGotoKeySequence(Action.GOTO_NODES, KeyCodes.KEY_N);
-        addGotoKeySequence(Action.GOTO_PROPERTIES, KeyCodes.KEY_P);
-        addGotoKeySequence(Action.GOTO_DATA_RETENTION, KeyCodes.KEY_R);
-        addGotoKeySequence(Action.GOTO_SEARCH_RESULTS, KeyCodes.KEY_S);
-        addGotoKeySequence(Action.GOTO_TASKS, KeyCodes.KEY_T);
-        addGotoKeySequence(Action.GOTO_USER_GROUPS, KeyCodes.KEY_G);
-        addGotoKeySequence(Action.GOTO_USER_PREFERENCES, KeyCodes.KEY_U);
-        addGotoKeySequence(Action.GOTO_FS_VOLUMES, KeyCodes.KEY_V);
-        addGotoKeySequence(Action.GOTO_USER_ACCESS, KeyCodes.KEY_W);
-        addGotoKeySequence(Action.GOTO_USER_ACCOUNTS, KeyCodes.KEY_X);
-        addGotoKeySequence(Action.GOTO_SIGNING_KEYS, KeyCodes.KEY_Y);
+        addDefault(Action.GOTO_APP_PERMS, "G A");
+        addDefault(Action.GOTO_ANNOTATIONS, "G B");
+        addDefault(Action.GOTO_CACHES, "G C");
+        addDefault(Action.GOTO_DEPENDENCIES, "G D");
+        addDefault(Action.GOTO_EXPLORER_TREE, "G E");
+        addDefault(Action.GOTO_USER_GROUPS, "G G");
+        addDefault(Action.GOTO_INDEX_VOLUMES, "G I");
+        addDefault(Action.GOTO_JOBS, "G J");
+        addDefault(Action.GOTO_API_KEYS, "G K");
+        addDefault(Action.GOTO_NODES, "G N");
+        addDefault(Action.GOTO_PROPERTIES, "G P");
+        addDefault(Action.GOTO_DATA_RETENTION, "G R");
+        addDefault(Action.GOTO_SEARCH_RESULTS, "G S");
+        addDefault(Action.GOTO_TASKS, "G T");
+        addDefault(Action.GOTO_USER_PREFERENCES, "G U");
+        addDefault(Action.GOTO_FS_VOLUMES, "G V");
+        addDefault(Action.GOTO_USER_ACCESS, "G W");
+        addDefault(Action.GOTO_USER_ACCOUNTS, "G X");
+        addDefault(Action.GOTO_SIGNING_KEYS, "G Y");
 
         // Binds for creating a document. Sort these by 2nd key
-        addCreateDocKeySequence(Action.CREATE_ANNOTATION, KeyCodes.KEY_A);
-        addCreateDocKeySequence(Action.CREATE_ELASTIC_INDEX, KeyCodes.KEY_C);
-        addCreateDocKeySequence(Action.CREATE_DASHBOARD, KeyCodes.KEY_D);
-        addCreateDocKeySequence(Action.CREATE_FEED, KeyCodes.KEY_E);
-        addCreateDocKeySequence(Action.CREATE_FOLDER, KeyCodes.KEY_F);
-        addCreateDocKeySequence(Action.CREATE_DICTIONARY, KeyCodes.KEY_I);
-        addCreateDocKeySequence(Action.CREATE_LUCENE_INDEX, KeyCodes.KEY_L);
-        addCreateDocKeySequence(Action.CREATE_DOCUMENTATION, KeyCodes.KEY_O);
-        addCreateDocKeySequence(Action.CREATE_PIPELINE, KeyCodes.KEY_P);
-        addCreateDocKeySequence(Action.CREATE_QUERY, KeyCodes.KEY_Q);
-        addCreateDocKeySequence(Action.CREATE_ANALYTIC_RULE, KeyCodes.KEY_R);
-        addCreateDocKeySequence(Action.CREATE_TEXT_CONVERTER, KeyCodes.KEY_T);
-        addCreateDocKeySequence(Action.CREATE_VIEW, KeyCodes.KEY_V);
-        addCreateDocKeySequence(Action.CREATE_XSLT, KeyCodes.KEY_X);
+        addDefault(Action.CREATE_ANNOTATION, "C A");
+        addDefault(Action.CREATE_ELASTIC_INDEX, "C C");
+        addDefault(Action.CREATE_DASHBOARD, "C D");
+        addDefault(Action.CREATE_FEED, "C E");
+        addDefault(Action.CREATE_FOLDER, "C F");
+        addDefault(Action.CREATE_DICTIONARY, "C I");
+        addDefault(Action.CREATE_LUCENE_INDEX, "C L");
+        addDefault(Action.CREATE_DOCUMENTATION, "C O");
+        addDefault(Action.CREATE_PIPELINE, "C P");
+        addDefault(Action.CREATE_QUERY, "C Q");
+        addDefault(Action.CREATE_ANALYTIC_RULE, "C R");
+        addDefault(Action.CREATE_TEXT_CONVERTER, "C T");
+        addDefault(Action.CREATE_VIEW, "C V");
+        addDefault(Action.CREATE_XSLT, "C X");
 
         // Map doc types to the create actions, so we can get the action for a doc
         DOC_TYPE_TO_ACTION_MAP.put(ElasticIndexDoc.TYPE, Action.CREATE_ELASTIC_INDEX);
@@ -148,8 +173,7 @@ public class KeyBinding {
         DOC_TYPE_TO_ACTION_MAP.put(ViewDoc.TYPE, Action.CREATE_VIEW);
         DOC_TYPE_TO_ACTION_MAP.put(XsltDoc.TYPE, Action.CREATE_XSLT);
 
-//        addKeySequence(Action.DOCUMENTATION, SUB_TAB_FIRST_KEY, KeyCodes.KEY_D);
-//        addKeySequence(Action.SETTINGS, SUB_TAB_FIRST_KEY, KeyCodes.KEY_S);
+        applyUserBindings(Collections.emptyMap(), true);
     }
 
     public static void addCommand(final Action action, final Command command) {
@@ -164,62 +188,287 @@ public class KeyBinding {
         }
     }
 
+    /// The text of the main shortcut bound to an action, e.g. to show beside a menu item. This
+    /// reflects the user's changes to the bindings.
+    ///
+    /// @param action The action.
+    /// @return The text form of the action's first shortcut, e.g. `Ctrl+S` or `G U`, or null if
+    /// the action has no shortcut.
     public static String getShortcut(final Action action) {
-        final List<Shortcut> shortcuts = NullSafe.list(ACTION_TO_SHORTCUTS_MAP.get(action));
+        final List<KeyShortcut> shortcuts = NullSafe.list(ACTION_TO_SHORTCUTS_MAP.get(action));
+        return shortcuts.isEmpty()
+                ? null
+                : shortcuts.get(0).toString();
+    }
 
-        if (!shortcuts.isEmpty()) {
-            // Get the primary shortcut
-            return shortcuts.get(0).toString();
-        } else {
-            // Try key sequences instead
-            return KEY_SEQUENCES.getShortcut(action);
+    /// @return The actions whose bindings the user can change, in the order to show them.
+    public static List<Action> getConfigurableActions() {
+        final List<Action> actions = new ArrayList<>();
+        for (final Action action : Action.values()) {
+            if (action.isConfigurable()) {
+                actions.add(action);
+            }
         }
+        return actions;
+    }
+
+    /// @param action An action.
+    /// @return The action's built-in shortcuts, which the user can't change, e.g. the Up arrow to
+    /// move up a list. Empty if it has none.
+    public static List<KeyShortcut> getFixedShortcuts(final Action action) {
+        return NullSafe.list(FIXED_BINDINGS.get(action))
+                .stream()
+                .map(KeyShortcut::of)
+                .collect(Collectors.toList());
+    }
+
+    /// @param action A configurable action.
+    /// @return The action's default shortcuts, before any changes by the user. Empty if it has
+    /// none.
+    public static List<KeyShortcut> getDefaultShortcuts(final Action action) {
+        return NullSafe.list(DEFAULT_BINDINGS.get(action));
+    }
+
+    /// @return The default shortcuts of all the configurable actions, including those with none.
+    public static Map<Action, List<KeyShortcut>> getDefaultBindings() {
+        final Map<Action, List<KeyShortcut>> bindings = new LinkedHashMap<>();
+        for (final Action action : getConfigurableActions()) {
+            bindings.put(action, new ArrayList<>(getDefaultShortcuts(action)));
+        }
+        return bindings;
+    }
+
+    /// Makes the shortcuts of all the configurable actions from the defaults and the user's
+    /// changes, as saved in their preferences.
+    ///
+    /// @param userBindings The user's shortcuts for the actions they have changed, by action
+    ///                     name, in the text form of [KeyShortcut]. An empty list means the action
+    ///                     has no shortcut. Unknown actions and invalid shortcuts are ignored. May
+    ///                     be null.
+    /// @return The shortcuts of every configurable action, including those with none.
+    public static Map<Action, List<KeyShortcut>> fromUserBindings(final Map<String, List<String>> userBindings) {
+        final Map<Action, List<KeyShortcut>> bindings = getDefaultBindings();
+        NullSafe.map(userBindings).forEach((actionName, shortcutTexts) -> {
+            final Action action = parseAction(actionName);
+            if (action != null && action.isConfigurable()) {
+                final List<KeyShortcut> shortcuts = new ArrayList<>();
+                for (final String shortcutText : NullSafe.list(shortcutTexts)) {
+                    final KeyShortcut shortcut = KeyShortcut.parse(shortcutText);
+                    if (shortcut != null && !shortcuts.contains(shortcut)) {
+                        shortcuts.add(shortcut);
+                    }
+                }
+                bindings.put(action, shortcuts);
+            }
+        });
+        return bindings;
+    }
+
+    /// The reverse of [#fromUserBindings(Map)], for saving in the user's preferences: only the
+    /// actions whose shortcuts differ from the defaults are included, so that the user gets any
+    /// new default shortcuts in later versions of Stroom.
+    ///
+    /// @param bindings The shortcuts of the configurable actions. Actions that are missing keep
+    ///                 their defaults.
+    /// @return The shortcuts of the actions that differ from the defaults, by action name, in the
+    /// text form of [KeyShortcut], or null if none differ.
+    public static Map<String, List<String>> toUserBindings(final Map<Action, List<KeyShortcut>> bindings) {
+        final Map<String, List<String>> userBindings = new LinkedHashMap<>();
+        for (final Action action : getConfigurableActions()) {
+            final List<KeyShortcut> shortcuts = NullSafe.map(bindings).get(action);
+            if (shortcuts != null && !shortcuts.equals(getDefaultShortcuts(action))) {
+                userBindings.put(action.name(), shortcuts.stream()
+                        .map(KeyShortcut::toString)
+                        .collect(Collectors.toList()));
+            }
+        }
+        return userBindings.isEmpty()
+                ? null
+                : userBindings;
+    }
+
+    /// Makes the shortcuts that will be in use: the user's shortcuts (see
+    /// [#fromUserBindings(Map)]) less any that can't be used, i.e. those that clash with a fixed
+    /// binding, those that clash with a shortcut of an action before them, and character key
+    /// shortcuts if the user has turned them off. Actions the user has changed come before those
+    /// they haven't, so a new default shortcut never takes the place of one the user chose.
+    ///
+    /// @param userBindings                 The user's changes, as for [#fromUserBindings(Map)].
+    /// @param characterKeyShortcutsEnabled False if the user has turned off character key
+    ///                                     shortcuts.
+    /// @return The shortcuts in use for every configurable action, including those with none.
+    public static Map<Action, List<KeyShortcut>> resolve(final Map<String, List<String>> userBindings,
+                                                         final boolean characterKeyShortcutsEnabled) {
+        final Map<Action, List<KeyShortcut>> bindings = fromUserBindings(userBindings);
+        final List<Action> actions = new ArrayList<>();
+        for (final Entry<Action, List<KeyShortcut>> entry : bindings.entrySet()) {
+            if (!entry.getValue().equals(getDefaultShortcuts(entry.getKey()))) {
+                actions.add(entry.getKey());
+            }
+        }
+        for (final Action action : bindings.keySet()) {
+            if (!actions.contains(action)) {
+                actions.add(action);
+            }
+        }
+
+        final List<KeyShortcut> used = new ArrayList<>();
+        final Map<Action, List<KeyShortcut>> resolved = new LinkedHashMap<>();
+        for (final Action action : actions) {
+            final List<KeyShortcut> shortcuts = new ArrayList<>();
+            for (final KeyShortcut shortcut : bindings.get(action)) {
+                final boolean turnedOff = !characterKeyShortcutsEnabled && shortcut.isCharacterKeyShortcut();
+                final boolean clashes = findFixedClash(shortcut) != null
+                                        || used.stream().anyMatch(shortcut::clashesWith);
+                if (!turnedOff && !clashes) {
+                    shortcuts.add(shortcut);
+                    used.add(shortcut);
+                }
+            }
+            resolved.put(action, shortcuts);
+        }
+
+        // Back in the usual order
+        final Map<Action, List<KeyShortcut>> ordered = new LinkedHashMap<>();
+        for (final Action action : bindings.keySet()) {
+            ordered.put(action, resolved.get(action));
+        }
+        return ordered;
+    }
+
+    /// Changes the shortcuts in use to the user's, e.g. once their preferences have been loaded
+    /// or when they change them (see [#resolve(Map, boolean)]). Menu items show the new
+    /// shortcuts the next time they are shown.
+    ///
+    /// @param userBindings                 The user's changes, as for [#fromUserBindings(Map)].
+    /// @param characterKeyShortcutsEnabled False if the user has turned off character key
+    ///                                     shortcuts.
+    public static void applyUserBindings(final Map<String, List<String>> userBindings,
+                                         final boolean characterKeyShortcutsEnabled) {
+        KEY_STROKE_TO_ACTION_MAP.clear();
+        ACTION_TO_SHORTCUTS_MAP.clear();
+        keySequences = new KeySequences();
+
+        resolve(userBindings, characterKeyShortcutsEnabled).forEach((action, shortcuts) ->
+                shortcuts.forEach(shortcut -> bind(action, shortcut)));
+        // Fixed bindings last, so a menu shows the user's shortcut rather than e.g. an arrow key
+        FIXED_BINDINGS.forEach((action, keyStrokes) ->
+                keyStrokes.forEach(keyStroke -> bind(action, KeyShortcut.of(keyStroke))));
+    }
+
+    /// Finds the shortcuts of other actions that clash with a shortcut (see
+    /// [KeyShortcut#clashesWith(KeyShortcut)]), e.g. to warn the user before they bind it.
+    ///
+    /// @param bindings The shortcuts of the configurable actions.
+    /// @param action   The action that the shortcut is for.
+    /// @param shortcut The shortcut.
+    /// @return The clashing shortcuts of the other actions, by action, in the order of
+    /// `bindings`. Empty if there are none.
+    public static Map<Action, List<KeyShortcut>> findClashes(final Map<Action, List<KeyShortcut>> bindings,
+                                                             final Action action,
+                                                             final KeyShortcut shortcut) {
+        final Map<Action, List<KeyShortcut>> clashes = new LinkedHashMap<>();
+        NullSafe.map(bindings).forEach((otherAction, shortcuts) -> {
+            if (otherAction != action) {
+                final List<KeyShortcut> clashing = NullSafe.list(shortcuts)
+                        .stream()
+                        .filter(shortcut::clashesWith)
+                        .collect(Collectors.toList());
+                if (!clashing.isEmpty()) {
+                    clashes.put(otherAction, clashing);
+                }
+            }
+        });
+        return clashes;
+    }
+
+    /// @param shortcut A shortcut.
+    /// @return The action whose fixed binding the shortcut clashes with, e.g. [Action#SELECT]
+    /// for `Space`, or null if there is none. A shortcut like this can't be used.
+    public static Action findFixedClash(final KeyShortcut shortcut) {
+        for (final Entry<Action, List<KeyStroke>> entry : FIXED_BINDINGS.entrySet()) {
+            for (final KeyStroke keyStroke : entry.getValue()) {
+                if (shortcut.clashesWith(KeyShortcut.of(keyStroke))) {
+                    return entry.getKey();
+                }
+            }
+        }
+        return null;
+    }
+
+    /// Tells key handling that a key recorder, which lets the user press the keys of a new
+    /// shortcut, has the focus (or has lost it). While it has the focus, key presses don't run
+    /// commands or take part in key sequences, so that the user can press any keys. Only Escape
+    /// and Enter still give an action ([Action#CLOSE] and [Action#OK]), to close the recorder's
+    /// dialog.
+    ///
+    /// @param recording Whether a key recorder has the focus.
+    public static void setRecording(final boolean recording) {
+        KeyBinding.recording = recording;
+        keySequences.clear();
+    }
+
+    /// Makes a key stroke from a key event.
+    ///
+    /// @param e A key event.
+    /// @return The key, with the modifier keys held down.
+    public static KeyStroke getKeyStroke(final NativeEvent e) {
+        return KeyStroke.builder()
+                .keyCode(e.getKeyCode())
+                .shift(e.getShiftKey())
+                .ctrl(e.getCtrlKey())
+                .alt(e.getAltKey())
+                .meta(e.getMetaKey())
+                .build();
     }
 
     /// Whether a key press is a shortcut for an action, without the side effects of [#test] (it
     /// neither runs a command nor takes part in a key sequence), for a widget that handles an
-    /// action itself before the global key handler sees the key.
+    /// action itself before the global key handler sees the key. A key without Ctrl, Alt or Meta
+    /// isn't a shortcut while the user is typing in a text field.
     ///
     /// @param e      A `keydown` event.
     /// @param action The action.
     /// @return Whether the key, with its modifiers, is bound to the action.
     public static boolean isShortcut(final NativeEvent e, final Action action) {
-        return BrowserEvents.KEYDOWN.equals(e.getType())
-               && (e.getAltKey() || e.getCtrlKey() || e.getMetaKey())
+        return !recording
+               && BrowserEvents.KEYDOWN.equals(e.getType())
+               && (e.getAltKey() || e.getCtrlKey() || e.getMetaKey() || !isInput(e))
                && getKeyDownAction(e) == action;
     }
 
     public static Action test(final NativeEvent e) {
+        if (recording) {
+            return testWhileRecording(e);
+        }
+
         Action action = null;
-        logKey(e);
 
         // We don't want to test key binds in text input else we pick up things like the user typing '/'
         if (BrowserEvents.KEYDOWN.equals(e.getType())) {
-//            GWT.log("KeyBinding KEYDOWN " + keyCodeToString(e.getKeyCode()));
-
             // Only test a basic action if we have a modifier.
             if (e.getAltKey() || e.getCtrlKey() || e.getMetaKey()) {
                 // If there is a modifier then this isn't going to be a key sequence.
-                KEY_SEQUENCES.clear();
+                keySequences.clear();
                 action = getKeyDownAction(e);
                 action = testAction(e, action);
 
             } else if (isInput(e)) {
                 // We will support some single key bindings in text boxes.
                 if (e.getKeyCode() == KeyCodes.KEY_ESCAPE) {
-                    KEY_SEQUENCES.clear();
+                    keySequences.clear();
                     action = getKeyDownAction(e);
                     action = testAction(e, action);
                 } else if (e.getKeyCode() == KeyCodes.KEY_SHIFT) {
                     // Allow double shift keysequence in text area.
-                    KEY_SEQUENCES.onKeyDown(e);
+                    keySequences.onKeyDown(e);
                 } else {
-                    KEY_SEQUENCES.clear();
+                    keySequences.clear();
                 }
 
             } else {
                 // See if this is potentially part of a sequence.
-                if (!KEY_SEQUENCES.onKeyDown(e)) {
+                if (!keySequences.onKeyDown(e)) {
                     // It isn't part of a sequence so test if it is a simple binding.
                     action = getKeyDownAction(e);
                     if (action != null) {
@@ -229,12 +478,25 @@ public class KeyBinding {
             }
 
         } else if (BrowserEvents.KEYUP.equals(e.getType())) {
-//            GWT.log("KeyBinding KEYUP " + keyCodeToString(e.getKeyCode()));
-
-            action = KEY_SEQUENCES.onKeyUp(e);
+            action = keySequences.onKeyUp(e);
             action = testAction(e, action);
         }
         return action;
+    }
+
+    private static Action testWhileRecording(final NativeEvent e) {
+        if (BrowserEvents.KEYDOWN.equals(e.getType())
+            && !e.getAltKey()
+            && !e.getCtrlKey()
+            && !e.getMetaKey()
+            && !e.getShiftKey()) {
+            if (e.getKeyCode() == KeyCodes.KEY_ESCAPE) {
+                return Action.CLOSE;
+            } else if (e.getKeyCode() == KeyCodes.KEY_ENTER || e.getKeyCode() == KeyCodes.KEY_MAC_ENTER) {
+                return Action.OK;
+            }
+        }
+        return null;
     }
 
     private static Action testAction(final NativeEvent e,
@@ -254,7 +516,6 @@ public class KeyBinding {
         return action;
     }
 
-
     private static boolean isInput(final NativeEvent e) {
         final EventTarget eventTarget = e.getEventTarget();
         final boolean isInput;
@@ -266,11 +527,6 @@ public class KeyBinding {
                 //  components so that we can control the key events
                 isInput = isTextBox(element, tagName)
                           || "TEXTAREA".equalsIgnoreCase(tagName);
-
-//                final String className = NullSafe.string(element.getClassName());
-//                final String type = element.getAttribute("type");
-//                GWT.log("className: " + className + " tagName: " + element.getTagName()
-//                        + " type: " + type + " shouldCheck: " + shouldCheck);
             } else {
                 isInput = false;
             }
@@ -296,192 +552,65 @@ public class KeyBinding {
                || "url".equalsIgnoreCase(type);
     }
 
-    private static void logKey(final NativeEvent e) {
-//        final List<String> keys = new ArrayList<>();
-//        if (e.getShiftKey()) {
-//            keys.add("Shift");
-//        }
-//        if (e.getCtrlKey()) {
-//            keys.add("Ctrl");
-//        }
-//        if (e.getAltKey()) {
-//            keys.add("Alt");
-//        }
-//        if (e.getMetaKey()) {
-//            keys.add("Meta");
-//        }
-//        keys.add(KeyBinding.keyCodeToString(e.getKeyCode()));
-//        GWT.log(e.getType()
-//                + " (" + e.getKeyCode() + ") - "
-//                + String.join("+", keys)
-//                + ", firstInSequence: " + firstInSequence
-//                + ", eventTargetKey: " + deriveEventTargetKey(e));
-    }
-
     private static Action getKeyDownAction(final NativeEvent e) {
+        return KEY_STROKE_TO_ACTION_MAP.get(getKeyStroke(e));
+    }
 
-        final Shortcut shortcut = getShortcut(e);
-
-//        GWT.log("KEYDOWN = " + shortcut);
-
-        final Binding binding = getBinding(shortcut);
-        Action action = null;
-//        Command command = null;
-        if (binding != null) {
-
-//            GWT.log("BINDING = " + binding);
-
-            action = binding.action;
+    private static Action parseAction(final String actionName) {
+        for (final Action action : Action.values()) {
+            if (action.name().equals(actionName)) {
+                return action;
+            }
         }
-        return action;
+        return null;
     }
 
-    private static Shortcut getShortcut(final NativeEvent e) {
-        return Shortcut.builder()
-                .keyCode(e.getKeyCode())
-                .shift(e.getShiftKey())
-                .ctrl(e.getCtrlKey())
-                .alt(e.getAltKey())
-                .meta(e.getMetaKey())
-                .build();
+    private static void bind(final Action action, final KeyShortcut shortcut) {
+        if (shortcut.isSequence()) {
+            final List<KeyStroke> keyStrokes = shortcut.getKeyStrokes();
+            keySequences.addKeySequence(action, keyStrokes.get(0).getKeyCode(), keyStrokes.get(1).getKeyCode());
+        } else {
+            // First binding of a key stroke wins
+            if (!KEY_STROKE_TO_ACTION_MAP.containsKey(shortcut.getFirst())) {
+                KEY_STROKE_TO_ACTION_MAP.put(shortcut.getFirst(), action);
+            }
+        }
+        ACTION_TO_SHORTCUTS_MAP.computeIfAbsent(action, k -> new ArrayList<>()).add(shortcut);
     }
 
-    private static Binding getBinding(final Shortcut shortcut) {
-        Binding binding = null;
-        // Favour exact matches
-        binding = NullSafe.get(SHORTCUT_TO_ACTION_MAP.get(shortcut),
-                action -> new Binding.Builder().action(action).shortcut(shortcut).build());
-
-        // TODO Commented this out as it seems a tad risky, better to be explicit with binds
-//        if (binding == null) {
-//            // If we have a binding that isn't exact but has the same keycode without specifying modifiers then
-//            // return the bound action.
-//            for (final Binding binding : BINDINGS) {
-//                if (!binding.shortcut.hasModifiers() && binding.shortcut.keyCode == shortcut.keyCode) {
-//                    return binding;
-//                }
-//            }
-//        }
-        return binding;
-    }
-
-    static void add(final Action action,
-                    final boolean ctrl,
-                    final int... keyCode) {
-        for (final int code : keyCode) {
-            add(action, Shortcut.builder()
-                    .ctrl(ctrl)
-                    .keyCode(code)
-                    .build());
+    private static void addFixed(final Action action, final int... keyCodes) {
+        for (final int keyCode : keyCodes) {
+            addFixed(action, KeyStroke.of(keyCode));
         }
     }
 
-    static void add(final Action action, final int... keyCode) {
-        for (final int code : keyCode) {
-            add(action, Shortcut.builder()
-                    .keyCode(code)
-                    .build());
+    private static void addFixed(final Action action, final KeyStroke... keyStrokes) {
+        final List<KeyStroke> list = FIXED_BINDINGS.computeIfAbsent(action, k -> new ArrayList<>());
+        for (final KeyStroke keyStroke : keyStrokes) {
+            if (list.contains(keyStroke)) {
+                throw new RuntimeException("Duplicate shortcut " + keyStroke + " for action " + action);
+            }
+            list.add(keyStroke);
         }
     }
 
-    static void add(final Action action, final Shortcut... shortcuts) {
-        for (final Shortcut shortcut : shortcuts) {
-            final List<Shortcut> shortcuts2 = ACTION_TO_SHORTCUTS_MAP.computeIfAbsent(action, k -> new ArrayList<>());
-            if (shortcuts2.contains(shortcut)) {
+    private static void addDefault(final Action action, final String... shortcutTexts) {
+        if (!action.isConfigurable()) {
+            throw new RuntimeException("Action " + action + " has no category so can't have a default binding");
+        }
+        final List<KeyShortcut> list = DEFAULT_BINDINGS.computeIfAbsent(action, k -> new ArrayList<>());
+        for (final String shortcutText : shortcutTexts) {
+            final KeyShortcut shortcut = KeyShortcut.parse(shortcutText);
+            if (shortcut == null) {
+                throw new RuntimeException("Invalid shortcut '" + shortcutText + "' for action " + action);
+            } else if (list.contains(shortcut)) {
                 throw new RuntimeException("Duplicate shortcut " + shortcut + " for action " + action
                                            + ", existing shortcuts: "
-                                           + shortcuts2.stream()
+                                           + list.stream()
                                                    .map(Objects::toString)
                                                    .collect(Collectors.joining(", ")));
             }
-            shortcuts2.add(shortcut);
-            SHORTCUT_TO_ACTION_MAP.put(shortcut, action);
-//            BINDINGS.add(new Binding.Builder()
-//                    .shortcut(shortcut)
-//                    .action(action)
-//                    .build());
-        }
-    }
-
-    static void addGotoKeySequence(final Action action,
-                                   final int keyCode2) {
-        KEY_SEQUENCES.addKeySequence(
-                action,
-                GOTO_FIRST_KEY,
-                keyCode2);
-    }
-
-    static void addCreateDocKeySequence(final Action action,
-                                        final int keyCode2) {
-        KEY_SEQUENCES.addKeySequence(
-                action,
-                CREATE_DOC_FIRST_KEY,
-                keyCode2);
-    }
-
-    public static String keyCodeToString(final int keyCode) {
-        //noinspection EnhancedSwitchMigration // cos GWT
-        switch (keyCode) {
-            case KeyCodes.KEY_LEFT:
-                return "Left-Arrow";
-            case KeyCodes.KEY_RIGHT:
-                return "Right-Arrow";
-            case KeyCodes.KEY_UP:
-                return "Up-Arrow";
-            case KeyCodes.KEY_DOWN:
-                return "Down-Arrow";
-            case KeyCodes.KEY_SPACE:
-                return "Space";
-            case KeyCodes.KEY_CTRL:
-                return "Ctrl";
-            case KeyCodes.KEY_ALT:
-                return "Alt";
-            case KeyCodes.KEY_SHIFT:
-                return "Shift";
-            case KeyCodes.KEY_TAB:
-                return "Tab";
-            case KeyCodes.KEY_ESCAPE:
-                return "Esc";
-            case KeyCodes.KEY_ENTER:
-                return "Enter";
-            case KeyCodes.KEY_MAC_ENTER:
-                return "Mac-Enter";
-            case KeyCodes.KEY_BACKSPACE:
-                return "Backspace";
-            case KeyCodes.KEY_DELETE:
-                return "Delete";
-            case KeyCodes.KEY_INSERT:
-                return "Insert";
-            case KeyCodes.KEY_F1:
-                return "F1";
-            case KeyCodes.KEY_F2:
-                return "F2";
-            case KeyCodes.KEY_F3:
-                return "F3";
-            case KeyCodes.KEY_F4:
-                return "F4";
-            case KeyCodes.KEY_F5:
-                return "F5";
-            case KeyCodes.KEY_F6:
-                return "F6";
-            case KeyCodes.KEY_F7:
-                return "F7";
-            case KeyCodes.KEY_F8:
-                return "F8";
-            case KeyCodes.KEY_F9:
-                return "F9";
-            case KeyCodes.KEY_F10:
-                return "F10";
-            case KeyCodes.KEY_END:
-                return "End";
-            case KeyCodes.KEY_HOME:
-                return "Home";
-            case KeyCodes.KEY_PAGEUP:
-                return "Pageup";
-            case KeyCodes.KEY_PAGEDOWN:
-                return "Pagedown";
-            default:
-                return String.valueOf(((char) keyCode)).toLowerCase();
+            list.add(shortcut);
         }
     }
 
@@ -489,16 +618,23 @@ public class KeyBinding {
     // --------------------------------------------------------------------------------
 
 
-    private static class MyKeyCodes {
+    /// The groups that the configurable actions are shown in.
+    public enum Category {
+        GENERAL("General"),
+        LISTS("Lists"),
+        GO_TO("Go to"),
+        CREATE("Create");
 
-        /**
-         * Question mark '?'
-         */
-        private static final int KEY_QUESTION_MARK = 63;
-        /**
-         * Question mark '?'
-         */
-        private static final int KEY_FORWARD_SLASH = 191;
+        private final String displayName;
+
+        Category(final String displayName) {
+            this.displayName = displayName;
+        }
+
+        /// @return The name of the category to show the user.
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
 
@@ -506,269 +642,115 @@ public class KeyBinding {
 
 
     public enum Action {
-        MOVE_UP,
-        MOVE_DOWN,
-        MOVE_LEFT,
-        MOVE_RIGHT,
-        MOVE_PAGE_DOWN,
-        MOVE_PAGE_UP,
-        MOVE_START,
-        MOVE_END,
+        MOVE_UP("Move up", Category.LISTS),
+        MOVE_DOWN("Move down", Category.LISTS),
+        MOVE_LEFT("Move left or collapse", Category.LISTS),
+        MOVE_RIGHT("Move right or expand", Category.LISTS),
+        MOVE_PAGE_DOWN("Move down a page", Category.LISTS),
+        MOVE_PAGE_UP("Move up a page", Category.LISTS),
+        MOVE_START("Move to the start", Category.LISTS),
+        MOVE_END("Move to the end", Category.LISTS),
         /**
          * 'e' - E.g. to edit the current item
          */
-        EDIT,
-        CLOSE,
+        EDIT("Edit", null),
+        CLOSE("Close", null),
         /**
          * enter
          */
-        EXECUTE,
+        EXECUTE("Open", null),
         /**
          * space
          */
-        SELECT,
-        MENU,
-        SELECT_ALL,
+        SELECT("Select", null),
+        MENU("Show menu", null),
+        SELECT_ALL("Select all", null),
         /**
          * ctrl-enter
          */
-        OK,
-        ITEM_SAVE,
-        ITEM_SAVE_ALL,
-        ITEM_CLOSE,
-        ITEM_CLOSE_ALL,
-        FIND,
-        FIND_IN_CONTENT,
-        RECENT_ITEMS,
-        LOCATE,
+        OK("OK", null),
+        ITEM_SAVE("Save", Category.GENERAL),
+        ITEM_SAVE_ALL("Save all", Category.GENERAL),
+        ITEM_CLOSE("Close tab", Category.GENERAL),
+        ITEM_CLOSE_ALL("Close all tabs", Category.GENERAL),
+        FIND("Find", Category.GENERAL),
+        FIND_IN_CONTENT("Find in content", Category.GENERAL),
+        RECENT_ITEMS("Recent items", Category.GENERAL),
+        LOCATE("Locate in explorer", Category.GENERAL),
         // Maximise the pane holding the focus within its split pane, or restore it
-        MAXIMISE_PANE,
-        HELP,
-        DOCUMENTATION,
-        SHOW_KEY_BINDS,
-        INFO,
-        FOCUS_FILTER,
-        FOCUS_EXPLORER_FILTER,
-        SETTINGS,
+        MAXIMISE_PANE("Maximise or restore pane", Category.GENERAL),
+        HELP("Show help", Category.GENERAL),
+        DOCUMENTATION("Documentation", null),
+        SHOW_KEY_BINDS("Show keyboard shortcuts", null),
+        INFO("Info", null),
+        FOCUS_FILTER("Go to quick filter", Category.GENERAL),
+        FOCUS_EXPLORER_FILTER("Go to explorer filter", Category.GENERAL),
+        SETTINGS("Settings", null),
 
         // GOTO key sequences
-        GOTO_ANNOTATIONS,
-        GOTO_PROPERTIES,
-        GOTO_API_KEYS,
-        GOTO_SIGNING_KEYS,
-        GOTO_CACHES,
-        GOTO_DATA_RETENTION,
-        GOTO_CONTENT_TEMPLATES,
-        GOTO_DEPENDENCIES,
-        GOTO_JOBS,
-        GOTO_NODES,
-        GOTO_TASKS,
-        GOTO_EXPLORER_TREE,
-        GOTO_SEARCH_RESULTS,
-        GOTO_FS_VOLUMES,
-        GOTO_APP_PERMS,
-        GOTO_DOC_PERMS,
-        GOTO_INDEX_VOLUMES,
-        GOTO_USER_ACCESS,
-        GOTO_USER_ACCOUNTS,
-        GOTO_USER_PROFILE,
-        GOTO_USERS,
-        GOTO_USER_GROUPS,
-        GOTO_USER_PREFERENCES,
-        GOTO_USER_PERMISSION_REPORT,
+        GOTO_ANNOTATIONS("Go to Annotations", Category.GO_TO),
+        GOTO_PROPERTIES("Go to Properties", Category.GO_TO),
+        GOTO_API_KEYS("Go to API Keys", Category.GO_TO),
+        GOTO_SIGNING_KEYS("Go to Signing Keys", Category.GO_TO),
+        GOTO_CACHES("Go to Caches", Category.GO_TO),
+        GOTO_DATA_RETENTION("Go to Data Retention", Category.GO_TO),
+        GOTO_CONTENT_TEMPLATES("Go to Content Templates", Category.GO_TO),
+        GOTO_DEPENDENCIES("Go to Dependencies", Category.GO_TO),
+        GOTO_JOBS("Go to Jobs", Category.GO_TO),
+        GOTO_NODES("Go to Nodes", Category.GO_TO),
+        GOTO_TASKS("Go to Server Tasks", Category.GO_TO),
+        GOTO_EXPLORER_TREE("Go to Explorer", Category.GO_TO),
+        GOTO_SEARCH_RESULTS("Go to Search Results", Category.GO_TO),
+        GOTO_FS_VOLUMES("Go to Data Volumes", Category.GO_TO),
+        GOTO_APP_PERMS("Go to Application Permissions", Category.GO_TO),
+        GOTO_DOC_PERMS("Go to Document Permissions", Category.GO_TO),
+        GOTO_INDEX_VOLUMES("Go to Index Volumes", Category.GO_TO),
+        GOTO_USER_ACCESS("Go to User Access", Category.GO_TO),
+        GOTO_USER_ACCOUNTS("Go to User Accounts", Category.GO_TO),
+        GOTO_USER_PROFILE("Go to User Profile", Category.GO_TO),
+        GOTO_USERS("Go to Users", Category.GO_TO),
+        GOTO_USER_GROUPS("Go to User Groups", Category.GO_TO),
+        GOTO_USER_PREFERENCES("Go to User Preferences", Category.GO_TO),
+        GOTO_USER_PERMISSION_REPORT("Go to User Permissions Report", Category.GO_TO),
 
         // Create Doc key sequences
-        CREATE_ANNOTATION, // A
-        CREATE_ELASTIC_INDEX, // C
-        CREATE_DASHBOARD, // D
-        CREATE_FEED, // E
-        CREATE_FOLDER, // F
-        CREATE_DICTIONARY, // I
-        CREATE_LUCENE_INDEX, // L
-        CREATE_DOCUMENTATION, // O
-        CREATE_PIPELINE, // P
-        CREATE_QUERY, // Q
-        CREATE_ANALYTIC_RULE, // R
-        CREATE_TEXT_CONVERTER, // T
-        CREATE_VIEW, // V
-        CREATE_XSLT, // X
-    }
+        CREATE_ANNOTATION("Create Annotation", Category.CREATE), // A
+        CREATE_ELASTIC_INDEX("Create Elastic Index", Category.CREATE), // C
+        CREATE_DASHBOARD("Create Dashboard", Category.CREATE), // D
+        CREATE_FEED("Create Feed", Category.CREATE), // E
+        CREATE_FOLDER("Create Folder", Category.CREATE), // F
+        CREATE_DICTIONARY("Create Dictionary", Category.CREATE), // I
+        CREATE_LUCENE_INDEX("Create Lucene Index", Category.CREATE), // L
+        CREATE_DOCUMENTATION("Create Documentation", Category.CREATE), // O
+        CREATE_PIPELINE("Create Pipeline", Category.CREATE), // P
+        CREATE_QUERY("Create Query", Category.CREATE), // Q
+        CREATE_ANALYTIC_RULE("Create Analytic Rule", Category.CREATE), // R
+        CREATE_TEXT_CONVERTER("Create Text Converter", Category.CREATE), // T
+        CREATE_VIEW("Create View", Category.CREATE), // V
+        CREATE_XSLT("Create XSLT", Category.CREATE); // X
 
+        private final String displayName;
+        private final Category category;
 
-    // --------------------------------------------------------------------------------
-
-
-    private static class Binding {
-
-        private final Shortcut shortcut;
-        private final Action action;
-
-        private Binding(final Shortcut shortcut,
-                        final Action action) {
-            this.shortcut = shortcut;
-            this.action = action;
+        Action(final String displayName, final Category category) {
+            this.displayName = displayName;
+            this.category = category;
         }
 
-        @Override
-        public String toString() {
-            return "Binding{" +
-                   "shortcut=" + shortcut +
-                   ", action=" + action +
-                   '}';
+        /// @return The name of the action to show the user.
+        public String getDisplayName() {
+            return displayName;
         }
 
-        public static class Builder {
-
-            private Shortcut shortcut;
-            private Action action;
-
-            public Builder shortcut(final Shortcut shortcut) {
-                this.shortcut = shortcut;
-                return this;
-            }
-
-            public Builder action(final Action action) {
-                this.action = action;
-                return this;
-            }
-
-            public Binding build() {
-                return new Binding(shortcut, action);
-            }
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class Shortcut {
-
-        private final int keyCode;
-        private final boolean shift;
-        private final boolean ctrl;
-        private final boolean alt;
-        private final boolean meta;
-
-        public Shortcut(final int keyCode,
-                        final boolean shift,
-                        final boolean ctrl,
-                        final boolean alt,
-                        final boolean meta) {
-            this.keyCode = keyCode;
-            this.shift = shift;
-            this.ctrl = ctrl;
-            this.alt = alt;
-            this.meta = meta;
+        /// @return The group the action is shown in, or null if the user can't change its
+        /// bindings.
+        public Category getCategory() {
+            return category;
         }
 
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            final Shortcut binding = (Shortcut) o;
-            return keyCode == binding.keyCode &&
-                   shift == binding.shift &&
-                   ctrl == binding.ctrl &&
-                   alt == binding.alt &&
-                   meta == binding.meta;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(keyCode, shift, ctrl, alt, meta);
-        }
-
-        @Override
-        public String toString() {
-            final List<String> keysPressed = new ArrayList<>();
-            if (ctrl) {
-                keysPressed.add("Ctrl");
-            }
-            if (alt) {
-                keysPressed.add("Alt");
-            }
-            if (shift) {
-                keysPressed.add("Shift");
-            }
-            if (meta) {
-                keysPressed.add("Meta");
-            }
-            keysPressed.add(keyCodeToString(keyCode));
-            return java.lang.String.join("+", keysPressed);
-        }
-
-        public static Builder builder() {
-            return new Builder();
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public static class Builder {
-
-        private int keyCode;
-        private boolean shift;
-        private boolean ctrl;
-        private boolean alt;
-        private boolean meta;
-
-        private Builder() {
-        }
-
-        public Builder keyCode(final int keyCode) {
-            this.keyCode = keyCode;
-            return this;
-        }
-
-        public Builder shift(final boolean shift) {
-            this.shift = shift;
-            return this;
-        }
-
-        public Builder shift() {
-            this.shift = true;
-            return this;
-        }
-
-        public Builder ctrl() {
-            this.ctrl = true;
-            return this;
-        }
-
-        public Builder ctrl(final boolean ctrl) {
-            this.ctrl = ctrl;
-            return this;
-        }
-
-        public Builder alt() {
-            this.alt = true;
-            return this;
-        }
-
-        public Builder alt(final boolean alt) {
-            this.alt = alt;
-            return this;
-        }
-
-        public Builder meta() {
-            this.meta = true;
-            return this;
-        }
-
-        public Builder meta(final boolean meta) {
-            this.meta = meta;
-            return this;
-        }
-
-        private Shortcut build() {
-            return new Shortcut(keyCode, shift, ctrl, alt, meta);
+        /// @return Whether the user can change the action's bindings.
+        public boolean isConfigurable() {
+            return category != null;
         }
     }
 }

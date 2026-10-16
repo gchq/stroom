@@ -36,6 +36,12 @@ import stroom.main.client.view.MainViewImpl;
 import stroom.preferences.client.EditorPreferencesPresenter;
 import stroom.preferences.client.EditorPreferencesPresenter.EditorPreferencesView;
 import stroom.preferences.client.EditorPreferencesViewImpl;
+import stroom.preferences.client.KeyBindingPreferencesPresenter;
+import stroom.preferences.client.KeyBindingPreferencesPresenter.KeyBindingPreferencesView;
+import stroom.preferences.client.KeyBindingPreferencesViewImpl;
+import stroom.preferences.client.KeyShortcutRecorderPresenter;
+import stroom.preferences.client.KeyShortcutRecorderPresenter.KeyShortcutRecorderView;
+import stroom.preferences.client.KeyShortcutRecorderViewImpl;
 import stroom.preferences.client.ThemePreferencesPresenter;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
 import stroom.preferences.client.ThemePreferencesViewImpl;
@@ -95,6 +101,12 @@ public class ShellAppScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(TimePreferencesPresenter.class,
                 TimePreferencesView.class,
                 TimePreferencesViewImpl.class);
+        bindPresenterWidget(KeyBindingPreferencesPresenter.class,
+                KeyBindingPreferencesView.class,
+                KeyBindingPreferencesViewImpl.class);
+        bindPresenterWidget(KeyShortcutRecorderPresenter.class,
+                KeyShortcutRecorderView.class,
+                KeyShortcutRecorderViewImpl.class);
 
         // WelcomeModule
         bindPresenterWidget(WelcomePresenter.class,

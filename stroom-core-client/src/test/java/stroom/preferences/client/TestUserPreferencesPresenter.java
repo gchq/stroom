@@ -124,6 +124,7 @@ class TestUserPreferencesPresenter {
                 Mockito.mock(ThemePreferencesPresenter.class),
                 Mockito.mock(EditorPreferencesPresenter.class),
                 Mockito.mock(TimePreferencesPresenter.class),
+                Mockito.mock(KeyBindingPreferencesPresenter.class),
                 Mockito.mock(ClientSecurityContext.class));
         // The dialog's size is worked out from the browser window's
         try (final MockedStatic<PopupSize> ignored = Mockito.mockStatic(PopupSize.class)) {

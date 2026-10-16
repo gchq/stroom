@@ -1183,6 +1183,27 @@
     width: 250px;
 }
 
+/* The list of keyboard shortcuts fills what the tab has left below the filter, framed as a control */
+.keyBindingPreferences-list {
+    min-height: 0;
+    margin-top: var(--control__gap--vertical);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--content-box__background-color);
+    overflow: hidden;
+}
+
+/* The keys of a keyboard shortcut being recorded */
+.keyShortcutRecorder-keys {
+    font-family: monospace;
+}
+
+/* What the user can do next while recording a keyboard shortcut, kept the same height as it changes */
+.keyShortcutRecorder-message {
+    min-height: 4.5em;
+    white-space: normal;
+}
+
 .default-min-sizes {
     min-width: 200px;
     min-height: 200px;

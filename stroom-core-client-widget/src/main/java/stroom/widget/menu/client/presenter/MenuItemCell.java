@@ -156,7 +156,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                     final String shortcut = KeyBinding.getShortcut(value.getAction());
                     if (shortcut != null) {
                         inner.append(TEMPLATE.inner("menuItem-shortcut",
-                                SafeHtmlUtils.fromTrustedString(shortcut)));
+                                SafeHtmlUtils.fromString(shortcut)));
                     }
                 }
 
@@ -220,7 +220,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                     final String shortcut = KeyBinding.getShortcut(value.getAction());
                     if (shortcut != null) {
                         inner.append(TEMPLATE.inner("menuItem-shortcut",
-                                SafeHtmlUtils.fromTrustedString(shortcut)));
+                                SafeHtmlUtils.fromString(shortcut)));
                     }
                 }
 

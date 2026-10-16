@@ -30,6 +30,7 @@ import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.datepicker.client.ClientTimeZone;
 import stroom.widget.util.client.ClientStringUtil;
+import stroom.widget.util.client.KeyBinding;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -142,6 +143,10 @@ public class UserPreferencesManager {
 
         ClientTimeZone.setTimeZone(getTimeZone(userPreferences));
 
+        KeyBinding.applyUserBindings(
+                userPreferences.getKeyBindings(),
+                isCharacterKeyShortcutsEnabled(userPreferences));
+
         // Last, so that waiting consumers see the preferences applied
         userPreferencesHolder.set(userPreferences);
     }
@@ -243,6 +248,12 @@ public class UserPreferencesManager {
      */
     public String getCurrentPreferenceClasses() {
         return ThemeCssUtil.getCurrentPreferenceClasses(getCurrentUserPreferences());
+    }
+
+    /// @param userPreferences The user's preferences.
+    /// @return Whether the user has keyboard shortcuts made only of character keys turned on.
+    public static boolean isCharacterKeyShortcutsEnabled(final UserPreferences userPreferences) {
+        return Objects.requireNonNullElse(userPreferences.getEnableCharacterKeyShortcuts(), true);
     }
 
     public boolean isHideConditionalStyles() {
