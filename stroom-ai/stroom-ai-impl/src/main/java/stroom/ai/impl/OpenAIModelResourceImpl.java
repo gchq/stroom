@@ -185,7 +185,9 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
                     .map(serverTool -> new McpToolDescription(
                             serverTool.tool().name(),
                             serverTool.policy() != McpToolPolicy.DENY,
-                            McpToolDocs.markdown(serverTool.tool(), serverTool.policy(), server.isTrusted())))
+                            McpToolDocs.markdown(serverTool.tool(), serverTool.policy()),
+                            McpToolDocs.classifications(serverTool.tool()),
+                            McpToolset.declaredGroup(serverTool.tool())))
                     .toList();
             return new ListMcpToolsResponse(tools, null);
         } catch (final RuntimeException e) {
