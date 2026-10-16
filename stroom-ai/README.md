@@ -118,9 +118,11 @@ Every tool call and every decision is event-logged.
 
 ## Forms from MCP tools (elicitation)
 
-An MCP tool can ask the user to fill in a form while it runs. The chat shows the form in a card, with _Submit_
-and _Decline_; an answer that doesn't fit the form (e.g. a required field left empty) is refused, and the form stays
-to be put right. Stopping the run cancels the form, and the card says so (in another tab too). The answer goes to the MCP server, never to the model. The tool call keeps its thread while it waits, so:
+An MCP tool can ask the user to fill in a form while it runs. The chat shows the form in a card, below what the
+model wrote before calling the tool, with _Submit_ (or Enter in a field) and _Decline_. Fields start with the
+values the server suggests (its schema's `default`, e.g. a proposed pipeline name). An answer that doesn't fit the
+form (e.g. a required field left empty) is refused, and the form stays to be put right. Once answered, the card
+shrinks to the question's first line and the answer given. Stopping the run cancels the form, and the card says so (in another tab too). The answer goes to the MCP server, never to the model. The tool call keeps its thread while it waits, so:
 
 * _Stop_ gives up on an MCP tool call at once (its client can't cancel it, so the server may still finish what it
   started), rather than when it returns;

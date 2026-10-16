@@ -466,9 +466,22 @@ public class AskStroomAiPresenter
             }
         }, ClickEvent.getType()));
 
-        // In a question being edited, Escape cancels the edit and Ctrl+Enter sends it.
+        // In a question being edited, Escape cancels the edit and Ctrl+Enter sends it. In a form from an MCP tool,
+        // Enter submits it.
         registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
             final Element target = e.getNativeEvent().getEventTarget().cast();
+            if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && target.hasAttribute(AiElicitationCard.FIELD_ATTRIBUTE)) {
+                final Element card = ElementUtil.findParent(target, element ->
+                        element.hasClassName("ai-message"), 8);
+                final Element submit = card != null
+                        ? findFormSubmit(card)
+                        : null;
+                if (submit != null && !submit.getPropertyBoolean("disabled")) {
+                    e.preventDefault();
+                    onAnswerForm(submit, Integer.parseInt(submit.getAttribute(ELICITATION_ATTRIBUTE)), "ACCEPT");
+                }
+                return;
+            }
             if (!target.hasClassName("ai-edit-text")) {
                 return;
             }
@@ -1539,8 +1552,9 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * Renders a form an MCP tool asked the user to fill in: what the server said, as plain text, and while it
-     * waits, its fields with Submit and Decline; once answered, what became of it.
+     * Renders a form an MCP tool asked the user to fill in. While it waits: what the server said, as plain text,
+     * and its fields with Submit and Decline. Once answered, just the question (its first line, the whole of it
+     * on hover) and the answer, or what else became of it.
      */
     private void appendElicitationCard(final HtmlBuilder hb,
                                        final AiChatMessage msg,
@@ -1550,15 +1564,18 @@ public class AskStroomAiPresenter
         final String status = NullSafe.string(AiToolMessages.getString(json, "status"));
         final String server = AiToolMessages.getString(json, "server");
         final boolean pending = "PENDING".equals(status);
+        final String message = NullSafe.string(AiToolMessages.getString(json, "message"));
         hb.div(card -> {
-            card.div(title -> title.append(pending
-                    ? server + " needs your input"
-                    : "A form from " + server), Attribute.className("ai-approval-title"));
-            card.div(text -> text.append(NullSafe.string(AiToolMessages.getString(json, "message"))),
-                    Attribute.className("ai-elicitation-message"));
             if (pending) {
+                card.div(server + " needs your input", Attribute.className("ai-approval-title"));
+                card.div(message, Attribute.className("ai-elicitation-message"));
                 AiElicitationCard.appendFields(card, AiElicitationForm.fields(json));
+            } else {
+                card.div(AiElicitationCard.firstLine(message, "A form from " + server),
+                        Attribute.className("ai-approval-title"),
+                        Attribute.title(message));
             }
+            final boolean answerShown = "ACCEPTED".equals(status) && AiElicitationCard.appendAnswer(card, json);
             card.div(footer -> {
                 if (pending) {
                     footer.elem("Submit", BUTTON,
@@ -1569,7 +1586,7 @@ public class AskStroomAiPresenter
                             Attribute.className("allow-focus ai-approval-button ai-approval-button--deny"),
                             new Attribute(ELICITATION_ATTRIBUTE, String.valueOf(msg.getId())),
                             new Attribute(ELICITATION_ACTION_ATTRIBUTE, "DECLINE"));
-                } else {
+                } else if (!"ACCEPTED".equals(status) || !answerShown) {
                     footer.span(text -> text.append(AiChatTexts.formStatus(status)),
                             Attribute.className("ai-approval-reason"));
                 }
@@ -1602,7 +1619,7 @@ public class AskStroomAiPresenter
                             : "DECLINED";
                     appendMessage(new AiChatMessage(msg.getId(), msg.getChatId(), msg.getCreateTimeMs(),
                             msg.getMessageType(), msg.getAttachmentId(),
-                            AiToolMessages.withStatus(msg.getMessage(), status), msg.getTurnId(),
+                            AiElicitationCard.answered(msg.getMessage(), status, values), msg.getTurnId(),
                             msg.getTokenCount()), System.currentTimeMillis());
                     // The tool carries on with the answer.
                     pollAfterAnswer();
@@ -1613,6 +1630,16 @@ public class AskStroomAiPresenter
                     // E.g. the form was cancelled when the run stopped: show it as it now stands.
                     pollAfterAnswer();
                 }, getView());
+    }
+
+    private static Element findFormSubmit(final Element card) {
+        final NodeList<Element> buttons = card.getElementsByTagName("button");
+        for (int i = 0; i < buttons.getLength(); i++) {
+            if ("ACCEPT".equals(buttons.getItem(i).getAttribute(ELICITATION_ACTION_ATTRIBUTE))) {
+                return buttons.getItem(i);
+            }
+        }
+        return null;
     }
 
     private static void setFormButtonsEnabled(final Element card, final boolean enabled) {
@@ -2574,6 +2601,9 @@ public class AskStroomAiPresenter
             // The answer is here, so the turn's work is done.
             activityGroups.finish(msg.getTurnId(), msg.getCreateTimeMs());
             removeLiveAnswer();
+        } else if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE) {
+            // The text being written is now stored, so is shown in its place.
+            removeLiveAnswer();
         }
         Element existing = findMessageElement(markdownContainer, messageId);
         if (existing == null && (msg.getMessageType() == AiMessageType.USER_MESSAGE
@@ -2767,6 +2797,11 @@ public class AskStroomAiPresenter
             case AI_RESPONSE:
                 appendMessageHtml(hb, "ai-message ai-message--assistant", msg.getMessage(),
                         timeMs, nowMs, true, messageId, false, msg.getTurnId(), false);
+                break;
+            case INTERIM_RESPONSE:
+                // What the model said while working: no retry, as the turn's answer is still to come.
+                appendMessageHtml(hb, "ai-message ai-message--assistant ai-message--interim", msg.getMessage(),
+                        timeMs, nowMs, true, messageId, false, 0, false);
                 break;
             case ERROR:
                 appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),

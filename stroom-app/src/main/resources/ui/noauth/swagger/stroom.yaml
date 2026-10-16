@@ -11315,6 +11315,7 @@ components:
           - ELICITATION
           - SUGGESTIONS
           - TASK_LIST
+          - INTERIM_RESPONSE
         tokenCount:
           type: integer
           format: int32
