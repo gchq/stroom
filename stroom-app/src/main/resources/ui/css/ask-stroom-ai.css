@@ -910,14 +910,24 @@
     text-decoration: underline;
 }
 
+/* Up to ten commands high, then scrolls. */
 .askStroomAiViewImpl-commands {
     display: flex;
     flex-direction: column;
     gap: 2px;
     padding: 4px;
+    max-height: calc(10 * 28px);
+    overflow-y: auto;
 }
 
 .askStroomAiViewImpl-command {
+    flex: none;
+    box-sizing: border-box;
+    height: 26px;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: pointer;
     text-align: left;
     padding: 3px 6px;
@@ -930,7 +940,12 @@
 
 .askStroomAiViewImpl-command:hover,
 .askStroomAiViewImpl-command:focus {
-    background: var(--page__background-color);
+    background: var(--curve-tab__background-color--hover);
+}
+
+.askStroomAiViewImpl-command:hover .askStroomAiViewImpl-commandDescription,
+.askStroomAiViewImpl-command:focus .askStroomAiViewImpl-commandDescription {
+    color: var(--control__text-color);
 }
 
 .askStroomAiViewImpl-commandArgs {
@@ -1567,4 +1582,48 @@ a.ai-stroom-link::after {
     font-size: 1.15em;
     font-weight: 600;
     margin-right: 4px;
+}
+
+/* ---- A slash command's reference, above the input ---- */
+
+/* Shaded, scrolling, and taking its room from the messages above; its top edge can be dragged to resize it. */
+.askStroomAiViewImpl-commandReference {
+    position: relative;
+    box-sizing: border-box;
+    height: 180px;
+    min-height: 60px;
+    margin-bottom: 6px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 6px;
+    background: rgba(128, 128, 128, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.askStroomAiViewImpl-commandReference-resize {
+    position: absolute;
+    top: -4px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    cursor: ns-resize;
+    z-index: 1;
+}
+
+.askStroomAiViewImpl-commandReference-close {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 2;
+}
+
+.askStroomAiViewImpl-commandReference-content {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 8px 32px 8px 12px;
+    font-size: var(--ai-font-size--small);
+}
+
+.askStroomAiViewImpl-commandReference-content p:first-child {
+    margin-top: 0;
 }
