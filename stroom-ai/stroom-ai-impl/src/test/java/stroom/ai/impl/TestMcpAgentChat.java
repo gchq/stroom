@@ -382,9 +382,9 @@ class TestMcpAgentChat {
         Mockito.when(toolConsent.decide(Mockito.eq(7), Mockito.eq("search"), Mockito.any(), Mockito.any(),
                         Mockito.anyBoolean()))
                 .thenReturn(ToolConsent.Verdict.RUN,
-                        new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", true, false,
+                        new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", "Not trusted.", true, false,
                                 List.of("untrusted server")),
-                        new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", true, false,
+                        new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", "Not trusted.", true, false,
                                 List.of("untrusted server")));
         final ChatModel model = new StubToolCallingModel(AiMessage.from(List.of(
                 ToolExecutionRequest.builder().id("1").name("search").arguments("{\"q\":1}").build(),
@@ -413,7 +413,8 @@ class TestMcpAgentChat {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(), Mockito.any(),
                 Mockito.anyBoolean())).thenReturn(new ToolConsent.Verdict(ToolConsent.Kind.DENY,
-                "You chose not to allow this tool in this chat.", false, false, List.of()));
+                "You chose not to allow this tool in this chat.", "You chose not to allow this tool in this chat.",
+                false, false, List.of()));
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder().id("1").name("search").arguments("{}")
                         .build())),
