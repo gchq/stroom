@@ -27,14 +27,27 @@ public final class AiSlashCommand {
     private final String name;
     private final String arguments;
     private final String description;
+    private final String reference;
 
     /// @param name        The command, with its `/`, e.g. `/compact`.
     /// @param arguments   What may follow it, e.g. `[focus]`, or an empty string.
     /// @param description What it does.
     public AiSlashCommand(final String name, final String arguments, final String description) {
+        this(name, arguments, description, null);
+    }
+
+    /// @param name        The command, with its `/`, e.g. `/compact`.
+    /// @param arguments   What may follow it, e.g. `[focus]`, or an empty string.
+    /// @param description What it does, in a line.
+    /// @param reference   More about it, as Markdown, shown when it is picked from the list, or null.
+    public AiSlashCommand(final String name,
+                          final String arguments,
+                          final String description,
+                          final String reference) {
         this.name = name;
         this.arguments = arguments;
         this.description = description;
+        this.reference = reference;
     }
 
     /// @return The command, with its `/`.
@@ -50,6 +63,21 @@ public final class AiSlashCommand {
     /// @return What the command does.
     public String getDescription() {
         return description;
+    }
+
+    /// @return The command's reference, as Markdown: how to use it, what it does, and anything more there is.
+    public String getReference() {
+        final StringBuilder sb = new StringBuilder("**`").append(name);
+        if (arguments != null && !arguments.isEmpty()) {
+            sb.append(' ').append(arguments);
+        }
+        sb.append("`**\n\n").append(description == null
+                ? ""
+                : description).append('\n');
+        if (reference != null && !reference.isEmpty()) {
+            sb.append('\n').append(reference).append('\n');
+        }
+        return sb.toString();
     }
 
     /// Reads the arguments the user typed after a command: `name=value` pairs, with values in double quotes if
