@@ -402,6 +402,13 @@
     border-color: var(--control__border-color--focused);
 }
 
+/* The progress line lines up with the turns' activity lines ("Worked for ..."), rather than being indented
+   like a message. */
+.ai-message.ai-message--working {
+    padding-left: 0;
+    padding-right: 0;
+}
+
 .ai-message--working summary,
 .ai-message--data summary,
 .ai-message--thinking summary,

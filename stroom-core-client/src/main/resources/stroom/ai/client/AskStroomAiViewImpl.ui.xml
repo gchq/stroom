@@ -43,8 +43,8 @@
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
                     <l:SelectionBox ui:field="agentMode" addStyleNames="askStroomAiViewImpl-agentMode"/>
-                    <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>
                     <p:InlineSvgButton ui:field="autoApprove" addStyleNames="allow-focus askStroomAiViewImpl-autoApprove"/>
+                    <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>
                     <g:Button ui:field="contextMeter" styleName="allow-focus askStroomAiViewImpl-contextMeter"/>
                     <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
                     <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>

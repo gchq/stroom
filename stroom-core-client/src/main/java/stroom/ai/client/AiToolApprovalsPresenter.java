@@ -100,7 +100,7 @@ public class AiToolApprovalsPresenter extends MyPresenterWidget<AiToolApprovalsP
             return;
         }
         final String message = "Approve everything in this chat? Tool calls on trusted servers will run without "
-                               + "asking you, including ones that change things.";
+                               + "asking you, including ones that can modify data.";
         ConfirmEvent.fire(this, message, ok -> {
             if (ok) {
                 setApproveEverything(true);
