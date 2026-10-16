@@ -77,6 +77,8 @@ import stroom.widget.util.client.SafeHtmlUtil;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -133,6 +135,11 @@ public class AnnotationEditPresenter
     private static final Attribute HISTORY_ITEM = Attribute.className("annotationHistoryItem");
     private static final Attribute ANNOTATION_TABLE = Attribute.className("annotationTable");
     private static final Attribute ANNOTATION_LINK = Attribute.className("annotationLink");
+    // An event or annotation reference is a link the keyboard can reach and follow (with Enter)
+    private static final Attribute LINK_ROLE = new Attribute("role", "link");
+    private static final Attribute LINK_TAB_INDEX = new Attribute("tabindex", "0");
+    // Put between references written with nothing between them: an em space
+    private static final String LINK_GAP = "\u2003";
 
     private final AnnotationResourceClient annotationResourceClient;
     private final ChooserPresenter<AnnotationTag> annotationStatusPresenter;
@@ -531,28 +538,19 @@ public class AnnotationEditPresenter
 
             final HTML panel = new HTML(html.toSafeHtml());
             panel.setStyleName("dock-max annotationHistoryOuter");
+            // Enter on an event or annotation reference follows it, as a mouse press does
+            panel.addDomHandler(e -> {
+                final Element target = e.getNativeEvent().getEventTarget().cast();
+                if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && target.hasTagName("u")) {
+                    e.preventDefault();
+                    followLink(target);
+                }
+            }, KeyDownEvent.getType());
             panel.addMouseDownHandler(e -> {
                 // If the user has clicked on a link then consume the event.
                 final Element target = e.getNativeEvent().getEventTarget().cast();
                 if (target.hasTagName("u")) {
-                    final String link = target.getAttribute("link");
-                    if (NullSafe.isNonBlankString(link)) {
-                        final Hyperlink hyperlink = Hyperlink.create(link);
-                        if (hyperlink != null) {
-                            HyperlinkEvent.fire(this, hyperlink, this);
-                        }
-                    } else {
-                        final String eventIdString = target.getAttribute("eventId");
-                        if (NullSafe.isNonBlankString(eventIdString)) {
-                            final EventId eventId = EventId.parse(eventIdString);
-                            ShowDataEvent.fire(this, SourceLocation.fromEventId(eventId));
-                        } else {
-                            final String annotationIdString = target.getAttribute("annotationId");
-                            if (NullSafe.isNonBlankString(annotationIdString)) {
-                                EditAnnotationEvent.fire(this, Long.parseLong(annotationIdString));
-                            }
-                        }
-                    }
+                    followLink(target);
                 } else {
                     Element parent = target;
                     String id = null;
@@ -1159,6 +1157,8 @@ public class AnnotationEditPresenter
         final char[] chars = comment.toCharArray();
 
         boolean start = true;
+        // Whether a link has been added (so one added next with no text before it needs a space)
+        boolean afterLink = false;
         for (int i = 0; i < chars.length; i++) {
             final char c = chars[i];
             if (start && c == '#') {
@@ -1171,10 +1171,15 @@ public class AnnotationEditPresenter
                     if (sb.length() > 0) {
                         html.append(sb.toString());
                         sb.setLength(0);
+                    } else if (afterLink) {
+                        // Links written with nothing between them (#5#6) are spaced apart (an
+                        // em space, wide enough that each is a target of its own, WCAG 2.5.8)
+                        html.append(LINK_GAP);
                     }
 
                     // Append the link.
                     link(html, AnnotationEntryType.LINK_ANNOTATION, idString);
+                    afterLink = true;
 
                     // Jump to next index.
                     i += idString.length();
@@ -1200,10 +1205,13 @@ public class AnnotationEditPresenter
                             if (sb.length() > 0) {
                                 html.append(sb.toString());
                                 sb.setLength(0);
+                            } else if (afterLink) {
+                                html.append(LINK_GAP);
                             }
 
                             // Append the link.
                             link(html, AnnotationEntryType.LINK_EVENT, streamIdString + ":" + eventIdString);
+                            afterLink = true;
 
                             // Jump to next index.
                             i = pos - 1;
@@ -1283,6 +1291,28 @@ public class AnnotationEditPresenter
     }
 
 
+    // Follows a link in the history: a hyperlink, or an event or annotation reference
+    private void followLink(final Element target) {
+        final String link = target.getAttribute("link");
+        if (NullSafe.isNonBlankString(link)) {
+            final Hyperlink hyperlink = Hyperlink.create(link);
+            if (hyperlink != null) {
+                HyperlinkEvent.fire(this, hyperlink, this);
+            }
+        } else {
+            final String eventIdString = target.getAttribute("eventId");
+            if (NullSafe.isNonBlankString(eventIdString)) {
+                final EventId eventId = EventId.parse(eventIdString);
+                ShowDataEvent.fire(this, SourceLocation.fromEventId(eventId));
+            } else {
+                final String annotationIdString = target.getAttribute("annotationId");
+                if (NullSafe.isNonBlankString(annotationIdString)) {
+                    EditAnnotationEvent.fire(this, Long.parseLong(annotationIdString));
+                }
+            }
+        }
+    }
+
     private static native boolean copy(final Element element) /*-{
         var activeElement = $doc.activeElement;
         element.focus();
@@ -1301,7 +1331,11 @@ public class AnnotationEditPresenter
             final EventId eventId = EventId.parse(value);
             if (eventId != null) {
                 builder.underline(u -> u.append(eventId.toString()),
-                        ANNOTATION_LINK, new Attribute("eventId", eventId.toString()));
+                        ANNOTATION_LINK,
+                        new Attribute("eventId", eventId.toString()),
+                        LINK_ROLE,
+                        LINK_TAB_INDEX,
+                        new Attribute("aria-label", "Event " + eventId));
             } else {
                 builder.bold(value);
             }
@@ -1310,7 +1344,11 @@ public class AnnotationEditPresenter
             builder.underline(u -> {
                 u.append("#");
                 u.append(value);
-            }, ANNOTATION_LINK, new Attribute("annotationId", value));
+            }, ANNOTATION_LINK,
+                    new Attribute("annotationId", value),
+                    LINK_ROLE,
+                    LINK_TAB_INDEX,
+                    new Attribute("aria-label", "Annotation " + value));
         } else {
             builder.bold(value);
         }

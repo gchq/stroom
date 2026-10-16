@@ -32,6 +32,7 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.RowActions;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -82,7 +83,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                         final Function<T_ROW, SafeHtml> cellTextFunction,
                         final Function<T_ROW, String> nameFunction,
                         final Function<T_ROW, String> cssClassFunction) {
-        super(BrowserEvents.MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
         this.eventBus = eventBus;
         this.showIcon = showIcon;
         this.cellTextFunction = cellTextFunction;
@@ -111,10 +112,13 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                                final T_ROW value,
                                final NativeEvent event,
                                final ValueUpdater<T_ROW> valueUpdater) {
-        super.onBrowserEvent(context, parent, value, event, valueUpdater);
         final String name = NullSafe.get(value, nameFunction);
         if (name != null) {
-            if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
+            if (RowActions.isKeyPress(event)) {
+                // Enter or Space on the open button; the button's own click would come too
+                event.preventDefault();
+                onEnterKeyDown(context, parent, value, event, valueUpdater);
+            } else if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
                 if (MouseUtil.isPrimary(event)) {
                     onEnterKeyDown(context, parent, value, event, valueUpdater);
                 } else {
@@ -249,12 +253,13 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                         "Copy name '" + name + "' to clipboard",
                         copy));
 
+                // A button the keyboard reaches from its row (a row action)
                 final SafeHtml open = SvgImageUtil.toSafeHtml(
                         SvgImage.OPEN,
                         ICON_CLASS_NAME,
-                        OPEN_CLASS_NAME,
                         HOVER_ICON_CLASS_NAME);
-                sb.append(template.divWithToolTip(
+                sb.append(RowActions.button(
+                        OPEN_CLASS_NAME,
                         "Open " + FeedDoc.TYPE + " " + name + " in new tab",
                         open));
             }

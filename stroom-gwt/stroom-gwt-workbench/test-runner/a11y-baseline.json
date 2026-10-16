@@ -117,6 +117,9 @@
   "app-editors-queryeditor--hyperlinks": [
     "target-size"
   ],
+  "app-editors-queryeditor--hyperlinks-by-keyboard": [
+    "target-size"
+  ],
   "app-editors-queryeditor--null-completion": [
     "target-size"
   ],
@@ -420,6 +423,9 @@
     "aria-command-name"
   ],
   "app-main-findincontentdialog--default": [
+    "label"
+  ],
+  "app-main-jobsscreen--command-links-by-keyboard": [
     "label"
   ],
   "app-main-jobsscreen--cross-navigation": [

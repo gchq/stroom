@@ -149,13 +149,16 @@ public final class UserGroupsScreenStories {
                     // The panes' tab stops: a quick filter, its buttons (one toolbar, named by its
                     // first button), its toolbar and its pager (and its grid, a div), the master's,
                     // then Member Of's, then Members', with the splitter (named by the pane it
-                    // resizes) between each
+                    // resizes) between each. A grid's row with the keyboard focus is followed by
+                    // its row's open buttons (row actions)
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
                             "input", "Show Recent Filters", "Create Group", "First", "div",
+                            "Open group Administrators in new tab",
                             "Users and groups",
                             "input", "Show Recent Filters", "Add to Group", "First",
                             "Members",
-                            "input", "Show Recent Filters", "Add Member to Group", "First", "div"));
+                            "input", "Show Recent Filters", "Add Member to Group", "First", "div",
+                            "Open user Alice Anderson in new tab", "Open user Alice A Anderson in new tab"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group
                 .story("EditGroup", UserGroupsScreenStories::render)

@@ -31,6 +31,7 @@ import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.RowActions;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
@@ -146,6 +147,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         sinkEvents(Event.ONCONTEXTMENU);
 
         aiSupport = new MyDataGridAiSupport<>(globalEventBus, this);
+
+        // Rows drawn afresh have every row action out of the tab order
+        addRedrawHandler(this::updateRowActionTabStops);
     }
 
     public String getTableName() {
@@ -239,6 +243,17 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             return;
         }
         super.onBrowserEvent2(event);
+    }
+
+    /// Also puts the row actions (see [RowActions]) of the keyboard selected row in the tab order.
+    @Override
+    protected void setKeyboardSelected(final int index, final boolean selected, final boolean stealFocus) {
+        super.setKeyboardSelected(index, selected, stealFocus);
+        updateRowActionTabStops();
+    }
+
+    private void updateRowActionTabStops() {
+        RowActions.updateTabStops(getTableBodyElement(), getKeyboardSelectedRow());
     }
 
     public void hasContextMenu(final boolean hasContextMenu) {

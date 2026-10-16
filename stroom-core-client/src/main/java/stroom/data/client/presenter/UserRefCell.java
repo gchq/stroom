@@ -31,6 +31,7 @@ import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.RowActions;
 import stroom.widget.util.client.SvgImageUtil;
 import stroom.widget.util.client.Templates;
 
@@ -73,7 +74,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                         final Function<T_ROW, UserRef> docRefFunction,
                         final Function<T_ROW, String> cssClassFunction,
                         final DisplayType displayType) {
-        super(BrowserEvents.MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
         this.eventBus = eventBus;
         this.securityContext = securityContext;
         this.showIcon = showIcon;
@@ -100,10 +101,13 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                                final T_ROW value,
                                final NativeEvent event,
                                final ValueUpdater<T_ROW> valueUpdater) {
-        super.onBrowserEvent(context, parent, value, event, valueUpdater);
         final UserRef userRef = docRefFunction.apply(value);
         if (userRef != null) {
             if (BrowserEvents.MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
+                onEnterKeyDown(context, parent, value, event, valueUpdater);
+            } else if (RowActions.isKeyPress(event)) {
+                // Enter or Space on the open button; the button's own click would come too
+                event.preventDefault();
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
         }
@@ -188,9 +192,11 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
 
                 // Not all users should be able to open the user
                 if (userRef.getUuid() != null && hasPermissionToOpen(userRef)) {
+                    // A button the keyboard reaches from its row (a row action)
                     final SafeHtml openSvg = SvgImageUtil.toSafeHtml(
-                            SvgImage.OPEN, ICON_CLASS_NAME, OPEN_CLASS_NAME, HOVER_ICON_CLASS_NAME);
-                    sb.append(Templates.divWithTitle(
+                            SvgImage.OPEN, ICON_CLASS_NAME, HOVER_ICON_CLASS_NAME);
+                    sb.append(RowActions.button(
+                            OPEN_CLASS_NAME,
                             "Open " + userRef.getType(CaseType.LOWER) + " " + cellPlainText + " in new tab",
                             openSvg));
                 }

@@ -72,8 +72,9 @@ public final class JobsScreenStories {
     /// The name of the spy recording the server tasks shown (Stroom's `OpenTaskManagerEvent`).
     static final String ON_SHOW_TASKS = "onShowTasks";
 
-    // The title of a schedule link's 'open' icon
-    private static final String EDIT_SCHEDULE = "Edit schedule";
+    // The name of node1's Node link's 'open' button
+    private static final String OPEN_NODE1 = "Open node 'node1' and job 'Data Retention' on the Nodes screen.";
+
     // The schedule editor's expression field (its FormGroup's identity is scheduleExpression).
     // The field's id is the identity itself
     private static final String EXPRESSION_INPUT = "#scheduleExpression";
@@ -213,9 +214,9 @@ public final class JobsScreenStories {
                     play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW);
                     // Open the schedule editor from a selected row's link.
                     // GWT's CommandLinkCell runs its command on a mousedown on
-                    // its 'open' icon (not a click on its text) and the grid then leaves the
+                    // its 'open' button (not a click on its text) and the grid then leaves the
                     // selection alone, so the multi-selection is kept
-                    play.fireEvent().mouseDown(openIcon(play.within(play.getAllByTitle(EDIT_SCHEDULE).nth(0))));
+                    play.fireEvent().mouseDown(play.getByRole("button", editSchedule("node1")));
                     // GWT asks to confirm the batch change (naming the nodes) before
                     // it shows the schedule editor. The job's name is
                     // quoted (it once lacked the closing quote)
@@ -243,11 +244,9 @@ public final class JobsScreenStories {
                     play.findByText("Data Retention");
                     play.click(play.getByText("Data Retention"));
                     play.findByText("node1");
-                    // The Node cell is a link that opens the Nodes screen.
-                    // GWT's CommandLink isn't a button; pressing its 'open' icon,
-                    // titled with what it opens, runs its command
-                    play.click(openIcon(play.within(
-                            play.getByTitle("Open node 'node1' and job 'Data Retention' on the Nodes screen."))));
+                    // The Node cell is a link that opens the Nodes screen: pressing its 'open'
+                    // button, named for what it opens, runs its command
+                    play.click(play.getByRole("button", OPEN_NODE1));
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_NODE)).toHaveBeenCalledWith("node1"));
                     // The row's action menu: GWT's buildActionMenu yields four items in this order
                     play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(0));
@@ -269,9 +268,9 @@ public final class JobsScreenStories {
                     play.click(play.getByText("Data Retention"));
                     // node1 (CRON) has a Schedule link showing its expression.
                     // GWT's CommandLinkCell runs its command when its 'open'
-                    // icon (titled 'Edit schedule') is pressed, not its text
+                    // button (named for the job and node) is pressed, not its text
                     play.findByText("0 0 * * ?");
-                    play.click(openIcon(play.within(play.getByTitle(EDIT_SCHEDULE))));
+                    play.click(play.getByRole("button", editSchedule("node1")));
                     play.waitFor(() -> play.expect(screen.getByText("Change Schedule")).toBeInTheDocument());
                     final Query expression = screen.querySelector(EXPRESSION_INPUT);
                     play.clear(expression);
@@ -282,7 +281,47 @@ public final class JobsScreenStories {
                                     .withJsonBodyContaining("{\"type\": \"CRON\", \"expression\": \"0 /5 * * * ?\"}")
                                     .toSpyMatcher()));
                     expectNoProblems(play);
+                })
+                // The links' 'open' buttons are reached from their row with Tab, and pressed with
+                // Space or Enter (they were icons that only a mouse could press). Only the
+                // keyboard selected row's buttons are tab stops, so the list isn't a tab stop per
+                // row
+                .story("CommandLinksByKeyboard", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Data Retention");
+                    play.click(play.getByText("Data Retention"));
+                    play.findByText("0 0 * * ?");
+                    // Pressing a row's text gives its row the keyboard focus
+                    play.click(play.getByText("node1"));
+                    play.waitFor(() -> play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW));
+                    final Query openNode = play.getByRole("button", OPEN_NODE1);
+                    final Query editSchedule = play.getByRole("button", editSchedule("node1"));
+                    play.expect(openNode).toHaveAttribute("tabindex", "0");
+                    play.expect(editSchedule).toHaveAttribute("tabindex", "0");
+                    // Another row's buttons are reached by moving to the row first
+                    play.expect(play.getByRole("button",
+                                    "Open node 'node2' and job 'Data Retention' on the Nodes screen."))
+                            .toHaveAttribute("tabindex", "-1");
+                    play.tab();
+                    play.expect(openNode).toHaveFocus();
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(play.spy(ON_OPEN_NODE)).toHaveBeenCalledWith("node1"));
+                    play.tab();
+                    play.expect(editSchedule).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(screen.getByText("Change Schedule")).toBeInTheDocument());
+                    // The keys pressed a button, so the row's selection is unchanged
+                    play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW);
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Change Schedule")).toBeNull());
+                    expectNoProblems(play);
                 });
+    }
+
+    // The name of a schedule link's 'open' button, which says which job and node it edits
+    private static String editSchedule(final String nodeName) {
+        return "Edit schedule for job 'Data Retention' on node '" + nodeName + "'";
     }
 
     // GWT's grid rows are <tr> elements with no role attribute (their role is
@@ -298,11 +337,6 @@ public final class JobsScreenStories {
         play.click(screen.findByText("Run Job on 'node1' Now"));
         play.waitFor(() -> play.expect(screen.getByText(
                 TextMatch.containing("execute job 'Data Retention' on node 'node1'"))).toBeInTheDocument());
-    }
-
-    // The 'open' icon of a CommandLinkCell, which runs the link's command when pressed
-    private static Query openIcon(final Play link) {
-        return link.querySelector(StroomDom.COMMAND_LINK_OPEN);
     }
 
     private static String rowText(final Element row) {

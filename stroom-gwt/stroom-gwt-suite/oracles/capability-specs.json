@@ -11932,7 +11932,7 @@
     "Feed",
     "Pipeline",
     "View Source",
-    "selector: .characterNavigator-label"
+    "Set Source Range"
    ]
   },
   {
@@ -12415,7 +12415,7 @@
     "Next record",
     "Last record",
     "Refresh",
-    "selector: .itemNavigator-label",
+    "Select Record",
     "View Source"
    ]
   },
@@ -13141,7 +13141,7 @@
     "Type",
     "Feed",
     "Pipeline",
-    "selector: .stepLocationLink"
+    "Set Location"
    ],
    "explained": 0
   },
@@ -13161,7 +13161,7 @@
     "Exit Stepping Mode",
     "Manage Step Filters",
     "Refresh Current Step",
-    "selector: .stepLocationLink"
+    "Set Location"
    ],
    "explained": 0
   },

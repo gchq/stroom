@@ -3,7 +3,7 @@
  "declared": 1546,
  "exercised": 824,
  "presenters": {
-  "declared": 803,
+  "declared": 804,
   "exercised": 502
  },
  "byKind": {
@@ -20,7 +20,7 @@
    "exercised": 80
   },
   "click": {
-   "declared": 471,
+   "declared": 470,
    "exercised": 254
   },
   "selection": {
@@ -32,7 +32,7 @@
    "exercised": 120
   },
   "key": {
-   "declared": 82,
+   "declared": 83,
    "exercised": 21
   },
   "hide": {
@@ -83,11 +83,11 @@
  "why": {
   "unreached": 233,
   "needs-value": 194,
-  "needs-key": 61,
+  "needs-key": 62,
   "view": 67,
   "widget": 90,
   "needs-dom": 6,
-  "unlabelled": 48,
+  "unlabelled": 47,
   "needs-dirty": 10,
   "needs-close": 5,
   "ok-blocked": 1,
@@ -492,6 +492,16 @@
    "via": "UiHandler",
    "exercised": false,
    "why": "view"
+  },
+  {
+   "class": "CommonAlertViewImpl",
+   "classKind": "view",
+   "kind": "click",
+   "receiver": "showHideDetail",
+   "label": null,
+   "line": 64,
+   "exercised": false,
+   "why": "unlabelled"
   },
   {
    "class": "AbstractNotificationListPresenter",
@@ -1769,6 +1779,17 @@
   {
    "class": "AnnotationEditPresenter",
    "classKind": "presenter",
+   "kind": "key",
+   "receiver": "KeyDownEvent",
+   "label": null,
+   "line": 526,
+   "via": "addDomHandler",
+   "exercised": false,
+   "why": "needs-key"
+  },
+  {
+   "class": "AnnotationEditPresenter",
+   "classKind": "presenter",
    "kind": "mousedown",
    "receiver": "panel",
    "label": null,
@@ -2338,17 +2359,6 @@
    "via": "UiHandler",
    "exercised": false,
    "why": "needs-value"
-  },
-  {
-   "class": "ChooserViewImpl",
-   "classKind": "view",
-   "kind": "click",
-   "receiver": "clearSelection",
-   "label": null,
-   "line": 82,
-   "via": "UiHandler",
-   "exercised": false,
-   "why": "unlabelled"
   },
   {
    "class": "DurationPresenter",
@@ -9857,7 +9867,7 @@
    "class": "StepLocationLinkPresenter",
    "classKind": "presenter",
    "kind": "click",
-   "receiver": "getLabel()",
+   "receiver": "getButton()",
    "label": null,
    "line": 38,
    "exercised": false,
@@ -13039,7 +13049,7 @@
    "class": "TimeRangePopup",
    "classKind": "widget",
    "kind": "click",
-   "receiver": "label",
+   "receiver": "button",
    "label": null,
    "line": 134,
    "exercised": false,
@@ -14057,19 +14067,9 @@
    "class": "ScheduleViewImpl",
    "classKind": "view",
    "kind": "click",
-   "receiver": "label",
+   "receiver": "button",
    "label": null,
-   "line": 147,
-   "exercised": false,
-   "why": "unlabelled"
-  },
-  {
-   "class": "ScheduleViewImpl",
-   "classKind": "view",
-   "kind": "click",
-   "receiver": "label",
-   "label": null,
-   "line": 156,
+   "line": 163,
    "exercised": false,
    "why": "unlabelled"
   },

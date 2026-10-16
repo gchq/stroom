@@ -215,9 +215,8 @@ public final class DictionaryEditorStories {
                     play.click(tab(play, "Imports"));
                     final Play grid = play.within(play.findByText("Document Name").closest(".dataGridWidget"));
                     // The imported dictionary is a command link (hasOpenLink) that opens the doc.
-                    // Its 'open' icon, titled with what it opens, runs it
-                    play.click(grid.within(grid.getByTitle("Open Dictionary 'Cities'."))
-                            .querySelector(StroomDom.COMMAND_LINK_OPEN));
+                    // Its 'open' button, named for what it opens, runs it
+                    play.click(grid.getByRole("button", "Open Dictionary 'Cities'."));
                     play.waitFor(() -> play.expect(play.spy(OPEN_DOC)).toHaveBeenCalledWith("dict-cities"));
                     // Remove is enabled (a row is selected by default) and confirms first
                     play.click(play.getByRole("button", "Remove Imported Dictionary"));

@@ -431,9 +431,9 @@ last closed dialog for a moment only.
 **Reported.**
 
 * Annotation edit: Status, Assigned To, Labels, Collections and Retain are clickable blocks with no
-  tab stop (`AnnotationEditViewImpl.ui.xml`).
-* The schedule's and the time range's Quick Settings presets are plain labels with click handlers
-  (`ScheduleViewImpl`, `TimeRangePopup.ui.xml`).
+  tab stop (`AnnotationEditViewImpl.ui.xml`). Making a whole block a button would put its form
+  group's help button and Assign Yourself inside a button (nested controls), so it needs a design:
+  e.g. a separate "Change Status" button beside the value.
 
 ### Toolbars are a tab stop per button
 
@@ -881,6 +881,30 @@ They are in `test-runner/a11y-baseline.json` until they are fixed.
 
 These were found by the review and fixed in the same change:
 
+* **Controls that looked like links but were mouse only** (no role, no tab stop; WCAG 2.1.1,
+  4.1.2), now buttons or links:
+  * The open icons of grid cells (`CommandLinkCell`, `DocRefCell`, `UserRefCell`, `FeedRefCell`)
+    and the links in query and dashboard results (`TableRow`) are row actions (`RowActions`): a
+    `<button>` named by its title, or a `role="link"`. Tab reaches those of the row with the
+    keyboard focus (the other rows' are out of the tab order, so a long list isn't a tab stop per
+    row), Enter and Space press a button and Enter follows a link; the grid leaves those keys to
+    them (`widgets-cell-renderers-docrefcell--open-by-keyboard`,
+    `app-main-jobsscreen--command-links-by-keyboard`,
+    `app-editors-queryeditor--hyperlinks-by-keyboard`). A result link with no text was dropped; it
+    is now shown, named for what it opens (`HyperlinkName`), and a link whose text is its URL is
+    named by the URL's host and path. The schedule link's button now says which job and node it
+    edits.
+  * An annotation's event and annotation references (`#42`, `1234:5`) are links named "Annotation
+    42" and "Event 1234:5", followed with Enter (`app-annotations-decoratecomment--links-invoke-handlers`).
+  * The data viewer's "Part 1 of 3" and "Lines/Chars ... of ..." (which open dialogs), the time
+    range's and schedule's Quick Settings (now in groups named by their titles), the column value
+    filter's Select All / Select None and the XSD browser's Home / Back / Forward are text buttons
+    (`LinkButton`) that keep their look (`widgets-editors-viewers-xsdbrowser--keyboard-navigation`).
+  * The alert dialogs' "Show Detail / Hide Detail" was a GWT `Hyperlink`, which also added a
+    browser history entry; it is now a "Show Detail" button with `aria-expanded` and
+    `aria-controls` (`widgets-dialogs-alertdialog--show-detail`), and the pipeline's View Source
+    link is a toolbar button.
+  * The annotation chooser's "clear selection" link had no callers and is removed.
 * **The HTTP client's User Agent was never saved.** `HttpClientConfigPresenter` now reads and writes
   it (blank means the client's own user agent); the OpenAI model editor's play checks it is kept.
 * **Elastic's response timeout was ignored**: the response timeout was set from the connection

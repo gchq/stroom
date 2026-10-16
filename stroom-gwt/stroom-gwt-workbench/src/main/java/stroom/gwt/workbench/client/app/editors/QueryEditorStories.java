@@ -285,6 +285,14 @@ public final class QueryEditorStories {
             RestReply.json(nameTable(
                     "[Open](data?id=1001&partNo=1&recordNo=5&viewType=source&displayType=tab){data}")));
 
+    // Links followed from the keyboard: a link to stream 1001, one with no text to stream 1002, and
+    // one whose text is its URL, each beside a note
+    private static final RestFixtures KEYBOARD_LINK_FIXTURES = fixtures(RestFixtures.builder(),
+            RestReply.json(linkTable(
+                    "[Open](data?id=1001&partNo=1&recordNo=5&viewType=source&displayType=tab){data}", "first",
+                    "[](data?id=1002&partNo=1&recordNo=5&viewType=source&displayType=tab){data}", "second",
+                    "[https://example.com/docs/](https://example.com/docs/){browser}", "third")));
+
     // Visualisation: a vis result as well as the table, and the visualisation document
     private static final String VIS_SETTINGS =
             "{\"json\": \"{}\", \"visualisation\": {\"type\": \"Visualisation\", \"uuid\": \"vis-1\", "
@@ -353,7 +361,14 @@ public final class QueryEditorStories {
                     // The popup is a GWT PopupPanel on the page's body
                     play.waitFor(() -> play.expect(screen.querySelector(".timeRange-popup")).toBeInTheDocument());
                     final Play popup = screen.within(screen.querySelector(".timeRange-popup"));
-                    play.click(popup.getByText("Today"));
+                    // The quick settings are buttons in groups named by their titles (they were
+                    // labels with click handlers, which the keyboard couldn't reach), pressed here
+                    // with Enter
+                    final Query today = popup.within(popup.getByRole("group", "Present"))
+                            .getByRole("button", "Today");
+                    play.run("focus Today", () -> today.element().get().focus());
+                    play.expect(today).toHaveFocus();
+                    play.keyboard("{Enter}");
                     play.click(popup.getByRole("button", StroomDom.button("OK")));
                     expectSearchWith(play, "{\"queryContext\": {\"timeRange\": {\"name\": \"Today\"}}}");
                     DocumentEditors.expectNoProblems(play);
@@ -560,6 +575,8 @@ public final class QueryEditorStories {
                     play.expect(link.property("tagName")).toBe("U");
                     // Stroom URL encodes the link in the attribute
                     play.expect(link.attribute("link")).toMatch("https%3A%2F%2Fexample.com");
+                    // It is announced as a link, named by its text
+                    play.expect(play.getByRole("link", "Docs")).toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // A group row has an expander; expanding it fetches again with the open group
@@ -825,6 +842,40 @@ public final class QueryEditorStories {
                             .toHaveBeenCalledWith("STROOM_TAB SOURCE 1001:4"));
                     DocumentEditors.expectNoProblems(play);
                 })
+                // A table's links are reached with Tab from their row (only the row with the keyboard
+                // focus has its links in the tab order) and followed with Enter. They were
+                // underlined text that only a mouse could follow. A link with no text is shown,
+                // named for what it opens, rather than dropped; one whose text is its URL is named
+                // by the URL's host and path
+                .story("HyperlinksByKeyboard", context -> render(context, KEYBOARD_LINK_FIXTURES, null, false,
+                        QueryEditorStories::hyperlinks))
+                .withPlay(play -> {
+                    execute(play);
+                    final Query open = play.findByRole("link", "Open");
+                    final Query noText = play.getByRole("link", "Data");
+                    play.expect(noText).toHaveTextContent("Data");
+                    play.expect(play.getByRole("link", "example.com/docs"))
+                            .toHaveTextContent("https://example.com/docs/");
+                    // Pressing a row's text gives the row the keyboard focus
+                    play.click(play.getByText("first"));
+                    play.waitFor(() -> play.expect(open).toHaveAttribute("tabindex", "0"));
+                    play.expect(noText).toHaveAttribute("tabindex", "-1");
+                    play.tab();
+                    play.expect(open).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
+                            .toHaveBeenCalledWith("STROOM_TAB SOURCE 1001:4"));
+                    // Back to the row, down to the next one, and on to its link
+                    play.tab(true);
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(noText).toHaveAttribute("tabindex", "0"));
+                    play.tab();
+                    play.expect(noText).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
+                            .toHaveBeenCalledWith("STROOM_TAB SOURCE 1002:4"));
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // When the query's data source is Annotations, changing an annotation runs a new
                 // search (with no query key), rather than refreshing the old one
                 .story("AnnotationChangeForcesNewSearch", context -> render(context, ANNOTATIONS_DATA_SOURCE_FIXTURES,
@@ -920,6 +971,20 @@ public final class QueryEditorStories {
         return QueryFixtures.response(true, QueryFixtures.tableResult("table",
                 "[{\"id\": \"f-name\", \"name\": \"Name\", \"visible\": true}]",
                 "[{\"values\": [\"" + value + "\"], \"depth\": 0}]", 1));
+    }
+
+    // A complete search of a table of a 'Name' column and a 'Note' column, given as the values of
+    // each row in turn
+    private static String linkTable(final String... values) {
+        final String[] rows = new String[values.length / 2];
+        for (int i = 0; i < rows.length; i++) {
+            rows[i] = "{\"values\": [\"" + values[i * 2] + "\", \"" + values[i * 2 + 1]
+                      + "\"], \"depth\": 0, \"groupKey\": \"row-" + i + "\"}";
+        }
+        return QueryFixtures.response(true, QueryFixtures.tableResult("table",
+                "[{\"id\": \"f-name\", \"name\": \"Name\", \"visible\": true}, "
+                + "{\"id\": \"f-note\", \"name\": \"Note\", \"visible\": true}]",
+                "[" + String.join(", ", rows) + "]", rows.length));
     }
 
     // A page of help rows field_<from> to field_<from + count - 1> of `total`

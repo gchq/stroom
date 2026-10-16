@@ -330,11 +330,9 @@ const TITLED = 'titled: ';
  *  its Edit Comment / Delete Entry menu (`AnnotationEditPresenter.showEntryEditMenu`). */
 const ENTRY = 'entry: ';
 const ENTRY_TYPES = { comment: '4' };
-/** `selector: <css>` — a clickable whose TEXT is data, so no label can name it: the stepping toolbar's
- *  location label (`.stepLocationLink`, `[<metaId>:<part>:<record>]`) opens `Set Location` on a click. */
+/** `selector: <css>` — a clickable whose TEXT is data, so no label can name it: a query result's link
+ *  (`.dataGridWidget tbody u[link]`), whose text is the row's data. */
 const SELECTOR = 'selector: ';
-/** The clickable-label classes the survey offers as `selector:` affordances (see survey()). */
-const CLICKABLE_LABELS = ['.itemNavigator-label', '.characterNavigator-label', '.stepLocationLink'];
 async function clickAffordance(label, timeout = 3000) {
   if (label.startsWith(COLUMN_MENU)) return clickDesignHeader(label.slice(COLUMN_MENU.length));
   if (label.startsWith(SELECTOR)) {
@@ -527,18 +525,12 @@ async function survey() {
     }, scope).catch(() => []);
     for (const label of headers) if (!buttons.some((b) => b.label === label)) buttons.push({ kind: 'header', label, enabled: true, visible: true });
   }
-  // Labels that OPEN something, which no markup advertises: a GWT `Label` with a click handler is a
-  // div. The data preview's item pager (`.itemNavigator-label`, "Part 1 of 1" → ItemSelection-
-  // Presenter), the source view's character pager (`.characterNavigator-label` → CharacterRange-
-  // SelectionPresenter) and the stepping toolbar's location (`.stepLocationLink` → StepLocation-
-  // Presenter). Offered as `selector:` affordances whenever one is visible in scope.
-  if (!menuItems.length) {
-    const labels = await page.evaluate(([sel, classes]) => {
-      const root = document.querySelector(sel) ?? document.body;
-      return classes.filter((cls) => [...root.querySelectorAll(cls)].some((e) => e.offsetWidth > 0 && e.offsetHeight > 0));
-    }, [scope, CLICKABLE_LABELS]).catch(() => []);
-    for (const cls of labels) buttons.push({ kind: 'label', label: `${SELECTOR}${cls}`, enabled: true, visible: true });
-  }
+  // The data preview's item pager ("Part 1 of 1" → ItemSelectionPresenter), the source view's
+  // character pager (→ CharacterRangeSelectionPresenter) and the stepping toolbar's location
+  // (→ StepLocationPresenter) were GWT `Label`s with click handlers, which no markup advertised, so
+  // they were offered here as `selector:` affordances. They are buttons now (#5406), titled
+  // `Select Part`/`Select Record`, `Set Source Range` and `Set Location`, so the button reader
+  // finds them.
   const grids = await page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     // GWT's `.dataGridWidget` table, with an ARIA grid (`role=grid`, whose header is
@@ -1791,9 +1783,9 @@ if (DIRECTED.includes('stepping')) {
   // scratch store under Stroom's TEMP dir, creates no meta and writes no stream, so it is allowed now
   // and the step controls (First/Backward/Forward/Last/Refresh) run for real.
   //
-  // Two doors, neither a button: `Set Location` (StepLocationPresenter) opens from the toolbar's
-  // location LABEL, whose text is `[<metaId>:<part>:<record>]` — data, hence `selector:`; and
-  // ElementPresenter is created client-side by `SteppingPresenter.getContent` when a NON-SOURCE
+  // Two doors: `Set Location` (StepLocationPresenter) opens from the toolbar's location button
+  // (titled `Set Location`; its text, `[<metaId>:<part>:<record>]`, is data); and ElementPresenter
+  // is created client-side by `SteppingPresenter.getContent` when a NON-SOURCE
   // element is selected in the stepping tree — the same canvas as the Structure tab, so the same
   // `select-element` step. Its panes (code, input, output, log) are the second seed's surface.
   const stepping = [
@@ -1806,8 +1798,8 @@ if (DIRECTED.includes('stepping')) {
   // disabled. An `Events` row parses: `[<meta>:1:1]`, Step Forward → `[<meta>:1:2]`, and the
   // response's elementMap carries the XSLT filter's input and output (probe-stepping.mjs).
   const onStream = [...stepping, { via: 'select-row', text: '^\\S+ Events ', post: true, opens: 'changed' }];
-  // The location label (`selector: .stepLocationLink` → Set Location) is offered by the survey
-  // itself (CLICKABLE_LABELS); it used to be an `extra` on these two seeds.
+  // The location button (`Set Location`) is found by the survey's button reader; it used to be an
+  // `extra` on these two seeds.
   seeds.push({ kind: 'post-action', presenter: 'SteppingPresenter', seedDepth: 3,
     path: ['Pipeline (document)', 'Structure', 'after Stepping Mode'], route: stepping });
   seeds.push({ kind: 'post-action', presenter: 'SteppingPresenter', seedDepth: 4,
@@ -1818,8 +1810,9 @@ if (DIRECTED.includes('stepping')) {
   console.log('  + 3 directed stepping seed(s): stepping mode at rest, stepping on an Events stream, its XSLT element');
 }
 if (DIRECTED.includes('datalink')) {
-  // A result cell that is a `data(…)` HYPERLINK with displayType `tab` — rendered `<u link="…">`, and
-  // DataGridSelectionEventManager fires HyperlinkEvent for it, whose handler fires ShowDataEvent as
+  // A result cell that is a `data(…)` HYPERLINK with displayType `tab` — rendered `<u link="…"
+  // role="link">`, and DataGridSelectionEventManager fires HyperlinkEvent for it (on a mousedown,
+  // or Enter), whose handler fires ShowDataEvent as
   // a STROOM_TAB — DataPreviewTab-
   // Presenter, the one door opened only by an event (door-preconditions.md, class `event`). Nothing
   // to seed: the query builds the link over the same rows the `results` seeds use.

@@ -357,9 +357,11 @@ public class JobNodeListHelper {
             final String schedule = NullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getSchedule);
 
             if (schedule != null) {
+                // Says which job and node, as the button's name is heard on its own
                 return new CommandLink(
                         schedule,
-                        "Edit schedule",
+                        "Edit schedule for job '" + jobNodeAndInfo.getJobName()
+                        + "' on node '" + jobNodeAndInfo.getNodeName() + "'",
                         () ->
                                 showSchedule(jobNodeAndInfo));
             } else {

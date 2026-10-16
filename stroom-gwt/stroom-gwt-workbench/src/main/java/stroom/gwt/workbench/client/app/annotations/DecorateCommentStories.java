@@ -63,6 +63,7 @@ public final class DecorateCommentStories {
             "#notanid",
             "1234 alone",
             // GWT leaves 'start' true after a token, so adjacent references both link
+            // (an em space apart, so that each is a target of its own)
             "#5#6",
             // No links: a single plain text node
             "just a comment"};
@@ -91,7 +92,7 @@ public final class DecorateCommentStories {
                                     "x1234:5",
                                     "#notanid",
                                     "1234 alone",
-                                    "[#5]|[#6]",
+                                    "[#5]|\u2003|[#6]",
                                     "just a comment"));
                     ContentStorySupport.expectNoProblems(play);
                 })
@@ -107,6 +108,18 @@ public final class DecorateCommentStories {
                     play.waitFor(() -> play.expect(play.spy(OPENED).callCount()).toBe(2));
                     play.expect(play.spy(OPENED)).toHaveBeenNthCalledWith(1, "ann:7");
                     play.expect(play.spy(OPENED)).toHaveBeenNthCalledWith(2, "evt:100:200");
+                    // They are links, named for what they refer to, which the keyboard reaches (they
+                    // are tab stops) and follows with Enter
+                    final Query annotation = play.getByRole("link", "Annotation 7");
+                    final Query event = play.getByRole("link", "Event 100:200");
+                    play.expect(annotation).toHaveAttribute("tabindex", "0");
+                    play.run("focus the annotation link", () -> annotation.element().get().focus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(OPENED)).toHaveBeenNthCalledWith(3, "ann:7"));
+                    play.tab();
+                    play.expect(event).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.spy(OPENED)).toHaveBeenNthCalledWith(4, "evt:100:200"));
                     ContentStorySupport.expectNoProblems(play);
                 });
     }

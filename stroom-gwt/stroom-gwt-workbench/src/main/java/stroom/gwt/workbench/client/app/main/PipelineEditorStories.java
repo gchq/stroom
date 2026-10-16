@@ -270,9 +270,10 @@ public final class PipelineEditorStories {
                     play.expect(play.getByText("Ref Pipeline")).toBeInTheDocument();
                     play.expect(play.getByText("MY_FEED")).toBeInTheDocument();
                     play.expect(play.getByTitle("New Pipeline Reference")).toBeInTheDocument();
-                    // View Source opens the pipeline's JSON, captioned 'Pipeline Source'.
-                    // 'View Source' is a GWT Hyperlink (a link, not a button)
-                    play.click(play.getByText("View Source"));
+                    // View Source opens the pipeline's JSON, captioned 'Pipeline Source'. It is
+                    // a toolbar button (it was a GWT Hyperlink, which added a browser history
+                    // entry)
+                    play.click(play.getByRole("button", "View Source"));
                     final Play source = dialog(screen, "Pipeline Source");
                     play.click(source.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Pipeline Source", StroomDom.DIALOG_TITLE))

@@ -195,6 +195,9 @@ export async function readButtons(page, scopeSelector) {
       const out = [];
       let order = 0;
       for (const el of els) {
+        // A grid cell's buttons (an 'open' icon, marked data-row-action) are its rows' content,
+        // named for each row's data, not toolbar structure; the grid reader reads the rows
+        if (el.hasAttribute('data-row-action')) continue;
         const label = norm(el.getAttribute('title') || el.getAttribute('aria-label') || el.textContent);
         if (!label) continue;
         const cls = String(el.className || '');

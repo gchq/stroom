@@ -33,6 +33,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.RowActions;
 import stroom.widget.util.client.SvgImageUtil;
 import stroom.widget.util.client.Templates;
 
@@ -85,7 +86,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                        final Function<T_ROW, DocRef> docRefFunction,
                        final Function<T_ROW, String> cssClassFunction,
                        final Function<T_ROW, Boolean> canOpenFunction) {
-        super(BrowserEvents.MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
         this.eventBus = eventBus;
         this.showIcon = showIcon;
         this.hasOpenAndCopy = hasOpenAndCopy;
@@ -112,11 +113,14 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                                final T_ROW value,
                                final NativeEvent event,
                                final ValueUpdater<T_ROW> valueUpdater) {
-        super.onBrowserEvent(context, parent, value, event, valueUpdater);
         if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
             if (MouseUtil.isPrimary(event)) {
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
+        } else if (RowActions.isKeyPress(event)) {
+            // Enter or Space on the open button; the button's own click would come too
+            event.preventDefault();
+            onEnterKeyDown(context, parent, value, event, valueUpdater);
         }
     }
 
@@ -230,12 +234,13 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
                 // A broken ref may have an empty UUID, which can't be opened
                 if (NullSafe.isNonBlankString(docRef.getUuid())) {
+                    // A button the keyboard reaches from its row (a row action)
                     final SafeHtml open = SvgImageUtil.toSafeHtml(
                             SvgImage.OPEN,
                             ICON_CLASS_NAME,
-                            OPEN_CLASS_NAME,
                             HOVER_ICON_CLASS_NAME);
-                    sb.append(Templates.divWithTitle(
+                    sb.append(RowActions.button(
+                            OPEN_CLASS_NAME,
                             "Open " + docRef.getType() + " " + docRef.getName() + " in new tab",
                             open));
                 }

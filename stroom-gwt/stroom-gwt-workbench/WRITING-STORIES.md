@@ -818,18 +818,23 @@ titles, menus and menu items, tick boxes). Where it doesn't (see the accessibili
   names from `.dataGridSortableHeaderNameHolder`);
 * `ACTIONS_TITLE` ('Actions...'); `MENU_ITEM_TEXT`; `LINK_TAB_LABEL` (link tabs have no
   `role="tab"`); `QUICK_FILTER_PLACEHOLDER` (quick filters have no label); `SELECTION_BOX` (click
-  its text box to open it); `COMMAND_LINK_OPEN`; `FILE_INPUT`.
+  its text box to open it); `FILE_INPUT`.
 
 Also:
 
 * **Press a grid row's cell, not its `<tr>`.** A play's event is dispatched to the element it is
   given, and GWT's grids handle the events of their cells, so `play.dblClick(play.getByText(x))`
   opens a row where `play.dblClick(play.getByText(x).closest("tr"))` does nothing.
-* **Command links** (`CommandLinkCell`: Jobs' Node/Schedule, the Imports grid) run on a mousedown on
-  their 'open' icon, found inside the element titled with what it opens:
-  `play.click(play.within(play.getByTitle("Edit schedule")).querySelector(StroomDom.COMMAND_LINK_OPEN))`.
-  To keep a multi-selection, `play.fireEvent().mouseDown(...)` on the icon (the grid then leaves the
+* **Command links** (`CommandLinkCell`: Jobs' Node/Schedule, the Imports grid) and the 'open'
+  icons of document, user and feed cells are buttons, named for what they open, that run on a
+  mousedown: `play.click(play.getByRole("button", "Open Dictionary 'Cities'."))`. To keep a
+  multi-selection, `play.fireEvent().mouseDown(...)` on the button (the grid then leaves the
   selection alone).
+* **Buttons and links in grid cells** (row actions: those buttons, and the links in query and
+  dashboard results) are tab stops only in the row with the keyboard focus (`tabindex="0"`; the
+  other rows' are `-1`): give a row the focus (press its text), then `play.tab()` reaches its row
+  actions in order. Enter and Space press a button, Enter follows a link; the grid leaves the keys
+  pressed on them alone (`JobsScreen` `CommandLinksByKeyboard`).
 * Grid tick boxes are `TickBoxCell` divs (`.tickBox`) with the `checkbox` role, not inputs, so
   `getAllByRole("checkbox")` finds them too; list boxes (`<select multiple>`) are driven with
   `play.selectOptions(...)`; context menus with `play.rightClick(cell)`.

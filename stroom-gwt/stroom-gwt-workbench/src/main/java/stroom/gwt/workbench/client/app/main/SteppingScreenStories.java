@@ -192,8 +192,10 @@ public final class SteppingScreenStories {
                     play.expect(play.querySelector(".code-editor__marker--warning"))
                             .toHaveAttribute("lineno", "1");
                     play.expect(play.querySelector(".code-editor__summary")).toHaveClass("code-editor__summary--error");
-                    // Clicking the location label opens the Set Location dialog
-                    play.click(play.getAllByText("[1:1:1]").nth(0));
+                    // The location is a button, named for what it does and where it is, that opens
+                    // the Set Location dialog
+                    play.click(play.getByRole("button",
+                            "Set Location ([1:1:1], stream 1, part 1, record 1)"));
                     final Play jump = screen.within(
                             screen.findByText("Set Location", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
                     play.click(jump.getByRole("button", StroomDom.button("Cancel")));

@@ -19,13 +19,11 @@ package stroom.pipeline.structure.client.view;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.pipeline.structure.client.presenter.PipelineStructureUiHandlers;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -54,7 +52,7 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     @UiField
     SimplePanel pipelineReferences;
     @UiField
-    Hyperlink viewSource;
+    ToolbarButton viewSource;
 
     @Inject
     public PipelineStructureViewImpl(final Binder binder) {
@@ -136,10 +134,8 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
 
     @UiHandler("viewSource")
     void onViewSource(final ClickEvent event) {
-        if (MouseUtil.isPrimary(event)) {
-            if (getUiHandlers() != null) {
-                getUiHandlers().viewSource();
-            }
+        if (getUiHandlers() != null) {
+            getUiHandlers().viewSource();
         }
     }
 
