@@ -101,7 +101,7 @@ public class AiToolApprovalsPresenter extends MyPresenterWidget<AiToolApprovalsP
         }
         final String message = "Approve everything in this chat?\n"
                                + "Trusted servers' tools that modify data already run without asking, until the "
-                               + "chat reads data from tools or attached tables.\n"
+                               + "chat reads an untrusted MCP server's output.\n"
                                + "With this on, they keep running without asking after that.\n"
                                + "Destructive tools, and ones that reach outside Stroom, still ask.";
         ConfirmEvent.fire(this, message, ok -> {
