@@ -84,6 +84,7 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
                       final PopupSize popupSize) {
         onTypeChange();
         createNewGroupPresenter.getView().setName("");
+        createNewGroupPresenter.getView().setNameValid();
         createNewUserPresenter.getView().clear();
         createMultipleUsersPresenter.getView().clear();
 

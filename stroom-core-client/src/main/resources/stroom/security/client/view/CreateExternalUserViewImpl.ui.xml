@@ -4,8 +4,10 @@
   xmlns:form="urn:import:stroom.widget.form.client">
 
   <g:FlowPanel styleName="createExternalUserViewImpl max form flex-column">
-    <form:FormGroup identity="subjectId"
+    <form:FormGroup ui:field="subjectIdGroup"
+                    identity="subjectId"
                     label="Unique User Identity"
+                    required="true"
                     addStyleNames="createExternalUserViewImpl-subjectId dock-min form"
                     screenReaderText="The user's ID in the identity provider, e.g. a UUID or email address.">
       <form:HelpHTML>

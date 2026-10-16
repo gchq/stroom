@@ -13,6 +13,11 @@
                 <p:ToolbarToggleButton ui:field="toggleRegex" svg="REGEX" title="Regex"/>
             </p:Toolbar>
         </g:FlowPanel>
+        <!-- What may be typed, and what is wrong with it, under the pattern -->
+        <g:FlowPanel styleName="FindViewImpl-guidance dock-min">
+            <g:Label ui:field="patternFeedback" styleName="form-group__feedback"/>
+            <g:Label ui:field="patternHint" styleName="form-group__description"/>
+        </g:FlowPanel>
         <!-- The results above the text of the selected one (addStyleNames, as styleName would replace
              the split pane's own class) -->
         <l:SplitPane vertical="true" sizes="300px, *" names="Results, Text"

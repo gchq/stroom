@@ -26,12 +26,15 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+
+import java.util.function.Supplier;
 
 public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
         extends MyPresenter<FindView, T_PROXY>
@@ -120,5 +123,16 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
         void setResultView(View view);
 
         void setDialogMode(boolean dialog);
+
+        /// Says what the filter is for and what may be typed in it, for screen readers.
+        ///
+        /// @param accessibleName What the filter is for, e.g. `Find by name`.
+        /// @param description    What may be typed, or null for nothing.
+        void setFilterGuidance(String accessibleName, String description);
+
+        /// Sets the help shown by the filter's syntax help button.
+        ///
+        /// @param popupTextSupplier Supplies the help.
+        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
     }
 }

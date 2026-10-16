@@ -706,6 +706,38 @@ and the old panels, their CSS, their stories and the comparison stories are dele
 stories in `Widgets/Layout/SplitPane` now drag split panes alone, checking each follows the mouse to
 the pixel.
 
+### Errors not identified to screen readers (#5409)
+
+**Fixed.** Several dialogs didn't identify input errors to assistive technology (WCAG 3.3.1, Error
+Identification):
+
+* Create (e.g. a new Feed) and Rename with no name showed a warning alert, which a screen reader
+  didn't read: the focus went to its Close button and the dialog wasn't described by its message.
+  The message is now shown under the Name field (`FormGroup.setFeedback`, which marks the field
+  `aria-invalid` and described by the message), and the field is focused, so its label and the
+  message are read. The field is also marked required (`CreateDocumentViewImpl`,
+  `NameDocumentViewImpl`; the workbench's `App/Main/CreateDocumentDialog` `NoName`).
+* Add External User(s) could be submitted with every field blank: no identity asked the server to
+  create a user with none, and no users in Add Multiple closed the dialog as Cancel does. Add User
+  Group with no name did the same as no identity. Each now says why under its field and keeps the
+  dialog open (`TestCreateExternalUserPresenter`, `TestCreateMultipleUsersPresenter`,
+  `TestCreateNewGroupPresenter`; the workbench's `App/Main/UsersScreen` `NoUserIdentity` and
+  `NoUsersToAdd`), and the server refuses a blank identity or group name
+  (`UserServiceImpl`, `TestUserServiceImpl`).
+* Every alert is now an alert dialog (`role="alertdialog"`) described by its message
+  (`aria-describedby`), so a screen reader reads the message when it opens
+  (`PopupUtil.setAlertDialogRole`; the workbench's `App/Main/ApiErrorAlertHost`).
+* Find In Content gave no guidance on what to type, and an invalid regex matched nothing and said
+  nothing (the server logged it as an error). The pattern box is now named, with guidance under it
+  that changes with the Regex toggle, and the server says why a regex is invalid
+  (`RegexPatternValidator`), which is shown under the box in a live region (the workbench's
+  `App/Main/FindInContentDialog` `InvalidRegex`). Find's quick filter is named "Find by name", says
+  what may be typed, and its syntax help lists the explorer's fields.
+* A quick filter the server rejected was only shown by its styling and hover text. The box is now
+  also `aria-invalid` and described by the reason, which is in a live region, so a screen reader
+  says it as the user types (`QuickFilter.setFilterError`; the workbench's
+  `Widgets/Inputs/QuickFilter` `RejectedFilter`).
+
 ### Keyboard trap in the code editor
 
 Tab in an editable code editor inserts an indent, so keyboard users can't leave it (WCAG 2.1.2).
@@ -764,9 +796,9 @@ best done in `ShowMenuEvent` with a named opener rather than one place at a time
 * Ask Stroom AI: the message box has only a placeholder ("How can I help?") (`AskStroomAiViewImpl`).
   (Its Send/Cancel button, once named only by `setText`, which didn't show, is now a `ToolbarButton`
   named Send or Cancel.)
-* Quick filters have only a "Quick Filter" placeholder, no label, e.g. the Find dialog's,
-  Dependencies, User Access and Export (`QuickFilter`).
-* Find In Content's pattern box has no label (`FindInContentViewImpl.ui.xml`).
+* Quick filters have only a "Quick Filter" placeholder, no label, e.g. Dependencies, User Access
+  and Export (`QuickFilter`). `QuickFilter.setAccessibleName` and `setDescription` now give one a
+  name and say what may be typed; the Find and Recent Items dialogs use them (#5409).
 * A content tab's close cross (`.curveTab-close`, a `div`) has no name and isn't a button
   (`CurveTab`).
 * The grid's group expander has no name or title (`ExpanderCell`).

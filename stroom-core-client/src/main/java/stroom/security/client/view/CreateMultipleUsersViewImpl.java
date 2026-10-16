@@ -17,10 +17,13 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -32,6 +35,8 @@ public class CreateMultipleUsersViewImpl
 
     private final Widget widget;
 
+    @UiField
+    FormGroup userBatchGroup;
     @UiField
     TextArea userBatch;
 
@@ -49,6 +54,21 @@ public class CreateMultipleUsersViewImpl
     @Override
     public void clear() {
         userBatch.setText(null);
+        userBatchGroup.clearFeedback();
+    }
+
+    @Override
+    public void setUsersCsvDataInvalid(final String message) {
+        userBatchGroup.setFeedback(message);
+        userBatch.setFocus(true);
+    }
+
+    @UiHandler("userBatch")
+    void onUserBatchKeyUp(final KeyUpEvent event) {
+        // Once users have been entered the feedback no longer applies
+        if (userBatchGroup.getFeedback() != null && !userBatch.getText().trim().isEmpty()) {
+            userBatchGroup.clearFeedback();
+        }
     }
 
     @Override

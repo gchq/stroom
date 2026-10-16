@@ -48,6 +48,7 @@ public class RecentItemsPresenter
                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view, proxy, findResultListPresenter, quickFilterContextHandlerFactory);
         this.recentItems = recentItems;
+        view.setFilterGuidance("Filter recent items by name", null);
     }
 
     @ProxyEvent

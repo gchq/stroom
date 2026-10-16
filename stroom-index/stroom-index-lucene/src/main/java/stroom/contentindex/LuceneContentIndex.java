@@ -741,6 +741,10 @@ public class LuceneContentIndex implements ContentIndex, Handler {
 
     @Override
     public ResultPage<DocContentMatch> findInContent(final FindInContentRequest request) {
+        // An invalid regex is the user's mistake, so tell them, rather than logging it as an error
+        // and matching nothing
+        RegexPatternValidator.validate(request.getFilter());
+
         // Trigger async initialisation, wait for a bit, then throw if it is not ready
         ensureIndexAndWait();
 

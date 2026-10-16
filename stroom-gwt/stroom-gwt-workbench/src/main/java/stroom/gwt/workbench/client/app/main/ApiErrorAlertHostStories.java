@@ -71,6 +71,10 @@ public final class ApiErrorAlertHostStories {
                     play.expect(screen.findByText(TextMatch.containing("Boom from the server"))).toBeInTheDocument();
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
                             ValueMatcher.stringContaining("Boom from the server"));
+                    // An alert dialog described by its message, so a screen reader reads the message
+                    // when it opens, not just the Close button it focuses (#5409)
+                    play.expect(screen.getByRole("alertdialog", "Alert"))
+                            .toHaveAccessibleDescription(TextMatch.containing("Boom from the server"));
                     play.click(screen.getByRole("button", StroomDom.button("Close")));
                     play.waitFor(() -> play.expect(screen.queryByText(TextMatch.containing("Boom from the server")))
                             .toBeNull());

@@ -31,6 +31,7 @@ import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.FindInContentResult;
 import stroom.explorer.shared.StringMatch;
+import stroom.explorer.shared.StringMatch.MatchType;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.TextRangeUtil;
 import stroom.util.shared.NullSafe;
@@ -146,6 +147,7 @@ public class FindInContentPresenter
                 lastFilter = currentQuery.getFilter();
 
                 if (NullSafe.isBlankString(currentQuery.getFilter().getPattern())) {
+                    getView().setPatternValid();
                     final ResultPage<FindInContentResult> resultPage = ResultPage.empty();
                     if (resultPage.getPageStart() != cellTable.getPageStart()) {
                         cellTable.setPageStart(resultPage.getPageStart());
@@ -159,6 +161,7 @@ public class FindInContentPresenter
                             .create(EXPLORER_RESOURCE)
                             .method(res -> res.findInContent(currentQuery))
                             .onSuccess(resultPage -> {
+                                getView().setPatternValid();
                                 if (resultPage.getPageStart() != cellTable.getPageStart()) {
                                     cellTable.setPageStart(resultPage.getPageStart());
                                 }
@@ -174,7 +177,17 @@ public class FindInContentPresenter
 
                                 resetFocus();
                             })
-                            .onFailure(errorHandler)
+                            .onFailure(error -> {
+                                if (MatchType.REGEX.equals(currentQuery.getFilter().getMatchType())) {
+                                    // Most likely the regex is invalid, so say why under it, rather
+                                    // than in a popup that takes the user away from typing it
+                                    getView().setPatternInvalid(error.getMessage());
+                                    dataConsumer.accept(ResultPage.empty());
+                                    selectionModel.clear();
+                                } else {
+                                    errorHandler.onError(error);
+                                }
+                            })
                             .taskMonitorFactory(pagerView)
                             .exec();
                 }
@@ -323,5 +336,13 @@ public class FindInContentPresenter
         void setTextView(View view);
 
         TaskMonitorFactory getTaskListener();
+
+        /// Shows why the pattern is invalid, under it.
+        ///
+        /// @param message What is wrong with the pattern.
+        void setPatternInvalid(String message);
+
+        /// Clears any message about the pattern being invalid.
+        void setPatternValid();
     }
 }
