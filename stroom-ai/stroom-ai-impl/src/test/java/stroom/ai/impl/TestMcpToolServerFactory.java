@@ -34,6 +34,8 @@ import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.UserTokenIssuer;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpHeader;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
@@ -48,6 +50,7 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -204,6 +207,37 @@ class TestMcpToolServerFactory {
         assertThat(McpToolServerFactory.isSecureEndpoint("http://mcp.example.com/mcp")).isFalse();
         assertThat(McpToolServerFactory.isSecureEndpoint("not a url")).isFalse();
         assertThat(McpToolServerFactory.isSecureEndpoint(null)).isFalse();
+    }
+
+    @Test
+    void connectionFailuresSayWhatWentWrong() {
+        final RuntimeException wrapped = new RuntimeException("Client failed to initialize by explicit API call",
+                new IllegalStateException("Sending message failed with a non-OK HTTP code: 401 - Unauthorized"));
+        assertThat(McpToolServerFactory.describeFailure(wrapped))
+                .startsWith("Client failed to initialize by explicit API call: Sending message failed with a "
+                            + "non-OK HTTP code: 401")
+                .contains("refused Stroom's credentials");
+
+        assertThat(McpToolServerFactory.describeFailure(new RuntimeException("Client failed to initialize",
+                new javax.net.ssl.SSLHandshakeException("PKIX path building failed"))))
+                .contains("PKIX path building failed")
+                .contains("certificate is trusted");
+        assertThat(McpToolServerFactory.describeFailure(new RuntimeException("x",
+                new java.nio.channels.UnresolvedAddressException())))
+                .contains("UnresolvedAddressException")
+                .contains("host name could not be found");
+        // Something else is just described.
+        assertThat(McpToolServerFactory.describeFailure(new RuntimeException("odd"))).isEqualTo("odd");
+    }
+
+    @Test
+    void aZeroOrMissingTimeoutUsesTheDefault() {
+        final Duration zero = McpToolServerFactory.toDuration(SimpleDuration.builder().time(0)
+                .timeUnit(TimeUnit.SECONDS).build());
+        assertThat(zero).isEqualTo(Duration.ofMinutes(2));
+        assertThat(McpToolServerFactory.toDuration(null)).isEqualTo(Duration.ofMinutes(2));
+        assertThat(McpToolServerFactory.toDuration(SimpleDuration.builder().time(30)
+                .timeUnit(TimeUnit.SECONDS).build())).isEqualTo(Duration.ofSeconds(30));
     }
 
     private void internalIdp() {

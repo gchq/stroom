@@ -46,6 +46,8 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -83,7 +85,10 @@ public class McpToolServerEditPresenter
         this.credentialClient = credentialClient;
         this.httpClientConfigPresenterProvider = httpClientConfigPresenterProvider;
         view.setUiHandlers(this);
-        view.getAuthModeSelectionBox().addItems(McpAuthMode.values());
+        // In alphabetical order of what they are called.
+        view.getAuthModeSelectionBox().addItems(Arrays.stream(McpAuthMode.values())
+                .sorted(Comparator.comparing(McpAuthMode::getDisplayValue, String.CASE_INSENSITIVE_ORDER))
+                .toList());
     }
 
     /// Shows the dialog.
@@ -158,7 +163,7 @@ public class McpToolServerEditPresenter
     @Override
     public void onAuthModeChange() {
         updateCredentialModel(getView().getAuthModeSelectionBox().getValue());
-        updateAuthModeWarning(getView().getAuthModeSelectionBox().getValue());
+        updateAudienceVisibility(getView().getAuthModeSelectionBox().getValue());
         getView().setApiKeyFieldsVisible(getView().getAuthModeSelectionBox().getValue() == McpAuthMode.API_KEY);
     }
 
@@ -191,6 +196,24 @@ public class McpToolServerEditPresenter
 
     @Override
     public void onSetHttpClientConfiguration() {
+        if (httpClientConfiguration != null) {
+            showHttpClientConfiguration();
+            return;
+        }
+        // Start from the defaults, as an empty config would be saved with zero timeouts.
+        final OpenAIModelResource resource = GWT.create(OpenAIModelResource.class);
+        restFactory
+                .create(resource)
+                .method(OpenAIModelResource::getDefaultHttpClientConfig)
+                .onSuccess(defaults -> {
+                    httpClientConfiguration = defaults;
+                    showHttpClientConfiguration();
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    private void showHttpClientConfiguration() {
         httpClientConfigPresenterProvider.get().show(httpClientConfiguration, readOnly, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
@@ -198,22 +221,15 @@ public class McpToolServerEditPresenter
         });
     }
 
-    /**
-     * Warns that passing the user's sign-in through needs an external identity provider, if Stroom does not use
-     * one (U3).
-     */
-    private void updateAuthModeWarning(final McpAuthMode authMode) {
-        getView().setAuthModeWarning(null);
+    /// Shows the token audience for 'OAuth2 passthrough' when Stroom is its own identity provider, as Stroom then
+    /// issues the tokens itself.
+    private void updateAudienceVisibility(final McpAuthMode authMode) {
         getView().setAudienceVisible(false);
         if (authMode == McpAuthMode.STROOM_SESSION_TOKEN) {
             uiConfigCache.get(config -> {
                 if (config != null && !config.isExternalIdentityProvider()) {
                     // Stroom issues its own tokens for the server, which need an audience.
                     getView().setAudienceVisible(true);
-                    getView().setAuthModeWarning("Stroom uses its internal identity provider, so it signs each "
-                                                 + "user in with a short-lived token it issues for this server. "
-                                                 + "Set the token audience, mark the server trusted, and use "
-                                                 + "https.");
                 }
             }, this);
         }
@@ -227,6 +243,8 @@ public class McpToolServerEditPresenter
         model.setTaskMonitorFactory(this);
         getView().getCredentialSelectionBox().setModel(model);
         getView().setCredentialEnabled(!readOnly && usesCredential(authMode));
+        // None and OAuth2 passthrough use no stored credential.
+        getView().setCredentialVisible(usesCredential(authMode));
     }
 
     private void read(final McpToolServerConfig config) {
@@ -238,7 +256,7 @@ public class McpToolServerEditPresenter
         getView().setEndpoint(c.getEndpoint());
         getView().getAuthModeSelectionBox().setValue(c.getAuthMode());
         updateCredentialModel(c.getAuthMode());
-        updateAuthModeWarning(c.getAuthMode());
+        updateAudienceVisibility(c.getAuthMode());
         if (NullSafe.isNonBlankString(c.getCredentialName())) {
             credentialClient.getCredentialByName(c.getCredentialName(),
                     credential -> getView().getCredentialSelectionBox().setValue(credential), this);
@@ -336,6 +354,9 @@ public class McpToolServerEditPresenter
 
         void setApiKeyValuePrefix(String apiKeyValuePrefix);
 
+        /// Shows the credential, used only by the modes that send a stored credential.
+        void setCredentialVisible(boolean visible);
+
         String getAudience();
 
         void setAudience(String audience);
@@ -344,13 +365,6 @@ public class McpToolServerEditPresenter
         void setAudienceVisible(boolean visible);
 
         void setApiKeyFieldsVisible(boolean visible);
-
-        /**
-         * Shows a warning about the authentication chosen, or hides it.
-         *
-         * @param warning The warning, or null.
-         */
-        void setAuthModeWarning(String warning);
 
         boolean isTrusted();
 
