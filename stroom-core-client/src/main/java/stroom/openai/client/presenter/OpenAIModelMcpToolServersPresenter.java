@@ -35,16 +35,21 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class OpenAIModelMcpToolServersPresenter
-        extends DocPresenter<PagerView, OpenAIModelDoc> {
+        extends DocPresenter<OpenAIModelMcpToolServersPresenter.McpToolServersView, OpenAIModelDoc> {
+
+    public static final String SERVERS = "SERVERS";
+    public static final String TOOLS = "TOOLS";
 
     private final MyDataGrid<McpToolServerConfig> dataGrid;
     private final MultiSelectionModelImpl<McpToolServerConfig> selectionModel;
     private final Provider<McpToolServerEditPresenter> editPresenterProvider;
+    private final McpToolListPresenter toolListPresenter;
     // The model the servers belong to, for testing a server's connection.
     private String modelUuid;
 
@@ -60,21 +65,28 @@ public class OpenAIModelMcpToolServersPresenter
 
     @Inject
     public OpenAIModelMcpToolServersPresenter(final EventBus eventBus,
-                                              final PagerView view,
-                                              final Provider<McpToolServerEditPresenter> editPresenterProvider) {
+                                              final McpToolServersView view,
+                                              final PagerView serversView,
+                                              final Provider<McpToolServerEditPresenter> editPresenterProvider,
+                                              final McpToolListPresenter toolListPresenter) {
         super(eventBus, view);
         this.editPresenterProvider = editPresenterProvider;
+        this.toolListPresenter = toolListPresenter;
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("MCP Tool Servers");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
-        view.setDataWidget(dataGrid);
+        serversView.setDataWidget(dataGrid);
 
-        addButton = view.addButton(SvgPresets.ADD.title("Add tool server"));
-        editButton = view.addButton(SvgPresets.EDIT.title("Edit tool server"));
-        removeButton = view.addButton(SvgPresets.DELETE.title("Remove tool server"));
-        moveUpButton = view.addButton(SvgPresets.UP.title("Move tool server up"));
-        moveDownButton = view.addButton(SvgPresets.DOWN.title("Move tool server down"));
+        addButton = serversView.addButton(SvgPresets.ADD.title("Add tool server"));
+        editButton = serversView.addButton(SvgPresets.EDIT.title("Edit tool server"));
+        removeButton = serversView.addButton(SvgPresets.DELETE.title("Remove tool server"));
+        moveUpButton = serversView.addButton(SvgPresets.UP.title("Move tool server up"));
+        moveDownButton = serversView.addButton(SvgPresets.DOWN.title("Move tool server down"));
+
+        // The servers, and below a divider, the tools of the one selected.
+        view.setInSlot(SERVERS, serversView.asWidget());
+        setInSlot(TOOLS, toolListPresenter);
 
         initColumns();
         enableButtons();
@@ -110,6 +122,7 @@ public class OpenAIModelMcpToolServersPresenter
         }));
         registerHandler(selectionModel.addSelectionHandler(e -> {
             enableButtons();
+            showTools();
             if (!isReadOnly() && e.getSelectionType().isDoubleSelect()) {
                 onEdit();
             }
@@ -123,6 +136,7 @@ public class OpenAIModelMcpToolServersPresenter
         servers.addAll(document.getMcpToolServers());
         refresh();
         enableButtons();
+        showTools();
     }
 
     @Override
@@ -142,6 +156,15 @@ public class OpenAIModelMcpToolServersPresenter
                         .centerAligned()
                         .build(),
                 80);
+        dataGrid.addColumn(
+                DataGridUtil.<McpToolServerConfig>readOnlyTickBoxColumnBuilder(
+                                TickBoxState.createTickBoxFunc(McpToolServerConfig::isTrusted))
+                        .centerAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Trusted")
+                        .centerAligned()
+                        .build(),
+                80);
         dataGrid.addResizableColumn(
                 DataGridUtil.<McpToolServerConfig>textColumnBuilder(McpToolServerConfig::getName).build(),
                 DataGridUtil.headingBuilder("Name").build(),
@@ -150,17 +173,6 @@ public class OpenAIModelMcpToolServersPresenter
                 DataGridUtil.<McpToolServerConfig>textColumnBuilder(McpToolServerConfig::getEndpoint).build(),
                 DataGridUtil.headingBuilder("Endpoint").build(),
                 300);
-        dataGrid.addResizableColumn(
-                DataGridUtil.<McpToolServerConfig>textColumnBuilder(
-                        OpenAIModelMcpToolServersPresenter::authModeText).build(),
-                DataGridUtil.headingBuilder("Authentication").build(),
-                150);
-    }
-
-    private static String authModeText(final McpToolServerConfig server) {
-        return server.getAuthMode() == null
-                ? ""
-                : server.getAuthMode().getDisplayValue();
     }
 
     private void refresh() {
@@ -169,6 +181,11 @@ public class OpenAIModelMcpToolServersPresenter
             dataProvider.addDataDisplay(dataGrid);
         }
         dataProvider.setCompleteList(new ArrayList<>(servers));
+    }
+
+    /// Lists the selected server's tools below the servers, as it is set up now.
+    private void showTools() {
+        toolListPresenter.show(modelUuid, selectionModel.getSelected());
     }
 
     private void enableButtons() {
@@ -197,6 +214,7 @@ public class OpenAIModelMcpToolServersPresenter
                     refresh();
                     selectionModel.setSelected(updated);
                     enableButtons();
+                    showTools();
                     onChange();
                 });
     }
@@ -212,6 +230,7 @@ public class OpenAIModelMcpToolServersPresenter
                 servers.set(index, updated);
                 refresh();
                 selectionModel.setSelected(updated);
+                showTools();
                 enableButtons();
                 onChange();
             }
@@ -253,5 +272,13 @@ public class OpenAIModelMcpToolServersPresenter
         selectionModel.setSelected(selected);
         enableButtons();
         onChange();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface McpToolServersView extends View {
+
     }
 }
