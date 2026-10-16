@@ -22,6 +22,7 @@ import stroom.widget.button.client.Button;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -59,6 +60,9 @@ public class AiMemoryViewImpl extends ViewWithUiHandlers<AiMemoryUiHandlers> imp
     @Inject
     public AiMemoryViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Every edit, including pasting and cutting with the mouse.
+        content.addKeyUpHandler(event -> contentChanged());
+        content.addDomHandler(event -> contentChanged(), InputEvent.getType());
         changes.addClickHandler(event -> {
             final Element target = event.getNativeEvent().getEventTarget().cast();
             final String messageId = target.getAttribute(UNDO_ATTRIBUTE);
@@ -66,6 +70,12 @@ public class AiMemoryViewImpl extends ViewWithUiHandlers<AiMemoryUiHandlers> imp
                 getUiHandlers().onUndoChange(Integer.parseInt(messageId));
             }
         });
+    }
+
+    private void contentChanged() {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onContentChanged();
+        }
     }
 
     @Override
