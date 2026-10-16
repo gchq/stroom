@@ -215,6 +215,15 @@ class McpAgentChat {
                 .anyMatch(m -> UNTRUSTED_MESSAGE_TYPES.contains(m.getMessageType()))) {
             runManager.markTainted(chatId);
         }
+        // A call to an untrusted MCP server's tool earlier in the chat means its output may hold planted
+        // instructions.
+        if (aiService.getMessages(chatId).stream()
+                .filter(m -> m.getMessageType() == AiMessageType.TOOL_CALL)
+                .map(m -> read(m, ToolCallRecord.class))
+                .filter(Objects::nonNull)
+                .anyMatch(call -> isUntrustedServerTool(toolset, call.tool()))) {
+            runManager.markReadUntrustedServer(chatId);
+        }
         final Map<ToolSpecification, ToolExecutor> builtIns = new LinkedHashMap<>();
         final Map<ToolSpecification, ToolExecutor> mcpTools = new LinkedHashMap<>();
         if (modelDoc == null || modelDoc.isToolsEnabled()) {
@@ -364,6 +373,9 @@ class McpAgentChat {
                                 final boolean unattended) {
         if (builtInTools.readsUntrustedContent(toolRequest.name())) {
             runManager.markTainted(chatId);
+        }
+        if (isUntrustedServerTool(toolset, toolRequest.name())) {
+            runManager.markReadUntrustedServer(chatId);
         }
         final long startMs = System.currentTimeMillis();
         final String result = execute(tools, toolRequest, toolRequest.name(), chatId);
@@ -517,6 +529,20 @@ class McpAgentChat {
                 pending,
                 verdicts.stream().allMatch(ToolConsent.Verdict::allowForChat),
                 verdicts.stream().allMatch(ToolConsent.Verdict::allowServerReadOnly));
+    }
+
+    /// @return True if the tool is an untrusted MCP server's, or one of the resource tools while any server is
+    /// untrusted (as they read from all of them).
+    private boolean isUntrustedServerTool(final McpToolset toolset, final String toolName) {
+        if (toolset == null || toolName == null || builtInTools.toolMap().keySet().stream()
+                .anyMatch(spec -> spec.name().equals(toolName))) {
+            return false;
+        }
+        return toolset.toolInfo(toolName)
+                .map(info -> !info.trusted())
+                .orElseGet(() -> toolset.hasUntrustedServer()
+                                 && (McpToolset.LIST_RESOURCES_TOOL.equals(toolName)
+                                     || McpToolset.GET_RESOURCE_TOOL.equals(toolName)));
     }
 
     private static <T> T read(final AiChatMessage message, final Class<T> type) {

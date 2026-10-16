@@ -206,7 +206,8 @@ public class AiChatRunManager {
         });
         final LocalRun localRun = new LocalRun(run.getId(), userUuid, task,
                 new AtomicLong(System.currentTimeMillis()), new AtomicBoolean(false),
-                new AtomicBoolean(false), new AtomicBoolean(false), new AtomicBoolean(false));
+                new AtomicBoolean(false), new AtomicBoolean(false), new AtomicBoolean(false),
+                new AtomicBoolean(false));
         localRuns.put(chatId, localRun);
         ensureHeartbeat();
 
@@ -391,6 +392,25 @@ public class AiChatRunManager {
         return localRun == null || localRun.tainted().get();
     }
 
+    /// Records that the chat's run has read the output of an untrusted MCP server's tool, so trusted servers' tools
+    /// that modify data need the user's approval from now on.
+    ///
+    /// @param chatId The chat.
+    public void markReadUntrustedServer(final int chatId) {
+        final LocalRun localRun = localRuns.get(chatId);
+        if (localRun != null && !localRun.readUntrustedServer().getAndSet(true)) {
+            LOGGER.debug(() -> "The run of chatId=" + chatId + " has read an untrusted MCP server's output");
+        }
+    }
+
+    /// @param chatId The chat.
+    /// @return True if the chat's run has read an untrusted MCP server's tool output, or if the chat has no run on
+    /// this node (so nothing is known about what was read).
+    public boolean hasReadUntrustedServer(final int chatId) {
+        final LocalRun localRun = localRuns.get(chatId);
+        return localRun == null || localRun.readUntrustedServer().get();
+    }
+
     /// Adds to the tokens and tool calls used by the chat's run on this node, if it has one.
     ///
     /// @param chatId       The chat.
@@ -552,7 +572,8 @@ public class AiChatRunManager {
                             AtomicBoolean working,
                             AtomicBoolean stopRequested,
                             AtomicBoolean unattended,
-                            AtomicBoolean tainted) {
+                            AtomicBoolean tainted,
+                            AtomicBoolean readUntrustedServer) {
 
         void requestStop() {
             stopRequested.set(true);
