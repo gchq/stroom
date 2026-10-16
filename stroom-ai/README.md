@@ -65,7 +65,7 @@ On the model's **MCP Tool Servers** tab, add each server's Streamable HTTP endpo
     user's calls run as one account. Use them for development, or for servers that do their own checks.
 * **Test Connection** (General tab) connects with the settings as they are in the dialog and lists the
   tools the server would offer. It needs EDIT permission on the model.
-* **Trusted** (Tools tab): only trusted servers' tool annotations (read-only, destructive, open-world) are
+* **Trusted server** (General tab): only trusted servers' tool annotations (read-only, destructive, open-world) are
   believed, and only their instructions are given to the model. Mark a server trusted only if you control
   it.
 * **Server instructions**: what a trusted server says, when connected, about how to use it (for FastMCP,
