@@ -154,6 +154,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         // The explorer's buttons: one toolbar, so one tab stop
         final Toolbar toolbar = getView().getToolbar();
         add = toolbar.button(SvgImage.ADD, "New Document", this::onNew);
+        add.setOpensMenu(true);
         add.setEnabled(false);
         delete = toolbar.button(SvgImage.DELETE, "Delete Selected Documents", this::deleteItem);
         delete.setEnabled(false);
@@ -357,7 +358,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                     .builder()
                     .items(items)
                     .popupPosition(popupPosition)
-                    .addAutoHidePartner(autoHidePartner)
+                    .opener(autoHidePartner)
                     .onHide(e -> menuVisible = false)
                     .fire(this);
         }

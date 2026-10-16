@@ -97,7 +97,7 @@ public class TabManager {
                 ShowMenuEvent
                         .builder()
                         .items(menuItems)
-                        .addAutoHidePartner(target)
+                        .opener(target)
                         .popupPosition(popupPosition)
                         .onHide(e -> currentTabConfig = null)
                         .fire(dashboardPresenter);

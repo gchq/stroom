@@ -61,8 +61,16 @@ public class Menu {
                     .popupType(PopupType.POPUP)
                     .popupPosition(event.getPopupPosition())
                     .addAutoHidePartner(event.getAutoHidePartners())
-                    .onShow(e -> menuPresenter.focus())
+                    .onShow(e -> {
+                        // Set once showing, after any menu this one replaced has said it closed, but
+                        // not if this menu was itself closed before it got this far
+                        if (currentItems == event.getItems()) {
+                            MenuOpener.setExpanded(event.getOpener(), true);
+                        }
+                        menuPresenter.focus();
+                    })
                     .onHide(e -> {
+                        MenuOpener.setExpanded(event.getOpener(), false);
                         if (event.getHideHandler() != null) {
                             event.getHideHandler().onHide(e);
                         }

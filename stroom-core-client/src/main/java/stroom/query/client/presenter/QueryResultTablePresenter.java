@@ -235,6 +235,7 @@ public class QueryResultTablePresenter
         annotateButton = pagerView.getToolbar().button(SvgImage.EDIT, "Annotate Selected Rows",
                 this::showAnnotationMenu);
         annotateButton.setVisible(annotationManager.isEnabled());
+        annotateButton.setOpensMenu(true);
 
         // Ask AI
         askAiButton = pagerView.getToolbar().button(SvgImage.AI, "Ask Stroom AI", this::onAskAi);

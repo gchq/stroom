@@ -178,6 +178,7 @@ public class DashboardPresenter
 
         addComponentButton = editToolbar.button(SvgImage.ADD, "Add Component", this::onAdd);
         addComponentButton.setVisible(false);
+        addComponentButton.setOpensMenu(true);
 
         setConstraintsButton = editToolbar.button(SvgImage.RESIZE, "Set Layout Constraints", this::onConstraints);
         setConstraintsButton.setVisible(false);
@@ -361,6 +362,7 @@ public class DashboardPresenter
                 .builder()
                 .items(menuItems)
                 .popupPosition(popupPosition)
+                .opener(target)
                 .fire(this);
     }
 

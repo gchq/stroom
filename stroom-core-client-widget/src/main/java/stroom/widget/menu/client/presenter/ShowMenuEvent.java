@@ -42,6 +42,7 @@ public class ShowMenuEvent
     private final Element[] autoHidePartners;
     private final boolean allowCloseOnMoveLeft;
     private final Integer width;
+    private final Element opener;
 
     private ShowMenuEvent(final List<Item> items,
                           final PopupPosition popupPosition,
@@ -49,7 +50,8 @@ public class ShowMenuEvent
                           final HidePopupEvent.Handler hideHandler,
                           final Element[] autoHidePartners,
                           final boolean allowCloseOnMoveLeft,
-                          final Integer width) {
+                          final Integer width,
+                          final Element opener) {
         this.items = items;
         this.popupPosition = popupPosition;
         this.autoHidePartners = autoHidePartners;
@@ -57,6 +59,7 @@ public class ShowMenuEvent
         this.hideHandler = hideHandler;
         this.allowCloseOnMoveLeft = allowCloseOnMoveLeft;
         this.width = width;
+        this.opener = opener;
     }
 
     public static Builder builder() {
@@ -99,6 +102,11 @@ public class ShowMenuEvent
         return allowCloseOnMoveLeft;
     }
 
+    /// @return The button the menu was opened from, or null.
+    public Element getOpener() {
+        return opener;
+    }
+
     /// @return The menu's width in pixels, or null for it to fit its items.
     public Integer getWidth() {
         return width;
@@ -136,6 +144,7 @@ public class ShowMenuEvent
         private final List<Element> autoHidePartners = new ArrayList<>();
         private Boolean allowCloseOnMoveLeft = null;
         private Integer width = null;
+        private Element opener;
 
         public Builder() {
         }
@@ -155,6 +164,20 @@ public class ShowMenuEvent
                 for (final Element element : autoHidePartner) {
                     this.autoHidePartners.add(element);
                 }
+            }
+            return this;
+        }
+
+        /// Sets the button that opens the menu. Pressing it while the menu is open doesn't count as a
+        /// click outside the menu, and if it was marked as opening a menu (see [MenuOpener#mark]),
+        /// its `aria-expanded` says whether the menu is open.
+        ///
+        /// @param opener The button's element, or null.
+        /// @return This builder.
+        public Builder opener(final Element opener) {
+            this.opener = opener;
+            if (opener != null) {
+                addAutoHidePartner(opener);
             }
             return this;
         }
@@ -212,7 +235,8 @@ public class ShowMenuEvent
                     hideHandler,
                     elements,
                     Objects.requireNonNullElse(allowCloseOnMoveLeft, false),
-                    width));
+                    width,
+                    opener));
         }
     }
 }

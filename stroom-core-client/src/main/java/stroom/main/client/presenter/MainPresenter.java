@@ -210,7 +210,7 @@ public class MainPresenter
                     .builder()
                     .items(items)
                     .popupPosition(popupPosition)
-                    .addAutoHidePartner(autoHidePartner)
+                    .opener(autoHidePartner)
                     .fire(this);
         }
     }

@@ -19,12 +19,15 @@ package stroom.gwt.workbench.client.widgets.menu;
 
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -52,6 +55,7 @@ public final class MenuPanelStories {
     // The highlighted row is the cell table's keyboard-selected row.
     private static final String ACTIVE_ROW = ".menuCellTable tr[class*='KeyboardSelectedRow']";
     private static final String NO_ACTION = "(no action yet)";
+    private static final String ON_CHOSEN = "onChosen";
 
     private MenuPanelStories() {
         // Static utility
@@ -193,7 +197,96 @@ public final class MenuPanelStories {
                     // Activate the highlighted "Open"
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.getByText("Open", "strong")).toBeInTheDocument());
+                })
+                // A toolbar button marked as opening a menu says so, and whether its menu is open
+                // (the ARIA menu button pattern); a plain opener says neither
+                .story("MenuButton", MenuPanelStories::menuButton)
+                .withPlay(play -> {
+                    final Query actions = play.getByRole("button", "Show Actions");
+                    final Query plain = play.getByRole("button", TextMatch.containing("Plain Opener"));
+                    play.expect(actions).toHaveAttribute("aria-haspopup", "menu");
+                    play.expect(actions).toHaveAttribute("aria-expanded", "false");
+
+                    // Opened: expanded. Escape closes it: collapsed
+                    play.click(actions);
+                    final Query menu = play.screen().findByRole("menu");
+                    play.waitFor(() -> play.expect(actions).toHaveAttribute("aria-expanded", "true"));
+                    play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", "Copy"))
+                            .toHaveFocus());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
+                    play.expect(actions).toHaveAttribute("aria-expanded", "false");
+
+                    // Choosing an item closes it too
+                    play.click(actions);
+                    play.waitFor(() -> play.expect(actions).toHaveAttribute("aria-expanded", "true"));
+                    play.click(play.within(play.screen().findByRole("menu")).getByRole("menuitem", "Copy"));
+                    play.expect(play.spy(ON_CHOSEN)).toHaveBeenCalledWith("Copy");
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
+                    play.expect(actions).toHaveAttribute("aria-expanded", "false");
+
+                    // The button is the menu's auto-hide partner and Stroom's Menu closes a menu
+                    // shown again with the same items, so a second press toggles it closed
+                    play.click(actions);
+                    play.waitFor(() -> play.expect(actions).toHaveAttribute("aria-expanded", "true"));
+                    play.click(actions);
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
+                    play.expect(actions).toHaveAttribute("aria-expanded", "false");
+
+                    // Opening another menu closes this one, which says so; the plain opener isn't
+                    // marked, so it gets no menu button attributes
+                    play.click(actions);
+                    play.waitFor(() -> play.expect(actions).toHaveAttribute("aria-expanded", "true"));
+                    play.click(plain);
+                    play.waitFor(() -> play.expect(play.screen().getByRole("menu")).toHaveTextContent(
+                            TextMatch.containing("Refresh")));
+                    play.expect(actions).toHaveAttribute("aria-expanded", "false");
+                    play.expect(plain).not().toHaveAttribute("aria-expanded");
+                    play.expect(plain).not().toHaveAttribute("aria-haspopup");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
+                    play.expect(plain).not().toHaveAttribute("aria-expanded");
                 });
+    }
+
+    /// A toolbar whose 'Show Actions' button is marked as opening a menu, and a plain Stroom
+    /// `Button` that opens another menu with itself as the opener but isn't marked (as a logo or a
+    /// table cell that only positions a menu).
+    private static Widget menuButton(final StoryContext context) {
+        final StoryPopups popups = StoryPopups.create(context).withMenus();
+        final Spy onChosen = context.fn(ON_CHOSEN);
+
+        final FlowPanel panel = new FlowPanel();
+        panel.getElement().getStyle().setProperty("padding", "20px 16px");
+
+        // The same list each time, so that Stroom's Menu toggles the menu on a second press
+        final List<Item> actionItems = Arrays.asList(
+                MenuWidgets.icon("Copy", SvgImage.COPY, () -> onChosen.call("Copy")).build(),
+                MenuWidgets.icon("Delete", SvgImage.DELETE, () -> onChosen.call("Delete")).build());
+        final Toolbar toolbar = new Toolbar("Item actions");
+        final ToolbarButton actions = toolbar.button(SvgImage.ELLIPSES_VERTICAL, "Show Actions", () -> {
+            // Set below, once the button exists
+        });
+        actions.setOnClick(() -> ShowMenuEvent.builder()
+                .items(actionItems)
+                .popupPosition(new PopupPosition(new Rect(actions.getElement()), PopupLocation.BELOW))
+                .opener(actions.getElement())
+                .fire(popups.getEventBus()::fireEvent));
+        actions.setOpensMenu(true);
+        panel.add(toolbar);
+
+        final List<Item> plainItems = Arrays.asList(
+                MenuWidgets.simple("Refresh", () -> onChosen.call("Refresh")));
+        final Button plain = new Button();
+        plain.setText("Plain Opener ▾");
+        plain.getElement().getStyle().setProperty("margin", "4px");
+        plain.addClickHandler(event -> ShowMenuEvent.builder()
+                .items(plainItems)
+                .popupPosition(new PopupPosition(new Rect(plain.getElement()), PopupLocation.BELOW))
+                .opener(plain.getElement())
+                .fire(popups.getEventBus()::fireEvent));
+        panel.add(plain);
+        return panel;
     }
 
     /// A description, a button that toggles the menu below it, and (when `showResult`) the last

@@ -23,6 +23,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
+import stroom.widget.menu.client.presenter.MenuOpener;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -75,6 +76,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         mainMenuButton.getElement().setInnerSafeHtml(SvgImageUtil.toSafeHtml(
                 SvgImage.MENU,
                 "main-menu"));
+        MenuOpener.mark(mainMenuButton.getElement());
     }
 
     @Override

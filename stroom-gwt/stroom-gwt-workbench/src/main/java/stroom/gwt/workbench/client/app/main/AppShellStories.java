@@ -796,8 +796,13 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(newButton).toHaveAttribute("aria-disabled", "true"));
                     play.click(nav.getByText("Dictionaries"));
                     play.waitFor(() -> play.expect(newButton).not().toHaveAttribute("aria-disabled"));
+                    // A menu button, which says whether its menu of document types is open
+                    play.expect(newButton).toHaveAttribute("aria-haspopup", "menu");
+                    play.expect(newButton).toHaveAttribute("aria-expanded", "false");
                     play.click(newButton);
+                    play.waitFor(() -> play.expect(newButton).toHaveAttribute("aria-expanded", "true"));
                     play.click(screen.findByText("Dictionary", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect(newButton).toHaveAttribute("aria-expanded", "false"));
                     final Query dialog = screen.findByText("New Dictionary", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG);
                     // Pick the destination folder in the dialog's tree
@@ -890,7 +895,7 @@ public final class AppShellStories {
                     play.expect(play.findByText("Dictionaries")).toBeInTheDocument();
                     play.expect(play.getByRole("button", TextMatch.regex("expand all", "i"))).toBeInTheDocument();
                     play.expect(play.getByRole("button", TextMatch.regex("collapse all", "i"))).toBeInTheDocument();
-                    play.expect(play.getByRole("button", TextMatch.regex("^new$", "i"))).toBeInTheDocument();
+                    play.expect(play.getByRole("button", "New Document")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
                 // Sign Out Other Sessions confirms first, then signs out the others

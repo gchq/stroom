@@ -197,6 +197,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                                         final DocumentAssetEditAssetDialogPresenter editAssetDialog,
                                         final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
+        addButton.setOpensMenu(true);
 
         this.restFactory = restFactory;
         this.uploadFileDialog = uploadFileDialog;
@@ -322,6 +323,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         ShowMenuEvent.builder()
                 .items(menuItems)
                 .popupPosition(position)
+                .opener(addButton.getElement())
                 .allowCloseOnMoveLeft()
                 .fire(this);
     }

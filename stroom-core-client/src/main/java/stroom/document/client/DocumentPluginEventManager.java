@@ -493,7 +493,7 @@ public class DocumentPluginEventManager extends Plugin {
                                 .builder()
                                 .items(children)
                                 .popupPosition(event.getPopupPosition())
-                                .addAutoHidePartner(event.getElement())
+                                .opener(event.getElement())
                                 .fire(this));
             }
         }));

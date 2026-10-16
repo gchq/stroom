@@ -143,6 +143,7 @@ public class AnnotationManager implements HasHandlers {
                     .builder()
                     .items(menuItems)
                     .popupPosition(popupPosition)
+                    .opener(target)
                     .fire(this);
         }
     }
