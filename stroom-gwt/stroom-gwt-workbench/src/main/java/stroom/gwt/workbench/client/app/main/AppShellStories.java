@@ -413,12 +413,15 @@ public final class AppShellStories {
                     play.expect(play.findByText("Volume Group", "label")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
-                // The runs of icon buttons, and the tab stops each costs: the explorer's and the
-                // main toolbar's, then those a document adds (its tab's Save buttons and its editor's)
+                // The runs of icon buttons, and the tab stops each costs: the Main Menu and Hide
+                // Sidebar buttons (each a toolbar of its own), the explorer's and the main toolbar's,
+                // then those a document adds (its tab's Save buttons and its editor's)
                 .story("ToolbarTabStops", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
+                            "Main Menu: 1 tab stop",
+                            "Hide Sidebar: 1 tab stop",
                             "Ask Stroom AI, Show Menu: 1 tab stop",
                             "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
                             "New, Delete, Locate Current Item, Expand All, Collapse All, Filter Types, "
@@ -427,6 +430,8 @@ public final class AppShellStories {
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeInTheDocument());
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
+                            "Main Menu: 1 tab stop",
+                            "Hide Sidebar: 1 tab stop",
                             "Ask Stroom AI, Show Menu: 1 tab stop",
                             "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
                             "Save, Save As, Download Dictionary words: 1 tab stop",

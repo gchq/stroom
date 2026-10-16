@@ -850,33 +850,33 @@ They are in `test-runner/a11y-baseline.json` until they are fixed.
 
 ### Top bar focus rings cut off
 
-**Confirmed** (measured in the workbench at 1280 x 720). The keyboard focus ring of every control
-along the top of the app shell is partly hidden (WCAG 2.4.7, Focus Visible): each ring is a 1px
-border with a 4px `--focus-shadow` band outside it, and each control sits against the edge of an
-element that hides its overflow:
+**Fixed.** The keyboard focus ring of every control along the top of the app shell was partly
+hidden (WCAG 2.4.7, Focus Visible): each ring is a 1px border with a 4px `--focus-shadow` band
+outside it, and each control sat against the edge of an element that hides its overflow, at the top
+of the window with no room above it:
 
-| Control | Size | Cut off | By |
+| Control | Was | Cut off | By |
 |---|---|---|---|
-| Main Menu, beside the logo (`NavigationViewImpl`, `main-menu focus-without-border`) | 44 x 41 | top 4px, right 4px | `.navigation` |
-| Hide Sidebar, left of the document tabs (`CurveTabLayoutViewImpl`, `navigation-menu-button focus-without-border`) | 30 x 33 | top 4px, left 4px | `.split-pane__pane` |
-| Ask Stroom AI (`MainToolbar`, `toolbar--header`) | 32 x 32 | top 3px | `.mainViewImpl` |
-| Show Menu (`MainToolbar`, `toolbar--header`) | 32 x 32 | top 3px, right 3px | `.mainViewImpl` |
+| Main Menu, beside the logo (`NavigationViewImpl`) | a plain `Button`, 44 x 41 | top 4px, right 4px | `.navigation` |
+| Hide Sidebar, left of the document tabs (`CurveTabLayoutViewImpl`) | a plain `Button`, 30 x 33 | top 4px, left 4px | `.split-pane__pane` |
+| Ask Stroom AI (`MainToolbar`) | a `toolbar--header` button, 32 x 32 | top 3px | `.mainViewImpl` |
+| Show Menu (`MainToolbar`) | a `toolbar--header` button, 32 x 32 | top 3px, right 3px | `.mainViewImpl` |
 
-The tab bar's row is 34px (the 33px `.curveTabLayoutViewImpl-tabBarOuter` and a 1px border), the
-application's toolbar 34px and the explorer's title bar 41px, all at the top of the window, so
-there is no room above any of them. Suggested fix: make Main Menu and Hide Sidebar toolbar buttons
-(in a `Toolbar`) and drop `toolbar--header`'s 32px size, so every control is a 24px toolbar button
-centred in its bar (leaving 5px above and below), with at least 4px between each and the edge
-beside it (a toolbar's own margin is 2px).
+Ask Stroom AI and Show Menu also drew their focus border twice: `toolbar--header` gave the button a
+1px border of its own that turned the focus colour, inside which the standard toolbar button's
+`::before` drew its own.
 
-Ask Stroom AI and Show Menu also draw their focus border twice: `toolbar--header` gives the button
-a 1px border of its own that turns the focus colour on `:focus-visible`, and the standard toolbar
-button's `::before` (at `inset: 0`, just inside it) draws its focus border too, so the ring shows a
-double line. Dropping `toolbar--header` leaves the one `::before` border every toolbar button has.
+Main Menu and Hide Sidebar are now toolbar buttons, each in a toolbar of its own (Hide Sidebar swaps
+its icon and title as the sidebar is hidden and shown), and `toolbar--header` is gone, so all four
+are standard 24px toolbar buttons with the one `::before` focus border. Each bar centres its buttons
+(the tab bar's row and the application's toolbar are 33px high, the explorer's title bar 41px), and
+each toolbar keeps at least 4px from the edge beside it. The old `main-menu` and
+`navigation-menu-button` styles are removed.
 
-Checked by stories `App/Main/TopBar`: `FocusRings` (every ring shown and measured with
-`FocusRingClipping`, failing until this is fixed) and `Keyboard` (the real keyboard reaches each
-control and draws its ring; `test-runner/lib/real-input/top-bar.mjs`).
+Checked by stories `App/Main/TopBar`: `FocusRings` (every ring shown with pseudo-state classes and
+measured with `FocusRingClipping`) and `Keyboard` (the real keyboard reaches each control and draws
+its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/Main/AppShell`
+`ToolbarTabStops` counts Main Menu and Hide Sidebar as one tab stop each.
 
 ## Copy-paste mistakes and typos
 

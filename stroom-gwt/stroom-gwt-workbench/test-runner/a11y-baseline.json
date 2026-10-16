@@ -323,8 +323,7 @@
     "button-name"
   ],
   "app-main-appshell--main-menu": [
-    "button-name",
-    "target-size"
+    "button-name"
   ],
   "app-main-appshell--main-toolbar-tab-order": [
     "button-name"
