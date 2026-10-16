@@ -53,8 +53,6 @@ public class McpElicitations {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(McpElicitations.class);
 
     private static final Duration CHECK_INTERVAL = Duration.ofMillis(500);
-    // Who asks the questions of Stroom AI's own agent.
-    private static final String STROOM_AI = "Stroom AI";
 
     private final AiDao aiDao;
     private final AiChatRunDao runDao;
@@ -81,29 +79,6 @@ public class McpElicitations {
     /// @return The user's answer, or a decline or cancel if the form can't be shown, the user does not answer in
     /// time, or the run is stopped.
     ElicitResult handle(final int chatId, final String server, final ElicitFormRequest request) {
-        return handle(chatId, server, null, request);
-    }
-
-    /// Asks the user questions for Stroom AI's own agent (its ask_user tool), as a form shown in the chat, and
-    /// waits for their answer, as for a form from an MCP server.
-    ///
-    /// @param chatId  The chat.
-    /// @param tool    The tool asking, which says how the chat shows the form.
-    /// @param message What the questions are for.
-    /// @param schema  The questions, as a form.
-    /// @return The user's answer, or a decline or cancel if the form can't be shown, the user does not answer in
-    /// time, or the run is stopped.
-    public ElicitResult askUser(final int chatId,
-                                final String tool,
-                                final String message,
-                                final Map<String, Object> schema) {
-        return handle(chatId, STROOM_AI, tool, new ElicitFormRequest(message, schema, null));
-    }
-
-    private ElicitResult handle(final int chatId,
-                                final String server,
-                                final String tool,
-                                final ElicitFormRequest request) {
         final String problem = ElicitationSchema.check(request.message(), request.requestedSchema());
         if (problem != null) {
             warn(chatId, "A form from MCP tool server '" + server + "' was declined, as " + problem + ".");
@@ -121,7 +96,7 @@ public class McpElicitations {
             final AtomicBoolean stop = runManager.stopFlag(chatId);
             final long expiresMs = System.currentTimeMillis() + config.getElicitationTimeout().toMillis();
             final ElicitationRecord record = new ElicitationRecord(ElicitationRecord.KIND, Status.PENDING, server,
-                    tool, request.message(), request.requestedSchema(), expiresMs, null);
+                    null, request.message(), request.requestedSchema(), expiresMs, null);
             final AiChatMessage message = aiDao.storeMessage(chatId, AiMessageType.ELICITATION,
                     JsonUtil.writeValueAsString(record, false));
             // The chat needs the user, but the run keeps its thread, so it is not carried on by anything else.

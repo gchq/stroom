@@ -58,12 +58,6 @@ final class AiElicitationForm {
                 final List<String> values = new ArrayList<>();
                 final List<String> labels = new ArrayList<>();
                 options(optionSource, values, labels);
-                // Suggested answers to a question the user may also answer in their own words.
-                final boolean custom = values.isEmpty() && definition.get("examples") != null;
-                if (custom) {
-                    values.addAll(strings(definition.get("examples")));
-                    labels.addAll(values);
-                }
                 // What the server suggests, e.g. a proposed name: a list for a choice of several.
                 final List<String> defaults = definition.get("default") != null
                                               && definition.get("default").isArray() != null
@@ -82,8 +76,7 @@ final class AiElicitationForm {
                         multi,
                         values,
                         labels,
-                        defaults,
-                        custom));
+                        defaults));
             }
         } catch (final RuntimeException e) {
             // Not a form that can be shown.
@@ -172,7 +165,6 @@ final class AiElicitationForm {
         private final List<String> values;
         private final List<String> labels;
         private final List<String> defaults;
-        private final boolean custom;
 
         private Field(final String name,
                       final String title,
@@ -183,8 +175,7 @@ final class AiElicitationForm {
                       final boolean multi,
                       final List<String> values,
                       final List<String> labels,
-                      final List<String> defaults,
-                      final boolean custom) {
+                      final List<String> defaults) {
             this.name = name;
             this.title = title;
             this.description = description;
@@ -195,12 +186,6 @@ final class AiElicitationForm {
             this.values = values;
             this.labels = labels;
             this.defaults = defaults;
-            this.custom = custom;
-        }
-
-        /// @return True if the values are only suggestions, and the user may give any answer.
-        boolean isCustom() {
-            return custom;
         }
 
         String getName() {
