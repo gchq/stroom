@@ -142,7 +142,7 @@ class TestAgentEndToEnd {
 
     @Test
     void aRunCallsAnMcpToolThenStreamsTheAnswer() throws Exception {
-        model.callTool("s__create_filter", "{\"feed\":\"ACME\"}")
+        model.callTool("create_filter", "{\"feed\":\"ACME\"}")
                 .answer("Filter 31 is ready for you to enable.");
 
         final ChatResponse response = run("set up feed ACME");
@@ -153,7 +153,7 @@ class TestAgentEndToEnd {
         // The trusted server's instructions are in the system prompt, and its tool is offered.
         assertThat(JsonUtil.writeValueAsString(requests.getFirst().get("messages"), false)).contains(INSTRUCTIONS);
         assertThat(JsonUtil.writeValueAsString(requests.getFirst().get("tools"), false))
-                .contains("s__create_filter");
+                .contains("create_filter");
         // The tool's result went back to the model.
         assertThat(JsonUtil.writeValueAsString(requests.get(1).get("messages"), false))
                 .contains("Filter 31 created, disabled.");

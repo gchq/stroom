@@ -168,8 +168,18 @@ public final class McpToolset implements AutoCloseable {
      * @return The tools and how to run each of them, in the order the servers are configured.
      */
     public Map<ToolSpecification, ToolExecutor> tools() {
+        return tools(Set.of());
+    }
+
+    /**
+     * Lists every server's tools, and adds the resource tools if any server has resources.
+     *
+     * @param reservedNames Names the tools must not be given, e.g. those of the built-in tools.
+     * @return The tools and how to run each of them, in the order the servers are configured.
+     */
+    public Map<ToolSpecification, ToolExecutor> tools(final Set<String> reservedNames) {
         final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>();
-        final Set<String> usedNames = new HashSet<>();
+        final Set<String> usedNames = new HashSet<>(reservedNames);
         boolean anyResources = false;
         for (final McpServerConnection connection : connections) {
             final List<Tool> serverTools;
@@ -184,7 +194,7 @@ public final class McpToolset implements AutoCloseable {
             final McpToolFilter filter = McpToolFilter.forServer(connection.config());
             for (final Tool tool : serverTools) {
                 if (filter.isAllowed(tool.name())) {
-                    final String name = McpToolNames.prefixedName(
+                    final String name = McpToolNames.modelName(
                             connection.toolNamePrefix(), tool.name(), usedNames);
                     usedNames.add(name);
                     final ToolSpecification specification = McpToolAdapter.toToolSpecification(tool)

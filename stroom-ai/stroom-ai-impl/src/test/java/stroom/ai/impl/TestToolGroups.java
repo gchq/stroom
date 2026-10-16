@@ -44,7 +44,7 @@ class TestToolGroups {
 
         assertThat(groups.isGrouped()).isFalse();
         assertThat(names(groups.offered(Set.of(), group -> {
-        }))).containsExactly("fastmcp__pipeline_create", "fastmcp__pipeline_step");
+        }))).containsExactly("pipeline_create", "pipeline_step");
     }
 
     @Test
@@ -77,7 +77,7 @@ class TestToolGroups {
                 .filter(specification -> specification.name().equals("activate_pipeline"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(activate.description()).contains("fastmcp__pipeline_create", "fastmcp__pipeline_step");
+        assertThat(activate.description()).contains("pipeline_create", "pipeline_step");
 
         final String result = before.get(activate).execute(ToolExecutionRequest.builder()
                 .id("1")
@@ -85,12 +85,12 @@ class TestToolGroups {
                 .arguments("{}")
                 .build(), null);
 
-        assertThat(result).contains("now available").contains("fastmcp__pipeline_create");
+        assertThat(result).contains("now available").contains("pipeline_create");
         assertThat(active).containsExactly("pipeline");
         assertThat(names(groups.offered(active, active::add)))
-                .containsExactly("fastmcp__pipeline_create", "fastmcp__pipeline_step", "activate_index");
+                .containsExactly("pipeline_create", "pipeline_step", "activate_index");
         assertThat(ToolGroups.isActivationTool("activate_index")).isTrue();
-        assertThat(ToolGroups.isActivationTool("fastmcp__index_create")).isFalse();
+        assertThat(ToolGroups.isActivationTool("index_create")).isFalse();
     }
 
     @Test

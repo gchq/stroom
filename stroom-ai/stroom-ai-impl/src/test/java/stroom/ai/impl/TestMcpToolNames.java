@@ -71,4 +71,15 @@ class TestMcpToolNames {
         assertThat(name2).hasSize(McpToolNames.MAX_NAME_LENGTH);
         assertThat(name1).isNotEqualTo(name2);
     }
+
+    @Test
+    void toolsKeepTheirOwnNamesUnlessTaken() {
+        assertThat(McpToolNames.modelName("stroom", "start_build", Set.of())).isEqualTo("start_build");
+        assertThat(McpToolNames.modelName("stroom", "find.documents v2", Set.of())).isEqualTo("find_documents_v2");
+        // The same name as a built-in tool, or another server's tool, gets the server's prefix.
+        assertThat(McpToolNames.modelName("stroom", "grep", Set.of("grep"))).isEqualTo("stroom__grep");
+        assertThat(McpToolNames.modelName("other", "start_build", Set.of("start_build")))
+                .isEqualTo("other__start_build");
+    }
+
 }
