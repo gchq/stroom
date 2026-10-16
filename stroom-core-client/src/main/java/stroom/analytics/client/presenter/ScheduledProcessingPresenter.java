@@ -17,6 +17,7 @@
 package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionSchedule;
@@ -178,12 +179,19 @@ public class ScheduledProcessingPresenter
     public void remove() {
         final ExecutionSchedule selected = scheduledProcessListPresenter.getSelected();
         if (selected != null && !readOnly) {
-            restFactory
-                    .create(EXECUTION_SCHEDULE_RESOURCE)
-                    .method(res -> res.deleteExecutionSchedule(selected))
-                    .onSuccess(success -> scheduledProcessListPresenter.refresh())
-                    .taskMonitorFactory(this)
-                    .exec();
+            // Deleting a schedule can't be undone, so ask first
+            ConfirmEvent.fire(this,
+                    "Are you sure you want to delete the execution schedule '" + selected.getName() + "'?",
+                    ok -> {
+                        if (ok) {
+                            restFactory
+                                    .create(EXECUTION_SCHEDULE_RESOURCE)
+                                    .method(res -> res.deleteExecutionSchedule(selected))
+                                    .onSuccess(success -> scheduledProcessListPresenter.refresh())
+                                    .taskMonitorFactory(this)
+                                    .exec();
+                        }
+                    });
         }
     }
 

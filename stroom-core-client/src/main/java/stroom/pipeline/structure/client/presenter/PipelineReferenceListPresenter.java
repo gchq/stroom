@@ -74,6 +74,7 @@ public class PipelineReferenceListPresenter
     private static final String NEW_TITLE = "New Pipeline Reference";
     private static final String EDIT_TITLE = "Edit Selected Pipeline Reference";
     private static final String REMOVE_TITLE = "Remove Selected Pipeline Reference";
+    private static final String RESTORE_TITLE = "Restore Selected Pipeline Reference";
     private static final String READ_ONLY_SUFFIX = " (read only)";
 
     private final MyDataGrid<PipelineReference> dataGrid;
@@ -524,7 +525,11 @@ public class PipelineReferenceListPresenter
                 : "";
         addButton.setTitle(NEW_TITLE + readOnlySuffix);
         editButton.setTitle(EDIT_TITLE + readOnlySuffix);
-        removeButton.setTitle(REMOVE_TITLE + readOnlySuffix);
+        // Pressing it on a reference that is already removed restores it, so say so
+        final String removeTitle = State.REMOVED.equals(state)
+                ? RESTORE_TITLE
+                : REMOVE_TITLE;
+        removeButton.setTitle(removeTitle + readOnlySuffix);
     }
 
     private enum State {

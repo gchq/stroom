@@ -225,7 +225,7 @@ public class ProfilePeriodListPresenter
 
         final ProfilePeriod selected = selectionModel.getSelected();
 
-        editButton.setEnabled(!readOnly);
+        editButton.setEnabled(!readOnly && selected != null);
         removeButton.setEnabled(!readOnly && selected != null);
 
         final String readOnlySuffix = readOnly
