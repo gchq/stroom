@@ -134,8 +134,6 @@ public class PipelineElementBox extends Box<PipelineElement> {
                 SvgImage.FILTER,
                 "svgIcon",
                 BASE_CLASS + "-filterImage icon-colour__green");
-        // Only shown (and so only read out) when the element has active filters
-        filterIcon.getElement().setAttribute(ROLE, ROLE_IMG);
 
         background.add(filterIcon);
         updateFilterState();
@@ -170,13 +168,16 @@ public class PipelineElementBox extends Box<PipelineElement> {
             filterIcon.removeStyleName(BASE_CLASS + "-filterOff");
             final String filterIconTitle = buildFilterIconTitle();
             filterIcon.setTitle(filterIconTitle);
+            filterIcon.getElement().setAttribute(ROLE, ROLE_IMG);
             filterIcon.getElement().setAttribute(ARIA_LABEL, NullSafe.isBlankString(filterIconTitle)
                     ? ACTIVE_FILTERS_NAME
                     : filterIconTitle);
         } else {
+            // Only the icon inside is hidden, so the empty holder mustn't be an image either
             filterIcon.addStyleName(BASE_CLASS + "-filterOff");
             filterIcon.removeStyleName(BASE_CLASS + "-filterOn");
             filterIcon.setTitle(null);
+            filterIcon.getElement().removeAttribute(ROLE);
             filterIcon.getElement().removeAttribute(ARIA_LABEL);
         }
     }
