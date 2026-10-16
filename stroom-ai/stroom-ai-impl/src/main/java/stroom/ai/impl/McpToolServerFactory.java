@@ -269,9 +269,9 @@ public class McpToolServerFactory {
             client.initialize();
         } catch (final RuntimeException e) {
             closeQuietly(client, label);
+            LOGGER.debug(() -> "Unable to connect to MCP tool server '" + label + "' at " + endpoint, e);
             throw new RuntimeException("MCP tool server '" + label + "' could not be reached at "
-                                       + endpoint + " - "
-                                       + NullSafe.nonBlankStringElse(e.getMessage(), e.toString()), e);
+                                       + endpoint + " - " + describeFailure(e), e);
         }
         LOGGER.debug(() -> "Connected to MCP tool server '" + label + "' at " + endpoint);
         final McpServerConnection connection = new McpServerConnection(label, server, client, userIdentityRef);
@@ -386,6 +386,52 @@ public class McpToolServerFactory {
         }
         final Map<String, String> fixedHeaders = Map.copyOf(headers);
         return () -> fixedHeaders;
+    }
+
+    /// @return What went wrong connecting, in words: the underlying cause (the client library only says that it
+    /// failed to initialise), with a hint for the usual causes.
+    static String describeFailure(final Throwable e) {
+        final List<String> messages = new ArrayList<>();
+        Throwable cause = e;
+        Throwable root = e;
+        while (cause != null && messages.size() < 5) {
+            final String message = NullSafe.nonBlankStringElse(cause.getMessage(), cause.getClass().getSimpleName());
+            // Skipped if an outer message already includes it, as wrappers often repeat their cause.
+            if (messages.stream().noneMatch(outer -> outer.contains(message))) {
+                messages.add(message);
+            }
+            root = cause;
+            cause = cause.getCause() == cause
+                    ? null
+                    : cause.getCause();
+        }
+        final String text = String.join(": ", messages);
+        final String lower = (text + " " + root.getClass().getName()).toLowerCase(Locale.ROOT);
+        final String hint;
+        if (lower.contains("401") || lower.contains("403") || lower.contains("unauthori")
+            || lower.contains("forbidden")) {
+            hint = "The server refused Stroom's credentials. Check the authentication settings; for OAuth2 "
+                   + "passthrough with Stroom's internal identity provider, check the server accepts Stroom's "
+                   + "issuer, JWKS URL and the token audience.";
+        } else if (lower.contains("ssl") || lower.contains("certificate") || lower.contains("pkix")
+                   || lower.contains("handshake")) {
+            hint = "The secure connection failed. Check the server's certificate is trusted, e.g. with the "
+                   + "trust store in the HTTP client config (TLS tab).";
+        } else if (lower.contains("unresolvedaddress") || lower.contains("unknownhost")
+                   || lower.contains("name or service not known")) {
+            hint = "The server's host name could not be found from this Stroom node.";
+        } else if (lower.contains("connection refused") || lower.contains("connectexception")) {
+            hint = "Nothing is listening at that address; check the URL and port, and that the server is running.";
+        } else if (lower.contains("timeout") || lower.contains("timed out")) {
+            hint = "The server didn't answer in time; check it is reachable from this Stroom node.";
+        } else if (lower.contains("404")) {
+            hint = "Nothing was found at that path; check the endpoint URL (FastMCP's is usually /mcp).";
+        } else {
+            hint = null;
+        }
+        return hint == null
+                ? text
+                : text + ". " + hint;
     }
 
     /// For 'OAuth2 passthrough' when Stroom is its own identity provider: Stroom has no sign-in token another server
@@ -581,10 +627,14 @@ public class McpToolServerFactory {
         }
     };
 
-    private static Duration toDuration(final SimpleDuration simpleDuration) {
-        final SimpleDuration effective = simpleDuration != null
-                ? simpleDuration
-                : DEFAULT_TIMEOUT;
-        return stroom.util.time.SimpleDurationUtil.convertToStroomDuration(effective).getDuration();
+    /// @return The timeout, or the default if none is set or it is zero (as saved by an HTTP client config dialog
+    /// opened without defaults), which the HTTP client would refuse.
+    static Duration toDuration(final SimpleDuration simpleDuration) {
+        final Duration duration = simpleDuration != null
+                ? stroom.util.time.SimpleDurationUtil.convertToStroomDuration(simpleDuration).getDuration()
+                : null;
+        return duration != null && duration.isPositive()
+                ? duration
+                : stroom.util.time.SimpleDurationUtil.convertToStroomDuration(DEFAULT_TIMEOUT).getDuration();
     }
 }

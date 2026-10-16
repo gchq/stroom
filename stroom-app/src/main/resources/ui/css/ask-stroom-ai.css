@@ -1099,12 +1099,6 @@
     margin-bottom: 10px;
 }
 
-.mcpToolServer-warning {
-    margin-top: 4px;
-    font-size: 0.85em;
-    color: #ed6c02;
-}
-
 /* ---- Edit MCP Tool Server dialog ---- */
 
 .mcpToolServer-content {
