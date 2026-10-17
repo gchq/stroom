@@ -2441,7 +2441,8 @@ public class AskStroomAiPresenter
                 // A question not yet stored comes after everything else, so goes too.
                 child.removeFromParent();
             } else if (NullSafe.isNonBlankString(idStr)) {
-                final int id = Integer.parseInt(idStr);
+                // Not always just a number, e.g. the steps a message left to the user.
+                final int id = AiActivityGroups.messageIdOf(idStr);
                 if (id > fromMessageId || (id == fromMessageId && !keepFirst)) {
                     child.removeFromParent();
                     renderedMessages.remove(id);
