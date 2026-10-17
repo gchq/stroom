@@ -193,6 +193,7 @@ public class AskStroomAiPresenter
     private static final String RUN_STATUS_ID = "ai-run-status";
     private static final String RESUME_RUN_ATTRIBUTE = "data-resume-run";
     private static final String RETRY_TURN_ATTRIBUTE = "data-retry-turn-id";
+    private static final String ERROR_RETRY_CLASS = "ai-message-error-retry";
     private static final String APPROVAL_ID_ATTRIBUTE = "data-approval-id";
     private static final String APPROVAL_ANSWER_ATTRIBUTE = "data-approval-answer";
     private static final String APPROVAL_SCOPE_ATTRIBUTE = "data-approval-scope";
@@ -2609,6 +2610,12 @@ public class AskStroomAiPresenter
             // Say if the run stopped before finishing, and offer to resume it.
             updateRunStatus(response.getRun());
             currentRunActive = !response.isComplete();
+            getView().setInProgress(!response.isComplete());
+            // The input box glows while the chat works, e.g. calling a tool or the model, but not while it waits
+            // for the user to answer something, as nothing happens until they do.
+            final boolean needsUser = response.getRun() != null
+                                      && response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER;
+            getView().setSendButtonLoadingState(requestInFlight || (!response.isComplete() && !needsUser));
             refreshFollowUps();
 
             // Show what the server is currently doing, and take the line away when it is done.
@@ -2647,6 +2654,7 @@ public class AskStroomAiPresenter
             // Clear loading state on poll failure so the UI doesn't get stuck.
             polling = false;
             getView().setSendButtonLoadingState(false);
+            getView().setInProgress(false);
         }, getView());
     }
 
@@ -2881,6 +2889,8 @@ public class AskStroomAiPresenter
     private void clearRenderedMessages() {
         getView().clearMessages();
         getView().setTaskList(null, SafeHtmlUtils.EMPTY_SAFE_HTML);
+        // Shown again by the next poll if the chat now shown has anything in progress.
+        getView().setInProgress(false);
         followUps = List.of();
         refreshFollowUps();
         renderedMessages.clear();
@@ -2931,6 +2941,15 @@ public class AskStroomAiPresenter
     }
 
     @Override
+    public void onConversationResized() {
+        // The view getting shorter leaves the scroll position where it was, which hides the latest messages
+        // behind the bottom of the view rather than pushing them up.
+        if (followBottom) {
+            scrollToLatest();
+        }
+    }
+
+    @Override
     public void onJumpToLatest() {
         followBottom = true;
         scrollToLatest();
@@ -2943,6 +2962,34 @@ public class AskStroomAiPresenter
         lastScrollTop = markdownContainer.getScrollTop();
     }
 
+    /// @param error An ERROR message.
+    /// @return The question the error stopped being answered, or 0 if it has an answer, e.g. the error came from
+    /// attaching data to the next question, which is stored before the question is.
+    private int unansweredTurn(final AiChatMessage error) {
+        final int turnId = error.getTurnId();
+        if (turnId <= 0) {
+            return 0;
+        }
+        for (final AiChatMessage msg : renderedMessages.values()) {
+            if (msg.getTurnId() == turnId && msg.getMessageType() == AiMessageType.AI_RESPONSE) {
+                return 0;
+            }
+        }
+        return turnId;
+    }
+
+    // Takes away the Retry buttons of errors, as a newer question has been asked.
+    private void removeErrorRetries() {
+        final NodeList<Element> retries = getView().getMarkdownContainer().getElement()
+                .getElementsByTagName("button");
+        for (int i = retries.getLength() - 1; i >= 0; i--) {
+            final Element retry = retries.getItem(i);
+            if (retry.hasClassName(ERROR_RETRY_CLASS)) {
+                retry.removeFromParent();
+            }
+        }
+    }
+
     /**
      * Render a single message with type-aware HTML structure.
      */
@@ -2953,6 +3000,8 @@ public class AskStroomAiPresenter
                                   || msg.getMessageType() == AiMessageType.ATTACHMENT;
         switch (msg.getMessageType()) {
             case USER_MESSAGE:
+                // Asking again for an earlier question would replace this one too, so only the latest is offered.
+                removeErrorRetries();
                 appendMessageHtml(hb, "ai-message ai-message--user", msg.getMessage(),
                         timeMs, nowMs, true, messageId, deletable, 0, true);
                 break;
@@ -2966,8 +3015,10 @@ public class AskStroomAiPresenter
                         timeMs, nowMs, true, messageId, false, 0, false);
                 break;
             case ERROR:
-                appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
-                        timeMs, nowMs, true, messageId, false);
+                // An error given as JSON is shown as a heading and its details. One that stopped a question
+                // being answered, e.g. as a tool or the model failed, offers to ask it again.
+                appendMessageHtml(hb, "ai-message ai-message--error", AiErrorMessages.markdown(msg.getMessage()),
+                        timeMs, nowMs, true, messageId, false, unansweredTurn(msg), false);
                 break;
             case STEER_MESSAGE:
                 appendMessageHtml(hb, "ai-message ai-message--user ai-message--steer", msg.getMessage(),
@@ -3066,6 +3117,7 @@ public class AskStroomAiPresenter
                                    final boolean editable) {
         final SafeHtml markdownHtml = markdownConverter.convertUntrustedMarkdownToHtml(markdownText);
         final boolean assistant = cssClass.contains("ai-message--assistant");
+        final boolean error = cssClass.contains("ai-message--error");
 
         hb.div(wrapper -> {
             if (assistant) {
@@ -3075,6 +3127,14 @@ public class AskStroomAiPresenter
                 }, Attribute.className("ai-message-avatar"));
             }
             wrapper.div(content -> content.append(markdownHtml), Attribute.className("ai-message-content"));
+            // An error that stopped a question being answered offers to ask it again, where it can be seen.
+            if (error && retryTurnId > 0) {
+                wrapper.elem(button -> button.append("Retry"),
+                        BUTTON,
+                        Attribute.className(ERROR_RETRY_CLASS),
+                        Attribute.title("Ask the question again"),
+                        new Attribute(RETRY_TURN_ATTRIBUTE, String.valueOf(retryTurnId)));
+            }
             // Add message footer (timestamp and buttons), shown when the message is hovered over.
             wrapper.div(footer -> {
 
@@ -3088,7 +3148,7 @@ public class AskStroomAiPresenter
                 }
 
                 // Add a button to ask the question again.
-                if (retryTurnId > 0) {
+                if (retryTurnId > 0 && !error) {
                     button(footer,
                             SvgImage.REFRESH,
                             iconButtonClassName("ai-message-retry"),
@@ -3923,6 +3983,12 @@ public class AskStroomAiPresenter
         String getMessage();
 
         void setSendButtonLoadingState(final boolean enabled);
+
+        /// Shows the Stop button while anything is in progress for the chat, e.g. search results still
+        /// downloading to attach, as well as while a question is worked on.
+        ///
+        /// @param inProgress True if anything is in progress.
+        void setInProgress(boolean inProgress);
 
         void setTitle(String title);
 

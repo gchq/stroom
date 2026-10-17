@@ -80,11 +80,14 @@ class TestAskStroomAIService {
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final ContextAssembler contextAssembler = Mockito.mock(ContextAssembler.class);
 
+    private final AiBackgroundTasks backgroundTasks = Mockito.mock(AiBackgroundTasks.class);
+
     private AskStroomAIService service() {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, () -> null, null, null,
                 null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null, compactor, null,
                 toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext,
-                () -> null, chatTitler, null);
+                () -> null, chatTitler, null,
+                backgroundTasks);
     }
 
     private final AiAttachmentFileStore attachmentFileStore = Mockito.mock(AiAttachmentFileStore.class);
@@ -96,7 +99,8 @@ class TestAskStroomAIService {
         return new AskStroomAIService(aiService, attachmentFileStore, null, null, null, null, null, () -> null,
                 null, null, null, null, null, mcpClientCache, null, runManager, runDao, null, null,
                 contextAssembler, usageTracker, compactor, memoryService, toolApprovalService,
-                Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext, () -> null, chatTitler, null);
+                Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext, () -> null, chatTitler, null,
+                backgroundTasks);
     }
 
     private static final DocRef CHOSEN_MODEL = new DocRef(OpenAIModelDoc.TYPE, "chosen-uuid", "Chosen");
@@ -108,7 +112,32 @@ class TestAskStroomAIService {
         return new AskStroomAIService(aiService, null, null, null, store, null, null, () -> defaultConfig,
                 null, null, null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null,
                 compactor, null, toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new,
-                securityContext, () -> null, chatTitler, null);
+                securityContext, () -> null, chatTitler, null,
+                backgroundTasks);
+    }
+
+    @Test
+    void stoppingAChatStopsItsRunAndItsBackgroundTasks() {
+        Mockito.when(runManager.stop(1, AiChatRunStopReason.USER)).thenReturn(true);
+        Mockito.when(backgroundTasks.terminate(1)).thenReturn(2);
+
+        assertThat(service().cancelProcessing(1)).isTrue();
+
+        final InOrder inOrder = Mockito.inOrder(aiService, runManager, backgroundTasks);
+        inOrder.verify(aiService).verifyOwnership(1);
+        inOrder.verify(runManager).stop(1, AiChatRunStopReason.USER);
+        inOrder.verify(backgroundTasks).terminate(1);
+    }
+
+    @Test
+    void stoppingAChatWithOnlyBackgroundTasksStopsThem() {
+        // E.g. search results still downloading to attach, with no question asked yet.
+        Mockito.when(runManager.stop(1, AiChatRunStopReason.USER)).thenReturn(false);
+        Mockito.when(backgroundTasks.terminate(1)).thenReturn(1);
+        assertThat(service().cancelProcessing(1)).isTrue();
+
+        Mockito.when(backgroundTasks.terminate(1)).thenReturn(0);
+        assertThat(service().cancelProcessing(1)).isFalse();
     }
 
     @Test
