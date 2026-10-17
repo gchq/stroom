@@ -260,7 +260,8 @@ final class AiElicitationCard {
     static String firstLine(final String message, final String fallback) {
         if (message != null) {
             for (final String line : message.split("\n")) {
-                final String text = line.replaceAll("^\\s*#+\\s*", "")
+                final String text = line.trim()
+                        .replaceAll("^#+\\s*", "")
                         .replaceAll("^[*_]+|[*_]+$", "")
                         .trim();
                 if (!text.isEmpty()) {
@@ -274,10 +275,11 @@ final class AiElicitationCard {
     /// Adds what the user answered: each field they gave a value, by its title, with a choice shown by its label
     /// and true/false as Yes/No.
     ///
-    /// @param hb   Where to add it.
-    /// @param json An answered ELICITATION message, with its answer as `content`.
+    /// @param hb        Where to add it.
+    /// @param json      An answered ELICITATION message, with its answer as `content`.
+    /// @param cardTitle The title shown on the card, or null. A single field that asks the same isn't repeated.
     /// @return True if there was an answer to show.
-    static boolean appendAnswer(final HtmlBuilder hb, final String json) {
+    static boolean appendAnswer(final HtmlBuilder hb, final String json, final String cardTitle) {
         final JSONObject content;
         try {
             final JSONValue value = JSONParser.parseStrict(json).isObject().get("content");
@@ -301,6 +303,11 @@ final class AiElicitationCard {
             return false;
         }
         hb.div(answer -> {
+            if (rows.size() == 1 && isCardTitle(rows.get(0)[0], cardTitle)) {
+                // The card's title already asks the question, so just the answer.
+                answer.div(rows.get(0)[1], Attribute.className("ai-elicitation-answer-value"));
+                return;
+            }
             for (final String[] row : rows) {
                 if (row[0].endsWith("?")) {
                     // A question: its answer below it.
@@ -315,6 +322,14 @@ final class AiElicitationCard {
             }
         }, Attribute.className("ai-elicitation-answer"));
         return true;
+    }
+
+    /// @param fieldTitle A field's title.
+    /// @param cardTitle  The title shown on the card, or null if there is none.
+    /// @return True if the field's title says the same as the card's, ignoring Markdown marks and spaces, so
+    /// showing it again would repeat it.
+    static boolean isCardTitle(final String fieldTitle, final String cardTitle) {
+        return cardTitle != null && cardTitle.equals(firstLine(fieldTitle, null));
     }
 
     private static String shown(final AiElicitationForm.Field field, final JSONValue value) {
