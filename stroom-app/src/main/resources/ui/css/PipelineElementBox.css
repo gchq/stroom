@@ -48,7 +48,9 @@
 	--pipeline-element-box__fill: var(--icon-button__background-color--hover);
 }
 
+/* Pressed, with the pressed name colour (the selected element keeps its own) */
 .pipelineElementBox-background:active {
+	--pipeline-element-box__text-color: var(--pipeline-element-box__text-color--pressed);
 	--pipeline-element-box__fill: var(--icon-button__background-color--active);
 }
 
@@ -72,7 +74,8 @@
 
 /* Where a dragged element would be dropped: a 2px border in a colour of its own, as the pipeline
    bar's for a warning or error (with 1px less padding, so that what is inside doesn't move). A
-   focused one (as when moving with the keyboard) keeps its colour, with the focus ring */
+   focused one (as when moving with the keyboard) keeps its colour, with the focus border outside
+   it and the focus ring outside that (as the ring alone is under 3:1 against the page) */
 .pipelineElementBox-hotspot,
 .pipelineElementBox-refused {
 	border-width: 2px;
@@ -82,6 +85,11 @@
 .pipelineElementBox-hotspot,
 .pipelineElementBox-hotspot:focus-visible {
 	border-color: var(--pipeline-element-box__drop-target);
+}
+
+.pipelineElementBox-hotspot:focus-visible,
+.pipelineElementBox-refused:focus-visible {
+	box-shadow: 0 0 0 1px var(--focus-border), 0 0 0 5px var(--focus-ring__color);
 }
 
 /* The dots where the connectors join stay centred on the thicker border */

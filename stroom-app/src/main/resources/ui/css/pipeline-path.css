@@ -21,6 +21,8 @@
  * A chevron is cut to shape with clip-path, which would also cut off a border, outline or box
  * shadow, so its shape is drawn in layers:
  *   - the chevron's ::before, set out by the focus ring's width: the focus ring
+ *   - the chevron's ::after, set out by 1px: the focus border of a chevron whose own border is a
+ *     problem's colour, so that it still has one
  *   - .pipeline-path__shape: the border, the shape's own background showing round...
  *   - .pipeline-path__fill, set in by the border's width: the fill
  * A chevron (.pipeline-path__segment) holds its button (.pipeline-path__button) and, after a fork,
@@ -54,8 +56,8 @@
      * its slanted edges go 10px across for 13px down. An edge set out (or in) by d across its
      * slant moves 1.262d across (sqrt(1 + (10/13)^2)), and its ends move 0.769d along it for each
      * d its neighbouring edge moves. The ring and fill shapes below are worked out from these, for
-     * a 4px ring and a 1px (or a problem's 2px) border, so that their edges run alongside the
-     * chevron's.
+     * a 4px ring, a 1px (or a problem's 2px) border and a 1px focus border outside a problem's, so
+     * that their edges run alongside the chevron's.
      */
     --pipeline-path__shape: polygon(
             0 0,
@@ -89,6 +91,15 @@
             calc(100% - 18.03px) 100%,
             1.88px 100%,
             14.95px 50%);
+    /* The focus border outside a problem's, in a box set out 1px above and below and 10px each
+       side */
+    --pipeline-path__edge-shape: polygon(
+            7.97px 0,
+            calc(100% - 19.51px) 0,
+            calc(100% - 8.74px) 50%,
+            calc(100% - 19.51px) 100%,
+            7.97px 100%,
+            18.74px 50%);
 
     position: relative;
     z-index: 0;
@@ -130,6 +141,17 @@
     inset: -4px -10px;
     z-index: -2;
     clip-path: var(--pipeline-path__ring-shape);
+    background-color: transparent;
+}
+
+/* The focus border of a chevron whose own border is a problem's colour: just outside it, over the
+   focus ring (both under the chevron, so that nothing is over what can be clicked) */
+.pipeline-path__segment::after {
+    content: "";
+    position: absolute;
+    inset: -1px -10px;
+    z-index: -2;
+    clip-path: var(--pipeline-path__edge-shape);
     background-color: transparent;
 }
 
@@ -191,6 +213,12 @@
             calc(100% - 4.95px) 50%,
             calc(100% - 18.03px) 100%,
             0 100%);
+    --pipeline-path__edge-shape: polygon(
+            0 0,
+            calc(100% - 19.51px) 0,
+            calc(100% - 8.74px) 50%,
+            calc(100% - 19.51px) 100%,
+            0 100%);
     margin-left: 0;
     padding-left: 10px;
     border-radius: .25rem 0 0 .25rem;
@@ -201,12 +229,18 @@
     border-radius: calc(.25rem + 4px) 0 0 calc(.25rem + 4px);
 }
 
+.pipeline-path__segment--first::after {
+    left: -1px;
+    border-radius: calc(.25rem + 1px) 0 0 calc(.25rem + 1px);
+}
+
 /* The last has a square, rounded end */
 .pipeline-path__segment--last {
     --pipeline-path__shape: polygon(0 0, 100% 0, 100% 100%, 0 100%, 10px 50%);
     --pipeline-path__fill-shape: polygon(1.03px 0, 100% 0, 100% 100%, 1.03px 100%, 10.26px 50%);
     --pipeline-path__thick-fill-shape: polygon(2.06px 0, 100% 0, 100% 100%, 2.06px 100%, 10.53px 50%);
     --pipeline-path__ring-shape: polygon(1.88px 0, 100% 0, 100% 100%, 1.88px 100%, 14.95px 50%);
+    --pipeline-path__edge-shape: polygon(7.97px 0, 100% 0, 100% 100%, 7.97px 100%, 18.74px 50%);
     padding-right: 10px;
     border-radius: 0 .25rem .25rem 0;
 }
@@ -216,17 +250,28 @@
     border-radius: 0 calc(.25rem + 4px) calc(.25rem + 4px) 0;
 }
 
+.pipeline-path__segment--last::after {
+    right: -1px;
+    border-radius: 0 calc(.25rem + 1px) calc(.25rem + 1px) 0;
+}
+
 /* The only one is a rounded box */
 .pipeline-path__segment--first.pipeline-path__segment--last {
     --pipeline-path__shape: none;
     --pipeline-path__fill-shape: none;
     --pipeline-path__thick-fill-shape: none;
     --pipeline-path__ring-shape: none;
+    --pipeline-path__edge-shape: none;
     border-radius: .25rem;
 }
 
 .pipeline-path__segment--first.pipeline-path__segment--last::before {
     border-radius: calc(.25rem + 4px);
+}
+
+.pipeline-path__segment--first.pipeline-path__segment--last::after {
+    inset: -1px;
+    border-radius: calc(.25rem + 1px);
 }
 
 /* The states, as a toolbar button's: hovered */
@@ -237,6 +282,8 @@
 /* Pressed with the mouse, and still held with the pointer moved off it (but not when it is the drop
    down chevron that is pressed) */
 .pipeline-path__segment:active:not(:has(.pipeline-path__caret:active)) {
+    /* The pressed name colour (the selected element keeps its own) */
+    --pipeline-element-box__text-color: var(--pipeline-element-box__text-color--pressed);
     --pipeline-path__fill: var(--icon-button__background-color--active);
 }
 
@@ -286,6 +333,14 @@
 
 .pipeline-path__segment:has(> .pipeline-path__button:focus-visible)::before {
     background-color: var(--focus-ring__color);
+}
+
+/* A focused chevron whose border is a problem's colour keeps it, with the focus border outside it
+   (as the focus ring alone is under 3:1 against the page) */
+.pipeline-path__segment:is(.pipeline-path__segment--warn,
+    .pipeline-path__segment--error,
+    .pipeline-path__segment--fatal):has(> .pipeline-path__button:focus-visible)::after {
+    background-color: var(--focus-border);
 }
 
 /* Warnings and worse have a thicker border in their colour */
@@ -476,6 +531,7 @@
         --pipeline-element-box__background-color: Canvas;
         --pipeline-path__border: CanvasText;
         --pipeline-element-box__text-color: CanvasText;
+        --pipeline-element-box__text-color--pressed: CanvasText;
         --icon-button__background-color--hover: Canvas;
         --icon-button__background-color--active: Canvas;
         --icon-button__background-color--active-outside: Canvas;

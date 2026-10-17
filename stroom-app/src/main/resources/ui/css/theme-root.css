@@ -143,6 +143,9 @@
     --pipeline-element-box__background-color--selected: var(--row__background-color--selected);
     --pipeline-element-box__background-color--selected--hover: var(--row__background-color--selected--hovered);
     --pipeline-element-box__text-color: #444;
+    /* The names of pipeline elements held down with the mouse (PipelineElementBox.css,
+       pipeline-path.css), at least 4.5:1 against the pressed fill */
+    --pipeline-element-box__text-color--pressed: var(--pipeline-element-box__text-color);
     --pipeline-element-box__text-color--selected: #000;
     --pipeline-element-box__border-color: #918e8c;
     --pipeline-element-box__border-color--selected: #717e7c;

@@ -122,6 +122,8 @@
     --pipeline-element-box__background-color--selected: var(--row__background-color--selected);
     --pipeline-element-box__background-color--selected--hover: var(--row__background-color--selected--hovered);
     --pipeline-element-box__text-color: var(--text-color);
+    /* White, as the usual is 4.2:1 against the pressed fill */
+    --pipeline-element-box__text-color--pressed: var(--text-color--selected);
     --pipeline-element-box__text-color--selected: var(--text-color--selected);
     --pipeline-element-box__border-color: #777;
     --pipeline-element-box__border-color--selected: #a1a1a1;
