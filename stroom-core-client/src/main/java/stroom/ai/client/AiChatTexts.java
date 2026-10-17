@@ -56,6 +56,26 @@ public final class AiChatTexts {
         return SvgImage.AI;
     }
 
+    /// @param status A chat's status.
+    /// @return The colour of the chat's icon in the list of chats, as a class name suffix, matching
+    /// [#statusIcon(AiChatStatus)] and the badge on the Ask Stroom AI button: "needs-you" (orange), "busy"
+    /// (blue), "failed" (red), "paused" (amber) or "unread" (green), or null for a quiet chat.
+    static String statusColour(final AiChatStatus status) {
+        if (status.isNeedsYou()) {
+            return "needs-you";
+        } else if (status.isBusy()) {
+            return "busy";
+        } else if (status.getRunStatus() == AiChatRunStatus.FAILED) {
+            return "failed";
+        } else if (status.getRunStatus() == AiChatRunStatus.INTERRUPTED
+                   || status.getRunStatus() == AiChatRunStatus.STOPPED) {
+            return "paused";
+        } else if (status.isUnread()) {
+            return "unread";
+        }
+        return null;
+    }
+
     /// @param percent How full the model's context window is.
     /// @return The context pill's colour: none (grey), "warn" (yellow) from [#CONTEXT_WARN_PERCENT], or "over"
     /// (red) from [#CONTEXT_OVER_PERCENT].
