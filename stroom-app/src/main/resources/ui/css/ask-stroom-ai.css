@@ -771,6 +771,13 @@
     font-size: var(--ai-font-size--small);
 }
 
+/* What the model said while working reads as Stroom AI speaking, not as a step it took. */
+.ai-activity-entries > .ai-message--interim {
+    margin: 6px 0;
+    padding: 4px 0;
+    font-size: inherit;
+}
+
 .ai-activity-entry--error .ai-entry-title {
     color: var(--icon-colour__red, #d32f2f);
 }
