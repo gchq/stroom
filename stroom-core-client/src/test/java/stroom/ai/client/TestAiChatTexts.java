@@ -71,6 +71,19 @@ class TestAiChatTexts {
     }
 
     @Test
+    void eachStateHasTheColourOfItsBadge() {
+        assertThat(AiChatTexts.statusColour(status(AiChatRunStatus.WAITING_FOR_USER, true, false)))
+                .isEqualTo("needs-you");
+        assertThat(AiChatTexts.statusColour(status(AiChatRunStatus.RUNNING, true, false))).isEqualTo("busy");
+        assertThat(AiChatTexts.statusColour(status(AiChatRunStatus.FAILED, true, false))).isEqualTo("failed");
+        assertThat(AiChatTexts.statusColour(status(AiChatRunStatus.STOPPED, false, false))).isEqualTo("paused");
+        assertThat(AiChatTexts.statusColour(status(AiChatRunStatus.INTERRUPTED, false, false)))
+                .isEqualTo("paused");
+        assertThat(AiChatTexts.statusColour(status(AiChatRunStatus.DONE, true, false))).isEqualTo("unread");
+        assertThat(AiChatTexts.statusColour(status(AiChatRunStatus.DONE, false, false))).isNull();
+    }
+
+    @Test
     void aQuietChatHasNoNoteUnlessItApprovesEverything() {
         assertThat(AiChatTexts.statusIcon(status(null, false, false))).isEqualTo(SvgImage.AI);
         assertThat(AiChatTexts.statusNote(status(AiChatRunStatus.DONE, false, false))).isEmpty();
