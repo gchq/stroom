@@ -208,6 +208,23 @@ final class AiActivityGroups {
         return null;
     }
 
+    /// @param idStr The message id an element of the conversation is marked with, e.g. `2904`, or `2904-actions`
+    ///              for the steps a message left to the user.
+    /// @return The id of the message the element shows, or -1 if it isn't one stored, e.g. a question still
+    /// being sent.
+    static int messageIdOf(final String idStr) {
+        if (idStr == null) {
+            return -1;
+        }
+        int end = 0;
+        while (end < idStr.length() && Character.isDigit(idStr.charAt(end))) {
+            end++;
+        }
+        return end > 0
+                ? Integer.parseInt(idStr.substring(0, end))
+                : -1;
+    }
+
     /// Removes the entries of messages from a message onwards, and any group left with none, e.g. when a
     /// question is edited.
     ///
@@ -219,12 +236,9 @@ final class AiActivityGroups {
             Element child = group.entries.getFirstChildElement();
             while (child != null) {
                 final Element next = child.getNextSiblingElement();
-                final String idStr = child.getAttribute(MESSAGE_ID_ATTRIBUTE);
-                if (idStr != null && !idStr.isEmpty()) {
-                    final int id = Integer.parseInt(idStr);
-                    if (id > fromMessageId || (id == fromMessageId && !keepFirst)) {
-                        child.removeFromParent();
-                    }
+                final int id = messageIdOf(child.getAttribute(MESSAGE_ID_ATTRIBUTE));
+                if (id > fromMessageId || (id == fromMessageId && !keepFirst)) {
+                    child.removeFromParent();
                 }
                 child = next;
             }
