@@ -47,6 +47,7 @@ final class AiActivityGroups {
     private static final String ENTRY_TITLE_CLASS = "ai-entry-title";
     private static final String CONTENT_CLASS = "ai-details-content";
     private static final String LIVE_CLASS = "ai-activity-live";
+    private static final String CLOSE_AT_ONCE_CLASS = "ai-activity--close-at-once";
     private static final String PREVIEW_CLASS = "ai-thinking-preview";
     private static final String CALL_ID_ATTRIBUTE = "data-call-id";
     private static final int PREVIEW_CHARS = 90;
@@ -167,7 +168,7 @@ final class AiActivityGroups {
             group.finished = true;
             group.lastTimeMs = Math.max(group.lastTimeMs, endTimeMs);
             removeLive(group);
-            group.element.removeAttribute("open");
+            closeAtOnce(group.element);
             updateTitle(group);
         }
     }
@@ -291,6 +292,17 @@ final class AiActivityGroups {
             groups.put(turnId, group);
         }
         return group;
+    }
+
+    /// Closes a group without the animation the user's own opening and closing has. The conversation is scrolled
+    /// to its latest message straight after, which, while the group was still closing, would scroll to where the
+    /// end was before the group closed, leaving what follows the group out of view.
+    private static void closeAtOnce(final Element element) {
+        element.addClassName(CLOSE_AT_ONCE_CLASS);
+        element.removeAttribute("open");
+        // Reading the height lays the group out closed now, so that putting the animation back doesn't animate.
+        element.getOffsetHeight();
+        element.removeClassName(CLOSE_AT_ONCE_CLASS);
     }
 
     /// @return True if anything other than the lines showing what is happening now follows the element.

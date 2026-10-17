@@ -212,6 +212,7 @@ public class AskStroomAIService {
     private final AiMemoryService memoryService;
     private final ChatTitler chatTitler;
     private final FollowUpSuggester followUpSuggester;
+    private final AiBackgroundTasks backgroundTasks;
     private final ToolApprovalService toolApprovalService;
     private final AiAuditLog auditLog;
     private final AiDao aiDao;
@@ -251,8 +252,10 @@ public class AskStroomAIService {
                               final SecurityContext securityContext,
                               final Provider<McpElicitations> mcpElicitationsProvider,
                               final ChatTitler chatTitler,
-                              final FollowUpSuggester followUpSuggester) {
+                              final FollowUpSuggester followUpSuggester,
+                              final AiBackgroundTasks backgroundTasks) {
         this.chatTitler = chatTitler;
+        this.backgroundTasks = backgroundTasks;
         this.followUpSuggester = followUpSuggester;
         this.aiService = aiService;
         this.mcpElicitationsProvider = mcpElicitationsProvider;
@@ -987,6 +990,8 @@ public class AskStroomAIService {
         final Runnable runnable = taskContextFactory.context(
                 "Download search results for AI analysis",
                 taskContext -> {
+                    // Stopping the chat stops the download.
+                    backgroundTasks.started(chatId, taskContext);
                     try {
                         info(taskContext, () -> "Async download started: attachmentId=" + attachmentId
                                                 + " chatId=" + chatId
@@ -1083,8 +1088,12 @@ public class AskStroomAIService {
                     } catch (final Exception e) {
                         LOGGER.debug(e::getMessage, e);
                         aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.ERROR,
-                                null, null, e.getMessage(), false);
+                                null, null, taskContext.isTerminated()
+                                        ? "Stopped before it finished downloading"
+                                        : e.getMessage(), false);
                         attachmentFileStore.deleteAttachmentFile(attachmentId);
+                    } finally {
+                        backgroundTasks.ended(chatId, taskContext);
                     }
                 });
         executorProvider.get().execute(runnable);
@@ -1806,12 +1815,17 @@ public class AskStroomAIService {
 
 
     /**
-     * Signals cancellation for an in-progress batch analysis.
-     * The batch processing checks this flag before each batch.
+     * Stops everything working for a chat: its run, with any tool call it is waiting on (see
+     * {@link AiChatRunManager#stop}), and its tasks on this node, e.g. downloading search results attached to it.
+     *
+     * @param chatId The chat.
+     * @return True if anything was stopped.
      */
     public boolean cancelProcessing(final int chatId) {
         aiService.verifyOwnership(chatId);
-        return runManager.stop(chatId, AiChatRunStopReason.USER);
+        final boolean runStopped = runManager.stop(chatId, AiChatRunStopReason.USER);
+        final int tasksTerminated = backgroundTasks.terminate(chatId);
+        return runStopped || tasksTerminated > 0;
     }
 
 
