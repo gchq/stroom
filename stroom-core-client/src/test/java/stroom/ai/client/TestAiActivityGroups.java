@@ -45,4 +45,15 @@ class TestAiActivityGroups {
     void theRestIsInTheConversation(final AiMessageType type) {
         assertThat(AiActivityGroups.isActivity(type)).isFalse();
     }
+
+    @Test
+    void elementsAreMatchedToTheMessagesTheyShow() {
+        // The steps a message left to the user are marked with the message's id and a suffix, which asking a
+        // question again failed to read.
+        assertThat(AiActivityGroups.messageIdOf("2904-actions")).isEqualTo(2904);
+        assertThat(AiActivityGroups.messageIdOf("2904")).isEqualTo(2904);
+        assertThat(AiActivityGroups.messageIdOf("pending")).isEqualTo(-1);
+        assertThat(AiActivityGroups.messageIdOf("")).isEqualTo(-1);
+        assertThat(AiActivityGroups.messageIdOf(null)).isEqualTo(-1);
+    }
 }
