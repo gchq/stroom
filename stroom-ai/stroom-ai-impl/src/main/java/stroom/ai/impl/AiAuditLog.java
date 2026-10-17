@@ -25,6 +25,7 @@ import event.logging.Data;
 import event.logging.Outcome;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
+import event.logging.ProcessType;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -63,6 +64,7 @@ public class AiAuditLog {
                          final boolean unattended) {
         log(TOOL_CALL_TYPE_ID, "Ask Stroom AI called tool " + tool + " in chat " + chatId,
                 ProcessEventAction.builder()
+                        .withType(ProcessType.APPLICATION)
                         .withAction(ProcessAction.CALL)
                         .withCommand(tool)
                         .withArguments(shorten(arguments))
@@ -84,6 +86,7 @@ public class AiAuditLog {
     public void answer(final int chatId, final String question, final String answer, final boolean unattended) {
         log(ANSWER_TYPE_ID, "Ask Stroom AI answered a question in chat " + chatId,
                 ProcessEventAction.builder()
+                        .withType(ProcessType.APPLICATION)
                         .withAction(ProcessAction.EXECUTE)
                         .withCommand("Ask Stroom AI")
                         .withArguments(shorten(question))
@@ -110,6 +113,7 @@ public class AiAuditLog {
                            final boolean success) {
         log(USER_ACTION_TYPE_ID, "User did a step suggested in Ask Stroom AI chat " + chatId + ": " + label,
                 ProcessEventAction.builder()
+                        .withType(ProcessType.APPLICATION)
                         .withAction(ProcessAction.EXECUTE)
                         .withCommand(action)
                         .withArguments(shorten(label))
