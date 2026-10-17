@@ -421,11 +421,15 @@ class McpAgentChat {
 
         // A large result is saved to the workspace and the model is given a stub, so it does not fill the
         // model's context.
-        final String path = ToolOutputs.isLarge(result) && !builtInTools.boundsItsOutput(toolRequest.name())
-                ? saveOutput(chatId, callMessage, result)
+        final boolean large = ToolOutputs.isLarge(result) && !builtInTools.boundsItsOutput(toolRequest.name());
+        final String saved = large
+                ? ToolOutputs.forSaving(result)
+                : result;
+        final String path = large
+                ? saveOutput(chatId, callMessage, saved)
                 : null;
         final String forModel = path != null
-                ? ToolOutputs.stub(result, path)
+                ? ToolOutputs.stub(saved, path)
                 : result;
         final boolean error = isError(result);
         // Steps that are the user's, checked, to show as buttons. The model is not told about them: the steps are
