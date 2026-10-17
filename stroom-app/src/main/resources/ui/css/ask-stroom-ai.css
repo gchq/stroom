@@ -1322,8 +1322,13 @@
     font-weight: 600;
 }
 
+/* What the model said alongside its tool calls, while the Working line shows it. */
+.ai-message--shown-as-progress {
+    display: none;
+}
+
 .ai-elicitation-answer-value {
-    margin: 0 0 6px 12px;
+    margin: 0 0 6px;
 }
 
 .ai-elicitation-check {
