@@ -284,8 +284,8 @@ public class AskStroomAiPresenter
     private String lastRenderedDay;
     // True while the conversation is scrolled to the bottom, so new messages scroll into view.
     private boolean followBottom = true;
-    // What the model said alongside its latest tool calls, kept out of the conversation while the Working line
-    // shows it, or null once it is shown in the conversation.
+    // What the model said alongside its latest tool calls, kept out of its turn's activity group while the Working
+    // line shows it, or null once it is shown there.
     private AiChatMessage interimShownAsProgress;
     // Where the conversation was scrolled to last, to tell the user scrolling up from content growing below.
     private int lastScrollTop;
@@ -1863,7 +1863,7 @@ public class AskStroomAiPresenter
             markdownContainer.replaceChild(card, existing);
         } else {
             markdownContainer.appendChild(card);
-            keepProgressLast(markdownContainer);
+            keepProgressInPlace(markdownContainer);
         }
     }
 
@@ -2719,6 +2719,11 @@ public class AskStroomAiPresenter
 
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
         if (AiActivityGroups.isActivity(msg.getMessageType())) {
+            if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE) {
+                // The text being written is now stored, so is shown in its place, after what was said before.
+                removeLiveAnswer();
+                showInterimInActivity();
+            }
             final Element existingEntry = activityGroups.findEntry(messageId);
             if (existingEntry != null) {
                 existingEntry.getParentElement().replaceChild(messageElement, existingEntry);
@@ -2727,10 +2732,15 @@ public class AskStroomAiPresenter
                 activityGroups.add(markdownContainer, msg, messageElement, question != null
                         ? question.getCreateTimeMs()
                         : 0);
-                keepProgressLast(markdownContainer);
+                keepProgressInPlace(markdownContainer);
             }
             if (msg.getMessageType() == AiMessageType.TOOL_RESULT) {
                 appendUserActionsCard(markdownContainer, msg, nowMs);
+            } else if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE
+                       && Document.get().getElementById(WORKING_MESSAGE_ID) != null) {
+                // While the agent works, shown once the Working line moves on from it (see updateWorkingMessage).
+                interimShownAsProgress = msg;
+                messageElement.addClassName(SHOWN_AS_PROGRESS_CLASS);
             }
             return;
         }
@@ -2738,16 +2748,13 @@ public class AskStroomAiPresenter
             // The answer is here, so the turn's work is done.
             activityGroups.finish(msg.getTurnId(), msg.getCreateTimeMs());
             removeLiveAnswer();
-        } else if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE) {
-            // The text being written is now stored, so is shown in its place.
-            removeLiveAnswer();
         }
         if (msg.getMessageType() == AiMessageType.ELICITATION
             || msg.getMessageType() == AiMessageType.APPROVAL_REQUEST
             || msg.getMessageType() == AiMessageType.AI_RESPONSE
             || msg.getMessageType() == AiMessageType.ERROR) {
             // What the model said comes before what it asks the user, and before its answer.
-            showInterimInConversation();
+            showInterimInActivity();
         }
         Element existing = findMessageElement(markdownContainer, messageId);
         if (existing == null && (msg.getMessageType() == AiMessageType.USER_MESSAGE
@@ -2762,15 +2769,6 @@ public class AskStroomAiPresenter
         }
         if (msg.getMessageType() == AiMessageType.COMPACTION_SUMMARY) {
             showUndoOnLatestCompaction();
-        }
-        if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE) {
-            showInterimInConversation();
-            // While the agent works, shown in the conversation once the Working line moves on from it (see
-            // updateWorkingMessage).
-            if (Document.get().getElementById(WORKING_MESSAGE_ID) != null) {
-                interimShownAsProgress = msg;
-                messageElement.addClassName(SHOWN_AS_PROGRESS_CLASS);
-            }
         }
     }
 
@@ -3423,7 +3421,7 @@ public class AskStroomAiPresenter
             removeLiveAnswer();
             activityGroups.finishAll();
         }
-        keepProgressLast(markdownContainer);
+        keepProgressInPlace(markdownContainer);
         if (any) {
             scrollToBottom();
         }
@@ -3450,20 +3448,30 @@ public class AskStroomAiPresenter
         if (content != null) {
             content.setInnerHTML(html.asString());
         }
-        keepProgressLast(markdownContainer);
+        keepProgressInPlace(markdownContainer);
     }
 
     /**
-     * Keeps the line saying what is being done, then the answer being written, at the end of the conversation, as
-     * messages arrive above them.
+     * Keeps the line saying what is being done just below the work of the turn being worked on, so it stays above
+     * anything put to the user and anything they send while it works, and the answer being written at the end of
+     * the conversation, as messages arrive.
      */
-    private static void keepProgressLast(final Element markdownContainer) {
-        for (final String id : new String[]{WORKING_MESSAGE_ID, LIVE_ANSWER_ID}) {
-            final Element element = Document.get().getElementById(id);
-            if (element != null && element.getParentElement() == markdownContainer
-                && element != markdownContainer.getLastChild()) {
-                markdownContainer.appendChild(element);
+    private void keepProgressInPlace(final Element markdownContainer) {
+        final Element working = Document.get().getElementById(WORKING_MESSAGE_ID);
+        if (working != null && working.getParentElement() == markdownContainer) {
+            final Element group = activityGroups.getLatestUnfinished();
+            if (group != null && group.getParentElement() == markdownContainer) {
+                if (group.getNextSibling() != working) {
+                    markdownContainer.insertAfter(working, group);
+                }
+            } else if (working != markdownContainer.getLastChild()) {
+                markdownContainer.appendChild(working);
             }
+        }
+        final Element live = Document.get().getElementById(LIVE_ANSWER_ID);
+        if (live != null && live.getParentElement() == markdownContainer
+            && live != markdownContainer.getLastChild()) {
+            markdownContainer.appendChild(live);
         }
     }
 
@@ -3491,6 +3499,7 @@ public class AskStroomAiPresenter
             appendWorkingMessage(hb, workingMessage,
                     workingMessage.getCreateTimeMs(), System.currentTimeMillis());
             appendToContainer(hb);
+            keepProgressInPlace(getView().getMarkdownContainer().getElement());
         } else {
             final Element text = doc.getElementById(WORKING_TEXT_ID);
             if (text != null) {
@@ -3502,18 +3511,17 @@ public class AskStroomAiPresenter
         if (interimShownAsProgress != null
             && (workingMessage == null
                 || !AiChatTexts.isShownAsProgress(workingText(workingMessage), interimShownAsProgress.getMessage()))) {
-            showInterimInConversation();
+            showInterimInActivity();
         }
     }
 
-    /// Shows what the model said alongside its latest tool calls in the conversation, if it was kept out while
-    /// the Working line showed it.
-    private void showInterimInConversation() {
+    /// Shows what the model said alongside its latest tool calls in its turn's activity group, if it was kept
+    /// out while the Working line showed it.
+    private void showInterimInActivity() {
         if (interimShownAsProgress == null) {
             return;
         }
-        final Element element = findMessageElement(getView().getMarkdownContainer().getElement(),
-                String.valueOf(interimShownAsProgress.getId()));
+        final Element element = activityGroups.findEntry(String.valueOf(interimShownAsProgress.getId()));
         interimShownAsProgress = null;
         if (element != null) {
             element.removeClassName(SHOWN_AS_PROGRESS_CLASS);
