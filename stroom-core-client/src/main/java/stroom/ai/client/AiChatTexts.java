@@ -24,6 +24,9 @@ import stroom.svg.shared.SvgImage;
 /// tested without a browser.
 public final class AiChatTexts {
 
+    // How much of what the model said must start the Working line for it to count as shown there.
+    private static final int PROGRESS_MATCH_CHARS = 24;
+
     // The classification an untrusted server's tools have on approval cards.
     static final String UNTRUSTED_SERVER = "untrusted server";
     // The context pill turns yellow, then red, as the context window fills.
@@ -190,5 +193,29 @@ public final class AiChatTexts {
                + (sideEffects
                 ? " Changes the agent has made with tools, or to your memory, will not be undone."
                 : "");
+    }
+
+    /// @param progress What the Working line says, e.g. "Let me check the schema (describe_document)".
+    /// @param text     What the model said alongside its tool calls, as Markdown.
+    /// @return True if the Working line is showing that text: it starts the same way, ignoring Markdown marks,
+    /// link targets, spaces and punctuation.
+    static boolean isShownAsProgress(final String progress, final String text) {
+        final String shown = lettersAndDigits(progress);
+        final String said = lettersAndDigits(text);
+        if (shown.isEmpty() || said.isEmpty()) {
+            return false;
+        }
+        return shown.startsWith(said.substring(0, Math.min(said.length(), PROGRESS_MATCH_CHARS)));
+    }
+
+    private static String lettersAndDigits(final String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replaceAll("\\]\\([^)]*\\)", "")
+                // Spaces and ASCII punctuation (not \p{..} classes, which GWT's JavaScript regular expressions
+                // don't support).
+                .replaceAll("[\\s!-/:-@\\[-`{-~]", "")
+                .toLowerCase();
     }
 }

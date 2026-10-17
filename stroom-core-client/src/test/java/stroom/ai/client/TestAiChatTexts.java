@@ -29,6 +29,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestAiChatTexts {
 
     @Test
+    void theWorkingLineShowsWhatTheModelSaid() {
+        // The Working line has the first line as plain text, cut short, with the tool's name.
+        assertThat(AiChatTexts.isShownAsProgress(
+                "Confirmed: raw data is <tweet> fragments with no root element, so this needs an XML… "
+                + "(build_data_splitter)",
+                "**Confirmed**: raw data is `<tweet>` fragments with no root element, so this needs an XML "
+                + "fragment wrapper.\n\nLet me build it.")).isTrue();
+        assertThat(AiChatTexts.isShownAsProgress("Checking the feed now. (describe_feed)",
+                "Checking [the feed](?action=open-doc&docType=Feed) now.")).isTrue();
+        // A short remark is shown whole.
+        assertThat(AiChatTexts.isShownAsProgress("Now writing (write_documentation)", "Now writing.")).isTrue();
+    }
+
+    @Test
+    void theWorkingLineHasMovedOn() {
+        assertThat(AiChatTexts.isShownAsProgress("Running read_stream — stream_id=1465",
+                "Now writing the documentation.")).isFalse();
+        assertThat(AiChatTexts.isShownAsProgress("Working...", "Now writing the documentation.")).isFalse();
+        assertThat(AiChatTexts.isShownAsProgress("Now writing (write_documentation)", null)).isFalse();
+        assertThat(AiChatTexts.isShownAsProgress(null, "Now writing.")).isFalse();
+    }
+
+    @Test
     void theMostImportantStateIsShown() {
         // Needing the user beats being unread.
         assertThat(AiChatTexts.statusIcon(status(AiChatRunStatus.WAITING_FOR_USER, true, false)))
