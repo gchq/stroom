@@ -23,6 +23,7 @@ import stroom.ai.shared.AiApprovalScope;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatSearchHit;
@@ -982,10 +983,15 @@ public class AskStroomAiPresenter
         final boolean current = currentChat != null && currentChat.getId() == chatId;
         final String title = NullSafe.nonBlankStringElse(chatTitle, DEFAULT_CHAT_TITLE);
         hb.div(item -> {
+            final String colour = status != null
+                    ? AiChatTexts.statusColour(status)
+                    : null;
             item.div(iconDiv -> icon(iconDiv, status != null
                             ? AiChatTexts.statusIcon(status)
                             : SvgImage.AI),
-                    Attribute.className("ai-chat-list-icon"));
+                    Attribute.className("ai-chat-list-icon" + (colour != null
+                            ? " ai-chat-list-icon--" + colour
+                            : "")));
             item.div(text -> {
                 text.div(name -> highlight(name, title, query), Attribute.className("ai-chat-list-title"),
                         Attribute.title(title));
@@ -2611,12 +2617,7 @@ public class AskStroomAiPresenter
             // Say if the run stopped before finishing, and offer to resume it.
             updateRunStatus(response.getRun());
             currentRunActive = !response.isComplete();
-            getView().setInProgress(!response.isComplete());
-            // The input box glows while the chat works, e.g. calling a tool or the model, but not while it waits
-            // for the user to answer something, as nothing happens until they do.
-            final boolean needsUser = response.getRun() != null
-                                      && response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER;
-            getView().setSendButtonLoadingState(requestInFlight || (!response.isComplete() && !needsUser));
+            showWorking(response);
             refreshFollowUps();
 
             // Show what the server is currently doing, and take the line away when it is done.
@@ -2657,6 +2658,29 @@ public class AskStroomAiPresenter
             getView().setSendButtonLoadingState(false);
             getView().setInProgress(false);
         }, getView());
+    }
+
+    /// Shows whether the chat is working, with the input box glowing and the Stop button, from what a poll found.
+    /// It is working while its run calls tools or the model, or data is still coming down. It isn't while it waits
+    /// for the user, e.g. to answer something, or once an error has ended the question, as nothing happens until
+    /// the user does something.
+    private void showWorking(final AiChatPollResponse response) {
+        final boolean needsUser = response.getRun() != null
+                                  && response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER;
+        final boolean working = !response.isComplete() && !needsUser && !endedByError();
+        getView().setInProgress(working);
+        getView().setSendButtonLoadingState(requestInFlight || working);
+    }
+
+    // True if the latest message shown is an error, which ends the question it was answering.
+    private boolean endedByError() {
+        AiChatMessage latest = null;
+        for (final AiChatMessage msg : renderedMessages.values()) {
+            if (latest == null || msg.getId() > latest.getId()) {
+                latest = msg;
+            }
+        }
+        return latest != null && latest.getMessageType() == AiMessageType.ERROR;
     }
 
     /**
@@ -3878,6 +3902,8 @@ public class AskStroomAiPresenter
     private void loadChat(final AiChat chat) {
         currentChat = chat;
         currentRunActive = false;
+        // Whatever the last chat was doing, until this one is known.
+        getView().setSendButtonLoadingState(false);
         refreshFollowUps();
         // A loaded chat already has a title, unless it has no question yet (see below).
         titleGenerated = true;
@@ -3921,9 +3947,11 @@ public class AskStroomAiPresenter
                 updateRunStatus(response.getRun());
                 currentRunActive = !response.isComplete();
                 refreshFollowUps();
-                if (!response.isComplete() && currentChat != null && currentChat.getId() == chat.getId()) {
-                    getView().setSendButtonLoadingState(true);
-                    startPolling();
+                if (currentChat != null && currentChat.getId() == chat.getId()) {
+                    showWorking(response);
+                    if (!response.isComplete()) {
+                        startPolling();
+                    }
                 }
             }, error -> { /* ignore */ }, this);
         }, this);

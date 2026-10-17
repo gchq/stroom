@@ -1526,6 +1526,28 @@
     height: 16px;
 }
 
+/* A chat's state in colour, matching the badge on the Ask Stroom AI button. */
+.ai-chat-list-icon--needs-you svg {
+    color: #ed6c02;
+}
+
+.ai-chat-list-icon--busy svg {
+    color: #1976d2;
+}
+
+.ai-chat-list-icon--failed svg {
+    color: #d32f2f;
+}
+
+.ai-chat-list-icon--paused svg {
+    color: #f9a825;
+}
+
+/* The bright green of the button's unread badge. */
+.ai-chat-list-icon--unread svg {
+    color: #00e676;
+}
+
 .ai-chat-list-text {
     flex: 1 1 auto;
     min-width: 0;
