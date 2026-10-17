@@ -17,9 +17,16 @@
 package stroom.ai.impl;
 
 
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.service.tool.ToolExecutor;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
@@ -211,12 +218,17 @@ final class ToolGroups {
                 : clean(fallback, fallback);
     }
 
-    /// The groups the model has turned on in each chat. They stay on for the rest of the chat on this node, or
-    /// until the chat is one of the least recently used past [#MAX_CHATS].
+    /// The groups the model has turned on in each chat. They stay on for the rest of the chat, or until the chat
+    /// is one of the least recently used past [#MAX_CHATS]. They are kept on this node, and found again from the
+    /// chat's `activate_` tool calls when the chat is first used here, e.g. after Stroom restarts, since the
+    /// model, seeing it turned them on, carries on as if they were.
     @Singleton
     static final class Activations {
 
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Activations.class);
         private static final int MAX_CHATS = 10_000;
+
+        private final Provider<AiDao> aiDaoProvider;
 
         private final Map<Integer, Set<String>> activeByChat = new LinkedHashMap<>(16, 0.75f, true) {
             @Override
@@ -226,18 +238,46 @@ final class ToolGroups {
         };
 
         @Inject
-        Activations() {
-            // For injection.
+        Activations(final Provider<AiDao> aiDaoProvider) {
+            this.aiDaoProvider = aiDaoProvider;
         }
 
         /// @return The groups turned on in the chat.
         synchronized Set<String> active(final int chatId) {
-            return Set.copyOf(activeByChat.getOrDefault(chatId, Set.of()));
+            return Set.copyOf(activeIn(chatId));
         }
 
         /// Turns a group on in a chat.
         synchronized void activate(final int chatId, final String group) {
-            activeByChat.computeIfAbsent(chatId, key -> new HashSet<>()).add(group);
+            activeIn(chatId).add(group);
+        }
+
+        private Set<String> activeIn(final int chatId) {
+            return activeByChat.computeIfAbsent(chatId, this::activatedBefore);
+        }
+
+        // The groups the chat's tool calls turned on, before this node knew of the chat.
+        private Set<String> activatedBefore(final int chatId) {
+            final Set<String> active = new HashSet<>();
+            for (final AiChatMessage message : aiDaoProvider.get().getMessages(chatId)) {
+                if (message.getMessageType() == AiMessageType.TOOL_CALL) {
+                    final String tool = toolName(message.getMessage());
+                    if (isActivationTool(tool)) {
+                        active.add(tool.substring(ACTIVATE_PREFIX.length()));
+                    }
+                }
+            }
+            LOGGER.debug(() -> "Tool groups turned on before in chatId=" + chatId + ": " + active);
+            return active;
+        }
+
+        private static String toolName(final String toolCallJson) {
+            try {
+                return JsonUtil.readValue(toolCallJson, ToolCallRecord.class).tool();
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> "Unreadable tool call: " + toolCallJson, e);
+                return null;
+            }
         }
     }
 }
