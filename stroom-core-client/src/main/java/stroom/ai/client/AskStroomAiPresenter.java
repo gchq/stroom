@@ -101,6 +101,7 @@ import stroom.widget.util.client.Size;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.TextAreaElement;
@@ -206,6 +207,8 @@ public class AskStroomAiPresenter
     // On the Yes and No buttons of a yes or no question: the question's field, and the answer each gives.
     private static final String ELICITATION_FIELD_ATTRIBUTE = "data-elicitation-field";
     private static final String ELICITATION_VALUE_ATTRIBUTE = "data-elicitation-value";
+    // The tool Stroom AI's agent asks the user questions with.
+    private static final String ASK_USER_TOOL = "ask_user";
     private static final int DEFAULT_COMPACT_AT_PERCENT = 80;
     private static final String LIVE_ANSWER_ID = "ai-live-answer";
     private static final int STREAMING_POLL_MS = 500;
@@ -383,6 +386,16 @@ public class AskStroomAiPresenter
                         return;
                     }
 
+                    // Answering, or going back to, one of the agent's questions.
+                    if (button.hasAttribute(AiElicitationCard.OPTION_ATTRIBUTE)) {
+                        onQuestionAnswered(button, button.getAttribute(AiElicitationCard.OPTION_ATTRIBUTE));
+                        return;
+                    }
+                    if (button.hasAttribute(AiElicitationCard.BACK_ATTRIBUTE)) {
+                        onQuestionBack(button);
+                        return;
+                    }
+
                     // Answering a form from an MCP tool.
                     final String elicitationStr = button.getAttribute(ELICITATION_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(elicitationStr)) {
@@ -473,6 +486,16 @@ public class AskStroomAiPresenter
         // Enter submits it.
         registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
             final Element target = e.getNativeEvent().getEventTarget().cast();
+            if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER
+                && target.hasClassName(AiElicitationCard.CUSTOM_ANSWER_CLASS)) {
+                // The user's own answer to one of the agent's questions.
+                e.preventDefault();
+                final String answer = InputElement.as(target).getValue().trim();
+                if (!answer.isEmpty()) {
+                    onQuestionAnswered(target, answer);
+                }
+                return;
+            }
             if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && target.hasAttribute(AiElicitationCard.FIELD_ATTRIBUTE)) {
                 final Element card = ElementUtil.findParent(target, element ->
                         element.hasClassName("ai-message"), 8);
@@ -1568,12 +1591,21 @@ public class AskStroomAiPresenter
         final String server = AiToolMessages.getString(json, "server");
         final boolean pending = "PENDING".equals(status);
         final String message = NullSafe.string(AiToolMessages.getString(json, "message"));
+        // Questions from Stroom AI's own agent, asked one at a time, rather than a form from an MCP server.
+        final boolean questions = ASK_USER_TOOL.equals(AiToolMessages.getString(json, "tool"));
         final List<AiElicitationForm.Field> fields = pending
                 ? AiElicitationForm.fields(json)
                 : List.of();
-        final AiElicitationForm.Field yesNo = AiElicitationCard.yesNoQuestion(fields);
+        // Yes and No buttons are only for a server's form: the agent's questions have answers to choose from.
+        final AiElicitationForm.Field yesNo = questions
+                ? null
+                : AiElicitationCard.yesNoQuestion(fields);
         hb.div(card -> {
-            if (pending) {
+            if (pending && questions) {
+                card.div(AiElicitationCard.firstLine(message, "Some questions for you"),
+                        Attribute.className("ai-approval-title"));
+                AiElicitationCard.appendQuestions(card, fields);
+            } else if (pending) {
                 card.div(server + " needs your input", Attribute.className("ai-approval-title"));
                 card.div(message, Attribute.className("ai-elicitation-message"));
                 if (yesNo != null) {
@@ -1588,7 +1620,12 @@ public class AskStroomAiPresenter
             }
             final boolean answerShown = "ACCEPTED".equals(status) && AiElicitationCard.appendAnswer(card, json);
             card.div(footer -> {
-                if (pending && yesNo != null) {
+                if (pending && questions) {
+                    footer.elem("Skip these questions", BUTTON,
+                            Attribute.className("allow-focus ai-approval-button ai-approval-button--deny"),
+                            new Attribute(ELICITATION_ATTRIBUTE, String.valueOf(msg.getId())),
+                            new Attribute(ELICITATION_ACTION_ATTRIBUTE, "DECLINE"));
+                } else if (pending && yesNo != null) {
                     // A single yes or no question is answered with a button for each.
                     footer.elem("Yes", BUTTON,
                             Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
@@ -1662,6 +1699,58 @@ public class AskStroomAiPresenter
                     // E.g. the form was cancelled when the run stopped: show it as it now stands.
                     pollAfterAnswer();
                 }, getView());
+    }
+
+    /**
+     * Takes the answer to one of the agent's questions, then shows the next question, or after the last, sends
+     * the answers.
+     *
+     * @param within An element of the question, e.g. the answer clicked.
+     * @param answer The answer.
+     */
+    private void onQuestionAnswered(final Element within, final String answer) {
+        final Element question = ElementUtil.findParent(within, element ->
+                element.hasClassName(AiElicitationCard.QUESTION_CLASS), 4);
+        final Element card = question != null
+                ? ElementUtil.findParent(question, element -> element.hasAttribute(MESSAGE_ID_ATTRIBUTE), 4)
+                : null;
+        if (card == null) {
+            return;
+        }
+        final NodeList<Element> inputs = question.getElementsByTagName("input");
+        for (int i = 0; i < inputs.getLength(); i++) {
+            if (inputs.getItem(i).hasAttribute(AiElicitationCard.FIELD_ATTRIBUTE)) {
+                InputElement.as(inputs.getItem(i)).setValue(answer);
+            }
+        }
+        // Shown as chosen, for if the user comes back to it.
+        final NodeList<Element> options = question.getElementsByTagName("button");
+        for (int i = 0; i < options.getLength(); i++) {
+            final Element option = options.getItem(i);
+            option.setClassName(option.getClassName().replace(" ai-question-option--chosen", "")
+                                + (answer.equals(option.getAttribute(AiElicitationCard.OPTION_ATTRIBUTE))
+                    ? " ai-question-option--chosen"
+                    : ""));
+        }
+        final Element next = question.getNextSiblingElement();
+        if (next != null && next.hasClassName(AiElicitationCard.QUESTION_CLASS)) {
+            question.addClassName(AiElicitationCard.LATER_CLASS);
+            next.removeClassName(AiElicitationCard.LATER_CLASS);
+        } else {
+            onAnswerForm(question, Integer.parseInt(card.getAttribute(MESSAGE_ID_ATTRIBUTE)), "ACCEPT");
+        }
+    }
+
+    private void onQuestionBack(final Element within) {
+        final Element question = ElementUtil.findParent(within, element ->
+                element.hasClassName(AiElicitationCard.QUESTION_CLASS), 4);
+        final Element previous = question != null
+                ? question.getPreviousSiblingElement()
+                : null;
+        if (previous != null && previous.hasClassName(AiElicitationCard.QUESTION_CLASS)) {
+            question.addClassName(AiElicitationCard.LATER_CLASS);
+            previous.removeClassName(AiElicitationCard.LATER_CLASS);
+        }
     }
 
     private static Element findFormSubmit(final Element card) {
