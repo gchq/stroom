@@ -76,7 +76,7 @@ class TestMcpAgentChat {
     private final UserActions userActions = new UserActions(userActionLookup);
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
             usageTracker, toolConsent, auditLog, new ModelStreamer(aiService),
-            new ToolGroups.Activations(), AiConfig::new, aiDao, userActions);
+            new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions);
 
     {
         // Tool calls run unless a test says otherwise.
@@ -349,7 +349,7 @@ class TestMcpAgentChat {
                 null, null, null, null, null, 3);
         final McpAgentChat cappedChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 usageTracker, toolConsent, auditLog, new ModelStreamer(aiService),
-                new ToolGroups.Activations(), () -> config, aiDao, userActions);
+                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions);
         final AiMessage toolCall = AiMessage.from(List.of(ToolExecutionRequest.builder()
                 .id("1")
                 .name("search")
@@ -414,7 +414,7 @@ class TestMcpAgentChat {
                 null, null, null, null, null, null);
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 usageTracker, toolConsent, auditLog, new ModelStreamer(aiService),
-                new ToolGroups.Activations(), () -> config, aiDao, userActions);
+                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
@@ -479,7 +479,7 @@ class TestMcpAgentChat {
                 null, null, null, null, null, null);
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
                 Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService),
-                new ToolGroups.Activations(), () -> config, aiDao, userActions);
+                new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")

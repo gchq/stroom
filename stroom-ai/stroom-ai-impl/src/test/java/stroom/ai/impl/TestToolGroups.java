@@ -16,6 +16,8 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
 import stroom.openai.shared.McpToolServerConfig;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -95,12 +97,36 @@ class TestToolGroups {
 
     @Test
     void activationsAreKeptPerChat() {
-        final ToolGroups.Activations activations = new ToolGroups.Activations();
+        final ToolGroups.Activations activations = new ToolGroups.Activations(() -> Mockito.mock(AiDao.class));
 
         activations.activate(1, "pipeline");
 
         assertThat(activations.active(1)).containsExactly("pipeline");
         assertThat(activations.active(2)).isEmpty();
+    }
+
+    @Test
+    void groupsTurnedOnBeforeAreFoundFromTheChat() {
+        // As after Stroom restarts: the chat shows the groups were turned on, so the model carries on as if they
+        // were.
+        final AiDao aiDao = Mockito.mock(AiDao.class);
+        Mockito.when(aiDao.getMessages(1)).thenReturn(List.of(
+                message(1, AiMessageType.TOOL_CALL, "{\"callId\":\"a\",\"tool\":\"activate_onboarding\"}"),
+                message(2, AiMessageType.TOOL_RESULT, "{\"tool\":\"activate_explore\"}"),
+                message(3, AiMessageType.TOOL_CALL, "{\"callId\":\"b\",\"tool\":\"build_status\"}"),
+                message(4, AiMessageType.TOOL_CALL, "not json"),
+                message(5, AiMessageType.TOOL_CALL, "{\"callId\":\"c\",\"tool\":\"activate_builds\"}")));
+        final ToolGroups.Activations activations = new ToolGroups.Activations(() -> aiDao);
+
+        assertThat(activations.active(1)).containsExactlyInAnyOrder("onboarding", "builds");
+        activations.activate(1, "explore");
+        assertThat(activations.active(1)).containsExactlyInAnyOrder("onboarding", "builds", "explore");
+        // The chat is only read once.
+        Mockito.verify(aiDao, Mockito.times(1)).getMessages(1);
+    }
+
+    private static AiChatMessage message(final int id, final AiMessageType type, final String text) {
+        return new AiChatMessage(id, 1, 0L, type, null, text, 0, 0);
     }
 
     private static List<String> names(final Map<ToolSpecification, ToolExecutor> tools) {
