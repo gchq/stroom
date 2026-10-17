@@ -65,4 +65,53 @@ class TestToolOutputs {
                 .contains("x".repeat(ToolOutputs.PREVIEW_CHARS) + "…")
                 .hasSizeLessThan(ToolOutputs.PREVIEW_CHARS + 600);
     }
+
+    @Test
+    void jsonOnOneLineIsSavedAFieldPerLine() {
+        // As build_status gave it: one long line, so reading or searching the file by line found it all at once.
+        final String output = "{\"build\":\"twitter-onboard\",\"documents\":[{\"name\":\"TWITTER\"}],"
+                              + "\"size\":12.50,\"id\":12345678901234567890,\"next\":{\"step\":\"promoted\"}}";
+
+        final String saved = ToolOutputs.forSaving(output);
+
+        assertThat(saved.lines()).contains(
+                "  \"build\" : \"twitter-onboard\",",
+                "  \"size\" : 12.50,",
+                "  \"id\" : 12345678901234567890,",
+                "    \"step\" : \"promoted\"");
+    }
+
+    @Test
+    void outputThatIsNotJsonIsSavedAsItIs() {
+        assertThat(ToolOutputs.forSaving("row 1\nrow 2")).isEqualTo("row 1\nrow 2");
+        assertThat(ToolOutputs.forSaving("{not json")).isEqualTo("{not json");
+        assertThat(ToolOutputs.forSaving("\"text\"")).isEqualTo("\"text\"");
+    }
+
+    @Test
+    void theStubOfJsonSaysWhatItHolds() {
+        final String object = ToolOutputs.forSaving("{\"build\":\"b\",\"steps\":[],\"next\":{\"step\":\"x\"}}");
+        assertThat(ToolOutputs.stub(object, "/p"))
+                .contains("It is a JSON object with the fields build, steps, next.")
+                .contains("`.next`");
+
+        assertThat(ToolOutputs.stub("[1, 2, 3]", "/p")).contains("It is a JSON array of 3 items.");
+        assertThat(ToolOutputs.stub("row 1", "/p")).doesNotContain("JSON");
+    }
+
+    @Test
+    void theStubOfJsonWithManyFieldsListsTheFirst() {
+        final StringBuilder sb = new StringBuilder("{");
+        for (int i = 0; i < ToolOutputs.MAX_LISTED_FIELDS + 5; i++) {
+            sb.append(i == 0
+                    ? ""
+                    : ",").append("\"f").append(i).append("\":").append(i);
+        }
+        final String output = sb.append('}').toString();
+
+        assertThat(ToolOutputs.stub(output, "/p"))
+                .contains("f0, f1")
+                .contains("and 5 more")
+                .doesNotContain("f" + ToolOutputs.MAX_LISTED_FIELDS + ",");
+    }
 }
