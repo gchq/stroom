@@ -47,6 +47,12 @@ class AskUserTool extends AbstractBuiltInTool {
     static final String OPTIONS = "options";
     static final String RECOMMENDED = "recommended";
     static final String ALLOW_CUSTOM = "allowCustom";
+    // An option the model gives as an object rather than as text, e.g. {"label": "Create", "description": "..."}.
+    static final String OPTION_LABEL = "label";
+    static final String OPTION_DESCRIPTION = "description";
+    // Not part of an MCP form's schema: what each option means, shown under it. Only Stroom AI's chat reads it.
+    static final String OPTION_DESCRIPTIONS = "optionDescriptions";
+    private static final List<String> OPTION_LABEL_KEYS = List.of(OPTION_LABEL, "value", "title", "name");
     static final int MAX_QUESTIONS = 8;
     static final int MAX_OPTIONS = 6;
     static final int MAX_QUESTION_CHARS = 500;
@@ -157,15 +163,13 @@ class AskUserTool extends AbstractBuiltInTool {
                                                    + " characters.");
             }
             final List<String> options = new ArrayList<>();
+            final List<String> descriptions = new ArrayList<>();
             if (map.get(OPTIONS) instanceof final List<?> given2) {
                 for (final Object option : given2) {
-                    final String value = NullSafe.trim(option == null
-                            ? null
-                            : String.valueOf(option));
+                    final String value = shorten(optionLabel(option));
                     if (!value.isEmpty() && !options.contains(value)) {
-                        options.add(value.length() > MAX_OPTION_CHARS
-                                ? value.substring(0, MAX_OPTION_CHARS)
-                                : value);
+                        options.add(value);
+                        descriptions.add(shorten(optionDescription(option)));
                     }
                 }
             }
@@ -181,9 +185,39 @@ class AskUserTool extends AbstractBuiltInTool {
                                        && options.contains(value.strip())
                     ? value.strip()
                     : null;
-            questions.add(new Question(text.strip(), options, recommended, allowCustom));
+            questions.add(new Question(text.strip(), options, descriptions, recommended, allowCustom));
         }
         return questions;
+    }
+
+    /// @return An option's text. Models are asked for text, but some give an object with a label and a
+    /// description, as an MCP form's titled choices have.
+    private static String optionLabel(final Object option) {
+        if (option instanceof final Map<?, ?> map) {
+            for (final String key : OPTION_LABEL_KEYS) {
+                if (map.get(key) instanceof final String label && !label.isBlank()) {
+                    return label;
+                }
+            }
+            return "";
+        }
+        return option == null
+                ? ""
+                : String.valueOf(option);
+    }
+
+    /// @return What an option given as an object says it means, or an empty string.
+    private static String optionDescription(final Object option) {
+        return option instanceof final Map<?, ?> map && map.get(OPTION_DESCRIPTION) instanceof final String text
+                ? text
+                : "";
+    }
+
+    private static String shorten(final String text) {
+        final String value = NullSafe.trim(text);
+        return value.length() > MAX_OPTION_CHARS
+                ? value.substring(0, MAX_OPTION_CHARS)
+                : value;
     }
 
     /// @return The questions as a form: a text field per question, whose suggested answers are its examples (or
@@ -199,6 +233,9 @@ class AskUserTool extends AbstractBuiltInTool {
                 field.put(question.allowCustom()
                         ? "examples"
                         : "enum", question.options());
+                if (question.optionDescriptions().stream().anyMatch(description -> !description.isEmpty())) {
+                    field.put(OPTION_DESCRIPTIONS, question.optionDescriptions());
+                }
             }
             if (question.recommended() != null) {
                 field.put("default", question.recommended());
@@ -245,10 +282,15 @@ class AskUserTool extends AbstractBuiltInTool {
     /// A question for the user.
     ///
     /// @param text        The question.
-    /// @param options     Answers to choose from.
-    /// @param recommended The answer the agent recommends, or null.
-    /// @param allowCustom True if the user may give their own answer.
-    record Question(String text, List<String> options, String recommended, boolean allowCustom) {
+    /// @param options            Answers to choose from.
+    /// @param optionDescriptions What each answer means, an empty string for one the agent didn't explain.
+    /// @param recommended        The answer the agent recommends, or null.
+    /// @param allowCustom        True if the user may give their own answer.
+    record Question(String text,
+                    List<String> options,
+                    List<String> optionDescriptions,
+                    String recommended,
+                    boolean allowCustom) {
 
     }
 }

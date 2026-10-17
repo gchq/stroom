@@ -165,6 +165,50 @@
     color: #d32f2f;
 }
 
+/* Stops everything the chat is doing. Shown only while something is in progress: a red stop square in a
+   spinning red ring. */
+.askStroomAiViewImpl-stop {
+    display: none;
+}
+
+.askStroomAiViewImpl-stop.askStroomAiViewImpl-stop--shown {
+    display: flex;
+    justify-content: center;
+}
+
+.askStroomAiViewImpl-stop::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: 50%;
+    border: 2px solid rgba(211, 47, 47, 0.25);
+    border-top-color: #d32f2f;
+    animation: ai-stop-spin 1s linear infinite;
+    pointer-events: none;
+}
+
+.askStroomAiViewImpl-modelPane .askStroomAiViewImpl-stop svg {
+    width: 10px;
+    height: 10px;
+    color: #d32f2f;
+}
+
+.askStroomAiViewImpl-stop:hover::after {
+    border-color: #d32f2f;
+}
+
+@keyframes ai-stop-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .askStroomAiViewImpl-stop::after {
+        animation-duration: 3s;
+    }
+}
+
 /* The model picker is as wide as the model's name (up to the room there is), so its drop-down arrow sits
    beside the name rather than at the far end of the row. */
 .askStroomAiViewImpl-modelPane .dropDownView-container {
@@ -376,6 +420,21 @@
     background: rgba(211, 47, 47, 0.1);
     border-left: 3px solid #d32f2f;
     color: #d32f2f;
+}
+
+.ai-message--error .ai-message-content h4 {
+    margin: 0 0 4px;
+    font-size: inherit;
+    font-weight: 600;
+}
+
+.ai-message--error .ai-message-content ul {
+    margin: 4px 0 0;
+}
+
+.ai-message-error-retry {
+    cursor: pointer;
+    margin-top: 6px;
 }
 
 .ai-message--run-status {
@@ -1288,6 +1347,17 @@
     border-color: var(--blue-300);
 }
 
+.ai-question-option-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ai-question-option-description {
+    font-size: var(--ai-font-size--small);
+    color: var(--control__text-color--disabled);
+}
+
 .ai-question-option--recommended {
     border-color: rgba(var(--blue-500-rgb), 0.7);
 }
@@ -1669,6 +1739,11 @@ mark.ai-chat-list-hit {
     .askStroomAiViewImpl details::details-content {
         transition: none;
     }
+}
+
+/* A group closed for the user, e.g. when its turn is answered, closes at once (see AiActivityGroups). */
+.askStroomAiViewImpl details.ai-activity--close-at-once::details-content {
+    transition: none;
 }
 
 /* ---- A model's MCP Tool Servers tab: the selected server's tools ---- */

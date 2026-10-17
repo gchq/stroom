@@ -127,6 +127,38 @@ class TestAskUserTool {
         assertThat(AskUserTool.form(questions).toString()).doesNotContain("default");
     }
 
+    @Test
+    void optionsGivenWithWhatTheyMeanAreShownByTheirLabels() {
+        // As a model gave them, though it is asked for text: shown as "{label=4.1.0, description=...}" before.
+        final List<AskUserTool.Question> questions = AskUserTool.questions("""
+                {"questions": [{"question": "Which event-logging version?",
+                  "options": [{"label": "4.1.0", "description": "Newest this Stroom holds."},
+                              {"label": "4.0.2"},
+                              "3.x"],
+                  "recommended": "4.1.0"}]}""");
+
+        assertThat(questions).singleElement().satisfies(question -> {
+            assertThat(question.options()).containsExactly("4.1.0", "4.0.2", "3.x");
+            assertThat(question.optionDescriptions()).containsExactly("Newest this Stroom holds.", "", "");
+            assertThat(question.recommended()).isEqualTo("4.1.0");
+        });
+        @SuppressWarnings("unchecked") final Map<String, Map<String, Object>> properties =
+                (Map<String, Map<String, Object>>) AskUserTool.form(questions).get("properties");
+        assertThat(properties.get("q1"))
+                .containsEntry("examples", List.of("4.1.0", "4.0.2", "3.x"))
+                .containsEntry("optionDescriptions", List.of("Newest this Stroom holds.", "", ""));
+    }
+
+    @Test
+    void optionsWithoutDescriptionsGiveNone() {
+        final List<AskUserTool.Question> questions = AskUserTool.questions(
+                "{\"questions\": [{\"question\": \"Which?\", \"options\": [\"a\", {\"value\": \"b\"}, {}]}]}");
+
+        assertThat(questions).singleElement()
+                .satisfies(question -> assertThat(question.options()).containsExactly("a", "b"));
+        assertThat(AskUserTool.form(questions).toString()).doesNotContain("optionDescriptions");
+    }
+
     private String run(final String arguments) {
         return tool.execute(ToolExecutionRequest.builder().id("1").name("ask_user").arguments(arguments).build(),
                 CHAT_ID);
