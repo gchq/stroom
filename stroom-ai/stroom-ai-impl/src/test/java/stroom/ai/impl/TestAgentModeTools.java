@@ -85,6 +85,7 @@ class TestAgentModeTools {
             Map.entry("run_stroomql", false),
             Map.entry("summarise_column", false),
             Map.entry("task_list", false),
+            Map.entry("ask_user", false),
             Map.entry("fetch_events", false),
             Map.entry("search_events", false)));
 
@@ -102,6 +103,8 @@ class TestAgentModeTools {
             bind(SecurityContext.class).toInstance(Mockito.mock(SecurityContext.class));
             bind(TableSummariser.class).toInstance(Mockito.mock(TableSummariser.class));
             bind(AskStroomAiConfig.class).toInstance(new AskStroomAiConfig());
+            bind(McpElicitations.class).toInstance(Mockito.mock(McpElicitations.class));
+            bind(AiChatRunManager.class).toInstance(Mockito.mock(AiChatRunManager.class));
         }
     }).getInstance(BuiltInTools.class);
 
