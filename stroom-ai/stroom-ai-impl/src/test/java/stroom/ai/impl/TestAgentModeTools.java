@@ -122,7 +122,7 @@ class TestAgentModeTools {
         final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools,
                 Mockito.mock(AiChatRunManager.class), Mockito.mock(WorkspaceStore.class),
                 Mockito.mock(ContextUsageTracker.class), toolConsent, Mockito.mock(AiAuditLog.class),
-                new ModelStreamer(aiService), new ToolGroups.Activations(), AiConfig::new, aiDao,
+                new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao,
                 new UserActions(Mockito.mock(UserActionLookup.class)));
         final List<ChatRequest> requests = new ArrayList<>();
         final ChatModel model = new ChatModel() {
