@@ -28,12 +28,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Groups each turn's reasoning, tool calls and other activity into one collapsible element above its answer, so
-/// the conversation shows questions and answers, with the work behind each answer a click away.
+/// Groups each turn's reasoning, tool calls, what the model says while it works and other activity into one
+/// collapsible element above its answer, so the conversation shows questions and answers, with the work behind
+/// each answer a click away. What the model says while it works is in the group, in the order it was said, so it
+/// doesn't push the group, and the tool calls added to it, up out of view.
 ///
 /// The group is open while the turn is worked on, with a heading saying what is happening now, and closes when
-/// the answer arrives, with a heading saying how long it took and what was done. Each entry in it is its own
-/// `<details>` element, so what the user has opened stays open as more arrives.
+/// the answer arrives, with a heading saying how long it took and what was done. If something else is shown in
+/// the conversation while the turn is worked on, e.g. a form the user answers, the group closes there and the
+/// turn's later activity goes in a new group after it, so the conversation reads in the order things happened.
+/// Each entry in a group is its own `<details>` element, so what the user has opened stays open as more arrives.
 final class AiActivityGroups {
 
     static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
@@ -46,13 +50,19 @@ final class AiActivityGroups {
     private static final String PREVIEW_CLASS = "ai-thinking-preview";
     private static final String CALL_ID_ATTRIBUTE = "data-call-id";
     private static final int PREVIEW_CHARS = 90;
+    // The lines showing what is happening now, kept at the end of the conversation, rather than part of it.
+    private static final String[] PROGRESS_CLASSES = {"ai-message--working", "ai-message--streaming"};
 
+    // The latest group of each turn.
     private final Map<Integer, Group> groups = new HashMap<>();
+    // Groups closed when something else was shown after them while their turn was worked on.
+    private final List<Group> earlierGroups = new ArrayList<>();
 
     /// @param type A message type.
     /// @return True if messages of the type belong in a turn's activity group, rather than in the conversation.
     static boolean isActivity(final AiMessageType type) {
         return type == AiMessageType.THINKING
+               || type == AiMessageType.INTERIM_RESPONSE
                || type == AiMessageType.TOOL_CALL
                || type == AiMessageType.TOOL_RESULT
                || type == AiMessageType.MEMORY_UPDATE
@@ -66,12 +76,11 @@ final class AiActivityGroups {
     /// @param container      The conversation.
     /// @param msg            The message.
     /// @param entry          The message's element: a `<details>` element whose summary text is in an element
-    ///                       with the class `ai-entry-title`.
+    ///                       with the class `ai-entry-title`, or for what the model said, the message as shown in
+    ///                       the conversation.
     /// @param questionTimeMs When the turn's question was asked, or 0 if not known.
     void add(final Element container, final AiChatMessage msg, final Element entry, final long questionTimeMs) {
-        final Group group = getOrCreate(container, msg.getTurnId(), questionTimeMs > 0
-                ? questionTimeMs
-                : msg.getCreateTimeMs());
+        final Group group = getOrCreate(container, msg.getTurnId(), questionTimeMs, msg.getCreateTimeMs());
         final String json = msg.getMessage();
         if (msg.getMessageType() == AiMessageType.TOOL_RESULT) {
             final Element call = findCall(group, AiToolMessages.getString(json, "callId"));
@@ -94,7 +103,9 @@ final class AiActivityGroups {
         removeLive(group);
         group.entries.appendChild(entry);
         group.lastTimeMs = msg.getCreateTimeMs();
-        if (msg.getMessageType() != AiMessageType.DEBUG_DETAIL) {
+        // The heading names the step being taken, which what the model said isn't.
+        if (msg.getMessageType() != AiMessageType.DEBUG_DETAIL
+            && msg.getMessageType() != AiMessageType.INTERIM_RESPONSE) {
             group.currentStep = entryTitle(entry);
         }
         updateTitle(group);
@@ -111,9 +122,8 @@ final class AiActivityGroups {
                           final AiChatMessage streaming,
                           final SafeHtml html,
                           final long questionTimeMs) {
-        final Group group = getOrCreate(container, streaming.getTurnId(), questionTimeMs > 0
-                ? questionTimeMs
-                : streaming.getCreateTimeMs());
+        final Group group = getOrCreate(container, streaming.getTurnId(), questionTimeMs,
+                streaming.getCreateTimeMs());
         Element live = findByClass(group.entries, LIVE_CLASS);
         if (live == null) {
             live = Document.get().createElement("details");
@@ -169,10 +179,23 @@ final class AiActivityGroups {
         }
     }
 
+    /// @return The group of the latest turn still being worked on, or null if there isn't one.
+    Element getLatestUnfinished() {
+        Group latest = null;
+        for (final Group group : groups.values()) {
+            if (!group.finished && (latest == null || group.turnId > latest.turnId)) {
+                latest = group;
+            }
+        }
+        return latest != null
+                ? latest.element
+                : null;
+    }
+
     /// @param messageId A message id.
     /// @return The message's entry in a group, or null if it is not in one.
     Element findEntry(final String messageId) {
-        for (final Group group : groups.values()) {
+        for (final Group group : allGroups()) {
             Element child = group.entries.getFirstChildElement();
             while (child != null) {
                 if (messageId.equals(child.getAttribute(MESSAGE_ID_ATTRIBUTE))) {
@@ -190,8 +213,8 @@ final class AiActivityGroups {
     /// @param fromMessageId The first message to remove.
     /// @param keepFirst     True to keep that message itself.
     void removeFrom(final int fromMessageId, final boolean keepFirst) {
-        final List<Integer> emptied = new ArrayList<>();
-        for (final Group group : groups.values()) {
+        final List<Group> emptied = new ArrayList<>();
+        for (final Group group : allGroups()) {
             Element child = group.entries.getFirstChildElement();
             while (child != null) {
                 final Element next = child.getNextSiblingElement();
@@ -206,19 +229,49 @@ final class AiActivityGroups {
             }
             if (group.entries.getFirstChildElement() == null) {
                 group.element.removeFromParent();
-                emptied.add(group.turnId);
+                emptied.add(group);
             }
         }
-        emptied.forEach(groups::remove);
+        for (final Group group : emptied) {
+            if (!earlierGroups.remove(group)) {
+                groups.remove(group.turnId);
+            }
+        }
     }
 
     /// Forgets every group, e.g. when the conversation is cleared.
     void clear() {
         groups.clear();
+        earlierGroups.clear();
     }
 
-    private Group getOrCreate(final Element container, final int turnId, final long startTimeMs) {
+    private List<Group> allGroups() {
+        final List<Group> all = new ArrayList<>(earlierGroups);
+        all.addAll(groups.values());
+        return all;
+    }
+
+    /// @param questionTimeMs When the turn's question was asked, or 0 if not known.
+    /// @param timeMs         When the activity being added happened.
+    /// @return The turn's group to add to, made at the end of the conversation if needed. A turn's first group
+    /// times its work from when the question was asked, and any later group from its first activity.
+    private Group getOrCreate(final Element container,
+                              final int turnId,
+                              final long questionTimeMs,
+                              final long timeMs) {
         Group group = groups.get(turnId);
+        long startTimeMs = questionTimeMs > 0
+                ? questionTimeMs
+                : timeMs;
+        if (group != null && !group.finished && isFollowedByConversation(group.element)) {
+            // Something has been shown after the group, e.g. a form the user has answered, so what follows goes
+            // after it, in a group of its own, starting now.
+            finish(turnId, group.lastTimeMs);
+            earlierGroups.add(group);
+            groups.remove(turnId);
+            group = null;
+            startTimeMs = timeMs;
+        }
         if (group == null) {
             final Element element = Document.get().createElement("details");
             element.setClassName("ai-message " + GROUP_CLASS);
@@ -238,6 +291,27 @@ final class AiActivityGroups {
             groups.put(turnId, group);
         }
         return group;
+    }
+
+    /// @return True if anything other than the lines showing what is happening now follows the element.
+    private static boolean isFollowedByConversation(final Element element) {
+        Element next = element.getNextSiblingElement();
+        while (next != null) {
+            if (!isProgress(next)) {
+                return true;
+            }
+            next = next.getNextSiblingElement();
+        }
+        return false;
+    }
+
+    private static boolean isProgress(final Element element) {
+        for (final String className : PROGRESS_CLASSES) {
+            if (hasClass(element, className)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Element findCall(final Group group, final String callId) {
