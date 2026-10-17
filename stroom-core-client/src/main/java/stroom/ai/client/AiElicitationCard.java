@@ -218,8 +218,17 @@ final class AiElicitationCard {
                             final String value = field.getValues().get(j);
                             final boolean recommended = value.equals(field.getDefault());
                             final String label = field.getLabels().get(j);
+                            final String description = field.getOptionDescription(j);
                             options.elem(option -> {
-                                option.span(label);
+                                if (description != null) {
+                                    // What the answer means, under it.
+                                    option.span(text -> {
+                                        text.span(label, Attribute.className("ai-question-option-label"));
+                                        text.span(description, Attribute.className("ai-question-option-description"));
+                                    }, Attribute.className("ai-question-option-text"));
+                                } else {
+                                    option.span(label);
+                                }
                                 if (recommended) {
                                     option.span("Recommended", Attribute.className("ai-question-recommended"));
                                 }

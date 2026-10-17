@@ -79,6 +79,10 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
      */
     void onConversationScrolled();
 
+    /// Called when the conversation's view changes size, e.g. as the task list above the input grows, so the latest
+    /// message can be kept in view while the conversation is being followed.
+    void onConversationResized();
+
     /// The user chose how the agent works in the chat.
     void onAgentModeChange(AiAgentMode mode);
 

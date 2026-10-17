@@ -23,6 +23,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.tab.client.view.GlobalResizeObserver;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -58,7 +59,7 @@ import java.util.List;
 public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandlers> implements AskStroomAiView {
 
     private static final String SEND_BUTTON_NORMAL_TEXT = "Send";
-    private static final String SEND_BUTTON_CANCEL_TEXT = "Cancel";
+    private static final String STOP_SHOWN_CLASS = "askStroomAiViewImpl-stop--shown";
     private static final String EMPTY_STYLE = "empty";
     private static final String SWITCHER_OPEN_CLASS = "askStroomAiViewImpl-switcher--open";
     private static final String AUTO_APPROVE_ON_CLASS = "askStroomAiViewImpl-autoApprove--on";
@@ -68,8 +69,10 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     private static final int MIN_REFERENCE_HEIGHT = 60;
 
     private final Widget widget;
-    // True while the chat is working, so the run button is a Stop button.
+    // True while the chat is working on a question.
     private boolean working;
+    // True while anything else is in progress for the chat, e.g. search results downloading to attach.
+    private boolean inProgress;
 
     @UiField
     FlowPanel inputBox;
@@ -102,6 +105,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     Button jumpToLatest;
     @UiField
     TextArea message;
+    @UiField
+    InlineSvgButton stop;
     @UiField
     InlineSvgButton run;
     @UiField
@@ -173,6 +178,18 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
                 getUiHandlers().onConversationScrolled();
             }
         }, ScrollEvent.getType());
+        // Content below the conversation, e.g. the task list, takes its room from the conversation as it grows.
+        markdownPreview.addAttachHandler(event -> {
+            if (event.isAttached()) {
+                GlobalResizeObserver.addListener(markdownPreview.getElement(), element -> {
+                    if (getUiHandlers() != null) {
+                        getUiHandlers().onConversationResized();
+                    }
+                });
+            } else {
+                GlobalResizeObserver.removeListener(markdownPreview.getElement());
+            }
+        });
 
         // The arrow is its own element, so it can be made to stand out.
         jumpToLatest.setHTML(SafeHtmlUtils.fromSafeConstant(
@@ -241,6 +258,16 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         run.setText(SEND_BUTTON_NORMAL_TEXT);
         run.setSvg(SvgImage.PLAY);
         run.setEnabled(false);
+
+        // Shown while anything is in progress, beside Send, which stays for steering the agent as it works.
+        stop.setSvg(SvgImage.STOP);
+        stop.setTitle("Stop everything this chat is doing, including tool calls and downloads");
+        stop.addClickHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onCancelProcessing();
+            }
+        });
+        showStop();
     }
 
     @Override
@@ -268,19 +295,19 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         // A glowing border round the input box while a question is being worked on.
         inputBox.setStyleName(WORKING_CLASS, loading);
         working = loading;
-        if (loading) {
-            run.setEnabled(true);
-            run.setText(SEND_BUTTON_CANCEL_TEXT);
-            run.setSvg(SvgImage.STOP);
-            run.addStyleName("stop");
-            run.removeStyleName("play");
-        } else {
-            run.setEnabled(!message.getText().isEmpty());
-            run.setText(SEND_BUTTON_NORMAL_TEXT);
-            run.setSvg(SvgImage.PLAY);
-            run.addStyleName("play");
-            run.removeStyleName("stop");
-        }
+        // Sending while the chat works steers it, so Send is there whenever there is something to send.
+        run.setEnabled(!message.getText().isEmpty());
+        showStop();
+    }
+
+    @Override
+    public void setInProgress(final boolean inProgress) {
+        this.inProgress = inProgress;
+        showStop();
+    }
+
+    private void showStop() {
+        stop.setStyleName(STOP_SHOWN_CLASS, working || inProgress);
     }
 
     @Override
@@ -315,7 +342,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @UiHandler("message")
     public void onMessageKeyUp(final KeyUpEvent event) {
-        run.setEnabled(working || !message.getText().isEmpty());
+        run.setEnabled(!message.getText().isEmpty());
         if (getUiHandlers() != null) {
             getUiHandlers().onInputChanged(message.getText());
         }
@@ -427,13 +454,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiHandler("run")
     public void onRun(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            // Whatever the button shows: Stop while the chat works (e.g. after a refresh, or once polling has
-            // picked the run up), Send otherwise.
-            if (working) {
-                getUiHandlers().onCancelProcessing();
-            } else {
-                sendMessage();
-            }
+            sendMessage();
         }
     }
 

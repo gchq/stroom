@@ -71,6 +71,10 @@ final class AiElicitationForm {
                         : text(definition, "default") != null
                                 ? List.of(text(definition, "default"))
                                 : List.of();
+                // What each choice means, shown under it: only Stroom AI's own questions (ask_user) give these.
+                final List<String> optionDescriptions = strings(optionSource != null
+                        ? optionSource.get("optionDescriptions")
+                        : null);
                 fields.add(new Field(name,
                         text(definition, "title") != null
                                 ? text(definition, "title")
@@ -83,7 +87,8 @@ final class AiElicitationForm {
                         values,
                         labels,
                         defaults,
-                        custom));
+                        custom,
+                        optionDescriptions));
             }
         } catch (final RuntimeException e) {
             // Not a form that can be shown.
@@ -173,6 +178,7 @@ final class AiElicitationForm {
         private final List<String> labels;
         private final List<String> defaults;
         private final boolean custom;
+        private final List<String> optionDescriptions;
 
         private Field(final String name,
                       final String title,
@@ -184,7 +190,8 @@ final class AiElicitationForm {
                       final List<String> values,
                       final List<String> labels,
                       final List<String> defaults,
-                      final boolean custom) {
+                      final boolean custom,
+                      final List<String> optionDescriptions) {
             this.name = name;
             this.title = title;
             this.description = description;
@@ -196,6 +203,18 @@ final class AiElicitationForm {
             this.labels = labels;
             this.defaults = defaults;
             this.custom = custom;
+            this.optionDescriptions = optionDescriptions;
+        }
+
+        /// @param index A value's position in [#getValues()].
+        /// @return What the value means, or null if nothing says.
+        String getOptionDescription(final int index) {
+            final String description = index < optionDescriptions.size()
+                    ? optionDescriptions.get(index)
+                    : null;
+            return description == null || description.isBlank()
+                    ? null
+                    : description;
         }
 
         /// @return True if the values are only suggestions, and the user may give any answer.
