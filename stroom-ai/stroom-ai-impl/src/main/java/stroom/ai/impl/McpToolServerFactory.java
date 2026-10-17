@@ -58,6 +58,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
@@ -74,6 +76,7 @@ import java.util.function.Supplier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 /**
@@ -561,8 +564,8 @@ public class McpToolServerFactory {
     }
 
     /**
-     * @return an {@link SSLContext} when the TLS config needs one (custom trust/key store or
-     * trust-self-signed), otherwise null so the JDK default context is used.
+     * @return an {@link SSLContext} when the TLS config needs one (custom trust/key store, trust-self-signed or
+     * not verifying host names), otherwise null so the JDK default context is used.
      */
     private SSLContext buildSslContext(final HttpClientConfig httpClientConfig, final String label) {
         final HttpTlsConfiguration tls = httpConfigResolver.resolve(httpClientConfig.getTls());
@@ -573,14 +576,9 @@ public class McpToolServerFactory {
         final boolean hasKeyStore = NullSafe.isNonBlankString(tls.getKeyStorePath());
         final boolean hasTrustStore = NullSafe.isNonBlankString(tls.getTrustStorePath());
         final boolean trustAll = tls.isTrustSelfSignedCertificates();
-        if (!hasKeyStore && !hasTrustStore && !trustAll) {
+        final boolean verifyHostname = tls.isVerifyHostname();
+        if (!hasKeyStore && !hasTrustStore && !trustAll && verifyHostname) {
             return null;
-        }
-
-        if (!tls.isVerifyHostname()) {
-            LOGGER.warn(() -> "MCP tool server '" + label + "': 'verify hostname' is turned off in the TLS "
-                              + "configuration, but that cannot be honoured for MCP connections and will be "
-                              + "ignored.");
         }
 
         try {
@@ -604,12 +602,26 @@ public class McpToolServerFactory {
                             : null);
 
             final SSLContext sslContext = SSLContext.getInstance(sslConfig.getSslProtocol());
-            sslContext.init(keyManagers, trustManagers, new SecureRandom());
+            sslContext.init(keyManagers, verifyHostname
+                    ? trustManagers
+                    : hostnameIgnoring(trustManagers, label), new SecureRandom());
             return sslContext;
-        } catch (final NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (final NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
             throw new RuntimeException("MCP tool server '" + label + "': failed to build TLS context - "
                                        + e.getMessage(), e);
         }
+    }
+
+    // The trust managers, or the JDK's default ones if there are none, made not to check host names.
+    private static TrustManager[] hostnameIgnoring(final TrustManager[] trustManagers, final String label)
+            throws NoSuchAlgorithmException, KeyStoreException {
+        LOGGER.debug(() -> "MCP tool server '" + label + "': not verifying host names");
+        if (trustManagers != null) {
+            return HostnameIgnoringTrustManager.wrap(trustManagers);
+        }
+        final TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        factory.init((KeyStore) null);
+        return HostnameIgnoringTrustManager.wrap(factory.getTrustManagers());
     }
 
     private static final X509TrustManager TRUST_ALL = new X509TrustManager() {
