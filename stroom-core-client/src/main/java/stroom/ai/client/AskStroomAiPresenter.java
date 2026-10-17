@@ -171,6 +171,8 @@ public class AskStroomAiPresenter
     private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
     private static final String WORKING_MESSAGE_ID = "ai-working-message";
     private static final String WORKING_TEXT_ID = "ai-working-text";
+    // On what the model said alongside its tool calls, while the Working line shows it.
+    private static final String SHOWN_AS_PROGRESS_CLASS = "ai-message--shown-as-progress";
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
     private static final String USER_ACTION_MESSAGE_ATTRIBUTE = "data-user-action-message";
     private static final String DEFAULT_CHAT_TITLE = "New chat";
@@ -282,6 +284,11 @@ public class AskStroomAiPresenter
     private String lastRenderedDay;
     // True while the conversation is scrolled to the bottom, so new messages scroll into view.
     private boolean followBottom = true;
+    // What the model said alongside its latest tool calls, kept out of the conversation while the Working line
+    // shows it, or null once it is shown in the conversation.
+    private AiChatMessage interimShownAsProgress;
+    // Where the conversation was scrolled to last, to tell the user scrolling up from content growing below.
+    private int lastScrollTop;
     // The prompts the model's MCP servers offer, as slash commands, once fetched.
     private List<AiMcpPrompt> mcpPrompts;
     private boolean fetchingPrompts;
@@ -1053,6 +1060,10 @@ public class AskStroomAiPresenter
         getView().setFollowUps(currentRunActive || requestInFlight
                 ? List.of()
                 : followUps);
+        // The suggestions take room from the conversation, so keep the latest message in view.
+        if (followBottom) {
+            scrollToLatest();
+        }
     }
 
     /// Shows the agent's task list: a heading with how many are done, and each task with an icon for its status.
@@ -1098,6 +1109,8 @@ public class AskStroomAiPresenter
             }, Attribute.className("ai-task ai-task--" + status));
         }
         getView().setTaskList("Tasks " + done + "/" + tasks.size(), hb.toSafeHtml());
+        // The task list takes room from the conversation, so keep the latest message in view.
+        scrollToBottom();
     }
 
     /// @param json A SUGGESTIONS message: a JSON array of strings.
@@ -1618,7 +1631,10 @@ public class AskStroomAiPresenter
                         Attribute.className("ai-approval-title"),
                         Attribute.title(message));
             }
-            final boolean answerShown = "ACCEPTED".equals(status) && AiElicitationCard.appendAnswer(card, json);
+            final boolean answerShown = "ACCEPTED".equals(status)
+                                        && AiElicitationCard.appendAnswer(card, json, pending
+                                                ? null
+                                                : AiElicitationCard.firstLine(message, "A form from " + server));
             card.div(footer -> {
                 if (pending && questions) {
                     footer.elem("Skip these questions", BUTTON,
@@ -2726,6 +2742,13 @@ public class AskStroomAiPresenter
             // The text being written is now stored, so is shown in its place.
             removeLiveAnswer();
         }
+        if (msg.getMessageType() == AiMessageType.ELICITATION
+            || msg.getMessageType() == AiMessageType.APPROVAL_REQUEST
+            || msg.getMessageType() == AiMessageType.AI_RESPONSE
+            || msg.getMessageType() == AiMessageType.ERROR) {
+            // What the model said comes before what it asks the user, and before its answer.
+            showInterimInConversation();
+        }
         Element existing = findMessageElement(markdownContainer, messageId);
         if (existing == null && (msg.getMessageType() == AiMessageType.USER_MESSAGE
                                  || msg.getMessageType() == AiMessageType.STEER_MESSAGE)) {
@@ -2739,6 +2762,15 @@ public class AskStroomAiPresenter
         }
         if (msg.getMessageType() == AiMessageType.COMPACTION_SUMMARY) {
             showUndoOnLatestCompaction();
+        }
+        if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE) {
+            showInterimInConversation();
+            // While the agent works, shown in the conversation once the Working line moves on from it (see
+            // updateWorkingMessage).
+            if (Document.get().getElementById(WORKING_MESSAGE_ID) != null) {
+                interimShownAsProgress = msg;
+                messageElement.addClassName(SHOWN_AS_PROGRESS_CLASS);
+            }
         }
     }
 
@@ -2854,11 +2886,13 @@ public class AskStroomAiPresenter
         followUps = List.of();
         refreshFollowUps();
         renderedMessages.clear();
+        interimShownAsProgress = null;
         activityGroups.clear();
         contextUsage = null;
         getView().setContextMeter(null, null, null);
         lastRenderedDay = null;
         followBottom = true;
+        lastScrollTop = 0;
         getView().setJumpToLatestVisible(false);
     }
 
@@ -2885,8 +2919,16 @@ public class AskStroomAiPresenter
 
     @Override
     public void onConversationScrolled() {
-        // Scrolled up, so stop following the conversation, and offer to jump back to the latest message.
-        followBottom = isAtBottom();
+        final int scrollTop = getView().getMarkdownContainer().getElement().getScrollTop();
+        // Only the user scrolling up stops following the conversation. Content added below, or the view getting
+        // shorter (e.g. when the task list grows), also leaves it short of the bottom, but the user still wants
+        // to follow it.
+        if (isAtBottom()) {
+            followBottom = true;
+        } else if (scrollTop < lastScrollTop) {
+            followBottom = false;
+        }
+        lastScrollTop = scrollTop;
         getView().setJumpToLatestVisible(!followBottom);
     }
 
@@ -2900,6 +2942,7 @@ public class AskStroomAiPresenter
         getView().setJumpToLatestVisible(false);
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
         markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+        lastScrollTop = markdownContainer.getScrollTop();
     }
 
     /**
@@ -3453,6 +3496,28 @@ public class AskStroomAiPresenter
             if (text != null) {
                 text.setInnerText(workingText(workingMessage));
             }
+        }
+        // What the model said is shown on the Working line until the line moves on to its next step, so it isn't
+        // shown twice.
+        if (interimShownAsProgress != null
+            && (workingMessage == null
+                || !AiChatTexts.isShownAsProgress(workingText(workingMessage), interimShownAsProgress.getMessage()))) {
+            showInterimInConversation();
+        }
+    }
+
+    /// Shows what the model said alongside its latest tool calls in the conversation, if it was kept out while
+    /// the Working line showed it.
+    private void showInterimInConversation() {
+        if (interimShownAsProgress == null) {
+            return;
+        }
+        final Element element = findMessageElement(getView().getMarkdownContainer().getElement(),
+                String.valueOf(interimShownAsProgress.getId()));
+        interimShownAsProgress = null;
+        if (element != null) {
+            element.removeClassName(SHOWN_AS_PROGRESS_CLASS);
+            scrollToBottom();
         }
     }
 

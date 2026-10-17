@@ -35,6 +35,20 @@ class TestAiElicitationCard {
     }
 
     @Test
+    void aFieldThatAsksWhatTheCardsTitleAsksIsNotRepeated() {
+        final String title = AiElicitationCard.firstLine("""
+                **How should the new index's fields be named?**
+
+                Choose a convention.""", "A form");
+        assertThat(AiElicitationCard.isCardTitle("How should the new index's fields be named?", title)).isTrue();
+        assertThat(AiElicitationCard.isCardTitle("**How should the new index's fields be named?** ", title))
+                .isTrue();
+        assertThat(AiElicitationCard.isCardTitle("Which cluster?", title)).isFalse();
+        assertThat(AiElicitationCard.isCardTitle("Which cluster?", null)).isFalse();
+        assertThat(AiElicitationCard.isCardTitle(null, title)).isFalse();
+    }
+
+    @Test
     void withoutAQuestionTheFallbackIsUsed() {
         assertThat(AiElicitationCard.firstLine(null, "A form from fastmcp")).isEqualTo("A form from fastmcp");
         assertThat(AiElicitationCard.firstLine(" \n** **\n", "A form from fastmcp")).isEqualTo("A form from fastmcp");
