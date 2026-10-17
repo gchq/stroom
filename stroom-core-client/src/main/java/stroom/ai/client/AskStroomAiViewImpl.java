@@ -20,9 +20,9 @@ import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.shared.AiAgentMode;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.spinner.client.SpinnerSmall;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -112,8 +112,6 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     Label contextIndicator;
     @UiField
     SimplePanel modelRef;
-    @UiField
-    SpinnerSmall spinner;
     @UiField
     FlowPanel followUps;
     @UiField
@@ -292,7 +290,18 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @Override
     public TaskMonitor createTaskMonitor() {
-        return spinner.createTaskMonitor();
+        // No spinner, as the glowing border round the input box shows when a question is being worked on.
+        return new TaskMonitor() {
+            @Override
+            public void onStart(final Task task) {
+                // Silent.
+            }
+
+            @Override
+            public void onEnd(final Task task) {
+                // Silent.
+            }
+        };
     }
 
     @UiHandler("message")

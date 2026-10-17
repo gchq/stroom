@@ -2,7 +2,6 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:p="urn:import:stroom.widget.button.client"
-             xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel ui:field="root" styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical empty">
         <g:FlowPanel styleName="dock-min askStroomAiViewImpl-top">
@@ -57,7 +56,6 @@
                     <l:SelectionBox ui:field="agentMode" addStyleNames="askStroomAiViewImpl-agentMode"/>
                     <p:InlineSvgButton ui:field="autoApprove" addStyleNames="allow-focus askStroomAiViewImpl-autoApprove"/>
                     <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>
-                    <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
                     <g:Button ui:field="contextMeter" styleName="allow-focus askStroomAiViewImpl-contextMeter"/>
                     <g:HTML ui:field="contextDetails" styleName="askStroomAiViewImpl-contextDetails"/>
                     <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>
