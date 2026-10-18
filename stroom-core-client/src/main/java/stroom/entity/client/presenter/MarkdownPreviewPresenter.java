@@ -78,6 +78,8 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
         // Same origin lets this page set the preview's scroll position, to follow the editor. Scripts are still
         // not allowed, so nothing in the preview can run.
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS, SandboxOption.ALLOW_SAME_ORIGIN);
+        // A link followed in the frame would load Stroom, or another site, in it, where it can't run.
+        iFramePresenter.setLinkHandler(href -> MarkdownLinks.open(this, href));
 
         view.setViews(codePresenter.getView(), iFramePresenter.getView());
         syncScroll(codePresenter.getView().asWidget().getElement(),
