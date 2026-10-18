@@ -53,7 +53,40 @@ class TestMcpToolDocs {
                 .contains("**Policy:** Ask every time")
                 .contains("| `feed` | string | yes | The feed's name |")
                 .contains("| `mode` | string (one of: full, quick) |  | Default: quick. |")
-                .contains("| `tags` | array of string |  |  |");
+                .contains("| `tags` | array of string |  |  |")
+                // With an example call, of the required parameters.
+                .contains("### Example")
+                .contains("\"feed\" : \"<feed>\"")
+                .doesNotContain("\"mode\" :");
+    }
+
+    @Test
+    void exampleArgumentsAreOfTheRightKind() {
+        final Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put("name", Map.of("type", "string", "examples", List.of("ACME-EVENTS")));
+        properties.put("mode", Map.of("type", "string", "enum", List.of("full", "quick")));
+        properties.put("limit", Map.of("type", "integer", "default", 50));
+        properties.put("count", Map.of("type", List.of("integer", "null")));
+        properties.put("dryRun", Map.of("type", "boolean"));
+        properties.put("ids", Map.of("type", "array", "items", Map.of("type", "number")));
+        properties.put("where", Map.of("type", "object"));
+        properties.put("optional", Map.of("type", "string"));
+        final List<String> required = List.of("name", "mode", "limit", "count", "dryRun", "ids", "where");
+
+        assertThat(McpToolDocs.exampleArguments(Map.of("properties", properties, "required", required)))
+                .containsExactly(
+                        Map.entry("name", "ACME-EVENTS"),
+                        Map.entry("mode", "full"),
+                        Map.entry("limit", 50),
+                        Map.entry("count", 1),
+                        Map.entry("dryRun", true),
+                        Map.entry("ids", List.of(1)),
+                        Map.entry("where", Map.of()));
+        // With none required, the first parameter; with none at all, no arguments.
+        assertThat(McpToolDocs.exampleArguments(Map.of("properties", Map.of("q", Map.of("type", "string")))))
+                .containsExactly(Map.entry("q", "<q>"));
+        assertThat(McpToolDocs.exampleArguments(Map.of("type", "object"))).isEmpty();
+        assertThat(McpToolDocs.exampleArguments(null)).isEmpty();
     }
 
     @Test
