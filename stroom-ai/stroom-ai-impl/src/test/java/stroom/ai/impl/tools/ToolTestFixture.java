@@ -22,10 +22,13 @@ import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
@@ -75,6 +78,10 @@ final class ToolTestFixture {
     final List<Dependency> edges = new ArrayList<>();
     /// The dependency graph, answering the quick filter queries the tools make.
     final DocDependencyService dependencyService = Mockito.mock(DocDependencyService.class);
+    /// Finds documents by name, as Stroom's does: only those the user can view.
+    final DocFinder docFinder = Mockito.mock(DocFinder.class);
+    /// The folders each document is in, by UUID, e.g. `List.of("Feeds", "Archive")`; `/Lookups` if not given.
+    final Map<String, List<String>> folders = new HashMap<>();
     @SuppressWarnings("rawtypes")
     private final Map<DocumentTypeName, DocumentActionHandler> handlers = new HashMap<>();
     private AiWorkspaceConfig limits = new AiWorkspaceConfig();
@@ -92,8 +99,21 @@ final class ToolTestFixture {
         Mockito.when(explorerNodeService.getNodeByUuid(Mockito.anyString())).thenAnswer(invocation ->
                 Optional.ofNullable(docRefs.get(invocation.<String>getArgument(0)))
                         .map(docRef -> ExplorerNode.builder().docRef(docRef).build()));
-        Mockito.when(explorerNodeService.getPath(Mockito.any())).thenReturn(List.of(
-                ExplorerNode.builder().docRef(new DocRef("Folder", "folder-uuid", "Lookups")).build()));
+        Mockito.when(explorerNodeService.getPath(Mockito.any())).thenAnswer(invocation -> {
+            final DocRef docRef = invocation.getArgument(0);
+            final List<ExplorerNode> path = new ArrayList<>();
+            path.add(ExplorerConstants.SYSTEM_NODE);
+            for (final String name : folders.getOrDefault(docRef.getUuid(), List.of("Lookups"))) {
+                path.add(ExplorerNode.builder().docRef(new DocRef("Folder", "folder-" + name, name)).build());
+            }
+            return path;
+        });
+        Mockito.when(docFinder.findByName(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean()))
+                .thenAnswer(invocation -> docRefs.values().stream()
+                        .filter(docRef -> docRef.getType().equals(invocation.getArgument(0)))
+                        .filter(docRef -> docRef.getName().equalsIgnoreCase(invocation.getArgument(1)))
+                        .filter(docRef -> visible.contains(docRef.getUuid()))
+                        .toList());
         Mockito.when(workspace.limits()).thenAnswer(invocation -> limits);
         Mockito.when(dependencyService.fetchDependencies(Mockito.any(), Mockito.any())).thenAnswer(invocation -> {
             final DependencyCriteria criteria = invocation.getArgument(0);
@@ -127,6 +147,24 @@ final class ToolTestFixture {
     /// @return The tools' access checks, over this world, logging to its audit log.
     DocumentAccess documentAccess() {
         return new DocumentAccess(() -> explorerNodeService, securityContext, () -> handlers, auditLog());
+    }
+
+    /// @return The AGENTS docs of this world, read through its access checks.
+    AgentInstructions agentInstructions() {
+        return new AgentInstructions(() -> docFinder, documentAccess());
+    }
+
+    /// Adds an AGENTS doc.
+    ///
+    /// @param uuid    Its UUID.
+    /// @param text    What it says.
+    /// @param canView True if the user can view it.
+    /// @param folders The folders it is in, from the top of the tree, e.g. "Feeds"; none for the top.
+    DocRef addInstructions(final String uuid, final String text, final boolean canView, final String... folders) {
+        this.folders.put(uuid, List.of(folders));
+        return add(new DocRef(DocumentationDoc.TYPE, uuid, AgentInstructions.DOC_NAME),
+                new DocumentationDoc(uuid, AgentInstructions.DOC_NAME, null, null, null, null, null, null, text),
+                canView);
     }
 
     /// @return The audit log, logging to this world's mocked event logging.

@@ -17,6 +17,8 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.AgentInstructions.Ignored;
+import stroom.ai.impl.tools.AgentInstructions.Standing;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SafePattern;
 import stroom.ai.impl.workspace.ToolDeadline;
@@ -79,6 +81,7 @@ class FindInContentTool extends AbstractWorkspaceTool {
     static final String UUIDS_ARG = "uuids";
     static final String TYPES_ARG = "types";
     static final String LIMIT_ARG = "limit";
+    static final String INCLUDE_IGNORED_ARG = "includeIgnored";
     static final int DEFAULT_LIMIT = 20;
     static final int MAX_LIMIT = 100;
     /// The most matching lines shown for each document.
@@ -100,6 +103,7 @@ class FindInContentTool extends AbstractWorkspaceTool {
     private final Provider<Set<ContentIndexable>> contentIndexablesProvider;
     private final Provider<WordListProvider> wordListProviderProvider;
     private final DocumentAccess access;
+    private final AgentInstructions agentInstructions;
     private final AiAuditLog auditLog;
 
     @Inject
@@ -108,12 +112,14 @@ class FindInContentTool extends AbstractWorkspaceTool {
                       final Provider<Set<ContentIndexable>> contentIndexablesProvider,
                       final Provider<WordListProvider> wordListProviderProvider,
                       final DocumentAccess access,
+                      final AgentInstructions agentInstructions,
                       final AiAuditLog auditLog) {
         super(workspace);
         this.contentIndexProvider = contentIndexProvider;
         this.contentIndexablesProvider = contentIndexablesProvider;
         this.wordListProviderProvider = wordListProviderProvider;
         this.access = access;
+        this.agentInstructions = agentInstructions;
         this.auditLog = auditLog;
     }
 
@@ -125,7 +131,8 @@ class FindInContentTool extends AbstractWorkspaceTool {
                              + "dictionaries with their imports), returning each matching document's type, name, "
                              + "UUID and folder with its matching lines. Give uuids to search just those documents "
                              + "(quickest, e.g. those document_links found), or types to search every document of "
-                             + "those types you can view. Says how it searched and how many documents it read.")
+                             + "those types you can view. Says how it searched and how many documents it read. "
+                             + "Documents in folders an AGENTS doc says to ignore (e.g. an Archive) are left out.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(PATTERN_ARG, "The text to find.")
                         .addBooleanProperty(REGEX_ARG, "True if pattern is a regular expression.")
@@ -134,6 +141,8 @@ class FindInContentTool extends AbstractWorkspaceTool {
                         .addProperty(TYPES_ARG, stringArraySchema("The document types to search, e.g. "
                                                                      + "['XSLT', 'TextConverter'], if no uuids "
                                                                      + "are given."))
+                        .addBooleanProperty(INCLUDE_IGNORED_ARG, "Optional. True to search ignored folders too, "
+                                                                 + "only when the user asks for them.")
                         .addIntegerProperty(LIMIT_ARG, "The most matching documents to return (default "
                                                        + DEFAULT_LIMIT + ", at most " + MAX_LIMIT + ").")
                         .addStringProperty(OUT_ARG, "A file in /outputs/ to write all the matching lines to.")
@@ -161,7 +170,12 @@ class FindInContentTool extends AbstractWorkspaceTool {
                 : Math.max(1, Math.min(limitArg, MAX_LIMIT));
         final Map<String, ContentIndexable> indexables = indexables();
         // Stop reading before the call's time limit, to return what was found.
-        final Search search = new Search(pattern, limit, indexables, startNanos + timeLimit().toNanos() * 3 / 4);
+        final Standing standing = agentInstructions.load(chatId, "Standing instructions read by the " + NAME
+                                                                 + " tool");
+        final Search search = new Search(pattern, limit, indexables, startNanos + timeLimit().toNanos() * 3 / 4,
+                booleanArg(request, INCLUDE_IGNORED_ARG, false)
+                        ? null
+                        : standing);
 
         final List<String> notFound = new ArrayList<>();
         final String how;
@@ -197,6 +211,12 @@ class FindInContentTool extends AbstractWorkspaceTool {
         }
         if (search.tooMany) {
             sb.append(" It stopped after reading ").append(MAX_DOCS_READ).append(" documents.");
+        }
+        if (search.ignored > 0) {
+            sb.append(" Left out ").append(search.ignored).append(" document(s) in folders an ")
+                    .append(AgentInstructions.DOC_NAME).append(" doc says to ignore: ")
+                    .append(String.join(", ", search.ignoredBy)).append("; pass ").append(INCLUDE_IGNORED_ARG)
+                    .append(" only if the user asks for them.");
         }
         if (!notFound.isEmpty()) {
             sb.append(" Not found, or you don't have permission to view them: ").append(String.join(", ", notFound))
@@ -369,6 +389,10 @@ class FindInContentTool extends AbstractWorkspaceTool {
         private final long stopNanos;
         private final List<Match> matches = new ArrayList<>();
         private final Set<String> seen = new LinkedHashSet<>();
+        // The AGENTS docs whose ignored folders are left out, or null to search them too.
+        private final Standing standing;
+        private final Set<String> ignoredBy = new LinkedHashSet<>();
+        private int ignored;
         private int read;
         private boolean full;
         private boolean outOfTime;
@@ -377,16 +401,20 @@ class FindInContentTool extends AbstractWorkspaceTool {
         private Search(final SafePattern pattern,
                        final int limit,
                        final Map<String, ContentIndexable> indexables,
-                       final long stopNanos) {
+                       final long stopNanos,
+                       final Standing standing) {
             this.pattern = pattern;
             this.limit = limit;
             this.indexables = indexables;
             this.stopNanos = stopNanos;
+            this.standing = standing;
         }
 
         private void reset() {
             matches.clear();
             seen.clear();
+            ignoredBy.clear();
+            ignored = 0;
             read = 0;
             full = false;
         }
@@ -410,6 +438,14 @@ class FindInContentTool extends AbstractWorkspaceTool {
             ToolDeadline.check();
             if (docRef == null || !seen.add(docRef.getUuid()) || !access.canView(docRef)) {
                 return true;
+            }
+            if (standing != null && standing.ignoresAny()) {
+                final Optional<Ignored> ignoring = standing.ignored(agentInstructions.folderOf(docRef));
+                if (ignoring.isPresent()) {
+                    ignored++;
+                    ignoredBy.add(ignoring.get().describe());
+                    return true;
+                }
             }
             final Map<String, List<String>> parts = read(docRef);
             read++;
