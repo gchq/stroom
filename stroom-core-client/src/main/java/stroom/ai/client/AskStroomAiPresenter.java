@@ -905,6 +905,14 @@ public class AskStroomAiPresenter
         setChatListShowing(!chatListShowing);
     }
 
+    @Override
+    public void onCloseChatList() {
+        if (chatListShowing) {
+            setChatListShowing(false);
+            getView().focus();
+        }
+    }
+
     private void setChatListShowing(final boolean showing) {
         chatListShowing = showing;
         getView().setChatListVisible(showing);
@@ -991,7 +999,10 @@ public class AskStroomAiPresenter
                             : SvgImage.AI),
                     Attribute.className("ai-chat-list-icon" + (colour != null
                             ? " ai-chat-list-icon--" + colour
-                            : "")));
+                            : "")),
+                    Attribute.title(status != null
+                            ? AiChatTexts.statusExplanation(status)
+                            : "A chat"));
             item.div(text -> {
                 text.div(name -> highlight(name, title, query), Attribute.className("ai-chat-list-title"),
                         Attribute.title(title));

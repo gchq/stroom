@@ -76,6 +76,28 @@ public final class AiChatTexts {
         return null;
     }
 
+    /// @param status A chat's status.
+    /// @return What the chat's icon in the list of chats means, for its tooltip, matching
+    /// [#statusIcon(AiChatStatus)].
+    static String statusExplanation(final AiChatStatus status) {
+        if (status.isNeedsYou()) {
+            return "Needs you: waiting for your answer or approval before it can carry on.";
+        } else if (status.getRunStatus() == AiChatRunStatus.QUEUED) {
+            return "Queued: waiting for one of your other questions, or other users' questions, to finish.";
+        } else if (status.isBusy()) {
+            return "Working on your question.";
+        } else if (status.getRunStatus() == AiChatRunStatus.FAILED) {
+            return "Failed: the last question ended with an error. Open the chat to see it, and resume or retry.";
+        } else if (status.getRunStatus() == AiChatRunStatus.INTERRUPTED) {
+            return "Interrupted, as the Stroom node working on it stopped. Open the chat to resume it.";
+        } else if (status.getRunStatus() == AiChatRunStatus.STOPPED) {
+            return "Stopped before it finished. Open the chat to resume it.";
+        } else if (status.isUnread()) {
+            return "New messages you haven't read yet.";
+        }
+        return "Nothing new.";
+    }
+
     /// @param percent How full the model's context window is.
     /// @return The context pill's colour: none (grey), "warn" (yellow) from [#CONTEXT_WARN_PERCENT], or "over"
     /// (red) from [#CONTEXT_OVER_PERCENT].
