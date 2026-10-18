@@ -23,7 +23,9 @@ import java.util.Map;
 
 /// Reminds the model to keep its task list up to date. Models often write the list when they start and then forget
 /// it, so the user sees the first step in progress throughout. Once the model has kept a list with steps still to
-/// do, it is reminded after every few steps in which it hasn't updated it. One is made for each run.
+/// do, it is reminded after every few steps in which it hasn't updated it. One is made each time a run works on a
+/// question, from the question's list so far (see [#continuing(String)]), as a run that stops for the user's
+/// approval carries on afresh once they give it.
 public final class TaskListReminder {
 
     /// How many steps without an update before the model is reminded.
@@ -36,6 +38,21 @@ public final class TaskListReminder {
 
     private boolean unfinished;
     private int stepsSinceUpdate;
+
+    /// @param taskListJson The question's latest task list, as [TaskListTool] stores it, or null if it has none.
+    /// @return A reminder carrying on from it: one that reminds about a list with steps still to do, as one would
+    /// that had seen it written.
+    public static TaskListReminder continuing(final String taskListJson) {
+        final TaskListReminder reminder = new TaskListReminder();
+        if (taskListJson != null) {
+            try {
+                reminder.unfinished = hasUnfinished(TaskListTool.tasks(taskListJson));
+            } catch (final IllegalArgumentException e) {
+                // Not a list it can read, so nothing to remind about.
+            }
+        }
+        return reminder;
+    }
 
     /// Notes the tool calls the model made in a step.
     ///
