@@ -120,18 +120,25 @@ final class AiSlashCommands {
         return existing.stripTrailing() + "\n" + bullet + "\n";
     }
 
+    /// Said with [#help], which is shown as an alert's detail: an alert's message is cut off when long, and the
+    /// list grows with MCP servers' prompts.
+    static final String HELP_MESSAGE = "The commands, and what each does, are below. To send a message that "
+                                       + "starts with /, start it with //.";
+
     /// @param commands The commands there are: the chat's own, then MCP servers' prompts.
     /// @return A list of the commands, one a line, with what each does.
     static String help(final List<AiSlashCommand> commands) {
-        final StringBuilder sb = new StringBuilder("Commands:");
+        final StringBuilder sb = new StringBuilder();
         for (final AiSlashCommand command : commands) {
-            sb.append("\n").append(command.getName());
+            if (!sb.isEmpty()) {
+                sb.append("\n");
+            }
+            sb.append(command.getName());
             if (!command.getArguments().isEmpty()) {
                 sb.append(" ").append(command.getArguments());
             }
             sb.append(" - ").append(command.getDescription());
         }
-        sb.append("\n\nTo send a message that starts with /, start it with //.");
         return sb.toString();
     }
 }
