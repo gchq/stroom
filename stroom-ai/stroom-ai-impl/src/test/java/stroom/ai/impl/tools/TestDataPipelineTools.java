@@ -27,6 +27,7 @@ import stroom.ai.impl.dao.AiDaoModule;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.MockSourceDocModule;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAttachmentType;
@@ -108,6 +109,7 @@ class TestDataPipelineTools {
                 new DbTestModule(),
                 new AiDbModule(),
                 new AiDaoModule(),
+                new MockSourceDocModule(),
                 new AbstractModule() {
                     @Override
                     protected void configure() {
