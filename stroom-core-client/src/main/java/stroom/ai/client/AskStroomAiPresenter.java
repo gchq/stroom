@@ -132,6 +132,7 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -194,6 +195,9 @@ public class AskStroomAiPresenter
     private static final String RUN_STATUS_ID = "ai-run-status";
     private static final String RESUME_RUN_ATTRIBUTE = "data-resume-run";
     private static final String RETRY_TURN_ATTRIBUTE = "data-retry-turn-id";
+    // A message gone to from the overview is picked out for this long.
+    private static final String LOCATED_CLASS = "ai-message--located";
+    private static final int LOCATED_MS = 2_000;
     private static final String ERROR_RETRY_CLASS = "ai-message-error-retry";
     private static final String APPROVAL_ID_ATTRIBUTE = "data-approval-id";
     private static final String APPROVAL_ANSWER_ATTRIBUTE = "data-approval-answer";
@@ -246,6 +250,10 @@ public class AskStroomAiPresenter
     private boolean currentRunActive;
     // True while the list of chats is shown in place of the conversation.
     private boolean chatListShowing;
+    // Whether the overview of the chat is shown, is to be drawn again, and shows the agent as working.
+    private boolean overviewShowing;
+    private boolean overviewRefreshDue;
+    private boolean overviewWorking;
     // The command whose reference is shown, or null.
     private String referenceCommand;
     // The latest suggested follow-ups, while the answer they follow is the latest thing in the chat.
@@ -906,6 +914,140 @@ public class AskStroomAiPresenter
     }
 
     @Override
+    public void onToggleOverview() {
+        setOverviewShowing(!overviewShowing);
+    }
+
+    @Override
+    public void onCloseOverview() {
+        if (overviewShowing) {
+            setOverviewShowing(false);
+            getView().focus();
+        }
+    }
+
+    @Override
+    public void onOverviewStep(final int messageId) {
+        setOverviewShowing(false);
+        final Element element = findMessageElement(getView().getMarkdownContainer().getElement(),
+                String.valueOf(messageId));
+        if (element == null) {
+            return;
+        }
+        // Looking at an earlier part of the chat, so it isn't scrolled away as messages arrive.
+        followBottom = false;
+        element.scrollIntoView();
+        lastScrollTop = getView().getMarkdownContainer().getElement().getScrollTop();
+        getView().setJumpToLatestVisible(true);
+        // Picked out for a moment, to see which it is.
+        element.addClassName(LOCATED_CLASS);
+        new Timer() {
+            @Override
+            public void run() {
+                element.removeClassName(LOCATED_CLASS);
+            }
+        }.schedule(LOCATED_MS);
+    }
+
+    private void setOverviewShowing(final boolean showing) {
+        if (showing && chatListShowing) {
+            setChatListShowing(false);
+        }
+        overviewShowing = showing;
+        getView().setOverviewVisible(showing);
+        if (showing) {
+            drawOverview();
+        }
+    }
+
+    // Draws the overview again soon, if it is shown, once the messages being added now are all in.
+    private void refreshOverview() {
+        if (overviewShowing && !overviewRefreshDue) {
+            overviewRefreshDue = true;
+            Scheduler.get().scheduleDeferred(() -> {
+                overviewRefreshDue = false;
+                if (overviewShowing) {
+                    drawOverview();
+                }
+            });
+        }
+    }
+
+    private void drawOverview() {
+        getView().setOverview(AiChatOverview.svg(AiChatOverview.of(overviewItems()), overviewWorking));
+    }
+
+    /// @return The chat's messages, in order, as the overview sees them: what the user did, the tools the agent
+    /// called, and anything else it did, which counts towards the time it spent.
+    private List<AiChatOverview.Item> overviewItems() {
+        final List<AiChatMessage> messages = new ArrayList<>(renderedMessages.values());
+        messages.sort(Comparator.comparingInt(AiChatMessage::getId));
+        final List<AiChatOverview.Item> items = new ArrayList<>();
+        for (final AiChatMessage msg : messages) {
+            final int id = msg.getId();
+            final long timeMs = msg.getCreateTimeMs();
+            final String json = msg.getMessage();
+            final AiChatOverview.Item item = switch (msg.getMessageType()) {
+                case USER_MESSAGE -> AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.QUESTION, json);
+                case STEER_MESSAGE -> AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.STEER, json);
+                case TOOL_CALL -> AiChatOverview.Item.tool(id, timeMs, AiToolMessages.getString(json, "tool"));
+                case ELICITATION -> answerItem(id, timeMs, json);
+                case APPROVAL_REQUEST -> approvalItem(id, timeMs, json);
+                default -> AiChatOverview.Item.work(id, timeMs);
+            };
+            items.add(item);
+        }
+        return items;
+    }
+
+    // A form or question the user answered, or what the agent did if they haven't (yet).
+    private static AiChatOverview.Item answerItem(final int id, final long timeMs, final String json) {
+        final String status = AiToolMessages.getString(json, "status");
+        if ("ACCEPTED".equals(status)) {
+            return AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.ANSWER,
+                    NullSafe.nonBlankStringElse(AiElicitationCard.answerSummary(json), "Answered"));
+        }
+        if ("DECLINED".equals(status)) {
+            return AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.ANSWER, "Chose not to answer");
+        }
+        return AiChatOverview.Item.work(id, timeMs);
+    }
+
+    // A request for approval the user answered, or what the agent did if they haven't (yet).
+    private static AiChatOverview.Item approvalItem(final int id, final long timeMs, final String json) {
+        if (!AiToolMessages.isToolRequest(json)) {
+            // A change to the memory.
+            final String status = AiToolMessages.getString(json, "status");
+            if ("APPROVED".equals(status)) {
+                return AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.APPROVAL, "A change to memory");
+            }
+            if ("REJECTED".equals(status)) {
+                return AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.REJECTION, "A change to memory");
+            }
+            return AiChatOverview.Item.work(id, timeMs);
+        }
+        final List<String> allowed = new ArrayList<>();
+        final List<String> denied = new ArrayList<>();
+        for (final AiToolMessages.ApprovalCall call : AiToolMessages.approvalCalls(json)) {
+            if ("ALLOWED".equals(call.getDecision())) {
+                allowed.add(call.getTool());
+            } else if ("DENIED".equals(call.getDecision())) {
+                denied.add(call.getTool());
+            }
+        }
+        if (allowed.isEmpty() && denied.isEmpty()) {
+            return AiChatOverview.Item.work(id, timeMs);
+        }
+        if (allowed.isEmpty()) {
+            return AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.REJECTION, String.join(", ", denied));
+        }
+        return AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.APPROVAL, String.join(", ", allowed)
+                                                                                  + (denied.isEmpty()
+                ? ""
+                : "; rejected " + String.join(", ", denied)));
+    }
+
+    @Override
     public void onCloseChatList() {
         if (chatListShowing) {
             setChatListShowing(false);
@@ -914,6 +1056,9 @@ public class AskStroomAiPresenter
     }
 
     private void setChatListShowing(final boolean showing) {
+        if (showing && overviewShowing) {
+            setOverviewShowing(false);
+        }
         chatListShowing = showing;
         getView().setChatListVisible(showing);
         // Each time the list is shown it starts unsearched.
@@ -2468,6 +2613,7 @@ public class AskStroomAiPresenter
             child = next;
         }
         activityGroups.removeFrom(fromMessageId, keepFirst);
+        refreshOverview();
         removeLiveAnswer();
         // Don't leave a day divider with nothing after it.
         Element last = markdownContainer.getLastChild() != null
@@ -2679,6 +2825,10 @@ public class AskStroomAiPresenter
         final boolean needsUser = response.getRun() != null
                                   && response.getRun().getStatus() == AiChatRunStatus.WAITING_FOR_USER;
         final boolean working = !response.isComplete() && !needsUser && !endedByError();
+        if (working != overviewWorking) {
+            overviewWorking = working;
+            refreshOverview();
+        }
         getView().setInProgress(working);
         getView().setSendButtonLoadingState(requestInFlight || working);
     }
@@ -2749,6 +2899,7 @@ public class AskStroomAiPresenter
             getView().setTaskList(null, SafeHtmlUtils.EMPTY_SAFE_HTML);
         }
         renderedMessages.put(msg.getId(), msg);
+        refreshOverview();
         final HtmlBuilder hb = new HtmlBuilder();
         renderMessage(hb, msg, nowMs);
         final Element holder = parseHtml(hb);
@@ -2930,6 +3081,7 @@ public class AskStroomAiPresenter
         followUps = List.of();
         refreshFollowUps();
         renderedMessages.clear();
+        refreshOverview();
         interimShownAsProgress = null;
         activityGroups.clear();
         contextUsage = null;
@@ -4071,6 +4223,14 @@ public class AskStroomAiPresenter
 
         /// Shows the list of chats in place of the conversation, or the conversation again.
         void setChatListVisible(boolean visible);
+
+        /// Shows the overview of the chat in place of the conversation, or the conversation again.
+        void setOverviewVisible(boolean visible);
+
+        /// Draws the overview of the chat.
+        ///
+        /// @param svg The overview, as SVG (see [AiChatOverview#svg(AiChatOverview.Overview, boolean)]).
+        void setOverview(String svg);
 
         /// @return How the agent is to work in the chat.
         AiAgentMode getAgentMode();
