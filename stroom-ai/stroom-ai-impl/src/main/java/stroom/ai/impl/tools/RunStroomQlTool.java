@@ -88,8 +88,10 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 .description("Runs a StroomQL query as the user (e.g. 'from \"My View\" where EventTime > "
                              + "day() - 1d select Host, count() as N group by Host') and writes the results to a "
                              + "table in the workspace. You get the table's path and a profile of it (row count, "
-                             + "columns, common values); query it further with the table tool. Add a limit to the "
-                             + "query for large results.")
+                             + "columns, common values); query it further with the table tool. Use eval (e.g. 'eval "
+                             + "Rate = Bytes / Duration') to work values out in the query, in Stroom's expression "
+                             + "language, as the table tool's expressions are. Add a limit to the query for large "
+                             + "results.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(QUERY_ARG, "The StroomQL query.")
                         .addStringProperty(OUT_ARG, "A .md file in /outputs/ for the results (default "
