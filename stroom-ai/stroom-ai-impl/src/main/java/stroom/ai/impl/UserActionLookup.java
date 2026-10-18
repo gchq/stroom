@@ -34,6 +34,10 @@ public interface UserActionLookup {
     Optional<DocRef> find(DocRef docRef);
 
     /// @param docRef A document.
+    /// @return True if the user may edit it (Edit permission). False if they may not, or checking fails.
+    boolean canEdit(DocRef docRef);
+
+    /// @param docRef A document.
     /// @return The document's tags, empty if it has none or cannot be found.
     Set<String> tags(DocRef docRef);
 

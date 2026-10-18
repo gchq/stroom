@@ -31,6 +31,7 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
+import stroom.entity.client.event.DocTabSelectedEvent;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
@@ -197,6 +198,8 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
                         getView().getTabBar().selectTab(tab);
                         selectedTab = tab;
 
+                        // The selection is final, so e.g. the AI chat can follow the tab the user is in.
+                        DocTabSelectedEvent.fire(this, this, tab, content);
                         afterSelectTab(content);
                     }
                 });
@@ -210,6 +213,11 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
 
     public TabData getSelectedTab() {
         return selectedTab;
+    }
+
+    /// @return What the selected tab within this document's tab shows, or null if none has been shown yet.
+    public PresenterWidget<?> getSelectedContent() {
+        return currentContent;
     }
 
     @Override
@@ -291,6 +299,13 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     /// text parts and its Documentation tab, without changing the tab. Null if no document has been read.
     @Override
     public AiTabSnapshot snapshot() {
+        // A tab within this one that knows better what it shows (e.g. a Pipeline's Stepping view) speaks for it.
+        if (currentContent instanceof final AiTabSnapshotProvider provider && provider != this) {
+            final AiTabSnapshot snapshot = provider.snapshot();
+            if (snapshot != null) {
+                return snapshot;
+            }
+        }
         final D entity = getEntity();
         if (docRef == null || entity == null) {
             return null;

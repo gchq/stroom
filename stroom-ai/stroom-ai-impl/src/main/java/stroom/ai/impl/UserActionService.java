@@ -17,10 +17,12 @@
 package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
+import stroom.ai.impl.UserActionRecord.CodeChange;
 import stroom.ai.impl.UserActionRecord.Status;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiUserActionResult;
+import stroom.docref.DocRef;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -41,6 +43,12 @@ import java.util.Optional;
 public class UserActionService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserActionService.class);
+
+    /// What a proposed code change's card says once it has been applied.
+    static final String APPLIED = "Applied, not saved";
+    static final String APPLY_COMMAND = "Apply proposed code change";
+    static final String UNDO_COMMAND = "Undo applied code change";
+    private static final String NOT_IN_CHAT = "This action is not in the chat.";
 
     private final AiService aiService;
     private final AiDao aiDao;
@@ -72,10 +80,7 @@ public class UserActionService {
     /// @return What happened.
     public AiUserActionResult doUserAction(final int chatId, final int messageId, final String actionId) {
         aiService.verifyOwnership(chatId);
-        final AiChatMessage message = aiDao.getMessagesSince(chatId, messageId - 1).stream()
-                .filter(m -> m.getId() == messageId && m.getMessageType() == AiMessageType.TOOL_RESULT)
-                .findFirst()
-                .orElse(null);
+        final AiChatMessage message = findMessage(chatId, messageId);
         final ToolResultRecord result = message == null
                 ? null
                 : read(message.getMessage());
@@ -83,7 +88,7 @@ public class UserActionService {
                 ? null
                 : find(result, actionId);
         if (action == null) {
-            return new AiUserActionResult(false, "This action is not in the chat.", null);
+            return new AiUserActionResult(false, NOT_IN_CHAT, null);
         }
         if (action.status() != Status.PENDING) {
             return new AiUserActionResult(false, "This has already been done.", null);
@@ -97,9 +102,52 @@ public class UserActionService {
             case UserActions.ENABLE_PROCESSOR_FILTER, UserActions.DISABLE_PROCESSOR_FILTER ->
                 changeFilter(chatId, message, result, action);
             case UserActions.CREATE_QUERY -> createQuery(chatId, action);
+            case UserActions.APPLY_CODE_CHANGE -> applyCodeChange(chatId, message, result, action);
             // Only shown, for the cluster admin to run. Stroom never runs these.
             default -> new AiUserActionResult(false, "Stroom does not run this action.", null);
         };
+    }
+
+    /// Records that the user undid a proposed code change they had applied to a stepping element's editor with a
+    /// button in the chat, if they may still edit the element's document. The browser puts the editor's previous
+    /// text back once this says it may; nothing is saved. The button can then be used to apply the change again.
+    ///
+    /// @param chatId    The chat, which the user must own.
+    /// @param messageId The tool result message the action is in.
+    /// @param actionId  The action's id.
+    /// @return What happened.
+    public AiUserActionResult undoUserAction(final int chatId, final int messageId, final String actionId) {
+        aiService.verifyOwnership(chatId);
+        final AiChatMessage message = findMessage(chatId, messageId);
+        final ToolResultRecord result = message == null
+                ? null
+                : read(message.getMessage());
+        final UserActionRecord action = result == null
+                ? null
+                : find(result, actionId);
+        if (action == null) {
+            return new AiUserActionResult(false, NOT_IN_CHAT, null);
+        }
+        if (!UserActions.APPLY_CODE_CHANGE.equals(action.action()) || action.status() != Status.DONE) {
+            return new AiUserActionResult(false, "There is no applied change to undo.", null);
+        }
+        final String target = describeTarget(action);
+        if (!lookup.canEdit(action.doc())) {
+            final String problem = "You don't have permission to edit " + describeDoc(action) + ", so the change "
+                                   + "can't be undone here. Use Ctrl+Z in the editor.";
+            auditLog.processed(chatId, action.doc(), UNDO_COMMAND, target, problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        final String outcome = "Undid the applied change, not saved";
+        if (update(message, result, action.withStatus(Status.PENDING, outcome)) == null) {
+            return new AiUserActionResult(false, "This has already changed. Try again.", null);
+        }
+        auditLog.processed(chatId, action.doc(), UNDO_COMMAND, target,
+                "Undid an applied change: " + lineCounts(action), true);
+        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I undid the "
+                                                                     + "proposed change I had applied to "
+                                                                     + target + ". Nothing was saved.");
+        return new AiUserActionResult(true, outcome, null);
     }
 
     private AiUserActionResult openDocument(final int chatId, final UserActionRecord action) {
@@ -127,6 +175,68 @@ public class UserActionService {
         }
         auditLog.userAction(chatId, action.action(), action.label(), "Opened the New Query dialog", true);
         return new AiUserActionResult(true, null, null, action.name(), action.request());
+    }
+
+    /// Lets the browser apply a proposed code change to a stepping element's editor, unsaved, if the user may edit
+    /// the element's document (as editing it by hand needs). The button is claimed first, so it applies once; it
+    /// is put back if the change is undone. Nothing is saved: a later Save is logged by the document's own Save.
+    private AiUserActionResult applyCodeChange(final int chatId,
+                                               final AiChatMessage message,
+                                               final ToolResultRecord result,
+                                               final UserActionRecord action) {
+        final String target = describeTarget(action);
+        if (action.doc() == null || action.codeChange() == null || lookup.find(action.doc()).isEmpty()) {
+            final String problem = "The document no longer exists, or you cannot see it.";
+            auditLog.processed(chatId, action.doc(), APPLY_COMMAND, target, problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        if (!lookup.canEdit(action.doc())) {
+            final String problem = "You don't have permission to edit " + describeDoc(action)
+                                   + ", so the change can't be applied.";
+            auditLog.processed(chatId, action.doc(), APPLY_COMMAND, target, problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        if (update(message, result, action.withStatus(Status.DONE, APPLIED)) == null) {
+            return new AiUserActionResult(false, "This has already been done.", null);
+        }
+        auditLog.processed(chatId, action.doc(), APPLY_COMMAND, target,
+                "Applied a proposed change, not saved: " + lineCounts(action), true);
+        // So the model knows on its next turn (or now, if it is working).
+        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I applied the "
+                                                                     + "proposed change to " + target + " ("
+                                                                     + lineCounts(action) + "). It is not saved.");
+        return new AiUserActionResult(true, APPLIED, null);
+    }
+
+    private static String describeDoc(final UserActionRecord action) {
+        final DocRef doc = action.doc();
+        return doc == null
+                ? "the document"
+                : doc.getType() + " '" + NullSafe.nonBlankStringElse(doc.getName(), doc.getUuid()) + "'";
+    }
+
+    private static String describeTarget(final UserActionRecord action) {
+        final CodeChange change = action.codeChange();
+        if (change == null) {
+            return describeDoc(action);
+        }
+        return describeDoc(action) + " in element '" + change.element() + "' of pipeline '"
+               + NullSafe.nonBlankStringElse(NullSafe.get(change.pipeline(), DocRef::getName), "?")
+               + "', while stepping";
+    }
+
+    private static String lineCounts(final UserActionRecord action) {
+        final CodeChange change = action.codeChange();
+        return change == null
+                ? "no lines"
+                : "+" + change.added() + " −" + change.removed() + " lines";
+    }
+
+    private AiChatMessage findMessage(final int chatId, final int messageId) {
+        return aiDao.getMessagesSince(chatId, messageId - 1).stream()
+                .filter(m -> m.getId() == messageId && m.getMessageType() == AiMessageType.TOOL_RESULT)
+                .findFirst()
+                .orElse(null);
     }
 
     private AiUserActionResult changeFilter(final int chatId,

@@ -37,7 +37,9 @@ import java.util.List;
 /// @param expiresMs When the button stops working.
 /// @param status    Whether the button has been used.
 /// @param outcome   What happened when it was used, or null.
-/// @param name      The name suggested for a document to create (e.g. a query), or null.
+/// @param name       The name suggested for a document to create (e.g. a query), or null.
+/// @param codeChange For a proposed code change (apply_code_change), what it changes and the code it was proposed
+///                   against, or null. The proposed code is in `request` and the element's document in `doc`.
 public record UserActionRecord(String id,
                                String action,
                                String label,
@@ -50,7 +52,8 @@ public record UserActionRecord(String id,
                                long expiresMs,
                                Status status,
                                String outcome,
-                               String name) {
+                               String name,
+                               CodeChange codeChange) {
 
     /// An action that creates nothing, so suggests no name.
     public UserActionRecord(final String id,
@@ -68,12 +71,51 @@ public record UserActionRecord(String id,
         this(id, action, label, details, warning, filterId, doc, request, after, expiresMs, status, outcome, null);
     }
 
+    /// An action that is not a proposed code change.
+    public UserActionRecord(final String id,
+                            final String action,
+                            final String label,
+                            final String details,
+                            final String warning,
+                            final Integer filterId,
+                            final DocRef doc,
+                            final String request,
+                            final List<String> after,
+                            final long expiresMs,
+                            final Status status,
+                            final String outcome,
+                            final String name) {
+        this(id, action, label, details, warning, filterId, doc, request, after, expiresMs, status, outcome, name,
+                null);
+    }
+
     /// @param status  The new status.
     /// @param outcome What happened.
     /// @return This action with the status and outcome changed.
     public UserActionRecord withStatus(final Status status, final String outcome) {
         return new UserActionRecord(id, action, label, details, warning, filterId, doc, request, after, expiresMs,
-                status, outcome, name);
+                status, outcome, name, codeChange);
+    }
+
+    /// A change to a stepping element's code that the agent proposed, which the user can review and apply to the
+    /// element's editor, unsaved.
+    ///
+    /// @param pipeline     The pipeline being stepped.
+    /// @param element      The element's id, as named in the pipeline.
+    /// @param baseCode     The element's code the change was proposed against, as the user had it (unsaved edits
+    ///                     included). The change is only applied while the editor still holds it.
+    /// @param baseHash     The SHA-256 of the base code, as hex.
+    /// @param snapshotHash The hash of the tab snapshot the base code came from, or null.
+    /// @param added        How many lines the change adds or changes to.
+    /// @param removed      How many lines the change removes or changes from.
+    public record CodeChange(DocRef pipeline,
+                             String element,
+                             String baseCode,
+                             String baseHash,
+                             String snapshotHash,
+                             int added,
+                             int removed) {
+
     }
 
     /// Whether a button has been used.
