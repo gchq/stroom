@@ -25,12 +25,18 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocFinder;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.shared.Dependency;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.impl.QueryService;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ResultPage;
@@ -188,13 +194,91 @@ class TestQueryTools {
                 .contains("- document.description (")
                 .contains("Documentation (what its fields hold")
                 .contains("### [Linux indexing](?action=open-doc&docType=Documentation&docUuid=pipe-doc-uuid) "
-                          + "(Documentation): the Documentation doc beside it of Pipeline 'Linux indexing'")
+                          + "(Documentation): the Documentation doc beside a pipeline that writes to it of Pipeline "
+                          + "'Linux indexing'")
                 .contains("| document.description | The tweet's text |")
                 .doesNotContain("Hidden indexing")
                 .contains("Use Initiator.Id for the actioning user.");
         // The documentation read is logged.
         Mockito.verify(documentAccess).logViews(Mockito.eq(CHAT), Mockito.eq(List.of(pipelineDoc)),
                 Mockito.contains(DescribeDataSourceTool.NAME));
+    }
+
+    @Test
+    void anElasticIndexIsDocumentedByThePipelineThatWritesToItByNameAndTheDocsInItsFolder() {
+        // As an MCP build leaves it: the indexing pipeline names the Elasticsearch index and its cluster, not the
+        // index doc, so the dependency graph has no link from the pipeline to the index doc. The pipeline's
+        // documentation is in the index doc's folder, named after the pipeline.
+        final DocRef cluster = new DocRef("ElasticCluster", "cluster-uuid", "ES_DEV");
+        final DocRef index = new DocRef(ElasticIndexDoc.TYPE, "ecs-uuid", "TWITTER-ECS-v1");
+        final DocRef folder = new DocRef("Folder", "indexing-uuid", "Indexing");
+        final DocRef pipeline = new DocRef("Pipeline", "pipe-uuid", "Twitter-Indexing-Onboard-v1");
+        final DocRef other = new DocRef("Pipeline", "other-pipe-uuid", "Other indexing");
+        final DocRef pipelineDoc = new DocRef(DocumentationDoc.TYPE, "pipe-doc-uuid", "Twitter-Indexing-Onboard-v1");
+        final DocRef survey = new DocRef(DocumentationDoc.TYPE, "survey-uuid", "Unrelated - Survey");
+        Mockito.when(registry.getDataSourceDocRefs()).thenReturn(List.of(index));
+        Mockito.when(registry.findDataSourceByUuid("ecs-uuid")).thenReturn(Optional.of(index));
+        usable.add(index.getUuid());
+        Mockito.when(documentAccess.read(index, ElasticIndexDoc.class)).thenReturn(Optional.of(ElasticIndexDoc.builder()
+                .uuid("ecs-uuid").name("TWITTER-ECS-v1").indexName("stroom-ecs-twitter-v1").clusterRef(cluster)
+                .build()));
+        Mockito.when(dependencyService.fetchDependencies(Mockito.argThat(criteria ->
+                        criteria != null && "touuid:=cluster-uuid".equals(criteria.getPartialName())), Mockito.any()))
+                .thenReturn(ResultPage.createUnboundedList(List.of(new Dependency(pipeline, cluster, true),
+                        new Dependency(other, cluster, true))));
+        Mockito.when(documentAccess.canView(Mockito.argThat(docRef -> docRef != null
+                                                                    && docRef.getUuid().contains("pipe"))))
+                .thenReturn(true);
+        Mockito.when(documentAccess.read(pipeline, PipelineDoc.class))
+                .thenReturn(Optional.of(writingTo(pipeline, "stroom-ecs-twitter-v1")));
+        Mockito.when(documentAccess.read(other, PipelineDoc.class))
+                .thenReturn(Optional.of(writingTo(other, "some-other-index")));
+        Mockito.when(documentAccess.parent(index)).thenReturn(Optional.of(folder));
+        Mockito.when(documentAccess.children(folder)).thenReturn(List.of(
+                ExplorerNode.builder().docRef(pipelineDoc).build(), ExplorerNode.builder().docRef(survey).build(),
+                ExplorerNode.builder().docRef(index).build()));
+        Mockito.when(documentAccess.read(pipelineDoc, DocumentationDoc.class)).thenReturn(Optional.of(documentation(
+                "pipe-doc-uuid", "| `create.document.description` | The tweet's text |")));
+        Mockito.when(documentAccess.read(survey, DocumentationDoc.class))
+                .thenReturn(Optional.of(documentation("survey-uuid", "Nothing about this index.")));
+        Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
+                QueryField.builder().fldName("create.document.description").fldType(FieldType.KEYWORD)
+                        .queryable(true).build())));
+
+        final String result = run(describeTool(), "{\"data_source\":\"ecs-uuid\"}");
+
+        assertThat(result)
+                .contains("### [Twitter-Indexing-Onboard-v1](?action=open-doc&docType=Documentation&docUuid="
+                          + "pipe-doc-uuid) (Documentation): the Documentation doc beside it")
+                .contains("| `create.document.description` | The tweet's text |")
+                .doesNotContain("Unrelated - Survey");
+        // Given once, though both the folder and the pipeline lead to it.
+        assertThat(result.split("The tweet's text", -1)).hasSize(2);
+    }
+
+    @Test
+    void anElasticIndexNameWithWildCardsCoversTheIndexesAPipelineWritesTo() {
+        final DocRef cluster = new DocRef("ElasticCluster", "cluster-uuid", "ES_DEV");
+        final DocRef index = new DocRef(ElasticIndexDoc.TYPE, "ecs-uuid", "TWITTER-ECS");
+        final DocRef pipeline = new DocRef("Pipeline", "pipe-uuid", "Twitter indexing");
+        Mockito.when(registry.getDataSourceDocRefs()).thenReturn(List.of(index));
+        Mockito.when(registry.findDataSourceByUuid("ecs-uuid")).thenReturn(Optional.of(index));
+        usable.add(index.getUuid());
+        Mockito.when(documentAccess.read(index, ElasticIndexDoc.class)).thenReturn(Optional.of(ElasticIndexDoc.builder()
+                .uuid("ecs-uuid").name("TWITTER-ECS").indexName("stroom-ecs-twitter-*").clusterRef(cluster).build()));
+        Mockito.when(dependencyService.fetchDependencies(Mockito.argThat(criteria ->
+                        criteria != null && "touuid:=cluster-uuid".equals(criteria.getPartialName())), Mockito.any()))
+                .thenReturn(ResultPage.createUnboundedList(List.of(new Dependency(pipeline, cluster, true))));
+        Mockito.when(documentAccess.canView(pipeline)).thenReturn(true);
+        Mockito.when(documentAccess.read(pipeline, PipelineDoc.class))
+                .thenReturn(Optional.of(writingTo(pipeline, "STROOM-ECS-TWITTER-V2")));
+        Mockito.when(documentAccess.read(pipeline)).thenReturn(Optional.of(PipelineDoc.builder().uuid("pipe-uuid")
+                .name("Twitter indexing").description("Writes tweets: Text is the tweet's text.").build()));
+        Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of()));
+
+        assertThat(run(describeTool(), "{\"data_source\":\"ecs-uuid\"}"))
+                .contains("(Pipeline): the Documentation tab of a pipeline that writes to it")
+                .contains("Writes tweets: Text is the tweet's text.");
     }
 
     @Test
@@ -318,5 +402,17 @@ class TestQueryTools {
 
     private static DocumentationDoc documentation(final String uuid, final String text) {
         return new DocumentationDoc(uuid, "doc", null, null, null, null, null, null, text);
+    }
+
+    // A pipeline whose Elastic indexing filter writes to an Elasticsearch index by name.
+    private static PipelineDoc writingTo(final DocRef pipeline, final String indexName) {
+        return PipelineDoc.builder()
+                .uuid(pipeline.getUuid())
+                .name(pipeline.getName())
+                .pipelineData(new PipelineDataBuilder()
+                        .addProperty(new PipelineProperty("elasticIndexingFilter",
+                                DataSourceDocumentation.INDEX_NAME_PROPERTY, new PipelinePropertyValue(indexName)))
+                        .build())
+                .build();
     }
 }

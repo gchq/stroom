@@ -136,6 +136,18 @@ public class DocumentAccess {
         }
     }
 
+    /// @param docRef A document.
+    /// @return The folder it is in, or the System root at the top of the tree. Empty if it isn't in the tree, or it
+    /// can't be found. The folder isn't checked for View, so only use it to look for what is in it.
+    public Optional<DocRef> parent(final DocRef docRef) {
+        try {
+            return explorerNodeServiceProvider.get().getParent(docRef).map(ExplorerNode::getDocRef);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the folder of " + docRef, e);
+            return Optional.empty();
+        }
+    }
+
     /// @param folder A folder the user can view, or the System root.
     /// @return What it holds that the user can view, as the Explorer tree shows it, leaving out the Favourites
     /// root. Empty if it can't be listed.
