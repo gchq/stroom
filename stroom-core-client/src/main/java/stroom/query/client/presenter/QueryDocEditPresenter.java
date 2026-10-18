@@ -36,7 +36,9 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
+import stroom.pipeline.stepping.client.presenter.ApplyCodeChangeResult;
 import stroom.query.api.TimeRange;
+import stroom.query.client.event.QueryCodeChangeEvent;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
@@ -46,6 +48,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.ui.config.shared.ReportUiDefaultConfig;
+import stroom.util.shared.diff.LineDiff;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.ButtonPanel;
@@ -57,6 +60,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
@@ -68,6 +72,11 @@ public class QueryDocEditPresenter
     private static final AnalyticRuleResource ANALYTIC_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
     private static final ReportResource REPORT_RESOURCE = GWT.create(ReportResource.class);
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
+    /// Said when the Query's editor no longer holds the query a change was proposed against.
+    static final String QUERY_CHANGED = "The query has changed since this was proposed. Ask again for a change to "
+                                         + "the current query.";
+    /// Said when the Query can't be edited here.
+    static final String QUERY_NOT_EDITABLE = "This Query is read only, so the change can't be applied.";
 
     private final QueryEditPresenter queryEditPresenter;
     private final RestFactory restFactory;
@@ -121,6 +130,63 @@ public class QueryDocEditPresenter
         registerHandler(queryEditPresenter.addChangeHandler(this::onChange));
         registerHandler(createRuleButton.addClickHandler(event -> createRule()));
         registerHandler(createReportButton.addClickHandler(event -> createReport()));
+        registerHandler(getEventBus().addHandler(QueryCodeChangeEvent.getType(), this::onQueryCodeChange));
+    }
+
+    // A revised query proposed in the AI chat, for this Query: applied to the editor (unsaved) once the server has
+    // checked and recorded it, or undone.
+    private void onQueryCodeChange(final QueryCodeChangeEvent event) {
+        if (docRef == null || event.getQuery() == null
+            || !Objects.equals(docRef.getUuid(), event.getQuery().getUuid())) {
+            return;
+        }
+        switch (event.getOperation()) {
+            case APPLY -> applyCodeChange(event);
+            case CAN_UNDO -> {
+                event.setCanUndo(queryEditPresenter.canUndoCodeChange());
+                event.setHandled(null);
+            }
+            case UNDO -> {
+                event.setUndone(queryEditPresenter.undoCodeChange());
+                event.setHandled(null);
+            }
+        }
+    }
+
+    private void applyCodeChange(final QueryCodeChangeEvent event) {
+        if (isReadOnly()) {
+            event.setHandled(QUERY_NOT_EDITABLE);
+            return;
+        }
+        if (!LineDiff.diff(event.getBaseQuery(), queryEditPresenter.getQuery()).isIdentical()) {
+            event.setHandled(QUERY_CHANGED);
+            return;
+        }
+        event.setHandled(null);
+        final Runnable apply = () -> {
+            final ApplyCodeChangeResult result = queryEditPresenter.applyCodeChange(event.getBaseQuery(),
+                    event.getProposedQuery());
+            if (result == ApplyCodeChangeResult.APPLIED) {
+                if (event.getOnApplied() != null) {
+                    event.getOnApplied().run();
+                }
+            } else {
+                AlertEvent.fireWarn(this, result == ApplyCodeChangeResult.CODE_CHANGED
+                        ? QUERY_CHANGED
+                        : "The query's editor isn't ready. Select the Query's tab and try again.", null);
+            }
+        };
+        if (event.getApprover() == null) {
+            apply.run();
+        } else {
+            event.getApprover().approve(false, List.of(), refusal -> {
+                if (refusal != null) {
+                    AlertEvent.fireWarn(this, refusal, null);
+                } else {
+                    apply.run();
+                }
+            });
+        }
     }
 
     private void createRule() {

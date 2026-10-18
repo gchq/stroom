@@ -56,6 +56,14 @@ class TestUserActionsUi {
     }
 
     @Test
+    void aRevisedQueryIsAppliedToItsQueryAndCanBeUndoneOnceApplied() {
+        assertThat(UserActionsUi.buttonText(UserActionsUi.APPLY_QUERY_CHANGE)).isEqualTo("Apply to query");
+        assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_QUERY_CHANGE, "DONE")).isTrue();
+        assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_QUERY_CHANGE, "PENDING")).isFalse();
+        assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_CODE_CHANGE, "DONE")).isTrue();
+    }
+
+    @Test
     void aProposedQueryAndAnElasticsearchRequestAreShownAsCode() {
         assertThat(UserActionsUi.showsCode(UserActionsUi.CREATE_QUERY)).isTrue();
         assertThat(UserActionsUi.showsCode(UserActionsUi.ELASTICSEARCH_REQUEST)).isTrue();

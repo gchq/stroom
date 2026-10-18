@@ -70,7 +70,7 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
                              + "you suggest, and once the user creates it there, the query is saved with your "
                              + "StroomQL and opened. Validate the query first. If more than one data source could "
                              + "hold what the user asked for, ask them which to use with ask_user first. To change "
-                             + "a query the user already has, give the revised StroomQL as a code block instead.")
+                             + "the query open in the user's active tab, use propose_query_change instead.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "The name to suggest for the new query.")
                         .addStringProperty(QUERY_ARG, "The StroomQL.")
@@ -84,7 +84,8 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
     @Override
     String run(final ToolExecutionRequest request, final int chatId) {
         final String name = stringArg(request, NAME_ARG);
-        final String query = rawArg(request, QUERY_ARG);
+        // Laid out as people write queries, as it is what the new Query document will hold.
+        final String query = StroomQlFormatter.format(rawArg(request, QUERY_ARG));
         if (name == null || name.length() > MAX_NAME_CHARS || name.chars().anyMatch(Character::isISOControl)) {
             throw new WorkspaceException("Give a name for the query, of at most " + MAX_NAME_CHARS
                                          + " characters on one line.");
