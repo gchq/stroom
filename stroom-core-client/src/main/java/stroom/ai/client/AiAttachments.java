@@ -32,6 +32,8 @@ final class AiAttachments {
 
     /// The attribute of a chip's remove button: the attachment's message id.
     static final String REMOVE_ATTRIBUTE = "data-remove-attachment-message-id";
+    /// The attribute of the button that removes all the attachments listed.
+    static final String REMOVE_ALL_ATTRIBUTE = "data-remove-all-attachments";
 
     private static final String CHIP_ID_PREFIX = "ai-attachment-";
     private static final String DASHBOARD_PREFIX = "Dashboard '";
@@ -105,6 +107,24 @@ final class AiAttachments {
     static boolean isDownloading(final AiChatAttachment attachment) {
         return attachment == null || attachment.getStatus() == AiAttachmentStatus.PENDING
                || attachment.getStatus() == AiAttachmentStatus.DOWNLOADING;
+    }
+
+    /// Adds the button that removes all the attachments listed, after asking.
+    ///
+    /// @param hb      Where to add it.
+    /// @param enabled False while any of them is still downloading, as each can only be removed once it has.
+    static void removeAllButton(final HtmlBuilder hb, final boolean enabled) {
+        hb.elem(button -> button.div(div -> div.appendTrustedString(SvgImage.CLEAR.getSvg()),
+                        Attribute.className("svg-image " + SvgImage.CLEAR.getClassName() + " face")),
+                SafeHtmlUtils.fromSafeConstant("button"),
+                Attribute.className("ai-attachment-remove-all icon-button"),
+                Attribute.title(enabled
+                        ? "Delete all attachments"
+                        : "Delete all attachments (once they have downloaded)"),
+                new Attribute(REMOVE_ALL_ATTRIBUTE, "true"),
+                enabled
+                        ? new Attribute("type", "button")
+                        : new Attribute("disabled", "disabled"));
     }
 
     /// @param attachmentId The attachment.

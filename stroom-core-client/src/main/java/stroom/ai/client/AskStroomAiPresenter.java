@@ -397,7 +397,9 @@ public class AskStroomAiPresenter
                 }
                 final String remove = button.getAttribute(AiAttachments.REMOVE_ATTRIBUTE);
                 final String attachmentId = button.getAttribute("data-attachment-id");
-                if (NullSafe.isNonBlankString(remove)) {
+                if (button.hasAttribute(AiAttachments.REMOVE_ALL_ATTRIBUTE)) {
+                    removeAllAttachments();
+                } else if (NullSafe.isNonBlankString(remove)) {
                     removeAttachment(Integer.parseInt(remove));
                 } else if (NullSafe.isNonBlankString(attachmentId)) {
                     onViewAttachmentData(Integer.parseInt(attachmentId), button.getAttribute("data-attachment-desc"));
@@ -3992,8 +3994,30 @@ public class AskStroomAiPresenter
     /// downloaded.
     private void refreshAttachmentList() {
         final HtmlBuilder hb = new HtmlBuilder();
-        pendingAttachments.values().forEach(msg -> attachmentChip(hb, msg, true));
+        if (!pendingAttachments.isEmpty()) {
+            // The chips wrap onto as many rows as they need, with the button to remove them all beside them.
+            hb.div(chips -> pendingAttachments.values().forEach(msg -> attachmentChip(chips, msg, true)),
+                    Attribute.className("ai-attachment-chips"));
+            AiAttachments.removeAllButton(hb, pendingAttachments.values().stream()
+                    .noneMatch(msg -> AiAttachments.isDownloading(attachmentStatuses.get(msg.getAttachmentId()))));
+        }
         getView().setAttachments(hb.toSafeHtml());
+    }
+
+    /// Removes all the tables attached since the last message was sent, after asking.
+    private void removeAllAttachments() {
+        final List<Integer> messageIds = new ArrayList<>(pendingAttachments.keySet());
+        if (messageIds.isEmpty()) {
+            return;
+        }
+        final String question = messageIds.size() == 1
+                ? "Remove the attached table?"
+                : "Remove all " + messageIds.size() + " attached tables?";
+        ConfirmEvent.fire(this, question, ok -> {
+            if (ok) {
+                messageIds.forEach(this::removeAttachment);
+            }
+        });
     }
 
     /// Adds the chips of the tables a message was sent with to the start of its bubble.
