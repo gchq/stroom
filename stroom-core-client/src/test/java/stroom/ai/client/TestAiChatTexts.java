@@ -84,6 +84,23 @@ class TestAiChatTexts {
     }
 
     @Test
+    void eachStateIsExplained() {
+        assertThat(AiChatTexts.statusExplanation(status(AiChatRunStatus.WAITING_FOR_USER, true, false)))
+                .startsWith("Needs you");
+        assertThat(AiChatTexts.statusExplanation(status(AiChatRunStatus.QUEUED, false, false))).startsWith("Queued");
+        assertThat(AiChatTexts.statusExplanation(status(AiChatRunStatus.RUNNING, true, false)))
+                .isEqualTo("Working on your question.");
+        assertThat(AiChatTexts.statusExplanation(status(AiChatRunStatus.FAILED, true, false))).startsWith("Failed");
+        assertThat(AiChatTexts.statusExplanation(status(AiChatRunStatus.INTERRUPTED, false, false)))
+                .startsWith("Interrupted");
+        assertThat(AiChatTexts.statusExplanation(status(AiChatRunStatus.STOPPED, false, false)))
+                .startsWith("Stopped");
+        assertThat(AiChatTexts.statusExplanation(status(AiChatRunStatus.DONE, true, false)))
+                .isEqualTo("New messages you haven't read yet.");
+        assertThat(AiChatTexts.statusExplanation(status(AiChatRunStatus.DONE, false, false))).isEqualTo("Nothing new.");
+    }
+
+    @Test
     void aQuietChatHasNoNoteUnlessItApprovesEverything() {
         assertThat(AiChatTexts.statusIcon(status(null, false, false))).isEqualTo(SvgImage.AI);
         assertThat(AiChatTexts.statusNote(status(AiChatRunStatus.DONE, false, false))).isEmpty();

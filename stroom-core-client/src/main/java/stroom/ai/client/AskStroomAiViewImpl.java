@@ -25,7 +25,9 @@ import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -137,6 +139,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     HTML commandReferenceContent;
     // While the reference is being resized: where the drag started, and the height then.
     private HandlerRegistration referenceDrag;
+    // Closes the list of chats on Escape while it is shown.
+    private HandlerRegistration chatListEscape;
     private int referenceDragStartY;
     private int referenceDragStartHeight;
     @UiField
@@ -214,7 +218,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         });
 
         chatSearch.getElement().setAttribute("placeholder", "Search chats");
-        chatSearch.setTitle("Search your chats' titles and your questions in them.\nEscape clears the search.");
+        chatSearch.setTitle("Search your chats' titles and your questions in them.\nEscape clears the search, "
+                            + "or, once it is clear, goes back to the chat.");
         chatSearch.addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE && !chatSearch.getText().isEmpty()) {
                 // Clears the search, rather than doing what Escape does elsewhere.
@@ -583,6 +588,29 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         });
     }
 
+    /// Escape in the list of chats goes back to the chat, unless there is a search to clear first: Escape in the
+    /// search box clears it (see its key handler), and only once it is clear goes back. It does the same with
+    /// nothing focused, but is left to anything shown over the chat, e.g. a dialog asking to delete a chat.
+    private void closeChatListOnEscape(final Event.NativePreviewEvent preview) {
+        final NativeEvent nativeEvent = preview.getNativeEvent();
+        if (preview.getTypeInt() != Event.ONKEYDOWN || nativeEvent.getKeyCode() != KeyCodes.KEY_ESCAPE) {
+            return;
+        }
+        final EventTarget eventTarget = nativeEvent.getEventTarget();
+        if (!Element.is(eventTarget)) {
+            return;
+        }
+        final Element target = Element.as(eventTarget);
+        final boolean inChat = widget.getElement().isOrHasChild(target);
+        final boolean nothingFocused = target == Document.get().getBody();
+        final boolean searchToClear = target == chatSearch.getElement() && !chatSearch.getText().isEmpty();
+        if ((inChat || nothingFocused) && !searchToClear && getUiHandlers() != null) {
+            preview.cancel();
+            nativeEvent.preventDefault();
+            getUiHandlers().onCloseChatList();
+        }
+    }
+
     /// @return The most the reference may take: most of the chat, leaving room for some of the messages.
     private int maxReferenceHeight() {
         return Math.max(MIN_REFERENCE_HEIGHT, (int) (widget.getOffsetHeight() * 0.7));
@@ -646,6 +674,13 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @Override
     public void setChatListVisible(final boolean visible) {
+        if (chatListEscape != null) {
+            chatListEscape.removeHandler();
+            chatListEscape = null;
+        }
+        if (visible) {
+            chatListEscape = Event.addNativePreviewHandler(this::closeChatListOnEscape);
+        }
         chatList.setVisible(visible);
         markdownPreview.setVisible(!visible);
         if (visible) {

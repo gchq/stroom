@@ -69,6 +69,9 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
      */
     void onShowSwitcher(Element target);
 
+    /// Closes the list of chats, going back to the chat being shown.
+    void onCloseChatList();
+
     /**
      * Scrolls the conversation to the latest message, and follows new messages from then on.
      */
