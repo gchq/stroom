@@ -39,6 +39,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /// Selects, filters, groups, aggregates and sorts the rows of a table in the workspace (CSV, TSV or a markdown
 /// table, such as an attached table), in code, so figures are exact. Nothing in a query is ever run as code: a
@@ -61,7 +62,7 @@ public final class TableEngine {
     /// @return The result.
     /// @throws WorkspaceException if the query does not fit the table, or goes over a limit.
     public static Result run(final Path file, final Format format, final Query query) {
-        try (final RowSource source = open(file, format)) {
+        try (final RowSource source = withEvals(open(file, format), query.eval())) {
             final List<String> header = source.header();
             final List<CompiledCondition> conditions = new ArrayList<>();
             for (final Condition condition : query.where()) {
@@ -123,15 +124,22 @@ public final class TableEngine {
         final List<Aggregate> aggregates = query.aggregates().isEmpty()
                 ? List.of(new Aggregate("count", null, null))
                 : query.aggregates();
-        final List<Integer> aggregateIndexes = new ArrayList<>();
+        // Each aggregate, ready to make what works it out for a group.
+        final List<Supplier<GroupValue>> makers = new ArrayList<>();
         for (final Aggregate aggregate : aggregates) {
-            checkFunction(aggregate);
-            aggregateIndexes.add(aggregate.column() == null
-                    ? -1
-                    : index(aggregate.column(), header));
+            if (aggregate.expression() != null) {
+                final TableExpression expression = TableExpression.compile(aggregate.expression(), header);
+                makers.add(() -> new ExpressionValue(expression.group()));
+            } else {
+                checkFunction(aggregate);
+                final int index = aggregate.column() == null
+                        ? -1
+                        : index(aggregate.column(), header);
+                makers.add(() -> new Accumulator(aggregate.function(), index));
+            }
         }
 
-        final Map<List<String>, Accumulator[]> groups = new LinkedHashMap<>();
+        final Map<List<String>, GroupValue[]> groups = new LinkedHashMap<>();
         long read = 0;
         long matched = 0;
         for (final Iterator<List<String>> it = source.rows(); it.hasNext(); ) {
@@ -149,24 +157,21 @@ public final class TableEngine {
                         ? ValueMasker.mask(value)
                         : value);
             }
-            Accumulator[] accumulators = groups.get(key);
+            GroupValue[] accumulators = groups.get(key);
             if (accumulators == null) {
                 if (groups.size() >= MAX_GROUPS) {
                     throw new WorkspaceException("There are more than " + MAX_GROUPS + " groups. Group by fewer "
                                                  + "columns, filter the rows first, or use mask to reduce free "
                                                  + "text to patterns.");
                 }
-                accumulators = new Accumulator[aggregates.size()];
+                accumulators = new GroupValue[aggregates.size()];
                 for (int i = 0; i < accumulators.length; i++) {
-                    accumulators[i] = new Accumulator(aggregates.get(i).function());
+                    accumulators[i] = makers.get(i).get();
                 }
                 groups.put(key, accumulators);
             }
-            for (int i = 0; i < accumulators.length; i++) {
-                final int index = aggregateIndexes.get(i);
-                accumulators[i].add(index < 0
-                        ? null
-                        : cell(row, index));
+            for (final GroupValue accumulator : accumulators) {
+                accumulator.add(row);
             }
         }
 
@@ -176,7 +181,7 @@ public final class TableEngine {
         final List<List<String>> rows = new ArrayList<>(groups.size());
         groups.forEach((key, accumulators) -> {
             final List<String> row = new ArrayList<>(key);
-            for (final Accumulator accumulator : accumulators) {
+            for (final GroupValue accumulator : accumulators) {
                 row.add(accumulator.result());
             }
             rows.add(row);
@@ -379,21 +384,40 @@ public final class TableEngine {
 
     }
 
-    /// An aggregate of a column's values over each group.
+    /// An aggregate over each group: of a column's values, with a function, or an expression in Stroom's expression
+    /// language with aggregates in it (see [TableExpression]).
     ///
-    /// @param function One of count, count_distinct, sum, min, max, avg.
-    /// @param column   The column, or null for count.
-    /// @param as       The result column's name, or null for e.g. "sum(bytes)".
-    public record Aggregate(String function, String column, String as) {
+    /// @param function   One of count, count_distinct, sum, min, max, avg, or null for an expression.
+    /// @param column     The column, or null for count or an expression.
+    /// @param as         The result column's name, or null for e.g. "sum(bytes)".
+    /// @param expression The expression, e.g. round(sum(${bytes}) / count(), 2), or null for a function.
+    public record Aggregate(String function, String column, String as, String expression) {
+
+        /// An aggregate of one of the functions.
+        public Aggregate(final String function, final String column, final String as) {
+            this(function, column, as, null);
+        }
 
         String name() {
             if (as != null && !as.isBlank()) {
                 return as;
             }
+            if (expression != null) {
+                return expression;
+            }
             return column == null
                     ? function
                     : function + "(" + column + ")";
         }
+    }
+
+    /// A column worked out for each row from its other columns, with an expression in Stroom's expression language
+    /// (see [TableExpression]).
+    ///
+    /// @param as         The column's name.
+    /// @param expression The expression, e.g. ${bytes} / ${duration}.
+    public record Eval(String as, String expression) {
+
     }
 
     /// A column to sort by.
@@ -404,10 +428,11 @@ public final class TableEngine {
 
     }
 
-    /// What to do to a table, in this order: filter rows (where), then either group (groupBy, aggregates, or
-    /// distinct for the distinct values of the selected columns with their counts) or select columns, then sort
-    /// (orderBy), then limit.
+    /// What to do to a table, in this order: work out computed columns for each row (eval), filter rows (where),
+    /// then either group (groupBy, aggregates, or distinct for the distinct values of the selected columns with their
+    /// counts) or select columns, then sort (orderBy), then limit.
     ///
+    /// @param eval       Columns worked out for each row, which the rest can use as any other.
     /// @param select     The columns to keep, or empty for all.
     /// @param where      Conditions rows must all meet.
     /// @param groupBy    The columns to group by.
@@ -417,7 +442,8 @@ public final class TableEngine {
     ///                   reduces to patterns.
     /// @param orderBy    How to sort the result.
     /// @param limit      The most rows to return, or null for all.
-    public record Query(List<String> select,
+    public record Query(List<Eval> eval,
+                        List<String> select,
                         List<Condition> where,
                         List<String> groupBy,
                         List<Aggregate> aggregates,
@@ -427,11 +453,24 @@ public final class TableEngine {
                         Integer limit) {
 
         public Query {
+            eval = List.copyOf(Objects.requireNonNullElse(eval, List.of()));
             select = List.copyOf(Objects.requireNonNullElse(select, List.of()));
             where = List.copyOf(Objects.requireNonNullElse(where, List.of()));
             groupBy = List.copyOf(Objects.requireNonNullElse(groupBy, List.of()));
             aggregates = List.copyOf(Objects.requireNonNullElse(aggregates, List.of()));
             orderBy = List.copyOf(Objects.requireNonNullElse(orderBy, List.of()));
+        }
+
+        /// A query without computed columns.
+        public Query(final List<String> select,
+                     final List<Condition> where,
+                     final List<String> groupBy,
+                     final List<Aggregate> aggregates,
+                     final boolean distinct,
+                     final boolean mask,
+                     final List<Order> orderBy,
+                     final Integer limit) {
+            this(List.of(), select, where, groupBy, aggregates, distinct, mask, orderBy, limit);
         }
     }
 
@@ -475,9 +514,33 @@ public final class TableEngine {
         }
     }
 
-    private static final class Accumulator {
+    /// What is worked out over a group's rows, for one aggregate.
+    private interface GroupValue {
+
+        void add(List<String> row);
+
+        String result();
+    }
+
+    /// An aggregate given as an expression, e.g. round(sum(${bytes}) / count(), 2).
+    private record ExpressionValue(TableExpression.Group group) implements GroupValue {
+
+        @Override
+        public void add(final List<String> row) {
+            group.add(row);
+        }
+
+        @Override
+        public String result() {
+            return group.result();
+        }
+    }
+
+    private static final class Accumulator implements GroupValue {
 
         private final String function;
+        // The column it is of, or -1 for count.
+        private final int index;
         private long count;
         private double sum;
         private long numbers;
@@ -485,11 +548,16 @@ public final class TableEngine {
         private String max;
         private Set<String> distinct;
 
-        Accumulator(final String function) {
+        Accumulator(final String function, final int index) {
             this.function = function.toLowerCase(Locale.ROOT);
+            this.index = index;
         }
 
-        void add(final String value) {
+        @Override
+        public void add(final List<String> row) {
+            final String value = index < 0
+                    ? null
+                    : cell(row, index);
             count++;
             switch (function) {
                 case "count_distinct" -> {
@@ -523,7 +591,8 @@ public final class TableEngine {
             }
         }
 
-        String result() {
+        @Override
+        public String result() {
             return switch (function) {
                 case "count" -> String.valueOf(count);
                 case "count_distinct" -> String.valueOf(distinct == null
@@ -547,6 +616,35 @@ public final class TableEngine {
         }
     }
 
+    /// @return The rows, with the computed columns added to each: each worked out in turn, so one can use those
+    /// before it.
+    private static RowSource withEvals(final RowSource source, final List<Eval> evals) throws IOException {
+        if (evals.isEmpty()) {
+            return source;
+        }
+        final List<String> header = new ArrayList<>(source.header());
+        final List<TableExpression> expressions = new ArrayList<>();
+        for (final Eval eval : evals) {
+            final String name = Objects.requireNonNullElse(eval.as(), "").strip();
+            if (name.isEmpty()) {
+                throw new WorkspaceException("Give each computed column a name (as).");
+            }
+            if (header.stream().anyMatch(name::equalsIgnoreCase)) {
+                throw new WorkspaceException("There is already a column '" + name + "'. Name the computed column "
+                                             + "something else.");
+            }
+            final TableExpression expression = TableExpression.compile(eval.expression(), header);
+            if (expression.isAggregate()) {
+                throw new ExpressionException("The computed column '" + name + "' uses an aggregate (e.g. sum or "
+                                             + "count), which works over groups of rows: give it in aggregates, "
+                                             + "with groupBy.");
+            }
+            expressions.add(expression);
+            header.add(name);
+        }
+        return new EvalSource(source, header, expressions);
+    }
+
     private interface RowSource extends AutoCloseable {
 
         List<String> header();
@@ -555,6 +653,57 @@ public final class TableEngine {
 
         @Override
         void close() throws IOException;
+    }
+
+    /// A table's rows, with computed columns added.
+    private static final class EvalSource implements RowSource {
+
+        private final RowSource source;
+        private final List<String> header;
+        private final List<TableExpression> expressions;
+
+        private EvalSource(final RowSource source,
+                           final List<String> header,
+                           final List<TableExpression> expressions) {
+            this.source = source;
+            this.header = List.copyOf(header);
+            this.expressions = expressions;
+        }
+
+        @Override
+        public List<String> header() {
+            return header;
+        }
+
+        @Override
+        public Iterator<List<String>> rows() {
+            final Iterator<List<String>> rows = source.rows();
+            final int width = header.size() - expressions.size();
+            return new Iterator<>() {
+                @Override
+                public boolean hasNext() {
+                    return rows.hasNext();
+                }
+
+                @Override
+                public List<String> next() {
+                    final List<String> row = new ArrayList<>(header.size());
+                    final List<String> given = rows.next();
+                    for (int i = 0; i < width; i++) {
+                        row.add(cell(given, i));
+                    }
+                    for (final TableExpression expression : expressions) {
+                        row.add(expression.evaluate(row));
+                    }
+                    return row;
+                }
+            };
+        }
+
+        @Override
+        public void close() throws IOException {
+            source.close();
+        }
     }
 
     private static final class CsvSource implements RowSource {
