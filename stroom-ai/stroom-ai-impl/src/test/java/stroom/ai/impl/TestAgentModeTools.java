@@ -27,6 +27,11 @@ import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.data.store.api.Store;
+import stroom.dictionary.api.WordListProvider;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.api.DocumentActionHandler;
+import stroom.docstore.api.DocumentTypeName;
+import stroom.explorer.api.ExplorerNodeService;
 import stroom.query.impl.QueryService;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -35,6 +40,7 @@ import stroom.task.api.TaskContext;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.multibindings.MapBinder;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -87,7 +93,10 @@ class TestAgentModeTools {
             Map.entry("task_list", false),
             Map.entry("ask_user", false),
             Map.entry("fetch_events", false),
-            Map.entry("search_events", false)));
+            Map.entry("search_events", false),
+            Map.entry("document_info", false),
+            Map.entry("read_document", false),
+            Map.entry("document_documentation", false)));
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
@@ -105,6 +114,11 @@ class TestAgentModeTools {
             bind(AskStroomAiConfig.class).toInstance(new AskStroomAiConfig());
             bind(McpElicitations.class).toInstance(Mockito.mock(McpElicitations.class));
             bind(AiChatRunManager.class).toInstance(Mockito.mock(AiChatRunManager.class));
+            bind(ExplorerNodeService.class).toInstance(Mockito.mock(ExplorerNodeService.class));
+            bind(DocDependencyService.class).toInstance(Mockito.mock(DocDependencyService.class));
+            bind(WordListProvider.class).toInstance(Mockito.mock(WordListProvider.class));
+            bind(AiAuditLog.class).toInstance(Mockito.mock(AiAuditLog.class));
+            MapBinder.newMapBinder(binder(), DocumentTypeName.class, DocumentActionHandler.class);
         }
     }).getInstance(BuiltInTools.class);
 

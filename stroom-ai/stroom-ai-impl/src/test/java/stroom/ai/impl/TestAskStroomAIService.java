@@ -48,6 +48,7 @@ import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.SearchRequestSource;
+import stroom.query.impl.QueryService;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
@@ -87,7 +88,7 @@ class TestAskStroomAIService {
                 null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null, compactor, null,
                 toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext,
                 () -> mcpElicitations, chatTitler, null,
-                backgroundTasks);
+                backgroundTasks, null);
     }
 
     private final McpElicitations mcpElicitations = Mockito.mock(McpElicitations.class);
@@ -101,7 +102,7 @@ class TestAskStroomAIService {
                 null, null, null, null, null, mcpClientCache, null, runManager, runDao, null, null,
                 contextAssembler, usageTracker, compactor, memoryService, toolApprovalService,
                 Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext, () -> null, chatTitler, null,
-                backgroundTasks);
+                backgroundTasks, null);
     }
 
     private static final DocRef CHOSEN_MODEL = new DocRef(OpenAIModelDoc.TYPE, "chosen-uuid", "Chosen");
@@ -114,7 +115,7 @@ class TestAskStroomAIService {
                 null, null, null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null,
                 compactor, null, toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new,
                 securityContext, () -> null, chatTitler, null,
-                backgroundTasks);
+                backgroundTasks, null);
     }
 
     @Test
@@ -534,16 +535,43 @@ class TestAskStroomAIService {
         final DocRef dataSource = new DocRef("Index", "index-uuid");
         final DocRef queryDoc = new DocRef("Query", "query-uuid");
 
+        final QueryService queryService = Mockito.mock(QueryService.class);
+
         assertThat(AskStroomAIService.sourceDocUuid(new DashboardTableContext("d", null,
                 DashboardSearchRequest.builder()
                         .search(Search.builder().dataSourceRef(dataSource).build())
-                        .build()))).isEqualTo("index-uuid");
+                        .build()), queryService)).isEqualTo("index-uuid");
+        // A query whose data source can't be found records its Query document instead.
         assertThat(AskStroomAIService.sourceDocUuid(new QueryTableContext("q", null,
                 QuerySearchRequest.builder()
                         .searchRequestSource(SearchRequestSource.builder().ownerDocRef(queryDoc).build())
-                        .build()))).isEqualTo("query-uuid");
-        assertThat(AskStroomAIService.sourceDocUuid(new DashboardTableContext("d", null, null))).isNull();
-        assertThat(AskStroomAIService.sourceDocUuid(new GeneralTableContext("g", List.of(), List.of()))).isNull();
+                        .build()), queryService)).isEqualTo("query-uuid");
+        assertThat(AskStroomAIService.sourceDocUuid(new DashboardTableContext("d", null, null), queryService))
+                .isNull();
+        assertThat(AskStroomAIService.sourceDocUuid(new GeneralTableContext("g", List.of(), List.of()),
+                queryService)).isNull();
+    }
+
+    @Test
+    void testSourceDocUuid_aQueryTableRecordsTheDataSourceItReads() {
+        // Regression test: a query table recorded its Query document, so losing Use on the index it read did not
+        // make the table unavailable.
+        final QueryService queryService = Mockito.mock(QueryService.class);
+        final String query = "from \"Logons\" select UserId";
+        Mockito.when(queryService.getReferencedDataSource(query))
+                .thenReturn(Optional.of(new DocRef("Index", "index-uuid", "Logons")));
+        final QueryTableContext context = new QueryTableContext("q", null, QuerySearchRequest.builder()
+                .searchRequestSource(SearchRequestSource.builder()
+                        .ownerDocRef(new DocRef("Query", "query-uuid"))
+                        .build())
+                .query(query)
+                .build());
+
+        assertThat(AskStroomAIService.sourceDocUuid(context, queryService)).isEqualTo("index-uuid");
+
+        // A query that can't be parsed falls back to its Query document.
+        Mockito.when(queryService.getReferencedDataSource(query)).thenThrow(new RuntimeException("bad query"));
+        assertThat(AskStroomAIService.sourceDocUuid(context, queryService)).isEqualTo("query-uuid");
     }
 
     @Test

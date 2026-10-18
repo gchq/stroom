@@ -31,6 +31,8 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiMemoryScope;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.DocumentReference;
+import stroom.ai.shared.DocumentReferenceContext;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -39,6 +41,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -471,20 +474,50 @@ public class AiDaoImpl implements AiDao {
     // Attachment operations
     // ---------------------------------------------------------------------
 
-    private static final Function<Record, AiChatAttachment> RECORD_TO_ATTACHMENT = record ->
-            new AiChatAttachment(
-                    record.get(AI_CHAT_ATTACHMENT.ID),
-                    record.get(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID),
-                    record.get(AI_CHAT_ATTACHMENT.CREATE_TIME_MS),
-                    record.get(AI_CHAT_ATTACHMENT.UPDATE_TIME_MS),
-                    AiAttachmentStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
-                            record.get(AI_CHAT_ATTACHMENT.STATUS).byteValue()),
-                    AiAttachmentType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
-                            record.get(AI_CHAT_ATTACHMENT.ATTACHMENT_TYPE).byteValue()),
-                    record.get(AI_CHAT_ATTACHMENT.DESCRIPTION),
-                    record.get(AI_CHAT_ATTACHMENT.ROW_COUNT),
-                    record.get(AI_CHAT_ATTACHMENT.TRUNCATED),
-                    record.get(AI_CHAT_ATTACHMENT.ERROR_MESSAGE));
+    /// The context of a document reference, which says which document it refers to. Only read for references, as
+    /// the context of an attached table holds its whole search request.
+    private static final Field<String> REFERENCE_JSON = DSL
+            .when(AI_CHAT_ATTACHMENT.ATTACHMENT_TYPE.eq((int) AiAttachmentType.DOCUMENT.getPrimitiveValue()),
+                    AI_CHAT_ATTACHMENT.CONTEXT_JSON)
+            .as("reference_json");
+
+    private static final Function<Record, AiChatAttachment> RECORD_TO_ATTACHMENT = record -> {
+        final DocumentReference reference = reference(record);
+        return new AiChatAttachment(
+                record.get(AI_CHAT_ATTACHMENT.ID),
+                record.get(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID),
+                record.get(AI_CHAT_ATTACHMENT.CREATE_TIME_MS),
+                record.get(AI_CHAT_ATTACHMENT.UPDATE_TIME_MS),
+                AiAttachmentStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                        record.get(AI_CHAT_ATTACHMENT.STATUS).byteValue()),
+                AiAttachmentType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                        record.get(AI_CHAT_ATTACHMENT.ATTACHMENT_TYPE).byteValue()),
+                record.get(AI_CHAT_ATTACHMENT.DESCRIPTION),
+                record.get(AI_CHAT_ATTACHMENT.ROW_COUNT),
+                record.get(AI_CHAT_ATTACHMENT.TRUNCATED),
+                record.get(AI_CHAT_ATTACHMENT.ERROR_MESSAGE),
+                NullSafe.get(reference, DocumentReference::getDocRef),
+                NullSafe.get(reference, DocumentReference::getPath));
+    };
+
+    // The document a reference attachment refers to, from its stored context, or null for any other attachment.
+    private static DocumentReference reference(final Record record) {
+        final String json = record.indexOf(REFERENCE_JSON.getName()) >= 0
+                ? record.get(REFERENCE_JSON.getName(), String.class)
+                : null;
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            final DocumentReferenceContext context = JsonUtil.readValue(json, DocumentReferenceContext.class);
+            return NullSafe.isEmptyCollection(context.getDocuments())
+                    ? null
+                    : context.getDocuments().getFirst();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read the context of a document reference: " + e.getMessage(), e);
+            return null;
+        }
+    }
 
     @Override
     public AiChatAttachment createAttachment(final int chatId,
@@ -542,7 +575,8 @@ public class AiDaoImpl implements AiDao {
                                 AI_CHAT_ATTACHMENT.DESCRIPTION,
                                 AI_CHAT_ATTACHMENT.ROW_COUNT,
                                 AI_CHAT_ATTACHMENT.TRUNCATED,
-                                AI_CHAT_ATTACHMENT.ERROR_MESSAGE)
+                                AI_CHAT_ATTACHMENT.ERROR_MESSAGE,
+                                REFERENCE_JSON)
                         .from(AI_CHAT_ATTACHMENT)
                         .where(AI_CHAT_ATTACHMENT.ID.eq(attachmentId))
                         .fetchOptional())
@@ -562,7 +596,8 @@ public class AiDaoImpl implements AiDao {
                                 AI_CHAT_ATTACHMENT.DESCRIPTION,
                                 AI_CHAT_ATTACHMENT.ROW_COUNT,
                                 AI_CHAT_ATTACHMENT.TRUNCATED,
-                                AI_CHAT_ATTACHMENT.ERROR_MESSAGE)
+                                AI_CHAT_ATTACHMENT.ERROR_MESSAGE,
+                                REFERENCE_JSON)
                         .from(AI_CHAT_ATTACHMENT)
                         .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))
                         .orderBy(AI_CHAT_ATTACHMENT.CREATE_TIME_MS.asc())

@@ -19,7 +19,9 @@ package stroom.ai.client;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatAttachment;
+import stroom.docref.DocRef;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.HtmlBuilder;
 
 import org.junit.jupiter.api.Test;
 
@@ -57,6 +59,51 @@ class TestAiAttachments {
                 .isEqualTo("Couldn't be downloaded: Timed out");
         assertThat(AiAttachments.isDownloading(attachment(AiAttachmentStatus.PENDING, null, false, null))).isTrue();
         assertThat(AiAttachments.isDownloading(attachment(AiAttachmentStatus.READY, 2, false, null))).isFalse();
+    }
+
+    @Test
+    void aDocumentsChipHasItsNameAndItsTypeAndPathAsItsTooltip() {
+        final AiChatAttachment document = document(new DocRef("Dictionary", "dict-uuid", "Malicious IPs"));
+
+        assertThat(AiAttachments.isDocument(document)).isTrue();
+        assertThat(AiAttachments.isDocument(attachment(AiAttachmentStatus.READY, 2, false, null))).isFalse();
+        assertThat(AiAttachments.isDocument(null)).isFalse();
+        assertThat(AiAttachments.documentLabel(document, "Dictionary 'Malicious IPs'")).isEqualTo("Malicious IPs");
+        assertThat(AiAttachments.documentLabel(document(new DocRef("Dictionary", "dict-uuid")), "Dictionary 'X'"))
+                .isEqualTo("Dictionary 'X'");
+        assertThat(AiAttachments.documentTooltip("Dictionary", "/Security/Lookups"))
+                .isEqualTo("Dictionary in /Security/Lookups");
+        assertThat(AiAttachments.documentTooltip(null, null)).isEqualTo("Document");
+        // It is ready at once, as there is nothing to download.
+        assertThat(AiAttachments.isDownloading(document)).isFalse();
+    }
+
+    @Test
+    void aDocumentsChipOpensItAndCanBeRemovedUntilSent() {
+        final AiChatAttachment document = document(new DocRef("Dictionary", "dict-uuid", "Malicious IPs"));
+
+        final String removable = chipHtml(document, true);
+        assertThat(removable)
+                .contains(AiAttachments.OPEN_DOC_TYPE_ATTRIBUTE + "=\"Dictionary\"")
+                .contains(AiAttachments.OPEN_DOC_UUID_ATTRIBUTE + "=\"dict-uuid\"")
+                .contains("Malicious IPs")
+                .contains("Dictionary in /Security/Lookups")
+                .contains(AiAttachments.REMOVE_ATTRIBUTE)
+                .doesNotContain("ai-attachment-chip-spinner")
+                .doesNotContain("data-attachment-id");
+        assertThat(chipHtml(document, false)).doesNotContain(AiAttachments.REMOVE_ATTRIBUTE);
+    }
+
+    private static String chipHtml(final AiChatAttachment attachment, final boolean removable) {
+        final HtmlBuilder hb = new HtmlBuilder();
+        AiAttachments.chip(hb, 7, attachment.getId(), "Dictionary 'Malicious IPs'", attachment, removable,
+                SvgImage.DOCUMENT_DICTIONARY, "Dictionary");
+        return hb.toSafeHtml().asString();
+    }
+
+    private static AiChatAttachment document(final DocRef docRef) {
+        return new AiChatAttachment(3, 2, 0L, 0L, AiAttachmentStatus.READY, AiAttachmentType.DOCUMENT,
+                "Dictionary 'Malicious IPs'", null, false, null, docRef, "/Security/Lookups");
     }
 
     private static AiChatAttachment attachment(final AiAttachmentStatus status,

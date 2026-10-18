@@ -60,6 +60,7 @@ import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DeleteAiMemoryRequest;
+import stroom.ai.shared.DocumentReferenceContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
@@ -141,6 +142,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Answers "Ask Stroom AI" questions. Each question is answered by an agent run (see {@link AiChatRunManager}),
@@ -220,6 +222,7 @@ public class AskStroomAIService {
     private final SecurityContext securityContext;
     private Duration stopWait = STOP_WAIT;
     private final McpAgentChat mcpAgentChat;
+    private final DocumentReferences documentReferences;
 
     @Inject
     public AskStroomAIService(final AiService aiService,
@@ -253,8 +256,10 @@ public class AskStroomAIService {
                               final Provider<McpElicitations> mcpElicitationsProvider,
                               final ChatTitler chatTitler,
                               final FollowUpSuggester followUpSuggester,
-                              final AiBackgroundTasks backgroundTasks) {
+                              final AiBackgroundTasks backgroundTasks,
+                              final DocumentReferences documentReferences) {
         this.chatTitler = chatTitler;
+        this.documentReferences = documentReferences;
         this.backgroundTasks = backgroundTasks;
         this.followUpSuggester = followUpSuggester;
         this.aiService = aiService;
@@ -819,6 +824,11 @@ public class AskStroomAIService {
     private void createAttachment(final int chatId,
                                   final AskStroomAiContext context,
                                   final AskStroomAiConfig config) {
+        if (context instanceof final DocumentReferenceContext documentReferenceContext) {
+            // References to documents, which have nothing to download.
+            documentReferences.attach(chatId, documentReferenceContext);
+            return;
+        }
         final AiAttachmentType attachmentType = switch (context) {
             case final DashboardTableContext dashboardTableContext -> AiAttachmentType.DASHBOARD;
             case final QueryTableContext queryTableContext -> AiAttachmentType.QUERY;
@@ -861,20 +871,41 @@ public class AskStroomAIService {
         }
     }
 
-    /**
-     * @return The UUID of the document whose data an attached table holds, so the user's access to it can be
-     * checked again whenever the table is used: the data source of a dashboard table, or the query document of a
-     * query table.
-     */
-    static String sourceDocUuid(final AskStroomAiContext context) {
+    /// @param context      An attached table.
+    /// @param queryService Finds the data source a StroomQL query reads.
+    /// @return The UUID of the document whose data an attached table holds, so the user's access to it can be
+    /// checked again whenever the table is used: the data source of a dashboard table, or the data source a query
+    /// table's StroomQL reads. If a query's data source can't be found, its Query document instead, which is then
+    /// checked for View.
+    static String sourceDocUuid(final AskStroomAiContext context, final QueryService queryService) {
         return switch (context) {
             case final DashboardTableContext dashboard -> NullSafe.get(dashboard.getSearchRequest(),
                     DashboardSearchRequest::getSearch, Search::getDataSourceRef, DocRef::getUuid);
-            case final QueryTableContext query -> NullSafe.get(query.getSearchRequest(),
-                    QuerySearchRequest::getSearchRequestSource, SearchRequestSource::getOwnerDocRef,
-                    DocRef::getUuid);
+            case final QueryTableContext query -> {
+                final String dataSourceUuid = queryDataSourceUuid(query, queryService);
+                yield dataSourceUuid != null
+                        ? dataSourceUuid
+                        : NullSafe.get(query.getSearchRequest(), QuerySearchRequest::getSearchRequestSource,
+                                SearchRequestSource::getOwnerDocRef, DocRef::getUuid);
+            }
             default -> null;
         };
+    }
+
+    // The UUID of the data source a query table's StroomQL reads, or null if it can't be found.
+    private static String queryDataSourceUuid(final QueryTableContext query, final QueryService queryService) {
+        final String queryText = NullSafe.get(query.getSearchRequest(), QuerySearchRequest::getQuery);
+        if (queryService == null || NullSafe.isBlankString(queryText)) {
+            return null;
+        }
+        try {
+            return queryService.getReferencedDataSource(queryText)
+                    .map(DocRef::getUuid)
+                    .orElse(null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the data source of a query table: " + e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
@@ -1076,7 +1107,8 @@ public class AskStroomAIService {
                             info(taskContext, () -> "Async download finished: attachmentId=" + attachmentId
                                                     + " rows=" + reportedRowCount + " cols=" + colCount
                                                     + " truncated=" + truncated);
-                            storeAttachment(chatId, attachmentId, targetFile, description, sourceDocUuid(context));
+                            storeAttachment(chatId, attachmentId, targetFile, description,
+                                    sourceDocUuid(context, queryService));
                             aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
                                     reportedRowCount, description, null, truncated);
                         } finally {
@@ -1231,7 +1263,12 @@ public class AskStroomAIService {
             LOGGER.debug(() -> "processQuestion: chatId=" + chatId
                                + " readyAttachments=" + readyAttachments.size());
 
-            final Map<Integer, AiChatAttachment> attachmentMap = readyAttachments.stream()
+            // With the documents attached as references, which the model is given a note about.
+            final Map<Integer, AiChatAttachment> attachmentMap = Stream.concat(readyAttachments.stream(),
+                            attachments.stream()
+                                    .filter(a -> a.getAttachmentType() != null
+                                                 && a.getAttachmentType().isReference())
+                                    .filter(a -> a.getStatus() == AiAttachmentStatus.READY))
                     .collect(Collectors.toMap(AiChatAttachment::getId, a -> a));
             // Messages the user sends after this are steering messages for the run to pick up.
             final int steerAfterMessageId = aiService.getMessages(chatId).stream()
@@ -2392,6 +2429,17 @@ public class AskStroomAIService {
     private void writeAttachmentAsMarkdownTable(final BufferedWriter writer,
                                                 final int attachmentId,
                                                 final String description) throws IOException {
+        // A document attached as a reference holds no data of its own.
+        final boolean reference = aiService.getAttachment(attachmentId)
+                .map(AiChatAttachment::getAttachmentType)
+                .filter(AiAttachmentType::isReference)
+                .isPresent();
+        if (reference) {
+            writer.write("_Referenced document: ");
+            writer.write(NullSafe.string(description));
+            writer.write("_\n");
+            return;
+        }
         final Path mdFile = workspaceStore.localFile(attachmentId);
         if (!Files.exists(mdFile)) {
             LOGGER.debug(() -> "writeAttachmentAsMarkdownTable: file not found for attachmentId="

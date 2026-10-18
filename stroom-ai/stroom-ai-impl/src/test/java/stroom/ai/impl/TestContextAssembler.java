@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentStatus;
@@ -25,6 +26,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
+import stroom.docref.DocRef;
 import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.data.message.AiMessage;
@@ -91,7 +93,7 @@ class TestContextAssembler {
         final stroom.ai.impl.AiWorkspaceDao workspaceDao = Mockito.mock(stroom.ai.impl.AiWorkspaceDao.class);
         final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
         final ContextAssembler assembler = new ContextAssembler(
-                () -> null, AiConfig::new, null, aiService, aiDao, workspaceDao, tracker, null);
+                () -> null, AiConfig::new, null, aiService, aiDao, workspaceDao, tracker, null, null);
         Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
                 new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "table", 1, null),
                 new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, 100),
@@ -131,7 +133,7 @@ class TestContextAssembler {
         final AiWorkspaceDao workspaceDao = Mockito.mock(AiWorkspaceDao.class);
         final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
         final ContextAssembler assembler = new ContextAssembler(
-                () -> null, AiConfig::new, null, aiService, null, workspaceDao, tracker, null);
+                () -> null, AiConfig::new, null, aiService, null, workspaceDao, tracker, null, null);
         final List<AiChatMessage> history = List.of(
                 new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "Firewall events", 0, null),
                 new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 2, null));
@@ -151,7 +153,7 @@ class TestContextAssembler {
     void testOnlyModelsWithToolsAreToldAboutThem() {
         final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
                 Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
-                Mockito.mock(ContextUsageTracker.class), null);
+                Mockito.mock(ContextUsageTracker.class), null, null);
         final List<AiChatMessage> history = List.of(
                 new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, null));
         final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
@@ -173,7 +175,7 @@ class TestContextAssembler {
     void testConversationContextIsTheChatAsCompacted() {
         final stroom.ai.api.AiService aiService = Mockito.mock(stroom.ai.api.AiService.class);
         final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null, aiService, null,
-                Mockito.mock(AiWorkspaceDao.class), Mockito.mock(ContextUsageTracker.class), null);
+                Mockito.mock(AiWorkspaceDao.class), Mockito.mock(ContextUsageTracker.class), null, null);
         Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
                 new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "first question", 1, null),
                 new AiChatMessage(2, 1, 0L, AiMessageType.AI_RESPONSE, null, "a long first answer", 1, null),
@@ -203,7 +205,7 @@ class TestContextAssembler {
         final AiDao aiDao = Mockito.mock(AiDao.class);
         final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
                 Mockito.mock(stroom.ai.api.AiService.class), aiDao, Mockito.mock(AiWorkspaceDao.class),
-                Mockito.mock(ContextUsageTracker.class), null);
+                Mockito.mock(ContextUsageTracker.class), null, null);
         final List<AiChatMessage> history = List.of(
                 new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, null));
         final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
@@ -231,7 +233,7 @@ class TestContextAssembler {
         final WorkspaceStore workspaceStore = Mockito.mock(WorkspaceStore.class);
         final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, workspaceStore,
                 Mockito.mock(stroom.ai.api.AiService.class), null, workspaceDao,
-                Mockito.mock(ContextUsageTracker.class), null);
+                Mockito.mock(ContextUsageTracker.class), null, null);
         final AiChatAttachment attachment = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
                 AiAttachmentType.DASHBOARD, "Firewall events", 2, false, null);
         final Path table = tempDir.resolve("50.md");
@@ -266,7 +268,7 @@ class TestContextAssembler {
                 .build();
         final ContextAssembler assembler = new ContextAssembler(() -> config, AiConfig::new, workspaceStore,
                 Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
-                Mockito.mock(ContextUsageTracker.class), null);
+                Mockito.mock(ContextUsageTracker.class), null, null);
         final AiChatAttachment attachment = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
                 AiAttachmentType.DASHBOARD, "Firewall events", 3, false, null);
         final Path table = tempDir.resolve("50.md");
@@ -326,4 +328,59 @@ class TestContextAssembler {
         assertThat(ContextAssembler.eventsNote("| Column | Type |\n| User | text |\n| Count | number |")).isEmpty();
     }
 
+
+    @Test
+    void testAReferencedDocumentsNoteSurvivesCompaction() {
+        final DocRef dictionary = new DocRef("Dictionary", "dict-uuid", "Malicious IPs");
+        final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+        Mockito.when(documentAccess.canView(dictionary)).thenReturn(true);
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
+                Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
+                Mockito.mock(ContextUsageTracker.class), null,
+                new DocumentReferences(Mockito.mock(stroom.ai.api.AiService.class), documentAccess));
+        final AiChatAttachment reference = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
+                AiAttachmentType.DOCUMENT, "Dictionary 'Malicious IPs'", null, false, null, dictionary,
+                "/Security/Lookups");
+        final List<AiChatMessage> history = List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "Dictionary 'Malicious IPs'", 1, null),
+                new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q1", 1, null),
+                new AiChatMessage(3, 1, 0L, AiMessageType.AI_RESPONSE, null, "a1", 1, null),
+                new AiChatMessage(4, 1, 0L, AiMessageType.USER_MESSAGE, null, "q2", 2, null));
+
+        // The turn it was attached in is compacted.
+        final List<ChatMessage> messages = assembler.assemble(new AskStroomAiRequest(null, null, null, "q2"), 1,
+                java.util.Map.of(50, reference), history,
+                new CompactionRecord(1, 1, "Summary", 0, 0, 0, false, false), true);
+
+        assertThat(messages).filteredOn(UserMessage.class::isInstance)
+                .extracting(message -> ((UserMessage) message).singleText())
+                .contains("[Referenced document: Dictionary 'Malicious IPs' (uuid dict-uuid, /Security/Lookups). "
+                          + "Use document_info, read_document or document_documentation with its uuid to see it.]")
+                .noneMatch(text -> text.equals("q1"));
+    }
+
+    @Test
+    void testAReferencedDocumentTheUserCanNoLongerViewIsSaidToBeGone() {
+        final DocRef dictionary = new DocRef("Dictionary", "dict-uuid", "Malicious IPs");
+        final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+        Mockito.when(documentAccess.canView(dictionary)).thenReturn(false);
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
+                Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
+                Mockito.mock(ContextUsageTracker.class), null,
+                new DocumentReferences(Mockito.mock(stroom.ai.api.AiService.class), documentAccess));
+        final AiChatAttachment reference = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
+                AiAttachmentType.DOCUMENT, "Dictionary 'Malicious IPs'", null, false, null, dictionary,
+                "/Security/Lookups");
+        final List<AiChatMessage> history = List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "Dictionary 'Malicious IPs'", 1, null),
+                new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, null));
+
+        final List<ChatMessage> messages = assembler.assemble(new AskStroomAiRequest(null, null, null, "q"), 1,
+                java.util.Map.of(50, reference), history, CompactionRecord.NONE, true);
+
+        assertThat(((UserMessage) messages.get(1)).singleText())
+                .contains("The referenced document Dictionary 'Malicious IPs' is no longer available")
+                .doesNotContain("dict-uuid")
+                .doesNotContain("/Security/Lookups");
+    }
 }

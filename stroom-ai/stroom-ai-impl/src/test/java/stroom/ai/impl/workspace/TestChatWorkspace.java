@@ -90,6 +90,7 @@ class TestChatWorkspace {
                 new DbTestModule(),
                 new AiDbModule(),
                 new AiDaoModule(),
+                new MockSourceDocModule(),
                 new AbstractModule() {
                     @Override
                     protected void configure() {

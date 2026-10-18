@@ -24,6 +24,7 @@ import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiContextUsage;
@@ -158,6 +159,7 @@ public class ContextAssembler {
     private final AiWorkspaceDao workspaceDao;
     private final ContextUsageTracker usageTracker;
     private final AiMemoryService memoryService;
+    private final DocumentReferences documentReferences;
 
     @Inject
     ContextAssembler(final Provider<AskStroomAiConfig> defaultConfigProvider,
@@ -167,7 +169,8 @@ public class ContextAssembler {
                      final AiDao aiDao,
                      final AiWorkspaceDao workspaceDao,
                      final ContextUsageTracker usageTracker,
-                     final AiMemoryService memoryService) {
+                     final AiMemoryService memoryService,
+                     final DocumentReferences documentReferences) {
         this.defaultConfigProvider = defaultConfigProvider;
         this.aiConfigProvider = aiConfigProvider;
         this.workspaceStore = workspaceStore;
@@ -176,6 +179,7 @@ public class ContextAssembler {
         this.workspaceDao = workspaceDao;
         this.usageTracker = usageTracker;
         this.memoryService = memoryService;
+        this.documentReferences = documentReferences;
     }
 
     /**
@@ -285,7 +289,12 @@ public class ContextAssembler {
         for (int i = 0; i < relevantHistory.size() - 1; i++) {
             final AiChatMessage msg = relevantHistory.get(i);
             if (msg.getMessageType() == AiMessageType.ATTACHMENT) {
-                // Attached tables are always kept, as the user attached them to be used.
+                // Attached tables and documents are always kept, as the user attached them to be used.
+                final UserMessage referenceMessage = referenceMessage(msg, attachmentMap);
+                if (referenceMessage != null) {
+                    messages.add(referenceMessage);
+                    continue;
+                }
                 final UserMessage attachmentMessage = tablesAsProfiles
                         ? Objects.requireNonNullElseGet(profileMessage(chatId, msg, attachmentMap),
                                 () -> attachmentMessage(msg, attachmentMap))
@@ -555,6 +564,20 @@ public class ContextAssembler {
             LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
             return null;
         }
+    }
+
+    /// @return The note about a document attached to the chat as a reference, or null if the message is not of
+    /// one.
+    private UserMessage referenceMessage(final AiChatMessage msg,
+                                         final Map<Integer, AiChatAttachment> attachmentMap) {
+        final AiChatAttachment attachment = NullSafe.get(msg.getAttachmentId(), attachmentMap::get);
+        if (attachment == null || attachment.getAttachmentType() != AiAttachmentType.DOCUMENT) {
+            return null;
+        }
+        // Without a way to check the user can still view it, the model is told nothing about what it was.
+        return documentReferences != null
+                ? documentReferences.note(attachment)
+                : DocumentReferences.unavailableNote(attachment.getDescription());
     }
 
     static UserMessage unavailableNote(final String description, final String reason) {

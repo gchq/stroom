@@ -49,6 +49,11 @@ public class DataSourceProviderRegistry {
         }
     }
 
+    /// @return The document types that searches can be run on, one for each provider, e.g. `Index` or `View`.
+    public Set<String> getDataSourceTypes() {
+        return Set.copyOf(dataSourceProviders.keySet());
+    }
+
     public Optional<DataSourceProvider> getDataSourceProvider(final String type) {
         return Optional.ofNullable(dataSourceProviders.get(type));
     }

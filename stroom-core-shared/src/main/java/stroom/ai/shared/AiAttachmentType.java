@@ -35,7 +35,10 @@ public enum AiAttachmentType implements HasPrimitiveValue {
     /**
      * Any other workspace file, e.g. the profile of an attached table, or a file written by a data tool.
      */
-    WORKSPACE_FILE(4);
+    WORKSPACE_FILE(4),
+    /// A Stroom document the user attached to the chat as a reference, from the Explorer tree. It has no content
+    /// of its own: the agent reads the document with its document tools.
+    DOCUMENT(5);
 
     public static final PrimitiveValueConverter<AiAttachmentType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiAttachmentType.class, AiAttachmentType.values());
@@ -57,5 +60,11 @@ public enum AiAttachmentType implements HasPrimitiveValue {
      */
     public boolean isTableContext() {
         return this == DASHBOARD || this == QUERY || this == GENERAL;
+    }
+
+    /// @return True if this refers to something in Stroom (e.g. a document) rather than holding data of its own,
+    /// so there is nothing to download.
+    public boolean isReference() {
+        return this == DOCUMENT;
     }
 }

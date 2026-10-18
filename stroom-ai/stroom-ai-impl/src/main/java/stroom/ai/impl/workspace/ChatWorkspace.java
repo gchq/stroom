@@ -182,6 +182,38 @@ public class ChatWorkspace {
     /// @return The file's id.
     public int write(final int chatId, final WorkspacePath path, final Path content, final String sourceDocUuid) {
         checkWritable(path);
+        return store(chatId, path, content, sourceDocUuid);
+    }
+
+    /// Saves the content of a Stroom document a tool has read, in the read-only [Area#DOCUMENTS] area, replacing
+    /// any file already at the path. The file records the document as its source, so the user's access to the
+    /// document is checked again whenever the file is used.
+    ///
+    /// @param chatId        The chat.
+    /// @param path          Where to save it; must be a file in [Area#DOCUMENTS].
+    /// @param content       The content.
+    /// @param sourceDocUuid The UUID of the document the content came from.
+    /// @return The file's id.
+    public int writeDocument(final int chatId,
+                             final WorkspacePath path,
+                             final String content,
+                             final String sourceDocUuid) {
+        if (!path.isFile() || path.area() != Area.DOCUMENTS) {
+            throw new WorkspaceException(path + " is not a file in /documents/.");
+        }
+        final Path temp = tempFile();
+        try {
+            Files.writeString(temp, content, StandardCharsets.UTF_8);
+            return store(chatId, path, temp, sourceDocUuid);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        } finally {
+            deleteQuietly(temp);
+        }
+    }
+
+    // Stores a file at a path already checked, within the limits.
+    private int store(final int chatId, final WorkspacePath path, final Path content, final String sourceDocUuid) {
         final long size;
         try {
             size = Files.size(content);
