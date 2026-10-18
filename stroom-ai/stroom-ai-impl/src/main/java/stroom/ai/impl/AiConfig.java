@@ -44,6 +44,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     static final int DEFAULT_MAX_ELICITATIONS_PER_NODE = 5;
     static final int DEFAULT_MAX_CHAT_TITLE_WORDS = 12;
     static final int DEFAULT_MAX_TOOL_ITERATIONS = 100;
+    static final long DEFAULT_MAX_TAB_SNAPSHOT_BYTES = 2L * 1024 * 1024;
 
     private final AiDbConfig dbConfig;
     private final CacheConfig chatResponseCache;
@@ -63,6 +64,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final int maxChatTitleWords;
     private final boolean suggestFollowUps;
     private final int maxToolIterations;
+    private final boolean shareActiveTab;
+    private final long maxTabSnapshotBytes;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -86,6 +89,34 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         maxChatTitleWords = DEFAULT_MAX_CHAT_TITLE_WORDS;
         suggestFollowUps = true;
         maxToolIterations = DEFAULT_MAX_TOOL_ITERATIONS;
+        shareActiveTab = true;
+        maxTabSnapshotBytes = DEFAULT_MAX_TAB_SNAPSHOT_BYTES;
+    }
+
+    /// As the constructor that reads the config, with the active tab shared and the default tab snapshot limit.
+    public AiConfig(final AiDbConfig dbConfig,
+                    final CacheConfig chatResponseCache,
+                    final StroomDuration maxRunDuration,
+                    final StroomDuration unattendedAfter,
+                    final Integer maxRunsPerUser,
+                    final Integer maxRunsPerNode,
+                    final AiCompactionConfig compaction,
+                    final StroomDuration workspaceFileRetention,
+                    final StroomDuration chatRetention,
+                    final AiWorkspaceConfig workspace,
+                    final Boolean allowApproveEverything,
+                    final Integer toolGroupThreshold,
+                    final StroomDuration elicitationTimeout,
+                    final Integer maxElicitationsPerNode,
+                    final Boolean askReadOnlyToolsAfterUntrustedContent,
+                    final Integer maxChatTitleWords,
+                    final Boolean suggestFollowUps,
+                    final Integer maxToolIterations) {
+        this(dbConfig, chatResponseCache, maxRunDuration, unattendedAfter, maxRunsPerUser, maxRunsPerNode,
+                compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
+                toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
+                askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations, null,
+                null);
     }
 
     @SuppressWarnings("unused")
@@ -108,7 +139,9 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     final Boolean askReadOnlyToolsAfterUntrustedContent,
                     @JsonProperty("maxChatTitleWords") final Integer maxChatTitleWords,
                     @JsonProperty("suggestFollowUps") final Boolean suggestFollowUps,
-                    @JsonProperty("maxToolIterations") final Integer maxToolIterations) {
+                    @JsonProperty("maxToolIterations") final Integer maxToolIterations,
+                    @JsonProperty("shareActiveTab") final Boolean shareActiveTab,
+                    @JsonProperty("maxTabSnapshotBytes") final Long maxTabSnapshotBytes) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -132,6 +165,29 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.suggestFollowUps = Objects.requireNonNullElse(suggestFollowUps, true);
         this.maxToolIterations = Math.max(1, Objects.requireNonNullElse(maxToolIterations,
                 DEFAULT_MAX_TOOL_ITERATIONS));
+        this.shareActiveTab = Objects.requireNonNullElse(shareActiveTab, true);
+        this.maxTabSnapshotBytes = Math.max(0, Objects.requireNonNullElse(maxTabSnapshotBytes,
+                DEFAULT_MAX_TAB_SNAPSHOT_BYTES));
+    }
+
+    /// @return True if what the user sees in their active document tab (unsaved changes included) is shared with
+    /// the questions they ask in a chat.
+    @JsonPropertyDescription("If true, what the user sees in their active document tab (unsaved changes "
+                             + "included) is shared with each question they ask in an 'Ask Stroom AI' chat, shown "
+                             + "as a chip by the input that they can remove. Only documents the user can view are "
+                             + "shared.")
+    @JsonProperty("shareActiveTab")
+    public boolean isShareActiveTab() {
+        return shareActiveTab;
+    }
+
+    /// @return The most bytes of a tab's content kept for one question; parts beyond it are cut short.
+    @JsonPropertyDescription("The most bytes of an active tab's content (its text parts, as edited) kept for one "
+                             + "question in an 'Ask Stroom AI' chat. Parts beyond the limit are cut short, and the "
+                             + "agent is told so.")
+    @JsonProperty("maxTabSnapshotBytes")
+    public long getMaxTabSnapshotBytes() {
+        return maxTabSnapshotBytes;
     }
 
     @JsonPropertyDescription("The most calls to the model the agent may make for one question while it uses "
@@ -292,6 +348,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", maxChatTitleWords=" + maxChatTitleWords +
                ", suggestFollowUps=" + suggestFollowUps +
                ", maxToolIterations=" + maxToolIterations +
+               ", shareActiveTab=" + shareActiveTab +
+               ", maxTabSnapshotBytes=" + maxTabSnapshotBytes +
                '}';
     }
 }

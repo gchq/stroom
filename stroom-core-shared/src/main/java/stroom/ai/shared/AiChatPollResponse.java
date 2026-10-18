@@ -60,6 +60,23 @@ public class AiChatPollResponse {
      */
     @JsonProperty
     private final List<AiChatMessage> watchedMessages;
+    /**
+     * False if an administrator has turned off sharing the active tab with chats, or null if not known.
+     */
+    @JsonProperty
+    private final Boolean shareActiveTab;
+
+    public AiChatPollResponse(final List<AiChatMessage> newMessages,
+                              final List<AiChatAttachment> attachments,
+                              final AiChatMessage workingMessage,
+                              final Boolean complete,
+                              final AiChatRun run,
+                              final AiContextUsage contextUsage,
+                              final List<AiChatMessage> streamingMessages,
+                              final List<AiChatMessage> watchedMessages) {
+        this(newMessages, attachments, workingMessage, complete, run, contextUsage, streamingMessages,
+                watchedMessages, null);
+    }
 
     @JsonCreator
     public AiChatPollResponse(@JsonProperty("newMessages") final List<AiChatMessage> newMessages,
@@ -69,7 +86,8 @@ public class AiChatPollResponse {
                               @JsonProperty("run") final AiChatRun run,
                               @JsonProperty("contextUsage") final AiContextUsage contextUsage,
                               @JsonProperty("streamingMessages") final List<AiChatMessage> streamingMessages,
-                              @JsonProperty("watchedMessages") final List<AiChatMessage> watchedMessages) {
+                              @JsonProperty("watchedMessages") final List<AiChatMessage> watchedMessages,
+                              @JsonProperty("shareActiveTab") final Boolean shareActiveTab) {
         this.newMessages = newMessages;
         this.attachments = attachments;
         this.workingMessage = workingMessage;
@@ -78,6 +96,7 @@ public class AiChatPollResponse {
         this.contextUsage = contextUsage;
         this.streamingMessages = streamingMessages;
         this.watchedMessages = watchedMessages;
+        this.shareActiveTab = shareActiveTab;
     }
 
     public List<AiChatMessage> getNewMessages() {
@@ -119,5 +138,12 @@ public class AiChatPollResponse {
      */
     public List<AiChatMessage> getWatchedMessages() {
         return watchedMessages;
+    }
+
+    /**
+     * @return False if an administrator has turned off sharing the active tab with chats, or null if not known.
+     */
+    public Boolean getShareActiveTab() {
+        return shareActiveTab;
     }
 }

@@ -16,9 +16,12 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.TabSnapshots;
+import stroom.ai.impl.TabSnapshots.UnsavedPart;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.Word;
@@ -38,6 +41,7 @@ import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -70,14 +74,23 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
 
     private final DocumentAccess documentAccess;
     private final Provider<WordListProvider> wordListProviderProvider;
+    private final TabSnapshots tabSnapshots;
+
+    ReadDocumentTool(final ChatWorkspace workspace,
+                     final DocumentAccess documentAccess,
+                     final Provider<WordListProvider> wordListProviderProvider) {
+        this(workspace, documentAccess, wordListProviderProvider, null);
+    }
 
     @Inject
     ReadDocumentTool(final ChatWorkspace workspace,
                      final DocumentAccess documentAccess,
-                     final Provider<WordListProvider> wordListProviderProvider) {
+                     final Provider<WordListProvider> wordListProviderProvider,
+                     final TabSnapshots tabSnapshots) {
         super(workspace);
         this.documentAccess = documentAccess;
         this.wordListProviderProvider = wordListProviderProvider;
+        this.tabSnapshots = tabSnapshots;
     }
 
     @Override
@@ -116,7 +129,23 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         if (DictionaryDoc.TYPE.equals(docRef.getType())) {
             return readDictionary(chatId, docRef, part);
         }
-        return readParts(chatId, docRef, part);
+        final String result = readParts(chatId, docRef, part);
+        return result + savedVersionNote(chatId, docRef);
+    }
+
+    // For a document that is the user's active tab with unsaved changes, a note that what was read is as saved,
+    // and where the tab's content as edited is.
+    private String savedVersionNote(final int chatId, final DocRef docRef) {
+        if (tabSnapshots == null) {
+            return "";
+        }
+        return tabSnapshots.forLatestQuestion(chatId)
+                .filter(TabSnapshots.StoredTabSnapshot::dirty)
+                .filter(snapshot -> snapshot.docRef() != null
+                                    && docRef.getUuid().equals(snapshot.docRef().getUuid()))
+                .map(snapshot -> "\n\nThis is the document as saved. It is the user's active tab, with unsaved "
+                                 + "changes: its content as edited is in /tabs/" + snapshot.number() + "/.")
+                .orElse("");
     }
 
     // Any document but a dictionary: its text parts, by name.
@@ -180,9 +209,23 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
             return "A dictionary has no part '" + part + "'. Leave part out for its words combined with its "
                    + "imports', or give part 'own' for only its own words.";
         }
-        final List<String> ownWords = words(doc.getData());
+        // While the dictionary is the user's active tab with unsaved changes, its own words are as edited there.
+        final UnsavedPart unsaved = NullSafe.get(tabSnapshots, snapshots ->
+                snapshots.unsavedPart(chatId, docRef, AiTabSnapshotPart.DATA).orElse(null));
+        final boolean useUnsaved = unsaved != null && !unsaved.cut();
+        final List<String> ownWords = words(useUnsaved
+                ? unsaved.text()
+                : doc.getData());
         final StringBuilder sb = new StringBuilder(describe(docRef)).append(", ")
                 .append(documentAccess.path(docRef)).append(".\n");
+        if (useUnsaved) {
+            sb.append("It is the user's active tab, with unsaved changes: its own words are as edited there (")
+                    .append(unsaved.path()).append("), not as saved. The words of the dictionaries it imports are "
+                                               + "as saved.\n");
+        } else if (unsaved != null) {
+            sb.append("It is the user's active tab, with unsaved changes, but its words as edited were too many "
+                      + "to share, so its words as saved are used. Say so.\n");
+        }
         if (part != null) {
             sb.append("It has ").append(ownWords.size()).append(" word(s) of its own, not counting those of the "
                                                                  + "dictionaries it imports.\n");
@@ -198,10 +241,17 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         walkImports(chatId, docRef, doc, 1, visited, tree, notIncluded);
 
         final WordList combined = wordListProviderProvider.get().getCombinedWordList(docRef);
-        sb.append("It has ").append(combined.size()).append(" word(s) in all, combined with the dictionaries it "
-                                                             + "imports as Stroom uses it (each import's words "
-                                                             + "first, duplicates removed); ")
-                .append(ownWords.size()).append(" are its own.\n");
+        final List<SourcedWord> sourced = useUnsaved
+                ? withUnsavedOwnWords(docRef, combined, ownWords)
+                : sourcedWords(docRef, combined);
+        sb.append("It has ").append(sourced.size()).append(" word(s) in all, combined with the dictionaries it "
+                                                           + "imports as Stroom uses it (each import's words "
+                                                           + "first, duplicates removed); ")
+                .append(ownWords.size()).append(" are its own")
+                .append(useUnsaved
+                        ? " (unsaved)"
+                        : "")
+                .append(".\n");
         if (!tree.isEmpty()) {
             sb.append("\nImports:\n").append(tree);
         }
@@ -212,14 +262,11 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         }
         final StringBuilder table = new StringBuilder("| Word | Source |\n| --- | --- |\n");
         final StringBuilder inline = new StringBuilder();
-        for (final Word word : combined.getWordList()) {
-            final String source = combined.getSource(word)
-                    .map(ReadDocumentTool::describe)
-                    .orElse("?");
-            table.append("| ").append(cell(word.getWord())).append(" | ").append(cell(source)).append(" |\n");
-            inline.append(word.getWord());
-            if (!docRef.getUuid().equals(word.getSourceUuid())) {
-                inline.append("  (from ").append(source).append(')');
+        for (final SourcedWord word : sourced) {
+            table.append("| ").append(cell(word.word())).append(" | ").append(cell(word.source())).append(" |\n");
+            inline.append(word.word());
+            if (!word.own()) {
+                inline.append("  (from ").append(word.source()).append(')');
             }
             inline.append('\n');
         }
@@ -233,6 +280,41 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                         + "each came from, to ").append(path)
                 .append(". Query it with the table tool (e.g. to count words by Source, or find a word).\n\n")
                 .append(previewNote(inline.toString())).toString().stripTrailing();
+    }
+
+    /// @return The words of a dictionary's combined list, each with the dictionary it came from.
+    static List<SourcedWord> sourcedWords(final DocRef docRef, final WordList combined) {
+        final List<SourcedWord> words = new ArrayList<>();
+        for (final Word word : combined.getWordList()) {
+            final String source = combined.getSource(word)
+                    .map(ReadDocumentTool::describe)
+                    .orElse("?");
+            words.add(new SourcedWord(word.getWord(), source, docRef.getUuid().equals(word.getSourceUuid())));
+        }
+        return words;
+    }
+
+    /// Combines a dictionary's own words as the user has edited them (unsaved) with the words of its imports as
+    /// saved, as Stroom would once it is saved: the imports' words first, then its own, with a word in both kept
+    /// as its own (the dictionary nearest the top wins).
+    ///
+    /// @param docRef   The dictionary.
+    /// @param combined Its combined list, as saved.
+    /// @param ownWords Its own words, as edited.
+    /// @return The words, each with the dictionary it comes from.
+    static List<SourcedWord> withUnsavedOwnWords(final DocRef docRef,
+                                                 final WordList combined,
+                                                 final List<String> ownWords) {
+        final Set<String> own = new LinkedHashSet<>(ownWords);
+        final List<SourcedWord> words = new ArrayList<>();
+        for (final SourcedWord word : sourcedWords(docRef, combined)) {
+            if (!word.own() && !own.contains(word.word())) {
+                words.add(word);
+            }
+        }
+        final String source = describe(docRef) + " (unsaved, as edited in the user's tab)";
+        own.forEach(word -> words.add(new SourcedWord(word, source, true)));
+        return words;
     }
 
     // Adds a line for each of a dictionary's imports, and theirs below, noting any the user can't view. Each import
@@ -352,5 +434,18 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
 
     private static String cell(final String value) {
         return NullSafe.string(value).replace("\\", "\\\\").replace("|", "\\|");
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A word of a dictionary's combined list.
+    ///
+    /// @param word   The word.
+    /// @param source The dictionary it comes from, e.g. "Dictionary 'Known bad'".
+    /// @param own    True if it is the dictionary's own word, rather than an import's.
+    record SourcedWord(String word, String source, boolean own) {
+
     }
 }

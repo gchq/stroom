@@ -165,6 +165,38 @@ class TestUserActionService {
     }
 
     @Test
+    void createQueryLetsTheBrowserOpenTheNewQueryDialogWithoutCreatingAnything() {
+        final String query = "from \"Windows events\" select User";
+        Mockito.when(lookup.usableDataSource(query)).thenReturn(Optional.of(new DocRef("View", "v", "V")));
+        storeResult(createQuery(query));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "q1");
+
+        assertThat(result.isDone()).isTrue();
+        assertThat(result.getCreateQueryName()).isEqualTo("Windows users");
+        assertThat(result.getCreateQueryText()).isEqualTo(query);
+        // The button can be used again (e.g. after the dialog was cancelled), so the result isn't changed.
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.eq(UserActions.CREATE_QUERY),
+                Mockito.anyString(), Mockito.eq("Opened the New Query dialog"), Mockito.eq(true));
+    }
+
+    @Test
+    void createQueryIsRefusedOnceTheUserCanNoLongerRunTheQuery() {
+        final String query = "from \"Windows events\" select User";
+        Mockito.when(lookup.usableDataSource(query)).thenReturn(Optional.empty());
+        storeResult(createQuery(query));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "q1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getCreateQueryText()).isNull();
+        Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.eq(UserActions.CREATE_QUERY),
+                Mockito.anyString(), Mockito.contains("can't use"), Mockito.eq(false));
+    }
+
+    @Test
     void anUnknownActionOrMessageDoesNothing() {
         storeResult(enable(Status.PENDING, Long.MAX_VALUE));
 
@@ -184,6 +216,11 @@ class TestUserActionService {
         return new UserActionRecord("enable-31", UserActions.ENABLE_PROCESSOR_FILTER,
                 "Enable processor filter 31 on pipeline 'Acme-Events'", null, null, 31, PIPELINE, null, List.of(),
                 expiresMs, status, null);
+    }
+
+    private static UserActionRecord createQuery(final String query) {
+        return new UserActionRecord("q1", UserActions.CREATE_QUERY, "Create query 'Windows users'", null, null,
+                null, null, query, List.of(), Long.MAX_VALUE, Status.PENDING, null, "Windows users");
     }
 
     private static ProcessorFilter filter(final boolean enabled) {

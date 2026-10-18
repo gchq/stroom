@@ -62,6 +62,9 @@ public class WorkspaceStore {
 
     static final String REASON_EXPIRED = "it reached its retention age";
     static final String REASON_NO_ACCESS = "you no longer have access to the data it came from";
+    // The folders of files holding a document's own content, rather than data searched from it.
+    private static final String DOCUMENTS_FOLDER = "/documents/";
+    private static final String TABS_FOLDER = "/tabs/";
     static final String REASON_NOT_CHECKED = "your access to the data it came from couldn't be checked just now; "
                                              + "try again";
 
@@ -114,7 +117,8 @@ public class WorkspaceStore {
             throw new WorkspaceFileUnavailableException(fileId, info.path(), REASON_EXPIRED);
         }
         if (info.sourceDocUuid() != null) {
-            final SourceDocAccess.Access access = sourceDocAccess.access(info.sourceDocUuid());
+            final SourceDocAccess.Access access = sourceDocAccess.access(info.sourceDocUuid(),
+                    holdsDocumentContent(info.path()));
             if (access == SourceDocAccess.Access.DENIED) {
                 makeUnavailable(fileId, REASON_NO_ACCESS);
                 throw new WorkspaceFileUnavailableException(fileId, info.path(), REASON_NO_ACCESS);
@@ -123,6 +127,13 @@ public class WorkspaceStore {
                 throw new WorkspaceFileUnavailableException(fileId, info.path(), REASON_NOT_CHECKED);
             }
         }
+    }
+
+    /// @param path A workspace file's path.
+    /// @return True if the file holds a document's own content (its text under `/documents/`, or a snapshot of its
+    /// tab under `/tabs/`), which needs View on the document, rather than data searched from it.
+    static boolean holdsDocumentContent(final String path) {
+        return path != null && (path.startsWith(DOCUMENTS_FOLDER) || path.startsWith(TABS_FOLDER));
     }
 
     /// Deletes this node's local copy of a file, e.g. because the file has been deleted.

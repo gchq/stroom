@@ -43,6 +43,14 @@ class TestUserActionsUi {
         assertThat(UserActionsUi.buttonText(UserActionsUi.ENABLE_PROCESSOR_FILTER)).isEqualTo("Enable");
         assertThat(UserActionsUi.buttonText(UserActionsUi.DISABLE_PROCESSOR_FILTER)).isEqualTo("Disable");
         assertThat(UserActionsUi.buttonText(UserActionsUi.OPEN_DOCUMENT)).isEqualTo("Open");
+        assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_QUERY)).isEqualTo("Create query…");
         assertThat(UserActionsUi.buttonText("something_else")).isEqualTo("Do it");
+    }
+
+    @Test
+    void aProposedQueryAndAnElasticsearchRequestAreShownAsCode() {
+        assertThat(UserActionsUi.showsCode(UserActionsUi.CREATE_QUERY)).isTrue();
+        assertThat(UserActionsUi.showsCode(UserActionsUi.ELASTICSEARCH_REQUEST)).isTrue();
+        assertThat(UserActionsUi.showsCode(UserActionsUi.OPEN_DOCUMENT)).isFalse();
     }
 }

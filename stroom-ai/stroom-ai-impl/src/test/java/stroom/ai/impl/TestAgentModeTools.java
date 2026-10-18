@@ -26,12 +26,15 @@ import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AskStroomAiConfig;
+import stroom.ai.shared.TableAnalysisConfig;
+import stroom.dashboard.impl.DashboardService;
 import stroom.data.store.api.Store;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;
 import stroom.explorer.api.ExplorerNodeService;
+import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.impl.QueryService;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -96,7 +99,14 @@ class TestAgentModeTools {
             Map.entry("search_events", false),
             Map.entry("document_info", false),
             Map.entry("read_document", false),
-            Map.entry("document_documentation", false)));
+            Map.entry("document_documentation", false),
+            // Saves its snapshot of the tab's results to the workspace, which querying needs.
+            Map.entry("current_results", false),
+            Map.entry("list_data_sources", false),
+            Map.entry("describe_data_source", false),
+            Map.entry("validate_stroomql", false),
+            // Only offers the user a button: the user creates the query.
+            Map.entry("propose_query", false)));
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
@@ -118,6 +128,11 @@ class TestAgentModeTools {
             bind(DocDependencyService.class).toInstance(Mockito.mock(DocDependencyService.class));
             bind(WordListProvider.class).toInstance(Mockito.mock(WordListProvider.class));
             bind(AiAuditLog.class).toInstance(Mockito.mock(AiAuditLog.class));
+            bind(TabSnapshots.class).toInstance(Mockito.mock(TabSnapshots.class));
+            bind(TableDownloader.class).toInstance(Mockito.mock(TableDownloader.class));
+            bind(DataSourceProviderRegistry.class).toInstance(Mockito.mock(DataSourceProviderRegistry.class));
+            bind(DashboardService.class).toInstance(Mockito.mock(DashboardService.class));
+            bind(TableAnalysisConfig.class).toInstance(new TableAnalysisConfig());
             MapBinder.newMapBinder(binder(), DocumentTypeName.class, DocumentActionHandler.class);
         }
     }).getInstance(BuiltInTools.class);

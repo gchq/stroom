@@ -51,7 +51,10 @@ import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.ai.shared.UndoAiMemoryChangeRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.preferences.client.UserPreferencesManager;
+import stroom.query.shared.QueryDoc;
+import stroom.query.shared.QueryResource;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.NullSafe;
@@ -68,6 +71,7 @@ import java.util.function.Consumer;
 public class AskStroomAiClient {
 
     private static final AskStroomAiResource RESOURCE = GWT.create(AskStroomAiResource.class);
+    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private final RestFactory restFactory;
     private final UserPreferencesManager userPreferencesManager;
@@ -357,6 +361,33 @@ public class AskStroomAiClient {
                 .create(RESOURCE)
                 .method(res -> res.doUserAction(chatId, messageId, actionId))
                 .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Puts StroomQL in a query the user has just created, e.g. with a query the agent proposed.
+    ///
+    /// @param docRef             The new query.
+    /// @param queryText          The StroomQL.
+    /// @param consumer           Given the query once saved.
+    /// @param errorHandler       Told if it couldn't be saved.
+    /// @param taskMonitorFactory Shows that it is being saved.
+    void setQueryText(final DocRef docRef,
+                      final String queryText,
+                      final Consumer<QueryDoc> consumer,
+                      final RestErrorHandler errorHandler,
+                      final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
+                .onSuccess(doc -> restFactory
+                        .create(QUERY_RESOURCE)
+                        .method(res -> res.update(docRef.getUuid(), doc.copy().query(queryText).build()))
+                        .onSuccess(consumer)
+                        .onFailure(errorHandler)
+                        .taskMonitorFactory(taskMonitorFactory)
+                        .exec())
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

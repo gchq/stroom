@@ -32,6 +32,8 @@ import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.docref.DocRef;
+import stroom.query.shared.QueryDoc;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -100,7 +102,25 @@ public class ContextAssembler {
             and UUID you know from a tool result, write it as a link the user can click to open it: \
             [ACME-EVENTS](?action=open-doc&docType=Feed&docUuid=<uuid>). Write a stream as \
             [stream 1234](?action=open-stream&id=1234), and one of its events as \
-            [event 1234:5](?action=open-stream&id=1234&recordNo=5). Never make up a UUID or id.""";
+            [event 1234:5](?action=open-stream&id=1234&recordNo=5). Never make up a UUID or id.
+            - When the user's active tab shows tables of results, take a snapshot of the rows with \
+            current_results rather than guessing from what was said. If the user asks about the first n rows, \
+            pass rows. If it says the snapshot is stale (the tab's query, expression, parameters or time range \
+            have changed since) or incomplete (the search hadn't finished, the row limit cut it, or it holds \
+            fewer rows than asked for while more exist), say so before giving figures, and offer with ask_user \
+            to extend it or run the search again (refresh). Never pass refresh unless the user has said yes. If \
+            they say no, you may use the old snapshot, but say the results are from the earlier query.""";
+
+    /// What the model is told while the user's active tab is a StroomQL Query.
+    static final String QUERY_GUIDANCE = """
+            ## The active tab is a StroomQL query
+            - Check queries against the data source's fields (describe_data_source) rather than guessing field \
+            names; find data sources with list_data_sources.
+            - Validate a query with validate_stroomql before you show or propose it, and fix any errors.
+            - Offer to run it (run_stroomql, with a limit) to check it returns what was asked, and work out \
+            figures from the results with tools, e.g. current_results then table.
+            - Changes to the user's query are theirs to make: give the revised StroomQL as a code block to copy. \
+            To make a new query, use propose_query, which gives the user a button to create it.""";
 
     /// What the model is told in Agent mode. The user may have switched from Ask or Plan mode, where earlier
     /// answers will have said the model couldn't change anything; it is told that no longer applies.
@@ -160,6 +180,20 @@ public class ContextAssembler {
     private final ContextUsageTracker usageTracker;
     private final AiMemoryService memoryService;
     private final DocumentReferences documentReferences;
+    private final TabSnapshots tabSnapshots;
+
+    ContextAssembler(final Provider<AskStroomAiConfig> defaultConfigProvider,
+                     final Provider<AiConfig> aiConfigProvider,
+                     final WorkspaceStore workspaceStore,
+                     final AiService aiService,
+                     final AiDao aiDao,
+                     final AiWorkspaceDao workspaceDao,
+                     final ContextUsageTracker usageTracker,
+                     final AiMemoryService memoryService,
+                     final DocumentReferences documentReferences) {
+        this(defaultConfigProvider, aiConfigProvider, workspaceStore, aiService, aiDao, workspaceDao, usageTracker,
+                memoryService, documentReferences, null);
+    }
 
     @Inject
     ContextAssembler(final Provider<AskStroomAiConfig> defaultConfigProvider,
@@ -170,7 +204,9 @@ public class ContextAssembler {
                      final AiWorkspaceDao workspaceDao,
                      final ContextUsageTracker usageTracker,
                      final AiMemoryService memoryService,
-                     final DocumentReferences documentReferences) {
+                     final DocumentReferences documentReferences,
+                     final TabSnapshots tabSnapshots) {
+        this.tabSnapshots = tabSnapshots;
         this.defaultConfigProvider = defaultConfigProvider;
         this.aiConfigProvider = aiConfigProvider;
         this.workspaceStore = workspaceStore;
@@ -269,10 +305,13 @@ public class ContextAssembler {
         final List<AiChatMessage> relevantHistory = selectHistoryForModel(history);
         final Map<Integer, List<AiChatMessage>> toolMessagesByTurn = toolMessagesByTurn(history);
 
+        // The user's active tab when they asked the question, if it was shared.
+        final TabSnapshots.StoredTabSnapshot tab = latestTab(chatId, history);
+
         // A model with tools is told how to use them well; one without is not told about tools it doesn't have.
         final String memory = memory(chatId, tablesAsProfiles);
         final String systemPrompt = (tablesAsProfiles
-                ? systemPrompt() + "\n\n" + TOOL_GUIDANCE
+                ? systemPrompt() + "\n\n" + TOOL_GUIDANCE + tabGuidance(tab)
                 : systemPrompt())
                 + modeGuidance(chatId, tablesAsProfiles);
         messages.add(new SystemMessage(memory != null
@@ -308,9 +347,9 @@ public class ContextAssembler {
                         // Say which tools were used for the answer, so the model knows what it has already
                         // looked at.
                         final String toolLog = toolLog(toolMessagesByTurn.get(msg.getTurnId()));
-                        messages.add(new UserMessage(toolLog != null
+                        messages.add(new UserMessage(earlierTabNote(msg) + (toolLog != null
                                 ? msg.getMessage() + "\n\n[" + toolLog + "]"
-                                : msg.getMessage()));
+                                : msg.getMessage())));
                     }
                     case STEER_MESSAGE -> messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + msg.getMessage()));
                     case AI_RESPONSE -> messages.add(new AiMessage(msg.getMessage()));
@@ -319,7 +358,10 @@ public class ContextAssembler {
             }
         }
 
-        messages.add(new UserMessage(request.getMessage()));
+        // Only the latest question is given its tab in full; earlier ones say where theirs is.
+        messages.add(new UserMessage(tab != null
+                ? request.getMessage() + "\n\n" + tabSnapshots.note(chatId, tab)
+                : request.getMessage()));
         // A run carrying on with the question (e.g. after the user approved tool calls) picks up where it was.
         messages.addAll(currentTurn(history));
         return messages;
@@ -578,6 +620,43 @@ public class ContextAssembler {
         return documentReferences != null
                 ? documentReferences.note(attachment)
                 : DocumentReferences.unavailableNote(attachment.getDescription());
+    }
+
+    /// @return The snapshot of the user's active tab sent with the latest question, or null if none was, it can no
+    /// longer be used, or tabs aren't shared.
+    private TabSnapshots.StoredTabSnapshot latestTab(final int chatId, final List<AiChatMessage> history) {
+        if (tabSnapshots == null || !tabSnapshots.isEnabled()) {
+            return null;
+        }
+        return history.reversed().stream()
+                .filter(message -> message.getMessageType() == AiMessageType.USER_MESSAGE)
+                .findFirst()
+                .map(AiChatMessage::getAttachmentId)
+                .flatMap(tabSnapshots::read)
+                .orElse(null);
+    }
+
+    /// @param tab The snapshot of the user's active tab sent with the question, or null.
+    /// @return The guidance for the kind of tab it is, after a blank line, or an empty string if there is none.
+    static String tabGuidance(final TabSnapshots.StoredTabSnapshot tab) {
+        final String type = NullSafe.get(tab, TabSnapshots.StoredTabSnapshot::docRef, DocRef::getType);
+        return QueryDoc.TYPE.equals(type)
+                ? "\n\n" + QUERY_GUIDANCE
+                : "";
+    }
+
+    /// @return For an earlier question sent with the user's active tab, a short note of where the snapshot of it
+    /// is, before the question; otherwise an empty string.
+    private String earlierTabNote(final AiChatMessage question) {
+        if (tabSnapshots == null || question.getAttachmentId() == null || workspaceDao == null) {
+            return "";
+        }
+        return workspaceDao.getFileInfo(question.getAttachmentId())
+                .map(AiWorkspaceDao.FileInfo::path)
+                .filter(path -> path.startsWith("/tabs/"))
+                .map(path -> "[Asked with the user's active tab shared; its snapshot is in "
+                             + path.substring(0, path.lastIndexOf('/') + 1) + "]\n")
+                .orElse("");
     }
 
     static UserMessage unavailableNote(final String description, final String reason) {

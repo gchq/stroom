@@ -34,6 +34,7 @@ import stroom.ai.shared.AiMcpPromptArgument;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryScope;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -52,6 +53,7 @@ import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.event.PromptEvent;
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.core.client.ContentManager;
@@ -66,16 +68,23 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestError;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
+import stroom.document.client.DocumentTabData;
+import stroom.document.client.event.HasDirtyHandlers;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.document.client.event.ShowCreateDocumentDialogEvent;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.query.shared.QueryDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.Task;
@@ -95,6 +104,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
@@ -129,6 +139,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
@@ -337,6 +348,18 @@ public class AskStroomAiPresenter
     // How much of the model's context window the chat uses, as last reported.
     private AiContextUsage contextUsage;
     private final DocumentTypeCache documentTypeCache;
+    // The active content tab, if it can be shared with the chat, and the handler that follows its unsaved state.
+    private TabData activeTab;
+    private HandlerRegistration activeTabDirtyRegistration;
+    // A tab the user stopped sharing, until another tab is active.
+    private TabData dismissedTab;
+    // False if an administrator has turned off sharing the active tab.
+    private boolean shareActiveTab = true;
+    // The hash of the active tab's snapshot last sent to each chat, by chat id, so an unchanged one is sent as its
+    // hash only.
+    private final Map<Integer, String> lastSentTabHashes = new HashMap<>();
+    // The node selected in the Explorer tree, for the folder of a query created from the chat.
+    private ExplorerNode selectedExplorerNode;
 
     @Inject
     public AskStroomAiPresenter(final EventBus eventBus,
@@ -407,6 +430,10 @@ public class AskStroomAiPresenter
                 final Element button = ElementUtil.findParent(target, element ->
                         element.getTagName().equalsIgnoreCase("button"), 5);
                 if (button == null) {
+                    return;
+                }
+                if (button.hasAttribute(AiAttachments.REMOVE_TAB_ATTRIBUTE)) {
+                    stopSharingActiveTab();
                     return;
                 }
                 final String remove = button.getAttribute(AiAttachments.REMOVE_ATTRIBUTE);
@@ -606,6 +633,21 @@ public class AskStroomAiPresenter
                 onSendEdit(Integer.parseInt(idStr));
             }
         }, KeyDownEvent.getType()));
+
+        // The active tab is shared with the chat, as the user sees it, starting with the one active now.
+        onActiveTabChange(contentManager.getSelectedTab());
+        addRegisteredHandler(ContentTabSelectionChangeEvent.getType(), event ->
+                onActiveTabChange(event.getTabData()));
+        addRegisteredHandler(RefreshContentTabEvent.getType(), event -> {
+            if (event.getTabData() != null && event.getTabData() == activeTab) {
+                refreshAttachmentList();
+            }
+        });
+        addRegisteredHandler(ExplorerTreeSelectEvent.getType(), event -> {
+            if (event.getSelectionModel() != null) {
+                selectedExplorerNode = event.getSelectionModel().getSelected();
+            }
+        });
 
         // Listen for dock splitter resize events to persist the new size.
         addRegisteredHandler(DockResizeEvent.getType(), event -> {
@@ -2233,11 +2275,14 @@ public class AskStroomAiPresenter
                         Attribute.className("ai-user-action-after"));
             }
             final String request = AiToolMessages.getString(json, "request");
+            if (UserActionsUi.showsCode(action) && NullSafe.isNonBlankString(request)) {
+                // An Elasticsearch request is shown for the cluster admin to copy, and Stroom never runs it. A
+                // proposed query is shown before the user creates it.
+                row.elem(pre -> pre.code(code -> code.append(request)), PRE);
+            }
             if (UserActionsUi.ELASTICSEARCH_REQUEST.equals(action)) {
-                // Shown for the cluster admin to copy. Stroom never runs it.
-                if (NullSafe.isNonBlankString(request)) {
-                    row.elem(pre -> pre.code(code -> code.append(request)), PRE);
-                }
+                // No button.
+                return;
             } else if (pending) {
                 row.elem(UserActionsUi.buttonText(action), BUTTON,
                         Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
@@ -2258,6 +2303,12 @@ public class AskStroomAiPresenter
         }
         button.setAttribute("disabled", "disabled");
         askStroomAiClient.doUserAction(currentChat.getId(), messageId, actionId, result -> {
+            if (result.isDone() && result.getCreateQueryText() != null) {
+                // The button can be used again, as the user may cancel the dialog.
+                button.removeAttribute("disabled");
+                createQuery(result.getCreateQueryName(), result.getCreateQueryText());
+                return;
+            }
             if (result.getOpenDocument() != null) {
                 OpenDocumentEvent.fire(this, result.getOpenDocument(), true);
                 button.removeAttribute("disabled");
@@ -2273,6 +2324,26 @@ public class AskStroomAiPresenter
             // Fetch the note of what was done.
             pollAfterAnswer();
         }, this);
+    }
+
+    /// Opens Stroom's own New Query dialog with the agent's suggested name, in the folder selected in the Explorer
+    /// tree. Once the user creates the query, the agent's StroomQL is put in it and it is opened. Nothing is saved
+    /// unless the user creates it.
+    private void createQuery(final String name, final String queryText) {
+        ShowCreateDocumentDialogEvent.fire(
+                this,
+                "New Query",
+                selectedExplorerNode,
+                QueryDoc.TYPE,
+                NullSafe.string(name),
+                true,
+                newNode -> {
+                    final DocRef docRef = newNode.getDocRef();
+                    askStroomAiClient.setQueryText(docRef, queryText,
+                            doc -> OpenDocumentEvent.fire(this, docRef, true),
+                            error -> showError(error, "Unable to put the query in " + docRef.getName(), null),
+                            getView());
+                });
     }
 
     private void showUserActionStatus(final int messageId,
@@ -2540,14 +2611,25 @@ public class AskStroomAiPresenter
         markdownContainer.getElement().setScrollTop(markdownContainer.getElement().getScrollHeight());
 
         ensureChat(() -> askStroomAiClient.getConfig(config -> {
+            final int chatId = currentChat.getId();
+            // The active tab as the user sees it now, or only its hash if it hasn't changed since last sent.
+            final AiTabSnapshot tabSnapshot = activeTabSnapshot();
             final AskStroomAiRequest request = new AskStroomAiRequest(
-                    currentChat, config, data, message, getView().getAgentMode());
+                    currentChat, config, data, message, getView().getAgentMode(),
+                    AiTabSnapshots.toSend(tabSnapshot, lastSentTabHashes.get(chatId)));
+            // A message sent while the chat is working steers it, and its tab isn't kept.
+            final boolean asQuestion = !currentRunActive;
             // Clear context so follow-up messages don't re-attach the same data.
             this.data = null;
             requestInFlight = true;
             askStroomAiClient.sendMessage(request,
                     response -> {
                         requestInFlight = false;
+                        if (response != null && response.isTabSnapshotNeeded()) {
+                            lastSentTabHashes.remove(chatId);
+                        } else if (tabSnapshot != null && asQuestion) {
+                            lastSentTabHashes.put(chatId, tabSnapshot.getHash());
+                        }
                         // Poll to get the properly typed, persisted messages. Also picks up a partial
                         // answer, where the user cancelled part way through. As after answering a form: a message
                         // sent while one waited puts it aside, and the run carries on, though it may still show
@@ -2945,6 +3027,7 @@ public class AskStroomAiPresenter
 
             // Update attachment status elements in-place.
             updateAttachmentStatuses(response.getAttachments());
+            updateShareActiveTab(response);
             // And forms the server has answered for the user, e.g. cancelled as the run stopped.
             updateWatchedMessages(response.getWatchedMessages());
 
@@ -4004,14 +4087,90 @@ public class AskStroomAiPresenter
         refreshAttachmentChips();
     }
 
+    /// Follows the active content tab, which is shared with the chat while it is a document the chat can be told
+    /// about, other than the chat's own tab.
+    private void onActiveTabChange(final TabData tabData) {
+        if (activeTabDirtyRegistration != null) {
+            activeTabDirtyRegistration.removeHandler();
+            activeTabDirtyRegistration = null;
+        }
+        // Another tab is active, so one the user stopped sharing can be shared again once it is active again.
+        if (tabData != dismissedTab) {
+            dismissedTab = null;
+        }
+        final boolean shareable = tabData instanceof AiTabSnapshotProvider
+                                  && tabData instanceof DocumentTabData
+                                  && (tabPresenter == null || tabData != tabPresenter);
+        activeTab = shareable
+                ? tabData
+                : null;
+        if (activeTab instanceof final HasDirtyHandlers hasDirtyHandlers) {
+            activeTabDirtyRegistration = hasDirtyHandlers.addDirtyHandler(event -> refreshAttachmentList());
+        }
+        refreshAttachmentList();
+    }
+
+    /// Stops sharing the active tab with the chat, until another tab is active.
+    private void stopSharingActiveTab() {
+        dismissedTab = activeTab;
+        refreshAttachmentList();
+    }
+
+    /// @return The tab shared with the next question, or null if none is.
+    private TabData sharedTab() {
+        return shareActiveTab && activeTab != null && activeTab != dismissedTab
+               && ((DocumentTabData) activeTab).getDocRef() != null
+                ? activeTab
+                : null;
+    }
+
+    private static boolean isDirty(final TabData tabData) {
+        return tabData instanceof final DocPresenter<?, ?> docPresenter && docPresenter.isDirty();
+    }
+
+    /// @return What the user sees in the shared tab now, or null if no tab is shared.
+    private AiTabSnapshot activeTabSnapshot() {
+        final TabData sharedTab = sharedTab();
+        if (sharedTab == null) {
+            return null;
+        }
+        try {
+            return ((AiTabSnapshotProvider) sharedTab).snapshot();
+        } catch (final RuntimeException e) {
+            // The question is still worth sending without the tab.
+            return null;
+        }
+    }
+
+    /// Keeps up with whether an administrator allows the active tab to be shared.
+    private void updateShareActiveTab(final AiChatPollResponse response) {
+        final boolean share = response == null
+                              || response.getShareActiveTab() == null
+                              || response.getShareActiveTab();
+        if (share != shareActiveTab) {
+            shareActiveTab = share;
+            refreshAttachmentList();
+        }
+    }
+
     /// Shows the tables attached since the last message was sent above the input box, each removable once it has
     /// downloaded.
     private void refreshAttachmentList() {
         final HtmlBuilder hb = new HtmlBuilder();
-        if (!pendingAttachments.isEmpty()) {
+        final TabData sharedTab = sharedTab();
+        if (!pendingAttachments.isEmpty() || sharedTab != null) {
             // The chips wrap onto as many rows as they need, with the button to remove them all beside them.
-            hb.div(chips -> pendingAttachments.values().forEach(msg -> attachmentChip(chips, msg, true)),
-                    Attribute.className("ai-attachment-chips"));
+            hb.div(chips -> {
+                if (sharedTab != null) {
+                    final DocRef docRef = ((DocumentTabData) sharedTab).getDocRef();
+                    AiAttachments.tabChip(chips, sharedTab.getIcon(),
+                            AiTabSnapshots.chipText(docRef, isDirty(sharedTab)),
+                            AiTabSnapshots.chipTooltip(docRef));
+                }
+                pendingAttachments.values().forEach(msg -> attachmentChip(chips, msg, true));
+            }, Attribute.className("ai-attachment-chips"));
+        }
+        if (!pendingAttachments.isEmpty()) {
             AiAttachments.removeAllButton(hb, pendingAttachments.values().stream()
                     .noneMatch(msg -> AiAttachments.isDownloading(attachmentStatuses.get(msg.getAttachmentId()))));
         }
@@ -4412,6 +4571,7 @@ public class AskStroomAiPresenter
             // refreshed, and carries on following it.
             askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, isLooking(), null, response -> {
                 updateAttachmentStatuses(response.getAttachments());
+                updateShareActiveTab(response);
                 updateRunStatus(response.getRun());
                 currentRunActive = !response.isComplete();
                 refreshFollowUps();
