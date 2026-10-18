@@ -45,6 +45,8 @@ import org.mockito.Mockito;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -206,5 +208,64 @@ class TestAiAuditLog {
                         .withEventAction(action)
                         .build())
                 .build();
+    }
+
+    @Test
+    void streamsViewedAreNamedUpToALimit() {
+        final List<Long> streams = LongStream.rangeClosed(1, AiAuditLog.MAX_LOGGED_DOCUMENTS + 5).boxed().toList();
+
+        auditLog.streamsViewed(7, streams, "Read 9 event(s) with the fetch_events tool");
+
+        final ArgumentCaptor<ViewEventAction> action = ArgumentCaptor.forClass(ViewEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.DATA_VIEW_TYPE_ID),
+                Mockito.contains((AiAuditLog.MAX_LOGGED_DOCUMENTS + 5) + " stream(s)"), action.capture());
+        assertThat(action.getValue().getObjects()).hasSize(AiAuditLog.MAX_LOGGED_DOCUMENTS);
+        assertThat(((OtherObject) action.getValue().getObjects().getFirst()).getType())
+                .isEqualTo(AiAuditLog.STREAM_TYPE);
+        assertThat(action.getValue().getOutcome().getDescription())
+                .contains("Read 9 event(s)")
+                .contains("the first " + AiAuditLog.MAX_LOGGED_DOCUMENTS + " of");
+        assertValid(action.getValue());
+    }
+
+    @Test
+    void noStreamsViewedLogsNothing() {
+        auditLog.streamsViewed(7, List.of(), "Nothing");
+
+        Mockito.verifyNoInteractions(eventLoggingService);
+    }
+
+    @Test
+    void documentsSearchedNameTheQueryAndWhatWasFound() {
+        auditLog.documentsSearched(7, "'X' in documents of type XSLT",
+                List.of(new DocRef("XSLT", "a", "A"), new DocRef("XSLT", "b", "B")),
+                Map.of("DocumentsRead", "12"), "Text found by the find_in_content tool");
+
+        final ArgumentCaptor<SearchEventAction> action = ArgumentCaptor.forClass(SearchEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.SEARCH_TYPE_ID), Mockito.contains("chat 7"),
+                action.capture());
+        assertThat(action.getValue().getQuery().getRaw()).isEqualTo("'X' in documents of type XSLT");
+        assertThat(action.getValue().getTotalResults()).hasToString("2");
+        assertThat(action.getValue().getResults().getObjects()).hasSize(2);
+        assertThat(action.getValue().getData())
+                .anySatisfy(data -> {
+                    assertThat(data.getName()).isEqualTo("DocumentsRead");
+                    assertThat(data.getValue()).isEqualTo("12");
+                });
+        assertValid(action.getValue());
+    }
+
+    @Test
+    void streamsSearchedNameTheStreamsFound() {
+        auditLog.streamsSearched(7, "feed is X", List.of(11L, 12L), Map.of("StreamStoreReads", "1"),
+                "Stream meta found by the stream_meta tool");
+
+        final ArgumentCaptor<SearchEventAction> action = ArgumentCaptor.forClass(SearchEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.SEARCH_TYPE_ID), Mockito.anyString(),
+                action.capture());
+        assertThat(action.getValue().getResults().getObjects())
+                .map(object -> ((OtherObject) object).getType() + " " + ((OtherObject) object).getId())
+                .containsExactly("Stream 11", "Stream 12");
+        assertValid(action.getValue());
     }
 }

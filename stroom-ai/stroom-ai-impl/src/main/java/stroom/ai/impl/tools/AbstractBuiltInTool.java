@@ -16,10 +16,17 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import dev.langchain4j.model.chat.request.json.JsonArraySchema;
+import dev.langchain4j.model.chat.request.json.JsonStringSchema;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -89,5 +96,58 @@ abstract class AbstractBuiltInTool implements BuiltInTool {
         } catch (final NumberFormatException e) {
             return null;
         }
+    }
+
+    /// Reads a list of strings argument, e.g. a list of UUIDs. The model may give it as a JSON array, or as one
+    /// string with the items separated by commas, and both are accepted.
+    ///
+    /// @param request The model's call.
+    /// @param name    The argument's name.
+    /// @return The items, trimmed, without empty or repeated ones. Empty if the argument is absent.
+    /// @throws WorkspaceException if the arguments are not valid JSON.
+    static List<String> stringListArg(final ToolExecutionRequest request, final String name) {
+        final Object value = argsMap(request).get(name);
+        final List<String> items = new ArrayList<>();
+        if (value instanceof final List<?> list) {
+            for (final Object item : list) {
+                if (item != null) {
+                    items.add(String.valueOf(item));
+                }
+            }
+        } else if (value != null) {
+            items.addAll(Arrays.asList(String.valueOf(value).split(",")));
+        }
+        return items.stream()
+                .map(String::strip)
+                .filter(item -> !item.isEmpty())
+                .distinct()
+                .toList();
+    }
+
+    /// @param request The model's call.
+    /// @return Its arguments, or an empty map if it has none.
+    /// @throws WorkspaceException if they are not valid JSON.
+    static Map<?, ?> argsMap(final ToolExecutionRequest request) {
+        final String json = request.arguments();
+        if (json == null || json.isBlank()) {
+            return Collections.emptyMap();
+        }
+        try {
+            final Map<?, ?> args = JsonUtil.readValue(json, Map.class);
+            return args == null
+                    ? Collections.emptyMap()
+                    : args;
+        } catch (final RuntimeException e) {
+            throw new WorkspaceException("The arguments are not valid JSON.");
+        }
+    }
+
+    /// @param description What the list holds.
+    /// @return The schema of a list of strings argument.
+    static JsonArraySchema stringArraySchema(final String description) {
+        return JsonArraySchema.builder()
+                .items(JsonStringSchema.builder().build())
+                .description(description)
+                .build();
     }
 }

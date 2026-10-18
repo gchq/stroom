@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.EventsFile;
+import stroom.ai.impl.workspace.SafeJq;
 import stroom.ai.impl.workspace.SafePattern;
 import stroom.ai.impl.workspace.SafeXPath;
 import stroom.ai.impl.workspace.TableEngine;
@@ -25,10 +26,14 @@ import stroom.ai.impl.workspace.TableEngine.Format;
 import stroom.ai.impl.workspace.TableEngine.Query;
 import stroom.ai.impl.workspace.TableEngine.Result;
 import stroom.ai.impl.workspace.ToolDeadline;
+import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.util.json.JsonUtil;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
@@ -36,15 +41,8 @@ import jakarta.inject.Inject;
 import net.sf.saxon.s9api.XPathExecutable;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmNodeKind;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
+import net.thisptr.jackson.jq.JsonQuery;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -64,6 +62,7 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     static final String IGNORE_CASE_ARG = "ignoreCase";
     static final String COLUMN_ARG = "column";
     static final String JOIN_ARG = "join";
+    static final String JQ_ARG = "jq";
     static final String DEFAULT_OUT = "/outputs/search_events.csv";
     static final String DEFAULT_PREFIX = "d";
     static final int PREVIEW_ROWS = 10;
@@ -72,6 +71,7 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     static final int SNIPPET_CHARS_BEFORE = 60;
     static final int SNIPPET_CHARS = 200;
     static final String VALUE_SEPARATOR = " | ";
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Inject
     SearchEventsTool(final ChatWorkspace workspace) {
@@ -89,7 +89,11 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                              + "bound to '" + DEFAULT_PREFIX + "'; several values are joined with ' | '). Give text "
                              + "to keep only the events containing it (in the xpath's value if given, else "
                              + "anywhere in the event), with a snippet around the match. Give join (the table the "
-                             + "events came from) to add the result as a column to that table instead. Then use "
+                             + "events came from) to add the result as a column to that table instead. Give jq "
+                             + "with xpath to parse each XPath value as JSON and apply a jq filter to it, with a "
+                             + "row per result (e.g. xpath /d:map/d:string[@key='message'] with jq "
+                             + "'.. | .username? // empty' for every username at any depth); values that aren't "
+                             + "JSON are counted, not failed. Then use "
                              + "the table tool on the output to count, group or filter.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(PATH_ARG, "The events file, e.g. /outputs/events.xml.")
@@ -97,6 +101,8 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                         .addProperty(NAMESPACES_ARG, JsonObjectSchema.builder()
                                 .description("Namespace prefixes to use, e.g. {\"e\": \"event-logging:3\"}.")
                                 .build())
+                        .addStringProperty(JQ_ARG, "A jq filter to apply to each XPath value, parsed as "
+                                                   + "JSON (needs xpath).")
                         .addStringProperty(TEXT_ARG, "Text to find in each event.")
                         .addBooleanProperty(REGEX_ARG, "True if text is a regular expression.")
                         .addBooleanProperty(IGNORE_CASE_ARG, "False to match the case of text (default true).")
@@ -133,17 +139,37 @@ class SearchEventsTool extends AbstractWorkspaceTool {
         final String column = nonBlankElse(rawArg(request, COLUMN_ARG), hasXPath
                 ? "value"
                 : "match");
+        final String jq = rawArg(request, JQ_ARG);
+        final boolean hasJq = jq != null && !jq.isBlank();
+        if (hasJq && !hasXPath) {
+            throw new WorkspaceException("Give xpath with jq: jq is applied to each event's XPath value.");
+        }
+        final JsonQuery query = hasJq
+                ? SafeJq.compile(jq)
+                : null;
 
         final List<XdmNode> events = events(SafeXPath.parse(workspace.localFile(chatId, path)));
         final XPathExecutable executable = hasXPath
                 ? SafeXPath.compile(expression, namespaces(request, events))
                 : null;
 
-        // The result for each event that has one, keyed by its stream and event ids.
-        final Map<List<String>, String> results = new LinkedHashMap<>();
+        // The results for each event that has any, keyed by its stream and event ids.
+        final Map<List<String>, List<String>> results = new LinkedHashMap<>();
+        final JqErrors jqErrors = new JqErrors();
         for (final XdmNode event : events) {
             ToolDeadline.check();
             final XdmNode content = content(event);
+            final List<String> key = List.of(event.attribute(EventsFile.STREAM_ID_ATTRIBUTE),
+                    event.attribute(EventsFile.EVENT_ID_ATTRIBUTE));
+            if (query != null) {
+                final List<String> outputs = content != null
+                        ? jqValues(query, xpathValues(executable, content), pattern, jqErrors)
+                        : List.of();
+                if (!outputs.isEmpty()) {
+                    results.put(key, outputs);
+                }
+                continue;
+            }
             final String value = executable != null
                     ? (content != null
                     ? xpathValue(executable, content)
@@ -166,8 +192,7 @@ class SearchEventsTool extends AbstractWorkspaceTool {
             } else {
                 result = value;
             }
-            results.put(List.of(event.attribute(EventsFile.STREAM_ID_ATTRIBUTE),
-                    event.attribute(EventsFile.EVENT_ID_ATTRIBUTE)), result);
+            results.put(key, List.of(result));
         }
 
         final String joinArg = rawArg(request, JOIN_ARG);
@@ -175,10 +200,13 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                 ? join(chatId, WorkspacePath.parse(joinArg), column, results)
                 : asTable(column, results);
         writeCsv(chatId, out, table, workspace.sourceDocUuid(chatId, path));
-        final String found = pattern != null
-                ? results.size() + " of " + events.size() + " event(s) matched"
+        final String found = pattern != null || query != null
+                ? results.size() + " of " + events.size() + " event(s) " + (query != null
+                ? "gave a jq result"
+                : "matched")
                 : "Searched " + events.size() + " event(s)";
-        return found + ". Wrote " + table.rows().size() + " row(s) to " + out + "; use the table tool on it to "
+        return found + jqErrors.summary() + ". Wrote " + table.rows().size() + " row(s) to " + out
+               + "; use the table tool on it to "
                + "count, group or filter. The first rows:\n\n" + markdown(table);
     }
 
@@ -212,10 +240,61 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     }
 
     private static String xpathValue(final XPathExecutable executable, final XdmNode content) {
+        final List<String> values = xpathValues(executable, content);
+        return shorten(String.join(VALUE_SEPARATOR, values).replaceAll("\\s+", " ").strip(), MAX_VALUE_CHARS);
+    }
+
+    /// @return The values the expression gives for one event, as they are.
+    private static List<String> xpathValues(final XPathExecutable executable, final XdmNode content) {
         final List<String> values = new ArrayList<>();
         // A document of its own, so the expression only sees this event.
         SafeXPath.evaluate(executable, SafeXPath.asDocument(content), false, values::add);
-        return shorten(String.join(VALUE_SEPARATOR, values).replaceAll("\\s+", " ").strip(), MAX_VALUE_CHARS);
+        return values;
+    }
+
+    /// Applies a jq filter to each of an event's XPath values, parsed as JSON.
+    ///
+    /// @param query   The jq filter.
+    /// @param values  The event's XPath values.
+    /// @param pattern Text the results must contain, or null.
+    /// @param errors  Counts the values that aren't JSON, or that the filter fails on.
+    /// @return The filter's results, as text.
+    static List<String> jqValues(final JsonQuery query,
+                                 final List<String> values,
+                                 final SafePattern pattern,
+                                 final JqErrors errors) {
+        final List<String> outputs = new ArrayList<>();
+        for (final String value : values) {
+            final JsonNode json;
+            try {
+                json = MAPPER.readTree(value);
+            } catch (final JsonProcessingException e) {
+                errors.notJson++;
+                continue;
+            }
+            if (json == null || json.isMissingNode()) {
+                errors.notJson++;
+                continue;
+            }
+            try {
+                for (final JsonNode output : SafeJq.run(query, json)) {
+                    final String text = output.isTextual()
+                            ? output.asText()
+                            : output.toString();
+                    if (pattern == null || pattern.find(text)) {
+                        outputs.add(shorten(text, MAX_VALUE_CHARS));
+                    }
+                }
+            } catch (final ToolTimeoutException e) {
+                throw e;
+            } catch (final WorkspaceException e) {
+                errors.failed++;
+                if (errors.firstFailure == null) {
+                    errors.firstFailure = e.getMessage();
+                }
+            }
+        }
+        return outputs;
     }
 
     /// @return The namespaces given, with the events' own namespace bound to [#DEFAULT_PREFIX] unless it is given.
@@ -259,9 +338,10 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                 : text;
     }
 
-    private static Result asTable(final String column, final Map<List<String>, String> results) {
+    private static Result asTable(final String column, final Map<List<String>, List<String>> results) {
         final List<List<String>> rows = new ArrayList<>();
-        results.forEach((key, value) -> rows.add(List.of(key.get(0), key.get(1), value)));
+        results.forEach((key, values) -> values.forEach(value ->
+                rows.add(List.of(key.get(0), key.get(1), value))));
         return new Result(List.of(FetchEventsTool.STREAM_ID_COLUMN, FetchEventsTool.EVENT_ID_COLUMN, column),
                 rows, rows.size(), rows.size());
     }
@@ -270,7 +350,7 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     private Result join(final int chatId,
                         final WorkspacePath tablePath,
                         final String column,
-                        final Map<List<String>, String> results) {
+                        final Map<List<String>, List<String>> results) {
         final Result table = TableEngine.run(workspace.localFile(chatId, tablePath), Format.forPath(tablePath),
                 new Query(null, null, null, null, false, false, null, null));
         final int streamColumn = indexOf(table.columns(), FetchEventsTool.STREAM_ID_COLUMN);
@@ -280,7 +360,8 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                                          + " and " + FetchEventsTool.EVENT_ID_COLUMN + " columns.");
         }
         final Map<List<String>, String> byId = new HashMap<>();
-        results.forEach((key, value) -> byId.put(List.of(normalise(key.get(0)), normalise(key.get(1))), value));
+        results.forEach((key, values) -> byId.put(List.of(normalise(key.get(0)), normalise(key.get(1))),
+                String.join(VALUE_SEPARATOR, values)));
         final List<String> columns = new ArrayList<>(table.columns());
         columns.add(column);
         final List<List<String>> rows = new ArrayList<>();
@@ -307,21 +388,7 @@ class SearchEventsTool extends AbstractWorkspaceTool {
     }
 
     private void writeCsv(final int chatId, final WorkspacePath out, final Result result, final String source) {
-        final Path temp = workspace.tempFile();
-        try {
-            try (final BufferedWriter writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8);
-                    final CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT)) {
-                printer.printRecord(result.columns());
-                for (final List<String> row : result.rows()) {
-                    printer.printRecord(row);
-                }
-            }
-            workspace.write(chatId, out, temp, source);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        } finally {
-            workspace.deleteQuietly(temp);
-        }
+        ToolTables.writeCsv(workspace, chatId, out, result.columns(), result.rows(), source);
     }
 
     private static String markdown(final Result result) {
@@ -346,5 +413,30 @@ class SearchEventsTool extends AbstractWorkspaceTool {
         return value == null || value.isBlank()
                 ? other
                 : value.strip();
+    }
+
+    /// Counts the XPath values jq couldn't be applied to.
+    static final class JqErrors {
+
+        private int notJson;
+        private int failed;
+        private String firstFailure;
+
+        /// @return A note of the values jq couldn't be applied to, or nothing.
+        String summary() {
+            final StringBuilder sb = new StringBuilder();
+            if (notJson > 0) {
+                sb.append(" (").append(notJson).append(" XPath value(s) weren't JSON, so were left out");
+            }
+            if (failed > 0) {
+                sb.append(sb.isEmpty()
+                        ? " ("
+                        : "; ").append("the jq filter failed on ").append(failed).append(" value(s), e.g. ")
+                        .append(firstFailure);
+            }
+            return sb.isEmpty()
+                    ? ""
+                    : sb.append(')').toString();
+        }
     }
 }

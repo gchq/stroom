@@ -43,8 +43,6 @@ public final class AiTabSnapshots {
                                            + "shared; the saved settings can be read with document_info and "
                                            + "read_document.";
 
-    private static final long FNV_OFFSET = 0xcbf29ce484222325L;
-    private static final long FNV_PRIME = 0x100000001b3L;
     // Between the fields hashed, so that moving text from one field to the next changes the hash.
     private static final char SEPARATOR = '\u0001';
 
@@ -223,14 +221,6 @@ public final class AiTabSnapshots {
 
     /// @return The 64 bit FNV-1a hash of the text's characters, as hex.
     static String fnv1a(final String text) {
-        long hash = FNV_OFFSET;
-        for (int i = 0; i < text.length(); i++) {
-            final char chr = text.charAt(i);
-            hash ^= (chr & 0xff);
-            hash *= FNV_PRIME;
-            hash ^= ((chr >> 8) & 0xff);
-            hash *= FNV_PRIME;
-        }
-        return Long.toHexString(hash);
+        return AiTabSnapshotPart.hashText(text);
     }
 }

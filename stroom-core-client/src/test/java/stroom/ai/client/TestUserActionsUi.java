@@ -16,7 +16,14 @@
 
 package stroom.ai.client;
 
+import stroom.dashboard.client.event.ApplyDashboardChangeEvent;
+import stroom.dashboard.client.table.TableChange;
+import stroom.query.api.Format;
+import stroom.query.api.Sort.SortDirection;
+
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,5 +70,40 @@ class TestUserActionsUi {
         // A proposed change is shown as a diff, not as code to copy.
         assertThat(UserActionsUi.showsCode(UserActionsUi.APPLY_CODE_CHANGE)).isFalse();
         assertThat(UserActionsUi.UNDO_WITHDRAWN).contains("Ctrl+Z");
+    }
+
+    @Test
+    void theApplyToDashboardButtonSaysWhyItCantBeUsed() {
+        assertThat(UserActionsUi.buttonText(UserActionsUi.APPLY_DASHBOARD_CHANGE)).isEqualTo("Apply to dashboard");
+        // Editable, open or not.
+        assertThat(UserActionsUi.applyDashboardDisabledReason(true, false, false)).isNull();
+        assertThat(UserActionsUi.applyDashboardDisabledReason(true, true, true)).isNull();
+        // Not editable when proposed, or open and read-only now.
+        assertThat(UserActionsUi.applyDashboardDisabledReason(false, false, false))
+                .isEqualTo(ApplyDashboardChangeEvent.NOT_EDITABLE);
+        assertThat(UserActionsUi.applyDashboardDisabledReason(true, true, false))
+                .isEqualTo(ApplyDashboardChangeEvent.NOT_EDITABLE);
+    }
+
+    @Test
+    void aProposedOperationIsReadForTheDashboard() {
+        final Map<String, String> fields = Map.of("op", "add_column", "name", "Count", "expression", "count()",
+                "format", "Number", "position", "2");
+        final TableChange change = UserActionsUi.tableChange(fields::get);
+
+        assertThat(change.getOp()).isEqualTo(TableChange.ADD_COLUMN);
+        assertThat(change.getName()).isEqualTo("Count");
+        assertThat(change.getExpression()).isEqualTo("count()");
+        assertThat(change.getFormat().getType()).isEqualTo(Format.Type.NUMBER);
+        assertThat(change.getPosition()).isEqualTo(2);
+        assertThat(change.getLevel()).isNull();
+
+        final TableChange sort = UserActionsUi.tableChange(Map.of("op", "sort", "column", "Count",
+                "direction", "descending", "priority", "1.0")::get);
+        assertThat(sort.getSortDirection()).isEqualTo(SortDirection.DESCENDING);
+        assertThat(sort.getPriority()).isEqualTo(1);
+        assertThat(UserActionsUi.tableChange(Map.of("op", "sort", "direction", "none")::get).getSortDirection())
+                .isNull();
+        assertThat(UserActionsUi.tableChange(Map.of("op", "group", "level", "x")::get).getLevel()).isNull();
     }
 }
