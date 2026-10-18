@@ -111,7 +111,8 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
         dataSourceAccess.timeField(dataSource)
                 .ifPresent(field -> sb.append("Time field: ").append(field.getFldName()).append('\n'));
         if (values.isEmpty()) {
-            return sb.append("It has no fields you can see.").toString();
+            sb.append("It has no fields you can see.");
+            return sb.append(context(chatId, dataSource)).toString();
         }
         sb.append("Fields (").append(values.size()).append("):\n");
         for (final QueryField field : values) {
@@ -131,13 +132,18 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
         if (values.size() >= MAX_FIELDS) {
             sb.append("(Only the first ").append(MAX_FIELDS).append(" fields are given.)\n");
         }
-        // What its fields hold, e.g. that document.description is a tweet's text, from the pipeline that feeds it.
-        sb.append(DataSourceDocumentation.note(dataSourceDocumentation.find(chatId, dataSource,
-                "Documentation read by the " + NAME + " tool")));
-        // E.g. which field holds the acting user, as the people who look after the data source say.
-        sb.append(agentInstructions.load(chatId, "Standing instructions read by the " + NAME + " tool")
-                .note(List.of(agentInstructions.folderOf(dataSource))));
+        sb.append(context(chatId, dataSource));
         return sb.toString().stripTrailing();
+    }
+
+    // What the people and builds that look after the data source say about it: its documentation (e.g. that
+    // document.description is a tweet's text, from the pipeline that feeds it) and its AGENTS docs (e.g. which field
+    // holds the acting user). Given even when its fields can't be listed.
+    private String context(final int chatId, final DocRef dataSource) {
+        return DataSourceDocumentation.note(dataSourceDocumentation.find(chatId, dataSource,
+                       "Documentation read by the " + NAME + " tool"))
+               + agentInstructions.load(chatId, "Standing instructions read by the " + NAME + " tool")
+                       .note(List.of(agentInstructions.folderOf(dataSource)));
     }
 
     @Override
