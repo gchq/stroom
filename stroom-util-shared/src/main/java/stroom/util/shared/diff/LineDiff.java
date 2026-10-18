@@ -60,6 +60,20 @@ public final class LineDiff {
         return new LineDiffResult(oldLines, newLines, toBlocks(ops));
     }
 
+    /// @param text A text, or null.
+    /// @return The line break it uses (`\r\n`, `\r` or `\n`), or `\n` if it has none.
+    public static String lineSeparatorOf(final String text) {
+        if (text != null) {
+            final int index = text.indexOf('\r');
+            if (index >= 0) {
+                return index + 1 < text.length() && text.charAt(index + 1) == '\n'
+                        ? "\r\n"
+                        : "\r";
+            }
+        }
+        return "\n";
+    }
+
     /// Splits text into lines on `\r\n`, `\n` or `\r`, without the line terminators.
     /// There is always at least one line, and a text ending in a line break has a final empty line.
     ///

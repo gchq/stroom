@@ -32,6 +32,7 @@ import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.ai.shared.DocumentReferenceContext;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -268,7 +269,9 @@ public class TabSnapshots {
                         .append(", the most kept of a tab; say so if it matters.");
             }
         }
-        if (parts.stream().noneMatch(part -> AiTabSnapshotPart.DOCUMENTATION.equals(part.name()))) {
+        // A folder has no Documentation tab.
+        if (!ExplorerConstants.isFolderOrSystem(docRef)
+            && parts.stream().noneMatch(part -> AiTabSnapshotPart.DOCUMENTATION.equals(part.name()))) {
             sb.append(" Its Documentation tab is as saved: read it with document_documentation if needed.");
         }
         if (NullSafe.isNonBlankString(snapshot.note())) {

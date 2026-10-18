@@ -110,18 +110,34 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
                 .build();
     }
 
+    /// @param current  The element's code as it is.
+    /// @param proposed The code the model proposed.
+    /// @return The proposed code ending in the same line breaks as the current code (none, or e.g. one `\n`), so
+    /// only the model's real changes are shown and applied.
+    static String withLineEndingOf(final String current, final String proposed) {
+        return stripLineBreaks(proposed) + current.substring(stripLineBreaks(current).length());
+    }
+
+    private static String stripLineBreaks(final String text) {
+        int end = text.length();
+        while (end > 0 && (text.charAt(end - 1) == '\n' || text.charAt(end - 1) == '\r')) {
+            end--;
+        }
+        return text.substring(0, end);
+    }
+
     @Override
     String run(final ToolExecutionRequest request, final int chatId) {
         final String elementId = stringArg(request, ELEMENT_ARG);
-        final String code = rawArg(request, CODE_ARG);
+        final String given = rawArg(request, CODE_ARG);
         final String summary = stringArg(request, SUMMARY_ARG);
         if (elementId == null) {
             throw new WorkspaceException("Give the element's id, as named in the pipeline.");
         }
-        if (code == null || code.isBlank()) {
+        if (given == null || given.isBlank()) {
             throw new WorkspaceException("Give the whole proposed code.");
         }
-        if (code.length() > UserActions.MAX_CODE_CHARS) {
+        if (given.length() > UserActions.MAX_CODE_CHARS) {
             throw new WorkspaceException("The code may be at most " + UserActions.MAX_CODE_CHARS + " characters.");
         }
         if (summary != null && summary.length() > MAX_SUMMARY_CHARS) {
@@ -165,6 +181,8 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
                    + "proposed. Give the change as a code block to copy.";
         }
 
+        // The model often drops or adds a final line break, which would show as a change of its own.
+        final String code = withLineEndingOf(base.text(), given);
         final String problem = xmlProblem(code);
         if (problem != null) {
             return "The proposed code isn't well formed XML, so no change was proposed: " + problem

@@ -510,4 +510,14 @@ class TestContextAssembler {
                 .doesNotContain("dict-uuid")
                 .doesNotContain("/Security/Lookups");
     }
+
+    @Test
+    void theModelIsToldToAskWhichDataSourceAndWhetherToRunOrCreateAQuery() {
+        assertThat(ContextAssembler.TOOL_GUIDANCE)
+                .contains("Never choose a data source for the user")
+                .contains("ask them which to use with ask_user, one option for each")
+                .contains("run a search and give them the results (run_stroomql), or to set up a Query document "
+                          + "they can run themselves (propose_query)")
+                .contains("in the same ask_user call");
+    }
 }

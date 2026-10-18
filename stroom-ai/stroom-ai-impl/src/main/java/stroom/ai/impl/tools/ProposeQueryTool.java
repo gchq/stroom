@@ -68,8 +68,9 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
                 .description("Offers the user a 'Create query…' button for a new StroomQL Query document. It "
                              + "creates nothing itself: the button opens Stroom's New Query dialog with the name "
                              + "you suggest, and once the user creates it there, the query is saved with your "
-                             + "StroomQL and opened. Validate the query first. To change a query the user already "
-                             + "has, give the revised StroomQL as a code block instead.")
+                             + "StroomQL and opened. Validate the query first. If more than one data source could "
+                             + "hold what the user asked for, ask them which to use with ask_user first. To change "
+                             + "a query the user already has, give the revised StroomQL as a code block instead.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "The name to suggest for the new query.")
                         .addStringProperty(QUERY_ARG, "The StroomQL.")

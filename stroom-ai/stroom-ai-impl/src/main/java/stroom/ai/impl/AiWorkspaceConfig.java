@@ -39,6 +39,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     static final StroomDuration DEFAULT_TOOL_TIME_LIMIT = StroomDuration.ofSeconds(30);
     static final StroomDuration DEFAULT_QUERY_TIME_LIMIT = StroomDuration.ofMinutes(2);
     static final int DEFAULT_MAX_QUERY_LENGTH = 10_000;
+    static final int DEFAULT_MAX_QUERY_ROWS = 10_000;
     static final int DEFAULT_MAX_EVENTS_PER_FETCH = 500;
     static final int DEFAULT_MAX_EVENT_BYTES = 1024 * 1024;
     static final int DEFAULT_MAX_STREAM_STORE_READS = 500;
@@ -51,6 +52,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     private final StroomDuration toolTimeLimit;
     private final StroomDuration queryTimeLimit;
     private final int maxQueryLength;
+    private final int maxQueryRows;
     private final int maxEventsPerFetch;
     private final int maxEventBytes;
     private final int maxStreamStoreReads;
@@ -64,6 +66,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         toolTimeLimit = DEFAULT_TOOL_TIME_LIMIT;
         queryTimeLimit = DEFAULT_QUERY_TIME_LIMIT;
         maxQueryLength = DEFAULT_MAX_QUERY_LENGTH;
+        maxQueryRows = DEFAULT_MAX_QUERY_ROWS;
         maxEventsPerFetch = DEFAULT_MAX_EVENTS_PER_FETCH;
         maxEventBytes = DEFAULT_MAX_EVENT_BYTES;
         maxStreamStoreReads = DEFAULT_MAX_STREAM_STORE_READS;
@@ -80,7 +83,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                              @JsonProperty("maxQueryLength") final Integer maxQueryLength,
                              @JsonProperty("maxEventsPerFetch") final Integer maxEventsPerFetch,
                              @JsonProperty("maxEventBytes") final Integer maxEventBytes,
-                             @JsonProperty("maxStreamStoreReads") final Integer maxStreamStoreReads) {
+                             @JsonProperty("maxStreamStoreReads") final Integer maxStreamStoreReads,
+                             @JsonProperty("maxQueryRows") final Integer maxQueryRows) {
         this.maxFileBytes = Objects.requireNonNullElse(maxFileBytes, DEFAULT_MAX_FILE_BYTES);
         this.maxChatBytes = Objects.requireNonNullElse(maxChatBytes, DEFAULT_MAX_CHAT_BYTES);
         this.maxUserBytes = Objects.requireNonNullElse(maxUserBytes, DEFAULT_MAX_USER_BYTES);
@@ -92,6 +96,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         this.maxEventsPerFetch = Objects.requireNonNullElse(maxEventsPerFetch, DEFAULT_MAX_EVENTS_PER_FETCH);
         this.maxEventBytes = Objects.requireNonNullElse(maxEventBytes, DEFAULT_MAX_EVENT_BYTES);
         this.maxStreamStoreReads = Objects.requireNonNullElse(maxStreamStoreReads, DEFAULT_MAX_STREAM_STORE_READS);
+        this.maxQueryRows = Objects.requireNonNullElse(maxQueryRows, DEFAULT_MAX_QUERY_ROWS);
     }
 
     @JsonPropertyDescription("The largest a single workspace file may be, in bytes.")
@@ -144,6 +149,14 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         return maxQueryLength;
     }
 
+    @JsonPropertyDescription("The most rows a StroomQL query run by the agent (run_stroomql) may return. A query "
+                             + "with no limit is given this one, and a larger limit is lowered to it, so the "
+                             + "agent's searches are never unbounded.")
+    @JsonProperty("maxQueryRows")
+    public int getMaxQueryRows() {
+        return maxQueryRows;
+    }
+
     @JsonPropertyDescription("The most source events the agent may fetch in one call of fetch_events.")
     @JsonProperty("maxEventsPerFetch")
     public int getMaxEventsPerFetch() {
@@ -176,6 +189,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                ", toolTimeLimit=" + toolTimeLimit +
                ", queryTimeLimit=" + queryTimeLimit +
                ", maxQueryLength=" + maxQueryLength +
+               ", maxQueryRows=" + maxQueryRows +
                ", maxEventsPerFetch=" + maxEventsPerFetch +
                ", maxEventBytes=" + maxEventBytes +
                ", maxStreamStoreReads=" + maxStreamStoreReads +

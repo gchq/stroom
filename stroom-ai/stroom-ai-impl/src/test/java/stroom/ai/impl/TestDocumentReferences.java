@@ -25,6 +25,7 @@ import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.DocumentReference;
 import stroom.ai.shared.DocumentReferenceContext;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.util.json.JsonUtil;
 
@@ -136,5 +137,15 @@ class TestDocumentReferences {
                 .doesNotContain("dict-uuid");
         assertThat(documentReferences.note(new AiChatAttachment(5, 1, 0L, 0L, AiAttachmentStatus.READY,
                 AiAttachmentType.DASHBOARD, "Dashboard 'A'", 3, false, null))).isNull();
+    }
+
+    @Test
+    void theNoteForAFolderNamesTheToolThatListsItsContents() {
+        final DocRef folder = new DocRef(ExplorerConstants.FOLDER_TYPE, "folder-uuid", "Firewalls");
+
+        assertThat(DocumentReferences.referenceNote(folder, "/Security").singleText())
+                .isEqualTo("[Referenced document: Folder 'Firewalls' (uuid folder-uuid, /Security). Use "
+                           + "folder_contents with its uuid to see what is in it (its documents, and the streams, "
+                           + "processor filters and tasks of its feeds and pipelines).]");
     }
 }

@@ -359,7 +359,9 @@ class TestDataPipelineTools {
         Mockito.when(queryService.downloadSearchResults(Mockito.any()))
                 .thenReturn(new ResourceGeneration(resourceKey, List.of()));
         Mockito.when(resourceStore.getTempFile(resourceKey)).thenReturn(results);
-        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> resourceStore);
+        final AgentSearches agentSearches = Mockito.mock(AgentSearches.class);
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService, () -> resourceStore,
+                agentSearches);
         Mockito.when(injectorSecurityContext.hasDocumentPermission(Mockito.any(), Mockito.any())).thenReturn(true);
 
         final String result = run(tool, "{\"query\":\"from \\\"My View\\\" select Host, count() as N group by "
@@ -378,6 +380,26 @@ class TestDataPipelineTools {
         Mockito.verify(queryService, Mockito.times(2)).search(requests.capture());
         assertThat(requests.getAllValues().get(1).getQueryKey()).isEqualTo(queryKey);
         assertThat(requests.getAllValues().getFirst().isStoreHistory()).isFalse();
+        // A query without a limit is given one, and told so.
+        assertThat(requests.getAllValues().getFirst().getQuery())
+                .isEqualTo("from \"My View\" limit 10000\nselect Host, count() as N group by Host");
+        assertThat(result).contains("The query had no limit, so 'limit 10000'");
+        // The search is removed once its results are written.
+        Mockito.verify(agentSearches).destroy(queryKey);
+    }
+
+    @Test
+    void theModelIsToldWhenTheRowLimitApplies() {
+        final StroomQlLimit.Limited kept = new StroomQlLimit.Limited("q", StroomQlLimit.Change.NONE);
+
+        assertThat(RunStroomQlTool.limitNote(kept, 100, 5)).isEmpty();
+        assertThat(RunStroomQlTool.limitNote(new StroomQlLimit.Limited("q", StroomQlLimit.Change.LOWERED), 100, 5))
+                .contains("The query's limit was over 100");
+        // Rows that reach the most may not be all of them, and aren't a count.
+        assertThat(RunStroomQlTool.limitNote(kept, 100, 100))
+                .contains("there may be more")
+                .contains("don't take the row count for a total")
+                .contains("use count() with group by");
     }
 
     @Test
@@ -386,24 +408,31 @@ class TestDataPipelineTools {
         Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.empty());
         Mockito.when(queryService.search(Mockito.any()))
                 .thenReturn(response(new QueryKey("q"), true, List.of("Unknown field 'Hst'")));
+        final AgentSearches agentSearches = Mockito.mock(AgentSearches.class);
         final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService,
-                () -> Mockito.mock(ResourceStore.class));
+                () -> Mockito.mock(ResourceStore.class), agentSearches);
 
         assertThat(run(tool, "{\"query\":\"from x select Hst\"}")).isEqualTo("Error: The query failed: Unknown "
                                                                           + "field 'Hst'");
         assertThat(run(tool, "{}")).isEqualTo("Error: Give a StroomQL query.");
+        // A search that failed is removed too.
+        Mockito.verify(agentSearches).destroy(new QueryKey("q"));
 
         // A query that never finishes is stopped at the limit.
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
                 new AiWorkspaceConfig(null, null, null, null, null, null, StroomDuration.ofMillis(800),
-                        null, null, null, null), null,
+                        null, null, null, null, null), null,
                 null, null, null, null, null, null, null);
         Mockito.when(queryService.search(Mockito.any())).thenReturn(response(new QueryKey("q"), false, null));
+        Mockito.clearInvocations(agentSearches);
         assertThat(run(tool, "{\"query\":\"from x\"}")).startsWith("Error: This took too long");
+        // One stopped at the time limit is never left running.
+        Mockito.verify(agentSearches).destroy(new QueryKey("q"));
 
         // The longest query an administrator allows.
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, null, null, null, null, 20, null, null, null),
+                new AiWorkspaceConfig(null, null, null, null, null, null, StroomDuration.ofMillis(800), 20, null,
+                        null, null, null),
                         null, null, null, null, null,
                         null, null, null);
         assertThat(run(tool, "{\"query\":\"from x select a, b, c, d\"}"))

@@ -28,6 +28,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -93,6 +94,62 @@ public class DocumentAccess {
     /// @return The document (with its type and name) if [#find(String)] finds it. Empty otherwise.
     public Optional<DocRef> findDocRef(final String uuid) {
         return find(uuid).map(ExplorerNode::getDocRef);
+    }
+
+    /// Finds a folder by its UUID or its Explorer path, following only folders the user can view.
+    ///
+    /// @param folder A folder's UUID, or its Explorer path, e.g. `/Security/Lookups`. Null, blank or `/` for the
+    ///               top of the tree.
+    /// @return The folder, or the System root for the top of the tree, which anyone may look in. Empty if there is
+    /// no such folder, or the user can't view it or a folder above it on the path, with no difference between the
+    /// cases.
+    public Optional<DocRef> findFolder(final String folder) {
+        final String value = folder == null
+                ? ""
+                : folder.strip();
+        if (value.isEmpty() || "/".equals(value) || ExplorerConstants.SYSTEM_DOC_REF.getUuid().equals(value)) {
+            return Optional.of(ExplorerConstants.SYSTEM_DOC_REF);
+        }
+        if (!value.startsWith("/")) {
+            return findDocRef(value).filter(ExplorerConstants::isFolder);
+        }
+        try {
+            ExplorerNode current = ExplorerConstants.SYSTEM_NODE;
+            for (final String name : value.substring(1).split("/")) {
+                if (name.isBlank()) {
+                    continue;
+                }
+                final ExplorerNode parent = current;
+                current = explorerNodeServiceProvider.get().getNodesByName(parent, name.strip()).stream()
+                        .filter(ExplorerConstants::isFolder)
+                        .filter(node -> canView(node.getDocRef()))
+                        .findFirst()
+                        .orElse(null);
+                if (current == null) {
+                    return Optional.empty();
+                }
+            }
+            return Optional.of(current.getDocRef());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the folder " + folder, e);
+            return Optional.empty();
+        }
+    }
+
+    /// @param folder A folder the user can view, or the System root.
+    /// @return What it holds that the user can view, as the Explorer tree shows it, leaving out the Favourites
+    /// root. Empty if it can't be listed.
+    public List<ExplorerNode> children(final DocRef folder) {
+        try {
+            return NullSafe.list(explorerNodeServiceProvider.get().getChildren(folder)).stream()
+                    .filter(node -> node != null && node.getDocRef() != null)
+                    .filter(node -> !ExplorerConstants.isRootNode(node))
+                    .filter(node -> canView(node.getDocRef()))
+                    .toList();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to list the children of " + folder, e);
+            return List.of();
+        }
     }
 
     /// @return True if the user may view data (streams), as the Data screen needs. False if they may not, or if
