@@ -24,6 +24,7 @@ import stroom.processor.shared.QueryData;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -49,7 +50,8 @@ import java.util.regex.Pattern;
 /// - each button's text is written by Stroom, from its own state, never from the server's `summary`;
 /// - a filter must exist, be on the pipeline named, and be disabled (to enable it) or enabled (to disable it);
 /// - an Elasticsearch request is only shown if it is one of three simple requests naming an index of the
-///   pipelines in the result, and Stroom never runs it.
+///   pipelines in the result (the one it gives as its `doc`, or another action's), and Stroom never runs it. One
+///   that isn't is left out, and logged, as the model has the request in the result's text to give the user.
 ///
 /// The model can neither make nor click a button: only the user's click does anything, and it is checked
 /// again then.
@@ -72,6 +74,8 @@ public class UserActions {
     static final int MAX_AFTER_CHARS = 200;
     static final int MAX_DETAILS_CHARS = 500;
     static final int MAX_REQUEST_CHARS = 100_000;
+    // The most of a request Stroom will not show that is logged.
+    private static final int MAX_LOGGED_CHARS = 200;
 
     private static final Pattern ID_PATTERN = Pattern.compile("[A-Za-z0-9_.:-]{1,64}");
     private static final Pattern DOC_TYPE_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9]{0,63}");
@@ -82,6 +86,9 @@ public class UserActions {
     private static final Pattern PUT_TEMPLATE = Pattern.compile("PUT _index_template/" + ES_NAME);
     private static final Pattern DELETE_DATA_STREAM = Pattern.compile("DELETE _data_stream/" + ES_NAME);
     private static final Pattern DELETE_INDEX = Pattern.compile("DELETE " + ES_NAME);
+    // What a variable in an index name may be filled in with: the characters of an index name, no wildcards or
+    // lists.
+    private static final String VARIABLE_VALUE = "[a-z0-9._-]+";
 
     private final UserActionLookup lookup;
 
@@ -130,7 +137,7 @@ public class UserActions {
                 case ENABLE_PROCESSOR_FILTER -> filterAction(id, map, true, expiresMs);
                 case DISABLE_PROCESSOR_FILTER -> filterAction(id, map, false, expiresMs);
                 case OPEN_DOCUMENT -> openDocument(id, map, expiresMs);
-                case ELASTICSEARCH_REQUEST -> Optional.of(elasticsearchRequest(id, map, pipelines, expiresMs));
+                case ELASTICSEARCH_REQUEST -> elasticsearchRequest(id, map, pipelines, expiresMs);
                 default -> Optional.empty();
             };
             if (record.isPresent()) {
@@ -235,19 +242,28 @@ public class UserActions {
                 expiresMs, Status.PENDING, null));
     }
 
-    private UserActionRecord elasticsearchRequest(final String id,
-                                                  final Map<?, ?> map,
-                                                  final Set<DocRef> pipelines,
-                                                  final long expiresMs) {
+    private Optional<UserActionRecord> elasticsearchRequest(final String id,
+                                                            final Map<?, ?> map,
+                                                            final Set<DocRef> pipelines,
+                                                            final long expiresMs) {
         final String request = string(map.get("request"));
-        final String problem = elasticsearchProblem(request, pipelines);
-        final String label = "Elasticsearch request, for the cluster admin to run";
-        return problem == null
-                ? new UserActionRecord(id, ELASTICSEARCH_REQUEST, label, null, null, null, null, request.strip(),
-                List.of(), expiresMs, Status.PENDING, null)
-                : new UserActionRecord(id, ELASTICSEARCH_REQUEST, label, null,
-                        "Stroom has not shown this request, as " + problem, null, null, null, List.of(), expiresMs,
-                        Status.PENDING, null);
+        // The pipeline the request is for, if it says, as well as any another action names.
+        final Set<DocRef> candidates = new HashSet<>(pipelines);
+        final DocRef doc = docRef(map.get("doc"));
+        if (doc != null && PipelineDoc.TYPE.equals(doc.getType())) {
+            candidates.add(doc);
+        }
+        final String problem = elasticsearchProblem(request, candidates);
+        if (problem != null) {
+            // Its first line, cut short: it is the server's text.
+            LOGGER.info(() -> LogUtil.message("Not showing an Elasticsearch request from an MCP tool, as {} "
+                                              + "Request: {}", problem, LogUtil.truncate(NullSafe.string(request)
+                                                      .lines().findFirst().orElse(""), MAX_LOGGED_CHARS)));
+            return Optional.empty();
+        }
+        return Optional.of(new UserActionRecord(id, ELASTICSEARCH_REQUEST,
+                "Elasticsearch request, for the cluster admin to run", null, null, null, null, request.strip(),
+                List.of(), expiresMs, Status.PENDING, null));
     }
 
     /// @return Why the request cannot be shown, or null if it can.
@@ -262,9 +278,12 @@ public class UserActions {
         }
         Matcher matcher = PUT_TEMPLATE.matcher(firstLine);
         if (matcher.matches()) {
-            // A template is named after the index it is for.
+            // A template is named after the index it is for: up to its first variable, if it has any, e.g.
+            // "ecs-acme-v1-{year}" names templates starting "ecs-acme-v1-".
             final String template = matcher.group(1);
-            return indexes.stream().anyMatch(template::startsWith)
+            return indexes.stream()
+                           .map(UserActions::fixedPart)
+                           .anyMatch(index -> !index.isEmpty() && template.startsWith(index))
                     ? null
                     : "the template is not named after an index of the pipelines here.";
         }
@@ -276,12 +295,51 @@ public class UserActions {
             matcher = DELETE_INDEX.matcher(firstLine);
         }
         if (matcher.matches()) {
-            return indexes.contains(matcher.group(1))
+            final String name = matcher.group(1);
+            return indexes.stream().anyMatch(index -> namesIndex(index, name))
                     ? null
                     : "it does not name an index of the pipelines here.";
         }
         return "it is not one of the requests Stroom allows (PUT _index_template/<name>, "
                + "DELETE _data_stream/<index> or DELETE <index>, with no wildcards or lists).";
+    }
+
+    /// @param indexName An index name a pipeline writes to, which may hold variables the pipeline fills in from
+    ///                  each document, e.g. `stroom-ecs-twitter-v1-{_suffixName}`.
+    /// @param name      The name of an index, as a request gives it.
+    /// @return True if the pipeline may write to the index: the name is the index name, or one it may make, with
+    /// each variable filled in. An index name that starts with a variable could make almost any name, so only
+    /// matches itself.
+    static boolean namesIndex(final String indexName, final String name) {
+        if (indexName.equals(name)) {
+            return true;
+        }
+        if (fixedPart(indexName).isEmpty() || indexName.indexOf('{') < 0) {
+            return false;
+        }
+        final StringBuilder regex = new StringBuilder();
+        int from = 0;
+        while (from < indexName.length()) {
+            final int open = indexName.indexOf('{', from);
+            final int close = open < 0
+                    ? -1
+                    : indexName.indexOf('}', open);
+            if (open < 0 || close < 0) {
+                regex.append(Pattern.quote(indexName.substring(from)));
+                break;
+            }
+            regex.append(Pattern.quote(indexName.substring(from, open))).append(VARIABLE_VALUE);
+            from = close + 1;
+        }
+        return name.matches(regex.toString());
+    }
+
+    // The start of an index name, before any variable in it.
+    private static String fixedPart(final String indexName) {
+        final int variable = indexName.indexOf('{');
+        return variable < 0
+                ? indexName
+                : indexName.substring(0, variable);
     }
 
     /// @return What a filter selects and how fast it processes, as Stroom has it.

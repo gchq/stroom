@@ -22,6 +22,9 @@ import stroom.docstore.api.DocumentTypeName;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -33,6 +36,7 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +49,9 @@ public class UserActionLookupImpl implements UserActionLookup {
 
     // How far up a pipeline's parents to look for the indexes it writes to.
     private static final int MAX_PIPELINE_DEPTH = 10;
+    // The element that writes to Elasticsearch, and its property naming the index it writes to.
+    private static final String ELASTIC_INDEXING_FILTER = "ElasticIndexingFilter";
+    private static final String INDEX_NAME_PROPERTY = "indexName";
 
     private final ProcessorFilterService processorFilterService;
     private final ExplorerNodeService explorerNodeService;
@@ -100,6 +107,10 @@ public class UserActionLookupImpl implements UserActionLookup {
     public Set<String> elasticIndexNames(final DocRef pipeline) {
         final Set<String> names = new HashSet<>();
         final Set<String> seen = new HashSet<>();
+        // Each element's type, and the index name each element is given, nearest the pipeline first, as a pipeline
+        // sets what it inherits.
+        final Map<String, String> elementTypes = new HashMap<>();
+        final Map<String, String> indexNames = new HashMap<>();
         DocRef current = pipeline;
         for (int depth = 0; current != null && depth < MAX_PIPELINE_DEPTH && seen.add(current.getUuid()); depth++) {
             final PipelineDoc doc = read(current, PipelineDoc.TYPE, PipelineDoc.class);
@@ -112,8 +123,25 @@ public class UserActionLookupImpl implements UserActionLookup {
                             index -> NullSafe.consume(index.getIndexName(), names::add));
                 }
             }
+            final PipelineData data = doc.getPipelineData();
+            if (data != null) {
+                for (final PipelineElement element : data.getAddedElements()) {
+                    elementTypes.putIfAbsent(element.getId(), element.getType());
+                }
+                for (final PipelineProperty property : data.getAddedProperties()) {
+                    if (INDEX_NAME_PROPERTY.equals(property.getName()) && property.getValue() != null
+                        && NullSafe.isNonBlankString(property.getValue().getString())) {
+                        indexNames.putIfAbsent(property.getElement(), property.getValue().getString().strip());
+                    }
+                }
+            }
             current = doc.getParentPipeline();
         }
+        indexNames.forEach((element, name) -> {
+            if (ELASTIC_INDEXING_FILTER.equals(elementTypes.get(element))) {
+                names.add(name);
+            }
+        });
         return names;
     }
 

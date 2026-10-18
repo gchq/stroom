@@ -39,6 +39,7 @@ public interface UserActionLookup {
 
     /// @param pipeline A pipeline.
     /// @return The names of the Elasticsearch indexes that the pipeline (or a pipeline it inherits from) writes
-    /// to, through its Elastic Index documents.
+    /// to: the `indexName` of its Elastic indexing filters, as the pipeline that is lowest in the chain sets it, and
+    /// those of the Elastic Index documents it names. A name may hold variables, e.g. `{year}`.
     Set<String> elasticIndexNames(DocRef pipeline);
 }
