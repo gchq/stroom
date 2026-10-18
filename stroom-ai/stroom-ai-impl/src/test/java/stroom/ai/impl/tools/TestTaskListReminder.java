@@ -66,6 +66,23 @@ class TestTaskListReminder {
     }
 
     @Test
+    void aRunCarryingOnAfterAnApprovalRemindsAboutTheListItKept() {
+        // The run stopped for the user's approval just after writing its list, and carries on once they give it:
+        // seen in a chat whose list wasn't updated for the 59 tool calls after it.
+        final TaskListReminder carryingOn = TaskListReminder.continuing(UNFINISHED);
+
+        assertThat(steps(carryingOn, TaskListReminder.STEPS_BEFORE_REMINDER - 1)).isFalse();
+        assertThat(carryingOn.afterStep(List.of(call("read_stream", "{}")))).isTrue();
+
+        // Nothing to remind about without a list, once it is done, or if it can't be read.
+        assertThat(steps(TaskListReminder.continuing(null), TaskListReminder.STEPS_BEFORE_REMINDER * 2)).isFalse();
+        assertThat(steps(TaskListReminder.continuing(FINISHED), TaskListReminder.STEPS_BEFORE_REMINDER * 2))
+                .isFalse();
+        assertThat(steps(TaskListReminder.continuing("not json"), TaskListReminder.STEPS_BEFORE_REMINDER * 2))
+                .isFalse();
+    }
+
+    @Test
     void aFailedUpdateLeavesTheListAsItWas() {
         final TaskListReminder reminder = new TaskListReminder();
         reminder.afterStep(List.of(call(TaskListTool.NAME, UNFINISHED)));
