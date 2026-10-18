@@ -213,6 +213,8 @@ public class AskStroomAiPresenter
     private static final String COPY_TEXT_ATTRIBUTE = "data-copy-text";
     private static final String DAY_DIVIDER_CLASS = "ai-day-divider";
     private static final String PENDING_MESSAGE_ID = "pending";
+    // How long a chat takes to load before it is shown to be loading.
+    private static final int LOADING_DELAY_MS = 200;
     private static final String UNDO_COMPACTION_ATTRIBUTE = "data-undo-compaction";
     private static final String ELICITATION_ATTRIBUTE = "data-elicitation-id";
     private static final String ELICITATION_ACTION_ATTRIBUTE = "data-elicitation-action";
@@ -281,6 +283,13 @@ public class AskStroomAiPresenter
     };
     private long statusVersion;
     private Timer statusTimer;
+    // Shows that a chat is loading, if it takes long enough to notice, so a quick load doesn't flicker.
+    private final Timer loadingTimer = new Timer() {
+        @Override
+        public void run() {
+            getView().setLoading(true);
+        }
+    };
     // How the chat is shown: DOCK, DIALOG or TAB, or null if hidden.
     private DockType shownAs;
     private boolean docked;
@@ -4304,7 +4313,16 @@ public class AskStroomAiPresenter
         refreshAutoApprove();
 
         // Load messages for the selected chat.
+        loadingTimer.cancel();
+        getView().setLoading(false);
+        loadingTimer.schedule(LOADING_DELAY_MS);
         askStroomAiClient.getMessages(chat.getId(), messages -> {
+            if (currentChat == null || currentChat.getId() != chat.getId()) {
+                // Another chat was opened while this one loaded.
+                return;
+            }
+            loadingTimer.cancel();
+            getView().setLoading(false);
             final long nowMs = System.currentTimeMillis();
             // A chat with no question yet (e.g. a new chat reopened after a refresh) is named by its first.
             if (NullSafe.list(messages).stream()
@@ -4340,6 +4358,12 @@ public class AskStroomAiPresenter
                     }
                 }
             }, error -> { /* ignore */ }, this);
+        }, error -> {
+            if (currentChat != null && currentChat.getId() == chat.getId()) {
+                loadingTimer.cancel();
+                getView().setLoading(false);
+                showError(error, "Unable to load the chat", null);
+            }
         }, this);
     }
 
@@ -4431,6 +4455,9 @@ public class AskStroomAiPresenter
 
         /// @return The list of attachments above the input box, for its clicks.
         Widget getAttachmentList();
+
+        /// Shows, over the conversation, that a chat is loading, or stops showing it.
+        void setLoading(boolean loading);
 
         /// Shows a command's reference above the input, until hidden.
         void showCommandReference(SafeHtml html);
