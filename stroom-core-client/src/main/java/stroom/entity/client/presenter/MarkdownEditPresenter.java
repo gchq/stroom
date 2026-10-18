@@ -91,6 +91,8 @@ public class MarkdownEditPresenter
         // Same origin lets Stroom's shortcuts (e.g. Alt+W) work while the document has the focus. Scripts are
         // still not allowed, so nothing in the document can run.
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS, SandboxOption.ALLOW_SAME_ORIGIN);
+        // A link followed in the frame would load Stroom, or another site, in it, where it can't run.
+        iFramePresenter.setLinkHandler(href -> MarkdownLinks.open(this, href));
 //        view.setView(iFramePresenter.getView());
 
         editModeButton = new InlineSvgToggleButton();
