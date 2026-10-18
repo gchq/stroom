@@ -189,22 +189,88 @@ class TestUserActions {
             "PUT _index_template/other",
             "GET _cat/indices",
             ""})
-    void otherElasticsearchRequestsAreReplacedByAWarning(final String request) {
+    void otherElasticsearchRequestsAreLeftOut(final String request) {
+        // Not shown as a step that reads like an error: the model has the request to give the user, in the text.
         assertThat(userActions.check(withPipeline(es("drop", request)), NOW))
-                .filteredOn(action -> action.id().equals("drop"))
-                .singleElement()
-                .satisfies(action -> {
-                    assertThat(action.request()).isNull();
-                    assertThat(action.warning()).startsWith("Stroom has not shown this request");
-                });
+                .extracting(UserActionRecord::id)
+                .containsExactly("enable-31");
     }
 
     @Test
     void anElasticsearchRequestNeedsAPipelineInTheResult() {
-        assertThat(userActions.check(List.of(es("drop", "DELETE ecs-acme-v1")), NOW))
+        assertThat(userActions.check(List.of(es("drop", "DELETE ecs-acme-v1")), NOW)).isEmpty();
+    }
+
+    @Test
+    void anIndexNameWithVariablesNamesTheIndexesItMakes() {
+        // The pipeline's XSLT fills the variables in for each document, so the index a request names may be any of
+        // those the pattern makes.
+        assertThat(UserActions.namesIndex("stroom-ecs-twitter-v1-{_suffixName}", "stroom-ecs-twitter-v1-2026"))
+                .isTrue();
+        assertThat(UserActions.namesIndex("ecs-{_kind}-v1-{year}", "ecs-auth-v1-2026")).isTrue();
+        // Fixed text after a variable must be there too.
+        assertThat(UserActions.namesIndex("stroom-twitter-{year}-v1", "stroom-twitter-2026-v1")).isTrue();
+        assertThat(UserActions.namesIndex("stroom-twitter-{year}-v1", "stroom-twitter-2026-v2")).isFalse();
+        assertThat(UserActions.namesIndex("stroom-twitter-{year}-v1", "stroom-twitter-2026")).isFalse();
+        assertThat(UserActions.namesIndex("ecs-acme-v1", "ecs-acme-v1")).isTrue();
+        assertThat(UserActions.namesIndex("ecs-acme-v1", "ecs-acme-v1-2026")).isFalse();
+        assertThat(UserActions.namesIndex("stroom-ecs-twitter-v1-{_suffixName}", "stroom-ecs-twitter-v1-")).isFalse();
+        assertThat(UserActions.namesIndex("stroom-ecs-twitter-v1-{_suffixName}", "other-2026")).isFalse();
+        // Starting with a variable, it could make almost any name.
+        assertThat(UserActions.namesIndex("{_index}", "anything")).isFalse();
+        assertThat(UserActions.namesIndex("{_index}", "{_index}")).isTrue();
+        // Characters that mean something to a regular expression are taken as they are.
+        assertThat(UserActions.namesIndex("ecs.acme-{x}", "ecsXacme-1")).isFalse();
+    }
+
+    @Test
+    void anIndexMadeFromAPatternMayBeDropped() {
+        Mockito.when(lookup.elasticIndexNames(new DocRef("Pipeline", PIPELINE_UUID)))
+                .thenReturn(Set.of("ecs-acme-v1-{_suffixName}"));
+
+        assertThat(userActions.check(withPipeline(es("drop", "DELETE _data_stream/ecs-acme-v1-2026")), NOW))
+                .extracting(UserActionRecord::id)
+                .containsExactly("enable-31", "drop");
+        assertThat(userActions.check(withPipeline(es("drop", "DELETE other-2026")), NOW))
+                .extracting(UserActionRecord::id)
+                .containsExactly("enable-31");
+    }
+
+    @Test
+    void anElasticsearchRequestMayNameItsOwnPipeline() {
+        // As propose_index_template gives the agreed template: on its own, for the pipeline that writes the index.
+        final Map<String, Object> commit = new HashMap<>(es("commit-template",
+                "PUT _index_template/ecs-acme-v1\n{\"index_patterns\": [\"ecs-acme-v1*\"]}"));
+        commit.put("doc", doc("Pipeline", PIPELINE_UUID, "Acme-Events"));
+
+        assertThat(userActions.check(List.of(commit), NOW))
                 .singleElement()
-                .extracting(UserActionRecord::request)
-                .isNull();
+                .satisfies(action -> assertThat(action.request()).startsWith("PUT _index_template/ecs-acme-v1"));
+        // Only a pipeline counts.
+        commit.put("doc", doc("Feed", PIPELINE_UUID, "Acme-Events"));
+        assertThat(userActions.check(List.of(commit), NOW)).isEmpty();
+    }
+
+    @Test
+    void aTemplateIsNamedAfterAnIndexUpToItsFirstVariable() {
+        Mockito.when(lookup.elasticIndexNames(new DocRef("Pipeline", PIPELINE_UUID)))
+                .thenReturn(Set.of("ecs-acme-v1-{year}", "{feed}-events"));
+
+        assertThat(userActions.check(withPipeline(es("t", "PUT _index_template/ecs-acme-v1-template")), NOW))
+                .extracting(UserActionRecord::id)
+                .containsExactly("enable-31", "t");
+        // A template for an index with fixed text after a variable is named after the text before it.
+        Mockito.when(lookup.elasticIndexNames(new DocRef("Pipeline", PIPELINE_UUID)))
+                .thenReturn(Set.of("stroom-twitter-{year}-v1"));
+        assertThat(userActions.check(withPipeline(es("t", "PUT _index_template/stroom-twitter-v1")), NOW))
+                .extracting(UserActionRecord::id)
+                .containsExactly("enable-31", "t");
+        Mockito.when(lookup.elasticIndexNames(new DocRef("Pipeline", PIPELINE_UUID)))
+                .thenReturn(Set.of("ecs-acme-v1-{year}", "{feed}-events"));
+        // A name that is all variable says nothing of what the template must be named.
+        assertThat(userActions.check(withPipeline(es("t", "PUT _index_template/other-events")), NOW))
+                .extracting(UserActionRecord::id)
+                .containsExactly("enable-31");
     }
 
     @Test
