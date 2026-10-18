@@ -46,7 +46,9 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
                                       + "one's documentation with describe_data_source (it says what their fields "
                                       + "hold, which their names may not), then ask the user which to use with "
                                       + "ask_user (one option for each, with what each holds) rather than "
-                                      + "choosing one yourself, unless they have already said.";
+                                      + "choosing one yourself, unless they have already said. If it isn't clear "
+                                      + "whether they want the search run or a Query document made, ask that in "
+                                      + "the same ask_user call.";
     static final String FILTER_ARG = "filter";
     static final String INCLUDE_IGNORED_ARG = "includeIgnored";
     /// The most data sources listed in one call.

@@ -80,6 +80,9 @@ public class DataSourceDocumentation {
     static final int MAX_FOLDER_DOCS = 50;
     /// The most docs in its folder given only because they mention it (not named after it or a pipeline).
     static final int MAX_MENTIONING_DOCS = 3;
+    // An HTML comment, which may span lines; an unclosed one runs to the end.
+    private static final Pattern COMMENT = Pattern.compile("<!--.*?(-->|\\z)", Pattern.DOTALL);
+
     /// The property of an Elastic indexing filter that names the Elasticsearch index it writes to.
     static final String INDEX_NAME_PROPERTY = "indexName";
 
@@ -149,7 +152,10 @@ public class DataSourceDocumentation {
             besideDoc(pipeline).ifPresent(doc -> found.putIfAbsent(doc.from().getUuid(), doc));
         }
 
-        final List<Documented> docs = List.copyOf(found.values());
+        // Some hold nothing but what the MCP server keeps hidden.
+        final List<Documented> docs = found.values().stream()
+                .filter(doc -> !doc.text().isBlank())
+                .toList();
         final List<DocRef> read = docs.stream()
                 .map(Documented::from)
                 .filter(docRef -> !docRef.equals(dataSource))
@@ -159,6 +165,15 @@ public class DataSourceDocumentation {
             documentAccess.logViews(chatId, read, purpose);
         }
         return docs;
+    }
+
+    /// @param text Markdown, or null.
+    /// @return It without HTML comments (`<!-- … -->`), and without the blank lines they leave.
+    static String withoutComments(final String text) {
+        if (text == null) {
+            return "";
+        }
+        return COMMENT.matcher(text).replaceAll("").replaceAll("\\n{3,}", "\n\n").strip();
     }
 
     /// @param docs The data source's documentation, as [#find(int, DocRef, String)] gave it.
@@ -366,5 +381,10 @@ public class DataSourceDocumentation {
     /// @param text The documentation.
     public record Documented(DocRef from, DocRef of, String what, String text) {
 
+        /// The text without HTML comments, where the Stroom MCP server keeps what it needs (its mapping, field
+        /// descriptions, an index template), hidden from people and only noise to the agent.
+        public Documented {
+            text = withoutComments(text);
+        }
     }
 }

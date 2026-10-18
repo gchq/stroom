@@ -42,6 +42,7 @@ import stroom.docstore.api.DocFinder;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.QueryKey;
 import stroom.query.impl.QueryService;
+import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -386,6 +387,11 @@ class TestDataPipelineTools {
         assertThat(result).contains("The query had no limit, so 'limit 10000'");
         // The search is removed once its results are written.
         Mockito.verify(agentSearches).destroy(queryKey);
+        // All the rows the limit allows are downloaded, not just the few the search was polled for.
+        final ArgumentCaptor<DownloadQueryResultsRequest> download =
+                ArgumentCaptor.forClass(DownloadQueryResultsRequest.class);
+        Mockito.verify(queryService).downloadSearchResults(download.capture());
+        assertThat(download.getValue().getSearchRequest().getRequestedRange().getLength()).isEqualTo(10_000L);
     }
 
     @Test

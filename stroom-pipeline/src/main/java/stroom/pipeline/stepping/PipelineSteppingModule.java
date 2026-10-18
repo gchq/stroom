@@ -16,6 +16,7 @@
 
 package stroom.pipeline.stepping;
 
+import stroom.ai.api.CodeChangeStepper;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -25,5 +26,6 @@ public class PipelineSteppingModule extends AbstractModule {
     protected void configure() {
         RestResourcesBinder.create(binder())
                 .bind(SteppingResourceImpl.class);
+        bind(CodeChangeStepper.class).to(AiCodeChangeStepper.class);
     }
 }

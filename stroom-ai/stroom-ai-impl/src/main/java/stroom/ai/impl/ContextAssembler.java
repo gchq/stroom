@@ -135,7 +135,10 @@ public class ContextAssembler {
             - Clauses go in this order: from, where (with and, or, not and brackets), eval, window, filter, \
             sort by, group by, having, limit, select, show. limit comes before select, e.g. \
             `from "My View" where EventTime > day() - 1d limit 100 select EventTime, User`.
-            - Quote a data source or field name with spaces or dots in double quotes.
+            - Quote a data source's name in double quotes if it has spaces or punctuation. Never quote a field \
+            name in select or eval: a quoted name there is text, so every row would hold the name itself. Write \
+            a field with dots as it is (create.document.description, @timestamp), and one with spaces as \
+            ${Create Time}.
             - Conditions: =, !=, >, >=, <, <=, in ("a", "b"), in dictionary "Name", and between 1 and 10. There \
             is no contains, like or matches: to find a word in text, use = with wildcards, e.g. `Text = "*sky*"` \
             (* for any characters, ? for one).
@@ -180,6 +183,13 @@ public class ContextAssembler {
             only the change asked for, keeping the rest of the code exactly as it is. Before writing it, call \
             get_instructions with the element's document and the pipeline, and follow their XSLT style and how \
             they map fields.
+            - The pipeline's later elements check what the code writes: a schema filter validates it against a \
+            schema (e.g. event-logging), which fixes which elements may appear where, in what order, and what \
+            each must hold (e.g. a Send has a Source, a Destination and a Payload, not a Document). Write only \
+            what the schema allows; read it (the XmlSchema doc the schema filter uses: document_links on the \
+            pipeline finds it) when you aren't sure. propose_code_change tries each change by stepping the \
+            record with it, refuses one that gives new errors, and gives the output it made: fix the errors and \
+            propose again, and show that output rather than what you expect.
             - Once the user has applied a change and stepped again, check the new output against what you \
             expected.""";
 

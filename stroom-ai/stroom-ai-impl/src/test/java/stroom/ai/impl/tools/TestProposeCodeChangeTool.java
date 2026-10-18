@@ -16,6 +16,10 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.api.CodeChangeStepper;
+import stroom.ai.api.CodeChangeStepper.StepOutcome;
+import stroom.ai.api.CodeChangeStepper.StepProblem;
+import stroom.ai.api.CodeChangeStepper.StepTrial;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredPart;
@@ -36,6 +40,7 @@ import stroom.util.json.JsonUtil;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.time.Duration;
@@ -74,6 +79,7 @@ class TestProposeCodeChangeTool {
     private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final DocFinder docFinder = Mockito.mock(DocFinder.class);
+    private final CodeChangeStepper stepper = Mockito.mock(CodeChangeStepper.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
     private ProposeCodeChangeTool tool;
 
@@ -85,7 +91,80 @@ class TestProposeCodeChangeTool {
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
         Mockito.when(documentAccess.canView(XSLT)).thenReturn(true);
         tool = new ProposeCodeChangeTool(workspace, tabSnapshots, documentAccess,
-                new AgentInstructions(() -> docFinder, documentAccess));
+                new AgentInstructions(() -> docFinder, documentAccess), () -> stepper);
+        // By default, the record steps cleanly with both the current and the proposed code.
+        steps(List.of(), List.of());
+    }
+
+    @Test
+    void aChangeWhoseOutputTheSchemaRejectsIsRefusedWithTheErrors() {
+        stepping("xsltFilter", BASE, false);
+        final StepProblem invalid = new StepProblem("schemaFilter", "ERROR", "cvc-complex-type.2.4.a: Invalid "
+                                                                             + "content was found starting with "
+                                                                             + "element 'Document'.", 12, 9);
+        // An error the current code gives too isn't the change's.
+        final StepProblem already = new StepProblem("xsltFilter", "WARNING", "An old warning", 3, 1);
+        steps(List.of(already), List.of(already, invalid));
+
+        final String result = run("xsltFilter", PROPOSED, "Models it as a Send.");
+
+        assertThat(result)
+                .startsWith("The change was tried by stepping record 5 of stream 12 with it, and gives errors the "
+                            + "current code doesn't, so it wasn't proposed:")
+                .contains("- ERROR in schemaFilter at line 12, column 9: cvc-complex-type.2.4.a: Invalid content "
+                          + "was found starting with element 'Document'.")
+                .doesNotContain("An old warning")
+                .contains("pass allowErrors")
+                .contains("The element's output with the proposed code, for this record:\n<Events/>");
+        assertThat(context.takeUserActions("c1")).isEmpty();
+        // The stepping screen's record, with the current code and then the proposed code.
+        final ArgumentCaptor<StepTrial> trial = ArgumentCaptor.forClass(StepTrial.class);
+        Mockito.verify(stepper).step(trial.capture());
+        assertThat(trial.getValue().pipeline()).isEqualTo(PIPELINE);
+        assertThat(trial.getValue().metaId()).isEqualTo(12L);
+        assertThat(trial.getValue().partIndex()).isZero();
+        assertThat(trial.getValue().recordIndex()).isEqualTo(4L);
+        assertThat(trial.getValue().codes()).containsExactly(Map.of("xsltFilter", BASE),
+                Map.of("xsltFilter", PROPOSED));
+    }
+
+    @Test
+    void aChangeWithNewErrorsIsOfferedOnlyWhenTheUserAcceptsThem() {
+        stepping("xsltFilter", BASE, false);
+        steps(List.of(), List.of(new StepProblem("schemaFilter", "ERROR", "Invalid content", 0, 0)));
+
+        final String arguments = JsonUtil.writeValueAsString(Map.of("element", "xsltFilter", "code", PROPOSED,
+                "summary", "s", "allowErrors", true));
+        final String result = context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1")
+                .name(ProposeCodeChangeTool.NAME).arguments(arguments).build(), CHAT));
+
+        assertThat(result)
+                .contains("Review and apply")
+                .contains("it gives new errors, which the user accepted:\n- ERROR in schemaFilter: Invalid content");
+        assertThat(context.takeUserActions("c1")).hasSize(1);
+    }
+
+    @Test
+    void aCleanChangeIsOfferedWithTheOutputItGaveAndAnyErrorsItClears() {
+        stepping("xsltFilter", BASE, false);
+        steps(List.of(new StepProblem("schemaFilter", "ERROR", "Was invalid", 0, 0)), List.of());
+
+        assertThat(run("xsltFilter", PROPOSED, "Fixes it."))
+                .contains("It was tried by stepping record 5 of stream 12: it gives no new errors, and clears 1 "
+                          + "error(s) the current code gives.")
+                .contains("The element's output with the proposed code, for this record:\n<Events/>");
+    }
+
+    @Test
+    void aChangeThatCantBeTriedIsOfferedSayingWhy() {
+        stepping("xsltFilter", BASE, false);
+        Mockito.when(stepper.step(Mockito.any())).thenThrow(new IllegalStateException("Stepping did not finish in "
+                                                                                       + "time."));
+
+        assertThat(run("xsltFilter", PROPOSED, "s"))
+                .contains("Review and apply")
+                .contains("The change couldn't be tried by stepping (Stepping did not finish in time.)");
+        assertThat(context.takeUserActions("c1")).hasSize(1);
     }
 
     @Test
@@ -262,5 +341,12 @@ class TestProposeCodeChangeTool {
                 "summary", summary));
         return context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1").name(ProposeCodeChangeTool.NAME)
                 .arguments(arguments).build(), CHAT));
+    }
+
+    // Stepping the record gives these problems with the current code and with the proposed code.
+    private void steps(final List<StepProblem> before, final List<StepProblem> after) {
+        Mockito.when(stepper.step(Mockito.any())).thenReturn(List.of(
+                new StepOutcome(true, before, Map.of("xsltFilter", "<Events/>")),
+                new StepOutcome(true, after, Map.of("xsltFilter", "<Events/>"))));
     }
 }
