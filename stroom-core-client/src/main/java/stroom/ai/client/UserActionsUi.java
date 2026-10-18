@@ -34,6 +34,8 @@ final class UserActionsUi {
     /// A change to a stepping element's code the agent proposed, which the button opens a review of, from which
     /// the user can apply it to the element's editor (unsaved).
     static final String APPLY_CODE_CHANGE = "apply_code_change";
+    /// A revised query the agent proposed for the user's open Query, which the button puts in its editor, unsaved.
+    static final String APPLY_QUERY_CHANGE = "apply_query_change";
     /// A change to a dashboard table the agent proposed, which the button applies to the open dashboard (unsaved).
     static final String APPLY_DASHBOARD_CHANGE = "apply_dashboard_change";
     /// What an applied dashboard change's card says, as the server writes it.
@@ -82,7 +84,7 @@ final class UserActionsUi {
     /// @param status Its status, as stored.
     /// @return True if it is a code change that has been applied, so its card offers Undo apply.
     static boolean isAppliedCodeChange(final String action, final String status) {
-        return APPLY_CODE_CHANGE.equals(action) && "DONE".equals(status);
+        return (APPLY_CODE_CHANGE.equals(action) || APPLY_QUERY_CHANGE.equals(action)) && "DONE".equals(status);
     }
 
     /// @param action An action.
@@ -98,6 +100,8 @@ final class UserActionsUi {
             return "Create query…";
         } else if (APPLY_CODE_CHANGE.equals(action)) {
             return "Review and apply…";
+        } else if (APPLY_QUERY_CHANGE.equals(action)) {
+            return "Apply to query";
         } else if (APPLY_DASHBOARD_CHANGE.equals(action)) {
             return "Apply to dashboard";
         }

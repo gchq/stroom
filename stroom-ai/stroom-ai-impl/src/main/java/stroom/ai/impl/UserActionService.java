@@ -131,7 +131,7 @@ public class UserActionService {
         } catch (final NumberFormatException e) {
             return new AiUserActionResult(false, "The rejected parts of the change weren't understood.", null);
         }
-        if (!rejected.isEmpty() && !UserActions.APPLY_CODE_CHANGE.equals(action.action())) {
+        if (!rejected.isEmpty() && !isCodeChange(action)) {
             return new AiUserActionResult(false, "Only a proposed code change can be applied in part.", null);
         }
 
@@ -140,7 +140,8 @@ public class UserActionService {
             case UserActions.ENABLE_PROCESSOR_FILTER, UserActions.DISABLE_PROCESSOR_FILTER ->
                 changeFilter(chatId, message, result, action);
             case UserActions.CREATE_QUERY -> createQuery(chatId, action);
-            case UserActions.APPLY_CODE_CHANGE -> applyCodeChange(chatId, message, result, action, rejected);
+            case UserActions.APPLY_CODE_CHANGE, UserActions.APPLY_QUERY_CHANGE ->
+                applyCodeChange(chatId, message, result, action, rejected);
             case UserActions.APPLY_DASHBOARD_CHANGE -> applyDashboardChange(chatId, message, result, action);
             // Only shown, for the cluster admin to run. Stroom never runs these.
             default -> new AiUserActionResult(false, "Stroom does not run this action.", null);
@@ -167,7 +168,7 @@ public class UserActionService {
         if (action == null) {
             return new AiUserActionResult(false, NOT_IN_CHAT, null);
         }
-        if (!UserActions.APPLY_CODE_CHANGE.equals(action.action()) || action.status() != Status.DONE) {
+        if (!isCodeChange(action) || action.status() != Status.DONE) {
             return new AiUserActionResult(false, "There is no applied change to undo.", null);
         }
         final String target = describeTarget(action);
@@ -381,9 +382,17 @@ public class UserActionService {
                 : doc.getType() + " '" + NullSafe.nonBlankStringElse(doc.getName(), doc.getUuid()) + "'";
     }
 
+    /// @return True for a change to code (a stepping element's, or an open Query's) that the user applies to an
+    /// editor, unsaved, and can undo.
+    private static boolean isCodeChange(final UserActionRecord action) {
+        return UserActions.APPLY_CODE_CHANGE.equals(action.action())
+               || UserActions.APPLY_QUERY_CHANGE.equals(action.action());
+    }
+
     private static String describeTarget(final UserActionRecord action) {
         final CodeChange change = action.codeChange();
-        if (change == null) {
+        if (change == null || change.pipeline() == null) {
+            // A Query's, in its own tab.
             return describeDoc(action);
         }
         return describeDoc(action) + " in element '" + change.element() + "' of pipeline '"
