@@ -53,6 +53,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.event.PromptEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
+import stroom.content.client.event.SelectContentTabEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.LocationManager;
 import stroom.data.client.event.AskStroomAiBadgeEvent;
@@ -609,6 +610,10 @@ public class AskStroomAiPresenter
     @ProxyEvent
     @Override
     public void onAsk(final AskStroomAiEvent event) {
+        if (shownAs == DockType.TAB) {
+            // Already open in a tab, perhaps behind others, so brought to the front to show what is attached.
+            SelectContentTabEvent.fire(this, tabPresenter());
+        }
         // Show if not already showing.
         ShowAskStroomAiEvent.fire(this, true);
 
