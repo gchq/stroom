@@ -127,6 +127,40 @@ class TestUserActions {
     }
 
     @Test
+    void aQueryChangeButtonIsOnlyOfferedByStroomsOwnToolsForAQuery() {
+        final DocRef query = new DocRef("Query", OTHER_UUID, "Twitter tweets");
+        Mockito.when(lookup.find(new DocRef("Query", OTHER_UUID))).thenReturn(Optional.of(query));
+        final Map<String, Object> change = new HashMap<>();
+        change.put("id", "q1");
+        change.put("action", UserActions.APPLY_QUERY_CHANGE);
+        change.put("doc", doc("Query", OTHER_UUID, "Something else"));
+        change.put("request", "from v\nselect a, b");
+        change.put("base", "from v\nselect a");
+        change.put("base_hash", "b".repeat(64));
+        change.put("added", 1);
+        change.put("removed", 1);
+        change.put("summary", "Adds b.");
+
+        // From an MCP server, it is dropped.
+        assertThat(userActions.check(List.of(change), NOW)).isEmpty();
+
+        assertThat(userActions.check(null, List.of(change), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.APPLY_QUERY_CHANGE);
+            assertThat(action.label()).isEqualTo("Change to Query 'Twitter tweets': +1 −1 lines");
+            assertThat(action.doc()).isEqualTo(query);
+            assertThat(action.request()).isEqualTo("from v\nselect a, b");
+            assertThat(action.codeChange().pipeline()).isNull();
+            assertThat(action.codeChange().element()).isNull();
+            assertThat(action.codeChange().baseCode()).isEqualTo("from v\nselect a");
+        });
+
+        // Only for a Query.
+        final Map<String, Object> notAQuery = new HashMap<>(change);
+        notAQuery.put("doc", doc("XSLT", OTHER_UUID, "x"));
+        assertThat(userActions.check(null, List.of(notAQuery), NOW)).isEmpty();
+    }
+
+    @Test
     void aDashboardChangeButtonIsOnlyOfferedByStroomsOwnTools() {
         final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Logons");
         Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
