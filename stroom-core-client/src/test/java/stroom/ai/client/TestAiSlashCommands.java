@@ -17,6 +17,8 @@
 package stroom.ai.client;
 
 import stroom.ai.shared.AiAgentMode;
+import stroom.ai.shared.AiMcpPrompt;
+import stroom.ai.shared.AiMcpPromptArgument;
 
 import org.junit.jupiter.api.Test;
 
@@ -56,11 +58,18 @@ class TestAiSlashCommands {
     }
 
     @Test
-    void helpListsEveryCommandWithWhatItDoes() {
-        final String help = AiSlashCommands.help(List.of(
-                new AiSlashCommand("/plan", "<task>", "Plan it"),
-                new AiSlashCommand("/help", "", "List the commands")));
+    void aPromptsExampleHasItsRequiredArguments() {
+        final AiMcpPromptArgument feed = new AiMcpPromptArgument("feed", "The feed", true);
+        final AiMcpPromptArgument since = new AiMcpPromptArgument("since", "From when", false);
 
-        assertThat(help).isEqualTo("/plan <task> - Plan it\n/help - List the commands");
+        assertThat(AiSlashCommands.promptExample(prompt(List.of(since, feed))))
+                .isEqualTo("/onboard feed=<feed>");
+        // With none required, its first argument.
+        assertThat(AiSlashCommands.promptExample(prompt(List.of(since)))).isEqualTo("/onboard since=<since>");
+        assertThat(AiSlashCommands.promptExample(prompt(List.of()))).isEqualTo("/onboard");
+    }
+
+    private static AiMcpPrompt prompt(final List<AiMcpPromptArgument> arguments) {
+        return new AiMcpPrompt("server", "onboard", "/onboard", "Onboard a feed", arguments);
     }
 }

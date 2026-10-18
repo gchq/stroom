@@ -11,11 +11,12 @@
         </g:FlowPanel>
         <g:SimplePanel styleName="dock-max">
             <g:ThinSplitLayoutPanel styleName="max">
-                <g:south size="240">
-                    <g:HTML ui:field="details" styleName="max markdown mcpToolList-details"/>
-                </g:south>
-                <g:center>
+                <!-- About 20 tools, with the rest of the space for the selected tool's documentation. -->
+                <g:north size="510">
                     <g:SimplePanel ui:field="grid" styleName="max"/>
+                </g:north>
+                <g:center>
+                    <g:HTML ui:field="details" styleName="max markdown mcpToolList-details"/>
                 </g:center>
             </g:ThinSplitLayoutPanel>
         </g:SimplePanel>

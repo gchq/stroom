@@ -122,6 +122,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -135,6 +136,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -233,6 +235,7 @@ public class AskStroomAiPresenter
     private final Provider<AiToolApprovalsPresenter> toolApprovalsPresenterProvider;
     private final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider;
     private final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider;
+    private final Provider<AiCommandErrorPresenter> commandErrorPresenterProvider;
     private final ContentManager contentManager;
     private final LocationManager locationManager;
     private final DateTimeFormatter dateTimeFormatter;
@@ -293,6 +296,15 @@ public class AskStroomAiPresenter
     private long keepPollingUntilMs;
     // The rendered messages, by id, e.g. to edit a question or redraw an answered card.
     private final Map<Integer, AiChatMessage> renderedMessages = new HashMap<>();
+    // Tables attached since the last message was sent, by their message id: shown above the input box, then in
+    // the bubble of the message they are sent with.
+    private final Map<Integer, AiChatMessage> pendingAttachments = new LinkedHashMap<>();
+    // The attachments each message the user sent went with, by its id.
+    private final Map<Integer, List<AiChatMessage>> sentAttachments = new HashMap<>();
+    // The attachments of the message being sent, until it is stored.
+    private List<AiChatMessage> sendingAttachments = List.of();
+    // The latest status of each attachment, by its id.
+    private final Map<Integer, AiChatAttachment> attachmentStatuses = new HashMap<>();
     // Each turn's reasoning and tool calls, grouped above its answer.
     private final AiActivityGroups activityGroups = new AiActivityGroups();
     // The day of the last message added, for day dividers.
@@ -324,6 +336,7 @@ public class AskStroomAiPresenter
                                 final Provider<AiToolApprovalsPresenter> toolApprovalsPresenterProvider,
                                 final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
                                 final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider,
+                                final Provider<AiCommandErrorPresenter> commandErrorPresenterProvider,
                                 final ContentManager contentManager,
                                 final LocationManager locationManager,
                                 final DateTimeFormatter dateTimeFormatter,
@@ -337,6 +350,7 @@ public class AskStroomAiPresenter
         this.toolApprovalsPresenterProvider = toolApprovalsPresenterProvider;
         this.aiAttachmentDataPresenterProvider = aiAttachmentDataPresenterProvider;
         this.askStroomAiTabPresenterProvider = askStroomAiTabPresenterProvider;
+        this.commandErrorPresenterProvider = commandErrorPresenterProvider;
         this.contentManager = contentManager;
         this.locationManager = locationManager;
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
@@ -369,6 +383,24 @@ public class AskStroomAiPresenter
         registerHandler(getView().getChatList().addDomHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 onChatListClick(e.getNativeEvent().getEventTarget().cast());
+            }
+        }, ClickEvent.getType()));
+
+        registerHandler(getView().getAttachmentList().addDomHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                final Element target = e.getNativeEvent().getEventTarget().cast();
+                final Element button = ElementUtil.findParent(target, element ->
+                        element.getTagName().equalsIgnoreCase("button"), 5);
+                if (button == null) {
+                    return;
+                }
+                final String remove = button.getAttribute(AiAttachments.REMOVE_ATTRIBUTE);
+                final String attachmentId = button.getAttribute("data-attachment-id");
+                if (NullSafe.isNonBlankString(remove)) {
+                    removeAttachment(Integer.parseInt(remove));
+                } else if (NullSafe.isNonBlankString(attachmentId)) {
+                    onViewAttachmentData(Integer.parseInt(attachmentId), button.getAttribute("data-attachment-desc"));
+                }
             }
         }, ClickEvent.getType()));
 
@@ -504,8 +536,8 @@ public class AskStroomAiPresenter
             }
         }, ClickEvent.getType()));
 
-        // In a question being edited, Escape cancels the edit and Ctrl+Enter sends it. In a form from an MCP tool,
-        // Enter submits it.
+        // In a question being edited, Escape cancels the edit and Enter sends it (Shift+Enter starts a new line), as
+        // in the chat's input box. In a form from an MCP tool, Enter submits it.
         registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
             final Element target = e.getNativeEvent().getEventTarget().cast();
             if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER
@@ -545,7 +577,7 @@ public class AskStroomAiPresenter
                 e.preventDefault();
                 e.stopPropagation();
                 onCancelEdit(Integer.parseInt(idStr));
-            } else if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && e.isControlKeyDown()) {
+            } else if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && !e.isShiftKeyDown()) {
                 e.preventDefault();
                 onSendEdit(Integer.parseInt(idStr));
             }
@@ -1535,6 +1567,7 @@ public class AskStroomAiPresenter
                                     : ": " + argument.getDescription());
                 }
             }
+            reference.append("\n\nExample: `").append(AiSlashCommands.promptExample(prompt)).append('`');
             commands.add(new AiSlashCommand(prompt.getCommand(), arguments.toString(),
                     NullSafe.string(prompt.getDescription()) + " (from " + prompt.getServer() + ")",
                     reference.toString()));
@@ -1555,9 +1588,10 @@ public class AskStroomAiPresenter
             fetchingPrompts = false;
             then.run();
         }, error -> {
-            // No prompts if they can't be listed, e.g. there is no model yet.
+            // No prompts if they can't be listed, e.g. there is no model yet, but the chat's own commands work.
             mcpPrompts = List.of();
             fetchingPrompts = false;
+            then.run();
         }, SILENT), SILENT);
     }
 
@@ -1577,8 +1611,8 @@ public class AskStroomAiPresenter
                 rest);
         for (final AiMcpPromptArgument argument : NullSafe.list(prompt.getArguments())) {
             if (argument.isRequired() && NullSafe.isBlankString(arguments.get(argument.getName()))) {
-                AlertEvent.fireWarn(this, prompt.getCommand() + " needs " + argument.getName() + ", e.g. "
-                                          + prompt.getCommand() + " " + argument.getName() + "=…", null);
+                showCommandError(prompt.getCommand() + " needs " + argument.getName() + ", e.g. "
+                                 + AiSlashCommands.promptExample(prompt) + ".", prompt.getCommand());
                 return;
             }
         }
@@ -1622,9 +1656,34 @@ public class AskStroomAiPresenter
             fetchPrompts(() -> runSlashCommand(message));
             return true;
         }
-        AlertEvent.fireWarn(this, "Unknown command " + parts[0] + ". " + AiSlashCommands.HELP_MESSAGE,
-                AiSlashCommands.help(slashCommands()), null);
+        showCommandError("There is no command " + parts[0] + ". A command is one of the chat's own (e.g. /new or "
+                         + "/compact) or a prompt of one of the MCP servers: type / to see them, with how to use "
+                         + "each. To send a message that starts with /, start it with //.", null);
         return true;
+    }
+
+    /// Says why a command can't be run: for one there is, with a link to its documentation above the input.
+    ///
+    /// @param message Why it can't be run.
+    /// @param command The command, if it is one there is; or null for one there isn't.
+    private void showCommandError(final String message, final String command) {
+        final AiSlashCommand known = command == null
+                ? null
+                : slashCommands().stream()
+                        .filter(candidate -> candidate.getName().equals(command))
+                        .findFirst()
+                        .orElse(null);
+        commandErrorPresenterProvider.get().show(
+                known == null
+                        ? "Unknown Command"
+                        : "Invalid Command",
+                message,
+                known == null
+                        ? null
+                        : "Show how to use " + command,
+                known == null
+                        ? null
+                        : () -> onCommandPicked(known));
     }
 
     /// Runs one of the chat's own commands.
@@ -1644,7 +1703,10 @@ public class AskStroomAiPresenter
             }
             case AiSlashCommands.MODE -> {
                 final AiAgentMode mode = AiSlashCommands.parseMode(rest);
-                if (mode == null) {
+                if (mode == null && !rest.isEmpty()) {
+                    showCommandError("'" + rest + "' isn't a mode. Use /mode agent, /mode ask or /mode plan.",
+                            AiSlashCommands.MODE);
+                } else if (mode == null) {
                     AlertEvent.fireInfo(this, "This chat is in " + getView().getAgentMode().getDisplayValue()
                                               + " mode. Use /mode agent, /mode ask or /mode plan to change it.",
                             null);
@@ -1654,7 +1716,7 @@ public class AskStroomAiPresenter
             }
             case AiSlashCommands.PLAN -> {
                 if (rest.isEmpty()) {
-                    AlertEvent.fireWarn(this, "Say what to plan, e.g. /plan onboard feed ACME.", null);
+                    showCommandError("Say what to plan, e.g. /plan onboard feed ACME.", AiSlashCommands.PLAN);
                 } else {
                     switchMode(AiAgentMode.PLAN);
                     sendMessage(rest);
@@ -1684,14 +1746,15 @@ public class AskStroomAiPresenter
             }
             case AiSlashCommands.REMEMBER -> {
                 if (rest.isEmpty()) {
-                    AlertEvent.fireWarn(this, "Say what to remember, e.g. /remember our firewall feeds start "
-                                              + "with FW-.", null);
+                    showCommandError("Say what to remember, e.g. /remember our firewall feeds start with FW-.",
+                            AiSlashCommands.REMEMBER);
                 } else {
                     ensureChat(() -> remember(rest));
                 }
             }
-            default -> AlertEvent.fireInfo(this, AiSlashCommands.HELP_MESSAGE, AiSlashCommands.help(slashCommands()),
-                    null);
+            default -> {
+                // Only the chat's own commands are run here.
+            }
         }
     }
 
@@ -2438,6 +2501,10 @@ public class AskStroomAiPresenter
         getView().clearContextIndicator();
 
         followBottom = true;
+        // The tables attached are sent with the message, so are shown in its bubble rather than above the input.
+        sendingAttachments = new ArrayList<>(pendingAttachments.values());
+        pendingAttachments.clear();
+        refreshAttachmentList();
         appendPendingQuestion(message);
 
         // Scroll markdown container to bottom, so the user's message is displayed
@@ -2586,6 +2653,8 @@ public class AskStroomAiPresenter
                         // polling brings the stored one.
                         removeMessageElementsFrom(messageId, false);
                         followBottom = true;
+                        // The edited question replaces this one, so has its attachments.
+                        sendingAttachments = new ArrayList<>(sentAttachments.getOrDefault(messageId, List.of()));
                         appendPendingQuestion(newText);
                         scrollToBottom();
                         startPolling();
@@ -2947,6 +3016,7 @@ public class AskStroomAiPresenter
         appendMessageHtml(hb, "ai-message ai-message--user", question, nowMs, nowMs, false, 0, false);
         final Element element = parseHtml(hb).getFirstChildElement();
         element.setAttribute(MESSAGE_ID_ATTRIBUTE, PENDING_MESSAGE_ID);
+        addAttachmentChips(element, sendingAttachments);
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
         appendDayDivider(markdownContainer, nowMs, nowMs);
         markdownContainer.appendChild(element);
@@ -2978,6 +3048,26 @@ public class AskStroomAiPresenter
             // A new question has a task list of its own, if any.
             getView().setTaskList(null, SafeHtmlUtils.EMPTY_SAFE_HTML);
         }
+        if (msg.getMessageType() == AiMessageType.ATTACHMENT) {
+            // Not part of the conversation until it is sent: listed above the input box.
+            renderedMessages.put(msg.getId(), msg);
+            if (sentAttachments.values().stream().noneMatch(sent -> sent.contains(msg))) {
+                pendingAttachments.put(msg.getId(), msg);
+                refreshAttachmentList();
+            }
+            return;
+        }
+        if ((msg.getMessageType() == AiMessageType.USER_MESSAGE
+             || msg.getMessageType() == AiMessageType.STEER_MESSAGE)
+            && !sentAttachments.containsKey(msg.getId())) {
+            // The tables attached before it were sent with it.
+            final List<AiChatMessage> sent = new ArrayList<>(sendingAttachments);
+            pendingAttachments.values().stream().filter(pending -> !sent.contains(pending)).forEach(sent::add);
+            sentAttachments.put(msg.getId(), sent);
+            pendingAttachments.clear();
+            sendingAttachments = List.of();
+            refreshAttachmentList();
+        }
         renderedMessages.put(msg.getId(), msg);
         refreshOverview();
         final HtmlBuilder hb = new HtmlBuilder();
@@ -2989,6 +3079,7 @@ public class AskStroomAiPresenter
         }
         final String messageId = String.valueOf(msg.getId());
         messageElement.setAttribute(MESSAGE_ID_ATTRIBUTE, messageId);
+        addAttachmentChips(messageElement, sentAttachments.get(msg.getId()));
         decorateCodeBlocks(messageElement);
         decorateStroomLinks(messageElement);
 
@@ -3167,6 +3258,11 @@ public class AskStroomAiPresenter
         followUps = List.of();
         refreshFollowUps();
         renderedMessages.clear();
+        pendingAttachments.clear();
+        sentAttachments.clear();
+        sendingAttachments = List.of();
+        attachmentStatuses.clear();
+        refreshAttachmentList();
         unwatchPrompt();
         refreshOverview();
         interimShownAsProgress = null;
@@ -3295,8 +3391,7 @@ public class AskStroomAiPresenter
     private void renderMessage(final HtmlBuilder hb, final AiChatMessage msg, final long nowMs) {
         final long timeMs = msg.getCreateTimeMs();
         final int messageId = msg.getId();
-        final boolean deletable = msg.getMessageType() == AiMessageType.USER_MESSAGE
-                                  || msg.getMessageType() == AiMessageType.ATTACHMENT;
+        final boolean deletable = msg.getMessageType() == AiMessageType.USER_MESSAGE;
         switch (msg.getMessageType()) {
             case USER_MESSAGE:
                 // Asking again for an earlier question would replace this one too, so only the latest is offered.
@@ -3377,7 +3472,7 @@ public class AskStroomAiPresenter
                         SvgImage.INFO, "Request detail", msg.getMessage(), timeMs, nowMs);
                 break;
             case ATTACHMENT:
-                appendAttachmentMessage(hb, msg, timeMs, nowMs, messageId, deletable);
+                // Shown as a chip, above the input box or in the bubble of the message it was sent with.
                 break;
             default:
                 appendMessageHtml(hb, "ai-message", msg.getMessage(), timeMs, nowMs, false, 0, false);
@@ -3677,54 +3772,6 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * Render an ATTACHMENT message with a status line that can be updated in-place
-     * via a unique DOM ID.
-     */
-    private void appendAttachmentMessage(final HtmlBuilder hb,
-                                         final AiChatMessage msg,
-                                         final long timeMs,
-                                         final long nowMs,
-                                         final int messageId,
-                                         final boolean deletable) {
-        final Integer attachmentId = msg.getAttachmentId();
-        hb.div(container -> {
-            // Header with icon and description.
-            container.div(header -> {
-                final String description = NullSafe.getOrElse(
-                        msg, AiChatMessage::getMessage, "Table attachment");
-                button(header, SvgImage.TABLE,
-                        iconButtonClassName("ai-attachment-icon"),
-                        Attribute.title("View data"),
-                        new Attribute("data-attachment-id", String.valueOf(attachmentId)),
-                        new Attribute("data-attachment-desc", description));
-                header.append(description);
-            }, Attribute.className("ai-message-header"));
-
-            // Status line — will be updated in-place by polling.
-            if (attachmentId != null) {
-                container.div(statusDiv ->
-                                appendStatus(statusDiv, SvgImage.DOWNLOAD, "Downloading..."),
-                        Attribute.className("ai-attachment-status"), new Attribute("id",
-                                "ai-attachment-status-" +
-                                attachmentId));
-            }
-
-            // Footer with timestamp and optional delete button.
-            container.div(footer -> {
-                // Add delete button.
-                if (deletable && messageId > 0) {
-                    button(footer,
-                            SvgImage.DELETE,
-                            iconButtonClassName("ai-message-delete"),
-                            Attribute.title("Delete attachment"),
-                            new Attribute("data-delete-message-id", String.valueOf(messageId)));
-                }
-                timestamp(footer, timeMs, nowMs);
-            }, Attribute.className("ai-message-footer"));
-        }, Attribute.className("ai-message ai-message--data"));
-    }
-
-    /**
      * Renders the WORKING message with stable DOM ids, so that polling can update the progress text
      * where it stands rather than appending a new line every time it changes. The text is in the
      * summary because that is the part that is visible without expanding it.
@@ -3912,52 +3959,69 @@ public class AskStroomAiPresenter
         return NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Working...");
     }
 
-    private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {
-        button(hb, icon, iconButtonClassName("ai-attachment-status-icon"));
-        hb.div(status -> status.append(text), Attribute.className("ai-attachment-status-text"));
-    }
-
     /**
-     * Update existing attachment status elements in the DOM with current status.
+     * Keeps the attachments' chips up to date with their statuses.
      */
     private void updateAttachmentStatuses(final java.util.List<AiChatAttachment> attachments) {
         if (attachments == null) {
             return;
         }
         for (final AiChatAttachment attachment : attachments) {
-            final Element statusEl = findInConversation("ai-attachment-status-" + attachment.getId());
-            if (statusEl != null) {
-                statusEl.setInnerHTML(formatAttachmentStatus(attachment));
-            }
+            attachmentStatuses.put(attachment.getId(), attachment);
         }
+        refreshAttachmentList();
+        // And the chips of those sent with a message, e.g. sent before they finished downloading.
+        sentAttachments.values().forEach(sent -> sent.forEach(msg -> {
+            final Element chip = msg.getAttachmentId() != null
+                    ? findInConversation(AiAttachments.chipId(msg.getAttachmentId()))
+                    : null;
+            if (chip != null) {
+                final HtmlBuilder hb = new HtmlBuilder();
+                attachmentChip(hb, msg, false);
+                chip.getParentElement().replaceChild(parseHtml(hb).getFirstChildElement(), chip);
+            }
+        }));
     }
 
-    /**
-     * Format a human-readable status string with an appropriate icon for the
-     * given attachment status.
-     */
-    private String formatAttachmentStatus(final AiChatAttachment attachment) {
+    /// Shows the tables attached since the last message was sent above the input box, each removable once it has
+    /// downloaded.
+    private void refreshAttachmentList() {
         final HtmlBuilder hb = new HtmlBuilder();
-        switch (attachment.getStatus()) {
-            case PENDING -> appendStatus(hb, SvgImage.DOWNLOAD, "Pending...");
-            case DOWNLOADING -> appendStatus(hb, SvgImage.DOWNLOAD, "Downloading...");
-            case READY -> {
-                final StringBuilder sb = new StringBuilder();
-                sb.append(" Ready");
-                if (attachment.getRowCount() != null) {
-                    sb.append(" --- ").append(attachment.getRowCount()).append(" rows");
-                }
-                if (attachment.isTruncated()) {
-                    sb.append(" (truncated to limit)");
-                }
-                appendStatus(hb, SvgImage.OK, sb.toString());
-            }
-            case ERROR -> appendStatus(hb, SvgImage.ERROR, "Error: " +
-                                                           NullSafe.getOrElse(attachment,
-                                                                   AiChatAttachment::getErrorMessage,
-                                                                   "Unknown error"));
+        pendingAttachments.values().forEach(msg -> attachmentChip(hb, msg, true));
+        getView().setAttachments(hb.toSafeHtml());
+    }
+
+    /// Adds the chips of the tables a message was sent with to the start of its bubble.
+    private void addAttachmentChips(final Element messageElement, final List<AiChatMessage> attachments) {
+        if (attachments == null || attachments.isEmpty()) {
+            return;
         }
-        return hb.toSafeHtml().asString();
+        final HtmlBuilder hb = new HtmlBuilder();
+        hb.div(chips -> attachments.forEach(msg -> attachmentChip(chips, msg, false)),
+                Attribute.className("ai-message-attachments"));
+        messageElement.insertFirst(parseHtml(hb).getFirstChildElement());
+    }
+
+    private void attachmentChip(final HtmlBuilder hb, final AiChatMessage msg, final boolean removable) {
+        final Integer attachmentId = msg.getAttachmentId();
+        if (attachmentId == null) {
+            return;
+        }
+        AiAttachments.chip(hb, msg.getId(), attachmentId, msg.getMessage(), attachmentStatuses.get(attachmentId),
+                removable);
+    }
+
+    /// Removes a table attached since the last message was sent, without asking, as it is listed to be sent
+    /// with the next message and can be attached again.
+    private void removeAttachment(final int messageId) {
+        if (currentChat == null) {
+            return;
+        }
+        pendingAttachments.remove(messageId);
+        refreshAttachmentList();
+        askStroomAiClient.deleteMessage(currentChat.getId(), messageId, success -> {
+            // Removed.
+        }, getView());
     }
 
     private static void icon(final HtmlBuilder hb, final SvgImage icon) {
@@ -4329,6 +4393,15 @@ public class AskStroomAiPresenter
         /// @param heading Its heading, e.g. "Tasks 2/5", or null to hide it.
         /// @param items   The tasks.
         void setTaskList(String heading, SafeHtml items);
+
+        /// Shows the tables attached since the last message was sent, above the input box, or hides them if there
+        /// are none.
+        ///
+        /// @param html The attachments' chips, or empty for none.
+        void setAttachments(SafeHtml html);
+
+        /// @return The list of attachments above the input box, for its clicks.
+        Widget getAttachmentList();
 
         /// Shows a command's reference above the input, until hidden.
         void showCommandReference(SafeHtml html);
