@@ -28,4 +28,11 @@ public interface IFrameLoadUiHandlers extends UiHandlers {
     ///
     /// @param nativeEvent The key down event.
     void onFrameKeyDown(NativeEvent nativeEvent);
+
+    /// Called for a link clicked in the frame's document, before the frame follows it. Only for a document this
+    /// page can see into.
+    ///
+    /// @param href The link, as the browser resolves it (absolute).
+    /// @return True if the link has been opened some other way, so the frame mustn't follow it.
+    boolean onFrameLinkClick(String href);
 }

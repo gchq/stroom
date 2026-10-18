@@ -53,8 +53,12 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
         frame.getElement().addClassName("iframe-frame");
 
         panel.setWidget(frame);
-        // Each time a document loads into the frame, pass its key presses on, if this page can see into it.
-        frame.addLoadHandler(event -> forwardKeyDowns(frame.getElement()));
+        // Each time a document loads into the frame, pass its key presses and link clicks on, if this page can see
+        // into it.
+        frame.addLoadHandler(event -> {
+            forwardKeyDowns(frame.getElement());
+            forwardLinkClicks(frame.getElement());
+        });
 
         final RepeatingCommand updateTitleCommand = () -> {
             final IFrameElement iFrameElement = frame.getElement().cast();
@@ -96,6 +100,42 @@ public class IFrameViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandlers> imp
         if (doc) {
             doc.addEventListener('keydown', function (event) {
                 self.@stroom.iframe.client.view.IFrameViewImpl::onFrameKeyDown(*)(event);
+            });
+        }
+    }-*/;
+
+    private boolean onFrameLinkClick(final String href) {
+        return getUiHandlers() != null && getUiHandlers().onFrameLinkClick(href);
+    }
+
+    /**
+     * Offers the links clicked in the frame's document to {@link #onFrameLinkClick(String)} first, and stops the
+     * frame following one that has been opened some other way: in a sandbox without scripts, a link to Stroom
+     * would load Stroom in the frame, where it can't run. A link to a place in the page, and one clicked with a
+     * modifier or another button (to open it in a new tab), are left to the browser. Does nothing for a document
+     * this page can't see into.
+     */
+    private native void forwardLinkClicks(Element frameElement) /*-{
+        var self = this;
+        var doc = null;
+        try {
+            doc = frameElement.contentDocument;
+        } catch (e) {
+            // Another origin.
+        }
+        if (doc) {
+            doc.addEventListener('click', function (event) {
+                if (event.defaultPrevented || event.button !== 0
+                    || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+                    return;
+                }
+                var link = event.target && event.target.closest ? event.target.closest('a[href]') : null;
+                if (!link || (link.getAttribute('href') || '').charAt(0) === '#') {
+                    return;
+                }
+                if (self.@stroom.iframe.client.view.IFrameViewImpl::onFrameLinkClick(*)(link.href)) {
+                    event.preventDefault();
+                }
             });
         }
     }-*/;
