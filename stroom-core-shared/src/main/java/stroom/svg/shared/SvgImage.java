@@ -2357,6 +2357,16 @@ public enum SvgImage {
             "(--icon-colour__blue)\" stroke-width=\"71.125\"/></svg> \n" +
             ""),
 
+    FORK_JOIN("fork-join.svg", "svg-image__fork-join", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 2" +
+            "4\"><g style=\"fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;s" +
+            "troke-linejoin:round\"><path d=\"M 12,1.5 V 4.5\"/><path d=\"M 10.5,7.5 L 7.2,10.6\"/" +
+            "><path d=\"M 13.5,7.5 L 16.8,10.6\"/><path d=\"M 7.2,13.4 L 10.5,16.5\"/><path d=\"M " +
+            "16.8,13.4 L 13.5,16.5\"/><path d=\"M 12,19.5 V 22.5\"/></g><g style=\"fill:currentCo" +
+            "lor\"><circle cx=\"12\" cy=\"6\" r=\"2.4\"/><circle cx=\"6\" cy=\"12\" r=\"2.4\"/><circle cx=" +
+            "\"18\" cy=\"12\" r=\"2.4\"/><circle cx=\"12\" cy=\"18\" r=\"2.4\"/></g></svg> \n" +
+            ""),
+
     FORMAT("format.svg", "svg-image__format", "" +
             "<svg id=\"svg4232\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=" +
             "\"http://www.w3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"" +

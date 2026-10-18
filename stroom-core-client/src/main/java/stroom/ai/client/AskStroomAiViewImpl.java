@@ -36,6 +36,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -64,6 +65,15 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     private static final String STOP_SHOWN_CLASS = "askStroomAiViewImpl-stop--shown";
     private static final String EMPTY_STYLE = "empty";
     private static final String SWITCHER_OPEN_CLASS = "askStroomAiViewImpl-switcher--open";
+    private static final String OVERVIEW_OPEN_CLASS = "askStroomAiViewImpl-overviewToggle--on";
+    // How much each zoom step zooms the overview, and how far it may be zoomed.
+    private static final double OVERVIEW_ZOOM_STEP = 1.2;
+    private static final double MIN_OVERVIEW_ZOOM = 0.4;
+    private static final double MAX_OVERVIEW_ZOOM = 4;
+    // Fitted to a wide panel, the overview grows no larger than this, so its text isn't huge.
+    private static final double MAX_FITTED_OVERVIEW_ZOOM = 1.5;
+    // The room either side of the overview, inside its panel.
+    private static final int OVERVIEW_MARGIN = 12;
     private static final String AUTO_APPROVE_ON_CLASS = "askStroomAiViewImpl-autoApprove--on";
     private static final String WORKING_CLASS = "askStroomAiViewImpl-bottom-inner--working";
 
@@ -83,6 +93,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     Label chatTitle;
     @UiField
+    InlineSvgButton overviewToggle;
+    @UiField
     stroom.widget.button.client.Button newChat;
     @UiField
     InlineSvgButton tabToggle;
@@ -95,6 +107,19 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     SimplePanel markdownPreview;
     @UiField
     FlowPanel chatList;
+    @UiField
+    FlowPanel overview;
+    @UiField
+    Button overviewZoomOut;
+    @UiField
+    Button overviewZoomIn;
+    @UiField
+    Button overviewFit;
+    @UiField
+    HTML overviewContent;
+    // How far the overview is zoomed, and whether it is fitted to the panel's width (so refitted as it is redrawn).
+    private double overviewZoom = 1;
+    private boolean overviewFitted = true;
     @UiField
     FlowPanel jumpToLatestBar;
     @UiField
@@ -139,7 +164,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     HTML commandReferenceContent;
     // While the reference is being resized: where the drag started, and the height then.
     private HandlerRegistration referenceDrag;
-    // Closes the list of chats on Escape while it is shown.
+    // Closes the list of chats, or the overview, on Escape while it is shown.
     private HandlerRegistration chatListEscape;
     private int referenceDragStartY;
     private int referenceDragStartHeight;
@@ -236,6 +261,48 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
                 getUiHandlers().onChatSearch(chatSearch.getText());
             }
         });
+
+        overviewToggle.setSvg(SvgImage.FORK_JOIN);
+        overviewToggle.setText("Overview");
+        overviewToggle.setTitle("Show an overview of the chat: what you asked and chose, and what the agent did in "
+                                + "between. Click a step to go to it.");
+        overviewToggle.addClickHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onToggleOverview();
+            }
+        });
+        overviewZoomIn.addClickHandler(event -> zoomOverview(OVERVIEW_ZOOM_STEP, null));
+        overviewZoomOut.addClickHandler(event -> zoomOverview(1 / OVERVIEW_ZOOM_STEP, null));
+        overviewFit.addClickHandler(event -> {
+            overviewFitted = true;
+            fitOverview();
+        });
+        overviewContent.addDomHandler(event -> {
+            // Ctrl+wheel (or a trackpad's pinch, which browsers send as one) zooms, about the pointer; the wheel
+            // alone scrolls.
+            if (event.isControlKeyDown() || event.isMetaKeyDown()) {
+                event.preventDefault();
+                zoomOverview(event.getDeltaY() < 0
+                        ? OVERVIEW_ZOOM_STEP
+                        : 1 / OVERVIEW_ZOOM_STEP, event.getNativeEvent());
+            }
+        }, MouseWheelEvent.getType());
+        overviewContent.addDomHandler(event -> {
+            final int messageId = overviewStepAt(event.getNativeEvent().getEventTarget());
+            if (messageId > 0 && getUiHandlers() != null) {
+                getUiHandlers().onOverviewStep(messageId);
+            }
+        }, ClickEvent.getType());
+        overviewContent.addDomHandler(event -> {
+            final int key = event.getNativeKeyCode();
+            if (key == KeyCodes.KEY_ENTER || key == ' ') {
+                final int messageId = overviewStepAt(event.getNativeEvent().getEventTarget());
+                if (messageId > 0 && getUiHandlers() != null) {
+                    event.preventDefault();
+                    getUiHandlers().onOverviewStep(messageId);
+                }
+            }
+        }, KeyDownEvent.getType());
 
         newChat.setText("New chat");
         newChat.setIcon(SvgImage.ADD);
@@ -521,8 +588,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     public void setEmptyState(final boolean empty) {
         this.empty = empty;
         setNewChatEnabled(!empty);
-        // The list of chats takes the conversation's place, so it is not shown as an empty chat.
-        if (empty && !chatList.isVisible()) {
+        // The list of chats and the overview take the conversation's place, so aren't shown as an empty chat.
+        if (empty && !chatList.isVisible() && !overview.isVisible()) {
             root.addStyleName(EMPTY_STYLE);
         } else {
             root.removeStyleName(EMPTY_STYLE);
@@ -607,7 +674,11 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         if ((inChat || nothingFocused) && !searchToClear && getUiHandlers() != null) {
             preview.cancel();
             nativeEvent.preventDefault();
-            getUiHandlers().onCloseChatList();
+            if (overview.isVisible()) {
+                getUiHandlers().onCloseOverview();
+            } else {
+                getUiHandlers().onCloseChatList();
+            }
         }
     }
 
@@ -674,20 +745,109 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @Override
     public void setChatListVisible(final boolean visible) {
-        if (chatListEscape != null) {
-            chatListEscape.removeHandler();
-            chatListEscape = null;
-        }
-        if (visible) {
-            chatListEscape = Event.addNativePreviewHandler(this::closeChatListOnEscape);
-        }
         chatList.setVisible(visible);
-        markdownPreview.setVisible(!visible);
+        showConversationOrPanel();
         if (visible) {
             jumpToLatestBar.setVisible(false);
         }
         chatTitle.setStyleName(SWITCHER_OPEN_CLASS, visible);
         setEmptyState(empty);
+    }
+
+    @Override
+    public void setOverviewVisible(final boolean visible) {
+        overview.setVisible(visible);
+        overviewToggle.setStyleName(OVERVIEW_OPEN_CLASS, visible);
+        showConversationOrPanel();
+        if (visible) {
+            jumpToLatestBar.setVisible(false);
+        }
+        setEmptyState(empty);
+    }
+
+    // The list of chats and the overview each take the conversation's place, and close on Escape.
+    private void showConversationOrPanel() {
+        final boolean panel = chatList.isVisible() || overview.isVisible();
+        markdownPreview.setVisible(!panel);
+        if (chatListEscape != null) {
+            chatListEscape.removeHandler();
+            chatListEscape = null;
+        }
+        if (panel) {
+            chatListEscape = Event.addNativePreviewHandler(this::closeChatListOnEscape);
+        }
+    }
+
+    @Override
+    public void setOverview(final String svg) {
+        final Element content = overviewContent.getElement();
+        // Following the latest step, as the conversation does, unless the user has scrolled up to look at others.
+        final boolean atEnd = content.getScrollHeight() - content.getScrollTop() - content.getClientHeight() < 24;
+        final int scrollTop = content.getScrollTop();
+        overviewContent.setHTML(SafeHtmlUtils.fromTrustedString(svg));
+        if (overviewFitted) {
+            fitOverview();
+        } else {
+            sizeOverview();
+        }
+        content.setScrollTop(atEnd
+                ? content.getScrollHeight()
+                : scrollTop);
+    }
+
+    // Zooms the overview by a factor, keeping what is under the pointer (or the middle) where it is.
+    private void zoomOverview(final double factor, final NativeEvent pointer) {
+        final Element content = overviewContent.getElement();
+        final double zoom = Math.max(MIN_OVERVIEW_ZOOM, Math.min(MAX_OVERVIEW_ZOOM, overviewZoom * factor));
+        final double ratio = zoom / overviewZoom;
+        final int x = pointer != null
+                ? pointer.getClientX() - content.getAbsoluteLeft()
+                : content.getClientWidth() / 2;
+        final int y = pointer != null
+                ? pointer.getClientY() - content.getAbsoluteTop()
+                : content.getClientHeight() / 2;
+        final double left = (content.getScrollLeft() + x) * ratio - x;
+        final double top = (content.getScrollTop() + y) * ratio - y;
+        overviewFitted = false;
+        overviewZoom = zoom;
+        sizeOverview();
+        content.setScrollLeft((int) Math.round(left));
+        content.setScrollTop((int) Math.round(top));
+    }
+
+    // Zooms the overview so that it is as wide as the panel.
+    private void fitOverview() {
+        final int width = overviewContent.getElement().getClientWidth() - 2 * OVERVIEW_MARGIN;
+        overviewZoom = width > 0
+                ? Math.max(MIN_OVERVIEW_ZOOM, Math.min(MAX_FITTED_OVERVIEW_ZOOM,
+                (double) width / AiChatOverview.WIDTH))
+                : 1;
+        sizeOverview();
+    }
+
+    // Sizes the overview's SVG for its zoom: as it is vector graphics, it is drawn sharp at any size.
+    private void sizeOverview() {
+        final Element svg = overviewContent.getElement().getFirstChildElement();
+        if (svg == null) {
+            return;
+        }
+        final long height = AiToolMessages.parseLong(svg.getAttribute("data-height"));
+        svg.getStyle().setWidth(AiChatOverview.WIDTH * overviewZoom, Unit.PX);
+        svg.getStyle().setHeight(height * overviewZoom, Unit.PX);
+    }
+
+    /// @return The id of the message whose step in the overview holds an element, or 0 if it isn't in a step.
+    private static int overviewStepAt(final EventTarget eventTarget) {
+        if (!Element.is(eventTarget)) {
+            return 0;
+        }
+        Element element = Element.as(eventTarget);
+        while (element != null && !element.hasAttribute(AiChatOverview.MESSAGE_ID_ATTRIBUTE)) {
+            element = element.getParentElement();
+        }
+        return element != null
+                ? (int) AiToolMessages.parseLong(element.getAttribute(AiChatOverview.MESSAGE_ID_ATTRIBUTE))
+                : 0;
     }
 
     @Override

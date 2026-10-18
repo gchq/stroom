@@ -289,25 +289,7 @@ final class AiElicitationCard {
     /// @param cardTitle The title shown on the card, or null. A single field that asks the same isn't repeated.
     /// @return True if there was an answer to show.
     static boolean appendAnswer(final HtmlBuilder hb, final String json, final String cardTitle) {
-        final JSONObject content;
-        try {
-            final JSONValue value = JSONParser.parseStrict(json).isObject().get("content");
-            content = value != null
-                    ? value.isObject()
-                    : null;
-        } catch (final RuntimeException e) {
-            return false;
-        }
-        if (content == null) {
-            return false;
-        }
-        final List<String[]> rows = new ArrayList<>();
-        for (final AiElicitationForm.Field field : AiElicitationForm.fields(json)) {
-            final String shown = shown(field, content.get(field.getName()));
-            if (shown != null) {
-                rows.add(new String[]{field.getTitle(), shown});
-            }
-        }
+        final List<String[]> rows = answerRows(json);
         if (rows.isEmpty()) {
             return false;
         }
@@ -339,6 +321,42 @@ final class AiElicitationCard {
     /// showing it again would repeat it.
     static boolean isCardTitle(final String fieldTitle, final String cardTitle) {
         return cardTitle != null && cardTitle.equals(firstLine(fieldTitle, null));
+    }
+
+    /// @param json An answered ELICITATION message, with its answer as `content`.
+    /// @return What the user answered, shortly, e.g. "4.1.0; Yes", or null if there is no answer to show.
+    static String answerSummary(final String json) {
+        final List<String> answers = new ArrayList<>();
+        for (final String[] row : answerRows(json)) {
+            answers.add(row[1]);
+        }
+        return answers.isEmpty()
+                ? null
+                : String.join("; ", answers);
+    }
+
+    // Each field the user gave a value, as its title and the value shown.
+    private static List<String[]> answerRows(final String json) {
+        final List<String[]> rows = new ArrayList<>();
+        final JSONObject content;
+        try {
+            final JSONValue value = JSONParser.parseStrict(json).isObject().get("content");
+            content = value != null
+                    ? value.isObject()
+                    : null;
+        } catch (final RuntimeException e) {
+            return rows;
+        }
+        if (content == null) {
+            return rows;
+        }
+        for (final AiElicitationForm.Field field : AiElicitationForm.fields(json)) {
+            final String shown = shown(field, content.get(field.getName()));
+            if (shown != null) {
+                rows.add(new String[]{field.getTitle(), shown});
+            }
+        }
+        return rows;
     }
 
     private static String shown(final AiElicitationForm.Field field, final JSONValue value) {
