@@ -1953,3 +1953,197 @@ a.ai-stroom-link::after {
 .ai-task--in_progress .ai-task-title {
     font-weight: 600;
 }
+
+/* ---- Chat overview: what the user did, joined by what the agent did in between, drawn as SVG ---- */
+
+/* Right beside the chat's title, which gives way to it when long. */
+.askStroomAiViewImpl-title .askStroomAiViewImpl-switcher {
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.askStroomAiViewImpl-title .askStroomAiViewImpl-overviewToggle {
+    flex: none;
+    margin-left: 2px;
+}
+
+.askStroomAiViewImpl-title .askStroomAiViewImpl-overviewToggle div {
+    width: auto;
+}
+
+.askStroomAiViewImpl-overviewToggle--on {
+    background: rgba(var(--blue-500-rgb), 0.2);
+}
+
+.askStroomAiViewImpl-overviewToggle--on svg {
+    color: var(--blue-300);
+}
+
+.askStroomAiViewImpl-overview {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    position: relative;
+}
+
+.ai-overview-toolbar {
+    position: absolute;
+    top: 8px;
+    right: 16px;
+    z-index: 1;
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 6px;
+    background: var(--page__background-color);
+    border: 1px solid var(--control__border-color);
+}
+
+.ai-overview-zoom {
+    min-width: 28px;
+    height: 24px;
+    padding: 0 6px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--control__text-color);
+    font-size: var(--ai-font-size--small);
+    cursor: pointer;
+}
+
+.ai-overview-zoom:hover {
+    background: var(--curve-tab__background-color--hover);
+}
+
+.ai-overview-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding: 8px 12px 16px;
+}
+
+.ai-overview-svg {
+    display: block;
+    margin: 0 auto;
+    font-family: inherit;
+    overflow: visible;
+}
+
+.ai-overview-node {
+    cursor: pointer;
+    outline: none;
+}
+
+.ai-overview-node-box {
+    fill: var(--page__background-color);
+    stroke: var(--control__border-color);
+    stroke-width: 1;
+    transition: fill 0.15s, stroke 0.15s;
+}
+
+.ai-overview-node:hover .ai-overview-node-box,
+.ai-overview-node:focus-visible .ai-overview-node-box {
+    fill: var(--curve-tab__background-color--hover);
+    stroke: var(--blue-300);
+}
+
+.ai-overview-node:focus-visible .ai-overview-node-box {
+    stroke-width: 2;
+}
+
+.ai-overview-node-caption {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    fill: var(--control__text-color--disabled);
+}
+
+.ai-overview-node-text {
+    font-size: 13px;
+    fill: var(--control__text-color);
+}
+
+/* Each kind of step has a colour of its own, down its left edge. */
+.ai-overview-node--question .ai-overview-node-accent {
+    fill: #1976d2;
+}
+
+.ai-overview-node--steer .ai-overview-node-accent {
+    fill: #00897b;
+}
+
+.ai-overview-node--answer .ai-overview-node-accent {
+    fill: #43a047;
+}
+
+.ai-overview-node--approval .ai-overview-node-accent {
+    fill: #f9a825;
+}
+
+.ai-overview-node--rejection .ai-overview-node-accent {
+    fill: #d32f2f;
+}
+
+.ai-overview-link line {
+    stroke: var(--control__border-color);
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.ai-overview-link-end {
+    fill: var(--control__border-color);
+}
+
+.ai-overview-link-tools {
+    font-size: 11px;
+    fill: var(--control__text-color);
+}
+
+.ai-overview-link-time {
+    font-size: 11px;
+    fill: var(--control__text-color--disabled);
+    font-variant-numeric: tabular-nums;
+}
+
+/* What the agent is doing now: a line that moves. */
+.ai-overview-link--live line {
+    stroke: var(--blue-300);
+    stroke-dasharray: 4 5;
+    animation: ai-overview-live 0.8s linear infinite;
+}
+
+.ai-overview-link--live .ai-overview-link-end {
+    fill: var(--blue-300);
+}
+
+@keyframes ai-overview-live {
+    to {
+        stroke-dashoffset: -9;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ai-overview-link--live line {
+        animation: none;
+    }
+}
+
+.ai-overview-empty {
+    font-size: 13px;
+    fill: var(--control__text-color--disabled);
+}
+
+/* A message gone to from the overview, picked out for a moment. */
+.ai-message--located {
+    animation: ai-message-located 2s ease-out;
+}
+
+@keyframes ai-message-located {
+    0%, 30% {
+        box-shadow: 0 0 0 3px rgba(var(--blue-500-rgb), 0.6);
+    }
+    100% {
+        box-shadow: 0 0 0 3px rgba(var(--blue-500-rgb), 0);
+    }
+}
