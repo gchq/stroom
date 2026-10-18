@@ -16,6 +16,7 @@
 
 package stroom.security.openid.api;
 
+import java.time.Duration;
 import java.util.Optional;
 
 /// Issues short-lived access tokens, signed by Stroom's internal identity provider, that let another service act
@@ -34,10 +35,14 @@ public interface UserTokenIssuer {
     /// Gives an access token for a user and an audience, reusing one issued earlier while it has long enough
     /// left to run.
     ///
-    /// @param subjectId The user's subject id.
-    /// @param audience  Who the token is for.
-    /// @param signInJwt The token the user signed in with, whose grant the issued token joins, or null if there is
-    ///                  none (e.g. a user of an API key), when the token simply runs out.
+    /// @param subjectId    The user's subject id.
+    /// @param audience     Who the token is for.
+    /// @param signInJwt    The token the user signed in with, whose grant the issued token joins, or null if there
+    ///                     is none (e.g. a user of an API key), when the token simply runs out.
+    /// @param minRemaining How long the token must still have to run, e.g. as long as a request made with it may
+    ///                     take, as a server keeps using the token a request came with until it answers. The
+    ///                     issuer's own least time applies if this is shorter, and its greatest lifetime if
+    ///                     longer.
     /// @return The token, or empty if tokens cannot be issued (see [#isAvailable()]).
-    Optional<String> getAccessToken(String subjectId, String audience, String signInJwt);
+    Optional<String> getAccessToken(String subjectId, String audience, String signInJwt, Duration minRemaining);
 }

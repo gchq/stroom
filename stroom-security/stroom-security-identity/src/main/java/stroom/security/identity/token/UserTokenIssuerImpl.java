@@ -41,7 +41,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /// Issues access tokens for other services to act as a user, signed by the internal identity provider.
 ///
 /// A token lives for [#LIFETIME] and is reused until it has less than [#MIN_REMAINING] left, so a service that is
-/// called often doesn't cause a token to be signed and recorded for every call.
+/// called often doesn't cause a token to be signed and recorded for every call. A caller that needs a token to
+/// last longer, e.g. for a request that may take many minutes, during which the service keeps using the token it
+/// came with, says how long it must still have left, and gets a token that lasts that long (up to
+/// [#MAX_LIFETIME]).
 @Singleton
 public class UserTokenIssuerImpl implements UserTokenIssuer {
 
@@ -49,6 +52,8 @@ public class UserTokenIssuerImpl implements UserTokenIssuer {
 
     static final Duration LIFETIME = Duration.ofMinutes(5);
     static final Duration MIN_REMAINING = Duration.ofMinutes(1);
+    // The most a token lives, however long a caller asks for, as it can act as the user.
+    static final Duration MAX_LIFETIME = Duration.ofMinutes(30);
     // The scope recorded for these tokens, so they can be told apart in the token inventory.
     static final String SCOPE = "openid stroom-delegated";
 
@@ -76,16 +81,21 @@ public class UserTokenIssuerImpl implements UserTokenIssuer {
     }
 
     @Override
-    public Optional<String> getAccessToken(final String subjectId, final String audience, final String signInJwt) {
+    public Optional<String> getAccessToken(final String subjectId,
+                                           final String audience,
+                                           final String signInJwt,
+                                           final Duration minRemaining) {
         if (!isAvailable() || NullSafe.isBlankString(subjectId) || NullSafe.isBlankString(audience)) {
             return Optional.empty();
         }
+        final Duration lifetime = lifetimeFor(minRemaining);
+        final Duration needed = neededFor(minRemaining, lifetime);
         final long nowMs = System.currentTimeMillis();
         final String familyId = familyOf(signInJwt, nowMs);
         final MintedToken token = tokens.compute(new Key(subjectId, audience, familyId), (key, existing) ->
-                isReusable(existing, nowMs)
+                isReusable(existing, nowMs, needed)
                         ? existing
-                        : issue(key, nowMs));
+                        : issue(key, nowMs, lifetime));
         // Forget tokens that have run out, so the map doesn't grow with users who have gone.
         tokens.values().removeIf(other -> other.expiresMs() <= nowMs);
         return Optional.of(token.token());
@@ -114,16 +124,46 @@ public class UserTokenIssuerImpl implements UserTokenIssuer {
         }
     }
 
+    /// @param minRemaining How long a caller needs a token to still have to run, or null for no more than usual.
+    /// @return How long to issue a token for: long enough to be reused for as long as a usual one (its
+    /// [#LIFETIME] less [#MIN_REMAINING]) before it has less than that left, so a long one isn't issued for every
+    /// request, between [#LIFETIME] and [#MAX_LIFETIME].
+    static Duration lifetimeFor(final Duration minRemaining) {
+        final Duration lifetime = needed(minRemaining).plus(LIFETIME.minus(MIN_REMAINING));
+        if (lifetime.compareTo(LIFETIME) < 0) {
+            return LIFETIME;
+        }
+        return lifetime.compareTo(MAX_LIFETIME) > 0
+                ? MAX_LIFETIME
+                : lifetime;
+    }
+
+    /// @return How long a token must still have to run to be reused: what the caller needs, but at least
+    /// [#MIN_REMAINING], and no more than one issued now would have, less that.
+    static Duration neededFor(final Duration minRemaining, final Duration lifetime) {
+        final Duration needed = needed(minRemaining);
+        final Duration most = lifetime.minus(MIN_REMAINING);
+        return needed.compareTo(most) > 0
+                ? most
+                : needed;
+    }
+
+    private static Duration needed(final Duration minRemaining) {
+        return minRemaining == null || minRemaining.compareTo(MIN_REMAINING) < 0
+                ? MIN_REMAINING
+                : minRemaining;
+    }
+
     /// @return True if the token has long enough left, and hasn't been revoked (e.g. by the user signing out).
-    private boolean isReusable(final MintedToken token, final long nowMs) {
+    private boolean isReusable(final MintedToken token, final long nowMs, final Duration needed) {
         return token != null
-               && token.expiresMs() - nowMs > MIN_REMAINING.toMillis()
+               && token.expiresMs() - nowMs > needed.toMillis()
                && !revokedTokenChecker.isRevoked(token.jti());
     }
 
-    private MintedToken issue(final Key key, final long nowMs) {
+    private MintedToken issue(final Key key, final long nowMs, final Duration lifetime) {
         final MintedToken token = tokenBuilderFactory.builder()
-                .expirationTime(Instant.ofEpochMilli(nowMs).plus(LIFETIME))
+                .expirationTime(Instant.ofEpochMilli(nowMs).plus(lifetime))
                 .clientId(key.audience())
                 .subject(key.subjectId())
                 .scope(SCOPE)
