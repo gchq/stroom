@@ -365,6 +365,51 @@ public class AskStroomAiClient {
                 .exec();
     }
 
+    /// Does what a button that a tool's result offered does, once the server has checked it, telling the caller if
+    /// the request fails.
+    ///
+    /// @param chatId             The chat.
+    /// @param messageId          The tool result message the action is in.
+    /// @param actionId           The action's id.
+    /// @param consumer           Given what happened.
+    /// @param errorHandler       Told if the request fails.
+    /// @param taskMonitorFactory Shows that it is being done.
+    void doUserAction(final int chatId,
+                      final int messageId,
+                      final String actionId,
+                      final Consumer<AiUserActionResult> consumer,
+                      final Consumer<Throwable> errorHandler,
+                      final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.doUserAction(chatId, messageId, actionId))
+                .onSuccess(consumer)
+                .onFailure(error -> errorHandler.accept(error.getException()))
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Records that the user undid a proposed code change they applied, once the server has checked they may
+    /// still edit the document.
+    ///
+    /// @param chatId             The chat.
+    /// @param messageId          The tool result message the action is in.
+    /// @param actionId           The action's id.
+    /// @param consumer           Given what happened.
+    /// @param taskMonitorFactory Shows that it is being done.
+    void undoUserAction(final int chatId,
+                        final int messageId,
+                        final String actionId,
+                        final Consumer<AiUserActionResult> consumer,
+                        final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.undoUserAction(chatId, messageId, actionId))
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
     /// Puts StroomQL in a query the user has just created, e.g. with a query the agent proposed.
     ///
     /// @param docRef             The new query.
