@@ -29,10 +29,13 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.function.Predicate;
+
 public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView>
         implements IFrameLoadUiHandlers, HasDirtyHandlers {
 
     private final GlobalKeyHandler globalKeyHandler;
+    private Predicate<String> linkHandler;
 
     @Inject
     public IFramePresenter(final EventBus eventBus,
@@ -79,6 +82,17 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
     @Override
     public void onFrameKeyDown(final NativeEvent nativeEvent) {
         globalKeyHandler.onKeyDown(nativeEvent);
+    }
+
+    /// @param linkHandler Opens the links clicked in the frame's document some other way than in the frame, e.g. a
+    ///                    document in Stroom, returning true if it has, or null to let the frame follow them all.
+    public void setLinkHandler(final Predicate<String> linkHandler) {
+        this.linkHandler = linkHandler;
+    }
+
+    @Override
+    public boolean onFrameLinkClick(final String href) {
+        return linkHandler != null && linkHandler.test(href);
     }
 
     @Override

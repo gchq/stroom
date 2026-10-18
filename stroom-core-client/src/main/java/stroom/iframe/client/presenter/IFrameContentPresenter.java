@@ -86,6 +86,12 @@ public class IFrameContentPresenter
     }
 
     @Override
+    public boolean onFrameLinkClick(final String href) {
+        // A page shown in a tab follows its own links.
+        return false;
+    }
+
+    @Override
     public void onTitleChange(final String title) {
         RefreshContentTabEvent.fire(this, this);
     }
