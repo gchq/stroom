@@ -40,7 +40,10 @@ import stroom.docstore.api.DocumentTypeName;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.meta.api.MetaService;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorTaskService;
 import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.impl.QueryService;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -107,6 +110,7 @@ class TestAgentModeTools {
             Map.entry("document_info", false),
             Map.entry("read_document", false),
             Map.entry("document_documentation", false),
+            Map.entry("folder_contents", false),
             // Saves its snapshot of the tab's results to the workspace, which querying needs.
             Map.entry("current_results", false),
             Map.entry("list_data_sources", false),
@@ -150,6 +154,9 @@ class TestAgentModeTools {
             bind(TableAnalysisConfig.class).toInstance(new TableAnalysisConfig());
             MapBinder.newMapBinder(binder(), DocumentTypeName.class, DocumentActionHandler.class);
             bind(MetaService.class).toInstance(Mockito.mock(MetaService.class));
+            bind(ProcessorFilterService.class).toInstance(Mockito.mock(ProcessorFilterService.class));
+            bind(ProcessorTaskService.class).toInstance(Mockito.mock(ProcessorTaskService.class));
+            bind(ResultStoreManager.class).toInstance(Mockito.mock(ResultStoreManager.class));
             bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
             bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
             bind(ContentIndex.class).toInstance(Mockito.mock(ContentIndex.class));

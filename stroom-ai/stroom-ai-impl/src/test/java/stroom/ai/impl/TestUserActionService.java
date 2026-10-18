@@ -26,6 +26,8 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.diff.LineDiff;
+import stroom.util.shared.diff.LineDiffResult;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,7 @@ import org.mockito.Mockito;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -237,6 +240,59 @@ class TestUserActionService {
     }
 
     @Test
+    void aCodeChangeAppliedInPartRecordsWhatWasAppliedAndWhatWasRejected() {
+        Mockito.when(lookup.find(XSLT)).thenReturn(Optional.of(XSLT));
+        Mockito.when(lookup.canEdit(XSLT)).thenReturn(true);
+        // Two parts: the value changed, and the final line break removed.
+        storeResult(codeChange(Status.PENDING, "<a>\n  <b>Test</b>\n</a>\n", "<a>\n  <b>Development</b>\n</a>"));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "code-1", "1");
+
+        assertThat(result.isDone()).isTrue();
+        assertThat(result.getMessage()).isEqualTo("Applied, not saved (1 of 2 parts)");
+        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(XSLT),
+                Mockito.eq(UserActionService.APPLY_COMMAND), Mockito.contains("element 'xsltFilter'"),
+                Mockito.eq("Applied part of a proposed change, not saved: +1 −1 lines, 1 of 2 parts"),
+                Mockito.eq(true));
+        final ArgumentCaptor<String> note = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
+                note.capture());
+        assertThat(note.getValue())
+                .contains("I applied part of the proposed change")
+                .contains("(+1 −1 lines, 1 of 2 parts)")
+                .contains("- Part 2, at line 4: the removal of the final line break");
+    }
+
+    @Test
+    void aRejectedPartOfAChangeIsDescribedByItsLines() {
+        final LineDiffResult diff = LineDiff.diff("a\nb\nc", "a\nB\nc");
+
+        assertThat(UserActionService.describeParts(diff, Set.of(0)))
+                .isEqualTo("- Part 1, at line 2:\n  - b\n  + B");
+    }
+
+    @Test
+    void rejectingEveryPartOrPartsThatArentThereIsRefused() {
+        Mockito.when(lookup.find(XSLT)).thenReturn(Optional.of(XSLT));
+        Mockito.when(lookup.canEdit(XSLT)).thenReturn(true);
+        storeResult(codeChange(Status.PENDING, "<a>\n  <b>Test</b>\n</a>\n", "<a>\n  <b>Development</b>\n</a>"));
+
+        assertThat(service.doUserAction(CHAT, MESSAGE, "code-1", "0,1").getMessage())
+                .contains("Every part of the change was rejected");
+        assertThat(service.doUserAction(CHAT, MESSAGE, "code-1", "2").getMessage())
+                .contains("aren't parts of this change");
+        assertThat(service.doUserAction(CHAT, MESSAGE, "code-1", "x").getMessage()).contains("weren't understood");
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.any(),
+                Mockito.any());
+
+        // Only a code change can be applied in part.
+        storeResult(enable(Status.PENDING, Long.MAX_VALUE));
+        assertThat(service.doUserAction(CHAT, MESSAGE, "enable-31", "0").getMessage())
+                .contains("Only a proposed code change");
+        Mockito.verifyNoInteractions(processorFilterService);
+    }
+
+    @Test
     void applyingADashboardChangeNeedsEditAndRecordsTheOperationsWithoutSaving() {
         Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
         Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
@@ -395,6 +451,12 @@ class TestUserActionService {
         return new UserActionRecord("code-1", UserActions.APPLY_CODE_CHANGE, "Change to XSLT 'Event translation'",
                 "Lower-cases the user name.", null, null, XSLT, "<b/>\n<c/>", List.of(), Long.MAX_VALUE, status, null,
                 null, new UserActionRecord.CodeChange(PIPELINE, "xsltFilter", "<a/>", "0".repeat(64), "h", 2, 1));
+    }
+
+    private static UserActionRecord codeChange(final Status status, final String base, final String proposed) {
+        return new UserActionRecord("code-1", UserActions.APPLY_CODE_CHANGE, "Change to XSLT 'Event translation'",
+                null, null, null, XSLT, proposed, List.of(), Long.MAX_VALUE, status, null, null,
+                new UserActionRecord.CodeChange(PIPELINE, "xsltFilter", base, "0".repeat(64), "h", 1, 2));
     }
 
     private static UserActionRecord dashboardChange() {

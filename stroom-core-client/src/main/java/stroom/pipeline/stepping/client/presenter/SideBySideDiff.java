@@ -182,6 +182,16 @@ public final class SideBySideDiff {
         return changeStartRows;
     }
 
+    /// @param change A change, by its index in [#getChangeStartRows()]; its index among the diff's changed blocks.
+    /// @return The zero based row after the change's last row.
+    public int getChangeEndRow(final int change) {
+        int row = changeStartRows.get(change);
+        while (row < left.size() && left.get(row) != Side.EQUAL) {
+            row++;
+        }
+        return row;
+    }
+
     /// @param currentRow The zero based row the user is at, or -1 for before the first.
     /// @return The index (into [#getChangeStartRows()]) of the first change after the row, or -1 if
     /// there isn't one.

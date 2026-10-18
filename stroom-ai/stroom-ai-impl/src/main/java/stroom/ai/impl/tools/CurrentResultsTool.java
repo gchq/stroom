@@ -123,6 +123,8 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     private final Provider<TableAnalysisConfig> tableAnalysisConfigProvider;
     private final AiAuditLog auditLog;
 
+    private final AgentSearches agentSearches;
+
     @Inject
     CurrentResultsTool(final ChatWorkspace workspace,
                        final TabSnapshots tabSnapshots,
@@ -131,8 +133,10 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                        final Provider<QueryService> queryServiceProvider,
                        final Provider<DashboardService> dashboardServiceProvider,
                        final Provider<TableAnalysisConfig> tableAnalysisConfigProvider,
-                       final AiAuditLog auditLog) {
+                       final AiAuditLog auditLog,
+                       final AgentSearches agentSearches) {
         super(workspace);
+        this.agentSearches = agentSearches;
         this.tabSnapshots = tabSnapshots;
         this.tableDownloader = tableDownloader;
         this.dataSourceAccess = dataSourceAccess;
@@ -421,6 +425,12 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                         e.getClass().getSimpleName()) + "). Stroom may no longer hold them, e.g. if the tab was "
                                      + "closed or the search run again; offer the user to run the search again "
                                      + "(refresh).");
+            } finally {
+                if (refresh) {
+                    // The search this tool ran again is stopped once its rows are taken (or can't be), keeping
+                    // what it found, so it never runs on after the call.
+                    agentSearches.terminate(status.queryKey());
+                }
             }
             final String sourceUuid = dataSource.getUuid();
             workspace.writeTabFile(chatId, WorkspacePath.parse(base + ".md"), temp, sourceUuid);
@@ -685,12 +695,18 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         final long waitUntilNanos = System.nanoTime()
                                     + (long) (timeLimit().toNanos() * SEARCH_TIME_SHARE);
         DashboardSearchResponse response = search(live, null);
-        while (response != null
-               && NullSafe.isEmptyCollection(response.getErrors())
-               && !response.isComplete()
-               && System.nanoTime() < waitUntilNanos) {
-            pause();
-            response = search(live, response.getQueryKey());
+        try {
+            while (response != null
+                   && NullSafe.isEmptyCollection(response.getErrors())
+                   && !response.isComplete()
+                   && System.nanoTime() < waitUntilNanos) {
+                pause();
+                response = search(live, response.getQueryKey());
+            }
+        } catch (final RuntimeException e) {
+            // E.g. the time limit: the search this tool started never runs on after the call.
+            agentSearches.terminate(NullSafe.get(response, DashboardSearchResponse::getQueryKey));
+            throw e;
         }
         if (response == null) {
             return new Ran(null, null, "it did not run");

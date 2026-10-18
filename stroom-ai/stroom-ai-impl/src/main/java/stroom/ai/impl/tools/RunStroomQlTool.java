@@ -29,6 +29,7 @@ import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.docref.DocRef;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.OffsetRange;
+import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.impl.QueryService;
@@ -71,13 +72,16 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
 
     private final Provider<QueryService> queryServiceProvider;
     private final Provider<ResourceStore> resourceStoreProvider;
+    private final AgentSearches agentSearches;
 
     @Inject
     RunStroomQlTool(final ChatWorkspace workspace,
                     final Provider<QueryService> queryServiceProvider,
-                    final Provider<ResourceStore> resourceStoreProvider) {
+                    final Provider<ResourceStore> resourceStoreProvider,
+                    final AgentSearches agentSearches) {
         super(workspace);
         this.queryServiceProvider = queryServiceProvider;
+        this.agentSearches = agentSearches;
         this.resourceStoreProvider = resourceStoreProvider;
     }
 
@@ -91,7 +95,9 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                              + "columns, common values); query it further with the table tool. Use eval (e.g. 'eval "
                              + "Rate = Bytes / Duration') to work values out in the query, in Stroom's expression "
                              + "language, as the table tool's expressions are. Add a limit to the query for large "
-                             + "results.")
+                             + "results. If more than one data source could hold what the user asked for, ask them "
+                             + "which to use with ask_user first; never choose one for them. If the user may "
+                             + "instead want a Query document to run themselves (propose_query), ask them which.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(QUERY_ARG, "The StroomQL query.")
                         .addStringProperty(OUT_ARG, "A .md file in /outputs/ for the results (default "
@@ -108,17 +114,21 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
 
     @Override
     String run(final ToolExecutionRequest request, final int chatId) {
-        final String query = rawArg(request, QUERY_ARG);
-        if (query == null || query.isBlank()) {
+        final String given = rawArg(request, QUERY_ARG);
+        if (given == null || given.isBlank()) {
             throw new WorkspaceException("Give a StroomQL query.");
         }
         final int maxQueryLength = workspace.limits().getMaxQueryLength();
-        if (query.length() > maxQueryLength) {
+        if (given.length() > maxQueryLength) {
             throw new WorkspaceException("The query may be at most " + maxQueryLength + " characters.");
         }
-        final WorkspacePath given = outArg(request);
-        final WorkspacePath out = given != null
-                ? given
+        // Never an unbounded search: the rows are capped, whatever the query asks for.
+        final int maxRows = workspace.limits().getMaxQueryRows();
+        final StroomQlLimit.Limited limited = StroomQlLimit.apply(given, maxRows);
+        final String query = limited.query();
+        final WorkspacePath givenOut = outArg(request);
+        final WorkspacePath out = givenOut != null
+                ? givenOut
                 : WorkspacePath.parse("/outputs/queries/query-"
                                       + FILE_TIME.format(ZonedDateTime.now(ZoneOffset.UTC)) + ".md");
         final QueryService queryService = queryServiceProvider.get();
@@ -135,11 +145,30 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 .storeHistory(false)
                 .requestedRange(new OffsetRange(0L, 100L))
                 .build();
-        DashboardSearchResponse response = queryService.search(searchRequest);
-        while (response != null && NullSafe.isEmptyCollection(response.getErrors()) && !response.isComplete()) {
-            pause();
-            response = queryService.search(searchRequest.copy().queryKey(response.getQueryKey()).build());
+        QueryKey queryKey = null;
+        try {
+            DashboardSearchResponse response = queryService.search(searchRequest);
+            queryKey = NullSafe.get(response, DashboardSearchResponse::getQueryKey);
+            while (response != null && NullSafe.isEmptyCollection(response.getErrors()) && !response.isComplete()) {
+                pause();
+                response = queryService.search(searchRequest.copy().queryKey(response.getQueryKey()).build());
+            }
+            return results(chatId, searchRequest, response, out, sourceDocUuid, limited, maxRows);
+        } finally {
+            // The search is the agent's own, and is never left running, e.g. when the time limit is reached.
+            agentSearches.destroy(queryKey);
         }
+    }
+
+    // Writes the results of a search that has finished to the workspace, and says what they hold.
+    private String results(final int chatId,
+                           final QuerySearchRequest searchRequest,
+                           final DashboardSearchResponse response,
+                           final WorkspacePath out,
+                           final String sourceDocUuid,
+                           final StroomQlLimit.Limited limited,
+                           final int maxRows) {
+        final QueryService queryService = queryServiceProvider.get();
         if (response == null) {
             throw new WorkspaceException("The query did not run.");
         }
@@ -165,10 +194,33 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         }
         try (final Reader reader = Files.newBufferedReader(workspace.localFile(chatId, out),
                 StandardCharsets.UTF_8)) {
-            return "Ran the query. The results are in " + out + ".\n\n" + TableProfiler.profile(reader, out.path());
+            final String profile = TableProfiler.profile(reader, out.path());
+            final long rows = MarkdownTables.countRows(workspace.localFile(chatId, out));
+            return "Ran the query. The results are in " + out + "." + limitNote(limited, maxRows, rows) + "\n\n"
+                   + profile;
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /// @return What the model is told about the row limit: nothing if the query's own limit was used and the rows
+    /// didn't reach the most allowed.
+    static String limitNote(final StroomQlLimit.Limited limited, final int maxRows, final long rows) {
+        final StringBuilder sb = new StringBuilder();
+        if (limited.change() == StroomQlLimit.Change.ADDED) {
+            sb.append(" The query had no limit, so 'limit ").append(maxRows).append("' (the most rows a query may "
+                                                                                   + "return here) was added.");
+        } else if (limited.change() == StroomQlLimit.Change.LOWERED) {
+            sb.append(" The query's limit was over ").append(maxRows).append(", the most rows a query may return "
+                                                                               + "here, so it was lowered to that.");
+        }
+        if (rows >= maxRows) {
+            sb.append(" It returned ").append(maxRows).append(" rows, the most allowed, so there may be more: don't "
+                                                              + "take the row count for a total. To count rows, "
+                                                              + "use count() with group by (without group by, "
+                                                              + "each row is its own group).");
+        }
+        return sb.toString();
     }
 
     private static void pause() {

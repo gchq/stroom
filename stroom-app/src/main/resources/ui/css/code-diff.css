@@ -27,6 +27,7 @@
 .editor .codeDiff-changed,
 .editor .codeDiff-filler,
 .editor .codeDiff-applied,
+.editor .codeDiff-rejected,
 .editor .codeDiff-removedChars,
 .editor .codeDiff-addedChars {
     position: absolute;
@@ -62,6 +63,13 @@
 .editor .codeDiff-addedChars {
     background-color: var(--code-diff__background-color--added--strong);
     border-radius: 2px;
+}
+
+/* A change the user rejected in the review, so it isn't applied: greyed over its own colour, with a bar at its
+   left edge. */
+.editor .codeDiff-rejected {
+    background-color: var(--code-diff__background-color--rejected, rgba(128, 128, 128, 0.45));
+    box-shadow: inset 3px 0 0 var(--code-diff__border-color--rejected, rgba(128, 128, 128, 0.9));
 }
 
 /* Lines changed by an applied change, until the next edit or step. */

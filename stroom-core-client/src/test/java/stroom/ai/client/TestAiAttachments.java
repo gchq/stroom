@@ -94,6 +94,24 @@ class TestAiAttachments {
         assertThat(chipHtml(document, false)).doesNotContain(AiAttachments.REMOVE_ATTRIBUTE);
     }
 
+    @Test
+    void theActiveTabsChipShowsTheTabsIconSizedAsADocumentChipsIs() {
+        final HtmlBuilder hb = new HtmlBuilder();
+        AiAttachments.tabChip(hb, SvgImage.DOCUMENT_XSLT, "Tab: Event translation", "Shared");
+        final String html = hb.toSafeHtml().asString();
+
+        // The icon is inside its box, which the chip's styles size, as a document chip's icon is.
+        assertThat(html)
+                .contains("<div class=\"ai-attachment-chip-icon\"><div class=\"svg-image "
+                          + SvgImage.DOCUMENT_XSLT.getClassName() + " face\">")
+                .contains(SvgImage.DOCUMENT_XSLT.getSvg())
+                .contains("Tab: Event translation");
+        // Without an icon, a file's.
+        final HtmlBuilder plain = new HtmlBuilder();
+        AiAttachments.tabChip(plain, null, "Tab: X", "Shared");
+        assertThat(plain.toSafeHtml().asString()).contains(SvgImage.FILE.getClassName());
+    }
+
     private static String chipHtml(final AiChatAttachment attachment, final boolean removable) {
         final HtmlBuilder hb = new HtmlBuilder();
         AiAttachments.chip(hb, 7, attachment.getId(), "Dictionary 'Malicious IPs'", attachment, removable,

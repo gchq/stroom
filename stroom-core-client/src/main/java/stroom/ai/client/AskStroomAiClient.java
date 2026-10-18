@@ -66,6 +66,7 @@ import com.google.inject.Singleton;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Singleton
 public class AskStroomAiClient {
@@ -359,7 +360,7 @@ public class AskStroomAiClient {
                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
-                .method(res -> res.doUserAction(chatId, messageId, actionId))
+                .method(res -> res.doUserAction(chatId, messageId, actionId, null))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
@@ -382,7 +383,36 @@ public class AskStroomAiClient {
                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
-                .method(res -> res.doUserAction(chatId, messageId, actionId))
+                .method(res -> res.doUserAction(chatId, messageId, actionId, null))
+                .onSuccess(consumer)
+                .onFailure(error -> errorHandler.accept(error.getException()))
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Applies a proposed code change without the parts the user rejected, once the server has checked it and
+    /// recorded what is applied.
+    ///
+    /// @param chatId             The chat.
+    /// @param messageId          The tool result message the action is in.
+    /// @param actionId           The action's id.
+    /// @param rejected           The parts of the change the user rejected, by their index; empty for none.
+    /// @param consumer           Given what happened.
+    /// @param errorHandler       Told if the request fails.
+    /// @param taskMonitorFactory Shows that it is being done.
+    void applyCodeChange(final int chatId,
+                         final int messageId,
+                         final String actionId,
+                         final List<Integer> rejected,
+                         final Consumer<AiUserActionResult> consumer,
+                         final Consumer<Throwable> errorHandler,
+                         final TaskMonitorFactory taskMonitorFactory) {
+        final String rejectedChanges = rejected == null || rejected.isEmpty()
+                ? null
+                : rejected.stream().map(String::valueOf).collect(Collectors.joining(","));
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.doUserAction(chatId, messageId, actionId, rejectedChanges))
                 .onSuccess(consumer)
                 .onFailure(error -> errorHandler.accept(error.getException()))
                 .taskMonitorFactory(taskMonitorFactory)

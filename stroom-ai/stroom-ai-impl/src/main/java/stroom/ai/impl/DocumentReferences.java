@@ -25,6 +25,7 @@ import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.DocumentReference;
 import stroom.ai.shared.DocumentReferenceContext;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -106,10 +107,13 @@ public class DocumentReferences {
     /// @param path   Its folder's path, or null.
     /// @return The note the model is given about a document attached to the chat.
     static UserMessage referenceNote(final DocRef docRef, final String path) {
+        final String use = ExplorerConstants.isFolder(docRef)
+                ? "Use folder_contents with its uuid to see what is in it (its documents, and the streams, "
+                  + "processor filters and tasks of its feeds and pipelines).]"
+                : "Use document_info, read_document or document_documentation with its uuid to see it.]";
         return new UserMessage("[Referenced document: " + DocumentReferenceContext.describe(docRef)
                                + " (uuid " + docRef.getUuid() + ", " + NullSafe.nonBlankStringElse(path, "/")
-                               + "). Use document_info, read_document or document_documentation with its uuid "
-                               + "to see it.]");
+                               + "). " + use);
     }
 
     /// @param description What the document was, as it was attached.

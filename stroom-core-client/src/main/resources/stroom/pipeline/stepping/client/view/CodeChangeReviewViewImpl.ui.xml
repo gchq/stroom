@@ -9,6 +9,8 @@
             <b:Button ui:field="previousChange" addStyleNames="allow-focus Button--contained-secondary"
                       text="Previous"/>
             <b:Button ui:field="nextChange" addStyleNames="allow-focus Button--contained-secondary" text="Next"/>
+            <b:Button ui:field="rejectChange" addStyleNames="allow-focus Button--contained-secondary"
+                      text="Reject change"/>
         </g:FlowPanel>
         <g:FlowPanel styleName="dock-min dock-container-horizontal codeChangeReviewViewImpl-titles">
             <g:Label addStyleNames="codeChangeReviewViewImpl-title" text="Current code"/>

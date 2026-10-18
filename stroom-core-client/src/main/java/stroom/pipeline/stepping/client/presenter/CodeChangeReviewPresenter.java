@@ -42,6 +42,8 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 
 /// A dialog for reviewing a proposed code change side by side before applying it: two read only code
@@ -49,6 +51,9 @@ import java.util.function.Consumer;
 /// red on the left, added lines green on the right and changed lines amber on both, with the changed
 /// characters marked more strongly. Blank filler rows keep each change lined up, the two sides scroll
 /// together, and Previous and Next move between the changes.
+///
+/// The user can reject any of the changes (e.g. a removed final line break) with "Reject change", which marks
+/// it on both sides and leaves it out of what is applied.
 ///
 /// The buttons are "Apply to editor", "Apply and step" and "Cancel"; what applying does is up to the
 /// caller (see [#show(String, String, String, AceEditorMode, boolean, ReviewHandler)]), or use
@@ -71,11 +76,21 @@ public class CodeChangeReviewPresenter
     private static final String FILLER_CLASS = "codeDiff-filler";
     private static final String REMOVED_CHARS_CLASS = "codeDiff-removedChars";
     private static final String ADDED_CHARS_CLASS = "codeDiff-addedChars";
+    private static final String REJECTED_CLASS = "codeDiff-rejected";
+    /// Shown when every change has been rejected.
+    static final String ALL_REJECTED_MESSAGE = "Every change is rejected, so there is nothing to apply.";
 
     private final EditorPresenter leftEditor;
     private final EditorPresenter rightEditor;
 
     private SideBySideDiff sideBySideDiff;
+    private LineDiffResult diff;
+    private String currentCode;
+    private String proposedCode;
+    // The changes the user has rejected, by their index among the diff's changed blocks.
+    private final Set<Integer> rejected = new TreeSet<>();
+    // Why the change can't be applied, whatever is rejected, or null.
+    private String problem;
     private ReviewHandler handler;
     private int currentChange = -1;
     private boolean syncingScroll;
@@ -120,16 +135,16 @@ public class CodeChangeReviewPresenter
                                + (element.getElement() != null
                 ? " - " + element.getElement().getId()
                 : "");
-        final ReviewHandler reviewHandler = (andStep, onProblem) -> {
+        final ReviewHandler reviewHandler = (andStep, code, rejectedChanges, onProblem) -> {
             final String problem = checkElement(element, baseCode, editable);
             if (problem != null) {
                 onProblem.accept(problem);
             } else if (approver == null) {
-                onProblem.accept(applyToElement(element, baseCode, proposedCode, andStep, onApplied));
+                onProblem.accept(applyToElement(element, baseCode, code, andStep, onApplied));
             } else {
-                approver.approve(andStep, refusal -> onProblem.accept(refusal != null
+                approver.approve(andStep, rejectedChanges, refusal -> onProblem.accept(refusal != null
                         ? refusal
-                        : applyToElement(element, baseCode, proposedCode, andStep, onApplied)));
+                        : applyToElement(element, baseCode, code, andStep, onApplied)));
             }
         };
 
@@ -188,20 +203,26 @@ public class CodeChangeReviewPresenter
                      final boolean stepAvailable,
                      final ReviewHandler handler) {
         this.handler = handler;
-        final LineDiffResult diff = LineDiff.diff(currentCode, proposedCode);
+        this.currentCode = currentCode;
+        this.proposedCode = proposedCode;
+        this.diff = LineDiff.diff(currentCode, proposedCode);
         this.sideBySideDiff = SideBySideDiff.of(diff);
         this.currentChange = -1;
+        this.rejected.clear();
+        this.problem = null;
 
-        setContent(leftEditor, mode, sideBySideDiff.getLeftText(), sideBySideDiff.getLeftLabels(),
-                buildMarkers(sideBySideDiff.getLeft(), sideBySideDiff.getLeftCharChanges(), REMOVED_CHARS_CLASS));
-        setContent(rightEditor, mode, sideBySideDiff.getRightText(), sideBySideDiff.getRightLabels(),
-                buildMarkers(sideBySideDiff.getRight(), sideBySideDiff.getRightCharChanges(), ADDED_CHARS_CLASS));
+        leftEditor.setMode(mode);
+        leftEditor.setText(sideBySideDiff.getLeftText());
+        leftEditor.setLineNumberLabels(sideBySideDiff.getLeftLabels());
+        rightEditor.setMode(mode);
+        rightEditor.setText(sideBySideDiff.getRightText());
+        rightEditor.setLineNumberLabels(sideBySideDiff.getRightLabels());
+        updateMarkers();
 
         final CodeChangeReviewView view = getView();
-        view.setSummary(CodeDiffCardRenderer.summary(diff));
         view.setMessage(null);
-        view.setApplyEnabled(!diff.isIdentical());
         view.setStepAvailable(stepAvailable);
+        updateRejection();
         updateNavigation();
 
         ShowPopupEvent.builder(this)
@@ -218,8 +239,64 @@ public class CodeChangeReviewPresenter
     ///
     /// @param message The message.
     public void showProblem(final String message) {
+        problem = message;
         getView().setMessage(message);
         getView().setApplyEnabled(false);
+    }
+
+    @Override
+    public void onToggleRejectChange() {
+        if (sideBySideDiff == null || currentChange < 0) {
+            return;
+        }
+        if (!rejected.remove(currentChange)) {
+            rejected.add(currentChange);
+        }
+        updateMarkers();
+        updateRejection();
+    }
+
+    /// @return The code to apply: the proposed code without the changes the user rejected.
+    String codeToApply() {
+        return rejected.isEmpty()
+                ? proposedCode
+                : diff.withChangesExcept(rejected, LineDiff.lineSeparatorOf(currentCode));
+    }
+
+    // Shows what is rejected: the summary, the reject button, and whether anything is left to apply.
+    private void updateRejection() {
+        final int changes = sideBySideDiff.getChangeStartRows().size();
+        final CodeChangeReviewView view = getView();
+        view.setSummary(summary(diff, rejected.size(), changes, codeToApply(), currentCode));
+        view.setRejectEnabled(currentChange >= 0);
+        view.setRejected(rejected.contains(currentChange));
+        final boolean allRejected = changes > 0 && rejected.size() >= changes;
+        if (problem == null) {
+            view.setMessage(allRejected
+                    ? ALL_REJECTED_MESSAGE
+                    : null);
+            view.setApplyEnabled(!diff.isIdentical() && !allRejected);
+        }
+    }
+
+    /// @param diff     The proposed change.
+    /// @param rejected How many of its changes are rejected.
+    /// @param changes  How many changes it has.
+    /// @param applied  The code that applying would give.
+    /// @param current  The current code.
+    /// @return The summary, e.g. "+3 −1 lines", or with some rejected "+1 −1 lines (1 of 2 changes rejected)".
+    static String summary(final LineDiffResult diff,
+                          final int rejected,
+                          final int changes,
+                          final String applied,
+                          final String current) {
+        if (rejected == 0) {
+            return CodeDiffCardRenderer.summary(diff);
+        }
+        return CodeDiffCardRenderer.summary(LineDiff.diff(current, applied)) + " (" + rejected + " of " + changes
+               + (changes == 1
+                ? " change"
+                : " changes") + " rejected)";
     }
 
     @Override
@@ -260,7 +337,7 @@ public class CodeChangeReviewPresenter
         }
         // Not twice while the change is being checked.
         getView().setApplyEnabled(false);
-        handler.apply(andStep, problem -> {
+        handler.apply(andStep, codeToApply(), new ArrayList<>(rejected), problem -> {
             if (problem == null) {
                 hide();
             } else {
@@ -278,6 +355,7 @@ public class CodeChangeReviewPresenter
         leftEditor.gotoLine(row + 1);
         rightEditor.gotoLine(row + 1);
         updateNavigation();
+        updateRejection();
     }
 
     private void updateNavigation() {
@@ -337,15 +415,26 @@ public class CodeChangeReviewPresenter
         return editor;
     }
 
-    private static void setContent(final EditorPresenter editor,
-                                   final AceEditorMode mode,
-                                   final String text,
-                                   final List<String> labels,
-                                   final List<Marker> markers) {
-        editor.setMode(mode);
-        editor.setText(text);
-        editor.setLineNumberLabels(labels);
-        editor.setMarkers(markers);
+    // Marks the changes on both sides, with the rejected ones marked over them.
+    private void updateMarkers() {
+        final List<Marker> leftMarkers = buildMarkers(sideBySideDiff.getLeft(), sideBySideDiff.getLeftCharChanges(),
+                REMOVED_CHARS_CLASS);
+        final List<Marker> rightMarkers = buildMarkers(sideBySideDiff.getRight(),
+                sideBySideDiff.getRightCharChanges(), ADDED_CHARS_CLASS);
+        for (final int change : rejected) {
+            final int start = sideBySideDiff.getChangeStartRows().get(change);
+            final int end = sideBySideDiff.getChangeEndRow(change);
+            leftMarkers.add(rejectedMarker(start, end));
+            rightMarkers.add(rejectedMarker(start, end));
+        }
+        leftEditor.setMarkers(leftMarkers);
+        rightEditor.setMarkers(rightMarkers);
+    }
+
+    private static Marker rejectedMarker(final int startRow, final int endRow) {
+        // Ace skips empty ranges, so end at column 1 (a full line marker covers whole rows).
+        return new Marker(AceRange.create(startRow, 0, endRow - 1, 1), REJECTED_CLASS, AceMarkerType.FULL_LINE,
+                false);
     }
 
     // One full line marker per run of rows of the same kind, plus a text marker for each changed range
@@ -409,9 +498,11 @@ public class CodeChangeReviewPresenter
         /// Applies the change.
         ///
         /// @param andStep  True for "Apply and step", which should also re-run the current step.
+        /// @param code     The code to apply: the proposed code without any changes the user rejected.
+        /// @param rejected The changes the user rejected, by their index among the diff's changed blocks.
         /// @param onResult Given null once the change has been applied, so the dialog closes, or a message
         ///                 saying why it wasn't, which the dialog shows (and stops offering to apply).
-        void apply(boolean andStep, Consumer<String> onResult);
+        void apply(boolean andStep, String code, List<Integer> rejected, Consumer<String> onResult);
     }
 
 
@@ -447,5 +538,11 @@ public class CodeChangeReviewPresenter
 
         /// @param enabled True to enable the Next button.
         void setNextEnabled(boolean enabled);
+
+        /// @param enabled True to enable the button that rejects (or keeps) the current change.
+        void setRejectEnabled(boolean enabled);
+
+        /// @param rejected True if the current change is rejected, so the button offers to keep it.
+        void setRejected(boolean rejected);
     }
 }

@@ -27,6 +27,9 @@ public interface CodeChangeReviewUiHandlers extends UiHandlers {
     /// Moves both editors to the next change.
     void onNextChange();
 
+    /// Rejects the current change, so it isn't applied, or keeps it again if it was rejected.
+    void onToggleRejectChange();
+
     /// Applies the change to the element's editor.
     void onApply();
 

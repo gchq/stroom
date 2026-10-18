@@ -34,6 +34,10 @@ import java.util.Locale;
 class ListDataSourcesTool extends AbstractWorkspaceTool {
 
     static final String NAME = "list_data_sources";
+    /// What the model is reminded of when more than one data source is listed.
+    static final String CHOOSE_NOTE = "If more than one of these could hold what the user asked for, ask them which "
+                                      + "to use with ask_user (one option for each) rather than choosing one "
+                                      + "yourself, unless they have already said.";
     static final String FILTER_ARG = "filter";
     /// The most data sources listed in one call.
     static final int MAX_LISTED = 200;
@@ -61,7 +65,8 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
                 .description("Lists the data sources the user can run StroomQL queries on (views, indexes, "
                              + "Elastic and Solr indexes and so on): name, type and uuid, with a line of their "
                              + "documentation for a short list. Use describe_data_source for a data source's "
-                             + "fields before writing a query.")
+                             + "fields before writing a query. If more than one could hold what the user asked "
+                             + "for, ask them which to use with ask_user rather than choosing one yourself.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(FILTER_ARG, "Optional. Only data sources whose name or type contains "
                                                        + "this, ignoring case.")
@@ -99,6 +104,9 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
         if (matching.size() > listed.size()) {
             sb.append("(").append(matching.size() - listed.size())
                     .append(" more not shown. Give a filter to narrow the list.)\n");
+        }
+        if (matching.size() > 1) {
+            sb.append(CHOOSE_NOTE).append('\n');
         }
         return sb.toString().stripTrailing();
     }

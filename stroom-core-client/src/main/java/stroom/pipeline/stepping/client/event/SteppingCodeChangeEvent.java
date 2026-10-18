@@ -22,6 +22,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /// Asks the stepping screen of an open pipeline to do something with a code change proposed in the AI chat: open
@@ -240,8 +241,10 @@ public class SteppingCodeChangeEvent extends GwtEvent<SteppingCodeChangeEvent.Ha
     public interface Approver {
 
         /// @param andStep  True for "Apply and step".
+        /// @param rejected The parts of the change the user rejected, by their index among the diff's changed
+        ///                 blocks, which aren't applied. Empty if the whole change is applied.
         /// @param onResult Given null if the change may be applied, or a message saying why it may not.
-        void approve(boolean andStep, Consumer<String> onResult);
+        void approve(boolean andStep, List<Integer> rejected, Consumer<String> onResult);
     }
 
 

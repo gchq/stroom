@@ -16,6 +16,9 @@
 
 package stroom.folder.client;
 
+import stroom.ai.client.AiTabSnapshotProvider;
+import stroom.ai.client.AiTabSnapshots;
+import stroom.ai.shared.AiTabSnapshot;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
@@ -38,9 +41,11 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Collections;
+
 public class FolderPresenter
         extends LinkTabPanelPresenter
-        implements DocumentTabData {
+        implements DocumentTabData, AiTabSnapshotProvider {
 
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
@@ -161,6 +166,20 @@ public class FolderPresenter
     @Override
     public DocRef getDocRef() {
         return docRef;
+    }
+
+    /// @return The folder and which of its tabs the user is looking at, for the AI chat, which lists what is in
+    /// it with its folder_contents tool. Null if no folder has been read.
+    @Override
+    public AiTabSnapshot snapshot() {
+        if (docRef == null) {
+            return null;
+        }
+        final TabData selected = getSelectedTab();
+        return AiTabSnapshots.create(docRef, docRef.getName(), selected != null
+                        ? selected.getLabel()
+                        : null, false, Collections.emptyList(), Collections.emptyList(),
+                AiTabSnapshots.FOLDER_NOTE);
     }
 
     @Override

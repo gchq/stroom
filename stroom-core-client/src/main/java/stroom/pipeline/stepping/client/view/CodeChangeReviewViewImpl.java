@@ -48,6 +48,8 @@ public class CodeChangeReviewViewImpl
     @UiField
     Button nextChange;
     @UiField
+    Button rejectChange;
+    @UiField
     SimplePanel left;
     @UiField
     SimplePanel right;
@@ -65,6 +67,8 @@ public class CodeChangeReviewViewImpl
         widget = binder.createAndBindUi(this);
         previousChange.setIcon(SvgImage.UP);
         nextChange.setIcon(SvgImage.DOWN);
+        setRejected(false);
+        rejectChange.setEnabled(false);
         apply.setIcon(SvgImage.OK);
         applyAndStep.setIcon(SvgImage.STEP_FORWARD);
         cancel.setIcon(SvgImage.CANCEL);
@@ -123,6 +127,31 @@ public class CodeChangeReviewViewImpl
     @Override
     public void setNextEnabled(final boolean enabled) {
         nextChange.setEnabled(enabled);
+    }
+
+    @Override
+    public void setRejectEnabled(final boolean enabled) {
+        rejectChange.setEnabled(enabled);
+    }
+
+    @Override
+    public void setRejected(final boolean rejected) {
+        if (rejected) {
+            rejectChange.setText("Keep change");
+            rejectChange.setIcon(SvgImage.UNDO);
+            rejectChange.setTitle("Apply this change after all");
+        } else {
+            rejectChange.setText("Reject change");
+            rejectChange.setIcon(SvgImage.CLOSE);
+            rejectChange.setTitle("Leave this change out of what is applied");
+        }
+    }
+
+    @UiHandler("rejectChange")
+    void onRejectChangeClick(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onToggleRejectChange();
+        }
     }
 
     @UiHandler("previousChange")

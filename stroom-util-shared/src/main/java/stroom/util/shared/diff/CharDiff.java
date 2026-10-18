@@ -117,7 +117,52 @@ public final class CharDiff {
             addIfNotEmpty(oldRanges, regionOldStart, regionOldEnd);
             addIfNotEmpty(newRanges, regionNewStart, regionNewEnd);
         }
-        return new CharDiff(oldRanges, newRanges);
+        return new CharDiff(toWordEdges(oldLine, oldRanges), toWordEdges(newLine, newRanges));
+    }
+
+    /// Widens each changed range to the edges of the word it is in when only a few of the word's letters are left
+    /// out, so a changed word is shown whole: "Test" to "Development" share their last "t", which would otherwise
+    /// leave "Tes" and "Developmen" highlighted.
+    ///
+    /// @param line   The line.
+    /// @param ranges Its changed ranges, in order.
+    /// @return The ranges, widened, with any that now touch joined.
+    static List<CharRange> toWordEdges(final String line, final List<CharRange> ranges) {
+        final List<CharRange> widened = new ArrayList<>();
+        for (final CharRange range : ranges) {
+            int start = range.getStart();
+            int end = range.getEnd();
+            if (isWordChar(line, start)) {
+                int left = 0;
+                while (isWordChar(line, start - 1 - left)) {
+                    left++;
+                }
+                if (left <= MERGE_GAP) {
+                    start -= left;
+                }
+            }
+            if (isWordChar(line, end - 1)) {
+                int right = 0;
+                while (isWordChar(line, end + right)) {
+                    right++;
+                }
+                if (right <= MERGE_GAP) {
+                    end += right;
+                }
+            }
+            // Index based, as GWT's lists have no getLast().
+            if (!widened.isEmpty() && widened.get(widened.size() - 1).getEnd() >= start) {
+                final CharRange last = widened.remove(widened.size() - 1);
+                widened.add(new CharRange(last.getStart(), Math.max(last.getEnd(), end)));
+            } else {
+                widened.add(new CharRange(start, end));
+            }
+        }
+        return widened;
+    }
+
+    private static boolean isWordChar(final String line, final int index) {
+        return index >= 0 && index < line.length() && Character.isLetterOrDigit(line.charAt(index));
     }
 
     /// @return The ranges of changed characters in the old line, in order.

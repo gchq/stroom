@@ -31,6 +31,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
@@ -250,7 +251,10 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             operationId = "doAiUserAction")
     AiUserActionResult doUserAction(@PathParam("chatId") int chatId,
                                     @PathParam("messageId") int messageId,
-                                    @PathParam("actionId") String actionId);
+                                    @PathParam("actionId") String actionId,
+                                    @Parameter(description = "For a proposed code change, the parts of it the user "
+                                                             + "rejected, by their number from 0, comma separated")
+                                    @QueryParam("rejectedChanges") String rejectedChanges);
 
     @POST
     @Path("/undoUserAction/{chatId}/{messageId}/{actionId}")
