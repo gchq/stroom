@@ -191,7 +191,7 @@ public class McpToolServerFactory {
                 warnings.add(NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
             }
         }
-        return new McpToolset(connections, warnings, chatId == null);
+        return new McpToolset(connections, warnings, chatId == null, modelDoc.getModelId());
     }
 
     /**
