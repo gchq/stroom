@@ -53,6 +53,8 @@ public record ElicitationRecord(String kind,
         ACCEPTED,
         DECLINED,
         CANCELLED,
-        EXPIRED
+        EXPIRED,
+        /// Not answered, as the user sent a message instead, which the run carries on with.
+        SUPERSEDED
     }
 }
