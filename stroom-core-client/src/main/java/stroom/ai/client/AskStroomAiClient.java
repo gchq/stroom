@@ -551,11 +551,13 @@ public class AskStroomAiClient {
 
     void getMessages(final int chatId,
                      final Consumer<List<AiChatMessage>> consumer,
+                     final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.getMessages(chatId))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
