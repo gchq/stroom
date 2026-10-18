@@ -170,6 +170,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     Label contextIndicator;
     @UiField
+    HTML attachments;
+    @UiField
     SimplePanel modelRef;
     @UiField
     FlowPanel followUps;
@@ -216,6 +218,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         followUps.setVisible(false);
         commandReference.setVisible(false);
         taskList.setVisible(false);
+        attachments.setVisible(false);
         taskListHeader.addClickHandler(event -> {
             taskListCollapsed = !taskListCollapsed;
             showTaskListCollapsed();
@@ -505,7 +508,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @UiHandler("message")
     public void onMessageKeyDown(final KeyDownEvent event) {
-        // Ctrl+Enter send the message.
+        // Enter sends the message; Shift+Enter starts a new line.
         if (!event.isShiftKeyDown() && event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             event.preventDefault();
             sendMessage();
@@ -694,6 +697,17 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         } else {
             root.removeStyleName(EMPTY_STYLE);
         }
+    }
+
+    @Override
+    public void setAttachments(final SafeHtml html) {
+        attachments.setHTML(html);
+        attachments.setVisible(!html.asString().isEmpty());
+    }
+
+    @Override
+    public Widget getAttachmentList() {
+        return attachments;
     }
 
     @Override

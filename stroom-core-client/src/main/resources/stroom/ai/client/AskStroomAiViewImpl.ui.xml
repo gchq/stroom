@@ -76,6 +76,7 @@
             <g:FlowPanel ui:field="inputBox"
                          styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
                 <g:FlowPanel ui:field="commandSuggestions" styleName="dock-min askStroomAiViewImpl-commands"/>
+                <g:HTML ui:field="attachments" styleName="dock-min askStroomAiViewImpl-attachments"/>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-messagePane">
                     <g:Label ui:field="contextIndicator"
                              styleName="askStroomAiViewImpl-contextChip"/>
