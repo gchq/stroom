@@ -2453,8 +2453,10 @@ public class AskStroomAiPresenter
                     response -> {
                         requestInFlight = false;
                         // Poll to get the properly typed, persisted messages. Also picks up a partial
-                        // answer, where the user cancelled part way through.
-                        startPolling();
+                        // answer, where the user cancelled part way through. As after answering a form: a message
+                        // sent while one waited puts it aside, and the run carries on, though it may still show
+                        // as waiting for the user for a moment.
+                        pollAfterAnswer();
                         maybeGenerateTitle(message);
                     }, error -> {
                         requestInFlight = false;
@@ -3202,7 +3204,13 @@ public class AskStroomAiPresenter
 
     @Override
     public void onConversationScrolled() {
-        final int scrollTop = getView().getMarkdownContainer().getElement().getScrollTop();
+        final Element container = getView().getMarkdownContainer().getElement();
+        if (container.getClientHeight() == 0) {
+            // Hidden (e.g. another Stroom tab is shown), when the browser puts it back to the top: not the user
+            // scrolling, so it is where they left it that counts.
+            return;
+        }
+        final int scrollTop = container.getScrollTop();
         // Only the user scrolling up stops following the conversation. Content added below, or the view getting
         // shorter (e.g. when the task list grows), also leaves it short of the bottom, but the user still wants
         // to follow it.
@@ -3217,25 +3225,43 @@ public class AskStroomAiPresenter
 
     @Override
     public void onConversationResized() {
+        final Element container = getView().getMarkdownContainer().getElement();
+        if (container.getClientHeight() == 0) {
+            return;
+        }
         // The view getting shorter leaves the scroll position where it was, which hides the latest messages
-        // behind the bottom of the view rather than pushing them up.
+        // behind the bottom of the view rather than pushing them up. And shown again (e.g. back from another
+        // Stroom tab), the browser has put it back at the top: it goes straight to where the user left it.
         if (followBottom) {
             scrollToLatest();
+        } else if (container.getScrollTop() != lastScrollTop) {
+            scrollInstantly(container, lastScrollTop);
         }
     }
 
     @Override
     public void onJumpToLatest() {
         followBottom = true;
-        scrollToLatest();
+        getView().setJumpToLatestVisible(false);
+        // Asked for, so it glides there.
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+        lastScrollTop = markdownContainer.getScrollHeight() - markdownContainer.getClientHeight();
     }
 
+    // Keeps the latest message in view, straight away rather than gliding there: the chat is following it, so a
+    // glide from wherever it was (e.g. the top, when loaded or shown again) would only be in the way.
     private void scrollToLatest() {
         getView().setJumpToLatestVisible(false);
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
-        markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+        scrollInstantly(markdownContainer, markdownContainer.getScrollHeight());
         lastScrollTop = markdownContainer.getScrollTop();
     }
+
+    // Scrolls without the conversation's smooth scrolling.
+    private static native void scrollInstantly(Element element, int top) /*-{
+        element.scrollTo({top: top, behavior: "instant"});
+    }-*/;
 
     /// @param error An ERROR message.
     /// @return The question the error stopped being answered, or 0 if it has an answer, e.g. the error came from

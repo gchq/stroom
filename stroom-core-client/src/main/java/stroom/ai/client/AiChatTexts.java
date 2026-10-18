@@ -180,6 +180,7 @@ public final class AiChatTexts {
             case "DECLINED" -> "You declined it.";
             case "CANCELLED" -> "Not answered, as the run was stopped.";
             case "EXPIRED" -> "Not answered in time.";
+            case "SUPERSEDED" -> "Cancelled: you sent a message instead.";
             default -> status;
         };
     }

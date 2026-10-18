@@ -186,6 +186,29 @@ public class McpElicitations {
                           + answered.status());
     }
 
+    /// Puts aside the forms in a chat that are waiting for answers, as the user has sent a message instead: the tools
+    /// that asked are told they weren't answered, and the run carries on, with the message.
+    ///
+    /// @param chatId The chat.
+    /// @return How many forms were put aside.
+    int supersedePending(final int chatId) {
+        int count = 0;
+        for (final AiChatMessage message : aiDao.getMessages(chatId)) {
+            if (message.getMessageType() != AiMessageType.ELICITATION) {
+                continue;
+            }
+            final ElicitationRecord record = read(message).orElse(null);
+            // Only one answer counts, e.g. if the form is answered as the message is sent.
+            if (record != null && record.status() == Status.PENDING
+                && aiDao.compareAndSetMessageText(message.getId(), message.getMessage(),
+                    JsonUtil.writeValueAsString(record.answered(Status.SUPERSEDED, null), false))) {
+                LOGGER.debug(() -> "Form " + message.getId() + " in chatId=" + chatId + ": " + Status.SUPERSEDED);
+                count++;
+            }
+        }
+        return count;
+    }
+
     /// @return How many forms are waiting for answers on this node.
     int waitingCount() {
         return waiting.get();
@@ -211,6 +234,7 @@ public class McpElicitations {
                     return new ElicitResult(Action.DECLINE, null);
                 case CANCELLED:
                 case EXPIRED:
+                case SUPERSEDED:
                     return new ElicitResult(Action.CANCEL, null);
                 default:
                     break;
