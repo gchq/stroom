@@ -151,6 +151,64 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void toolsAServerSaysHaveChangedAreOfferedAsTheyAreNowAtTheNextStep() {
+        // As a server that offers a tool once a step is done: it says its tools have changed during the call.
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        final Tool next = Tool.builder()
+                .name("next_step")
+                .description("does the next step")
+                .inputSchema(Map.of("type", "object"))
+                .build();
+        Mockito.when(client.listTools())
+                .thenReturn(new ListToolsResult(List.of(searchTool()), null))
+                .thenReturn(new ListToolsResult(List.of(searchTool(), next), null));
+        final McpServerConnection connection = new McpServerConnection("test", null, client, null);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class))).thenAnswer(invocation -> {
+            connection.invalidateTools();
+            return CallToolResult.builder().content(List.of(new TextContent("searched"))).isError(false).build();
+        });
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("search")
+                        .arguments("{\"query\":\"errors\"}")
+                        .build())),
+                AiMessage.from("Done."));
+
+        agentChat.chat(model, null, 7, messages, new McpToolset(List.of(connection), List.of(), true), 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(model.requests).hasSize(2);
+        assertThat(model.requests.get(0).toolSpecifications()).extracting(ToolSpecification::name)
+                .contains("search")
+                .doesNotContain("next_step");
+        assertThat(model.requests.get(1).toolSpecifications()).extracting(ToolSpecification::name)
+                .contains("search", "next_step");
+        // The model is told, so it doesn't rely on what it saw before.
+        assertThat(model.requests.get(1).messages().getLast())
+                .isInstanceOfSatisfying(ToolExecutionResultMessage.class, result -> assertThat(result.text())
+                        .startsWith("searched")
+                        .contains("The tools of MCP server(s) test have changed"));
+    }
+
+    @Test
+    void toolsThatHaveNotChangedAreNotListedAgain() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("42"))).isError(false).build());
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder().id("1").name("search").arguments("{}").build())),
+                AiMessage.from("Done."));
+
+        agentChat.chat(model, null, 7, messages, toolset(client, searchTool()), 99, new AtomicBoolean(false),
+                taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(client, Mockito.times(1)).listTools();
+        assertThat(((ToolExecutionResultMessage) model.requests.get(1).messages().getLast()).text())
+                .doesNotContain("have changed");
+    }
+
+    @Test
     void progressAndDebugDetailDescribeWhyEachToolRuns() {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
