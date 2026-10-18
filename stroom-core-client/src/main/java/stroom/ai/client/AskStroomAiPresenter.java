@@ -92,6 +92,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -254,6 +255,8 @@ public class AskStroomAiPresenter
     private boolean overviewShowing;
     private boolean overviewRefreshDue;
     private boolean overviewWorking;
+    // The prompt waiting for the user, kept in view as it grows.
+    private Element watchedPrompt;
     // What the overview is searched for, if anything.
     private String overviewQuery;
     // The command whose reference is shown, or null.
@@ -938,8 +941,11 @@ public class AskStroomAiPresenter
         }
         // Looking at an earlier part of the chat, so it isn't scrolled away as messages arrive.
         followBottom = false;
-        element.scrollIntoView();
-        lastScrollTop = getView().getMarkdownContainer().getElement().getScrollTop();
+        // Its top below the top row's shadow, as far as the shadow reaches into the conversation.
+        final Element container = getView().getMarkdownContainer().getElement();
+        container.setScrollTop(Math.max(0, element.getAbsoluteTop() - container.getAbsoluteTop()
+                                            + container.getScrollTop() - topShadowReach(element)));
+        lastScrollTop = container.getScrollTop();
         getView().setJumpToLatestVisible(true);
         // Picked out for a moment, to see which it is.
         element.addClassName(LOCATED_CLASS);
@@ -950,6 +956,62 @@ public class AskStroomAiPresenter
             }
         }.schedule(LOCATED_MS);
     }
+
+    /// @return True if the message asks the user something they haven't answered yet: a form, or a request for
+    /// approval.
+    private static boolean isWaitingForAnswer(final AiChatMessage msg) {
+        final String json = msg.getMessage();
+        return (msg.getMessageType() == AiMessageType.ELICITATION
+                && "PENDING".equals(AiToolMessages.getString(json, "status")))
+               || (msg.getMessageType() == AiMessageType.APPROVAL_REQUEST && AiToolMessages.isPendingApproval(json));
+    }
+
+    // Keeps the prompt waiting for the user in view as it grows, e.g. as its next question or a box for their own
+    // answer appears, as its growing doesn't change the conversation's size.
+    private void watchPrompt(final Element prompt) {
+        unwatchPrompt();
+        watchedPrompt = prompt;
+        GlobalResizeObserver.addListener(prompt, element -> keepPromptBaseInView(prompt));
+    }
+
+    private void unwatchPrompt() {
+        if (watchedPrompt != null) {
+            GlobalResizeObserver.removeListener(watchedPrompt);
+            watchedPrompt = null;
+        }
+    }
+
+    // Scrolls just enough to bring the prompt's base into view, above the bottom's shadow: no further than keeps its
+    // top in view, below the top's, and not at all if the user has scrolled away from it.
+    private void keepPromptBaseInView(final Element prompt) {
+        final Element container = getView().getMarkdownContainer().getElement();
+        if (!container.isOrHasChild(prompt)) {
+            unwatchPrompt();
+            return;
+        }
+        final int reach = topShadowReach(prompt);
+        final int viewTop = container.getAbsoluteTop() + reach;
+        final int viewBottom = container.getAbsoluteTop() + container.getClientHeight() - reach;
+        final int top = prompt.getAbsoluteTop();
+        final int bottom = prompt.getAbsoluteBottom();
+        if (bottom <= viewBottom || top >= viewBottom) {
+            return;
+        }
+        final int by = Math.min(bottom - viewBottom, top - viewTop);
+        if (by > 0) {
+            container.setScrollTop(container.getScrollTop() + by);
+            lastScrollTop = container.getScrollTop();
+        }
+    }
+
+    /// @return How far the top row's shadow reaches into the conversation, in pixels: the scroll margin the CSS gives
+    /// a message from the shadow's size (--ai-overlay-reach).
+    private static native int topShadowReach(Element message) /*-{
+        var reach = parseFloat($wnd.getComputedStyle(message).scrollMarginTop);
+        return isNaN(reach) || reach <= 0
+            ? 32
+            : Math.round(reach);
+    }-*/;
 
     private void setOverviewShowing(final boolean showing) {
         if (showing && chatListShowing) {
@@ -2980,6 +3042,12 @@ public class AskStroomAiPresenter
             appendDayDivider(markdownContainer, msg.getCreateTimeMs(), nowMs);
             markdownContainer.appendChild(messageElement);
         }
+        if (isWaitingForAnswer(msg)) {
+            watchPrompt(messageElement);
+        } else if (existing != null && existing == watchedPrompt) {
+            // Answered, so no longer grows as it is filled in.
+            unwatchPrompt();
+        }
         if (msg.getMessageType() == AiMessageType.COMPACTION_SUMMARY) {
             showUndoOnLatestCompaction();
         }
@@ -3099,6 +3167,7 @@ public class AskStroomAiPresenter
         followUps = List.of();
         refreshFollowUps();
         renderedMessages.clear();
+        unwatchPrompt();
         refreshOverview();
         interimShownAsProgress = null;
         activityGroups.clear();
