@@ -19,6 +19,7 @@ package stroom.util.shared.diff;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /// The result of [LineDiff#diff(String, String)]: the blocks of equal and differing lines, and views of
 /// them as side by side rows, unified diff hunks and line replacements.
@@ -63,6 +64,31 @@ public final class LineDiffResult {
             }
         }
         return changed;
+    }
+
+    /// The text with only some of the changes made: the old text, with each changed block replaced by its new
+    /// lines unless it is rejected, e.g. so the user can apply a proposed change without its removal of a final
+    /// line break.
+    ///
+    /// @param rejected      The changes to leave out, by their index in [#getChangedBlocks()]. Indexes that
+    ///                      aren't changes are ignored.
+    /// @param lineSeparator What to end each line with but the last, e.g. [LineDiff#lineSeparatorOf(String)] of
+    ///                      the old text.
+    /// @return The text.
+    public String withChangesExcept(final Set<Integer> rejected, final String lineSeparator) {
+        final List<String> lines = new ArrayList<>();
+        int change = 0;
+        for (final DiffBlock block : blocks) {
+            if (block.isDifference() && !rejected.contains(change)) {
+                lines.addAll(newLines.subList(block.getNewFrom(), block.getNewTo()));
+            } else {
+                lines.addAll(oldLines.subList(block.getOldFrom(), block.getOldTo()));
+            }
+            if (block.isDifference()) {
+                change++;
+            }
+        }
+        return String.join(lineSeparator, lines);
     }
 
     /// @return True if the texts have the same lines (line endings are ignored).

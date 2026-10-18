@@ -146,6 +146,21 @@ class TestProposeCodeChangeTool {
     }
 
     @Test
+    void aDroppedOrAddedFinalLineBreakIsNotAChange() {
+        // The code ends with a line break, as an editor's usually does, and the model's doesn't.
+        stepping("xsltFilter", BASE + "\n", false);
+
+        assertThat(run("xsltFilter", PROPOSED, "Keeps the user name, lower-cased."))
+                .contains("(+1 −1 lines, in 1 place(s))");
+        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action ->
+                assertThat(action).containsEntry("request", PROPOSED + "\n"));
+
+        assertThat(ProposeCodeChangeTool.withLineEndingOf("a\r\n", "b")).isEqualTo("b\r\n");
+        assertThat(ProposeCodeChangeTool.withLineEndingOf("a", "b\n\n")).isEqualTo("b");
+        assertThat(ProposeCodeChangeTool.withLineEndingOf("a\n", "b\n")).isEqualTo("b\n");
+    }
+
+    @Test
     void aProposalTheSameAsTheCodeIsRefused() {
         stepping("xsltFilter", BASE, false);
 

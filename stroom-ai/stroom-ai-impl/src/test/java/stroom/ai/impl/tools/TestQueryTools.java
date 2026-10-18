@@ -94,6 +94,8 @@ class TestQueryTools {
                 .contains("Data sources you can use (2)")
                 .contains("Index 'Linux events' (uuid linux-uuid)")
                 .contains("View 'Windows events' (uuid windows-uuid)")
+                // With more than one, the model is reminded to ask the user which to use.
+                .endsWith(ListDataSourcesTool.CHOOSE_NOTE)
                 .doesNotContain("Secret");
         final ArgumentCaptor<List<DocRef>> logged = listCaptor();
         Mockito.verify(auditLog).documentsViewed(Mockito.eq(CHAT), logged.capture(),
@@ -105,7 +107,9 @@ class TestQueryTools {
     void listDataSourcesCanBeFiltered() {
         assertThat(run(new ListDataSourcesTool(workspace, dataSourceAccess, auditLog), "{\"filter\":\"WIN\"}"))
                 .contains("Windows events")
-                .doesNotContain("Linux");
+                .doesNotContain("Linux")
+                // Just one fits, so there is nothing to ask.
+                .doesNotContain(ListDataSourcesTool.CHOOSE_NOTE);
         assertThat(run(new ListDataSourcesTool(workspace, dataSourceAccess, auditLog), "{\"filter\":\"secret\"}"))
                 .isEqualTo("There are no data sources you can use matching 'secret'.");
     }

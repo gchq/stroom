@@ -26,6 +26,7 @@ import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -91,6 +92,7 @@ class StreamMetaTool extends AbstractWorkspaceTool {
     static final String TYPE_ID = "AskStroomAi." + NAME;
     static final String FEEDS_ARG = "feeds";
     static final String PIPELINE_ARG = "pipeline";
+    static final String FOLDER_ARG = "folder";
     static final String TYPE_ARG = "type";
     static final String FROM_ARG = "from";
     static final String TO_ARG = "to";
@@ -159,7 +161,8 @@ class StreamMetaTool extends AbstractWorkspaceTool {
                 .name(NAME)
                 .description("Finds streams (the data Stroom has received or produced) and writes a table of "
                              + "their meta to the workspace, for the table tool. Give feeds and/or a pipeline "
-                             + "(the streams it produced), and optionally type, from/to (create time) and "
+                             + "(the streams it produced), or a folder (the streams of the feeds in it and "
+                             + "produced by its pipelines), and optionally type, from/to (create time) and "
                              + "status. Each row is a stream, with the attributes asked for (e.g. 'Raw Size', "
                              + "'Read Count', or a header the data arrived with such as 'RemoteHost'); give "
                              + "parts for a row per part with the headers each part was received with. Give "
@@ -171,6 +174,9 @@ class StreamMetaTool extends AbstractWorkspaceTool {
                 .parameters(JsonObjectSchema.builder()
                         .addProperty(FEEDS_ARG, stringArraySchema("Feed names or UUIDs."))
                         .addStringProperty(PIPELINE_ARG, "A pipeline's UUID: the streams it produced.")
+                        .addStringProperty(FOLDER_ARG, "A folder's UUID or Explorer path, e.g. "
+                                                       + "'/Security/Firewalls': the streams of the feeds in it "
+                                                       + "(at any depth) and produced by its pipelines.")
                         .addStringProperty(TYPE_ARG, "A stream type, e.g. 'Raw Events' or 'Events'.")
                         .addStringProperty(FROM_ARG, "The earliest create time: an ISO 8601 date or date and "
                                                      + "time (UTC), or a period back from now, e.g. 'P7D'.")
@@ -273,8 +279,22 @@ class StreamMetaTool extends AbstractWorkspaceTool {
 
         final List<String> feeds = stringListArg(request, FEEDS_ARG);
         final String pipeline = stringArg(request, PIPELINE_ARG);
-        if (feeds.isEmpty() && pipeline == null) {
-            throw new WorkspaceException("Give feeds, a pipeline, or both.");
+        final String folder = stringArg(request, FOLDER_ARG);
+        if (feeds.isEmpty() && pipeline == null && folder == null) {
+            throw new WorkspaceException("Give feeds, a pipeline or a folder.");
+        }
+        if (folder != null) {
+            final DocRef folderRef = documentAccess.findFolder(folder)
+                    .orElseThrow(() -> new WorkspaceException("No folder was found with that UUID or path, or you "
+                                                              + "don't have permission to view it."));
+            if (!ExplorerConstants.SYSTEM_DOC_REF.equals(folderRef)) {
+                builder.addOperator(ExpressionOperator.builder().op(Op.OR)
+                        .addDocRefTerm(MetaFields.FEED, Condition.IN_FOLDER, folderRef)
+                        .addDocRefTerm(MetaFields.PIPELINE, Condition.IN_FOLDER, folderRef)
+                        .build());
+                description.add("feed or pipeline in folder '" + folderRef.getName() + "'");
+                sourceDocUuid = folderRef.getUuid();
+            }
         }
         if (!feeds.isEmpty()) {
             final ExpressionOperator.Builder feedTerms = ExpressionOperator.builder().op(Op.OR);

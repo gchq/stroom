@@ -2499,8 +2499,8 @@ public class AskStroomAiPresenter
         final String codeChange = AiToolMessages.getString(json, "codeChange");
         final DocRef pipeline = docRef(AiToolMessages.getString(codeChange, "pipeline"));
         final String elementId = AiToolMessages.getString(codeChange, "element");
-        final SteppingCodeChangeEvent.Approver approver = (andStep, onResult) ->
-                askStroomAiClient.doUserAction(chatId, messageId, actionId,
+        final SteppingCodeChangeEvent.Approver approver = (andStep, rejected, onResult) ->
+                askStroomAiClient.applyCodeChange(chatId, messageId, actionId, rejected,
                         result -> onResult.accept(result.isDone()
                                 ? null
                                 : NullSafe.nonBlankStringElse(result.getMessage(), "The change can't be applied.")),

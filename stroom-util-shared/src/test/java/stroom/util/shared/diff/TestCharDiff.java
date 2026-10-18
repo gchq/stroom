@@ -31,16 +31,20 @@ class TestCharDiff {
 
     @Test
     void testSingleCharacterChange() {
+        // In a short word, the word is shown whole.
         final CharDiff charDiff = CharDiff.of("abc", "axc");
-        assertThat(charDiff.getOldRanges()).containsExactly(new CharRange(1, 2));
-        assertThat(charDiff.getNewRanges()).containsExactly(new CharRange(1, 2));
+        assertThat(charDiff.getOldRanges()).containsExactly(new CharRange(0, 3));
+        assertThat(charDiff.getNewRanges()).containsExactly(new CharRange(0, 3));
+        // In a longer one, only the changed letter.
+        final CharDiff longer = CharDiff.of("abcdefg", "abcXefg");
+        assertThat(longer.getOldRanges()).containsExactly(new CharRange(3, 4));
     }
 
     @Test
     void testInsertionOnly() {
         final CharDiff charDiff = CharDiff.of("ac", "abbbc");
         assertThat(charDiff.getOldRanges()).isEmpty();
-        assertThat(charDiff.getNewRanges()).containsExactly(new CharRange(1, 4));
+        assertThat(charDiff.getNewRanges()).containsExactly(new CharRange(0, 5));
     }
 
     @Test
@@ -59,8 +63,9 @@ class TestCharDiff {
     @Test
     void testSeparateChanges() {
         final CharDiff charDiff = CharDiff.of("one fish two fish", "One fish two dish");
-        assertThat(charDiff.getOldRanges()).containsExactly(new CharRange(0, 1), new CharRange(13, 14));
-        assertThat(charDiff.getNewRanges()).containsExactly(new CharRange(0, 1), new CharRange(13, 14));
+        // "one" is shown whole; "fish" leaves three letters out, so only its first is.
+        assertThat(charDiff.getOldRanges()).containsExactly(new CharRange(0, 3), new CharRange(13, 14));
+        assertThat(charDiff.getNewRanges()).containsExactly(new CharRange(0, 3), new CharRange(13, 14));
     }
 
     @Test
@@ -69,6 +74,19 @@ class TestCharDiff {
         final CharDiff charDiff = CharDiff.of("xay", "XaY");
         assertThat(charDiff.getOldRanges()).containsExactly(new CharRange(0, 3));
         assertThat(charDiff.getNewRanges()).containsExactly(new CharRange(0, 3));
+    }
+
+    @Test
+    void aChangedWordIsShownWholeThoughItSharesLettersAtItsEdges() {
+        // "Test" and "Development" share their last "t", which alone would leave "Tes" and "Developmen".
+        final String oldLine = "<Environment>Test</Environment>";
+        final String newLine = "<Environment>Development</Environment>";
+        final CharDiff charDiff = CharDiff.of(oldLine, newLine);
+
+        assertThat(charDiff.getOldRanges()).singleElement().satisfies(range ->
+                assertThat(oldLine.substring(range.getStart(), range.getEnd())).isEqualTo("Test"));
+        assertThat(charDiff.getNewRanges()).singleElement().satisfies(range ->
+                assertThat(newLine.substring(range.getStart(), range.getEnd())).isEqualTo("Development"));
     }
 
     @Test

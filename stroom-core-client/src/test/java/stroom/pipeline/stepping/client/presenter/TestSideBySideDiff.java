@@ -19,8 +19,11 @@ package stroom.pipeline.stepping.client.presenter;
 import stroom.pipeline.stepping.client.presenter.SideBySideDiff.Side;
 import stroom.util.shared.diff.CharRange;
 import stroom.util.shared.diff.LineDiff;
+import stroom.util.shared.diff.LineDiffResult;
 
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -98,5 +101,29 @@ class TestSideBySideDiff {
         assertThat(diff.getLeft()).containsExactly(Side.CHANGED, Side.FILLER);
         assertThat(diff.getRight()).containsExactly(Side.CHANGED, Side.ADDED);
         assertThat(diff.getLeftText()).isEqualTo("\n");
+    }
+
+    @Test
+    void eachChangeEndsWhereTheNextEqualRowStarts() {
+        // Two changes: line 2 changed, and the final line break removed (a filler row on the right).
+        final SideBySideDiff diff = SideBySideDiff.of(LineDiff.diff("a\nb\nc\n", "a\nB\nc"));
+
+        assertThat(diff.getChangeStartRows()).containsExactly(1, 3);
+        assertThat(diff.getChangeEndRow(0)).isEqualTo(2);
+        assertThat(diff.getChangeEndRow(1)).isEqualTo(4);
+    }
+
+    @Test
+    void theSummarySaysHowManyChangesAreRejectedAndCountsOnlyWhatIsApplied() {
+        final String current = "a\nb\nc\n";
+        final String proposed = "a\nB\nc";
+        final LineDiffResult diff = LineDiff.diff(current, proposed);
+
+        assertThat(CodeChangeReviewPresenter.summary(diff, 0, 2, proposed, current))
+                .isEqualTo(CodeDiffCardRenderer.summary(diff));
+        assertThat(CodeChangeReviewPresenter.summary(diff, 1, 2,
+                diff.withChangesExcept(Set.of(1), "\n"), current))
+                .isEqualTo(CodeDiffCardRenderer.summary(LineDiff.diff(current, "a\nB\nc\n"))
+                           + " (1 of 2 changes rejected)");
     }
 }

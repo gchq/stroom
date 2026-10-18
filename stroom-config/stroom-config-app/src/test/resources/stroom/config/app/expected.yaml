@@ -67,6 +67,7 @@ appConfig:
       maxFileBytes: 20971520
       maxLinesPerRead: 500
       maxQueryLength: 10000
+      maxQueryRows: 10000
       maxStreamStoreReads: 500
       maxUserBytes: 524288000
       queryTimeLimit: "PT2M"
