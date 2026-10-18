@@ -3162,10 +3162,13 @@ public class AskStroomAiPresenter
         ConfirmEvent.fire(this, warning, ok -> {
             if (ok && currentChat != null) {
                 askStroomAiClient.getConfig(config -> {
+                    // Asked with the tab as it is now, which may be the one the user meant, in full.
+                    final AiTabSnapshot tabSnapshot = activeTabSnapshot();
                     final EditAiMessageRequest request = new EditAiMessageRequest(currentChat, config, messageId,
-                            newText);
+                            newText, tabSnapshot);
                     getView().setSendButtonLoadingState(true);
                     askStroomAiClient.editMessage(request, response -> {
+                        rememberSentTab(currentChat.getId(), tabSnapshot);
                         // The question and what follows are replaced; the new question is shown now, until
                         // polling brings the stored one.
                         removeMessageElementsFrom(messageId, false);
@@ -3245,8 +3248,12 @@ public class AskStroomAiPresenter
         }
         getView().setSendButtonLoadingState(true);
         askStroomAiClient.getConfig(config -> {
-            final EditAiMessageRequest request = new EditAiMessageRequest(currentChat, config, turnId, null);
+            // Asked with the tab as it is now, in full.
+            final AiTabSnapshot tabSnapshot = activeTabSnapshot();
+            final EditAiMessageRequest request = new EditAiMessageRequest(currentChat, config, turnId, null,
+                    tabSnapshot);
             askStroomAiClient.editMessage(request, response -> {
+                rememberSentTab(currentChat.getId(), tabSnapshot);
                 // The question and everything after it are replaced by the new answer, which keeps the question
                 // where it is in the conversation.
                 removeMessageElementsFrom(turnId, true);
@@ -4533,6 +4540,14 @@ public class AskStroomAiPresenter
 
     private static boolean isDirty(final TabData tabData) {
         return tabData instanceof final DocPresenter<?, ?> docPresenter && docPresenter.isDirty();
+    }
+
+    /// Remembers the tab sent in full with an edited question, so the next question need only send its hash if it
+    /// hasn't changed.
+    private void rememberSentTab(final int chatId, final AiTabSnapshot tabSnapshot) {
+        if (tabSnapshot != null && tabSnapshot.getHash() != null) {
+            lastSentTabHashes.put(chatId, tabSnapshot.getHash());
+        }
     }
 
     /// @return What the user sees in the shared tab now, or null if no tab is shared.

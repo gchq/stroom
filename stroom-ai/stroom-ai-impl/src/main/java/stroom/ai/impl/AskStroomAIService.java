@@ -48,6 +48,7 @@ import stroom.ai.shared.AiMcpPromptText;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryListResponse;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AnswerAiElicitationRequest;
@@ -330,7 +331,7 @@ public class AskStroomAIService {
         boolean resendTab = false;
         if (request.getMessage() != null && !steer(chatId, request.getMessage())) {
             // What the user sees in their active tab is kept now, as the user, and recorded on the question.
-            final TabSnapshots.Stored tab = storeTabSnapshot(chatId, request);
+            final TabSnapshots.Stored tab = storeTabSnapshot(chatId, request.getTabSnapshot());
             resendTab = tab.resend();
             runManager.start(chatId, run -> {
                 aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, tab.snapshotId(), request.getMessage());
@@ -345,12 +346,12 @@ public class AskStroomAIService {
 
     /// Keeps what the user sees in their active tab, sent with a question. A tab that can't be kept is left out,
     /// and the question is asked without it.
-    private TabSnapshots.Stored storeTabSnapshot(final int chatId, final AskStroomAiRequest request) {
-        if (tabSnapshots == null || request.getTabSnapshot() == null) {
+    private TabSnapshots.Stored storeTabSnapshot(final int chatId, final AiTabSnapshot snapshot) {
+        if (tabSnapshots == null || snapshot == null) {
             return TabSnapshots.Stored.NONE;
         }
         try {
-            return tabSnapshots.store(chatId, request.getTabSnapshot());
+            return tabSnapshots.store(chatId, snapshot);
         } catch (final RuntimeException e) {
             LOGGER.warn(() -> "Unable to keep the active tab for chat " + chatId + ": " + e.getMessage(), e);
             return TabSnapshots.Stored.NONE;
@@ -359,8 +360,8 @@ public class AskStroomAIService {
 
     /**
      * Edits one of the user's earlier questions, or asks it again unchanged. The question and everything after
-     * it are removed from the chat and the new text is answered in a new run. A run that is working on the chat
-     * is stopped first.
+     * it are removed from the chat and the new text is answered in a new run, with the user's active tab as it is
+     * now (they may have switched to the tab they meant). A run that is working on the chat is stopped first.
      *
      * @param request The chat, config, question and new text (null to ask it again unchanged).
      * @return An empty response; the answer is delivered by polling.
@@ -375,6 +376,8 @@ public class AskStroomAIService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Only your own questions in this chat can be edited."));
         final String newText = NullSafe.nonBlankStringElse(request.getMessage(), question.getMessage());
+        // Kept now, as the user, as for a new question.
+        final TabSnapshots.Stored tab = storeTabSnapshot(chatId, request.getTabSnapshot());
 
         stopAndWait(chatId, AiChatRunStopReason.EDITED);
 
@@ -388,12 +391,11 @@ public class AskStroomAIService {
         runManager.start(chatId, run -> {
             removeMessages(toRemove);
             chatCompactor.onTurnChanged(chatId, question.getTurnId());
-            // The question keeps the tab it was asked with.
-            aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, question.getAttachmentId(), newText);
+            aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, tab.snapshotId(), newText);
             chatTitler.nameFromQuestion(chatId, newText);
             answerQuestion(chatId, edited);
         });
-        return new AskStroomAiResponse(null);
+        return new AskStroomAiResponse(null, tab.resend());
     }
 
     /**

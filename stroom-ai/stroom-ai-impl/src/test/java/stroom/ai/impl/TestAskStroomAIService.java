@@ -331,18 +331,34 @@ class TestAskStroomAIService {
     }
 
     @Test
-    void testEditMessage_aQuestionKeepsTheTabItWasAskedWith() {
+    void testEditMessage_anEditedQuestionIsAskedWithTheTabAsItIsNow() {
+        // Asked with one tab, then the user switched to the one they meant and edited the question.
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, 42, "q1", 1, null)));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        runStraightAway();
+        final AiTabSnapshot tab = new AiTabSnapshot(new DocRef("Pipeline", "p1", "Twitter-Events"),
+                "Twitter-Events", null, false, List.of(), List.of(), null, "hash2");
+        Mockito.when(tabSnapshots.store(1, tab)).thenReturn(new TabSnapshots.Stored(43, false));
+
+        service().editMessage(new EditAiMessageRequest(chat, null, 1, "q1 edited", tab));
+
+        // The old snapshot may be shared with other questions, so is kept; only the question goes.
+        Mockito.verify(aiService).deleteMessage(1);
+        Mockito.verify(aiService, Mockito.never()).deleteAttachment(42);
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, 43, "q1 edited");
+    }
+
+    @Test
+    void testEditMessage_aQuestionAskedAgainWithNoTabSharedHasNone() {
         Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
                 new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, 42, "q1", 1, null)));
         Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
         runStraightAway();
 
-        service().editMessage(new EditAiMessageRequest(chat, null, 1, "q1 edited"));
+        service().editMessage(new EditAiMessageRequest(chat, null, 1, null, null));
 
-        // The snapshot may be shared with other questions, so is kept; only the question goes.
-        Mockito.verify(aiService).deleteMessage(1);
-        Mockito.verify(aiService, Mockito.never()).deleteAttachment(42);
-        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, 42, "q1 edited");
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, null, "q1");
     }
 
     @Test
@@ -443,7 +459,7 @@ class TestAskStroomAIService {
                 message(1, AiMessageType.USER_MESSAGE, "q"),
                 message(2, AiMessageType.AI_RESPONSE, "a")));
 
-        assertThatThrownBy(() -> service().editMessage(new EditAiMessageRequest(chat, null, 2, "x")))
+        assertThatThrownBy(() -> service().editMessage(new EditAiMessageRequest(chat, null, 2, "x", null)))
                 .hasMessageContaining("Only your own questions");
         Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
     }
@@ -469,7 +485,7 @@ class TestAskStroomAIService {
             return running;
         });
 
-        service().editMessage(new EditAiMessageRequest(chat, null, 3, "q2 edited"));
+        service().editMessage(new EditAiMessageRequest(chat, null, 3, "q2 edited", null));
 
         Mockito.verify(runManager).stop(1, AiChatRunStopReason.EDITED);
         // The edited question and its answer are removed, and the earlier turn is kept.
@@ -494,7 +510,7 @@ class TestAskStroomAIService {
             return null;
         });
 
-        service().editMessage(new EditAiMessageRequest(chat, null, 1, null));
+        service().editMessage(new EditAiMessageRequest(chat, null, 1, null, null));
 
         Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, null, "q1");
     }
@@ -507,7 +523,7 @@ class TestAskStroomAIService {
         final AskStroomAIService service = service();
         service.setStopWait(java.time.Duration.ofMillis(300));
 
-        assertThatThrownBy(() -> service.editMessage(new EditAiMessageRequest(chat, null, 1, "x")))
+        assertThatThrownBy(() -> service.editMessage(new EditAiMessageRequest(chat, null, 1, "x", null)))
                 .isInstanceOf(AiChatRunManager.AiChatBusyException.class);
         Mockito.verify(aiService, Mockito.never()).deleteMessage(Mockito.anyInt());
     }
