@@ -25,10 +25,12 @@ import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -57,6 +59,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandlers> implements AskStroomAiView {
@@ -66,14 +69,18 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     private static final String EMPTY_STYLE = "empty";
     private static final String SWITCHER_OPEN_CLASS = "askStroomAiViewImpl-switcher--open";
     private static final String OVERVIEW_OPEN_CLASS = "askStroomAiViewImpl-overviewToggle--on";
+    private static final String OVERVIEW_CURRENT_MATCH_CLASS = "ai-overview--current";
+    private static final String SHOWING_OVERVIEW_CLASS = "askStroomAiViewImpl--showingOverview";
     // How much each zoom step zooms the overview, and how far it may be zoomed.
     private static final double OVERVIEW_ZOOM_STEP = 1.2;
     private static final double MIN_OVERVIEW_ZOOM = 0.4;
     private static final double MAX_OVERVIEW_ZOOM = 4;
     // Fitted to a wide panel, the overview grows no larger than this, so its text isn't huge.
     private static final double MAX_FITTED_OVERVIEW_ZOOM = 1.5;
-    // The room either side of the overview, inside its panel.
-    private static final int OVERVIEW_MARGIN = 12;
+    // How long a zoom from the buttons takes.
+    private static final int OVERVIEW_ZOOM_MS = 200;
+    // The room either side of the overview, inside its panel (--ai-overview-margin in the CSS).
+    private static final int OVERVIEW_MARGIN = 48;
     private static final String AUTO_APPROVE_ON_CLASS = "askStroomAiViewImpl-autoApprove--on";
     private static final String WORKING_CLASS = "askStroomAiViewImpl-bottom-inner--working";
 
@@ -110,16 +117,36 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     FlowPanel overview;
     @UiField
-    Button overviewZoomOut;
+    InlineSvgButton overviewSearchToggle;
     @UiField
-    Button overviewZoomIn;
+    FlowPanel overviewSearchControls;
     @UiField
-    Button overviewFit;
+    TextBox overviewSearch;
+    @UiField
+    InlineSvgButton overviewSearchClear;
+    @UiField
+    Label overviewSearchCount;
+    @UiField
+    InlineSvgButton overviewPreviousMatch;
+    @UiField
+    InlineSvgButton overviewNextMatch;
+    @UiField
+    FlowPanel overviewZoomStrip;
+    @UiField
+    InlineSvgButton overviewZoomOut;
+    @UiField
+    InlineSvgButton overviewZoomIn;
+    @UiField
+    InlineSvgButton overviewFit;
     @UiField
     HTML overviewContent;
     // How far the overview is zoomed, and whether it is fitted to the panel's width (so refitted as it is redrawn).
     private double overviewZoom = 1;
     private boolean overviewFitted = true;
+    // The zoom from the buttons under way, if one is.
+    private OverviewZoomAnimation overviewZoomAnimation;
+    // The match of the overview's search gone to, as an index into the matches, in order.
+    private int overviewMatch;
     @UiField
     FlowPanel jumpToLatestBar;
     @UiField
@@ -262,20 +289,81 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
             }
         });
 
-        overviewToggle.setSvg(SvgImage.FORK_JOIN);
-        overviewToggle.setText("Overview");
-        overviewToggle.setTitle("Show an overview of the chat: what you asked and chose, and what the agent did in "
-                                + "between. Click a step to go to it.");
+        // The text first, as setting it replaces the button's content, icon and all.
+        overviewToggle.setText("Chat history navigation");
+        overviewToggle.setSvg(SvgImage.EXPLORE);
+        overviewToggle.setTitle("Chat history navigation");
         overviewToggle.addClickHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onToggleOverview();
             }
         });
-        overviewZoomIn.addClickHandler(event -> zoomOverview(OVERVIEW_ZOOM_STEP, null));
-        overviewZoomOut.addClickHandler(event -> zoomOverview(1 / OVERVIEW_ZOOM_STEP, null));
+        overviewSearchToggle.setSvg(SvgImage.SEARCH);
+        overviewSearchToggle.setTitle("Search the chat history");
+        overviewSearchToggle.addClickHandler(event -> {
+            // The search box takes the button's place while it is open.
+            overviewSearchToggle.setVisible(false);
+            overviewSearchControls.setVisible(true);
+            overviewSearch.setFocus(true);
+        });
+        // An empty search left is put away again.
+        overviewSearch.addBlurHandler(event -> {
+            if (overviewSearch.getText().isEmpty()) {
+                closeOverviewSearch();
+            }
+        });
+        overviewSearch.getElement().setAttribute("placeholder", "Search the chat");
+        overviewSearch.setTitle("Find the steps that hold some words.\nEnter goes to the next, Shift+Enter the last. "
+                                + "Escape clears the search, or, once it is clear, goes back to the chat.");
+        overviewSearch.addKeyDownHandler(event -> {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+                event.preventDefault();
+                goToOverviewMatch(event.isShiftKeyDown()
+                        ? -1
+                        : 1);
+            } else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE && overviewSearchControls.isVisible()) {
+                // Clears the search and puts it away, rather than closing the overview.
+                event.preventDefault();
+                event.stopPropagation();
+                closeOverviewSearch();
+                overviewSearchToggle.setFocus(true);
+            }
+        });
+        overviewSearchClear.setSvg(SvgImage.CLEAR);
+        overviewSearchClear.setTitle("Clear Search");
+        overviewSearchClear.addClickHandler(event -> {
+            closeOverviewSearch();
+            overviewSearchToggle.setFocus(true);
+        });
+        overviewSearch.addKeyUpHandler(event -> {
+            final int key = event.getNativeKeyCode();
+            if (key != KeyCodes.KEY_ENTER && key != KeyCodes.KEY_ESCAPE && key != KeyCodes.KEY_SHIFT) {
+                searchOverview();
+            }
+        });
+        overviewPreviousMatch.setSvg(SvgImage.ARROW_UP);
+        overviewPreviousMatch.setTitle("The match before (Shift+Enter)");
+        overviewPreviousMatch.addClickHandler(event -> goToOverviewMatch(-1));
+        overviewNextMatch.setSvg(SvgImage.ARROW_DOWN);
+        overviewNextMatch.setTitle("The match after (Enter)");
+        overviewNextMatch.addClickHandler(event -> goToOverviewMatch(1));
+        overviewZoomOut.setSvg(SvgImage.ZOOM_OUT);
+        overviewZoomOut.setTitle("Zoom out (Ctrl+wheel)");
+        overviewZoomIn.setSvg(SvgImage.ZOOM_IN);
+        overviewZoomIn.setTitle("Zoom in (Ctrl+wheel)");
+        overviewFit.setSvg(SvgImage.FIT_WIDTH);
+        overviewFit.setTitle("Fit to the panel's width");
+        overviewZoomIn.addClickHandler(event -> {
+            overviewFitted = false;
+            animateOverviewZoom(clampZoom(overviewTargetZoom() * OVERVIEW_ZOOM_STEP));
+        });
+        overviewZoomOut.addClickHandler(event -> {
+            overviewFitted = false;
+            animateOverviewZoom(clampZoom(overviewTargetZoom() / OVERVIEW_ZOOM_STEP));
+        });
         overviewFit.addClickHandler(event -> {
             overviewFitted = true;
-            fitOverview();
+            animateOverviewZoom(fittedZoom());
         });
         overviewContent.addDomHandler(event -> {
             // Ctrl+wheel (or a trackpad's pinch, which browsers send as one) zooms, about the pointer; the wheel
@@ -285,6 +373,18 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
                 zoomOverview(event.getDeltaY() < 0
                         ? OVERVIEW_ZOOM_STEP
                         : 1 / OVERVIEW_ZOOM_STEP, event.getNativeEvent());
+            }
+        }, MouseWheelEvent.getType());
+        // The zoom buttons sit over the overview but aren't in it, so the wheel over them is passed on to it: to
+        // scroll it, or zoom it with Ctrl.
+        overviewZoomStrip.addDomHandler(event -> {
+            event.preventDefault();
+            if (event.isControlKeyDown() || event.isMetaKeyDown()) {
+                zoomOverview(event.getDeltaY() < 0
+                        ? OVERVIEW_ZOOM_STEP
+                        : 1 / OVERVIEW_ZOOM_STEP, null);
+            } else {
+                scrollBy(overviewContent.getElement(), event.getNativeEvent());
             }
         }, MouseWheelEvent.getType());
         overviewContent.addDomHandler(event -> {
@@ -670,7 +770,9 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         final Element target = Element.as(eventTarget);
         final boolean inChat = widget.getElement().isOrHasChild(target);
         final boolean nothingFocused = target == Document.get().getBody();
-        final boolean searchToClear = target == chatSearch.getElement() && !chatSearch.getText().isEmpty();
+        final boolean searchToClear = (target == chatSearch.getElement() && !chatSearch.getText().isEmpty())
+                                      || (target == overviewSearch.getElement()
+                                          && overviewSearchControls.isVisible());
         if ((inChat || nothingFocused) && !searchToClear && getUiHandlers() != null) {
             preview.cancel();
             nativeEvent.preventDefault();
@@ -756,8 +858,22 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @Override
     public void setOverviewVisible(final boolean visible) {
+        if (visible) {
+            // Each time it is shown it starts unsearched.
+            overviewSearch.setText("");
+            overviewSearchCount.setText("");
+            overviewMatch = 0;
+            showOverviewSearchClear();
+            overviewPreviousMatch.setVisible(false);
+            overviewNextMatch.setVisible(false);
+            overviewSearchControls.setVisible(false);
+            overviewSearchToggle.setVisible(true);
+        }
         overview.setVisible(visible);
         overviewToggle.setStyleName(OVERVIEW_OPEN_CLASS, visible);
+        // The panel is marked while the overview is shown, e.g. so the task list, which is about the conversation,
+        // is put away.
+        root.setStyleName(SHOWING_OVERVIEW_CLASS, visible);
         showConversationOrPanel();
         if (visible) {
             jumpToLatestBar.setVisible(false);
@@ -793,12 +909,169 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         content.setScrollTop(atEnd
                 ? content.getScrollHeight()
                 : scrollTop);
+        backOverviewHits(content);
+        showOverviewMatch(false);
     }
+
+    /// Draws a box behind each place a word searched for is found in the overview, as SVG text has no background:
+    /// sized to the word as the browser draws it, which only the browser knows.
+    private static native void backOverviewHits(Element content) /*-{
+        // Round the label of each line that matches, an outline shown when it is the match gone to.
+        var links = content.querySelectorAll(".ai-overview-link.ai-overview--match");
+        for (var l = 0; l < links.length; l++) {
+            var texts = links[l].querySelectorAll("text");
+            var left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+            for (var t = 0; t < texts.length; t++) {
+                try {
+                    var b = texts[t].getBBox();
+                    left = Math.min(left, b.x);
+                    top = Math.min(top, b.y);
+                    right = Math.max(right, b.x + b.width);
+                    bottom = Math.max(bottom, b.y + b.height);
+                } catch (e) {
+                    // Not drawn, so it can't be measured.
+                }
+            }
+            if (right > left) {
+                var outline = $doc.createElementNS("http://www.w3.org/2000/svg", "rect");
+                outline.setAttribute("class", "ai-overview-link-outline");
+                outline.setAttribute("x", left - 5);
+                outline.setAttribute("y", top - 3);
+                outline.setAttribute("width", right - left + 10);
+                outline.setAttribute("height", bottom - top + 6);
+                outline.setAttribute("rx", 4);
+                // Before the label, so drawn behind it.
+                links[l].insertBefore(outline, texts[0]);
+            }
+        }
+        var hits = content.querySelectorAll(".ai-overview-hit");
+        for (var i = 0; i < hits.length; i++) {
+            var hit = hits[i];
+            var text = hit.parentNode;
+            try {
+                var box = hit.getBBox();
+                var back = $doc.createElementNS("http://www.w3.org/2000/svg", "rect");
+                back.setAttribute("class", "ai-overview-hit-back");
+                back.setAttribute("x", box.x - 1);
+                back.setAttribute("y", box.y);
+                back.setAttribute("width", box.width + 2);
+                back.setAttribute("height", box.height);
+                back.setAttribute("rx", 2);
+                // Before the text, so drawn behind it.
+                text.parentNode.insertBefore(back, text);
+            } catch (e) {
+                // Not drawn (e.g. hidden), so it can't be measured: the word is shown without its box.
+            }
+        }
+    }-*/;
+
+    // Searches the overview again for what is in the box, from its first match.
+    private void searchOverview() {
+        overviewMatch = 0;
+        showOverviewSearchClear();
+        if (getUiHandlers() != null) {
+            getUiHandlers().onOverviewSearch(overviewSearch.getText());
+        }
+        showOverviewMatch(true);
+    }
+
+    // Clears the search and puts it away, leaving the button to open it.
+    private void closeOverviewSearch() {
+        final boolean searched = !overviewSearch.getText().isEmpty();
+        overviewSearch.setText("");
+        overviewSearchControls.setVisible(false);
+        overviewSearchToggle.setVisible(true);
+        if (searched) {
+            searchOverview();
+        }
+    }
+
+    // The button to clear the search is only there when there is a search, as in a Quick Filter.
+    private void showOverviewSearchClear() {
+        final boolean searching = !overviewSearch.getText().isEmpty();
+        overviewSearchClear.setEnabled(searching);
+        overviewSearchClear.setVisible(searching);
+    }
+
+    // Goes to the next match of the search, or back to the last, round to the other end.
+    private void goToOverviewMatch(final int by) {
+        final List<Element> matches = overviewMatches();
+        if (!matches.isEmpty()) {
+            overviewMatch = (overviewMatch + by + matches.size()) % matches.size();
+            showOverviewMatch(true);
+        }
+    }
+
+    // Marks the match gone to, says how many there are, and scrolls to it if asked.
+    private void showOverviewMatch(final boolean scroll) {
+        final List<Element> matches = overviewMatches();
+        // The paginator is only there while searching, and only goes anywhere with more than one match.
+        final boolean searching = !overviewSearch.getText().isBlank();
+        overviewPreviousMatch.setVisible(searching);
+        overviewNextMatch.setVisible(searching);
+        overviewPreviousMatch.setEnabled(matches.size() > 1);
+        overviewNextMatch.setEnabled(matches.size() > 1);
+        if (!searching) {
+            overviewSearchCount.setText("");
+            return;
+        }
+        if (matches.isEmpty()) {
+            overviewSearchCount.setText("No matches");
+            return;
+        }
+        overviewMatch = Math.min(overviewMatch, matches.size() - 1);
+        for (int i = 0; i < matches.size(); i++) {
+            setClass(matches.get(i), OVERVIEW_CURRENT_MATCH_CLASS, i == overviewMatch);
+        }
+        overviewSearchCount.setText((overviewMatch + 1) + " of " + matches.size());
+        if (scroll) {
+            scrollIntoView(matches.get(overviewMatch));
+        }
+    }
+
+    // The overview's steps that match its search, in order.
+    private List<Element> overviewMatches() {
+        final List<Element> matches = new ArrayList<>();
+        final NodeList<Element> steps = overviewContent.getElement().getElementsByTagName("g");
+        for (int i = 0; i < steps.getLength(); i++) {
+            if (hasClass(steps.getItem(i), AiChatOverview.MATCH_CLASS)) {
+                matches.add(steps.getItem(i));
+            }
+        }
+        return matches;
+    }
+
+    // An SVG element's class is not a string to GWT, so it is read and set as an attribute.
+    private static boolean hasClass(final Element element, final String className) {
+        return (" " + element.getAttribute("class") + " ").contains(" " + className + " ");
+    }
+
+    private static void setClass(final Element element, final String className, final boolean on) {
+        final String classes = (" " + element.getAttribute("class") + " ").replace(" " + className + " ", " ");
+        element.setAttribute("class", (classes + (on
+                ? className
+                : "")).trim());
+    }
+
+    // Scrolls an element as the wheel would have, had it been over it.
+    private static native void scrollBy(Element element, NativeEvent wheel) /*-{
+        var unit = wheel.deltaMode === 1
+            ? 16
+            : (wheel.deltaMode === 2
+                ? element.clientHeight
+                : 1);
+        element.scrollBy(wheel.deltaX * unit, wheel.deltaY * unit);
+    }-*/;
+
+    private static native void scrollIntoView(Element element) /*-{
+        element.scrollIntoView({block: "center", behavior: "smooth"});
+    }-*/;
 
     // Zooms the overview by a factor, keeping what is under the pointer (or the middle) where it is.
     private void zoomOverview(final double factor, final NativeEvent pointer) {
+        cancelOverviewZoom();
         final Element content = overviewContent.getElement();
-        final double zoom = Math.max(MIN_OVERVIEW_ZOOM, Math.min(MAX_OVERVIEW_ZOOM, overviewZoom * factor));
+        final double zoom = clampZoom(overviewZoom * factor);
         final double ratio = zoom / overviewZoom;
         final int x = pointer != null
                 ? pointer.getClientX() - content.getAbsoluteLeft()
@@ -817,12 +1090,46 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     // Zooms the overview so that it is as wide as the panel.
     private void fitOverview() {
+        cancelOverviewZoom();
+        overviewZoom = fittedZoom();
+        sizeOverview();
+    }
+
+    // The zoom that makes the overview as wide as the panel.
+    private double fittedZoom() {
         final int width = overviewContent.getElement().getClientWidth() - 2 * OVERVIEW_MARGIN;
-        overviewZoom = width > 0
+        return width > 0
                 ? Math.max(MIN_OVERVIEW_ZOOM, Math.min(MAX_FITTED_OVERVIEW_ZOOM,
                 (double) width / AiChatOverview.WIDTH))
                 : 1;
-        sizeOverview();
+    }
+
+    private static double clampZoom(final double zoom) {
+        return Math.max(MIN_OVERVIEW_ZOOM, Math.min(MAX_OVERVIEW_ZOOM, zoom));
+    }
+
+    // The zoom the overview is going to, if it is being zoomed, so steps taken quickly add up.
+    private double overviewTargetZoom() {
+        return overviewZoomAnimation != null
+                ? overviewZoomAnimation.to
+                : overviewZoom;
+    }
+
+    private void cancelOverviewZoom() {
+        if (overviewZoomAnimation != null) {
+            overviewZoomAnimation.cancel();
+            overviewZoomAnimation = null;
+        }
+    }
+
+    // Zooms the overview smoothly, keeping what is in the middle of the panel where it is.
+    private void animateOverviewZoom(final double to) {
+        cancelOverviewZoom();
+        if (to == overviewZoom) {
+            return;
+        }
+        overviewZoomAnimation = new OverviewZoomAnimation(overviewZoom, to);
+        overviewZoomAnimation.run(OVERVIEW_ZOOM_MS);
     }
 
     // Sizes the overview's SVG for its zoom: as it is vector graphics, it is drawn sharp at any size.
@@ -872,6 +1179,46 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         if (!message.getText().isEmpty()) {
             getUiHandlers().onSendMessage(getMessage());
             message.setText(null);
+        }
+    }
+
+    /// Zooms the overview from one zoom to another, a little each frame, keeping what is in the middle of the panel
+    /// where it is.
+    private final class OverviewZoomAnimation extends Animation {
+
+        private final double from;
+        private final double to;
+        private final int middleX;
+        private final int middleY;
+        private final double startLeft;
+        private final double startTop;
+
+        private OverviewZoomAnimation(final double from, final double to) {
+            final Element content = overviewContent.getElement();
+            this.from = from;
+            this.to = to;
+            this.middleX = content.getClientWidth() / 2;
+            this.middleY = content.getClientHeight() / 2;
+            this.startLeft = content.getScrollLeft();
+            this.startTop = content.getScrollTop();
+        }
+
+        @Override
+        protected void onUpdate(final double progress) {
+            final Element content = overviewContent.getElement();
+            overviewZoom = from + (to - from) * interpolate(progress);
+            final double ratio = overviewZoom / from;
+            sizeOverview();
+            content.setScrollLeft((int) Math.round((startLeft + middleX) * ratio - middleX));
+            content.setScrollTop((int) Math.round((startTop + middleY) * ratio - middleY));
+        }
+
+        @Override
+        protected void onComplete() {
+            super.onComplete();
+            if (overviewZoomAnimation == this) {
+                overviewZoomAnimation = null;
+            }
         }
     }
 

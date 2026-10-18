@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A two-headed arrow between two bars, to fit something to the width it has, with rounded ends like
+     process.svg. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <g style="fill:none;stroke:#010101;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round">
+        <path d="M 3,5 V 19 M 21,5 V 19"/>
+        <path d="M 7,12 H 17"/>
+        <path d="M 9.5,9 L 6.5,12 L 9.5,15 M 14.5,9 L 17.5,12 L 14.5,15"/>
+    </g>
+</svg>

@@ -323,16 +323,21 @@ final class AiElicitationCard {
         return cardTitle != null && cardTitle.equals(firstLine(fieldTitle, null));
     }
 
-    /// @param json An answered ELICITATION message, with its answer as `content`.
-    /// @return What the user answered, shortly, e.g. "4.1.0; Yes", or null if there is no answer to show.
-    static String answerSummary(final String json) {
-        final List<String> answers = new ArrayList<>();
+    /// @param json     An answered ELICITATION message, with its answer as `content`.
+    /// @param question What the form asks, for a field without a title of its own.
+    /// @return Each question the user answered and their answer, a line each, e.g. "Question: Which schema
+    /// version?" then "Answer: 4.1.0", or null if there is no answer to show.
+    static String answerText(final String json, final String question) {
+        final List<String> lines = new ArrayList<>();
         for (final String[] row : answerRows(json)) {
-            answers.add(row[1]);
+            lines.add(AiChatOverview.QUESTION_LABEL + (NullSafe.isNonBlankString(row[0])
+                    ? row[0]
+                    : question));
+            lines.add(AiChatOverview.ANSWER_LABEL + row[1]);
         }
-        return answers.isEmpty()
+        return lines.isEmpty()
                 ? null
-                : String.join("; ", answers);
+                : String.join("\n", lines);
     }
 
     // Each field the user gave a value, as its title and the value shown.
