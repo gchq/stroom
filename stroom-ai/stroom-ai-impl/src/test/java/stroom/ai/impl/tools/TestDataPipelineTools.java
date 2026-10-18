@@ -256,6 +256,27 @@ class TestDataPipelineTools {
                 .contains("| Login failed for <ip> | 1 |");
     }
 
+    /// A mistake in an expression is the model's to fix, so however often it is made, the table's column isn't
+    /// summarised instead.
+    @Test
+    void testExpressionMistakesDontFallBackToSummarising() {
+        workspace.write(chatId, WorkspacePath.parse("/outputs/messages.csv"),
+                "message,n\nLogin failed for 10.0.0.1,1\nDisk 91% full,2\n", null);
+        final TableTool table = new TableTool(workspace, columnSummariser());
+        final ToolRunContext context = new ToolRunContext(Mockito.mock(ChatModel.class), null, () -> false);
+        final String badQuery = "{\"path\":\"/outputs/messages.csv\",\"select\":[\"message\"],"
+                                + "\"eval\":[{\"as\":\"y\",\"expression\":\"year(${n})\"}]}";
+
+        for (int i = 0; i < 3; i++) {
+            assertThat(context.run(() -> run(table, badQuery)))
+                    .startsWith("Error:")
+                    .contains("expected 0, got 1")
+                    // What year takes is shown with the error.
+                    .contains("year()")
+                    .doesNotContain("summary");
+        }
+    }
+
     @Test
     void testRunStroomQl() throws Exception {
         final QueryService queryService = Mockito.mock(QueryService.class);
