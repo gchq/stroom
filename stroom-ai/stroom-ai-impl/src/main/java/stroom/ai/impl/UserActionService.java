@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/// Does what a button that an MCP tool's result offered does, when the user clicks it (see [UserActions]).
+/// Does what a button that a tool's result offered does, when the user clicks it (see [UserActions]).
 ///
 /// The click is the user's consent, so it is only done for the user who owns the chat, once, within its expiry,
 /// and only if it can still be done. A filter is changed as the user, so their permissions apply. Each click is
@@ -96,6 +96,7 @@ public class UserActionService {
             case UserActions.OPEN_DOCUMENT -> openDocument(chatId, action);
             case UserActions.ENABLE_PROCESSOR_FILTER, UserActions.DISABLE_PROCESSOR_FILTER ->
                 changeFilter(chatId, message, result, action);
+            case UserActions.CREATE_QUERY -> createQuery(chatId, action);
             // Only shown, for the cluster admin to run. Stroom never runs these.
             default -> new AiUserActionResult(false, "Stroom does not run this action.", null);
         };
@@ -112,6 +113,20 @@ public class UserActionService {
         }
         auditLog.userAction(chatId, action.action(), action.label(), "Opened", true);
         return new AiUserActionResult(true, null, action.doc());
+    }
+
+    /// Lets the browser open Stroom's New Query dialog with the suggested name, if the user may still run the
+    /// query. Nothing is created here: the user creates the query in the dialog, which checks their permission to
+    /// create it in the folder they choose and logs it as Stroom logs any new document. As it changes nothing, the
+    /// button can be used again (e.g. after the dialog was cancelled).
+    private AiUserActionResult createQuery(final int chatId, final UserActionRecord action) {
+        if (action.request() == null || lookup.usableDataSource(action.request()).isEmpty()) {
+            final String problem = "The query's data source no longer exists, or you can't use it.";
+            auditLog.userAction(chatId, action.action(), action.label(), problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        auditLog.userAction(chatId, action.action(), action.label(), "Opened the New Query dialog", true);
+        return new AiUserActionResult(true, null, null, action.name(), action.request());
     }
 
     private AiUserActionResult changeFilter(final int chatId,

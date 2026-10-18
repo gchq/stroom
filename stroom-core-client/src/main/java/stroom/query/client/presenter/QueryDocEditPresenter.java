@@ -102,6 +102,11 @@ public class QueryDocEditPresenter
         toolbar.addButton(createReportButton);
     }
 
+    /// @return The query's editor and results.
+    public QueryEditPresenter getQueryEditPresenter() {
+        return queryEditPresenter;
+    }
+
     @Override
     public List<Widget> getToolbars() {
         final List<Widget> list = new ArrayList<>();

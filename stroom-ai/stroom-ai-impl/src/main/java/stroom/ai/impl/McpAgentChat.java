@@ -485,8 +485,12 @@ class McpAgentChat {
         final boolean error = isError(result);
         // Steps that are the user's, checked, to show as buttons. The model is not told about them: the steps are
         // in the result's text too.
+        // Stroom's own tools offer theirs through the run's context.
+        final List<Map<String, Object>> builtInActions = ToolRunContext.current()
+                .map(context -> context.takeUserActions(toolRequest.id()))
+                .orElse(List.of());
         final List<UserActionRecord> actions = userActions.check(toolset.takeUserActions(toolRequest.id()),
-                System.currentTimeMillis());
+                builtInActions, System.currentTimeMillis());
         aiService.storeMessage(chatId, AiMessageType.TOOL_RESULT,
                 JsonUtil.writeValueAsString(new ToolResultRecord(toolRequest.id(), toolRequest.name(),
                         error, forModel, path, result.length(), durationMs, actions.isEmpty()

@@ -80,6 +80,45 @@ class TestUserActions {
     }
 
     @Test
+    void aCreateQueryButtonIsOnlyOfferedByStroomsOwnTools() {
+        final DocRef view = new DocRef("View", OTHER_UUID, "Windows events");
+        Mockito.when(lookup.usableDataSource("from \"Windows events\" select User")).thenReturn(Optional.of(view));
+        final Map<String, Object> createQuery = createQuery("q1", "Windows users",
+                "from \"Windows events\" select User");
+
+        // From an MCP server, it is dropped.
+        assertThat(userActions.check(List.of(createQuery), NOW)).isEmpty();
+
+        // From one of Stroom's own tools, it is offered, described by Stroom.
+        assertThat(userActions.check(null, List.of(createQuery), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.CREATE_QUERY);
+            assertThat(action.label()).isEqualTo("Create query 'Windows users', reading View 'Windows events'");
+            assertThat(action.name()).isEqualTo("Windows users");
+            assertThat(action.request()).isEqualTo("from \"Windows events\" select User");
+            assertThat(action.details()).isEqualTo("Who logged on");
+            assertThat(action.doc()).isEqualTo(view);
+            assertThat(action.status()).isEqualTo(Status.PENDING);
+        });
+    }
+
+    @Test
+    void aCreateQueryButtonNeedsAQueryTheUserCanRunAndAGoodName() {
+        Mockito.when(lookup.usableDataSource(Mockito.anyString())).thenReturn(Optional.empty());
+        assertThat(userActions.check(null, List.of(createQuery("q1", "Secret", "from Secret select A")), NOW))
+                .isEmpty();
+
+        Mockito.when(lookup.usableDataSource(Mockito.anyString()))
+                .thenReturn(Optional.of(new DocRef("View", OTHER_UUID, "V")));
+        assertThat(userActions.check(null, List.of(
+                createQuery("q2", "Two\nlines", "from V select A"),
+                createQuery("q3", " ", "from V select A"),
+                createQuery("q4", "x".repeat(UserActions.MAX_NAME_CHARS + 1), "from V select A"),
+                createQuery("q5", "Fine", "from V select A")), NOW))
+                .extracting(UserActionRecord::id)
+                .containsExactly("q5");
+    }
+
+    @Test
     void aPipelineTheServerDidNotMakeIsWarnedAbout() {
         Mockito.when(lookup.tags(PIPELINE)).thenReturn(Set.of());
 
@@ -332,6 +371,11 @@ class TestUserActions {
 
     private static Map<String, Object> open(final String id, final String type, final String uuid) {
         return Map.of("id", id, "action", "open_document", "doc", doc(type, uuid, "Name"));
+    }
+
+    private static Map<String, Object> createQuery(final String id, final String name, final String query) {
+        return Map.of("id", id, "action", UserActions.CREATE_QUERY, "name", name, "query", query,
+                "description", "Who logged on");
     }
 
     private static Map<String, Object> es(final String id, final String request) {

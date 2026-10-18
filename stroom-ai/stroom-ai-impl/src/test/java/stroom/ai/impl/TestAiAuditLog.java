@@ -29,6 +29,7 @@ import event.logging.OtherObject;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
 import event.logging.ProcessType;
+import event.logging.SearchEventAction;
 import event.logging.SystemDetail;
 import event.logging.User;
 import event.logging.ViewEventAction;
@@ -41,7 +42,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.math.BigInteger;
 import java.util.Date;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -122,6 +125,51 @@ class TestAiAuditLog {
         final DefaultXMLValidator validator = new DefaultXMLValidator(SchemaLocator.getSchemaLocation(),
                 new ExceptionAndLoggingErrorHandler(), ValidationExceptionBehaviourMode.THROW);
         assertThatCode(() -> validator.validate(new DefaultEventSerializer().serialize(event(action.getValue()))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void testDocumentsViewedNamesEachDocument() {
+        auditLog.documentsViewed(7, List.of(new DocRef("View", "v1", "Windows events"),
+                new DocRef("Index", "i1", "Linux events")), "Listed by the list_data_sources tool");
+
+        final ArgumentCaptor<ViewEventAction> action = ArgumentCaptor.forClass(ViewEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.DOCUMENT_VIEW_TYPE_ID),
+                Mockito.eq("Ask Stroom AI viewed 2 document(s) in chat 7"), action.capture());
+        assertThat(action.getValue().getObjects()).hasSize(2);
+        assertValid(action.getValue());
+    }
+
+    @Test
+    void testSearchedNamesTheDataSource() {
+        auditLog.searched(7, new DocRef("View", "v1", "Windows events"), "from \"Windows events\" select User",
+                100L, "Snapshot taken by the current_results tool");
+
+        final ArgumentCaptor<SearchEventAction> action = ArgumentCaptor.forClass(SearchEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.SEARCH_TYPE_ID), Mockito.contains("chat 7"),
+                action.capture());
+        assertThat(action.getValue().getDataSources().getDataSource()).containsExactly("View 'Windows events'");
+        assertThat(action.getValue().getTotalResults()).isEqualTo(BigInteger.valueOf(100));
+        assertValid(action.getValue());
+    }
+
+    @Test
+    void testProcessedNamesTheDocumentAndOutcome() {
+        auditLog.processed(7, new DocRef("View", "v1", "Windows events"), "validate_stroomql", "from x", "OK",
+                true);
+
+        final ArgumentCaptor<ProcessEventAction> action = ArgumentCaptor.forClass(ProcessEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.PROCESS_TYPE_ID),
+                Mockito.eq("Ask Stroom AI ran validate_stroomql in chat 7"), action.capture());
+        assertThat(action.getValue().getCommand()).isEqualTo("validate_stroomql");
+        assertThat(action.getValue().getOutcome().getDescription()).isEqualTo("OK");
+        assertValid(action.getValue());
+    }
+
+    private static void assertValid(final EventAction action) {
+        final DefaultXMLValidator validator = new DefaultXMLValidator(SchemaLocator.getSchemaLocation(),
+                new ExceptionAndLoggingErrorHandler(), ValidationExceptionBehaviourMode.THROW);
+        assertThatCode(() -> validator.validate(new DefaultEventSerializer().serialize(event(action))))
                 .doesNotThrowAnyException();
     }
 

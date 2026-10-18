@@ -53,7 +53,9 @@ appConfig:
     maxRunDuration: "PT2H"
     maxRunsPerNode: 20
     maxRunsPerUser: 3
+    maxTabSnapshotBytes: 2097152
     maxToolIterations: 100
+    shareActiveTab: true
     suggestFollowUps: true
     toolGroupThreshold: 24
     unattendedAfter: "PT10M"

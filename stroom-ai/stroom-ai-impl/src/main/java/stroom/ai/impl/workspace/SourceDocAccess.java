@@ -92,6 +92,17 @@ public class SourceDocAccess {
     /// document): [Access#ALLOWED]; [Access#DENIED] if they may not, or it no longer exists; or
     /// [Access#UNKNOWN] if that couldn't be checked, e.g. as a lookup failed.
     public Access access(final String sourceDocUuid) {
+        return access(sourceDocUuid, false);
+    }
+
+    /// As [#access(String)], for a file that may hold the document's own content rather than data searched from it.
+    ///
+    /// @param sourceDocUuid   The UUID of the document a file's content came from.
+    /// @param documentContent True if the file holds the document's own content (e.g. its text, or a snapshot of
+    ///                        its tab), which needs View even for a data source (e.g. an index's settings), as Use
+    ///                        only lets someone search it.
+    /// @return Whether the current user may still use the file's content.
+    public Access access(final String sourceDocUuid, final boolean documentContent) {
         if (sourceDocUuid == null || sourceDocUuid.isBlank()) {
             return Access.DENIED;
         }
@@ -106,7 +117,9 @@ public class SourceDocAccess {
             LOGGER.debug("A workspace file's source no longer exists, so the file can't be used");
             return Access.DENIED;
         }
-        final DocumentPermission permission = requiredPermission(type.get());
+        final DocumentPermission permission = documentContent
+                ? DocumentPermission.VIEW
+                : requiredPermission(type.get());
         try {
             return securityContext.hasDocumentPermission(new DocRef(type.get(), sourceDocUuid), permission)
                     ? Access.ALLOWED

@@ -55,6 +55,11 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(SummariseColumnTool.class)
                 .addBinding(DocumentInfoTool.class)
                 .addBinding(ReadDocumentTool.class)
-                .addBinding(DocumentDocumentationTool.class);
+                .addBinding(DocumentDocumentationTool.class)
+                .addBinding(CurrentResultsTool.class)
+                .addBinding(ListDataSourcesTool.class)
+                .addBinding(DescribeDataSourceTool.class)
+                .addBinding(ValidateStroomQlTool.class)
+                .addBinding(ProposeQueryTool.class);
     }
 }

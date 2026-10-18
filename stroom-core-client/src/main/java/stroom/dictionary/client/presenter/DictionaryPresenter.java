@@ -16,6 +16,8 @@
 
 package stroom.dictionary.client.presenter;
 
+import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.core.client.LocationManager;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
@@ -41,6 +43,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.List;
 import javax.inject.Provider;
 
 public class DictionaryPresenter extends DocTabPresenter<LinkTabPanelView, DictionaryDoc> {
@@ -194,5 +197,25 @@ public class DictionaryPresenter extends DocTabPresenter<LinkTabPanelView, Dicti
     @Override
     protected TabData getDocumentationTab() {
         return DOCUMENTATION;
+    }
+
+    /// Shares a dictionary's own words and its imports, as edited. The words of the dictionaries it imports are
+    /// read as saved by the agent's tools.
+    @Override
+    protected String addAiSnapshotParts(final DictionaryDoc edited,
+                                        final List<AiTabSnapshotPart> parts,
+                                        final List<AiTabSearch> searches) {
+        parts.add(new AiTabSnapshotPart(AiTabSnapshotPart.DATA, "text/plain", edited.getData()));
+        final StringBuilder imports = new StringBuilder();
+        if (edited.getImports() != null) {
+            for (final DocRef importRef : edited.getImports()) {
+                if (importRef != null) {
+                    imports.append(importRef.getType()).append(" '").append(importRef.getName()).append("' (")
+                            .append(importRef.getUuid()).append(")\n");
+                }
+            }
+        }
+        parts.add(new AiTabSnapshotPart(AiTabSnapshotPart.IMPORTS, "text/plain", imports.toString()));
+        return null;
     }
 }

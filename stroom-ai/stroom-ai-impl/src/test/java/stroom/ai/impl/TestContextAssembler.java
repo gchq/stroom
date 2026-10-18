@@ -150,6 +150,68 @@ class TestContextAssembler {
     }
 
     @Test
+    void testTheActiveTabIsNotedForTheLatestQuestionOnly() {
+        final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
+        final AiWorkspaceDao workspaceDao = Mockito.mock(AiWorkspaceDao.class);
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
+                Mockito.mock(stroom.ai.api.AiService.class), null, workspaceDao,
+                Mockito.mock(ContextUsageTracker.class), null, null, tabSnapshots);
+        final TabSnapshots.StoredTabSnapshot earlier = tab(7, new DocRef("XSLT", "x", "Event translation"));
+        final TabSnapshots.StoredTabSnapshot latest = tab(8, new DocRef("XSLT", "x", "Event translation"));
+        Mockito.when(tabSnapshots.isEnabled()).thenReturn(true);
+        Mockito.when(tabSnapshots.read(71)).thenReturn(java.util.Optional.of(earlier));
+        Mockito.when(tabSnapshots.read(81)).thenReturn(java.util.Optional.of(latest));
+        Mockito.when(tabSnapshots.note(1, latest)).thenReturn("[Active tab: XSLT 'Event translation'.]");
+        Mockito.when(workspaceDao.getFileInfo(71)).thenReturn(java.util.Optional.of(new AiWorkspaceDao.FileInfo(
+                71, 1, "/tabs/7/snapshot.json", AiAttachmentStatus.READY, "x", null, null, 10L)));
+        final List<AiChatMessage> history = List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, 71, "first", 1, null),
+                new AiChatMessage(2, 1, 0L, AiMessageType.AI_RESPONSE, null, "a1", 1, null),
+                new AiChatMessage(3, 1, 0L, AiMessageType.USER_MESSAGE, 81, "second", 3, null));
+
+        final List<ChatMessage> messages = assembler.assemble(new AskStroomAiRequest(null, null, null, "second"),
+                1, java.util.Map.of(), history, CompactionRecord.NONE, true);
+
+        assertThat(((UserMessage) messages.get(1)).singleText())
+                .isEqualTo("[Asked with the user's active tab shared; its snapshot is in /tabs/7/]\nfirst");
+        assertThat(((UserMessage) messages.getLast()).singleText())
+                .isEqualTo("second\n\n[Active tab: XSLT 'Event translation'.]");
+        Mockito.verify(tabSnapshots, Mockito.never()).note(1, earlier);
+        // Not a query, so no query guidance.
+        assertThat(((SystemMessage) messages.getFirst()).text()).doesNotContain(ContextAssembler.QUERY_GUIDANCE);
+    }
+
+    @Test
+    void testQueryGuidanceIsGivenOnlyWhileAQueryTabIsActive() {
+        final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
+                Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
+                Mockito.mock(ContextUsageTracker.class), null, null, tabSnapshots);
+        final TabSnapshots.StoredTabSnapshot query = tab(2, new DocRef("Query", "q", "Logons"));
+        Mockito.when(tabSnapshots.isEnabled()).thenReturn(true);
+        Mockito.when(tabSnapshots.read(21)).thenReturn(java.util.Optional.of(query));
+        Mockito.when(tabSnapshots.note(Mockito.anyInt(), Mockito.any())).thenReturn("[Active tab]");
+        final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
+
+        final String withQuery = ((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), List.of(
+                        new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, 21, "q", 1, null)),
+                CompactionRecord.NONE, true).getFirst()).text();
+        final String withoutTab = ((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), List.of(
+                        new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, null)),
+                CompactionRecord.NONE, true).getFirst()).text();
+
+        assertThat(withQuery).contains(ContextAssembler.QUERY_GUIDANCE).contains("validate_stroomql");
+        assertThat(withoutTab).doesNotContain(ContextAssembler.QUERY_GUIDANCE);
+        // The tools' guidance says when to offer, rather than run, a refresh of the tab's results.
+        assertThat(withoutTab).contains("Never pass refresh unless the user has said yes");
+    }
+
+    private static TabSnapshots.StoredTabSnapshot tab(final int number, final DocRef docRef) {
+        return new TabSnapshots.StoredTabSnapshot(number * 10 + 1, number, docRef, "/", docRef.getName(), null,
+                false, null, "h", 0L, List.of(), List.of());
+    }
+
+    @Test
     void testOnlyModelsWithToolsAreToldAboutThem() {
         final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
                 Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),

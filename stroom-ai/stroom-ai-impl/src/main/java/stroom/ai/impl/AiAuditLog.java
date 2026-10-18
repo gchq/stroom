@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.shared.DocumentReferenceContext;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.util.logging.LambdaLogger;
@@ -23,15 +24,21 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import event.logging.Data;
+import event.logging.DataSources;
 import event.logging.EventAction;
 import event.logging.OtherObject;
 import event.logging.Outcome;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
 import event.logging.ProcessType;
+import event.logging.Query;
+import event.logging.SearchEventAction;
 import event.logging.ViewEventAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.math.BigInteger;
+import java.util.List;
 
 /// Records what the 'Ask Stroom AI' agent does for a user in the audit log: every tool call (with its arguments,
 /// shortened, and whether it was run, refused or failed) and every answer. Events from a run while the user was
@@ -44,6 +51,10 @@ public class AiAuditLog {
     static final String ANSWER_TYPE_ID = "AskStroomAi.answer";
     static final String USER_ACTION_TYPE_ID = "AskStroomAi.userAction";
     static final String DOCUMENT_VIEW_TYPE_ID = "AskStroomAi.viewDocument";
+    static final String SEARCH_TYPE_ID = "AskStroomAi.search";
+    static final String PROCESS_TYPE_ID = "AskStroomAi.process";
+    /// The most documents named in one View event.
+    static final int MAX_LOGGED_DOCUMENTS = 100;
     static final int MAX_TEXT = 1_000;
 
     private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
@@ -155,6 +166,102 @@ public class AiAuditLog {
                                 .withDescription(purpose)
                                 .build())
                         .build());
+    }
+
+    /// Records that several Stroom documents were viewed for the chat, e.g. the data sources a tool listed, as one
+    /// View event naming each (up to [#MAX_LOGGED_DOCUMENTS]).
+    ///
+    /// @param chatId  The chat.
+    /// @param docRefs The documents.
+    /// @param purpose Why they were viewed, e.g. "Listed by the list_data_sources tool".
+    public void documentsViewed(final int chatId, final List<DocRef> docRefs, final String purpose) {
+        if (docRefs == null || docRefs.isEmpty()) {
+            return;
+        }
+        final ViewEventAction.Builder<Void> builder = ViewEventAction.builder();
+        docRefs.stream()
+                .limit(MAX_LOGGED_DOCUMENTS)
+                .forEach(docRef -> builder.addObject(OtherObject.builder()
+                        .withType(docRef.getType())
+                        .withId(docRef.getUuid())
+                        .withName(docRef.getName())
+                        .build()));
+        final String more = docRefs.size() > MAX_LOGGED_DOCUMENTS
+                ? " (the first " + MAX_LOGGED_DOCUMENTS + " of " + docRefs.size() + " are named)"
+                : "";
+        log(DOCUMENT_VIEW_TYPE_ID, "Ask Stroom AI viewed " + docRefs.size() + " document(s) in chat " + chatId,
+                builder.withOutcome(Outcome.builder()
+                                .withSuccess(true)
+                                .withDescription(purpose + more)
+                                .build())
+                        .addData(data("ChatId", String.valueOf(chatId)))
+                        .addData(data("Purpose", purpose))
+                        .build());
+    }
+
+    /// Records that the agent read the results of a search for the chat, e.g. a snapshot of the rows a query tab
+    /// shows, as a Search event naming the data source.
+    ///
+    /// @param chatId     The chat.
+    /// @param dataSource The data source searched, or null if not known.
+    /// @param query      The query, e.g. its StroomQL or expression, or null.
+    /// @param rows       How many rows were read, or null if not known.
+    /// @param purpose    Why, e.g. "Snapshot of the results of Query 'Logons', taken by the current_results tool".
+    public void searched(final int chatId,
+                         final DocRef dataSource,
+                         final String query,
+                         final Long rows,
+                         final String purpose) {
+        final SearchEventAction.Builder<Void> builder = SearchEventAction.builder()
+                .withDataSources(DataSources.builder()
+                        .addDataSource(dataSource == null
+                                ? "Unknown"
+                                : DocumentReferenceContext.describe(dataSource))
+                        .build())
+                .withQuery(Query.builder().withRaw(shorten(query)).build())
+                .addData(data("ChatId", String.valueOf(chatId)))
+                .addData(data("Purpose", purpose));
+        if (dataSource != null) {
+            builder.addData(data("DataSourceUuid", dataSource.getUuid()));
+        }
+        if (rows != null) {
+            builder.withTotalResults(BigInteger.valueOf(rows));
+        }
+        log(SEARCH_TYPE_ID, "Ask Stroom AI read search results in chat " + chatId + ": " + purpose,
+                builder.build());
+    }
+
+    /// Records something the agent did with a document for the chat that reads but changes nothing, e.g.
+    /// validating a query against a data source, as a Process event.
+    ///
+    /// @param chatId  The chat.
+    /// @param docRef  The document, e.g. the data source, or null if not known.
+    /// @param command What was done, e.g. "validate_stroomql".
+    /// @param input   What it was done with, e.g. the query, shortened.
+    /// @param outcome What happened.
+    /// @param success False if it failed.
+    public void processed(final int chatId,
+                          final DocRef docRef,
+                          final String command,
+                          final String input,
+                          final String outcome,
+                          final boolean success) {
+        final ProcessEventAction.Builder<Void> builder = ProcessEventAction.builder()
+                .withType(ProcessType.APPLICATION)
+                .withAction(ProcessAction.EXECUTE)
+                .withCommand(command)
+                .withArguments(shorten(input))
+                .withOutcome(Outcome.builder()
+                        .withSuccess(success)
+                        .withDescription(shorten(outcome))
+                        .build())
+                .addData(data("ChatId", String.valueOf(chatId)));
+        if (docRef != null) {
+            builder.addData(data("DocumentType", docRef.getType()))
+                    .addData(data("DocumentUuid", docRef.getUuid()))
+                    .addData(data("DocumentName", NullSafe.string(docRef.getName())));
+        }
+        log(PROCESS_TYPE_ID, "Ask Stroom AI ran " + command + " in chat " + chatId, builder.build());
     }
 
     private void log(final String typeId, final String description, final EventAction action) {
