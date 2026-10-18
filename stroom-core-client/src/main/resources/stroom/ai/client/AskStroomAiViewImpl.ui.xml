@@ -7,13 +7,12 @@
         <g:FlowPanel styleName="dock-min askStroomAiViewImpl-top">
             <g:FlowPanel styleName="dock-max askStroomAiViewImpl-title">
                 <g:Label ui:field="chatTitle" text="Agent"/>
-                <!-- Beside the title, as it is about the chat shown. -->
-                <p:InlineSvgButton ui:field="overviewToggle"
-                                   addStyleNames="allow-focus navigation-menu-button askStroomAiViewImpl-overviewToggle"/>
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-min askStroomAiViewImpl-buttons">
                 <p:Button ui:field="newChat" text="New chat"
                           addStyleNames="allow-focus askStroomAiViewImpl-newChat"/>
+                <p:InlineSvgButton ui:field="overviewToggle"
+                                   addStyleNames="allow-focus navigation-menu-button askStroomAiViewImpl-overviewToggle"/>
                 <p:InlineSvgButton ui:field="tabToggle" text="Open in a Tab"
                                    addStyleNames="allow-focus navigation-menu-button"/>
                 <p:InlineSvgButton ui:field="menu" text="More"
@@ -30,14 +29,30 @@
         </g:FlowPanel>
         <g:FlowPanel ui:field="overview" styleName="dock-max askStroomAiViewImpl-overview" visible="false">
             <g:FlowPanel styleName="ai-overview-toolbar">
-                <g:Button ui:field="overviewZoomOut" styleName="allow-focus ai-overview-zoom" text="−"
-                          title="Zoom out (Ctrl+wheel)"/>
-                <g:Button ui:field="overviewZoomIn" styleName="allow-focus ai-overview-zoom" text="+"
-                          title="Zoom in (Ctrl+wheel)"/>
-                <g:Button ui:field="overviewFit" styleName="allow-focus ai-overview-zoom" text="Fit"
-                          title="Fit the overview's width to the panel"/>
+                <!-- Opens the search; until then, all there is. -->
+                <p:InlineSvgButton ui:field="overviewSearchToggle" addStyleNames="allow-focus"/>
+                <g:FlowPanel ui:field="overviewSearchControls" styleName="ai-overview-search-controls"
+                             visible="false">
+                    <!-- As the Explorer's Quick Filter: a box with a button to clear it. -->
+                    <g:FlowPanel styleName="quickFilter ai-overview-search">
+                        <g:TextBox ui:field="overviewSearch" addStyleNames="allow-focus quickFilter-textBox"/>
+                        <p:InlineSvgButton ui:field="overviewSearchClear" addStyleNames="clear"/>
+                    </g:FlowPanel>
+                    <!-- The search's matches: how many, and going to the one before or after. -->
+                    <g:Label ui:field="overviewSearchCount" styleName="ai-overview-search-count"/>
+                    <p:InlineSvgButton ui:field="overviewPreviousMatch" addStyleNames="allow-focus"/>
+                    <p:InlineSvgButton ui:field="overviewNextMatch" addStyleNames="allow-focus"/>
+                </g:FlowPanel>
             </g:FlowPanel>
-            <g:HTML ui:field="overviewContent" styleName="ai-overview-content"/>
+            <g:FlowPanel styleName="ai-overview-body">
+                <g:HTML ui:field="overviewContent" styleName="ai-overview-content"/>
+                <!-- Over the overview's right-hand margin, which matches its left, so the chart stays centred. -->
+                <g:FlowPanel ui:field="overviewZoomStrip" styleName="ai-overview-zoom-strip">
+                    <p:InlineSvgButton ui:field="overviewZoomIn" addStyleNames="allow-focus"/>
+                    <p:InlineSvgButton ui:field="overviewZoomOut" addStyleNames="allow-focus"/>
+                    <p:InlineSvgButton ui:field="overviewFit" addStyleNames="allow-focus"/>
+                </g:FlowPanel>
+            </g:FlowPanel>
         </g:FlowPanel>
         <g:FlowPanel ui:field="jumpToLatestBar" styleName="dock-min askStroomAiViewImpl-jumpToLatestBar">
             <g:Button ui:field="jumpToLatest" styleName="allow-focus askStroomAiViewImpl-jumpToLatest"
