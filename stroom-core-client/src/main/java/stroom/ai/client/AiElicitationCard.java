@@ -130,7 +130,7 @@ final class AiElicitationCard {
             row.div(field.getDescription(), Attribute.className("ai-elicitation-description"));
         }
         if (field.isMulti()) {
-            for (int i = 0; i < field.getValues().size(); i++) {
+            for (final int i : recommendedFirst(field.getValues(), field.getDefaults())) {
                 checkBox(row, field.getLabels().get(i), field, SEVERAL, field.getValues().get(i),
                         field.getDefaults().contains(field.getValues().get(i)));
             }
@@ -141,7 +141,7 @@ final class AiElicitationCard {
                 if (!field.isRequired()) {
                     select.elem("", OPTION, new Attribute("value", ""));
                 }
-                for (int i = 0; i < field.getValues().size(); i++) {
+                for (final int i : recommendedFirst(field.getValues(), field.getDefaults())) {
                     final String value = field.getValues().get(i);
                     if (value.equals(field.getDefault())) {
                         select.elem(field.getLabels().get(i), OPTION, new Attribute("value", value),
@@ -214,7 +214,7 @@ final class AiElicitationCard {
                     }
                     question.div(field.getTitle(), Attribute.className("ai-question-text"));
                     question.div(options -> {
-                        for (int j = 0; j < field.getValues().size(); j++) {
+                        for (final int j : recommendedFirst(field.getValues(), field.getDefaults())) {
                             final String value = field.getValues().get(j);
                             final boolean recommended = value.equals(field.getDefault());
                             final String label = field.getLabels().get(j);
@@ -260,6 +260,25 @@ final class AiElicitationCard {
                         : " ai-question--later")));
             }
         }, Attribute.className("ai-questions"));
+    }
+
+    /// @param values      A field's options.
+    /// @param recommended The options recommended (the field's default, or defaults).
+    /// @return The positions of the options in the order to show them: those recommended first, then the rest, each
+    /// in the order given.
+    static List<Integer> recommendedFirst(final List<String> values, final List<String> recommended) {
+        final List<Integer> order = new ArrayList<>();
+        for (int i = 0; i < values.size(); i++) {
+            if (recommended.contains(values.get(i))) {
+                order.add(i);
+            }
+        }
+        for (int i = 0; i < values.size(); i++) {
+            if (!recommended.contains(values.get(i))) {
+                order.add(i);
+            }
+        }
+        return order;
     }
 
     /// @param message  What the server said.
