@@ -49,14 +49,15 @@
     padding: 10px;
 }
 
+/* As rounded as the task list above it. */
 .askStroomAiViewImpl-bottom-inner {
     display: flex;
     gap: 5px;
     overflow: hidden;
     background-color: var(--page__background-color);
     border: 1px solid var(--splitter__background-color);
-    border-radius: .25rem;
-    padding: 5px;
+    border-radius: 6px;
+    padding: 6px;
 }
 
 /* While a question is being worked on, the input box gets a glowing border in the app's blues, with a bright
@@ -2254,6 +2255,17 @@ a.ai-stroom-link::after {
 /* A message gone to (e.g. from the overview) stops below the top row's shadow, rather than under it. */
 .askStroomAiViewImpl-middle > * {
     scroll-margin-top: var(--ai-overlay-reach);
+}
+
+/* Room at the ends of the conversation and the overview as deep as the shadows over them reach, so the first and
+   latest messages (e.g. a question asked, with the task list below) can always be scrolled clear of them. */
+.askStroomAiViewImpl-middle {
+    padding-top: calc(var(--ai-overlay-reach) + 8px);
+    padding-bottom: calc(var(--ai-overlay-reach) + 12px);
+}
+
+.ai-overview-content {
+    padding-bottom: calc(var(--ai-overlay-reach) + 16px);
 }
 
 /* A dark page needs a much darker shadow to show at all. */
