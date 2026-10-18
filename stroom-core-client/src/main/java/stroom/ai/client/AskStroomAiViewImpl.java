@@ -65,6 +65,7 @@ import java.util.List;
 public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandlers> implements AskStroomAiView {
 
     private static final String SEND_BUTTON_NORMAL_TEXT = "Send";
+    private static final String LOADING_STYLE = "askStroomAiViewImpl-middle--loading";
     private static final String STOP_SHOWN_CLASS = "askStroomAiViewImpl-stop--shown";
     private static final String EMPTY_STYLE = "empty";
     private static final String SWITCHER_OPEN_CLASS = "askStroomAiViewImpl-switcher--open";
@@ -697,6 +698,15 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
             root.addStyleName(EMPTY_STYLE);
         } else {
             root.removeStyleName(EMPTY_STYLE);
+        }
+    }
+
+    @Override
+    public void setLoading(final boolean loading) {
+        if (loading) {
+            markdownPreview.addStyleName(LOADING_STYLE);
+        } else {
+            markdownPreview.removeStyleName(LOADING_STYLE);
         }
     }
 
