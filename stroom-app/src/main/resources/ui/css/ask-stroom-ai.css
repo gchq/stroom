@@ -23,10 +23,11 @@
     flex-grow: 1;
     align-items: center;
     flex-direction: row;
-    overflow: hidden;
+    min-width: 0;
 }
 
-.askStroomAiViewImpl-title div {
+/* The title, cut short with an ellipsis. Only the area's own children: not what is inside its buttons. */
+.askStroomAiViewImpl-title > div {
     text-overflow: ellipsis;
     width: 100%;
     overflow: hidden;
@@ -1956,70 +1957,128 @@ a.ai-stroom-link::after {
 
 /* ---- Chat overview: what the user did, joined by what the agent did in between, drawn as SVG ---- */
 
-/* Right beside the chat's title, which gives way to it when long. */
+/* A long title gives way, cut short, rather than pushing the buttons beside it out of view. */
 .askStroomAiViewImpl-title .askStroomAiViewImpl-switcher {
     flex: 0 1 auto;
     min-width: 0;
 }
 
-.askStroomAiViewImpl-title .askStroomAiViewImpl-overviewToggle {
-    flex: none;
-    margin-left: 2px;
+/* While the overview is shown: in full, rather than dimmed as the panel's other buttons are, on solid blue with a
+   white icon in either theme. (Stroom's usual look for a button that is on draws the icon in the page's colour,
+   dark on blue with a black border in the dark theme.) */
+.navigation-menu-button.askStroomAiViewImpl-overviewToggle--on {
+    opacity: 1;
 }
 
-.askStroomAiViewImpl-title .askStroomAiViewImpl-overviewToggle div {
-    width: auto;
-}
-
-.askStroomAiViewImpl-overviewToggle--on {
-    background: rgba(var(--blue-500-rgb), 0.2);
+.askStroomAiViewImpl-overviewToggle--on .background,
+.askStroomAiViewImpl-overviewToggle--on:hover .background {
+    background-color: var(--blue-500);
+    border: none;
 }
 
 .askStroomAiViewImpl-overviewToggle--on svg {
-    color: var(--blue-300);
+    color: #ffffff;
 }
 
+/* The overview takes the conversation's place, and no more: its height is what is left, never its chart's, so a
+   tall chart scrolls rather than growing the panel. */
 .askStroomAiViewImpl-overview {
     display: flex;
     flex-direction: column;
+    flex: 1 1 0;
     min-height: 0;
+    overflow: hidden;
     position: relative;
 }
 
+/* The room either side of the chart: the same on the left as on the right, where the zoom buttons sit over it.
+   And above it, for the search controls floating over its top. */
+.askStroomAiViewImpl-overview {
+    --ai-overview-margin: 48px;
+    --ai-overview-top: 60px;
+    /* How far the floating search and zoom controls are from the overview's edges. */
+    --ai-overview-inset: 12px;
+}
+
+/* The search controls float over the chart, which scrolls beneath them, so the shadow of the panel's top row of
+   buttons still falls on the chart. */
 .ai-overview-toolbar {
     position: absolute;
-    top: 8px;
-    right: 16px;
-    z-index: 1;
+    /* At the top left, as far from the left as from the top. */
+    top: var(--ai-overview-inset);
+    left: var(--ai-overview-inset);
+    max-width: calc(100% - 2 * var(--ai-overview-inset) - 40px);
+    z-index: 2;
     display: flex;
+    align-items: center;
     gap: 2px;
-    padding: 2px;
+    padding: 4px 6px;
+    box-sizing: border-box;
     border-radius: 6px;
     background: var(--page__background-color);
     border: 1px solid var(--control__border-color);
 }
 
-.ai-overview-zoom {
-    min-width: 28px;
-    height: 24px;
-    padding: 0 6px;
-    border: none;
-    border-radius: 4px;
-    background: transparent;
-    color: var(--control__text-color);
+.ai-overview-search-controls {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* The floating controls are as wide as what is in them, so the box has a width of its own. */
+.ai-overview-search {
+    flex: 0 1 220px;
+    min-width: 80px;
+    margin-right: 6px;
+}
+
+.ai-overview-search .quickFilter-textBox {
     font-size: var(--ai-font-size--small);
-    cursor: pointer;
 }
 
-.ai-overview-zoom:hover {
-    background: var(--curve-tab__background-color--hover);
+/* There is no help button beside it, as there is in a Quick Filter. */
+.ai-overview-search button.clear {
+    right: 4px;
 }
 
-.ai-overview-content {
-    flex: 1 1 auto;
+.ai-overview-search-count {
+    flex: none;
+    margin-right: 4px;
+    font-size: var(--ai-font-size--meta);
+    color: var(--control__text-color--disabled);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ai-overview-body {
+    flex: 1 1 0;
     min-height: 0;
+    position: relative;
+}
+
+/* Filling the body exactly, whatever the chart's size, so what doesn't fit scrolls. */
+.ai-overview-content {
+    position: absolute;
+    inset: 0;
     overflow: auto;
-    padding: 8px 12px 16px;
+    padding: var(--ai-overview-top) var(--ai-overview-margin) 16px;
+}
+
+/* Inside the chart's right-hand margin, clear of its scroll bar at the very edge. */
+/* Its buttons level with the search button: at the same height, with the same padding. */
+.ai-overview-zoom-strip {
+    position: absolute;
+    top: var(--ai-overview-inset);
+    right: 20px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 6px;
+    background: var(--page__background-color);
+    border: 1px solid var(--control__border-color);
 }
 
 .ai-overview-svg {
@@ -2039,6 +2098,38 @@ a.ai-stroom-link::after {
     stroke: var(--control__border-color);
     stroke-width: 1;
     transition: fill 0.15s, stroke 0.15s;
+}
+
+/* While searching: what doesn't match fades, and only the match gone to is outlined, so it is plain which it is:
+   a step's box, or a line's label (an outline drawn round it by the view's backOverviewHits). */
+.ai-overview--dimmed {
+    opacity: 0.35;
+}
+
+.ai-overview--current .ai-overview-node-box {
+    stroke: var(--blue-500);
+    stroke-width: 3;
+}
+
+.ai-overview-link-outline {
+    fill: none;
+    stroke: none;
+}
+
+.ai-overview--current .ai-overview-link-outline {
+    fill: var(--page__background-color);
+    stroke: var(--blue-500);
+    stroke-width: 2;
+}
+
+/* Each place a word searched for is found: dark on a yellow box drawn behind it (see the view's
+   backOverviewHits), as SVG text has no background of its own. */
+.ai-overview-hit {
+    fill: #000000;
+}
+
+.ai-overview-hit-back {
+    fill: #ffd54f;
 }
 
 .ai-overview-node:hover .ai-overview-node-box,
@@ -2146,4 +2237,70 @@ a.ai-stroom-link::after {
     100% {
         box-shadow: 0 0 0 3px rgba(var(--blue-500-rgb), 0);
     }
+}
+
+/* ---- Depth: what sits over the conversation and the overview casts a shadow on them as they scroll beneath it,
+   rather than cutting them off with a hard edge ---- */
+
+.askStroomAiViewImpl {
+    --ai-overlay-shadow: rgba(0, 0, 0, 1);
+    /* The shadow of a bar over the conversation, and how far it reaches into it. */
+    --ai-overlay-offset: 16px;
+    --ai-overlay-blur: 28px;
+    --ai-overlay-spread: -12px;
+    --ai-overlay-reach: calc(var(--ai-overlay-offset) + var(--ai-overlay-blur) + var(--ai-overlay-spread));
+}
+
+/* A message gone to (e.g. from the overview) stops below the top row's shadow, rather than under it. */
+.askStroomAiViewImpl-middle > * {
+    scroll-margin-top: var(--ai-overlay-reach);
+}
+
+/* A dark page needs a much darker shadow to show at all. */
+.stroom-theme-dark .askStroomAiViewImpl {
+    --ai-overlay-shadow: rgba(0, 0, 0, 1);
+}
+
+/* The button row along the top, over what is below it. */
+.askStroomAiViewImpl-top {
+    position: relative;
+    z-index: 2;
+    background-color: var(--control__background-color);
+    box-shadow: 0 var(--ai-overlay-offset) var(--ai-overlay-blur) var(--ai-overlay-spread) var(--ai-overlay-shadow);
+}
+
+/* The task list, suggestions and input box along the bottom, over what is above them. Not while the chat is
+   empty, when the input box sits in the middle with nothing beneath it. */
+.askStroomAiViewImpl:not(.empty) .askStroomAiViewImpl-bottom {
+    position: relative;
+    z-index: 1;
+    background-color: var(--control__background-color);
+    box-shadow: 0 calc(-1 * var(--ai-overlay-offset)) var(--ai-overlay-blur) var(--ai-overlay-spread)
+    var(--ai-overlay-shadow);
+    /* No gap above the task list and input box, so the shadow starts right at their top edge. */
+    padding-top: 0;
+}
+
+/* And the input box and task list each lifted off it. (While the chat works, the input box's glow takes the place
+   of its shadow.) */
+.askStroomAiViewImpl-bottom-inner,
+.askStroomAiViewImpl-taskList {
+    box-shadow: 0 6px 24px var(--ai-overlay-shadow);
+}
+
+/* The button to go back to the latest message stays over the bottom's shadow. */
+.askStroomAiViewImpl-jumpToLatestBar {
+    z-index: 3;
+}
+
+/* The overview's search controls and zoom buttons, lifted off the chart scrolling beneath them. */
+.ai-overview-toolbar,
+.ai-overview-zoom-strip {
+    box-shadow: 0 6px 24px var(--ai-overlay-shadow);
+}
+
+/* While the overview is shown, the task list is put away: it is about the conversation, not the overview. It comes
+   back as it was when the overview closes. */
+.askStroomAiViewImpl--showingOverview .askStroomAiViewImpl-taskList {
+    display: none !important;
 }

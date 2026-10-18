@@ -78,6 +78,11 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
     /// Closes the overview of the chat, going back to the conversation.
     void onCloseOverview();
 
+    /// Searches the overview of the chat: the steps that match are picked out, and the rest dimmed.
+    ///
+    /// @param query The words searched for, or blank for no search.
+    void onOverviewSearch(String query);
+
     /// Goes to a step of the overview in the conversation, closing the overview.
     ///
     /// @param messageId The id of the step's message.
