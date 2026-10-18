@@ -61,7 +61,6 @@ class TestAiSlashCommands {
                 new AiSlashCommand("/plan", "<task>", "Plan it"),
                 new AiSlashCommand("/help", "", "List the commands")));
 
-        assertThat(help).isEqualTo("Commands:\n/plan <task> - Plan it\n/help - List the commands\n\n"
-                                   + "To send a message that starts with /, start it with //.");
+        assertThat(help).isEqualTo("/plan <task> - Plan it\n/help - List the commands");
     }
 }

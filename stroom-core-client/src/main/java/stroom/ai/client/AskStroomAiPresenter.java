@@ -1622,8 +1622,8 @@ public class AskStroomAiPresenter
             fetchPrompts(() -> runSlashCommand(message));
             return true;
         }
-        AlertEvent.fireWarn(this, "Unknown command " + parts[0] + ".\n\n" + AiSlashCommands.help(slashCommands()),
-                null);
+        AlertEvent.fireWarn(this, "Unknown command " + parts[0] + ". " + AiSlashCommands.HELP_MESSAGE,
+                AiSlashCommands.help(slashCommands()), null);
         return true;
     }
 
@@ -1690,7 +1690,8 @@ public class AskStroomAiPresenter
                     ensureChat(() -> remember(rest));
                 }
             }
-            default -> AlertEvent.fireInfo(this, AiSlashCommands.help(slashCommands()), null);
+            default -> AlertEvent.fireInfo(this, AiSlashCommands.HELP_MESSAGE, AiSlashCommands.help(slashCommands()),
+                    null);
         }
     }
 
