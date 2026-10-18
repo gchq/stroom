@@ -123,7 +123,7 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                 ? requestedOut
                 : WorkspacePath.parse(DEFAULT_OUT);
         workspace.checkWritable(out);
-        if (!securityContextProvider.get().hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
+        if (!canViewData()) {
             throw new WorkspaceException("You don't have permission to view data, so events can't be fetched.");
         }
         final int maxEvents = limits().getMaxEventsPerFetch();
@@ -210,6 +210,17 @@ class FetchEventsTool extends AbstractWorkspaceTool {
     private static long segmentCount(final InputStreamProvider provider) throws IOException {
         try (final SegmentInputStream in = provider.get()) {
             return in.count();
+        }
+    }
+
+    // True if the user may view data, as the Data screen needs; false if they may not, or if checking fails (failing
+    // closed, as the other tools' checks do).
+    private boolean canViewData() {
+        try {
+            return securityContextProvider.get().hasAppPermission(AppPermission.VIEW_DATA_PERMISSION);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to check the View Data permission", e);
+            return false;
         }
     }
 

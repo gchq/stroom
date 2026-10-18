@@ -1092,6 +1092,39 @@ paths:
         \ since"
       tags:
       - AI
+  /ai/v1/undoUserAction/{chatId}/{messageId}/{actionId}:
+    post:
+      operationId: undoAiUserAction
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: messageId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: actionId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiUserActionResult"
+          description: default response
+      summary: "Record that the user undid a proposed code change they applied to\
+        \ a stepping editor with a button in the chat, after checking they may still\
+        \ edit the document"
+      tags:
+      - AI
   /ai/v1/updateChatTitle/{chatId}:
     post:
       operationId: updateChatTitle
@@ -11476,6 +11509,8 @@ components:
           - GENERAL
           - TOOL_OUTPUT
           - WORKSPACE_FILE
+          - DOCUMENT
+          - TAB_SNAPSHOT
         chatId:
           type: integer
           format: int32
@@ -11484,6 +11519,10 @@ components:
           format: int64
         description:
           type: string
+        docPath:
+          type: string
+        docRef:
+          $ref: "#/components/schemas/DocRef"
         errorMessage:
           type: string
         id:
@@ -11585,6 +11624,8 @@ components:
             $ref: "#/components/schemas/AiChatMessage"
         run:
           $ref: "#/components/schemas/AiChatRun"
+        shareActiveTab:
+          type: boolean
         streamingMessages:
           type: array
           items:
@@ -11783,6 +11824,126 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AiMemory"
+    AiSteppingContext:
+      type: object
+      properties:
+        childStreamType:
+          type: string
+        elements:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSteppingElement"
+        feedName:
+          type: string
+        generalErrors:
+          type: array
+          items:
+            type: string
+        metaId:
+          type: integer
+          format: int64
+        partNo:
+          type: integer
+          format: int64
+        recordNo:
+          type: integer
+          format: int64
+        selectedElementId:
+          type: string
+        streamType:
+          type: string
+    AiSteppingElement:
+      type: object
+      properties:
+        dirty:
+          type: boolean
+        docRef:
+          $ref: "#/components/schemas/DocRef"
+        errorCount:
+          type: integer
+          format: int32
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSteppingError"
+        hasCode:
+          type: boolean
+        id:
+          type: string
+        type:
+          type: string
+        warningCount:
+          type: integer
+          format: int32
+    AiSteppingError:
+      type: object
+      properties:
+        colNo:
+          type: integer
+          format: int32
+        lineNo:
+          type: integer
+          format: int32
+        message:
+          type: string
+        pane:
+          type: string
+        severity:
+          type: string
+    AiTabSearch:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+        componentId:
+          type: string
+        live:
+          $ref: "#/components/schemas/AskStroomAiContext"
+        name:
+          type: string
+        results:
+          $ref: "#/components/schemas/AskStroomAiContext"
+        searching:
+          type: boolean
+        visibleRows:
+          type: integer
+          format: int64
+    AiTabSnapshot:
+      type: object
+      properties:
+        dirty:
+          type: boolean
+        docRef:
+          $ref: "#/components/schemas/DocRef"
+        hash:
+          type: string
+        innerTab:
+          type: string
+        note:
+          type: string
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiTabSnapshotPart"
+        searches:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiTabSearch"
+        stepping:
+          $ref: "#/components/schemas/AiSteppingContext"
+        tabLabel:
+          type: string
+    AiTabSnapshotPart:
+      type: object
+      properties:
+        mediaType:
+          type: string
+        name:
+          type: string
+        text:
+          type: string
     AiToolApproval:
       type: object
       properties:
@@ -11812,6 +11973,10 @@ components:
     AiUserActionResult:
       type: object
       properties:
+        createQueryName:
+          type: string
+        createQueryText:
+          type: string
         done:
           type: boolean
         message:
@@ -12463,6 +12628,7 @@ components:
       discriminator:
         mapping:
           dashboardTable: "#/components/schemas/DashboardTableContext"
+          documentReference: "#/components/schemas/DocumentReferenceContext"
           generalTable: "#/components/schemas/GeneralTableContext"
           queryTable: "#/components/schemas/QueryTableContext"
         propertyName: type
@@ -12490,11 +12656,15 @@ components:
           - AGENT
           - ASK
           - PLAN
+        tabSnapshot:
+          $ref: "#/components/schemas/AiTabSnapshot"
     AskStroomAiResponse:
       type: object
       properties:
         message:
           type: string
+        tabSnapshotNeeded:
+          type: boolean
     AssignTasksRequest:
       type: object
       properties:
@@ -14544,6 +14714,23 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    DocumentReference:
+      type: object
+      properties:
+        docRef:
+          $ref: "#/components/schemas/DocRef"
+        path:
+          type: string
+    DocumentReferenceContext:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AskStroomAiContext"
+      - type: object
+        properties:
+          documents:
+            type: array
+            items:
+              $ref: "#/components/schemas/DocumentReference"
     DocumentType:
       type: object
       properties:
@@ -14646,6 +14833,7 @@ components:
           - EXCLAMATION
           - EXPAND_ALL
           - EXPAND_DOWN
+          - EXPLORE
           - EXPLORER
           - EYE
           - EYE_OFF
@@ -14671,6 +14859,7 @@ components:
           - FILE_SCRIPT
           - FILTER
           - FIND
+          - FIT_WIDTH
           - FOLDER
           - FOLDER_TREE
           - FORMAT
@@ -14782,6 +14971,8 @@ components:
           - VALUE_FILTER
           - VOLUMES
           - WARNING
+          - ZOOM_IN
+          - ZOOM_OUT
         type:
           type: string
     DocumentTypes:
@@ -19541,6 +19732,7 @@ components:
           - EXCLAMATION
           - EXPAND_ALL
           - EXPAND_DOWN
+          - EXPLORE
           - EXPLORER
           - EYE
           - EYE_OFF
@@ -19566,6 +19758,7 @@ components:
           - FILE_SCRIPT
           - FILTER
           - FIND
+          - FIT_WIDTH
           - FOLDER
           - FOLDER_TREE
           - FORMAT
@@ -19677,6 +19870,8 @@ components:
           - VALUE_FILTER
           - VOLUMES
           - WARNING
+          - ZOOM_IN
+          - ZOOM_OUT
         roles:
           type: array
           items:
