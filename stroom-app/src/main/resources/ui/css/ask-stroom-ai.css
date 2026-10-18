@@ -49,6 +49,42 @@
     padding: 10px;
 }
 
+/* While a chat loads (once that has taken long enough to notice): a spinning circle in the middle of the
+   conversation, which is empty until the chat is shown, with what it is doing below it. */
+.askStroomAiViewImpl-middle--loading {
+    position: relative;
+}
+
+.askStroomAiViewImpl-middle--loading::before,
+.askStroomAiViewImpl-middle--loading::after {
+    position: absolute;
+    left: 50%;
+    pointer-events: none;
+}
+
+.askStroomAiViewImpl-middle--loading::before {
+    content: "";
+    top: calc(50% - 28px);
+    width: 28px;
+    height: 28px;
+    margin-left: -14px;
+    box-sizing: border-box;
+    border: 3px solid rgba(128, 128, 128, 0.3);
+    border-top-color: var(--blue-500, #1976d2);
+    border-radius: 50%;
+    animation: ai-stop-spin 0.9s linear infinite;
+}
+
+.askStroomAiViewImpl-middle--loading::after {
+    content: "Loading chat...";
+    top: calc(50% + 10px);
+    transform: translateX(-50%);
+    color: var(--control__text-color--disabled);
+    font-size: var(--ai-font-size--meta);
+    white-space: nowrap;
+}
+
+
 /* As rounded as the task list above it. */
 .askStroomAiViewImpl-bottom-inner {
     display: flex;
@@ -696,30 +732,12 @@
     overflow: auto;
 }
 
-/* ---- Empty state (centered input, ChatGPT-style) ---- */
-.askStroomAiViewImpl.empty .markdown-container {
-    display: none;
-}
-
-.askStroomAiViewImpl.empty .askStroomAiViewImpl-bottom {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-
-.askStroomAiViewImpl.empty .askStroomAiViewImpl-bottom-inner {
-    width: 100%;
-    max-width: 500px;
-}
-
+/* ---- Empty state: the input stays at the bottom, as in a chat with messages, with a prompt above it ---- */
 .askStroomAiViewImpl-emptyPrompt {
     display: none;
     font-size: 1.25em;
     color: var(--control__text-color--disabled);
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     text-align: center;
     user-select: none;
 }
