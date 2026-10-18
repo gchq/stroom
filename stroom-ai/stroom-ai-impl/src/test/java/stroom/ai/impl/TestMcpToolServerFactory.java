@@ -173,18 +173,22 @@ class TestMcpToolServerFactory {
     @Test
     void stroomSessionToken_withTheInternalIdentityProvider_sendsATokenStroomIssues() {
         internalIdp();
-        Mockito.when(userTokenIssuer.getAccessToken("jbloggs", "stroom-mcp", null)).thenReturn(Optional.of("issued"));
+        Mockito.when(userTokenIssuer.getAccessToken(Mockito.eq("jbloggs"), Mockito.eq("stroom-mcp"), Mockito.isNull(),
+                Mockito.any())).thenReturn(Optional.of("issued"));
 
         assertThat(headers(issuedTokenServer("https://x/mcp", "stroom-mcp", true)))
                 .containsExactly(Map.entry("Authorization", "Bearer issued"));
         // Not the session's token.
         Mockito.verifyNoInteractions(userIdentityFactory);
+        // One that lasts as long as a request may take, as the server keeps using it until it answers.
+        Mockito.verify(userTokenIssuer, Mockito.atLeastOnce())
+                .getAccessToken("jbloggs", "stroom-mcp", null, Duration.ofMinutes(2));
     }
 
     @Test
     void stroomSessionToken_withTheInternalIdentityProvider_needsAnAudienceATrustedServerAndHttps() {
         internalIdp();
-        Mockito.when(userTokenIssuer.getAccessToken(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(userTokenIssuer.getAccessToken(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Optional.of("issued"));
 
         assertThatThrownBy(() -> headers(issuedTokenServer("https://x/mcp", " ", true)))
@@ -195,7 +199,8 @@ class TestMcpToolServerFactory {
                 .hasMessageContaining("https");
         // On the same machine, http is allowed.
         assertThat(headers(issuedTokenServer("http://localhost:8000/mcp", "stroom-mcp", true))).hasSize(1);
-        Mockito.verify(userTokenIssuer, Mockito.times(2)).getAccessToken("jbloggs", "stroom-mcp", null);
+        Mockito.verify(userTokenIssuer, Mockito.times(2)).getAccessToken(Mockito.eq("jbloggs"),
+                Mockito.eq("stroom-mcp"), Mockito.isNull(), Mockito.any());
     }
 
     @Test

@@ -217,6 +217,11 @@ public class McpToolServerFactory {
                 server.getHttpClientConfiguration(),
                 () -> HttpClientConfig.builder().build());
         final Duration timeout = toDuration(httpClientConfig.getTimeout());
+        // How long a tool call may take. In a chat, one waits while the user fills in a form, so it must not time
+        // out first.
+        final Duration callTimeout = chatId != null
+                ? longer(timeout, formTimeout())
+                : timeout;
         final SSLContext sslContext = isHttps(endpoint)
                 ? buildSslContext(httpClientConfig, label)
                 : null;
@@ -224,7 +229,8 @@ public class McpToolServerFactory {
             warnIfTlsConfigured(httpClientConfig, label);
         }
         final AtomicReference<UserIdentity> userIdentityRef = new AtomicReference<>(userIdentity);
-        final Supplier<Map<String, String>> authHeaders = authHeadersSupplier(server, label, userIdentityRef);
+        final Supplier<Map<String, String>> authHeaders = authHeadersSupplier(server, label, userIdentityRef,
+                callTimeout);
         final Map<String, String> configuredHeaders = configuredHeaders(httpClientConfig);
 
         final HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport.builder(endpoint)
@@ -260,14 +266,9 @@ public class McpToolServerFactory {
                 .progressConsumer(notification -> NullSafe.consume(connectionRef.get(),
                         connection -> connection.onProgress(notification)));
         if (chatId != null) {
-            // A tool call waits while the user fills in a form, so it must not time out first.
-            final Duration formTimeout = NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getElicitationTimeout,
-                    AiConfig.DEFAULT_ELICITATION_TIMEOUT).getDuration().plus(FORM_TIMEOUT_MARGIN);
             final McpElicitations elicitations = elicitationsProvider.get();
             spec.capabilities(ClientCapabilities.builder().elicitation().build())
-                    .requestTimeout(timeout.compareTo(formTimeout) > 0
-                            ? timeout
-                            : formTimeout)
+                    .requestTimeout(callTimeout)
                     .elicitation(request -> elicitations.handle(chatId, label, request));
         }
         final McpSyncClient client = spec.build();
@@ -335,20 +336,38 @@ public class McpToolServerFactory {
      */
     Map<String, String> buildAuthHeaders(final McpToolServerConfig server, final String label) {
         return authHeadersSupplier(server, label,
-                new AtomicReference<>(securityContextProvider.get().getUserIdentity())).get();
+                new AtomicReference<>(securityContextProvider.get().getUserIdentity()),
+                toDuration(NullSafe.get(server.getHttpClientConfiguration(), HttpClientConfig::getTimeout))).get();
+    }
+
+    /// @return How long a tool call that waits for the user to fill in a form may take: the form's timeout, and a
+    /// little more, so the form expires first.
+    private Duration formTimeout() {
+        return NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getElicitationTimeout,
+                AiConfig.DEFAULT_ELICITATION_TIMEOUT).getDuration().plus(FORM_TIMEOUT_MARGIN);
+    }
+
+    private static Duration longer(final Duration one, final Duration other) {
+        return one.compareTo(other) > 0
+                ? one
+                : other;
     }
 
     /**
      * Resolves the server's credentials now, so that a missing or wrong credential is reported straight
      * away, and returns a supplier of the headers to add to each request.
+     *
+     * @param callTimeout How long a request may take, which a token Stroom issues must outlast, as the server
+     *                    keeps using the token a request came with until it answers.
      */
     private Supplier<Map<String, String>> authHeadersSupplier(final McpToolServerConfig server,
                                                               final String label,
-                                                              final AtomicReference<UserIdentity> userIdentity) {
+                                                              final AtomicReference<UserIdentity> userIdentity,
+                                                              final Duration callTimeout) {
         if (server.getAuthMode() == McpAuthMode.STROOM_SESSION_TOKEN
             && NullSafe.get(openIdConfigurationProvider.get(), OpenIdConfiguration::getIdentityProviderType)
                == IdpType.INTERNAL_IDP) {
-            return issuedTokenHeadersSupplier(server, label, userIdentity);
+            return issuedTokenHeadersSupplier(server, label, userIdentity, callTimeout);
         }
         if (server.getAuthMode() == McpAuthMode.STROOM_SESSION_TOKEN) {
             // Only an external identity provider gives Stroom a token another server can check (U3).
@@ -446,7 +465,8 @@ public class McpToolServerFactory {
     /// trusted server, over https or on the same machine.
     private Supplier<Map<String, String>> issuedTokenHeadersSupplier(final McpToolServerConfig server,
                                                                      final String label,
-                                                                     final AtomicReference<UserIdentity> userIdentity) {
+                                                                     final AtomicReference<UserIdentity> userIdentity,
+                                                                     final Duration callTimeout) {
         final String audience = NullSafe.trim(server.getAudience());
         if (audience.isEmpty()) {
             throw new RuntimeException("The tools of MCP tool server '" + label + "' are unavailable: it has no "
@@ -468,19 +488,21 @@ public class McpToolServerFactory {
                                        + "': there is no authenticated Stroom user to sign in as");
         }
         // Check a token can be had now, then get a current one for every request.
-        issuedTokenHeaders(userIdentity.get(), audience, label);
-        return () -> issuedTokenHeaders(userIdentity.get(), audience, label);
+        issuedTokenHeaders(userIdentity.get(), audience, label, callTimeout);
+        return () -> issuedTokenHeaders(userIdentity.get(), audience, label, callTimeout);
     }
 
     private Map<String, String> issuedTokenHeaders(final UserIdentity userIdentity,
                                                    final String audience,
-                                                   final String label) {
+                                                   final String label,
+                                                   final Duration callTimeout) {
         // The token the user signed in with, so the issued one is revoked with it when they sign out.
         final String signInJwt = userIdentity instanceof final HasJwt hasJwt
                 ? hasJwt.getJwt()
                 : null;
         final String token = userTokenIssuerProvider.get()
-                .getAccessToken(userIdentity.subjectId(), audience, signInJwt)
+                // Long enough for the request it is sent with, however long that may take.
+                .getAccessToken(userIdentity.subjectId(), audience, signInJwt, callTimeout)
                 .orElseThrow(() -> new RuntimeException("MCP tool server '" + label
                                                         + "': Stroom could not issue a token to sign you in"));
         return Map.of("Authorization", "Bearer " + token);
