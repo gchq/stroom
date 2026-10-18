@@ -90,6 +90,8 @@ public final class McpToolset implements AutoCloseable {
     private final Set<String> readOnlyToolNames = ConcurrentHashMap.newKeySet();
     private final Map<String, McpToolInfo> toolInfos = new ConcurrentHashMap<>();
     private final Map<String, Object> userActions = new ConcurrentHashMap<>();
+    // How many times each server had said its tools changed when they were last listed (see toolsChanged).
+    private final Map<McpServerConnection, Long> toolListVersions = new ConcurrentHashMap<>();
     // Who is told what each tool call under way has got to, by the model's id for the call.
     private final Map<String, Consumer<String>> progressListeners = new ConcurrentHashMap<>();
     // The group each tool is declared to be in, by an admin's rule or by its server.
@@ -207,10 +209,15 @@ public final class McpToolset implements AutoCloseable {
      * @return The tools and how to run each of them, in the order the servers are configured.
      */
     public Map<ToolSpecification, ToolExecutor> tools(final Set<String> reservedNames) {
+        // Listed afresh, so what is known of tools a server no longer has goes.
+        readOnlyToolNames.clear();
+        toolInfos.clear();
+        declaredGroups.clear();
         final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>();
         final Set<String> usedNames = new HashSet<>(reservedNames);
         boolean anyResources = false;
         for (final McpServerConnection connection : connections) {
+            toolListVersions.put(connection, connection.toolListVersion());
             final List<Tool> serverTools;
             try {
                 serverTools = connection.tools();
@@ -427,6 +434,19 @@ public final class McpToolset implements AutoCloseable {
             userActions.put(request.id(), structured.get(USER_ACTIONS));
         }
         return McpToolAdapter.renderResult(result);
+    }
+
+    /// @return The servers that have said their tools have changed since [#tools(Set)] last listed them, by name,
+    /// empty if none have.
+    public List<String> serversWithChangedTools() {
+        final List<String> changed = new ArrayList<>();
+        for (final McpServerConnection connection : connections) {
+            final Long listed = toolListVersions.get(connection);
+            if (listed != null && listed != connection.toolListVersion()) {
+                changed.add(connection.label());
+            }
+        }
+        return changed;
     }
 
     /// Has what a tool call has got to, as its server reports it, passed on while the call runs, until
