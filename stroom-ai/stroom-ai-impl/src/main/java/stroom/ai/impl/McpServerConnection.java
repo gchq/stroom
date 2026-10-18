@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -53,6 +54,8 @@ final class McpServerConnection implements AutoCloseable {
     private volatile List<Tool> tools;
     private volatile long toolsFetchedMs;
     private volatile long lastUsedMs;
+    // Goes up each time the server says its tools have changed, so a run can tell it has.
+    private final AtomicLong toolListVersion = new AtomicLong();
     // Who is told of the progress the server reports for each tool call under way, by the call's progress token.
     private final Map<Object, Consumer<ProgressNotification>> progressListeners = new ConcurrentHashMap<>();
 
@@ -156,6 +159,13 @@ final class McpServerConnection implements AutoCloseable {
     void invalidateTools() {
         LOGGER.debug(() -> "Tool list changed for MCP server '" + label + "'");
         tools = null;
+        toolListVersion.incrementAndGet();
+    }
+
+    /// @return How many times the server has said its tools have changed, to tell whether it has since a list
+    /// was read.
+    long toolListVersion() {
+        return toolListVersion.get();
     }
 
     private List<Tool> listTools() {

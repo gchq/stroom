@@ -237,18 +237,19 @@ class McpAgentChat {
             runManager.markReadUntrustedServer(chatId);
         }
         final Map<ToolSpecification, ToolExecutor> builtIns = new LinkedHashMap<>();
-        final Map<ToolSpecification, ToolExecutor> mcpTools = new LinkedHashMap<>();
-        if (modelDoc == null || modelDoc.isToolsEnabled()) {
+        final boolean toolsEnabled = modelDoc == null || modelDoc.isToolsEnabled();
+        if (toolsEnabled) {
             builtIns.putAll(builtInTools.toolMap());
-            addMcpTools(mcpTools, toolset, builtIns.keySet());
         }
         // In Ask and Plan modes, the model may only use the tools that cannot change anything.
-        if (Objects.requireNonNullElse(aiDao.getAgentMode(chatId), AiAgentMode.AGENT).isReadOnly()) {
+        final boolean readOnlyMode = Objects.requireNonNullElse(aiDao.getAgentMode(chatId), AiAgentMode.AGENT)
+                .isReadOnly();
+        if (readOnlyMode) {
             builtIns.keySet().removeIf(specification -> !builtInTools.isReadOnly(specification.name()));
-            mcpTools.keySet().removeIf(specification -> !toolset.isReadOnly(specification.name()));
         }
+        Map<ToolSpecification, ToolExecutor> mcpTools = mcpTools(toolset, toolsEnabled, readOnlyMode);
         // A large set of MCP tools is offered as groups the model turns on when it needs them.
-        final ToolGroups toolGroups = ToolGroups.of(mcpTools, toolset, toolGroupThreshold());
+        ToolGroups toolGroups = ToolGroups.of(mcpTools, toolset, toolGroupThreshold());
         Map<ToolSpecification, ToolExecutor> tools = offeredTools(chatId, builtIns, toolGroups, modelDoc);
         final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
         // Trusted servers' instructions on how to use their tools, for the servers whose tools are offered.
@@ -283,6 +284,15 @@ class McpAgentChat {
             // turned on.
             if (iteration > 1) {
                 conversation.addAll(steerFeed.poll());
+                // A server that has said its tools changed while the run worked has them listed again, so the
+                // model is offered what the server has now, not what it had when the run started.
+                final List<String> changed = toolset.serversWithChangedTools();
+                if (!changed.isEmpty()) {
+                    LOGGER.debug(() -> "chat: chatId=" + chatId + " the tools of " + changed + " have changed");
+                    mcpTools = mcpTools(toolset, toolsEnabled, readOnlyMode);
+                    toolGroups = ToolGroups.of(mcpTools, toolset, toolGroupThreshold());
+                    noteToolsChanged(conversation, changed);
+                }
                 tools = offeredTools(chatId, builtIns, toolGroups, modelDoc);
             }
             final List<ToolSpecification> toolSpecifications = List.copyOf(tools.keySet());
@@ -779,6 +789,34 @@ class McpAgentChat {
      * Adds the MCP tools/resources for this chat. Built-in tools win if a name is already taken, so a server
      * cannot replace one of Stroom's own tools.
      */
+    /// @return The MCP tools to offer, by the names they are offered as: none if the model has tools turned off,
+    /// and only those that cannot change anything in a read-only mode.
+    private Map<ToolSpecification, ToolExecutor> mcpTools(final McpToolset toolset,
+                                                          final boolean toolsEnabled,
+                                                          final boolean readOnlyMode) {
+        final Map<ToolSpecification, ToolExecutor> mcpTools = new LinkedHashMap<>();
+        if (toolsEnabled) {
+            // Named so as not to clash with any of the built-in tools, whether or not they are offered.
+            addMcpTools(mcpTools, toolset, builtInTools.toolMap().keySet());
+        }
+        if (readOnlyMode) {
+            mcpTools.keySet().removeIf(specification -> !toolset.isReadOnly(specification.name()));
+        }
+        return mcpTools;
+    }
+
+    /// Tells the model, with the last tool result, that servers' tools have changed, so it calls them as they are
+    /// now offered, rather than as it saw them earlier in the run.
+    static void noteToolsChanged(final List<ChatMessage> conversation, final List<String> servers) {
+        final int last = conversation.size() - 1;
+        if (last >= 0 && conversation.get(last) instanceof final ToolExecutionResultMessage result) {
+            conversation.set(last, ToolExecutionResultMessage.from(result.id(), result.toolName(),
+                    result.text() + "\n\nThe tools of MCP server(s) " + String.join(", ", servers)
+                    + " have changed: call them only as they are offered now, as their names, arguments or what "
+                    + "they do may differ from before."));
+        }
+    }
+
     private void addMcpTools(final Map<ToolSpecification, ToolExecutor> tools,
                              final McpToolset toolset,
                              final Set<ToolSpecification> builtIns) {
