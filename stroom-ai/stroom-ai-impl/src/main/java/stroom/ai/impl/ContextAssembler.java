@@ -122,6 +122,24 @@ public class ContextAssembler {
             - Changes to the user's query are theirs to make: give the revised StroomQL as a code block to copy. \
             To make a new query, use propose_query, which gives the user a button to create it.""";
 
+    /// What the model is told while the user's active tab is a pipeline's stepping screen.
+    static final String STEPPING_GUIDANCE = """
+            ## The active tab is stepping a pipeline
+            - The tab note gives the files of the selected element: its code as edited (unsaved changes \
+            included), its input and output panes as shown, and the pipeline's structure with the step's errors. \
+            Only the selected element is shared in full. If the user asks about another element, ask them to \
+            select it in the stepping screen, then ask again.
+            - To explain an output, trace it back: find the value in the output file (xpath or grep), find the \
+            template or rule in the code that writes it, then the input it reads (xpath or grep on the input \
+            file). Quote the lines you rely on, from each file, with their line numbers.
+            - Explain the cause before proposing a fix, and show the output you expect for this record.
+            - To change the selected element's code (an XSLT or text converter), use propose_code_change with \
+            the whole revised code, rather than writing the code out in your answer. It shows the user a diff \
+            with a Review and apply button; nothing changes until they apply it, and it is never saved. Make \
+            only the change asked for, keeping the rest of the code exactly as it is.
+            - Once the user has applied a change and stepped again, check the new output against what you \
+            expected.""";
+
     /// What the model is told in Agent mode. The user may have switched from Ask or Plan mode, where earlier
     /// answers will have said the model couldn't change anything; it is told that no longer applies.
     static final String AGENT_GUIDANCE = """
@@ -639,6 +657,9 @@ public class ContextAssembler {
     /// @param tab The snapshot of the user's active tab sent with the question, or null.
     /// @return The guidance for the kind of tab it is, after a blank line, or an empty string if there is none.
     static String tabGuidance(final TabSnapshots.StoredTabSnapshot tab) {
+        if (tab != null && tab.stepping() != null) {
+            return "\n\n" + STEPPING_GUIDANCE;
+        }
         final String type = NullSafe.get(tab, TabSnapshots.StoredTabSnapshot::docRef, DocRef::getType);
         return QueryDoc.TYPE.equals(type)
                 ? "\n\n" + QUERY_GUIDANCE

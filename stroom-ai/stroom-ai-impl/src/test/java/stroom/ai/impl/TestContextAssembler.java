@@ -24,6 +24,7 @@ import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiSteppingContext;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.docref.DocRef;
@@ -206,9 +207,46 @@ class TestContextAssembler {
         assertThat(withoutTab).contains("Never pass refresh unless the user has said yes");
     }
 
+    @Test
+    void testSteppingGuidanceIsGivenOnlyWhileTheSteppingTabIsActive() {
+        final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
+                Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
+                Mockito.mock(ContextUsageTracker.class), null, null, tabSnapshots);
+        final DocRef pipeline = new DocRef("Pipeline", "p", "Acme-Events");
+        final TabSnapshots.StoredTabSnapshot stepping = new TabSnapshots.StoredTabSnapshot(31, 3, pipeline, "/",
+                "Acme-Events", "Stepping", false, null, "h", 0L, List.of(), List.of(),
+                new AiSteppingContext("ACME", 12L, "Raw Events", null, 1L, 1L, null, List.of(), List.of()));
+        // The same pipeline, showing its Structure tab rather than stepping.
+        final TabSnapshots.StoredTabSnapshot structure = tab(4, pipeline);
+        Mockito.when(tabSnapshots.isEnabled()).thenReturn(true);
+        Mockito.when(tabSnapshots.read(31)).thenReturn(java.util.Optional.of(stepping));
+        Mockito.when(tabSnapshots.read(41)).thenReturn(java.util.Optional.of(structure));
+        Mockito.when(tabSnapshots.note(Mockito.anyInt(), Mockito.any())).thenReturn("[Active tab]");
+        final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
+
+        final String whileStepping = systemText(assembler, request, 31);
+        final String notStepping = systemText(assembler, request, 41);
+        final String withoutTab = systemText(assembler, request, null);
+
+        assertThat(whileStepping).contains(ContextAssembler.STEPPING_GUIDANCE)
+                .contains("propose_code_change")
+                .doesNotContain(ContextAssembler.QUERY_GUIDANCE);
+        assertThat(notStepping).doesNotContain(ContextAssembler.STEPPING_GUIDANCE);
+        assertThat(withoutTab).doesNotContain(ContextAssembler.STEPPING_GUIDANCE);
+    }
+
+    private static String systemText(final ContextAssembler assembler,
+                                     final AskStroomAiRequest request,
+                                     final Integer snapshotId) {
+        return ((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), List.of(
+                        new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, snapshotId, "q", 1, null)),
+                CompactionRecord.NONE, true).getFirst()).text();
+    }
+
     private static TabSnapshots.StoredTabSnapshot tab(final int number, final DocRef docRef) {
         return new TabSnapshots.StoredTabSnapshot(number * 10 + 1, number, docRef, "/", docRef.getName(), null,
-                false, null, "h", 0L, List.of(), List.of());
+                false, null, "h", 0L, List.of(), List.of(), null);
     }
 
     @Test

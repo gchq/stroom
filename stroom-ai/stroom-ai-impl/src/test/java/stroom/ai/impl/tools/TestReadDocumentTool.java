@@ -238,7 +238,7 @@ class TestReadDocumentTool {
         viewable.add(XSLT.getUuid());
         xsltContent("<xsl:stylesheet/>");
         Mockito.when(tabSnapshots.forLatestQuestion(1)).thenReturn(Optional.of(new TabSnapshots.StoredTabSnapshot(
-                5, 3, XSLT, "/", "Event translation", null, true, null, "h", 0L, List.of(), List.of())));
+                5, 3, XSLT, "/", "Event translation", null, true, null, "h", 0L, List.of(), List.of(), null)));
 
         assertThat(run("{\"uuid\":\"xslt-uuid\"}"))
                 .contains("This is the document as saved")

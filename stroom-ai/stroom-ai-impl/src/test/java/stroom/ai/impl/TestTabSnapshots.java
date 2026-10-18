@@ -21,6 +21,9 @@ import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiSteppingContext;
+import stroom.ai.shared.AiSteppingElement;
+import stroom.ai.shared.AiSteppingError;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AiTabSnapshotPart;
@@ -40,12 +43,15 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 class TestTabSnapshots {
 
     private static final int CHAT = 1;
     private static final DocRef XSLT = new DocRef("XSLT", "xslt-uuid", "Event translation");
     private static final DocRef QUERY = new DocRef("Query", "query-uuid", "Logons");
+    private static final DocRef PIPELINE = new DocRef("Pipeline", "pipeline-uuid", "Acme-Events");
+    private static final DocRef CONVERTER = new DocRef("TextConverter", "tc-uuid", "CSV");
 
     @TempDir
     Path tempDir;
@@ -240,6 +246,83 @@ class TestTabSnapshots {
     }
 
     @Test
+    void aSteppingTabIsKeptAsItsPanesWithItsStructureAndNoted() {
+        viewable.add(PIPELINE.getUuid());
+        final AiSteppingContext stepping = new AiSteppingContext("ACME-EVENTS", 1234L, "Raw Events", null, 1L, 5L,
+                "xsltFilter", List.of(
+                        new AiSteppingElement("dsParser", "DSParser", CONVERTER, true, false, 0, 0, null),
+                        new AiSteppingElement("xsltFilter", "XSLTFilter", XSLT, true, true, 1, 1, List.of(
+                                new AiSteppingError("ERROR", "CODE", 12, 5, "Unknown function lower-cas()"),
+                                new AiSteppingError("WARNING", "OUTPUT", null, null, "Empty output"))),
+                        new AiSteppingElement("writer", "XMLWriter", null, false, false, 0, 0, null)),
+                List.of("Pipeline ended early"));
+        final AiTabSnapshot tab = new AiTabSnapshot(PIPELINE, "Acme-Events", "Stepping", true, List.of(
+                new AiTabSnapshotPart(AiTabSnapshotPart.STEP_CODE, "application/xslt+xml", "<xsl:stylesheet/>"),
+                new AiTabSnapshotPart(AiTabSnapshotPart.STEP_OUTPUT, "application/xml", "<Events/>"),
+                new AiTabSnapshotPart(AiTabSnapshotPart.STEP_INPUT, "text/plain", "user,host")),
+                List.of(), null, stepping, "h1");
+
+        final TabSnapshots.Stored stored = tabSnapshots.store(CHAT, tab);
+
+        assertThat(files.content("/tabs/1/code.xsl")).contains("<xsl:stylesheet/>");
+        assertThat(files.content("/tabs/1/output.xml")).contains("<Events/>");
+        assertThat(files.content("/tabs/1/input.txt")).contains("user,host");
+        assertThat(files.content("/tabs/1/structure.md")).hasValueSatisfying(structure -> assertThat(structure)
+                .contains("At stream 1234 (feed ACME-EVENTS, Raw Events), part 1, record 5.")
+                .contains("| xsltFilter (selected) | XSLTFilter | XSLT 'Event translation' (uuid xslt-uuid) "
+                          + "(unsaved) | 1 | 1 |")
+                .contains("| dsParser | DSParser | TextConverter 'CSV' (uuid tc-uuid) | 0 | 0 |")
+                .contains("- ERROR in the code at line 12, column 5: Unknown function lower-cas()")
+                .contains("- WARNING in the output: Empty output")
+                .contains("- Pipeline ended early"));
+        // Each file records the pipeline, so access to it is checked again whenever the file is used.
+        assertThat(files.source("/tabs/1/code.xsl")).contains(PIPELINE.getUuid());
+
+        final StoredTabSnapshot snapshot = tabSnapshots.read(stored.snapshotId()).orElseThrow();
+        assertThat(snapshot.stepping()).isEqualTo(stepping);
+        assertThat(tabSnapshots.part(CHAT, snapshot, AiTabSnapshotPart.STEP_CODE))
+                .hasValueSatisfying(part -> assertThat(part.text()).isEqualTo("<xsl:stylesheet/>"));
+        assertThat(tabSnapshots.note(CHAT, snapshot))
+                .contains("The user is stepping the pipeline, at stream 1234 (feed ACME-EVENTS, Raw Events), "
+                          + "part 1, record 5.")
+                .contains("Selected element: 'xsltFilter' (XSLTFilter, XSLT 'Event translation' (uuid xslt-uuid), "
+                          + "unsaved changes), with 1 error(s) and 1 warning(s).")
+                .contains("Its code, as edited: /tabs/1/code.xsl.")
+                .contains("Its input pane, as shown: /tabs/1/input.txt.")
+                .contains("Its output pane, as shown: /tabs/1/output.xml.")
+                .contains("error counts and the selected element's messages: /tabs/1/structure.md.");
+    }
+
+    @Test
+    void aSteppingTabsPanesAreCutToTheLimitCodeLast() {
+        viewable.add(PIPELINE.getUuid());
+        final AiSteppingContext stepping = new AiSteppingContext(null, null, null, null, null, null, null,
+                List.of(), List.of());
+        final String structure = SteppingDescriptions.structure(PIPELINE.getName(), stepping);
+        // Room for the structure and the code, but not the input.
+        config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, true, (long) structure.length() + 20);
+        final AiTabSnapshot tab = new AiTabSnapshot(PIPELINE, "Acme-Events", "Stepping", false, List.of(
+                new AiTabSnapshotPart(AiTabSnapshotPart.STEP_CODE, "application/xml", "<code/>"),
+                new AiTabSnapshotPart(AiTabSnapshotPart.STEP_INPUT, "application/xml", "<input>" + "x".repeat(100)
+                                                                                       + "</input>")),
+                List.of(), null, stepping, "h1");
+
+        final StoredTabSnapshot snapshot = tabSnapshots.read(tabSnapshots.store(CHAT, tab).snapshotId())
+                .orElseThrow();
+
+        assertThat(snapshot.parts()).extracting(TabSnapshots.StoredPart::name, TabSnapshots.StoredPart::cut)
+                .containsExactly(
+                        tuple(TabSnapshots.STEP_STRUCTURE, false),
+                        tuple(AiTabSnapshotPart.STEP_CODE, false),
+                        tuple(AiTabSnapshotPart.STEP_INPUT, true));
+        assertThat(files.content("/tabs/1/code.xml")).contains("<code/>");
+        assertThat(tabSnapshots.note(CHAT, snapshot)).contains("/tabs/1/input.xml was cut short")
+                .contains("no stream selected yet")
+                .contains("The source is selected");
+    }
+
+    @Test
     void fileNamesFollowTheDocumentType() {
         final Set<String> used = new HashSet<>();
         assertThat(TabSnapshots.fileName("XSLT", AiTabSnapshotPart.DATA, used)).isEqualTo("code.xsl");
@@ -247,8 +330,16 @@ class TestTabSnapshots {
         assertThat(TabSnapshots.fileName("Dictionary", AiTabSnapshotPart.DATA, used)).isEqualTo("words.txt");
         assertThat(TabSnapshots.fileName("Query", AiTabSnapshotPart.QUERY, used)).isEqualTo("query.sql");
         assertThat(TabSnapshots.fileName("Feed", "../odd name", used)).isEqualTo("___odd_name.txt");
+        assertThat(TabSnapshots.fileName("Pipeline", AiTabSnapshotPart.STEP_CODE, "application/xslt+xml", used))
+                .isEqualTo("code-2.xsl");
+        assertThat(TabSnapshots.fileName("Pipeline", AiTabSnapshotPart.STEP_CODE, "application/xml", used))
+                .isEqualTo("code-2.xml");
+        assertThat(TabSnapshots.fileName("Pipeline", AiTabSnapshotPart.STEP_INPUT, "application/xml", used))
+                .isEqualTo("input.xml");
+        assertThat(TabSnapshots.fileName("Pipeline", AiTabSnapshotPart.STEP_OUTPUT, "text/plain", used))
+                .isEqualTo("output.txt");
         // A name already used gets a number.
-        assertThat(TabSnapshots.fileName("XSLT", AiTabSnapshotPart.DATA, used)).isEqualTo("code-2.xsl");
+        assertThat(TabSnapshots.fileName("XSLT", AiTabSnapshotPart.DATA, used)).isEqualTo("code-3.xsl");
     }
 
     @Test

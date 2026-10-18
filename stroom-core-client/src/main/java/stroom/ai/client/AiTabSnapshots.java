@@ -16,6 +16,9 @@
 
 package stroom.ai.client;
 
+import stroom.ai.shared.AiSteppingContext;
+import stroom.ai.shared.AiSteppingElement;
+import stroom.ai.shared.AiSteppingError;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AiTabSnapshotPart;
@@ -80,8 +83,23 @@ public final class AiTabSnapshots {
                                        final List<AiTabSnapshotPart> parts,
                                        final List<AiTabSearch> searches,
                                        final String note) {
+        return create(docRef, tabLabel, innerTab, dirty, parts, searches, note, null);
+    }
+
+    /// Makes a snapshot with its hash, e.g. of a pipeline's stepping screen.
+    ///
+    /// @param stepping What a pipeline's stepping screen shows, or null if the tab isn't stepping.
+    /// @return The snapshot.
+    public static AiTabSnapshot create(final DocRef docRef,
+                                       final String tabLabel,
+                                       final String innerTab,
+                                       final boolean dirty,
+                                       final List<AiTabSnapshotPart> parts,
+                                       final List<AiTabSearch> searches,
+                                       final String note,
+                                       final AiSteppingContext stepping) {
         final AiTabSnapshot snapshot = new AiTabSnapshot(docRef, tabLabel, innerTab, dirty, parts, searches, note,
-                null);
+                stepping, null);
         return snapshot.withHash(hash(snapshot));
     }
 
@@ -113,7 +131,45 @@ public final class AiTabSnapshots {
             add(sb, fingerprint(search.getResults()));
             add(sb, fingerprint(search.getLive()));
         }
+        if (snapshot.getStepping() != null) {
+            add(sb, "stepping");
+            add(sb, fingerprint(snapshot.getStepping()));
+        }
         return fnv1a(sb.toString());
+    }
+
+    /// @param stepping What a pipeline's stepping screen shows, or null.
+    /// @return All of it, so that any change to where the step is, the elements or their errors changes the hash.
+    static String fingerprint(final AiSteppingContext stepping) {
+        if (stepping == null) {
+            return null;
+        }
+        final StringBuilder sb = new StringBuilder();
+        add(sb, stepping.getFeedName());
+        add(sb, String.valueOf(stepping.getMetaId()));
+        add(sb, stepping.getStreamType());
+        add(sb, stepping.getChildStreamType());
+        add(sb, String.valueOf(stepping.getPartNo()));
+        add(sb, String.valueOf(stepping.getRecordNo()));
+        add(sb, stepping.getSelectedElementId());
+        for (final AiSteppingElement element : stepping.getElements()) {
+            add(sb, "element");
+            add(sb, element.getId());
+            add(sb, element.getType());
+            add(sb, NullSafe.get(element.getDocRef(), DocRef::getUuid));
+            add(sb, element.isHasCode() + "," + element.isDirty() + "," + element.getErrorCount() + ","
+                    + element.getWarningCount());
+            for (final AiSteppingError error : element.getErrors()) {
+                add(sb, error.getSeverity());
+                add(sb, error.getPane());
+                add(sb, error.getLineNo() + ":" + error.getColNo());
+                add(sb, error.getMessage());
+            }
+        }
+        for (final String error : stepping.getGeneralErrors()) {
+            add(sb, error);
+        }
+        return sb.toString();
     }
 
     /// @param context A search request behind a table, or null.

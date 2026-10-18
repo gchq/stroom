@@ -25,6 +25,8 @@ import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiSteppingContext;
+import stroom.ai.shared.AiSteppingElement;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AiTabSnapshotPart;
@@ -70,6 +72,10 @@ public class TabSnapshots {
     static final String SNAPSHOT_FILE = "snapshot.json";
     /// The search requests behind the tables of results a snapshot's tab shows, in its folder.
     static final String SEARCHES_FILE = "searches.json";
+    /// The description of a stepping tab's pipeline, step and errors, in its folder.
+    static final String STRUCTURE_FILE = "structure.md";
+    /// The name of a stepping tab's structure part, as kept.
+    static final String STEP_STRUCTURE = "stepStructure";
     /// Parts no longer than this are previewed in the note the model is given.
     static final int SMALL_PART_CHARS = 2_000;
     /// The most lines, and characters, of a small part's preview.
@@ -203,6 +209,18 @@ public class TabSnapshots {
 
     /// @param chatId   The chat.
     /// @param snapshot A snapshot.
+    /// @param part     The name of one of its parts, e.g. [AiTabSnapshotPart#STEP_CODE].
+    /// @return The part's text as kept, if the snapshot has the part and its file may still be used.
+    public Optional<UnsavedPart> part(final int chatId, final StoredTabSnapshot snapshot, final String part) {
+        return NullSafe.list(snapshot.parts()).stream()
+                .filter(stored -> Objects.equals(stored.name(), part))
+                .findFirst()
+                .flatMap(stored -> readPart(chatId, stored)
+                        .map(text -> new UnsavedPart(text, stored.cut(), stored.path())));
+    }
+
+    /// @param chatId   The chat.
+    /// @param snapshot A snapshot.
     /// @return The note the model is given about it with the question it was sent with: what the tab shows, its
     /// files and their sizes, short previews of small parts, and the tables of results it shows. If the user can no
     /// longer view the document, it says only that the tab is no longer available.
@@ -256,6 +274,9 @@ public class TabSnapshots {
         if (NullSafe.isNonBlankString(snapshot.note())) {
             sb.append(' ').append(snapshot.note().strip());
         }
+        if (snapshot.stepping() != null) {
+            appendSteppingNote(sb, snapshot);
+        }
         final List<AiTabSearch> searches = NullSafe.list(snapshot.searches());
         if (!searches.isEmpty()) {
             sb.append("\nTables of results shown:");
@@ -293,6 +314,37 @@ public class TabSnapshots {
         return sb.toString();
     }
 
+    // What the model needs to find its way around a stepping tab's files.
+    private static void appendSteppingNote(final StringBuilder sb, final StoredTabSnapshot snapshot) {
+        final AiSteppingContext stepping = snapshot.stepping();
+        sb.append("\nThe user is stepping the pipeline, at ").append(SteppingDescriptions.location(stepping))
+                .append('.');
+        final AiSteppingElement selected = stepping.getSelectedElement();
+        if (selected == null) {
+            sb.append(" The source is selected, so no element's panes are shared.");
+        } else {
+            sb.append(" Selected element: ").append(SteppingDescriptions.element(selected)).append(", with ")
+                    .append(selected.getErrorCount()).append(" error(s) and ").append(selected.getWarningCount())
+                    .append(" warning(s).");
+            appendPartPath(sb, snapshot, AiTabSnapshotPart.STEP_CODE, " Its code, as edited: ");
+            appendPartPath(sb, snapshot, AiTabSnapshotPart.STEP_INPUT, " Its input pane, as shown: ");
+            appendPartPath(sb, snapshot, AiTabSnapshotPart.STEP_OUTPUT, " Its output pane, as shown: ");
+        }
+        appendPartPath(sb, snapshot, STEP_STRUCTURE, " The pipeline's elements, the documents they use, their "
+                                                     + "error counts and the selected element's messages: ");
+        sb.append(" Only the selected element is shared in full.");
+    }
+
+    private static void appendPartPath(final StringBuilder sb,
+                                       final StoredTabSnapshot snapshot,
+                                       final String partName,
+                                       final String prefix) {
+        NullSafe.list(snapshot.parts()).stream()
+                .filter(part -> partName.equals(part.name()))
+                .findFirst()
+                .ifPresent(part -> sb.append(prefix).append(part.path()).append('.'));
+    }
+
     /// @param snapshot A snapshot.
     /// @return The workspace folder holding its files, e.g. `/tabs/7/`.
     static String folder(final StoredTabSnapshot snapshot) {
@@ -323,6 +375,20 @@ public class TabSnapshots {
     /// @return The file name to keep a part as, e.g. `code.xsl` for an XSLT's code or `query.sql` for a query's
     /// StroomQL.
     static String fileName(final String docType, final String partName, final Set<String> used) {
+        return fileName(docType, partName, null, used);
+    }
+
+    /// @param docType   The type of the document shown.
+    /// @param partName  The part's name.
+    /// @param mediaType The kind of text the part holds, or null if not known.
+    /// @param used      The file names already used in the snapshot's folder.
+    /// @return The file name to keep a part as, e.g. `code.xsl` for an XSLT's code, `query.sql` for a query's
+    /// StroomQL, or `input.xml` for a stepping element's input pane.
+    static String fileName(final String docType,
+                           final String partName,
+                           final String mediaType,
+                           final Set<String> used) {
+        final boolean xml = NullSafe.string(mediaType).contains("xml");
         final String base = switch (NullSafe.string(partName)) {
             case AiTabSnapshotPart.DATA -> switch (NullSafe.string(docType)) {
                 case "XSLT" -> "code.xsl";
@@ -337,6 +403,18 @@ public class TabSnapshots {
             case AiTabSnapshotPart.QUERY -> "query.sql";
             case AiTabSnapshotPart.IMPORTS -> "imports.txt";
             case AiTabSnapshotPart.DASHBOARD -> "dashboard.md";
+            case AiTabSnapshotPart.STEP_INPUT -> xml
+                    ? "input.xml"
+                    : "input.txt";
+            case AiTabSnapshotPart.STEP_OUTPUT -> xml
+                    ? "output.xml"
+                    : "output.txt";
+            case AiTabSnapshotPart.STEP_CODE -> NullSafe.string(mediaType).contains("xslt")
+                    ? "code.xsl"
+                    : xml
+                            ? "code.xml"
+                            : "code.txt";
+            case STEP_STRUCTURE -> STRUCTURE_FILE;
             default -> safeName(partName) + ".txt";
         };
         String name = base;
@@ -407,13 +485,20 @@ public class TabSnapshots {
         final int number = nextNumber(chatId);
         final String folder = "/tabs/" + number + "/";
         final String sourceUuid = docRef.getUuid();
-        long budget = NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getMaxTabSnapshotBytes,
-                AiConfig.DEFAULT_MAX_TAB_SNAPSHOT_BYTES);
         final Set<String> used = new HashSet<>();
         used.add(SNAPSHOT_FILE);
         used.add(SEARCHES_FILE);
+        final List<AiTabSnapshotPart> given = new ArrayList<>();
+        if (snapshot.getStepping() != null) {
+            // First, as it is small and says what the other parts are.
+            given.add(new AiTabSnapshotPart(STEP_STRUCTURE, "text/markdown",
+                    SteppingDescriptions.structure(docRef.getName(), snapshot.getStepping())));
+        }
+        given.addAll(NullSafe.list(snapshot.getParts()));
         final List<StoredPart> parts = new ArrayList<>();
-        for (final AiTabSnapshotPart part : NullSafe.list(snapshot.getParts())) {
+        long budget = NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getMaxTabSnapshotBytes,
+                AiConfig.DEFAULT_MAX_TAB_SNAPSHOT_BYTES);
+        for (final AiTabSnapshotPart part : given) {
             final String text = NullSafe.string(NullSafe.get(part, AiTabSnapshotPart::getText));
             if (part == null || text.isEmpty()) {
                 continue;
@@ -422,7 +507,7 @@ public class TabSnapshots {
             final String kept = cutToBytes(text, Math.max(0, budget));
             final long keptBytes = utf8Bytes(kept);
             budget -= keptBytes;
-            final String path = folder + fileName(docRef.getType(), part.getName(), used);
+            final String path = folder + fileName(docRef.getType(), part.getName(), part.getMediaType(), used);
             workspace.writeTabFile(chatId, WorkspacePath.parse(path), kept, sourceUuid);
             parts.add(new StoredPart(part.getName(), part.getMediaType(), path, keptBytes, originalBytes,
                     keptBytes < originalBytes));
@@ -434,7 +519,7 @@ public class TabSnapshots {
         }
         final StoredTabSnapshot stored = new StoredTabSnapshot(0, number, docRef, documentAccess.path(docRef),
                 snapshot.getTabLabel(), snapshot.getInnerTab(), snapshot.isDirty(), snapshot.getNote(),
-                snapshot.getHash(), System.currentTimeMillis(), parts, searches);
+                snapshot.getHash(), System.currentTimeMillis(), parts, searches, snapshot.getStepping());
         final int fileId = workspace.writeTabFile(chatId, WorkspacePath.parse(folder + SNAPSHOT_FILE),
                 JsonUtil.writeValueAsString(stored), sourceUuid);
         LOGGER.debug(() -> "Kept tab snapshot " + folder + " of " + docRef + " in chatId=" + chatId);
@@ -550,6 +635,7 @@ public class TabSnapshots {
     /// @param takenAtMs When it was kept.
     /// @param parts     Its parts.
     /// @param searches  The search requests behind the tables of results it showed.
+    /// @param stepping  What the pipeline's stepping screen showed, if the tab was stepping, or null.
     public record StoredTabSnapshot(int id,
                                     int number,
                                     DocRef docRef,
@@ -561,12 +647,13 @@ public class TabSnapshots {
                                     String hash,
                                     long takenAtMs,
                                     List<StoredPart> parts,
-                                    List<AiTabSearch> searches) {
+                                    List<AiTabSearch> searches,
+                                    AiSteppingContext stepping) {
 
         /// @return This snapshot, with the id of its record's file.
         public StoredTabSnapshot withId(final int id) {
             return new StoredTabSnapshot(id, number, docRef, docPath, tabLabel, innerTab, dirty, note, hash,
-                    takenAtMs, parts, searches);
+                    takenAtMs, parts, searches, stepping);
         }
     }
 

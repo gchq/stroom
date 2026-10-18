@@ -44,6 +44,7 @@ class TestUserActionsUi {
         assertThat(UserActionsUi.buttonText(UserActionsUi.DISABLE_PROCESSOR_FILTER)).isEqualTo("Disable");
         assertThat(UserActionsUi.buttonText(UserActionsUi.OPEN_DOCUMENT)).isEqualTo("Open");
         assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_QUERY)).isEqualTo("Create query…");
+        assertThat(UserActionsUi.buttonText(UserActionsUi.APPLY_CODE_CHANGE)).isEqualTo("Review and apply…");
         assertThat(UserActionsUi.buttonText("something_else")).isEqualTo("Do it");
     }
 
@@ -52,5 +53,15 @@ class TestUserActionsUi {
         assertThat(UserActionsUi.showsCode(UserActionsUi.CREATE_QUERY)).isTrue();
         assertThat(UserActionsUi.showsCode(UserActionsUi.ELASTICSEARCH_REQUEST)).isTrue();
         assertThat(UserActionsUi.showsCode(UserActionsUi.OPEN_DOCUMENT)).isFalse();
+    }
+
+    @Test
+    void onlyAnAppliedCodeChangeOffersUndoApply() {
+        assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_CODE_CHANGE, "DONE")).isTrue();
+        assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_CODE_CHANGE, "PENDING")).isFalse();
+        assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.CREATE_QUERY, "DONE")).isFalse();
+        // A proposed change is shown as a diff, not as code to copy.
+        assertThat(UserActionsUi.showsCode(UserActionsUi.APPLY_CODE_CHANGE)).isFalse();
+        assertThat(UserActionsUi.UNDO_WITHDRAWN).contains("Ctrl+Z");
     }
 }

@@ -20,6 +20,7 @@ import stroom.editor.client.event.HasFormatHandlers;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.util.shared.TextRange;
+import stroom.util.shared.diff.LineReplacement;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
@@ -80,4 +81,28 @@ public interface EditorView
     void setControlsVisible(boolean visible);
 
     void setOptionsToDefaultAvailability();
+
+    /// Replaces ranges of whole lines while keeping the undo history and the user's cursor and
+    /// selection. See [stroom.editor.client.view.Editor#applyLineReplacements(List)].
+    ///
+    /// @param replacements The line replacements, with line numbers relative to the current text.
+    /// @return False if the editor has not started yet, so nothing was changed.
+    boolean applyLineReplacements(List<LineReplacement> replacements);
+
+    /// @param listener Called whenever the vertical scroll position changes.
+    void addScrollListener(Runnable listener);
+
+    /// @return The vertical scroll position in pixels, or -1 if the editor isn't attached.
+    int getScrollTop();
+
+    /// @param scrollTop The vertical scroll position in pixels.
+    void setScrollTop(int scrollTop);
+
+    /// @param labels The gutter label for each row in place of line numbers, or null for line numbers.
+    void setLineNumberLabels(List<String> labels);
+
+    /// Moves the cursor to a line, scrolling it into view.
+    ///
+    /// @param lineNo The one based line number.
+    void gotoLine(int lineNo);
 }

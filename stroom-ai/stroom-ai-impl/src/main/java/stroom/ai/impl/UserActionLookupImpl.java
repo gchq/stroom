@@ -109,6 +109,19 @@ public class UserActionLookupImpl implements UserActionLookup {
     }
 
     @Override
+    public boolean canEdit(final DocRef docRef) {
+        if (docRef == null || docRef.getUuid() == null) {
+            return false;
+        }
+        try {
+            return securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to check Edit on " + docRef, e);
+            return false;
+        }
+    }
+
+    @Override
     public Optional<DocRef> usableDataSource(final String query) {
         final QueryService queryService = queryServiceProvider.get();
         if (queryService == null || query == null || query.isBlank()) {

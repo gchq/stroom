@@ -106,7 +106,9 @@ class TestAgentModeTools {
             Map.entry("describe_data_source", false),
             Map.entry("validate_stroomql", false),
             // Only offers the user a button: the user creates the query.
-            Map.entry("propose_query", false)));
+            Map.entry("propose_query", false),
+            // Only offers the user a button: the user applies the change to the editor, unsaved.
+            Map.entry("propose_code_change", false)));
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);

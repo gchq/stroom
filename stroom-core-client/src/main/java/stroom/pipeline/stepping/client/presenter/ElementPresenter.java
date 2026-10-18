@@ -28,6 +28,7 @@ import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.HasChangeHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
+import stroom.editor.client.view.Marker;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -45,6 +46,7 @@ import stroom.util.shared.Location;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
+import stroom.util.shared.diff.LineReplacement;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -57,7 +59,10 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
+import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
@@ -71,6 +76,7 @@ public class ElementPresenter
         implements HasChangeHandlers, ClassificationUiHandlers {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
+    private static final String APPLIED_CHANGE_MARKER_CLASS = "codeDiff-applied";
 
     private final Provider<ClassificationWrapperView> classificationWrapperViewProvider;
     private final Provider<EditorPresenter> editorProvider;
@@ -101,6 +107,8 @@ public class ElementPresenter
     private ClassificationWrapperView outputView;
     private View logView;
     private Consumer<StepType> stepRequestHandler = null;
+    private boolean readOnly;
+    private CodeChangeApplier codeChangeApplier;
 
     @Inject
     public ElementPresenter(final EventBus eventBus,
@@ -175,6 +183,7 @@ public class ElementPresenter
     }
 
     public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
         codePresenter.setReadOnly(readOnly);
     }
 
@@ -295,6 +304,15 @@ public class ElementPresenter
     }
 
     private void onCodeChange() {
+        // An edit by the user ends the highlighting of an applied change, but the edits made while
+        // applying one must not.
+        if (codeChangeApplier != null) {
+            codeChangeApplier.onEditorChange();
+        }
+        fireCodeChanged();
+    }
+
+    private void fireCodeChanged() {
         refreshDirty();
         ChangeEvent.fire(ElementPresenter.this);
     }
@@ -349,6 +367,166 @@ public class ElementPresenter
                 }
             }, KeyDownEvent.getType()));
         }
+    }
+
+    /// @return The text of the input pane (bottom left) as displayed, i.e. formatted if the step
+    /// formatted it, or null if this element has no input pane.
+    public String getDisplayedInput() {
+        return NullSafe.get(inputPresenter, EditorPresenter::getText);
+    }
+
+    /// @return The text of the output pane (right) as displayed, i.e. formatted if the step formatted
+    /// it, or null if the output pane has not been created.
+    public String getDisplayedOutput() {
+        return NullSafe.get(outputPresenter, EditorPresenter::getText);
+    }
+
+    /// @return True if this element has code that has been loaded and can be edited, so a proposed
+    /// change can be applied to it.
+    public boolean canApplyCodeChange() {
+        return codeChangeApplier != null
+               && loaded
+               && document instanceof HasData
+               && !readOnly;
+    }
+
+    /// Applies a proposed change to the element's code in its editor, as an unsaved edit, but only if
+    /// the editor still holds the code the change was proposed against. Nothing is saved.
+    ///
+    /// @param baseCode     The code the change was proposed against. Line endings are ignored.
+    /// @param proposedCode The whole proposed code.
+    /// @return The outcome: [ApplyCodeChangeResult#CODE_CHANGED] if the editor no longer holds the base
+    /// code, otherwise as for [#applyCodeChange(String)].
+    public ApplyCodeChangeResult applyCodeChange(final String baseCode, final String proposedCode) {
+        if (!canApplyCodeChange()) {
+            return ApplyCodeChangeResult.NOT_EDITABLE;
+        }
+        return afterApply(codeChangeApplier.apply(baseCode, proposedCode));
+    }
+
+    /// Applies a proposed change to the element's code in its editor, as an unsaved edit. Nothing is
+    /// saved.
+    ///
+    /// The current code is diffed against the proposal and only the changed lines are replaced, through
+    /// the editor's selection, so the editor's undo history is kept and Ctrl+Z undoes the change. The
+    /// exact previous text (unsaved edits included) is kept for [#undoApply()], the changed lines are
+    /// highlighted until the next edit or step, and the element is marked as having unsaved changes.
+    ///
+    /// @param proposedCode The whole proposed code.
+    /// @return [ApplyCodeChangeResult#APPLIED] if the change was applied,
+    /// [ApplyCodeChangeResult#NO_CHANGE] if the proposal is the same as the current code,
+    /// [ApplyCodeChangeResult#NOT_EDITABLE] if the element has no editable code, or
+    /// [ApplyCodeChangeResult#NOT_READY] if the editor has not been shown yet.
+    public ApplyCodeChangeResult applyCodeChange(final String proposedCode) {
+        if (!canApplyCodeChange()) {
+            return ApplyCodeChangeResult.NOT_EDITABLE;
+        }
+        return afterApply(codeChangeApplier.apply(proposedCode));
+    }
+
+    /// Applies a proposed change as [#applyCodeChange(String, String)] does and, if it was applied,
+    /// re-runs the current step so the output pane shows its effect ("Apply and step"). The changed
+    /// lines stay highlighted through that step.
+    ///
+    /// @param baseCode     The code the change was proposed against. Line endings are ignored.
+    /// @param proposedCode The whole proposed code.
+    /// @return The outcome of applying the change.
+    public ApplyCodeChangeResult applyCodeChangeAndStep(final String baseCode, final String proposedCode) {
+        final ApplyCodeChangeResult result = applyCodeChange(baseCode, proposedCode);
+        if (result == ApplyCodeChangeResult.APPLIED) {
+            codeChangeApplier.keepMarkersForNextStep();
+            refreshStep();
+        }
+        return result;
+    }
+
+    /// @return True if a change has been applied and the editor still holds exactly the applied text,
+    /// so [#undoApply()] can put the previous text back. Once the user edits the text this is false,
+    /// and Ctrl+Z is the way back.
+    public boolean canUndoApply() {
+        return codeChangeApplier != null && codeChangeApplier.canUndo();
+    }
+
+    /// Puts back the exact text the editor held before the last applied change, unsaved edits
+    /// included, as long as the editor still holds the applied text. Like applying, this goes through
+    /// the editor's selection, so it can itself be undone with Ctrl+Z. Nothing is saved.
+    ///
+    /// @return True if the previous text was put back, false if it can no longer be (see
+    /// [#canUndoApply()]).
+    public boolean undoApply() {
+        if (codeChangeApplier == null || !codeChangeApplier.undo()) {
+            return false;
+        }
+        fireCodeChanged();
+        return true;
+    }
+
+    /// @return The change last applied with [#applyCodeChange(String)], or null if there isn't one or
+    /// it has been undone.
+    public AppliedCodeChange getAppliedCodeChange() {
+        return NullSafe.get(codeChangeApplier, CodeChangeApplier::getAppliedChange);
+    }
+
+    /// @return The editor mode (syntax) for this element's code.
+    public AceEditorMode getCodeMode() {
+        return getMode(element);
+    }
+
+    /// Re-runs the current step, as Ctrl+Enter in the code editor does, if stepping allows it.
+    ///
+    /// @return True if a step was requested.
+    public boolean refreshStep() {
+        if (stepRequestHandler == null) {
+            return false;
+        }
+        stepRequestHandler.accept(StepType.REFRESH);
+        return true;
+    }
+
+    /// Called before each step. Removes the highlighting of the lines changed by an applied change,
+    /// unless the step is the one started by [#applyCodeChangeAndStep(String, String)].
+    public void onBeforeStep() {
+        if (codeChangeApplier != null) {
+            codeChangeApplier.onBeforeStep();
+        }
+    }
+
+    private ApplyCodeChangeResult afterApply(final ApplyCodeChangeResult result) {
+        if (result == ApplyCodeChangeResult.APPLIED) {
+            fireCodeChanged();
+        }
+        return result;
+    }
+
+    // Lets the code change applier work on the code editor.
+    private CodeChangeApplier.CodeEditor createCodeEditorAdapter(final EditorPresenter editorPresenter) {
+        return new CodeChangeApplier.CodeEditor() {
+            @Override
+            public String getCode() {
+                return editorPresenter.getText();
+            }
+
+            @Override
+            public boolean applyLineReplacements(final List<LineReplacement> replacements) {
+                return editorPresenter.applyLineReplacements(replacements);
+            }
+
+            @Override
+            public void setChangedLineMarkers(final List<int[]> ranges) {
+                final List<Marker> markers = new ArrayList<>();
+                for (final int[] range : ranges) {
+                    // Ace skips empty ranges, so end at column 1 (a full line marker covers whole rows).
+                    markers.add(new Marker(
+                            AceRange.create(range[0], 0, range[1] - 1, 1),
+                            APPLIED_CHANGE_MARKER_CLASS,
+                            AceMarkerType.FULL_LINE,
+                            false));
+                }
+                editorPresenter.setMarkers(markers.isEmpty()
+                        ? null
+                        : markers);
+            }
+        };
     }
 
     public void setIndicators(final Indicators indicators) {
@@ -538,6 +716,7 @@ public class ElementPresenter
     private EditorPresenter getCodePresenter(final PipelineElement element) {
         if (codePresenter == null) {
             codePresenter = editorProvider.get();
+            codeChangeApplier = new CodeChangeApplier(createCodeEditorAdapter(codePresenter));
             presenterMap.put(IndicatorType.CODE, codePresenter);
             setCommonEditorOptions(codePresenter);
 

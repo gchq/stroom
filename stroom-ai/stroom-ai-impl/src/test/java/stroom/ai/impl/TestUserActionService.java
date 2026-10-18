@@ -44,6 +44,7 @@ class TestUserActionService {
     private static final int MESSAGE = 50;
     private static final String PIPELINE_UUID = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90";
     private static final DocRef PIPELINE = new DocRef("Pipeline", PIPELINE_UUID, "Acme-Events");
+    private static final DocRef XSLT = new DocRef("XSLT", "6b1d3c2e-8f4a-4b9c-a1d2-3e4f5a6b7c8d", "Event translation");
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
@@ -204,6 +205,119 @@ class TestUserActionService {
         assertThat(service.doUserAction(CHAT, MESSAGE + 1, "enable-31").getMessage()).contains("not in the chat");
     }
 
+    @Test
+    void applyingACodeChangeNeedsEditAndRecordsItWithoutSavingAnything() {
+        Mockito.when(lookup.find(XSLT)).thenReturn(Optional.of(XSLT));
+        Mockito.when(lookup.canEdit(XSLT)).thenReturn(true);
+        final String stored = storeResult(codeChange(Status.PENDING));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "code-1");
+
+        assertThat(result.isDone()).isTrue();
+        assertThat(result.getMessage()).isEqualTo("Applied, not saved");
+        final ArgumentCaptor<String> written = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiDao).compareAndSetMessageText(Mockito.eq(MESSAGE), Mockito.eq(stored), written.capture());
+        assertThat(JsonUtil.readValue(written.getValue(), ToolResultRecord.class).userActions())
+                .singleElement()
+                .satisfies(action -> {
+                    assertThat(action.status()).isEqualTo(Status.DONE);
+                    assertThat(action.outcome()).isEqualTo("Applied, not saved");
+                    // What it was proposed against is kept, for Undo apply and the card.
+                    assertThat(action.codeChange().baseCode()).isEqualTo("<a/>");
+                });
+        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(XSLT),
+                Mockito.eq(UserActionService.APPLY_COMMAND), Mockito.contains("element 'xsltFilter'"),
+                Mockito.eq("Applied a proposed change, not saved: +2 −1 lines"), Mockito.eq(true));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
+                Mockito.contains("It is not saved"));
+        // The browser applies it to the editor; nothing on the server changes the document.
+        Mockito.verifyNoInteractions(processorFilterService);
+    }
+
+    @Test
+    void aCodeChangeIsNotAppliedWithoutEdit() {
+        Mockito.when(lookup.find(XSLT)).thenReturn(Optional.of(XSLT));
+        Mockito.when(lookup.canEdit(XSLT)).thenReturn(false);
+        storeResult(codeChange(Status.PENDING));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "code-1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).contains("permission to edit XSLT 'Event translation'");
+        // The button stays, in case the user is given Edit.
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(XSLT),
+                Mockito.eq(UserActionService.APPLY_COMMAND), Mockito.anyString(), Mockito.contains("permission"),
+                Mockito.eq(false));
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
+    }
+
+    @Test
+    void aCodeChangeForADocumentTheUserCanNoLongerSeeIsNotApplied() {
+        Mockito.when(lookup.find(XSLT)).thenReturn(Optional.empty());
+        Mockito.when(lookup.canEdit(XSLT)).thenReturn(true);
+        storeResult(codeChange(Status.PENDING));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "code-1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).contains("no longer exists, or you cannot see it");
+    }
+
+    @Test
+    void undoingAnAppliedCodeChangeIsRecordedAndOffersTheChangeAgain() {
+        Mockito.when(lookup.canEdit(XSLT)).thenReturn(true);
+        final String stored = storeResult(codeChange(Status.DONE));
+
+        final AiUserActionResult result = service.undoUserAction(CHAT, MESSAGE, "code-1");
+
+        assertThat(result.isDone()).isTrue();
+        final ArgumentCaptor<String> written = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiDao).compareAndSetMessageText(Mockito.eq(MESSAGE), Mockito.eq(stored), written.capture());
+        assertThat(JsonUtil.readValue(written.getValue(), ToolResultRecord.class).userActions())
+                .singleElement()
+                .extracting(UserActionRecord::status)
+                .isEqualTo(Status.PENDING);
+        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(XSLT),
+                Mockito.eq(UserActionService.UNDO_COMMAND), Mockito.anyString(),
+                Mockito.eq("Undid an applied change: +2 −1 lines"), Mockito.eq(true));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
+                Mockito.contains("I undid the proposed change"));
+    }
+
+    @Test
+    void onlyAnAppliedCodeChangeCanBeUndone() {
+        Mockito.when(lookup.canEdit(XSLT)).thenReturn(true);
+        storeResult(codeChange(Status.PENDING));
+
+        assertThat(service.undoUserAction(CHAT, MESSAGE, "code-1").getMessage())
+                .contains("no applied change to undo");
+
+        storeResult(enable(Status.DONE, Long.MAX_VALUE));
+        assertThat(service.undoUserAction(CHAT, MESSAGE, "enable-31").isDone()).isFalse();
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
+                Mockito.anyString());
+    }
+
+    @Test
+    void undoingNeedsEditAndTheChatsOwner() {
+        Mockito.when(lookup.canEdit(XSLT)).thenReturn(false);
+        storeResult(codeChange(Status.DONE));
+
+        final AiUserActionResult result = service.undoUserAction(CHAT, MESSAGE, "code-1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).contains("Ctrl+Z");
+        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(XSLT),
+                Mockito.eq(UserActionService.UNDO_COMMAND), Mockito.anyString(), Mockito.contains("permission"),
+                Mockito.eq(false));
+
+        Mockito.doThrow(new AuthenticationException("Not your chat")).when(aiService).verifyOwnership(CHAT);
+        assertThatThrownBy(() -> service.undoUserAction(CHAT, MESSAGE, "code-1"))
+                .isInstanceOf(AuthenticationException.class);
+    }
+
     private String storeResult(final UserActionRecord action) {
         final String json = JsonUtil.writeValueAsString(new ToolResultRecord("c1", "fastmcp__create_filter", false,
                 "created", null, 7, 1, List.of(action)), false);
@@ -221,6 +335,12 @@ class TestUserActionService {
     private static UserActionRecord createQuery(final String query) {
         return new UserActionRecord("q1", UserActions.CREATE_QUERY, "Create query 'Windows users'", null, null,
                 null, null, query, List.of(), Long.MAX_VALUE, Status.PENDING, null, "Windows users");
+    }
+
+    private static UserActionRecord codeChange(final Status status) {
+        return new UserActionRecord("code-1", UserActions.APPLY_CODE_CHANGE, "Change to XSLT 'Event translation'",
+                "Lower-cases the user name.", null, null, XSLT, "<b/>\n<c/>", List.of(), Long.MAX_VALUE, status, null,
+                null, new UserActionRecord.CodeChange(PIPELINE, "xsltFilter", "<a/>", "0".repeat(64), "h", 2, 1));
     }
 
     private static ProcessorFilter filter(final boolean enabled) {
