@@ -38,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -48,8 +49,8 @@ import java.util.regex.Pattern;
 ///
 /// Tool results carry data from Stroom, so their text may have been written to mislead. So:
 ///
-/// - only five actions are kept, each with typed arguments; any other entry is dropped. create_query is only kept
-///   when one of Stroom's own tools offers it;
+/// - only six actions are kept, each with typed arguments; any other entry is dropped. create_query and
+///   apply_code_change are only kept when one of Stroom's own tools offers them;
 /// - each button's text is written by Stroom, from its own state, never from the server's `summary`;
 /// - a filter must exist, be on the pipeline named, and be disabled (to enable it) or enabled (to disable it);
 /// - an Elasticsearch request is only shown if it is one of three simple requests naming an index of the
@@ -68,6 +69,9 @@ public class UserActions {
     public static final String ELASTICSEARCH_REQUEST = "elasticsearch_request";
     /// Opens Stroom's New Query dialog with a suggested name; once created, the query is given the StroomQL.
     public static final String CREATE_QUERY = "create_query";
+    /// Opens a review of a code change the agent proposed for a stepping element, which the user can apply to the
+    /// element's editor (unsaved) and undo.
+    public static final String APPLY_CODE_CHANGE = "apply_code_change";
 
     /// How long a button works for, as for approvals and forms.
     static final Duration EXPIRY = Duration.ofHours(24);
@@ -80,10 +84,16 @@ public class UserActions {
     static final int MAX_DETAILS_CHARS = 500;
     static final int MAX_REQUEST_CHARS = 100_000;
     static final int MAX_NAME_CHARS = 200;
+    /// The most characters of code a proposed code change may have, on either side.
+    public static final int MAX_CODE_CHARS = 500_000;
     // The most of a request Stroom will not show that is logged.
     private static final int MAX_LOGGED_CHARS = 200;
 
     private static final Pattern ID_PATTERN = Pattern.compile("[A-Za-z0-9_.:-]{1,64}");
+    // A pipeline element's id, as the pipeline editor allows.
+    private static final Pattern ELEMENT_ID_PATTERN = Pattern.compile("[^\\p{Cntrl}]{1,200}");
+    // A SHA-256, as hex.
+    private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-fA-F]{64}");
     private static final Pattern DOC_TYPE_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9]{0,63}");
     private static final Pattern UUID_PATTERN = Pattern.compile(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
@@ -172,6 +182,9 @@ public class UserActions {
                 case CREATE_QUERY -> builtIn.contains(map)
                         ? createQuery(id, map, expiresMs)
                         : Optional.empty();
+                case APPLY_CODE_CHANGE -> builtIn.contains(map)
+                        ? codeChange(id, map, expiresMs)
+                        : Optional.empty();
                 default -> Optional.empty();
             };
             if (record.isPresent()) {
@@ -202,7 +215,7 @@ public class UserActions {
             }
             result.add(new UserActionRecord(record.id(), record.action(), record.label(), record.details(),
                     record.warning(), record.filterId(), record.doc(), record.request(), List.copyOf(after),
-                    record.expiresMs(), Status.PENDING, null, record.name()));
+                    record.expiresMs(), Status.PENDING, null, record.name(), record.codeChange()));
         }
         return List.copyOf(result);
     }
@@ -297,6 +310,54 @@ public class UserActions {
                         ? null
                         : truncate(description, MAX_DETAILS_CHARS),
                 null, null, dataSource, query, List.of(), expiresMs, Status.PENDING, null, name));
+    }
+
+    /// A button that opens a review of a change to a stepping element's code, for an element whose document exists
+    /// and the user may view. Applying it needs Edit, which is checked when the user applies it.
+    private Optional<UserActionRecord> codeChange(final String id, final Map<?, ?> map, final long expiresMs) {
+        final DocRef named = docRef(map.get("doc"));
+        final DocRef pipelineNamed = docRef(map.get("pipeline"));
+        final String element = string(map.get("element"));
+        final String proposed = string(map.get("request"));
+        final String base = string(map.get("base"));
+        final String baseHash = string(map.get("base_hash"));
+        if (named == null || pipelineNamed == null || !PipelineDoc.TYPE.equals(pipelineNamed.getType())
+            || element == null || !ELEMENT_ID_PATTERN.matcher(element).matches()
+            || proposed == null || proposed.isEmpty() || proposed.length() > MAX_CODE_CHARS
+            || base == null || base.length() > MAX_CODE_CHARS
+            || baseHash == null || !HASH_PATTERN.matcher(baseHash).matches()) {
+            return Optional.empty();
+        }
+        final DocRef doc = lookup.find(named).orElse(null);
+        final DocRef pipeline = lookup.find(pipelineNamed).orElse(null);
+        if (doc == null || pipeline == null) {
+            return Optional.empty();
+        }
+        final Integer added = count(map.get("added"));
+        final Integer removed = count(map.get("removed"));
+        final String summary = NullSafe.get(string(map.get("summary")), String::strip);
+        final String lines = "+" + Objects.requireNonNullElse(added, 0) + " "
+                             + "−" + Objects.requireNonNullElse(removed, 0) + " lines";
+        final String label = "Change to " + doc.getType() + " '" + doc.getName() + "' (element '" + element
+                             + "' of pipeline '" + pipeline.getName() + "'): " + lines;
+        return Optional.of(new UserActionRecord(id, APPLY_CODE_CHANGE, label,
+                NullSafe.isBlankString(summary)
+                        ? null
+                        : truncate(summary, MAX_DETAILS_CHARS),
+                null, null, doc, proposed, List.of(), expiresMs, Status.PENDING, null, null,
+                new UserActionRecord.CodeChange(pipeline, element, base, baseHash.toLowerCase(Locale.ROOT),
+                        string(map.get("snapshot_hash")), Objects.requireNonNullElse(added, 0),
+                        Objects.requireNonNullElse(removed, 0))));
+    }
+
+    private static Integer count(final Object value) {
+        if (value instanceof final Integer i && i >= 0) {
+            return i;
+        }
+        if (value instanceof final Long l && l >= 0 && l <= Integer.MAX_VALUE) {
+            return l.intValue();
+        }
+        return null;
     }
 
     private static boolean hasControlCharacters(final String text) {

@@ -253,6 +253,16 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
                                     @PathParam("actionId") String actionId);
 
     @POST
+    @Path("/undoUserAction/{chatId}/{messageId}/{actionId}")
+    @Operation(
+            summary = "Record that the user undid a proposed code change they applied to a stepping editor with a "
+                      + "button in the chat, after checking they may still edit the document",
+            operationId = "undoAiUserAction")
+    AiUserActionResult undoUserAction(@PathParam("chatId") int chatId,
+                                      @PathParam("messageId") int messageId,
+                                      @PathParam("actionId") String actionId);
+
+    @POST
     @Path("/resetAllUsersConfig")
     @Operation(
             summary = "Reset every user's Ask Stroom AI settings (model, prompts, dock position and so on) to the " +

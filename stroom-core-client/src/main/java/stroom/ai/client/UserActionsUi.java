@@ -26,6 +26,16 @@ final class UserActionsUi {
     static final String ELASTICSEARCH_REQUEST = "elasticsearch_request";
     /// A StroomQL query the agent proposed, which the button opens Stroom's New Query dialog to create.
     static final String CREATE_QUERY = "create_query";
+    /// A change to a stepping element's code the agent proposed, which the button opens a review of, from which
+    /// the user can apply it to the element's editor (unsaved).
+    static final String APPLY_CODE_CHANGE = "apply_code_change";
+    /// What an applied code change's card says, as the server writes it.
+    static final String APPLIED = "Applied, not saved";
+    /// The text of the button that undoes an applied code change.
+    static final String UNDO_APPLY = "Undo apply";
+    /// What an applied code change's card says once its editor has been edited, so Undo apply would lose edits.
+    static final String UNDO_WITHDRAWN = "The code has been edited since the change was applied, so Undo apply "
+                                         + "would lose those edits. Use Ctrl+Z in the editor to undo it.";
 
     private UserActionsUi() {
         // Static methods only.
@@ -59,6 +69,13 @@ final class UserActionsUi {
     }
 
     /// @param action An action.
+    /// @param status Its status, as stored.
+    /// @return True if it is a code change that has been applied, so its card offers Undo apply.
+    static boolean isAppliedCodeChange(final String action, final String status) {
+        return APPLY_CODE_CHANGE.equals(action) && "DONE".equals(status);
+    }
+
+    /// @param action An action.
     /// @return What its button says.
     static String buttonText(final String action) {
         if (ENABLE_PROCESSOR_FILTER.equals(action)) {
@@ -69,6 +86,8 @@ final class UserActionsUi {
             return "Open";
         } else if (CREATE_QUERY.equals(action)) {
             return "Create query…";
+        } else if (APPLY_CODE_CHANGE.equals(action)) {
+            return "Review and apply…";
         }
         return "Do it";
     }

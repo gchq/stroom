@@ -72,6 +72,7 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
+import stroom.entity.client.event.DocTabSelectedEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
@@ -83,6 +84,8 @@ import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.stepping.client.event.SteppingCodeChangeEvent;
+import stroom.pipeline.stepping.client.presenter.CodeDiffCardRenderer;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.shared.QueryDoc;
 import stroom.security.shared.DocumentPermission;
@@ -92,6 +95,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.diff.LineDiff;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -204,6 +208,8 @@ public class AskStroomAiPresenter
     private static final String MARK_ALL_READ_ATTRIBUTE = "data-mark-all-read";
     private static final String DELETE_ALL_CHATS_ATTRIBUTE = "data-delete-all-chats";
     private static final String USER_ACTION_ID_ATTRIBUTE = "data-user-action-id";
+    // On an applied code change's Undo apply button: the tool result message the action is in.
+    private static final String USER_ACTION_UNDO_ATTRIBUTE = "data-user-action-undo";
     // A tool result's buttons are shown in a card of their own, outside the turn's activity.
     private static final String USER_ACTIONS_ID_SUFFIX = "-actions";
     private static final SafeHtml PRE = SafeHtmlUtils.fromSafeConstant("pre");
@@ -483,6 +489,14 @@ public class AskStroomAiPresenter
                         return;
                     }
 
+                    // Undoing a proposed code change the user applied.
+                    final String undoMessage = button.getAttribute(USER_ACTION_UNDO_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(undoMessage)) {
+                        onUndoCodeChange(button, Integer.parseInt(undoMessage),
+                                button.getAttribute(USER_ACTION_ID_ATTRIBUTE));
+                        return;
+                    }
+
                     // A step an MCP tool's result left to the user.
                     final String userActionMessage = button.getAttribute(USER_ACTION_MESSAGE_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(userActionMessage)) {
@@ -638,6 +652,12 @@ public class AskStroomAiPresenter
         onActiveTabChange(contentManager.getSelectedTab());
         addRegisteredHandler(ContentTabSelectionChangeEvent.getType(), event ->
                 onActiveTabChange(event.getTabData()));
+        // A tab within the active tab, e.g. a Pipeline's Stepping view, which then speaks for the tab.
+        addRegisteredHandler(DocTabSelectedEvent.getType(), event -> {
+            if (event.getDocTab() != null && event.getDocTab() == activeTab) {
+                refreshAttachmentList();
+            }
+        });
         addRegisteredHandler(RefreshContentTabEvent.getType(), event -> {
             if (event.getTabData() != null && event.getTabData() == activeTab) {
                 refreshAttachmentList();
@@ -2275,6 +2295,10 @@ public class AskStroomAiPresenter
                         Attribute.className("ai-user-action-after"));
             }
             final String request = AiToolMessages.getString(json, "request");
+            if (UserActionsUi.APPLY_CODE_CHANGE.equals(action)) {
+                codeChangeRow(row, messageId, json, request, status, pending);
+                return;
+            }
             if (UserActionsUi.showsCode(action) && NullSafe.isNonBlankString(request)) {
                 // An Elasticsearch request is shown for the cluster admin to copy, and Stroom never runs it. A
                 // proposed query is shown before the user creates it.
@@ -2297,8 +2321,165 @@ public class AskStroomAiPresenter
         }, Attribute.className("ai-user-action"));
     }
 
+    /// The rest of a proposed code change's row: the compact diff, and a button to review and apply it, or,
+    /// once applied, one to undo it while the element's editor still holds the applied text.
+    private void codeChangeRow(final HtmlBuilder row,
+                               final int messageId,
+                               final String json,
+                               final String proposed,
+                               final String status,
+                               final boolean pending) {
+        final String codeChange = AiToolMessages.getString(json, "codeChange");
+        final String base = AiToolMessages.getString(codeChange, "baseCode");
+        if (base != null && proposed != null) {
+            row.append(CodeDiffCardRenderer.render(LineDiff.diff(base, proposed)));
+        }
+        final String actionId = NullSafe.string(AiToolMessages.getString(json, "id"));
+        if (pending) {
+            row.elem(UserActionsUi.buttonText(UserActionsUi.APPLY_CODE_CHANGE), BUTTON,
+                    Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
+                    new Attribute(USER_ACTION_MESSAGE_ATTRIBUTE, String.valueOf(messageId)),
+                    new Attribute(USER_ACTION_ID_ATTRIBUTE, actionId));
+            return;
+        }
+        row.div(text -> text.append(UserActionsUi.outcomeText(status, AiToolMessages.getString(json, "outcome"))),
+                Attribute.className("ai-approval-reason"));
+        if (UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_CODE_CHANGE, status)) {
+            final SteppingCodeChangeEvent canUndo = SteppingCodeChangeEvent.fireCanUndo(this,
+                    docRef(AiToolMessages.getString(codeChange, "pipeline")),
+                    AiToolMessages.getString(codeChange, "element"));
+            if (canUndo.isHandled() && !canUndo.isCanUndo()) {
+                row.div(text -> text.append(UserActionsUi.UNDO_WITHDRAWN), Attribute.className("ai-approval-reason"));
+            } else {
+                row.elem(UserActionsUi.UNDO_APPLY, BUTTON,
+                        Attribute.className("allow-focus ai-approval-button"),
+                        new Attribute(USER_ACTION_UNDO_ATTRIBUTE, String.valueOf(messageId)),
+                        new Attribute(USER_ACTION_ID_ATTRIBUTE, actionId));
+            }
+        }
+    }
+
+    /// @param json A document reference, as JSON, or null.
+    /// @return The document reference, or null.
+    private static DocRef docRef(final String json) {
+        final String type = AiToolMessages.getString(json, "type");
+        final String uuid = AiToolMessages.getString(json, "uuid");
+        if (type == null || uuid == null) {
+            return null;
+        }
+        return new DocRef(type, uuid, AiToolMessages.getString(json, "name"));
+    }
+
+    /// @return The action of a tool result message with the id, as JSON, or null if it isn't there.
+    private String findUserAction(final int messageId, final String actionId) {
+        final AiChatMessage msg = renderedMessages.get(messageId);
+        final JSONArray actions = msg == null
+                ? null
+                : AiToolMessages.getArray(msg.getMessage(), "userActions");
+        if (actions == null || actionId == null) {
+            return null;
+        }
+        for (int i = 0; i < actions.size(); i++) {
+            final JSONObject action = actions.get(i).isObject();
+            if (action != null && actionId.equals(AiToolMessages.getString(action.toString(), "id"))) {
+                return action.toString();
+            }
+        }
+        return null;
+    }
+
+    /// Opens the review of a proposed code change in the pipeline's stepping screen, if it is open. Applying it
+    /// there is first checked and recorded by the server (which needs Edit on the element's document), then
+    /// done in the element's editor, unsaved.
+    private void onReviewCodeChange(final Element button, final int messageId, final String actionId) {
+        final String json = findUserAction(messageId, actionId);
+        if (json == null || currentChat == null) {
+            return;
+        }
+        final int chatId = currentChat.getId();
+        final String codeChange = AiToolMessages.getString(json, "codeChange");
+        final DocRef pipeline = docRef(AiToolMessages.getString(codeChange, "pipeline"));
+        final String elementId = AiToolMessages.getString(codeChange, "element");
+        final SteppingCodeChangeEvent.Approver approver = (andStep, onResult) ->
+                askStroomAiClient.doUserAction(chatId, messageId, actionId,
+                        result -> onResult.accept(result.isDone()
+                                ? null
+                                : NullSafe.nonBlankStringElse(result.getMessage(), "The change can't be applied.")),
+                        error -> onResult.accept(NullSafe.nonBlankStringElse(error.getMessage(),
+                                "Unable to apply the change.")),
+                        this);
+        final SteppingCodeChangeEvent event = SteppingCodeChangeEvent.fireReview(this,
+                pipeline,
+                elementId,
+                docRef(AiToolMessages.getString(json, "doc")),
+                AiToolMessages.getString(codeChange, "baseCode"),
+                AiToolMessages.getString(json, "request"),
+                approver,
+                () -> {
+                    showUserActionStatus(messageId, actionId, "DONE", UserActionsUi.APPLIED);
+                    // Fetch the note of what was done.
+                    pollAfterAnswer();
+                });
+        if (!event.isHandled()) {
+            final String name = NullSafe.nonBlankStringElse(NullSafe.get(pipeline, DocRef::getName), "?");
+            if (pipeline != null) {
+                OpenDocumentEvent.fire(this, pipeline, true);
+            }
+            AlertEvent.fireInfo(this, "To review the change, open pipeline '" + name + "' in stepping mode, step "
+                                      + "to the record and select element '" + elementId
+                                      + "', then click the button again.", null);
+        } else if (event.getMessage() != null) {
+            AlertEvent.fireInfo(this, event.getMessage(), null);
+        }
+    }
+
+    /// Undoes a proposed code change the user applied, putting back exactly what the element's editor held, if
+    /// it still holds the applied text. The server checks Edit and records it first.
+    private void onUndoCodeChange(final Element button, final int messageId, final String actionId) {
+        final String json = findUserAction(messageId, actionId);
+        if (json == null || currentChat == null) {
+            return;
+        }
+        final String codeChange = AiToolMessages.getString(json, "codeChange");
+        final DocRef pipeline = docRef(AiToolMessages.getString(codeChange, "pipeline"));
+        final String elementId = AiToolMessages.getString(codeChange, "element");
+        final SteppingCodeChangeEvent canUndo = SteppingCodeChangeEvent.fireCanUndo(this, pipeline, elementId);
+        if (!canUndo.isHandled()) {
+            AlertEvent.fireInfo(this, "Open pipeline '" + NullSafe.get(pipeline, DocRef::getName)
+                                      + "' in stepping mode to undo the change there, or use Ctrl+Z in the "
+                                      + "element's editor.", null);
+            return;
+        }
+        if (!canUndo.isCanUndo()) {
+            AlertEvent.fireInfo(this, UserActionsUi.UNDO_WITHDRAWN, null);
+            // Withdraw the button.
+            showUserActionStatus(messageId, actionId, "DONE", UserActionsUi.APPLIED);
+            return;
+        }
+        button.setAttribute("disabled", "disabled");
+        askStroomAiClient.undoUserAction(currentChat.getId(), messageId, actionId, result -> {
+            if (!result.isDone()) {
+                button.removeAttribute("disabled");
+                AlertEvent.fireWarn(this, NullSafe.string(result.getMessage()), null);
+                return;
+            }
+            final SteppingCodeChangeEvent undo = SteppingCodeChangeEvent.fireUndo(this, pipeline, elementId);
+            if (!undo.isUndone()) {
+                AlertEvent.fireWarn(this, UserActionsUi.UNDO_WITHDRAWN, null);
+            }
+            showUserActionStatus(messageId, actionId, "PENDING", result.getMessage());
+            pollAfterAnswer();
+        }, this);
+    }
+
     private void onUserActionButton(final Element button, final int messageId, final String actionId) {
         if (currentChat == null) {
+            return;
+        }
+        final String action = AiToolMessages.getString(findUserAction(messageId, actionId), "action");
+        if (UserActionsUi.APPLY_CODE_CHANGE.equals(action)) {
+            // Nothing is done until the user applies it in the review.
+            onReviewCodeChange(button, messageId, actionId);
             return;
         }
         button.setAttribute("disabled", "disabled");

@@ -23,6 +23,7 @@ import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.util.shared.TextRange;
+import stroom.util.shared.diff.LineReplacement;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -152,6 +153,54 @@ public class EditorPresenter
 
     public void setOptionsToDefaultAvailability() {
         getView().setOptionsToDefaultAvailability();
+    }
+
+    /// Replaces ranges of whole lines in the editor without resetting its undo history, so the user
+    /// can undo the change with Ctrl+Z. Each range is selected and replaced, last first; the user's
+    /// cursor and selection are then put back, moved to allow for lines added or removed above them.
+    ///
+    /// Use [stroom.util.shared.diff.LineDiffResult#getLineReplacements()] to get the replacements that
+    /// turn the current text into another.
+    ///
+    /// @param replacements The line replacements, with zero based line numbers relative to the
+    ///                     current text.
+    /// @return False if the editor has not started yet (it has never been shown), so nothing was
+    /// changed.
+    /// @throws IllegalArgumentException If a replacement is outside the text or two of them overlap.
+    public boolean applyLineReplacements(final List<LineReplacement> replacements) {
+        return getView().applyLineReplacements(replacements);
+    }
+
+    /// Adds a listener for changes to the vertical scroll position, e.g. to scroll another editor
+    /// with this one.
+    ///
+    /// @param listener Called whenever the vertical scroll position changes.
+    public void addScrollListener(final Runnable listener) {
+        getView().addScrollListener(listener);
+    }
+
+    /// @return The vertical scroll position in pixels, or -1 if the editor isn't attached.
+    public int getScrollTop() {
+        return getView().getScrollTop();
+    }
+
+    /// @param scrollTop The vertical scroll position in pixels.
+    public void setScrollTop(final int scrollTop) {
+        getView().setScrollTop(scrollTop);
+    }
+
+    /// Shows the given labels in the gutter in place of line numbers, one per row.
+    ///
+    /// @param labels The label for each row, or null to show line numbers again.
+    public void setLineNumberLabels(final List<String> labels) {
+        getView().setLineNumberLabels(labels);
+    }
+
+    /// Moves the cursor to a line, scrolling it into view.
+    ///
+    /// @param lineNo The one based line number.
+    public void gotoLine(final int lineNo) {
+        getView().gotoLine(lineNo);
     }
 
     public EditorMenuPresenter getContextMenu() {

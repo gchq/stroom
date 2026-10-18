@@ -102,6 +102,50 @@ class TestUserActions {
     }
 
     @Test
+    void aCodeChangeButtonIsOnlyOfferedByStroomsOwnTools() {
+        final DocRef xslt = new DocRef("XSLT", OTHER_UUID, "Event translation");
+        Mockito.when(lookup.find(new DocRef("XSLT", OTHER_UUID))).thenReturn(Optional.of(xslt));
+        final Map<String, Object> change = codeChange("c1", "xsltFilter", "<b/>");
+
+        // From an MCP server, it is dropped.
+        assertThat(userActions.check(List.of(change), NOW)).isEmpty();
+
+        // From one of Stroom's own tools, it is offered, described by Stroom.
+        assertThat(userActions.check(null, List.of(change), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.APPLY_CODE_CHANGE);
+            assertThat(action.label()).isEqualTo("Change to XSLT 'Event translation' (element 'xsltFilter' of "
+                                                 + "pipeline 'Acme-Events'): +1 −1 lines");
+            assertThat(action.details()).isEqualTo("Lower-cases the user name.");
+            assertThat(action.doc()).isEqualTo(xslt);
+            assertThat(action.request()).isEqualTo("<b/>");
+            assertThat(action.codeChange().pipeline()).isEqualTo(PIPELINE);
+            assertThat(action.codeChange().element()).isEqualTo("xsltFilter");
+            assertThat(action.codeChange().baseCode()).isEqualTo("<a/>");
+            assertThat(action.codeChange().added()).isEqualTo(1);
+            assertThat(action.status()).isEqualTo(Status.PENDING);
+        });
+    }
+
+    @Test
+    void aCodeChangeButtonNeedsADocumentTheUserCanSeeAndGoodArguments() {
+        // The user can't see the element's document.
+        Mockito.when(lookup.find(new DocRef("XSLT", OTHER_UUID))).thenReturn(Optional.empty());
+        assertThat(userActions.check(null, List.of(codeChange("c1", "xsltFilter", "<b/>")), NOW)).isEmpty();
+
+        Mockito.when(lookup.find(new DocRef("XSLT", OTHER_UUID)))
+                .thenReturn(Optional.of(new DocRef("XSLT", OTHER_UUID, "X")));
+        final Map<String, Object> noHash = new HashMap<>(codeChange("c2", "xsltFilter", "<b/>"));
+        noHash.remove("base_hash");
+        final Map<String, Object> notAPipeline = new HashMap<>(codeChange("c3", "xsltFilter", "<b/>"));
+        notAPipeline.put("pipeline", doc("Feed", PIPELINE_UUID, "Acme-Events"));
+        assertThat(userActions.check(null, List.of(
+                codeChange("c4", "two\nlines", "<b/>"),
+                codeChange("c5", "xsltFilter", ""),
+                noHash,
+                notAPipeline), NOW)).isEmpty();
+    }
+
+    @Test
     void aCreateQueryButtonNeedsAQueryTheUserCanRunAndAGoodName() {
         Mockito.when(lookup.usableDataSource(Mockito.anyString())).thenReturn(Optional.empty());
         assertThat(userActions.check(null, List.of(createQuery("q1", "Secret", "from Secret select A")), NOW))
@@ -376,6 +420,22 @@ class TestUserActions {
     private static Map<String, Object> createQuery(final String id, final String name, final String query) {
         return Map.of("id", id, "action", UserActions.CREATE_QUERY, "name", name, "query", query,
                 "description", "Who logged on");
+    }
+
+    private static Map<String, Object> codeChange(final String id, final String element, final String proposed) {
+        final Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("action", UserActions.APPLY_CODE_CHANGE);
+        map.put("doc", doc("XSLT", OTHER_UUID, "Something else"));
+        map.put("pipeline", doc("Pipeline", PIPELINE_UUID, "Acme-Events"));
+        map.put("element", element);
+        map.put("request", proposed);
+        map.put("base", "<a/>");
+        map.put("base_hash", "a".repeat(64));
+        map.put("added", 1);
+        map.put("removed", 1);
+        map.put("summary", "Lower-cases the user name.");
+        return map;
     }
 
     private static Map<String, Object> es(final String id, final String request) {
