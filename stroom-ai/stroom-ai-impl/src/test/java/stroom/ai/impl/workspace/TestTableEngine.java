@@ -18,6 +18,7 @@ package stroom.ai.impl.workspace;
 
 import stroom.ai.impl.workspace.TableEngine.Aggregate;
 import stroom.ai.impl.workspace.TableEngine.Condition;
+import stroom.ai.impl.workspace.TableEngine.Eval;
 import stroom.ai.impl.workspace.TableEngine.Format;
 import stroom.ai.impl.workspace.TableEngine.Order;
 import stroom.ai.impl.workspace.TableEngine.Query;
@@ -158,6 +159,117 @@ class TestTableEngine {
     }
 
     @Test
+    void testComputedColumnsCanBeFilteredGroupedAndSorted() {
+        final Result result = TableEngine.run(csv, Format.CSV, query()
+                .eval(List.of(new Eval("kb", "${bytes} / 1000"),
+                        // One computed column can use another.
+                        new Eval("site", "upperCase(substring(${host}, 0, 2))"),
+                        new Eval("big", "if(${kb} >= 0.05, 'yes', 'no')")))
+                .where(List.of(new Condition("big", "=", "yes")))
+                .select(List.of("host", "kb", "site", "big"))
+                .orderBy(List.of(new Order("kb", true)))
+                .build());
+
+        assertThat(result.columns()).containsExactly("host", "kb", "site", "big");
+        assertThat(result.rows()).containsExactly(List.of("fw1", "0.1", "FW", "yes"),
+                List.of("fw2", "0.05", "FW", "yes"));
+    }
+
+    @Test
+    void testComputedColumnsWithStringDateAndMissingValues() throws IOException {
+        final Path times = tempDir.resolve("times.csv");
+        Files.writeString(times, """
+                time,user,score
+                2026-10-18T09:15:00.000Z,Alice,3
+                2026-10-18T09:45:30.000Z,bob,abc
+                ,carol,
+                """);
+        final Result result = TableEngine.run(times, Format.CSV, query()
+                .eval(List.of(new Eval("hour", "formatDate(floorHour(${time}), 'HH:mm')"),
+                        new Eval("name", "concat(upperCase(${user}), '!')"),
+                        new Eval("double", "${score} * 2"),
+                        new Eval("len", "stringLength(${user})")))
+                .select(List.of("hour", "name", "double", "len"))
+                .build());
+
+        assertThat(result.rows()).containsExactly(
+                List.of("09:00", "ALICE!", "6", "5"),
+                // A value that isn't a number gives an error, in its cell.
+                List.of("09:00", "BOB!", result.rows().get(1).get(2), "3"),
+                // An empty cell is no value.
+                List.of("", "CAROL!", "", "5"));
+        assertThat(result.rows().get(1).get(2)).satisfiesAnyOf(
+                value -> assertThat(value).isEmpty(),
+                value -> assertThat(value).startsWith("ERR"));
+    }
+
+    @Test
+    void testExpressionAggregates() {
+        final Result result = TableEngine.run(csv, Format.CSV, query()
+                .groupBy(List.of("host"))
+                .aggregates(List.of(new Aggregate("count", null, null),
+                        new Aggregate(null, null, "mean", "round(sum(${bytes}) / count(), 1)"),
+                        new Aggregate(null, null, null, "max(${bytes}) - min(${bytes})")))
+                .orderBy(List.of(new Order("host", false)))
+                .build());
+
+        assertThat(result.columns()).containsExactly("host", "count", "mean", "max(${bytes}) - min(${bytes})");
+        // As in Stroom, min takes fw1's empty cell as the least value, so the difference is no value.
+        assertThat(result.rows()).containsExactly(
+                List.of("fw1", "3", "41.7", ""),
+                List.of("fw2", "1", "50", "0"),
+                List.of("fw3", "1", "7", "0"));
+
+        final Result filtered = TableEngine.run(csv, Format.CSV, query()
+                .where(List.of(new Condition("bytes", "not_empty", null)))
+                .groupBy(List.of("host"))
+                .aggregates(List.of(new Aggregate(null, null, "range", "max(${bytes}) - min(${bytes})")))
+                .limit(1)
+                .build());
+        assertThat(filtered.rows()).containsExactly(List.of("fw1", "75"));
+    }
+
+    @Test
+    void testExpressionErrors() {
+        assertThatThrownBy(() -> TableEngine.run(csv, Format.CSV, query()
+                .eval(List.of(new Eval("x", "uppercase(${nope})"))).build()))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessageContaining("'nope'")
+                .hasMessageContaining("host, bytes, message");
+        assertThatThrownBy(() -> TableEngine.run(csv, Format.CSV, query()
+                .eval(List.of(new Eval("x", "substrin(${host}, 0, 1)"))).build()))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessageContaining("substrin")
+                .hasMessageContaining("Did you mean substring");
+        assertThatThrownBy(() -> TableEngine.run(csv, Format.CSV, query()
+                .groupBy(List.of("host"))
+                .aggregates(List.of(new Aggregate(null, null, null, "avg(${bytes})"))).build()))
+                .isInstanceOf(ExpressionException.class)
+                .hasMessageContaining("Did you mean average?");
+        assertThatThrownBy(() -> TableEngine.run(csv, Format.CSV, query()
+                .eval(List.of(new Eval("x", "sum(${bytes})"))).build()))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessageContaining("aggregates");
+        assertThatThrownBy(() -> TableEngine.run(csv, Format.CSV, query()
+                .eval(List.of(new Eval("host", "${bytes}"))).build()))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessageContaining("already a column");
+        assertThatThrownBy(() -> TableEngine.run(csv, Format.CSV, query()
+                .eval(List.of(new Eval("x", "askAi(${message})"))).build()))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessageContaining("isn't available");
+        assertThatThrownBy(() -> TableEngine.run(csv, Format.CSV, query()
+                .groupBy(List.of("host"))
+                .aggregates(List.of(new Aggregate(null, null, null, "first(${bytes})"))).build()))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessageContaining("isn't available");
+        assertThatThrownBy(() -> TableEngine.run(csv, Format.CSV, query()
+                .eval(List.of(new Eval("x", "(${bytes} + "))).build()))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessageContaining("can't be read");
+    }
+
+    @Test
     void testCompareValues() {
         assertThat(TableEngine.compareValues("9", "10")).isNegative();
         assertThat(TableEngine.compareValues("b", "a")).isPositive();
@@ -185,6 +297,7 @@ class TestTableEngine {
 
     private static final class QueryBuilder {
 
+        private List<Eval> eval = List.of();
         private List<String> select = List.of();
         private List<Condition> where = List.of();
         private List<String> groupBy = List.of();
@@ -193,6 +306,11 @@ class TestTableEngine {
         private boolean mask;
         private List<Order> orderBy = List.of();
         private Integer limit;
+
+        QueryBuilder eval(final List<Eval> eval) {
+            this.eval = eval;
+            return this;
+        }
 
         QueryBuilder select(final List<String> select) {
             this.select = select;
@@ -235,7 +353,7 @@ class TestTableEngine {
         }
 
         Query build() {
-            return new Query(select, where, groupBy, aggregates, distinct, mask, orderBy, limit);
+            return new Query(eval, select, where, groupBy, aggregates, distinct, mask, orderBy, limit);
         }
     }
 }

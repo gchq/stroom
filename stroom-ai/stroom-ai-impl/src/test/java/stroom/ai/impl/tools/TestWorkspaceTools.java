@@ -406,6 +406,48 @@ class TestWorkspaceTools {
     }
 
     @Test
+    void testTableExpressions() {
+        assertThat(run(tableTool(), "{\"path\":\"/attachments/7.md\",\"eval\":[{\"as\":\"twice\","
+                                    + "\"expression\":\"${n} * 2\"}],\"select\":[\"host\",\"twice\"]}"))
+                .contains("| host | twice |")
+                .contains("| fw1 | 6 |");
+        assertThat(run(tableTool(), "{\"path\":\"/attachments/7.md\",\"groupBy\":[\"host\"],"
+                                    + "\"aggregates\":[{\"as\":\"mean\",\"expression\":\"sum(${n}) / count()\"}]}"))
+                .contains("| host | mean |")
+                .contains("| fw1 | 3 |");
+        assertThat(run(tableTool(), "{\"path\":\"/attachments/7.md\",\"aggregates\":[{\"as\":\"x\"}]}"))
+                .startsWith("Error: Give each aggregate a function, or an expression.");
+        // Help needs no table.
+        assertThat(run(tableTool(), "{\"help\":[\"round\"]}"))
+                .startsWith("round")
+                .contains("round(");
+    }
+
+    /// The examples the tool's description gives the model all work.
+    @Test
+    void testTheDescriptionsExamplesWork() {
+        workspaceStore.createFile(chatId, AiAttachmentType.WORKSPACE_FILE, "/attachments/9.md", null, """
+                | host | bytes | seconds | time | status |
+                | --- | --- | --- | --- | --- |
+                | fw1 | 100 | 3 | 2026-10-18T09:15:00.000Z | ERROR |
+                | fw2 | 50 | 2 | 2026-10-18T10:45:00.000Z | OK |
+                """);
+        final String[] parts = TableTool.EXAMPLES.split("; aggregates ");
+        final String evals = "[" + parts[0].substring("eval ".length()) + "]";
+        final String aggregates = "[" + parts[1] + "]";
+
+        assertThat(tableTool().specification().description()).contains(TableTool.EXAMPLES).contains("String: ");
+        assertThat(run(tableTool(), "{\"path\":\"/attachments/9.md\",\"eval\":" + evals
+                                    + ",\"select\":[\"rate\",\"site\",\"hour\"]}"))
+                .contains("| rate | site | hour |")
+                .contains("| 33.3 | FW1 | 2026-10-18 09:00 |")
+                .contains("| 25 | FW2 | 2026-10-18 10:00 |");
+        assertThat(run(tableTool(), "{\"path\":\"/attachments/9.md\",\"aggregates\":" + aggregates + "}"))
+                .contains("| error % |")
+                .contains("| 50 |");
+    }
+
+    @Test
     void testResultsKeepTheirSource() {
         final int attachment = workspaceStore.createFile(chatId, AiAttachmentType.WORKSPACE_FILE,
                 "/attachments/8.md", null, "| host |\n| --- |\n| fw1 |\n");
