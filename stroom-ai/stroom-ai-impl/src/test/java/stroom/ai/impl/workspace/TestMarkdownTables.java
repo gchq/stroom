@@ -49,6 +49,16 @@ class TestMarkdownTables {
     }
 
     @Test
+    void rowsAreCountedWithoutTheHeaderAndSeparator(@TempDir final Path dir) throws IOException {
+        final Path file = dir.resolve("table.md");
+        Files.writeString(file, "| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n\n");
+        assertThat(MarkdownTables.countRows(file)).isEqualTo(2);
+
+        Files.writeString(file, "| a | b |\n| --- | --- |\n");
+        assertThat(MarkdownTables.countRows(file)).isZero();
+    }
+
+    @Test
     void emptyIdColumnsAreDropped(@TempDir final Path dir) throws IOException {
         final Path file = dir.resolve("table.md");
         // From a data source without streams, e.g. reference data: the ids are always empty.

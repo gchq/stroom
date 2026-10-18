@@ -22,6 +22,7 @@ import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
@@ -165,7 +166,8 @@ class TestStreamMetaTool {
     void streamStoreReadsAreCappedWithANote() {
         rows.add(row(4, DAY_2, Map.of()));
         storeAttributes.put(4L, Map.of("Raw Size", "400"));
-        fixture.setLimits(new AiWorkspaceConfig(null, null, null, null, null, null, null, null, null, null, 1));
+        fixture.setLimits(new AiWorkspaceConfig(null, null, null, null, null, null, null, null, null, null, 1,
+                null));
 
         final String result = run("{\"feeds\":[\"WINDOWS-EVENTS\"],\"attributes\":[\"Raw Size\"]}");
 
@@ -226,6 +228,29 @@ class TestStreamMetaTool {
     }
 
     @Test
+    void aFolderFindsTheStreamsOfItsFeedsAndPipelines() {
+        fixture.add(new DocRef(ExplorerConstants.FOLDER_TYPE, "folder-uuid", "Windows"), null, true);
+
+        run("{\"folder\":\"folder-uuid\"}");
+
+        final ArgumentCaptor<FindMetaCriteria> criteria = ArgumentCaptor.forClass(FindMetaCriteria.class);
+        Mockito.verify(metaService).findRows(criteria.capture());
+        assertThat(criteria.getValue().getExpression().toString())
+                .contains("OR {Feed in folder Windows, Pipeline in folder Windows}")
+                .contains("Status = Unlocked");
+    }
+
+    @Test
+    void aFolderTheUserCantViewIsTreatedAsMissing() {
+        fixture.add(new DocRef(ExplorerConstants.FOLDER_TYPE, "secret-folder-uuid", "Secret"), null, false);
+
+        assertThat(message("{\"folder\":\"secret-folder-uuid\"}"))
+                .isEqualTo(message("{\"folder\":\"no-such-uuid\"}"))
+                .contains("No folder was found");
+        Mockito.verifyNoInteractions(metaService);
+    }
+
+    @Test
     void theSearchIsLoggedNamingTheStreams() {
         run("{\"feeds\":[\"WINDOWS-EVENTS\"],\"attributes\":[\"Raw Size\"]}");
 
@@ -241,7 +266,7 @@ class TestStreamMetaTool {
 
     @Test
     void badArgumentsAreRefused() {
-        assertThat(message("{}")).contains("Give feeds, a pipeline, or both");
+        assertThat(message("{}")).contains("Give feeds, a pipeline or a folder");
         assertThat(message("{\"feeds\":[\"X\"],\"groupBy\":[\"colour\"]}")).contains("Can't group by 'colour'");
         assertThat(message("{\"feeds\":[\"X\"],\"aggregates\":[\"avg(Raw Size)\"]}")).contains("isn't an aggregate");
         assertThat(message("{\"feeds\":[\"X\"],\"from\":\"last week\"}")).contains("isn't a time");

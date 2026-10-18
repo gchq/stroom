@@ -292,8 +292,10 @@ final class AiAttachments {
                 ? icon
                 : SvgImage.FILE;
         hb.div(chip -> {
-            chip.div(div -> div.appendTrustedString(image.getSvg()),
-                    Attribute.className("svg-image " + image.getClassName() + " ai-attachment-chip-icon face"));
+            // Its icon in a box, as a document chip's is, so the icon is sized the same; it isn't a button.
+            chip.div(box -> box.div(div -> div.appendTrustedString(image.getSvg()),
+                            Attribute.className("svg-image " + image.getClassName() + " face")),
+                    Attribute.className("ai-attachment-chip-icon"));
             chip.span(text, Attribute.className("ai-attachment-chip-label"));
             chip.elem(button -> button.div(div -> div.appendTrustedString(SvgImage.CLOSE.getSvg()),
                             Attribute.className("svg-image " + SvgImage.CLOSE.getClassName() + " face")),

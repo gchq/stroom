@@ -1660,6 +1660,13 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "description" : "For a proposed code change, the parts of it the user rejected, by their number from 0, comma separated",
+          "in" : "query",
+          "name" : "rejectedChanges",
+          "schema" : {
+            "type" : "string"
+          }
         } ],
         "responses" : {
           "default" : {
