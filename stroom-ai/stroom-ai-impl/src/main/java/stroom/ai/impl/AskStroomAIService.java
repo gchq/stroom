@@ -674,9 +674,10 @@ public class AskStroomAIService {
         }
         if (active.getStatus() == AiChatRunStatus.WAITING_FOR_USER
             && active.getStopReason() == AiChatRunStopReason.NEEDS_INPUT) {
-            // A tool is waiting for the user to fill in a form, holding the run's thread. The run picks the
-            // message up once the tool has its answer.
+            // A tool is waiting for the user to fill in a form, holding the run's thread. A message sent instead
+            // puts the form aside, so the tool is told it wasn't answered, and the run carries on with the message.
             aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, message);
+            mcpElicitationsProvider.get().supersedePending(chatId);
             return true;
         }
         if (active.getStatus() == AiChatRunStatus.WAITING_FOR_USER) {

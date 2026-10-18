@@ -111,6 +111,8 @@ class TestAiChatTexts {
     void formStatuses() {
         assertThat(AiChatTexts.formStatus("ACCEPTED")).isEqualTo("You answered it.");
         assertThat(AiChatTexts.formStatus("EXPIRED")).isEqualTo("Not answered in time.");
+        // Put aside as the user sent a message instead.
+        assertThat(AiChatTexts.formStatus("SUPERSEDED")).isEqualTo("Cancelled: you sent a message instead.");
         assertThat(AiChatTexts.formStatus("SOMETHING_NEW")).isEqualTo("SOMETHING_NEW");
         assertThat(AiChatTexts.formStatus(null)).isEmpty();
     }

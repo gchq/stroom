@@ -714,6 +714,39 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         taskListHeader.setTitle(taskListCollapsed
                 ? "Show the agent's tasks"
                 : "Hide the agent's tasks");
+        keepCurrentTaskInView();
+    }
+
+    // Scrolls a long task list to the step being worked on (or, if none is, the next to do, or once they are all
+    // done, the last), in the middle where there is room, so the steps either side of it show too.
+    private void keepCurrentTaskInView() {
+        final Element items = taskListItems.getElement();
+        if (!taskListItems.isVisible() || items.getClientHeight() == 0
+            || items.getScrollHeight() <= items.getClientHeight()) {
+            return;
+        }
+        Element current = firstTask(items, "ai-task--in_progress");
+        if (current == null) {
+            current = firstTask(items, "ai-task--not_started");
+        }
+        if (current == null) {
+            current = items.getLastChild() != null
+                    ? items.getLastChild().cast()
+                    : null;
+        }
+        if (current == null) {
+            return;
+        }
+        final int top = current.getAbsoluteTop() - items.getAbsoluteTop() + items.getScrollTop();
+        items.setScrollTop(Math.max(0, top - (items.getClientHeight() - current.getOffsetHeight()) / 2));
+    }
+
+    private static Element firstTask(final Element items, final String className) {
+        Element task = items.getFirstChildElement();
+        while (task != null && !task.hasClassName(className)) {
+            task = task.getNextSiblingElement();
+        }
+        return task;
     }
 
     @Override
