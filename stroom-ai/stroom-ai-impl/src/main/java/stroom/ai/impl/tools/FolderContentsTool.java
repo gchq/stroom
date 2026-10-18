@@ -17,6 +17,8 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.AgentInstructions.Ignored;
+import stroom.ai.impl.tools.AgentInstructions.Standing;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
@@ -64,6 +66,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -86,6 +89,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
     static final String SHOW_ARG = "show";
     static final String DEPTH_ARG = "depth";
     static final String TYPES_ARG = "types";
+    static final String INCLUDE_IGNORED_ARG = "includeIgnored";
 
     static final String DOCUMENTS = "documents";
     static final String STREAMS = "streams";
@@ -110,6 +114,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<ProcessorTaskService> processorTaskServiceProvider;
     private final Provider<DocFinder> docFinderProvider;
+    private final AgentInstructions agentInstructions;
     private final AiAuditLog auditLog;
 
     @Inject
@@ -119,6 +124,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
                        final Provider<ProcessorFilterService> processorFilterServiceProvider,
                        final Provider<ProcessorTaskService> processorTaskServiceProvider,
                        final Provider<DocFinder> docFinderProvider,
+                       final AgentInstructions agentInstructions,
                        final AiAuditLog auditLog) {
         this.documentAccess = documentAccess;
         this.securityContext = securityContext;
@@ -126,6 +132,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.processorTaskServiceProvider = processorTaskServiceProvider;
         this.docFinderProvider = docFinderProvider;
+        this.agentInstructions = agentInstructions;
         this.auditLog = auditLog;
     }
 
@@ -140,7 +147,9 @@ class FolderContentsTool extends AbstractBuiltInTool {
                              + "the most recent; use stream_meta with folder for more), 'processors' (the "
                              + "processor filters of its pipelines and analytic rules: enabled, priority, "
                              + "progress) and 'tasks' (counts of their processing tasks by status). Ask for the "
-                             + "streams, processors or tasks when the user mentions data, processing or tasks.")
+                             + "streams, processors or tasks when the user mentions data, processing or tasks. "
+                             + "Folders an AGENTS doc says to ignore (e.g. an Archive) are shown but not looked "
+                             + "in, and the AGENTS docs that apply to the folder are given.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(FOLDER_ARG, "The folder's UUID, or its Explorer path, e.g. "
                                                        + "'/Security/Lookups'. Omit, or give '/', for the top of "
@@ -154,6 +163,8 @@ class FolderContentsTool extends AbstractBuiltInTool {
                         .addProperty(TYPES_ARG, stringArraySchema("For documents, only these types, e.g. "
                                                                   + "['Feed', 'Pipeline', 'XSLT']. Folders are "
                                                                   + "still followed."))
+                        .addBooleanProperty(INCLUDE_IGNORED_ARG, "Optional. True to look in ignored folders too, "
+                                                                 + "only when the user asks for them.")
                         .build())
                 .build();
     }
@@ -187,13 +198,21 @@ class FolderContentsTool extends AbstractBuiltInTool {
                 ? "/"
                 : joinPath(documentAccess.path(folder), folder.getName());
         final Listing listing = new Listing();
+        final Standing standing = agentInstructions.load(chatId, "Standing instructions read by the " + NAME
+                                                                 + " tool");
+        final Optional<Ignored> folderIgnored = standing.ignored(path);
+        // A folder the user asks about is listed in full, even if an AGENTS doc says to ignore it.
+        final Scan scan = new Scan(standing, "true".equalsIgnoreCase(stringArg(request, INCLUDE_IGNORED_ARG))
+                                             || folderIgnored.isPresent());
         final StringBuilder sb = new StringBuilder();
         sb.append(root
                 ? "The top of the Explorer tree (/)"
                 : "Folder '" + folder.getName() + "' (" + path + ", uuid " + folder.getUuid() + ", "
                   + DocumentInfoTool.link(folder) + ")").append('\n');
+        folderIgnored.ifPresent(ignored -> sb.append("It is in ").append(ignored.describe())
+                .append(", so searches leave it out; it is listed as it was asked for.\n"));
         if (show.contains(DOCUMENTS)) {
-            appendDocuments(sb, folder, depth, types, listing);
+            appendDocuments(sb, folder, path, depth, types, scan, listing);
         }
         if (show.contains(STREAMS)) {
             appendStreams(sb, folder, root, listing);
@@ -216,6 +235,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
                         ? ", depth " + depth
                         : ""),
                 listing.documents, data, "Folder contents listed by the " + NAME + " tool");
+        sb.append(standing.note(List.of(path)));
         if (!listing.streams.isEmpty()) {
             auditLog.streamsSearched(chatId, "streams of the feeds and pipelines in " + path, listing.streams,
                     Map.of(), "Folder streams listed by the " + NAME + " tool");
@@ -244,11 +264,13 @@ class FolderContentsTool extends AbstractBuiltInTool {
     // Lists the documents in the folder, and in the folders below it to the depth asked for, each as a link.
     private void appendDocuments(final StringBuilder sb,
                                  final DocRef folder,
+                                 final String path,
                                  final int depth,
                                  final Set<String> types,
+                                 final Scan scan,
                                  final Listing listing) {
         final List<Entry> entries = new ArrayList<>();
-        final boolean cut = collect(folder, 1, depth, types, entries);
+        final boolean cut = collect(folder, path, 1, depth, types, scan, entries);
         final Map<String, Integer> byType = new TreeMap<>();
         entries.stream()
                 .filter(entry -> !entry.onlyFollowed())
@@ -281,19 +303,33 @@ class FolderContentsTool extends AbstractBuiltInTool {
             if (NullSafe.hasItems(node.getTags())) {
                 sb.append(" tags: ").append(String.join(", ", node.getTags().stream().sorted().toList()));
             }
+            if (entry.ignored() != null) {
+                sb.append(" — not looked in: ").append(entry.ignored().describe());
+            }
             sb.append('\n');
             listing.documents.add(docRef);
         }
-        sb.append("Documents in folders you can't view aren't listed.\n");
+        sb.append("Documents in folders you can't view aren't listed.");
+        if (scan.ignoredFolders > 0 || scan.ignoredDocuments > 0) {
+            sb.append(" Folders an ").append(AgentInstructions.DOC_NAME).append(" doc says to ignore weren't "
+                                                                                  + "looked in");
+            if (scan.ignoredDocuments > 0) {
+                sb.append(", and ").append(scan.ignoredDocuments).append(" document(s) it names were left out");
+            }
+            sb.append("; pass ").append(INCLUDE_IGNORED_ARG).append(" only if the user asks for them.");
+        }
+        sb.append('\n');
     }
 
     /// Adds the folder's children, then those of each folder among them, to the depth asked for.
     ///
     /// @return True if it stopped at [#MAX_DOCUMENTS].
     private boolean collect(final DocRef folder,
+                            final String path,
                             final int level,
                             final int depth,
                             final Set<String> types,
+                            final Scan scan,
                             final List<Entry> entries) {
         final List<ExplorerNode> children = new ArrayList<>(documentAccess.children(folder));
         // Folders first, then by type and name, as the Explorer tree sorts them.
@@ -302,17 +338,28 @@ class FolderContentsTool extends AbstractBuiltInTool {
                 .thenComparing(node -> NullSafe.string(node.getDocRef().getName())));
         for (final ExplorerNode child : children) {
             final boolean isFolder = ExplorerConstants.isFolder(child);
+            final String childPath = joinPath(path, child.getDocRef().getName());
+            final Ignored ignored = scan.ignored(childPath);
+            if (ignored != null && !isFolder) {
+                scan.ignoredDocuments++;
+                continue;
+            }
             final boolean wanted = types.isEmpty() || types.contains(child.getDocRef().getType());
-            final boolean descend = isFolder && level < depth;
-            if (!wanted && !descend) {
+            final boolean descend = isFolder && level < depth && ignored == null;
+            if (ignored != null) {
+                scan.ignoredFolders++;
+                if (!types.isEmpty()) {
+                    continue;
+                }
+            } else if (!wanted && !descend) {
                 continue;
             }
             if (entries.size() >= MAX_DOCUMENTS) {
                 return true;
             }
             final int index = entries.size();
-            entries.add(new Entry(child, level, !wanted));
-            if (descend && collect(child.getDocRef(), level + 1, depth, types, entries)) {
+            entries.add(new Entry(child, level, !wanted, ignored));
+            if (descend && collect(child.getDocRef(), childPath, level + 1, depth, types, scan, entries)) {
                 return true;
             }
             // A folder only listed to show where the documents below it are, with none of them below it.
@@ -567,8 +614,35 @@ class FolderContentsTool extends AbstractBuiltInTool {
     /// A document listed, at its level below the folder (1 for one directly in it).
     ///
     /// @param onlyFollowed True for a folder listed only to show where the documents below it are.
-    private record Entry(ExplorerNode node, int level, boolean onlyFollowed) {
+    /// @param ignored The ignored folder it is (or is in), if an AGENTS doc says to ignore it, else null.
+    private record Entry(ExplorerNode node, int level, boolean onlyFollowed, Ignored ignored) {
 
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// How the documents are looked through: which folders the AGENTS docs ignore, and what was left out.
+    private static final class Scan {
+
+        private final Standing standing;
+        private final boolean includeIgnored;
+        private int ignoredFolders;
+        private int ignoredDocuments;
+
+        private Scan(final Standing standing, final boolean includeIgnored) {
+            this.standing = standing;
+            this.includeIgnored = includeIgnored;
+        }
+
+        /// @return The ignored folder the path is (or is in), or null if it isn't ignored or ignoring is off.
+        private Ignored ignored(final String path) {
+            if (includeIgnored || !standing.ignoresAny()) {
+                return null;
+            }
+            return standing.ignored(path).orElse(null);
+        }
     }
 
 

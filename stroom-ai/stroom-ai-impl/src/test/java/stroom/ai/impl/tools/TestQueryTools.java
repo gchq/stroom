@@ -22,6 +22,10 @@ import stroom.ai.impl.UserActions;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.api.DocFinder;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.importexport.shared.Dependency;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
@@ -61,6 +65,10 @@ class TestQueryTools {
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
+    private final DocFinder docFinder = Mockito.mock(DocFinder.class);
+    private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+    private final AgentInstructions agentInstructions = new AgentInstructions(() -> docFinder, documentAccess);
+    private final DocDependencyService dependencyService = Mockito.mock(DocDependencyService.class);
     private final Set<String> usable = new HashSet<>();
     private DataSourceAccess dataSourceAccess;
 
@@ -88,7 +96,7 @@ class TestQueryTools {
 
     @Test
     void listDataSourcesGivesOnlyThoseTheUserCanUse() {
-        final String result = run(new ListDataSourcesTool(workspace, dataSourceAccess, auditLog), "{}");
+        final String result = run(listTool(), "{}");
 
         assertThat(result)
                 .contains("Data sources you can use (2)")
@@ -105,12 +113,12 @@ class TestQueryTools {
 
     @Test
     void listDataSourcesCanBeFiltered() {
-        assertThat(run(new ListDataSourcesTool(workspace, dataSourceAccess, auditLog), "{\"filter\":\"WIN\"}"))
+        assertThat(run(listTool(), "{\"filter\":\"WIN\"}"))
                 .contains("Windows events")
                 .doesNotContain("Linux")
                 // Just one fits, so there is nothing to ask.
                 .doesNotContain(ListDataSourcesTool.CHOOSE_NOTE);
-        assertThat(run(new ListDataSourcesTool(workspace, dataSourceAccess, auditLog), "{\"filter\":\"secret\"}"))
+        assertThat(run(listTool(), "{\"filter\":\"secret\"}"))
                 .isEqualTo("There are no data sources you can use matching 'secret'.");
     }
 
@@ -130,6 +138,62 @@ class TestQueryTools {
                 .contains("- Raw (")
                 .contains("not queryable");
         Mockito.verify(auditLog).documentViewed(Mockito.eq(CHAT), Mockito.eq(WINDOWS),
+                Mockito.contains(DescribeDataSourceTool.NAME));
+    }
+
+    @Test
+    void dataSourcesInFoldersAnAgentsDocIgnoresAreNotListedUnlessAskedFor() {
+        agents("## Ignore\n- folders: Archive\n");
+        Mockito.when(documentAccess.path(LINUX)).thenReturn("/Archive/2020");
+        Mockito.when(documentAccess.path(WINDOWS)).thenReturn("/Views");
+
+        assertThat(run(listTool(), "{}"))
+                .contains("Data sources you can use (1)")
+                .contains("Windows events")
+                .doesNotContain("Linux events")
+                .contains("1 data source(s) in folders an AGENTS doc says to ignore were left out: /Archive "
+                          + "(ignored by the AGENTS doc in /). Pass includeIgnored only if the user asks for those.")
+                .contains(AgentInstructions.FOLLOW);
+        assertThat(run(listTool(),
+                "{\"includeIgnored\":true}"))
+                .contains("Linux events")
+                .doesNotContain("were left out");
+    }
+
+    @Test
+    void describeDataSourceGivesTheDocumentationOfThePipelinesThatFeedItAndItsAgentsDocs() {
+        // As the Stroom MCP server documents a pipeline: a Documentation doc beside it, with its name.
+        final DocRef pipeline = new DocRef("Pipeline", "pipe-uuid", "Linux indexing");
+        final DocRef pipelineDoc = new DocRef(DocumentationDoc.TYPE, "pipe-doc-uuid", "Linux indexing");
+        final DocRef hidden = new DocRef("Pipeline", "hidden-pipe-uuid", "Hidden indexing");
+        Mockito.when(dependencyService.fetchDependencies(Mockito.argThat(criteria ->
+                        criteria != null && "touuid:=linux-uuid".equals(criteria.getPartialName())), Mockito.any()))
+                .thenReturn(ResultPage.createUnboundedList(List.of(new Dependency(pipeline, LINUX, true),
+                        new Dependency(hidden, LINUX, true))));
+        Mockito.when(documentAccess.canView(pipeline)).thenReturn(true);
+        Mockito.when(documentAccess.path(pipeline)).thenReturn("/Pipelines");
+        Mockito.when(documentAccess.path(pipelineDoc)).thenReturn("/Pipelines");
+        Mockito.when(docFinder.findByName(DocumentationDoc.TYPE, "Linux indexing", false))
+                .thenReturn(List.of(pipelineDoc));
+        Mockito.when(documentAccess.read(pipelineDoc, DocumentationDoc.class)).thenReturn(Optional.of(
+                documentation("pipe-doc-uuid", "| document.description | The tweet's text |")));
+        agents("## Fields\n- Use Initiator.Id for the actioning user.\n");
+        Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
+                QueryField.builder().fldName("document.description").fldType(FieldType.TEXT).queryable(true)
+                        .build())));
+
+        final String result = run(describeTool(), "{\"data_source\":\"linux-uuid\"}");
+
+        assertThat(result)
+                .contains("- document.description (")
+                .contains("Documentation (what its fields hold")
+                .contains("### [Linux indexing](?action=open-doc&docType=Documentation&docUuid=pipe-doc-uuid) "
+                          + "(Documentation): the Documentation doc beside it of Pipeline 'Linux indexing'")
+                .contains("| document.description | The tweet's text |")
+                .doesNotContain("Hidden indexing")
+                .contains("Use Initiator.Id for the actioning user.");
+        // The documentation read is logged.
+        Mockito.verify(documentAccess).logViews(Mockito.eq(CHAT), Mockito.eq(List.of(pipelineDoc)),
                 Mockito.contains(DescribeDataSourceTool.NAME));
     }
 
@@ -214,8 +278,14 @@ class TestQueryTools {
         assertThat(context.takeUserActions("c1")).isEmpty();
     }
 
+    private ListDataSourcesTool listTool() {
+        return new ListDataSourcesTool(workspace, dataSourceAccess, agentInstructions, auditLog);
+    }
+
     private DescribeDataSourceTool describeTool() {
-        return new DescribeDataSourceTool(workspace, dataSourceAccess, () -> queryService, auditLog);
+        return new DescribeDataSourceTool(workspace, dataSourceAccess, () -> queryService, agentInstructions,
+                new DataSourceDocumentation(documentAccess, dataSourceAccess, () -> docFinder,
+                        () -> dependencyService), auditLog);
     }
 
     private ValidateStroomQlTool validateTool() {
@@ -234,5 +304,19 @@ class TestQueryTools {
     @SuppressWarnings("unchecked")
     private static ArgumentCaptor<List<DocRef>> listCaptor() {
         return ArgumentCaptor.forClass((Class<List<DocRef>>) (Class<?>) List.class);
+    }
+
+    // An AGENTS doc at the top of the tree, which the user can view.
+    private void agents(final String text) {
+        final DocRef agents = new DocRef(DocumentationDoc.TYPE, "agents-uuid", AgentInstructions.DOC_NAME);
+        Mockito.when(docFinder.findByName(DocumentationDoc.TYPE, AgentInstructions.DOC_NAME, true))
+                .thenReturn(List.of(agents));
+        Mockito.when(documentAccess.read(agents, DocumentationDoc.class))
+                .thenReturn(Optional.of(documentation("agents-uuid", text)));
+        Mockito.when(documentAccess.path(agents)).thenReturn("/");
+    }
+
+    private static DocumentationDoc documentation(final String uuid, final String text) {
+        return new DocumentationDoc(uuid, "doc", null, null, null, null, null, null, text);
     }
 }

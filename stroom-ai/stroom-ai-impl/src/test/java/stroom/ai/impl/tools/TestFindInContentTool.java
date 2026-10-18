@@ -92,6 +92,25 @@ class TestFindInContentTool {
     }
 
     @Test
+    void documentsInFoldersAnAgentsDocIgnoresAreLeftOutUnlessAskedFor() {
+        // Users XSLT is in /Lookups/Archive, which the AGENTS doc in /Lookups ignores.
+        fixture.folders.put("users", List.of("Lookups", "Archive"));
+        fixture.addInstructions("agents", "## Ignore\n- folders: Archive\n", true, "Lookups");
+
+        assertThat(run("{\"pattern\":\"user_to_email\",\"uuids\":[\"users\",\"hosts\"]}"))
+                .contains("0 document(s) matched")
+                .contains("Left out 1 document(s) in folders an AGENTS doc says to ignore: /Lookups/Archive "
+                          + "(ignored by the AGENTS doc in /Lookups); pass includeIgnored only if the user asks "
+                          + "for them.");
+        Mockito.verify(xslts, Mockito.never()).getIndexableData(Mockito.argThat(docRef ->
+                "users".equals(docRef.getUuid())));
+
+        assertThat(run("{\"pattern\":\"user_to_email\",\"uuids\":[\"users\"],\"includeIgnored\":true}"))
+                .contains("1 document(s) matched")
+                .doesNotContain("Left out");
+    }
+
+    @Test
     void aDocumentTheUserCantViewIsNeitherReadNorRevealed() {
         final String hidden = run("{\"pattern\":\"USER\",\"uuids\":[\"hidden\"]}");
         final String missing = run("{\"pattern\":\"USER\",\"uuids\":[\"missing\"]}");
@@ -185,7 +204,7 @@ class TestFindInContentTool {
     private String run(final String arguments) {
         final FindInContentTool tool = new FindInContentTool(fixture.workspace, () -> contentIndex,
                 () -> Set.of(xslts, dictionaries), () -> wordListProvider, fixture.documentAccess(),
-                fixture.auditLog());
+                fixture.agentInstructions(), fixture.auditLog());
         return tool.run(ToolTestFixture.request(FindInContentTool.NAME, arguments), 1);
     }
 

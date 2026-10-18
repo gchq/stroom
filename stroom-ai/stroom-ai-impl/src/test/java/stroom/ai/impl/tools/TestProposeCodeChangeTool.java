@@ -29,6 +29,8 @@ import stroom.ai.shared.AiSteppingContext;
 import stroom.ai.shared.AiSteppingElement;
 import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -71,6 +73,7 @@ class TestProposeCodeChangeTool {
     private final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
     private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+    private final DocFinder docFinder = Mockito.mock(DocFinder.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
     private ProposeCodeChangeTool tool;
 
@@ -81,7 +84,8 @@ class TestProposeCodeChangeTool {
         Mockito.when(workspace.withTimeLimit(Mockito.any(Duration.class), Mockito.any()))
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
         Mockito.when(documentAccess.canView(XSLT)).thenReturn(true);
-        tool = new ProposeCodeChangeTool(workspace, tabSnapshots, documentAccess);
+        tool = new ProposeCodeChangeTool(workspace, tabSnapshots, documentAccess,
+                new AgentInstructions(() -> docFinder, documentAccess));
     }
 
     @Test
@@ -121,6 +125,24 @@ class TestProposeCodeChangeTool {
             assertThat(action.codeChange().pipeline()).isEqualTo(PIPELINE);
             assertThat(action.codeChange().snapshotHash()).isEqualTo("snap-hash");
         });
+    }
+
+    @Test
+    void theAgentsDocsWhereTheCodeIsAreGivenToCheckTheChangeAgainst() {
+        final DocRef agents = new DocRef(DocumentationDoc.TYPE, "agents-uuid", AgentInstructions.DOC_NAME);
+        Mockito.when(docFinder.findByName(DocumentationDoc.TYPE, AgentInstructions.DOC_NAME, true))
+                .thenReturn(List.of(agents));
+        Mockito.when(documentAccess.read(agents, DocumentationDoc.class)).thenReturn(Optional.of(
+                new DocumentationDoc("agents-uuid", "AGENTS", null, null, null, null, null, null,
+                        "## XSLT style\n- Variables in camelCase.")));
+        Mockito.when(documentAccess.path(agents)).thenReturn("/Feeds");
+        Mockito.when(documentAccess.path(XSLT)).thenReturn("/Feeds/Acme");
+        stepping("xsltFilter", BASE, false);
+
+        assertThat(run("xsltFilter", PROPOSED, "Keeps the user name, lower-cased."))
+                .contains(AgentInstructions.FOLLOW)
+                .contains("- Variables in camelCase.")
+                .contains("Check the change follows these.");
     }
 
     @Test
