@@ -30,6 +30,7 @@ import io.modelcontextprotocol.spec.McpSchema.ElicitResult.Action;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -140,6 +141,25 @@ class TestMcpElicitations {
         assertThatThrownBy(() -> elicitations.answer(CHAT_ID, card.getId(), "ACCEPT", Map.of("feed", "ACME")))
                 .hasMessageContaining("no longer waiting");
         assertThat(result.get(10, TimeUnit.SECONDS).action()).isEqualTo(Action.CANCEL);
+    }
+
+    @Test
+    void aMessageSentInsteadPutsTheFormAsideAndTheToolCarriesOn() throws Exception {
+        Mockito.when(aiDao.getMessages(CHAT_ID)).thenAnswer(inv -> messages.values().stream()
+                .sorted(Comparator.comparingInt(AiChatMessage::getId))
+                .toList());
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        final CompletableFuture<ElicitResult> result = CompletableFuture.supplyAsync(() ->
+                elicitations.handle(CHAT_ID, "fastmcp", new ElicitFormRequest("Which feed?", FORM, null)));
+        final AiChatMessage card = waitForCard();
+
+        assertThat(elicitations.supersedePending(CHAT_ID)).isEqualTo(1);
+
+        // Not answered: the tool is told so, and the card says why.
+        assertThat(result.get(5, TimeUnit.SECONDS).action()).isEqualTo(Action.CANCEL);
+        assertThat(messages.get(card.getId()).getMessage()).contains("\"status\":\"SUPERSEDED\"");
+        // Only a form still waiting is put aside.
+        assertThat(elicitations.supersedePending(CHAT_ID)).isZero();
     }
 
     @Test
