@@ -16,6 +16,9 @@
 
 package stroom.ai.client.gin;
 
+import stroom.ai.client.AiCommandErrorPresenter;
+import stroom.ai.client.AiCommandErrorPresenter.AiCommandErrorView;
+import stroom.ai.client.AiCommandErrorViewImpl;
 import stroom.ai.client.AiConfigGeneralPresenter;
 import stroom.ai.client.AiConfigGeneralPresenter.AiConfigGeneralView;
 import stroom.ai.client.AiConfigGeneralViewImpl;
@@ -68,6 +71,10 @@ public class AskStroomAIModule extends AbstractPresenterModule {
                 AskStroomAiTabPresenter.class,
                 AskStroomAiTabView.class,
                 AskStroomAiTabViewImpl.class);
+        bindPresenterWidget(
+                AiCommandErrorPresenter.class,
+                AiCommandErrorView.class,
+                AiCommandErrorViewImpl.class);
         bindPresenterWidget(
                 DownloadChatPresenter.class,
                 DownloadChatView.class,
