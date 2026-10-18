@@ -99,8 +99,9 @@ public class WorkspaceStore {
     }
 
     /// Checks a file can still be used: it has not expired, and the user still has access to the data it came
-    /// from (Use on a data source, View on any other document, see [SourceDocAccess]). If not, its content is
-    /// removed.
+    /// from (Use on a data source, View on any other document, see [SourceDocAccess]). An expired file's content is
+    /// removed. A file whose source the user can no longer access (or that no longer exists) is only refused, and
+    /// kept, as they can't get at it, and it can be used again if their access returns.
     ///
     /// @param fileId The file.
     /// @throws WorkspaceFileUnavailableException if it cannot be used.
@@ -120,7 +121,7 @@ public class WorkspaceStore {
             final SourceDocAccess.Access access = sourceDocAccess.access(info.sourceDocUuid(),
                     holdsDocumentContent(info.path()));
             if (access == SourceDocAccess.Access.DENIED) {
-                makeUnavailable(fileId, REASON_NO_ACCESS);
+                // Refused, but kept: the user can't get at it, and it works again if their access returns.
                 throw new WorkspaceFileUnavailableException(fileId, info.path(), REASON_NO_ACCESS);
             } else if (access == SourceDocAccess.Access.UNKNOWN) {
                 // Not used this time, but kept, as access may well be confirmed next time.
