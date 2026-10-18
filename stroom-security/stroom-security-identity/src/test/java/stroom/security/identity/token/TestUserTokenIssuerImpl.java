@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.time.Duration;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,7 +60,7 @@ class TestUserTokenIssuerImpl {
 
     @Test
     void aTokenIsForTheUserAndAudienceAndShortLived() throws Exception {
-        final String token = issuer.getAccessToken("jbloggs", "stroom-mcp", null).orElseThrow();
+        final String token = issuer.getAccessToken("jbloggs", "stroom-mcp", null, null).orElseThrow();
 
         final JwtClaims claims = claimsOf(token);
         assertThat(claims.getSubject()).isEqualTo("jbloggs");
@@ -77,16 +78,16 @@ class TestUserTokenIssuerImpl {
 
     @Test
     void aTokenIsReusedUntilRevoked() {
-        final String first = issuer.getAccessToken("jbloggs", "stroom-mcp", null).orElseThrow();
+        final String first = issuer.getAccessToken("jbloggs", "stroom-mcp", null, null).orElseThrow();
 
-        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", null)).contains(first);
+        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", null, null)).contains(first);
         // Another audience or user gets its own.
-        assertThat(issuer.getAccessToken("jbloggs", "other-mcp", null)).isNotEqualTo(Optional.of(first));
-        assertThat(issuer.getAccessToken("asmith", "stroom-mcp", null)).isNotEqualTo(Optional.of(first));
+        assertThat(issuer.getAccessToken("jbloggs", "other-mcp", null, null)).isNotEqualTo(Optional.of(first));
+        assertThat(issuer.getAccessToken("asmith", "stroom-mcp", null, null)).isNotEqualTo(Optional.of(first));
 
         // E.g. the user signed out.
         Mockito.when(revokedTokenChecker.isRevoked(Mockito.anyString())).thenReturn(true);
-        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", null)).isNotEqualTo(Optional.of(first));
+        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", null, null)).isNotEqualTo(Optional.of(first));
     }
 
     @Test
@@ -100,7 +101,7 @@ class TestUserTokenIssuerImpl {
                 .thenReturn(Optional.of(OAuthToken.newJwt(OAuthTokenType.ACCESS, "j", "jbloggs", "stroom",
                         "family-1", null, null, 0L, Long.MAX_VALUE)));
 
-        final String token = issuer.getAccessToken("jbloggs", "stroom-mcp", signIn).orElseThrow();
+        final String token = issuer.getAccessToken("jbloggs", "stroom-mcp", signIn, null).orElseThrow();
 
         final ArgumentCaptor<OAuthToken> recorded = ArgumentCaptor.forClass(OAuthToken.class);
         Mockito.verify(oAuthTokenDao).create(recorded.capture());
@@ -109,7 +110,41 @@ class TestUserTokenIssuerImpl {
         Mockito.when(oAuthTokenDao.fetchByJti(Mockito.anyString(), Mockito.anyLong()))
                 .thenReturn(Optional.of(OAuthToken.newJwt(OAuthTokenType.ACCESS, "j", "jbloggs", "stroom",
                         "family-2", null, null, 0L, Long.MAX_VALUE)));
-        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", signIn)).isNotEqualTo(Optional.of(token));
+        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", signIn, null)).isNotEqualTo(Optional.of(token));
+    }
+
+    @Test
+    void aTokenForALongRequestOutlastsIt() throws Exception {
+        // As for an MCP tool call that may take 11 minutes: the server keeps using the token it came with.
+        final Duration request = Duration.ofMinutes(11);
+        final String token = issuer.getAccessToken("jbloggs", "stroom-mcp", null, request).orElseThrow();
+
+        final long lifetimeSeconds = claimsOf(token).getExpirationTime().getValue() - System.currentTimeMillis() / 1000;
+        // Long enough for the request, and to be reused as long as a usual token is.
+        final long expected = Duration.ofMinutes(15).toSeconds();
+        assertThat(lifetimeSeconds).isBetween(expected - 5, expected);
+        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", null, request)).contains(token);
+        // A usual token isn't long enough for the request, so isn't reused for it.
+        final String usual = new UserTokenIssuerImpl(new TokenBuilderFactory(IdentityConfig::new, keys,
+                () -> openIdConfiguration), oAuthTokenDao, revokedTokenChecker, () -> openIdConfiguration)
+                .getAccessToken("jbloggs", "stroom-mcp", null, null).orElseThrow();
+        assertThat(claimsOf(usual).getExpirationTime().getValue() - System.currentTimeMillis() / 1000)
+                .isLessThan(request.toSeconds());
+    }
+
+    @Test
+    void howLongATokenIsIssuedForAndHowLongItMustHaveLeftToBeReused() {
+        final Duration usual = UserTokenIssuerImpl.LIFETIME;
+        assertThat(UserTokenIssuerImpl.lifetimeFor(null)).isEqualTo(usual);
+        assertThat(UserTokenIssuerImpl.lifetimeFor(Duration.ofSeconds(10))).isEqualTo(usual);
+        assertThat(UserTokenIssuerImpl.neededFor(null, usual)).isEqualTo(UserTokenIssuerImpl.MIN_REMAINING);
+        assertThat(UserTokenIssuerImpl.lifetimeFor(Duration.ofMinutes(2))).isEqualTo(Duration.ofMinutes(6));
+        assertThat(UserTokenIssuerImpl.neededFor(Duration.ofMinutes(2), Duration.ofMinutes(6)))
+                .isEqualTo(Duration.ofMinutes(2));
+        // However long is asked for, no longer than the most.
+        assertThat(UserTokenIssuerImpl.lifetimeFor(Duration.ofHours(3))).isEqualTo(UserTokenIssuerImpl.MAX_LIFETIME);
+        assertThat(UserTokenIssuerImpl.neededFor(Duration.ofHours(3), UserTokenIssuerImpl.MAX_LIFETIME))
+                .isEqualTo(UserTokenIssuerImpl.MAX_LIFETIME.minus(UserTokenIssuerImpl.MIN_REMAINING));
     }
 
     @Test
@@ -117,14 +152,14 @@ class TestUserTokenIssuerImpl {
         Mockito.when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.EXTERNAL_IDP);
 
         assertThat(issuer.isAvailable()).isFalse();
-        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", null)).isEmpty();
+        assertThat(issuer.getAccessToken("jbloggs", "stroom-mcp", null, null)).isEmpty();
         Mockito.verifyNoInteractions(oAuthTokenDao);
     }
 
     @Test
     void noTokenWithoutAUserOrAudience() {
-        assertThat(issuer.getAccessToken(" ", "stroom-mcp", null)).isEmpty();
-        assertThat(issuer.getAccessToken("jbloggs", null, null)).isEmpty();
+        assertThat(issuer.getAccessToken(" ", "stroom-mcp", null, null)).isEmpty();
+        assertThat(issuer.getAccessToken("jbloggs", null, null, null)).isEmpty();
     }
 
     private static JwtClaims claimsOf(final String jwt) throws Exception {
