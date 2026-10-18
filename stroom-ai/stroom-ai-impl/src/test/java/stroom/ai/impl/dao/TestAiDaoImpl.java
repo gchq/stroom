@@ -20,21 +20,30 @@ import stroom.ai.impl.AiDao;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
 import stroom.ai.shared.AiAgentMode;
+import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.DocumentReference;
+import stroom.ai.shared.DocumentReferenceContext;
+import stroom.ai.shared.GeneralTableContext;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.UserRef;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import jakarta.inject.Inject;
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -80,6 +89,32 @@ class TestAiDaoImpl {
         try (final Connection connection = aiDbConnProvider.getConnection()) {
             DbTestUtil.clearTables(connection, TABLES);
         }
+    }
+
+    @Test
+    void testADocumentReferenceSaysWhichDocumentItIs() {
+        final AiChat chat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final DocRef dictionary = new DocRef("Dictionary", "dict-uuid", "Malicious IPs");
+        final AiChatAttachment reference = aiDao.createAttachment(chat.getId(), AiAttachmentType.DOCUMENT,
+                JsonUtil.writeValueAsString(new DocumentReferenceContext(List.of(
+                        new DocumentReference(dictionary, "/Security/Lookups")))));
+        // A table's context isn't a document reference, so isn't read as one.
+        final AiChatAttachment table = aiDao.createAttachment(chat.getId(), AiAttachmentType.GENERAL,
+                JsonUtil.writeValueAsString(new GeneralTableContext("t", List.of("a"), List.of())));
+        aiDao.updateAttachmentStatus(reference.getId(), AiAttachmentStatus.READY, null,
+                "Dictionary 'Malicious IPs'", null, false);
+
+        final AiChatAttachment read = aiDao.getAttachment(reference.getId()).orElseThrow();
+        assertThat(read.getAttachmentType()).isEqualTo(AiAttachmentType.DOCUMENT);
+        assertThat(read.getStatus()).isEqualTo(AiAttachmentStatus.READY);
+        assertThat(read.getDocRef()).isEqualTo(dictionary);
+        assertThat(read.getDocRef().getName()).isEqualTo("Malicious IPs");
+        assertThat(read.getDocPath()).isEqualTo("/Security/Lookups");
+        assertThat(aiDao.getAttachmentsByChatId(chat.getId()))
+                .extracting(AiChatAttachment::getId, AiChatAttachment::getDocRef)
+                .containsExactly(
+                        Tuple.tuple(reference.getId(), dictionary),
+                        Tuple.tuple(table.getId(), null));
     }
 
     @Test

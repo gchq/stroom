@@ -31,6 +31,9 @@ import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
+import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.test.common.util.db.DbTestModule;
@@ -56,11 +59,17 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestWorkspaceStore {
+
+    private static final String INDEX = "Index";
+    private static final String ELASTIC_INDEX = "ElasticIndex";
+    private static final String XSLT = "XSLT";
 
     private static final List<String> TABLES = List.of(
             "ai_chat_file_chunk",
@@ -85,6 +94,9 @@ class TestWorkspaceStore {
 
     private AiChat chat;
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+    private final ExplorerNodeService explorerNodeService = Mockito.mock(ExplorerNodeService.class);
+    private final DataSourceProviderRegistry dataSourceProviderRegistry =
+            Mockito.mock(DataSourceProviderRegistry.class);
     private AiConfig aiConfig = new AiConfig();
 
     @BeforeEach
@@ -101,6 +113,8 @@ class TestWorkspaceStore {
                         bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
                         bind(TempDirProvider.class).toInstance(() -> tempDir);
                         bind(SecurityContext.class).toInstance(securityContext);
+                        bind(ExplorerNodeService.class).toInstance(explorerNodeService);
+                        bind(DataSourceProviderRegistry.class).toInstance(dataSourceProviderRegistry);
                         bind(AiConfig.class).toProvider(() -> aiConfig);
                     }
                 });
@@ -110,6 +124,7 @@ class TestWorkspaceStore {
             DbTestUtil.clearTables(connection, TABLES);
         }
         chat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        Mockito.when(dataSourceProviderRegistry.getDataSourceTypes()).thenReturn(Set.of(INDEX, ELASTIC_INDEX));
     }
 
     @Test
@@ -225,6 +240,7 @@ class TestWorkspaceStore {
         final int fileId = workspaceStore.createFile(chat.getId(), AiAttachmentType.TOOL_OUTPUT, "/outputs/f.txt",
                 null, "x\n");
         workspaceStore.setRetention(fileId, "source-uuid");
+        sourceIs("source-uuid", INDEX);
         Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.eq(DocumentPermission.USE)))
                 .thenReturn(true);
 
@@ -241,5 +257,103 @@ class TestWorkspaceStore {
                 .isInstanceOf(WorkspaceFileUnavailableException.class)
                 .hasMessageContaining("no longer have access");
         assertThat(workspaceDao.getChunkInfo(fileId)).isEmpty();
+    }
+
+    @Test
+    void testADataSourceSourceNeedsOnlyUse() {
+        // Admins often grant Use but not View on an Elastic index, so users can search it without reading its
+        // connection settings: they keep their attached tables.
+        final int fileId = fileFrom("elastic-uuid");
+        sourceIs("elastic-uuid", ELASTIC_INDEX);
+        permissions(true, false);
+
+        assertThat(workspaceStore.readLines(fileId, 0, 10)).containsExactly("x");
+        Mockito.verify(securityContext).hasDocumentPermission(new DocRef(ELASTIC_INDEX, "elastic-uuid"),
+                DocumentPermission.USE);
+    }
+
+    @Test
+    void testADocumentSourceNeedsView() {
+        // Use doesn't let a user read an XSLT, so a file made from its content needs View.
+        final int fileId = fileFrom("xslt-uuid");
+        sourceIs("xslt-uuid", XSLT);
+        permissions(true, false);
+
+        assertThatThrownBy(() -> workspaceStore.readLines(fileId, 0, 10))
+                .isInstanceOf(WorkspaceFileUnavailableException.class)
+                .hasMessageContaining("no longer have access");
+        assertThat(workspaceDao.getChunkInfo(fileId)).isEmpty();
+    }
+
+    @Test
+    void testADocumentSourceWithViewIsAvailable() {
+        final int fileId = fileFrom("xslt-uuid");
+        sourceIs("xslt-uuid", XSLT);
+        permissions(true, true);
+
+        assertThat(workspaceStore.readLines(fileId, 0, 10)).containsExactly("x");
+        Mockito.verify(securityContext).hasDocumentPermission(new DocRef(XSLT, "xslt-uuid"),
+                DocumentPermission.VIEW);
+    }
+
+    @Test
+    void testADeletedOrUnknownSourceMakesTheFileUnavailable() {
+        final int fileId = fileFrom("gone-uuid");
+        Mockito.when(explorerNodeService.getNodeByUuid("gone-uuid")).thenReturn(Optional.empty());
+        Mockito.when(dataSourceProviderRegistry.findDataSourceByUuid("gone-uuid")).thenReturn(Optional.empty());
+        permissions(true, true);
+
+        assertThatThrownBy(() -> workspaceStore.readLines(fileId, 0, 10))
+                .isInstanceOf(WorkspaceFileUnavailableException.class)
+                .hasMessageContaining("no longer have access");
+        Mockito.verify(securityContext, Mockito.never()).hasDocumentPermission(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void testADataSourceOutsideTheExplorerTreeIsFoundByItsProvider() {
+        final int fileId = fileFrom("searchable-uuid");
+        Mockito.when(explorerNodeService.getNodeByUuid("searchable-uuid")).thenReturn(Optional.empty());
+        Mockito.when(dataSourceProviderRegistry.findDataSourceByUuid("searchable-uuid"))
+                .thenReturn(Optional.of(new DocRef(INDEX, "searchable-uuid", "Meta Store")));
+        permissions(true, false);
+
+        assertThat(workspaceStore.readLines(fileId, 0, 10)).containsExactly("x");
+    }
+
+    @Test
+    void testALookUpThatFailsRefusesTheFileButKeepsIt() {
+        final int fileId = fileFrom("flaky-uuid");
+        Mockito.when(explorerNodeService.getNodeByUuid("flaky-uuid")).thenThrow(new RuntimeException("db down"));
+        permissions(true, true);
+
+        // Not used while access can't be checked, and not removed for a passing fault.
+        assertThatThrownBy(() -> workspaceStore.readLines(fileId, 0, 10))
+                .isInstanceOf(WorkspaceFileUnavailableException.class)
+                .hasMessageContaining("couldn't be checked just now");
+        assertThat(workspaceDao.getChunkInfo(fileId)).isNotEmpty();
+
+        // Once the lookup works again, so does the file.
+        Mockito.reset(explorerNodeService);
+        sourceIs("flaky-uuid", INDEX);
+        assertThat(workspaceStore.readLines(fileId, 0, 10)).containsExactly("x");
+    }
+
+    private int fileFrom(final String sourceDocUuid) {
+        final int fileId = workspaceStore.createFile(chat.getId(), AiAttachmentType.TOOL_OUTPUT,
+                "/outputs/" + sourceDocUuid + ".txt", null, "x\n");
+        workspaceStore.setRetention(fileId, sourceDocUuid);
+        return fileId;
+    }
+
+    private void sourceIs(final String uuid, final String type) {
+        Mockito.when(explorerNodeService.getNodeByUuid(uuid))
+                .thenReturn(Optional.of(ExplorerNode.builder().type(type).uuid(uuid).name("Source").build()));
+    }
+
+    private void permissions(final boolean use, final boolean view) {
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.eq(DocumentPermission.USE)))
+                .thenReturn(use);
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.eq(DocumentPermission.VIEW)))
+                .thenReturn(view);
     }
 }

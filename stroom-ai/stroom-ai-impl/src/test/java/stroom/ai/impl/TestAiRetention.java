@@ -19,6 +19,7 @@ package stroom.ai.impl;
 import stroom.ai.impl.dao.AiDaoModule;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
+import stroom.ai.impl.workspace.MockSourceDocModule;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
@@ -97,6 +98,7 @@ class TestAiRetention {
                 new DbTestModule(),
                 new AiDbModule(),
                 new AiDaoModule(),
+                new MockSourceDocModule(),
                 new AbstractModule() {
                     @Override
                     protected void configure() {

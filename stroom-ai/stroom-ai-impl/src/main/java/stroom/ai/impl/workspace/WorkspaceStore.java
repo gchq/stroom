@@ -24,9 +24,6 @@ import stroom.ai.impl.AiWorkspaceDao.ChunkInfo;
 import stroom.ai.impl.AiWorkspaceDao.FileInfo;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
-import stroom.docref.DocRef;
-import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -65,23 +62,23 @@ public class WorkspaceStore {
 
     static final String REASON_EXPIRED = "it reached its retention age";
     static final String REASON_NO_ACCESS = "you no longer have access to the data it came from";
-    /// Document permissions are held by UUID, so the type of a source document need not be known to check them.
-    private static final String SOURCE_DOC_TYPE = "AiDataSource";
+    static final String REASON_NOT_CHECKED = "your access to the data it came from couldn't be checked just now; "
+                                             + "try again";
 
     private final AiWorkspaceDao workspaceDao;
     private final AiAttachmentFileStore fileStore;
     private final Provider<AiConfig> aiConfigProvider;
-    private final SecurityContext securityContext;
+    private final SourceDocAccess sourceDocAccess;
 
     @Inject
     public WorkspaceStore(final AiWorkspaceDao workspaceDao,
                           final AiAttachmentFileStore fileStore,
                           final Provider<AiConfig> aiConfigProvider,
-                          final SecurityContext securityContext) {
+                          final SourceDocAccess sourceDocAccess) {
         this.workspaceDao = workspaceDao;
         this.fileStore = fileStore;
         this.aiConfigProvider = aiConfigProvider;
-        this.securityContext = securityContext;
+        this.sourceDocAccess = sourceDocAccess;
     }
 
     /// Sets where a file's content came from, and when it expires (the configured retention from now). Files hold
@@ -99,7 +96,8 @@ public class WorkspaceStore {
     }
 
     /// Checks a file can still be used: it has not expired, and the user still has access to the data it came
-    /// from. If not, its content is removed.
+    /// from (Use on a data source, View on any other document, see [SourceDocAccess]). If not, its content is
+    /// removed.
     ///
     /// @param fileId The file.
     /// @throws WorkspaceFileUnavailableException if it cannot be used.
@@ -115,11 +113,15 @@ public class WorkspaceStore {
             makeUnavailable(fileId, REASON_EXPIRED);
             throw new WorkspaceFileUnavailableException(fileId, info.path(), REASON_EXPIRED);
         }
-        if (info.sourceDocUuid() != null
-            && !securityContext.hasDocumentPermission(new DocRef(SOURCE_DOC_TYPE, info.sourceDocUuid()),
-                DocumentPermission.USE)) {
-            makeUnavailable(fileId, REASON_NO_ACCESS);
-            throw new WorkspaceFileUnavailableException(fileId, info.path(), REASON_NO_ACCESS);
+        if (info.sourceDocUuid() != null) {
+            final SourceDocAccess.Access access = sourceDocAccess.access(info.sourceDocUuid());
+            if (access == SourceDocAccess.Access.DENIED) {
+                makeUnavailable(fileId, REASON_NO_ACCESS);
+                throw new WorkspaceFileUnavailableException(fileId, info.path(), REASON_NO_ACCESS);
+            } else if (access == SourceDocAccess.Access.UNKNOWN) {
+                // Not used this time, but kept, as access may well be confirmed next time.
+                throw new WorkspaceFileUnavailableException(fileId, info.path(), REASON_NOT_CHECKED);
+            }
         }
     }
 

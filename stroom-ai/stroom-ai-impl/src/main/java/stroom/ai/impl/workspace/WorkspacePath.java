@@ -135,6 +135,8 @@ public record WorkspacePath(Area area, List<String> segments) {
         ATTACHMENTS("attachments", false),
         /// Large tool results, and files written by tools and the agent.
         OUTPUTS("outputs", true),
+        /// The content of Stroom documents the document tools read, when too large to give in full. Read-only.
+        DOCUMENTS("documents", false),
         /// Memory, which is held separately (see AiMemoryService).
         MEMORIES("memories", true);
 
@@ -164,8 +166,8 @@ public record WorkspacePath(Area area, List<String> segments) {
         }
 
         static String describeAll() {
-            return "/attachments/ (attached tables, read-only), /outputs/ (results and your own files) or "
-                   + "/memories/ (memory)";
+            return "/attachments/ (attached tables, read-only), /outputs/ (results and your own files), "
+                   + "/documents/ (Stroom documents read with read_document, read-only) or /memories/ (memory)";
         }
     }
 }

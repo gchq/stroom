@@ -16,18 +16,22 @@
 
 package stroom.ai.impl;
 
+import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 
 import event.logging.Device;
 import event.logging.Event;
+import event.logging.EventAction;
 import event.logging.EventDetail;
 import event.logging.EventSource;
 import event.logging.EventTime;
+import event.logging.OtherObject;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
 import event.logging.ProcessType;
 import event.logging.SystemDetail;
 import event.logging.User;
+import event.logging.ViewEventAction;
 import event.logging.impl.DefaultEventSerializer;
 import event.logging.impl.DefaultXMLValidator;
 import event.logging.impl.ExceptionAndLoggingErrorHandler;
@@ -100,6 +104,28 @@ class TestAiAuditLog {
     }
 
     @Test
+    void testDocumentViewedNamesTheDocument() {
+        auditLog.documentViewed(7, new DocRef("Dictionary", "dict-uuid", "Malicious IPs"),
+                "Read by the read_document tool");
+
+        final ArgumentCaptor<ViewEventAction> action = ArgumentCaptor.forClass(ViewEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.DOCUMENT_VIEW_TYPE_ID),
+                Mockito.eq("Ask Stroom AI viewed Dictionary 'Malicious IPs' in chat 7"), action.capture());
+        assertThat(action.getValue().getObjects())
+                .singleElement()
+                .isInstanceOfSatisfying(OtherObject.class, object -> {
+                    assertThat(object.getType()).isEqualTo("Dictionary");
+                    assertThat(object.getId()).isEqualTo("dict-uuid");
+                    assertThat(object.getName()).isEqualTo("Malicious IPs");
+                });
+        assertThat(action.getValue().getOutcome().isSuccess()).isTrue();
+        final DefaultXMLValidator validator = new DefaultXMLValidator(SchemaLocator.getSchemaLocation(),
+                new ExceptionAndLoggingErrorHandler(), ValidationExceptionBehaviourMode.THROW);
+        assertThatCode(() -> validator.validate(new DefaultEventSerializer().serialize(event(action.getValue()))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     void testFailureToLogDoesNotStopTheAgent() {
         Mockito.doThrow(new RuntimeException("down")).when(eventLoggingService)
                 .log(Mockito.anyString(), Mockito.anyString(), Mockito.any(ProcessEventAction.class));
@@ -108,7 +134,7 @@ class TestAiAuditLog {
     }
 
     // An event as Stroom logs it, with the least the schema needs around the action.
-    private static Event event(final ProcessEventAction action) {
+    private static Event event(final EventAction action) {
         return Event.builder()
                 .withEventTime(EventTime.builder()
                         .withTimeCreated(new Date())
