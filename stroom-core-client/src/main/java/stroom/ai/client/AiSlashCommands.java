@@ -17,6 +17,9 @@
 package stroom.ai.client;
 
 import stroom.ai.shared.AiAgentMode;
+import stroom.ai.shared.AiMcpPrompt;
+import stroom.ai.shared.AiMcpPromptArgument;
+import stroom.util.shared.NullSafe;
 
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +33,6 @@ final class AiSlashCommands {
     static final String NEW = "/new";
     static final String CLEAR = "/clear";
     static final String REMEMBER = "/remember";
-    static final String HELP = "/help";
 
     /// The user memory note that /remember adds to.
     static final String REMEMBER_NOTE = "remembered.md";
@@ -78,11 +80,7 @@ final class AiSlashCommands {
                     The fact is added to the note `remembered.md` in your memory, which you can see and edit from \
                     the chat menu's **Memory**.
 
-                    Example: `/remember our firewall feeds all start with FW-`"""),
-            new AiSlashCommand(HELP, "",
-                    "List the commands",
-                    """
-                    To send a message that starts with `/` as it is, start it with `//`."""));
+                    Example: `/remember our firewall feeds all start with FW-`"""));
 
     private AiSlashCommands() {
         // Static methods only.
@@ -120,25 +118,18 @@ final class AiSlashCommands {
         return existing.stripTrailing() + "\n" + bullet + "\n";
     }
 
-    /// Said with [#help], which is shown as an alert's detail: an alert's message is cut off when long, and the
-    /// list grows with MCP servers' prompts.
-    static final String HELP_MESSAGE = "The commands, and what each does, are below. To send a message that "
-                                       + "starts with /, start it with //.";
-
-    /// @param commands The commands there are: the chat's own, then MCP servers' prompts.
-    /// @return A list of the commands, one a line, with what each does.
-    static String help(final List<AiSlashCommand> commands) {
-        final StringBuilder sb = new StringBuilder();
-        for (final AiSlashCommand command : commands) {
-            if (!sb.isEmpty()) {
-                sb.append("\n");
+    /// @param prompt An MCP server's prompt.
+    /// @return An example of the prompt's command: with each of its required arguments, or if none is, its first.
+    static String promptExample(final AiMcpPrompt prompt) {
+        final StringBuilder example = new StringBuilder(prompt.getCommand());
+        final List<AiMcpPromptArgument> arguments = NullSafe.list(prompt.getArguments());
+        for (final AiMcpPromptArgument argument : arguments) {
+            if (argument.isRequired() || (argument == arguments.get(0)
+                                          && arguments.stream().noneMatch(AiMcpPromptArgument::isRequired))) {
+                example.append(' ').append(argument.getName()).append("=<").append(argument.getName()).append('>');
             }
-            sb.append(command.getName());
-            if (!command.getArguments().isEmpty()) {
-                sb.append(" ").append(command.getArguments());
-            }
-            sb.append(" - ").append(command.getDescription());
         }
-        return sb.toString();
+        return example.toString();
     }
+
 }

@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.openai.shared.McpToolPolicy;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import io.modelcontextprotocol.spec.McpSchema.Tool;
@@ -24,6 +25,7 @@ import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,6 +55,7 @@ final class McpToolDocs {
         }
         sb.append("**Policy:** ").append(policyText(policy)).append("\n\n");
         appendParameters(sb, tool.inputSchema());
+        appendExample(sb, tool.inputSchema());
         return sb.toString().strip() + "\n";
     }
 
@@ -112,6 +115,60 @@ final class McpToolDocs {
                     .append(escapeCell(description(property)))
                     .append(" |\n");
         });
+    }
+
+    // An example of the arguments a call takes: its required parameters, each with a value of the right kind.
+    private static void appendExample(final StringBuilder sb, final Map<String, Object> schema) {
+        sb.append("\n### Example\n\nThe arguments of a call:\n\n```json\n")
+                .append(JsonUtil.writeValueAsString(exampleArguments(schema), true))
+                .append("\n```\n");
+    }
+
+    /// @param schema A tool's input schema.
+    /// @return Example arguments for a call: each required parameter (or, if none is, the first parameter) with
+    /// one of its examples, its default, its first allowed value, or else a placeholder of its type.
+    static Map<String, Object> exampleArguments(final Map<String, Object> schema) {
+        final Map<?, ?> properties = schema != null && schema.get("properties") instanceof final Map<?, ?> map
+                ? map
+                : Map.of();
+        final Collection<?> required = schema != null && schema.get("required") instanceof final Collection<?> list
+                ? list
+                : List.of();
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        properties.forEach((name, value) -> {
+            final boolean first = arguments.isEmpty() && required.isEmpty();
+            if (required.contains(name) || first) {
+                final Map<?, ?> property = value instanceof final Map<?, ?> map
+                        ? map
+                        : Map.of();
+                arguments.put(String.valueOf(name), exampleValue(String.valueOf(name), property));
+            }
+        });
+        return arguments;
+    }
+
+    private static Object exampleValue(final String name, final Map<?, ?> property) {
+        if (property.get("examples") instanceof final List<?> examples && !examples.isEmpty()) {
+            return examples.getFirst();
+        }
+        if (property.get("default") != null) {
+            return property.get("default");
+        }
+        if (property.get("enum") instanceof final List<?> values && !values.isEmpty()) {
+            return values.getFirst();
+        }
+        final Object type = property.get("type") instanceof final List<?> types && !types.isEmpty()
+                ? types.getFirst()
+                : property.get("type");
+        return switch (String.valueOf(type)) {
+            case "integer", "number" -> 1;
+            case "boolean" -> true;
+            case "array" -> List.of(exampleValue(name, property.get("items") instanceof final Map<?, ?> items
+                    ? items
+                    : Map.of()));
+            case "object" -> Map.of();
+            default -> "<" + name + ">";
+        };
     }
 
     /// @return The property's type, e.g. "string", "array of string", or "string (one of: a, b)".

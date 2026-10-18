@@ -70,8 +70,9 @@
 }
 
 .askStroomAiViewImpl-bottom-inner--working {
+    /* As thick in all as the border and padding it has otherwise, so the box doesn't change size. */
     border: 2px solid transparent;
-    padding: 4px;
+    padding: 5px;
     background:
         linear-gradient(var(--page__background-color), var(--page__background-color)) padding-box,
         conic-gradient(from var(--ai-glow-angle),
@@ -125,6 +126,106 @@
     white-space: nowrap;
     align-self: center;
     flex-shrink: 0;
+}
+
+/* Tables attached since the last message was sent, listed above the input in its box. */
+.askStroomAiViewImpl-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 2px 2px 4px;
+}
+
+/* The tables a message was sent with, at the top of its bubble. */
+.ai-message-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.ai-attachment-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 2px 4px 2px 2px;
+    border: 1px solid var(--ai-border-color, rgba(128, 128, 128, 0.35));
+    border-radius: 6px;
+    background-color: var(--control__background-color, transparent);
+    font-size: var(--ai-font-size--meta);
+    line-height: 16px;
+}
+
+/* The chip's buttons are icon buttons, sized to the chip's line, with their icons centred in them. */
+.ai-attachment-chip-icon,
+.ai-attachment-chip-remove {
+    box-sizing: border-box;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.ai-attachment-chip-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.ai-attachment-chip-icon .face {
+    width: 14px;
+    height: 14px;
+}
+
+.ai-attachment-chip-remove .face {
+    width: 10px;
+    height: 10px;
+}
+
+.ai-attachment-chip-icon .face svg,
+.ai-attachment-chip-remove .face svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.ai-attachment-chip-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ai-attachment-chip--error .ai-attachment-chip-label {
+    color: #d32f2f;
+}
+
+/* While the table is downloaded. */
+.ai-attachment-chip-spinner {
+    width: 12px;
+    height: 12px;
+    margin: 0 2px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border: 2px solid rgba(128, 128, 128, 0.35);
+    border-top-color: #1976d2;
+    border-radius: 50%;
+    animation: ai-stop-spin 0.9s linear infinite;
+}
+
+/* In its place once downloaded, highlighted on hover as other icon buttons are. */
+.ai-attachment-chip-remove {
+    width: 16px;
+    height: 16px;
+    border: thin solid transparent;
+    border-radius: 4px;
+}
+
+.ai-attachment-chip-remove:hover {
+    background-color: var(--icon-button__background-color--hover);
+    border-color: var(--icon-button__border-color--hover);
+}
+
+.ai-attachment-chip-remove:hover .face {
+    color: var(--icon-colour__red);
 }
 
 .askStroomAiViewImpl-messagePane input,
