@@ -131,9 +131,38 @@
 /* Tables attached since the last message was sent, listed above the input in its box. */
 .askStroomAiViewImpl-attachments {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     gap: 4px;
     padding: 2px 2px 4px;
+}
+
+.ai-attachment-chips {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+
+/* On the right of the list, centred on its rows, removing all its tables after asking: a standard size icon button
+   (as the auto-approve shield is). */
+.ai-attachment-remove-all {
+    box-sizing: border-box;
+    border: thin solid transparent;
+}
+
+.ai-attachment-remove-all:hover:not([disabled]) {
+    background-color: var(--icon-button__background-color--hover);
+    border-color: var(--icon-button__border-color--hover);
+}
+
+.ai-attachment-remove-all:hover:not([disabled]) .face {
+    color: var(--icon-colour__red);
+}
+
+.ai-attachment-remove-all[disabled] {
+    opacity: 0.4;
+    cursor: default;
 }
 
 /* The tables a message was sent with, at the top of its bubble. */
