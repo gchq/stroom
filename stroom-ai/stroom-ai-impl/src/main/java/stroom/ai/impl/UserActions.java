@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.ai.impl.UserActionRecord.Status;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
@@ -72,6 +73,9 @@ public class UserActions {
     /// Opens a review of a code change the agent proposed for a stepping element, which the user can apply to the
     /// element's editor (unsaved) and undo.
     public static final String APPLY_CODE_CHANGE = "apply_code_change";
+    /// A change to a dashboard table that the agent proposed (only from Stroom's own propose_dashboard_change tool),
+    /// which the button applies to the open dashboard, unsaved.
+    public static final String APPLY_DASHBOARD_CHANGE = "apply_dashboard_change";
 
     /// How long a button works for, as for approvals and forms.
     static final Duration EXPIRY = Duration.ofHours(24);
@@ -94,6 +98,8 @@ public class UserActions {
     private static final Pattern ELEMENT_ID_PATTERN = Pattern.compile("[^\\p{Cntrl}]{1,200}");
     // A SHA-256, as hex.
     private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-fA-F]{64}");
+    // The hash of a dashboard's settings, as the browser and server work it out.
+    private static final Pattern SNAPSHOT_HASH_PATTERN = Pattern.compile("[0-9a-fA-F]{1,16}");
     private static final Pattern DOC_TYPE_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9]{0,63}");
     private static final Pattern UUID_PATTERN = Pattern.compile(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
@@ -185,6 +191,9 @@ public class UserActions {
                 case APPLY_CODE_CHANGE -> builtIn.contains(map)
                         ? codeChange(id, map, expiresMs)
                         : Optional.empty();
+                case APPLY_DASHBOARD_CHANGE -> builtIn.contains(map)
+                        ? dashboardChange(id, map, expiresMs)
+                        : Optional.empty();
                 default -> Optional.empty();
             };
             if (record.isPresent()) {
@@ -215,7 +224,8 @@ public class UserActions {
             }
             result.add(new UserActionRecord(record.id(), record.action(), record.label(), record.details(),
                     record.warning(), record.filterId(), record.doc(), record.request(), List.copyOf(after),
-                    record.expiresMs(), Status.PENDING, null, record.name(), record.codeChange()));
+                    record.expiresMs(), Status.PENDING, null, record.name(), record.codeChange(),
+                    record.dashboardChange()));
         }
         return List.copyOf(result);
     }
@@ -348,6 +358,46 @@ public class UserActions {
                 new UserActionRecord.CodeChange(pipeline, element, base, baseHash.toLowerCase(Locale.ROOT),
                         string(map.get("snapshot_hash")), Objects.requireNonNullElse(added, 0),
                         Objects.requireNonNullElse(removed, 0))));
+    }
+
+    /// A button that applies a change to a table on a dashboard the user may view, while the dashboard still has the
+    /// settings it was proposed against. Applying it needs Edit, which is checked when the user clicks it; whether
+    /// they could edit it when it was proposed is kept, so the button can say so.
+    private Optional<UserActionRecord> dashboardChange(final String id, final Map<?, ?> map, final long expiresMs) {
+        final DocRef named = docRef(map.get("doc"));
+        final String component = NullSafe.get(string(map.get("component")), String::strip);
+        final String componentId = NullSafe.get(string(map.get("component_id")), String::strip);
+        final String snapshotHash = string(map.get("snapshot_hash"));
+        if (named == null || !DashboardDoc.TYPE.equals(named.getType())
+            || component == null || component.isEmpty() || component.length() > MAX_NAME_CHARS
+            || hasControlCharacters(component)
+            || componentId == null || !ID_PATTERN.matcher(componentId).matches()
+            || snapshotHash == null || !SNAPSHOT_HASH_PATTERN.matcher(snapshotHash).matches()) {
+            return Optional.empty();
+        }
+        final List<DashboardChanges.Change> changes;
+        try {
+            changes = DashboardChanges.parse(map.get("changes"));
+        } catch (final IllegalArgumentException e) {
+            LOGGER.debug(() -> "Dropping a dashboard change that can't be read: " + e.getMessage());
+            return Optional.empty();
+        }
+        final DocRef dashboard = lookup.find(named).orElse(null);
+        if (dashboard == null) {
+            return Optional.empty();
+        }
+        final String summary = NullSafe.get(string(map.get("summary")), String::strip);
+        final String label = "Change to table '" + component + "' on dashboard '" + dashboard.getName() + "': "
+                             + changes.size() + " change(s)";
+        return Optional.of(new UserActionRecord(id, APPLY_DASHBOARD_CHANGE, label,
+                NullSafe.isBlankString(summary)
+                        ? null
+                        : truncate(summary, MAX_DETAILS_CHARS),
+                null, null, dashboard, null, List.of(), expiresMs, Status.PENDING, null, null, null,
+                new UserActionRecord.DashboardChange(component, componentId, snapshotHash.toLowerCase(Locale.ROOT),
+                        lookup.canEdit(dashboard),
+                        changes.stream().map(DashboardChanges.Change::toMap).toList(),
+                        DashboardChanges.describe(changes))));
     }
 
     private static Integer count(final Object value) {

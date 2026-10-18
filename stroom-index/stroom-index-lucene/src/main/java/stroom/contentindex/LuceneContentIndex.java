@@ -739,6 +739,15 @@ public class LuceneContentIndex implements ContentIndex, Handler {
         }
     }
 
+    /// Says whether the index can be searched now. Unlike [#findInContent(FindInContentRequest)], this never
+    /// waits, and never starts building the index.
+    ///
+    /// @return True if the index has been initialised on this node.
+    @Override
+    public boolean isReady() {
+        return isIndexInitialised();
+    }
+
     @Override
     public ResultPage<DocContentMatch> findInContent(final FindInContentRequest request) {
         // Trigger async initialisation, wait for a bit, then throw if it is not ready

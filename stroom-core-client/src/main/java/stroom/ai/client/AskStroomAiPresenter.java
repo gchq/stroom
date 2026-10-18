@@ -58,6 +58,8 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.event.ApplyDashboardChangeEvent;
+import stroom.dashboard.client.table.TableChange;
 import stroom.data.client.event.AskStroomAiBadgeEvent;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
@@ -2299,6 +2301,10 @@ public class AskStroomAiPresenter
                 codeChangeRow(row, messageId, json, request, status, pending);
                 return;
             }
+            if (UserActionsUi.APPLY_DASHBOARD_CHANGE.equals(action)) {
+                dashboardChangeRow(row, messageId, json, status, pending);
+                return;
+            }
             if (UserActionsUi.showsCode(action) && NullSafe.isNonBlankString(request)) {
                 // An Elasticsearch request is shown for the cluster admin to copy, and Stroom never runs it. A
                 // proposed query is shown before the user creates it.
@@ -2356,6 +2362,99 @@ public class AskStroomAiPresenter
                         new Attribute(USER_ACTION_UNDO_ATTRIBUTE, String.valueOf(messageId)),
                         new Attribute(USER_ACTION_ID_ATTRIBUTE, actionId));
             }
+        }
+    }
+
+    /// The rest of a proposed dashboard change's row: the changes in plain language, as Stroom wrote them, and the
+    /// Apply to dashboard button, disabled (saying why) if the user can't edit the dashboard.
+    private void dashboardChangeRow(final HtmlBuilder row,
+                                    final int messageId,
+                                    final String json,
+                                    final String status,
+                                    final boolean pending) {
+        final String change = AiToolMessages.getString(json, "dashboardChange");
+        final JSONArray changes = AiToolMessages.getArray(change, "changes");
+        if (changes != null && changes.size() > 0) {
+            row.div(list -> {
+                for (int i = 0; i < changes.size(); i++) {
+                    final JSONString item = changes.get(i).isString();
+                    if (item != null) {
+                        list.div("• " + item.stringValue());
+                    }
+                }
+            }, Attribute.className("ai-user-action-details"));
+        }
+        if (!pending) {
+            row.div(text -> text.append(UserActionsUi.outcomeText(status, AiToolMessages.getString(json, "outcome"))),
+                    Attribute.className("ai-approval-reason"));
+            return;
+        }
+        final ApplyDashboardChangeEvent check = ApplyDashboardChangeEvent.fireCheck(this,
+                docRef(AiToolMessages.getString(json, "doc")));
+        final String disabled = UserActionsUi.applyDashboardDisabledReason(
+                AiToolMessages.getBoolean(change, "editable"),
+                check.isHandled() && check.isOpen(),
+                check.isEditable());
+        final List<Attribute> attributes = new ArrayList<>();
+        attributes.add(Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"));
+        attributes.add(new Attribute(USER_ACTION_MESSAGE_ATTRIBUTE, String.valueOf(messageId)));
+        attributes.add(new Attribute(USER_ACTION_ID_ATTRIBUTE, NullSafe.string(AiToolMessages.getString(json, "id"))));
+        if (disabled != null) {
+            attributes.add(new Attribute("disabled", "disabled"));
+            attributes.add(Attribute.title(disabled));
+        }
+        row.elem(UserActionsUi.buttonText(UserActionsUi.APPLY_DASHBOARD_CHANGE), BUTTON,
+                attributes.toArray(new Attribute[0]));
+    }
+
+    /// Applies a proposed dashboard change to the dashboard, opening it if it isn't open. The dashboard refuses it
+    /// if it has changed since the proposal or can't be edited, and asks the user to save unsaved changes first.
+    /// Just before applying, the server checks Edit and records it. Nothing is saved.
+    private void onApplyDashboardChange(final Element button, final int messageId, final String actionId) {
+        final String json = findUserAction(messageId, actionId);
+        if (json == null || currentChat == null) {
+            return;
+        }
+        final int chatId = currentChat.getId();
+        final String change = AiToolMessages.getString(json, "dashboardChange");
+        final List<TableChange> changes = new ArrayList<>();
+        final JSONArray operations = AiToolMessages.getArray(change, "operations");
+        for (int i = 0; operations != null && i < operations.size(); i++) {
+            final JSONObject operation = operations.get(i).isObject();
+            if (operation != null) {
+                final String operationJson = operation.toString();
+                changes.add(UserActionsUi.tableChange(name -> AiToolMessages.getString(operationJson, name)));
+            }
+        }
+        final DocRef dashboard = docRef(AiToolMessages.getString(json, "doc"));
+        button.setAttribute("disabled", "disabled");
+        final ApplyDashboardChangeEvent event = ApplyDashboardChangeEvent.fireApply(this,
+                dashboard,
+                AiToolMessages.getString(change, "componentId"),
+                AiToolMessages.getString(change, "component"),
+                changes,
+                AiToolMessages.getString(change, "snapshotHash"),
+                onResult -> askStroomAiClient.doUserAction(chatId, messageId, actionId,
+                        result -> onResult.accept(result.isDone()
+                                ? null
+                                : NullSafe.nonBlankStringElse(result.getMessage(), "The change can't be applied.")),
+                        error -> onResult.accept(NullSafe.nonBlankStringElse(error.getMessage(),
+                                "Unable to apply the change.")),
+                        this),
+                () -> {
+                    showUserActionStatus(messageId, actionId, "DONE", UserActionsUi.APPLIED_DASHBOARD);
+                    // Fetch the note of what was done.
+                    pollAfterAnswer();
+                },
+                message -> {
+                    button.removeAttribute("disabled");
+                    if (message != null) {
+                        AlertEvent.fireWarn(this, message, null);
+                    }
+                });
+        if (!event.isHandled()) {
+            button.removeAttribute("disabled");
+            AlertEvent.fireWarn(this, "The dashboard can't be opened here.", null);
         }
     }
 
@@ -2480,6 +2579,10 @@ public class AskStroomAiPresenter
         if (UserActionsUi.APPLY_CODE_CHANGE.equals(action)) {
             // Nothing is done until the user applies it in the review.
             onReviewCodeChange(button, messageId, actionId);
+            return;
+        }
+        if (UserActionsUi.APPLY_DASHBOARD_CHANGE.equals(action)) {
+            onApplyDashboardChange(button, messageId, actionId);
             return;
         }
         button.setAttribute("disabled", "disabled");

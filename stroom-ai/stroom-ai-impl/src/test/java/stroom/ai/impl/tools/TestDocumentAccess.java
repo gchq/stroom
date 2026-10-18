@@ -23,7 +23,10 @@ import stroom.docstore.api.DocumentTypeName;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 
 import org.junit.jupiter.api.Test;
@@ -121,5 +124,41 @@ class TestDocumentAccess {
 
     private static ExplorerNode folder(final String name) {
         return ExplorerNode.builder().type(ExplorerConstants.FOLDER_TYPE).uuid(name + "-uuid").name(name).build();
+    }
+
+    @Test
+    void aDocumentOfAClassIsReadOnlyIfTheUserCanViewIt() {
+        @SuppressWarnings("unchecked") final DocumentActionHandler<XsltDoc> handler =
+                Mockito.mock(DocumentActionHandler.class);
+        Mockito.when(handler.readDocument(XSLT)).thenReturn(XsltDoc.builder().uuid("xslt-uuid").data("x").build());
+        handlers.put(new DocumentTypeName("XSLT"), handler);
+        Mockito.when(securityContext.hasDocumentPermission(XSLT, DocumentPermission.VIEW)).thenReturn(true);
+
+        assertThat(documentAccess.read(XSLT, XsltDoc.class)).map(XsltDoc::getData).contains("x");
+        // Of another class than asked for.
+        assertThat(documentAccess.read(XSLT, PipelineDoc.class)).isEmpty();
+
+        Mockito.when(securityContext.hasDocumentPermission(XSLT, DocumentPermission.VIEW)).thenReturn(false);
+        assertThat(documentAccess.read(XSLT, XsltDoc.class)).isEmpty();
+    }
+
+    @Test
+    void aDocRefIsFoundOnlyIfTheUserCanViewIt() {
+        nodeExists(XSLT);
+        Mockito.when(securityContext.hasDocumentPermission(XSLT, DocumentPermission.VIEW)).thenReturn(true);
+        assertThat(documentAccess.findDocRef("xslt-uuid")).contains(XSLT);
+
+        Mockito.when(securityContext.hasDocumentPermission(XSLT, DocumentPermission.VIEW)).thenReturn(false);
+        assertThat(documentAccess.findDocRef("xslt-uuid")).isEmpty();
+    }
+
+    @Test
+    void viewDataIsCheckedFailingClosed() {
+        Mockito.when(securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)).thenReturn(true);
+        assertThat(documentAccess.canViewData()).isTrue();
+
+        Mockito.when(securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION))
+                .thenThrow(new IllegalStateException("No user"));
+        assertThat(documentAccess.canViewData()).isFalse();
     }
 }

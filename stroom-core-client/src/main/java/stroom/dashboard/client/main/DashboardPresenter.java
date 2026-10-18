@@ -17,6 +17,7 @@
 package stroom.dashboard.client.main;
 
 import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
@@ -35,6 +36,7 @@ import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
 import stroom.dashboard.client.query.CurrentSelectionPresenter;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.table.TableChange;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -55,10 +57,13 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.query.api.Column;
+import stroom.query.api.ColumnFilter;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.Format;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource;
+import stroom.query.api.Sort.SortDirection;
 import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
@@ -1090,15 +1095,68 @@ public class DashboardPresenter
                     if (!column.isSpecial()) {
                         sb.append("- ").append(column.getName()).append(": ")
                                 .append(NullSafe.string(column.getExpression()))
-                                .append(column.isVisible()
-                                        ? ""
-                                        : " (hidden)")
+                                .append(aiColumnState(column))
                                 .append('\n');
                     }
                 }
             }
         }
         return sb.toString();
+    }
+
+    // How a column is shown, for the AI chat: hidden, grouped, sorted, formatted or filtered.
+    private static String aiColumnState(final Column column) {
+        final List<String> state = new ArrayList<>();
+        if (!column.isVisible()) {
+            state.add("hidden");
+        }
+        if (column.getGroup() != null) {
+            state.add("grouped, level " + (column.getGroup() + 1));
+        }
+        if (column.getSort() != null) {
+            state.add("sorted " + NullSafe.get(column.getSort().getDirection(), SortDirection::getDisplayValue)
+                      + ", order " + (column.getSort().getOrder() + 1));
+        }
+        final Format.Type formatType = NullSafe.get(column.getFormat(), Format::getType);
+        if (formatType != null && formatType != Format.Type.GENERAL) {
+            state.add("format " + formatType.getDisplayValue());
+        }
+        final String filter = NullSafe.get(column.getColumnFilter(), ColumnFilter::getFilter);
+        if (NullSafe.isNonBlankString(filter)) {
+            state.add("filter '" + filter + "'");
+        }
+        return state.isEmpty()
+                ? ""
+                : " (" + String.join("; ", state) + ")";
+    }
+
+    /// @return A hash of the dashboard's settings as edited, as given to the AI chat ([#aiDashboardText()]), to tell
+    /// whether the dashboard has changed since the chat proposed a change to it.
+    public String aiDashboardHash() {
+        return AiTabSnapshotPart.hashText(aiDashboardText());
+    }
+
+    /// Applies changes the AI chat proposed to one of the dashboard's tables, as its column menus would, unsaved.
+    ///
+    /// @param componentId The table's component id.
+    /// @param name        The table's name, used if no component has the id.
+    /// @param changes     The changes, in order.
+    /// @return Why they couldn't all be applied, or null if they were.
+    public String applyAiTableChanges(final String componentId, final String name, final List<TableChange> changes) {
+        Component component = componentId == null
+                ? null
+                : components.get(componentId);
+        if (component == null) {
+            for (final Component each : components) {
+                if (Objects.equals(NullSafe.get(each.getComponentConfig(), ComponentConfig::getName), name)) {
+                    component = each;
+                }
+            }
+        }
+        if (component == null) {
+            return "The dashboard has no table '" + name + "'.";
+        }
+        return TableChange.apply(component, changes);
     }
 
     /// @return Each table's search requests, for the AI chat to take snapshots of their rows.
