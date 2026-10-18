@@ -41,6 +41,8 @@ import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DeleteAiMemoryRequest;
+import stroom.ai.shared.DocumentReference;
+import stroom.ai.shared.DocumentReferenceContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
@@ -163,6 +165,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                 case final DashboardTableContext d -> "Dashboard Table";
                 case final QueryTableContext q -> "Stroom QL Query";
                 case final GeneralTableContext g -> "General Table";
+                case final DocumentReferenceContext r -> "Document Reference";
             };
         }
         builder.withDataSources(DataSources.builder().addDataSource(dataSourceInfo).build());
@@ -260,6 +263,15 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                             .withName("Columns")
                             .withValue(String.valueOf(NullSafe.list(g.getColumns()).size()))
                             .build());
+                }
+                case final DocumentReferenceContext r -> {
+                    // The documents attached, as the user gave them.
+                    NullSafe.list(r.getDocuments()).forEach(reference -> NullSafe.consume(reference,
+                            DocumentReference::getDocRef, docRef -> builder.addData(Data.builder()
+                                    .withName("Document")
+                                    .withValue(docRef.getType() + " '" + docRef.getName() + "' {"
+                                               + docRef.getUuid() + "}")
+                                    .build())));
                 }
             }
         }

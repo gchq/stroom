@@ -16,16 +16,20 @@
 
 package stroom.ai.impl;
 
+import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import event.logging.Data;
+import event.logging.EventAction;
+import event.logging.OtherObject;
 import event.logging.Outcome;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
 import event.logging.ProcessType;
+import event.logging.ViewEventAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -39,6 +43,7 @@ public class AiAuditLog {
     static final String TOOL_CALL_TYPE_ID = "AskStroomAi.toolCall";
     static final String ANSWER_TYPE_ID = "AskStroomAi.answer";
     static final String USER_ACTION_TYPE_ID = "AskStroomAi.userAction";
+    static final String DOCUMENT_VIEW_TYPE_ID = "AskStroomAi.viewDocument";
     static final int MAX_TEXT = 1_000;
 
     private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
@@ -126,7 +131,33 @@ public class AiAuditLog {
                         .build());
     }
 
-    private void log(final String typeId, final String description, final ProcessEventAction action) {
+    /// Records that a Stroom document was viewed for the chat: read by one of the agent's document tools, or
+    /// attached to the chat by the user. Logged as well as the tool call, as the document's own resource logs a
+    /// View when the UI fetches it.
+    ///
+    /// @param chatId  The chat.
+    /// @param docRef  The document.
+    /// @param purpose Why it was viewed, e.g. "Read by the read_document tool".
+    public void documentViewed(final int chatId, final DocRef docRef, final String purpose) {
+        log(DOCUMENT_VIEW_TYPE_ID, "Ask Stroom AI viewed " + docRef.getType() + " '"
+                                   + NullSafe.nonBlankStringElse(docRef.getName(), docRef.getUuid())
+                                   + "' in chat " + chatId,
+                ViewEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType(docRef.getType())
+                                .withId(docRef.getUuid())
+                                .withName(docRef.getName())
+                                .addData(data("ChatId", String.valueOf(chatId)))
+                                .addData(data("Purpose", purpose))
+                                .build())
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(true)
+                                .withDescription(purpose)
+                                .build())
+                        .build());
+    }
+
+    private void log(final String typeId, final String description, final EventAction action) {
         try {
             eventLoggingServiceProvider.get().log(typeId, description, action);
         } catch (final RuntimeException e) {
