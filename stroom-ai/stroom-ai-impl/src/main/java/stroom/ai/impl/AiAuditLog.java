@@ -23,9 +23,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
+import event.logging.BaseObject;
 import event.logging.Data;
 import event.logging.DataSources;
 import event.logging.EventAction;
+import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.Outcome;
 import event.logging.ProcessAction;
@@ -38,7 +40,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /// Records what the 'Ask Stroom AI' agent does for a user in the audit log: every tool call (with its arguments,
 /// shortened, and whether it was run, refused or failed) and every answer. Events from a run while the user was
@@ -53,14 +57,18 @@ public class AiAuditLog {
     static final String DOCUMENT_VIEW_TYPE_ID = "AskStroomAi.viewDocument";
     static final String SEARCH_TYPE_ID = "AskStroomAi.search";
     static final String PROCESS_TYPE_ID = "AskStroomAi.process";
+    static final String DATA_VIEW_TYPE_ID = "AskStroomAi.viewData";
+    /// The type of the objects named in events for streams.
+    static final String STREAM_TYPE = "Stream";
     /// The most documents named in one View event.
     static final int MAX_LOGGED_DOCUMENTS = 100;
     static final int MAX_TEXT = 1_000;
 
     private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
 
+    /// @param eventLoggingServiceProvider Where events are logged.
     @Inject
-    AiAuditLog(final Provider<StroomEventLoggingService> eventLoggingServiceProvider) {
+    public AiAuditLog(final Provider<StroomEventLoggingService> eventLoggingServiceProvider) {
         this.eventLoggingServiceProvider = eventLoggingServiceProvider;
     }
 
@@ -229,6 +237,106 @@ public class AiAuditLog {
         }
         log(SEARCH_TYPE_ID, "Ask Stroom AI read search results in chat " + chatId + ": " + purpose,
                 builder.build());
+    }
+
+    /// Records that the agent read streams' data for the chat, e.g. the events a tool fetched, as one View event
+    /// naming each stream (up to [#MAX_LOGGED_DOCUMENTS]).
+    ///
+    /// @param chatId    The chat.
+    /// @param streamIds The streams read.
+    /// @param purpose   What was read and why, e.g. "Read 12 event(s) with the fetch_events tool".
+    public void streamsViewed(final int chatId, final Collection<Long> streamIds, final String purpose) {
+        if (streamIds == null || streamIds.isEmpty()) {
+            return;
+        }
+        final ViewEventAction.Builder<Void> builder = ViewEventAction.builder();
+        streamIds.stream()
+                .limit(MAX_LOGGED_DOCUMENTS)
+                .forEach(streamId -> builder.addObject(streamObject(streamId)));
+        log(DATA_VIEW_TYPE_ID, "Ask Stroom AI read the data of " + streamIds.size() + " stream(s) in chat "
+                               + chatId,
+                builder.withOutcome(Outcome.builder()
+                                .withSuccess(true)
+                                .withDescription(purpose + more(streamIds.size()))
+                                .build())
+                        .addData(data("ChatId", String.valueOf(chatId)))
+                        .addData(data("Purpose", purpose))
+                        .build());
+    }
+
+    /// Records that the agent searched Stroom's documents for the chat, e.g. following their dependencies or
+    /// finding text in them, as a Search event naming the documents found (up to [#MAX_LOGGED_DOCUMENTS]).
+    ///
+    /// @param chatId  The chat.
+    /// @param query   The search, in words, e.g. "dependants of Feed 'X', depth 2".
+    /// @param found   The documents found and given to the agent.
+    /// @param data    Anything else to record, e.g. how many documents were read, by name.
+    /// @param purpose Why, e.g. "Search by the find_in_content tool".
+    public void documentsSearched(final int chatId,
+                                  final String query,
+                                  final List<DocRef> found,
+                                  final Map<String, String> data,
+                                  final String purpose) {
+        final List<BaseObject> objects = NullSafe.list(found).stream()
+                .limit(MAX_LOGGED_DOCUMENTS)
+                .map(docRef -> (BaseObject) OtherObject.builder()
+                        .withType(docRef.getType())
+                        .withId(docRef.getUuid())
+                        .withName(docRef.getName())
+                        .build())
+                .toList();
+        searchedObjects(chatId, query, objects, NullSafe.list(found).size(), data, purpose);
+    }
+
+    /// Records that the agent searched streams' meta for the chat, as a Search event naming the streams found (up
+    /// to [#MAX_LOGGED_DOCUMENTS]).
+    ///
+    /// @param chatId    The chat.
+    /// @param query     The search, in words, e.g. "feed is X, created from 2026-10-01".
+    /// @param streamIds The streams found.
+    /// @param data      Anything else to record, e.g. how many streams were read from the stream store, by name.
+    /// @param purpose   Why, e.g. "Search by the stream_meta tool".
+    public void streamsSearched(final int chatId,
+                                final String query,
+                                final List<Long> streamIds,
+                                final Map<String, String> data,
+                                final String purpose) {
+        final List<BaseObject> objects = NullSafe.list(streamIds).stream()
+                .limit(MAX_LOGGED_DOCUMENTS)
+                .map(streamId -> (BaseObject) streamObject(streamId))
+                .toList();
+        searchedObjects(chatId, query, objects, NullSafe.list(streamIds).size(), data, purpose);
+    }
+
+    private void searchedObjects(final int chatId,
+                                 final String query,
+                                 final List<BaseObject> objects,
+                                 final int total,
+                                 final Map<String, String> data,
+                                 final String purpose) {
+        final SearchEventAction.Builder<Void> builder = SearchEventAction.builder()
+                .withQuery(Query.builder().withRaw(shorten(query)).build())
+                .withTotalResults(BigInteger.valueOf(total))
+                .addData(data("ChatId", String.valueOf(chatId)))
+                .addData(data("Purpose", purpose + more(total)));
+        if (!objects.isEmpty()) {
+            builder.withResults(MultiObject.builder().addObjects(objects).build());
+        }
+        NullSafe.map(data).forEach((name, value) -> builder.addData(data(name, value)));
+        log(SEARCH_TYPE_ID, "Ask Stroom AI searched in chat " + chatId + ": " + purpose, builder.build());
+    }
+
+    private static OtherObject streamObject(final long streamId) {
+        return OtherObject.builder()
+                .withType(STREAM_TYPE)
+                .withId(String.valueOf(streamId))
+                .build();
+    }
+
+    private static String more(final int total) {
+        return total > MAX_LOGGED_DOCUMENTS
+                ? " (the first " + MAX_LOGGED_DOCUMENTS + " of " + total + " are named)"
+                : "";
     }
 
     /// Records something the agent did with a document for the chat that reads but changes nothing, e.g.

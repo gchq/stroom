@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.api.AiService;
+import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.AiWorkspaceConfig;
@@ -37,6 +38,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docstore.api.DocFinder;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.test.common.util.db.DbTestModule;
@@ -48,10 +50,13 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import event.logging.OtherObject;
+import event.logging.ViewEventAction;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -99,6 +104,7 @@ class TestEventTools {
     private final AiService aiService = Mockito.mock(AiService.class);
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final Store store = Mockito.mock(Store.class);
+    private final StroomEventLoggingService eventLoggingService = Mockito.mock(StroomEventLoggingService.class);
     // The segments of each stream the user may see: header, events, footer.
     private final Map<Long, List<String>> streams = new HashMap<>();
     private AiConfig aiConfig = new AiConfig();
@@ -224,7 +230,7 @@ class TestEventTools {
 
         // An event over the size limit is left out.
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, null, null, null, null, null, null, 120),
+                new AiWorkspaceConfig(null, null, null, null, null, null, null, null, null, 120, null),
                 null, null, null, null, null, null, null, null);
         assertThat(run(fetchTool(), "{\"path\":\"/attachments/5.md\",\"out\":\"/outputs/small.xml\"}"))
                 .contains("too large to fetch");
@@ -323,8 +329,84 @@ class TestEventTools {
                 .startsWith("Error");
     }
 
+    @Test
+    void fetchEventsLogsAViewEventNamingTheStreamsRead() {
+        run(fetchTool(), "{\"path\":\"/attachments/5.md\"}");
+
+        final ArgumentCaptor<ViewEventAction> action = ArgumentCaptor.forClass(ViewEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq("AskStroomAi.viewData"), Mockito.contains("2 stream(s)"),
+                action.capture());
+        assertThat(action.getValue().getOutcome().getDescription()).contains("4 event(s)");
+        assertThat(action.getValue().getObjects())
+                .map(object -> ((OtherObject) object).getType() + " " + ((OtherObject) object).getId())
+                .containsExactly("Stream 11", "Stream 12");
+    }
+
+    @Test
+    void searchEventsAppliesJqToEachXPathValueParsedAsJson() {
+        streams.put(13L, List.of(HEADER,
+                "<Event><Data Name=\"message\" Value='{\"user\":{\"username\":\"alice\"},"
+                + "\"to\":[{\"username\":\"bob\"}]}'/></Event>\n",
+                "<Event><Data Name=\"message\" Value=\"not JSON at all\"/></Event>\n",
+                "<Event><Data Name=\"message\" Value='{\"user\":{\"username\":\"carol\"}}'/></Event>\n",
+                FOOTER));
+        attach("/attachments/9.md", """
+                | StreamId | EventId |
+                | --- | --- |
+                | 13 | 1 |
+                | 13 | 2 |
+                | 13 | 3 |
+                """);
+        run(fetchTool(), "{\"path\":\"/attachments/9.md\"}");
+
+        final String result = run(new SearchEventsTool(workspace), """
+                {"path":"/outputs/events.xml","xpath":"//d:Data[@Name='message']/@Value",
+                 "jq":".. | .username? // empty","column":"username"}""");
+
+        assertThat(result)
+                .contains("2 of 3 event(s) gave a jq result (1 XPath value(s) weren't JSON, so were left out)")
+                .contains("Wrote 3 row(s)");
+        assertThat(read("/outputs/search_events.csv")).isEqualTo("""
+                StreamId,EventId,username\r
+                13,1,alice\r
+                13,1,bob\r
+                13,3,carol\r
+                """);
+        // jq needs an XPath value to work on.
+        assertThat(run(new SearchEventsTool(workspace), """
+                {"path":"/outputs/events.xml","jq":".","text":"alice"}"""))
+                .startsWith("Error")
+                .contains("Give xpath with jq");
+        assertThat(run(new SearchEventsTool(workspace), """
+                {"path":"/outputs/events.xml","xpath":"//d:Data/@Value","jq":"env"}"""))
+                .contains("the jq filter failed on 2 value(s)");
+    }
+
+    @Test
+    void aPipelineFetchesAndSearchesEventsInOneCall() {
+        final PipelineTool pipeline = new PipelineTool(workspace, new GrepTool(workspace), new JqTool(workspace),
+                new XPathTool(workspace), new TableTool(workspace, Mockito.mock(ColumnSummariser.class)), fetchTool(),
+                new SearchEventsTool(workspace), Mockito.mock(CurrentResultsTool.class));
+
+        final String result = run(pipeline, """
+                {"steps":[
+                  {"tool":"fetch_events","args":{"path":"/attachments/5.md"}},
+                  {"tool":"search_events","args":{"xpath":"//d:Outcome/d:Success","column":"success"}},
+                  {"tool":"table","args":{"groupBy":["success"]}}]}""");
+
+        assertThat(result)
+                .contains("Step 1 (fetch_events): Wrote 4 event(s) from 2 stream(s)")
+                .contains("Step 2 (search_events): Searched 4 event(s)")
+                .contains("| Failure | 2 |")
+                .contains("| Success | 2 |");
+        // The intermediate files are gone.
+        assertThat(workspace.list(chatId, WorkspacePath.parse("/outputs/")))
+                .noneMatch(entry -> entry.path().path().contains("/pipeline/"));
+    }
+
     private FetchEventsTool fetchTool() {
-        return new FetchEventsTool(workspace, () -> store, () -> securityContext);
+        return new FetchEventsTool(workspace, () -> store, () -> securityContext,
+                new AiAuditLog(() -> eventLoggingService));
     }
 
     private Source source(final long streamId) throws IOException {

@@ -249,7 +249,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         }
     }
 
-    private void changeSort(final Column column, final SortDirection direction) {
+    void changeSort(final Column column, final SortDirection direction) {
         final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
         boolean change = false;
 
@@ -426,7 +426,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         }
     }
 
-    private void replaceColumn(final Column oldColumn, final Column newColumn) {
+    void replaceColumn(final Column oldColumn, final Column newColumn) {
         final List<Column> columns = new ArrayList<>();
         for (final Column column : getColumns()) {
             if (column.getId().equals(oldColumn.getId())) {
@@ -486,13 +486,13 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                         .build());
     }
 
-    private void showColumn(final Column column) {
+    void showColumn(final Column column) {
         replaceColumn(column, column.copy().visible(true).build());
         tablePresenter.onChange();
         tablePresenter.updateColumns();
     }
 
-    private void hideColumn(final Column column) {
+    void hideColumn(final Column column) {
         if (getVisibleColumnCount() <= 1) {
             AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
         } else {
@@ -675,7 +675,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                 .build();
     }
 
-    private void setGroup(final Column column, final Integer group) {
+    void setGroup(final Column column, final Integer group) {
         if (!Objects.equals(column.getGroup(), group)) {
             replaceColumn(column, column.copy().group(group).build());
             fixGroups(getColumns());

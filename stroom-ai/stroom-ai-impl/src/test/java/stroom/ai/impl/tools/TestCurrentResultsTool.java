@@ -26,16 +26,26 @@ import stroom.ai.impl.tools.CurrentResultsTool.ResultsMeta;
 import stroom.ai.impl.tools.CurrentResultsTool.State;
 import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.AskStroomAiContext;
+import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.dashboard.impl.DashboardService;
+import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
+import stroom.query.api.Column;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.api.QueryKey;
+import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableResult;
+import stroom.query.api.TableSettings;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.util.shared.ResultPage;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +57,7 @@ import org.mockito.Mockito;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,6 +71,8 @@ class TestCurrentResultsTool {
     private static final String RAN = "from \"Windows events\" select User";
     private static final QueryKey TAB_KEY = new QueryKey("tab-key");
     private static final QueryKey NEW_KEY = new QueryKey("new-key");
+    private static final DocRef DASHBOARD = new DocRef("Dashboard", "dash-uuid", "Logons");
+    private static final String TABLE_ID = "table-1";
 
     @TempDir
     Path tempDir;
@@ -69,6 +82,7 @@ class TestCurrentResultsTool {
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
+    private final DashboardService dashboardService = Mockito.mock(DashboardService.class);
     private TableAnalysisConfig tableAnalysisConfig = new TableAnalysisConfig();
     private FakeTabWorkspace files;
     private CurrentResultsTool tool;
@@ -80,7 +94,7 @@ class TestCurrentResultsTool {
     void setUp() throws Exception {
         files = new FakeTabWorkspace(tempDir);
         tool = new CurrentResultsTool(files.workspace(), tabSnapshots, tableDownloader, dataSourceAccess,
-                () -> queryService, () -> Mockito.mock(DashboardService.class), () -> tableAnalysisConfig,
+                () -> queryService, () -> dashboardService, () -> tableAnalysisConfig,
                 auditLog);
         Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.of(VIEW));
         Mockito.when(dataSourceAccess.canUse(VIEW)).thenReturn(true);
@@ -92,6 +106,16 @@ class TestCurrentResultsTool {
             return new DashboardSearchResponse("node1", key, null, null, null, finished,
                     List.of(new TableResult("table", null, null, null, available, null, null)), null);
         });
+        Mockito.when(dashboardService.search(Mockito.any())).thenAnswer(invocation -> {
+            final DashboardSearchRequest request = invocation.getArgument(0);
+            final QueryKey key = request.getQueryKey() != null
+                    ? request.getQueryKey()
+                    : NEW_KEY;
+            return new DashboardSearchResponse("node1", key, null, null, null, finished,
+                    List.of(new TableResult(TABLE_ID, null, null, null, available, null, null)), null);
+        });
+        Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
+                QueryField.createId("StreamId"), QueryField.createId("EventId"), QueryField.createText("User"))));
         Mockito.when(tableDownloader.download(Mockito.any(), Mockito.anyLong(), Mockito.any())).thenAnswer(
                 invocation -> {
                     final long max = invocation.getArgument(1);
@@ -298,6 +322,81 @@ class TestCurrentResultsTool {
         assertThat(fewAssessment.notes()).singleElement().asString().contains("call again with refresh");
     }
 
+    @Test
+    void anUngroupedTableWithEventIdsIsSnapshottedAsItIs() {
+        dashboardTab(false, true);
+
+        final String result = run("{\"withEventIds\":true}");
+
+        assertThat(result).contains("Took a snapshot of Logons");
+        // The download has the ids only if the table keeps them: this one does, so no search is run.
+        Mockito.verify(dashboardService, Mockito.never()).search(Mockito.argThat(request ->
+                request.getQueryKey() == null));
+    }
+
+    @Test
+    void aGroupedTablesEventsNeedTheUsersYesToSearchAgain() {
+        dashboardTab(true, true);
+
+        final String result = run("{\"withEventIds\":true}");
+
+        assertThat(result)
+                .contains("means running its search again")
+                .contains("ungrouped, one row per event")
+                .contains("withEventIds and refresh");
+        Mockito.verifyNoInteractions(tableDownloader);
+    }
+
+    @Test
+    void aGroupedTablesEventsAreTakenUngroupedWithTheirIds() {
+        dashboardTab(true, false);
+
+        final String result = run("{\"withEventIds\":true,\"refresh\":true}");
+
+        final ArgumentCaptor<DashboardSearchRequest> searched = ArgumentCaptor.forClass(DashboardSearchRequest.class);
+        Mockito.verify(dashboardService, Mockito.atLeastOnce()).search(searched.capture());
+        final DashboardSearchRequest request = searched.getAllValues().getFirst();
+        // A search of its own, not the dashboard's.
+        assertThat(request.getQueryKey()).isNull();
+        final List<Column> columns = ((TableResultRequest) request.getComponentResultRequests().getFirst())
+                .getTableSettings().getColumns();
+        assertThat(columns).allMatch(column -> column.getGroup() == null);
+        assertThat(columns).extracting(Column::getId)
+                .contains(SpecialColumns.RESERVED_STREAM_ID, SpecialColumns.RESERVED_EVENT_ID);
+        assertThat(result)
+                .contains("/tabs/results/dash-uuid/table-1-events.md")
+                .contains("the " + available + " event(s) behind the table's 7 group(s)");
+        Mockito.verify(auditLog).searched(Mockito.eq(CHAT), Mockito.eq(VIEW), Mockito.any(), Mockito.anyLong(),
+                Mockito.contains("ungrouped"));
+    }
+
+    @Test
+    void aDataSourceWithoutEventIdsSaysTheEventsCantBeFetched() {
+        dashboardTab(true, false);
+        Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
+                QueryField.createText("User"))));
+
+        final String result = run("{\"withEventIds\":true,\"refresh\":true}");
+
+        assertThat(result).contains("doesn't store each event's StreamId and EventId");
+        Mockito.verifyNoInteractions(tableDownloader);
+    }
+
+    @Test
+    void theCoverageOfASnapshotIsSaid() {
+        final ResultsMeta all = meta(100, 100, false, 100L, true, false);
+        assertThat(CurrentResultsTool.coverage(all, 100)).isEqualTo("Coverage: all 100 row(s) the table's search "
+                                                                    + "found.");
+
+        final ResultsMeta first = new ResultsMeta(QUERY_DOC, "Logons", null, "/tabs/results/q/t-events.md", "h",
+                null, 0L, 500, 500, true, 2_400_000L, true, false, true, null, null, 41L);
+        assertThat(CurrentResultsTool.coverage(first, 500))
+                .contains("the first 500 of 2400000 event(s) the table's search found (behind the table's 41 "
+                          + "group(s))")
+                .contains("of the first N of M events")
+                .contains("extraction pipeline");
+    }
+
     private String run(final String arguments) {
         return tool.execute(ToolExecutionRequest.builder().id("c1").name(CurrentResultsTool.NAME)
                 .arguments(arguments).build(), CHAT);
@@ -312,6 +411,39 @@ class TestCurrentResultsTool {
         final AiTabSearch search = new AiTabSearch("Logons", null, context(ran, resultsKey), context(edited, null),
                 List.of("User"), available, false);
         Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.of(snapshot(search)));
+    }
+
+    // The latest question's tab: a dashboard with one table, grouped or not, keeping each row's ids or not.
+    private void dashboardTab(final boolean grouped, final boolean withIds) {
+        final List<Column> columns = new ArrayList<>();
+        columns.add(Column.builder().id("c1").name("User").expression("${User}").group(grouped
+                ? 0
+                : null).build());
+        columns.add(Column.builder().id("c2").name("Count").expression("count()").build());
+        if (withIds) {
+            columns.add(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
+            columns.add(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
+        }
+        final DashboardTableContext results = dashboardContext(columns, TAB_KEY);
+        final DashboardTableContext live = dashboardContext(columns, null);
+        final AiTabSearch search = new AiTabSearch("Logons", TABLE_ID, results, live, List.of("User", "Count"), 7L,
+                false);
+        Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.of(new StoredTabSnapshot(5, 1,
+                DASHBOARD, "/", "Logons", "Dashboard", false, null, "h", 0L, List.of(), List.of(search), null)));
+    }
+
+    private static DashboardTableContext dashboardContext(final List<Column> columns, final QueryKey queryKey) {
+        return new DashboardTableContext("Dashboard 'Logons'", "node1", DashboardSearchRequest.builder()
+                .queryKey(queryKey)
+                .search(Search.builder()
+                        .dataSourceRef(VIEW)
+                        .expression(ExpressionOperator.builder().build())
+                        .build())
+                .componentResultRequests(List.of(TableResultRequest.builder()
+                        .componentId(TABLE_ID)
+                        .tableSettings(TableSettings.builder().columns(columns).build())
+                        .build()))
+                .build());
     }
 
     private static StoredTabSnapshot snapshot(final AiTabSearch search) {
@@ -334,6 +466,6 @@ class TestCurrentResultsTool {
                                     final boolean finished,
                                     final boolean cutByLimit) {
         return new ResultsMeta(QUERY_DOC, "Logons", null, "/tabs/results/q/results.md", "h", null, 0L, held,
-                wanted, truncated, total, finished, cutByLimit, false, "k", null);
+                wanted, truncated, total, finished, cutByLimit, false, "k", null, null);
     }
 }
