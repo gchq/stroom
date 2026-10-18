@@ -431,6 +431,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         message.getElement().setAttribute("placeholder", "How can I help?");
 
         run.setText(SEND_BUTTON_NORMAL_TEXT);
+        run.setTitle("Send message");
         run.setSvg(SvgImage.PLAY);
         run.setEnabled(false);
 
