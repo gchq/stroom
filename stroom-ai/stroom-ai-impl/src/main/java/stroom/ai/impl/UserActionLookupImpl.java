@@ -27,6 +27,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.query.impl.QueryService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
@@ -35,6 +36,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,13 +60,24 @@ public class UserActionLookupImpl implements UserActionLookup {
     private final SecurityContext securityContext;
     @SuppressWarnings("rawtypes")
     private final Map<DocumentTypeName, DocumentActionHandler> documentActionHandlers;
+    private final Provider<QueryService> queryServiceProvider;
+
+    @SuppressWarnings("rawtypes")
+    UserActionLookupImpl(final ProcessorFilterService processorFilterService,
+                         final ExplorerNodeService explorerNodeService,
+                         final SecurityContext securityContext,
+                         final Map<DocumentTypeName, DocumentActionHandler> documentActionHandlers) {
+        this(processorFilterService, explorerNodeService, securityContext, documentActionHandlers, () -> null);
+    }
 
     @Inject
     @SuppressWarnings("rawtypes")
     UserActionLookupImpl(final ProcessorFilterService processorFilterService,
                          final ExplorerNodeService explorerNodeService,
                          final SecurityContext securityContext,
-                         final Map<DocumentTypeName, DocumentActionHandler> documentActionHandlers) {
+                         final Map<DocumentTypeName, DocumentActionHandler> documentActionHandlers,
+                         final Provider<QueryService> queryServiceProvider) {
+        this.queryServiceProvider = queryServiceProvider;
         this.processorFilterService = processorFilterService;
         this.explorerNodeService = explorerNodeService;
         this.securityContext = securityContext;
@@ -93,6 +106,21 @@ public class UserActionLookupImpl implements UserActionLookup {
         return explorerNodeService.getNode(docRef)
                 .map(ExplorerNode::getDocRef)
                 .filter(found -> docRef.getType().equals(found.getType()));
+    }
+
+    @Override
+    public Optional<DocRef> usableDataSource(final String query) {
+        final QueryService queryService = queryServiceProvider.get();
+        if (queryService == null || query == null || query.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return queryService.getReferencedDataSource(query)
+                    .filter(dataSource -> securityContext.hasDocumentPermission(dataSource, DocumentPermission.USE));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the data source of a query", e);
+            return Optional.empty();
+        }
     }
 
     @Override

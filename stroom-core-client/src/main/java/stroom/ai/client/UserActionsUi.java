@@ -24,6 +24,8 @@ final class UserActionsUi {
     static final String DISABLE_PROCESSOR_FILTER = "disable_processor_filter";
     static final String OPEN_DOCUMENT = "open_document";
     static final String ELASTICSEARCH_REQUEST = "elasticsearch_request";
+    /// A StroomQL query the agent proposed, which the button opens Stroom's New Query dialog to create.
+    static final String CREATE_QUERY = "create_query";
 
     private UserActionsUi() {
         // Static methods only.
@@ -50,6 +52,13 @@ final class UserActionsUi {
     }
 
     /// @param action An action.
+    /// @return True if the action shows a request or query as code: an Elasticsearch request (only shown, for the
+    /// cluster admin) or a proposed query.
+    static boolean showsCode(final String action) {
+        return ELASTICSEARCH_REQUEST.equals(action) || CREATE_QUERY.equals(action);
+    }
+
+    /// @param action An action.
     /// @return What its button says.
     static String buttonText(final String action) {
         if (ENABLE_PROCESSOR_FILTER.equals(action)) {
@@ -58,6 +67,8 @@ final class UserActionsUi {
             return "Disable";
         } else if (OPEN_DOCUMENT.equals(action)) {
             return "Open";
+        } else if (CREATE_QUERY.equals(action)) {
+            return "Create query…";
         }
         return "Do it";
     }

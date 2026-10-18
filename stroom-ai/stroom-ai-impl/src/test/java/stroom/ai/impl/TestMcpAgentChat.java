@@ -906,6 +906,46 @@ class TestMcpAgentChat {
         assertThat(JsonUtil.readValue(untrustedResults.getFirst(), ToolResultRecord.class).userActions()).isNull();
     }
 
+    @Test
+    void userActionsOfferedByBuiltInToolsAreCheckedAndKeptWithTheResult() {
+        final String query = "from \"Windows events\" select User";
+        Mockito.when(userActionLookup.usableDataSource(query))
+                .thenReturn(Optional.of(new DocRef("View", "v-uuid", "Windows events")));
+        final dev.langchain4j.agent.tool.ToolSpecification propose = dev.langchain4j.agent.tool.ToolSpecification
+                .builder()
+                .name("propose_query")
+                .description("built in")
+                .build();
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(propose, (request, memoryId) -> {
+            // As propose_query offers its button, through the run's context.
+            stroom.ai.impl.tools.ToolRunContext.current().orElseThrow().offerUserAction(request.id(), Map.of(
+                    "id", "create-query-1", "action", UserActions.CREATE_QUERY, "name", "Windows users",
+                    "query", query));
+            return "offered";
+        }));
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("propose_query")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, McpToolset.EMPTY, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        final ArgumentCaptor<String> results = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService, Mockito.atLeastOnce()).storeMessage(Mockito.eq(7),
+                Mockito.eq(AiMessageType.TOOL_RESULT), results.capture());
+        final ToolResultRecord result = JsonUtil.readValue(results.getAllValues().getFirst(), ToolResultRecord.class);
+        assertThat(result.text()).isEqualTo("offered");
+        assertThat(result.userActions()).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.CREATE_QUERY);
+            assertThat(action.name()).isEqualTo("Windows users");
+            assertThat(action.request()).isEqualTo(query);
+        });
+    }
+
     private List<String> toolResults(final stroom.openai.shared.McpToolServerConfig config,
                                      final Map<String, Object> structured) {
         Mockito.clearInvocations(aiService);
