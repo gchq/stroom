@@ -209,6 +209,23 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void theTaskListCarriedOnIsTheLatestQuestionsLatest() {
+        assertThat(McpAgentChat.latestTaskList(List.of(
+                new AiChatMessage(1, 7, 0L, AiMessageType.USER_MESSAGE, null, "onboard it", 1, null),
+                new AiChatMessage(2, 7, 0L, AiMessageType.TASK_LIST, null, "first", 1, null),
+                new AiChatMessage(3, 7, 0L, AiMessageType.TOOL_CALL, null, "{}", 1, null),
+                new AiChatMessage(4, 7, 0L, AiMessageType.TASK_LIST, null, "second", 1, null),
+                new AiChatMessage(5, 7, 0L, AiMessageType.APPROVAL_REQUEST, null, "{}", 1, null))))
+                .isEqualTo("second");
+        // One kept for an earlier question isn't the one the user sees.
+        assertThat(McpAgentChat.latestTaskList(List.of(
+                new AiChatMessage(1, 7, 0L, AiMessageType.TASK_LIST, null, "earlier", 1, null),
+                new AiChatMessage(2, 7, 0L, AiMessageType.USER_MESSAGE, null, "and now?", 2, null))))
+                .isNull();
+        assertThat(McpAgentChat.latestTaskList(List.of())).isNull();
+    }
+
+    @Test
     void progressAndDebugDetailDescribeWhyEachToolRuns() {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))

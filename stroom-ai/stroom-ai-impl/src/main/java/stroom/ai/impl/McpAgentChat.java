@@ -274,7 +274,10 @@ class McpAgentChat {
 
 
         final int maxIterations = maxToolIterations();
-        final TaskListReminder taskListReminder = new TaskListReminder();
+        // From the question's list so far, as one kept before the run stopped for the user's approval is still to be
+        // kept up to date.
+        final TaskListReminder taskListReminder = TaskListReminder.continuing(
+                latestTaskList(aiService.getMessages(chatId)));
         ChatResponse response = null;
         for (int iteration = 1; iteration <= maxIterations; iteration++) {
             if (cancelled.get() || taskContext.isTerminated()) {
@@ -850,6 +853,22 @@ class McpAgentChat {
                 group -> toolGroupActivations.activate(chatId, group)));
         limitTools(tools, NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getMaxToolDefinitions, 0), chatId);
         return tools;
+    }
+
+    /// @param messages A chat's messages, in order.
+    /// @return The latest task list kept for the chat's latest question, or null if it has none (a list kept for an
+    /// earlier question isn't the one the user sees).
+    static String latestTaskList(final List<AiChatMessage> messages) {
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            final AiChatMessage message = messages.get(i);
+            if (message.getMessageType() == AiMessageType.TASK_LIST) {
+                return message.getMessage();
+            }
+            if (message.getMessageType() == AiMessageType.USER_MESSAGE) {
+                return null;
+            }
+        }
+        return null;
     }
 
     /// Adds the task list reminder to the last tool result, so the model sees it before its next step.
