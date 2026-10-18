@@ -17,7 +17,9 @@
 package stroom.ai.client;
 
 import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatAttachment;
+import stroom.docref.DocRef;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.HtmlBuilder;
@@ -25,15 +27,19 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
-/// How a table attached to a chat is shown: as a chip saying what it is, e.g. "Events - Logons", first in a list
-/// above the input box while it is downloaded and until the next message is sent (when it can be removed), then in
-/// the bubble of the message it was sent with.
+/// How a table or document attached to a chat is shown: as a chip saying what it is, e.g. "Events - Logons", first
+/// in a list above the input box while it is downloaded and until the next message is sent (when it can be removed),
+/// then in the bubble of the message it was sent with. A document attached from the Explorer tree has nothing to
+/// download, so its chip is ready at once, with its type's icon (a button that opens it) and its name.
 final class AiAttachments {
 
     /// The attribute of a chip's remove button: the attachment's message id.
     static final String REMOVE_ATTRIBUTE = "data-remove-attachment-message-id";
     /// The attribute of the button that removes all the attachments listed.
     static final String REMOVE_ALL_ATTRIBUTE = "data-remove-all-attachments";
+    /// The attributes of a document chip's icon button, which opens the document: its type and uuid.
+    static final String OPEN_DOC_TYPE_ATTRIBUTE = "data-open-doc-type";
+    static final String OPEN_DOC_UUID_ATTRIBUTE = "data-open-doc-uuid";
 
     private static final String CHIP_ID_PREFIX = "ai-attachment-";
     private static final String DASHBOARD_PREFIX = "Dashboard '";
@@ -103,6 +109,34 @@ final class AiAttachments {
     }
 
     /// @param attachment The attachment's status, or null if it isn't known yet.
+    /// @return True if it is a document attached from the Explorer tree, as a reference.
+    static boolean isDocument(final AiChatAttachment attachment) {
+        return attachment != null
+               && attachment.getAttachmentType() == AiAttachmentType.DOCUMENT
+               && attachment.getDocRef() != null;
+    }
+
+    /// @param attachment  A document attached from the Explorer tree.
+    /// @param description What it is, as it was attached, e.g. "Dictionary 'Malicious IPs'".
+    /// @return What its chip says: the document's name.
+    static String documentLabel(final AiChatAttachment attachment, final String description) {
+        final DocRef docRef = attachment.getDocRef();
+        return NullSafe.isNonBlankString(docRef.getName())
+                ? docRef.getName()
+                : NullSafe.nonBlankStringElse(description, docRef.getUuid());
+    }
+
+    /// @param displayType The document's type, as Stroom shows it, e.g. "Dictionary".
+    /// @param path        The path of the folder holding it, e.g. "/Security/Lookups", or null if not known.
+    /// @return The chip's tooltip, e.g. "Dictionary in /Security/Lookups".
+    static String documentTooltip(final String displayType, final String path) {
+        final String type = NullSafe.nonBlankStringElse(displayType, "Document");
+        return NullSafe.isNonBlankString(path)
+                ? type + " in " + path
+                : type;
+    }
+
+    /// @param attachment The attachment's status, or null if it isn't known yet.
     /// @return True while it is being downloaded.
     static boolean isDownloading(final AiChatAttachment attachment) {
         return attachment == null || attachment.getStatus() == AiAttachmentStatus.PENDING
@@ -148,6 +182,33 @@ final class AiAttachments {
                      final String description,
                      final AiChatAttachment attachment,
                      final boolean removable) {
+        chip(hb, messageId, attachmentId, description, attachment, removable, null, null);
+    }
+
+    /// Adds an attachment's chip: for a table, its icon (a button to view its data), what it is, and while it is
+    /// downloaded a spinning circle, which is replaced, if it can be removed, by a remove button; for a document,
+    /// its type's icon (a button to open it), its name and, if it can be removed, a remove button.
+    ///
+    /// @param hb           Where to add it.
+    /// @param messageId    The id of the attachment's message.
+    /// @param attachmentId The attachment.
+    /// @param description  What it is, as it was attached.
+    /// @param attachment   Its status, or null if it isn't known yet.
+    /// @param removable    True if it can be removed, i.e. it hasn't been sent yet.
+    /// @param docIcon      For a document, its type's icon, or null if not known.
+    /// @param docType      For a document, its type as Stroom shows it, or null if not known.
+    static void chip(final HtmlBuilder hb,
+                     final int messageId,
+                     final int attachmentId,
+                     final String description,
+                     final AiChatAttachment attachment,
+                     final boolean removable,
+                     final SvgImage docIcon,
+                     final String docType) {
+        if (isDocument(attachment)) {
+            documentChip(hb, messageId, attachmentId, description, attachment, removable, docIcon, docType);
+            return;
+        }
         final boolean downloading = isDownloading(attachment);
         final boolean failed = attachment != null && attachment.getStatus() == AiAttachmentStatus.ERROR;
         final String state = downloading
@@ -178,5 +239,41 @@ final class AiAttachments {
         }, Attribute.className("ai-attachment-chip" + state),
                 new Attribute("id", chipId(attachmentId)),
                 Attribute.title(tooltip(attachment)));
+    }
+
+    // A document's chip: ready at once, as there is nothing to download.
+    private static void documentChip(final HtmlBuilder hb,
+                                     final int messageId,
+                                     final int attachmentId,
+                                     final String description,
+                                     final AiChatAttachment attachment,
+                                     final boolean removable,
+                                     final SvgImage docIcon,
+                                     final String docType) {
+        final DocRef docRef = attachment.getDocRef();
+        final SvgImage icon = docIcon != null
+                ? docIcon
+                : SvgImage.FILE;
+        hb.div(chip -> {
+            chip.elem(button -> button.div(div -> div.appendTrustedString(icon.getSvg()),
+                            Attribute.className("svg-image " + icon.getClassName() + " face")),
+                    SafeHtmlUtils.fromSafeConstant("button"),
+                    Attribute.className("ai-attachment-chip-icon icon-button"),
+                    Attribute.title("Open"),
+                    new Attribute(OPEN_DOC_TYPE_ATTRIBUTE, NullSafe.string(docRef.getType())),
+                    new Attribute(OPEN_DOC_UUID_ATTRIBUTE, NullSafe.string(docRef.getUuid())));
+            chip.span(documentLabel(attachment, description), Attribute.className("ai-attachment-chip-label"));
+            if (removable) {
+                chip.elem(button -> button.div(div -> div.appendTrustedString(SvgImage.CLOSE.getSvg()),
+                                Attribute.className("svg-image " + SvgImage.CLOSE.getClassName() + " face")),
+                        SafeHtmlUtils.fromSafeConstant("button"),
+                        Attribute.className("ai-attachment-chip-remove icon-button"),
+                        Attribute.title("Remove"),
+                        new Attribute(REMOVE_ATTRIBUTE, String.valueOf(messageId)));
+            }
+        }, Attribute.className("ai-attachment-chip"),
+                new Attribute("id", chipId(attachmentId)),
+                Attribute.title(documentTooltip(NullSafe.nonBlankStringElse(docType, docRef.getType()),
+                        attachment.getDocPath())));
     }
 }

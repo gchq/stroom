@@ -75,7 +75,7 @@ class TestPromptInjection {
         Mockito.when(workspaceStore.localFile(50)).thenReturn(table);
         final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, workspaceStore,
                 Mockito.mock(AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
-                Mockito.mock(ContextUsageTracker.class), null);
+                Mockito.mock(ContextUsageTracker.class), null, null);
         final AiChatAttachment attachment = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
                 AiAttachmentType.DASHBOARD, "Events", 1, false, null);
         final List<AiChatMessage> history = List.of(
@@ -106,7 +106,7 @@ class TestPromptInjection {
     void aCompactedSummaryIsGivenAsEarlierTurnsNotInstructions() {
         final AiService aiService = Mockito.mock(AiService.class);
         final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null, aiService, null,
-                Mockito.mock(AiWorkspaceDao.class), Mockito.mock(ContextUsageTracker.class), null);
+                Mockito.mock(AiWorkspaceDao.class), Mockito.mock(ContextUsageTracker.class), null, null);
         final List<AiChatMessage> history = List.of(
                 message(1, AiMessageType.USER_MESSAGE, null, "q1", 1),
                 message(2, AiMessageType.AI_RESPONSE, null, "a1", 1),

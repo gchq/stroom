@@ -65,10 +65,12 @@ import stroom.data.client.presenter.ShowDataEvent;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestError;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocumentType;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.openai.shared.OpenAIModelDoc;
@@ -315,6 +317,9 @@ public class AskStroomAiPresenter
     private List<AiChatMessage> sendingAttachments = List.of();
     // The latest status of each attachment, by its id.
     private final Map<Integer, AiChatAttachment> attachmentStatuses = new HashMap<>();
+    // Stroom's document types, for the icons of documents attached from the Explorer tree, once fetched.
+    private DocumentTypes documentTypes;
+    private boolean fetchingDocumentTypes;
     // Each turn's reasoning and tool calls, grouped above its answer.
     private final AiActivityGroups activityGroups = new AiActivityGroups();
     // The day of the last message added, for day dividers.
@@ -406,6 +411,9 @@ public class AskStroomAiPresenter
                 }
                 final String remove = button.getAttribute(AiAttachments.REMOVE_ATTRIBUTE);
                 final String attachmentId = button.getAttribute("data-attachment-id");
+                if (openAttachedDocument(button)) {
+                    return;
+                }
                 if (button.hasAttribute(AiAttachments.REMOVE_ALL_ATTRIBUTE)) {
                     removeAllAttachments();
                 } else if (NullSafe.isNonBlankString(remove)) {
@@ -429,6 +437,10 @@ public class AskStroomAiPresenter
                 final Element button = ElementUtil.findParent(target, element ->
                         element.getTagName().equalsIgnoreCase("button"), 5);
                 if (button != null) {
+                    // Opening a document attached from the Explorer tree.
+                    if (openAttachedDocument(button)) {
+                        return;
+                    }
                     // Capture "View data" click events.
                     final String attachmentIdStr = button.getAttribute("data-attachment-id");
                     if (NullSafe.isNonBlankString(attachmentIdStr)) {
@@ -3985,18 +3997,11 @@ public class AskStroomAiPresenter
         for (final AiChatAttachment attachment : attachments) {
             attachmentStatuses.put(attachment.getId(), attachment);
         }
-        refreshAttachmentList();
+        if (documentTypes == null && attachments.stream().anyMatch(AiAttachments::isDocument)) {
+            fetchDocumentTypes();
+        }
         // And the chips of those sent with a message, e.g. sent before they finished downloading.
-        sentAttachments.values().forEach(sent -> sent.forEach(msg -> {
-            final Element chip = msg.getAttachmentId() != null
-                    ? findInConversation(AiAttachments.chipId(msg.getAttachmentId()))
-                    : null;
-            if (chip != null) {
-                final HtmlBuilder hb = new HtmlBuilder();
-                attachmentChip(hb, msg, false);
-                chip.getParentElement().replaceChild(parseHtml(hb).getFirstChildElement(), chip);
-            }
-        }));
+        refreshAttachmentChips();
     }
 
     /// Shows the tables attached since the last message was sent above the input box, each removable once it has
@@ -4020,8 +4025,8 @@ public class AskStroomAiPresenter
             return;
         }
         final String question = messageIds.size() == 1
-                ? "Remove the attached table?"
-                : "Remove all " + messageIds.size() + " attached tables?";
+                ? "Remove the attachment?"
+                : "Remove all " + messageIds.size() + " attachments?";
         ConfirmEvent.fire(this, question, ok -> {
             if (ok) {
                 messageIds.forEach(this::removeAttachment);
@@ -4045,8 +4050,67 @@ public class AskStroomAiPresenter
         if (attachmentId == null) {
             return;
         }
-        AiAttachments.chip(hb, msg.getId(), attachmentId, msg.getMessage(), attachmentStatuses.get(attachmentId),
-                removable);
+        final AiChatAttachment attachment = attachmentStatuses.get(attachmentId);
+        final DocumentType documentType = documentType(attachment);
+        AiAttachments.chip(hb, msg.getId(), attachmentId, msg.getMessage(), attachment, removable,
+                NullSafe.get(documentType, DocumentType::getIcon),
+                NullSafe.get(documentType, DocumentType::getDisplayType));
+    }
+
+    /// @return The type of the document an attachment refers to, if it is a document and the types have been
+    /// fetched.
+    private DocumentType documentType(final AiChatAttachment attachment) {
+        if (documentTypes == null || !AiAttachments.isDocument(attachment)) {
+            return null;
+        }
+        final String type = attachment.getDocRef().getType();
+        // DocumentTypes' lookup map isn't filled in the browser, so look through the list.
+        return NullSafe.stream(documentTypes.getTypes())
+                .filter(documentType -> documentType.getType().equals(type))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /// Fetches Stroom's document types, for the icons of attached documents, and shows the chips again with them.
+    private void fetchDocumentTypes() {
+        if (fetchingDocumentTypes) {
+            return;
+        }
+        fetchingDocumentTypes = true;
+        documentTypeCache.fetch(types -> {
+            documentTypes = types;
+            fetchingDocumentTypes = false;
+            refreshAttachmentChips();
+        }, this);
+    }
+
+    /// Shows the attachments' chips again, above the input box and in the messages they were sent with.
+    private void refreshAttachmentChips() {
+        refreshAttachmentList();
+        sentAttachments.values().forEach(sent -> sent.forEach(msg -> {
+            final Element chip = msg.getAttachmentId() != null
+                    ? findInConversation(AiAttachments.chipId(msg.getAttachmentId()))
+                    : null;
+            if (chip != null) {
+                final HtmlBuilder hb = new HtmlBuilder();
+                attachmentChip(hb, msg, false);
+                chip.getParentElement().replaceChild(parseHtml(hb).getFirstChildElement(), chip);
+            }
+        }));
+    }
+
+    /// Opens the document a chip's icon button is for, if it is one.
+    ///
+    /// @param button A button that was clicked.
+    /// @return True if it was a document chip's icon button.
+    private boolean openAttachedDocument(final Element button) {
+        final String type = button.getAttribute(AiAttachments.OPEN_DOC_TYPE_ATTRIBUTE);
+        final String uuid = button.getAttribute(AiAttachments.OPEN_DOC_UUID_ATTRIBUTE);
+        if (NullSafe.isBlankString(type) || NullSafe.isBlankString(uuid)) {
+            return false;
+        }
+        OpenDocumentEvent.fire(this, new DocRef(type, uuid), true);
+        return true;
     }
 
     /// Removes a table attached since the last message was sent, without asking, as it is listed to be sent
