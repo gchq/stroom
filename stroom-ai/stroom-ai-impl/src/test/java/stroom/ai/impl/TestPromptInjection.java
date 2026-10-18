@@ -177,8 +177,9 @@ class TestPromptInjection {
                 Map.of("id", INJECTION, "action", "open_document",
                         "doc", Map.of("type", "Pipeline", "uuid", uuid))), 0L);
 
-        // Labels, details, warnings and requests are Stroom's; the bad id is dropped.
-        assertThat(actions).extracting(UserActionRecord::id).containsExactly("open", "drop");
+        // Labels, details, warnings and requests are Stroom's; the request Stroom doesn't allow and the bad id are
+        // dropped.
+        assertThat(actions).extracting(UserActionRecord::id).containsExactly("open");
         assertThat(actions).allSatisfy(action -> assertThat(String.join("|",
                 String.valueOf(action.label()), String.valueOf(action.details()), String.valueOf(action.warning()),
                 String.valueOf(action.request()), String.valueOf(action.doc()))).doesNotContain(INJECTION));
