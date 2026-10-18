@@ -254,6 +254,8 @@ public class AskStroomAiPresenter
     private boolean overviewShowing;
     private boolean overviewRefreshDue;
     private boolean overviewWorking;
+    // What the overview is searched for, if anything.
+    private String overviewQuery;
     // The command whose reference is shown, or null.
     private String referenceCommand;
     // The latest suggested follow-ups, while the answer they follow is the latest thing in the chat.
@@ -954,6 +956,8 @@ public class AskStroomAiPresenter
             setChatListShowing(false);
         }
         overviewShowing = showing;
+        // Each time it is shown it starts unsearched.
+        overviewQuery = null;
         getView().setOverviewVisible(showing);
         if (showing) {
             drawOverview();
@@ -974,7 +978,16 @@ public class AskStroomAiPresenter
     }
 
     private void drawOverview() {
-        getView().setOverview(AiChatOverview.svg(AiChatOverview.of(overviewItems()), overviewWorking));
+        getView().setOverview(AiChatOverview.svg(AiChatOverview.of(overviewItems()), overviewWorking,
+                overviewQuery));
+    }
+
+    @Override
+    public void onOverviewSearch(final String query) {
+        overviewQuery = query;
+        if (overviewShowing) {
+            drawOverview();
+        }
     }
 
     /// @return The chat's messages, in order, as the overview sees them: what the user did, the tools the agent
@@ -1003,12 +1016,17 @@ public class AskStroomAiPresenter
     // A form or question the user answered, or what the agent did if they haven't (yet).
     private static AiChatOverview.Item answerItem(final int id, final long timeMs, final String json) {
         final String status = AiToolMessages.getString(json, "status");
+        // What the form asks, as its card's title has it.
+        final String question = AiElicitationCard.firstLine(AiToolMessages.getString(json, "message"), "A form");
         if ("ACCEPTED".equals(status)) {
-            return AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.ANSWER,
-                    NullSafe.nonBlankStringElse(AiElicitationCard.answerSummary(json), "Answered"));
+            return AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.ANSWER, NullSafe.nonBlankStringElse(
+                    AiElicitationCard.answerText(json, question),
+                    AiChatOverview.QUESTION_LABEL + question + "\n" + AiChatOverview.ANSWER_LABEL + "Answered"));
         }
         if ("DECLINED".equals(status)) {
-            return AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.ANSWER, "Chose not to answer");
+            return AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.ANSWER,
+                    AiChatOverview.QUESTION_LABEL + question + "\n" + AiChatOverview.ANSWER_LABEL
+                    + "Chose not to answer");
         }
         return AiChatOverview.Item.work(id, timeMs);
     }
