@@ -43,6 +43,7 @@ import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.ListToolsResult;
+import io.modelcontextprotocol.spec.McpSchema.ProgressNotification;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import org.junit.jupiter.api.Test;
@@ -105,6 +106,48 @@ class TestMcpAgentChat {
 
         // The stub model answers without calling a tool, so we just get its plain response back.
         assertThat(response.aiMessage().text()).contains("[Stub Response]");
+    }
+
+    @Test
+    void whatAToolCallHasGotToIsShownOnTheWorkingLine() {
+        // As the MCP server's index survey reports it: without a progress token for the call, it reports nothing.
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.listTools()).thenReturn(new ListToolsResult(List.of(searchTool()), null));
+        final McpServerConnection connection = new McpServerConnection("test", null, client, null);
+        final List<Object> tokens = new ArrayList<>();
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class))).thenAnswer(invocation -> {
+            final Object token = invocation.<CallToolRequest>getArgument(0).progressToken();
+            tokens.add(token);
+            // As the MCP server reports it: a step number that goes up each time, with what it is doing.
+            connection.onProgress(new ProgressNotification(token, 1.0, null, "Reading documents", null));
+            // Said again, the line isn't changed again.
+            connection.onProgress(new ProgressNotification(token, 2.0, null, "Reading documents", null));
+            connection.onProgress(new ProgressNotification(token, 3.0, 3.0, null, null));
+            return CallToolResult.builder().content(List.of(new TextContent("42 errors"))).isError(false).build();
+        });
+        final McpToolset toolset = new McpToolset(List.of(connection), List.of(), true);
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("search")
+                        .arguments("{\"query\":\"errors\"}")
+                        .build())),
+                AiMessage.from("There were 42 errors today."));
+
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(tokens).singleElement().isNotNull();
+        final ArgumentCaptor<String> working = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService, Mockito.atLeastOnce()).updateMessageText(Mockito.eq(99), working.capture());
+        assertThat(working.getAllValues())
+                .containsSubsequence("Running search — query=errors — Reading documents…",
+                        "Running search — query=errors — 3 of 3…")
+                .filteredOn(text -> text.contains("Reading documents"))
+                .hasSize(1);
+        // Progress for the call once it has been answered goes nowhere.
+        connection.onProgress(new ProgressNotification(tokens.getFirst(), 4.0, null, "Late", null));
+        Mockito.verify(aiService, Mockito.never()).updateMessageText(Mockito.eq(99), Mockito.contains("Late"));
     }
 
     @Test
@@ -617,6 +660,41 @@ class TestMcpAgentChat {
                 .toList())
                 .containsExactly("created", "Not run: the user did not allow this call. They said: not now");
         Mockito.verify(auditLog).toolCall(7, "search", "{}", "Denied by the user", false, false);
+    }
+
+    @Test
+    void anApprovedCallShowsWhatItGetsToOnTheWorkingLine() {
+        // Run after the user approved it, when the run carries on, as one asked about first would have.
+        final ToolApprovalRequest.PendingCall allowed = new ToolApprovalRequest.PendingCall("a", "search",
+                "test", "search", "{\"query\":\"errors\"}", List.of(), null, null,
+                ToolApprovalRequest.Decision.ALLOWED, null);
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.listTools()).thenReturn(new ListToolsResult(List.of(searchTool()), null));
+        final McpServerConnection connection = new McpServerConnection("test", null, client, null);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class))).thenAnswer(invocation -> {
+            connection.onProgress(new ProgressNotification(
+                    invocation.<CallToolRequest>getArgument(0).progressToken(), 1.0, 4.0, "Creating", null));
+            return CallToolResult.builder().content(List.of(new TextContent("created"))).build();
+        });
+        Mockito.when(aiService.getMessages(7)).thenReturn(List.of(
+                new AiChatMessage(10, 7, 0L, AiMessageType.USER_MESSAGE, null, "make it", 10, null),
+                new AiChatMessage(11, 7, 0L, AiMessageType.TOOL_CALL, null,
+                        JsonUtil.writeValueAsString(new ToolCallRecord("a", "search", "{\"query\":\"errors\"}",
+                                "Making the filter."), false), 10, null),
+                new AiChatMessage(13, 7, 0L, AiMessageType.APPROVAL_REQUEST, null,
+                        JsonUtil.writeValueAsString(new ToolApprovalRequest(ToolApprovalRequest.KIND,
+                                ToolApprovalRequest.Status.ANSWERED, "r", List.of(allowed), true, false),
+                                false), 10, null)));
+
+        agentChat.chat(new StubToolCallingModel(AiMessage.from("done")), null, 7, messages,
+                new McpToolset(List.of(connection), List.of(), true), 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        final ArgumentCaptor<String> working = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService, Mockito.atLeastOnce()).updateMessageText(Mockito.eq(99), working.capture());
+        assertThat(working.getAllValues()).containsSubsequence(
+                "Making the filter. (search)…",
+                "Making the filter. (search) — Creating (1 of 4)…");
     }
 
     @Test

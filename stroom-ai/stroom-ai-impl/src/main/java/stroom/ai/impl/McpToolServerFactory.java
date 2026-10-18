@@ -255,7 +255,10 @@ public class McpToolServerFactory {
                 .requestTimeout(timeout)
                 .initializationTimeout(timeout)
                 .toolsChangeConsumer(tools -> NullSafe.consume(connectionRef.get(),
-                        McpServerConnection::invalidateTools));
+                        McpServerConnection::invalidateTools))
+                // What a tool call has got to, for the calls that asked to be told (see McpToolset).
+                .progressConsumer(notification -> NullSafe.consume(connectionRef.get(),
+                        connection -> connection.onProgress(notification)));
         if (chatId != null) {
             // A tool call waits while the user fills in a form, so it must not time out first.
             final Duration formTimeout = NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getElicitationTimeout,
