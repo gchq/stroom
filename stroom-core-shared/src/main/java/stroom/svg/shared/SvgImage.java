@@ -1778,6 +1778,16 @@ public enum SvgImage {
             "g> \n" +
             ""),
 
+    EXPLORE("explore.svg", "svg-image__explore", "" +
+            "<!-- A compass, after Material Symbols' \"explore\", with rounded corners like pro" +
+            "cess.svg. --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" view" +
+            "Box=\"0 0 24 24\"><circle style=\"fill:none;stroke:currentColor;stroke-width:2.2\" c" +
+            "x=\"12\" cy=\"12\" r=\"9.4\"/><path style=\"fill:currentColor;fill-rule:evenodd;stroke:" +
+            "currentColor;stroke-width:1.3;stroke-linejoin:round\" d=\"M 16.8,7.2 L 13.85,13.85" +
+            " L 7.2,16.8 L 10.15,10.15 Z M 13.75,12 A 1.75,1.75 0 1 0 10.25,12 A 1.75,1.75 0 " +
+            "1 0 13.75,12 Z\"/></svg> \n" +
+            ""),
+
     EXPLORER("explorer.svg", "svg-image__explorer", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:currentColor\" d=\"M1792 1248v320q0 40-28 68t-68 28h-" +
@@ -2326,6 +2336,15 @@ public enum SvgImage {
             "5 150 150 225 55.5 273.5q0 220-124 399l343 343q37 37 37 90z\"/></svg>\n" +
             ""),
 
+    FIT_WIDTH("fit-width.svg", "svg-image__fit-width", "" +
+            "<!-- A two-headed arrow between two bars, to fit something to the width it has, " +
+            "with rounded ends like process.svg. --><svg xmlns=\"http://www.w3.org/2000/svg\" w" +
+            "idth=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><g style=\"fill:none;stroke:currentColo" +
+            "r;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round\"><path d=\"M 3,5 V " +
+            "19 M 21,5 V 19\"/><path d=\"M 7,12 H 17\"/><path d=\"M 9.5,9 L 6.5,12 L 9.5,15 M 14." +
+            "5,9 L 17.5,12 L 14.5,15\"/></g></svg> \n" +
+            ""),
+
     FOLDER("folder.svg", "svg-image__folder", "" +
             "<svg xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns=\"http://www.w" +
             "3.org/2000/svg\" height=\"1792\" width=\"1792\" version=\"1.1\" xmlns:cc=\"http://creati" +
@@ -2355,16 +2374,6 @@ public enum SvgImage {
             "600.75 492.64v949.1h381.89\" stroke=\"var(--icon-colour__blue)\" stroke-width=\"71.1" +
             "25\" fill=\"none\"/><path d=\"m597.94 807.14h539.13\" fill-rule=\"evenodd\" stroke=\"var" +
             "(--icon-colour__blue)\" stroke-width=\"71.125\"/></svg> \n" +
-            ""),
-
-    FORK_JOIN("fork-join.svg", "svg-image__fork-join", "" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 2" +
-            "4\"><g style=\"fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;s" +
-            "troke-linejoin:round\"><path d=\"M 12,1.5 V 4.5\"/><path d=\"M 10.5,7.5 L 7.2,10.6\"/" +
-            "><path d=\"M 13.5,7.5 L 16.8,10.6\"/><path d=\"M 7.2,13.4 L 10.5,16.5\"/><path d=\"M " +
-            "16.8,13.4 L 13.5,16.5\"/><path d=\"M 12,19.5 V 22.5\"/></g><g style=\"fill:currentCo" +
-            "lor\"><circle cx=\"12\" cy=\"6\" r=\"2.4\"/><circle cx=\"6\" cy=\"12\" r=\"2.4\"/><circle cx=" +
-            "\"18\" cy=\"12\" r=\"2.4\"/><circle cx=\"12\" cy=\"18\" r=\"2.4\"/></g></svg> \n" +
             ""),
 
     FORMAT("format.svg", "svg-image__format", "" +
@@ -5375,6 +5384,22 @@ public enum SvgImage {
             "-10,21 l 17,457 c 0,6.6667 3.33333,12.1667 10,16.5 6.66667,4.3333 14.66667,6.5 2" +
             "4,6.5 l 185,0 c 9.33333,0 17.1667,-2.1667 23.5,-6.5 6.3333,-4.3333 9.8333,-9.833" +
             "3 10.5,-16.5 z\"/></svg> \n" +
+            ""),
+
+    ZOOM_IN("zoom-in.svg", "svg-image__zoom-in", "" +
+            "<!-- A magnifier with a plus, to zoom in, with rounded ends like process.svg. --" +
+            "><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 " +
+            "24\"><g style=\"fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:roun" +
+            "d;stroke-linejoin:round\"><circle cx=\"10\" cy=\"10\" r=\"6.8\"/><path d=\"M 15,15 L 21," +
+            "21\"/><path d=\"M 10,7 V 13 M 7,10 H 13\"/></g></svg> \n" +
+            ""),
+
+    ZOOM_OUT("zoom-out.svg", "svg-image__zoom-out", "" +
+            "<!-- A magnifier with a minus, to zoom out, with rounded ends like process.svg. " +
+            "--><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 2" +
+            "4 24\"><g style=\"fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:ro" +
+            "und;stroke-linejoin:round\"><circle cx=\"10\" cy=\"10\" r=\"6.8\"/><path d=\"M 15,15 L 2" +
+            "1,21\"/><path d=\"M 7,10 H 13\"/></g></svg> \n" +
             "");
 
     public static final String BASE_CLASS_NAME = "svg-image";
