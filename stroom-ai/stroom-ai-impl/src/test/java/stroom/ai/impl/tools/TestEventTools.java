@@ -214,6 +214,17 @@ class TestEventTools {
     }
 
     @Test
+    void aViewDataCheckThatFailsIsFailedClosed() {
+        Mockito.when(securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION))
+                .thenThrow(new RuntimeException("no"));
+
+        assertThat(run(fetchTool(), "{\"path\":\"/attachments/5.md\"}"))
+                .startsWith("Error")
+                .contains("permission to view data");
+        Mockito.verifyNoInteractions(store);
+    }
+
+    @Test
     void fetchEventsNeedsStreamAndEventIds() {
         attach("/attachments/6.md", "| User | Count |\n| --- | --- |\n| alice | 3 |\n");
 
