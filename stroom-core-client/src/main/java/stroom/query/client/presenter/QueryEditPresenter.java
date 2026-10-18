@@ -29,6 +29,8 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.pipeline.stepping.client.presenter.ApplyCodeChangeResult;
+import stroom.pipeline.stepping.client.presenter.CodeChangeApplier;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.GroupSelection;
@@ -47,6 +49,7 @@ import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
+import stroom.util.shared.diff.LineReplacement;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -84,6 +87,8 @@ public class QueryEditPresenter
     private final QueryHelpPresenter queryHelpPresenter;
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
+    // Applies the revised queries proposed in the AI chat, and undoes them.
+    private final CodeChangeApplier codeChangeApplier;
     private final QueryResultTableSplitPresenter queryResultPresenter;
     private final QueryModel queryModel;
     private final QueryResultTabsView linkTabsLayoutView;
@@ -223,6 +228,8 @@ public class QueryEditPresenter
         queryModel.addSearchStateListener(queryToolbarPresenter);
 
         this.editorPresenter = editorPresenter;
+
+        this.codeChangeApplier = new CodeChangeApplier(createCodeEditorAdapter());
         this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
         this.editorPresenter.getBasicAutoCompletionOption().setOff();
 
@@ -291,6 +298,7 @@ public class QueryEditPresenter
         super.onBind();
         //noinspection unused event
         registerHandler(editorPresenter.addValueChangeHandler(event -> {
+            codeChangeApplier.onEditorChange();
             final String query = editorPresenter.getText();
             updateQuery(query);
             onChange();
@@ -509,6 +517,49 @@ public class QueryEditPresenter
 
     public String getQuery() {
         return editorPresenter.getText();
+    }
+
+    /// Applies a revised query proposed in the AI chat to the editor, unsaved, keeping the editor's undo history, if
+    /// the editor still holds the query it was proposed against.
+    ///
+    /// @param baseQuery     The query the change was proposed against.
+    /// @param proposedQuery The whole revised query.
+    /// @return What happened.
+    public ApplyCodeChangeResult applyCodeChange(final String baseQuery, final String proposedQuery) {
+        return codeChangeApplier.apply(baseQuery, proposedQuery);
+    }
+
+    /// @return True if the change last applied can still be undone: the editor holds exactly the applied query.
+    public boolean canUndoCodeChange() {
+        return codeChangeApplier.canUndo();
+    }
+
+    /// Puts back the query the editor held before the change last applied, if it can still be undone.
+    ///
+    /// @return True if it was undone.
+    public boolean undoCodeChange() {
+        return codeChangeApplier.undo();
+    }
+
+    // Lets the code change applier work on the query editor. The editor's markers show the search's errors, so
+    // the lines a change applies aren't marked.
+    private CodeChangeApplier.CodeEditor createCodeEditorAdapter() {
+        return new CodeChangeApplier.CodeEditor() {
+            @Override
+            public String getCode() {
+                return editorPresenter.getText();
+            }
+
+            @Override
+            public boolean applyLineReplacements(final List<LineReplacement> replacements) {
+                return editorPresenter.applyLineReplacements(replacements);
+            }
+
+            @Override
+            public void setChangedLineMarkers(final List<int[]> ranges) {
+                // Not marked: see above.
+            }
+        };
     }
 
     private void onChange() {

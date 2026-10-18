@@ -397,6 +397,41 @@ class TestUserActionService {
     }
 
     @Test
+    void aQueryChangeIsAppliedAndUndoneAsACodeChangeIsWithEditOnTheQuery() {
+        final DocRef query = new DocRef("Query", "7c1d3c2e-8f4a-4b9c-a1d2-3e4f5a6b7c8d", "Twitter tweets");
+        Mockito.when(lookup.find(query)).thenReturn(Optional.of(query));
+        Mockito.when(lookup.canEdit(query)).thenReturn(true);
+        storeResult(new UserActionRecord("query-1", UserActions.APPLY_QUERY_CHANGE, "Change to Query", null, null,
+                null, query, "from v\nselect a, b", List.of(), Long.MAX_VALUE, Status.PENDING, null, null,
+                new UserActionRecord.CodeChange(null, null, "from v\nselect a", "0".repeat(64), "h", 1, 1)));
+
+        final AiUserActionResult applied = service.doUserAction(CHAT, MESSAGE, "query-1");
+
+        assertThat(applied.isDone()).isTrue();
+        assertThat(applied.getMessage()).isEqualTo("Applied, not saved");
+        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(query),
+                Mockito.eq(UserActionService.APPLY_COMMAND), Mockito.eq("Query 'Twitter tweets'"),
+                Mockito.eq("Applied a proposed change, not saved: +1 −1 lines"), Mockito.eq(true));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
+                Mockito.eq("(With a button in the chat) I applied the proposed change to Query 'Twitter tweets' "
+                           + "(+1 −1 lines). It is not saved."));
+
+        // Without Edit, it isn't applied.
+        Mockito.when(lookup.canEdit(query)).thenReturn(false);
+        storeResult(new UserActionRecord("query-1", UserActions.APPLY_QUERY_CHANGE, "Change to Query", null, null,
+                null, query, "from v\nselect a, b", List.of(), Long.MAX_VALUE, Status.PENDING, null, null,
+                new UserActionRecord.CodeChange(null, null, "from v\nselect a", "0".repeat(64), "h", 1, 1)));
+        assertThat(service.doUserAction(CHAT, MESSAGE, "query-1").isDone()).isFalse();
+
+        // Once applied, it can be undone.
+        Mockito.when(lookup.canEdit(query)).thenReturn(true);
+        storeResult(new UserActionRecord("query-1", UserActions.APPLY_QUERY_CHANGE, "Change to Query", null, null,
+                null, query, "from v\nselect a, b", List.of(), Long.MAX_VALUE, Status.DONE, "Applied, not saved",
+                null, new UserActionRecord.CodeChange(null, null, "from v\nselect a", "0".repeat(64), "h", 1, 1)));
+        assertThat(service.undoUserAction(CHAT, MESSAGE, "query-1").isDone()).isTrue();
+    }
+
+    @Test
     void onlyAnAppliedCodeChangeCanBeUndone() {
         Mockito.when(lookup.canEdit(XSLT)).thenReturn(true);
         storeResult(codeChange(Status.PENDING));

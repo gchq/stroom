@@ -120,6 +120,8 @@ class TestAgentModeTools {
             Map.entry("validate_stroomql", false),
             // Only offers the user a button: the user creates the query.
             Map.entry("propose_query", false),
+            // Only offers the user a button: the user applies the change to the Query's editor, unsaved.
+            Map.entry("propose_query_change", false),
             // Only offers the user a button: the user applies the change to the editor, unsaved.
             Map.entry("propose_code_change", false),
             Map.entry("stream_meta", false),

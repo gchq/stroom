@@ -89,6 +89,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.stepping.client.event.SteppingCodeChangeEvent;
 import stroom.pipeline.stepping.client.presenter.CodeDiffCardRenderer;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.query.client.event.QueryCodeChangeEvent;
 import stroom.query.shared.QueryDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -2301,6 +2302,10 @@ public class AskStroomAiPresenter
                 codeChangeRow(row, messageId, json, request, status, pending);
                 return;
             }
+            if (UserActionsUi.APPLY_QUERY_CHANGE.equals(action)) {
+                queryChangeRow(row, messageId, json, request, status, pending);
+                return;
+            }
             if (UserActionsUi.APPLY_DASHBOARD_CHANGE.equals(action)) {
                 dashboardChangeRow(row, messageId, json, status, pending);
                 return;
@@ -2354,6 +2359,41 @@ public class AskStroomAiPresenter
             final SteppingCodeChangeEvent canUndo = SteppingCodeChangeEvent.fireCanUndo(this,
                     docRef(AiToolMessages.getString(codeChange, "pipeline")),
                     AiToolMessages.getString(codeChange, "element"));
+            if (canUndo.isHandled() && !canUndo.isCanUndo()) {
+                row.div(text -> text.append(UserActionsUi.UNDO_WITHDRAWN), Attribute.className("ai-approval-reason"));
+            } else {
+                row.elem(UserActionsUi.UNDO_APPLY, BUTTON,
+                        Attribute.className("allow-focus ai-approval-button"),
+                        new Attribute(USER_ACTION_UNDO_ATTRIBUTE, String.valueOf(messageId)),
+                        new Attribute(USER_ACTION_ID_ATTRIBUTE, actionId));
+            }
+        }
+    }
+
+    /// The rest of a revised query's row: the query as it will be applied, and the Apply to query button, or, once
+    /// applied, Undo apply while the Query's editor still holds it.
+    private void queryChangeRow(final HtmlBuilder row,
+                                final int messageId,
+                                final String json,
+                                final String proposed,
+                                final String status,
+                                final boolean pending) {
+        if (NullSafe.isNonBlankString(proposed)) {
+            row.elem(pre -> pre.code(code -> code.append(proposed)), PRE);
+        }
+        final String actionId = NullSafe.string(AiToolMessages.getString(json, "id"));
+        if (pending) {
+            row.elem(UserActionsUi.buttonText(UserActionsUi.APPLY_QUERY_CHANGE), BUTTON,
+                    Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
+                    new Attribute(USER_ACTION_MESSAGE_ATTRIBUTE, String.valueOf(messageId)),
+                    new Attribute(USER_ACTION_ID_ATTRIBUTE, actionId));
+            return;
+        }
+        row.div(text -> text.append(UserActionsUi.outcomeText(status, AiToolMessages.getString(json, "outcome"))),
+                Attribute.className("ai-approval-reason"));
+        if (UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_QUERY_CHANGE, status)) {
+            final QueryCodeChangeEvent canUndo = QueryCodeChangeEvent.fireCanUndo(this,
+                    docRef(AiToolMessages.getString(json, "doc")));
             if (canUndo.isHandled() && !canUndo.isCanUndo()) {
                 row.div(text -> text.append(UserActionsUi.UNDO_WITHDRAWN), Attribute.className("ai-approval-reason"));
             } else {
@@ -2532,11 +2572,89 @@ public class AskStroomAiPresenter
         }
     }
 
+    /// Applies a revised query to its Query's editor, unsaved, if the Query is open. The server checks Edit and
+    /// records it first; the Query's tab checks its editor still holds the query it was proposed against.
+    private void onApplyQueryChange(final int messageId, final String actionId) {
+        final String json = findUserAction(messageId, actionId);
+        if (json == null || currentChat == null) {
+            return;
+        }
+        final int chatId = currentChat.getId();
+        final DocRef query = docRef(AiToolMessages.getString(json, "doc"));
+        final SteppingCodeChangeEvent.Approver approver = (andStep, rejected, onResult) ->
+                askStroomAiClient.applyCodeChange(chatId, messageId, actionId, rejected,
+                        result -> onResult.accept(result.isDone()
+                                ? null
+                                : NullSafe.nonBlankStringElse(result.getMessage(), "The change can't be applied.")),
+                        error -> onResult.accept(NullSafe.nonBlankStringElse(error.getMessage(),
+                                "Unable to apply the change.")),
+                        this);
+        final QueryCodeChangeEvent event = QueryCodeChangeEvent.fireApply(this,
+                query,
+                AiToolMessages.getString(AiToolMessages.getString(json, "codeChange"), "baseCode"),
+                AiToolMessages.getString(json, "request"),
+                approver,
+                () -> {
+                    showUserActionStatus(messageId, actionId, "DONE", UserActionsUi.APPLIED);
+                    // Fetch the note of what was done.
+                    pollAfterAnswer();
+                });
+        if (!event.isHandled()) {
+            if (query != null) {
+                OpenDocumentEvent.fire(this, query, true);
+            }
+            AlertEvent.fireInfo(this, "To apply the change, open Query '"
+                                      + NullSafe.nonBlankStringElse(NullSafe.get(query, DocRef::getName), "?")
+                                      + "', then click the button again.", null);
+        } else if (event.getMessage() != null) {
+            AlertEvent.fireInfo(this, event.getMessage(), null);
+        }
+    }
+
+    /// Undoes a revised query the user applied, putting back exactly what the Query's editor held, if it still
+    /// holds the applied query. The server checks Edit and records it first.
+    private void onUndoQueryChange(final Element button, final int messageId, final String actionId) {
+        final String json = findUserAction(messageId, actionId);
+        if (json == null || currentChat == null) {
+            return;
+        }
+        final DocRef query = docRef(AiToolMessages.getString(json, "doc"));
+        final QueryCodeChangeEvent canUndo = QueryCodeChangeEvent.fireCanUndo(this, query);
+        if (!canUndo.isHandled()) {
+            AlertEvent.fireInfo(this, "Open Query '" + NullSafe.get(query, DocRef::getName)
+                                      + "' to undo the change there, or use Ctrl+Z in its editor.", null);
+            return;
+        }
+        if (!canUndo.isCanUndo()) {
+            AlertEvent.fireInfo(this, UserActionsUi.UNDO_WITHDRAWN, null);
+            // Withdraw the button.
+            showUserActionStatus(messageId, actionId, "DONE", UserActionsUi.APPLIED);
+            return;
+        }
+        button.setAttribute("disabled", "disabled");
+        askStroomAiClient.undoUserAction(currentChat.getId(), messageId, actionId, result -> {
+            if (!result.isDone()) {
+                button.removeAttribute("disabled");
+                AlertEvent.fireWarn(this, NullSafe.string(result.getMessage()), null);
+                return;
+            }
+            if (!QueryCodeChangeEvent.fireUndo(this, query).isUndone()) {
+                AlertEvent.fireWarn(this, UserActionsUi.UNDO_WITHDRAWN, null);
+            }
+            showUserActionStatus(messageId, actionId, "PENDING", result.getMessage());
+            pollAfterAnswer();
+        }, this);
+    }
+
     /// Undoes a proposed code change the user applied, putting back exactly what the element's editor held, if
     /// it still holds the applied text. The server checks Edit and records it first.
     private void onUndoCodeChange(final Element button, final int messageId, final String actionId) {
         final String json = findUserAction(messageId, actionId);
         if (json == null || currentChat == null) {
+            return;
+        }
+        if (UserActionsUi.APPLY_QUERY_CHANGE.equals(AiToolMessages.getString(json, "action"))) {
+            onUndoQueryChange(button, messageId, actionId);
             return;
         }
         final String codeChange = AiToolMessages.getString(json, "codeChange");
@@ -2583,6 +2701,11 @@ public class AskStroomAiPresenter
         }
         if (UserActionsUi.APPLY_DASHBOARD_CHANGE.equals(action)) {
             onApplyDashboardChange(button, messageId, actionId);
+            return;
+        }
+        if (UserActionsUi.APPLY_QUERY_CHANGE.equals(action)) {
+            // Applied by the Query's tab, once the server allows it.
+            onApplyQueryChange(messageId, actionId);
             return;
         }
         button.setAttribute("disabled", "disabled");

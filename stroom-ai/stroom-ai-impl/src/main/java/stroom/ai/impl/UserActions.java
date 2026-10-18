@@ -22,6 +22,7 @@ import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
+import stroom.query.shared.QueryDoc;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -73,6 +74,9 @@ public class UserActions {
     /// Opens a review of a code change the agent proposed for a stepping element, which the user can apply to the
     /// element's editor (unsaved) and undo.
     public static final String APPLY_CODE_CHANGE = "apply_code_change";
+    /// A revised query the agent proposed (only from Stroom's own propose_query_change tool) for the user's open
+    /// Query, which the button puts in its editor (unsaved) and can undo.
+    public static final String APPLY_QUERY_CHANGE = "apply_query_change";
     /// A change to a dashboard table that the agent proposed (only from Stroom's own propose_dashboard_change tool),
     /// which the button applies to the open dashboard, unsaved.
     public static final String APPLY_DASHBOARD_CHANGE = "apply_dashboard_change";
@@ -190,6 +194,9 @@ public class UserActions {
                         : Optional.empty();
                 case APPLY_CODE_CHANGE -> builtIn.contains(map)
                         ? codeChange(id, map, expiresMs)
+                        : Optional.empty();
+                case APPLY_QUERY_CHANGE -> builtIn.contains(map)
+                        ? queryChange(id, map, expiresMs)
                         : Optional.empty();
                 case APPLY_DASHBOARD_CHANGE -> builtIn.contains(map)
                         ? dashboardChange(id, map, expiresMs)
@@ -356,6 +363,39 @@ public class UserActions {
                         : truncate(summary, MAX_DETAILS_CHARS),
                 null, null, doc, proposed, List.of(), expiresMs, Status.PENDING, null, null,
                 new UserActionRecord.CodeChange(pipeline, element, base, baseHash.toLowerCase(Locale.ROOT),
+                        string(map.get("snapshot_hash")), Objects.requireNonNullElse(added, 0),
+                        Objects.requireNonNullElse(removed, 0))));
+    }
+
+    /// A button that puts a revised query in the editor of the user's open Query, for a Query that exists and the
+    /// user may view. Applying it needs Edit, which is checked when the user clicks it. The code change it holds has
+    /// no pipeline or element.
+    private Optional<UserActionRecord> queryChange(final String id, final Map<?, ?> map, final long expiresMs) {
+        final DocRef named = docRef(map.get("doc"));
+        final String proposed = string(map.get("request"));
+        final String base = string(map.get("base"));
+        final String baseHash = string(map.get("base_hash"));
+        if (named == null || !QueryDoc.TYPE.equals(named.getType())
+            || proposed == null || proposed.isEmpty() || proposed.length() > MAX_CODE_CHARS
+            || base == null || base.length() > MAX_CODE_CHARS
+            || baseHash == null || !HASH_PATTERN.matcher(baseHash).matches()) {
+            return Optional.empty();
+        }
+        final DocRef doc = lookup.find(named).orElse(null);
+        if (doc == null) {
+            return Optional.empty();
+        }
+        final Integer added = count(map.get("added"));
+        final Integer removed = count(map.get("removed"));
+        final String summary = NullSafe.get(string(map.get("summary")), String::strip);
+        final String label = "Change to Query '" + doc.getName() + "': +" + Objects.requireNonNullElse(added, 0)
+                             + " −" + Objects.requireNonNullElse(removed, 0) + " lines";
+        return Optional.of(new UserActionRecord(id, APPLY_QUERY_CHANGE, label,
+                NullSafe.isBlankString(summary)
+                        ? null
+                        : truncate(summary, MAX_DETAILS_CHARS),
+                null, null, doc, proposed, List.of(), expiresMs, Status.PENDING, null, null,
+                new UserActionRecord.CodeChange(null, null, base, baseHash.toLowerCase(Locale.ROOT),
                         string(map.get("snapshot_hash")), Objects.requireNonNullElse(added, 0),
                         Objects.requireNonNullElse(removed, 0))));
     }

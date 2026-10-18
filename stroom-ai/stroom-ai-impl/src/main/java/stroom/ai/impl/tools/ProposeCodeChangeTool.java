@@ -388,7 +388,7 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
         }
     }
 
-    private static Map<String, Object> docRefMap(final DocRef docRef) {
+    static Map<String, Object> docRefMap(final DocRef docRef) {
         final Map<String, Object> map = new LinkedHashMap<>();
         map.put("type", docRef.getType());
         map.put("uuid", docRef.getUuid());

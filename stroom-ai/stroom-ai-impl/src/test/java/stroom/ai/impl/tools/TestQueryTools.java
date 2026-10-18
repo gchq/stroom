@@ -333,8 +333,11 @@ class TestQueryTools {
 
     @Test
     void proposeQueryOffersACreateQueryButton() {
-        Mockito.when(queryService.getReferencedDataSource(QUERY)).thenReturn(Optional.of(WINDOWS));
-        Mockito.when(queryService.validateQuery(QUERY)).thenReturn(new ValidateExpressionResult(true, QUERY, false));
+        // The query is laid out a clause a line, as the new Query document will hold it, and checked as it is.
+        final String formatted = "from \"Windows events\"\nselect User";
+        Mockito.when(queryService.getReferencedDataSource(formatted)).thenReturn(Optional.of(WINDOWS));
+        Mockito.when(queryService.validateQuery(formatted))
+                .thenReturn(new ValidateExpressionResult(true, formatted, false));
         final ToolRunContext context = new ToolRunContext(null, null, () -> false);
 
         final String result = context.run(() -> run(proposeTool(), "{\"name\":\"Windows users\",\"query\":\""
@@ -346,7 +349,7 @@ class TestQueryTools {
         assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> {
             assertThat(action).containsEntry("action", UserActions.CREATE_QUERY)
                     .containsEntry("name", "Windows users")
-                    .containsEntry("query", QUERY)
+                    .containsEntry("query", formatted)
                     .containsEntry("description", "Who logged on");
         });
         // Taken once only.
@@ -359,7 +362,8 @@ class TestQueryTools {
         Mockito.when(queryService.getReferencedDataSource(bad)).thenReturn(Optional.of(WINDOWS));
         Mockito.when(queryService.validateQuery(bad)).thenReturn(new ValidateExpressionResult(false, "Bad", false));
         final String secret = "from \"Secret events\" select User";
-        Mockito.when(queryService.getReferencedDataSource(secret)).thenReturn(Optional.of(SECRET));
+        Mockito.when(queryService.getReferencedDataSource(StroomQlFormatter.format(secret)))
+                .thenReturn(Optional.of(SECRET));
         final ToolRunContext context = new ToolRunContext(null, null, () -> false);
 
         assertThat(context.run(() -> run(proposeTool(), "{\"name\":\"n\",\"query\":\""

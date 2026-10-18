@@ -133,7 +133,8 @@ public class ContextAssembler {
 
             ## StroomQL
             - Clauses go in this order: from, where (with and, or, not and brackets), eval, window, filter, \
-            sort by, group by, having, limit, select, show. limit comes before select, e.g. \
+            sort by, group by, having, limit, select, show. In code blocks for the user, put each clause on its \
+            own line, and each and/or of a long where on an indented line. limit comes before select, e.g. \
             `from "My View" where EventTime > day() - 1d limit 100 select EventTime, User`.
             - Quote a data source's name in double quotes if it has spaces or punctuation. Never quote a field \
             name in select or eval: a quoted name there is text, so every row would hold the name itself. Write \
@@ -163,8 +164,10 @@ public class ContextAssembler {
             - Validate a query with validate_stroomql before you show or propose it, and fix any errors.
             - Offer to run it (run_stroomql, with a limit) to check it returns what was asked, and work out \
             figures from the results with tools, e.g. current_results then table.
-            - Changes to the user's query are theirs to make: give the revised StroomQL as a code block to copy. \
-            To make a new query, use propose_query, which gives the user a button to create it.""";
+            - To change the user's query, use propose_query_change with the whole revised StroomQL: it gives them \
+            an Apply to query button that puts it in the tab's editor, unsaved, and lets them undo it. Never say \
+            the query was changed until they apply it. To make a new query, use propose_query, which gives the \
+            user a button to create it.""";
 
     /// What the model is told while the user's active tab is a pipeline's stepping screen.
     static final String STEPPING_GUIDANCE = """
