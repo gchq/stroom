@@ -145,7 +145,6 @@ public class AiSteppingContext {
 
     /// @param id An element's id.
     /// @return The element with the id, or null if there is none.
-    @JsonIgnore
     public AiSteppingElement findElement(final String id) {
         if (id == null) {
             return null;

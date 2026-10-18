@@ -166,13 +166,11 @@ public class AiTabSnapshot {
 
     /// @return This snapshot as sent when it hasn't changed since it was last sent: its document, name, dirty
     /// state and hash, without its parts or searches.
-    @JsonIgnore
     public AiTabSnapshot hashOnly() {
         return new AiTabSnapshot(docRef, tabLabel, innerTab, dirty, null, null, null, null, hash);
     }
 
     /// @return This snapshot with the given hash.
-    @JsonIgnore
     public AiTabSnapshot withHash(final String hash) {
         return new AiTabSnapshot(docRef, tabLabel, innerTab, dirty, parts, searches, note, stepping, hash);
     }
