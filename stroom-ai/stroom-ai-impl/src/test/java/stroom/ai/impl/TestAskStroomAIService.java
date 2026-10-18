@@ -33,9 +33,11 @@ import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.EditAiMessageRequest;
@@ -82,13 +84,14 @@ class TestAskStroomAIService {
     private final ContextAssembler contextAssembler = Mockito.mock(ContextAssembler.class);
 
     private final AiBackgroundTasks backgroundTasks = Mockito.mock(AiBackgroundTasks.class);
+    private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
 
     private AskStroomAIService service() {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, () -> null, null, null,
                 null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null, compactor, null,
                 toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext,
                 () -> mcpElicitations, chatTitler, null,
-                backgroundTasks, null);
+                backgroundTasks, null, null, tabSnapshots);
     }
 
     private final McpElicitations mcpElicitations = Mockito.mock(McpElicitations.class);
@@ -102,7 +105,7 @@ class TestAskStroomAIService {
                 null, null, null, null, null, mcpClientCache, null, runManager, runDao, null, null,
                 contextAssembler, usageTracker, compactor, memoryService, toolApprovalService,
                 Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext, () -> null, chatTitler, null,
-                backgroundTasks, null);
+                backgroundTasks, null, null, tabSnapshots);
     }
 
     private static final DocRef CHOSEN_MODEL = new DocRef(OpenAIModelDoc.TYPE, "chosen-uuid", "Chosen");
@@ -115,7 +118,7 @@ class TestAskStroomAIService {
                 null, null, null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null,
                 compactor, null, toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new,
                 securityContext, () -> null, chatTitler, null,
-                backgroundTasks, null);
+                backgroundTasks, null, null, tabSnapshots);
     }
 
     @Test
@@ -285,6 +288,86 @@ class TestAskStroomAIService {
     }
 
     @Test
+    void testAskStroomAi_theActiveTabIsKeptAndRecordedOnTheQuestion() {
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        runStraightAway();
+        final AiTabSnapshot tab = new AiTabSnapshot(new DocRef("XSLT", "x-uuid", "Event translation"),
+                "Event translation", "XSLT", true, List.of(), List.of(), null, "hash1");
+        Mockito.when(tabSnapshots.store(1, tab)).thenReturn(new TabSnapshots.Stored(42, false));
+
+        final AskStroomAiResponse response = service().askStroomAi(new AskStroomAiRequest(chat, null, null,
+                "why?", null, tab));
+
+        assertThat(response.isTabSnapshotNeeded()).isFalse();
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, 42, "why?");
+    }
+
+    @Test
+    void testAskStroomAi_aTabSentAsItsHashOnlyThatIsNotHeldIsAskedForInFull() {
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        runStraightAway();
+        final AiTabSnapshot tab = new AiTabSnapshot(new DocRef("XSLT", "x-uuid", "Event translation"),
+                "Event translation", null, false, null, null, null, "hash1");
+        Mockito.when(tabSnapshots.store(1, tab)).thenReturn(new TabSnapshots.Stored(null, true));
+
+        final AskStroomAiResponse response = service().askStroomAi(new AskStroomAiRequest(chat, null, null,
+                "why?", null, tab));
+
+        assertThat(response.isTabSnapshotNeeded()).isTrue();
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, null, "why?");
+    }
+
+    @Test
+    void testAskStroomAi_aTabThatCantBeKeptLeavesTheQuestionWithoutIt() {
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        runStraightAway();
+        final AiTabSnapshot tab = new AiTabSnapshot(new DocRef("XSLT", "x-uuid", "Event translation"),
+                "Event translation", null, false, List.of(), List.of(), null, "hash1");
+        Mockito.when(tabSnapshots.store(1, tab)).thenThrow(new RuntimeException("The workspace is full"));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "why?", null, tab));
+
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, null, "why?");
+    }
+
+    @Test
+    void testEditMessage_aQuestionKeepsTheTabItWasAskedWith() {
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.USER_MESSAGE, 42, "q1", 1, null)));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        runStraightAway();
+
+        service().editMessage(new EditAiMessageRequest(chat, null, 1, "q1 edited"));
+
+        // The snapshot may be shared with other questions, so is kept; only the question goes.
+        Mockito.verify(aiService).deleteMessage(1);
+        Mockito.verify(aiService, Mockito.never()).deleteAttachment(42);
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, 42, "q1 edited");
+    }
+
+    @Test
+    void testIsAttachmentMessage() {
+        assertThat(AskStroomAIService.isAttachmentMessage(
+                new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 5, "table", 0, null))).isTrue();
+        assertThat(AskStroomAIService.isAttachmentMessage(
+                new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, 5, "q", 2, null))).isFalse();
+        assertThat(AskStroomAIService.isAttachmentMessage(message(3, AiMessageType.AI_RESPONSE, "a"))).isFalse();
+    }
+
+    // Runs a new run's work straight away, ignoring the failure to answer with mocks.
+    private void runStraightAway() {
+        Mockito.when(runManager.start(Mockito.eq(1), Mockito.any())).thenAnswer(invocation -> {
+            final java.util.function.Consumer<AiChatRun> work = invocation.getArgument(1);
+            try {
+                work.accept(null);
+            } catch (final RuntimeException e) {
+                // The answer cannot be worked out with mocks, which is fine here.
+            }
+            return null;
+        });
+    }
+
+    @Test
     void testAskStroomAi_startsARunWhenNoneIsActive() {
         Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
 
@@ -394,7 +477,7 @@ class TestAskStroomAIService {
         Mockito.verify(aiService).deleteMessage(4);
         Mockito.verify(aiService, Mockito.never()).deleteMessage(1);
         Mockito.verify(aiService, Mockito.never()).deleteMessage(2);
-        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, "q2 edited");
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, null, "q2 edited");
     }
 
     @Test
@@ -413,7 +496,7 @@ class TestAskStroomAIService {
 
         service().editMessage(new EditAiMessageRequest(chat, null, 1, null));
 
-        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, "q1");
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, null, "q1");
     }
 
     @Test

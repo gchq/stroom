@@ -16,6 +16,8 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
@@ -93,6 +95,18 @@ public class DashboardSuperPresenter
         if (context instanceof final DashboardContext dashboardContext) {
             dashboardPresenter.setParentContext(dashboardContext);
         }
+    }
+
+    /// Shares the dashboard's components as edited, and each table's search requests, so a tool can take a snapshot
+    /// of their rows.
+    @Override
+    protected String addAiSnapshotParts(final DashboardDoc edited,
+                                        final List<AiTabSnapshotPart> parts,
+                                        final List<AiTabSearch> searches) {
+        parts.add(new AiTabSnapshotPart(AiTabSnapshotPart.DASHBOARD, "text/markdown",
+                dashboardPresenter.aiDashboardText()));
+        searches.addAll(dashboardPresenter.aiTabSearches());
+        return null;
     }
 
     @Override

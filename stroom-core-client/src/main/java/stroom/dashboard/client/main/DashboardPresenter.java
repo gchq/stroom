@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.ai.shared.AiTabSearch;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
@@ -33,6 +34,8 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
 import stroom.dashboard.client.query.CurrentSelectionPresenter;
 import stroom.dashboard.client.query.QueryInfo;
+import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardConfig;
@@ -40,6 +43,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.KeyValueInputComponentSettings;
 import stroom.dashboard.shared.LayoutConstraints;
+import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
@@ -50,6 +54,8 @@ import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.query.api.Column;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource;
@@ -1051,6 +1057,86 @@ public class DashboardPresenter
             }
         }
         return null;
+    }
+
+    /// @return A description of the dashboard as edited, for the AI chat: each query's data source and expression,
+    /// each table's columns and their expressions, the parameters, the time range, and the components shown.
+    public String aiDashboardText() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Time range: ").append(queryToolbarPresenter.getTimeRange()).append('\n');
+        sb.append("Parameters: ").append(NullSafe.list(dashboardContext.getParams())).append('\n');
+        final List<String> shown = new ArrayList<>();
+        addShownComponents(layoutPresenter.getLayoutConfig(), shown);
+        sb.append("Shown components: ").append(String.join(", ", shown)).append('\n');
+        for (final Component component : components) {
+            final String name = NullSafe.get(component.getComponentConfig(), ComponentConfig::getName);
+            sb.append("\n## ").append(component.getComponentType().getName()).append(" '").append(name)
+                    .append("' (id ").append(component.getId()).append(")\n");
+            if (component instanceof final QueryPresenter queryPresenter) {
+                final DocRef dataSource = queryPresenter.getDataSource();
+                sb.append("Data source: ").append(dataSource == null
+                        ? "none"
+                        : dataSource.getType() + " '" + dataSource.getName() + "' (uuid " + dataSource.getUuid()
+                          + ")").append('\n');
+                sb.append("Expression:\n").append(NullSafe.get(queryPresenter.getExpression(),
+                        ExpressionOperator::toMultiLineString)).append('\n');
+            } else if (component instanceof final TablePresenter tablePresenter) {
+                final TableComponentSettings settings = tablePresenter.getTableComponentSettings();
+                sb.append("Query: ").append(NullSafe.get(settings, TableComponentSettings::getQueryId))
+                        .append('\n');
+                sb.append("Columns:\n");
+                for (final Column column : NullSafe.list(NullSafe.get(settings,
+                        TableComponentSettings::getColumns))) {
+                    if (!column.isSpecial()) {
+                        sb.append("- ").append(column.getName()).append(": ")
+                                .append(NullSafe.string(column.getExpression()))
+                                .append(column.isVisible()
+                                        ? ""
+                                        : " (hidden)")
+                                .append('\n');
+                    }
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /// @return Each table's search requests, for the AI chat to take snapshots of their rows.
+    public List<AiTabSearch> aiTabSearches() {
+        final List<AiTabSearch> searches = new ArrayList<>();
+        for (final Component component : components) {
+            if (component instanceof final TablePresenter tablePresenter) {
+                final String queryId = NullSafe.get(tablePresenter.getTableComponentSettings(),
+                        TableComponentSettings::getQueryId);
+                final Component query = queryId != null
+                        ? components.get(queryId)
+                        : null;
+                final Search liveSearch = query instanceof final QueryPresenter queryPresenter
+                        ? queryPresenter.aiLiveSearch()
+                        : null;
+                searches.add(tablePresenter.aiTabSearch(liveSearch));
+            }
+        }
+        return searches;
+    }
+
+    // Adds the names of the components shown: the selected tab of each tab layout.
+    private void addShownComponents(final MutableLayoutConfig layoutConfig, final List<String> shown) {
+        if (layoutConfig instanceof final MutableSplitLayoutConfig splitLayoutConfig) {
+            for (final MutableLayoutConfig child : NullSafe.list(splitLayoutConfig.getChildren())) {
+                addShownComponents(child, shown);
+            }
+        } else if (layoutConfig instanceof final MutableTabLayoutConfig tabLayoutConfig
+                   && !tabLayoutConfig.getTabs().isEmpty()) {
+            final int selected = tabLayoutConfig.getSelected() >= 0
+                                 && tabLayoutConfig.getSelected() < tabLayoutConfig.getTabs().size()
+                    ? tabLayoutConfig.getSelected()
+                    : 0;
+            final Component component = components.get(tabLayoutConfig.get(selected).getId());
+            if (component != null) {
+                shown.add(NullSafe.get(component.getComponentConfig(), ComponentConfig::getName));
+            }
+        }
     }
 
     @Override

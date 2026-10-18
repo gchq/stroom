@@ -34,6 +34,7 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.Search;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -660,6 +661,31 @@ public class QueryPresenter
                     null,
                     null);
         }
+    }
+
+    /// @return The search a run would start now, from the query as edited (its expression, with the dashboard's
+    /// parameters and selections applied, and the dashboard's time range), without starting it, or null if it has
+    /// no data source.
+    public Search aiLiveSearch() {
+        if (getQuerySettings().getDataSource() == null) {
+            return null;
+        }
+        final DashboardContext dashboardContext = getDashboardContext();
+        final ExpressionOperator root = dashboardContext.replaceExpression(expressionPresenter.write(), true);
+        return searchModel.buildSearch(root,
+                dashboardContext.getParams(),
+                dashboardContext.getResolvedTimeRange(),
+                queryInfo.getMessage());
+    }
+
+    /// @return The query's data source, or null.
+    public DocRef getDataSource() {
+        return getQuerySettings().getDataSource();
+    }
+
+    /// @return The query's expression, as edited.
+    public ExpressionOperator getExpression() {
+        return expressionPresenter.write();
     }
 
     private void resume(final String node,

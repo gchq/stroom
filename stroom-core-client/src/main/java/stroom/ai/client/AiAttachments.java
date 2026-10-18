@@ -41,6 +41,9 @@ final class AiAttachments {
     static final String OPEN_DOC_TYPE_ATTRIBUTE = "data-open-doc-type";
     static final String OPEN_DOC_UUID_ATTRIBUTE = "data-open-doc-uuid";
 
+    /// The attribute of the active tab chip's remove button, which stops sharing the tab.
+    static final String REMOVE_TAB_ATTRIBUTE = "data-remove-active-tab";
+
     private static final String CHIP_ID_PREFIX = "ai-attachment-";
     private static final String DASHBOARD_PREFIX = "Dashboard '";
     private static final String TABLE_SEPARATOR = "' -> Table '";
@@ -275,5 +278,29 @@ final class AiAttachments {
                 new Attribute("id", chipId(attachmentId)),
                 Attribute.title(documentTooltip(NullSafe.nonBlankStringElse(docType, docRef.getType()),
                         attachment.getDocPath())));
+    }
+
+    /// Adds the chip of the active tab, which is shared with the next question: its icon, what it says (e.g.
+    /// "Tab: Event translation (unsaved)") and a button that stops sharing it.
+    ///
+    /// @param hb      Where to add it.
+    /// @param icon    The tab's icon, or null.
+    /// @param text    What the chip says.
+    /// @param tooltip The chip's tooltip.
+    static void tabChip(final HtmlBuilder hb, final SvgImage icon, final String text, final String tooltip) {
+        final SvgImage image = icon != null
+                ? icon
+                : SvgImage.FILE;
+        hb.div(chip -> {
+            chip.div(div -> div.appendTrustedString(image.getSvg()),
+                    Attribute.className("svg-image " + image.getClassName() + " ai-attachment-chip-icon face"));
+            chip.span(text, Attribute.className("ai-attachment-chip-label"));
+            chip.elem(button -> button.div(div -> div.appendTrustedString(SvgImage.CLOSE.getSvg()),
+                            Attribute.className("svg-image " + SvgImage.CLOSE.getClassName() + " face")),
+                    SafeHtmlUtils.fromSafeConstant("button"),
+                    Attribute.className("ai-attachment-chip-remove icon-button"),
+                    Attribute.title("Stop sharing this tab"),
+                    new Attribute(REMOVE_TAB_ATTRIBUTE, "true"));
+        }, Attribute.className("ai-attachment-chip ai-attachment-chip--tab"), Attribute.title(tooltip));
     }
 }

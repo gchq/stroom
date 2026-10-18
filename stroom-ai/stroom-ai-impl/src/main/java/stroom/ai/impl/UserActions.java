@@ -31,7 +31,9 @@ import jakarta.inject.Inject;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -41,12 +43,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Checks the steps that an MCP tool's result says are the user's (its `structuredContent.user_actions`), so
-/// they can be offered as buttons.
+/// Checks the steps that an MCP tool's result says are the user's (its `structuredContent.user_actions`), or that
+/// one of Stroom's own tools offers (e.g. propose_query's create_query), so they can be offered as buttons.
 ///
 /// Tool results carry data from Stroom, so their text may have been written to mislead. So:
 ///
-/// - only four actions are kept, each with typed arguments; any other entry is dropped;
+/// - only five actions are kept, each with typed arguments; any other entry is dropped. create_query is only kept
+///   when one of Stroom's own tools offers it;
 /// - each button's text is written by Stroom, from its own state, never from the server's `summary`;
 /// - a filter must exist, be on the pipeline named, and be disabled (to enable it) or enabled (to disable it);
 /// - an Elasticsearch request is only shown if it is one of three simple requests naming an index of the
@@ -63,6 +66,8 @@ public class UserActions {
     public static final String DISABLE_PROCESSOR_FILTER = "disable_processor_filter";
     public static final String OPEN_DOCUMENT = "open_document";
     public static final String ELASTICSEARCH_REQUEST = "elasticsearch_request";
+    /// Opens Stroom's New Query dialog with a suggested name; once created, the query is given the StroomQL.
+    public static final String CREATE_QUERY = "create_query";
 
     /// How long a button works for, as for approvals and forms.
     static final Duration EXPIRY = Duration.ofHours(24);
@@ -74,6 +79,7 @@ public class UserActions {
     static final int MAX_AFTER_CHARS = 200;
     static final int MAX_DETAILS_CHARS = 500;
     static final int MAX_REQUEST_CHARS = 100_000;
+    static final int MAX_NAME_CHARS = 200;
     // The most of a request Stroom will not show that is logged.
     private static final int MAX_LOGGED_CHARS = 200;
 
@@ -104,14 +110,39 @@ public class UserActions {
     /// @return The actions that may be offered, in the order given, each with Stroom's own text. Empty if there
     /// are none.
     public List<UserActionRecord> check(final Object userActions, final long nowMs) {
-        if (!(userActions instanceof final List<?> entries) || entries.isEmpty()) {
-            return List.of();
-        }
+        return check(userActions, List.of(), nowMs);
+    }
+
+    /// Checks the user actions a tool result gave: those an MCP server sent, and those one of Stroom's own tools
+    /// offered.
+    ///
+    /// @param userActions    The result's `user_actions`, as an MCP server sent them, or null.
+    /// @param builtInActions The actions one of Stroom's own tools offered, as maps of the same form.
+    /// @param nowMs          The time now.
+    /// @return The actions that may be offered, in the order given (an MCP server's first), each with Stroom's own
+    /// text. Empty if there are none.
+    public List<UserActionRecord> check(final Object userActions,
+                                        final List<? extends Map<?, ?>> builtInActions,
+                                        final long nowMs) {
         final List<Map<?, ?>> maps = new ArrayList<>();
-        for (final Object entry : entries.subList(0, Math.min(entries.size(), MAX_ACTIONS))) {
-            if (entry instanceof final Map<?, ?> map) {
-                maps.add(map);
+        if (userActions instanceof final List<?> entries) {
+            for (final Object entry : entries.subList(0, Math.min(entries.size(), MAX_ACTIONS))) {
+                if (entry instanceof final Map<?, ?> map) {
+                    maps.add(map);
+                }
             }
+        }
+        // Only Stroom's own tools may offer actions that create documents. Kept by identity, so an MCP server
+        // can't claim to be one.
+        final Set<Map<?, ?>> builtIn = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (final Map<?, ?> map : NullSafe.list(builtInActions)) {
+            if (map != null && maps.size() < MAX_ACTIONS) {
+                maps.add(map);
+                builtIn.add(map);
+            }
+        }
+        if (maps.isEmpty()) {
+            return List.of();
         }
 
         // The pipelines named in the result, whose indexes an Elasticsearch request may name.
@@ -138,6 +169,9 @@ public class UserActions {
                 case DISABLE_PROCESSOR_FILTER -> filterAction(id, map, false, expiresMs);
                 case OPEN_DOCUMENT -> openDocument(id, map, expiresMs);
                 case ELASTICSEARCH_REQUEST -> elasticsearchRequest(id, map, pipelines, expiresMs);
+                case CREATE_QUERY -> builtIn.contains(map)
+                        ? createQuery(id, map, expiresMs)
+                        : Optional.empty();
                 default -> Optional.empty();
             };
             if (record.isPresent()) {
@@ -168,7 +202,7 @@ public class UserActions {
             }
             result.add(new UserActionRecord(record.id(), record.action(), record.label(), record.details(),
                     record.warning(), record.filterId(), record.doc(), record.request(), List.copyOf(after),
-                    record.expiresMs(), Status.PENDING, null));
+                    record.expiresMs(), Status.PENDING, null, record.name()));
         }
         return List.copyOf(result);
     }
@@ -240,6 +274,33 @@ public class UserActions {
         return lookup.find(named).map(doc -> new UserActionRecord(id, OPEN_DOCUMENT,
                 "Open " + doc.getType() + " '" + doc.getName() + "'", null, null, null, doc, null, List.of(),
                 expiresMs, Status.PENDING, null));
+    }
+
+    /// A button that opens Stroom's New Query dialog with the suggested name, for a query the user may run: its
+    /// data source must exist and the user must have Use on it.
+    private Optional<UserActionRecord> createQuery(final String id, final Map<?, ?> map, final long expiresMs) {
+        final String name = NullSafe.get(string(map.get("name")), String::strip);
+        final String query = NullSafe.get(string(map.get("query")), String::strip);
+        if (name == null || name.isEmpty() || name.length() > MAX_NAME_CHARS || hasControlCharacters(name)
+            || query == null || query.isEmpty() || query.length() > MAX_REQUEST_CHARS) {
+            return Optional.empty();
+        }
+        final DocRef dataSource = lookup.usableDataSource(query).orElse(null);
+        if (dataSource == null) {
+            return Optional.empty();
+        }
+        final String description = NullSafe.get(string(map.get("description")), String::strip);
+        return Optional.of(new UserActionRecord(id, CREATE_QUERY, "Create query '" + name + "', reading "
+                                                                  + dataSource.getType() + " '"
+                                                                  + dataSource.getName() + "'",
+                NullSafe.isBlankString(description)
+                        ? null
+                        : truncate(description, MAX_DETAILS_CHARS),
+                null, null, dataSource, query, List.of(), expiresMs, Status.PENDING, null, name));
+    }
+
+    private static boolean hasControlCharacters(final String text) {
+        return text.chars().anyMatch(Character::isISOControl);
     }
 
     private Optional<UserActionRecord> elasticsearchRequest(final String id,

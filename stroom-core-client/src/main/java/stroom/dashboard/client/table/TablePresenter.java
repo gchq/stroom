@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
@@ -182,6 +183,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
+    // How many rows the table has, as last shown, or null if not known.
+    private Long currentTotalRows;
     private boolean ignoreRangeChange;
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
@@ -618,48 +621,80 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void askStroomAi() {
+        final DashboardTableContext context = aiResultsContext();
+        if (context != null) {
+            AskStroomAiEvent.fire(this, context);
+        }
+    }
+
+    /// @return The search request behind the rows shown, for the AI chat to take a snapshot of them, or null if the
+    /// table's query hasn't been run.
+    public DashboardTableContext aiResultsContext() {
         if (currentSearchModel != null) {
             final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             final Search currentSearch = currentSearchModel.getCurrentSearch();
             if (queryKey != null && currentSearch != null) {
-                // Create a download request just for this table.
-                final Search search = Search
-                        .builder()
-                        .dataSourceRef(currentSearch.getDataSourceRef())
-                        .expression(currentSearch.getExpression())
-                        .componentSettingsMap(currentSearch.getComponentSettingsMap())
-                        .params(currentSearch.getParams())
-                        .timeRange(currentSearch.getTimeRange())
-                        .incremental(true)
-                        .queryInfo(currentSearch.getQueryInfo())
-                        .build();
-
-                final DashboardSearchRequest dashboardSearchRequest = DashboardSearchRequest
-                        .builder()
-                        .searchRequestSource(currentSearchModel.getSearchRequestSource())
-                        .queryKey(queryKey)
-                        .search(search)
-                        .componentResultRequests(Collections.singletonList(createDownloadQueryRequest()))
-                        .dateTimeSettings(getDateTimeSettings())
-                        .build();
-
-                // Build a descriptive summary from the search request source.
-                final SearchRequestSource source = currentSearchModel.getSearchRequestSource();
-                final String dashboardName = NullSafe.get(
-                        source, SearchRequestSource::getOwnerDocRef, DocRef::getName);
-                final String tableName = NullSafe.getOrElseGet(
-                        source,
-                        SearchRequestSource::getComponentName,
-                        () -> NullSafe.get(getComponentConfig(), ComponentConfig::getName));
-                final String description = buildDashboardDescription(dashboardName, tableName);
-
-                AskStroomAiEvent.fire(this,
-                        new DashboardTableContext(
-                                description,
-                                currentSearchModel.getCurrentNode(),
-                                dashboardSearchRequest));
+                return tableContext(currentSearch, queryKey, currentSearchModel.getCurrentNode());
             }
         }
+        return null;
+    }
+
+    /// @param liveSearch The search the table's query would run now, as edited, or null.
+    /// @return The table for the AI chat: the search request behind the rows shown, if any, and the request a run
+    /// would use now.
+    public AiTabSearch aiTabSearch(final Search liveSearch) {
+        final DashboardTableContext live = liveSearch != null && currentSearchModel != null
+                ? tableContext(liveSearch, null, null)
+                : null;
+        final List<String> columnNames = new ArrayList<>();
+        for (final Column column : NullSafe.list(getTableComponentSettings().getColumns())) {
+            if (!column.isSpecial()) {
+                columnNames.add(column.getName());
+            }
+        }
+        return new AiTabSearch(NullSafe.get(getComponentConfig(), ComponentConfig::getName),
+                NullSafe.get(getComponentConfig(), ComponentConfig::getId),
+                aiResultsContext(),
+                live,
+                columnNames,
+                currentTotalRows,
+                currentSearchModel != null && currentSearchModel.isSearching());
+    }
+
+    // A request to download just this table's rows, from a search.
+    private DashboardTableContext tableContext(final Search fromSearch, final QueryKey queryKey, final String node) {
+        // Create a download request just for this table.
+        final Search search = Search
+                .builder()
+                .dataSourceRef(fromSearch.getDataSourceRef())
+                .expression(fromSearch.getExpression())
+                .componentSettingsMap(fromSearch.getComponentSettingsMap())
+                .params(fromSearch.getParams())
+                .timeRange(fromSearch.getTimeRange())
+                .incremental(true)
+                .queryInfo(fromSearch.getQueryInfo())
+                .build();
+
+        final DashboardSearchRequest dashboardSearchRequest = DashboardSearchRequest
+                .builder()
+                .searchRequestSource(currentSearchModel.getSearchRequestSource())
+                .queryKey(queryKey)
+                .search(search)
+                .componentResultRequests(Collections.singletonList(createDownloadQueryRequest()))
+                .dateTimeSettings(getDateTimeSettings())
+                .build();
+
+        // Build a descriptive summary from the search request source.
+        final SearchRequestSource source = currentSearchModel.getSearchRequestSource();
+        final String dashboardName = NullSafe.get(
+                source, SearchRequestSource::getOwnerDocRef, DocRef::getName);
+        final String tableName = NullSafe.getOrElseGet(
+                source,
+                SearchRequestSource::getComponentName,
+                () -> NullSafe.get(getComponentConfig(), ComponentConfig::getName));
+        final String description = buildDashboardDescription(dashboardName, tableName);
+        return new DashboardTableContext(description, node, dashboardSearchRequest);
     }
 
     private String buildDashboardDescription(final String dashboardName, final String tableName) {
@@ -789,6 +824,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
+                    currentTotalRows = tableResult.getTotalResults();
                 }
 
                 // Enable download of current results.

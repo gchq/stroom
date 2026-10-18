@@ -42,4 +42,9 @@ public interface UserActionLookup {
     /// to: the `indexName` of its Elastic indexing filters, as the pipeline that is lowest in the chain sets it, and
     /// those of the Elastic Index documents it names. A name may hold variables, e.g. `{year}`.
     Set<String> elasticIndexNames(DocRef pipeline);
+
+    /// @param query A StroomQL query.
+    /// @return The data source the query reads, if it names one that exists and the user may use (Use permission,
+    /// as running the query needs). Empty otherwise, with no difference between the cases.
+    Optional<DocRef> usableDataSource(String query);
 }

@@ -18,8 +18,10 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.WordList;
@@ -43,6 +45,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -61,6 +64,7 @@ class TestReadDocumentTool {
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
     private final WordListProvider wordListProvider = Mockito.mock(WordListProvider.class);
+    private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
     @SuppressWarnings("rawtypes")
     private final Map<DocumentTypeName, DocumentActionHandler> handlers = new HashMap<>();
     private final Map<String, DictionaryDoc> dictionaries = new HashMap<>();
@@ -72,7 +76,10 @@ class TestReadDocumentTool {
     void setUp() {
         final DocumentAccess documentAccess = new DocumentAccess(() -> explorerNodeService, securityContext,
                 () -> handlers, auditLog);
-        tool = new ReadDocumentTool(workspace, documentAccess, () -> wordListProvider);
+        tool = new ReadDocumentTool(workspace, documentAccess, () -> wordListProvider, tabSnapshots);
+        Mockito.when(tabSnapshots.unsavedPart(Mockito.anyInt(), Mockito.any(), Mockito.any()))
+                .thenReturn(Optional.empty());
+        Mockito.when(tabSnapshots.forLatestQuestion(Mockito.anyInt())).thenReturn(Optional.empty());
         Mockito.when(workspace.limits()).thenReturn(new AiWorkspaceConfig());
         Mockito.when(workspace.withTimeLimit(Mockito.any(Duration.class), Mockito.any()))
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
@@ -186,6 +193,56 @@ class TestReadDocumentTool {
         Mockito.verify(auditLog).documentViewed(Mockito.eq(1), Mockito.eq(TOP), Mockito.anyString());
         Mockito.verify(auditLog).documentViewed(Mockito.eq(1), Mockito.eq(MIDDLE), Mockito.contains("as an import"));
         Mockito.verify(auditLog).documentViewed(Mockito.eq(1), Mockito.eq(BOTTOM), Mockito.contains("as an import"));
+    }
+
+    @Test
+    void unsavedOwnWordsAreCombinedWithTheSavedImports() {
+        viewable.addAll(Set.of(TOP.getUuid(), MIDDLE.getUuid()));
+        dictionary(TOP, "1.1.1.1", MIDDLE);
+        dictionary(MIDDLE, "2.2.2.2\n4.4.4.4");
+        combined(TOP, List.of("2.2.2.2", "4.4.4.4", "1.1.1.1"), List.of(MIDDLE, MIDDLE, TOP));
+        // The dictionary is the user's active tab: 1.1.1.1 has been removed, 3.3.3.3 and 4.4.4.4 added, unsaved.
+        Mockito.when(tabSnapshots.unsavedPart(1, TOP, AiTabSnapshotPart.DATA)).thenReturn(Optional.of(
+                new TabSnapshots.UnsavedPart("3.3.3.3\n4.4.4.4\n", false, "/tabs/3/words.txt")));
+
+        final String result = run("{\"uuid\":\"top-uuid\"}");
+
+        assertThat(result)
+                .contains("its own words are as edited there (/tabs/3/words.txt), not as saved")
+                .contains("The words of the dictionaries it imports are as saved.")
+                .contains("It has 3 word(s) in all")
+                .contains("2 are its own (unsaved)")
+                .contains("2.2.2.2  (from Dictionary 'Known bad')")
+                .contains("3.3.3.3\n")
+                // A word in both is the dictionary's own, as the dictionary nearest the top wins.
+                .endsWith("3.3.3.3\n4.4.4.4")
+                .doesNotContain("4.4.4.4  (from")
+                .doesNotContain("1.1.1.1");
+    }
+
+    @Test
+    void unsavedOwnWordsTooManyToShareAreSaidSo() {
+        viewable.add(TOP.getUuid());
+        dictionary(TOP, "1.1.1.1");
+        combined(TOP, List.of("1.1.1.1"), List.of(TOP));
+        Mockito.when(tabSnapshots.unsavedPart(1, TOP, AiTabSnapshotPart.DATA)).thenReturn(Optional.of(
+                new TabSnapshots.UnsavedPart("9.9.9.9", true, "/tabs/3/words.txt")));
+
+        assertThat(run("{\"uuid\":\"top-uuid\"}"))
+                .contains("too many to share, so its words as saved are used")
+                .contains("1.1.1.1");
+    }
+
+    @Test
+    void aDocumentWithUnsavedChangesSaysWhatWasReadIsAsSaved() {
+        viewable.add(XSLT.getUuid());
+        xsltContent("<xsl:stylesheet/>");
+        Mockito.when(tabSnapshots.forLatestQuestion(1)).thenReturn(Optional.of(new TabSnapshots.StoredTabSnapshot(
+                5, 3, XSLT, "/", "Event translation", null, true, null, "h", 0L, List.of(), List.of())));
+
+        assertThat(run("{\"uuid\":\"xslt-uuid\"}"))
+                .contains("This is the document as saved")
+                .contains("/tabs/3/");
     }
 
     @Test

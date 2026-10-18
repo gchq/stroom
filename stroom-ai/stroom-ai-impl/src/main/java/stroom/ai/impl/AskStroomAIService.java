@@ -25,8 +25,6 @@ import stroom.ai.impl.ChatCompactor.CompactionMode;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.memory.MemoryPath;
-import stroom.ai.impl.workspace.EventsFile;
-import stroom.ai.impl.workspace.MarkdownTables;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspaceStore;
@@ -75,18 +73,12 @@ import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.ai.shared.UndoAiMemoryChangeRequest;
 import stroom.config.global.api.GlobalConfig;
 import stroom.dashboard.impl.DashboardService;
-import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
-import stroom.dashboard.shared.DownloadSearchResultFileType;
-import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
-import stroom.query.api.OffsetRange;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.impl.QueryService;
-import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -125,7 +117,6 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -223,6 +214,8 @@ public class AskStroomAIService {
     private Duration stopWait = STOP_WAIT;
     private final McpAgentChat mcpAgentChat;
     private final DocumentReferences documentReferences;
+    private final TableDownloader tableDownloader;
+    private final TabSnapshots tabSnapshots;
 
     @Inject
     public AskStroomAIService(final AiService aiService,
@@ -257,8 +250,12 @@ public class AskStroomAIService {
                               final ChatTitler chatTitler,
                               final FollowUpSuggester followUpSuggester,
                               final AiBackgroundTasks backgroundTasks,
-                              final DocumentReferences documentReferences) {
+                              final DocumentReferences documentReferences,
+                              final TableDownloader tableDownloader,
+                              final TabSnapshots tabSnapshots) {
         this.chatTitler = chatTitler;
+        this.tableDownloader = tableDownloader;
+        this.tabSnapshots = tabSnapshots;
         this.documentReferences = documentReferences;
         this.backgroundTasks = backgroundTasks;
         this.followUpSuggester = followUpSuggester;
@@ -330,16 +327,34 @@ public class AskStroomAIService {
         // Stage 2: If a user message is present, start a run to answer it in the background. The client
         // follows its progress by polling, so the request returns straight away. A message sent while a run is
         // working steers that run instead.
+        boolean resendTab = false;
         if (request.getMessage() != null && !steer(chatId, request.getMessage())) {
+            // What the user sees in their active tab is kept now, as the user, and recorded on the question.
+            final TabSnapshots.Stored tab = storeTabSnapshot(chatId, request);
+            resendTab = tab.resend();
             runManager.start(chatId, run -> {
-                aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, request.getMessage());
+                aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, tab.snapshotId(), request.getMessage());
                 chatTitler.nameFromQuestion(chatId, request.getMessage());
                 answerQuestion(chatId, request);
             });
         }
 
         // The answer (if there is a question) is delivered by polling.
-        return new AskStroomAiResponse(null);
+        return new AskStroomAiResponse(null, resendTab);
+    }
+
+    /// Keeps what the user sees in their active tab, sent with a question. A tab that can't be kept is left out,
+    /// and the question is asked without it.
+    private TabSnapshots.Stored storeTabSnapshot(final int chatId, final AskStroomAiRequest request) {
+        if (tabSnapshots == null || request.getTabSnapshot() == null) {
+            return TabSnapshots.Stored.NONE;
+        }
+        try {
+            return tabSnapshots.store(chatId, request.getTabSnapshot());
+        } catch (final RuntimeException e) {
+            LOGGER.warn(() -> "Unable to keep the active tab for chat " + chatId + ": " + e.getMessage(), e);
+            return TabSnapshots.Stored.NONE;
+        }
     }
 
     /**
@@ -373,7 +388,8 @@ public class AskStroomAIService {
         runManager.start(chatId, run -> {
             removeMessages(toRemove);
             chatCompactor.onTurnChanged(chatId, question.getTurnId());
-            aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, newText);
+            // The question keeps the tab it was asked with.
+            aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, question.getAttachmentId(), newText);
             chatTitler.nameFromQuestion(chatId, newText);
             answerQuestion(chatId, edited);
         });
@@ -646,12 +662,19 @@ public class AskStroomAIService {
 
     private void removeMessages(final List<AiChatMessage> messages) {
         for (final AiChatMessage message : messages.reversed()) {
-            if (message.getAttachmentId() != null) {
+            if (isAttachmentMessage(message)) {
                 deleteAttachment(message.getChatId(), message.getAttachmentId());
             } else {
                 aiService.deleteMessage(message.getId());
             }
         }
+    }
+
+    /// @return True if the message is the one an attachment belongs to, so goes with it. A question refers to the
+    /// snapshot of the tab it was asked with, which other questions may share, so the snapshot is kept when a
+    /// question is removed (it goes with the chat, or once its retention ends).
+    static boolean isAttachmentMessage(final AiChatMessage message) {
+        return message.getAttachmentId() != null && message.getMessageType() != AiMessageType.USER_MESSAGE;
     }
 
     /**
@@ -1032,92 +1055,28 @@ public class AskStroomAIService {
                                 null, null, null, false);
 
                         final TableAnalysisConfig tableAnalysisConfig = getTableAnalysisConfig(config);
-                        final Supplier<ResourceGeneration> downloadSupplier =
-                                buildDownloadSupplier(context, tableAnalysisConfig);
-                        final ResourceGeneration resourceGeneration = LOGGER.logDurationIfDebugEnabled(
-                                downloadSupplier,
-                                rg -> "Download completed for attachmentId=" + attachmentId);
-                        final ResourceKey resourceKey = resourceGeneration.getResourceKey();
+                        final int maxRows = tableAnalysisConfig.getMaxTotalRows();
+                        final Path targetFile = attachmentFileStore.createAttachmentFile(attachmentId);
+                        final TableDownloader.Downloaded downloaded = LOGGER.logDurationIfDebugEnabled(
+                                () -> tableDownloader.download(context, maxRows, targetFile),
+                                result -> "Download completed for attachmentId=" + attachmentId);
+                        final boolean truncated = downloaded.truncated();
+                        final long reportedRowCount = downloaded.rows();
+                        final int colCount = downloaded.columns();
 
-                        try {
-                            final Path tempFile = resourceStore.getTempFile(resourceKey);
-                            final Path targetFile = attachmentFileStore.createAttachmentFile(attachmentId);
-                            Files.move(tempFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
-                            // A data source without streams (e.g. reference data) gives empty ids, which only
-                            // mislead.
-                            MarkdownTables.dropEmptyColumns(targetFile, EventsFile.SOURCE_ID_COLUMNS);
+                        final String description = context.getDescription()
+                                                   + " (" + reportedRowCount + " rows, " + colCount + " cols"
+                                                   + (truncated
+                                ? ", truncated to limit"
+                                : "") + ")";
 
-                            // Count rows by streaming the markdown file
-                            // (skip header line and separator line).
-                            final int maxRows = tableAnalysisConfig.getMaxTotalRows();
-                            int rowCount = 0;
-                            try (final BufferedReader reader = Files.newBufferedReader(targetFile)) {
-                                reader.readLine(); // skip markdown header
-                                reader.readLine(); // skip separator row
-                                while (reader.readLine() != null) {
-                                    rowCount++;
-                                }
-                            }
-
-                            // Truncated if we got more rows than the configured max
-                            // (we requested maxRows+1 to probe for overflow).
-                            final boolean truncated = rowCount > maxRows;
-                            final int reportedRowCount;
-
-                            if (truncated) {
-                                // Rewrite the file without the overflow probe row.
-                                final Path trimmedFile = targetFile.resolveSibling(
-                                        targetFile.getFileName() + ".tmp");
-                                try (final BufferedReader reader = Files.newBufferedReader(targetFile);
-                                        final BufferedWriter writer = Files.newBufferedWriter(trimmedFile)) {
-                                    int linesWritten = 0;
-                                    String line;
-                                    // Keep header + separator + maxRows data lines
-                                    final int maxLines = maxRows + 2;
-                                    while ((line = reader.readLine()) != null) {
-                                        if (linesWritten < maxLines) {
-                                            writer.write(line);
-                                            writer.newLine();
-                                            linesWritten++;
-                                        } else {
-                                            break;
-                                        }
-                                    }
-                                }
-                                Files.move(trimmedFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
-                                reportedRowCount = maxRows;
-                            } else {
-                                reportedRowCount = rowCount;
-                            }
-
-                            final int colCount;
-                            try (final BufferedReader reader = Files.newBufferedReader(targetFile)) {
-                                final String header = reader.readLine();
-                                colCount = header != null
-                                        ? parseMarkdownColumnCount(header)
-                                        : 0;
-                            }
-
-                            final String description = context.getDescription()
-                                                       + " (" + reportedRowCount + " rows, " + colCount + " cols"
-                                                       + (truncated
-                                    ? ", truncated to limit"
-                                    : "") + ")";
-
-                            info(taskContext, () -> "Async download finished: attachmentId=" + attachmentId
-                                                    + " rows=" + reportedRowCount + " cols=" + colCount
-                                                    + " truncated=" + truncated);
-                            storeAttachment(chatId, attachmentId, targetFile, description,
-                                    sourceDocUuid(context, queryService));
-                            aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
-                                    reportedRowCount, description, null, truncated);
-                        } finally {
-                            try {
-                                resourceStore.deleteTempFile(resourceKey);
-                            } catch (final Exception e) {
-                                LOGGER.debug(() -> "Failed to delete temp file", e);
-                            }
-                        }
+                        info(taskContext, () -> "Async download finished: attachmentId=" + attachmentId
+                                                + " rows=" + reportedRowCount + " cols=" + colCount
+                                                + " truncated=" + truncated);
+                        storeAttachment(chatId, attachmentId, targetFile, description,
+                                sourceDocUuid(context, queryService));
+                        aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
+                                (int) reportedRowCount, description, null, truncated);
                     } catch (final Exception e) {
                         LOGGER.debug(e::getMessage, e);
                         aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.ERROR,
@@ -1135,61 +1094,6 @@ public class AskStroomAIService {
     private void info(final TaskContext taskContext, final Supplier<String> message) {
         taskContext.info(message);
         LOGGER.debug(message);
-    }
-
-    /**
-     * Builds the download supplier for Dashboard or Query contexts.
-     * Applies row-limiting via the existing requestedRange on the search request.
-     */
-    private Supplier<ResourceGeneration> buildDownloadSupplier(final AskStroomAiContext context,
-                                                               final TableAnalysisConfig tableAnalysisConfig) {
-        // Request one extra row beyond the limit to detect truncation.
-        // If we get maxRows+1 rows back, we know the data is genuinely truncated.
-        final long maxRows = tableAnalysisConfig.getMaxTotalRows();
-        final OffsetRange probeRange = new OffsetRange(0L, maxRows + 1);
-
-        if (context instanceof final DashboardTableContext ctx) {
-            return () -> {
-                final DashboardSearchRequest searchRequest = ctx.getSearchRequest();
-                // Override requestedRange on each TableResultRequest to limit rows.
-                final List<ComponentResultRequest> limitedRequests =
-                        searchRequest.getComponentResultRequests().stream()
-                                .map(crr -> {
-                                    if (crr instanceof final TableResultRequest trr) {
-                                        return trr.copy()
-                                                .requestedRange(probeRange)
-                                                .build();
-                                    }
-                                    return crr;
-                                }).toList();
-
-                final DashboardSearchRequest limitedSearchRequest = searchRequest.copy()
-                        .componentResultRequests(limitedRequests)
-                        .build();
-
-                final String componentId = limitedRequests.stream()
-                        .filter(crr -> crr instanceof TableResultRequest)
-                        .map(ComponentResultRequest::getComponentId)
-                        .findFirst()
-                        .orElseThrow(() -> new RuntimeException("No table component found"));
-                // With each row's stream and event ids, so the agent can look at the events behind the rows.
-                final DownloadSearchResultsRequest downloadRequest = new DownloadSearchResultsRequest(
-                        limitedSearchRequest, componentId, DownloadSearchResultFileType.MARKDOWN,
-                        false, false, 100, true);
-                return dashboardService.downloadSearchResults(downloadRequest);
-            };
-        } else if (context instanceof final QueryTableContext ctx) {
-            return () -> {
-                final QuerySearchRequest searchRequest = ctx.getSearchRequest();
-                final QuerySearchRequest limitedSearchRequest = searchRequest.copy()
-                        .requestedRange(probeRange)
-                        .build();
-                final DownloadQueryResultsRequest downloadRequest = new DownloadQueryResultsRequest(
-                        limitedSearchRequest, DownloadSearchResultFileType.MARKDOWN, false, 100, true);
-                return queryService.downloadSearchResults(downloadRequest);
-            };
-        }
-        throw new IllegalStateException("Cannot build download supplier for: " + context.getClass().getName());
     }
 
     // ---------------------------------------------------------------------
@@ -1828,25 +1732,6 @@ public class AskStroomAIService {
         return value.replace("|", "\\|").replace("\n", " ");
     }
 
-    /**
-     * Counts the number of columns in a markdown table header line.
-     * Header format is: {@code | col1 | col2 | col3 |}
-     */
-    private int parseMarkdownColumnCount(final String headerLine) {
-        if (headerLine == null || headerLine.isBlank()) {
-            return 0;
-        }
-        // Count pipe characters and subtract 1 (there's one more pipe than columns).
-        int pipeCount = 0;
-        for (int i = 0; i < headerLine.length(); i++) {
-            if (headerLine.charAt(i) == '|') {
-                pipeCount++;
-            }
-        }
-        // | col1 | col2 | col3 | has 4 pipes for 3 columns
-        return Math.max(0, pipeCount - 1);
-    }
-
     // ---------------------------------------------------------------------
     // Cancellation methods
     // ---------------------------------------------------------------------
@@ -1940,7 +1825,7 @@ public class AskStroomAIService {
                         "Message " + messageId + " not found in chat " + chatId));
 
         // If this is an ATTACHMENT message, delete the attachment record + file.
-        if (targetMessage.getAttachmentId() != null) {
+        if (isAttachmentMessage(targetMessage)) {
             deleteAttachment(chatId, targetMessage.getAttachmentId());
         } else {
             // Simple message deletion.
@@ -2090,7 +1975,8 @@ public class AskStroomAIService {
                 ? aiService.getStreamingMessages(chatId)
                 : List.of();
         return new AiChatPollResponse(newMessages, attachments, workingMessage, complete, run, contextUsage,
-                streamingMessages, watchedMessages(chatId, request.getWatchedMessageIds()));
+                streamingMessages, watchedMessages(chatId, request.getWatchedMessageIds()),
+                NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::isShareActiveTab, true));
     }
 
     /// @return The chat's forms among the given messages, as they now stand (e.g. cancelled when the run was

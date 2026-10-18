@@ -37,17 +37,37 @@ public class AiUserActionResult {
     private final String message;
     @JsonProperty
     private final DocRef openDocument;
+    @JsonProperty
+    private final String createQueryName;
+    @JsonProperty
+    private final String createQueryText;
 
     /// @param done         True if the action was done.
     /// @param message      What happened, or why it was not done.
     /// @param openDocument A document for the browser to open, or null.
+    public AiUserActionResult(final Boolean done,
+                              final String message,
+                              final DocRef openDocument) {
+        this(done, message, openDocument, null, null);
+    }
+
+    /// @param done            True if the action was done.
+    /// @param message         What happened, or why it was not done.
+    /// @param openDocument    A document for the browser to open, or null.
+    /// @param createQueryName For a create_query action, the name to suggest in Stroom's New Query dialog, or null.
+    /// @param createQueryText For a create_query action, the StroomQL to put in the new query once created, or
+    ///                        null.
     @JsonCreator
     public AiUserActionResult(@JsonProperty("done") final Boolean done,
                               @JsonProperty("message") final String message,
-                              @JsonProperty("openDocument") final DocRef openDocument) {
+                              @JsonProperty("openDocument") final DocRef openDocument,
+                              @JsonProperty("createQueryName") final String createQueryName,
+                              @JsonProperty("createQueryText") final String createQueryText) {
         this.done = Objects.requireNonNullElse(done, false);
         this.message = message;
         this.openDocument = openDocument;
+        this.createQueryName = createQueryName;
+        this.createQueryText = createQueryText;
     }
 
     /// @return True if the action was done.
@@ -63,5 +83,15 @@ public class AiUserActionResult {
     /// @return A document for the browser to open, or null.
     public DocRef getOpenDocument() {
         return openDocument;
+    }
+
+    /// @return For a create_query action, the name to suggest in Stroom's New Query dialog, or null.
+    public String getCreateQueryName() {
+        return createQueryName;
+    }
+
+    /// @return For a create_query action, the StroomQL to put in the new query once created, or null.
+    public String getCreateQueryText() {
+        return createQueryText;
     }
 }

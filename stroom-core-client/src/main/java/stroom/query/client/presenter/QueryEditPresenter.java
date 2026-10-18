@@ -16,6 +16,8 @@
 
 package stroom.query.client.presenter;
 
+import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.QueryTableContext;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dispatch.client.RestFactory;
@@ -37,6 +39,7 @@ import stroom.query.api.Result;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
@@ -422,13 +425,7 @@ public class QueryEditPresenter
         // so the values travel as ordinary Params and the text is left alone. That also keeps the
         // error offsets the editor highlights aligned with what the user is looking at, which
         // rewriting the text silently broke.
-        List<Param> params = null;
-        if (queryVariables != null && !queryVariables.isEmpty()) {
-            params = new ArrayList<>();
-            for (final Map.Entry<String, String> entry : queryVariables.entrySet()) {
-                params.add(new Param(entry.getKey(), entry.getValue()));
-            }
-        }
+        final List<Param> params = queryParams();
         queryModel.startNewSearch(
                 null,
                 null,
@@ -439,6 +436,39 @@ public class QueryEditPresenter
                 true,
                 queryInfo.getMessage(),
                 null);
+    }
+
+    // The query's variables as params, or null if it has none.
+    private List<Param> queryParams() {
+        List<Param> params = null;
+        if (queryVariables != null && !queryVariables.isEmpty()) {
+            params = new ArrayList<>();
+            for (final Map.Entry<String, String> entry : queryVariables.entrySet()) {
+                params.add(new Param(entry.getKey(), entry.getValue()));
+            }
+        }
+        return params;
+    }
+
+    /// @param name The query's name, as the user sees it.
+    /// @return The query's results table for the AI chat: the search request behind the rows shown (if it has been
+    /// run), and the request a run would use now, from the editor's text and time range.
+    public AiTabSearch aiTabSearch(final String name) {
+        final QueryResultTablePresenter tablePresenter = queryResultPresenter.getTablePresenter();
+        final QuerySearchRequest liveRequest = queryModel.buildSearchRequest(null, null, editorPresenter.getText(),
+                        queryParams(), queryToolbarPresenter.getTimeRange(), true, queryInfo.getMessage(), null)
+                .copy()
+                .storeHistory(false)
+                .requestedRange(OffsetRange.UNBOUNDED)
+                .build();
+        final String description = "Query '" + name + "'";
+        return new AiTabSearch(name,
+                null,
+                tablePresenter.aiResultsContext(),
+                new QueryTableContext(description, null, liveRequest),
+                tablePresenter.getCurrentColumnNames(),
+                tablePresenter.getCurrentTotalRows(),
+                tablePresenter.isSearching());
     }
 
     public TimeRange getTimeRange() {

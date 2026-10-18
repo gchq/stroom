@@ -338,6 +338,32 @@ class TestWorkspaceStore {
         assertThat(workspaceStore.readLines(fileId, 0, 10)).containsExactly("x");
     }
 
+    @Test
+    void testADataSourcesOwnContentNeedsView() {
+        // An index's settings, as its tab showed them or read_document saved them, need View, while results
+        // searched from it need only Use.
+        sourceIs("index-uuid", INDEX);
+        final int snapshot = fileAt("/tabs/1/data.txt", "index-uuid");
+        final int document = fileAt("/documents/index-uuid/meta.json", "index-uuid");
+        final int results = fileAt("/attachments/7.md", "index-uuid");
+        permissions(true, false);
+
+        assertThatThrownBy(() -> workspaceStore.readLines(snapshot, 0, 10))
+                .isInstanceOf(WorkspaceFileUnavailableException.class);
+        assertThatThrownBy(() -> workspaceStore.readLines(document, 0, 10))
+                .isInstanceOf(WorkspaceFileUnavailableException.class);
+        assertThat(workspaceStore.readLines(results, 0, 10)).containsExactly("x");
+        assertThat(WorkspaceStore.holdsDocumentContent("/tabs/1/data.txt")).isTrue();
+        assertThat(WorkspaceStore.holdsDocumentContent("/outputs/tabs/x")).isFalse();
+    }
+
+    private int fileAt(final String path, final String sourceDocUuid) {
+        final int fileId = workspaceStore.createFile(chat.getId(), AiAttachmentType.WORKSPACE_FILE, path, null,
+                "x\n");
+        workspaceStore.setRetention(fileId, sourceDocUuid);
+        return fileId;
+    }
+
     private int fileFrom(final String sourceDocUuid) {
         final int fileId = workspaceStore.createFile(chat.getId(), AiAttachmentType.TOOL_OUTPUT,
                 "/outputs/" + sourceDocUuid + ".txt", null, "x\n");
