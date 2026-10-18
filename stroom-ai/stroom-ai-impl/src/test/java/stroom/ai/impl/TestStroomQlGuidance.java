@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.docref.DocRef;
+import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,10 +87,31 @@ class TestStroomQlGuidance {
         assertThat(ContextAssembler.TOOL_GUIDANCE).doesNotContain("is null");
     }
 
-    private void parse(final String query) {
+    @Test
+    void aQuotedFieldNameInSelectIsTextSoTheGuidanceSaysNotToQuoteOne() {
+        // As the agent wrote it: every row held the field's name.
+        assertThat(columnExpressions(parse("from v where a = 1 select \"create.document.description\"")))
+                .containsExactly("'create.document.description'");
+        // Unquoted, with dots or an @, and with spaces as a parameter, each is the field.
+        assertThat(columnExpressions(parse("from v where a = 1 select create.document.description, @timestamp, "
+                                           + "${Create Time}")))
+                .containsExactly("${create.document.description}", "${@timestamp}", "${Create Time}");
+        assertThat(ContextAssembler.TOOL_GUIDANCE)
+                .contains("Never quote a field \nname in select or eval".replace("\n", ""))
+                .contains("${Create Time}");
+    }
+
+    private static List<String> columnExpressions(final SearchRequest request) {
+        return request.getResultRequests().getFirst().getMappings().getFirst().getColumns().stream()
+                .filter(column -> !Boolean.TRUE.equals(column.isSpecial()))
+                .map(Column::getExpression)
+                .toList();
+    }
+
+    private SearchRequest parse(final String query) {
         final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().referenceTime(0L).build();
         final SearchRequest in = new SearchRequest(null, new QueryKey("test"), Query.builder().build(),
                 new ArrayList<ResultRequest>(0), dateTimeSettings, false);
-        factory.create(query, in, ExpressionContext.builder().dateTimeSettings(dateTimeSettings).build());
+        return factory.create(query, in, ExpressionContext.builder().dateTimeSettings(dateTimeSettings).build());
     }
 }
