@@ -30,23 +30,13 @@ import stroom.ai.impl.workspace.TableEngine.Result;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.util.concurrent.LazyValue;
-import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.model.chat.request.json.JsonArraySchema;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
-import dev.langchain4j.model.chat.request.json.JsonStringSchema;
 import jakarta.inject.Inject;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -117,10 +107,10 @@ class TableTool extends AbstractWorkspaceTool {
                         .addProperty("eval", JsonArraySchema.builder().items(eval)
                                 .description("Columns worked out for each row, first, which the rest can use as "
                                              + "any other.").build())
-                        .addProperty("select", stringArray("The columns to keep (default all)."))
+                        .addProperty("select", stringArraySchema("The columns to keep (default all)."))
                         .addProperty("where", JsonArraySchema.builder().items(condition)
                                 .description("Conditions every row must meet.").build())
-                        .addProperty("groupBy", stringArray("The columns to group by."))
+                        .addProperty("groupBy", stringArraySchema("The columns to group by."))
                         .addProperty("aggregates", JsonArraySchema.builder().items(aggregate)
                                 .description("What to work out for each group (default count).").build())
                         .addBooleanProperty("distinct", "True for the distinct values of the selected columns, "
@@ -130,8 +120,9 @@ class TableTool extends AbstractWorkspaceTool {
                                 .description("How to sort the result.").build())
                         .addIntegerProperty("limit", "The most rows to return.")
                         .addStringProperty(OUT_ARG, "A .csv file in /outputs/ to write the result to.")
-                        .addProperty(HELP_ARG, stringArray("Expression functions to describe (what each takes and "
-                                                           + "does), instead of querying a table."))
+                        .addProperty(HELP_ARG, stringArraySchema("Expression functions to describe (what each "
+                                                                 + "takes and does), instead of querying a "
+                                                                 + "table."))
                         .build())
                 .build();
     }
@@ -160,13 +151,9 @@ class TableTool extends AbstractWorkspaceTool {
                + "formatDate(${time}, 'yyyy')):\n" + CATALOGUE.getValueWithLocks();
     }
 
-    private static JsonArraySchema stringArray(final String description) {
-        return JsonArraySchema.builder().items(new JsonStringSchema()).description(description).build();
-    }
-
     @Override
     String run(final ToolExecutionRequest request, final int chatId) {
-        final List<String> help = strings(args(request).get(HELP_ARG), HELP_ARG);
+        final List<String> help = strings(argsMap(request).get(HELP_ARG), HELP_ARG);
         if (!help.isEmpty()) {
             return ExpressionFunctions.help(help);
         }
@@ -208,7 +195,7 @@ class TableTool extends AbstractWorkspaceTool {
     private String referencedColumn(final ToolExecutionRequest request, final int chatId, final WorkspacePath path) {
         final List<String> columns = TableEngine.run(workspace.localFile(chatId, path), Format.forPath(path),
                 new Query(List.of(), List.of(), List.of(), List.of(), false, false, List.of(), 1)).columns();
-        final Map<?, ?> args = args(request);
+        final Map<?, ?> args = argsMap(request);
         final List<String> referenced = new ArrayList<>();
         try {
             conditions(args.get("where")).forEach(condition -> referenced.add(condition.column()));
@@ -229,7 +216,7 @@ class TableTool extends AbstractWorkspaceTool {
 
     private String query(final ToolExecutionRequest request, final int chatId, final WorkspacePath path) {
         final WorkspacePath out = outArg(request);
-        final Map<?, ?> args = args(request);
+        final Map<?, ?> args = argsMap(request);
         final Query query = new Query(
                 evals(args.get("eval")),
                 strings(args.get("select"), "select"),
@@ -278,32 +265,7 @@ class TableTool extends AbstractWorkspaceTool {
     }
 
     private void writeCsv(final int chatId, final WorkspacePath out, final Result result, final String source) {
-        final Path temp = workspace.tempFile();
-        try {
-            try (final BufferedWriter writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8);
-                    final CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT)) {
-                printer.printRecord(result.columns());
-                for (final List<String> row : result.rows()) {
-                    printer.printRecord(row);
-                }
-            }
-            workspace.write(chatId, out, temp, source);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        } finally {
-            ChatWorkspace.deleteQuietly(temp);
-        }
-    }
-
-    private static Map<?, ?> args(final ToolExecutionRequest request) {
-        try {
-            final Map<?, ?> args = JsonUtil.readValue(request.arguments(), Map.class);
-            return args == null
-                    ? Map.of()
-                    : args;
-        } catch (final RuntimeException e) {
-            throw new WorkspaceException("The arguments are not valid JSON.");
-        }
+        ToolTables.writeCsv(workspace, chatId, out, result.columns(), result.rows(), source);
     }
 
     private static List<String> strings(final Object value, final String name) {

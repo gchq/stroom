@@ -55,7 +55,7 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
     @Override
     public final String execute(final ToolExecutionRequest request, final int chatId) {
         try {
-            return workspace.withTimeLimit(timeLimit(), () -> run(request, chatId));
+            return workspace.withTimeLimit(timeLimit(request), () -> run(request, chatId));
         } catch (final WorkspaceException e) {
             return "Error: " + e.getMessage();
         }
@@ -66,6 +66,12 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
      */
     protected Duration timeLimit() {
         return limits().getToolTimeLimit().getDuration();
+    }
+
+    /// @param request The model's call.
+    /// @return How long this call may take: by default, as long as any call of the tool ([#timeLimit()]).
+    protected Duration timeLimit(final ToolExecutionRequest request) {
+        return timeLimit();
     }
 
     /**

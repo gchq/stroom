@@ -70,4 +70,23 @@ class TestTableExpression {
         assertThat(first.result()).isEqualTo("3");
         assertThat(second.result()).isEqualTo("10");
     }
+
+    @Test
+    void aDashboardColumnsExpressionIsCheckedWithTheDataSourcesFields() {
+        assertThat(TableExpression.dashboardProblem("count()", List.of("UserId"))).isEmpty();
+        assertThat(TableExpression.dashboardProblem("upperCase(${userid})", List.of("UserId"))).isEmpty();
+        // Functions a dashboard has, that the table tool doesn't, are allowed.
+        assertThat(TableExpression.dashboardProblem("first(${UserId})", List.of("UserId"))).isEmpty();
+        assertThat(TableExpression.dashboardProblem("${annotation:Status}", List.of("UserId"))).isEmpty();
+        // Any field, if the data source's aren't known.
+        assertThat(TableExpression.dashboardProblem("${Anything}", null)).isEmpty();
+
+        assertThat(TableExpression.dashboardProblem("${Usr}", List.of("UserId")))
+                .hasValueSatisfying(problem -> assertThat(problem).contains("names a field 'Usr'"));
+        assertThat(TableExpression.dashboardProblem("count((", List.of("UserId")))
+                .hasValueSatisfying(problem -> assertThat(problem).contains("can't be read"));
+        assertThat(TableExpression.dashboardProblem("cuont()", List.of("UserId")))
+                .hasValueSatisfying(problem -> assertThat(problem).contains("Unknown function 'cuont'"));
+        assertThat(TableExpression.dashboardProblem(" ", List.of("UserId"))).contains("Give an expression.");
+    }
 }

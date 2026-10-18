@@ -41,6 +41,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     static final int DEFAULT_MAX_QUERY_LENGTH = 10_000;
     static final int DEFAULT_MAX_EVENTS_PER_FETCH = 500;
     static final int DEFAULT_MAX_EVENT_BYTES = 1024 * 1024;
+    static final int DEFAULT_MAX_STREAM_STORE_READS = 500;
 
     private final long maxFileBytes;
     private final long maxChatBytes;
@@ -52,6 +53,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     private final int maxQueryLength;
     private final int maxEventsPerFetch;
     private final int maxEventBytes;
+    private final int maxStreamStoreReads;
 
     public AiWorkspaceConfig() {
         maxFileBytes = DEFAULT_MAX_FILE_BYTES;
@@ -64,6 +66,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         maxQueryLength = DEFAULT_MAX_QUERY_LENGTH;
         maxEventsPerFetch = DEFAULT_MAX_EVENTS_PER_FETCH;
         maxEventBytes = DEFAULT_MAX_EVENT_BYTES;
+        maxStreamStoreReads = DEFAULT_MAX_STREAM_STORE_READS;
     }
 
     @JsonCreator
@@ -76,7 +79,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                              @JsonProperty("queryTimeLimit") final StroomDuration queryTimeLimit,
                              @JsonProperty("maxQueryLength") final Integer maxQueryLength,
                              @JsonProperty("maxEventsPerFetch") final Integer maxEventsPerFetch,
-                             @JsonProperty("maxEventBytes") final Integer maxEventBytes) {
+                             @JsonProperty("maxEventBytes") final Integer maxEventBytes,
+                             @JsonProperty("maxStreamStoreReads") final Integer maxStreamStoreReads) {
         this.maxFileBytes = Objects.requireNonNullElse(maxFileBytes, DEFAULT_MAX_FILE_BYTES);
         this.maxChatBytes = Objects.requireNonNullElse(maxChatBytes, DEFAULT_MAX_CHAT_BYTES);
         this.maxUserBytes = Objects.requireNonNullElse(maxUserBytes, DEFAULT_MAX_USER_BYTES);
@@ -87,6 +91,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         this.maxQueryLength = Objects.requireNonNullElse(maxQueryLength, DEFAULT_MAX_QUERY_LENGTH);
         this.maxEventsPerFetch = Objects.requireNonNullElse(maxEventsPerFetch, DEFAULT_MAX_EVENTS_PER_FETCH);
         this.maxEventBytes = Objects.requireNonNullElse(maxEventBytes, DEFAULT_MAX_EVENT_BYTES);
+        this.maxStreamStoreReads = Objects.requireNonNullElse(maxStreamStoreReads, DEFAULT_MAX_STREAM_STORE_READS);
     }
 
     @JsonPropertyDescription("The largest a single workspace file may be, in bytes.")
@@ -152,6 +157,14 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         return maxEventBytes;
     }
 
+    @JsonPropertyDescription("The most streams the agent's stream_meta tool may read attributes for from the "
+                             + "stream store in one call, for values the database no longer holds (or never "
+                             + "held), such as the headers each part was received with.")
+    @JsonProperty("maxStreamStoreReads")
+    public int getMaxStreamStoreReads() {
+        return maxStreamStoreReads;
+    }
+
     @Override
     public String toString() {
         return "AiWorkspaceConfig{" +
@@ -165,6 +178,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                ", maxQueryLength=" + maxQueryLength +
                ", maxEventsPerFetch=" + maxEventsPerFetch +
                ", maxEventBytes=" + maxEventBytes +
+               ", maxStreamStoreReads=" + maxStreamStoreReads +
                '}';
     }
 }

@@ -33,6 +33,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,6 +45,7 @@ class TestUserActionService {
     private static final int MESSAGE = 50;
     private static final String PIPELINE_UUID = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90";
     private static final DocRef PIPELINE = new DocRef("Pipeline", PIPELINE_UUID, "Acme-Events");
+    private static final DocRef DASHBOARD = new DocRef("Dashboard", "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f", "Logons");
     private static final DocRef XSLT = new DocRef("XSLT", "6b1d3c2e-8f4a-4b9c-a1d2-3e4f5a6b7c8d", "Event translation");
 
     private final AiService aiService = Mockito.mock(AiService.class);
@@ -235,6 +237,58 @@ class TestUserActionService {
     }
 
     @Test
+    void applyingADashboardChangeNeedsEditAndRecordsTheOperationsWithoutSaving() {
+        Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
+        final String stored = storeResult(dashboardChange());
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "dash-1");
+
+        assertThat(result.isDone()).isTrue();
+        assertThat(result.getMessage()).isEqualTo(UserActionService.APPLIED_DASHBOARD);
+        final ArgumentCaptor<String> written = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiDao).compareAndSetMessageText(Mockito.eq(MESSAGE), Mockito.eq(stored), written.capture());
+        assertThat(JsonUtil.readValue(written.getValue(), ToolResultRecord.class).userActions())
+                .singleElement()
+                .satisfies(action -> {
+                    assertThat(action.status()).isEqualTo(Status.DONE);
+                    assertThat(action.dashboardChange().operations()).hasSize(1);
+                });
+        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(DASHBOARD),
+                Mockito.eq(UserActionService.APPLY_DASHBOARD_COMMAND), Mockito.contains("table 'Events'"),
+                Mockito.eq("Applied a proposed change, not saved: Group by 'EventType' (level 1)"), Mockito.eq(true));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
+                Mockito.contains("It is not saved"));
+    }
+
+    @Test
+    void aDashboardChangeIsNotAppliedWithoutEdit() {
+        Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(false);
+        storeResult(dashboardChange());
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "dash-1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).contains("don't have permission to edit Dashboard 'Logons'");
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.any(),
+                Mockito.any());
+        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(DASHBOARD),
+                Mockito.eq(UserActionService.APPLY_DASHBOARD_COMMAND), Mockito.anyString(), Mockito.anyString(),
+                Mockito.eq(false));
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void aDashboardChangeIsAppliedOnce() {
+        Mockito.when(lookup.find(DASHBOARD)).thenReturn(Optional.of(DASHBOARD));
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
+        storeResult(dashboardChange().withStatus(Status.DONE, UserActionService.APPLIED_DASHBOARD));
+
+        assertThat(service.doUserAction(CHAT, MESSAGE, "dash-1").getMessage()).isEqualTo("This has already been done.");
+    }
+
+    @Test
     void aCodeChangeIsNotAppliedWithoutEdit() {
         Mockito.when(lookup.find(XSLT)).thenReturn(Optional.of(XSLT));
         Mockito.when(lookup.canEdit(XSLT)).thenReturn(false);
@@ -341,6 +395,15 @@ class TestUserActionService {
         return new UserActionRecord("code-1", UserActions.APPLY_CODE_CHANGE, "Change to XSLT 'Event translation'",
                 "Lower-cases the user name.", null, null, XSLT, "<b/>\n<c/>", List.of(), Long.MAX_VALUE, status, null,
                 null, new UserActionRecord.CodeChange(PIPELINE, "xsltFilter", "<a/>", "0".repeat(64), "h", 2, 1));
+    }
+
+    private static UserActionRecord dashboardChange() {
+        return new UserActionRecord("dash-1", UserActions.APPLY_DASHBOARD_CHANGE,
+                "Change to table 'Events' on dashboard 'Logons': 1 change(s)", null, null, null, DASHBOARD, null,
+                List.of(), Long.MAX_VALUE, Status.PENDING, null, null, null,
+                new UserActionRecord.DashboardChange("Events", "table-1", "abc", true,
+                        List.of(Map.of("op", "group", "column", "EventType", "level", 1)),
+                        List.of("Group by 'EventType' (level 1)")));
     }
 
     private static ProcessorFilter filter(final boolean enabled) {

@@ -80,6 +80,7 @@ import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.Row;
 import stroom.query.api.SearchRequestSource;
+import stroom.query.api.Sort;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
@@ -134,6 +135,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1397,6 +1399,123 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .copy()
                 .requestedRange(new OffsetRange(0L, length))
                 .build();
+    }
+
+    /// Applies changes the AI chat proposed and the user chose to apply, in order, through the code the column
+    /// menus use, so the result is what doing them by hand gives: each marks the dashboard as changed (unsaved),
+    /// updates the columns and refreshes the table as its menu item does. Nothing is saved.
+    ///
+    /// @param changes The changes.
+    /// @return Why a change couldn't be applied (those before it are applied), or null if they all were.
+    String applyAiChanges(final List<TableChange> changes) {
+        for (int i = 0; i < changes.size(); i++) {
+            final TableChange change = changes.get(i);
+            final String prefix = "Change " + (i + 1) + " (" + change.getOp() + "): ";
+            if (TableChange.ADD_COLUMN.equals(change.getOp())) {
+                final List<Column> columns = columnsManager.getColumns();
+                final int end = columns.size();
+                final int index = change.getPosition() == null
+                        ? end
+                        : Math.max(0, Math.min(change.getPosition() - 1, end));
+                columnsManager.addColumn(index, Column.builder()
+                        .name(change.getName())
+                        .expression(change.getExpression())
+                        .format(change.getFormat() != null
+                                ? change.getFormat()
+                                : Format.GENERAL)
+                        .visible(true)
+                        .build());
+                continue;
+            }
+            final Column column = columnsManager.getColumns().stream()
+                    .filter(col -> !col.isSpecial() && Objects.equals(col.getName(), change.getColumn()))
+                    .findFirst()
+                    .orElse(null);
+            if (column == null) {
+                return prefix + "the table has no column '" + change.getColumn() + "'.";
+            }
+            switch (change.getOp()) {
+                case TableChange.GROUP -> columnsManager.setGroup(column, change.getLevel() == null
+                        ? 0
+                        : change.getLevel() - 1);
+                case TableChange.UNGROUP -> columnsManager.setGroup(column, null);
+                case TableChange.EDIT_COLUMN -> {
+                    final Column.Builder builder = column.copy();
+                    if (change.getName() != null) {
+                        builder.name(change.getName());
+                    }
+                    if (change.getExpression() != null) {
+                        builder.expression(change.getExpression());
+                    }
+                    if (change.getFormat() != null) {
+                        builder.format(change.getFormat());
+                    }
+                    columnsManager.replaceColumn(column, builder.build());
+                    onChange();
+                    updateColumns();
+                    refresh();
+                }
+                case TableChange.HIDE_COLUMN -> {
+                    final long visible = columnsManager.getColumns().stream().filter(Column::isVisible).count();
+                    if (column.isVisible() && visible <= 1) {
+                        return prefix + "the table's last visible column can't be hidden.";
+                    }
+                    columnsManager.hideColumn(column);
+                }
+                case TableChange.SHOW_COLUMN -> columnsManager.showColumn(column);
+                case TableChange.SORT -> {
+                    columnsManager.changeSort(column, change.getSortDirection());
+                    if (change.getSortDirection() != null && change.getPriority() != null) {
+                        setSortPriority(column.getId(), change.getPriority() - 1);
+                    }
+                }
+                case TableChange.FILTER -> {
+                    final String filter = NullSafe.string(change.getFilter());
+                    columnsManager.setColumnFilter(column, filter.isEmpty()
+                            ? null
+                            : ColumnFilter.builder().filter(filter).enabled(true).build());
+                    // As setting a filter from the column menu does.
+                    if (!filter.isEmpty() && !getTableComponentSettings().showValueFilters()) {
+                        toggleShowValueFilters();
+                    }
+                }
+                default -> {
+                    return prefix + "this change isn't known.";
+                }
+            }
+        }
+        return null;
+    }
+
+    // Moves a sorted column's sort to a priority (0 first), keeping the order of the other sorts.
+    private void setSortPriority(final String columnId, final int priority) {
+        final List<Column> sorted = new ArrayList<>();
+        for (final Column col : columnsManager.getColumns()) {
+            if (col.getSort() != null) {
+                sorted.add(col);
+            }
+        }
+        sorted.sort(Comparator.comparingInt(col -> col.getSort().getOrder()));
+        final Column moved = sorted.stream()
+                .filter(col -> Objects.equals(col.getId(), columnId))
+                .findFirst()
+                .orElse(null);
+        if (moved == null) {
+            return;
+        }
+        sorted.remove(moved);
+        sorted.add(Math.max(0, Math.min(priority, sorted.size())), moved);
+        for (int order = 0; order < sorted.size(); order++) {
+            final Column col = sorted.get(order);
+            if (col.getSort().getOrder() != order) {
+                columnsManager.replaceColumn(col, col.copy()
+                        .sort(new Sort(order, col.getSort().getDirection()))
+                        .build());
+            }
+        }
+        onChange();
+        updateColumns();
+        refresh();
     }
 
     void refresh() {

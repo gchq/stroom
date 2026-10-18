@@ -33,9 +33,11 @@ import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 
 import java.text.ParseException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,6 +57,7 @@ public final class TableExpression {
             DateTimeSettings.builder().build(),
             (map, key, effectiveTimeMs) -> ValErr.create("getState isn't available here"),
             (model, systemPrompt, message) -> ValErr.create("askAi isn't available here"));
+    private static final String ANNOTATION_FIELD_PREFIX = "annotation:";
     private static final Pattern LEADING_ZERO = Pattern.compile("^\\s*[+-]?0\\d");
     private static final Pattern INTEGER = Pattern.compile("\\s*[+-]?\\d+\\s*");
     private static final Pattern UNKNOWN_FUNCTION = Pattern.compile("Unknown function '([^']+)'");
@@ -110,6 +113,42 @@ public final class TableExpression {
             columns[pos] = column(fieldIndex.getField(pos), header, text);
         }
         return new TableExpression(text, expression, columns);
+    }
+
+    /// Checks an expression for a dashboard table's column, with the parser the table tool's eval uses. Unlike
+    /// [#compile(String, List)], every function is allowed (as a dashboard allows them), and its fields are those
+    /// of the dashboard's data source.
+    ///
+    /// @param text   The expression, e.g. `count()` or `upperCase(${UserId})`.
+    /// @param fields The names of the data source's fields, or null if they aren't known, when any field is
+    ///               accepted. Annotation fields (`annotation:...`) are always accepted.
+    /// @return Why it isn't valid, or empty if it is.
+    public static Optional<String> dashboardProblem(final String text, final Collection<String> fields) {
+        if (text == null || text.isBlank()) {
+            return Optional.of("Give an expression.");
+        }
+        final FieldIndex fieldIndex = new FieldIndex();
+        final Expression expression;
+        try {
+            expression = new ExpressionParser(new ParamFactory(new HashMap<>())).parse(CONTEXT, fieldIndex, text);
+        } catch (final RuntimeException | ParseException e) {
+            return Optional.of("The expression '" + text + "' can't be read: " + e.getMessage()
+                               + suggestion(e.getMessage()));
+        }
+        if (expression == null) {
+            return Optional.of("Give an expression.");
+        }
+        if (fields != null) {
+            for (int pos = 0; pos < fieldIndex.size(); pos++) {
+                final String field = fieldIndex.getField(pos);
+                if (!field.startsWith(ANNOTATION_FIELD_PREFIX)
+                    && fields.stream().noneMatch(field::equalsIgnoreCase)) {
+                    return Optional.of("The expression '" + text + "' names a field '" + field + "' that the "
+                                       + "dashboard's data source doesn't have.");
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     /// @return True if it works out something over each group of rows, e.g. sum(...).

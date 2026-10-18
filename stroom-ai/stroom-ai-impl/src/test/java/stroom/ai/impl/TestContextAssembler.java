@@ -236,6 +236,33 @@ class TestContextAssembler {
         assertThat(withoutTab).doesNotContain(ContextAssembler.STEPPING_GUIDANCE);
     }
 
+    @Test
+    void testDashboardGuidanceIsGivenOnlyWhileADashboardTabIsActive() {
+        final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
+                Mockito.mock(stroom.ai.api.AiService.class), null, Mockito.mock(AiWorkspaceDao.class),
+                Mockito.mock(ContextUsageTracker.class), null, null, tabSnapshots);
+        Mockito.when(tabSnapshots.isEnabled()).thenReturn(true);
+        Mockito.when(tabSnapshots.read(31)).thenReturn(java.util.Optional.of(tab(3,
+                new DocRef("Dashboard", "d", "Logons"))));
+        Mockito.when(tabSnapshots.read(41)).thenReturn(java.util.Optional.of(tab(4,
+                new DocRef("XSLT", "x", "Event translation"))));
+        Mockito.when(tabSnapshots.note(Mockito.anyInt(), Mockito.any())).thenReturn("[Active tab]");
+        final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
+
+        final String withDashboard = systemText(assembler, request, 31);
+        final String withXslt = systemText(assembler, request, 41);
+        final String withoutTab = systemText(assembler, request, null);
+
+        assertThat(withDashboard).contains(ContextAssembler.DASHBOARD_GUIDANCE)
+                .contains("propose_dashboard_change")
+                .contains("withEventIds")
+                .doesNotContain(ContextAssembler.QUERY_GUIDANCE)
+                .doesNotContain(ContextAssembler.STEPPING_GUIDANCE);
+        assertThat(withXslt).doesNotContain(ContextAssembler.DASHBOARD_GUIDANCE);
+        assertThat(withoutTab).doesNotContain(ContextAssembler.DASHBOARD_GUIDANCE);
+    }
+
     private static String systemText(final ContextAssembler assembler,
                                      final AskStroomAiRequest request,
                                      final Integer snapshotId) {

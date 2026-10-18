@@ -21,6 +21,7 @@ import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TableDownloader;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.MarkdownTables;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
@@ -40,12 +41,16 @@ import stroom.docref.DocRef;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.TableResult;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
@@ -68,6 +73,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// `current_results` - a snapshot of the rows of a table of results shown in the user's active tab (a query's
 /// results, or a table on a dashboard), taken when the model needs them, so the user never has to attach them. It
@@ -91,9 +98,19 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     static final String TABLE_ARG = "table";
     static final String ROWS_ARG = "rows";
     static final String REFRESH_ARG = "refresh";
+    static final String WITH_EVENT_IDS_ARG = "withEventIds";
+    /// What a snapshot of the events behind a table has at the end of its path, after the table's own.
+    static final String EVENTS_SUFFIX = "-events";
+    /// The names of the fields a data source must have for the events behind its rows to be fetched.
+    static final List<String> EVENT_ID_FIELDS = List.of("StreamId", "EventId");
+    /// The most fields read to tell whether a data source has the event id fields.
+    static final int MAX_FIELDS = 10_000;
     static final String RESULTS_FOLDER = "/tabs/results/";
     static final String NO_TAB = "No tab with tables of results was shared with the user's latest question: ask "
                                  + "the user to open the query or dashboard and ask again.";
+    // A snapshot's table, or the first rows of one: its path without the extension (and the scope) is its record's.
+    private static final Pattern SNAPSHOT_FILE = Pattern.compile(
+            "(" + Pattern.quote(RESULTS_FOLDER) + ".+?)(?:-first-\\d+)?\\.md");
     private static final Duration POLL_INTERVAL = Duration.ofMillis(500);
     /// The part of the time limit spent waiting for a search run again to finish, leaving time to download it.
     private static final double SEARCH_TIME_SHARE = 0.75;
@@ -135,7 +152,11 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                              + "or time range have changed since) or incomplete (the search hadn't finished, the "
                              + "row limit cut it, or it holds fewer rows than asked for while more exist). Asking "
                              + "again reuses the snapshot. Never pass refresh unless the user has said yes: it runs "
-                             + "the search again, which can be slow.")
+                             + "the search again, which can be slow. Give withEventIds for the events behind the "
+                             + "rows (e.g. for fetch_events and search_events): each row then has its event's "
+                             + "StreamId and EventId, and a grouped dashboard table is taken ungrouped, one row per "
+                             + "event, by running its search again separately (so with refresh, only with the "
+                             + "user's yes). It can also be the first step of a pipeline.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(TABLE_ARG, "Optional. The table's name as the user sees it, for a "
                                                       + "dashboard with several tables.")
@@ -143,6 +164,9 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                                                       + "a scope like that.")
                         .addBooleanProperty(REFRESH_ARG, "Optional. Run the search again, as the tab now stands, "
                                                          + "and take a new snapshot. Only with the user's yes.")
+                        .addBooleanProperty(WITH_EVENT_IDS_ARG, "Optional. Take each row's StreamId and EventId, "
+                                                                + "one row per event, for the events behind the "
+                                                                + "table.")
                         .build())
                 .build();
     }
@@ -154,12 +178,23 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
 
     @Override
     String run(final ToolExecutionRequest request, final int chatId) {
+        return outcome(request, chatId).text();
+    }
+
+    /// Takes a snapshot of a table's rows, or reuses the one already taken, as the tool does.
+    ///
+    /// @param request The model's call, or a pipeline step's.
+    /// @param chatId  The chat.
+    /// @return What the model is told, and the snapshot's workspace file, which is null if no snapshot could be
+    /// used (the text then says why).
+    /// @throws WorkspaceException for arguments the model can correct.
+    Outcome outcome(final ToolExecutionRequest request, final int chatId) {
         final StoredTabSnapshot tab = tabSnapshots.forLatestQuestion(chatId).orElse(null);
         if (tab == null || NullSafe.isEmptyCollection(tab.searches())) {
-            return tab == null
+            return Outcome.problem(tab == null
                     ? NO_TAB
                     : "The user's active tab, " + ReadDocumentTool.describe(tab.docRef())
-                      + ", shows no tables of results.";
+                      + ", shows no tables of results.");
         }
         final AiTabSearch search = chooseTable(tab.searches(), stringArg(request, TABLE_ARG));
         if (search == null) {
@@ -167,7 +202,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
             for (final AiTabSearch each : tab.searches()) {
                 sb.append("'").append(name(each)).append("' ");
             }
-            return sb.toString().strip() + ".";
+            return Outcome.problem(sb.toString().strip() + ".");
         }
         final int limit = Math.max(1, NullSafe.getOrElse(tableAnalysisConfigProvider.get(),
                 TableAnalysisConfig::getMaxTotalRows, TableAnalysisConfig.DEFAULT_MAX_TOTAL_ROWS));
@@ -176,10 +211,15 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
             throw new WorkspaceException("Give rows as a whole number of at least 1.");
         }
         if (rows != null && rows > limit) {
-            return "Refused: a snapshot can hold at most " + limit + " rows (the global row limit), so the first "
-                   + rows + " can't be taken. Offer the user the first " + limit + " instead.";
+            return Outcome.problem("Refused: a snapshot can hold at most " + limit + " rows (the global row "
+                                   + "limit), so the first " + rows + " can't be taken. Offer the user the first "
+                                   + limit + " instead.");
         }
         final boolean refresh = booleanArg(request, REFRESH_ARG, false);
+        final boolean withEventIds = booleanArg(request, WITH_EVENT_IDS_ARG, false);
+        if (withEventIds && needsEventSearch(search)) {
+            return eventsOutcome(chatId, tab, search, rows, limit, refresh);
+        }
 
         final String base = basePath(tab.docRef(), search);
         final ResultsMeta existing = readMeta(chatId, base).orElse(null);
@@ -189,9 +229,9 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                              || !Objects.equals(existing.tabQueryKey(), tabQueryKey);
         final ResultsMeta meta;
         if (take) {
-            final Taken taken = take(chatId, tab, search, base, rows, limit, refresh, tabQueryKey);
+            final Taken taken = take(chatId, tab, search, base, rows, limit, refresh, tabQueryKey, false);
             if (taken.problem() != null) {
-                return taken.problem();
+                return Outcome.problem(taken.problem());
             }
             meta = taken.meta();
         } else {
@@ -202,8 +242,131 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         final String path = rows != null && rows < meta.rowsHeld()
                 ? scopedCopy(chatId, tab.docRef(), base, meta, rows)
                 : meta.path();
-        return describe(meta, assessment, path, rows, take, ResultsRequests.changes(meta.request(),
+        final String text = describe(meta, assessment, path, rows, take, ResultsRequests.changes(meta.request(),
                 search.getLive()), readProfile(chatId, path));
+        return new Outcome(withEventIds
+                ? text + "\n" + eventIdsNote(chatId, path)
+                : text, path);
+    }
+
+    /// @return True if the events behind a table's rows can only be had by running its search again: a dashboard
+    /// table that is grouped, or doesn't keep each row's stream and event ids.
+    private static boolean needsEventSearch(final AiTabSearch search) {
+        final AskStroomAiContext request = liveOrResults(search);
+        return request instanceof DashboardTableContext
+               && (ResultsRequests.isGrouped(request) || !ResultsRequests.hasEventIdColumns(request));
+    }
+
+    // The table's search request as the tab now stands, else the one behind the rows shown, or null.
+    private static AskStroomAiContext liveOrResults(final AiTabSearch search) {
+        return search.getLive() != null
+                ? search.getLive()
+                : search.getResults();
+    }
+
+    // Says whether a snapshot's rows have the ids of their events, for fetch_events.
+    private String eventIdsNote(final int chatId, final String path) {
+        final List<String> header = header(chatId, path);
+        final boolean hasIds = EVENT_ID_FIELDS.stream().allMatch(id -> header.stream()
+                .anyMatch(column -> column.equalsIgnoreCase(id)));
+        return hasIds
+                ? "Each row has its event's StreamId and EventId, so fetch_events can fetch the events behind them."
+                : "These rows have no StreamId and EventId, so the events behind them can't be fetched. For a "
+                  + "query, suggest the user adds them to its select (without grouping), as StroomQL to copy.";
+    }
+
+    // A snapshot of the events behind a dashboard table: its search run again, ungrouped, with each event's ids.
+    private Outcome eventsOutcome(final int chatId,
+                                  final StoredTabSnapshot tab,
+                                  final AiTabSearch search,
+                                  final Integer rows,
+                                  final int limit,
+                                  final boolean refresh) {
+        final AskStroomAiContext request = liveOrResults(search);
+        final DocRef dataSource = dataSource(request);
+        if (dataSource == null || !dataSourceAccess.canUse(dataSource)) {
+            return Outcome.problem("You can't use the data source these results come from, so they can't be "
+                                   + "read.");
+        }
+        final Boolean stored = storesEventIds(dataSource);
+        if (stored == null) {
+            return Outcome.problem("It couldn't be told whether " + ReadDocumentTool.describe(dataSource)
+                                   + " stores each event's StreamId and EventId, so the events behind '"
+                                   + name(search) + "' can't be fetched.");
+        }
+        if (!stored) {
+            return Outcome.problem(ReadDocumentTool.describe(dataSource) + " doesn't store each event's StreamId "
+                                   + "and EventId, so the events behind '" + name(search) + "' can't be fetched. "
+                                   + "Answer from the table's own columns, or suggest a column from the "
+                                   + "dashboard's extraction pipeline or a query on an indexed field, as text to "
+                                   + "copy.");
+        }
+        final String base = basePath(tab.docRef(), search) + EVENTS_SUFFIX;
+        final ResultsMeta existing = readMeta(chatId, base).orElse(null);
+        final boolean grouped = ResultsRequests.isGrouped(request);
+        if (existing == null && !refresh) {
+            return Outcome.problem("Getting the events behind '" + name(search) + "' means running its search "
+                                   + "again, separately (the user's dashboard isn't changed): "
+                                   + (grouped
+                    ? "ungrouped, one row per event, "
+                    : "") + "with each event's StreamId and EventId. As a search can be slow, ask the user "
+                                   + "(ask_user) and, with their yes, call again with withEventIds and refresh.");
+        }
+        final ResultsMeta meta;
+        if (refresh) {
+            final Taken taken = take(chatId, tab, search, base, rows, limit, true, null, true);
+            if (taken.problem() != null) {
+                return Outcome.problem(taken.problem());
+            }
+            meta = taken.meta();
+        } else {
+            meta = existing;
+        }
+        final Assessment assessment = assess(meta, rows, ResultsRequests.hash(search.getLive()), limit);
+        final String path = rows != null && rows < meta.rowsHeld()
+                ? scopedCopy(chatId, tab.docRef(), base, meta, rows)
+                : meta.path();
+        final StringBuilder sb = new StringBuilder(describe(meta, assessment, path, rows, refresh,
+                ResultsRequests.changes(meta.request(), search.getLive()), readProfile(chatId, path)));
+        final long events = Objects.requireNonNullElse(meta.totalRows(), meta.rowsHeld());
+        sb.append("\nThis is the table's search run again separately, ungrouped: one row per event, with each "
+                  + "event's StreamId and EventId, for fetch_events");
+        if (meta.groups() != null) {
+            sb.append(" (the ").append(events).append(" event(s) behind the table's ").append(meta.groups())
+                    .append(" group(s))");
+        }
+        sb.append(". Say how many events the answer covers.");
+        return new Outcome(sb.toString(), path);
+    }
+
+    // True if a data source has the event id fields, false if it doesn't, or null if it can't be told.
+    private Boolean storesEventIds(final DocRef dataSource) {
+        try {
+            final ResultPage<QueryField> fields = queryServiceProvider.get().findFields(new FindFieldCriteria(
+                    new PageRequest(0, MAX_FIELDS), FindFieldCriteria.DEFAULT_SORT_LIST, dataSource, null, null));
+            final List<String> names = NullSafe.list(NullSafe.get(fields, ResultPage::getValues)).stream()
+                    .map(QueryField::getFldName)
+                    .filter(Objects::nonNull)
+                    .toList();
+            return EVENT_ID_FIELDS.stream().allMatch(id -> names.stream().anyMatch(id::equalsIgnoreCase));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read the fields of " + dataSource, e);
+            return null;
+        }
+    }
+
+    // The column names of a snapshot's Markdown table.
+    private List<String> header(final int chatId, final String path) {
+        try (final BufferedReader reader = Files.newBufferedReader(workspace.localFile(chatId,
+                WorkspacePath.parse(path)), StandardCharsets.UTF_8)) {
+            final String line = reader.readLine();
+            return line == null
+                    ? List.of()
+                    : MarkdownTables.parseRow(line);
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read the header of " + path, e);
+            return List.of();
+        }
     }
 
     // Takes a snapshot of a table's rows: those the tab shows, or, with refresh, those of the search run again.
@@ -214,10 +377,15 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                        final Integer rows,
                        final int limit,
                        final boolean refresh,
-                       final String tabQueryKey) {
+                       final String tabQueryKey,
+                       final boolean events) {
         AskStroomAiContext source = refresh
                 ? search.getLive()
                 : search.getResults();
+        if (events && source instanceof final DashboardTableContext dashboard) {
+            // One row per event, with its ids, as a search of its own.
+            source = ResultsRequests.ungroupedWithEventIds(dashboard);
+        }
         if (source == null) {
             return Taken.problem(refresh
                     ? "The search can't be run again, as the tab's search request isn't known."
@@ -263,16 +431,83 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                 base + ".md", ResultsRequests.hash(source), ResultsRequests.timeRange(source),
                 System.currentTimeMillis(), downloaded.rows(), wanted, downloaded.truncated(),
                 status.totalRows(), status.complete(), wanted == limit && downloaded.truncated(), refresh,
-                tabQueryKey, source);
+                tabQueryKey, source, events && ResultsRequests.isGrouped(search.getLive())
+                ? search.getVisibleRows()
+                : null);
         writeProfile(chatId, meta.path(), describe(tab, search), dataSource.getUuid());
         workspace.writeTabFile(chatId, WorkspacePath.parse(base + ".json"), JsonUtil.writeValueAsString(meta),
                 dataSource.getUuid());
         auditLog.searched(chatId, dataSource, ResultsRequests.queryText(source), downloaded.rows(),
-                (refresh
-                        ? "Search run again, and a snapshot of its results taken"
-                        : "Snapshot taken of the results shown") + " for " + describe(tab, search) + " by the "
+                (events
+                        ? "Search run again ungrouped, and a snapshot taken of the events behind its rows"
+                        : (refresh
+                                ? "Search run again, and a snapshot of its results taken"
+                                : "Snapshot taken of the results shown")) + " for " + describe(tab, search) + " by the "
                 + NAME + " tool");
         return new Taken(meta, null);
+    }
+
+    /// Says how much of a table's search a snapshot of its rows covers, for the tools that work on its rows (e.g.
+    /// fetch_events), so they can say an answer is "of the first N of M".
+    ///
+    /// @param workspace The chat's workspace.
+    /// @param chatId    The chat.
+    /// @param table     A table file, which may be a snapshot this tool took (or the first rows of one).
+    /// @param rowsUsed  How many of its rows were used.
+    /// @return What it covers, as a sentence for the model, if the file is a snapshot whose record can be read.
+    static Optional<String> coverage(final ChatWorkspace workspace,
+                                     final int chatId,
+                                     final WorkspacePath table,
+                                     final long rowsUsed) {
+        final Matcher matcher = SNAPSHOT_FILE.matcher(table.path());
+        if (!matcher.matches()) {
+            return Optional.empty();
+        }
+        final WorkspacePath metaPath = WorkspacePath.parse(matcher.group(1) + ".json");
+        try {
+            if (workspace.find(chatId, metaPath).isEmpty()) {
+                return Optional.empty();
+            }
+            final ResultsMeta meta = JsonUtil.readValue(Files.readString(workspace.localFile(chatId, metaPath),
+                    StandardCharsets.UTF_8), ResultsMeta.class);
+            return Optional.of(coverage(meta, rowsUsed));
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read " + metaPath + ": " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /// @param meta     A snapshot's record.
+    /// @param rowsUsed How many of its rows were used.
+    /// @return What they cover, as a sentence for the model, with what to suggest if it isn't everything.
+    static String coverage(final ResultsMeta meta, final long rowsUsed) {
+        final boolean events = meta.path() != null && meta.path().contains(EVENTS_SUFFIX + ".md");
+        final String unit = events
+                ? "event(s)"
+                : "row(s)";
+        final StringBuilder sb = new StringBuilder("Coverage: ");
+        final long found = Objects.requireNonNullElse(meta.totalRows(), meta.rowsHeld());
+        final boolean all = rowsUsed >= found && !meta.truncated() && meta.finished();
+        if (all) {
+            sb.append("all ").append(found).append(' ').append(unit).append(" the table's search found");
+        } else {
+            sb.append("the first ").append(Math.min(rowsUsed, meta.rowsHeld())).append(" of ")
+                    .append(meta.totalRows() != null
+                            ? String.valueOf(meta.totalRows())
+                            : "more than " + meta.rowsHeld())
+                    .append(' ').append(unit).append(" the table's search found");
+        }
+        if (meta.groups() != null) {
+            sb.append(" (behind the table's ").append(meta.groups()).append(" group(s))");
+        }
+        sb.append('.');
+        if (!all) {
+            sb.append(" Say so (\"of the first N of M events\"). Offer to take more (current_results with rows, "
+                      + "within the global row limit) if that would help. For an answer over all the data, "
+                      + "suggest the scalable route as text to copy: a column from the dashboard's extraction "
+                      + "pipeline, or a query on an indexed field.");
+        }
+        return sb.toString();
     }
 
     /// Works out a snapshot's state, as compared with the tab as the user sees it now.
@@ -659,6 +894,8 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     /// @param refreshed    True if the search was run again to take it.
     /// @param tabQueryKey  The query key of the results the tab showed when it was taken, or null.
     /// @param request      The search request it was taken from.
+    /// @param groups       For a snapshot of the events behind a grouped table, how many rows (groups) the table
+    ///                     had, where known, else null.
     record ResultsMeta(DocRef tab,
                        String tableName,
                        String componentId,
@@ -674,7 +911,8 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                        boolean cutByLimit,
                        boolean refreshed,
                        String tabQueryKey,
-                       AskStroomAiContext request) {
+                       AskStroomAiContext request,
+                       Long groups) {
 
     }
 
@@ -696,6 +934,17 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     // A search run again: its results, as a request with its query key, or why it failed.
     private record Ran(AskStroomAiContext context, SearchStatus status, String error) {
 
+    }
+
+    /// What the tool tells the model, and the snapshot it used.
+    ///
+    /// @param text What the model is told.
+    /// @param path The snapshot's workspace file, or null if none could be used.
+    record Outcome(String text, String path) {
+
+        static Outcome problem(final String text) {
+            return new Outcome(text, null);
+        }
     }
 
     // A snapshot taken, or why it couldn't be.

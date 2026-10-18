@@ -16,6 +16,11 @@
 
 package stroom.ai.client;
 
+import stroom.dashboard.client.event.ApplyDashboardChangeEvent;
+import stroom.dashboard.client.table.TableChange;
+
+import java.util.function.Function;
+
 /// The actions an MCP tool's result can offer the user as buttons, as the server sends them (see the server's
 /// `UserActions`), and what their buttons say.
 final class UserActionsUi {
@@ -29,6 +34,11 @@ final class UserActionsUi {
     /// A change to a stepping element's code the agent proposed, which the button opens a review of, from which
     /// the user can apply it to the element's editor (unsaved).
     static final String APPLY_CODE_CHANGE = "apply_code_change";
+    /// A change to a dashboard table the agent proposed, which the button applies to the open dashboard (unsaved).
+    static final String APPLY_DASHBOARD_CHANGE = "apply_dashboard_change";
+    /// What an applied dashboard change's card says, as the server writes it.
+    static final String APPLIED_DASHBOARD = "Applied, not saved. Save the dashboard to keep it, or close it without "
+                                            + "saving to go back.";
     /// What an applied code change's card says, as the server writes it.
     static final String APPLIED = "Applied, not saved";
     /// The text of the button that undoes an applied code change.
@@ -88,7 +98,48 @@ final class UserActionsUi {
             return "Create query…";
         } else if (APPLY_CODE_CHANGE.equals(action)) {
             return "Review and apply…";
+        } else if (APPLY_DASHBOARD_CHANGE.equals(action)) {
+            return "Apply to dashboard";
         }
         return "Do it";
+    }
+
+    /// @param editableWhenProposed True if the user could edit the dashboard when the change was proposed.
+    /// @param open                 True if the dashboard is open now.
+    /// @param editableNow          True if it is open and the user can edit it.
+    /// @return Why the Apply to dashboard button is disabled, as its tooltip, or null if it isn't.
+    static String applyDashboardDisabledReason(final boolean editableWhenProposed,
+                                               final boolean open,
+                                               final boolean editableNow) {
+        if (!editableWhenProposed || (open && !editableNow)) {
+            return ApplyDashboardChangeEvent.NOT_EDITABLE;
+        }
+        return null;
+    }
+
+    /// @param field Gives each of a proposed operation's fields as text (numbers as digits), or null if it has none.
+    /// @return The operation, for the dashboard to apply.
+    static TableChange tableChange(final Function<String, String> field) {
+        return new TableChange(field.apply("op"),
+                field.apply("column"),
+                number(field.apply("level")),
+                field.apply("name"),
+                field.apply("expression"),
+                field.apply("format"),
+                number(field.apply("position")),
+                field.apply("direction"),
+                number(field.apply("priority")),
+                field.apply("filter"));
+    }
+
+    private static Integer number(final String text) {
+        if (text == null || text.isEmpty()) {
+            return null;
+        }
+        try {
+            return (int) Double.parseDouble(text);
+        } catch (final NumberFormatException e) {
+            return null;
+        }
     }
 }

@@ -127,6 +127,48 @@ class TestUserActions {
     }
 
     @Test
+    void aDashboardChangeButtonIsOnlyOfferedByStroomsOwnTools() {
+        final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Logons");
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));
+        Mockito.when(lookup.canEdit(dashboard)).thenReturn(false);
+        final Map<String, Object> change = dashboardChange("d1");
+
+        // From an MCP server, it is dropped.
+        assertThat(userActions.check(List.of(change), NOW)).isEmpty();
+
+        // From one of Stroom's own tools, it is offered, described by Stroom.
+        assertThat(userActions.check(null, List.of(change), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.APPLY_DASHBOARD_CHANGE);
+            assertThat(action.label()).isEqualTo("Change to table 'Events' on dashboard 'Logons': 2 change(s)");
+            assertThat(action.doc()).isEqualTo(dashboard);
+            assertThat(action.dashboardChange().componentId()).isEqualTo("table-1");
+            assertThat(action.dashboardChange().snapshotHash()).isEqualTo("abc123");
+            // Whether the user could edit it, so the button can say why it can't be used.
+            assertThat(action.dashboardChange().editable()).isFalse();
+            assertThat(action.dashboardChange().changes())
+                    .containsExactly("Group by 'EventType' (level 1)", "Add column 'Count' with expression count(), "
+                                                                       + "at the end");
+            assertThat(action.dashboardChange().operations()).hasSize(2);
+        });
+    }
+
+    @Test
+    void aDashboardChangeButtonNeedsADashboardTheUserCanSeeAndGoodChanges() {
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.empty());
+        assertThat(userActions.check(null, List.of(dashboardChange("d1")), NOW)).isEmpty();
+
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID)))
+                .thenReturn(Optional.of(new DocRef("Dashboard", OTHER_UUID, "Logons")));
+        final Map<String, Object> badOp = new HashMap<>(dashboardChange("d2"));
+        badOp.put("changes", List.of(Map.of("op", "delete_everything", "column", "x")));
+        final Map<String, Object> notADashboard = new HashMap<>(dashboardChange("d3"));
+        notADashboard.put("doc", doc("Feed", OTHER_UUID, "Logons"));
+        final Map<String, Object> noHash = new HashMap<>(dashboardChange("d4"));
+        noHash.remove("snapshot_hash");
+        assertThat(userActions.check(null, List.of(badOp, notADashboard, noHash), NOW)).isEmpty();
+    }
+
+    @Test
     void aCodeChangeButtonNeedsADocumentTheUserCanSeeAndGoodArguments() {
         // The user can't see the element's document.
         Mockito.when(lookup.find(new DocRef("XSLT", OTHER_UUID))).thenReturn(Optional.empty());
@@ -420,6 +462,20 @@ class TestUserActions {
     private static Map<String, Object> createQuery(final String id, final String name, final String query) {
         return Map.of("id", id, "action", UserActions.CREATE_QUERY, "name", name, "query", query,
                 "description", "Who logged on");
+    }
+
+    private static Map<String, Object> dashboardChange(final String id) {
+        final Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("action", UserActions.APPLY_DASHBOARD_CHANGE);
+        map.put("doc", doc("Dashboard", OTHER_UUID, "Something else"));
+        map.put("component", "Events");
+        map.put("component_id", "table-1");
+        map.put("snapshot_hash", "abc123");
+        map.put("changes", List.of(Map.of("op", "group", "column", "EventType", "level", 1),
+                Map.of("op", "add_column", "name", "Count", "expression", "count()")));
+        map.put("summary", "Counts events by type.");
+        return map;
     }
 
     private static Map<String, Object> codeChange(final String id, final String element, final String proposed) {

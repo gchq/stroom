@@ -19,10 +19,15 @@ package stroom.ai.impl.tools;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.QueryTableContext;
+import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
+import stroom.query.api.Column;
 import stroom.query.api.QueryKey;
+import stroom.query.api.SpecialColumns;
+import stroom.query.api.TableSettings;
 import stroom.query.api.TimeRange;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QuerySearchRequest;
@@ -135,6 +140,75 @@ final class ResultsRequests {
                     DashboardSearchRequest::getSearch, Search::getExpression, Object::toString);
             case null, default -> null;
         };
+    }
+
+    /// @param context A table's search request.
+    /// @return True if it is a dashboard table with a column grouped, so each row may stand for many events.
+    static boolean isGrouped(final AskStroomAiContext context) {
+        return columns(context).stream().anyMatch(column -> column.getGroup() != null);
+    }
+
+    /// @param context A table's search request.
+    /// @return True if it is a dashboard table whose columns include each row's stream and event ids (as the hidden
+    /// columns a table keeps for them, or columns of its own), so its rows can be traced to their events.
+    static boolean hasEventIdColumns(final AskStroomAiContext context) {
+        final List<Column> columns = columns(context);
+        return columns.stream().anyMatch(column -> SpecialColumns.RESERVED_STREAM_ID.equals(column.getId()))
+               && columns.stream().anyMatch(column -> SpecialColumns.RESERVED_EVENT_ID.equals(column.getId()));
+    }
+
+    /// A dashboard table's search, changed to give one row per event with each event's stream and event ids: the
+    /// same data source, expression, parameters, time range and column filters, with no column grouped and the
+    /// table's hidden stream and event id columns added if it doesn't have them. It has no query key, so running it
+    /// is a new search, separate from the dashboard's own.
+    ///
+    /// @param context A dashboard table's search request.
+    /// @return The changed request.
+    static DashboardTableContext ungroupedWithEventIds(final DashboardTableContext context) {
+        final DashboardSearchRequest request = context.getSearchRequest();
+        final List<ComponentResultRequest> tables = new ArrayList<>();
+        for (final ComponentResultRequest component : NullSafe.list(request.getComponentResultRequests())) {
+            if (component instanceof final TableResultRequest table && table.getTableSettings() != null) {
+                final TableSettings settings = table.getTableSettings();
+                final List<Column> columns = new ArrayList<>();
+                for (final Column column : NullSafe.list(settings.getColumns())) {
+                    columns.add(column.getGroup() != null
+                            ? column.copy().group(null).build()
+                            : column);
+                }
+                if (columns.stream().noneMatch(column -> SpecialColumns.RESERVED_STREAM_ID.equals(column.getId()))) {
+                    columns.add(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
+                }
+                if (columns.stream().noneMatch(column -> SpecialColumns.RESERVED_EVENT_ID.equals(column.getId()))) {
+                    columns.add(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
+                }
+                tables.add(table.copy()
+                        .tableSettings(settings.copy().columns(columns).build())
+                        .openGroups(null)
+                        .groupSelection(null)
+                        .build());
+            } else {
+                tables.add(component);
+            }
+        }
+        return new DashboardTableContext(context.getDescription(), null, request.copy()
+                .queryKey(null)
+                .componentResultRequests(tables)
+                .build());
+    }
+
+    // The columns of a dashboard table's search request, or none for a query.
+    private static List<Column> columns(final AskStroomAiContext context) {
+        if (!(context instanceof final DashboardTableContext dashboard) || dashboard.getSearchRequest() == null) {
+            return List.of();
+        }
+        return NullSafe.list(dashboard.getSearchRequest().getComponentResultRequests()).stream()
+                .filter(TableResultRequest.class::isInstance)
+                .map(TableResultRequest.class::cast)
+                .map(TableResultRequest::getTableSettings)
+                .filter(Objects::nonNull)
+                .flatMap(settings -> NullSafe.list(settings.getColumns()).stream())
+                .toList();
     }
 
     // What makes a request's results what they are, by what the user would call it, in order.

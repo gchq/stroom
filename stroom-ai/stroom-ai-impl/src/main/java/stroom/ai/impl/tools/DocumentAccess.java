@@ -24,6 +24,7 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -36,9 +37,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/// How the chat finds, reads and audits Stroom documents, as the user: the document tools, and documents the user
-/// attaches to a chat. Every document is checked for View before anything about it is given, and a document the
-/// user can't view is treated exactly as one that doesn't exist, so nothing reveals whether it does.
+/// How the chat finds, reads and audits Stroom documents, as the user: the document, content and stream tools, and
+/// documents the user attaches to a chat. It is the one place the tools check View (and View Data), find a
+/// document's folder, read documents and log what they viewed. Every document is checked for View before anything
+/// about it is given, and a document the user can't view is treated exactly as one that doesn't exist, so nothing
+/// reveals whether it does. Every check fails closed.
 public class DocumentAccess {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentAccess.class);
@@ -83,6 +86,23 @@ public class DocumentAccess {
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to find document " + uuid, e);
             return Optional.empty();
+        }
+    }
+
+    /// @param uuid A document's UUID, as the model gave it.
+    /// @return The document (with its type and name) if [#find(String)] finds it. Empty otherwise.
+    public Optional<DocRef> findDocRef(final String uuid) {
+        return find(uuid).map(ExplorerNode::getDocRef);
+    }
+
+    /// @return True if the user may view data (streams), as the Data screen needs. False if they may not, or if
+    /// checking fails (failing closed).
+    public boolean canViewData() {
+        try {
+            return securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to check the View Data permission", e);
+            return false;
         }
     }
 
@@ -150,6 +170,21 @@ public class DocumentAccess {
             LOGGER.debug(() -> "Unable to read " + docRef, e);
             return Optional.empty();
         }
+    }
+
+    /// Reads a document of a class, after checking View.
+    ///
+    /// @param docRef A document.
+    /// @param type   The class of document expected, e.g. `XsltDoc.class`.
+    /// @param <T>    The class of document.
+    /// @return The document, or empty if the user can't view it, it can't be read, or it isn't of that class.
+    public <T> Optional<T> read(final DocRef docRef, final Class<T> type) {
+        if (!canView(docRef)) {
+            return Optional.empty();
+        }
+        return read(docRef)
+                .filter(type::isInstance)
+                .map(type::cast);
     }
 
     /// @param type A document type.

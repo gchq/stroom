@@ -32,6 +32,7 @@ import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.query.shared.QueryDoc;
 import stroom.util.json.JsonUtil;
@@ -139,6 +140,26 @@ public class ContextAssembler {
             only the change asked for, keeping the rest of the code exactly as it is.
             - Once the user has applied a change and stepped again, check the new output against what you \
             expected.""";
+
+    /// What the model is told while the user's active tab is a dashboard.
+    static final String DASHBOARD_GUIDANCE = """
+            ## The active tab is a dashboard
+            - Name components (queries and tables) and columns as the user sees them, from the tab's dashboard \
+            file, which has each query's data source and expression and each table's columns as edited.
+            - Work out figures from snapshots of the tables' rows (current_results, then table), not from what \
+            the dashboard shows. Group or count for analysis on the snapshot with table; that changes nothing.
+            - For questions about the events behind a table (values by XPath, the commonest or rarest values, \
+            values inside JSON), use one pipeline call: current_results with withEventIds, then fetch_events, \
+            then search_events (with xpath, and jq for JSON), then table. Read a sample event first to find the \
+            XPath. Always say how many events the answer covers ("of the first N of M events"). For an answer \
+            over all the data, suggest the scalable route as text to copy: a column from the dashboard's \
+            extraction pipeline, or a query on an indexed field.
+            - Write column expressions in Stroom's expression language (the functions table's eval uses), with \
+            the data source's fields as ${Field}; check field names with describe_data_source.
+            - To change a table on the dashboard (group or ungroup, add, edit, hide or show a column, sort, or \
+            filter a column), use propose_dashboard_change. It shows the user the changes with an Apply to \
+            dashboard button; nothing changes until they click it, and it is never saved. Changes to a query's \
+            expression are the user's to make: give the terms to copy.""";
 
     /// What the model is told in Agent mode. The user may have switched from Ask or Plan mode, where earlier
     /// answers will have said the model couldn't change anything; it is told that no longer applies.
@@ -661,8 +682,11 @@ public class ContextAssembler {
             return "\n\n" + STEPPING_GUIDANCE;
         }
         final String type = NullSafe.get(tab, TabSnapshots.StoredTabSnapshot::docRef, DocRef::getType);
-        return QueryDoc.TYPE.equals(type)
-                ? "\n\n" + QUERY_GUIDANCE
+        if (QueryDoc.TYPE.equals(type)) {
+            return "\n\n" + QUERY_GUIDANCE;
+        }
+        return DashboardDoc.TYPE.equals(type)
+                ? "\n\n" + DASHBOARD_GUIDANCE
                 : "";
     }
 
