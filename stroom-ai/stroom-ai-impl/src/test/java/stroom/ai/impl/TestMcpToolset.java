@@ -115,7 +115,36 @@ class TestMcpToolset {
         assertThat(heard).containsExactly("Searching", "Reading documents", "Profiling");
     }
 
+    @Test
+    void eachCallSaysWhichModelIsCalling() {
+        // So the server can record the model (e.g. in a version history) rather than relying on the model to say:
+        // seen, Qwen 3.8 saying it was claude-opus-4-5.
+        final McpToolset withModel = new McpToolset(List.of(connection), List.of(), true,
+                " Qwen/Qwen3.8-Flash-Next-FP8 ");
+        final ArgumentCaptor<CallToolRequest> request = ArgumentCaptor.forClass(CallToolRequest.class);
+        Mockito.when(client.callTool(request.capture())).thenReturn(result());
+
+        call(withModel, "1");
+        withModel.listenForProgress("2", text -> {
+        });
+        call(withModel, "2");
+
+        assertThat(request.getAllValues().get(0).meta())
+                .containsExactly(Map.entry(McpToolset.MODEL_META_KEY, "Qwen/Qwen3.8-Flash-Next-FP8"));
+        // With the progress token, when there is one.
+        assertThat(request.getAllValues().get(1).meta())
+                .containsEntry(McpToolset.MODEL_META_KEY, "Qwen/Qwen3.8-Flash-Next-FP8")
+                .containsKey("progressToken");
+        // Without a model, nothing is said of it.
+        call("3");
+        assertThat(request.getAllValues().get(2).meta()).isNull();
+    }
+
     private String call(final String callId) {
+        return call(toolset, callId);
+    }
+
+    private String call(final McpToolset toolset, final String callId) {
         Mockito.when(client.listTools()).thenReturn(new ListToolsResult(List.of(Tool.builder()
                 .name("search")
                 .description("run a search")

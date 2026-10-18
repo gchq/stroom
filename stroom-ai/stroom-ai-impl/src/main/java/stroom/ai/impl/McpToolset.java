@@ -72,6 +72,9 @@ public final class McpToolset implements AutoCloseable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(McpToolset.class);
 
     public static final McpToolset EMPTY = new McpToolset(List.of(), List.of(), true);
+    /// The key, in a tool call's `_meta`, of the model calling the tool, so a server can record it (e.g. in a
+    /// version history) rather than relying on the model to say which it is, which models often get wrong.
+    static final String MODEL_META_KEY = "stroom.ai/model";
     // The tool metadata key a server can use to say which group a tool is in.
     static final String META_GROUP = "group";
     static final String META_CONFIRMS = "confirms";
@@ -87,6 +90,8 @@ public final class McpToolset implements AutoCloseable {
     private final List<McpServerConnection> connections;
     private final List<String> warnings;
     private final boolean ownsConnections;
+    // The model the tools are called for, or null.
+    private final String modelId;
     private final Set<String> readOnlyToolNames = ConcurrentHashMap.newKeySet();
     private final Map<String, McpToolInfo> toolInfos = new ConcurrentHashMap<>();
     private final Map<String, Object> userActions = new ConcurrentHashMap<>();
@@ -100,9 +105,21 @@ public final class McpToolset implements AutoCloseable {
     McpToolset(final List<McpServerConnection> connections,
                final List<String> warnings,
                final boolean ownsConnections) {
+        this(connections, warnings, ownsConnections, null);
+    }
+
+    /// @param modelId The model the tools are called for, as its model document has it, told to each server with
+    ///                each call (see [#MODEL_META_KEY]), or null.
+    McpToolset(final List<McpServerConnection> connections,
+               final List<String> warnings,
+               final boolean ownsConnections,
+               final String modelId) {
         this.connections = List.copyOf(connections);
         this.warnings = Collections.synchronizedList(new ArrayList<>(warnings));
         this.ownsConnections = ownsConnections;
+        this.modelId = NullSafe.isNonBlankString(modelId)
+                ? modelId.strip()
+                : null;
     }
 
     /**
@@ -401,9 +418,19 @@ public final class McpToolset implements AutoCloseable {
         final Consumer<String> listener = request.id() != null
                 ? progressListeners.get(request.id())
                 : null;
+        final CallToolRequest.Builder call = CallToolRequest.builder()
+                .name(toolName)
+                .arguments(args);
+        if (modelId != null) {
+            // Which model is calling, with every call, as the user may change it during a chat. Mutable, as the
+            // progress token goes in it too.
+            final Map<String, Object> meta = new LinkedHashMap<>();
+            meta.put(MODEL_META_KEY, modelId);
+            call.meta(meta);
+        }
         final CallToolResult result;
         if (listener == null) {
-            result = connection.client().callTool(new CallToolRequest(toolName, args));
+            result = connection.client().callTool(call.build());
         } else {
             // A server only reports a call's progress if it is given a token for it, unique to the call.
             final String progressToken = UUID.randomUUID().toString();
@@ -414,11 +441,7 @@ public final class McpToolset implements AutoCloseable {
                 }
             });
             try {
-                result = connection.client().callTool(CallToolRequest.builder()
-                        .name(toolName)
-                        .arguments(args)
-                        .progressToken(progressToken)
-                        .build());
+                result = connection.client().callTool(call.progressToken(progressToken).build());
             } finally {
                 connection.stopListening(progressToken);
             }
