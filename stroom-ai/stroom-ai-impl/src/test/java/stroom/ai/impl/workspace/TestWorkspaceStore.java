@@ -256,7 +256,15 @@ class TestWorkspaceStore {
         assertThatThrownBy(() -> workspaceStore.readLines(fileId, 0, 10))
                 .isInstanceOf(WorkspaceFileUnavailableException.class)
                 .hasMessageContaining("no longer have access");
-        assertThat(workspaceDao.getChunkInfo(fileId)).isEmpty();
+        // Refused, but kept: it isn't removed or marked unavailable.
+        assertThat(workspaceDao.getChunkInfo(fileId)).isNotEmpty();
+        assertThat(workspaceDao.getFileInfo(fileId).orElseThrow().status())
+                .isNotEqualTo(AiAttachmentStatus.UNAVAILABLE);
+
+        // Their access returns, and so does the file.
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.eq(DocumentPermission.USE)))
+                .thenReturn(true);
+        assertThat(workspaceStore.readLines(fileId, 0, 10)).containsExactly("x");
     }
 
     @Test
@@ -282,7 +290,7 @@ class TestWorkspaceStore {
         assertThatThrownBy(() -> workspaceStore.readLines(fileId, 0, 10))
                 .isInstanceOf(WorkspaceFileUnavailableException.class)
                 .hasMessageContaining("no longer have access");
-        assertThat(workspaceDao.getChunkInfo(fileId)).isEmpty();
+        assertThat(workspaceDao.getChunkInfo(fileId)).isNotEmpty();
     }
 
     @Test
@@ -297,7 +305,7 @@ class TestWorkspaceStore {
     }
 
     @Test
-    void testADeletedOrUnknownSourceMakesTheFileUnavailable() {
+    void testADeletedOrUnknownSourceRefusesTheFileButKeepsIt() {
         final int fileId = fileFrom("gone-uuid");
         Mockito.when(explorerNodeService.getNodeByUuid("gone-uuid")).thenReturn(Optional.empty());
         Mockito.when(dataSourceProviderRegistry.findDataSourceByUuid("gone-uuid")).thenReturn(Optional.empty());
@@ -307,6 +315,7 @@ class TestWorkspaceStore {
                 .isInstanceOf(WorkspaceFileUnavailableException.class)
                 .hasMessageContaining("no longer have access");
         Mockito.verify(securityContext, Mockito.never()).hasDocumentPermission(Mockito.any(), Mockito.any());
+        assertThat(workspaceDao.getChunkInfo(fileId)).isNotEmpty();
     }
 
     @Test
