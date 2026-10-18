@@ -176,8 +176,13 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
             throw new WorkspaceException("The query failed: " + String.join("; ", response.getErrors()));
         }
 
+        // The download takes the rows the request asks for, so it asks for all those the limit allows, not the few
+        // the search was polled for.
         final ResourceGeneration generation = queryService.downloadSearchResults(new DownloadQueryResultsRequest(
-                searchRequest.copy().queryKey(response.getQueryKey()).build(),
+                searchRequest.copy()
+                        .queryKey(response.getQueryKey())
+                        .requestedRange(new OffsetRange(0L, (long) maxRows))
+                        .build(),
                 // With each row's stream and event ids, so the events behind the rows can be fetched.
                 DownloadSearchResultFileType.MARKDOWN, false, 100, true));
         final ResourceKey resourceKey = generation.getResourceKey();

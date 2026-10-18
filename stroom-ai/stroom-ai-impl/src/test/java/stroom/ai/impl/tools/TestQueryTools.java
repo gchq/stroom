@@ -238,7 +238,12 @@ class TestQueryTools {
                 ExplorerNode.builder().docRef(pipelineDoc).build(), ExplorerNode.builder().docRef(survey).build(),
                 ExplorerNode.builder().docRef(index).build()));
         Mockito.when(documentAccess.read(pipelineDoc, DocumentationDoc.class)).thenReturn(Optional.of(documentation(
-                "pipe-doc-uuid", "| `create.document.description` | The tweet's text |")));
+                "pipe-doc-uuid", "| `create.document.description` | The tweet's text |\n\n<!-- stroom-mcp field "
+                                 + "descriptions\n{\"hidden\": \"state\"}\n-->")));
+        // A pipeline whose Documentation tab holds nothing but what the MCP server keeps hidden.
+        Mockito.when(documentAccess.read(pipeline)).thenReturn(Optional.of(PipelineDoc.builder().uuid("pipe-uuid")
+                .name("Twitter-Indexing-Onboard-v1").description("<!-- stroom-mcp agreed index template -->")
+                .build()));
         Mockito.when(documentAccess.read(survey, DocumentationDoc.class))
                 .thenReturn(Optional.of(documentation("survey-uuid", "Nothing about this index.")));
         Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
@@ -251,7 +256,11 @@ class TestQueryTools {
                 .contains("### [Twitter-Indexing-Onboard-v1](?action=open-doc&docType=Documentation&docUuid="
                           + "pipe-doc-uuid) (Documentation): the Documentation doc beside it")
                 .contains("| `create.document.description` | The tweet's text |")
-                .doesNotContain("Unrelated - Survey");
+                .doesNotContain("Unrelated - Survey")
+                // What the MCP server keeps hidden is left out.
+                .doesNotContain("stroom-mcp")
+                .doesNotContain("hidden")
+                .doesNotContain("the Documentation tab of a pipeline that writes to it");
         // Given once, though both the folder and the pipeline lead to it.
         assertThat(result.split("The tweet's text", -1)).hasSize(2);
     }
@@ -402,6 +411,14 @@ class TestQueryTools {
 
     private static DocumentationDoc documentation(final String uuid, final String text) {
         return new DocumentationDoc(uuid, "doc", null, null, null, null, null, null, text);
+    }
+
+    @Test
+    void htmlCommentsAreLeftOutOfDocumentation() {
+        assertThat(DataSourceDocumentation.withoutComments("a\n<!-- one -->\n\n\n\nb <!-- two\nlines --> c"))
+                .isEqualTo("a\n\nb  c");
+        assertThat(DataSourceDocumentation.withoutComments("a <!-- never closed")).isEqualTo("a");
+        assertThat(DataSourceDocumentation.withoutComments(null)).isEmpty();
     }
 
     // A pipeline whose Elastic indexing filter writes to an Elasticsearch index by name.
