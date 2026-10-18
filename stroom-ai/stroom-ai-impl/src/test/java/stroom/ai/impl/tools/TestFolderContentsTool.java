@@ -110,8 +110,9 @@ class TestFolderContentsTool {
                         .filter(docRef -> docRef.getName().equals(invocation.getArgument(1)))
                         .map(TestFolderContentsTool::node)
                         .toList());
-        Mockito.when(fixture.explorerNodeService.getPath(Mockito.any())).thenReturn(List.of(
-                ExplorerConstants.SYSTEM_NODE, node(SECURITY)));
+        fixture.folders.put(SECURITY.getUuid(), List.of());
+        fixture.folders.put(FIREWALLS.getUuid(), List.of("Security"));
+        fixture.folders.put(SECRET_FOLDER.getUuid(), List.of("Security"));
         Mockito.when(fixture.securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION))
                 .thenReturn(true);
         Mockito.when(docFinder.findByName(FeedDoc.TYPE, FEED.getName())).thenReturn(List.of(FEED));
@@ -309,6 +310,38 @@ class TestFolderContentsTool {
     }
 
     @Test
+    void foldersAnAgentsDocIgnoresAreShownButNotLookedInAndItsInstructionsGiven() {
+        final DocRef archive = fixture.add(folder("archive-uuid", "Archive"), null, true);
+        final DocRef old = fixture.add(new DocRef("XSLT", "old-xslt-uuid", "Old XSLT"), null, true);
+        fixture.folders.put(archive.getUuid(), List.of("Security"));
+        children.put(SECURITY.getUuid(), List.of(FIREWALLS, SECRET_FOLDER, archive));
+        children.put(archive.getUuid(), List.of(old));
+        fixture.addInstructions("agents-uuid", "## Ignore\n- folders: Archive\n\n## Naming\n- Feeds are upper "
+                                               + "case.", true, "Security");
+
+        final String result = run("{\"folder\":\"/Security\",\"depth\":3}");
+
+        assertThat(result)
+                .contains("- [Archive](?action=open-doc&docType=Folder&docUuid=archive-uuid) (Folder, uuid "
+                          + "archive-uuid) — not looked in: /Security/Archive (ignored by the AGENTS doc in "
+                          + "/Security)")
+                .doesNotContain("Old XSLT")
+                .contains("pass includeIgnored only if the user asks for them")
+                .contains(AgentInstructions.FOLLOW)
+                .contains("Feeds are upper case.");
+        Mockito.verify(fixture.explorerNodeService, Mockito.never()).getChildren(archive);
+
+        // Asked for, it is looked in.
+        assertThat(run("{\"folder\":\"/Security\",\"depth\":3,\"includeIgnored\":true}"))
+                .contains("Old XSLT");
+        // As is the ignored folder itself, when it is the one asked about.
+        assertThat(run("{\"folder\":\"archive-uuid\"}"))
+                .contains("It is in /Security/Archive (ignored by the AGENTS doc in /Security), so searches leave "
+                          + "it out; it is listed as it was asked for.")
+                .contains("Old XSLT");
+    }
+
+    @Test
     void somethingThatCantBeShownIsAnError() {
         assertThat(run("{\"show\":[\"documents\",\"secrets\"]}"))
                 .isEqualTo("Error: can't show 'secrets'. Show any of: documents, streams, processors, tasks.");
@@ -320,7 +353,8 @@ class TestFolderContentsTool {
 
     private FolderContentsTool tool() {
         return new FolderContentsTool(fixture.documentAccess(), fixture.securityContext, () -> metaService,
-                () -> processorFilterService, () -> processorTaskService, () -> docFinder, fixture.auditLog());
+                () -> processorFilterService, () -> processorTaskService, () -> docFinder,
+                fixture.agentInstructions(), fixture.auditLog());
     }
 
     private static DocRef folder(final String uuid, final String name) {

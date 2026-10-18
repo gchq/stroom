@@ -47,6 +47,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -79,14 +80,17 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
 
     private final TabSnapshots tabSnapshots;
     private final DocumentAccess documentAccess;
+    private final AgentInstructions agentInstructions;
 
     @Inject
     ProposeCodeChangeTool(final ChatWorkspace workspace,
                           final TabSnapshots tabSnapshots,
-                          final DocumentAccess documentAccess) {
+                          final DocumentAccess documentAccess,
+                          final AgentInstructions agentInstructions) {
         super(workspace);
         this.tabSnapshots = tabSnapshots;
         this.documentAccess = documentAccess;
+        this.agentInstructions = agentInstructions;
     }
 
     @Override
@@ -216,7 +220,19 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
                + " place(s)) as a diff, with a 'Review and apply' button. Nothing changes until they apply it to "
                + "the element's editor, and it is never saved; they can undo it. Tell them about the button "
                + "rather than saying the code was changed, and show the output you expect once they apply it "
-               + "and step.\nThe diff:\n" + diff.toUnifiedDiff(LineDiffResult.DEFAULT_CONTEXT_LINES);
+               + "and step.\nThe diff:\n" + diff.toUnifiedDiff(LineDiffResult.DEFAULT_CONTEXT_LINES)
+               + instructionsNote(chatId, docRef, tab.docRef());
+    }
+
+    // The AGENTS docs that apply where the code and its pipeline are, e.g. XSLT style and how fields are mapped,
+    // for the agent to check the change follows them.
+    private String instructionsNote(final int chatId, final DocRef code, final DocRef pipeline) {
+        final String note = agentInstructions.load(chatId, "Standing instructions read by the " + NAME + " tool")
+                .note(List.of(agentInstructions.folderOf(code), agentInstructions.folderOf(pipeline)));
+        return note.isEmpty()
+                ? ""
+                : note + "\n\nCheck the change follows these. If it doesn't, propose it again, fixed, and tell the "
+                  + "user what changed.";
     }
 
     /// @param code Some code.
