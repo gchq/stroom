@@ -465,7 +465,7 @@ class TestWorkspaceTools {
         assertThat(workspace.sourceDocUuid(chatId, WorkspacePath.parse("/outputs/hosts.csv")))
                 .isEqualTo("index-uuid");
 
-        // If the user loses access to the source, results made from it go too.
+        // If the user loses access to the source, results made from it are refused too.
         Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.any())).thenReturn(false);
         assertThat(run(new ReadFileTool(workspace), "{\"path\":\"/outputs/hosts.csv\"}"))
                 .contains("no longer have access");
