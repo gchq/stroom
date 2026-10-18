@@ -33,6 +33,7 @@ import io.modelcontextprotocol.spec.McpSchema.GetPromptRequest;
 import io.modelcontextprotocol.spec.McpSchema.GetPromptResult;
 import io.modelcontextprotocol.spec.McpSchema.ListPromptsResult;
 import io.modelcontextprotocol.spec.McpSchema.ListResourcesResult;
+import io.modelcontextprotocol.spec.McpSchema.ProgressNotification;
 import io.modelcontextprotocol.spec.McpSchema.Prompt;
 import io.modelcontextprotocol.spec.McpSchema.PromptMessage;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
@@ -50,7 +51,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -87,6 +90,8 @@ public final class McpToolset implements AutoCloseable {
     private final Set<String> readOnlyToolNames = ConcurrentHashMap.newKeySet();
     private final Map<String, McpToolInfo> toolInfos = new ConcurrentHashMap<>();
     private final Map<String, Object> userActions = new ConcurrentHashMap<>();
+    // Who is told what each tool call under way has got to, by the model's id for the call.
+    private final Map<String, Consumer<String>> progressListeners = new ConcurrentHashMap<>();
     // The group each tool is declared to be in, by an admin's rule or by its server.
     private final Map<String, String> declaredGroups = new ConcurrentHashMap<>();
 
@@ -386,7 +391,31 @@ public final class McpToolset implements AutoCloseable {
                             final String toolName,
                             final ToolExecutionRequest request) {
         final Map<String, Object> args = McpToolAdapter.parseArguments(request.arguments());
-        final CallToolResult result = connection.client().callTool(new CallToolRequest(toolName, args));
+        final Consumer<String> listener = request.id() != null
+                ? progressListeners.get(request.id())
+                : null;
+        final CallToolResult result;
+        if (listener == null) {
+            result = connection.client().callTool(new CallToolRequest(toolName, args));
+        } else {
+            // A server only reports a call's progress if it is given a token for it, unique to the call.
+            final String progressToken = UUID.randomUUID().toString();
+            final ProgressOrder order = new ProgressOrder();
+            connection.listen(progressToken, notification -> {
+                if (order.isNewer(notification)) {
+                    NullSafe.consume(describeProgress(notification), listener);
+                }
+            });
+            try {
+                result = connection.client().callTool(CallToolRequest.builder()
+                        .name(toolName)
+                        .arguments(args)
+                        .progressToken(progressToken)
+                        .build());
+            } finally {
+                connection.stopListening(progressToken);
+            }
+        }
         // Steps that are the user's, to show as buttons. Only a trusted server's are kept, and they are checked
         // before they are shown.
         if (request.id() != null
@@ -398,6 +427,52 @@ public final class McpToolset implements AutoCloseable {
             userActions.put(request.id(), structured.get(USER_ACTIONS));
         }
         return McpToolAdapter.renderResult(result);
+    }
+
+    /// Has what a tool call has got to, as its server reports it, passed on while the call runs, until
+    /// [#stopListening(String)].
+    ///
+    /// @param callId   The model's id for the call.
+    /// @param listener Told what the call has got to, e.g. "Reading documents (2 of 5)".
+    public void listenForProgress(final String callId, final Consumer<String> listener) {
+        progressListeners.put(callId, listener);
+    }
+
+    /// Stops passing on what a tool call has got to.
+    ///
+    /// @param callId The model's id for the call.
+    public void stopListening(final String callId) {
+        progressListeners.remove(callId);
+    }
+
+    /// @param notification Progress a server reported.
+    /// @return What it says, e.g. "Reading documents (2 of 5)", "Reading documents (40%)" or "2 of 5", or null if
+    /// it says nothing that can be shown.
+    static String describeProgress(final ProgressNotification notification) {
+        final String message = NullSafe.trim(notification.message());
+        final Double progress = notification.progress();
+        final Double total = notification.total();
+        final String howFar;
+        if (progress == null || progress < 0) {
+            howFar = null;
+        } else if (total != null && total > 0) {
+            howFar = isWhole(progress) && isWhole(total)
+                    ? (long) progress.doubleValue() + " of " + (long) total.doubleValue()
+                    : Math.round(Math.min(100, 100 * progress / total)) + "%";
+        } else {
+            // A count with nothing to say what of only means something beside a message.
+            howFar = null;
+        }
+        if (message.isEmpty()) {
+            return howFar;
+        }
+        return howFar != null
+                ? message + " (" + howFar + ")"
+                : message;
+    }
+
+    private static boolean isWhole(final double value) {
+        return value == Math.rint(value) && !Double.isInfinite(value);
     }
 
     /**
@@ -511,5 +586,24 @@ public final class McpToolset implements AutoCloseable {
     /// @param policy The tool policy that applies to it, or null if none does.
     public record ServerTool(McpToolServerConfig server, Tool tool, McpToolPolicy policy) {
 
+    }
+
+    /// Keeps to the order a server reported a call's progress in. The MCP client passes each notification on in a
+    /// thread of its own, so two sent close together can arrive the wrong way round; as a call's progress must go
+    /// up with each notification, one that doesn't is older than one already shown, and is dropped.
+    static final class ProgressOrder {
+
+        private double highest = Double.NEGATIVE_INFINITY;
+
+        /// @param notification Progress a server reported for the call.
+        /// @return True if it is newer than any seen before, so is to be shown.
+        synchronized boolean isNewer(final ProgressNotification notification) {
+            final Double progress = notification.progress();
+            if (progress == null || progress <= highest) {
+                return false;
+            }
+            highest = progress;
+            return true;
+        }
     }
 }

@@ -61,7 +61,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -98,6 +100,8 @@ class McpAgentChat {
      * How long a progress message shown to the user may be.
      */
     private static final int PROGRESS_MESSAGE_LIMIT = 160;
+    // The most of what an MCP server says a tool call has got to that is shown after the working line.
+    private static final int PROGRESS_UPDATE_LIMIT = 120;
 
     /**
      * Argument fields, in preference order, whose value best summarises what a tool call is for.
@@ -265,7 +269,7 @@ class McpAgentChat {
         }
 
         // Carry on from calls waiting for approval when the run last stopped, now they have been answered.
-        resumePending(chatId, conversation, tools, toolset, debugLog);
+        resumePending(chatId, conversation, tools, toolset, workingMessageId, taskContext, debugLog);
 
 
         final int maxIterations = maxToolIterations();
@@ -357,9 +361,14 @@ class McpAgentChat {
                         ? ToolConsent.Verdict.RUN
                         : toolConsent.decide(chatId, toolRequest.name(), builtInTools, toolset, unattended);
                 switch (verdict.kind()) {
-                    case RUN -> conversation.add(ToolExecutionResultMessage.from(toolRequest,
-                            runAndRecord(chatId, callMessage, toolRequest, tools, toolset, debugLog, t + 1,
-                                    unattended)));
+                    case RUN -> {
+                        final int callNo = t + 1;
+                        final Map<ToolSpecification, ToolExecutor> toolsNow = tools;
+                        conversation.add(ToolExecutionResultMessage.from(toolRequest,
+                                runShowingProgress(toolset, toolRequest, workingMessageId, progress, () ->
+                                        runAndRecord(chatId, callMessage, toolRequest, toolsNow, toolset, debugLog,
+                                                callNo, unattended))));
+                    }
                     case DENY -> conversation.add(ToolExecutionResultMessage.from(toolRequest,
                             recordNotRun(chatId, toolRequest, "Not run: " + verdict.reason(), unattended,
                                     "Not allowed in this chat")));
@@ -390,6 +399,35 @@ class McpAgentChat {
             return call(chatModel, conversation, null, chatId, modelDoc, budget);
         }
         return response;
+    }
+
+    /// Runs a tool call, showing on the working line what it has got to while it runs, as its MCP server reports
+    /// it, e.g. "Surveying the index (describe_document) — Reading documents (2 of 5)…".
+    ///
+    /// @param working What the working line says of the call.
+    /// @param call    Runs the call.
+    /// @return What the call returns.
+    private String runShowingProgress(final McpToolset toolset,
+                                      final ToolExecutionRequest toolRequest,
+                                      final int workingMessageId,
+                                      final String working,
+                                      final Supplier<String> call) {
+        if (toolRequest.id() == null) {
+            return call.get();
+        }
+        final AtomicReference<String> shown = new AtomicReference<>();
+        toolset.listenForProgress(toolRequest.id(), update -> {
+            final String text = working + " — " + truncate(update, PROGRESS_UPDATE_LIMIT) + "…";
+            // A server may report the same thing many times; the line is only changed when what it says changes.
+            if (!text.equals(shown.getAndSet(text))) {
+                aiService.updateMessageText(workingMessageId, text);
+            }
+        });
+        try {
+            return call.get();
+        } finally {
+            toolset.stopListening(toolRequest.id());
+        }
     }
 
     /**
@@ -472,6 +510,8 @@ class McpAgentChat {
                                final List<ChatMessage> conversation,
                                final Map<ToolSpecification, ToolExecutor> tools,
                                final McpToolset toolset,
+                               final int workingMessageId,
+                               final TaskContext taskContext,
                                final StringBuilder debugLog) {
         final List<AiChatMessage> history = aiService.getMessages(chatId);
         int question = history.size() - 1;
@@ -519,7 +559,13 @@ class McpAgentChat {
             final String result;
             if (decided != null && decided.decision() == Decision.ALLOWED) {
                 LOGGER.debug(() -> "Running approved tool '" + call.tool() + "' in chatId=" + chatId);
-                result = runAndRecord(chatId, message, request, tools, toolset, debugLog, ++callNo, unattended);
+                // Said on the working line as when the call was made, with what it gets to as it runs.
+                final String progress = toolCallProgressMessage(call.rationale(), request);
+                taskContext.info(() -> progress);
+                aiService.updateMessageText(workingMessageId, progress + "…");
+                final int thisCallNo = ++callNo;
+                result = runShowingProgress(toolset, request, workingMessageId, progress, () ->
+                        runAndRecord(chatId, message, request, tools, toolset, debugLog, thisCallNo, unattended));
             } else if (decided != null && decided.decision() == Decision.DENIED) {
                 result = recordNotRun(chatId, request, "Not run: the user did not allow this call"
                                                        + (NullSafe.isNonBlankString(decided.note())

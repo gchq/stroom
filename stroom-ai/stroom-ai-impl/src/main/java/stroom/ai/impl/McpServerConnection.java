@@ -24,13 +24,17 @@ import stroom.util.shared.NullSafe;
 
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema.ListToolsResult;
+import io.modelcontextprotocol.spec.McpSchema.ProgressNotification;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /// A connected MCP tool server. Connections are kept for a while between questions in the same chat (see
 /// [McpClientCache]), so the server's tool list is cached here too, until it is too old or the server says it
@@ -49,6 +53,8 @@ final class McpServerConnection implements AutoCloseable {
     private volatile List<Tool> tools;
     private volatile long toolsFetchedMs;
     private volatile long lastUsedMs;
+    // Who is told of the progress the server reports for each tool call under way, by the call's progress token.
+    private final Map<Object, Consumer<ProgressNotification>> progressListeners = new ConcurrentHashMap<>();
 
     /// @param label        The name used for the server in messages and in the resource tools.
     /// @param config       The server's configuration.
@@ -90,6 +96,38 @@ final class McpServerConnection implements AutoCloseable {
             userIdentity.set(identity);
         }
         lastUsedMs = System.currentTimeMillis();
+    }
+
+    /// Has the progress the server reports for a request passed on, until [#stopListening(Object)].
+    ///
+    /// @param progressToken The token sent with the request.
+    /// @param listener      Told of each progress notification for the request.
+    void listen(final Object progressToken, final Consumer<ProgressNotification> listener) {
+        progressListeners.put(progressToken, listener);
+    }
+
+    /// Stops passing on the progress of a request, e.g. once it has been answered.
+    ///
+    /// @param progressToken The token sent with the request.
+    void stopListening(final Object progressToken) {
+        progressListeners.remove(progressToken);
+    }
+
+    /// Passes on progress the server reports to whoever is listening for its request. Progress for a request
+    /// nobody is listening for, e.g. one already answered, is ignored.
+    ///
+    /// @param notification The server's notification.
+    void onProgress(final ProgressNotification notification) {
+        final Consumer<ProgressNotification> listener = progressListeners.get(notification.progressToken());
+        if (listener == null) {
+            LOGGER.debug(() -> "Progress from MCP server '" + label + "' for no request under way: " + notification);
+        } else {
+            try {
+                listener.accept(notification);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> "Unable to show progress from MCP server '" + label + "'", e);
+            }
+        }
     }
 
     /// @return When the connection was last used.
