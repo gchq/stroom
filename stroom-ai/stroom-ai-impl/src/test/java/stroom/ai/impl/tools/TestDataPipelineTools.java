@@ -20,6 +20,7 @@ import stroom.ai.api.AiService;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.api.TableSummaryRequest;
 import stroom.ai.api.TableSummaryResult;
+import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.AiWorkspaceConfig;
@@ -34,6 +35,7 @@ import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
 import stroom.collection.api.CollectionService;
 import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.data.store.api.Store;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
@@ -67,6 +69,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -99,6 +102,7 @@ class TestDataPipelineTools {
     private final AiService aiService = Mockito.mock(AiService.class);
     private final TableSummariser tableSummariser = Mockito.mock(TableSummariser.class);
     private final SecurityContext injectorSecurityContext = Mockito.mock(SecurityContext.class);
+    private final CurrentResultsTool currentResultsTool = Mockito.mock(CurrentResultsTool.class);
     private AiConfig aiConfig = new AiConfig();
     private int chatId;
     private int otherChatId;
@@ -159,6 +163,67 @@ class TestDataPipelineTools {
         assertThat(workspace.list(chatId, WorkspacePath.parse("/outputs/")))
                 .extracting(entry -> entry.path().path())
                 .containsExactly("/outputs/events.log");
+    }
+
+    @Test
+    void testPipelineTimeLimitIsAWorkspaceStepsUnlessAStepTakesLonger() {
+        final PipelineTool pipeline = pipeline();
+        final Duration toolLimit = workspace.limits().getToolTimeLimit().getDuration();
+        final Duration queryLimit = workspace.limits().getQueryTimeLimit().getDuration();
+        Mockito.when(currentResultsTool.timeLimit()).thenReturn(queryLimit);
+
+        assertThat(pipeline.timeLimit(request("{\"steps\":["
+                                              + "{\"tool\":\"grep\",\"args\":{\"pattern\":\"x\"}},"
+                                              + "{\"tool\":\"table\",\"args\":{}}]}")))
+                .isEqualTo(toolLimit);
+        assertThat(pipeline.timeLimit(request("{\"steps\":["
+                                              + "{\"tool\":\"fetch_events\",\"args\":{}},"
+                                              + "{\"tool\":\"table\",\"args\":{}}]}")))
+                .isEqualTo(queryLimit);
+        assertThat(pipeline.timeLimit(request("{\"steps\":[{\"tool\":\"current_results\",\"args\":{}}]}")))
+                .isEqualTo(queryLimit);
+        // Steps that can't be read get a workspace step's limit, and are refused when run.
+        assertThat(pipeline.timeLimit(request("{\"steps\":\"nonsense\"}"))).isEqualTo(toolLimit);
+    }
+
+    @Test
+    void testPipelineStartsFromASnapshotOfTheTabsResults() {
+        Mockito.when(currentResultsTool.timeLimit()).thenReturn(Duration.ofMinutes(1));
+        Mockito.when(currentResultsTool.outcome(Mockito.any(), Mockito.eq(chatId))).thenReturn(
+                new CurrentResultsTool.Outcome("Took a snapshot of Logons: 1 row(s).\nState: ok", "/attachments/7.md"));
+
+        final String result = run(pipeline(), "{\"steps\":["
+                                              + "{\"tool\":\"current_results\",\"args\":{\"withEventIds\":true}},"
+                                              + "{\"tool\":\"table\",\"args\":{\"select\":[\"host\"]}}]}");
+
+        assertThat(result)
+                .startsWith("Step 1 (current_results): Took a snapshot of Logons: 1 row(s).")
+                .contains("fw1");
+        final ArgumentCaptor<ToolExecutionRequest> step = ArgumentCaptor.forClass(ToolExecutionRequest.class);
+        Mockito.verify(currentResultsTool).outcome(step.capture(), Mockito.eq(chatId));
+        assertThat(step.getValue().arguments()).contains("\"withEventIds\":true");
+    }
+
+    @Test
+    void testPipelineStopsWhenNoSnapshotCanBeTaken() {
+        Mockito.when(currentResultsTool.timeLimit()).thenReturn(Duration.ofMinutes(1));
+        Mockito.when(currentResultsTool.outcome(Mockito.any(), Mockito.eq(chatId))).thenReturn(
+                CurrentResultsTool.Outcome.problem("Getting the events means running its search again."));
+
+        assertThat(run(pipeline(), "{\"steps\":["
+                                   + "{\"tool\":\"current_results\",\"args\":{\"withEventIds\":true}},"
+                                   + "{\"tool\":\"table\",\"args\":{}}]}"))
+                .isEqualTo("Getting the events means running its search again.");
+    }
+
+    @Test
+    void testPipelineTakesASnapshotOnlyAsItsFirstStep() {
+        assertThat(run(pipeline(), "{\"steps\":["
+                                   + "{\"tool\":\"grep\",\"args\":{\"path\":\"/outputs/events.log\","
+                                   + "\"pattern\":\"ERROR\"}},"
+                                   + "{\"tool\":\"current_results\",\"args\":{}}]}"))
+                .contains("current_results can only be the first step");
+        Mockito.verify(currentResultsTool, Mockito.never()).outcome(Mockito.any(), Mockito.anyInt());
     }
 
     @Test
@@ -331,14 +396,14 @@ class TestDataPipelineTools {
         // A query that never finishes is stopped at the limit.
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
                 new AiWorkspaceConfig(null, null, null, null, null, null, StroomDuration.ofMillis(800),
-                        null, null, null), null,
+                        null, null, null, null), null,
                 null, null, null, null, null, null, null);
         Mockito.when(queryService.search(Mockito.any())).thenReturn(response(new QueryKey("q"), false, null));
         assertThat(run(tool, "{\"query\":\"from x\"}")).startsWith("Error: This took too long");
 
         // The longest query an administrator allows.
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, null, null, null, null, 20, null, null),
+                new AiWorkspaceConfig(null, null, null, null, null, null, null, 20, null, null, null),
                         null, null, null, null, null,
                         null, null, null);
         assertThat(run(tool, "{\"query\":\"from x select a, b, c, d\"}"))
@@ -351,7 +416,10 @@ class TestDataPipelineTools {
     private PipelineTool pipeline() {
         final ColumnSummariser summariser = columnSummariser();
         return new PipelineTool(workspace, new GrepTool(workspace), new JqTool(workspace), new XPathTool(workspace),
-                new TableTool(workspace, summariser));
+                new TableTool(workspace, summariser),
+                new FetchEventsTool(workspace, () -> Mockito.mock(Store.class), () -> injectorSecurityContext,
+                        Mockito.mock(AiAuditLog.class)),
+                new SearchEventsTool(workspace), currentResultsTool);
     }
 
     private SummariseColumnTool summariseTool() {

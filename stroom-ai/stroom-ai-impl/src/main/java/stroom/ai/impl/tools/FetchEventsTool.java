@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.EventsFile;
 import stroom.ai.impl.workspace.TableEngine;
@@ -74,14 +75,17 @@ class FetchEventsTool extends AbstractWorkspaceTool {
 
     private final Provider<Store> storeProvider;
     private final Provider<SecurityContext> securityContextProvider;
+    private final AiAuditLog auditLog;
 
     @Inject
     FetchEventsTool(final ChatWorkspace workspace,
                     final Provider<Store> storeProvider,
-                    final Provider<SecurityContext> securityContextProvider) {
+                    final Provider<SecurityContext> securityContextProvider,
+                    final AiAuditLog auditLog) {
         super(workspace);
         this.storeProvider = storeProvider;
         this.securityContextProvider = securityContextProvider;
+        this.auditLog = auditLog;
     }
 
     @Override
@@ -146,8 +150,21 @@ class FetchEventsTool extends AbstractWorkspaceTool {
             throw new UncheckedIOException(e);
         } finally {
             workspace.deleteQuietly(temp);
+            logView(chatId, counts);
         }
-        return summary(out, ids, counts);
+        final String coverage = CurrentResultsTool.coverage(workspace, chatId, path, ids.count() + ids.skipped())
+                .orElse(null);
+        return summary(out, ids, counts, coverage);
+    }
+
+    /// Records in the audit log the streams events were read from.
+    private void logView(final int chatId, final Counts counts) {
+        if (counts.streams.isEmpty()) {
+            return;
+        }
+        auditLog.streamsViewed(chatId, counts.streams, "Read " + counts.written + " event(s) from "
+                                                     + counts.streams.size() + " stream(s) with the " + NAME
+                                                     + " tool");
     }
 
     /// Writes the events of one stream, reading its header and footer once.
@@ -266,7 +283,10 @@ class FetchEventsTool extends AbstractWorkspaceTool {
         }
     }
 
-    private static String summary(final WorkspacePath out, final Ids ids, final Counts counts) {
+    private static String summary(final WorkspacePath out,
+                                  final Ids ids,
+                                  final Counts counts,
+                                  final String coverage) {
         final StringBuilder sb = new StringBuilder();
         if (counts.written > 0) {
             sb.append(String.format(Locale.ROOT, "Wrote %d event(s) from %d stream(s) to %s. Use search_events "
@@ -274,6 +294,10 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                     counts.written, counts.streams.size(), out));
         } else {
             sb.append("No events could be fetched.");
+        }
+        // On the first line, so a pipeline's log of this step keeps it.
+        if (coverage != null) {
+            sb.append(' ').append(coverage);
         }
         note(sb, ids.more(), "more row(s) were left out, over the limit; fetch them with a filtered table");
         note(sb, ids.skipped(), "row(s) had no stream or event id");

@@ -46,6 +46,9 @@ public class AiTabSnapshotPart {
     /// The part holding the selected element's code while stepping, as edited (unsaved changes included).
     public static final String STEP_CODE = "stepCode";
 
+    private static final long FNV_OFFSET = 0xcbf29ce484222325L;
+    private static final long FNV_PRIME = 0x100000001b3L;
+
     @JsonProperty
     private final String name;
     @JsonProperty
@@ -78,6 +81,26 @@ public class AiTabSnapshotPart {
     /// @return The text, as the user sees it.
     public String getText() {
         return text;
+    }
+
+    /// A hash of some text that the browser and the server work out the same way (64-bit FNV-1a over each
+    /// character's two bytes), e.g. to tell whether a dashboard has changed since a snapshot of it was taken.
+    ///
+    /// @param text Some text, or null.
+    /// @return Its hash, as hex.
+    public static String hashText(final String text) {
+        final String value = text == null
+                ? ""
+                : text;
+        long hash = FNV_OFFSET;
+        for (int i = 0; i < value.length(); i++) {
+            final char chr = value.charAt(i);
+            hash ^= (chr & 0xff);
+            hash *= FNV_PRIME;
+            hash ^= ((chr >> 8) & 0xff);
+            hash *= FNV_PRIME;
+        }
+        return Long.toHexString(hash);
     }
 
     @Override

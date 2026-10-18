@@ -17,8 +17,10 @@
 package stroom.dashboard.client;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
+import stroom.dashboard.client.event.ApplyDashboardChangeEvent;
 import stroom.dashboard.client.event.ReopenResultStoreEvent;
 import stroom.dashboard.client.main.DashboardSuperPresenter;
 import stroom.dashboard.shared.DashboardDoc;
@@ -29,6 +31,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.hyperlink.client.ShowDashboardEvent;
@@ -47,6 +50,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
@@ -75,6 +79,76 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 event -> openParameterisedDashboard(event.getContext(), event.getHref())));
         registerHandler(eventBus.addHandler(ReopenResultStoreEvent.getType(),
                 event -> reopen(event.getResultStoreInfo())));
+        registerHandler(eventBus.addHandler(ApplyDashboardChangeEvent.getType(), this::onApplyDashboardChange));
+    }
+
+    // A change to a dashboard table proposed in the AI chat: whether it can be applied, or applying it.
+    private void onApplyDashboardChange(final ApplyDashboardChangeEvent event) {
+        final DocRef docRef = event.getDashboard();
+        if (docRef == null || !getType().equals(docRef.getType())) {
+            return;
+        }
+        if (ApplyDashboardChangeEvent.Operation.CHECK == event.getOperation()) {
+            DashboardSuperPresenter open = null;
+            for (final DocumentTabData tabData : getOpenDocuments(List.of(docRef))) {
+                if (open == null && tabData instanceof final DashboardSuperPresenter dashboard) {
+                    open = dashboard;
+                }
+            }
+            event.setHandled(open != null, open != null && !open.isReadOnly());
+            return;
+        }
+        event.setHandled(true, true);
+        // Opens it if it isn't open, or shows it if it is.
+        open(docRef, true, false, false, null, presenter -> {
+            if (presenter instanceof final DashboardSuperPresenter dashboard) {
+                applyDashboardChange(dashboard, event);
+            } else {
+                event.notApplied("The dashboard couldn't be opened.");
+            }
+        }, false, new DefaultTaskMonitorFactory(this));
+    }
+
+    private void applyDashboardChange(final DashboardSuperPresenter dashboard, final ApplyDashboardChangeEvent event) {
+        final ApplyDashboardChangeEvent.Decision decision = ApplyDashboardChangeEvent.decide(!dashboard.isReadOnly(),
+                dashboard.getDashboardPresenter().aiDashboardHash(), event.getSnapshotHash(), dashboard.isDirty());
+        switch (decision) {
+            case NOT_EDITABLE -> event.notApplied(ApplyDashboardChangeEvent.NOT_EDITABLE);
+            case CHANGED -> event.notApplied(ApplyDashboardChangeEvent.CHANGED);
+            case SAVE_FIRST -> ConfirmEvent.fire(this, ApplyDashboardChangeEvent.SAVE_FIRST, ok -> {
+                if (!ok) {
+                    event.notApplied(null);
+                    return;
+                }
+                // The dashboard's own Save, with its own checks and logging.
+                save(dashboard, () -> {
+                    if (dashboard.isDirty()) {
+                        event.notApplied(ApplyDashboardChangeEvent.NOT_SAVED);
+                    } else {
+                        approveAndApply(dashboard, event);
+                    }
+                });
+            });
+            default -> approveAndApply(dashboard, event);
+        }
+    }
+
+    // Applies the change once the chat's approver (the server, which checks Edit and records it) says it may.
+    // Nothing is saved.
+    private void approveAndApply(final DashboardSuperPresenter dashboard, final ApplyDashboardChangeEvent event) {
+        event.getApprover().approve(problem -> {
+            if (problem != null) {
+                event.notApplied(problem);
+                return;
+            }
+            final String failed = dashboard.getDashboardPresenter().applyAiTableChanges(event.getComponentId(),
+                    event.getComponentName(), event.getChanges());
+            if (failed != null) {
+                event.notApplied(failed);
+            } else {
+                event.applied();
+            }
+        });
     }
 
     @Override

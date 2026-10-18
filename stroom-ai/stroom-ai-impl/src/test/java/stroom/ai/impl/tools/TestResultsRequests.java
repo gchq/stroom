@@ -20,11 +20,15 @@ import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.QueryTableContext;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
+import stroom.query.api.Column;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.Param;
 import stroom.query.api.QueryKey;
+import stroom.query.api.SpecialColumns;
+import stroom.query.api.TableSettings;
 import stroom.query.api.TimeRange;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QuerySearchRequest;
@@ -110,6 +114,54 @@ class TestResultsRequests {
                 .query(query)
                 .queryKey(queryKey)
                 .queryContext(QueryContext.builder().timeRange(timeRange).build())
+                .build());
+    }
+
+    @Test
+    void aDashboardTablesGroupingAndEventIdsAreRead() {
+        final Column grouped = Column.builder().id("c1").name("User").expression("${User}").group(0).build();
+        final Column count = Column.builder().id("c2").name("Count").expression("count()").build();
+
+        assertThat(ResultsRequests.isGrouped(table(List.of(grouped, count)))).isTrue();
+        assertThat(ResultsRequests.isGrouped(table(List.of(count)))).isFalse();
+        assertThat(ResultsRequests.hasEventIdColumns(table(List.of(count)))).isFalse();
+        assertThat(ResultsRequests.hasEventIdColumns(table(List.of(count, SpecialColumns.RESERVED_STREAM_ID_COLUMN,
+                SpecialColumns.RESERVED_EVENT_ID_COLUMN)))).isTrue();
+        // A query's table isn't a dashboard's.
+        assertThat(ResultsRequests.isGrouped(new QueryTableContext("q", null, QuerySearchRequest.builder().build())))
+                .isFalse();
+        assertThat(ResultsRequests.isGrouped(null)).isFalse();
+    }
+
+    @Test
+    void aTableIsSearchedAgainUngroupedWithItsEventIds() {
+        final Column grouped = Column.builder().id("c1").name("User").expression("${User}").group(0).build();
+        final DashboardTableContext table = table(List.of(grouped));
+
+        final DashboardTableContext events = ResultsRequests.ungroupedWithEventIds(table);
+
+        assertThat(events.getSearchRequest().getQueryKey()).isNull();
+        assertThat(ResultsRequests.isGrouped(events)).isFalse();
+        assertThat(ResultsRequests.hasEventIdColumns(events)).isTrue();
+        // What it searches is unchanged, so its snapshot is told stale as the table's would be.
+        assertThat(ResultsRequests.hash(events)).isEqualTo(ResultsRequests.hash(table));
+        // Ids the table already keeps aren't added twice.
+        final DashboardTableContext again = ResultsRequests.ungroupedWithEventIds(events);
+        assertThat(((TableResultRequest) again.getSearchRequest().getComponentResultRequests().getFirst())
+                .getTableSettings().getColumns()).hasSize(3);
+    }
+
+    private static DashboardTableContext table(final List<Column> columns) {
+        return new DashboardTableContext("Dashboard 'D'", "node1", DashboardSearchRequest.builder()
+                .queryKey(new QueryKey("k"))
+                .search(Search.builder()
+                        .dataSourceRef(new DocRef("Index", "i", "Index"))
+                        .expression(ExpressionOperator.builder().build())
+                        .build())
+                .componentResultRequests(List.of(TableResultRequest.builder()
+                        .componentId("table-1")
+                        .tableSettings(TableSettings.builder().columns(columns).build())
+                        .build()))
                 .build());
     }
 }

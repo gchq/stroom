@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.UserActionRecord.CodeChange;
+import stroom.ai.impl.UserActionRecord.DashboardChange;
 import stroom.ai.impl.UserActionRecord.Status;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
@@ -46,8 +47,12 @@ public class UserActionService {
 
     /// What a proposed code change's card says once it has been applied.
     static final String APPLIED = "Applied, not saved";
+    /// What a proposed dashboard change's card says once it has been applied.
+    static final String APPLIED_DASHBOARD = "Applied, not saved. Save the dashboard to keep it, or close it without "
+                                            + "saving to go back.";
     static final String APPLY_COMMAND = "Apply proposed code change";
     static final String UNDO_COMMAND = "Undo applied code change";
+    static final String APPLY_DASHBOARD_COMMAND = "Apply proposed dashboard change";
     private static final String NOT_IN_CHAT = "This action is not in the chat.";
 
     private final AiService aiService;
@@ -103,6 +108,7 @@ public class UserActionService {
                 changeFilter(chatId, message, result, action);
             case UserActions.CREATE_QUERY -> createQuery(chatId, action);
             case UserActions.APPLY_CODE_CHANGE -> applyCodeChange(chatId, message, result, action);
+            case UserActions.APPLY_DASHBOARD_CHANGE -> applyDashboardChange(chatId, message, result, action);
             // Only shown, for the cluster admin to run. Stroom never runs these.
             default -> new AiUserActionResult(false, "Stroom does not run this action.", null);
         };
@@ -206,6 +212,44 @@ public class UserActionService {
                                                                      + "proposed change to " + target + " ("
                                                                      + lineCounts(action) + "). It is not saved.");
         return new AiUserActionResult(true, APPLIED, null);
+    }
+
+    /// Lets the browser apply a proposed change to a dashboard table, unsaved, if the user may edit the dashboard
+    /// (as changing it by hand needs). The browser has already checked the dashboard hasn't changed since the
+    /// proposal and, if it had unsaved changes, saved them with the dashboard's own Save (logged by that Save).
+    /// The button is claimed first, so it applies once. Nothing is saved here or after.
+    private AiUserActionResult applyDashboardChange(final int chatId,
+                                                    final AiChatMessage message,
+                                                    final ToolResultRecord result,
+                                                    final UserActionRecord action) {
+        final DashboardChange change = action.dashboardChange();
+        final String target = change == null
+                ? describeDoc(action)
+                : "table '" + change.component() + "' on " + describeDoc(action);
+        final String operations = change == null
+                ? ""
+                : String.join("; ", NullSafe.list(change.changes()));
+        if (action.doc() == null || change == null || lookup.find(action.doc()).isEmpty()) {
+            final String problem = "The dashboard no longer exists, or you cannot see it.";
+            auditLog.processed(chatId, action.doc(), APPLY_DASHBOARD_COMMAND, target, problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        if (!lookup.canEdit(action.doc())) {
+            final String problem = "You don't have permission to edit " + describeDoc(action)
+                                   + ", so the change can't be applied.";
+            auditLog.processed(chatId, action.doc(), APPLY_DASHBOARD_COMMAND, target, problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        if (update(message, result, action.withStatus(Status.DONE, APPLIED_DASHBOARD)) == null) {
+            return new AiUserActionResult(false, "This has already been done.", null);
+        }
+        auditLog.processed(chatId, action.doc(), APPLY_DASHBOARD_COMMAND, target + ": " + operations,
+                "Applied a proposed change, not saved: " + operations, true);
+        // So the model knows on its next turn (or now, if it is working).
+        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I applied the "
+                                                                     + "proposed change to " + target + " ("
+                                                                     + operations + "). It is not saved.");
+        return new AiUserActionResult(true, APPLIED_DASHBOARD, null);
     }
 
     private static String describeDoc(final UserActionRecord action) {

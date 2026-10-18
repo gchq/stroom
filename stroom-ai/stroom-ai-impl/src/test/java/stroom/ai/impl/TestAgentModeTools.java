@@ -28,12 +28,18 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.dashboard.impl.DashboardService;
+import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.Store;
 import stroom.dictionary.api.WordListProvider;
+import stroom.docstore.api.ContentIndex;
+import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.explorer.api.ExplorerNodeService;
+import stroom.meta.api.MetaService;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.impl.QueryService;
 import stroom.resource.api.ResourceStore;
@@ -44,6 +50,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.multibindings.Multibinder;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -108,7 +115,13 @@ class TestAgentModeTools {
             // Only offers the user a button: the user creates the query.
             Map.entry("propose_query", false),
             // Only offers the user a button: the user applies the change to the editor, unsaved.
-            Map.entry("propose_code_change", false)));
+            Map.entry("propose_code_change", false),
+            Map.entry("stream_meta", false),
+            Map.entry("document_links", false),
+            Map.entry("find_in_content", false),
+            Map.entry("xslt_lookups", false),
+            // Only offers the user a button: the user applies the change to the dashboard, unsaved.
+            Map.entry("propose_dashboard_change", false)));
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
@@ -136,6 +149,12 @@ class TestAgentModeTools {
             bind(DashboardService.class).toInstance(Mockito.mock(DashboardService.class));
             bind(TableAnalysisConfig.class).toInstance(new TableAnalysisConfig());
             MapBinder.newMapBinder(binder(), DocumentTypeName.class, DocumentActionHandler.class);
+            bind(MetaService.class).toInstance(Mockito.mock(MetaService.class));
+            bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
+            bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
+            bind(ContentIndex.class).toInstance(Mockito.mock(ContentIndex.class));
+            bind(StroomEventLoggingService.class).toInstance(Mockito.mock(StroomEventLoggingService.class));
+            Multibinder.newSetBinder(binder(), ContentIndexable.class);
         }
     }).getInstance(BuiltInTools.class);
 

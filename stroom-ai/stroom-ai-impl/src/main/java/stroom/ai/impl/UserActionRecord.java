@@ -19,6 +19,7 @@ package stroom.ai.impl;
 import stroom.docref.DocRef;
 
 import java.util.List;
+import java.util.Map;
 
 /// A step that is the user's, offered as a button on a tool call's card, as kept (within its
 /// [ToolResultRecord]) once Stroom has checked it. Everything shown is written by Stroom, from its own state;
@@ -40,6 +41,8 @@ import java.util.List;
 /// @param name       The name suggested for a document to create (e.g. a query), or null.
 /// @param codeChange For a proposed code change (apply_code_change), what it changes and the code it was proposed
 ///                   against, or null. The proposed code is in `request` and the element's document in `doc`.
+/// @param dashboardChange For a proposed change to a dashboard table (apply_dashboard_change), what it changes,
+///                        or null. The dashboard is in `doc`.
 public record UserActionRecord(String id,
                                String action,
                                String label,
@@ -53,7 +56,27 @@ public record UserActionRecord(String id,
                                Status status,
                                String outcome,
                                String name,
-                               CodeChange codeChange) {
+                               CodeChange codeChange,
+                               DashboardChange dashboardChange) {
+
+    /// An action that is not a proposed dashboard change.
+    public UserActionRecord(final String id,
+                            final String action,
+                            final String label,
+                            final String details,
+                            final String warning,
+                            final Integer filterId,
+                            final DocRef doc,
+                            final String request,
+                            final List<String> after,
+                            final long expiresMs,
+                            final Status status,
+                            final String outcome,
+                            final String name,
+                            final CodeChange codeChange) {
+        this(id, action, label, details, warning, filterId, doc, request, after, expiresMs, status, outcome, name,
+                codeChange, null);
+    }
 
     /// An action that creates nothing, so suggests no name.
     public UserActionRecord(final String id,
@@ -94,7 +117,7 @@ public record UserActionRecord(String id,
     /// @return This action with the status and outcome changed.
     public UserActionRecord withStatus(final Status status, final String outcome) {
         return new UserActionRecord(id, action, label, details, warning, filterId, doc, request, after, expiresMs,
-                status, outcome, name, codeChange);
+                status, outcome, name, codeChange, dashboardChange);
     }
 
     /// A change to a stepping element's code that the agent proposed, which the user can review and apply to the
@@ -115,6 +138,26 @@ public record UserActionRecord(String id,
                              String snapshotHash,
                              int added,
                              int removed) {
+
+    }
+
+    /// A change to a table on a dashboard that the agent proposed, which the user can apply to the open dashboard
+    /// with a button, unsaved.
+    ///
+    /// @param component    The table, by its name as the user sees it.
+    /// @param componentId  The table's component id.
+    /// @param snapshotHash The hash of the dashboard's settings as the user had them when it was proposed
+    ///                     ([stroom.ai.shared.AiTabSnapshotPart#hashText(String)] of its dashboard part). The
+    ///                     change is only applied while the dashboard still has them.
+    /// @param editable     True if the user could edit the dashboard when it was proposed.
+    /// @param operations   The operations, as the browser applies them.
+    /// @param changes      Each operation in plain language, written by Stroom.
+    public record DashboardChange(String component,
+                                  String componentId,
+                                  String snapshotHash,
+                                  boolean editable,
+                                  List<Map<String, Object>> operations,
+                                  List<String> changes) {
 
     }
 
