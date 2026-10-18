@@ -72,6 +72,17 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
     /// Closes the list of chats, going back to the chat being shown.
     void onCloseChatList();
 
+    /// Shows the overview of the chat in place of the conversation, or the conversation again.
+    void onToggleOverview();
+
+    /// Closes the overview of the chat, going back to the conversation.
+    void onCloseOverview();
+
+    /// Goes to a step of the overview in the conversation, closing the overview.
+    ///
+    /// @param messageId The id of the step's message.
+    void onOverviewStep(int messageId);
+
     /**
      * Scrolls the conversation to the latest message, and follows new messages from then on.
      */

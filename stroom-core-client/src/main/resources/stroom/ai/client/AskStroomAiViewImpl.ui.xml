@@ -7,6 +7,9 @@
         <g:FlowPanel styleName="dock-min askStroomAiViewImpl-top">
             <g:FlowPanel styleName="dock-max askStroomAiViewImpl-title">
                 <g:Label ui:field="chatTitle" text="Agent"/>
+                <!-- Beside the title, as it is about the chat shown. -->
+                <p:InlineSvgButton ui:field="overviewToggle"
+                                   addStyleNames="allow-focus navigation-menu-button askStroomAiViewImpl-overviewToggle"/>
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-min askStroomAiViewImpl-buttons">
                 <p:Button ui:field="newChat" text="New chat"
@@ -24,6 +27,17 @@
                 <g:HTML ui:field="chatListActions" styleName="ai-chat-list-actions"/>
             </g:FlowPanel>
             <g:HTML ui:field="chatListItems" styleName="ai-chat-list-items"/>
+        </g:FlowPanel>
+        <g:FlowPanel ui:field="overview" styleName="dock-max askStroomAiViewImpl-overview" visible="false">
+            <g:FlowPanel styleName="ai-overview-toolbar">
+                <g:Button ui:field="overviewZoomOut" styleName="allow-focus ai-overview-zoom" text="−"
+                          title="Zoom out (Ctrl+wheel)"/>
+                <g:Button ui:field="overviewZoomIn" styleName="allow-focus ai-overview-zoom" text="+"
+                          title="Zoom in (Ctrl+wheel)"/>
+                <g:Button ui:field="overviewFit" styleName="allow-focus ai-overview-zoom" text="Fit"
+                          title="Fit the overview's width to the panel"/>
+            </g:FlowPanel>
+            <g:HTML ui:field="overviewContent" styleName="ai-overview-content"/>
         </g:FlowPanel>
         <g:FlowPanel ui:field="jumpToLatestBar" styleName="dock-min askStroomAiViewImpl-jumpToLatestBar">
             <g:Button ui:field="jumpToLatest" styleName="allow-focus askStroomAiViewImpl-jumpToLatest"
