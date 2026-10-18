@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -316,5 +317,31 @@ class TestLineDiff {
             range.addAll(replacement.getNewLines());
         }
         return lines;
+    }
+
+    @Test
+    void someChangesCanBeLeftOut() {
+        final String oldText = "<a>\n  <b>Test</b>\n</a>\n";
+        final String newText = "<a>\n  <b>Development</b>\n</a>";
+        final LineDiffResult diff = LineDiff.diff(oldText, newText);
+        assertThat(diff.getChangedBlocks()).hasSize(2);
+
+        // All of them, none of them, and all but the removal of the final line break.
+        assertThat(diff.withChangesExcept(Set.of(), "\n")).isEqualTo(newText);
+        assertThat(diff.withChangesExcept(Set.of(0, 1), "\n")).isEqualTo(oldText);
+        assertThat(diff.withChangesExcept(Set.of(1), "\n")).isEqualTo("<a>\n  <b>Development</b>\n</a>\n");
+        // Indexes that aren't changes are ignored.
+        assertThat(diff.withChangesExcept(Set.of(7), "\n")).isEqualTo(newText);
+    }
+
+    @Test
+    void theLineSeparatorOfATextIsFound() {
+        assertThat(LineDiff.lineSeparatorOf("a\r\nb")).isEqualTo("\r\n");
+        assertThat(LineDiff.lineSeparatorOf("a\rb")).isEqualTo("\r");
+        assertThat(LineDiff.lineSeparatorOf("a\nb")).isEqualTo("\n");
+        assertThat(LineDiff.lineSeparatorOf("a")).isEqualTo("\n");
+        assertThat(LineDiff.lineSeparatorOf(null)).isEqualTo("\n");
+        // Kept when only some changes are made.
+        assertThat(LineDiff.diff("a\r\nb", "a\r\nc").withChangesExcept(Set.of(), "\r\n")).isEqualTo("a\r\nc");
     }
 }

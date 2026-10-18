@@ -309,8 +309,11 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     // Logged by UserActionService, as coming from a suggestion in the chat.
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public AiUserActionResult doUserAction(final int chatId, final int messageId, final String actionId) {
-        return userActionServiceProvider.get().doUserAction(chatId, messageId, actionId);
+    public AiUserActionResult doUserAction(final int chatId,
+                                           final int messageId,
+                                           final String actionId,
+                                           final String rejectedChanges) {
+        return userActionServiceProvider.get().doUserAction(chatId, messageId, actionId, rejectedChanges);
     }
 
     // Logged by UserActionService, as undoing a change applied from a suggestion in the chat.

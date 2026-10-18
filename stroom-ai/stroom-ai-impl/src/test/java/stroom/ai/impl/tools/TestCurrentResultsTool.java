@@ -82,6 +82,7 @@ class TestCurrentResultsTool {
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
+    private final AgentSearches agentSearches = Mockito.mock(AgentSearches.class);
     private final DashboardService dashboardService = Mockito.mock(DashboardService.class);
     private TableAnalysisConfig tableAnalysisConfig = new TableAnalysisConfig();
     private FakeTabWorkspace files;
@@ -95,7 +96,7 @@ class TestCurrentResultsTool {
         files = new FakeTabWorkspace(tempDir);
         tool = new CurrentResultsTool(files.workspace(), tabSnapshots, tableDownloader, dataSourceAccess,
                 () -> queryService, () -> dashboardService, () -> tableAnalysisConfig,
-                auditLog);
+                auditLog, agentSearches);
         Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.of(VIEW));
         Mockito.when(dataSourceAccess.canUse(VIEW)).thenReturn(true);
         Mockito.when(queryService.search(Mockito.any())).thenAnswer(invocation -> {
@@ -254,6 +255,8 @@ class TestCurrentResultsTool {
         run("{}");
         Mockito.verify(queryService, Mockito.never()).search(Mockito.argThat(request ->
                 request.getQueryKey() == null));
+        // The tab's own search is never stopped.
+        Mockito.verifyNoInteractions(agentSearches);
 
         final String result = run("{\"refresh\":true}");
 
@@ -267,6 +270,20 @@ class TestCurrentResultsTool {
         Mockito.verify(tableDownloader, Mockito.times(2)).download(downloaded.capture(), Mockito.anyLong(),
                 Mockito.any());
         assertThat(ResultsRequests.queryKey(downloaded.getAllValues().getLast())).isEqualTo(NEW_KEY);
+        // The search it ran is stopped once its rows are taken, and the tab's is left alone.
+        Mockito.verify(agentSearches).terminate(NEW_KEY);
+        Mockito.verify(agentSearches, Mockito.never()).terminate(TAB_KEY);
+    }
+
+    @Test
+    void aSearchRunAgainIsStoppedWhenItsRowsCantBeTaken() {
+        tab(RAN, RAN + ", Host");
+        Mockito.doThrow(new IllegalStateException("gone")).when(tableDownloader)
+                .download(Mockito.any(), Mockito.anyLong(), Mockito.any());
+
+        assertThat(run("{\"refresh\":true}")).contains("The results couldn't be read");
+
+        Mockito.verify(agentSearches).terminate(NEW_KEY);
     }
 
     @Test

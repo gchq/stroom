@@ -85,6 +85,30 @@ public final class MarkdownTables {
         return true;
     }
 
+    /// @param file A file holding one Markdown table: a header row, a separator row, then the rows.
+    /// @return How many rows of data it holds, not counting the header and separator rows.
+    /// @throws UncheckedIOException if the file can't be read.
+    public static long countRows(final Path file) {
+        try (final BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            long rows = 0;
+            boolean header = true;
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) {
+                    continue;
+                }
+                if (header) {
+                    header = false;
+                } else if (rows > 0 || !isSeparatorRow(line)) {
+                    rows++;
+                }
+            }
+            return rows;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     /// Removes the named columns from a Markdown table file if they are empty in every row, e.g. the stream and
     /// event ids of a table from a data source that has none.
     ///

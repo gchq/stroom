@@ -29,12 +29,17 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.diff.DiffBlock;
+import stroom.util.shared.diff.LineDiff;
+import stroom.util.shared.diff.LineDiffResult;
 
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 /// Does what a button that a tool's result offered does, when the user clicks it (see [UserActions]).
 ///
@@ -54,6 +59,9 @@ public class UserActionService {
     static final String UNDO_COMMAND = "Undo applied code change";
     static final String APPLY_DASHBOARD_COMMAND = "Apply proposed dashboard change";
     private static final String NOT_IN_CHAT = "This action is not in the chat.";
+
+    /// The most lines of each rejected part of a code change described to the model, on each side.
+    static final int MAX_DESCRIBED_LINES = 10;
 
     private final AiService aiService;
     private final AiDao aiDao;
@@ -84,6 +92,22 @@ public class UserActionService {
     /// @param actionId  The action's id.
     /// @return What happened.
     public AiUserActionResult doUserAction(final int chatId, final int messageId, final String actionId) {
+        return doUserAction(chatId, messageId, actionId, null);
+    }
+
+    /// Does a user action, if it can still be done, leaving out the parts of a proposed code change the user
+    /// rejected in its review.
+    ///
+    /// @param chatId          The chat, which the user must own.
+    /// @param messageId       The tool result message the action is in.
+    /// @param actionId        The action's id.
+    /// @param rejectedChanges For a proposed code change, the parts the user rejected, by their index among the
+    ///                        change's changed blocks, comma separated; null or blank for none.
+    /// @return What happened.
+    public AiUserActionResult doUserAction(final int chatId,
+                                           final int messageId,
+                                           final String actionId,
+                                           final String rejectedChanges) {
         aiService.verifyOwnership(chatId);
         final AiChatMessage message = findMessage(chatId, messageId);
         final ToolResultRecord result = message == null
@@ -101,13 +125,22 @@ public class UserActionService {
         if (System.currentTimeMillis() > action.expiresMs()) {
             return new AiUserActionResult(false, "This button has expired. Ask again for an up-to-date one.", null);
         }
+        final Set<Integer> rejected;
+        try {
+            rejected = parseRejected(rejectedChanges);
+        } catch (final NumberFormatException e) {
+            return new AiUserActionResult(false, "The rejected parts of the change weren't understood.", null);
+        }
+        if (!rejected.isEmpty() && !UserActions.APPLY_CODE_CHANGE.equals(action.action())) {
+            return new AiUserActionResult(false, "Only a proposed code change can be applied in part.", null);
+        }
 
         return switch (action.action()) {
             case UserActions.OPEN_DOCUMENT -> openDocument(chatId, action);
             case UserActions.ENABLE_PROCESSOR_FILTER, UserActions.DISABLE_PROCESSOR_FILTER ->
                 changeFilter(chatId, message, result, action);
             case UserActions.CREATE_QUERY -> createQuery(chatId, action);
-            case UserActions.APPLY_CODE_CHANGE -> applyCodeChange(chatId, message, result, action);
+            case UserActions.APPLY_CODE_CHANGE -> applyCodeChange(chatId, message, result, action, rejected);
             case UserActions.APPLY_DASHBOARD_CHANGE -> applyDashboardChange(chatId, message, result, action);
             // Only shown, for the cluster admin to run. Stroom never runs these.
             default -> new AiUserActionResult(false, "Stroom does not run this action.", null);
@@ -189,7 +222,8 @@ public class UserActionService {
     private AiUserActionResult applyCodeChange(final int chatId,
                                                final AiChatMessage message,
                                                final ToolResultRecord result,
-                                               final UserActionRecord action) {
+                                               final UserActionRecord action,
+                                               final Set<Integer> rejected) {
         final String target = describeTarget(action);
         if (action.doc() == null || action.codeChange() == null || lookup.find(action.doc()).isEmpty()) {
             final String problem = "The document no longer exists, or you cannot see it.";
@@ -202,16 +236,104 @@ public class UserActionService {
             auditLog.processed(chatId, action.doc(), APPLY_COMMAND, target, problem, false);
             return new AiUserActionResult(false, problem, null);
         }
-        if (update(message, result, action.withStatus(Status.DONE, APPLIED)) == null) {
+        final LineDiffResult proposed = LineDiff.diff(action.codeChange().baseCode(), action.request());
+        final int parts = proposed.getChangedBlocks().size();
+        if (rejected.stream().anyMatch(index -> index < 0 || index >= parts)) {
+            return new AiUserActionResult(false, "The rejected parts aren't parts of this change.", null);
+        }
+        if (!rejected.isEmpty() && rejected.size() >= parts) {
+            return new AiUserActionResult(false, "Every part of the change was rejected, so there is nothing to "
+                                                 + "apply.", null);
+        }
+        if (rejected.isEmpty()) {
+            if (update(message, result, action.withStatus(Status.DONE, APPLIED)) == null) {
+                return new AiUserActionResult(false, "This has already been done.", null);
+            }
+            auditLog.processed(chatId, action.doc(), APPLY_COMMAND, target,
+                    "Applied a proposed change, not saved: " + lineCounts(action), true);
+            // So the model knows on its next turn (or now, if it is working).
+            aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I applied the "
+                                                                         + "proposed change to " + target + " ("
+                                                                         + lineCounts(action) + "). It is not "
+                                                                         + "saved.");
+            return new AiUserActionResult(true, APPLIED, null);
+        }
+
+        // Worked out here, as the browser does, so what is recorded is what the user applied.
+        final String baseCode = action.codeChange().baseCode();
+        final LineDiffResult applied = LineDiff.diff(baseCode,
+                proposed.withChangesExcept(rejected, LineDiff.lineSeparatorOf(baseCode)));
+        final String counts = "+" + applied.getAddedLineCount() + " −" + applied.getRemovedLineCount()
+                              + " lines, " + (parts - rejected.size()) + " of " + parts + " parts";
+        final String outcome = APPLIED + " (" + (parts - rejected.size()) + " of " + parts + " parts)";
+        if (update(message, result, action.withStatus(Status.DONE, outcome)) == null) {
             return new AiUserActionResult(false, "This has already been done.", null);
         }
         auditLog.processed(chatId, action.doc(), APPLY_COMMAND, target,
-                "Applied a proposed change, not saved: " + lineCounts(action), true);
-        // So the model knows on its next turn (or now, if it is working).
-        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I applied the "
-                                                                     + "proposed change to " + target + " ("
-                                                                     + lineCounts(action) + "). It is not saved.");
-        return new AiUserActionResult(true, APPLIED, null);
+                "Applied part of a proposed change, not saved: " + counts, true);
+        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I applied part of "
+                                                                     + "the proposed change to " + target + " ("
+                                                                     + counts + "). It is not saved. I rejected "
+                                                                     + "these parts, so they weren't applied:\n"
+                                                                     + describeParts(proposed, rejected));
+        return new AiUserActionResult(true, outcome, null);
+    }
+
+    /// @param rejectedChanges The rejected parts, comma separated, or null.
+    /// @return Them, by index.
+    /// @throws NumberFormatException if one isn't a number.
+    static Set<Integer> parseRejected(final String rejectedChanges) {
+        final Set<Integer> rejected = new TreeSet<>();
+        if (NullSafe.isBlankString(rejectedChanges)) {
+            return rejected;
+        }
+        for (final String part : rejectedChanges.split(",")) {
+            if (!part.isBlank()) {
+                rejected.add(Integer.parseInt(part.strip()));
+            }
+        }
+        return rejected;
+    }
+
+    /// @return Each rejected part of a change, as the lines it would have removed and added, for the model.
+    static String describeParts(final LineDiffResult diff, final Set<Integer> rejected) {
+        final StringBuilder sb = new StringBuilder();
+        final List<DiffBlock> blocks = diff.getChangedBlocks();
+        for (final int index : rejected) {
+            final DiffBlock block = blocks.get(index);
+            sb.append("- Part ").append(index + 1).append(", at line ").append(block.getOldFrom() + 1);
+            if (isFinalLineBreak(diff, block)) {
+                sb.append(": the ").append(block.getOldCount() > 0
+                        ? "removal"
+                        : "addition").append(" of the final line break\n");
+                continue;
+            }
+            sb.append(":\n");
+            appendLines(sb, "-", diff.getOldLines().subList(block.getOldFrom(), block.getOldTo()));
+            appendLines(sb, "+", diff.getNewLines().subList(block.getNewFrom(), block.getNewTo()));
+        }
+        return sb.toString().stripTrailing();
+    }
+
+    // A part that only removes or adds the empty last line: the text's final line break.
+    private static boolean isFinalLineBreak(final LineDiffResult diff, final DiffBlock block) {
+        if (block.getOldCount() == 1 && block.getNewCount() == 0) {
+            return block.getOldTo() == diff.getOldLines().size() && diff.getOldLines().getLast().isEmpty();
+        }
+        if (block.getOldCount() == 0 && block.getNewCount() == 1) {
+            return block.getNewTo() == diff.getNewLines().size() && diff.getNewLines().getLast().isEmpty();
+        }
+        return false;
+    }
+
+    private static void appendLines(final StringBuilder sb, final String prefix, final List<String> lines) {
+        lines.stream()
+                .limit(MAX_DESCRIBED_LINES)
+                .forEach(line -> sb.append("  ").append(prefix).append(' ').append(line).append('\n'));
+        if (lines.size() > MAX_DESCRIBED_LINES) {
+            sb.append("  ").append(prefix).append(" … and ").append(lines.size() - MAX_DESCRIBED_LINES)
+                    .append(" more line(s)\n");
+        }
     }
 
     /// Lets the browser apply a proposed change to a dashboard table, unsaved, if the user may edit the dashboard

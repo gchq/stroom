@@ -43,6 +43,11 @@ public final class AiTabSnapshots {
                                            + "shared; the saved settings can be read with document_info and "
                                            + "read_document.";
 
+    /// What a folder's tab says: what is in it is listed with a tool, not shared.
+    public static final String FOLDER_NOTE = "This is a folder: list what is in it with folder_contents and its "
+                                             + "uuid (its Data tab is 'streams', its Processors tab "
+                                             + "'processors', and its Active Tasks tab 'tasks').";
+
     // Between the fields hashed, so that moving text from one field to the next changes the hash.
     private static final char SEPARATOR = '\u0001';
 
