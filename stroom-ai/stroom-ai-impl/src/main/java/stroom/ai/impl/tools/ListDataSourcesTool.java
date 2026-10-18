@@ -17,6 +17,8 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.AgentInstructions.Ignored;
+import stroom.ai.impl.tools.AgentInstructions.Standing;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.docref.DocRef;
 import stroom.util.shared.NullSafe;
@@ -26,8 +28,13 @@ import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /// `list_data_sources` - the data sources (views, indexes, Elastic and Solr indexes and so on) the user can run
 /// queries on, as the query editor's help lists them, each checked for Use. Logged as a View of each one listed.
@@ -35,10 +42,13 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
 
     static final String NAME = "list_data_sources";
     /// What the model is reminded of when more than one data source is listed.
-    static final String CHOOSE_NOTE = "If more than one of these could hold what the user asked for, ask them which "
-                                      + "to use with ask_user (one option for each) rather than choosing one "
-                                      + "yourself, unless they have already said.";
+    static final String CHOOSE_NOTE = "If more than one of these could hold what the user asked for, read each "
+                                      + "one's documentation with describe_data_source (it says what their fields "
+                                      + "hold, which their names may not), then ask the user which to use with "
+                                      + "ask_user (one option for each, with what each holds) rather than "
+                                      + "choosing one yourself, unless they have already said.";
     static final String FILTER_ARG = "filter";
+    static final String INCLUDE_IGNORED_ARG = "includeIgnored";
     /// The most data sources listed in one call.
     static final int MAX_LISTED = 200;
     /// Documentation is given for each data source only when there are no more than this many.
@@ -47,14 +57,17 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
     static final int DOCUMENTATION_CHARS = 200;
 
     private final DataSourceAccess dataSourceAccess;
+    private final AgentInstructions agentInstructions;
     private final AiAuditLog auditLog;
 
     @Inject
     ListDataSourcesTool(final ChatWorkspace workspace,
                         final DataSourceAccess dataSourceAccess,
+                        final AgentInstructions agentInstructions,
                         final AiAuditLog auditLog) {
         super(workspace);
         this.dataSourceAccess = dataSourceAccess;
+        this.agentInstructions = agentInstructions;
         this.auditLog = auditLog;
     }
 
@@ -66,10 +79,15 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
                              + "Elastic and Solr indexes and so on): name, type and uuid, with a line of their "
                              + "documentation for a short list. Use describe_data_source for a data source's "
                              + "fields before writing a query. If more than one could hold what the user asked "
-                             + "for, ask them which to use with ask_user rather than choosing one yourself.")
+                             + "for, ask them which to use with ask_user rather than choosing one yourself. Data "
+                             + "sources in folders an AGENTS doc says to ignore (e.g. an Archive) are left out, "
+                             + "and the AGENTS docs that apply to those listed are given, e.g. which fields to "
+                             + "query for what.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(FILTER_ARG, "Optional. Only data sources whose name or type contains "
                                                        + "this, ignoring case.")
+                        .addBooleanProperty(INCLUDE_IGNORED_ARG, "Optional. True to list data sources in ignored "
+                                                                 + "folders too, only when the user asks for them.")
                         .build())
                 .build();
     }
@@ -77,15 +95,37 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
     @Override
     String run(final ToolExecutionRequest request, final int chatId) {
         final String filter = NullSafe.get(stringArg(request, FILTER_ARG), text -> text.toLowerCase(Locale.ROOT));
-        final List<DocRef> matching = dataSourceAccess.listUsable().stream()
+        final boolean includeIgnored = booleanArg(request, INCLUDE_IGNORED_ARG, false);
+        final List<DocRef> found = dataSourceAccess.listUsable().stream()
                 .filter(docRef -> filter == null
                                   || NullSafe.string(docRef.getName()).toLowerCase(Locale.ROOT).contains(filter)
                                   || NullSafe.string(docRef.getType()).toLowerCase(Locale.ROOT).contains(filter))
                 .toList();
+        final Standing standing = agentInstructions.load(chatId, "Standing instructions read by the " + NAME
+                                                                 + " tool");
+        final List<DocRef> matching = new ArrayList<>();
+        final Set<String> ignoredBy = new LinkedHashSet<>();
+        int ignored = 0;
+        for (final DocRef docRef : found) {
+            final Optional<Ignored> ignoring = standing.ignoresAny()
+                    ? standing.ignored(agentInstructions.folderOf(docRef))
+                    : Optional.empty();
+            if (ignoring.isPresent() && !includeIgnored) {
+                ignored++;
+                ignoredBy.add(ignoring.get().describe());
+            } else {
+                matching.add(docRef);
+            }
+        }
+        final String ignoredNote = ignored == 0
+                ? ""
+                : "\n" + ignored + " data source(s) in folders an " + AgentInstructions.DOC_NAME + " doc says to "
+                  + "ignore were left out: " + String.join(", ", ignoredBy) + ". Pass " + INCLUDE_IGNORED_ARG
+                  + " only if the user asks for those.";
         if (matching.isEmpty()) {
-            return filter == null
+            return (filter == null
                     ? "There are no data sources you can use."
-                    : "There are no data sources you can use matching '" + filter + "'.";
+                    : "There are no data sources you can use matching '" + filter + "'.") + ignoredNote;
         }
         final List<DocRef> listed = matching.subList(0, Math.min(matching.size(), MAX_LISTED));
         auditLog.documentsViewed(chatId, listed, "Listed by the " + NAME + " tool");
@@ -105,9 +145,13 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
             sb.append("(").append(matching.size() - listed.size())
                     .append(" more not shown. Give a filter to narrow the list.)\n");
         }
+        if (ignored > 0) {
+            sb.append(ignoredNote.strip()).append('\n');
+        }
         if (matching.size() > 1) {
             sb.append(CHOOSE_NOTE).append('\n');
         }
+        sb.append(standing.note(listed.stream().map(agentInstructions::folderOf).collect(Collectors.toSet())));
         return sb.toString().stripTrailing();
     }
 

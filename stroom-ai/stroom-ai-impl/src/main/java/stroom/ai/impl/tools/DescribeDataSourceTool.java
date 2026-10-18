@@ -48,16 +48,22 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
 
     private final DataSourceAccess dataSourceAccess;
     private final Provider<QueryService> queryServiceProvider;
+    private final AgentInstructions agentInstructions;
+    private final DataSourceDocumentation dataSourceDocumentation;
     private final AiAuditLog auditLog;
 
     @Inject
     DescribeDataSourceTool(final ChatWorkspace workspace,
                            final DataSourceAccess dataSourceAccess,
                            final Provider<QueryService> queryServiceProvider,
+                           final AgentInstructions agentInstructions,
+                           final DataSourceDocumentation dataSourceDocumentation,
                            final AiAuditLog auditLog) {
         super(workspace);
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
+        this.agentInstructions = agentInstructions;
+        this.dataSourceDocumentation = dataSourceDocumentation;
         this.auditLog = auditLog;
     }
 
@@ -67,7 +73,11 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
                 .name(NAME)
                 .description("Gives a data source's fields: each field's type, the conditions it supports and "
                              + "whether it can be queried, and the data source's time field. Use it to check the "
-                             + "field names in a StroomQL query (from \"<data source name>\" ...).")
+                             + "field names in a StroomQL query (from \"<data source name>\" ...). Also gives its "
+                             + "documentation, which says what its fields hold when their names don't (e.g. the "
+                             + "field mapping of the pipeline that feeds it): use it to choose a data source and "
+                             + "its fields. The AGENTS docs that apply where the data source is are given too: "
+                             + "follow what they say about its fields, e.g. which field holds the acting user.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(DATA_SOURCE_ARG, "The data source's name or uuid, as list_data_sources "
                                                             + "gives it.")
@@ -121,6 +131,12 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
         if (values.size() >= MAX_FIELDS) {
             sb.append("(Only the first ").append(MAX_FIELDS).append(" fields are given.)\n");
         }
+        // What its fields hold, e.g. that document.description is a tweet's text, from the pipeline that feeds it.
+        sb.append(DataSourceDocumentation.note(dataSourceDocumentation.find(chatId, dataSource,
+                "Documentation read by the " + NAME + " tool")));
+        // E.g. which field holds the acting user, as the people who look after the data source say.
+        sb.append(agentInstructions.load(chatId, "Standing instructions read by the " + NAME + " tool")
+                .note(List.of(agentInstructions.folderOf(dataSource))));
         return sb.toString().stripTrailing();
     }
 

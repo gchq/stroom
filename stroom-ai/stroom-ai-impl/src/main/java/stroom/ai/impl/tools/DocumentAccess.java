@@ -262,4 +262,13 @@ public class DocumentAccess {
     public void logView(final int chatId, final DocRef docRef, final String purpose) {
         auditLog.documentViewed(chatId, docRef, purpose);
     }
+
+    /// Records in the audit log that the user viewed several documents for the chat, as one event.
+    ///
+    /// @param chatId  The chat.
+    /// @param docRefs The documents.
+    /// @param purpose Why, e.g. "Standing instructions read by the list_data_sources tool".
+    public void logViews(final int chatId, final List<DocRef> docRefs, final String purpose) {
+        auditLog.documentsViewed(chatId, docRefs, purpose);
+    }
 }
