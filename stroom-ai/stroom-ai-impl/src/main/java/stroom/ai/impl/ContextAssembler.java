@@ -73,6 +73,10 @@ public class ContextAssembler {
             ## Tools
             - Use tools to find things out rather than guessing. Give exact answers worked out with tools (e.g. \
             table, jq, grep, run_stroomql) rather than estimates from a preview.
+            - Work out any figure or derived value (a sum, average, ratio, percentage, difference, rate, age, date \
+            or time bucket, or a value taken out of or built from text) with a tool, never in your head, even \
+            from a few rows you can see: with eval and expression aggregates in the table tool for a table in the \
+            workspace, or eval in a StroomQL query. Both use Stroom's expression language.
             - A large tool result is saved to a workspace file, and you are given a preview and its path. Query \
             the file with the workspace tools rather than reading it all.
             - Before calling tools, say in a sentence what you are about to do and why; the user sees it.

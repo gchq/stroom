@@ -17,15 +17,19 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.ExpressionException;
+import stroom.ai.impl.workspace.ExpressionFunctions;
 import stroom.ai.impl.workspace.TableEngine;
 import stroom.ai.impl.workspace.TableEngine.Aggregate;
 import stroom.ai.impl.workspace.TableEngine.Condition;
+import stroom.ai.impl.workspace.TableEngine.Eval;
 import stroom.ai.impl.workspace.TableEngine.Format;
 import stroom.ai.impl.workspace.TableEngine.Order;
 import stroom.ai.impl.workspace.TableEngine.Query;
 import stroom.ai.impl.workspace.TableEngine.Result;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.util.concurrent.LazyValue;
 import stroom.util.json.JsonUtil;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -54,6 +58,14 @@ import java.util.Map;
 class TableTool extends AbstractWorkspaceTool {
 
     static final String NAME = "table";
+    static final String HELP_ARG = "help";
+    /// Examples of expressions, in the tool's description (each is checked to work).
+    static final String EXAMPLES = "eval {\"as\": \"rate\", \"expression\": \"round(${bytes} / ${seconds}, 1)\"}, "
+                                   + "{\"as\": \"site\", \"expression\": \"upperCase(substring(${host}, 0, 3))\"}, "
+                                   + "{\"as\": \"hour\", \"expression\": \"formatDate(floorHour(${time}), "
+                                   + "'yyyy-MM-dd HH:00')\"}; aggregates {\"as\": \"error %\", \"expression\": "
+                                   + "\"round(sum(if(${status} = 'ERROR', 1, 0)) / count() * 100, 1)\"}";
+    private static final LazyValue<String> CATALOGUE = LazyValue.initialisedBy(ExpressionFunctions::catalogue);
     static final int PREVIEW_ROWS = 10;
 
     /**
@@ -81,10 +93,16 @@ class TableTool extends AbstractWorkspaceTool {
                 .build();
         final JsonObjectSchema aggregate = JsonObjectSchema.builder()
                 .addEnumProperty("function", List.of("count", "count_distinct", "sum", "min", "max", "avg"),
-                        "What to work out for each group.")
+                        "What to work out for each group, or give expression instead.")
                 .addStringProperty("column", "The column (not needed for count).")
+                .addStringProperty("expression", "An expression with aggregates, worked out for each group, "
+                                                 + "instead of function, e.g. round(sum(${bytes}) / count(), 2).")
                 .addStringProperty("as", "A name for the result column.")
-                .required("function")
+                .build();
+        final JsonObjectSchema eval = JsonObjectSchema.builder()
+                .addStringProperty("as", "The new column's name.")
+                .addStringProperty("expression", "What it is for each row, e.g. ${bytes} / ${duration}.")
+                .required("as", "expression")
                 .build();
         final JsonObjectSchema order = JsonObjectSchema.builder()
                 .addStringProperty("column", "A column of the result.")
@@ -93,15 +111,12 @@ class TableTool extends AbstractWorkspaceTool {
                 .build();
         return ToolSpecification.builder()
                 .name(NAME)
-                .description("Queries a table in the workspace (an attached table in /attachments/, or a .csv or "
-                             + ".tsv file) exactly, in code: where filters rows, then groupBy and aggregates (or "
-                             + "distinct, for each distinct value with its count) summarise them, orderBy sorts "
-                             + "and limit cuts the result. Use mask with distinct or groupBy to count free text "
-                             + "(e.g. messages) as patterns, with numbers, IPs, dates and IDs masked. Use this "
-                             + "for any figures; never count rows by reading them. Give out to write the result "
-                             + "to a CSV file.")
+                .description(description())
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(PATH_ARG, "The table, e.g. /attachments/12.md.")
+                        .addProperty("eval", JsonArraySchema.builder().items(eval)
+                                .description("Columns worked out for each row, first, which the rest can use as "
+                                             + "any other.").build())
                         .addProperty("select", stringArray("The columns to keep (default all)."))
                         .addProperty("where", JsonArraySchema.builder().items(condition)
                                 .description("Conditions every row must meet.").build())
@@ -115,9 +130,34 @@ class TableTool extends AbstractWorkspaceTool {
                                 .description("How to sort the result.").build())
                         .addIntegerProperty("limit", "The most rows to return.")
                         .addStringProperty(OUT_ARG, "A .csv file in /outputs/ to write the result to.")
-                        .required(PATH_ARG)
+                        .addProperty(HELP_ARG, stringArray("Expression functions to describe (what each takes and "
+                                                           + "does), instead of querying a table."))
                         .build())
                 .build();
+    }
+
+    // What the tool does, how to write expressions, and the functions there are, by category. The functions are
+    // Stroom's, so are listed when first asked for.
+    private static String description() {
+        return "Queries a table in the workspace (an attached table in /attachments/, or a .csv or .tsv file) "
+               + "exactly, in code: eval adds columns worked out for each row, where filters rows, then groupBy "
+               + "and aggregates (or distinct, for each distinct value with its count) summarise them, orderBy sorts "
+               + "and limit cuts the result. Use mask with distinct or groupBy to count free text (e.g. messages) "
+               + "as patterns, with numbers, IPs, dates and IDs masked. Use this for any figures; never count rows "
+               + "or work figures out by reading them. Give out to write the result to a CSV file.\n\n"
+               + "Expressions (eval, and aggregates given as expression) are in Stroom's expression language, as in "
+               + "dashboards: ${column} is a column's value, 'text' or \"text\" a string, operators are "
+               + "+ - * / % ^ and = != < <= > >=, and functions are called as name(arguments). The names are "
+               + "Stroom's, not SQL's: the mean is average(), not avg(). A cell that is "
+               + "a number is a number (except one with a leading zero, e.g. 007, which is text); others are "
+               + "text, which date functions read as dates. An empty cell is no value, and a failure (e.g. "
+               + "arithmetic on text) gives ERR: in its cell. In aggregates, min and max take an empty cell as "
+               + "the least value, so filter with not_empty first. For example: "
+               + EXAMPLES + ". An expression in aggregates is worked out over each group, so may use aggregate "
+               + "functions; one in eval is worked out for each row, so may not. Give help with function names for "
+               + "what each takes, before using one you haven't used.\n\nFunctions, by category (one shown as "
+               + "name() takes no arguments: e.g. year() is the start of this year, so a date's year is "
+               + "formatDate(${time}, 'yyyy')):\n" + CATALOGUE.getValueWithLocks();
     }
 
     private static JsonArraySchema stringArray(final String description) {
@@ -126,9 +166,16 @@ class TableTool extends AbstractWorkspaceTool {
 
     @Override
     String run(final ToolExecutionRequest request, final int chatId) {
+        final List<String> help = strings(args(request).get(HELP_ARG), HELP_ARG);
+        if (!help.isEmpty()) {
+            return ExpressionFunctions.help(help);
+        }
         final WorkspacePath path = pathArg(request, PATH_ARG);
         try {
             return query(request, chatId, path);
+        } catch (final ExpressionException e) {
+            // The model fixes its expression from the message; a column's summary wouldn't help.
+            throw e;
         } catch (final WorkspaceException e) {
             return fallBack(request, chatId, path, e);
         }
@@ -184,6 +231,7 @@ class TableTool extends AbstractWorkspaceTool {
         final WorkspacePath out = outArg(request);
         final Map<?, ?> args = args(request);
         final Query query = new Query(
+                evals(args.get("eval")),
                 strings(args.get("select"), "select"),
                 conditions(args.get("where")),
                 strings(args.get("groupBy"), "groupBy"),
@@ -283,10 +331,22 @@ class TableTool extends AbstractWorkspaceTool {
     private static List<Aggregate> aggregates(final Object value) {
         final List<Aggregate> aggregates = new ArrayList<>();
         for (final Map<?, ?> map : maps(value, "aggregates")) {
+            final String expression = string(map.get("expression"));
+            if (expression == null && string(map.get("function")) == null) {
+                throw new WorkspaceException("Give each aggregate a function, or an expression.");
+            }
             aggregates.add(new Aggregate(string(map.get("function")), string(map.get("column")),
-                    string(map.get("as"))));
+                    string(map.get("as")), expression));
         }
         return aggregates;
+    }
+
+    private static List<Eval> evals(final Object value) {
+        final List<Eval> evals = new ArrayList<>();
+        for (final Map<?, ?> map : maps(value, "eval")) {
+            evals.add(new Eval(string(map.get("as")), string(map.get("expression"))));
+        }
+        return evals;
     }
 
     private static List<Order> orders(final Object value) {
