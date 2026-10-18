@@ -86,10 +86,11 @@ class TestAskStroomAIService {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, () -> null, null, null,
                 null, null, null, null, null, runManager, runDao, null, null, contextAssembler, null, compactor, null,
                 toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new, securityContext,
-                () -> null, chatTitler, null,
+                () -> mcpElicitations, chatTitler, null,
                 backgroundTasks);
     }
 
+    private final McpElicitations mcpElicitations = Mockito.mock(McpElicitations.class);
     private final AiAttachmentFileStore attachmentFileStore = Mockito.mock(AiAttachmentFileStore.class);
     private final McpClientCache mcpClientCache = Mockito.mock(McpClientCache.class);
     private final ContextUsageTracker usageTracker = Mockito.mock(ContextUsageTracker.class);
@@ -294,14 +295,19 @@ class TestAskStroomAIService {
     }
 
     @Test
-    void testAskStroomAi_aMessageWhileAToolWaitsForAFormIsKeptForLater() {
+    void testAskStroomAi_aMessageWhileAToolWaitsForAFormPutsTheFormAside() {
+        // Seen: a message sent while a form waited did nothing until the form was answered or expired.
         final AiChatRun waitingForForm = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
                 AiChatRunStopReason.NEEDS_INPUT, 0L, null, false, null);
         Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(waitingForForm));
 
         service().askStroomAi(new AskStroomAiRequest(chat, null, null, "use ACME"));
 
-        Mockito.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, "use ACME");
+        // Kept for the run to read, and the form put aside, so the tool that asked carries on (unanswered) and the
+        // run reads the message next.
+        final InOrder inOrder = Mockito.inOrder(aiService, mcpElicitations);
+        inOrder.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, "use ACME");
+        inOrder.verify(mcpElicitations).supersedePending(1);
         // Nothing is denied, and the run is not carried on, as the tool's thread is still working on it.
         Mockito.verifyNoInteractions(toolApprovalService);
         Mockito.verify(runManager, Mockito.never()).continueRun(Mockito.anyInt(), Mockito.any());
