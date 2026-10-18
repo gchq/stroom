@@ -2729,10 +2729,7 @@ public class AskStroomAiPresenter
      * finishing (with a button to resume it), and takes it away otherwise.
      */
     private void updateRunStatus(final AiChatRun run) {
-        final Element existing = Document.get().getElementById(RUN_STATUS_ID);
-        if (existing != null) {
-            existing.removeFromParent();
-        }
+        removeAllInConversation(RUN_STATUS_ID);
         if (run == null || run.getStatus() == AiChatRunStatus.DONE
             || (run.isActive() && run.getStatus() != AiChatRunStatus.QUEUED)) {
             return;
@@ -3014,7 +3011,7 @@ public class AskStroomAiPresenter
             if (msg.getMessageType() == AiMessageType.TOOL_RESULT) {
                 appendUserActionsCard(markdownContainer, msg, nowMs);
             } else if (msg.getMessageType() == AiMessageType.INTERIM_RESPONSE
-                       && Document.get().getElementById(WORKING_MESSAGE_ID) != null) {
+                       && findInConversation(WORKING_MESSAGE_ID) != null) {
                 // While the agent works, shown once the Working line moves on from it (see updateWorkingMessage).
                 interimShownAsProgress = msg;
                 messageElement.addClassName(SHOWN_AS_PROGRESS_CLASS);
@@ -3790,7 +3787,7 @@ public class AskStroomAiPresenter
     }
 
     private void showLiveAnswer(final Element markdownContainer, final SafeHtml html) {
-        Element live = Document.get().getElementById(LIVE_ANSWER_ID);
+        Element live = findInConversation(LIVE_ANSWER_ID);
         if (live == null) {
             final HtmlBuilder hb = new HtmlBuilder();
             hb.div(wrapper -> {
@@ -3818,7 +3815,7 @@ public class AskStroomAiPresenter
      * the conversation, as messages arrive.
      */
     private void keepProgressInPlace(final Element markdownContainer) {
-        final Element working = Document.get().getElementById(WORKING_MESSAGE_ID);
+        final Element working = findInConversation(WORKING_MESSAGE_ID);
         if (working != null && working.getParentElement() == markdownContainer) {
             final Element group = activityGroups.getLatestUnfinished();
             if (group != null && group.getParentElement() == markdownContainer) {
@@ -3829,32 +3826,49 @@ public class AskStroomAiPresenter
                 markdownContainer.appendChild(working);
             }
         }
-        final Element live = Document.get().getElementById(LIVE_ANSWER_ID);
+        final Element live = findInConversation(LIVE_ANSWER_ID);
         if (live != null && live.getParentElement() == markdownContainer
             && live != markdownContainer.getLastChild()) {
             markdownContainer.appendChild(live);
         }
     }
 
-    private static void removeLiveAnswer() {
-        final Element live = Document.get().getElementById(LIVE_ANSWER_ID);
-        if (live != null) {
-            live.removeFromParent();
-        }
+    private void removeLiveAnswer() {
+        removeAllInConversation(LIVE_ANSWER_ID);
     }
+
+    /// @return The element of the conversation with an id, or null if it has none. Looked for in the conversation
+    /// itself, not the page, which it isn't part of while another Stroom tab is shown: looking in the page then
+    /// found nothing, so a second Working line was added, and one was left behind once the run moved on.
+    private Element findInConversation(final String id) {
+        return firstMatch(getView().getMarkdownContainer().getElement(), "[id=\"" + id + "\"]");
+    }
+
+    /// Takes away the elements of the conversation with an id: all of them, should there be more than one.
+    private void removeAllInConversation(final String id) {
+        removeAllMatches(getView().getMarkdownContainer().getElement(), "[id=\"" + id + "\"]");
+    }
+
+    private static native Element firstMatch(Element root, String selector) /*-{
+        return root.querySelector(selector);
+    }-*/;
+
+    private static native void removeAllMatches(Element root, String selector) /*-{
+        var matches = root.querySelectorAll(selector);
+        for (var i = 0; i < matches.length; i++) {
+            matches[i].parentNode.removeChild(matches[i]);
+        }
+    }-*/;
 
     /**
      * Adds, updates or removes the progress line to match what the server says it is doing.
      */
     private void updateWorkingMessage(final AiChatMessage workingMessage) {
-        final Document doc = Document.get();
-        final Element existing = doc.getElementById(WORKING_MESSAGE_ID);
+        final Element existing = findInConversation(WORKING_MESSAGE_ID);
 
         if (workingMessage == null) {
-            // Nothing is being worked on, so the progress line has served its purpose.
-            if (existing != null) {
-                existing.removeFromParent();
-            }
+            // Nothing is being worked on, so the progress line has served its purpose (any left from before too).
+            removeAllInConversation(WORKING_MESSAGE_ID);
         } else if (existing == null) {
             final HtmlBuilder hb = new HtmlBuilder();
             appendWorkingMessage(hb, workingMessage,
@@ -3862,7 +3876,10 @@ public class AskStroomAiPresenter
             appendToContainer(hb);
             keepProgressInPlace(getView().getMarkdownContainer().getElement());
         } else {
-            final Element text = doc.getElementById(WORKING_TEXT_ID);
+            // Only the one: any other is one left from before.
+            final Element container = getView().getMarkdownContainer().getElement();
+            removeAllMatches(container, "[id=\"" + WORKING_MESSAGE_ID + "\"] ~ [id=\"" + WORKING_MESSAGE_ID + "\"]");
+            final Element text = findInConversation(WORKING_TEXT_ID);
             if (text != null) {
                 text.setInnerText(workingText(workingMessage));
             }
@@ -3907,8 +3924,7 @@ public class AskStroomAiPresenter
             return;
         }
         for (final AiChatAttachment attachment : attachments) {
-            final Document doc = Document.get();
-            final Element statusEl = doc.getElementById("ai-attachment-status-" + attachment.getId());
+            final Element statusEl = findInConversation("ai-attachment-status-" + attachment.getId());
             if (statusEl != null) {
                 statusEl.setInnerHTML(formatAttachmentStatus(attachment));
             }
