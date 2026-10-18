@@ -212,8 +212,54 @@ public class ChatWorkspace {
         }
     }
 
+    /// Saves part of what the user sees in a tab (e.g. a snapshot of its results), in the read-only [Area#TABS]
+    /// area, replacing any file already at the path. The file records the document its content came from, so the
+    /// user's access to it is checked again whenever the file is used.
+    ///
+    /// @param chatId        The chat.
+    /// @param path          Where to save it; must be a file in [Area#TABS].
+    /// @param content       A file holding the content, which is copied.
+    /// @param sourceDocUuid The UUID of the document the content came from.
+    /// @return The file's id.
+    public int writeTabFile(final int chatId,
+                            final WorkspacePath path,
+                            final Path content,
+                            final String sourceDocUuid) {
+        if (!path.isFile() || path.area() != Area.TABS) {
+            throw new WorkspaceException(path + " is not a file in /tabs/.");
+        }
+        return store(chatId, path, content, sourceDocUuid, AiAttachmentType.TAB_SNAPSHOT);
+    }
+
+    /// As [#writeTabFile(int, WorkspacePath, Path, String)], from text.
+    ///
+    /// @return The file's id.
+    public int writeTabFile(final int chatId,
+                            final WorkspacePath path,
+                            final String content,
+                            final String sourceDocUuid) {
+        final Path temp = tempFile();
+        try {
+            Files.writeString(temp, content, StandardCharsets.UTF_8);
+            return writeTabFile(chatId, path, temp, sourceDocUuid);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        } finally {
+            deleteQuietly(temp);
+        }
+    }
+
     // Stores a file at a path already checked, within the limits.
     private int store(final int chatId, final WorkspacePath path, final Path content, final String sourceDocUuid) {
+        return store(chatId, path, content, sourceDocUuid, AiAttachmentType.WORKSPACE_FILE);
+    }
+
+    // Stores a file of a type at a path already checked, within the limits.
+    private int store(final int chatId,
+                      final WorkspacePath path,
+                      final Path content,
+                      final String sourceDocUuid,
+                      final AiAttachmentType type) {
         final long size;
         try {
             size = Files.size(content);
@@ -227,8 +273,7 @@ public class ChatWorkspace {
             LOGGER.debug(() -> "Replaced " + path + " in chatId=" + chatId);
             return existing.get();
         }
-        final int fileId = workspaceStore.createFile(chatId, AiAttachmentType.WORKSPACE_FILE, path.path(), null,
-                sourceDocUuid, content);
+        final int fileId = workspaceStore.createFile(chatId, type, path.path(), null, sourceDocUuid, content);
         LOGGER.debug(() -> "Wrote " + path + " in chatId=" + chatId);
         return fileId;
     }

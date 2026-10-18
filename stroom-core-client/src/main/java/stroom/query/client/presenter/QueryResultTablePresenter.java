@@ -1063,6 +1063,15 @@ public class QueryResultTablePresenter
     }
 
     private void askStroomAi() {
+        final QueryTableContext context = aiResultsContext();
+        if (context != null) {
+            AskStroomAiEvent.fire(this, context);
+        }
+    }
+
+    /// @return The search request behind the results shown, for the AI chat to take a snapshot of them, or null
+    /// if no search has been run.
+    public QueryTableContext aiResultsContext() {
         if (currentSearchModel != null) {
             final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             final QuerySearchRequest currentSearch = currentSearchModel.getCurrentSearch();
@@ -1081,13 +1090,28 @@ public class QueryResultTablePresenter
                 final String description = queryName != null
                         ? "Query '" + queryName + "'"
                         : "Query table";
-
-                AskStroomAiEvent.fire(this,
-                        new QueryTableContext(
-                                description,
-                                currentSearchModel.getCurrentNode(),
-                                request));
+                return new QueryTableContext(description, currentSearchModel.getCurrentNode(), request);
             }
         }
+        return null;
+    }
+
+    /// @return The names of the columns shown.
+    public List<String> getCurrentColumnNames() {
+        final List<String> names = new ArrayList<>();
+        for (final Column column : currentColumns) {
+            names.add(column.getName());
+        }
+        return names;
+    }
+
+    /// @return How many rows the results have, as last shown, or null if not known.
+    public Long getCurrentTotalRows() {
+        return NullSafe.get(currentTableResult, TableResult::getTotalResults);
+    }
+
+    /// @return True while a search is running.
+    public boolean isSearching() {
+        return currentSearchModel != null && currentSearchModel.isSearching();
     }
 }

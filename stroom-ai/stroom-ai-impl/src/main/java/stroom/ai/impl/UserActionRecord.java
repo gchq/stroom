@@ -31,11 +31,13 @@ import java.util.List;
 /// @param warning   Something the user should know before they click, written by Stroom, or null.
 /// @param filterId  The processor filter, for enabling and disabling filters.
 /// @param doc       The document the action is about (with its name as Stroom has it), or null.
-/// @param request   An Elasticsearch request for the cluster admin, to show read-only, or null.
+/// @param request   An Elasticsearch request for the cluster admin, to show read-only, or the StroomQL of a query to
+///                  create, or null.
 /// @param after     What should be done first: other actions' labels, or the server's conditions.
 /// @param expiresMs When the button stops working.
 /// @param status    Whether the button has been used.
 /// @param outcome   What happened when it was used, or null.
+/// @param name      The name suggested for a document to create (e.g. a query), or null.
 public record UserActionRecord(String id,
                                String action,
                                String label,
@@ -47,14 +49,31 @@ public record UserActionRecord(String id,
                                List<String> after,
                                long expiresMs,
                                Status status,
-                               String outcome) {
+                               String outcome,
+                               String name) {
+
+    /// An action that creates nothing, so suggests no name.
+    public UserActionRecord(final String id,
+                            final String action,
+                            final String label,
+                            final String details,
+                            final String warning,
+                            final Integer filterId,
+                            final DocRef doc,
+                            final String request,
+                            final List<String> after,
+                            final long expiresMs,
+                            final Status status,
+                            final String outcome) {
+        this(id, action, label, details, warning, filterId, doc, request, after, expiresMs, status, outcome, null);
+    }
 
     /// @param status  The new status.
     /// @param outcome What happened.
     /// @return This action with the status and outcome changed.
     public UserActionRecord withStatus(final Status status, final String outcome) {
         return new UserActionRecord(id, action, label, details, warning, filterId, doc, request, after, expiresMs,
-                status, outcome);
+                status, outcome, name);
     }
 
     /// Whether a button has been used.
