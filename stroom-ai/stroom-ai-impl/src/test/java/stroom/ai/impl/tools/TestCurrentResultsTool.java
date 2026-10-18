@@ -316,7 +316,7 @@ class TestCurrentResultsTool {
 
     private static StoredTabSnapshot snapshot(final AiTabSearch search) {
         return new StoredTabSnapshot(5, 1, QUERY_DOC, "/", "Logons", "Query", false, null, "h", 0L, List.of(),
-                List.of(search));
+                List.of(search), null);
     }
 
     private static QueryTableContext context(final String query, final QueryKey queryKey) {

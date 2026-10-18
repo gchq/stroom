@@ -313,6 +313,13 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
         return userActionServiceProvider.get().doUserAction(chatId, messageId, actionId);
     }
 
+    // Logged by UserActionService, as undoing a change applied from a suggestion in the chat.
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AiUserActionResult undoUserAction(final int chatId, final int messageId, final String actionId) {
+        return userActionServiceProvider.get().undoUserAction(chatId, messageId, actionId);
+    }
+
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public Integer resetAllUsersConfig() {

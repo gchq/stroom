@@ -39,6 +39,12 @@ public class AiTabSnapshotPart {
     public static final String IMPORTS = "imports";
     /// The part describing a dashboard's components, as edited.
     public static final String DASHBOARD = "dashboard";
+    /// The part holding the stepping screen's input pane for the selected element, as displayed.
+    public static final String STEP_INPUT = "stepInput";
+    /// The part holding the stepping screen's output pane for the selected element, as displayed.
+    public static final String STEP_OUTPUT = "stepOutput";
+    /// The part holding the selected element's code while stepping, as edited (unsaved changes included).
+    public static final String STEP_CODE = "stepCode";
 
     @JsonProperty
     private final String name;

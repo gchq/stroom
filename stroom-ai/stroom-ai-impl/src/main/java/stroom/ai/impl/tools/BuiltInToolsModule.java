@@ -60,6 +60,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(ListDataSourcesTool.class)
                 .addBinding(DescribeDataSourceTool.class)
                 .addBinding(ValidateStroomQlTool.class)
-                .addBinding(ProposeQueryTool.class);
+                .addBinding(ProposeQueryTool.class)
+                .addBinding(ProposeCodeChangeTool.class);
     }
 }
