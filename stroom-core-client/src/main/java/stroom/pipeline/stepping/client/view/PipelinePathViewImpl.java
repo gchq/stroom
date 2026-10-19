@@ -88,7 +88,6 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private static final String COLLAPSED_CLASS = SEGMENT_CLASS + "--collapsed";
     private static final String ELLIPSIS_CLASS = SEGMENT_CLASS + "--ellipsis";
     private static final String SHAPE_CLASS = BASE_CLASS + "__shape";
-    private static final String FILL_CLASS = BASE_CLASS + "__fill";
     private static final String PULSE_CLASS = SEGMENT_CLASS + "--pulse";
     private static final String SEVERITY_CLASS = BASE_CLASS + "__severity";
     private static final String BRANCH_SEVERITY_CLASS = BASE_CLASS + "__branch-severity";
@@ -487,14 +486,12 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         return label;
     }
 
-    // The chevron's shape, under its content: its border, then its fill (see pipeline-path.css)
+    // The chevron's shape, under its content: its border, and its fill (its ::before, see
+    // pipeline-path.css)
     private static Element createShape() {
         final Element shape = Document.get().createSpanElement();
         shape.setClassName(SHAPE_CLASS);
         shape.setAttribute(ARIA_HIDDEN, "true");
-        final Element fill = Document.get().createSpanElement();
-        fill.setClassName(FILL_CLASS);
-        shape.appendChild(fill);
         return shape;
     }
 

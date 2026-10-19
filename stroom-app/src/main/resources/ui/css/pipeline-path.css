@@ -24,7 +24,7 @@
  *   - the chevron's ::after, set out by 1px: the focus border of a chevron whose own border is a
  *     problem's colour, so that it still has one
  *   - .pipeline-path__shape: the border, the shape's own background showing round...
- *   - .pipeline-path__fill, set in by the border's width: the fill
+ *   - .pipeline-path__shape's ::before, set in by the border's width: the fill
  * A chevron (.pipeline-path__segment) holds its button (.pipeline-path__button) and, after a fork,
  * its drop down chevron (.pipeline-path__caret), a menu button. As with toolbar.css, their states
  * come from their ARIA attributes (aria-current, aria-disabled, aria-expanded, and the focus), not
@@ -169,7 +169,8 @@
 
 /* The fill, over the elements' background (the pipeline structure tree's boxes' too), so that a
    see-through fill (e.g. hovered) shades it and doesn't show the border */
-.pipeline-path__fill {
+.pipeline-path__shape::before {
+    content: "";
     position: absolute;
     inset: 1px;
     border-radius: inherit;
@@ -180,9 +181,9 @@
 }
 
 /* A problem's border is 2px */
-.pipeline-path__segment--warn .pipeline-path__fill,
-.pipeline-path__segment--error .pipeline-path__fill,
-.pipeline-path__segment--fatal .pipeline-path__fill {
+.pipeline-path__segment--warn .pipeline-path__shape::before,
+.pipeline-path__segment--error .pipeline-path__shape::before,
+.pipeline-path__segment--fatal .pipeline-path__shape::before {
     inset: 2px;
     clip-path: var(--pipeline-path__thick-fill-shape);
 }
