@@ -69,6 +69,7 @@ public class UserActionService {
     private final UserActionLookup lookup;
     private final ProcessorFilterService processorFilterService;
     private final AiAuditLog auditLog;
+    private final DashboardBuilder dashboardBuilder;
 
     @Inject
     UserActionService(final AiService aiService,
@@ -76,13 +77,15 @@ public class UserActionService {
                       final UserActions userActions,
                       final UserActionLookup lookup,
                       final ProcessorFilterService processorFilterService,
-                      final AiAuditLog auditLog) {
+                      final AiAuditLog auditLog,
+                      final DashboardBuilder dashboardBuilder) {
         this.aiService = aiService;
         this.aiDao = aiDao;
         this.userActions = userActions;
         this.lookup = lookup;
         this.processorFilterService = processorFilterService;
         this.auditLog = auditLog;
+        this.dashboardBuilder = dashboardBuilder;
     }
 
     /// Does a user action, if it can still be done.
@@ -140,6 +143,7 @@ public class UserActionService {
             case UserActions.ENABLE_PROCESSOR_FILTER, UserActions.DISABLE_PROCESSOR_FILTER ->
                 changeFilter(chatId, message, result, action);
             case UserActions.CREATE_QUERY -> createQuery(chatId, action);
+            case UserActions.CREATE_DASHBOARD -> createDashboard(chatId, action);
             case UserActions.APPLY_CODE_CHANGE, UserActions.APPLY_QUERY_CHANGE ->
                 applyCodeChange(chatId, message, result, action, rejected);
             case UserActions.APPLY_DASHBOARD_CHANGE -> applyDashboardChange(chatId, message, result, action);
@@ -215,6 +219,31 @@ public class UserActionService {
         }
         auditLog.userAction(chatId, action.action(), action.label(), "Opened the New Query dialog", true);
         return new AiUserActionResult(true, null, null, action.name(), action.request());
+    }
+
+    /// Lets the browser open Stroom's New Dashboard dialog with the suggested name, giving it the dashboard's
+    /// settings, built again from the query now, if the user may still run the query. Nothing is created here: the
+    /// user creates the dashboard in the dialog, which checks their permission to create it in the folder they
+    /// choose and logs it as Stroom logs any new document. As it changes nothing, the button can be used again
+    /// (e.g. after the dialog was cancelled).
+    private AiUserActionResult createDashboard(final int chatId, final UserActionRecord action) {
+        if (action.request() == null || action.newDashboard() == null
+            || lookup.usableDataSource(action.request()).isEmpty()) {
+            final String problem = "The query's data source no longer exists, or you can't use it.";
+            auditLog.userAction(chatId, action.action(), action.label(), problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        final DashboardBuilder.Built built;
+        try {
+            built = dashboardBuilder.build(action.name(), action.request(), action.newDashboard().queryType(),
+                    action.newDashboard().preview());
+        } catch (final IllegalArgumentException e) {
+            final String problem = "The dashboard can no longer be built from the query: " + e.getMessage();
+            auditLog.userAction(chatId, action.action(), action.label(), problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        auditLog.userAction(chatId, action.action(), action.label(), "Opened the New Dashboard dialog", true);
+        return AiUserActionResult.createDashboard(action.name(), built.config());
     }
 
     /// Lets the browser apply a proposed code change to a stepping element's editor, unsaved, if the user may edit

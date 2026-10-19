@@ -141,7 +141,8 @@ class TestAiConcurrency {
                 .build()));
         final ProcessorFilterService processorFilterService = Mockito.mock(ProcessorFilterService.class);
         final UserActionService service = new UserActionService(Mockito.mock(AiService.class), aiDao,
-                new UserActions(lookup), lookup, processorFilterService, Mockito.mock(AiAuditLog.class));
+                new UserActions(lookup), lookup, processorFilterService, Mockito.mock(AiAuditLog.class),
+                Mockito.mock(DashboardBuilder.class));
 
         final List<AiUserActionResult> results = race(() ->
                 service.doUserAction(chat.getId(), message.getId(), "enable-31"));
