@@ -55,7 +55,7 @@ export function readRows(page) {
 
 /**
  * A row's SIGNATURE: its text plus the state of any tick box in it. A grid's boolean column is a
- * `TickBoxCell` — a `div.tickBox`, not a checkbox — so it contributes NO text, and a row whose
+ * `TickBoxCell` — a `div.tick-box--cell`, not an input — so it contributes NO text, and a row whose
  * Enabled flag was just toggled reads identically by text. The tick's class names carry the state,
  * so they are part of the signature.
  */
@@ -142,7 +142,7 @@ export async function fillField(page, label, text) {
 
 /**
  * Click the tick box labelled `label`: the one inside the FormGroup of that label, or a
- * `CustomCheckBox` that carries the label itself (`.SimpleTickBox` with its own `.form-label`, in a
+ * `CustomCheckBox` that carries the label itself (`label.tick-box` with its own `.tick-box__label`, in a
  * FormGroup with none, as Node Group's "Enabled" is). GWT renders a tick box as a div, not as a
  * bare checkbox (the CustomCheckBox's input is hidden), so the click has to land on the div.
  */
@@ -153,10 +153,10 @@ export async function clickTickBox(page, label) {
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const group = [...scope.querySelectorAll('.form-group')]
       .find((g) => n(g.querySelector('.form-group__label')?.textContent) === wanted);
-    const own = [...scope.querySelectorAll('.SimpleTickBox')]
+    const own = [...scope.querySelectorAll('.tick-box:not(.tick-box--cell)')]
       .find((t) => t.offsetWidth > 0 && n(t.querySelector('.form-label')?.textContent) === wanted);
-    const tick = group?.querySelector('.SimpleTickBox, .tickBox') ?? own;
-    const el = tick?.querySelector('.checkmark') ?? tick ?? group?.querySelector('input[type="checkbox"]');
+    const tick = group?.querySelector('.tick-box') ?? own;
+    const el = tick?.querySelector('.tick-box__mark') ?? tick ?? group?.querySelector('input[type="checkbox"]');
     if (!el || !(el.offsetWidth > 0)) return null;
     const r = el.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -177,12 +177,12 @@ export async function readTick(page, label) {
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const group = [...scope.querySelectorAll('.form-group')]
       .find((g) => n(g.querySelector('.form-group__label')?.textContent) === wanted);
-    const own = [...scope.querySelectorAll('.SimpleTickBox')]
+    const own = [...scope.querySelectorAll('.tick-box:not(.tick-box--cell)')]
       .find((t) => t.offsetWidth > 0 && n(t.querySelector('.form-label')?.textContent) === wanted);
-    const tick = group?.querySelector('.SimpleTickBox, .tickBox') ?? own;
+    const tick = group?.querySelector('.tick-box') ?? own;
     if (!tick) return null;
     const input = tick.querySelector('input[type="checkbox"]');
-    return input ? input.checked : /\btickBox-tick\b/.test(tick.className);
+    return input ? input.checked : tick.getAttribute('aria-checked') === 'true';
   }, [label]).catch(() => null);
 }
 
@@ -200,7 +200,7 @@ export async function selectRow(page, text) {
     // the walker's `select-row` does: a query result's first column is blank, and a click there left
     // the row unselected, so the Annotate menu had no annotation ids and offered no Change Status.
     const cells = [...row.querySelectorAll('td, [role=gridcell]')]
-      .filter((c) => c.offsetWidth > 0 && !c.querySelector('a, .tickBox, button, [role=button], svg'));
+      .filter((c) => c.offsetWidth > 0 && !c.querySelector('a, .tick-box--cell, button, [role=button], svg'));
     const cell = cells.find((c) => n(c.textContent)) ?? cells[0] ?? row;
     // A row below the grid's fold is measured off-screen, and the click landed on nothing.
     cell.scrollIntoView({ block: 'center' });
@@ -1052,7 +1052,7 @@ export function permissionSteps({ user = 'admin', from = 'Owner', to = 'View', c
     await caption(page, 'Set Document Create Permissions');
     const row = page.locator('.dialog-popup, .resizableDialog-popup').last().locator('tbody tr')
       .filter({ has: page.locator('td:last-child', { hasText: new RegExp(`^\\s*${createType}\\s*$`) }) }).first();
-    await row.locator('.tickBox').first().click({ timeout: 5_000 });
+    await row.locator('.tick-box--cell').first().click({ timeout: 5_000 });
     await settle(400);
     if (!(await clickButton(page, 'OK'))) throw new Error('no OK in "Set Document Create Permissions"');
     await closed(ctx, 'the create permission change');
@@ -1409,7 +1409,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
     const box = await page.evaluate((text) => {
       const row = [...document.querySelectorAll('.dataGridWidget tbody tr, [role=grid] [role=row]')]
         .find((r) => r.offsetWidth > 0 && r.textContent.includes(text) && !r.closest('.navigation'));
-      const t = row?.querySelector('.tickBox');
+      const t = row?.querySelector('.tick-box--cell');
       if (!t) return null;
       t.scrollIntoView({ block: 'center' });
       const r = t.getBoundingClientRect();
@@ -1636,7 +1636,10 @@ export async function runProcessorBatchCycle(page, spec, { guard, settle, log = 
     return [...g.querySelectorAll('tbody tr')].filter((r) => r.offsetWidth > 0)
       .map((r) => [...r.querySelectorAll('td')])
       .filter((tds) => tds[at('Run As User')]?.textContent.trim())
-      .map((tds) => tds[at('Enabled')]?.querySelector('.tickBox')?.classList.contains('tickBox-tick') ?? null);
+      .map((tds) => {
+        const tick = tds[at('Enabled')]?.querySelector('.tick-box--cell');
+        return tick ? tick.getAttribute('aria-checked') === 'true' : null;
+      });
   });
   /** Choose a change in the batch dialog and see it through its Confirm and its info Alert. */
   const batch = async (change) => {

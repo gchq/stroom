@@ -114,7 +114,7 @@
     align-items: center;
 }
 
-.batchExecutionScheduleEdit-row > .SimpleTickBox {
+.batchExecutionScheduleEdit-row > .tick-box {
     flex: 0 0 50px;
 }
 
@@ -2365,7 +2365,7 @@
     vertical-align: middle;
 }
 
-.multiChooser .tickBox {
+.multiChooser .tick-box {
     cursor: pointer;
 }
 

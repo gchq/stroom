@@ -34,8 +34,7 @@
 @import url("stroom-dashboard.css");
 @import url("editor.css");
 @import url("editor-themes.css");
-@import url("tickbox.css");
-@import url("tickboxcell.css");
+@import url("tick-box.css");
 @import url("SimplePopup.css");
 @import url("Dialog.css");
 @import url("ResizableDialog.css");

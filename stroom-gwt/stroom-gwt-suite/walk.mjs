@@ -1227,12 +1227,12 @@ async function driveStep(step) {
       [...document.querySelectorAll('button, [role=button]')].filter((b) => b.offsetWidth > 0 && !b.disabled && b.getAttribute('aria-disabled') !== 'true').length),
     { budget: 1_500, poll: 150, stableFor: 2, label: 'select-row', kind: 'content', allowZero: true }).catch(() => {});
   } else if (step.via === 'tick-row') {
-    // The first row's TICK BOX (`TickBoxCell` renders `div.tickBox`), a real click — the batch
+    // The first row's TICK BOX (`TickBoxCell` renders `div.tick-box--cell`), a real click — the batch
     // selection, which enables the batch buttons without selecting the row for the preview.
     const box = await page.evaluate(() => {
       const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
-      const tick = [...scope.querySelectorAll('.dataGridWidget tbody tr .tickBox, [role=grid] [role=row] .tickBox')].find((e) => e.offsetWidth > 0);
+      const tick = [...scope.querySelectorAll('.dataGridWidget tbody tr .tick-box--cell, [role=grid] [role=row] .tick-box--cell')].find((e) => e.offsetWidth > 0);
       if (!tick) return null;
       const r = tick.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -3146,7 +3146,7 @@ async function walk(node, state, arrivedAt) {
     // ticking a row is what enables the BATCH buttons — Download, Restore, Delete and Process
     // Selected Streams, `Show Summary of Selected Streams` (MetaPresenter's, all unreached in the handler inventory) — while a
     // click on the row selects it for the preview. Same shape as above, on the tick.
-    const hasTick = await page.evaluate(() => [...document.querySelectorAll('.dataGridWidget tbody tr .tickBox, [role=grid] [role=row] .tickBox')]
+    const hasTick = await page.evaluate(() => [...document.querySelectorAll('.dataGridWidget tbody tr .tick-box--cell, [role=grid] [role=row] .tick-box--cell')]
       .some((e) => e.offsetWidth > 0)).catch(() => false);
     if (hasTick) {
       const tick = { kind: 'post-action', path: [...node.path, `after tick row in ${node.path.at(-1)}`],

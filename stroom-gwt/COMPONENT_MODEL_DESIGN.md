@@ -457,6 +457,32 @@ Not yet done: the bare element rules in `stroom.css` (to go once every input has
 fields whose template replaces the class with `styleName` (so they get those rules instead); it
 hasn't been tried with a screen reader.
 
+## Tick box
+
+The tick box is the BEM block `tick-box` (`tick-box.css`), in two forms that look the same:
+
+- **The widget** (`CustomCheckBox`): a `label` element wrapping a native check box
+  (`tick-box__input`, unseen and over the box, so it has the focus, the clicks and the state), the
+  box drawn for it (`tick-box__mark`) and its text (`tick-box__label`). The label wraps the check
+  box, so its text names it and clicking anywhere on it ticks it, with no `for` and no id needed.
+  Its states are the check box's: `:checked`, `:disabled` and `aria-readonly` (a read-only tick box
+  can be focused and read, but a click is cancelled). It has no part-ticked state.
+- **The grid's cell** (`TickBoxCell`, `tick-box--cell`, an icon's size): an element with
+  `role="checkbox"`, `aria-checked` (`true`, `false` or `mixed`, part ticked, e.g. a header's
+  select-all) and `aria-readonly`, holding the drawn box. The part-ticked square is drawn by the
+  stylesheet, so the box has nothing inside it but the tick. A cell that can't be clicked is
+  `aria-readonly`, which gives it the read-only look (`NoBorderAppearance` no longer adds a class).
+  `ColumnValueCell` draws the same markup for its read-only ticks.
+
+Ticked is a white tick on the widget's blue (`--blue-500`); read only, a grey tick on the normal
+box; disabled, a grey tick on the filled box with no border every disabled control has.
+
+Stories `Widgets/Inputs/TickBox` (`Basic`, `ReadOnly`, `Disabled`, `NoLabel`) and
+`Widgets/Cell Renderers/TickBoxCell` (`InGrid`, `ReadOnly`).
+
+Not yet done: the grid cell can't be reached from the keyboard (the data grid's keyboard pattern,
+session 4); it hasn't been tried with a screen reader.
+
 ## Value spinner
 
 `ValueSpinner` (`stroom.widget.valuespinner.client`, styled by `value-spinner.css`) is a field for a whole number with arrows that step it down and up. It is retrofitted rather than replaced, as its API (`setMin`, `setMax`, `setMinStep`, `setValue`, `formatValue`/`parseValue` for subclasses) is used by about 58 views; `Spinner` holds its value, bounds and the stepping while an arrow is held, and no longer owns any widgets.

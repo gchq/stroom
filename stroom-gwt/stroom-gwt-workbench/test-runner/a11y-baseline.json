@@ -457,9 +457,6 @@
   "widgets-editors-viewers-markdowneditor--read-only-preview": [
     "frame-title"
   ],
-  "widgets-inputs-tickbox--no-label": [
-    "label"
-  ],
   "widgets-query-expressionbuilder--async-field-source-fetches-only-when-needed": [
     "label"
   ],

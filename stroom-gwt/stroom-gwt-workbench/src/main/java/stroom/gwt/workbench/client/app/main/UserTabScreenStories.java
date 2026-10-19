@@ -171,7 +171,7 @@ public final class UserTabScreenStories {
                             .toEqual(List.of("Granted", "Permission", "Description"));
                     play.expect(play.getByText("No application permission selected")).toBeInTheDocument();
                     // The explicit ANNOTATIONS is ticked; unticking it removes it
-                    play.click(play.within(play.getByText("Annotations").closest("tr")).querySelector(".tickBox"));
+                    play.click(play.within(play.getByText("Annotations").closest("tr")).querySelector(".tick-box"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/permission/app/v1/changeAppPermission")
                                     .withJsonBodyContaining("""

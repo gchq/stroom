@@ -85,7 +85,7 @@ public final class FloorMapAria {
     /// widget's wrapper element.
     ///
     /// Use for a composite that wraps exactly one control — `CustomCheckBox`,
-    /// whose root is a `div.SimpleTickBox` with the `<input>` inside it.
+    /// whose root is a `label.tick-box` with the `<input>` inside it.
     /// [#label(UIObject, String)] on such a widget lands the name on the wrapper,
     /// where it is dropped; [#group(UIObject, String)] would work but describes a
     /// single checkbox as a group of controls, which is a worse reading than naming the

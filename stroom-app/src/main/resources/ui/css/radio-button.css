@@ -36,8 +36,8 @@ input[type="radio"] {
 }
 
 input[type="radio"]:checked {
-    border-color: #2196F3;
-    background: radial-gradient(circle, white 0 3.5px, #2196F3 4px);
+    border-color: var(--blue-500);
+    background: radial-gradient(circle, white 0 3.5px, var(--blue-500) 4px);
 }
 
 input[type="radio"]:focus-visible {

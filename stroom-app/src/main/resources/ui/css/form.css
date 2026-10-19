@@ -98,7 +98,7 @@
     order: 2;
 }
 
-.form-group--inline-tick > .SimpleTickBox {
+.form-group--inline-tick > .tick-box {
     flex-basis: auto;
     order: 0;
 }

@@ -86,16 +86,16 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       return `${t.length}:${t.slice(0, 120)}`;
     };
     /**
-     * A `CustomCheckBox`: a visible `.SimpleTickBox` around a hidden `input.checkbox`, whose
+     * A `CustomCheckBox`: a visible `label.tick-box` around a hidden `input.tick-box__input`, whose
      * `checked` is the state. Reading only `input[type=checkbox]` found the hidden input, which has
      * no size, so all 56 of its value handlers were `needs-value`. Disabled or read-only ones can't be
      * driven. It is named by its own label ("Enabled"), or by its input's `aria-label` when it stands
      * outside any FormGroup, as Batch Edit Schedules' "Change Schedule Name" enable boxes do.
      */
     const simpleTick = (el) => {
-      if (!el || !(el.offsetWidth > 0) || /SimpleTickBox-(disabled|readonly)/.test(el.className)) return null;
+      if (!el || !(el.offsetWidth > 0) || !!el.querySelector('.tick-box__input:disabled, .tick-box__input[aria-readonly="true"]')) return null;
       const input = el.querySelector('input[type="checkbox"]');
-      const target = el.querySelector('.checkmark') ?? el.querySelector('.checkbox-container') ?? el;
+      const target = el.querySelector('.tick-box__mark') ?? el;
       const r = target.getBoundingClientRect();
       return { label: norm(el.querySelector('.form-label')?.textContent) || norm(input?.getAttribute('aria-label'))
         || norm(el.getAttribute('aria-label')), kind: 'tick', value: `checked=${!!input?.checked}`,
@@ -104,7 +104,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
     const out = [];
     for (const group of document.querySelectorAll('.form-group')) {
       if (!(group.offsetWidth > 0) || inDialog(group)) continue;
-      const ownTick = group.querySelector('.SimpleTickBox');
+      const ownTick = group.querySelector('.tick-box:not(.tick-box--cell)');
       // An inline tick's group has no `.form-group__label`: the tick box carries its own.
       const label = norm(group.querySelector('.form-group__label')?.textContent)
         || norm(ownTick?.querySelector('.form-label')?.textContent);
@@ -138,7 +138,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
         if (t) out.push({ ...t, label });
         continue;
       }
-      const tick = group.querySelector('.tickBox, input[type="checkbox"]');
+      const tick = group.querySelector('.tick-box--cell, input[type="checkbox"]');
       if (tick && tick.offsetWidth > 0) {
         const state = tick.tagName === 'INPUT'
           ? `checked=${tick.checked}`
@@ -188,7 +188,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
     }
     // Tick boxes OUTSIDE any FormGroup: a batch dialog's per-field "enable" boxes, which decide
     // whether the field next to them is applied at all.
-    for (const el of document.querySelectorAll('.SimpleTickBox')) {
+    for (const el of document.querySelectorAll('.tick-box:not(.tick-box--cell)')) {
       if (el.closest('.form-group') || inDialog(el)) continue;
       const t = simpleTick(el);
       if (t && t.label) out.push(t);

@@ -114,9 +114,10 @@ public final class PlanBEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Temporal Resolution", "label"))
                             .toBeInTheDocument());
                     play.expect(play.getByText("Value Size", "label")).toBeInTheDocument();
+                    // Tick boxes, each named by its own label
                     for (final String label : new String[]{
                             "Store Latest Value", "Store Min Value", "Store Max Value", "Store Count", "Store Sum"}) {
-                        play.expect(play.getByText(label, "label")).toBeInTheDocument();
+                        play.expect(play.getByRole("checkbox", label)).toBeInTheDocument();
                     }
                     // The key schema's TimeZoneWidget
                     play.expect(play.getByText("Time Zone", "label")).toBeInTheDocument();

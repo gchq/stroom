@@ -1588,6 +1588,16 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   `gwt-PasswordTextBox`), and every quick filter is named for what it filters, not only by its
   placeholder ("Filter users and groups", "Filter API keys", a selection box's list's "Filter" and
   the box's name, and so on).
+* **Two tick boxes that didn't match, neither BEM** (`CustomCheckBox`, `TickBoxCell`): a form's
+  tick box (`SimpleTickBox`, a `checkbox-container` div around its check box and box, then a
+  separate label) and a grid's (`tickBox-*`, an SVG tick on Bootstrap's darker blue, its half-tick
+  an inner div) had different markup, stylesheets and blues. Both are now the BEM block `tick-box`
+  (`tick-box.css`; `tickbox.css` and `tickboxcell.css` are deleted): the widget a label wrapping its
+  check box, box and text (one wrapper fewer, and the whole of it clickable), its states from the
+  check box alone (no `-disabled` or `-readonly` classes); the grid's cell the same box
+  (`tick-box--cell`), its states from `aria-checked` and `aria-readonly`, in the widget's blue
+  with its tick. The widget looks as it did. Workbench: `Widgets/Inputs/TickBox` `Basic`,
+  `ReadOnly`, `NoLabel`; `Widgets/Cell Renderers/TickBoxCell` `InGrid`.
 
 ## Checked and not bugs
 
