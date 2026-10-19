@@ -34,6 +34,7 @@ import stroom.ai.shared.AiMcpPromptArgument;
 import stroom.ai.shared.AiMemory;
 import stroom.ai.shared.AiMemoryScope;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiSuggestions;
 import stroom.ai.shared.AiTabSnapshot;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AnswerAiElicitationRequest;
@@ -48,6 +49,7 @@ import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.GetAiMcpPromptRequest;
 import stroom.ai.shared.SaveAiMemoryRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
+import stroom.ai.shared.SuggestAiPromptsRequest;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
@@ -204,6 +206,10 @@ public class AskStroomAiPresenter
     private static final String SEND_STEER_NOW_ATTRIBUTE = "data-send-steer-now";
     // The key in attachedTabs of a chat not yet made.
     private static final int NEW_CHAT_KEY = 0;
+    // How long after an attachment arrives its suggestions are offered, so its status arrives too.
+    private static final int ATTACHED_SUGGESTIONS_DELAY_MS = 600;
+    // How many more times the suggestions wait for the statuses of what was just attached.
+    private static final int MAX_ATTACHED_SUGGESTIONS_WAITS = 5;
     private static final String USER_ACTION_MESSAGE_ATTRIBUTE = "data-user-action-message";
     private static final String DEFAULT_CHAT_TITLE = "New chat";
     private static final SafeHtml MARK = SafeHtmlUtils.fromSafeConstant("mark");
@@ -293,8 +299,10 @@ public class AskStroomAiPresenter
     private String overviewQuery;
     // The command whose reference is shown, or null.
     private String referenceCommand;
-    // The latest suggested follow-ups, while the answer they follow is the latest thing in the chat.
+    // The suggestions offered above the input: the follow-ups to the latest answer (answerFollowUps, kept while that
+    // answer is the latest thing in the chat), or suggestions for what was attached since.
     private List<String> followUps = List.of();
+    private List<String> answerFollowUps = List.of();
     // Searching the list of chats: what is in the box, the text the hits are for, the hits (null when not
     // searching), and a count so that a slow answer to an earlier search is ignored.
     private String searchText = "";
@@ -314,6 +322,29 @@ public class AskStroomAiPresenter
         @Override
         public void run() {
             getView().setLoading(true);
+        }
+    };
+    // Suggestions for what the user has just attached: offered at once, from what was attached, then, while the chat
+    // has a conversation to go on, replaced by the model's, unless something else was attached or sent meanwhile
+    // (counted by attachedSuggestionsSequence). attachmentRequested is set while an attachment from elsewhere
+    // (e.g. the Explorer) is on its way, so it is suggested for when it arrives, but not when a chat is loaded.
+    private int attachedSuggestionsSequence;
+    private boolean attachmentRequested;
+    private int attachedSuggestionsWaits;
+    private final Timer attachedSuggestionsTimer = new Timer() {
+        @Override
+        public void run() {
+            // Every attachment is suggested for, so wait (a little) for the statuses of any just attached, which
+            // say what each is.
+            if (attachedSuggestionsWaits < MAX_ATTACHED_SUGGESTIONS_WAITS && pendingAttachments.values().stream()
+                    .anyMatch(msg -> !attachmentStatuses.containsKey(msg.getAttachmentId()))) {
+                attachedSuggestionsWaits++;
+                schedule(ATTACHED_SUGGESTIONS_DELAY_MS);
+                return;
+            }
+            attachedSuggestionsWaits = 0;
+            attachmentRequested = false;
+            offerAttachedSuggestions(false);
         }
     };
     // How the chat is shown: DOCK, DIALOG or TAB, or null if hidden.
@@ -744,6 +775,7 @@ public class AskStroomAiPresenter
                         maybeGenerateTitle(getContextTitle(this.data));
                         // Clear context so it isn't re-attached when the user sends a question.
                         this.data = null;
+                        attachmentRequested = true;
                         getView().clearContextIndicator();
                         askStroomAiClient.sendMessage(request,
                                 response -> pollForNewMessages(),
@@ -3033,12 +3065,16 @@ public class AskStroomAiPresenter
         // The command has been used.
         onCloseCommandReference();
         followUps = List.of();
+        answerFollowUps = List.of();
         getView().setFollowUps(List.of());
         getView().setSendButtonLoadingState(true);
         getView().setEmptyState(false);
         getView().clearContextIndicator();
 
         followBottom = true;
+        // Suggestions for what was attached that arrive now are too late.
+        attachedSuggestionsSequence++;
+        attachmentRequested = false;
         // The tables attached are sent with the message, so are shown in its bubble rather than above the input.
         sendingAttachments = new ArrayList<>(pendingAttachments.values());
         pendingAttachments.clear();
@@ -3588,7 +3624,8 @@ public class AskStroomAiPresenter
     private void appendMessage(final AiChatMessage msg, final long nowMs) {
         if (msg.getMessageType() == AiMessageType.SUGGESTIONS) {
             // Not part of the conversation: offered above the input instead.
-            followUps = parseFollowUps(msg.getMessage());
+            answerFollowUps = parseFollowUps(msg.getMessage());
+            followUps = answerFollowUps;
             refreshFollowUps();
             return;
         }
@@ -3599,6 +3636,7 @@ public class AskStroomAiPresenter
         }
         if (msg.getMessageType() == AiMessageType.USER_MESSAGE || isSteer(msg)) {
             followUps = List.of();
+            answerFollowUps = List.of();
             refreshFollowUps();
         }
         if (msg.getMessageType() == AiMessageType.USER_MESSAGE) {
@@ -3611,6 +3649,10 @@ public class AskStroomAiPresenter
             if (sentAttachments.values().stream().noneMatch(sent -> sent.contains(msg))) {
                 pendingAttachments.put(msg.getId(), msg);
                 refreshAttachmentList();
+                if (attachmentRequested) {
+                    // Once its status (e.g. which document it is) has arrived too, and any others attached with it.
+                    attachedSuggestionsTimer.schedule(ATTACHED_SUGGESTIONS_DELAY_MS);
+                }
             }
             return;
         }
@@ -3811,6 +3853,7 @@ public class AskStroomAiPresenter
         // Shown again by the next poll if the chat now shown has anything in progress.
         getView().setInProgress(false);
         followUps = List.of();
+        answerFollowUps = List.of();
         refreshFollowUps();
         renderedMessages.clear();
         pendingAttachments.clear();
@@ -4612,11 +4655,15 @@ public class AskStroomAiPresenter
         if (tabData == null) {
             return;
         }
+        final boolean wasAttached = attachedTabs.get(chatKey()) == tabData;
         attachedTabs.values().removeIf(tab -> tab == tabData);
         if (currentTab == tabData) {
             currentTab = null;
         }
         refreshAttachmentList();
+        if (wasAttached) {
+            onDetached();
+        }
     }
 
     /// Attaches the tab the user is on to the chat, in place of any attached before. It is shared with each
@@ -4625,6 +4672,96 @@ public class AskStroomAiPresenter
         if (currentTab != null) {
             attachedTabs.put(chatKey(), currentTab);
             refreshAttachmentList();
+            // The user attaches a tab to ask about it, so they are offered what can be done with that kind of tab,
+            // in place of any follow-ups to the last answer, and can type straight away.
+            offerAttachedSuggestions(true);
+            getView().focus();
+        }
+    }
+
+    /// Offers what the user might ask about everything attached (the tab, documents and tables): at once, from what
+    /// kind of thing each is (most recently attached first), then the model's suggestions, which take account of
+    /// what the user has been asking and suggest using several things together, if the chat has a conversation to
+    /// go on or several things are attached.
+    ///
+    /// @param tabFirst True if the tab was the last thing attached, false if documents or tables were.
+    private void offerAttachedSuggestions(final boolean tabFirst) {
+        final AiTabSnapshot tab = attachedTabSnapshot();
+        final List<String> suggestions = attachedSuggestions(tab, tabFirst);
+        if (!suggestions.isEmpty()) {
+            followUps = suggestions;
+            refreshFollowUps();
+        }
+        final int sequence = ++attachedSuggestionsSequence;
+        final List<Integer> attachmentIds = new ArrayList<>();
+        pendingAttachmentStatuses().forEach(attachment -> attachmentIds.add(attachment.getId()));
+        final int attachedCount = attachmentIds.size() + (tab != null
+                ? 1
+                : 0);
+        if (currentChat == null || suggestions.isEmpty() || (!hasConversation() && attachedCount < 2)) {
+            return;
+        }
+        final AiChat chat = currentChat;
+        askStroomAiClient.getConfig(config -> askStroomAiClient.suggestPrompts(
+                new SuggestAiPromptsRequest(chat, config, attachmentIds, AiSuggestions.outline(tab)),
+                suggested -> {
+                    // Only if nothing has been attached or sent since, and the chat is still the one shown.
+                    if (sequence == attachedSuggestionsSequence && currentChat == chat
+                        && !NullSafe.isEmptyCollection(suggested)) {
+                        followUps = suggested;
+                        refreshFollowUps();
+                    }
+                }), getView());
+    }
+
+    /// @param tab      The attached tab, as the user sees it, or null.
+    /// @param tabFirst True if the tab was the last thing attached, false if documents or tables were.
+    /// @return What the user might ask about what is attached, from what kind of thing each is, the most recently
+    /// attached first.
+    private List<String> attachedSuggestions(final AiTabSnapshot tab, final boolean tabFirst) {
+        final List<List<String>> groups = new ArrayList<>();
+        for (final AiChatAttachment attachment : pendingAttachmentStatuses()) {
+            groups.add(AiAttachments.isDocument(attachment)
+                    ? AiSuggestions.forDocument(attachment.getDocRef())
+                    : AiSuggestions.forTable());
+        }
+        groups.add(tabFirst
+                ? 0
+                : groups.size(), AiSuggestions.forTab(tab));
+        return AiSuggestions.combine(groups);
+    }
+
+    /// @return The statuses of the documents and tables attached for the next question, the most recently attached
+    /// first, for those whose status has arrived.
+    private List<AiChatAttachment> pendingAttachmentStatuses() {
+        final List<AiChatAttachment> statuses = new ArrayList<>();
+        final List<AiChatMessage> pending = new ArrayList<>(pendingAttachments.values());
+        for (int i = pending.size() - 1; i >= 0; i--) {
+            final AiChatAttachment attachment = attachmentStatuses.get(pending.get(i).getAttachmentId());
+            if (attachment != null) {
+                statuses.add(attachment);
+            }
+        }
+        return statuses;
+    }
+
+    /// @return True if the user has asked anything in the chat.
+    private boolean hasConversation() {
+        return renderedMessages.values().stream()
+                .anyMatch(msg -> msg.getMessageType() == AiMessageType.USER_MESSAGE);
+    }
+
+    /// After something (the tab, a document or a table) is detached, suggestions are offered again for whatever is
+    /// still attached, as when it was attached; with nothing left attached, the follow-ups to the latest answer come
+    /// back, or none in a chat with nothing asked in it.
+    private void onDetached() {
+        if (attachedTab() != null || !pendingAttachmentStatuses().isEmpty()) {
+            offerAttachedSuggestions(true);
+        } else {
+            // The model's suggestions for what was attached, still to come, no longer apply.
+            attachedSuggestionsSequence++;
+            followUps = answerFollowUps;
+            refreshFollowUps();
         }
     }
 
@@ -4632,6 +4769,7 @@ public class AskStroomAiPresenter
     private void detachTab() {
         attachedTabs.remove(chatKey());
         refreshAttachmentList();
+        onDetached();
     }
 
     /// @return The chat's key in [#attachedTabs].
@@ -4743,6 +4881,10 @@ public class AskStroomAiPresenter
                     final DocRef docRef = ((DocumentTabData) offeredTab).getDocRef();
                     AiAttachments.attachTabChip(chips, offeredTab.getIcon(), AiTabSnapshots.attachText(docRef),
                             AiTabSnapshots.attachTooltip(docRef, attachedTab != null));
+                }
+                // The tab, which stays attached, set apart from the documents and tables sent with the next question.
+                if ((attachedTab != null || offeredTab != null) && !pendingAttachments.isEmpty()) {
+                    chips.div("", Attribute.className("ai-attachment-chips-divider"));
                 }
                 pendingAttachments.values().forEach(msg -> attachmentChip(chips, msg, true));
             }, Attribute.className("ai-attachment-chips"));
@@ -4857,6 +4999,7 @@ public class AskStroomAiPresenter
         }
         pendingAttachments.remove(messageId);
         refreshAttachmentList();
+        onDetached();
         askStroomAiClient.deleteMessage(currentChat.getId(), messageId, success -> {
             // Removed.
         }, getView());
