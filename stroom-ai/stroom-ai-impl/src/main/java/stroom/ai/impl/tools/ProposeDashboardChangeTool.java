@@ -22,6 +22,10 @@ import stroom.ai.impl.DashboardBuilder;
 import stroom.ai.impl.DashboardChanges;
 import stroom.ai.impl.DashboardChanges.Change;
 import stroom.ai.impl.DashboardChanges.Checked;
+import stroom.ai.impl.DashboardComponents;
+import stroom.ai.impl.DashboardComponents.Component;
+import stroom.ai.impl.DashboardSettings;
+import stroom.ai.impl.DashboardSettings.Setting;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
@@ -34,6 +38,7 @@ import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
@@ -51,8 +56,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -117,18 +124,52 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 .addStringProperty("column", "The column, by its name as the user sees it (not for add_column, "
                                              + "add_table or set_expression).")
                 .addStringProperty("table", "The table the change is to, if not the component: only a table an "
-                                            + "earlier add_table in these changes adds.")
+                                            + "earlier add_table in these changes adds. For add_text: the table "
+                                            + "it follows (default the component).")
                 .addIntegerProperty("level", "For group: the level to group at, from 1.")
                 .addStringProperty("name", "For add_column: the new column's name. For edit_column: its new name. "
-                                           + "For add_table: the new table's name.")
+                                           + "For add_table or add_text: the new component's name. For rename: "
+                                           + "the new name.")
                 .addBooleanProperty("copy", "For add_table: true to start with the component's columns, false "
                                             + "(the default) for none.")
+                .addProperty("conditions", JsonArraySchema.builder()
+                        .items(JsonObjectSchema.builder()
+                                .addStringProperty("column", "The column, by its name as the user sees it.")
+                                .addEnumProperty("condition", List.copyOf(DashboardChanges.RULE_CONDITIONS.keySet()),
+                                        "The condition.")
+                                .addStringProperty("value", "The value to compare with (for between, two values "
+                                                            + "separated by a comma; for in, values separated by "
+                                                            + "spaces). Not for is null or is not null.")
+                                .required("column", "condition")
+                                .build())
+                        .description("For add_format_rule: the conditions a row must meet.")
+                        .build())
+                .addEnumProperty("match", List.of("all", "any"), "For add_format_rule: whether a row must meet all "
+                                                                + "the conditions (the default) or any of them.")
+                .addEnumProperty("style", DashboardChanges.FORMAT_STYLES, "For add_format_rule: the colour to give "
+                                                                          + "matching rows.")
+                .addEnumProperty("format_type", DashboardChanges.FORMAT_TYPES, "For add_format_rule: what the "
+                                                                              + "colour is given to (default "
+                                                                              + "background).")
+                .addBooleanProperty("bold", "For add_format_rule: make matching rows bold.")
+                .addBooleanProperty("italic", "For add_format_rule: make matching rows italic.")
+                .addBooleanProperty("hide", "For add_format_rule: hide matching rows.")
+                .addStringProperty("target", "For rename or set_setting: the component (table, query or text), "
+                                             + "by its name as the user sees it; default the component.")
+                .addStringProperty("setting", "For set_setting: the setting. " + settingsHelp())
+                .addStringProperty("value", "For set_setting: its value (true or false, a number, a pipeline's "
+                                            + "UUID, a data source's name or UUID, a component's name, or none "
+                                            + "where allowed).")
                 .addStringProperty("expression", "For add_column or edit_column: the column's expression in "
                                                  + "Stroom's expression language, e.g. count() or "
                                                  + "${EventTime}.")
                 .addEnumProperty("format", DashboardChanges.FORMATS, "For add_column or edit_column: the format.")
                 .addIntegerProperty("position", "For add_column: where to add it, from 1 (default the end). For "
-                                                + "move_column: where to move it, from 1.")
+                                                + "move_column: where to move it, from 1. For add_format_rule: "
+                                                + "where to add the rule among the table's rules, from 1 (default "
+                                                + "the end; the first rule a row matches applies). For "
+                                                + "remove_format_rule: the rule's number, as the dashboard file "
+                                                + "lists them.")
                 .addEnumProperty("direction", List.of(DashboardChanges.ASCENDING, DashboardChanges.DESCENDING,
                         DashboardChanges.NONE), "For sort: the direction, or none to stop sorting by it.")
                 .addIntegerProperty("priority", "For sort: its priority, from 1 (sorted by first). By default "
@@ -148,15 +189,24 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                              + "group or ungroup, add_column, edit_column, move_column, hide_column, show_column, "
                              + "sort, or filter, applied in order; set_expression, which replaces the expression "
                              + "of the classic query that feeds the table (give its conditions in where, and show "
-                             + "the user the expression, never StroomQL); or add_table, which adds a table as a "
+                             + "the user the expression, never StroomQL); add_table, which adds a table as a "
                              + "tab beside it, fed by the same query, that the changes after it set up by naming "
                              + "it as their table (e.g. a tab per event category: add_table, its columns, and a "
-                             + "filter on the category column). The user is shown the changes with an 'Apply to "
+                             + "filter on the category column); add_text, which adds a Text widget below the "
+                             + "table (or a table added before it, named as its table) showing the event of the "
+                             + "selected row, that later set_setting changes can set up by naming it as their "
+                             + "target; add_format_rule or remove_format_rule, for the table's conditional "
+                             + "formatting (rows matching conditions on its columns coloured, bold, italic or "
+                             + "hidden); rename, which renames any component and its tab; "
+                             + "or set_setting, which changes a setting of any table, query or text component, as "
+                             + "its Settings dialog has it. The user is shown the changes with an 'Apply to "
                              + "dashboard' button; nothing changes until they click it, and it is never saved. "
                              + "Columns and the table are named as the user sees them. Expressions are checked "
                              + "first; an invalid change is refused with the reason.")
                 .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(COMPONENT_ARG, "The table, by its name as the user sees it.")
+                        .addStringProperty(COMPONENT_ARG, "The table the changes are for, by its name as the user "
+                                                          + "sees it. Changes to other components name them as "
+                                                          + "their target.")
                         .addProperty(CHANGES_ARG, JsonArraySchema.builder()
                                 .items(change)
                                 .description("The changes, applied in order.")
@@ -219,7 +269,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                         .toList());
         final List<String> problems = new ArrayList<>(checked.problems());
         problems.addAll(expressionProblems(checked.changes(), table));
-        final List<Change> built = withQueryExpressions(checked.changes(), table, problems);
+        final List<Change> built = withComponents(withQueryExpressions(checked.changes(), table, problems),
+                settings.text(), tableName, problems);
         if (!problems.isEmpty()) {
             return "No change was proposed, as it isn't valid:\n- " + String.join("\n- ", problems)
                    + "\nCorrect it and propose it again.";
@@ -246,6 +297,128 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                  + "dashboard as an unsaved change, on top of any unsaved changes it has, which they can save, or "
                  + "undo with Undo apply. "
                  + "Tell them about the button rather than saying the dashboard was changed.";
+    }
+
+    // Resolves the component each rename and set_setting changes, by name (or a table these changes add), and checks
+    // and resolves each setting's value: documents by their UUID (or a data source by its name), and components by
+    // their name. Adds why to the problems for any that can't be.
+    private List<Change> withComponents(final List<Change> changes,
+                                        final String dashboardText,
+                                        final String tableName,
+                                        final List<String> problems) {
+        final List<Component> components = DashboardComponents.parse(dashboardText);
+        // The components these changes add, by name (lower case), with their type.
+        final Map<String, String> added = new HashMap<>();
+        final List<Change> resolved = new ArrayList<>();
+        for (int i = 0; i < changes.size(); i++) {
+            final Change change = changes.get(i);
+            final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
+            if (DashboardChanges.ADD_TABLE.equals(change.op()) || DashboardChanges.ADD_TEXT.equals(change.op())) {
+                final String key = change.name().toLowerCase(Locale.ROOT);
+                if (DashboardChanges.ADD_TEXT.equals(change.op())
+                    && (added.containsKey(key) || DashboardComponents.find(components, change.name()).isPresent())) {
+                    problems.add(prefix + "the dashboard already has a component '" + change.name() + "'. Give "
+                                 + "another name.");
+                }
+                added.put(key, DashboardChanges.ADD_TABLE.equals(change.op())
+                        ? DashboardComponents.TABLE
+                        : DashboardComponents.TEXT);
+            }
+            if (!DashboardChanges.RENAME.equals(change.op()) && !DashboardChanges.SET_SETTING.equals(change.op())) {
+                resolved.add(change);
+                continue;
+            }
+            final String targetName = NullSafe.nonBlankStringElse(change.target(), tableName);
+            final String targetId;
+            final String type;
+            if (added.containsKey(targetName.toLowerCase(Locale.ROOT))) {
+                // Known by its name until it is added.
+                targetId = null;
+                type = added.get(targetName.toLowerCase(Locale.ROOT));
+            } else {
+                final Component target = DashboardComponents.find(components, targetName).orElse(null);
+                if (target == null) {
+                    problems.add(prefix + "the dashboard has no component '" + targetName + "'. Its components "
+                                 + "are: " + DashboardComponents.describe(components) + ".");
+                    resolved.add(change);
+                    continue;
+                }
+                targetId = target.id();
+                type = target.type();
+            }
+            if (DashboardChanges.RENAME.equals(change.op())) {
+                if (components.stream().anyMatch(c -> c.name().equalsIgnoreCase(change.name())
+                                                      && !c.id().equals(targetId))) {
+                    problems.add(prefix + "the dashboard already has a component '" + change.name() + "'.");
+                }
+                resolved.add(change.withResolved(targetId, null, null, null));
+                continue;
+            }
+            final Setting setting = DashboardSettings.find(type, change.setting()).orElse(null);
+            if (setting == null) {
+                final List<String> keys = DashboardSettings.keys(type);
+                problems.add(prefix + type + " '" + targetName + "' has no setting '" + change.setting() + "'"
+                             + (keys.isEmpty()
+                        ? ", and its settings can't be changed here."
+                        : ". Its settings are: " + String.join(", ", keys) + "."));
+                resolved.add(change);
+                continue;
+            }
+            try {
+                resolved.add(resolveSetting(setting, change, targetId, components));
+            } catch (final IllegalArgumentException e) {
+                problems.add(prefix + e.getMessage());
+                resolved.add(change);
+            }
+        }
+        return resolved;
+    }
+
+    // Checks a setting's value, resolving any document or component it names.
+    private Change resolveSetting(final Setting setting,
+                                  final Change change,
+                                  final String targetId,
+                                  final List<Component> components) {
+        final String value = DashboardSettings.normalise(setting, change.value());
+        final boolean none = DashboardSettings.NONE.equalsIgnoreCase(value);
+        return switch (setting.kind()) {
+            case PIPELINE, PIPELINE_OR_NONE -> {
+                if (none && setting.kind() == DashboardSettings.Kind.PIPELINE_OR_NONE) {
+                    yield change.withResolved(targetId, DashboardSettings.NONE, null, null);
+                }
+                final DocRef pipeline = documentAccess.findDocRef(value)
+                        .filter(doc -> PipelineDoc.TYPE.equals(doc.getType()))
+                        .filter(documentAccess::canView)
+                        .orElseThrow(() -> new IllegalArgumentException("no pipeline you can view has the UUID '"
+                                                                        + value + "'. Give a Pipeline's UUID."));
+                yield change.withResolved(targetId, pipeline.getUuid(), null, pipeline);
+            }
+            case DATA_SOURCE -> {
+                final List<DocRef> found = dataSourceAccess.find(value).stream()
+                        .filter(dataSourceAccess::canUse)
+                        .toList();
+                if (found.size() != 1) {
+                    throw new IllegalArgumentException(found.isEmpty()
+                            ? "no data source you can use is called '" + value + "' or has that UUID."
+                            : "more than one data source is called '" + value + "'. Give its UUID.");
+                }
+                yield change.withResolved(targetId, found.getFirst().getUuid(), null, found.getFirst());
+            }
+            case QUERY_COMPONENT, TABLE_COMPONENT -> {
+                if (none && setting.kind() == DashboardSettings.Kind.TABLE_COMPONENT) {
+                    yield change.withResolved(targetId, DashboardSettings.NONE, null, null);
+                }
+                final String wanted = setting.kind() == DashboardSettings.Kind.QUERY_COMPONENT
+                        ? DashboardComponents.QUERY
+                        : DashboardComponents.TABLE;
+                final Component component = DashboardComponents.find(components, value)
+                        .filter(c -> wanted.equals(c.type()))
+                        .orElseThrow(() -> new IllegalArgumentException("the dashboard has no " + wanted
+                                                                        + " '" + value + "'."));
+                yield change.withResolved(targetId, component.name(), component.id(), null);
+            }
+            default -> change.withResolved(targetId, value, null, null);
+        };
     }
 
     // Builds the query expression of each set_expression change from its conditions, against the table's data
@@ -278,6 +451,19 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             }
         }
         return built;
+    }
+
+    // The settings each kind of component has, for the model.
+    private static String settingsHelp() {
+        final List<String> parts = new ArrayList<>();
+        for (final String type : List.of(DashboardComponents.TABLE, DashboardComponents.QUERY,
+                DashboardComponents.TEXT)) {
+            parts.add(type + ": " + String.join("; ", DashboardSettings.SETTINGS.stream()
+                    .filter(setting -> setting.componentType().equals(type))
+                    .map(setting -> setting.key() + " (" + setting.label() + ")")
+                    .toList()));
+        }
+        return String.join(". ", parts) + ".";
     }
 
     // Checks each expression a change gives, with the fields of the table's data source if they can be read.

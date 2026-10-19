@@ -38,6 +38,8 @@ import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TableChange;
 import stroom.dashboard.client.table.TablePresenter;
+import stroom.dashboard.client.text.TextPresenter;
+import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardConfig;
@@ -45,6 +47,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.KeyValueInputComponentSettings;
 import stroom.dashboard.shared.LayoutConstraints;
+import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
@@ -58,6 +61,9 @@ import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.ConditionalFormattingStyle;
+import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Format;
 import stroom.query.api.ParamUtil;
@@ -1103,9 +1109,94 @@ public class DashboardPresenter
                                 .append('\n');
                     }
                 }
+                final List<ConditionalFormattingRule> rules = NullSafe.list(NullSafe.get(settings,
+                        TableComponentSettings::getConditionalFormattingRules));
+                if (!rules.isEmpty()) {
+                    sb.append("Conditional formatting (the first rule a row matches applies):\n");
+                    for (int i = 0; i < rules.size(); i++) {
+                        sb.append(i + 1).append(". ").append(aiRule(rules.get(i))).append('\n');
+                    }
+                }
+            }
+            final String settings = aiSettings(NullSafe.get(component.getComponentConfig(),
+                    ComponentConfig::getSettings));
+            if (settings != null) {
+                sb.append("Settings: ").append(settings).append('\n');
             }
         }
         return sb.toString();
+    }
+
+    // A component's settings that the AI chat can change, by the keys it changes them by, or null if it has none.
+    private String aiSettings(final ComponentSettings settings) {
+        final List<String> parts = new ArrayList<>();
+        if (settings instanceof final TableComponentSettings table) {
+            parts.add("pageSize " + NullSafe.getOrElse(table, TableComponentSettings::getPageSize, 100));
+            parts.add("maxResults " + NullSafe.list(table.getMaxResults()));
+            parts.add("showDetail " + table.showDetail());
+            parts.add("extractValues " + table.extractValues());
+            parts.add("extractionPipeline " + aiDoc(table.getExtractionPipeline()));
+            parts.add("showValueFilters " + table.showValueFilters());
+            parts.add("query " + aiComponentName(table.getQueryId()));
+            if (table.overrideMaxStringFieldLength()) {
+                parts.add("maxStringFieldLength " + table.getMaxStringFieldLength());
+            }
+        } else if (settings instanceof final QueryComponentSettings query) {
+            final Automate automate = query.getAutomate();
+            parts.add("queryOnOpen " + (automate != null && automate.isOpen()));
+            parts.add("autoRefresh " + (automate != null && automate.isRefresh()));
+            parts.add("refreshInterval " + NullSafe.get(automate, Automate::getRefreshInterval));
+        } else if (settings instanceof final TextComponentSettings text) {
+            parts.add("table " + (text.getTableId() == null
+                    ? "none (any)"
+                    : aiComponentName(text.getTableId())));
+            parts.add("pipeline " + aiDoc(text.getPipeline()));
+            parts.add("showAsHtml " + text.isShowAsHtml());
+            parts.add("showStepping " + text.isShowStepping());
+        } else {
+            return null;
+        }
+        return String.join("; ", parts);
+    }
+
+    private static String aiDoc(final DocRef doc) {
+        return doc == null
+                ? "none"
+                : "'" + doc.getName() + "' (uuid " + doc.getUuid() + ")";
+    }
+
+    private String aiComponentName(final String componentId) {
+        final Component component = componentId == null
+                ? null
+                : components.get(componentId);
+        return component == null
+                ? "none"
+                : "'" + NullSafe.get(component.getComponentConfig(), ComponentConfig::getName) + "'";
+    }
+
+    // A conditional formatting rule, for the AI chat: which rows it matches, and what it does to them.
+    private static String aiRule(final ConditionalFormattingRule rule) {
+        final List<String> effects = new ArrayList<>();
+        if (rule.isHide()) {
+            effects.add("hidden");
+        }
+        if (rule.getFormattingStyle() != null && rule.getFormattingStyle() != ConditionalFormattingStyle.NONE) {
+            effects.add(rule.getFormattingStyle().getDisplayValue() + " "
+                        + NullSafe.get(rule.getFormattingType(), ConditionalFormattingType::getDisplayValue));
+        } else if (rule.getCustomStyle() != null) {
+            effects.add("custom colours");
+        }
+        if (rule.getTextAttributes() != null && rule.getTextAttributes().isBold()) {
+            effects.add("bold");
+        }
+        if (rule.getTextAttributes() != null && rule.getTextAttributes().isItalic()) {
+            effects.add("italic");
+        }
+        return "rows where " + rule.getExpression() + ": " + (effects.isEmpty()
+                ? "no effect"
+                : String.join(", ", effects)) + (rule.isEnabled()
+                ? ""
+                : " (disabled)");
     }
 
     // How a column is shown, for the AI chat: hidden, grouped, sorted, formatted or filtered.
@@ -1195,8 +1286,10 @@ public class DashboardPresenter
         final ExpressionOperator expressionBefore = query != null
                 ? query.getExpression()
                 : null;
-        // The tables added, by the name the changes give them (lower case).
+        // The tables added, by the name the changes give them (lower case), and the name and settings of each other
+        // component renamed or changed, as they were, by id.
         final Map<String, Component> added = new LinkedHashMap<>();
+        final Map<String, ComponentConfig> configsBefore = new LinkedHashMap<>();
         for (int i = 0; i < changes.size(); i++) {
             final TableChange change = changes.get(i);
             final String prefix = "Change " + (i + 1) + " (" + change.getOp() + "): ";
@@ -1208,6 +1301,41 @@ public class DashboardPresenter
                 } else {
                     added.put(NullSafe.string(change.getName()).toLowerCase(), table);
                 }
+            } else if (TableChange.ADD_TEXT.equals(change.getOp())) {
+                final Component followed = change.getTable() == null || change.getTable().equalsIgnoreCase(name)
+                        ? component
+                        : added.get(change.getTable().toLowerCase());
+                final Component text = followed == null
+                        ? null
+                        : addAiText(followed, change.getName());
+                if (text == null) {
+                    failed = prefix + "the Text widget couldn't be added.";
+                } else {
+                    added.put(NullSafe.string(change.getName()).toLowerCase(), text);
+                }
+            } else if (TableChange.RENAME.equals(change.getOp()) || TableChange.SET_SETTING.equals(change.getOp())) {
+                final Component target = change.getTargetId() != null
+                        ? components.get(change.getTargetId())
+                        : change.getTarget() == null
+                                ? component
+                                : added.get(change.getTarget().toLowerCase());
+                if (target == null) {
+                    failed = prefix + "there is no component '" + NullSafe.nonBlankStringElse(change.getTarget(), name)
+                             + "'.";
+                } else {
+                    if (!added.containsValue(target) && !configsBefore.containsKey(target.getId())) {
+                        configsBefore.put(target.getId(), AiComponentSettings.snapshot(target));
+                    }
+                    if (TableChange.RENAME.equals(change.getOp())) {
+                        target.setComponentName(change.getName());
+                    } else {
+                        failed = AiComponentSettings.apply(target, change.getSetting(), change.getValue(),
+                                change.getRef(), change.getDoc());
+                        failed = failed == null
+                                ? null
+                                : prefix + failed;
+                    }
+                }
             } else if (!TableChange.SET_EXPRESSION.equals(change.getOp())) {
                 final Component target = change.getTable() == null || change.getTable().equalsIgnoreCase(name)
                         ? component
@@ -1217,7 +1345,8 @@ public class DashboardPresenter
                         : TableChange.apply(target, List.of(change));
             }
             if (failed != null) {
-                added.values().forEach(this::removeAiTable);
+                added.values().forEach(this::removeAiComponent);
+                configsBefore.forEach((id, config) -> AiComponentSettings.restore(components.get(id), config));
                 TableChange.restore(component, before);
                 return failed;
             }
@@ -1229,7 +1358,7 @@ public class DashboardPresenter
         if (undoKey != null && before != null) {
             aiUndos.put(undoKey, new AiUndo(component.getComponentConfig().getId(), before,
                     NullSafe.get(query, Component::getId), expressionBefore,
-                    added.values().stream().map(Component::getId).toList(), aiDashboardHash()));
+                    added.values().stream().map(Component::getId).toList(), configsBefore, aiDashboardHash()));
         }
         return null;
     }
@@ -1268,16 +1397,51 @@ public class DashboardPresenter
         return table;
     }
 
-    // Removes a table the AI chat added, with its tab.
-    private void removeAiTable(final Component table) {
-        if (table.getTabConfig() != null && table.getTabConfig().getParent() != null) {
-            layoutPresenter.closeTab(table.getTabConfig());
+    // Adds a Text widget in a new pane below a table, following it, named as the AI chat asked (made unique if
+    // the dashboard has the name already).
+    private Component addAiText(final Component table, final String name) {
+        final MutableTabConfig tableTab = table.getTabConfig();
+        final ComponentType type = components.getComponentTypes().stream()
+                .filter(componentType -> TextPresenter.TYPE.getId().equals(componentType.getId()))
+                .findFirst()
+                .orElse(null);
+        if (type == null || tableTab == null || tableTab.getParent() == null) {
+            return null;
         }
-        if (table instanceof final Queryable queryable) {
+        final ComponentId componentId = new ComponentNameSet(components).createUnique(type, name);
+        final ComponentConfig componentConfig = ComponentConfig.builder()
+                .type(type.getId())
+                .id(componentId.id)
+                .name(componentId.name)
+                .settings(TextComponentSettings.builder().tableId(table.getId()).build())
+                .build();
+        final Component text = addComponent(componentConfig.getType(), componentConfig);
+        if (text == null) {
+            return null;
+        }
+        text.link();
+        final MutableTabConfig tabConfig = new MutableTabConfig(componentId.id, true);
+        text.setTabConfig(tabConfig);
+        if (!layoutPresenter.addTabBelow(tableTab.getParent(), tabConfig)) {
+            // Beside the table, if it can't go below it.
+            tableTab.getParent().add(tabConfig);
+            layoutPresenter.clear();
+            layoutPresenter.refresh();
+        }
+        onChange();
+        return text;
+    }
+
+    // Removes a component the AI chat added, with its tab.
+    private void removeAiComponent(final Component component) {
+        if (component.getTabConfig() != null && component.getTabConfig().getParent() != null) {
+            layoutPresenter.closeTab(component.getTabConfig());
+        }
+        if (component instanceof final Queryable queryable) {
             queryable.removeSearchStateListener(this);
             queryable.removeSearchErrorListener(this);
         }
-        components.remove(table.getId());
+        components.remove(component.getId());
         dashboardContext.fireContextChangeEvent();
         enableQueryButtons();
     }
@@ -1302,11 +1466,12 @@ public class DashboardPresenter
         }
         final AiUndo undo = aiUndos.remove(undoKey);
         for (final String addedId : undo.addedIds) {
-            final Component table = components.get(addedId);
-            if (table != null) {
-                removeAiTable(table);
+            final Component addedComponent = components.get(addedId);
+            if (addedComponent != null) {
+                removeAiComponent(addedComponent);
             }
         }
+        undo.configsBefore.forEach((id, config) -> AiComponentSettings.restore(components.get(id), config));
         if (undo.queryId != null && components.get(undo.queryId) instanceof final QueryPresenter query) {
             query.setExpression(undo.expressionBefore);
             query.onChange();
@@ -1414,8 +1579,9 @@ public class DashboardPresenter
 
 
     // A change from the AI chat that has been applied: the table it changed and its settings before, the query
-    // whose expression it set (if it did) and that expression before, the tables it added, and the hash of the
-    // dashboard's settings just after, which they must still have for it to be undone.
+    // whose expression it set (if it did) and that expression before, the tables it added, the name and settings
+    // of each other component it renamed or changed, and the hash of the dashboard's settings just after, which
+    // they must still have for it to be undone.
     private static class AiUndo {
 
         private final String componentId;
@@ -1423,6 +1589,7 @@ public class DashboardPresenter
         private final String queryId;
         private final ExpressionOperator expressionBefore;
         private final List<String> addedIds;
+        private final Map<String, ComponentConfig> configsBefore;
         private final String hashAfter;
 
         private AiUndo(final String componentId,
@@ -1430,12 +1597,14 @@ public class DashboardPresenter
                        final String queryId,
                        final ExpressionOperator expressionBefore,
                        final List<String> addedIds,
+                       final Map<String, ComponentConfig> configsBefore,
                        final String hashAfter) {
             this.componentId = componentId;
             this.before = before;
             this.queryId = queryId;
             this.expressionBefore = expressionBefore;
             this.addedIds = addedIds;
+            this.configsBefore = configsBefore;
             this.hashAfter = hashAfter;
         }
     }

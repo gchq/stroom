@@ -148,6 +148,15 @@ public abstract class AbstractComponentPresenter<V extends View>
         }
     }
 
+    /// Sets the component's settings as its Settings dialog does on OK, e.g. for a change from the AI chat: it
+    /// takes them as they are, then reacts to them.
+    ///
+    /// @param componentSettings The new settings.
+    public void applySettings(final ComponentSettings componentSettings) {
+        setSettings(componentSettings);
+        changeSettings();
+    }
+
     protected void changeSettings() {
         if (tabLayout != null) {
             tabLayout.refresh();

@@ -1866,6 +1866,25 @@ public class FlexLayout extends Composite {
         return maximised;
     }
 
+    /// Adds a tab (e.g. a new component's) in a new pane below another pane, sharing its space, as dropping the tab
+    /// on that pane's bottom edge does.
+    ///
+    /// @param target The pane to add it below.
+    /// @param tab    The tab, not yet in any pane.
+    /// @return True if it was added.
+    public boolean addTabBelow(final MutableTabLayoutConfig target, final MutableTabConfig tab) {
+        if (target == null || tab == null || positionAndSizeMap.get(target) == null) {
+            return false;
+        }
+        final boolean added = moveTabOutside(null, List.of(tab), target, Pos.BOTTOM);
+        if (added) {
+            clear();
+            refresh();
+            changeHandler.onChange();
+        }
+        return added;
+    }
+
     public void closeTab(final MutableTabConfig tabConfig) {
         final MutableTabLayoutConfig tabLayoutConfig = tabConfig.getParent();
         tabLayoutConfig.remove(tabConfig);

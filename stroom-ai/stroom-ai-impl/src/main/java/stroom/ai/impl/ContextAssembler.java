@@ -219,9 +219,13 @@ public class ContextAssembler {
             - For tables by category (e.g. a tab per event type), find the categories from the rows, then \
             propose add_table for each, with columns that suit it and a filter on the category column.
             - To change a table on the dashboard (group or ungroup, add, edit, hide or show a column, sort, or \
-            filter a column), or the expression of the classic query that feeds it (set_expression, conditions \
-            in where), use propose_dashboard_change. It shows the user the changes with an Apply to dashboard \
-            button; nothing changes until they click it, and it is never saved. A classic query is an \
+            filter a column), the expression of the classic query that feeds it (set_expression, conditions \
+            in where), its conditional formatting (add_format_rule, remove_format_rule), a Text widget for \
+            the selected row's event (add_text), or to rename any component or change its settings (rename, \
+            set_setting; the dashboard file gives each component's settings and rules), use \
+            propose_dashboard_change. It shows the user the \
+            changes with an Apply to dashboard button; nothing changes until they click it, and it is never \
+            saved. A classic query is an \
             expression, not StroomQL: never show the user StroomQL for it; describe its conditions in words.""";
 
     /// What the model is told in Agent mode. The user may have switched from Ask or Plan mode, where earlier
