@@ -66,6 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -415,6 +416,43 @@ public class AiDaoImpl implements AiDao {
                 .set(AI_CHAT_MESSAGE.TURN_ID, messageId)
                 .where(AI_CHAT_MESSAGE.ID.eq(messageId))
                 .execute());
+    }
+
+    @Override
+    public boolean changeMessageType(final int chatId,
+                                     final int messageId,
+                                     final Set<AiMessageType> from,
+                                     final AiMessageType to) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .update(AI_CHAT_MESSAGE)
+                .set(AI_CHAT_MESSAGE.MESSAGE_TYPE, (int) to.getPrimitiveValue())
+                .where(AI_CHAT_MESSAGE.ID.eq(messageId))
+                .and(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.in(primitiveValues(from)))
+                .execute()) > 0;
+    }
+
+    @Override
+    public int changeMessageTypes(final int chatId, final Set<AiMessageType> from, final AiMessageType to) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .update(AI_CHAT_MESSAGE)
+                .set(AI_CHAT_MESSAGE.MESSAGE_TYPE, (int) to.getPrimitiveValue())
+                .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.in(primitiveValues(from)))
+                .execute());
+    }
+
+    @Override
+    public boolean hasMessageOfType(final int chatId, final AiMessageType type) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                .fetchExists(AI_CHAT_MESSAGE, AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId)
+                        .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.eq((int) type.getPrimitiveValue()))));
+    }
+
+    private static List<Integer> primitiveValues(final Set<AiMessageType> types) {
+        return types.stream()
+                .map(type -> (int) type.getPrimitiveValue())
+                .toList();
     }
 
     @Override

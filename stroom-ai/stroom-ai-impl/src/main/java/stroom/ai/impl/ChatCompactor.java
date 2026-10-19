@@ -325,24 +325,29 @@ public class ChatCompactor {
                 .toList();
     }
 
-    /// Checks whether an exception from a model call means the request was too large for its context window.
+    /// Checks whether an exception from a model call means the request was too large for its context window. A
+    /// rate limit (429) never does, even if it mentions tokens, nor does a message that only names a setting (e.g.
+    /// "max_tokens must be at least 1").
     ///
     /// @param e The exception.
     /// @return True if the request was too large.
     public static boolean isContextOverflowError(final Throwable e) {
         Throwable cause = e;
         while (cause != null) {
-            if (cause instanceof final HttpException httpException && httpException.statusCode() == 413) {
-                return true;
+            if (cause instanceof final HttpException httpException) {
+                if (httpException.statusCode() == 413) {
+                    return true;
+                }
+                if (httpException.statusCode() == 429) {
+                    return false;
+                }
             }
             final String message = NullSafe.string(cause.getMessage()).toLowerCase();
             if (message.contains("maximum context length")
                 || message.contains("context length")
                 || message.contains("context window")
-                || message.contains("token limit")
                 || message.contains("too many tokens")
                 || message.contains("context_length_exceeded")
-                || message.contains("max_tokens")
                 || message.contains("input is too long")
                 || message.contains("prompt is too long")
                 || message.contains("request too large")) {

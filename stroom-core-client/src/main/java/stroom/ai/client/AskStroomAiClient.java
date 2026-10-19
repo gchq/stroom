@@ -643,6 +643,18 @@ public class AskStroomAiClient {
                 .exec();
     }
 
+    void sendSteerNow(final int chatId,
+                      final int messageId,
+                      final Consumer<Boolean> consumer,
+                      final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.sendSteerNow(chatId, messageId))
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
     void deleteMessage(final int chatId,
                        final int messageId,
                        final Consumer<Boolean> consumer,

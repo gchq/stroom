@@ -248,8 +248,11 @@ final class AiElicitationCard {
                                         : "Or type your own answer, then press Enter"));
                     }
                     if (!first) {
-                        question.elem("Back", BUTTON, Attribute.className("allow-focus ai-question-back"),
-                                new Attribute(BACK_ATTRIBUTE, "true"));
+                        // On its own line under the answers, not beside the typed answer.
+                        question.div(nav -> nav.elem("Back", BUTTON,
+                                        Attribute.className("allow-focus ai-question-back"),
+                                        new Attribute(BACK_ATTRIBUTE, "true")),
+                                Attribute.className("ai-question-nav"));
                     }
                     // Holds the answer given, which is what is sent.
                     question.elem(INPUT, new Attribute("type", "hidden"),

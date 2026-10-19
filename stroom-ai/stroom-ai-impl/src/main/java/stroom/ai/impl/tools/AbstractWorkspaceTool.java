@@ -152,8 +152,15 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
      * @return A line cut short if it is very long.
      */
     static String shortenLine(final String line) {
-        return line.length() > MAX_LINE_CHARS
-                ? line.substring(0, MAX_LINE_CHARS) + "… (" + (line.length() - MAX_LINE_CHARS) + " more characters)"
+        return shortenLine(line, MAX_LINE_CHARS);
+    }
+
+    /**
+     * @return A line cut short if it is longer than the given number of characters.
+     */
+    static String shortenLine(final String line, final int maxChars) {
+        return line.length() > maxChars
+                ? line.substring(0, maxChars) + "… (" + (line.length() - maxChars) + " more characters)"
                 : line;
     }
 

@@ -77,6 +77,28 @@ class TestStoppableCall {
     }
 
     @Test
+    void givesUpWhenCutShortWithoutStopping() throws InterruptedException {
+        final AtomicBoolean cut = new AtomicBoolean(false);
+        final CountDownLatch interrupted = new CountDownLatch(1);
+        final long startMs = System.currentTimeMillis();
+
+        assertThatThrownBy(() -> StoppableCall.run(() -> {
+            cut.set(true);
+            try {
+                Thread.sleep(Duration.ofMinutes(5));
+            } catch (final InterruptedException e) {
+                interrupted.countDown();
+            }
+            return "too late";
+        }, new AtomicBoolean(false), cut::get, CHECK)).isInstanceOf(StoppableCall.CutShortException.class);
+
+        assertThat(System.currentTimeMillis() - startMs).isLessThan(5_000);
+        assertThat(interrupted.await(5, TimeUnit.SECONDS)).isTrue();
+        // A call that returns first isn't cut short.
+        assertThat(StoppableCall.run(() -> "done", new AtomicBoolean(false), () -> false, CHECK)).isEqualTo("done");
+    }
+
+    @Test
     void doesNotStartOnceStopped() {
         final AtomicBoolean ran = new AtomicBoolean(false);
 

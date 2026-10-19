@@ -31,6 +31,7 @@ import stroom.util.shared.UserRef;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class MockAiDao implements AiDao {
 
@@ -105,6 +106,24 @@ public class MockAiDao implements AiDao {
     @Override
     public void askAsQuestion(final int messageId, final String question) {
 
+    }
+
+    @Override
+    public boolean changeMessageType(final int chatId,
+                                     final int messageId,
+                                     final Set<AiMessageType> from,
+                                     final AiMessageType to) {
+        return false;
+    }
+
+    @Override
+    public int changeMessageTypes(final int chatId, final Set<AiMessageType> from, final AiMessageType to) {
+        return 0;
+    }
+
+    @Override
+    public boolean hasMessageOfType(final int chatId, final AiMessageType type) {
+        return false;
     }
 
     @Override

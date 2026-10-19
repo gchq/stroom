@@ -38,7 +38,8 @@ public class AiChatPollRequest {
      * @param lastSeenMessageId The id of the last message the client has.
      * @param markRead          True if the chat is being shown, so its messages count as read.
      * @param watchedMessageIds Messages the client has that the server may change in place, e.g. forms waiting
-     *                          for the user (which are cancelled if the run stops), to be sent again as they now
+     *                          for the user (which are cancelled if the run stops) or steering messages waiting
+     *                          for the run to pick them up, to be sent again as they now
      *                          stand. Null or empty for none.
      */
     @JsonCreator

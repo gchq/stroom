@@ -32,7 +32,10 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// Records how many tokens each model call in a chat used, as reported by the model, and keeps what is needed to
 /// estimate how much of the context window a chat uses between calls:
@@ -47,6 +50,20 @@ public class ContextUsageTracker {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContextUsageTracker.class);
     private static final SimpleTokenCountEstimator ESTIMATOR = new SimpleTokenCountEstimator();
+    /// What uncorrected estimates are multiplied by when deciding whether a request will fit: characters / 4
+    /// undercounts XML, JSON and code, which tool results are full of.
+    static final double UNMEASURED_SAFETY_FACTOR = 1.25;
+    /// How much more than the context window a request is taken to have been when the model says it was too
+    /// large without saying by how much.
+    static final double UNKNOWN_OVERFLOW_FACTOR = 1.1;
+    /// The sizes model servers give for a request that was too large, e.g. vLLM's "you requested 140000 tokens
+    /// (135904 in the messages, 4096 in the completion)" or "your request has 135904 input tokens", or "prompt is
+    /// too long: 135904 tokens > 131072 maximum".
+    private static final List<Pattern> OVERFLOW_SIZE_PATTERNS = List.of(
+            Pattern.compile("(\\d+) in the messages"),
+            Pattern.compile("(\\d+) input tokens"),
+            Pattern.compile("too long: (\\d+) tokens"),
+            Pattern.compile("requested (\\d+) tokens"));
 
     private final AiDao aiDao;
     private final AiChatRunManager runManager;
@@ -111,6 +128,71 @@ public class ContextUsageTracker {
         return getCorrection(chatId)
                 .map(factor -> Math.round(estimate * factor))
                 .orElse(estimate);
+    }
+
+    /// As [#estimate(int, List, List)], but erring on the large side when no call has been measured, for deciding
+    /// whether a request will fit in the context window.
+    ///
+    /// @param chatId   The chat.
+    /// @param messages The messages to send.
+    /// @param tools    The tool definitions to offer, or null.
+    /// @return The estimate.
+    public long estimateCautiously(final int chatId,
+                                   final List<ChatMessage> messages,
+                                   final List<ToolSpecification> tools) {
+        final long estimate = ESTIMATOR.estimateTokenCountInMessages(messages) + estimateTools(tools);
+        return Math.round(estimate * getCorrection(chatId).orElse(UNMEASURED_SAFETY_FACTOR));
+    }
+
+    /// Records that the model said a request was too large for its context window, so the chat's estimates are
+    /// corrected from what it said the request's size was, or failing that, from the window it was too large for.
+    /// Estimates are only ever corrected upwards by this.
+    ///
+    /// @param chatId        The chat.
+    /// @param sent          The messages sent.
+    /// @param tools         The tool definitions offered, if any.
+    /// @param error         What the model said.
+    /// @param contextWindow The model's context window in tokens, or 0 if it is not known.
+    /// @return The size the model said the request was, in tokens, if it said.
+    public OptionalLong recordOverflow(final int chatId,
+                                       final List<ChatMessage> sent,
+                                       final List<ToolSpecification> tools,
+                                       final Throwable error,
+                                       final int contextWindow) {
+        final long estimate = ESTIMATOR.estimateTokenCountInMessages(sent) + estimateTools(tools);
+        final OptionalLong size = overflowSize(error);
+        final double actual = size.isPresent()
+                ? size.getAsLong()
+                : contextWindow * UNKNOWN_OVERFLOW_FACTOR;
+        if (estimate > 0 && actual > 0) {
+            corrections.merge(chatId, actual / estimate, Math::max);
+        }
+        LOGGER.debug(() -> "chatId=" + chatId + " overflowed the context window: estimated " + estimate
+                           + ", reported " + size);
+        return size;
+    }
+
+    /// @param error What the model said when a request was too large.
+    /// @return The size it said the request was, in tokens, if it said.
+    static OptionalLong overflowSize(final Throwable error) {
+        Throwable cause = error;
+        while (cause != null) {
+            final String message = NullSafe.string(cause.getMessage());
+            for (final Pattern pattern : OVERFLOW_SIZE_PATTERNS) {
+                final Matcher matcher = pattern.matcher(message);
+                if (matcher.find()) {
+                    try {
+                        return OptionalLong.of(Long.parseLong(matcher.group(1)));
+                    } catch (final NumberFormatException e) {
+                        // Too many digits to be a size; try the next.
+                    }
+                }
+            }
+            cause = cause.getCause() == cause
+                    ? null
+                    : cause.getCause();
+        }
+        return OptionalLong.empty();
     }
 
     /// @param chatId The chat.

@@ -48,7 +48,7 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// propose_dashboard_change: offers a change to a table on the dashboard in the user's active tab as a button,
+/// propose_dashboard_change: offers a change to a table on the dashboard in the tab the user attached as a button,
 /// after checking the dashboard is the latest snapshot's tab, the user can view it, the table and its columns
 /// exist and each expression is valid. It records the hash of the dashboard's settings and logs a View.
 class TestProposeDashboardChangeTool {

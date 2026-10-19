@@ -26,7 +26,7 @@ import java.util.Objects;
 
 /**
  * Asks for one of the user's earlier questions to be edited (or asked again unchanged), which removes it and
- * everything after it from the chat and answers the new text, with the user's active tab as it is now.
+ * everything after it from the chat and answers the new text, with the user's attached tab as it is now.
  */
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
@@ -48,7 +48,7 @@ public class EditAiMessageRequest {
      * @param config    The config to answer with.
      * @param messageId The id of the question (a USER_MESSAGE) to edit.
      * @param message     The new text, or null to ask the question again unchanged.
-     * @param tabSnapshot What the user sees in their active tab now, in full, or null if no tab is shared.
+     * @param tabSnapshot What the user sees in their attached tab now, in full, or null if no tab is shared.
      */
     @JsonCreator
     public EditAiMessageRequest(@JsonProperty("aiChat") final AiChat aiChat,
@@ -83,7 +83,7 @@ public class EditAiMessageRequest {
     }
 
     /**
-     * @return What the user sees in their active tab now, or null if no tab is shared.
+     * @return What the user sees in their attached tab now, or null if no tab is shared.
      */
     public AiTabSnapshot getTabSnapshot() {
         return tabSnapshot;
