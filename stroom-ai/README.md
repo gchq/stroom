@@ -232,7 +232,11 @@ _Steps for you_ card. The model can neither make nor click one.
 
 ## Context, memory and compaction
 
-* The context meter beside the model shows how much of the model's context window the chat uses.
+* The context meter beside the model shows how much of the model's context window the chat uses. While a question
+  is being answered, it shows what the model was sent for the latest call (as the model reported it) and what has
+  been added since, never more than the window; its tooltip says when the run has shortened earlier steps to fit,
+  so a breakdown larger than the figure (the parts as stored) is explained. Otherwise it is an estimate ("≈") of
+  what the next question would use.
 * When a chat reaches `compaction.thresholdPercent` of the window, earlier turns are replaced (for the
   model only) by short digests, keeping the last `compaction.turnsKeptInFull` turns. Users can compact
   with `/compact [focus]`, and undo the latest compaction.
@@ -242,7 +246,9 @@ _Steps for you_ card. The model can neither make nor click one.
   the latest result, then earlier steps put as a line or two each in a note. The latest step is always kept,
   and everything stays stored: the model can read it again with `read_turn`.
 * Token counts are estimated (characters / 4, corrected by what the model reported for the chat's last call;
-  25% more until a call has been measured, as XML and JSON take more tokens than that). If the model says a
+  25% more until a call has been measured, as XML and JSON take more tokens than that). Compaction and the
+  run's own shortening use the same estimate, so a chat is compacted when a question starts before the run would
+  have to shorten its steps. If the model says a
   request is too large anyway, the estimate is corrected from the size it gave (e.g. vLLM's "135904 in the
   messages"), the run is made smaller again and the call made again, up to 4 times, so the run carries on
   where it was. Only if that fails is the chat compacted as far as it will go and the run started again, with
