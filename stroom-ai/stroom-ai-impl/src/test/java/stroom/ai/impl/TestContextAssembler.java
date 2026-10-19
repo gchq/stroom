@@ -30,6 +30,7 @@ import stroom.ai.shared.AskStroomAiRequest;
 import stroom.docref.DocRef;
 import stroom.util.json.JsonUtil;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -151,7 +152,7 @@ class TestContextAssembler {
     }
 
     @Test
-    void testTheActiveTabIsNotedForTheLatestQuestionOnly() {
+    void testTheAttachedTabIsNotedForTheLatestQuestionOnly() {
         final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
         final AiWorkspaceDao workspaceDao = Mockito.mock(AiWorkspaceDao.class);
         final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, null,
@@ -162,7 +163,7 @@ class TestContextAssembler {
         Mockito.when(tabSnapshots.isEnabled()).thenReturn(true);
         Mockito.when(tabSnapshots.read(71)).thenReturn(java.util.Optional.of(earlier));
         Mockito.when(tabSnapshots.read(81)).thenReturn(java.util.Optional.of(latest));
-        Mockito.when(tabSnapshots.note(1, latest)).thenReturn("[Active tab: XSLT 'Event translation'.]");
+        Mockito.when(tabSnapshots.note(1, latest)).thenReturn("[Attached tab: XSLT 'Event translation'.]");
         Mockito.when(workspaceDao.getFileInfo(71)).thenReturn(java.util.Optional.of(new AiWorkspaceDao.FileInfo(
                 71, 1, "/tabs/7/snapshot.json", AiAttachmentStatus.READY, "x", null, null, 10L)));
         final List<AiChatMessage> history = List.of(
@@ -174,9 +175,9 @@ class TestContextAssembler {
                 1, java.util.Map.of(), history, CompactionRecord.NONE, true);
 
         assertThat(((UserMessage) messages.get(1)).singleText())
-                .isEqualTo("[Asked with the user's active tab shared; its snapshot is in /tabs/7/]\nfirst");
+                .isEqualTo("[Asked with a tab attached; its snapshot is in /tabs/7/]\nfirst");
         assertThat(((UserMessage) messages.getLast()).singleText())
-                .isEqualTo("second\n\n[Active tab: XSLT 'Event translation'.]");
+                .isEqualTo("second\n\n[Attached tab: XSLT 'Event translation'.]");
         Mockito.verify(tabSnapshots, Mockito.never()).note(1, earlier);
         // Not a query, so no query guidance.
         assertThat(((SystemMessage) messages.getFirst()).text()).doesNotContain(ContextAssembler.QUERY_GUIDANCE);
@@ -191,7 +192,7 @@ class TestContextAssembler {
         final TabSnapshots.StoredTabSnapshot query = tab(2, new DocRef("Query", "q", "Logons"));
         Mockito.when(tabSnapshots.isEnabled()).thenReturn(true);
         Mockito.when(tabSnapshots.read(21)).thenReturn(java.util.Optional.of(query));
-        Mockito.when(tabSnapshots.note(Mockito.anyInt(), Mockito.any())).thenReturn("[Active tab]");
+        Mockito.when(tabSnapshots.note(Mockito.anyInt(), Mockito.any())).thenReturn("[Attached tab]");
         final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
 
         final String withQuery = ((SystemMessage) assembler.assemble(request, 1, java.util.Map.of(), List.of(
@@ -222,7 +223,7 @@ class TestContextAssembler {
         Mockito.when(tabSnapshots.isEnabled()).thenReturn(true);
         Mockito.when(tabSnapshots.read(31)).thenReturn(java.util.Optional.of(stepping));
         Mockito.when(tabSnapshots.read(41)).thenReturn(java.util.Optional.of(structure));
-        Mockito.when(tabSnapshots.note(Mockito.anyInt(), Mockito.any())).thenReturn("[Active tab]");
+        Mockito.when(tabSnapshots.note(Mockito.anyInt(), Mockito.any())).thenReturn("[Attached tab]");
         final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
 
         final String whileStepping = systemText(assembler, request, 31);
@@ -247,7 +248,7 @@ class TestContextAssembler {
                 new DocRef("Dashboard", "d", "Logons"))));
         Mockito.when(tabSnapshots.read(41)).thenReturn(java.util.Optional.of(tab(4,
                 new DocRef("XSLT", "x", "Event translation"))));
-        Mockito.when(tabSnapshots.note(Mockito.anyInt(), Mockito.any())).thenReturn("[Active tab]");
+        Mockito.when(tabSnapshots.note(Mockito.anyInt(), Mockito.any())).thenReturn("[Attached tab]");
         final AskStroomAiRequest request = new AskStroomAiRequest(null, null, null, "q");
 
         final String withDashboard = systemText(assembler, request, 31);
@@ -433,6 +434,31 @@ class TestContextAssembler {
         assertThat(((ToolExecutionResultMessage) replay.get(1)).text()).isEqualTo("r1");
         assertThat(((UserMessage) replay.get(2)).singleText()).isEqualTo(McpAgentChat.STEER_PREFIX + "also b");
         assertThat(ContextAssembler.currentTurn(List.of())).isEmpty();
+    }
+
+    @Test
+    void testCurrentTurnIsReplayedAsTheModelsStepsWithWhatItSaid() {
+        final List<AiChatMessage> history = List.of(
+                message(10, AiMessageType.USER_MESSAGE, "q"),
+                // Two calls made together, then one on its own.
+                message(11, AiMessageType.TOOL_CALL, new ToolCallRecord("a", "t", "{}", "Checking both feeds.")),
+                message(12, AiMessageType.TOOL_CALL, new ToolCallRecord("b", "t", "{}", "Checking both feeds.")),
+                message(13, AiMessageType.TOOL_RESULT, new ToolResultRecord("a", "t", false, "r1", null, 2, 1, null)),
+                message(14, AiMessageType.TOOL_RESULT, new ToolResultRecord("b", "t", false, "r2", null, 2, 1, null)),
+                message(15, AiMessageType.TOOL_CALL, new ToolCallRecord("c", "t", "{}", "Now the pipeline.")),
+                message(16, AiMessageType.TOOL_RESULT, new ToolResultRecord("c", "t", false, "r3", null, 2, 1, null)));
+
+        final List<ChatMessage> replay = ContextAssembler.currentTurn(history);
+
+        assertThat(replay).hasSize(5);
+        assertThat(((AiMessage) replay.get(0)).text()).isEqualTo("Checking both feeds.");
+        assertThat(((AiMessage) replay.get(0)).toolExecutionRequests())
+                .extracting(ToolExecutionRequest::id)
+                .containsExactly("a", "b");
+        assertThat(((ToolExecutionResultMessage) replay.get(1)).text()).isEqualTo("r1");
+        assertThat(((ToolExecutionResultMessage) replay.get(2)).text()).isEqualTo("r2");
+        assertThat(((AiMessage) replay.get(3)).text()).isEqualTo("Now the pipeline.");
+        assertThat(((ToolExecutionResultMessage) replay.get(4)).text()).isEqualTo("r3");
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final String text) {

@@ -53,6 +53,7 @@ import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.alert.client.event.PromptEvent;
+import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
@@ -200,6 +201,9 @@ public class AskStroomAiPresenter
     // On what the model said alongside its tool calls, while the Working line shows it.
     private static final String SHOWN_AS_PROGRESS_CLASS = "ai-message--shown-as-progress";
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
+    private static final String SEND_STEER_NOW_ATTRIBUTE = "data-send-steer-now";
+    // The key in attachedTabs of a chat not yet made.
+    private static final int NEW_CHAT_KEY = 0;
     private static final String USER_ACTION_MESSAGE_ATTRIBUTE = "data-user-action-message";
     private static final String DEFAULT_CHAT_TITLE = "New chat";
     private static final SafeHtml MARK = SafeHtmlUtils.fromSafeConstant("mark");
@@ -357,14 +361,18 @@ public class AskStroomAiPresenter
     // How much of the model's context window the chat uses, as last reported.
     private AiContextUsage contextUsage;
     private final DocumentTypeCache documentTypeCache;
-    // The active content tab, if it can be shared with the chat, and the handler that follows its unsaved state.
-    private TabData activeTab;
-    private HandlerRegistration activeTabDirtyRegistration;
-    // A tab the user stopped sharing, until another tab is active.
-    private TabData dismissedTab;
-    // False if an administrator has turned off sharing the active tab.
+    // The document tab the user is on, which they can attach to the chat; while the chat's own tab is selected, the
+    // one they were on before.
+    private TabData currentTab;
+    // The tab the user has attached to each chat, by chat id (NEW_CHAT_KEY before the chat is made). It stays
+    // attached, whichever tab the user is on, until they remove it or close it.
+    private final Map<Integer, TabData> attachedTabs = new HashMap<>();
+    // The tab whose unsaved state is followed, to keep its chip up to date, and the handler that follows it.
+    private TabData followedTab;
+    private HandlerRegistration followedTabDirtyRegistration;
+    // False if an administrator has turned off sharing tabs with chats.
     private boolean shareActiveTab = true;
-    // The hash of the active tab's snapshot last sent to each chat, by chat id, so an unchanged one is sent as its
+    // The hash of the attached tab's snapshot last sent to each chat, by chat id, so an unchanged one is sent as its
     // hash only.
     private final Map<Integer, String> lastSentTabHashes = new HashMap<>();
     // The node selected in the Explorer tree, for the folder of a query created from the chat.
@@ -442,7 +450,11 @@ public class AskStroomAiPresenter
                     return;
                 }
                 if (button.hasAttribute(AiAttachments.REMOVE_TAB_ATTRIBUTE)) {
-                    stopSharingActiveTab();
+                    detachTab();
+                    return;
+                }
+                if (button.hasAttribute(AiAttachments.ATTACH_TAB_ATTRIBUTE)) {
+                    attachCurrentTab();
                     return;
                 }
                 final String remove = button.getAttribute(AiAttachments.REMOVE_ATTRIBUTE);
@@ -586,6 +598,13 @@ public class AskStroomAiPresenter
                         return;
                     }
 
+                    // Sending a message waiting for the run's current step now.
+                    final String sendNowStr = button.getAttribute(SEND_STEER_NOW_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(sendNowStr)) {
+                        onSendSteerNow(button, Integer.parseInt(sendNowStr));
+                        return;
+                    }
+
                     // Capture delete click events.
                     final String messageIdStr = button.getAttribute("data-delete-message-id");
                     if (NullSafe.isNonBlankString(messageIdStr)) {
@@ -651,18 +670,20 @@ public class AskStroomAiPresenter
             }
         }, KeyDownEvent.getType()));
 
-        // The active tab is shared with the chat, as the user sees it, starting with the one active now.
+        // The tab the user is on can be attached to the chat, starting with the one active now.
         onActiveTabChange(contentManager.getSelectedTab());
         addRegisteredHandler(ContentTabSelectionChangeEvent.getType(), event ->
                 onActiveTabChange(event.getTabData()));
-        // A tab within the active tab, e.g. a Pipeline's Stepping view, which then speaks for the tab.
+        // A closed tab can no longer be shared, so it is no longer attached or offered.
+        addRegisteredHandler(CloseContentTabEvent.getType(), event -> onTabClosed(event.getTabData()));
+        // A tab within an attached or offered tab, e.g. a Pipeline's Stepping view, which then speaks for the tab.
         addRegisteredHandler(DocTabSelectedEvent.getType(), event -> {
-            if (event.getDocTab() != null && event.getDocTab() == activeTab) {
+            if (event.getDocTab() != null && isShownInChips(event.getDocTab())) {
                 refreshAttachmentList();
             }
         });
         addRegisteredHandler(RefreshContentTabEvent.getType(), event -> {
-            if (event.getTabData() != null && event.getTabData() == activeTab) {
+            if (event.getTabData() != null && isShownInChips(event.getTabData())) {
                 refreshAttachmentList();
             }
         });
@@ -1189,7 +1210,8 @@ public class AskStroomAiPresenter
             final String json = msg.getMessage();
             final AiChatOverview.Item item = switch (msg.getMessageType()) {
                 case USER_MESSAGE -> AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.QUESTION, json);
-                case STEER_MESSAGE -> AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.STEER, json);
+                case STEER_MESSAGE, QUEUED_STEER_MESSAGE, SEND_NOW_STEER_MESSAGE ->
+                    AiChatOverview.Item.step(id, timeMs, AiChatOverview.Kind.STEER, json);
                 case TOOL_CALL -> AiChatOverview.Item.tool(id, timeMs, AiToolMessages.getString(json, "tool"));
                 case ELICITATION -> answerItem(id, timeMs, json);
                 case APPROVAL_REQUEST -> approvalItem(id, timeMs, json);
@@ -1425,13 +1447,12 @@ public class AskStroomAiPresenter
 
     /// Shows the suggested follow-ups, but only while nothing is working on the chat.
     private void refreshFollowUps() {
+        // The suggestions take room from the conversation, which keeps the latest message in view as its view
+        // gets shorter (onConversationResized) while it is followed; it isn't scrolled here, as this runs on every
+        // poll, which would pull the conversation to the bottom whatever had changed.
         getView().setFollowUps(currentRunActive || requestInFlight
                 ? List.of()
                 : followUps);
-        // The suggestions take room from the conversation, so keep the latest message in view.
-        if (followBottom) {
-            scrollToLatest();
-        }
     }
 
     /// Shows the agent's task list: a heading with how many are done, and each task with an icon for its status.
@@ -2189,13 +2210,15 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * @return The forms shown as waiting for the user, which the server may cancel (e.g. when the run stops).
+     * @return The messages shown that the server may change in place: forms waiting for the user, which it may
+     * cancel (e.g. when the run stops), and messages waiting for the run to pick them up, which it sends.
      */
-    private List<Integer> pendingFormIds() {
+    private List<Integer> watchedMessageIds() {
         final List<Integer> ids = new ArrayList<>();
         renderedMessages.values().forEach(msg -> {
-            if (msg.getMessageType() == AiMessageType.ELICITATION
-                && "PENDING".equals(AiToolMessages.getString(msg.getMessage(), "status"))) {
+            if ((msg.getMessageType() == AiMessageType.ELICITATION
+                 && "PENDING".equals(AiToolMessages.getString(msg.getMessage(), "status")))
+                || msg.getMessageType().isQueuedSteer()) {
                 ids.add(msg.getId());
             }
         });
@@ -2203,7 +2226,15 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * Shows the forms the server has changed since they were shown, e.g. cancelled as the run stopped.
+     * @return True if the message is one the user sent to steer a run, whether or not the run has picked it up.
+     */
+    private static boolean isSteer(final AiChatMessage msg) {
+        return msg.getMessageType() == AiMessageType.STEER_MESSAGE || msg.getMessageType().isQueuedSteer();
+    }
+
+    /**
+     * Shows the messages the server has changed since they were shown, e.g. a form cancelled as the run stopped, or
+     * a message the run has picked up.
      */
     private void updateWatchedMessages(final List<AiChatMessage> messages) {
         if (messages == null) {
@@ -2212,7 +2243,8 @@ public class AskStroomAiPresenter
         final long nowMs = System.currentTimeMillis();
         for (final AiChatMessage msg : messages) {
             final AiChatMessage shown = renderedMessages.get(msg.getId());
-            if (shown != null && !Objects.equals(shown.getMessage(), msg.getMessage())) {
+            if (shown != null && (shown.getMessageType() != msg.getMessageType()
+                                  || !Objects.equals(shown.getMessage(), msg.getMessage()))) {
                 appendMessage(msg, nowMs);
             }
         }
@@ -3019,8 +3051,9 @@ public class AskStroomAiPresenter
 
         ensureChat(() -> askStroomAiClient.getConfig(config -> {
             final int chatId = currentChat.getId();
-            // The active tab as the user sees it now, or only its hash if it hasn't changed since last sent.
-            final AiTabSnapshot tabSnapshot = activeTabSnapshot();
+            carryNewChatTab(chatId);
+            // The attached tab as the user sees it now, or only its hash if it hasn't changed since last sent.
+            final AiTabSnapshot tabSnapshot = attachedTabSnapshot();
             final AskStroomAiRequest request = new AskStroomAiRequest(
                     currentChat, config, data, message, getView().getAgentMode(),
                     AiTabSnapshots.toSend(tabSnapshot, lastSentTabHashes.get(chatId)));
@@ -3162,8 +3195,8 @@ public class AskStroomAiPresenter
         ConfirmEvent.fire(this, warning, ok -> {
             if (ok && currentChat != null) {
                 askStroomAiClient.getConfig(config -> {
-                    // Asked with the tab as it is now, which may be the one the user meant, in full.
-                    final AiTabSnapshot tabSnapshot = activeTabSnapshot();
+                    // Asked with the attached tab as it is now, which may be the one the user meant, in full.
+                    final AiTabSnapshot tabSnapshot = attachedTabSnapshot();
                     final EditAiMessageRequest request = new EditAiMessageRequest(currentChat, config, messageId,
                             newText, tabSnapshot);
                     getView().setSendButtonLoadingState(true);
@@ -3248,8 +3281,8 @@ public class AskStroomAiPresenter
         }
         getView().setSendButtonLoadingState(true);
         askStroomAiClient.getConfig(config -> {
-            // Asked with the tab as it is now, in full.
-            final AiTabSnapshot tabSnapshot = activeTabSnapshot();
+            // Asked with the attached tab as it is now, in full.
+            final AiTabSnapshot tabSnapshot = attachedTabSnapshot();
             final EditAiMessageRequest request = new EditAiMessageRequest(currentChat, config, turnId, null,
                     tabSnapshot);
             askStroomAiClient.editMessage(request, response -> {
@@ -3413,7 +3446,7 @@ public class AskStroomAiPresenter
             return;
         }
         final int chatId = currentChat.getId();
-        askStroomAiClient.pollMessages(chatId, lastSeenMessageId, isLooking(), pendingFormIds(), response -> {
+        askStroomAiClient.pollMessages(chatId, lastSeenMessageId, isLooking(), watchedMessageIds(), response -> {
             if (currentChat == null || currentChat.getId() != chatId) {
                 // The user has moved to another chat since this poll was sent. Rendering the reply
                 // now would put one chat's messages into another's.
@@ -3564,8 +3597,7 @@ public class AskStroomAiPresenter
             showTaskList(msg.getMessage());
             return;
         }
-        if (msg.getMessageType() == AiMessageType.USER_MESSAGE
-            || msg.getMessageType() == AiMessageType.STEER_MESSAGE) {
+        if (msg.getMessageType() == AiMessageType.USER_MESSAGE || isSteer(msg)) {
             followUps = List.of();
             refreshFollowUps();
         }
@@ -3582,8 +3614,7 @@ public class AskStroomAiPresenter
             }
             return;
         }
-        if ((msg.getMessageType() == AiMessageType.USER_MESSAGE
-             || msg.getMessageType() == AiMessageType.STEER_MESSAGE)
+        if ((msg.getMessageType() == AiMessageType.USER_MESSAGE || isSteer(msg))
             && !sentAttachments.containsKey(msg.getId())) {
             // The tables attached before it were sent with it.
             final List<AiChatMessage> sent = new ArrayList<>(sendingAttachments);
@@ -3648,8 +3679,7 @@ public class AskStroomAiPresenter
             showInterimInActivity();
         }
         Element existing = findMessageElement(markdownContainer, messageId);
-        if (existing == null && (msg.getMessageType() == AiMessageType.USER_MESSAGE
-                                 || msg.getMessageType() == AiMessageType.STEER_MESSAGE)) {
+        if (existing == null && (msg.getMessageType() == AiMessageType.USER_MESSAGE || isSteer(msg))) {
             existing = findMessageElement(markdownContainer, PENDING_MESSAGE_ID);
         }
         if (existing != null) {
@@ -3822,7 +3852,7 @@ public class AskStroomAiPresenter
     }
 
     @Override
-    public void onConversationScrolled() {
+    public void onConversationScrolled(final boolean byUser) {
         final Element container = getView().getMarkdownContainer().getElement();
         if (container.getClientHeight() == 0) {
             // Hidden (e.g. another Stroom tab is shown), when the browser puts it back to the top: not the user
@@ -3830,16 +3860,28 @@ public class AskStroomAiPresenter
             return;
         }
         final int scrollTop = container.getScrollTop();
-        // Only the user scrolling up stops following the conversation. Content added below, or the view getting
-        // shorter (e.g. when the task list grows), also leaves it short of the bottom, but the user still wants
-        // to follow it.
-        if (isAtBottom()) {
-            followBottom = true;
-        } else if (scrollTop < lastScrollTop) {
-            followBottom = false;
+        // Only the user scrolling changes whether the conversation is followed: scrolling up stops it, and scrolling
+        // to the bottom starts it again. The browser moves it too, e.g. holding it at the bottom as a section above
+        // closes, which would otherwise start following again while the user reads something else.
+        if (byUser) {
+            if (isAtBottom()) {
+                followBottom = true;
+            } else if (scrollTop < lastScrollTop) {
+                followBottom = false;
+            }
         }
         lastScrollTop = scrollTop;
         getView().setJumpToLatestVisible(!followBottom);
+    }
+
+    @Override
+    public void onSectionToggled(final boolean open) {
+        // Opening a section grows the conversation without scrolling it, so it would still be followed, and the
+        // next new message would carry what the user opened up out of view. They are reading it, so it stays put.
+        if (open && followBottom) {
+            followBottom = false;
+            getView().setJumpToLatestVisible(true);
+        }
     }
 
     @Override
@@ -3862,15 +3904,20 @@ public class AskStroomAiPresenter
     public void onJumpToLatest() {
         followBottom = true;
         getView().setJumpToLatestVisible(false);
-        // Asked for, so it glides there.
+        // Asked for, so it glides there. Where it starts from is where it was, so the glide's own scrolling, down,
+        // isn't taken as the user scrolling up.
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        lastScrollTop = markdownContainer.getScrollTop();
         markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
-        lastScrollTop = markdownContainer.getScrollHeight() - markdownContainer.getClientHeight();
     }
 
     // Keeps the latest message in view, straight away rather than gliding there: the chat is following it, so a
     // glide from wherever it was (e.g. the top, when loaded or shown again) would only be in the way.
     private void scrollToLatest() {
+        if (getView().isUserScrolling()) {
+            // Not from under the user: they are scrolling it themselves, which decides whether it is followed.
+            return;
+        }
         getView().setJumpToLatestVisible(false);
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
         scrollInstantly(markdownContainer, markdownContainer.getScrollHeight());
@@ -3942,6 +3989,10 @@ public class AskStroomAiPresenter
             case STEER_MESSAGE:
                 appendMessageHtml(hb, "ai-message ai-message--user ai-message--steer", msg.getMessage(),
                         timeMs, nowMs, true, messageId, false);
+                break;
+            case QUEUED_STEER_MESSAGE:
+            case SEND_NOW_STEER_MESSAGE:
+                appendQueuedSteer(hb, msg, timeMs, nowMs);
                 break;
             case TOOL_CALL:
                 appendDetailsElement(hb, "ai-message ai-message--tool",
@@ -4103,6 +4154,49 @@ public class AskStroomAiPresenter
 
             }, Attribute.className("ai-message-footer"));
         }, Attribute.className(cssClass));
+    }
+
+    /**
+     * Appends a message the user sent while the run was working, which waits for the run's current step to finish,
+     * with a button to send it now. Once the run picks it up, it is shown as any other message.
+     */
+    private void appendQueuedSteer(final HtmlBuilder hb,
+                                   final AiChatMessage msg,
+                                   final long timeMs,
+                                   final long nowMs) {
+        final SafeHtml markdownHtml = markdownConverter.convertUntrustedMarkdownToHtml(msg.getMessage());
+        final boolean sendingNow = msg.getMessageType() == AiMessageType.SEND_NOW_STEER_MESSAGE;
+        hb.div(wrapper -> {
+            wrapper.div(content -> content.append(markdownHtml), Attribute.className("ai-message-content"));
+            wrapper.div(status -> {
+                status.span(sendingNow
+                        ? "Sending now…"
+                        : "Waiting for the current step to finish", Attribute.className("ai-queued-steer-text"));
+                if (!sendingNow) {
+                    button(status,
+                            SvgImage.FAST_FORWARD,
+                            iconButtonClassName("allow-focus ai-queued-steer-send"),
+                            Attribute.title("Send now, without waiting for the current step to finish"),
+                            new Attribute(SEND_STEER_NOW_ATTRIBUTE, String.valueOf(msg.getId())));
+                }
+            }, Attribute.className("ai-queued-steer-status"));
+            wrapper.div(footer -> {
+                button(footer, SvgImage.COPY,
+                        iconButtonClassName("ai-message-copy-icon"),
+                        Attribute.title("Copy as Markdown"),
+                        new Attribute("data", msg.getMessage()));
+                timestamp(footer, timeMs, nowMs);
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className("ai-message ai-message--user ai-message--queued"));
+    }
+
+    private void onSendSteerNow(final Element button, final int messageId) {
+        if (currentChat == null) {
+            return;
+        }
+        button.setPropertyBoolean("disabled", true);
+        // Shown as sending once the server says so; if the run had already picked it up, it is shown as sent.
+        askStroomAiClient.sendSteerNow(currentChat.getId(), messageId, sent -> startPolling(), getView());
     }
 
     /**
@@ -4501,41 +4595,95 @@ public class AskStroomAiPresenter
         refreshAttachmentChips();
     }
 
-    /// Follows the active content tab, which is shared with the chat while it is a document the chat can be told
-    /// about, other than the chat's own tab.
+    /// Follows the tab the user is on, which they can attach to the chat while it is a document the chat can be told
+    /// about. The chat's own tab is passed over, so the tab the user was on before is still offered.
     private void onActiveTabChange(final TabData tabData) {
-        if (activeTabDirtyRegistration != null) {
-            activeTabDirtyRegistration.removeHandler();
-            activeTabDirtyRegistration = null;
+        if (tabPresenter != null && tabData == tabPresenter) {
+            return;
         }
-        // Another tab is active, so one the user stopped sharing can be shared again once it is active again.
-        if (tabData != dismissedTab) {
-            dismissedTab = null;
-        }
-        final boolean shareable = tabData instanceof AiTabSnapshotProvider
-                                  && tabData instanceof DocumentTabData
-                                  && (tabPresenter == null || tabData != tabPresenter);
-        activeTab = shareable
+        currentTab = tabData instanceof AiTabSnapshotProvider && tabData instanceof DocumentTabData
                 ? tabData
                 : null;
-        if (activeTab instanceof final HasDirtyHandlers hasDirtyHandlers) {
-            activeTabDirtyRegistration = hasDirtyHandlers.addDirtyHandler(event -> refreshAttachmentList());
+        refreshAttachmentList();
+    }
+
+    /// Forgets a closed tab: it is no longer attached to any chat or offered.
+    private void onTabClosed(final TabData tabData) {
+        if (tabData == null) {
+            return;
+        }
+        attachedTabs.values().removeIf(tab -> tab == tabData);
+        if (currentTab == tabData) {
+            currentTab = null;
         }
         refreshAttachmentList();
     }
 
-    /// Stops sharing the active tab with the chat, until another tab is active.
-    private void stopSharingActiveTab() {
-        dismissedTab = activeTab;
+    /// Attaches the tab the user is on to the chat, in place of any attached before. It is shared with each
+    /// question, as the user sees it then, until they remove it or close it.
+    private void attachCurrentTab() {
+        if (currentTab != null) {
+            attachedTabs.put(chatKey(), currentTab);
+            refreshAttachmentList();
+        }
+    }
+
+    /// Removes the attached tab from the chat; it is no longer shared with its questions.
+    private void detachTab() {
+        attachedTabs.remove(chatKey());
         refreshAttachmentList();
     }
 
-    /// @return The tab shared with the next question, or null if none is.
-    private TabData sharedTab() {
-        return shareActiveTab && activeTab != null && activeTab != dismissedTab
-               && ((DocumentTabData) activeTab).getDocRef() != null
-                ? activeTab
+    /// @return The chat's key in [#attachedTabs].
+    private int chatKey() {
+        return currentChat != null
+                ? currentChat.getId()
+                : NEW_CHAT_KEY;
+    }
+
+    /// Keeps a tab attached before the chat was made with the chat, now it has been made.
+    private void carryNewChatTab(final int chatId) {
+        final TabData tab = attachedTabs.remove(NEW_CHAT_KEY);
+        if (tab != null) {
+            attachedTabs.putIfAbsent(chatId, tab);
+        }
+    }
+
+    /// @return The tab attached to the chat, shared with its next question, or null if none is.
+    private TabData attachedTab() {
+        final TabData tab = attachedTabs.get(chatKey());
+        return shareActiveTab && tab != null && ((DocumentTabData) tab).getDocRef() != null
+                ? tab
                 : null;
+    }
+
+    /// @return The tab the user is on, offered to be attached, or null if there is none or it is already attached.
+    private TabData offeredTab() {
+        return shareActiveTab && currentTab != null && currentTab != attachedTab()
+               && ((DocumentTabData) currentTab).getDocRef() != null
+                ? currentTab
+                : null;
+    }
+
+    /// @return True if the tab's chip is shown, as attached or offered.
+    private boolean isShownInChips(final TabData tabData) {
+        return tabData == attachedTab() || tabData == offeredTab();
+    }
+
+    /// Follows the unsaved state of the attached tab, so its chip says whether it has unsaved changes.
+    private void followAttachedTab() {
+        final TabData tab = attachedTab();
+        if (tab == followedTab) {
+            return;
+        }
+        if (followedTabDirtyRegistration != null) {
+            followedTabDirtyRegistration.removeHandler();
+            followedTabDirtyRegistration = null;
+        }
+        followedTab = tab;
+        if (tab instanceof final HasDirtyHandlers hasDirtyHandlers) {
+            followedTabDirtyRegistration = hasDirtyHandlers.addDirtyHandler(event -> refreshAttachmentList());
+        }
     }
 
     private static boolean isDirty(final TabData tabData) {
@@ -4550,21 +4698,21 @@ public class AskStroomAiPresenter
         }
     }
 
-    /// @return What the user sees in the shared tab now, or null if no tab is shared.
-    private AiTabSnapshot activeTabSnapshot() {
-        final TabData sharedTab = sharedTab();
-        if (sharedTab == null) {
+    /// @return What the user sees in the attached tab now, or null if no tab is attached.
+    private AiTabSnapshot attachedTabSnapshot() {
+        final TabData tab = attachedTab();
+        if (tab == null) {
             return null;
         }
         try {
-            return ((AiTabSnapshotProvider) sharedTab).snapshot();
+            return ((AiTabSnapshotProvider) tab).snapshot();
         } catch (final RuntimeException e) {
             // The question is still worth sending without the tab.
             return null;
         }
     }
 
-    /// Keeps up with whether an administrator allows the active tab to be shared.
+    /// Keeps up with whether an administrator allows tabs to be shared with chats.
     private void updateShareActiveTab(final AiChatPollResponse response) {
         final boolean share = response == null
                               || response.getShareActiveTab() == null
@@ -4578,16 +4726,23 @@ public class AskStroomAiPresenter
     /// Shows the tables attached since the last message was sent above the input box, each removable once it has
     /// downloaded.
     private void refreshAttachmentList() {
+        followAttachedTab();
         final HtmlBuilder hb = new HtmlBuilder();
-        final TabData sharedTab = sharedTab();
-        if (!pendingAttachments.isEmpty() || sharedTab != null) {
+        final TabData attachedTab = attachedTab();
+        final TabData offeredTab = offeredTab();
+        if (!pendingAttachments.isEmpty() || attachedTab != null || offeredTab != null) {
             // The chips wrap onto as many rows as they need, with the button to remove them all beside them.
             hb.div(chips -> {
-                if (sharedTab != null) {
-                    final DocRef docRef = ((DocumentTabData) sharedTab).getDocRef();
-                    AiAttachments.tabChip(chips, sharedTab.getIcon(),
-                            AiTabSnapshots.chipText(docRef, isDirty(sharedTab)),
+                if (attachedTab != null) {
+                    final DocRef docRef = ((DocumentTabData) attachedTab).getDocRef();
+                    AiAttachments.tabChip(chips, attachedTab.getIcon(),
+                            AiTabSnapshots.chipText(docRef, isDirty(attachedTab)),
                             AiTabSnapshots.chipTooltip(docRef));
+                }
+                if (offeredTab != null) {
+                    final DocRef docRef = ((DocumentTabData) offeredTab).getDocRef();
+                    AiAttachments.attachTabChip(chips, offeredTab.getIcon(), AiTabSnapshots.attachText(docRef),
+                            AiTabSnapshots.attachTooltip(docRef, attachedTab != null));
                 }
                 pendingAttachments.values().forEach(msg -> attachmentChip(chips, msg, true));
             }, Attribute.className("ai-attachment-chips"));
@@ -5157,6 +5312,10 @@ public class AskStroomAiPresenter
          * @param visible True to show it.
          */
         void setJumpToLatestVisible(boolean visible);
+
+        /// @return True while the user is scrolling the conversation themselves (e.g. with the wheel, or dragging
+        /// the scroll bar), so the chat doesn't scroll it from under them.
+        boolean isUserScrolling();
 
         /**
          * Shows how much of the model's context window the chat uses, or hides the meter.

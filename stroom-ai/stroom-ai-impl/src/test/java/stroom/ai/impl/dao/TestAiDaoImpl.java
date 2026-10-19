@@ -51,6 +51,7 @@ import org.mockito.Mockito;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -364,6 +365,36 @@ class TestAiDaoImpl {
         // What follows belongs to its turn.
         assertThat(aiDao.storeMessage(chat.getId(), AiMessageType.AI_RESPONSE, "fw2 too").getTurnId())
                 .isEqualTo(steer.getId());
+    }
+
+    @Test
+    void queuedSteersChangeTypeOnlyFromTheGivenTypesAndInTheirOwnChat() {
+        final Set<AiMessageType> queued = Set.of(AiMessageType.QUEUED_STEER_MESSAGE,
+                AiMessageType.SEND_NOW_STEER_MESSAGE);
+        final AiChat chat = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChat other = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        aiDao.storeMessage(chat.getId(), AiMessageType.USER_MESSAGE, "first");
+        final AiChatMessage steer = aiDao.storeMessage(chat.getId(), AiMessageType.QUEUED_STEER_MESSAGE, "fw2?");
+        final AiChatMessage later = aiDao.storeMessage(chat.getId(), AiMessageType.QUEUED_STEER_MESSAGE, "fw3?");
+        final AiChatMessage elsewhere = aiDao.storeMessage(other.getId(), AiMessageType.QUEUED_STEER_MESSAGE, "x");
+
+        assertThat(aiDao.hasMessageOfType(chat.getId(), AiMessageType.SEND_NOW_STEER_MESSAGE)).isFalse();
+        // Not in that chat, so not changed.
+        assertThat(aiDao.changeMessageType(chat.getId(), elsewhere.getId(),
+                Set.of(AiMessageType.QUEUED_STEER_MESSAGE), AiMessageType.SEND_NOW_STEER_MESSAGE)).isFalse();
+        assertThat(aiDao.changeMessageType(chat.getId(), steer.getId(),
+                Set.of(AiMessageType.QUEUED_STEER_MESSAGE), AiMessageType.SEND_NOW_STEER_MESSAGE)).isTrue();
+        assertThat(aiDao.hasMessageOfType(chat.getId(), AiMessageType.SEND_NOW_STEER_MESSAGE)).isTrue();
+        // No longer of the type it is to be changed from.
+        assertThat(aiDao.changeMessageType(chat.getId(), steer.getId(),
+                Set.of(AiMessageType.QUEUED_STEER_MESSAGE), AiMessageType.SEND_NOW_STEER_MESSAGE)).isFalse();
+
+        assertThat(aiDao.changeMessageTypes(chat.getId(), queued, AiMessageType.STEER_MESSAGE)).isEqualTo(2);
+        assertThat(aiDao.getMessages(chat.getId()))
+                .filteredOn(message -> message.getId() == steer.getId() || message.getId() == later.getId())
+                .extracting(AiChatMessage::getMessageType)
+                .containsOnly(AiMessageType.STEER_MESSAGE);
+        assertThat(aiDao.hasMessageOfType(other.getId(), AiMessageType.QUEUED_STEER_MESSAGE)).isTrue();
     }
 
 }

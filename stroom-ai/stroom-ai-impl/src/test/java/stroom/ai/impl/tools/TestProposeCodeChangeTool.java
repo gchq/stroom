@@ -262,6 +262,54 @@ class TestProposeCodeChangeTool {
     }
 
     @Test
+    void editsAreMadeToTheCurrentCodeSoOnlyTheChangeNeedBeGiven() {
+        stepping("xsltFilter", BASE, false);
+        steps(List.of(), List.of());
+
+        final String result = runEdits("xsltFilter", List.of(Map.of("oldText", "select=\".\"",
+                "newText", "select=\"lower-case(substring-before(., '@'))\"")));
+
+        assertThat(result).contains("Review and apply").contains("(+1 −1 lines, in 1 place(s))");
+        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action ->
+                assertThat(action).containsEntry("request", PROPOSED));
+    }
+
+    @Test
+    void editsWhoseTextIsMissingOrRepeatedAreRefused() {
+        stepping("xsltFilter", BASE, false);
+
+        assertThat(runEdits("xsltFilter", List.of(Map.of("oldText", "normalize-space()", "newText", "x"))))
+                .contains("Edit 1's text to replace isn't in the element's code");
+        assertThat(runEdits("xsltFilter", List.of(Map.of("oldText", "xsl:template", "newText", "x"))))
+                .contains("appears more than once");
+        // Each edit is made to the code as the edits before it left it.
+        assertThat(runEdits("xsltFilter", List.of(
+                Map.of("oldText", "match=\"User\"", "newText", "match=\"Person\""),
+                Map.of("oldText", "match=\"User\"", "newText", "match=\"Other\""))))
+                .contains("Edit 2's text to replace isn't in the element's code (as the edits before it left it)");
+        assertThat(runEdits("xsltFilter", List.of(Map.of("oldText", "", "newText", "x"))))
+                .contains("Edit 1 has no text to replace");
+        assertThat(runEdits("xsltFilter", List.of("not an edit"))).contains("Edit 1 needs oldText and newText");
+        assertThat(runEdits("xsltFilter", List.of())).contains("Give edits as a list of objects");
+        assertThat(context.takeUserActions("c1")).isEmpty();
+    }
+
+    @Test
+    void eitherCodeOrEditsMustBeGivenButNotBoth() {
+        stepping("xsltFilter", BASE, false);
+
+        final String both = JsonUtil.writeValueAsString(Map.of("element", "xsltFilter", "code", PROPOSED,
+                "edits", List.of(Map.of("oldText", "User", "newText", "Person")), "summary", "s"));
+        final String neither = JsonUtil.writeValueAsString(Map.of("element", "xsltFilter", "summary", "s"));
+        for (final String arguments : List.of(both, neither)) {
+            assertThat(context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1")
+                    .name(ProposeCodeChangeTool.NAME).arguments(arguments).build(), CHAT)))
+                    .contains("Give either edits or the whole proposed code, but not both.");
+        }
+        assertThat(context.takeUserActions("c1")).isEmpty();
+    }
+
+    @Test
     void aProposalTheSameAsTheCodeIsRefused() {
         stepping("xsltFilter", BASE, false);
 
@@ -339,6 +387,13 @@ class TestProposeCodeChangeTool {
     private String run(final String element, final String code, final String summary) {
         final String arguments = JsonUtil.writeValueAsString(Map.of("element", element, "code", code,
                 "summary", summary));
+        return context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1").name(ProposeCodeChangeTool.NAME)
+                .arguments(arguments).build(), CHAT));
+    }
+
+    private String runEdits(final String element, final List<?> edits) {
+        final String arguments = JsonUtil.writeValueAsString(Map.of("element", element, "edits", edits,
+                "summary", "Change."));
         return context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1").name(ProposeCodeChangeTool.NAME)
                 .arguments(arguments).build(), CHAT));
     }

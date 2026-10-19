@@ -93,10 +93,17 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
      */
     void onJumpToLatest();
 
-    /**
-     * Called when the user scrolls the conversation, to stop or start following new messages.
-     */
-    void onConversationScrolled();
+    /// Called when the conversation is scrolled, to stop or start following new messages if the user scrolled it.
+    ///
+    /// @param byUser True if the user scrolled it, false if the chat or the browser did (e.g. as a section above
+    ///               closed, or the conversation got shorter).
+    void onConversationScrolled(boolean byUser);
+
+    /// Called when the user opens or closes a section of the conversation (e.g. a tool call), which they are then
+    /// reading, so new messages don't scroll it away.
+    ///
+    /// @param open True if they opened it.
+    void onSectionToggled(boolean open);
 
     /// Called when the conversation's view changes size, e.g. as the task list above the input grows, so the latest
     /// message can be kept in view while the conversation is being followed.

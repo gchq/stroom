@@ -21,6 +21,7 @@ import stroom.ai.impl.AiChatRunManager.AiChatBusyException;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
+import stroom.ai.shared.AiMessageType;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
@@ -93,6 +94,16 @@ class TestAiChatRunManager {
         assertThat(worked).isTrue();
         Mockito.verify(runDao).compareAndSetStatus(eq(5), anyCollection(), eq(AiChatRunStatus.DONE),
                 isNull(), isNull());
+    }
+
+    @Test
+    void testExecute_messagesTheRunDidNotPickUpAreKeptAsSentWhenItEnds() {
+        runManager.execute(run, r -> {
+            throw new IllegalStateException("model failed");
+        }, () -> false);
+
+        // Shown as sent, for the chat's next run to see, rather than waiting forever.
+        Mockito.verify(aiDao).changeMessageTypes(1, AiChatRunManager.QUEUED_STEERS, AiMessageType.STEER_MESSAGE);
     }
 
     @Test

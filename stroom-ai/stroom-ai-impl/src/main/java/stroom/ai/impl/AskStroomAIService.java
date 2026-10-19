@@ -146,6 +146,21 @@ public class AskStroomAIService {
     static final int MAX_CHAT_STATUSES = 100;
     // The most messages a poll may ask to watch.
     static final int MAX_WATCHED_MESSAGES = 20;
+    // Told to the model when its run starts again with the chat compacted, as the conversation had grown too large
+    // for the context window to carry on.
+    static final String RESUMED_AFTER_OVERFLOW_NOTE = "[The context window filled up while you worked, so the chat "
+                                                      + "has been compacted and you are carrying on. The tool calls "
+                                                      + "above are the steps you have taken on this question so "
+                                                      + "far; their results may be shortened (read_turn, with no "
+                                                      + "turn id, reads them in full). Carry on with the task from "
+                                                      + "where you were: don't start again, and don't stop to sum "
+                                                      + "up what you have done.]";
+    // The messages the client may watch, as the server changes them in place: forms, which are cancelled if the run
+    // stops, and what the user sent to steer a run, which becomes sent once the run picks it up (or a question of its
+    // own if the run had finished).
+    static final Set<AiMessageType> WATCHABLE_MESSAGE_TYPES = Set.of(AiMessageType.ELICITATION,
+            AiMessageType.QUEUED_STEER_MESSAGE, AiMessageType.SEND_NOW_STEER_MESSAGE, AiMessageType.STEER_MESSAGE,
+            AiMessageType.USER_MESSAGE);
     // Searching chats: the shortest text searched for (shorter matches too much to be useful), and the most chats
     // returned.
     static final int MIN_SEARCH_CHARS = 2;
@@ -330,7 +345,7 @@ public class AskStroomAIService {
         // working steers that run instead.
         boolean resendTab = false;
         if (request.getMessage() != null && !steer(chatId, request.getMessage())) {
-            // What the user sees in their active tab is kept now, as the user, and recorded on the question.
+            // What the user sees in their attached tab is kept now, as the user, and recorded on the question.
             final TabSnapshots.Stored tab = storeTabSnapshot(chatId, request.getTabSnapshot());
             resendTab = tab.resend();
             runManager.start(chatId, run -> {
@@ -344,7 +359,7 @@ public class AskStroomAIService {
         return new AskStroomAiResponse(null, resendTab);
     }
 
-    /// Keeps what the user sees in their active tab, sent with a question. A tab that can't be kept is left out,
+    /// Keeps what the user sees in their attached tab, sent with a question. A tab that can't be kept is left out,
     /// and the question is asked without it.
     private TabSnapshots.Stored storeTabSnapshot(final int chatId, final AiTabSnapshot snapshot) {
         if (tabSnapshots == null || snapshot == null) {
@@ -353,14 +368,14 @@ public class AskStroomAIService {
         try {
             return tabSnapshots.store(chatId, snapshot);
         } catch (final RuntimeException e) {
-            LOGGER.warn(() -> "Unable to keep the active tab for chat " + chatId + ": " + e.getMessage(), e);
+            LOGGER.warn(() -> "Unable to keep the attached tab for chat " + chatId + ": " + e.getMessage(), e);
             return TabSnapshots.Stored.NONE;
         }
     }
 
     /**
      * Edits one of the user's earlier questions, or asks it again unchanged. The question and everything after
-     * it are removed from the chat and the new text is answered in a new run, with the user's active tab as it is
+     * it are removed from the chat and the new text is answered in a new run, with the tab the user attached as it is
      * now (they may have switched to the tab they meant). A run that is working on the chat is stopped first.
      *
      * @param request The chat, config, question and new text (null to ask it again unchanged).
@@ -719,7 +734,9 @@ public class AskStroomAIService {
             carryOn(chatId);
             return true;
         }
-        final AiChatMessage steerMessage = aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, message);
+        // Queued until the run's current step finishes, unless the user sends it now.
+        final AiChatMessage steerMessage = aiService.storeMessage(chatId, AiMessageType.QUEUED_STEER_MESSAGE,
+                message);
         if (runDao.getActive(chatId).isEmpty()) {
             // The run finished as the message arrived, so it will not see it. Ask it as a question instead.
             aiService.deleteMessage(steerMessage.getId());
@@ -727,6 +744,19 @@ public class AskStroomAIService {
         }
         LOGGER.debug(() -> "Steering run " + active.getId() + " of chat " + chatId);
         return true;
+    }
+
+    /// Sends a message the user sent to steer the chat's run now, rather than when the run's current step finishes:
+    /// the run gives up waiting for a tool from an MCP server, and skips the rest of the step's tool calls, to pick
+    /// it up.
+    ///
+    /// @param chatId    The chat.
+    /// @param messageId The queued message.
+    /// @return True if it will be sent now, false if it is no longer waiting (e.g. the run has picked it up).
+    public boolean sendSteerNow(final int chatId, final int messageId) {
+        aiService.verifyOwnership(chatId);
+        return aiService.changeMessageType(chatId, messageId, Set.of(AiMessageType.QUEUED_STEER_MESSAGE),
+                AiMessageType.SEND_NOW_STEER_MESSAGE);
     }
 
     /**
@@ -819,7 +849,8 @@ public class AskStroomAIService {
      */
     private void answerLateMessages(final int chatId, final AskStroomAiRequest request, final int answeredUpTo) {
         final List<AiChatMessage> late = aiService.getMessagesSince(chatId, answeredUpTo).stream()
-                .filter(message -> message.getMessageType() == AiMessageType.STEER_MESSAGE)
+                .filter(message -> message.getMessageType() == AiMessageType.STEER_MESSAGE
+                                   || message.getMessageType().isQueuedSteer())
                 .toList();
         if (late.isEmpty()) {
             return;
@@ -1105,11 +1136,13 @@ public class AskStroomAIService {
     /**
      * Core question processing. Creates a single WORKING message that is updated in place
      * as processing progresses, then deleted when complete. Waits for any in-flight
-     * attachments, then uses optimistic send with progressive trim and summarisation:
+     * attachments, then:
      * <ol>
-     *     <li>Try sending full conversation history to the LLM.</li>
-     *     <li>On context overflow, summarise the dropped messages and retry with fewer.</li>
-     *     <li>If history is fully trimmed and it still overflows, fall back to batch processing.</li>
+     *     <li>Assembles the chat, compacting earlier turns if it is getting too large, and runs the agent loop,
+     *     which makes the conversation smaller itself if the model says it is too large, and carries on.</li>
+     *     <li>If that can't make it small enough, compacts the chat as far as it will go and runs the loop again,
+     *     telling the model to carry on from the steps it had taken.</li>
+     *     <li>If it still overflows, falls back to batch processing of the attachments, if there are any.</li>
      * </ol>
      */
     private String processQuestion(final AskStroomAiRequest request) {
@@ -1176,11 +1209,6 @@ public class AskStroomAIService {
                                                  && a.getAttachmentType().isReference())
                                     .filter(a -> a.getStatus() == AiAttachmentStatus.READY))
                     .collect(Collectors.toMap(AiChatAttachment::getId, a -> a));
-            // Messages the user sends after this are steering messages for the run to pick up.
-            final int steerAfterMessageId = aiService.getMessages(chatId).stream()
-                    .mapToInt(AiChatMessage::getId)
-                    .max()
-                    .orElse(0);
             final ContextBudget budget = chatCompactor.budget(modelDoc);
 
             // Accumulate debug detail across all attempts.
@@ -1197,12 +1225,24 @@ public class AskStroomAIService {
                 }
 
                 final int currentAttempt = attempt;
-                final List<ChatMessage> messages = chatCompactor.assemble(
+                // Anything the user has sent to steer the run so far is part of the turn, so is assembled with it,
+                // and messages they send after this are for the run to pick up. Worked out for each attempt, so a
+                // message the turn already holds isn't picked up again.
+                aiService.changeMessageTypes(chatId, AiChatRunManager.QUEUED_STEERS, AiMessageType.STEER_MESSAGE);
+                final int steerAfterMessageId = aiService.getMessages(chatId).stream()
+                        .mapToInt(AiChatMessage::getId)
+                        .max()
+                        .orElse(0);
+                final List<ChatMessage> messages = new ArrayList<>(chatCompactor.assemble(
                         request, chatId, attachmentMap, modelDoc, chatModel,
                         attempt == 1
                                 ? CompactionMode.AUTO
                                 : CompactionMode.FORCE,
-                        null);
+                        null));
+                if (attempt > 1) {
+                    // Without this, the model sees its steps so far and tends to sum them up and stop.
+                    messages.add(UserMessage.from(RESUMED_AFTER_OVERFLOW_NOTE));
+                }
 
                 LOGGER.debug(() -> "processQuestion: attempt " + currentAttempt
                                    + " messages=" + messages.size()
@@ -1274,6 +1314,9 @@ public class AskStroomAIService {
                                 .append(" (")
                                 .append(messages.size())
                                 .append(" messages) — OVERFLOW\n\n")
+                                .append("**The model said:** ")
+                                .append(NullSafe.nonBlankStringElse(e.getMessage(), e.getClass().getSimpleName()))
+                                .append("\n\nThe messages the attempt started with (its steps are above):\n\n")
                                 .append(formatMessagesAsDebugDetail(messages, null))
                                 .append("\n---\n\n");
                     }
@@ -1981,8 +2024,8 @@ public class AskStroomAIService {
                 NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::isShareActiveTab, true));
     }
 
-    /// @return The chat's forms among the given messages, as they now stand (e.g. cancelled when the run was
-    /// stopped), or null if none were asked for.
+    /// @return The given messages, as they now stand (e.g. a form cancelled when the run was stopped, or a steering
+    /// message the run has picked up), or null if none were asked for.
     private List<AiChatMessage> watchedMessages(final int chatId, final List<Integer> messageIds) {
         if (NullSafe.isEmptyCollection(messageIds)) {
             return null;
@@ -1994,7 +2037,7 @@ public class AskStroomAIService {
         final int first = wanted.stream().mapToInt(Integer::intValue).min().orElse(0);
         return aiDao.getMessagesSince(chatId, first - 1).stream()
                 .filter(message -> wanted.contains(message.getId())
-                                   && message.getMessageType() == AiMessageType.ELICITATION)
+                                   && WATCHABLE_MESSAGE_TYPES.contains(message.getMessageType()))
                 .toList();
     }
 

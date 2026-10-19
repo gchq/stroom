@@ -34,7 +34,7 @@ import stroom.util.shared.NullSafe;
 
 import java.util.List;
 
-/// What the chat does with the active tab's snapshot, without anything from the browser, so it can be tested: the
+/// What the chat does with the attached tab's snapshot, without anything from the browser, so it can be tested: the
 /// text of the tab's chip, the snapshot's hash, and whether to send it in full or only its hash.
 public final class AiTabSnapshots {
 
@@ -72,8 +72,28 @@ public final class AiTabSnapshots {
     public static String chipTooltip(final DocRef docRef) {
         final String type = NullSafe.nonBlankStringElse(NullSafe.get(docRef, DocRef::getType), "Document");
         final String name = NullSafe.nonBlankStringElse(NullSafe.get(docRef, DocRef::getName), "?");
-        return "Shared with your question: " + type + " '" + name + "', as you see it. Click × to stop sharing "
-               + "this tab.";
+        return "Attached to the chat: " + type + " '" + name + "' is shared with each question, as you see it "
+               + "then, whichever tab you are on. Click × to remove it.";
+    }
+
+    /// @param docRef The tab's document.
+    /// @return What the button that attaches the tab says, e.g. "Event translation".
+    public static String attachText(final DocRef docRef) {
+        return docRef == null
+                ? "Document"
+                : NullSafe.nonBlankStringElse(docRef.getName(), NullSafe.string(docRef.getUuid()));
+    }
+
+    /// @param docRef   The tab's document.
+    /// @param replaces True if another tab is attached, which this one would replace.
+    /// @return The tooltip of the button that attaches the tab.
+    public static String attachTooltip(final DocRef docRef, final boolean replaces) {
+        final String type = NullSafe.nonBlankStringElse(NullSafe.get(docRef, DocRef::getType), "Document");
+        final String name = NullSafe.nonBlankStringElse(NullSafe.get(docRef, DocRef::getName), "?");
+        return "Attach " + type + " '" + name + "' to the chat, so it is shared with each question, as you see it"
+               + (replaces
+                ? ", in place of the tab attached now"
+                : "");
     }
 
     /// Makes a snapshot with its hash.

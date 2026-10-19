@@ -52,6 +52,54 @@ class TestContextUsageTracker {
     }
 
     @Test
+    void testRecordOverflow_correctsEstimatesUpwardsFromTheReportedSize() {
+        final List<ChatMessage> sent = List.of(UserMessage.from("x".repeat(400)));
+        final long estimate = tracker.estimate(1, sent, null);
+
+        assertThat(tracker.recordOverflow(1, sent, null, new RuntimeException("wrapped", new RuntimeException(
+                "you requested 999 tokens (" + estimate * 3 + " in the messages, 0 in the completion)")), 8_000))
+                .hasValue(estimate * 3);
+        assertThat(tracker.estimate(1, sent, null)).isEqualTo(estimate * 3);
+        // A smaller size never lowers the correction.
+        tracker.recordOverflow(1, sent, null, new RuntimeException("your request has " + estimate
+                                                                   + " input tokens"), 8_000);
+        assertThat(tracker.estimate(1, sent, null)).isEqualTo(estimate * 3);
+    }
+
+    @Test
+    void testRecordOverflow_withoutASizeTakesTheRequestAsLargerThanTheWindow() {
+        final List<ChatMessage> sent = List.of(UserMessage.from("x".repeat(400)));
+
+        assertThat(tracker.recordOverflow(1, sent, null, new RuntimeException("context_length_exceeded"), 1_000))
+                .isEmpty();
+        assertThat(tracker.estimate(1, sent, null))
+                .isEqualTo(Math.round(1_000 * ContextUsageTracker.UNKNOWN_OVERFLOW_FACTOR));
+    }
+
+    @Test
+    void testOverflowSize() {
+        assertThat(ContextUsageTracker.overflowSize(new RuntimeException("prompt is too long: 140000 tokens > "
+                                                                         + "131072 maximum"))).hasValue(140_000);
+        assertThat(ContextUsageTracker.overflowSize(new RuntimeException("requested 5000 tokens"))).hasValue(5_000);
+        assertThat(ContextUsageTracker.overflowSize(new RuntimeException("too large"))).isEmpty();
+        assertThat(ContextUsageTracker.overflowSize(new RuntimeException((String) null))).isEmpty();
+    }
+
+    @Test
+    void testEstimateCautiously_errsLargeUntilACallIsMeasured() {
+        final List<ChatMessage> sent = List.of(UserMessage.from("x".repeat(400)));
+        final long estimate = tracker.estimate(1, sent, null);
+
+        assertThat(tracker.estimateCautiously(1, sent, null))
+                .isEqualTo(Math.round(estimate * ContextUsageTracker.UNMEASURED_SAFETY_FACTOR));
+        tracker.record(1, null, sent, null, ChatResponse.builder()
+                .aiMessage(AiMessage.from("ok"))
+                .tokenUsage(new TokenUsage((int) estimate, 1))
+                .build());
+        assertThat(tracker.estimateCautiously(1, sent, null)).isEqualTo(estimate);
+    }
+
+    @Test
     void testRecord_noUsageReported() {
         tracker.record(1, null, List.of(UserMessage.from("hi")), null,
                 ChatResponse.builder().aiMessage(AiMessage.from("hello")).build());

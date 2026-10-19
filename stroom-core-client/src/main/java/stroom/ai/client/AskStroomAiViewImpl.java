@@ -65,6 +65,10 @@ import java.util.List;
 public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandlers> implements AskStroomAiView {
 
     private static final String SEND_BUTTON_NORMAL_TEXT = "Send";
+    // How long after the user does something that scrolls the conversation its scrolling counts as theirs.
+    private static final double USER_SCROLL_MS = 600;
+    // How long after the user clicks a section's summary its opening or closing counts as theirs.
+    private static final double USER_TOGGLE_MS = 1_000;
     private static final String LOADING_STYLE = "askStroomAiViewImpl-middle--loading";
     private static final String STOP_SHOWN_CLASS = "askStroomAiViewImpl-stop--shown";
     private static final String EMPTY_STYLE = "empty";
@@ -93,6 +97,12 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     private boolean working;
     // True while anything else is in progress for the chat, e.g. search results downloading to attach.
     private boolean inProgress;
+    // When the user's scrolling stops counting as theirs (see watchUserScrolling), as ms since the epoch, whether
+    // the pointer is held down in the conversation, and when they last clicked a section's summary. Doubles, as
+    // they are set from JavaScript.
+    private double userScrollUntilMs;
+    private boolean pointerHeld;
+    private double summaryClickMs;
 
     @UiField
     FlowPanel inputBox;
@@ -235,9 +245,10 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         commandReferenceResize.addDomHandler(this::startReferenceResize, MouseDownEvent.getType());
         markdownPreview.addDomHandler(event -> {
             if (getUiHandlers() != null) {
-                getUiHandlers().onConversationScrolled();
+                getUiHandlers().onConversationScrolled(isUserScrolling());
             }
         }, ScrollEvent.getType());
+        watchUserScrolling(markdownPreview.getElement());
         // Content below the conversation, e.g. the task list, takes its room from the conversation as it grows.
         markdownPreview.addAttachHandler(event -> {
             if (event.isAttached()) {
@@ -1112,6 +1123,54 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     }
 
     // Scrolls an element as the wheel would have, had it been over it.
+    @Override
+    public boolean isUserScrolling() {
+        return pointerHeld || System.currentTimeMillis() < userScrollUntilMs;
+    }
+
+    // A section (e.g. a tool call or the model's reasoning) opened or closed: passed on if the user did it, by
+    // clicking its summary (or pressing Enter or Space on it, which clicks it), not the chat.
+    private void onSectionToggled(final boolean open) {
+        if (System.currentTimeMillis() - summaryClickMs < USER_TOGGLE_MS && getUiHandlers() != null) {
+            getUiHandlers().onSectionToggled(open);
+        }
+    }
+
+    // Notes what the user does in the conversation that scrolls it (the wheel, touch, keys, or holding the pointer
+    // down, e.g. dragging the scroll bar), so their scrolling can be told apart from the chat or the browser moving
+    // it, and passes on sections being opened or closed.
+    private native void watchUserScrolling(Element container) /*-{
+        var view = this;
+        var intent = function() {
+            view.@stroom.ai.client.AskStroomAiViewImpl::userScrollUntilMs = Date.now()
+                + @stroom.ai.client.AskStroomAiViewImpl::USER_SCROLL_MS;
+        };
+        ["wheel", "touchstart", "touchmove", "keydown"].forEach(function(type) {
+            container.addEventListener(type, intent, {passive: true, capture: true});
+        });
+        container.addEventListener("pointerdown", function() {
+            view.@stroom.ai.client.AskStroomAiViewImpl::pointerHeld = true;
+            intent();
+        }, true);
+        $wnd.addEventListener("pointerup", function() {
+            if (view.@stroom.ai.client.AskStroomAiViewImpl::pointerHeld) {
+                view.@stroom.ai.client.AskStroomAiViewImpl::pointerHeld = false;
+                intent();
+            }
+        }, true);
+        container.addEventListener("click", function(e) {
+            if (e.target && e.target.closest && e.target.closest("summary")) {
+                view.@stroom.ai.client.AskStroomAiViewImpl::summaryClickMs = Date.now();
+            }
+        }, true);
+        // Toggle doesn't bubble, so it is caught on its way down.
+        container.addEventListener("toggle", $entry(function(e) {
+            if (e.target && e.target.tagName === "DETAILS") {
+                view.@stroom.ai.client.AskStroomAiViewImpl::onSectionToggled(Z)(e.target.open);
+            }
+        }), true);
+    }-*/;
+
     private static native void scrollBy(Element element, NativeEvent wheel) /*-{
         var unit = wheel.deltaMode === 1
             ? 16
