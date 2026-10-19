@@ -19,6 +19,7 @@ package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.shared.TableComponentSettings;
+import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Format;
 import stroom.query.api.Sort.SortDirection;
@@ -45,6 +46,16 @@ public final class TableChange {
     public static final String MOVE_COLUMN = "move_column";
     /// Adds a table beside the table as a tab, fed by the same query.
     public static final String ADD_TABLE = "add_table";
+    /// Adds a Text widget below a table, showing the event of its selected row.
+    public static final String ADD_TEXT = "add_text";
+    /// Renames a component, and so its tab.
+    public static final String RENAME = "rename";
+    /// Changes one of a component's settings.
+    public static final String SET_SETTING = "set_setting";
+    /// Adds a conditional formatting rule to the table.
+    public static final String ADD_FORMAT_RULE = "add_format_rule";
+    /// Removes one of the table's conditional formatting rules, by its number.
+    public static final String REMOVE_FORMAT_RULE = "remove_format_rule";
     public static final String ASCENDING = "ascending";
     public static final String DESCENDING = "descending";
 
@@ -61,47 +72,49 @@ public final class TableChange {
     private final ExpressionOperator query;
     private final String table;
     private final boolean copy;
+    private final String target;
+    private final String targetId;
+    private final String setting;
+    private final String value;
+    private final String ref;
+    private final DocRef doc;
+    private final String style;
+    private final String formatType;
+    private final boolean bold;
+    private final boolean italic;
+    private final boolean hide;
 
-    /// @param op         What it does, e.g. [#GROUP].
-    /// @param column     The column it changes, by name, or null to add one.
-    /// @param level      For group, the level to group at, from 1, or null.
-    /// @param name       For add_column, the new column's name; for edit_column, its new name, or null.
-    /// @param expression For add_column or edit_column, the column's expression, or null.
-    /// @param format     For add_column or edit_column, the format as the column menu names it, or null.
-    /// @param position   For add_column, where to add it, from 1, or null for the end.
-    /// @param direction  For sort, ascending, descending or none.
-    /// @param priority   For sort, its priority from 1, or null to sort after the table's other sorts.
-    /// @param filter     For filter, the column's filter text, or empty to clear it.
-    /// @param query      For set_expression, the query's new expression, as Stroom built it, or null.
-    /// @param table      The table it changes, by name, if not the table the proposal is for (one an earlier
-    ///                   add_table adds), or null.
-    /// @param copy       For add_table, true to start the new table with the proposal table's columns.
-    public TableChange(final String op,
-                       final String column,
-                       final Integer level,
-                       final String name,
-                       final String expression,
-                       final String format,
-                       final Integer position,
-                       final String direction,
-                       final Integer priority,
-                       final String filter,
-                       final ExpressionOperator query,
-                       final String table,
-                       final boolean copy) {
-        this.op = op;
-        this.column = column;
-        this.level = level;
-        this.name = name;
-        this.expression = expression;
-        this.format = format;
-        this.position = position;
-        this.direction = direction;
-        this.priority = priority;
-        this.filter = filter;
-        this.query = query;
-        this.table = table;
-        this.copy = copy;
+    private TableChange(final Builder builder) {
+        this.op = builder.op;
+        this.column = builder.column;
+        this.level = builder.level;
+        this.name = builder.name;
+        this.expression = builder.expression;
+        this.format = builder.format;
+        this.position = builder.position;
+        this.direction = builder.direction;
+        this.priority = builder.priority;
+        this.filter = builder.filter;
+        this.query = builder.query;
+        this.table = builder.table;
+        this.copy = builder.copy;
+        this.target = builder.target;
+        this.targetId = builder.targetId;
+        this.setting = builder.setting;
+        this.value = builder.value;
+        this.ref = builder.ref;
+        this.doc = builder.doc;
+        this.style = builder.style;
+        this.formatType = builder.formatType;
+        this.bold = builder.bold;
+        this.italic = builder.italic;
+        this.hide = builder.hide;
+    }
+
+    /// @param op What the change does, e.g. [#GROUP].
+    /// @return A builder for a change, with only the fields its operation has set.
+    public static Builder builder(final String op) {
+        return new Builder(op);
     }
 
     /// @param table A dashboard component.
@@ -159,6 +172,61 @@ public final class TableChange {
     /// @return For add_table, true to start the new table with the proposal table's columns.
     public boolean isCopy() {
         return copy;
+    }
+
+    /// @return For rename and set_setting, the component it changes, by name, or null for the proposal's table.
+    public String getTarget() {
+        return target;
+    }
+
+    /// @return For rename and set_setting, the component's id, or null for a table added by these changes.
+    public String getTargetId() {
+        return targetId;
+    }
+
+    /// @return For set_setting, the setting's key.
+    public String getSetting() {
+        return setting;
+    }
+
+    /// @return For set_setting, its value.
+    public String getValue() {
+        return value;
+    }
+
+    /// @return For set_setting of a component, that component's id, or null.
+    public String getRef() {
+        return ref;
+    }
+
+    /// @return For set_setting of a document, the document, or null.
+    public DocRef getDoc() {
+        return doc;
+    }
+
+    /// @return For add_format_rule, the colour, as the rule editor names it, or null.
+    public String getStyle() {
+        return style;
+    }
+
+    /// @return For add_format_rule, what the colour is given to: background or text.
+    public String getFormatType() {
+        return formatType;
+    }
+
+    /// @return For add_format_rule, true to make matching rows bold.
+    public boolean isBold() {
+        return bold;
+    }
+
+    /// @return For add_format_rule, true to make matching rows italic.
+    public boolean isItalic() {
+        return italic;
+    }
+
+    /// @return For add_format_rule, true to hide matching rows.
+    public boolean isHide() {
+        return hide;
     }
 
     /// @return What it does, e.g. [#GROUP].
@@ -222,5 +290,213 @@ public final class TableChange {
     /// @return For filter, the filter text, or empty to clear it.
     public String getFilter() {
         return filter;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Builds a [TableChange], setting only the fields its operation has.
+    public static final class Builder {
+
+        private final String op;
+        private String column;
+        private Integer level;
+        private String name;
+        private String expression;
+        private String format;
+        private Integer position;
+        private String direction;
+        private Integer priority;
+        private String filter;
+        private ExpressionOperator query;
+        private String table;
+        private boolean copy;
+        private String target;
+        private String targetId;
+        private String setting;
+        private String value;
+        private String ref;
+        private DocRef doc;
+        private String style;
+        private String formatType;
+        private boolean bold;
+        private boolean italic;
+        private boolean hide;
+
+        private Builder(final String op) {
+            this.op = op;
+        }
+
+        /// @param column The column it changes, by name, or null to add one.
+        /// @return This builder.
+        public Builder column(final String column) {
+            this.column = column;
+            return this;
+        }
+
+        /// @param level For group, the level to group at, from 1, or null.
+        /// @return This builder.
+        public Builder level(final Integer level) {
+            this.level = level;
+            return this;
+        }
+
+        /// @param name For add_column, the new column's name; for edit_column, its new name; for add_table, add_text
+        ///             and rename, the new name.
+        /// @return This builder.
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        /// @param expression For add_column or edit_column, the column's expression, or null.
+        /// @return This builder.
+        public Builder expression(final String expression) {
+            this.expression = expression;
+            return this;
+        }
+
+        /// @param format For add_column or edit_column, the format as the column menu names it, or null.
+        /// @return This builder.
+        public Builder format(final String format) {
+            this.format = format;
+            return this;
+        }
+
+        /// @param position For add_column, move_column and add_format_rule, a position from 1; for remove_format_rule,
+        ///                 the rule's number.
+        /// @return This builder.
+        public Builder position(final Integer position) {
+            this.position = position;
+            return this;
+        }
+
+        /// @param direction For sort, ascending, descending or none.
+        /// @return This builder.
+        public Builder direction(final String direction) {
+            this.direction = direction;
+            return this;
+        }
+
+        /// @param priority For sort, its priority from 1, or null to sort after the table's other sorts.
+        /// @return This builder.
+        public Builder priority(final Integer priority) {
+            this.priority = priority;
+            return this;
+        }
+
+        /// @param filter For filter, the column's filter text, or empty to clear it.
+        /// @return This builder.
+        public Builder filter(final String filter) {
+            this.filter = filter;
+            return this;
+        }
+
+        /// @param query For set_expression, the query's new expression; for add_format_rule, the rule's conditions.
+        /// @return This builder.
+        public Builder query(final ExpressionOperator query) {
+            this.query = query;
+            return this;
+        }
+
+        /// @param table The table it changes (or, for add_text, follows), if not the proposal's: one an earlier
+        ///              add_table adds.
+        /// @return This builder.
+        public Builder table(final String table) {
+            this.table = table;
+            return this;
+        }
+
+        /// @param copy For add_table, true to start the new table with the proposal table's columns.
+        /// @return This builder.
+        public Builder copy(final boolean copy) {
+            this.copy = copy;
+            return this;
+        }
+
+        /// @param target For rename and set_setting, the component it changes, by name, or null for the proposal's
+        ///               table.
+        /// @return This builder.
+        public Builder target(final String target) {
+            this.target = target;
+            return this;
+        }
+
+        /// @param targetId For rename and set_setting, the component's id, or null for a component added by these
+        ///                 changes.
+        /// @return This builder.
+        public Builder targetId(final String targetId) {
+            this.targetId = targetId;
+            return this;
+        }
+
+        /// @param setting For set_setting, the setting's key.
+        /// @return This builder.
+        public Builder setting(final String setting) {
+            this.setting = setting;
+            return this;
+        }
+
+        /// @param value For set_setting, its value, as the server checked it.
+        /// @return This builder.
+        public Builder value(final String value) {
+            this.value = value;
+            return this;
+        }
+
+        /// @param ref For set_setting of a component, that component's id, or null.
+        /// @return This builder.
+        public Builder ref(final String ref) {
+            this.ref = ref;
+            return this;
+        }
+
+        /// @param doc For set_setting of a document, the document, or null.
+        /// @return This builder.
+        public Builder doc(final DocRef doc) {
+            this.doc = doc;
+            return this;
+        }
+
+        /// @param style For add_format_rule, the colour, as the rule editor names it, or null.
+        /// @return This builder.
+        public Builder style(final String style) {
+            this.style = style;
+            return this;
+        }
+
+        /// @param formatType For add_format_rule, what the colour is given to: background or text.
+        /// @return This builder.
+        public Builder formatType(final String formatType) {
+            this.formatType = formatType;
+            return this;
+        }
+
+        /// @param bold For add_format_rule, true to make matching rows bold.
+        /// @return This builder.
+        public Builder bold(final boolean bold) {
+            this.bold = bold;
+            return this;
+        }
+
+        /// @param italic For add_format_rule, true to make matching rows italic.
+        /// @return This builder.
+        public Builder italic(final boolean italic) {
+            this.italic = italic;
+            return this;
+        }
+
+        /// @param hide For add_format_rule, true to hide matching rows.
+        /// @return This builder.
+        public Builder hide(final boolean hide) {
+            this.hide = hide;
+            return this;
+        }
+
+        /// @return The change.
+        public TableChange build() {
+            return new TableChange(this);
+        }
     }
 }
