@@ -16,6 +16,7 @@ each piece of work.
    - Its own stylesheet, `<block>.css`, imported by `app.css`: BEM names, states from ARIA
      attributes (a state with no ARIA attribute is a block modifier, said so in the stylesheet),
      colours only from theme tokens.
+   - The fewest elements the pattern and the layout need: no wrappers that only carry a style.
    - Workbench stories: behaviour, keyboard, names and roles, a UiBinder template, and comparison
      stories showing the old widget above the new one with Stroom's real content.
    - Real-input checks (real keys and mouse) in the component's own file under
@@ -47,8 +48,12 @@ the component's classes (some names also match related classes), to help priorit
 | Dashboard splitters | `FlexLayout`, `Splitter` | (the same classes, with `FocusMemory`, `LayoutSizes` and `flex-layout.css`) | window splitter | retrofit (not `SplitPane`: a dashboard resizes on release, and its splitters must sit above the visualisations' floating frames) | every dashboard | built: splitters are tab stops in layout order (each after the panel before it, the dashboard's own width and height last), named for the panels either side ("Resize Query and Table"), with a value; arrow keys, Shift, Home and End; the focus is kept when the layout is rebuilt (maximise, restore); BEM CSS (`flex-layout.css`) | drags are mouse only (no touch or pen) and there is no live resize; Tab from a visualisation's frame goes to the end of the page; a splitter's name isn't refreshed when a tab is renamed while it has the focus; no real-input checks (drags are tested with synthetic events); line and focus contrast not measured; new `label` and `frame-title` baseline entries (from the dashboard content the stories show); not tried with a screen reader |
 | Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (in `AbstractTabBar`, shared with link tabs) | every document | in part: tab list, keys (and the tab menu from the keyboard), focus ring, panel link, sidebar toggle name and BEM CSS (`tab-bar.css`) done | left: link tabs are about 16px tall, under 2.5.8's 24px (baselined for the Data Retention impact stories, where one sits above a toolbar); link tab bars have no tab list name; a tab panel holding nothing focusable isn't a tab stop; a document tab's name is cut at 50 characters (with "..."), so a screen reader hears the shortened name; a tab's loading spinner isn't announced |
 | Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | in part: as document tabs (shared `AbstractTabBar`) | as document tabs |
-| Data grids | `MyDataGrid`, `MyCellTable`, `PagerViewImpl` | — | grid | probably retrofit (GWT cell table, many features) | ~78 (+14 cell tables, ~86 pagers) | not started | one tab stop with arrows inside; header and cell semantics; sortable headers are `role="button"`; cells get their events after the browser has handled them (`AbstractHasData.onBrowserEvent` defers them), so a cell can't `preventDefault()` one, and touch events don't reach cells |
+| Data grids | `MyDataGrid`, `PagerViewImpl` | — | grid | probably retrofit (GWT cell table, many features) | ~78 (+~86 pagers) | not started | one tab stop with arrows inside; header and cell semantics; sortable headers are `role="button"`; cells get their events after the browser has handled them (`AbstractHasData.onBrowserEvent` defers them), so a cell can't `preventDefault()` one, and touch events don't reach cells |
+| Cell tables | `MyCellTable` | — | grid (or table, where read only) | ? | ~14 | not started | as data grids: no header or cell semantics, no keyboard inside; whether each one is a grid or a plain table is for its research pass |
 | Explorer tree | explorer tree (cell tree, `explorerCell`), `EntityTreePresenter`, pickers | — | tree | ? | ~66 | not started | tree roles and keyboard |
+| Expression tree | `ExpressionTreePresenter`, `ExpressionTreeViewImpl`, `ExpressionTreePanel`, `ExpressionItemBox`, `TermEditor` | — | tree | ? | every query, dashboard query and filter (~17 files) | not started | no roles, names or keys; terms are edited in place, so the tree's keys and the term editor's fields need working out together |
+| Pipeline tree | `PipelineTreePresenter`, `PipelineTreeViewImpl`, `PipelineTreePanel`, `PipelineElementBox`, `DraggableTreePanel` | — | tree | retrofit | pipeline structure editor, stepping filter dialog | building, on branch `stepping_display` (not on this branch): a `tree` with `treeitem`s (level, position, selected), arrow keys, and moving elements with Ctrl+X and Ctrl+V (a keyboard alternative to dragging) | here: no roles or keys, mouse-only drag; on `stepping_display`: `PipelineElementBox.css` not BEM |
+| Pipeline bar | (the stepping screen's pipeline tree) | `PipelinePath`, `PipelinePathViewImpl`, `PipelinePathPresenter` | toolbar, with menu buttons at forks | replaced (stepping screen only) | stepping screen | building, on branch `stepping_display` (not on this branch): a chevron bar showing one path, with drop downs at forks, severity icons, forced colours and announced progress; BEM CSS (`pipeline-path.css`) | not on this branch; not tried with a screen reader |
 | Menus | `Menu`, `MenuPresenter`, menu items | — | menu / menubar | retrofit | ~19 places show menus | in part (items have `role="menuitem"`; `MenuRequest` lets widgets ask for one) | menu buttons don't say they open a menu (`ISSUES.md`) |
 | Dialogs and popups | popup support, `ResizableDialog` | — | dialog | ? | ~142 | ? | focus is restored on close (`CurrentFocus`); trapping, naming and Escape to check |
 | Quick filter | `QuickFilter` | — | search field | retrofit | ~83 | in part: Clear and syntax help are a toolbar (`quickFilter-toolbar`, one tab stop), in the form help icon's colour, Clear with its own icon (`CLEAR_OUTLINE`) | buttons below 24px (`target-size` baseline entries); not a `role="search"` or `type="search"` field; its syntax help is its own popup, not the shared `help-popup`; BEM pass not done (`quickFilter-…` classes) |
@@ -62,6 +67,57 @@ the component's classes (some names also match related classes), to help priorit
 | Code editor | Ace (`EditorPresenter`, `EditorViewImpl`) | — | — | retrofit around Ace | ~34 | not started | keyboard trap: Tab indents (`ISSUES.md`); Ace sources need human approval to change |
 | Layout panels | `DockLayoutPanel` and friends | (grid/flex, `SplitPane`) | — | replace as screens are touched | 6 (the floor map views) | in part: every view had its `DockLayoutPanel` replaced with grid or flex layout (`9dc39a1829`), but the floor map views added since use it again (`FloorMapEditorViewImpl`, `FloorMapFactListViewImpl`, `FloorMapGroupsViewImpl`, `FloorMapTimeListViewImpl`, `FloorMapTrackingViewImpl` and the template `FloorMapMapViewImpl.ui.xml`) | DOM order can differ from layout where a panel places its children (`ReadingOrder` is deleted, as no split panel is left); the floor map views not checked |
 | Content focus | tab pane | `ContentFocus` | — | added | all tabs | done (#5405) | — |
+
+## Checklist
+
+Each component against the things it needs before it counts as done. The Status table above says
+what has been done and what is left in words; this one is for seeing at a glance what is missing.
+
+- **Roles and states**: the WAI-ARIA pattern's roles, and its states (`aria-expanded`,
+  `aria-selected`, `aria-valuenow` and so on) kept up to date.
+- **Names**: every use has an accessible name (no `label` baseline entries for it).
+- **Keyboard**: the pattern's keys, and nothing reachable only by the mouse.
+- **Focus**: tab stops as the pattern says (often one, with arrows inside), a visible focus ring,
+  and the focus kept or put back sensibly when the component changes or closes.
+- **Own CSS**: the component's styles in its own stylesheet, `<block>.css`, not spread through
+  shared ones.
+- **BEM**: every class the component uses is a BEM name of its block (`block`, `block__element`,
+  `block--modifier`), states from ARIA attributes where there is one; shared tokens and the
+  shared control classes (`stroom-control`, `allow-focus`) aside.
+- **Minimal DOM**: no more elements than the pattern and the layout need.
+- **Screen reader**: tried with a real screen reader (NVDA, VoiceOver), not only axe.
+
+`done`, `part`, `no`; `?` not yet checked; `—` doesn't apply. Pipeline tree and bar describe this
+branch, with `stepping_display` in brackets.
+
+| Component | Roles and states | Names | Keyboard | Focus | Own CSS | BEM | Minimal DOM | Screen reader |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Toolbars | done | part | done | done | done (`toolbar.css`) | done | ? | no |
+| Floating action button | done | ? | done | ? | no (`stroom-button.css`) | no | ? | no |
+| Refresh button | done | done | done | done | done (`refresh-button.css`) | done | ? | no |
+| Split panes | done | done | done | done | done (`split-pane.css`) | done | ? | no |
+| Dashboard splitters | done | done | done | done | done (`flex-layout.css`) | done | ? | no |
+| Tab bars (documents) | done | done | done | part | done (`tab-bar.css`) | done | ? | no |
+| Link tabs (inside documents) | done | part | done | part | done (`tab-bar.css`) | done | ? | no |
+| Data grids | no | ? | no | no | part (`celltable/DataGrid.css`) | no | ? | no |
+| Cell tables | no | ? | no | no | part (`celltable/DefaultCellTable.css`) | no | ? | no |
+| Explorer tree | no | ? | ? | ? | part (`celltable/ExplorerTree.css`) | no | ? | no |
+| Expression tree | no | ? | no | ? | part (`ExpressionItemBox.css`, `TermEditor.css`) | no | ? | no |
+| Pipeline tree | no (done) | no (done) | no (done) | no (done) | part (`PipelineElementBox.css`) | no | ? | no |
+| Pipeline bar | — (done) | — (done) | — (done) | — (done) | — (done, `pipeline-path.css`) | — (done) | — (?) | — (no) |
+| Menus | part | ? | ? | ? | part (`celltable/Menu.css`, `menubar.css`) | no | ? | no |
+| Dialogs and popups | part | done | ? | part | part (`Dialog.css`, `ResizableDialog.css`, `PopupSupport.css`) | no | ? | no |
+| Quick filter | part | ? | part | done | done (`QuickFilter.css`) | no | ? | no |
+| Form groups | done | done | done | done | done (`form.css`) | done | ? | no |
+| Password box | done | done | done | done | done (`password-box.css`) | done | ? | no |
+| Selection box | done | part | done | done | done (`selection-box.css`, `selection-popup.css`) | part (the list's `selectionList-*`) | ? | no |
+| Tick box | done (a native checkbox) | part | done | ? | part (`tickbox.css`, `tickboxcell.css`) | no | ? | no |
+| Value spinner | done | done (the grid's cell: part) | done (the grid's cell: part) | done | done (`value-spinner.css`) | done | done | no |
+| Date and time | part | part | part | ? | part (`CustomDatePicker.css`, `svg-icon-box.css`) | part | ? | no |
+| Text inputs | done (native) | part | done (native) | done | no (`stroom.css`, `stroom-control.css`) | no | ? | no |
+| Code editor | — (Ace) | ? | no (Tab is a trap) | ? | done (`editor.css`) | part | — (Ace) | no |
+| Layout panels | — | — | — | — | — | — | part (the floor map views) | — |
+| Content focus | — | — | — | done | — | — | — | no |
 
 ## Tab decisions
 
@@ -117,8 +173,8 @@ Agreed for both tab bars (document and link tabs), following the WAI-ARIA tabs p
 1. Tab bars, both kinds: they shape the focus order of nearly every screen.
 2. Form controls (selection box, tick box, value spinner, date and time, text inputs): most of the
    `label` baseline entries, and the controls that grids hold in their cells.
-3. Data grids.
-4. Explorer tree.
+3. Data grids and cell tables.
+4. Trees: explorer, expression and pipeline (the pipeline tree and bar are under way on `stepping_display`).
 5. Menus, dialogs, quick filter, code editor, as their briefs are ready.
 6. Then page-level focus-order stories, once the components that make up a page are rolled out.
 
