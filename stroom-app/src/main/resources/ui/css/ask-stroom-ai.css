@@ -97,8 +97,8 @@
 }
 
 /* While a question is being worked on, the input box gets a glowing border in the app's blues, with a bright
-   highlight that travels round it, as VS Code does. The border is a gradient behind the box, so the box's own clipping does
-   not hide it. */
+   highlight that travels round it, so it is clear the chat is busy. The border is a gradient behind the box, so the
+   box's own clipping does not hide it. */
 @property --ai-glow-angle {
     syntax: "<angle>";
     initial-value: 0deg;
@@ -1528,7 +1528,7 @@
     font: inherit;
 }
 
-/* Questions from the agent (ask_user), one at a time, as VS Code shows them. */
+/* Questions from the agent (ask_user), one at a time. */
 .ai-questions {
     margin: 6px 0 8px;
 }

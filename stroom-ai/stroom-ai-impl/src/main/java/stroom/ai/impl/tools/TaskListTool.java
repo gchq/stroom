@@ -31,8 +31,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Lets the agent keep a task list for work with several steps, which the user sees above the chat's input as the
-/// agent works through it, as VS Code's agent does. Each call gives the whole list. It changes nothing in Stroom.
+/// Lets the agent keep a task list for work with several steps (e.g. onboarding a feed), which the user sees above
+/// the chat's input as the agent works through it, so they can see the plan, how far it has got and what is left.
+/// Each call gives the whole list. It changes nothing in Stroom.
 class TaskListTool extends AbstractBuiltInTool {
 
     static final String NAME = "task_list";

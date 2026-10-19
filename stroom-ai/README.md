@@ -118,10 +118,14 @@ Every tool call and every decision is event-logged.
 
 ## Questions for the user (`ask_user`)
 
-When the agent needs the user's decisions to carry on, it asks them with its built-in `ask_user` tool, as VS Code's
-agent does, rather than listing questions in its answer. The chat shows them in a card one at a time ("Question 1 of
-4"), each with the agent's answers to click (the one it recommends marked) and, unless it says only those make sense,
-a box for the user's own answer (Enter to give it). _Back_ returns to the previous question; _Skip these questions_
+When the agent can't carry on without the user deciding something (e.g. which feed to use, or whether to replace
+an existing pipeline), it asks with its built-in `ask_user` tool rather than listing questions at the end of its
+answer and stopping. The run waits for the answers and then carries on with them, so a task with several steps,
+such as onboarding a feed, isn't broken up into separate questions the user has to piece back together.
+
+The chat shows the questions in a card, one at a time ("Question 1 of 4"). Each comes with the answers the agent
+thinks likely, as buttons to click, with the one it recommends marked and shown first, and, unless the agent says
+only those answers make sense, a box for the user's own answer (Enter to give it). _Back_ returns to the previous question; _Skip these questions_
 declines them. After the last answer, the answers are the tool's result, and the card shrinks to the questions and
 answers. The questions use the same machinery as forms from MCP tools (below): the run waits, Stop cancels them, and
 they expire after `elicitationTimeout`. An unattended run isn't asked; the agent is told to put the questions in its
@@ -180,12 +184,15 @@ _Steps for you_ card. The model can neither make nor click one.
   words (12 by default; a longer reply is cut to that many). Titles are cut short with an ellipsis only where
   they would not fit on one line. Only the user's questions
   are sent. Once the user renames a chat, it is no longer named automatically; `/clear` lets it be again.
-* For work with several steps, the agent keeps a task list with its `task_list` tool (as VS Code's agent
-  does): it is shown above the input, with how many are done, and each step as not started, in progress or
-  completed, and can be folded away. Each update is kept (as a `TASK_LIST` message, never sent to the model), so
+* For work with several steps (e.g. onboarding a feed: create the feed, upload sample data, build and test a
+  pipeline, set up indexing), the agent writes a task list with its `task_list` tool before it starts, and keeps it
+  up to date as it works, so the user can see the plan, how far it has got and what is left. The list is shown
+  above the input, with how many steps are done, and each step marked as not started, in progress or completed;
+  it can be folded away. Each update is kept (as a `TASK_LIST` message, never sent to the model), so
   it survives a refresh; a new question clears it.
-* After an answer, up to three things the user might ask next are offered as links just above the input;
-  clicking one sends it. They come from one small call to the chat's model, given only the question and the
+* After an answer, up to three things the user might ask next are offered as links floating over the bottom of
+  the conversation, just above the input (the conversation keeps room below its latest message, so they never
+  hide it); clicking one sends it. They come from one small call to the chat's model, given only the question and the
   start of the answer, and are kept (as a `SUGGESTIONS` message, never shown in the conversation or sent to
   the model) so they survive a refresh. None are offered while the chat is working, once the user asks
   something else, or after a turn in which the agent asked the user for something (a form, an approval, or
@@ -199,7 +206,8 @@ _Steps for you_ card. The model can neither make nor click one.
   and use the attached things together, given only the latest two questions, the start of the latest
   answer and a two-line hint of each thing attached (what it is and what the agent can do with it, never its
   content; documents the user can't view are left out). Follow-ups after an answer get the same hints for the
-  attached tab and documents, and lean towards acting on them.
+  attached tab and documents, and lean towards acting on them. `suggestFollowUps: false` turns off the model's
+  suggestions of both kinds; the ones made at once, without the model, are still offered.
 * A message sent while the chat works steers the run. It is shown queued (a dashed outline, "Waiting for the
   current step to finish") and the run picks it up once its current step finishes, before its next call to the
   model; it is then shown as any other message. _Send now_ (the fast-forward button on it) has the run give up
@@ -249,20 +257,24 @@ _Steps for you_ card. The model can neither make nor click one.
 
 ## Attaching a tab
 
-The user decides which tab, if any, the chat sees, as in VS Code:
+The chat only sees a tab the user has attached to it. Nothing is shared just because a tab is open or selected, so
+moving between tabs (e.g. from one dashboard to another while a question is being worked on) never changes what
+the agent is looking at without the user choosing it:
 
 * Above the input, a dashed _+_ chip names the document tab the user is on (or, when the chat is open as a tab of
   its own, the one they were on before). Clicking it attaches that tab to the chat, in place of any attached
   before; one tab is attached at a time.
 * The attached tab is shown as a chip, "Tab: _name_" with its icon, and "(unsaved)" while it has unsaved changes.
-  It stays attached whichever tab the user is on, until they remove it (× on the chip) or close the tab, so
-  switching tabs (e.g. from one dashboard to another) never changes what the chat sees without the user
-  choosing it. Attachments are kept per chat, in the browser, until the page is reloaded.
+  It stays attached whichever tab the user is on, until they remove it (× on the chip) or close the tab.
+  Attachments are kept per chat, in the browser, until the page is reloaded.
 * Each question is sent with the attached tab as the user sees it then: unsaved changes, the inner tab shown
   (e.g. a pipeline's _Stepping_ view, with the selected element's input, output and code), and the tables of
   results shown. A tab that hasn't changed since the last question is sent as its hash only. The agent is
   given it as a snapshot in `/tabs/<n>/` with a note on the latest question; earlier questions keep a short
   note of where theirs is.
+* Attaching a tab moves the cursor to the input box and offers questions about it (see _Commands, prompts and
+  uploads_). The tab's chip is set apart from the chips of attached documents and tables by a divider: the tab
+  stays attached for every question, while documents and tables go with the next one.
 * Editing a question, or _Ask again_, sends the attached tab as it is now.
 * Only documents the user can view are shared. `shareActiveTab: false` turns attaching tabs off.
 
@@ -344,6 +356,7 @@ All under `appConfig.ai` unless stated.
 | `maxRunsPerUser` | `3` | Runs working at once for a user |
 | `maxTabSnapshotBytes` | `2097152` | The most bytes of an attached tab's content kept for one question |
 | `shareActiveTab` | `true` | Lets users attach a document tab to a chat |
+| `suggestFollowUps` | `true` | The model suggests follow-ups after answers, and questions about what is attached |
 | `toolGroupThreshold` | `24` | More MCP tools than this are offered as groups (0 never groups) |
 | `unattendedAfter` | `PT10M` | When a run with no one watching becomes unattended |
 | `workspace.maxQueryLength` | `10000` | The longest StroomQL query `run_stroomql` may run, in characters |

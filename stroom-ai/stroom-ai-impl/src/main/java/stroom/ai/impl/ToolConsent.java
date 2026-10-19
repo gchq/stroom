@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 /// Decides whether a tool call the model asks for runs straight away, needs the user's approval first, or is not
-/// run, following VS Code's approvals:
+/// run:
 ///
 /// - built-in tools run, while the user is away too (they only reach the chat's own workspace and memory, which
 ///   have their own controls);
