@@ -70,6 +70,8 @@ public class ContextUsageTracker {
     private final Map<Integer, Double> corrections = new ConcurrentHashMap<>();
     private final Map<Integer, Integer> toolDefinitionTokens = new ConcurrentHashMap<>();
     private final Map<Integer, Integer> serverInstructionTokens = new ConcurrentHashMap<>();
+    private final Map<Integer, MeasuredCall> lastCalls = new ConcurrentHashMap<>();
+    private final Map<Integer, Integer> shortenedParts = new ConcurrentHashMap<>();
 
     @Inject
     ContextUsageTracker(final AiDao aiDao, final AiChatRunManager runManager) {
@@ -106,6 +108,7 @@ public class ContextUsageTracker {
         if (estimate > 0) {
             corrections.put(chatId, inputTokens / (double) estimate);
         }
+        lastCalls.put(chatId, new MeasuredCall(inputTokens, System.currentTimeMillis()));
         aiDao.recordUsage(chatId,
                 NullSafe.get(modelDoc, OpenAIModelDoc::getUuid),
                 NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getMaxContextWindowTokens, 0),
@@ -235,10 +238,52 @@ public class ContextUsageTracker {
         return tokens;
     }
 
+    /// @param chatId The chat.
+    /// @return The chat's last model call on this node whose size the model reported, if there is one.
+    public Optional<MeasuredCall> getLastCall(final int chatId) {
+        return Optional.ofNullable(lastCalls.get(chatId));
+    }
+
+    /// Records that a run made its conversation smaller to fit the context window (see `McpAgentChat#shrink`), so
+    /// the context meter can say what it sends is less than the chat holds.
+    ///
+    /// @param chatId The chat.
+    /// @param parts  How many parts (tool results, tool call arguments or earlier steps) were shortened.
+    public void recordShortened(final int chatId, final int parts) {
+        if (parts > 0) {
+            shortenedParts.merge(chatId, parts, Integer::sum);
+        }
+    }
+
+    /// Forgets the parts shortened by the chat's last run, as a new run starts from the stored chat.
+    public void resetShortened(final int chatId) {
+        shortenedParts.remove(chatId);
+    }
+
+    /// @param chatId The chat.
+    /// @return How many parts the chat's latest run shortened to fit the context window.
+    public int getShortenedParts(final int chatId) {
+        return shortenedParts.getOrDefault(chatId, 0);
+    }
+
     /// Forgets what is held for a chat, e.g. because it has been deleted.
     public void forget(final int chatId) {
         corrections.remove(chatId);
         toolDefinitionTokens.remove(chatId);
         serverInstructionTokens.remove(chatId);
+        lastCalls.remove(chatId);
+        shortenedParts.remove(chatId);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A model call whose size the model reported.
+    ///
+    /// @param inputTokens The tokens the model said the request had.
+    /// @param timeMs      When the call returned.
+    public record MeasuredCall(long inputTokens, long timeMs) {
+
     }
 }

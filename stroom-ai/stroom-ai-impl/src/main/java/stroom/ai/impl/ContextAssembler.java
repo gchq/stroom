@@ -767,8 +767,10 @@ public class ContextAssembler {
     }
 
     /**
-     * Estimates how many tokens a request would use, corrected by how far off the estimate was for the chat's
-     * last measured model call.
+     * Estimates how many tokens a request would use, for deciding whether the chat needs compacting: corrected by
+     * how far off the estimate was for the chat's last measured model call, or, until a call has been measured,
+     * erring on the large side as the agent loop does ({@link ContextUsageTracker#UNMEASURED_SAFETY_FACTOR}), so
+     * the chat is compacted before the run would have to shorten its own steps.
      *
      * @param chatId   The chat.
      * @param messages The messages that would be sent.
@@ -777,9 +779,8 @@ public class ContextAssembler {
     public long estimateTokens(final int chatId, final List<ChatMessage> messages) {
         final long estimate = ESTIMATOR.estimateTokenCountInMessages(messages)
                               + usageTracker.getToolDefinitionTokens(chatId);
-        return usageTracker.getCorrection(chatId)
-                .map(factor -> Math.round(estimate * factor))
-                .orElse(estimate);
+        return Math.round(estimate * usageTracker.getCorrection(chatId)
+                .orElse(ContextUsageTracker.UNMEASURED_SAFETY_FACTOR));
     }
 
     /**
@@ -832,16 +833,58 @@ public class ContextAssembler {
 
         final long estimate = parts.values().stream().mapToLong(Long::longValue).sum();
         final Optional<Double> correction = usageTracker.getCorrection(chatId);
-        final long used = correction
-                .map(factor -> Math.round(estimate * factor))
-                .orElse(estimate);
         final int contextWindow = NullSafe.getOrElse(
                 aiDao.getUsage(chatId), ChatUsage::contextWindowTokens, 0);
         final int compactAtPercent = NullSafe.getOrElse(aiConfigProvider.get(),
                 AiConfig::getCompaction,
                 AiCompactionConfig::getThresholdPercent,
                 0);
-        return new AiContextUsage(contextWindow, used, correction.isEmpty(), parts, compactAtPercent);
+
+        // While a question is being answered, the run sends less than the chat holds once it has shortened its
+        // steps to fit, so what the model reported for its latest call is the truer figure: that, and what has
+        // been added since.
+        final Optional<Long> measured = measuredForLatestTurn(chatId, history, toolMessagesByTurn.get(latestTurn));
+        if (measured.isPresent()) {
+            final long used = contextWindow > 0
+                    ? Math.min(measured.get(), contextWindow)
+                    : measured.get();
+            return new AiContextUsage(contextWindow, used, false, parts, compactAtPercent,
+                    usageTracker.getShortenedParts(chatId));
+        }
+        final long used = correction
+                .map(factor -> Math.round(estimate * factor))
+                .orElse(estimate);
+        return new AiContextUsage(contextWindow, used, correction.isEmpty(), parts, compactAtPercent, 0);
+    }
+
+    /// @param history          All the chat's messages, in order.
+    /// @param latestToolMessages The tool calls and results of the latest turn.
+    /// @return If the latest question is still being answered and the model reported the size of a call made for
+    /// it: that size, and an estimate of the tool calls and results stored since, which the next call will add.
+    private Optional<Long> measuredForLatestTurn(final int chatId,
+                                                 final List<AiChatMessage> history,
+                                                 final List<AiChatMessage> latestToolMessages) {
+        AiChatMessage question = null;
+        for (int i = history.size() - 1; i >= 0 && question == null; i--) {
+            final AiChatMessage message = history.get(i);
+            if (message.getMessageType() == AiMessageType.AI_RESPONSE) {
+                // Answered: the next question is assembled from the stored chat, which the estimate covers.
+                return Optional.empty();
+            }
+            if (message.getMessageType() == AiMessageType.USER_MESSAGE) {
+                question = message;
+            }
+        }
+        if (question == null) {
+            return Optional.empty();
+        }
+        final long askedMs = question.getCreateTimeMs();
+        return usageTracker.getLastCall(chatId)
+                .filter(call -> call.timeMs() >= askedMs)
+                .map(call -> call.inputTokens() + NullSafe.list(latestToolMessages).stream()
+                        .filter(message -> message.getCreateTimeMs() > call.timeMs())
+                        .mapToLong(ContextAssembler::tokens)
+                        .sum());
     }
 
     private String systemPrompt() {

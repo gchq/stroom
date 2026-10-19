@@ -100,6 +100,27 @@ class TestContextUsageTracker {
     }
 
     @Test
+    void testLastCallAndShortenedPartsAreKeptForTheMeter() {
+        final List<ChatMessage> sent = List.of(UserMessage.from("x".repeat(400)));
+        tracker.record(1, null, sent, null, ChatResponse.builder()
+                .aiMessage(AiMessage.from("ok"))
+                .tokenUsage(new TokenUsage(123, 1))
+                .build());
+
+        assertThat(tracker.getLastCall(1)).hasValueSatisfying(call -> assertThat(call.inputTokens()).isEqualTo(123));
+        tracker.recordShortened(1, 2);
+        tracker.recordShortened(1, 0);
+        tracker.recordShortened(1, 3);
+        assertThat(tracker.getShortenedParts(1)).isEqualTo(5);
+        tracker.resetShortened(1);
+        assertThat(tracker.getShortenedParts(1)).isZero();
+        tracker.recordShortened(1, 1);
+        tracker.forget(1);
+        assertThat(tracker.getLastCall(1)).isEmpty();
+        assertThat(tracker.getShortenedParts(1)).isZero();
+    }
+
+    @Test
     void testRecord_noUsageReported() {
         tracker.record(1, null, List.of(UserMessage.from("hi")), null,
                 ChatResponse.builder().aiMessage(AiMessage.from("hello")).build());

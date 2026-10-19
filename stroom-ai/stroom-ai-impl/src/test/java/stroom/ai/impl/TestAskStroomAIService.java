@@ -628,7 +628,7 @@ class TestAskStroomAIService {
         assertThatThrownBy(() -> service().undoCompaction(new UndoAiCompactionRequest(chat, 4)))
                 .hasMessageContaining("Only the latest compaction");
 
-        final AiContextUsage usage = new AiContextUsage(1000, 600L, true, Map.of(), 80);
+        final AiContextUsage usage = new AiContextUsage(1000, 600L, true, Map.of(), 80, 0);
         Mockito.when(contextAssembler.estimateUsage(1)).thenReturn(usage);
         // The new usage is returned, as undoing makes the model see more.
         assertThat(service().undoCompaction(new UndoAiCompactionRequest(chat, 3))).isEqualTo(usage);

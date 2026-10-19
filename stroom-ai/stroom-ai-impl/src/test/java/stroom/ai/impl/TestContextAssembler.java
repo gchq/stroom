@@ -130,6 +130,70 @@ class TestContextAssembler {
     }
 
     @Test
+    void testTheEstimateForCompactingErrsLargeUntilACallIsMeasured() {
+        final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
+        final ContextAssembler assembler = new ContextAssembler(
+                () -> null, AiConfig::new, null, Mockito.mock(stroom.ai.api.AiService.class),
+                Mockito.mock(AiDao.class), Mockito.mock(AiWorkspaceDao.class), tracker, null, null);
+        final List<ChatMessage> messages = List.of(UserMessage.from("x".repeat(4_000)));
+        Mockito.when(tracker.getToolDefinitionTokens(1)).thenReturn(100);
+        Mockito.when(tracker.getCorrection(1)).thenReturn(java.util.Optional.empty());
+
+        final long unmeasured = assembler.estimateTokens(1, messages);
+
+        Mockito.when(tracker.getCorrection(1)).thenReturn(java.util.Optional.of(1.0));
+        final long measured = assembler.estimateTokens(1, messages);
+        // As the agent loop estimates, so the chat is compacted before the run has to shorten its own steps.
+        assertThat(unmeasured).isEqualTo(Math.round(measured * ContextUsageTracker.UNMEASURED_SAFETY_FACTOR));
+        Mockito.when(tracker.getCorrection(1)).thenReturn(java.util.Optional.of(2.0));
+        assertThat(assembler.estimateTokens(1, messages)).isEqualTo(measured * 2);
+    }
+
+    @Test
+    void testUsageWhileAnsweringIsWhatTheModelWasLastSentAndWhatHasBeenAddedSince() {
+        final stroom.ai.api.AiService aiService = Mockito.mock(stroom.ai.api.AiService.class);
+        final AiDao aiDao = Mockito.mock(AiDao.class);
+        final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
+        final ContextAssembler assembler = new ContextAssembler(
+                () -> null, AiConfig::new, null, aiService, aiDao, Mockito.mock(AiWorkspaceDao.class), tracker,
+                null, null);
+        final List<AiChatMessage> answering = List.of(
+                new AiChatMessage(10, 1, 1_000L, AiMessageType.USER_MESSAGE, null, "onboard it", 10, 5),
+                // Stored at full size, though the run has shortened it in what it sends.
+                new AiChatMessage(11, 1, 1_500L, AiMessageType.TOOL_RESULT, null, "{}", 10, 90_000),
+                // Since the last call, so the next call adds it.
+                new AiChatMessage(12, 1, 2_500L, AiMessageType.TOOL_RESULT, null, "{}", 10, 300));
+        Mockito.when(aiService.getMessages(1)).thenReturn(answering);
+        Mockito.when(tracker.getLastCall(1)).thenReturn(java.util.Optional.of(
+                new ContextUsageTracker.MeasuredCall(5_000, 2_000L)));
+        Mockito.when(tracker.getShortenedParts(1)).thenReturn(7);
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage("m", 10_000, null, 0, 0));
+
+        final stroom.ai.shared.AiContextUsage usage = assembler.estimateUsage(1);
+
+        assertThat(usage.getUsedTokens()).isEqualTo(5_300L);
+        assertThat(usage.isEstimated()).isFalse();
+        assertThat(usage.getShortenedParts()).isEqualTo(7);
+        // The parts are as stored, for the breakdown.
+        assertThat(usage.getParts()).containsEntry(ContextAssembler.PART_TOOL_RESULTS, 90_300L);
+
+        // Never more than the window the model accepted the call within.
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage("m", 5_100, null, 0, 0));
+        assertThat(assembler.estimateUsage(1).getPercentUsed()).isEqualTo(100);
+
+        // A call measured before the question, or a question answered, is the stored estimate.
+        Mockito.when(tracker.getLastCall(1)).thenReturn(java.util.Optional.of(
+                new ContextUsageTracker.MeasuredCall(5_000, 500L)));
+        assertThat(assembler.estimateUsage(1).getShortenedParts()).isZero();
+        Mockito.when(tracker.getLastCall(1)).thenReturn(java.util.Optional.of(
+                new ContextUsageTracker.MeasuredCall(5_000, 2_000L)));
+        final List<AiChatMessage> answered = new java.util.ArrayList<>(answering);
+        answered.add(new AiChatMessage(13, 1, 3_000L, AiMessageType.AI_RESPONSE, null, "done", 10, 2));
+        Mockito.when(aiService.getMessages(1)).thenReturn(answered);
+        assertThat(assembler.estimateUsage(1).getShortenedParts()).isZero();
+    }
+
+    @Test
     void testUnavailableAttachmentIsSaidToBeGone() {
         final stroom.ai.api.AiService aiService = Mockito.mock(stroom.ai.api.AiService.class);
         final AiWorkspaceDao workspaceDao = Mockito.mock(AiWorkspaceDao.class);

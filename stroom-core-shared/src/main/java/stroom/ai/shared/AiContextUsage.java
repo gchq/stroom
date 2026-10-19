@@ -44,6 +44,8 @@ public class AiContextUsage {
     private final Map<String, Long> parts;
     @JsonProperty
     private final int compactAtPercent;
+    @JsonProperty
+    private final int shortenedParts;
 
     /**
      * @param contextWindowTokens The model's context window, or 0 if it is not known.
@@ -53,13 +55,17 @@ public class AiContextUsage {
      * @param parts               Where the tokens go (e.g. "Chat history", "Tool definitions"), in order.
      * @param compactAtPercent    The percentage of the context window at which the chat is compacted
      *                            automatically, or 0 if not known.
+     * @param shortenedParts      How many parts (tool results, tool call arguments or earlier steps) the run
+     *                            answering the latest question shortened to fit the context window, so it sends
+     *                            less than the chat holds, or 0.
      */
     @JsonCreator
     public AiContextUsage(@JsonProperty("contextWindowTokens") final Integer contextWindowTokens,
                           @JsonProperty("usedTokens") final Long usedTokens,
                           @JsonProperty("estimated") final Boolean estimated,
                           @JsonProperty("parts") final Map<String, Long> parts,
-                          @JsonProperty("compactAtPercent") final Integer compactAtPercent) {
+                          @JsonProperty("compactAtPercent") final Integer compactAtPercent,
+                          @JsonProperty("shortenedParts") final Integer shortenedParts) {
         this.contextWindowTokens = Objects.requireNonNullElse(contextWindowTokens, 0);
         this.usedTokens = Objects.requireNonNullElse(usedTokens, 0L);
         this.estimated = Objects.requireNonNullElse(estimated, true);
@@ -67,6 +73,7 @@ public class AiContextUsage {
                 ? new LinkedHashMap<>()
                 : new LinkedHashMap<>(parts);
         this.compactAtPercent = Objects.requireNonNullElse(compactAtPercent, 0);
+        this.shortenedParts = Objects.requireNonNullElse(shortenedParts, 0);
     }
 
     /**
@@ -103,6 +110,13 @@ public class AiContextUsage {
     }
 
     /**
+     * @return How many parts the run answering the latest question shortened to fit the context window, or 0.
+     */
+    public int getShortenedParts() {
+        return shortenedParts;
+    }
+
+    /**
      * @return The percentage of the context window used, or -1 if the window is not known.
      */
     @JsonIgnore
@@ -122,12 +136,13 @@ public class AiContextUsage {
                && usedTokens == that.usedTokens
                && estimated == that.estimated
                && Objects.equals(parts, that.parts)
-               && compactAtPercent == that.compactAtPercent;
+               && compactAtPercent == that.compactAtPercent
+               && shortenedParts == that.shortenedParts;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(contextWindowTokens, usedTokens, estimated, parts, compactAtPercent);
+        return Objects.hash(contextWindowTokens, usedTokens, estimated, parts, compactAtPercent, shortenedParts);
     }
 
     @Override
@@ -138,6 +153,7 @@ public class AiContextUsage {
                ", estimated=" + estimated +
                ", parts=" + parts +
                ", compactAtPercent=" + compactAtPercent +
+               ", shortenedParts=" + shortenedParts +
                '}';
     }
 }
