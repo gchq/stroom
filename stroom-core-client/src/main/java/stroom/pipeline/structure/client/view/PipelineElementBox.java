@@ -176,6 +176,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
     /// faded, with a dashed border, and said so in its name.
     ///
     /// @param detached Whether it is detached.
+    @Override
     public void setDetached(final boolean detached) {
         this.detached = detached;
         toggleClass(DETACHED_CLASS, detached);
@@ -188,6 +189,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
     /// @param detachedName The detached element's name, or null when none is detached (or this is
     ///                     it, or after it).
     /// @param canTake      Whether this element can take it.
+    @Override
     public void setDetachedName(final String detachedName, final boolean canTake) {
         this.detachedName = detachedName;
         this.canTake = canTake;

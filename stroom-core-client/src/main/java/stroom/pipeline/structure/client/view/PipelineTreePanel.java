@@ -63,8 +63,6 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     private PipelineElementRenderer cellRenderer;
     private DefaultTreeForTreeLayout<PipelineElement> tree;
     private SelectionModel<PipelineElement> selectionModel;
-    // Told when a redraw is complete, e.g. to put the keyboard focus back on a box
-    private Runnable afterRefresh;
 
     public PipelineTreePanel() {
         panel = new FlowPanel();
@@ -202,9 +200,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
                     if (callback != null) {
                         callback.onRefresh();
                     }
-                    if (afterRefresh != null) {
-                        afterRefresh.run();
-                    }
+                    fireAfterRefresh();
                 }
             });
         }
@@ -272,14 +268,6 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
         if (treeLayout != null) {
             treeLayout.setTree(tree);
         }
-    }
-
-    /// Sets what to do when a redraw is complete, e.g. to put the keyboard focus back on a box
-    /// (as redrawing replaces them).
-    ///
-    /// @param afterRefresh What to do, or null for nothing.
-    public void setAfterRefresh(final Runnable afterRefresh) {
-        this.afterRefresh = afterRefresh;
     }
 
     public int getTreeHeight() {

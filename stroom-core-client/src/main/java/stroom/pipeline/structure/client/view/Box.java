@@ -31,5 +31,22 @@ public abstract class Box<E> extends Composite {
     public void showRefused(final boolean refused) {
     }
 
+    /// Shows (or stops showing) that the box's item is detached, or after the item detached, to be
+    /// attached to another parent with the keyboard (see [TreeKeyboard]). By default nothing is
+    /// shown.
+    ///
+    /// @param detached Whether it is.
+    public void setDetached(final boolean detached) {
+    }
+
+    /// Says (or stops saying) for assistive technology whether the box's item can take an item
+    /// detached to be attached to another parent (see [TreeKeyboard]). By default nothing is said.
+    ///
+    /// @param detachedName The detached item's name, or null when none is detached (or the box's
+    ///                     item is it, or after it).
+    /// @param canTake      Whether the box's item can take it.
+    public void setDetachedName(final String detachedName, final boolean canTake) {
+    }
+
     public abstract E getItem();
 }
