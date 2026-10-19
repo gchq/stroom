@@ -21,6 +21,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.DashboardBuilder;
 import stroom.ai.impl.DashboardChanges;
+import stroom.ai.impl.DashboardChanges.Change;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
@@ -31,11 +32,15 @@ import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
+import stroom.query.api.Column;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.SpecialColumns;
+import stroom.query.api.TableSettings;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.util.json.JsonUtil;
@@ -244,6 +249,35 @@ class TestProposeDashboardChangeTool {
     }
 
     @Test
+    void aTextWidgetOnAGroupedTableWithoutDetailRowsIsNoted() {
+        final Column grouped = Column.builder().id("c1").name("User").expression("${User}").group(0).build();
+        final Column count = Column.builder().id("c2").name("Count").expression("count()").build();
+        final AiTabSearch groupedTable = tableOf(List.of(grouped, count));
+        final AiTabSearch withDetail = tableOf(List.of(grouped, count, SpecialColumns.RESERVED_STREAM_ID_COLUMN,
+                SpecialColumns.RESERVED_EVENT_ID_COLUMN));
+        final List<Change> stepping = DashboardChanges.parse(List.of(Map.of("op", "set_setting", "target", "Text",
+                "setting", "showStepping", "value", "true")));
+        final List<Change> addText = DashboardChanges.parse(List.of(Map.of("op", "add_text", "name", "Preview")));
+
+        assertThat(ProposeDashboardChangeTool.eventNote(stepping, groupedTable, "Tweets"))
+                .contains("table 'Tweets' groups its rows")
+                .contains("set_setting showDetail true");
+        assertThat(ProposeDashboardChangeTool.eventNote(addText, groupedTable, "Tweets")).isNotEmpty();
+        // Not when the table shows its detail rows (so it has the events' ids), or the changes turn them on.
+        assertThat(ProposeDashboardChangeTool.eventNote(stepping, withDetail, "Tweets")).isEmpty();
+        assertThat(ProposeDashboardChangeTool.eventNote(DashboardChanges.parse(List.of(
+                Map.of("op", "add_text", "name", "Preview"),
+                Map.of("op", "set_setting", "setting", "showDetail", "value", "true"))).stream()
+                .map(change -> "showDetail".equals(change.setting())
+                        ? change.withResolved("table-1", "true", null, null)
+                        : change)
+                .toList(), groupedTable, "Tweets")).isEmpty();
+        // Nor for changes that don't touch a Text widget.
+        assertThat(ProposeDashboardChangeTool.eventNote(DashboardChanges.parse(List.of(Map.of("op", "hide_column",
+                "column", "Count"))), groupedTable, "Tweets")).isEmpty();
+    }
+
+    @Test
     void anUnknownColumnIsRefusedSayingWhy() {
         final String result = run(List.of(Map.of("op", "hide_column", "column", "Nope")));
 
@@ -302,6 +336,18 @@ class TestProposeDashboardChangeTool {
     @Test
     void badChangesAreRefused() {
         assertThat(run(List.of(Map.of("op", "drop_table")))).startsWith("Error: Change 1: op must be one of");
+    }
+
+    private static AiTabSearch tableOf(final List<Column> columns) {
+        final DashboardTableContext live = new DashboardTableContext("Dashboard 'Logons'", null,
+                DashboardSearchRequest.builder()
+                        .search(Search.builder().dataSourceRef(INDEX).build())
+                        .componentResultRequests(List.of(TableResultRequest.builder()
+                                .componentId("table-1")
+                                .tableSettings(TableSettings.builder().columns(columns).build())
+                                .build()))
+                        .build());
+        return new AiTabSearch("Tweets", "table-1", null, live, List.of("User", "Count"), 10L, false);
     }
 
     @SuppressWarnings("unchecked")

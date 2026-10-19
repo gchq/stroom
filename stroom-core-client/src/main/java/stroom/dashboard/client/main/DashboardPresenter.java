@@ -16,8 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.ai.shared.AiTabSearch;
-import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
@@ -106,6 +104,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -132,9 +131,9 @@ public class DashboardPresenter
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final FlexLayout layoutPresenter;
     private final Components components;
-    // Changes from the AI chat that have been applied, by their undo key, so each can be undone while the
+    // Changes made programmatically that have been applied, by their undo key, so each can be undone while the
     // dashboard is as the change left it.
-    private final Map<String, AiUndo> aiUndos = new HashMap<>();
+    private final Map<String, AppliedChanges> appliedChanges = new HashMap<>();
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final QueryInfo queryInfo;
     private final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider;
@@ -1074,9 +1073,10 @@ public class DashboardPresenter
         return null;
     }
 
-    /// @return A description of the dashboard as edited, for the AI chat: each query's data source and expression,
-    /// each table's columns and their expressions, the parameters, the time range, and the components shown.
-    public String aiDashboardText() {
+    /// @return A description of the dashboard as edited, in plain text, for tools and people reading it: each
+    /// query's data source and expression, each table's columns, formatting rules and settings, each other
+    /// component's settings, the parameters, the time range, and the components shown.
+    public String getDescription() {
         final StringBuilder sb = new StringBuilder();
         sb.append("Time range: ").append(queryToolbarPresenter.getTimeRange()).append('\n');
         sb.append("Parameters: ").append(NullSafe.list(dashboardContext.getParams())).append('\n');
@@ -1105,7 +1105,7 @@ public class DashboardPresenter
                     if (!column.isSpecial()) {
                         sb.append("- ").append(column.getName()).append(": ")
                                 .append(NullSafe.string(column.getExpression()))
-                                .append(aiColumnState(column))
+                                .append(describeColumnState(column))
                                 .append('\n');
                     }
                 }
@@ -1114,11 +1114,11 @@ public class DashboardPresenter
                 if (!rules.isEmpty()) {
                     sb.append("Conditional formatting (the first rule a row matches applies):\n");
                     for (int i = 0; i < rules.size(); i++) {
-                        sb.append(i + 1).append(". ").append(aiRule(rules.get(i))).append('\n');
+                        sb.append(i + 1).append(". ").append(describeRule(rules.get(i))).append('\n');
                     }
                 }
             }
-            final String settings = aiSettings(NullSafe.get(component.getComponentConfig(),
+            final String settings = describeSettings(NullSafe.get(component.getComponentConfig(),
                     ComponentConfig::getSettings));
             if (settings != null) {
                 sb.append("Settings: ").append(settings).append('\n');
@@ -1127,17 +1127,17 @@ public class DashboardPresenter
         return sb.toString();
     }
 
-    // A component's settings that the AI chat can change, by the keys it changes them by, or null if it has none.
-    private String aiSettings(final ComponentSettings settings) {
+    // A component's main settings (those its Settings dialog has), by short keys, or null if it has none.
+    private String describeSettings(final ComponentSettings settings) {
         final List<String> parts = new ArrayList<>();
         if (settings instanceof final TableComponentSettings table) {
             parts.add("pageSize " + NullSafe.getOrElse(table, TableComponentSettings::getPageSize, 100));
             parts.add("maxResults " + NullSafe.list(table.getMaxResults()));
             parts.add("showDetail " + table.showDetail());
             parts.add("extractValues " + table.extractValues());
-            parts.add("extractionPipeline " + aiDoc(table.getExtractionPipeline()));
+            parts.add("extractionPipeline " + describeDoc(table.getExtractionPipeline()));
             parts.add("showValueFilters " + table.showValueFilters());
-            parts.add("query " + aiComponentName(table.getQueryId()));
+            parts.add("query " + describeComponent(table.getQueryId()));
             if (table.overrideMaxStringFieldLength()) {
                 parts.add("maxStringFieldLength " + table.getMaxStringFieldLength());
             }
@@ -1149,8 +1149,8 @@ public class DashboardPresenter
         } else if (settings instanceof final TextComponentSettings text) {
             parts.add("table " + (text.getTableId() == null
                     ? "none (any)"
-                    : aiComponentName(text.getTableId())));
-            parts.add("pipeline " + aiDoc(text.getPipeline()));
+                    : describeComponent(text.getTableId())));
+            parts.add("pipeline " + describeDoc(text.getPipeline()));
             parts.add("showAsHtml " + text.isShowAsHtml());
             parts.add("showStepping " + text.isShowStepping());
         } else {
@@ -1159,13 +1159,13 @@ public class DashboardPresenter
         return String.join("; ", parts);
     }
 
-    private static String aiDoc(final DocRef doc) {
+    private static String describeDoc(final DocRef doc) {
         return doc == null
                 ? "none"
                 : "'" + doc.getName() + "' (uuid " + doc.getUuid() + ")";
     }
 
-    private String aiComponentName(final String componentId) {
+    private String describeComponent(final String componentId) {
         final Component component = componentId == null
                 ? null
                 : components.get(componentId);
@@ -1174,8 +1174,8 @@ public class DashboardPresenter
                 : "'" + NullSafe.get(component.getComponentConfig(), ComponentConfig::getName) + "'";
     }
 
-    // A conditional formatting rule, for the AI chat: which rows it matches, and what it does to them.
-    private static String aiRule(final ConditionalFormattingRule rule) {
+    // A conditional formatting rule: which rows it matches, and what it does to them.
+    private static String describeRule(final ConditionalFormattingRule rule) {
         final List<String> effects = new ArrayList<>();
         if (rule.isHide()) {
             effects.add("hidden");
@@ -1199,8 +1199,8 @@ public class DashboardPresenter
                 : " (disabled)");
     }
 
-    // How a column is shown, for the AI chat: hidden, grouped, sorted, formatted or filtered.
-    private static String aiColumnState(final Column column) {
+    // How a column is shown: hidden, grouped, sorted, formatted or filtered.
+    private static String describeColumnState(final Column column) {
         final List<String> state = new ArrayList<>();
         if (!column.isVisible()) {
             state.add("hidden");
@@ -1225,24 +1225,18 @@ public class DashboardPresenter
                 : " (" + String.join("; ", state) + ")";
     }
 
-    /// @return A hash of the dashboard's settings as edited, as given to the AI chat ([#aiDashboardText()]), to tell
-    /// whether the dashboard has changed since the chat proposed a change to it.
-    public String aiDashboardHash() {
-        return AiTabSnapshotPart.hashText(aiDashboardText());
-    }
-
-    /// Applies changes the AI chat proposed to one of the dashboard's tables, as its column menus would, unsaved:
+    /// Applies changes made programmatically to one of the dashboard's tables, as its column menus would, unsaved:
     /// changes to the table, to the expression of the classic query that feeds it, and tables added beside it as
     /// tabs (fed by the same query), which later changes name as their table. They are applied all or none: if one
     /// can't be, the dashboard is put back as it was. Once applied, they can be undone with
-    /// [#undoAiTableChanges(String)] while the dashboard is as they left it.
+    /// [#undoTableChanges(String)] while the dashboard is as they left it.
     ///
     /// @param componentId The table's component id.
     /// @param name        The table's name, used if no component has the id.
     /// @param changes     The changes, in order.
     /// @param undoKey     What the changes are known by, to undo them, or null if they can't be undone.
     /// @return Why they couldn't all be applied, or null if they were.
-    public String applyAiTableChanges(final String componentId,
+    public String applyTableChanges(final String componentId,
                                       final String name,
                                       final List<TableChange> changes,
                                       final String undoKey) {
@@ -1295,7 +1289,7 @@ public class DashboardPresenter
             final String prefix = "Change " + (i + 1) + " (" + change.getOp() + "): ";
             String failed = null;
             if (TableChange.ADD_TABLE.equals(change.getOp())) {
-                final Component table = addAiTable(component, change.getName(), change.isCopy());
+                final Component table = addTableBeside(component, change.getName(), change.isCopy());
                 if (table == null) {
                     failed = prefix + "the table couldn't be added.";
                 } else {
@@ -1307,7 +1301,7 @@ public class DashboardPresenter
                         : added.get(change.getTable().toLowerCase());
                 final Component text = followed == null
                         ? null
-                        : addAiText(followed, change.getName());
+                        : addTextBelow(followed, change.getName());
                 if (text == null) {
                     failed = prefix + "the Text widget couldn't be added.";
                 } else {
@@ -1324,12 +1318,12 @@ public class DashboardPresenter
                              + "'.";
                 } else {
                     if (!added.containsValue(target) && !configsBefore.containsKey(target.getId())) {
-                        configsBefore.put(target.getId(), AiComponentSettings.snapshot(target));
+                        configsBefore.put(target.getId(), ComponentSettingChanges.snapshot(target));
                     }
                     if (TableChange.RENAME.equals(change.getOp())) {
                         target.setComponentName(change.getName());
                     } else {
-                        failed = AiComponentSettings.apply(target, change.getSetting(), change.getValue(),
+                        failed = ComponentSettingChanges.apply(target, change.getSetting(), change.getValue(),
                                 change.getRef(), change.getDoc());
                         failed = failed == null
                                 ? null
@@ -1345,9 +1339,10 @@ public class DashboardPresenter
                         : TableChange.apply(target, List.of(change));
             }
             if (failed != null) {
-                added.values().forEach(this::removeAiComponent);
-                configsBefore.forEach((id, config) -> AiComponentSettings.restore(components.get(id), config));
+                added.values().forEach(this::removeAddedComponent);
+                configsBefore.forEach((id, config) -> ComponentSettingChanges.restore(components.get(id), config));
                 TableChange.restore(component, before);
+                syncSettingsDialogs(component, configsBefore.keySet());
                 return failed;
             }
         }
@@ -1355,17 +1350,18 @@ public class DashboardPresenter
             query.setExpression(expression);
             query.onChange();
         }
+        syncSettingsDialogs(component, configsBefore.keySet());
         if (undoKey != null && before != null) {
-            aiUndos.put(undoKey, new AiUndo(component.getComponentConfig().getId(), before,
+            appliedChanges.put(undoKey, new AppliedChanges(component.getComponentConfig().getId(), before,
                     NullSafe.get(query, Component::getId), expressionBefore,
-                    added.values().stream().map(Component::getId).toList(), configsBefore, aiDashboardHash()));
+                    added.values().stream().map(Component::getId).toList(), configsBefore, getDescription()));
         }
         return null;
     }
 
-    // Adds a table beside another as a tab, fed by the same query, with its columns or none, named as the AI chat
-    // asked (made unique if the dashboard has the name already).
-    private Component addAiTable(final Component source, final String name, final boolean copyColumns) {
+    // Adds a table beside another as a tab, fed by the same query, with its columns or none, with the name asked for
+    // (made unique if the dashboard has the name already).
+    private Component addTableBeside(final Component source, final String name, final boolean copyColumns) {
         final TableComponentSettings settings = TableChange.snapshot(source);
         final MutableTabConfig sourceTab = source.getTabConfig();
         if (settings == null || sourceTab == null || sourceTab.getParent() == null) {
@@ -1397,9 +1393,9 @@ public class DashboardPresenter
         return table;
     }
 
-    // Adds a Text widget in a new pane below a table, following it, named as the AI chat asked (made unique if
-    // the dashboard has the name already).
-    private Component addAiText(final Component table, final String name) {
+    // Adds a Text widget in a new pane below a table, following it, with the name asked for (made unique if the
+    // dashboard has the name already).
+    private Component addTextBelow(final Component table, final String name) {
         final MutableTabConfig tableTab = table.getTabConfig();
         final ComponentType type = components.getComponentTypes().stream()
                 .filter(componentType -> TextPresenter.TYPE.getId().equals(componentType.getId()))
@@ -1432,8 +1428,8 @@ public class DashboardPresenter
         return text;
     }
 
-    // Removes a component the AI chat added, with its tab.
-    private void removeAiComponent(final Component component) {
+    // Removes a component added by applied changes, with its tab.
+    private void removeAddedComponent(final Component component) {
         if (component.getTabConfig() != null && component.getTabConfig().getParent() != null) {
             layoutPresenter.closeTab(component.getTabConfig());
         }
@@ -1448,54 +1444,57 @@ public class DashboardPresenter
 
     /// @param undoKey What applied changes are known by.
     /// @return True if they can be undone: they were applied here, and the dashboard is as they left it.
-    public boolean canUndoAiTableChanges(final String undoKey) {
-        final AiUndo undo = undoKey == null
+    public boolean canUndoTableChanges(final String undoKey) {
+        final AppliedChanges undo = undoKey == null
                 ? null
-                : aiUndos.get(undoKey);
-        return undo != null && components.get(undo.componentId) != null && undo.hashAfter.equals(aiDashboardHash());
+                : appliedChanges.get(undoKey);
+        return undo != null
+               && components.get(undo.componentId) != null
+               && undo.descriptionAfter.equals(getDescription());
     }
 
-    /// Undoes changes from the AI chat, putting the table back as it was before them, as an unsaved edit, if the
+    /// Undoes applied changes, putting the table back as it was before them, as an unsaved edit, if the
     /// dashboard is as they left it.
     ///
     /// @param undoKey What the changes are known by.
     /// @return True if they were undone.
-    public boolean undoAiTableChanges(final String undoKey) {
-        if (!canUndoAiTableChanges(undoKey)) {
+    public boolean undoTableChanges(final String undoKey) {
+        if (!canUndoTableChanges(undoKey)) {
             return false;
         }
-        final AiUndo undo = aiUndos.remove(undoKey);
+        final AppliedChanges undo = appliedChanges.remove(undoKey);
         for (final String addedId : undo.addedIds) {
             final Component addedComponent = components.get(addedId);
             if (addedComponent != null) {
-                removeAiComponent(addedComponent);
+                removeAddedComponent(addedComponent);
             }
         }
-        undo.configsBefore.forEach((id, config) -> AiComponentSettings.restore(components.get(id), config));
+        undo.configsBefore.forEach((id, config) -> ComponentSettingChanges.restore(components.get(id), config));
         if (undo.queryId != null && components.get(undo.queryId) instanceof final QueryPresenter query) {
             query.setExpression(undo.expressionBefore);
             query.onChange();
         }
-        return TableChange.restore(components.get(undo.componentId), undo.before);
+        final boolean restored = TableChange.restore(components.get(undo.componentId), undo.before);
+        syncSettingsDialogs(components.get(undo.componentId), undo.configsBefore.keySet());
+        return restored;
     }
 
-    /// @return Each table's search requests, for the AI chat to take snapshots of their rows.
-    public List<AiTabSearch> aiTabSearches() {
-        final List<AiTabSearch> searches = new ArrayList<>();
-        for (final Component component : components) {
-            if (component instanceof final TablePresenter tablePresenter) {
-                final String queryId = NullSafe.get(tablePresenter.getTableComponentSettings(),
-                        TableComponentSettings::getQueryId);
-                final Component query = queryId != null
-                        ? components.get(queryId)
-                        : null;
-                final Search liveSearch = query instanceof final QueryPresenter queryPresenter
-                        ? queryPresenter.aiLiveSearch()
-                        : null;
-                searches.add(tablePresenter.aiTabSearch(liveSearch));
-            }
+    // Brings the Settings dialogs of the table and the other components a change touched up to date with their
+    // settings, so saving doesn't write what the dialogs last showed back over the change.
+    private void syncSettingsDialogs(final Component table, final Collection<String> componentIds) {
+        final List<Component> touched = new ArrayList<>();
+        if (table != null) {
+            touched.add(table);
         }
-        return searches;
+        for (final String id : componentIds) {
+            NullSafe.consume(components.get(id), touched::add);
+        }
+        ComponentSettingChanges.syncSettingsDialogs(touched);
+    }
+
+    /// @return The dashboard's components, e.g. to find its tables and the queries that feed them.
+    public Components getComponents() {
+        return components;
     }
 
     // Adds the names of the components shown: the selected tab of each tab layout.
@@ -1578,11 +1577,11 @@ public class DashboardPresenter
     // --------------------------------------------------------------------------------
 
 
-    // A change from the AI chat that has been applied: the table it changed and its settings before, the query
-    // whose expression it set (if it did) and that expression before, the tables it added, the name and settings
-    // of each other component it renamed or changed, and the hash of the dashboard's settings just after, which
-    // they must still have for it to be undone.
-    private static class AiUndo {
+    // Changes that have been applied: the table they changed and its settings before, the query whose expression
+    // they set (if they did) and that expression before, the components they added, the name and settings of each
+    // other component they renamed or changed, and the dashboard's description just after, which it must still
+    // have for them to be undone.
+    private static class AppliedChanges {
 
         private final String componentId;
         private final TableComponentSettings before;
@@ -1590,22 +1589,22 @@ public class DashboardPresenter
         private final ExpressionOperator expressionBefore;
         private final List<String> addedIds;
         private final Map<String, ComponentConfig> configsBefore;
-        private final String hashAfter;
+        private final String descriptionAfter;
 
-        private AiUndo(final String componentId,
+        private AppliedChanges(final String componentId,
                        final TableComponentSettings before,
                        final String queryId,
                        final ExpressionOperator expressionBefore,
                        final List<String> addedIds,
                        final Map<String, ComponentConfig> configsBefore,
-                       final String hashAfter) {
+                       final String descriptionAfter) {
             this.componentId = componentId;
             this.before = before;
             this.queryId = queryId;
             this.expressionBefore = expressionBefore;
             this.addedIds = addedIds;
             this.configsBefore = configsBefore;
-            this.hashAfter = hashAfter;
+            this.descriptionAfter = descriptionAfter;
         }
     }
 

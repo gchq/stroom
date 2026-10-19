@@ -101,10 +101,10 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             }
             if (ApplyDashboardChangeEvent.Operation.CAN_UNDO == event.getOperation()) {
                 event.setCanUndo(!open.isReadOnly()
-                                 && open.getDashboardPresenter().canUndoAiTableChanges(event.getUndoKey()));
+                                 && open.getDashboardPresenter().canUndoTableChanges(event.getUndoKey()));
             } else {
                 event.setUndone(!open.isReadOnly()
-                                && open.getDashboardPresenter().undoAiTableChanges(event.getUndoKey()));
+                                && open.getDashboardPresenter().undoTableChanges(event.getUndoKey()));
             }
             return;
         }
@@ -121,7 +121,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
     private void applyDashboardChange(final DashboardSuperPresenter dashboard, final ApplyDashboardChangeEvent event) {
         final ApplyDashboardChangeEvent.Decision decision = ApplyDashboardChangeEvent.decide(!dashboard.isReadOnly(),
-                dashboard.getDashboardPresenter().aiDashboardHash(), event.getSnapshotHash());
+                dashboard.aiDashboardHash(), event.getSnapshotHash());
         switch (decision) {
             case NOT_EDITABLE -> event.notApplied(ApplyDashboardChangeEvent.NOT_EDITABLE);
             case CHANGED -> event.notApplied(ApplyDashboardChangeEvent.CHANGED);
@@ -147,7 +147,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 event.notApplied(problem);
                 return;
             }
-            final String failed = dashboard.getDashboardPresenter().applyAiTableChanges(event.getComponentId(),
+            final String failed = dashboard.getDashboardPresenter().applyTableChanges(event.getComponentId(),
                     event.getComponentName(), event.getChanges(), event.getUndoKey());
             if (failed != null) {
                 event.notApplied(failed);
