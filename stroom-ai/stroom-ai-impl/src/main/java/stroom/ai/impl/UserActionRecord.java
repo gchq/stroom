@@ -189,8 +189,11 @@ public record UserActionRecord(String id,
     /// @param queryType Whether its query is kept as StroomQL or turned into a classic expression query, as
     ///                  [DashboardBuilder] names them.
     /// @param preview   True if it has a data preview below its table.
+    /// @param outline   For a classic dashboard, what its Query and Table hold, in plain words, written by Stroom
+    ///                  and shown in place of the StroomQL it is built from; empty or null for StroomQL.
     public record NewDashboard(String queryType,
-                               boolean preview) {
+                               boolean preview,
+                               List<String> outline) {
 
     }
 

@@ -95,8 +95,9 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
                                 + "Query, which shows its own table); " + DashboardBuilder.CLASSIC + " makes an "
                                 + "Expression Language query and a separate table. Classic can't hold window, "
                                 + "filter, having or show clauses.")
-                        .addBooleanProperty(PREVIEW_ARG, "True if the user wants a data preview below the table. "
-                                                         + "It needs ungrouped rows.")
+                        .addBooleanProperty(PREVIEW_ARG, "Whether the user wants a data preview below the table, "
+                                                         + "as they answered when asked. It needs ungrouped "
+                                                         + "rows: if the query groups, say so when you ask.")
                         .addStringProperty(DESCRIPTION_ARG, "Optional. A sentence saying what the dashboard "
                                                             + "shows, shown with the button.")
                         .required(NAME_ARG, QUERY_ARG, QUERY_TYPE_ARG, PREVIEW_ARG)
@@ -156,13 +157,17 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
         action.put("query", query.strip());
         action.put("query_type", built.queryType());
         action.put("preview", preview);
+        if (!built.outline().isEmpty()) {
+            action.put("outline", built.outline());
+        }
         NullSafe.consume(stringArg(request, DESCRIPTION_ARG), description -> action.put("description", description));
         context.offerUserAction(request.id(), action);
         return "The user has been offered a 'Create dashboard…' button for '" + name + "', reading "
                + DataSourceAccess.describe(dataSource) + ": " + built.describe() + ". Nothing is created until "
                + "they click it and confirm Stroom's New Dashboard dialog, which lets them choose the folder; then "
-               + "the dashboard opens in a new tab, ready to run. Tell them about the button rather than saying "
-               + "the dashboard was created.";
+               + "the dashboard opens in a new tab, ready to run, and is attached to the chat, so they can ask you to "
+               + "refine it (propose_dashboard_change). Tell them about the button rather than saying the dashboard "
+               + "was created.";
     }
 
     @Override

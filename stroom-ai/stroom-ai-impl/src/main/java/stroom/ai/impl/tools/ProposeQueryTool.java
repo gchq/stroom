@@ -123,8 +123,9 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
         context.offerUserAction(request.id(), action);
         return "The user has been offered a 'Create query…' button for '" + name + "', reading "
                + DataSourceAccess.describe(dataSource) + ". Nothing is created until they click it and confirm "
-               + "Stroom's New Query dialog, which lets them choose the folder; then the query opens in a new tab. "
-               + "Tell them about the button rather than saying the query was created.";
+               + "Stroom's New Query dialog, which lets them choose the folder; then the query opens in a new tab and "
+               + "is attached to the chat, so they can ask you to refine it (propose_query_change). Tell them about "
+               + "the button rather than saying the query was created.";
     }
 
     @Override
