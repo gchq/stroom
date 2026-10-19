@@ -65,7 +65,10 @@ class TestProposeDashboardTool {
                 .thenReturn(new ValidateExpressionResult(true, "ok", false));
         Mockito.when(dashboardBuilder.build(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
                 .thenAnswer(invocation -> new DashboardBuilder.Built(DashboardConfig.builder().build(), VIEW,
-                        invocation.getArgument(2), List.of("EventTime", "User"), false, invocation.getArgument(3)));
+                        invocation.getArgument(2), List.of("EventTime", "User"), false, invocation.getArgument(3),
+                        DashboardBuilder.CLASSIC.equals(invocation.getArgument(2))
+                                ? List.of("Query: everything", "Table columns: EventTime, User")
+                                : List.of()));
         tool = new ProposeDashboardTool(workspace, dataSourceAccess, () -> queryService, dashboardBuilder);
     }
 
@@ -77,6 +80,7 @@ class TestProposeDashboardTool {
                 .contains("'Create dashboard…' button for 'Logons'")
                 .contains("reading View 'Windows events'")
                 .contains("2 columns (EventTime, User)")
+                .contains("attached to the chat, so they can ask you to refine it (propose_dashboard_change)")
                 .contains("Tell them about the button");
         assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
                 .containsEntry("action", UserActions.CREATE_DASHBOARD)
@@ -84,10 +88,21 @@ class TestProposeDashboardTool {
                 .containsEntry("query", QUERY)
                 .containsEntry("query_type", "classic")
                 .containsEntry("preview", true)
-                .containsEntry("description", "Who logged on"));
+                .containsEntry("description", "Who logged on")
+                // What the dashboard will hold, shown in place of the StroomQL.
+                .containsEntry("outline", List.of("Query: everything", "Table columns: EventTime, User")));
         // It is the formatted query that is checked and built from.
         Mockito.verify(queryService).validateQuery(QUERY);
         Mockito.verify(dashboardBuilder).build("Logons", QUERY, "classic", true);
+    }
+
+    @Test
+    void aStroomQlDashboardHasNoOutline() {
+        run(args("from \"Windows events\" select EventTime, User", "stroomql", false));
+
+        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+                .containsEntry("query_type", "stroomql")
+                .doesNotContainKey("outline"));
     }
 
     @Test
