@@ -27,7 +27,6 @@ import stroom.widget.util.client.SvgImageUtil;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -56,7 +55,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
     private final PipelineModel pipelineModel;
     private PipelineElement pipelineElement;
-    private final Label label;
+    // The element's name: a plain element, not GWT's Label (whose gwt-Label class isn't BEM)
+    private final Element label;
     // Its type icon, if it has one, and the "not allowed" icon that takes its place while it refuses
     // what is being moved to it (so that that isn't told by colour alone), which is only in the
     // document then
@@ -84,8 +84,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
         final FlowPanel background = new FlowPanel();
         background.setStyleName(BLOCK);
 
-        label = new Label("", false);
-        label.addStyleName(LABEL_CLASS);
+        label = Document.get().createDivElement();
+        label.setClassName(LABEL_CLASS);
         setLabelText(pipelineElement.getDisplayName());
         setDescription(pipelineElement.getDescription());
 
@@ -101,7 +101,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
         refusedIcon = createIcon(SvgImage.NOT_ALLOWED, REFUSED_ICON_CLASS);
         hideIcon(refusedIcon, null);
 
-        background.add(label);
+        background.getElement().appendChild(label);
 
         final Optional<PipelineProperty> embeddedProperty = pipelineModel.getProperties(pipelineElement).stream()
                 .filter(Objects::nonNull)
@@ -201,8 +201,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
             // Not built yet: the constructor names it once it is
             return;
         }
-        final StringBuilder sb = new StringBuilder(NullSafe.string(label.getText()));
-        if (NullSafe.isNonBlankString(typeName) && !typeName.equals(label.getText())) {
+        final StringBuilder sb = new StringBuilder(NullSafe.string(label.getInnerText()));
+        if (NullSafe.isNonBlankString(typeName) && !typeName.equals(label.getInnerText())) {
             sb.append(", ").append(typeName);
         }
         if (embeddedName != null) {
@@ -284,9 +284,9 @@ public class PipelineElementBox extends Box<PipelineElement> {
     // The element's description as its name's hover tip, if it has one
     private void setDescription(final String description) {
         if (NullSafe.isBlankString(description)) {
-            label.getElement().removeAttribute("title");
+            label.removeAttribute("title");
         } else {
-            label.getElement().setAttribute("title", description);
+            label.setAttribute("title", description);
         }
     }
 
@@ -325,8 +325,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
     // The element's name, also in data-text, so that the label keeps room for it in bold (see
     // pipeline-element.css)
     private void setLabelText(final String text) {
-        label.setText(text);
-        label.getElement().setAttribute("data-text", text == null
+        label.setInnerText(text);
+        label.setAttribute("data-text", text == null
                 ? ""
                 : text);
         updateName();

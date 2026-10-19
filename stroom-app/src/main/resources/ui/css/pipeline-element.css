@@ -134,6 +134,7 @@
 .pipeline-element__label {
 	display: inline-grid;
 	padding: 0 8px;
+	white-space: nowrap;
 }
 
 .pipeline-element__label::after {
