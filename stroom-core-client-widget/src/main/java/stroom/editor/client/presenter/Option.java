@@ -16,11 +16,6 @@
 
 package stroom.editor.client.presenter;
 
-import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.HtmlBuilder.Attribute;
-
-import com.google.gwt.safehtml.shared.SafeHtml;
-
 public class Option {
 
     private ChangeHandler changeHandler;
@@ -99,18 +94,10 @@ public class Option {
         this.changeHandler = changeHandler;
     }
 
-    public SafeHtml getText() {
-        final String value = on
-                ? "ON"
-                : "OFF";
-        final String classNameSuffix = value.toLowerCase();
-        final String className = "code-editor-menu-option code-editor-menu-option--" + classNameSuffix;
-        return HtmlBuilder.builder()
-                .append(text)
-                .append(" (")
-                .span(spanBuilder -> spanBuilder.append(value), Attribute.className(className))
-                .append(")")
-                .toSafeHtml();
+    /// @return The option's name, e.g. "Wrap Lines", as plain text. Whether it is on is shown
+    /// separately (see [#isOn]).
+    public String getName() {
+        return text;
     }
 
     public boolean isOnAndAvailable() {

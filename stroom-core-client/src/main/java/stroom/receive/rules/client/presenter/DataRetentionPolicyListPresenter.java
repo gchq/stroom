@@ -179,9 +179,19 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
         final List<Item> items = actionMenuItemProvider.apply(row);
         ShowMenuEvent
                 .builder()
+                .name(getActionMenuName(row))
                 .items(items)
                 .popupPosition(popupPosition)
                 .fire(this);
+    }
+
+    // e.g. "Actions for rule 3 'My rule'"
+    private static String getActionMenuName(final DataRetentionRule row) {
+        final String name = row.getName();
+        return "Actions for rule " + row.getRuleNumber()
+               + (NullSafe.isBlankString(name)
+                ? ""
+                : " '" + name + "'");
     }
 
     private void addEnabledCol(final Function<DataRetentionRule, Boolean> valueFunc) {

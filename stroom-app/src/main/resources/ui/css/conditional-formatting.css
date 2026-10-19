@@ -485,7 +485,7 @@
 
 
 /* Styles for the drop down selection box */
-.conditionalFormatStyleSelection .SelectionBox-renderBox {
+.conditionalFormatStyleSelection .selection-box__value {
     padding: 0;
 }
 

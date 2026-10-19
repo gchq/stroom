@@ -37,6 +37,7 @@ import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -124,18 +125,19 @@ public class TermEditor extends Composite {
         andLabel = createLabel(" and ");
         andLabel.setVisible(false);
 
-        value = createTextBox(WIDE_CLASS_NAME);
+        // A term's parts have no labels, so each is named for what it is
+        value = createTextBox(WIDE_CLASS_NAME, "Value");
         value.setVisible(false);
-        valueFrom = createTextBox(NARROW_CLASS_NAME);
+        valueFrom = createTextBox(NARROW_CLASS_NAME, "From");
         valueFrom.setVisible(false);
-        valueTo = createTextBox(NARROW_CLASS_NAME);
+        valueTo = createTextBox(NARROW_CLASS_NAME, "To");
         valueTo.setVisible(false);
 
-        date = createDateBox(NARROW_CLASS_NAME);
+        date = createDateBox(NARROW_CLASS_NAME, "Date");
         date.setVisible(false);
-        dateFrom = createDateBox(NARROW_CLASS_NAME);
+        dateFrom = createDateBox(NARROW_CLASS_NAME, "From");
         dateFrom.setVisible(false);
-        dateTo = createDateBox(NARROW_CLASS_NAME);
+        dateTo = createDateBox(NARROW_CLASS_NAME, "To");
         dateTo.setVisible(false);
 
         fieldTypeLabel = createFieldTypeLabel();
@@ -575,6 +577,7 @@ public class TermEditor extends Composite {
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
         fieldListBox.addStyleName("termEditor-item");
+        AccessibleName.set(fieldListBox, "Field");
         uiConfigCache.get(uiConfig ->
                 NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
                         fieldListBox.registerPopupTextProvider(() ->
@@ -587,11 +590,13 @@ public class TermEditor extends Composite {
         conditionListBox.addStyleName(ITEM_CLASS_NAME);
         conditionListBox.addStyleName(DROPDOWN_CLASS_NAME);
         conditionListBox.addStyleName("condition");
+        AccessibleName.set(conditionListBox, "Condition");
         return conditionListBox;
     }
 
-    private SuggestBox createTextBox(final String widthClassName) {
+    private SuggestBox createTextBox(final String widthClassName, final String name) {
         final SuggestBox textBox = new SuggestBox(suggestOracle);
+        AccessibleName.set(textBox, name);
         textBox.addDomHandler(e -> {
             if (!textBox.isSuggestionListShowing()) {
                 textBox.showSuggestionList();
@@ -603,8 +608,9 @@ public class TermEditor extends Composite {
         return textBox;
     }
 
-    private MyDateBox createDateBox(final String widthClassName) {
+    private MyDateBox createDateBox(final String widthClassName, final String name) {
         final MyDateBox dateBox = new MyDateBox();
+        AccessibleName.set(dateBox, name);
         dateBox.addStyleName(ITEM_CLASS_NAME);
         dateBox.addStyleName(widthClassName);
         return dateBox;

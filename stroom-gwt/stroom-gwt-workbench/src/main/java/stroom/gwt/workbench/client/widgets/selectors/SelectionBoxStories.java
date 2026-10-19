@@ -28,6 +28,8 @@ import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
 import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.item.client.SimpleSelectionListModel;
+import stroom.widget.form.client.AccessibleName;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -48,9 +50,14 @@ public final class SelectionBoxStories {
     // The render box (which paints the value) is covered by the box's transparent text box, which
     // takes the clicks (as it does for a user) and opens the popup; the render box has no click
     // handler of its own
-    private static final String OPENER = ".SelectionBox-textBox";
-    private static final String POPUP = ".SelectionPopup";
+    private static final String OPENER = ".selection-box__input";
+    private static final String POPUP = ".selection-popup";
     private static final int KEY_F9 = 120;
+    // The keys that open the list, as the play function types them
+    private static final List<String> OPENING_KEYS =
+            List.of("{Enter}", "{ArrowDown}", "{ArrowUp}", "{Alt>}{ArrowDown}{/Alt}", " ");
+    // A short list (no quick filter), with two items starting with D
+    private static final List<String> NAMES = List.of("Alpha", "Bravo", "Charlie", "Delta", "Dingo", "Echo");
 
     private SelectionBoxStories() {
         // Static utility
@@ -97,6 +104,92 @@ public final class SelectionBoxStories {
                     play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
                     play.expect(play.querySelector(OPENER)).toBeDisabled();
                     play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
+                })
+                // The WAI-ARIA combobox's keys open the list: Enter, Down, Up, Alt+Down and (as the box
+                // can't be typed in) Space; Escape closes it and gives the focus back to the box
+                .story("KeysOpenTheList", context -> named(selectionBox(context, NAMES)))
+                .withPlay(play -> {
+                    final Query box = play.getByRole("combobox");
+                    play.tab();
+                    play.expect(box).toHaveFocus();
+                    for (final String keys : OPENING_KEYS) {
+                        play.keyboard(keys);
+                        play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
+                        play.expect(box).toHaveAttribute("aria-expanded", "true");
+                        play.keyboard("{Escape}");
+                        play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                        play.expect(box).toHaveAttribute("aria-expanded", "false");
+                        play.expect(box).toHaveFocus();
+                    }
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
+                })
+                // In the list, Alt+Up chooses the option with the focus and closes the list
+                .story("AltUpChoosesTheOption", context -> named(selectionBox(context, NAMES)))
+                .withPlay(play -> {
+                    final Query box = play.getByRole("combobox");
+                    play.tab();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Alpha")).toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Bravo")).toHaveFocus());
+                    play.keyboard("{Alt>}{ArrowUp}{/Alt}");
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledWith("Bravo");
+                    play.expect(box).toHaveValue("Bravo");
+                    play.expect(box).toHaveFocus();
+                })
+                // In a list with no quick filter, typing a character opens the list and goes to the
+                // first option that starts with it; typing it again goes to the next
+                .story("TypingJumpsToAnOption", context -> named(selectionBox(context, NAMES)))
+                .withPlay(play -> {
+                    play.tab();
+                    play.keyboard("d");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Delta")).toHaveFocus());
+                    play.keyboard("d");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Dingo")).toHaveFocus());
+                    // And round to the first again
+                    play.keyboard("d");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Delta")).toHaveFocus());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledWith("Delta");
+                })
+                // In a list with a quick filter (over 10 items), what is typed in the closed box is
+                // the filter, applied at once, and typing carries on in it
+                .story("TypingFiltersALongList", context -> named(selectionBox(context, numbered(150))))
+                .withPlay(play -> {
+                    play.tab();
+                    play.keyboard("15");
+                    final Query filter = play.screen().querySelector(".selectionList-quickFilter .quickFilter-textBox");
+                    play.waitFor(() -> play.expect(filter).toHaveValue("15"));
+                    play.expect(filter).toHaveFocus();
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Item 150")).toBeInTheDocument());
+                    play.expect(play.screen().queryByRole("option", "Item 2")).toBeNull();
+                })
+                // The list is named for the box that opened it, here by the box's form group label
+                .story("TheListIsNamedForTheBox", context -> {
+                    final FormGroup formGroup = new FormGroup();
+                    formGroup.setIdentity("colour");
+                    formGroup.setLabel("Colour");
+                    formGroup.add(selectionBox(context, NAMES));
+                    return minWidth(formGroup);
+                })
+                .withPlay(play -> {
+                    final Query box = play.getByRole("combobox", "Colour");
+                    play.tab();
+                    play.expect(box).toHaveFocus();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("listbox", "Colour")).toBeInTheDocument());
+                    play.keyboard("{Escape}");
+                })
+                // A value too long for the box stops clear of its drop-down arrow
+                .story("LongValue", context -> {
+                    final String longValue = "A value much too long to fit in the box beside its arrow";
+                    final SelectionBox<String> box = selectionBox(context, List.of("Short", longValue));
+                    box.setValue(longValue);
+                    final FlowPanel panel = named(box);
+                    panel.setWidth("220px");
+                    return panel;
                 })
                 // Long list - shows the quick filter and (over 100 items) the pager
                 .story("LongList", context -> {
@@ -185,7 +278,7 @@ public final class SelectionBoxStories {
         play.click(play.querySelector(OPENER));
         play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
         // Focus deliberately outside the popup
-        final Query textBox = play.querySelector(".SelectionBox-textBox");
+        final Query textBox = play.querySelector(".selection-box__input");
         play.run("focus the box's text box", () -> textBox.element().get().focus());
         play.keyboard("{Escape}");
         // Escape closes the list wherever the focus is (it once only did with the focus in the
@@ -209,6 +302,21 @@ public final class SelectionBoxStories {
         final Spy onChange = context.fn(ON_CHANGE);
         box.addValueChangeHandler(event -> onChange.call(event.getValue()));
         return box;
+    }
+
+    /// The box, at least 220px wide, named as a label would name it on Stroom's screens.
+    private static FlowPanel named(final SelectionBox<String> box) {
+        AccessibleName.set(box, "Name");
+        return minWidth(box);
+    }
+
+    /// @return `Item 1` to `Item n`.
+    private static List<String> numbered(final int count) {
+        final List<String> items = new ArrayList<>();
+        for (int i = 1; i <= count; i++) {
+            items.add("Item " + i);
+        }
+        return items;
     }
 
     /// The box, at least 220px wide, with a `Selected: ...` echo below.

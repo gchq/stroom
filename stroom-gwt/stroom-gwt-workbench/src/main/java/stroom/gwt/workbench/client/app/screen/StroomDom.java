@@ -38,11 +38,8 @@ public final class StroomDom {
     public static final String SELECTED_ROW = "dataGridSelectedRow";
     /// The class of the header of a column that can be sorted.
     public static final String SORTABLE_HEADER = "dataGridSortableHeader";
-    /// The 'open' icon of a `CommandLinkCell` or user cell: GWT runs the link's command when it is
-    /// pressed (a mousedown), not when its text is clicked. Its parent's title says what it opens.
-    public static final String COMMAND_LINK_OPEN = ".commandLinkOpen";
     /// The text box of Stroom's `SelectionBox` (a drop-down), which opens its list when clicked.
-    public static final String SELECTION_BOX = ".SelectionBox-textBox";
+    public static final String SELECTION_BOX = ".selection-box__input";
     /// The placeholder of a `QuickFilter`'s text box, which has no label.
     public static final String QUICK_FILTER_PLACEHOLDER = "Quick Filter";
     /// The label of a link tab (e.g. a document editor's 'Words', 'Permissions' sub-tabs), for

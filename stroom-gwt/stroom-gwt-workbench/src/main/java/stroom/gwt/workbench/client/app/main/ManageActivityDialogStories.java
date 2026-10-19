@@ -97,7 +97,7 @@ public final class ManageActivityDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     screen.findByText(TextMatch.containing("CASE-1"));
-                    play.click(screen.getByTitle("New"));
+                    play.click(screen.getByTitle("New Activity"));
                     // The edit form renders the config template's controls
                     play.waitFor(() -> play.expect(screen.querySelector("input[name=\"code\"]")).toBeInTheDocument());
                     play.type(screen.querySelector("input[name=\"code\"]"), "CASE-9");
@@ -124,7 +124,7 @@ public final class ManageActivityDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     screen.findByText(TextMatch.containing("CASE-1"));
-                    play.click(screen.getByTitle("New"));
+                    play.click(screen.getByTitle("New Activity"));
                     play.waitFor(() -> play.expect(screen.querySelector("input[name=\"code\"]")).toBeInTheDocument());
                     play.type(screen.querySelector("input[name=\"code\"]"), "X");
                     play.type(screen.querySelector("textarea[name=\"description\"]"), "short");
@@ -148,7 +148,7 @@ public final class ManageActivityDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.click(screen.findByText(TextMatch.containing("CASE-1")));
-                    play.click(screen.getByTitle("Delete"));
+                    play.click(screen.getByTitle("Delete Selected Activity"));
                     // Confirm in Stroom's confirmation dialog
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing(
                             "Are you sure you want to delete the selected activity?"))).toBeInTheDocument());

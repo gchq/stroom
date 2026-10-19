@@ -59,6 +59,9 @@ public class IndexFieldListPresenter
         implements QuickFilterUiHandlers {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
+    private static final String NEW_TITLE = "New Index Field";
+    private static final String EDIT_TITLE = "Edit Selected Index Field";
+    private static final String DELETE_TITLE = "Delete Selected Index Fields";
 
     private final PagerView pagerView;
     private final RestFactory restFactory;
@@ -97,10 +100,10 @@ public class IndexFieldListPresenter
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
         pagerView.getToolbar().setName("Field actions");
-        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New", this::onNew);
-        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit", this::onEditClicked);
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, this::onEditClicked);
         editButton.setEnabled(false);
-        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete", this::onRemoveClicked);
+        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, this::onRemoveClicked);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -158,15 +161,13 @@ public class IndexFieldListPresenter
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
-            newButton.setTitle("New field disabled as index is read only");
-            editButton.setTitle("Edit field disabled as index is read only");
-            removeButton.setTitle("Remove field disabled as index is read only");
-        } else {
-            newButton.setTitle("New Field");
-            editButton.setTitle("Edit Field");
-            removeButton.setTitle("Remove Field");
-        }
+        // The names stay, with why the buttons are disabled for a read-only index
+        final String suffix = readOnly
+                ? " (index is read only)"
+                : "";
+        newButton.setTitle(NEW_TITLE + suffix);
+        editButton.setTitle(EDIT_TITLE + suffix);
+        removeButton.setTitle(DELETE_TITLE + suffix);
     }
 
     private void addColumns() {
@@ -252,61 +253,37 @@ public class IndexFieldListPresenter
 
     private void onAdd() {
         indexFieldEditPresenter.read(IndexFieldImpl.builder().build());
-        indexFieldEditPresenter.show("New Field", e -> {
-            if (e.isOk()) {
-                final IndexFieldImpl indexField = indexFieldEditPresenter.write();
-                if (indexField == null) {
-                    // Not valid: write() has said why, so let the dialog be used again
-                    e.reset();
-                } else {
-                    restFactory
-                            .create(INDEX_RESOURCE)
-                            .method(res -> res.addField(new AddField(docRef, indexField)))
-                            .onSuccess(response -> {
-                                selectionModel.setSelected(indexField);
-                                refresh();
-                                e.hide();
-                            })
-                            .onFailure(new DefaultErrorHandler(this, e::reset))
-                            .taskMonitorFactory(pagerView)
-                            .exec();
-                }
-            } else {
-                e.hide();
-            }
-        });
+        indexFieldEditPresenter.show("New Field", (indexField, e) -> restFactory
+                .create(INDEX_RESOURCE)
+                .method(res -> res.addField(new AddField(docRef, indexField)))
+                .onSuccess(response -> {
+                    selectionModel.setSelected(indexField);
+                    refresh();
+                    e.hide();
+                })
+                .onFailure(new DefaultErrorHandler(this, e::reset))
+                .taskMonitorFactory(pagerView)
+                .exec());
     }
 
     private void onEdit() {
         final IndexFieldImpl existingField = selectionModel.getSelected();
         if (existingField != null) {
             indexFieldEditPresenter.read(existingField);
-            indexFieldEditPresenter.show("Edit Field", e -> {
-                if (e.isOk()) {
-                    final IndexFieldImpl indexField = indexFieldEditPresenter.write();
-                    if (indexField == null) {
-                        // Not valid: write() has said why, so let the dialog be used again
-                        e.reset();
-                    } else {
-                        restFactory
-                                .create(INDEX_RESOURCE)
-                                .method(res -> res.updateField(new UpdateField(
-                                        docRef,
-                                        existingField.getFldName(),
-                                        indexField)))
-                                .onSuccess(response -> {
-                                    selectionModel.setSelected(indexField);
-                                    refresh();
-                                    e.hide();
-                                })
-                                .onFailure(new DefaultErrorHandler(this, e::reset))
-                                .taskMonitorFactory(pagerView)
-                                .exec();
-                    }
-                } else {
-                    e.hide();
-                }
-            });
+            indexFieldEditPresenter.show("Edit Field", (indexField, e) -> restFactory
+                    .create(INDEX_RESOURCE)
+                    .method(res -> res.updateField(new UpdateField(
+                            docRef,
+                            existingField.getFldName(),
+                            indexField)))
+                    .onSuccess(response -> {
+                        selectionModel.setSelected(indexField);
+                        refresh();
+                        e.hide();
+                    })
+                    .onFailure(new DefaultErrorHandler(this, e::reset))
+                    .taskMonitorFactory(pagerView)
+                    .exec());
         }
     }
 

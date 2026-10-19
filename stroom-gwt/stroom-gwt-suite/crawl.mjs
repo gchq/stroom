@@ -113,9 +113,9 @@ if (!['reach', 'dom', 'pixel'].includes(DEPTH)) {
  * 13 button titles appear on >=95% of screens.
  */
 const CHROME = new Set([
-  'Main Menu', 'Show Menu', 'Expand All', 'Collapse All', 'Locate Current Item', 'Find In Content',
-  'Toggle Alerts', 'Ask Stroom AI', 'Filter Types', 'Clear Filter', 'Quick Filter Syntax Help',
-  'New', 'Delete',
+  'Main Menu', 'Show Main Menu', 'Expand All Folders', 'Collapse All Folders', 'Locate Current Item', 'Find in Content',
+  'Show Alerts', 'Ask Stroom AI', 'Filter Document Types', 'Clear Filter', 'Quick Filter Syntax Help',
+  'New Document', 'Delete Selected Documents',
 ]);
 const chromeDone = new Set();
 /** Types whose loose explorer-title match has already been reported. */
@@ -255,7 +255,7 @@ async function reset() {
  * closed folder away. `record.mjs` expands before every open for exactly this reason.
  */
 async function openDoc(name, type) {
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand' }).catch(() => {});
   await gwt.openDocByName(page, name, type);
   await waitForDocOpen();
@@ -356,7 +356,7 @@ async function navigate(node) {
       // mutation, the read-only guard aborts `explorer/v2/create`, and that route therefore reaches
       // the create dialog and never the editor behind it. The explorer already carries the type on
       // each row's icon, so an existing document is both reachable and read-only.
-      await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+      await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
       await settleExplorer(page, { label: 'expand' }).catch(() => {});
       // The mined type is the Java constant's stem (`XsltDoc.TYPE` -> `Xslt`); the explorer shows the
       // server's DISPLAY name (`XSL Translation`). Matching the two literally reported "no document of
@@ -394,7 +394,7 @@ async function navigate(node) {
       // The explorer tree is the biggest uncrawled surface in the application: Copy, Move, Rename,
       // Delete, Info and the whole document-type New submenu are reachable ONLY by right-click, so no
       // button-driven pass has ever seen them.
-      await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+      await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
       await settleExplorer(page, { label: 'expand' }).catch(() => {});
       // A multi-selection is built the way a user builds one: CLICK the first row, ctrl-click the
       // rest, then right-click inside the selection.
@@ -418,8 +418,8 @@ async function navigate(node) {
       }
       await page.waitForTimeout(600);
     } else if (step.via === 'tab-context') {
-      // The CONTENT TAB's own menu — Close / Close Others / Close Saved / Close All / Save / Save
-      // All / Locate / Add To Favourites — which is a separate menu built from `event.getTabData()`
+      // The CONTENT TAB's own menu — Close / Close Other Tabs / Close Saved Tabs / Close All Tabs /
+      // Save / Save All Tabs / Locate / Add To Favourites — which is a separate menu built from `event.getTabData()`
       // and is not reachable from the explorer at all.
       if (!(await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', step.label))) {
         throw new Error(`no content tab "${step.label}" to right-click`);

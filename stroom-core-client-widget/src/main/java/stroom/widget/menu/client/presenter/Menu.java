@@ -19,6 +19,7 @@ package stroom.widget.menu.client.presenter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
@@ -52,6 +53,7 @@ public class Menu {
             menuPresenter = menuPresenterProvider.get();
             menuPresenter.setData(event.getItems());
             menuPresenter.setAllowCloseOnMoveLeft(event.isAllowCloseOnMoveLeft());
+            setName(menuPresenter, event);
             if (event.getWidth() != null) {
                 menuPresenter.setWidth(event.getWidth());
             }
@@ -61,8 +63,16 @@ public class Menu {
                     .popupType(PopupType.POPUP)
                     .popupPosition(event.getPopupPosition())
                     .addAutoHidePartner(event.getAutoHidePartners())
-                    .onShow(e -> menuPresenter.focusItem(event.getFocusItem()))
+                    .onShow(e -> {
+                        // Set once showing, after any menu this one replaced has said it closed, but
+                        // not if this menu was itself closed before it got this far
+                        if (currentItems == event.getItems()) {
+                            MenuOpener.setExpanded(event.getOpener(), true);
+                        }
+                        menuPresenter.focusItem(event.getFocusItem());
+                    })
                     .onHide(e -> {
+                        MenuOpener.setExpanded(event.getOpener(), false);
                         if (event.getHideHandler() != null) {
                             event.getHideHandler().onHide(e);
                         }
@@ -72,6 +82,19 @@ public class Menu {
                         currentItems = null;
                     })
                     .fire();
+        }
+    }
+
+    // Names the menu for screen readers: by the name it was given, else by the menu button that
+    // opened it. Other openers (e.g. table cells or logos) are only where the menu is shown and
+    // may be redrawn, so aren't referred to
+    private static void setName(final MenuPresenter menuPresenter, final ShowMenuEvent event) {
+        if (event.getName() != null) {
+            menuPresenter.setName(event.getName());
+        } else if (MenuOpener.isMarked(event.getOpener())) {
+            menuPresenter.setLabelledBy(MenuOpener.ensureId(event.getOpener()));
+        } else if (!GWT.isProdMode()) {
+            GWT.log("Menu shown with no accessible name; give it one with ShowMenuEvent.Builder#name");
         }
     }
 

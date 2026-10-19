@@ -19,6 +19,9 @@
 @import url("Button.css");
 @import url("Button_Themes.css");
 @import url("stroom.css");
+/* Straight after stroom.css, where the text box rules it replaces were, so later rules still win */
+@import url("text-field.css");
+@import url("radio-button.css");
 @import url("stroom-control.css");
 @import url("stroom-button.css");
 @import url("toolbar.css");
@@ -47,7 +50,9 @@
 @import url("celltable/DataGrid.css");
 @import url("CustomDatePicker.css");
 @import url("ScheduleBox.css");
-@import url("SelectionBox.css");
+@import url("selection-box.css");
+@import url("selection-popup.css");
+@import url("svg-icon-box.css");
 @import url("QuickFilter.css");
 @import url("password-box.css");
 @import url("ExpressionItemBox.css");
@@ -61,7 +66,7 @@
 @import url("pipeline-element.css");
 @import url("pipeline-path.css");
 @import url("stepping-screen.css");
-@import url("valuespinner.css");
+@import url("value-spinner.css");
 @import url("imagebutton.css");
 @import url("linecolinput.css");
 @import url("ExpanderCell.css");

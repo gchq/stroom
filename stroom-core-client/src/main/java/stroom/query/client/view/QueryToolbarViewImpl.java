@@ -88,7 +88,7 @@ public class QueryToolbarViewImpl
             errors.setTitle("Show Errors");
         } else if (Severity.WARNING.equals(severity)) {
             errors.setSvg(SvgImage.ALERT);
-            errors.setTitle("Show Warning");
+            errors.setTitle("Show Warnings");
         } else if (Severity.INFO.equals(severity)) {
             errors.setSvg(SvgImage.INFO);
             errors.setTitle("Show Messages");

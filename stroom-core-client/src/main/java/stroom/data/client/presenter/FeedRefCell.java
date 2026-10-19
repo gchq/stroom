@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.data.grid.client.EventCell;
+import stroom.data.grid.client.HasContextMenus;
 import stroom.docstore.shared.DocumentType;
 import stroom.feed.client.CopyFeedUrlEvent;
 import stroom.feed.client.OpenFeedEvent;
@@ -28,10 +29,9 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.RowActions;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
-        implements HasHandlers, EventCell {
+        implements HasHandlers, EventCell, HasContextMenus<T_ROW> {
 
     private static final String ICON_CLASS_NAME = "svgIcon";
     private static final String COPY_CLASS_NAME = "docRefLinkCopy";
@@ -82,7 +82,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                         final Function<T_ROW, SafeHtml> cellTextFunction,
                         final Function<T_ROW, String> nameFunction,
                         final Function<T_ROW, String> cssClassFunction) {
-        super(BrowserEvents.MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
         this.eventBus = eventBus;
         this.showIcon = showIcon;
         this.cellTextFunction = cellTextFunction;
@@ -111,60 +111,42 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                                final T_ROW value,
                                final NativeEvent event,
                                final ValueUpdater<T_ROW> valueUpdater) {
-        super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        final String name = NullSafe.get(value, nameFunction);
-        if (name != null) {
-            if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
-                if (MouseUtil.isPrimary(event)) {
-                    onEnterKeyDown(context, parent, value, event, valueUpdater);
-                } else {
-                    final String type;
-                    final DocumentType documentType = FeedDoc.DOCUMENT_TYPE;
-                    type = documentType.getDisplayType();
-
-                    final List<Item> menuItems = new ArrayList<>();
-                    int priority = 1;
-                    menuItems.add(new IconMenuItem.Builder()
-                            .priority(priority++)
-                            .icon(SvgImage.OPEN)
-                            .text("Open " + type)
-                            .command(() -> OpenFeedEvent.fire(this, name, true))
-                            .build());
-                    menuItems.add(createCopyAsMenuItem(name, priority++));
-
-                    ShowMenuEvent
-                            .builder()
-                            .items(menuItems)
-                            .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
-                            .fire(this);
-                }
+        // The right-click menu is the grid's context menu, which adds this cell's items (see
+        // getContextMenuItems). The cell showing its own menu as well opened two menus
+        if (RowActions.isKeyPress(event)) {
+            if (NullSafe.get(value, nameFunction) != null) {
+                // Enter or Space on the open button; the button's own click would come too
+                event.preventDefault();
+                onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
-        } else {
-            final String text = cellTextFunction.apply(value).asString();
-            if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
-                if (MouseUtil.isPrimary(event)) {
-                    final Element element = event.getEventTarget().cast();
-                    if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
-                        if (text != null) {
-                            ClipboardUtil.copy(text);
-                        }
-                    }
-                } else if (NullSafe.isNonBlankString(text)) {
-                    final List<Item> menuItems = new ArrayList<>();
-                    menuItems.add(new IconMenuItem.Builder()
-                            .priority(1)
-                            .icon(SvgImage.COPY)
-                            .text("Copy")
-                            .command(() -> ClipboardUtil.copy(text))
-                            .build());
-                    ShowMenuEvent
-                            .builder()
-                            .items(menuItems)
-                            .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
-                            .fire(this);
-                }
-            }
+        } else if (BrowserEvents.MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
+            onEnterKeyDown(context, parent, value, event, valueUpdater);
         }
+    }
+
+    /// The items this cell adds to the grid's context menu for a feed: 'Open Feed' and 'Copy Feed
+    /// Details'.
+    ///
+    /// @param context The cell's context.
+    /// @param value   The row.
+    /// @return The items, or null for a row with no feed.
+    @Override
+    public List<Item> getContextMenuItems(final Context context, final T_ROW value) {
+        final String name = NullSafe.get(value, nameFunction);
+        if (name == null) {
+            return null;
+        }
+        final String type = FeedDoc.DOCUMENT_TYPE.getDisplayType();
+        final List<Item> menuItems = new ArrayList<>();
+        int priority = 1;
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(priority++)
+                .icon(SvgImage.OPEN)
+                .text("Open " + type)
+                .command(() -> OpenFeedEvent.fire(this, name, true))
+                .build());
+        menuItems.add(createCopyAsMenuItem(name, type, priority));
+        return menuItems;
     }
 
     @Override
@@ -247,13 +229,14 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
                         "Copy name '" + name + "' to clipboard",
                         copy));
 
+                // A button the keyboard reaches from its row (a row action)
                 final SafeHtml open = SvgImageUtil.toSafeHtml(
                         SvgImage.OPEN,
                         ICON_CLASS_NAME,
-                        OPEN_CLASS_NAME,
                         HOVER_ICON_CLASS_NAME);
-                sb.append(template.divWithToolTip(
-                        "Open " + FeedDoc.TYPE + " " + name + " in new tab",
+                sb.append(RowActions.button(
+                        OPEN_CLASS_NAME,
+                        "Open " + FeedDoc.TYPE + " " + name,
                         open));
             }
 
@@ -262,12 +245,13 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
     }
 
     private MenuItem createCopyAsMenuItem(final String name,
+                                          final String type,
                                           final int priority) {
         final List<Item> children = createCopyAsChildMenuItems(name);
         return new IconParentMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy As")
+                .text("Copy " + type + " Details")
                 .children(children)
                 .enabled(true)
                 .build();
@@ -283,7 +267,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Name to Clipboard")
+                    .text("Name")
                     .enabled(true)
                     .command(() -> ClipboardUtil.copy(name))
                     .build());
@@ -296,7 +280,7 @@ public class FeedRefCell<T_ROW> extends AbstractCell<T_ROW>
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SHARE)
-                .text("Copy Link to Clipboard")
+                .text("Link")
                 .command(() -> CopyFeedUrlEvent.fire(this, name))
                 .build();
     }

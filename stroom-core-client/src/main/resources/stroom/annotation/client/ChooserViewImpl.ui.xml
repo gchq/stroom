@@ -8,7 +8,6 @@
         </g:FlowPanel>
         <g:FlowPanel ui:field="bottom" styleName="chooserViewImpl-bottom">
         </g:FlowPanel>
-        <g:Label ui:field="clearSelection" styleName="chooserViewImpl-clearSelection"/>
     </g:FlowPanel>
 </ui:UiBinder>
 

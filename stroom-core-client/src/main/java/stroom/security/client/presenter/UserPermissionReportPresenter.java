@@ -118,7 +118,7 @@ public class UserPermissionReportPresenter
         docEdit.setEnabled(false);
         docFilter = documentPermissionsListPresenter.getView().getToolbar().button(
                 SvgImage.FILTER,
-                "Filter Documents To Apply Permissions Changes On",
+                "Filter Documents",
                 this::onFilter);
         batchEdit = documentPermissionsListPresenter.getView().getToolbar().button(
                 SvgImage.GENERATE,

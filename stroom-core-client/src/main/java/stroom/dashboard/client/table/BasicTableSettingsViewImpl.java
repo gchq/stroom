@@ -19,6 +19,7 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.item.client.SelectionBox;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -73,6 +74,8 @@ public class BasicTableSettingsViewImpl
         pageSize.setMin(1);
         pageSize.setMax(10000);
         maxStringFieldLength.setMax(Long.MAX_VALUE);
+        // It has no label of its own, as the tick box above it says what it is
+        AccessibleName.set(maxStringFieldLength, "Maximum String Field Length");
     }
 
     @Override

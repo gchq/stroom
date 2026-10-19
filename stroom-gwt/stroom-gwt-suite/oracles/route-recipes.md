@@ -30,7 +30,7 @@ declarative menu registration, so it re-derives instead of rotting.
 * `Main Menu > Annotations > Annotation Labels` → **AnnotationTagPresenter** _(AnnotationLabelPlugin)_
 * `Main Menu > Annotations > Annotation Statuses` → **AnnotationTagPresenter** _(AnnotationStatusPlugin)_
 * `Main Menu > Annotations > Browse Annotations` → **BrowseAnnotationPresenter** _(AnnotationBrowsePlugin)_
-* `Main Menu > Annotations > Create New Annotation` → **(unresolved)** _(AnnotationCreatePlugin)_
+* `Main Menu > Annotations > New Annotation` → **(unresolved)** _(AnnotationCreatePlugin)_
 * `Main Menu > Help > About` → **AboutPresenter** _(AboutPlugin)_
 * `Main Menu > Help > API Specification` → **(unresolved)** _(HelpPlugin)_
 * `Main Menu > Help > Help` → **(unresolved)** _(HelpPlugin)_
@@ -45,17 +45,17 @@ declarative menu registration, so it re-derives instead of rotting.
 * `Main Menu > Monitoring > Server Tasks` → **TaskManagerPresenter** _(TaskManagerPlugin)_
 * `Main Menu > Navigation > Add Current Item to Favourites` → **NavigationPresenter** _(NavigationPlugin)_
 * `Main Menu > Navigation > Delete Tab Session` → **NavigationPresenter** _(NavigationPlugin)_
-* `Main Menu > Navigation > Find` → **NavigationPresenter** _(NavigationPlugin)_
+* `Main Menu > Navigation > Find by Name` → **NavigationPresenter** _(NavigationPlugin)_
 * `Main Menu > Navigation > Find in Content` → **NavigationPresenter** _(NavigationPlugin)_
 * `Main Menu > Navigation > Locate Current Item` → **NavigationPresenter** _(NavigationPlugin)_
 * `Main Menu > Navigation > Open Tab Session` → **NavigationPresenter** _(NavigationPlugin)_
 * `Main Menu > Navigation > Recent Items` → **NavigationPresenter** _(NavigationPlugin)_
 * `Main Menu > Navigation > Save Tab Session` → **NavigationPresenter** _(NavigationPlugin)_
+* `Main Menu > Security > Accounts` → **AccountsPresenter** _(AccountsPlugin)_
+* `Main Menu > Security > API Keys` → **ApiKeysPresenter** _(ApiKeysPlugin)_
 * `Main Menu > Security > Application Permissions` → **AppPermissionsPresenter** _(AppPermissionsPlugin)_
-* `Main Menu > Security > Credentials Manager` → **CredentialsPresenter** _(CredentialsPlugin)_
+* `Main Menu > Security > Credentials` → **CredentialsPresenter** _(CredentialsPlugin)_
 * `Main Menu > Security > Document Permissions` → **BatchDocumentPermissionsPresenter** _(DocumentPermissionsPlugin)_
-* `Main Menu > Security > Manage Accounts` → **AccountsPresenter** _(AccountsPlugin)_
-* `Main Menu > Security > Manage API Keys` → **ApiKeysPresenter** _(ApiKeysPlugin)_
 * `Main Menu > Security > Signing Keys` → **SigningKeyPresenter** _(SigningKeyPlugin)_
 * `Main Menu > Security > User Access` → **UserAccessPresenter** _(UserAccessPlugin)_
 * `Main Menu > Security > User Groups` → **UserAndGroupsPresenter** _(UsersAndGroupsPlugin)_

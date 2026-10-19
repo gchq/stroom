@@ -122,7 +122,7 @@ public final class AnalyticRuleEditorStories {
                     // The process type is a selection box's text box
                     play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
                     play.click(play.getByDisplayValue("Scheduled Query"));
-                    play.click(screen.findByText("Table Builder", ".SelectionPopup *"));
+                    play.click(screen.findByText("Table Builder", ".selection-popup *"));
                     play.waitFor(() -> play.expect(DocumentEditors.tab(play, "Shards")).toBeVisible());
                     play.expect(DocumentEditors.tab(play, "Duplicate Management")).not().toBeVisible();
                     play.waitFor(() -> play.expect(play.getByText("Processing Info")).toBeInTheDocument());
@@ -143,7 +143,7 @@ public final class AnalyticRuleEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Notifications");
-                    play.click(play.findByRole("button", "Add Notification"));
+                    play.click(play.findByRole("button", "New Notification"));
                     // The dialog is captioned 'Add Notification'
                     final Play dialog = dialog(screen, "Add Notification");
                     play.expect(dialog.getByText("Destination Type")).toBeInTheDocument();
@@ -160,7 +160,7 @@ public final class AnalyticRuleEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Notifications");
-                    play.click(play.findByRole("button", "Add Notification"));
+                    play.click(play.findByRole("button", "New Notification"));
                     final Play dialog = dialog(screen, "Add Notification");
                     // It is labelled 'Maximum Notifications'
                     play.expect(dialog.getByText("Maximum Notifications")).toBeInTheDocument();
@@ -180,8 +180,8 @@ public final class AnalyticRuleEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Execution");
-                    // The button is titled 'Add Execution Schedule'
-                    play.click(play.findByRole("button", "Add Execution Schedule"));
+                    // The button is titled 'New Execution Schedule'
+                    play.click(play.findByRole("button", "New Execution Schedule"));
                     play.waitFor(() -> play.expect(screen.getByDisplayValue("node9")).toBeInTheDocument());
                     expectNoProblems(play);
                 })
@@ -250,7 +250,7 @@ public final class AnalyticRuleEditorStories {
         play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
         // Stroom opens a column's menu when its header is clicked
         QueryEditorStories.clickHeader(play, play.getByText("Count", ".column-top .column-label"));
-        play.click(screen.findByText("Hide", StroomDom.MENU_ITEM_TEXT));
+        play.click(screen.findByText("Hide Column", StroomDom.MENU_ITEM_TEXT));
         play.waitFor(() -> play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled"));
         // The preference is also sent with the next search
         play.click(play.getByRole("button", "Execute Query"));
@@ -282,7 +282,7 @@ public final class AnalyticRuleEditorStories {
 
     private static void pickDestinationType(final Play play, final Play dialog, final String type) {
         play.click(destinationType(dialog));
-        play.click(play.screen().findByText(type, ".SelectionPopup *"));
+        play.click(play.screen().findByText(type, ".selection-popup *"));
     }
 
     // Opens the Settings tab and waits for its fields
@@ -297,7 +297,7 @@ public final class AnalyticRuleEditorStories {
     // Opens the Notifications tab and waits for its list
     private static void showNotifications(final Play play, final boolean readOnly) {
         openTab(play, "Notifications");
-        play.waitFor(() -> play.expect(play.getByRole("button", "Add Notification")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByRole("button", "New Notification")).toBeInTheDocument());
         expectReadOnlyNote(play, readOnly);
         expectNoProblems(play);
     }
@@ -306,7 +306,7 @@ public final class AnalyticRuleEditorStories {
     private static void showExecution(final Play play, final boolean readOnly) {
         openTab(play, "Execution");
         play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
-        play.waitFor(() -> play.expect(play.getByRole("button", "Add Execution Schedule")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByRole("button", "New Execution Schedule")).toBeInTheDocument());
         expectReadOnlyNote(play, readOnly);
         expectNoProblems(play);
     }

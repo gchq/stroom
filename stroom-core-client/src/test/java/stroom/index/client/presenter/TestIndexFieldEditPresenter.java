@@ -17,86 +17,97 @@
 package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.event.CommonAlertEvent.Level;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.query.api.datasource.FieldType;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
-import com.google.gwt.junit.GWTMockUtilities;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
 
 class TestIndexFieldEditPresenter {
 
-    private final EventBus eventBus = new SimpleEventBus();
-    private final List<AlertEvent> alerts = new ArrayList<>();
+    private EventBus eventBus;
     private IndexFieldEditView view;
     private IndexFieldEditPresenter presenter;
+    private HidePopupRequestEvent hideRequest;
+    private BiConsumer<IndexFieldImpl, HidePopupRequestEvent> onOk;
 
+    @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
-        // The dense vector presenter's view is a GWT widget, which can only be made in a browser
-        GWTMockUtilities.disarm();
-        eventBus.addHandler(AlertEvent.getType(), alerts::add);
+        eventBus = Mockito.mock(EventBus.class);
         view = Mockito.mock(IndexFieldEditView.class);
+        Mockito.when(view.getType()).thenReturn(FieldType.TEXT);
         presenter = new IndexFieldEditPresenter(
                 eventBus,
                 view,
                 Mockito.mock(DenseVectorFieldPresenter.class));
-    }
-
-    @AfterEach
-    void tearDown() {
-        GWTMockUtilities.restore();
+        hideRequest = Mockito.mock(HidePopupRequestEvent.class);
+        onOk = Mockito.mock(BiConsumer.class);
     }
 
     @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {" "})
-    void write_noName(final String name) {
-        // Regression test: a blank name threw a ValidationException, which the New Field dialog
-        // didn't catch, leaving the dialog with OK and Cancel disabled and no message.
-        Mockito.when(view.getFieldName()).thenReturn(name);
+    @NullSource
+    @ValueSource(strings = {"", "   "})
+    void okWithNoNameShowsErrorAndReEnablesDialog(final String fieldName) {
+        Mockito.when(hideRequest.isOk()).thenReturn(true);
+        Mockito.when(view.getFieldName()).thenReturn(fieldName);
 
-        final IndexFieldImpl indexField = presenter.write();
+        presenter.onHideRequest(hideRequest, onOk);
 
-        assertThat(indexField)
-                .isNull();
-        assertThat(alerts)
-                .extracting(AlertEvent::getLevel, alert -> alert.getMessage().asString())
-                .containsExactly(tuple(
-                        Level.WARN,
-                        "An index field must have a name"));
+        Mockito.verifyNoInteractions(onOk);
+        Mockito.verify(hideRequest, Mockito.never()).hide();
+        Mockito.verify(hideRequest, Mockito.never()).reset();
+
+        // The buttons must be re-enabled once the error has been dismissed
+        final AlertEvent alertEvent = captureAlertEvent();
+        alertEvent.getCallback().onClose();
+        Mockito.verify(hideRequest).reset();
     }
 
     @Test
-    void write_name() {
-        Mockito.when(view.getFieldName()).thenReturn(" EventTime ");
-        Mockito.when(view.getType()).thenReturn(FieldType.DATE);
-        Mockito.when(view.isIndexed()).thenReturn(true);
+    void okWithNamePassesFieldOn() {
+        Mockito.when(hideRequest.isOk()).thenReturn(true);
+        Mockito.when(view.getFieldName()).thenReturn("  myField  ");
 
-        final IndexFieldImpl indexField = presenter.write();
+        presenter.onHideRequest(hideRequest, onOk);
 
-        assertThat(indexField.getFldName())
-                .isEqualTo("EventTime");
-        assertThat(indexField.getFldType())
-                .isEqualTo(FieldType.DATE);
-        assertThat(indexField.isIndexed())
-                .isTrue();
-        assertThat(alerts)
-                .isEmpty();
+        final ArgumentCaptor<IndexFieldImpl> captor = ArgumentCaptor.forClass(IndexFieldImpl.class);
+        Mockito.verify(onOk).accept(captor.capture(), Mockito.eq(hideRequest));
+        assertThat(captor.getValue().getFldName())
+                .isEqualTo("myField");
+        assertThat(captor.getValue().getFldType())
+                .isEqualTo(FieldType.TEXT);
+        Mockito.verify(eventBus, Mockito.never()).fireEventFromSource(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void cancelHidesDialog() {
+        Mockito.when(hideRequest.isOk()).thenReturn(false);
+
+        presenter.onHideRequest(hideRequest, onOk);
+
+        Mockito.verify(hideRequest).hide();
+        Mockito.verifyNoInteractions(onOk);
+    }
+
+    private AlertEvent captureAlertEvent() {
+        final ArgumentCaptor<GwtEvent<?>> captor = ArgumentCaptor.forClass(GwtEvent.class);
+        Mockito.verify(eventBus).fireEventFromSource(captor.capture(), Mockito.eq(presenter));
+        assertThat(captor.getValue())
+                .isInstanceOf(AlertEvent.class);
+        return (AlertEvent) captor.getValue();
     }
 }

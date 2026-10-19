@@ -87,6 +87,8 @@ public class TextInputPresenter
     }
 
     private void update(final TextInputComponentSettings settings) {
+        // Named for the component (e.g. "Feed"), so a rename renames it too
+        getView().setAccessibleName(getComponentConfig().getName());
         getView().setValue(settings.getValue());
     }
 
@@ -125,6 +127,11 @@ public class TextInputPresenter
     public interface TextInputView extends View, HasUiHandlers<TextInputUiHandlers> {
 
         void setValue(String value);
+
+        /// Names the input's box for screen readers.
+        ///
+        /// @param name The box's name: the component's name.
+        void setAccessibleName(String name);
 
         String getValue();
     }

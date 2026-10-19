@@ -60,7 +60,6 @@ public class ProcessorProfilePlugin extends MonitoringPlugin<ProcessorProfilePre
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
-            MenuKeys.addAdministrationMenu(event.getMenuItems());
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem.Builder()
                             .priority(12)

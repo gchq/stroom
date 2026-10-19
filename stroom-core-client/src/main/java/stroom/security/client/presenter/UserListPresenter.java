@@ -296,6 +296,8 @@ public class UserListPresenter
                                         Objects.requireNonNullElseGet(validUserScreensForActionMenu, UserScreen::all),
                                         this,
                                         copyPermissionsPopupFunction),
+                                null,
+                                (User user) -> UserAndGroupHelper.buildActionsForMsg(user),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();

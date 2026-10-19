@@ -63,8 +63,11 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         view.setView(scriptListPresenter.getView());
 
         scriptListPresenter.getView().getToolbar().setName("Script actions");
-        addButton = scriptListPresenter.getView().getToolbar().button(SvgImage.ADD, "Add", this::onAdd);
-        removeButton = scriptListPresenter.getView().getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        addButton = scriptListPresenter.getView().getToolbar().button(SvgImage.ADD, "Add Script Dependency",
+                this::onAdd);
+        removeButton = scriptListPresenter.getView().getToolbar().button(SvgImage.REMOVE,
+                "Remove Selected Script Dependency",
+                this::onRemove);
         removeButton.setEnabled(false);
 
         enableButtons();
@@ -147,13 +150,11 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         addButton.setEnabled(!readOnly);
         removeButton.setEnabled(!readOnly && selected != null);
 
-        if (readOnly) {
-            addButton.setTitle("Add dependency disabled as script is read only");
-            removeButton.setTitle("Remove dependency disabled as script is read only");
-        } else {
-            addButton.setTitle("Add Dependency");
-            removeButton.setTitle("Remove Dependency");
-        }
+        final String reason = readOnly
+                ? " (script is read only)"
+                : "";
+        addButton.setTitle("Add Script Dependency" + reason);
+        removeButton.setTitle("Remove Selected Script Dependency" + reason);
     }
 
     @Override

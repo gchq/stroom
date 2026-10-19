@@ -191,7 +191,7 @@ public final class ProcessorFilterEditDialogStories {
                     play.expect(screen.getByText("Max Task Creation Delay", "label")).toBeInTheDocument();
                     // A duration is a group of an amount and its unit, which the duration picker names
                     final Play delay = screen.within(screen.getByRole("group", "Max Task Creation Delay"));
-                    play.expect(delay.getByRole("textbox", "Amount")).toBeInTheDocument();
+                    play.expect(delay.getByRole("spinbutton", "Amount")).toBeInTheDocument();
                     play.expect(delay.getByRole("combobox", "Unit")).toBeInTheDocument();
                     saveExistingFilter(play, screen);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -243,15 +243,16 @@ public final class ProcessorFilterEditDialogStories {
                     // The dialog is on the page's body
                     play.click(screen.getByRole("button", TextMatch.startingWith("Set Feed Dependencies")));
                     final Play deps = dialog(screen, "Set Feed Dependencies");
-                    // GWT's two columns, and Remove disabled until a row is selected.
-                    // FeedDependencyListPresenter.enableButtons enables Edit whenever the filter isn't
-                    // read only, with or without a selection
+                    // GWT's two columns, and Edit and Remove disabled until a row is selected
+                    // (FeedDependencyListPresenter.enableButtons)
                     play.expect(deps.getByRole("columnheader", "Feed")).toBeInTheDocument();
                     play.expect(deps.getByRole("columnheader", "Type")).toBeInTheDocument();
-                    play.expect(deps.getByTitle("Edit Reference")).not().toHaveAttribute("aria-disabled");
-                    play.expect(deps.getByTitle("Remove Reference")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(deps.getByTitle("Edit Selected Feed Dependency"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(deps.getByTitle("Remove Selected Feed Dependency"))
+                            .toHaveAttribute("aria-disabled", "true");
                     // Add opens the editor popup
-                    play.click(deps.getByTitle("New Reference"));
+                    play.click(deps.getByTitle("New Feed Dependency"));
                     final Play editor = dialog(screen, "New Feed Dependency");
                     // GWT refuses to close with no feed
                     play.click(editor.getByRole("button", StroomDom.button("OK")));
@@ -271,8 +272,10 @@ public final class ProcessorFilterEditDialogStories {
                     // The row lands in the grid, and selecting it enables Edit/Remove
                     deps.findByText("MY_FEED");
                     play.click(deps.getByText("MY_FEED"));
-                    play.waitFor(() -> play.expect(deps.getByTitle("Remove Reference"))
+                    play.waitFor(() -> play.expect(deps.getByTitle("Remove Selected Feed Dependency"))
                             .not().toHaveAttribute("aria-disabled"));
+                    play.expect(deps.getByTitle("Edit Selected Feed Dependency"))
+                            .not().toHaveAttribute("aria-disabled");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });
     }

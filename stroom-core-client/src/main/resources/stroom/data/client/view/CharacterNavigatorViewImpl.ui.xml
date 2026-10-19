@@ -5,10 +5,8 @@
              xmlns:refresh-button="urn:import:stroom.data.pager.client">
     <g:FlowPanel styleName="characterNavigator">
         <g:FlowPanel styleName="characterNavigator-labels">
-            <g:Label ui:field="lblLines"
-                     styleName="characterNavigator-label"/>
-            <g:Label ui:field="lblCharacters"
-                     styleName="characterNavigator-label"/>
+            <btn:LinkButton ui:field="lblLines" addStyleNames="characterNavigator-label"/>
+            <btn:LinkButton ui:field="lblCharacters" addStyleNames="characterNavigator-label"/>
         </g:FlowPanel>
         <!--        <g:SimplePanel ui:field="progressBarPanel"-->
         <!--                       styleName="characterNavigator-progressBarPanel"/>-->

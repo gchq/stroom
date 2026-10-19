@@ -78,7 +78,7 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
         view.setDataWidget(dataGrid);
 
         view.getToolbar().setName("Session actions");
-        endSessionButton = view.getToolbar().button(SvgImage.DELETE, "End this session", this::endSelectedSession);
+        endSessionButton = view.getToolbar().button(SvgImage.DELETE, "End Selected Session", this::endSelectedSession);
         endSessionButton.setEnabled(false);
         initTableColumns();
     }

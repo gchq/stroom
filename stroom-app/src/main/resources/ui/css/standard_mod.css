@@ -321,7 +321,7 @@ body,table td,select {
 }
 
 /* INPUT CONTROLS */
-.gwt-TextBox,.gwt-PasswordTextBox,.gwt-ListBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree {
+.gwt-PasswordTextBox,.gwt-ListBox,.gwt-DateBox,.stroom-DropDownTree {
 	width: 200px;
 	margin: 0px;
 	padding: 1px;
@@ -339,11 +339,6 @@ body,table td,select {
 	padding: 0px;
 }
 
-.gwt-TextArea {
-	resize: none;
-	height: 80px;
-	overflow-y: auto;
-}
 textarea {
 	resize: none;
 	height: 80px;

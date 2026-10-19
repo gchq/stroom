@@ -93,7 +93,7 @@ public class BatchDocumentPermissionsPresenter
         documentListPresenter.getView().getToolbar().setName("Document permission actions");
         docFilter = documentListPresenter.getView().getToolbar().button(
                 SvgImage.FILTER,
-                "Filter Documents To Apply Permissions Changes On",
+                "Filter Documents to Apply Permission Changes To",
                 this::onFilter);
         docEdit = documentListPresenter.getView().getToolbar().button(
                 SvgImage.EDIT,

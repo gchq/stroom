@@ -123,14 +123,14 @@ public final class UserGroupsScreenStories {
                     play.waitFor(() -> play.expect(play.querySelector("[inert]")).toBeNull());
                     play.findByText("Members of group \"Administrators\":");
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Create Group, Edit group 'Administrators', Delete group 'Administrators': 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Create Group, Edit Group 'Administrators', Delete Group 'Administrators': 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
-                            "Add, Remove: 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Show Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Add to Group, Remove from Selected Group: 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
-                            "Add, Remove: 1 tab stop",
+                            "Add Member to Group, Remove Selected Member From Group: 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop"));
                 })
                 // #5405: Tab reads the panes as they are laid out, the master list, then the left
@@ -149,13 +149,16 @@ public final class UserGroupsScreenStories {
                     // The panes' tab stops: a quick filter, its buttons (one toolbar, named by its
                     // first button), its toolbar and its pager (and its grid, a div), the master's,
                     // then Member Of's, then Members', with the splitter (named by the pane it
-                    // resizes) between each
+                    // resizes) between each. A grid's row with the keyboard focus is followed by
+                    // its row's open buttons (row actions)
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
-                            "input", "Recent Filters", "Create Group", "First", "div",
+                            "input", "Show Recent Filters", "Create Group", "First", "div",
+                            "Open group Administrators",
                             "Users and groups",
-                            "input", "Recent Filters", "Add", "First",
+                            "input", "Show Recent Filters", "Add to Group", "First",
                             "Members",
-                            "input", "Recent Filters", "Add", "First", "div"));
+                            "input", "Show Recent Filters", "Add Member to Group", "First", "div",
+                            "Open user Alice Anderson", "Open user Alice A Anderson"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group
                 .story("EditGroup", UserGroupsScreenStories::render)
@@ -177,15 +180,16 @@ public final class UserGroupsScreenStories {
                     // Create, Edit, Delete in the master grid's pager toolbar
                     final Query edit = play.within(play.getByTitle("Create Group").closest(".toolbar"))
                             .querySelectorAll("button").nth(1);
-                    play.expect(edit).toHaveAttribute("title", "No Selection");
+                    play.expect(edit).toHaveAttribute("title", "Edit Selected Group");
                     play.expect(edit).toHaveAttribute("aria-disabled", "true");
                     // A user: disabled, with GWT's reason
                     play.click(play.getByText("Alice Anderson"));
-                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "User editing is not supported"));
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title",
+                            "Edit Selected Group (users cannot be edited here)"));
                     play.expect(edit).toHaveAttribute("aria-disabled", "true");
                     // A group: enabled
                     play.click(play.getAllByText("Administrators").nth(0));
-                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "Edit group 'Administrators'"));
+                    play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "Edit Group 'Administrators'"));
                     play.expect(edit).not().toHaveAttribute("aria-disabled");
                     // Edit, rename, OK: the subject id and display name are both changed
                     play.click(edit);
@@ -210,9 +214,9 @@ public final class UserGroupsScreenStories {
                     final Play masterRow = play.within(play.getByText("Alice Anderson").closest("tr"));
                     play.click(masterRow.getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containingIgnoreCase(
-                            "Show user on the Users screen"))).toBeVisible());
+                            "Show in Users"))).toBeVisible());
                     play.expect(screen.queryByText(TextMatch.containingIgnoreCase(
-                            "Show user on the User Groups screen"))).toBeNull();
+                            "Show in User Groups"))).toBeNull();
                     play.keyboard("{Escape}");
                     // Select the group so the membership panes are shown
                     play.click(play.getAllByText("Administrators").nth(0));
@@ -223,7 +227,7 @@ public final class UserGroupsScreenStories {
                     final Play memberRow = play.within(members.findAllByText("Alice Anderson").nth(0).closest("tr"));
                     play.click(memberRow.getByTitle(StroomDom.ACTIONS_TITLE));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containingIgnoreCase(
-                            "Show user on the User Groups screen"))).toBeVisible());
+                            "Show in User Groups"))).toBeVisible());
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The action menu's 'Copy ... from' opens the user picker for the row's user
@@ -234,7 +238,7 @@ public final class UserGroupsScreenStories {
                     final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
                     play.click(row.getByTitle(StroomDom.ACTIONS_TITLE));
                     // The item ends with three dots, not an ellipsis
-                    play.click(screen.findByText("Copy user groups and permissions from..."));
+                    play.click(screen.findByText("Copy User Groups and Permissions from..."));
                     screen.findByText("Select User");
                     // The picker lists the users (not groups) to copy from
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(

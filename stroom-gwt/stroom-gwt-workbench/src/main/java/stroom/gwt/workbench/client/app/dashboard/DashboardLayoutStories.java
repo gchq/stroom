@@ -120,8 +120,8 @@ public final class DashboardLayoutStories {
                 }))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    play.expect(play.getByRole("button", "Enter Design Mode")).toBeInTheDocument();
-                    play.expect(play.queryByRole("button", "Exit Design Mode")).toBeNull();
+                    play.expect(play.getByRole("button", DashboardPlays.DESIGN_MODE))
+                            .toHaveAttribute("aria-pressed", "false");
                     play.expect(play.queryByRole("button", "Add Component")).toBeNull();
                     DashboardPlays.expectNoProblems(play);
                 })
@@ -130,7 +130,8 @@ public final class DashboardLayoutStories {
                 }))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    play.expect(play.getByRole("button", "Enter Design Mode")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", DashboardPlays.DESIGN_MODE))
+                            .toHaveAttribute("aria-pressed", "false");
                     play.expect(play.queryByRole("button", "Add Component")).toBeNull();
                     DashboardPlays.expectNoProblems(play);
                 })
@@ -143,7 +144,8 @@ public final class DashboardLayoutStories {
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DashboardPlays.designMode(play, true);
-                    play.expect(play.getByRole("button", "Exit Design Mode")).toBeInTheDocument();
+                    play.expect(play.getByRole("button", DashboardPlays.DESIGN_MODE))
+                            .toHaveAttribute("aria-pressed", "true");
                     // The toggle makes the document dirty (Save is enabled), and saving it sends the
                     // flag
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
@@ -300,7 +302,7 @@ public final class DashboardLayoutStories {
                     DashboardPlays.designMode(play, true);
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "The Query")).toBeInTheDocument());
                     DashboardPlays.openTabMenu(play, "The Query");
-                    play.click(DashboardPlays.menuItem(screen, "Remove All"));
+                    play.click(DashboardPlays.menuItem(screen, "Remove All Tabs in Pane"));
                     play.click(screen.findByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.queryByText("The Query", DashboardPlays.COMPONENT_TAB))
                             .toBeNull());
@@ -390,19 +392,19 @@ public final class DashboardLayoutStories {
                     DashboardPlays.openTabMenu(play, "The Query");
                     final Value<List<String>> items = play.capture("items",
                             screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT).textContents());
-                    for (final String item : List.of("Rename", "Settings", "Hide", "Duplicate", "Duplicate To...",
-                            "Remove", "Maximise")) {
+                    for (final String item : List.of("Rename", "Settings", "Hide Tab", "Duplicate",
+                            "Duplicate to Another Dashboard...", "Remove", "Maximise")) {
                         play.expect(items).toContain(item);
                     }
                     play.expect("index of Maximise after Remove",
                                     () -> items.get().indexOf("Maximise") > items.get().indexOf("Remove"))
                             .toBe(true);
                     play.click(DashboardPlays.menuItem(screen, "Maximise"));
-                    // The toolbar's Restore (shown only while maximised) restores the tabs
-                    play.click(play.findByRole("button", "Restore"));
+                    // The toolbar's Restore Pane Layout (shown only while maximised) restores the tabs
+                    play.click(play.findByRole("button", "Restore Pane Layout"));
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "The Table")).toBeInTheDocument());
                     DashboardPlays.openTabMenu(play, "The Table 2");
-                    play.click(DashboardPlays.menuItem(screen, "Hide"));
+                    play.click(DashboardPlays.menuItem(screen, "Hide Tab"));
                     play.waitFor(() -> play.expect(play.queryByText("The Table 2", DashboardPlays.COMPONENT_TAB))
                             .toBeNull());
                     DashboardPlays.expectNoProblems(play);
@@ -468,7 +470,7 @@ public final class DashboardLayoutStories {
                     DashboardPlays.opened(play);
                     DashboardPlays.designMode(play, true);
                     DashboardPlays.openTabMenu(play, "The Table");
-                    play.click(DashboardPlays.menuItem(screen, "Duplicate To..."));
+                    play.click(DashboardPlays.menuItem(screen, "Duplicate to Another Dashboard..."));
                     play.expect(screen.findByText("Choose Dashboard", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                     DashboardPlays.expectNoProblems(play);
                 });

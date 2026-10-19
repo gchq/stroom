@@ -77,10 +77,10 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         terminateButton = view.getToolbar().button(SvgImage.STOP, "Terminate Search", this::onTerminate);
         terminateButton.setEnabled(false);
 
-        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete Store", this::onDelete);
+        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Result Store", this::onDelete);
         deleteButton.setEnabled(false);
 
-        settingsButton = view.getToolbar().button(SvgImage.SETTINGS, "Store Settings", this::edit);
+        settingsButton = view.getToolbar().button(SvgImage.SETTINGS, "Edit Result Store Settings", this::edit);
         settingsButton.setEnabled(false);
 
         // User Id

@@ -1,0 +1,113 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The text field: every text box and text area (GWT's TextBox and TextArea, which Stroom's copies of
+   them give this class), named BEM style (block, block--modifier). A text area is the block with
+   the multiline modifier.
+
+   Its states come from the element itself: :disabled, [readonly], :focus-visible and, for a
+   rejected value, [aria-invalid="true"] (FieldValidity, which also explains it in the form group's
+   feedback). This is the only stylesheet for a text field: stroom.css's rules for bare input and
+   textarea elements (for inputs with no block of their own yet, e.g. hand-built forms and the
+   pager's page box) leave text fields out.
+
+   Each rule weighs what the rule it replaced did (states in :where() add nothing), so other
+   stylesheets' rules for a particular field win or lose as they did.
+*/
+
+/* Its size, at a class's weight, which a screen's own rules for a field (e.g. width: 100%) outweigh */
+.text-field {
+    width: 200px;
+    margin: 0;
+    outline: none !important;
+}
+
+/* Its look, at an element and a class's weight for a text box (a text area's is a class's) */
+.text-field,
+input.text-field {
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+    padding: var(--input__padding--vertical) var(--input__padding--horizontal);
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
+}
+
+/* Disabled: the filled field with no border that every disabled control has */
+.text-field:disabled,
+input.text-field:disabled {
+    border-color: var(--control__border-color--disabled);
+    background-color: var(--control__background-color--disabled);
+    color: var(--control__text-color--disabled);
+}
+
+/* Read only: the normal field with its value greyed */
+:is(input, textarea).text-field:where([readonly]) {
+    color: var(--control__text-color--readonly);
+}
+
+/* Keyboard focus */
+:is(input, textarea).text-field:where(:focus-visible) {
+    border: thin solid var(--focus-border) !important;
+    box-shadow: var(--focus-shadow);
+}
+
+/* A rejected value (aria-invalid, as FieldValidity sets it): a red border, and a red ring with the
+   focus */
+:is(input, textarea).text-field:where([aria-invalid="true"]) {
+    border: thin solid var(--focus-border--invalid) !important;
+}
+
+:is(input, textarea).text-field:where([aria-invalid="true"]):focus-visible {
+    box-shadow: var(--focus-shadow--invalid);
+}
+
+/* A hint, in the muted text colour, which is 4.5:1 on the field (the browser's grey isn't); Firefox
+   also fades it, which opacity: 1 stops */
+:where(.text-field)::placeholder {
+    color: var(--text-color--muted);
+    opacity: 1;
+}
+
+/* A value the browser filled in keeps the field's colours rather than the browser's */
+input.text-field:where(:-webkit-autofill, :-webkit-autofill:hover, :-webkit-autofill:focus,
+:-webkit-autofill:active) {
+    font-family: var(--regular-font-family);
+    font-size: var(--font-size-13);
+    font-weight: 400;
+    box-sizing: border-box;
+    background-size: 100% 100%;
+    outline: none;
+    background-color: var(--control__background-color) !important;
+    color: var(--control__text-color) !important;
+    -webkit-box-shadow: 0 0 0 30px var(--control__background-color) inset;
+    -webkit-text-fill-color: var(--control__text-color) !important;
+    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+}
+
+/* A text area: several lines, scrolling when there are more, at a fixed height a screen can change */
+.text-field--multiline {
+    display: block;
+    height: 80px;
+    overflow-y: auto;
+    resize: none;
+}
+
+/* A read-only text area's scroll bar shows its field through it */
+.text-field--multiline[readonly]::-webkit-scrollbar,
+.text-field--multiline[readonly]::-webkit-scrollbar-corner {
+    background: transparent;
+}

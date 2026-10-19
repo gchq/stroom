@@ -17,6 +17,7 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.QueryInfoPresenter.QueryInfoView;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,6 +40,8 @@ public class QueryInfoViewImpl extends ViewWithUiHandlers implements QueryInfoVi
     @Inject
     public QueryInfoViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // The dialog's title (which a site can change) asks for it; this says what it is
+        AccessibleName.set(queryInfo, "Query Info");
         widget.addAttachHandler(event -> focus());
     }
 

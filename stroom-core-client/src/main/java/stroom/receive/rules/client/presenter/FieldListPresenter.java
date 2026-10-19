@@ -77,9 +77,9 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 
         getView().getToolbar().setName("Field actions");
         newButton = getView().getToolbar().button(SvgImage.ADD, "New Field", this::onAddClicked);
-        editButton = getView().getToolbar().button(SvgImage.EDIT, "Edit Field", this::onEditClicked);
+        editButton = getView().getToolbar().button(SvgImage.EDIT, "Edit Selected Field", this::onEditClicked);
         editButton.setEnabled(false);
-        removeButton = getView().getToolbar().button(SvgImage.DELETE, "Remove Field", this::onRemoveClicked);
+        removeButton = getView().getToolbar().button(SvgImage.DELETE, "Delete Selected Fields", this::onRemoveClicked);
         removeButton.setEnabled(false);
 //        upButton = getView().addButton(SvgPresets.UP);
 //        upButton.setTitle("Move Up");

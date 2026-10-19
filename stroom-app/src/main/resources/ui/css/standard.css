@@ -781,20 +781,6 @@ a, a:visited, a:hover {
   color: #999999;
 }
 
-.gwt-TextArea {
-  padding: 2px;
-}
-.gwt-TextArea-readonly {
-  color: #888;
-}
-
-.gwt-TextBox {
-  padding: 2px;
-}
-.gwt-TextBox-readonly {
-  color: #888;
-}
-
 .gwt-ToggleButton-up,
 .gwt-ToggleButton-up-hovering,
 .gwt-ToggleButton-up-disabled,

@@ -31,6 +31,8 @@ import stroom.widget.util.client.SelectionType;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -103,15 +105,7 @@ public class DataGridSelectionEventManager<T>
 
             // If the user has clicked on a link then consume the event.
             if (target.hasTagName("u")) {
-                final String link = target.getAttribute("link");
-                if (link != null) {
-                    final Hyperlink hyperlink = Hyperlink.create(link);
-                    if (hyperlink != null) {
-                        consumed = true;
-                        // TODO : Don't use the default task listener here.
-                        HyperlinkEvent.fire(dataGrid, hyperlink, new DefaultTaskMonitorFactory(this));
-                    }
-                }
+                consumed = followLink(target);
             }
 
             if (!consumed) {
@@ -159,6 +153,37 @@ public class DataGridSelectionEventManager<T>
                 });
             }
         }
+    }
+
+    /// Follows a link in a cell (e.g. a query result's) on Enter, as a mouse press does.
+    @Override
+    protected void onRowActionKeyDown(final CellPreviewEvent<T> event) {
+        final NativeEvent nativeEvent = event.getNativeEvent();
+        if (nativeEvent.getKeyCode() == KeyCodes.KEY_ENTER
+            && !nativeEvent.getCtrlKey()
+            && !nativeEvent.getAltKey()
+            && !nativeEvent.getMetaKey()) {
+            final Element target = nativeEvent.getEventTarget().cast();
+            if (followLink(target)) {
+                nativeEvent.preventDefault();
+                nativeEvent.stopPropagation();
+            }
+        }
+    }
+
+    // Follows the link an element holds in its 'link' attribute (a query result's link), if it
+    // has one, returning whether it did
+    private boolean followLink(final Element element) {
+        final String link = element.getAttribute("link");
+        if (link != null && !link.isEmpty()) {
+            final Hyperlink hyperlink = Hyperlink.create(link);
+            if (hyperlink != null) {
+                // TODO : Don't use the default task listener here.
+                HyperlinkEvent.fire(dataGrid, hyperlink, new DefaultTaskMonitorFactory(this));
+                return true;
+            }
+        }
+        return false;
     }
 
     private void doSelect(final T row, final SelectionType selectionType) {

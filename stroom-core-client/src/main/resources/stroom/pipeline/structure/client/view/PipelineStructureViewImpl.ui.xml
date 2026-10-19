@@ -19,8 +19,9 @@
                     <g:FlowPanel styleName="pipelineStructureViewImpl-bar-right">
                         <g:Label text="Inherit From: " styleName="gwt-Label pipelineStructureViewImpl-label"/>
                         <g:SimplePanel ui:field="inherit"/>
-                        <g:Hyperlink ui:field="viewSource" text="View Source"
-                                     addStyleNames="pipelineStructureViewImpl-viewSource"/>
+                        <v:Toolbar name="Pipeline source" addStyleNames="pipelineStructureViewImpl-viewSource">
+                            <v:ToolbarButton ui:field="viewSource" svg="CODE" title="View Source"/>
+                        </v:Toolbar>
                     </g:FlowPanel>
                 </g:FlowPanel>
                 <g:MaxScrollPanel ui:field="treeContainer"

@@ -410,6 +410,83 @@ Stories `App/Editors/DashboardEditor` (`DashboardKeyboardStories`): `TabOrder*` 
 
 Not yet done: drags read mouse events only (no touch or pen, and no pointer capture); Tab from inside a visualisation's frame goes to the end of the page, as the frame isn't in the layout; and the name isn't refreshed when a tab is renamed while its splitter has the focus.
 
+## Text fields
+
+Every text box and text area is the BEM block `text-field` (`text-field.css`), a text area with the
+`text-field--multiline` modifier. Stroom builds them from its own copies of GWT's `TextBox` and
+`TextArea` (`stroom-core-client-widget/src/main/java/com/google/gwt/user/client/ui`), and those give
+the class in place of GWT's `gwt-TextBox` and `gwt-TextArea` (a one-line change in each, approved
+for that directory), so no screen needed editing.
+
+- **States** come from the element: `:disabled` (the filled field with no border that every
+  disabled control has), `[readonly]` (the normal field, its value greyed), `:focus-visible`, and,
+  for a rejected value, `aria-invalid` (`FieldValidity`: a red border, and a red ring with the
+  focus). Its placeholder and the browser's autofill colours are there too. GWT's `ValueBoxBase`
+  also adds `text-field-readonly` when read only; nothing styles it.
+- **One stylesheet.** `text-field.css` has every look a text field has. `stroom.css`'s rules for
+  bare `input` and `textarea` elements (for inputs with no block of their own yet) leave text
+  fields out, with `:where(:not(.text-field))`, which adds nothing to their weight. The password
+  box's input is a text field too.
+- **Cascade.** `text-field.css` is imported straight after `stroom.css`, where the rules it replaces
+  were, and each of its rules weighs what the rule it replaced did: its size at a class's weight
+  (0,1,0), so a screen's `width: 100%` still wins; its look at an element and a class's (0,1,1) for a
+  text box; its states in `:where()`. So a later stylesheet's rules for a particular field win or
+  lose as they did, and screenshots of every text field's states were unchanged by the move.
+  Radio buttons' looks moved from `stroom.css` to `radio-button.css`.
+- **Names.** A field in a form group is named by its label. Where nothing on screen names a field,
+  it is named with `AccessibleName` (the annotation editor's Title and Subject, whose placeholders
+  are only hints; Query Info; Dependency Information; a pipeline property's Value, whose control is
+  set after its form group's label), or for its component (the dashboard's Text Input and Key Value
+  Input, renamed with it). Fields in configured HTML (the activity form) are named by wrapping them
+  in their `<label>`: a field's `id` there is the id of the property it sets, so a label can't point
+  at one.
+- **`LineColInput`** (`line-col-input`, `linecolinput.css`) is a text field for `line:column`; a
+  value that is no such position is marked invalid (`FieldValidity`), rather than turned red.
+
+Stories `Widgets/Inputs/TextInput` (`Basic`, `MultiLine`, `Invalid`, `DisabledAndReadonly`) and
+`Widgets/Inputs/LineColInput` (`InvalidValueIsMarked`).
+
+Not yet done: the bare element rules in `stroom.css` (to go once every input has a block); nine
+fields whose template replaces the class with `styleName` (so they get those rules instead); it
+hasn't been tried with a screen reader.
+
+## Value spinner
+
+`ValueSpinner` (`stroom.widget.valuespinner.client`, styled by `value-spinner.css`) is a field for a whole number with arrows that step it down and up. It is retrofitted rather than replaced, as its API (`setMin`, `setMax`, `setMinStep`, `setValue`, `formatValue`/`parseValue` for subclasses) is used by about 58 views; `Spinner` holds its value, bounds and the stepping while an arrow is held, and no longer owns any widgets.
+
+- **Keyboard and screen readers.** The field is a WAI-ARIA spin button (`role="spinbutton"` on the text input), with `aria-valuenow`, `aria-valuemin` and `aria-valuemax`, and `aria-valuetext` when `formatValue` shows the value other than as the number (e.g. "25%"). Up and Down step it, Page Up and Page Down take ten steps (stopping at the bounds rather than wrapping), Home and End go to its bounds, and Enter or leaving the field commits what was typed. Every step first commits what was typed, so it steps from that rather than from the value before it. The spinner is one tab stop.
+- **Arrows.** The arrows (down, then up) aren't buttons: the keys do what they do, so, as the pattern allows, they are no tab stop and are hidden from screen readers (`aria-hidden`), their titles naming them for the mouse. They are not a toolbar, the exception to "every icon button is made in a toolbar". Each is a 24px target (WCAG 2.5.8) inside the end of the field's border, as a drop-down's arrow is, with a 10px icon in the drop-down arrow's colour (`--icon-colour__black`, as the date picker's month and year arrows' size) and a toolbar button's hover and pressed fills. They read pointer events, so a mouse, a finger or a pen steps at once and keeps stepping, faster and faster, while held; a long press doesn't open the browser's menu. A mouse press puts the focus in the field, so typing can carry on; a finger's doesn't, so no on-screen keyboard comes up. They are dimmed and do nothing when the field is disabled or read only, which the CSS reads from the field's own state (`:read-only`, which a disabled field also matches), not a modifier.
+- **Rejected values.** A typed value that isn't a whole number within the bounds is rejected (WCAG 3.3.1): the value before it is put back, so what is shown is always what the screen will save, and the field is marked invalid and described by why, e.g. `"500" isn't allowed. Enter a whole number from 0 to 100.` (a bound that is the largest or smallest `long` isn't said). In a `FormGroup` (most of Stroom's spinners) the message is the group's feedback (`FormGroup.setFeedback`), as #5409's dialogs show theirs; otherwise the spinner shows it under the field (`value-spinner__feedback`). Either way it is also announced by a polite live region (`value-spinner__status`), as the focus has usually left the field, and read again when the field is focused. It stays until a value is accepted (a commit, an arrow or a step key); focusing and leaving the field unchanged doesn't clear it. A spinner that hasn't been given a value is empty, which isn't an error.
+- **Layout.** The block (`value-spinner`) holds the field and its arrows (`value-spinner__field`, which the arrows are placed on, so that feedback under it doesn't move them), then the feedback and the live region. A width given to the spinner (`width="200px"`, `w-100`, `dock-max`) is the field's; its own is 96px, leaving room for the value beside the arrows. The field's padding is set under `value-spinner__field`, to outrank `stroom.css`'s `input[type="text"]` padding.
+
+The data grid's spinner, `ValueSpinnerCell`, renders the widget's markup (`value-spinner`, `__field`, `__input`, `__steps`, `__step`, `__icon`) with the `value-spinner--cell` modifier: as wide as its cell, with a 24px-high field whose 1px negative margin keeps its row as high as the grid's others (28px). Spinner columns are `ColumnSizeConstants.VALUE_SPINNER_COL` (110px), room for a value and its two arrows; a disabled row's value is greyed by a rule in `value-spinner.css` that reads the grid's `dataGridDisabledCell`. Its field is a spin button named by its column (the name is required: `new ValueSpinnerCell(name, min, max)`, `DataGridUtil.valueSpinnerColumnBuilder(name, …)`), with its value and bounds, and the widget's keys while it has the focus, each committing the value and leaving the focus there. Its arrows step it while pressed with the mouse and commit it when let go. The grid hands a cell its events after the browser has handled them (`AbstractHasData.onBrowserEvent` defers `onBrowserEvent2`), so a cell can't `preventDefault()` an event and doesn't receive touch events: a finger's tap steps once, by the mouse events the browser makes for it, but a held finger doesn't repeat, and Page Up and Page Down may also scroll.
+
+Stories `Widgets/Inputs/ValueSpinner` (`ValueSpinnerStories`): the role, value and bounds as they change (`SpinButtonRoleAndValue`, `FormattedValueText`); the keys (`PageHomeAndEndKeys`, `KeysStepFromTypedText`, `ArrowsClampAtTheBoundary`); the arrows (`ArrowsStepTheValue`, `ArrowsStepFromTypedText`, `ArrowsAreNotTabStops`); disabled and read only; rejected values under the field, in a form group, empty and unset (`RejectedValueIsExplained`, `RejectedValueInAFormGroup`, `EmptyValueIsExplained`, `UnsetIsNotAnError`, and the older contract stories); and the widths screens give it (`Widths`). Stories `Widgets/Cell Renderers/ValueSpinnerCell` (`ValueSpinnerCellStories`): its role, name, value and bounds in a grid (`InGrid`), the arrows (`ArrowsStepAndCommit`), the keys (`KeysWhileFocused`), a typed value kept within its bounds and a read-only row. Real input (`test-runner/lib/real-input/value-spinner.mjs`): the real mouse clicks and holds an arrow, a real finger (touch events from Chromium's DevTools protocol) taps and holds one without focusing the field, the real keys step it, and a disabled spinner's arrows do nothing; in the grid, the real mouse clicks and holds an arrow, a real finger taps one, and the real keys step the field.
+
+Not yet done: it hasn't been tried with a screen reader, and VoiceOver on iOS may not step a custom spin button by swiping (the value can still be typed); screens are to be checked for the wider default width when it is rolled out; and the grid's spinner can't be reached from the keyboard (its field is `tabindex="-1"`), is named by its column but not its row, changes a typed value silently (non-digits dropped, then kept within its bounds), and doesn't repeat while a finger is held. Those wait on the data grid's keyboard pattern and event handling.
+
+## Icon boxes
+
+`SvgIconBox` (`stroom.svg.client`, styled by `svg-icon-box.css`) is a field with an icon inside the end of its border that opens what the field chooses from: a selection box's drop-down arrow, a date box's calendar, a time or schedule box's clock. The icon is a picture, not a button: the field opens the same thing from the keyboard (Enter, and a click on a selection box that can't be typed in), so it is hidden from screen readers (`aria-hidden`) and is no tab stop, though a click on it opens it too. It has no hover or focus states.
+
+- **Names.** The block is `svg-icon-box`; the field (the wrapped widget's first input) is `svg-icon-box__field`, padded clear of the icon; the icon is `svg-icon-box__icon` (a 26px strip over the end of the field) holding `svg-icon-box__image`.
+- **Drop-down arrow.** `setDropDownWidget` gives the box the value spinner's arrow (`ARROW_DOWN`), 10px, in `--icon-colour__black`, as the date picker's month and year arrows' size (`svg-icon-box--drop-down`, a variant with no ARIA meaning). Every "opens a list" arrow in a field looks the same: the selection box's, QuickFilter's Recent Filters (a toolbar button, so a tab stop, with the same icon) and, as a pair, the value spinner's. `SvgImage.DROP_DOWN`, which drew a smaller, thinner arrow, is deleted.
+- **Other icons** (the calendar and clock) are 16px (`--icon-width`) in `--icon-colour__grey`, as before.
+- **Read only.** `setReadonly` dims the icon and stops it opening anything (`svg-icon-box--readonly`, a state with no ARIA attribute on the box, so a modifier): the selection, date, time and schedule boxes set it when their field is disabled or read only.
+
+## Selection box
+
+`BaseSelectionBox` (`stroom.item.client`, styled by `selection-box.css`) is a WAI-ARIA combobox: its text box (`role="combobox"`, `aria-haspopup="listbox"`, `aria-expanded`, `aria-controls`) sits over a picture of its value (`selection-box__value`, `aria-hidden`), with an icon box's drop-down arrow at its end. Its list is a `SelectionPopup` (`selection-popup.css`) holding a `SelectionList`: a quick filter over 10 items, a pager over 100, and a list box whose rows are options. Opening the list moves the focus into it (to its quick filter if it has one, else to the chosen option), rather than keeping it in the box with `aria-activedescendant`.
+
+- **Keys on the box** (the list closed): Enter, Down, Up and Alt+Down open the list; in a box that can't be typed in (`selection-box--select-only`), Space does too, and typing a character opens the list and goes to it. Characters typed before the list has the focus are kept and passed on (`SelectionPopup.type`).
+- **Keys in the list**: Up and Down move between options (and Up from the first option to the quick filter); Enter or Alt+Up chooses the option with the focus and closes the list; Escape closes it; the focus goes back to the box. Typing goes to what is typed (`SelectionList.typeAhead`): into the quick filter, applied at once, with the caret after it (`QuickFilter.type`), or, in a list with no quick filter, to the next option that starts with it, characters typed within half a second being taken together, and the same character again going on to the next option starting with it. The list hands keys on after the browser has handled them (as the data grid does), so a key can't be cancelled there.
+- **Value.** The picture of the value stays on one line and ends in an ellipsis, clear of the arrow (`padding-right: 26px`). It draws the box's border (`stroom-control`).
+- **States.** Disabled and read only are modifiers (`selection-box--disabled`, `selection-box--readonly`), as the box has no ARIA attribute for them; they follow the text box's `disabled` and `aria-readonly`. A box that can't be typed in shows a pointer over it while it can be changed.
+
+Stories `Widgets/Selectors/SelectionBox` (`SelectionBoxStories`): `KeysOpenTheList`, `AltUpChoosesTheOption`, `TypingJumpsToAnOption`, `TypingFiltersALongList` and `LongValue`, beside the earlier ones. Real input (`test-runner/lib/real-input/selection-box.mjs`): typing, Alt+Up, Space and Escape pressed for real, and typing into a long list's quick filter.
+
+Not yet done: it hasn't been tried with a screen reader; the list's own classes (`selectionList-*`, in `components.css`) aren't BEM; and Home and End in the closed box don't open the list at its ends (optional in the pattern).
+
 ## CSS for new widgets
 
 New widgets get their own stylesheet, named after the widget's block, in `stroom-app/src/main/resources/ui/css/` and imported by `app.css` (after `stroom-button.css`, whose styles they may build on), e.g. `toolbar.css`, `focus-tooltip.css`, `split-pane.css` and `tab-bar.css`. Existing stylesheets (e.g. the 3,000 lines of `components.css`) are left as they are, and a widget's rules move into a file of its own when it is next changed.

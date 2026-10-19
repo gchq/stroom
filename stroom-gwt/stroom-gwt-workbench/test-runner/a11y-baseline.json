@@ -15,12 +15,6 @@
   "app-ai-askstroomaidialog--view-attachment-data": [
     "button-name"
   ],
-  "app-annotations-decoratecomment--decorates-links": [
-    "label"
-  ],
-  "app-annotations-decoratecomment--links-invoke-handlers": [
-    "label"
-  ],
   "app-dashboard-queryresultvis--pause-button-reports-up": [
     "frame-title"
   ],
@@ -33,68 +27,8 @@
   "app-editors-analyticruleeditor--table-preferences-persist-on-the-doc": [
     "target-size"
   ],
-  "app-editors-dashboardeditor--dock-onto-middle-panel": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--embedded-query-settings-fields": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--focus-kept-when-maximised": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--inner-split-dock": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--input-drives-query": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--list-input-dictionary": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--list-input-dictionary-resolves-stale-value": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--migrate-legacy-dashboard": [
-    "label"
-  ],
   "app-editors-dashboardeditor--splitter-above-visualisation": [
     "frame-title"
-  ],
-  "app-editors-dashboardeditor--splitter-dragging": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--splitter-focused": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--splitter-keeps-third-panel": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--splitter-keyboard-resize": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--splitter-keyboard-resize-stacked": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-after-docking-left": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-deeply-nested": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-nested-column": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-nested-row": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-side-by-side": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-stacked": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-tabbed": [
-    "label"
   ],
   "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [
     "color-contrast"
@@ -156,6 +90,9 @@
   "app-editors-queryeditor--hyperlinks": [
     "target-size"
   ],
+  "app-editors-queryeditor--hyperlinks-by-keyboard": [
+    "target-size"
+  ],
   "app-editors-queryeditor--null-completion": [
     "target-size"
   ],
@@ -198,9 +135,6 @@
   "app-editors-reporteditor--table-preferences-persist-on-the-doc": [
     "target-size"
   ],
-  "app-editors-vieweditor--add-term-enables-save": [
-    "label"
-  ],
   "app-editors-visualisationeditor--assets": [
     "aria-required-parent",
     "image-alt"
@@ -216,39 +150,6 @@
   "app-idp-authenticationerror--with-config-message": [
     "link-in-text-block"
   ],
-  "app-main-annotationeditor--annotation-editable": [
-    "label"
-  ],
-  "app-main-annotationeditor--annotation-read-only": [
-    "label"
-  ],
-  "app-main-annotationeditor--comment-buttons-tab-order": [
-    "label"
-  ],
-  "app-main-annotationeditor--editor": [
-    "label"
-  ],
-  "app-main-annotationeditor--entry-actions": [
-    "label"
-  ],
-  "app-main-annotationeditor--failed-comment-change-keeps-dialog-usable": [
-    "label"
-  ],
-  "app-main-annotationeditor--grouped-history": [
-    "label"
-  ],
-  "app-main-annotationeditor--history-rich-prose": [
-    "label"
-  ],
-  "app-main-annotationeditor--labels-and-tabs": [
-    "label"
-  ],
-  "app-main-annotationeditor--read-only": [
-    "label"
-  ],
-  "app-main-annotationeditor--status-setting-block": [
-    "label"
-  ],
   "app-main-appshell--activity-chooser": [
     "button-name"
   ],
@@ -256,6 +157,12 @@
     "button-name"
   ],
   "app-main-appshell--banner": [
+    "button-name"
+  ],
+  "app-main-appshell--change-keyboard-shortcut": [
+    "button-name"
+  ],
+  "app-main-appshell--character-key-shortcuts-off": [
     "button-name"
   ],
   "app-main-appshell--context-menu": [
@@ -313,7 +220,16 @@
   "app-main-appshell--goto-shortcut": [
     "button-name"
   ],
+  "app-main-appshell--help-menu": [
+    "button-name"
+  ],
+  "app-main-appshell--help-not-configured": [
+    "button-name"
+  ],
   "app-main-appshell--info-dialog": [
+    "button-name"
+  ],
+  "app-main-appshell--keyboard-shortcut-preferences": [
     "button-name"
   ],
   "app-main-appshell--live-explorer": [
@@ -323,8 +239,10 @@
     "button-name"
   ],
   "app-main-appshell--main-menu": [
-    "button-name",
-    "target-size"
+    "button-name"
+  ],
+  "app-main-appshell--main-menu-no-empty-group": [
+    "button-name"
   ],
   "app-main-appshell--main-toolbar-tab-order": [
     "button-name"
@@ -345,6 +263,9 @@
     "button-name"
   ],
   "app-main-appshell--opens-feed": [
+    "button-name"
+  ],
+  "app-main-appshell--record-clashing-shortcut": [
     "button-name"
   ],
   "app-main-appshell--rename-document": [
@@ -383,11 +304,11 @@
   "app-main-contentstorescreen--install": [
     "image-alt"
   ],
-  "app-main-contentstorescreen--upgrade-check-promotes-row": [
+  "app-main-contentstorescreen--links": [
     "image-alt"
   ],
-  "app-main-currentactivity--requires-query-info-gate": [
-    "label"
+  "app-main-contentstorescreen--upgrade-check-promotes-row": [
+    "image-alt"
   ],
   "app-main-datareceiptrulesscreen--obfuscation-warning": [
     "scrollable-region-focusable"
@@ -412,12 +333,6 @@
   ],
   "app-main-dataretentionscreen--row-action-menu": [
     "target-size"
-  ],
-  "app-main-dependencyinfodialog--dependency-info": [
-    "label"
-  ],
-  "app-main-dependencyinfodialog--missing-dependency-still-renders": [
-    "label"
   ],
   "app-main-executionschedulesscreen--batch-edit": [
     "aria-command-name"
@@ -458,60 +373,20 @@
   "app-main-executionschedulesscreen--unknown-node-is-marked": [
     "aria-command-name"
   ],
-  "app-main-findincontentdialog--default": [
-    "label"
-  ],
-  "app-main-jobsscreen--cross-navigation": [
-    "label"
-  ],
-  "app-main-jobsscreen--edit-schedule": [
-    "label"
-  ],
-  "app-main-jobsscreen--job-schedule": [
-    "label"
-  ],
   "app-main-manageactivitydialog--validation-blocks-save": [
-    "label",
     "scrollable-region-focusable"
-  ],
-  "app-main-nodesscreen--node-grid": [
-    "label"
-  ],
-  "app-main-nodesscreen--node-jobs": [
-    "label"
-  ],
-  "app-main-nodesscreen--preselect-node": [
-    "label"
-  ],
-  "app-main-nodesscreen--server-side-sorting": [
-    "label"
-  ],
-  "app-main-pipelineeditor--embedded-property": [
-    "label"
-  ],
-  "app-main-pipelineeditor--failed-batch-change-keeps-dialog-usable": [
-    "label"
-  ],
-  "app-main-pipelineeditor--processors": [
-    "label"
-  ],
-  "app-main-processorfilterlist--expander-tree": [
-    "label"
-  ],
-  "app-main-processorfilterlist--info-omits-delay-row-when-unset": [
-    "label"
-  ],
-  "app-main-processorfilterlist--info-shows-backoff-rows": [
-    "label"
-  ],
-  "app-main-processorfilterlist--info-shows-unlimited-tasks": [
-    "label"
   ],
   "app-main-resultstoresdialog--settings": [
     "scrollable-region-focusable"
   ],
   "app-main-resultstoresdialog--stores": [
     "scrollable-region-focusable"
+  ],
+  "app-main-topbar--focus-rings": [
+    "button-name"
+  ],
+  "app-main-topbar--keyboard": [
+    "button-name"
   ],
   "app-main-visualisationassets--upload-deduplicates-name": [
     "aria-required-parent",
@@ -524,17 +399,17 @@
   "app-query-queryresultstable--column-filter-row": [
     "target-size"
   ],
+  "app-query-queryresultstable--url-link-named-by-host-and-path": [
+    "target-size"
+  ],
   "widgets-date-time-calendargrid--basic": [
-    "aria-allowed-attr",
-    "label"
+    "aria-allowed-attr"
   ],
   "widgets-date-time-calendargrid--no-selection": [
-    "aria-allowed-attr",
-    "label"
+    "aria-allowed-attr"
   ],
   "widgets-date-time-calendargrid--past-date": [
-    "aria-allowed-attr",
-    "label"
+    "aria-allowed-attr"
   ],
   "widgets-date-time-customdatebox--default": [
     "label"
@@ -552,6 +427,10 @@
     "label"
   ],
   "widgets-date-time-datetimepicker--basic": [
+    "label"
+  ],
+  "widgets-date-time-datetimepicker--calendar-toolbars-in-the-dialog": [
+    "aria-allowed-attr",
     "label"
   ],
   "widgets-date-time-datetimepicker--disabled": [
@@ -593,43 +472,7 @@
   "widgets-editors-viewers-markdowneditor--read-only-preview": [
     "frame-title"
   ],
-  "widgets-inputs-linecolinput--basic": [
-    "label"
-  ],
-  "widgets-inputs-linecolinput--disabled": [
-    "label"
-  ],
-  "widgets-inputs-textinput--disabled-and-readonly": [
-    "label"
-  ],
   "widgets-inputs-tickbox--no-label": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--arrows-clamp-at-the-boundary": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--basic": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--decimals-and-exponents-are-rejected": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--disabled": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--non-numeric-text-is-rejected": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--out-of-bounds-typed-value-is-rejected": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--step": [
-    "label"
-  ],
-  "widgets-inputs-valuespinner--valid-value-commits-as-a-number": [
-    "label"
-  ],
-  "widgets-inputs-viewstates--tables-and-editors": [
     "label"
   ],
   "widgets-popuppositioner-popup-contract--arrow-left-closes-only-the-current-level": [
@@ -707,19 +550,7 @@
   "widgets-popuppositioner-popup-contract--trigger-click-closes-and-stays-closed": [
     "label"
   ],
-  "widgets-query-expressionbuilder--add-term-starts-with-no-field": [
-    "label"
-  ],
   "widgets-query-expressionbuilder--async-field-source-fetches-only-when-needed": [
-    "label"
-  ],
-  "widgets-query-expressionbuilder--clicking-the-dropdown-arrow-opens-the-picker": [
-    "label"
-  ],
-  "widgets-query-expressionbuilder--dynamic-fields-always-show-picker-chrome": [
-    "label"
-  ],
-  "widgets-query-expressionbuilder--static-fields-have-no-picker-chrome": [
     "label"
   ],
   "widgets-selectors-docselectionbox--warning-and-disabled": [

@@ -230,7 +230,7 @@ public final class SteppingScreenStories {
                             () -> boxBottom.get() - paneBottom.get()).toBeLessThanOrEqual(0));
                     // Selecting it shows its log pane toggle
                     play.click(play.getByText("xmlWriter"));
-                    play.findByTitle(TextMatch.containing("Toggle Log Pane (1 Error"));
+                    play.findByTitle(TextMatch.containing("Log Pane (1 Error"));
                     // Its output's warning (line 1) is in the editor's gutter and overview bar; its
                     // error (line 3) is past the one line of output, so only the overview's summary,
                     // which shows the worst severity, has it
@@ -239,8 +239,10 @@ public final class SteppingScreenStories {
                     play.expect(play.querySelector(".code-editor__marker--warning"))
                             .toHaveAttribute("lineno", "1");
                     play.expect(play.querySelector(".code-editor__summary")).toHaveClass("code-editor__summary--error");
-                    // Clicking the location label opens the Set Location dialog
-                    play.click(play.getAllByText("[1:1:1]").nth(0));
+                    // The location is a button, named for what it does and where it is, that opens
+                    // the Set Location dialog
+                    play.click(play.getByRole("button",
+                            "Set Location ([1:1:1], stream 1, part 1, record 1)"));
                     final Play jump = screen.within(
                             screen.findByText("Set Location", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
                     play.click(jump.getByRole("button", StroomDom.button("Cancel")));

@@ -32,10 +32,12 @@ public final class MenuRequest {
 
     private static final String EVENT = "stroom-menu-request";
 
+    private final String name;
     private final List<Item> items;
     private final PopupPosition popupPosition;
 
-    private MenuRequest(final List<Item> items, final PopupPosition popupPosition) {
+    private MenuRequest(final String name, final List<Item> items, final PopupPosition popupPosition) {
+        this.name = name;
         this.items = items;
         this.popupPosition = popupPosition;
     }
@@ -43,10 +45,14 @@ public final class MenuRequest {
     /// Asks for a menu to be shown.
     ///
     /// @param source        The element the menu is for, which the request bubbles up from.
+    /// @param name          The menu's accessible name (see [ShowMenuEvent.Builder#name]).
     /// @param items         The menu's items.
     /// @param popupPosition Where the menu is shown, e.g. at the pointer.
-    public static void fire(final Element source, final List<Item> items, final PopupPosition popupPosition) {
-        dispatch(source, EVENT, new MenuRequest(items, popupPosition));
+    public static void fire(final Element source,
+                            final String name,
+                            final List<Item> items,
+                            final PopupPosition popupPosition) {
+        dispatch(source, EVENT, new MenuRequest(name, items, popupPosition));
     }
 
     /// Shows the menus that widgets on the page ask for, by firing a [ShowMenuEvent] for each.
@@ -61,6 +67,7 @@ public final class MenuRequest {
 
     private static void show(final MenuRequest request, final HasHandlers handlers) {
         ShowMenuEvent.builder()
+                .name(request.name)
                 .items(request.items)
                 .popupPosition(request.popupPosition)
                 .fire(handlers);

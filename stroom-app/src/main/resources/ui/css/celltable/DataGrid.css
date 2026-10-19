@@ -205,13 +205,11 @@
 /*
 Stop disabled commandLinkCells from having their icon disabled
 */
-.dataGridDisabledCell,
-.dataGridDisabledCell .valueSpinner .gwt-TextBox {
+.dataGridDisabledCell {
     color: var(--text-color--disabled);
 }
 
-.dataGridSelectedRow .dataGridDisabledCell,
-.dataGridSelectedRow .dataGridDisabledCell .valueSpinner .gwt-TextBox {
+.dataGridSelectedRow .dataGridDisabledCell {
     color: var(--text-color--disabled--selected);
 }
 

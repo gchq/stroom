@@ -129,8 +129,7 @@ public final class ElasticClusterEditorStories {
                 })
                 .story("ReadOnly", context -> render(context, fixtures(true, null), true))
                 .withPlay(play -> {
-                    final Query save = play.findByRole("button",
-                            "Save is not available as this document is read only");
+                    final Query save = play.findByRole("button", "Save (read only)");
                     // Read only, not disabled: every field can be read and copied, none changed (the
                     // API key fields were once left editable)
                     play.waitFor(() -> play.expect(play.querySelector(URLS)).toHaveAttribute("readonly"));

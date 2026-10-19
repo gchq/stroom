@@ -7,7 +7,9 @@
     <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical navigation">
         <g:FlowPanel styleName="dock-min navigation-title-bar">
             <g:Button ui:field="logo" styleName="navigation-logo"/>
-            <g:Button ui:field="mainMenuButton" title="Main Menu" styleName="main-menu focus-without-border"/>
+            <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet">
+                <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu" opensMenu="true"/>
+            </b:Toolbar>
         </g:FlowPanel>
 
         <g:SimplePanel styleName="dock-min explorerTreeViewImpl-nameFilterPanel">

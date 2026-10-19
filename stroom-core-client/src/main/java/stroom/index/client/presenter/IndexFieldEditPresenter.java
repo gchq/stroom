@@ -37,6 +37,9 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.function.BiConsumer;
+import javax.validation.ValidationException;
+
 public class IndexFieldEditPresenter
         extends MyPresenterWidget<IndexFieldEditView>
         implements ChangeUiHandlers {
@@ -68,16 +71,15 @@ public class IndexFieldEditPresenter
         onChange();
     }
 
-    /// Reads the field from the dialog. If the field isn't valid, e.g. it has no name, a warning
-    /// says why and null is returned, so the caller can keep the dialog open.
+    /// Reads the field from the dialog.
     ///
-    /// @return The field, or null if it isn't valid.
+    /// @return The field.
+    /// @throws ValidationException If the field isn't valid, e.g. it has no name.
     public IndexFieldImpl write() {
         final String name = NullSafe.trim(getView().getFieldName());
 
         if (name.isEmpty()) {
-            AlertEvent.fireWarn(this, "An index field must have a name", null);
-            return null;
+            throw new ValidationException("An index field must have a name");
         }
 
         return IndexFieldImpl
@@ -93,15 +95,42 @@ public class IndexFieldEditPresenter
                 .build();
     }
 
-    public void show(final String caption, final HidePopupRequestEvent.Handler handler) {
+    /// Shows the dialog.
+    ///
+    /// @param caption The caption for the dialog.
+    /// @param onOk    Called with the field and the hide request when OK is clicked and the
+    ///                field is valid. It must either hide or reset the hide request.
+    public void show(final String caption, final BiConsumer<IndexFieldImpl, HidePopupRequestEvent> onOk) {
         final PopupSize popupSize = PopupSize.resizable(300, 770);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(caption)
                 .onShow(e -> getView().focus())
-                .onHideRequest(handler)
+                .onHideRequest(e -> onHideRequest(e, onOk))
                 .fire();
+    }
+
+    /// Handles a request to close the dialog. Cancel hides the dialog. OK passes the field to
+    /// `onOk`, unless the field is invalid, in which case an error is shown and the request is
+    /// reset so that the dialog's buttons are enabled again.
+    ///
+    /// @param e    The request to close the dialog.
+    /// @param onOk Called with the field and the hide request when the field is valid.
+    void onHideRequest(final HidePopupRequestEvent e,
+                       final BiConsumer<IndexFieldImpl, HidePopupRequestEvent> onOk) {
+        if (e.isOk()) {
+            final IndexFieldImpl indexField;
+            try {
+                indexField = write();
+            } catch (final RuntimeException ex) {
+                AlertEvent.fireError(this, ex.getMessage(), e::reset);
+                return;
+            }
+            onOk.accept(indexField, e);
+        } else {
+            e.hide();
+        }
     }
 
     @Override

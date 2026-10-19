@@ -70,7 +70,7 @@ public class NavigationPlugin extends Plugin {
                 new IconMenuItem.Builder()
                         .priority(201)
                         .icon(SvgImage.FIND)
-                        .text("Find")
+                        .text("Find by Name")
                         .action(Action.FIND)
                         .command(() -> ShowFindEvent.fire(NavigationPlugin.this))
                         .build());

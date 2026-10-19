@@ -133,15 +133,15 @@ public final class IndexEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(play.getByText("2024-01")).toBeInTheDocument());
-                    play.expect(play.getByRole("button", "Flush Selected Shards"))
+                    play.expect(play.getByRole("button", "Flush Selected Index Shards"))
                             .toHaveAttribute("aria-disabled", "true");
-                    play.expect(play.getByRole("button", "Delete Selected Shards"))
+                    play.expect(play.getByRole("button", "Delete Selected Index Shards"))
                             .toHaveAttribute("aria-disabled", "true");
                     // Shards are selected with their row's tick box
                     play.click(play.within(play.getByText("2024-01").closest("tr")).querySelector(".tickBox"));
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Flush Selected Shards"))
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Flush Selected Index Shards"))
                             .not().toHaveAttribute("aria-disabled"));
-                    play.expect(play.getByRole("button", "Delete Selected Shards"))
+                    play.expect(play.getByRole("button", "Delete Selected Index Shards"))
                             .not().toHaveAttribute("aria-disabled");
                     // The info column's popup shows what isn't a column
                     play.click(play.querySelector(".svgCell-icon"));
@@ -168,7 +168,7 @@ public final class IndexEditorStories {
                     play.expect(play.getByText("DenseVector")).toBeInTheDocument();
                     play.expect(play.queryByText("Dense Vector")).toBeNull();
                     play.click(play.getByText("Embedding"));
-                    play.click(play.getByRole("button", "Edit Field"));
+                    play.click(play.getByRole("button", "Edit Selected Index Field"));
                     play.waitFor(() -> play.expect(screen.getByText("Vector Similarity Function Type", "label"))
                             .toBeInTheDocument());
                     play.expect(screen.getByText("Embedding Model", "label")).toBeInTheDocument();
@@ -188,12 +188,12 @@ public final class IndexEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
-                    play.click(play.getByRole("button", "New Field"));
+                    play.click(play.getByRole("button", "New Index Field"));
                     final Play dialog = screen.within(screen.findByText("New Field", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
-                            .toHaveBeenCalledWith("WARN: An index field must have a name"));
+                            .toHaveBeenCalledWith("ERROR: An index field must have a name"));
                     play.click(screen.findByRole("button", StroomDom.button("Close")));
                     // The dialog can be used again: Cancel closes it, and nothing was added
                     play.click(dialog.getByRole("button", StroomDom.button("Cancel")));

@@ -90,7 +90,7 @@ public class ScheduledProcessHistoryListPresenter
         view.setDataWidget(dataGrid);
 
         view.getToolbar().setName("History actions");
-        replayButton = view.getToolbar().button(SvgImage.RERUN, "Rerun", this::replay);
+        replayButton = view.getToolbar().button(SvgImage.RERUN, "Replay Selected Execution", this::replay);
 
         addColumns();
         enableButtons();
@@ -199,7 +199,6 @@ public class ScheduledProcessHistoryListPresenter
     private void enableButtons() {
         // Replaying adds a new schedule, which isn't allowed if the owning document is read only
         replayButton.setEnabled(!readOnly && selectionModel.hasSelectedItems());
-        replayButton.setTitle("Replay Execution");
     }
 
     /// Sets whether the owning document is read only. When it is, executions can't be replayed.

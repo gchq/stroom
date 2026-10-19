@@ -217,16 +217,16 @@ public final class SplitPaneContentStories {
                     play.expect(screen.getByText("Maximise Content", MENU_ITEM_TEXT)).toBeInTheDocument();
                     // From the splitter, Alt+M maximises the pane it resizes
                     play.expect(menuItem(screen, "Maximise Properties"))
-                            .toHaveTextContent(TextMatch.containing("Alt+m"));
+                            .toHaveTextContent(TextMatch.containing("Alt+M"));
                     play.expect(menuItem(screen, "Maximise Content"))
                             .not().toHaveTextContent(TextMatch.containing("Alt"));
-                    play.expect(menuItem(screen, "Restore")).toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Restore Pane Sizes")).toHaveClass(MENU_ITEM_DISABLED);
                     play.click(screen.getByText("Maximise Content", MENU_ITEM_TEXT));
                     play.expect(paneWidth(play.getByTestId("properties"))).toBe(0);
                     play.rightClick(splitter);
-                    play.expect(menuItem(screen, "Restore")).not().toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Restore Pane Sizes")).not().toHaveClass(MENU_ITEM_DISABLED);
                     play.expect(menuItem(screen, "Maximise Content")).toHaveClass(MENU_ITEM_DISABLED);
-                    play.click(screen.getByText("Restore", MENU_ITEM_TEXT));
+                    play.click(screen.getByText("Restore Pane Sizes", MENU_ITEM_TEXT));
                     play.expect(paneWidth(play.getByTestId("properties"))).toBe(300);
                     play.rightClick(splitter);
                     play.click(maximiseProperties);

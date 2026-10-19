@@ -44,7 +44,7 @@ export function readFields(page) {
     const form = [...popups].reverse().find((p) => !p.querySelector('.alert-message'));
     if (!form) return null;
     const caption = norm(form.querySelector('.dialog-titleText')?.textContent);
-    const boxes = [...form.querySelectorAll('input[type="text"], input[type="number"], input:not([type]), .gwt-TextBox, textarea')]
+    const boxes = [...form.querySelectorAll('input[type="text"], input[type="number"], input:not([type]), .text-field, textarea')]
       .filter((e) => e.offsetWidth > 0 && e.offsetHeight > 0 && !e.disabled && !e.readOnly
         && !e.classList.contains('quickFilter-textBox')
         // ACE's hidden input IS a textarea. Typing into it goes to the editor, sets no `.value`,

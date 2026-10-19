@@ -53,7 +53,8 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
     private static final XmlSchemaResource XML_SCHEMA_RESOURCE = GWT.create(XmlSchemaResource.class);
 
     private static final String VALID = "Schema is valid";
-    private static final String INVALID = "Schema is invalid";
+    private static final String VALID_TITLE = "Show Validation Result (schema is valid)";
+    private static final String INVALID_TITLE = "Show Validation Result (schema is invalid)";
 
     private static final int VALIDATION_DEBOUNCE_MS = 300;
     private static final TabData SETTINGS = new TabDataImpl("Settings");
@@ -84,7 +85,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        validationIndicator = toolbar.button(SvgImage.OK, VALID, this::showValidationResult);
+        validationIndicator = toolbar.button(SvgImage.OK, VALID_TITLE, this::showValidationResult);
 
         this.validationDebounceTimer = new Timer() {
             @Override
@@ -217,10 +218,10 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
 
     private void updateValidationIndicator() {
         if (validationResponse.isOk()) {
-            validationIndicator.setTitle(VALID);
+            validationIndicator.setTitle(VALID_TITLE);
             validationIndicator.setSvg(SvgImage.OK);
         } else {
-            validationIndicator.setTitle(INVALID);
+            validationIndicator.setTitle(INVALID_TITLE);
             validationIndicator.setSvg(SvgImage.ALERT);
         }
     }

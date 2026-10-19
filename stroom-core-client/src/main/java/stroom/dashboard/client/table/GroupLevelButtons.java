@@ -47,9 +47,9 @@ public class GroupLevelButtons {
                              final Supplier<GroupSelection> selection,
                              final IntSupplier maxDepth,
                              final Consumer<GroupSelection> onChange) {
-        expandButton = toolbar.button(SvgImage.EXPAND_ALL, "Expand", () ->
+        expandButton = toolbar.button(SvgImage.EXPAND_ALL, "Expand Groups", () ->
                 onChange.accept(expand(selection.get(), maxDepth.getAsInt())));
-        collapseButton = toolbar.button(SvgImage.COLLAPSE_ALL, "Collapse", () ->
+        collapseButton = toolbar.button(SvgImage.COLLAPSE_ALL, "Collapse Groups", () ->
                 onChange.accept(collapse(selection.get())));
         expandButton.setEnabled(false);
         collapseButton.setEnabled(false);
@@ -66,15 +66,15 @@ public class GroupLevelButtons {
                                   && (expandedDepth < maxDepth || groupSelection.hasClosedGroups());
         expandButton.setEnabled(canExpand);
         expandButton.setTitle(canExpand
-                ? "Expand Level " + Math.min(maxDepth, expandedDepth + 1)
-                : "Expand");
+                ? "Expand Groups to Level " + Math.min(maxDepth, expandedDepth + 1)
+                : "Expand Groups");
 
         final boolean canCollapse = maxDepth > 0
                                     && (expandedDepth > 0 || groupSelection.hasOpenGroups());
         collapseButton.setEnabled(canCollapse);
         collapseButton.setTitle(canCollapse
-                ? "Collapse Level " + Math.min(maxDepth, Math.max(1, expandedDepth))
-                : "Collapse");
+                ? "Collapse Groups Level " + Math.min(maxDepth, Math.max(1, expandedDepth))
+                : "Collapse Groups");
     }
 
     // The selection with every group open to one more level

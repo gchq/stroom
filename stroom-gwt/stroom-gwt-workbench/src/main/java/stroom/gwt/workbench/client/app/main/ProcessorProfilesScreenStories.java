@@ -123,8 +123,11 @@ public final class ProcessorProfilesScreenStories {
                     // days to an empty Days, whose toString is 'None')
                     play.expect(periodRow).toHaveTextContent(TextMatch.containing("None"));
                     play.expect(periodRow).not().toHaveTextContent(TextMatch.containing("00:00:00"));
+                    // Edit is disabled until a period is selected (ProfilePeriodListPresenter)
+                    play.expect(profile.getByTitle("Edit Selected Profile Period"))
+                            .toHaveAttribute("aria-disabled", "true");
                     // Add a period
-                    play.click(profile.getByTitle("New Period"));
+                    play.click(profile.getByTitle("New Profile Period"));
                     final Play period = screen.within(screen.findByText(PERIOD_CAPTION, StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));
                     // The check boxes: Monday..Sunday, then Limit Single Node Threads and Limit Total
@@ -170,8 +173,8 @@ public final class ProcessorProfilesScreenStories {
                     final Play screen = play.screen();
                     play.findByText("Nightly");
                     // Create a new profile.
-                    // The 'New' button is an icon button titled 'New'
-                    play.click(play.getByTitle("New"));
+                    // The 'New Processor Profile' button is an icon button titled 'New Processor Profile'
+                    play.click(play.getByTitle("New Processor Profile"));
                     screen.findByText("Create Processor Profile");
                     // The field's id is the FormGroup's identity, 'profileName'
                     final Query name = screen.querySelector("#profileName");

@@ -97,7 +97,13 @@ td:hover .customDatePickerDayIsValue {
 }
 */
 
+/* The year's and month's rows, one above the other, as far apart as the 4px focus ring
+   (--focus-shadow) reaches, so a focused box's ring doesn't overlap the box below or above it (and as
+   far apart as each row's box and buttons are) */
 .customDatePickerMonthSelector {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 .customDatePickerYear,
 .customDatePickerMonth {
@@ -146,14 +152,14 @@ td:hover .customDatePickerDayIsValue {
     padding-left: 1rem;
 }
 
-.customDatePickerMonth .SelectionBox,
-.customDatePickerYear .SelectionBox {
+.customDatePickerMonth .selection-box,
+.customDatePickerYear .selection-box {
     flex-grow: 1;
     width: 5px;
 }
 
-.customDatePickerMonth .SelectionBox input,
-.customDatePickerYear .SelectionBox input {
+.customDatePickerMonth .selection-box input,
+.customDatePickerYear .selection-box input {
     min-width: 5px;
 }
 

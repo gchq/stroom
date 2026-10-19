@@ -202,6 +202,32 @@ basic use:
 * `stroom-core-client/src/main/java/stroom/pathways/client/view/PathwaysSettingsViewImpl.java`
   (`onReadOnly`, line 138)
 
+### Three workbench stories fail
+
+**Confirmed** (by `workbenchTest`, October 2026, and the code). Not fixed; two are stories left
+behind by changes to Stroom, and one is a contrast failure in Stroom's help popup.
+
+* `App/Main/QuickFilterHistory` `AdvancedQueryUnconvertible` waits for a "Replace the filter
+  text?" confirmation that no app code shows any more: #5740 (`943ba04085`) removed it from
+  `AdvancedQuickFilterPresenter`, which now replaces a filter it couldn't convert on OK without
+  asking, as its class comment says. Fix: the story should expect the text to be replaced on OK.
+* `App/Main/QuickFilterHistory` `FilterRejected` breaks `color-contrast` on the help popup's
+  Field qualifier cells (`tr:nth-child(6..10) > td:nth-child(2) > code`): `.infoTable code` uses
+  `--code-color` (`--pink-300` in the dark theme), which looks to be below 4.5:1 on the popup's
+  background. The story is the one that ends with the help popup open on a screen with
+  qualified fields. Fix: a lighter `--code-color` for the dark theme, or the popup's own code
+  colour.
+* `Widgets/Query/ExpressionBuilder` `AsyncFieldSourceFetchesOnlyWhenNeeded` sees `loadFields`
+  where it expects `findFieldByName:UserId`: #5740 (`28b78bf26e`) changed
+  `StringExpressionUtil.equalTo` (used by `DataSourceClient.findFieldByName`) from `=="UserId"`
+  to `="UserId"`, and the story's `FieldFixture.nameOf` only recognises `==`, so it describes the
+  lookup as a whole-list fetch. Fix: `FieldFixture` should accept `=` (and match by name).
+
+* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/main/QuickFilterHistoryStories.java`
+* `stroom-core-client/src/main/java/stroom/quickfilter/client/presenter/AdvancedQuickFilterPresenter.java`
+* `stroom-app/src/main/resources/ui/css/components.css` (`.infoTable code`) and `theme-dark.css`
+* `stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/query/FieldFixture.java`
+
 ## Controls that stay enabled but do nothing
 
 **Reported.**
@@ -431,9 +457,16 @@ last closed dialog for a moment only.
 **Reported.**
 
 * Annotation edit: Status, Assigned To, Labels, Collections and Retain are clickable blocks with no
-  tab stop (`AnnotationEditViewImpl.ui.xml`).
-* The schedule's and the time range's Quick Settings presets are plain labels with click handlers
-  (`ScheduleViewImpl`, `TimeRangePopup.ui.xml`).
+  tab stop (`AnnotationEditViewImpl.ui.xml`). Making a whole block a button would put its form
+  group's help button and Assign Yourself inside a button (nested controls), so it needs a design:
+  e.g. a separate "Change Status" button beside the value.
+* A grid's spinners (Jobs' Max Tasks, Nodes' and Processors' Priority) can't be reached from the
+  keyboard: the field is `tabindex="-1"`, and Enter on a row doesn't go into it
+  (`ValueSpinnerCell`). Once it has the focus (by a click), its keys work. It also changes a typed
+  value without saying so: non-digits are dropped and the rest kept within its bounds (`500`
+  becomes `100`). Both wait on the data grid's keyboard pattern. A held finger doesn't repeat its
+  arrows (a tap steps once), as the grid hands a cell its events after the browser has handled
+  them (`AbstractHasData.onBrowserEvent`), so touch events don't reach it.
 
 ### Toolbars are a tab stop per button
 
@@ -811,12 +844,8 @@ best done in `ShowMenuEvent` with a named opener rather than one place at a time
 
 **Reported.**
 
-* Dashboard table settings: the maximum string field length spinner has no label at all
-  (`BasicTableSettingsViewImpl.ui.xml`).
 * Node: the jobs list's group has no label because its `setLabel` call is commented out
   (`NodeViewImpl`).
-* Time Zone Offset: the hours and minutes spinners share one label (`TimeZoneWidget.ui.xml`, and the
-  time preferences); the minutes spinner is also hidden by a FIXME.
 * The explorer's Stroom logo (`navigation-logo`, a `Button` holding an SVG) has no name and is a tab
   stop (`NavigationViewImpl`).
 * Ask Stroom AI: the message box has only a placeholder ("How can I help?") (`AskStroomAiViewImpl`).
@@ -848,8 +877,6 @@ best done in `ShowMenuEvent` with a named opener rather than one place at a time
 * Dialogs have no `role="dialog"`, `aria-modal` or `aria-labelledby` (`Dialog`).
 * Tabs: neither the content tabs (`CurveTabBar`) nor link tabs (`LinkTabPanelView`, e.g. document
   sub-tabs and dashboard component tabs) have `tablist`/`tab` roles or `aria-selected`.
-* `ValueSpinner`: the field is a plain text box (no `spinbutton` role, `aria-valuemin`/`-max` or
-  `-now`), and its arrows are `div`s with no role or name that step on mousedown.
 * The sign-in page (`LoginViewImpl`) has no `<h1>`, no `main` landmark, no `aria-live` region for
   its messages and no `autocomplete` hints on its fields.
 * The password strength meter has no `meter` role or `aria-valuenow`, and the policy message no role
@@ -879,6 +906,36 @@ token that doesn't exist, and is fixed):
   disabled control, so this one may be acceptable.
 
 They are in `test-runner/a11y-baseline.json` until they are fixed.
+
+### Top bar focus rings cut off
+
+**Fixed.** The keyboard focus ring of every control along the top of the app shell was partly
+hidden (WCAG 2.4.7, Focus Visible): each ring is a 1px border with a 4px `--focus-shadow` band
+outside it, and each control sat against the edge of an element that hides its overflow, at the top
+of the window with no room above it:
+
+| Control | Was | Cut off | By |
+|---|---|---|---|
+| Main Menu, beside the logo (`NavigationViewImpl`) | a plain `Button`, 44 x 41 | top 4px, right 4px | `.navigation` |
+| Hide Sidebar, left of the document tabs (`CurveTabLayoutViewImpl`) | a plain `Button`, 30 x 33 | top 4px, left 4px | `.split-pane__pane` |
+| Ask Stroom AI (`MainToolbar`) | a `toolbar--header` button, 32 x 32 | top 3px | `.mainViewImpl` |
+| Show Main Menu (`MainToolbar`) | a `toolbar--header` button, 32 x 32 | top 3px, right 3px | `.mainViewImpl` |
+
+Ask Stroom AI and Show Main Menu also drew their focus border twice: `toolbar--header` gave the button
+a 1px border of its own that turned the focus colour, inside which the standard toolbar button's
+`::before` drew its own.
+
+Main Menu and Hide Sidebar are now toolbar buttons, each in a toolbar of its own (Hide Sidebar swaps
+its icon and title as the sidebar is hidden and shown), and `toolbar--header` is gone, so all four
+are standard 24px toolbar buttons with the one `::before` focus border. Each bar centres its buttons
+(the tab bar's row and the application's toolbar are 33px high, the explorer's title bar 41px), and
+each toolbar keeps at least 4px from the edge beside it. The old `main-menu` and
+`navigation-menu-button` styles are removed.
+
+Checked by stories `App/Main/TopBar`: `FocusRings` (every ring shown with pseudo-state classes and
+measured with `FocusRingClipping`) and `Keyboard` (the real keyboard reaches each control and draws
+its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/Main/AppShell`
+`ToolbarTabStops` counts Main Menu and Hide Sidebar as one tab stop each.
 
 ## Copy-paste mistakes and typos
 
@@ -939,6 +996,50 @@ They are in `test-runner/a11y-baseline.json` until they are fixed.
 
 These were found by the review and fixed in the same change:
 
+* **Controls that looked like links but were mouse only** (no role, no tab stop; WCAG 2.1.1,
+  4.1.2), now buttons or links:
+  * The open icons of grid cells (`CommandLinkCell`, `DocRefCell`, `UserRefCell`, `FeedRefCell`)
+    and the links in query and dashboard results (`TableRow`) are row actions (`RowActions`): a
+    `<button>` named by its title, or a `role="link"`. Tab reaches those of the row with the
+    keyboard focus (the other rows' are out of the tab order, so a long list isn't a tab stop per
+    row), Enter and Space press a button and Enter follows a link; the grid leaves those keys to
+    them (`widgets-cell-renderers-docrefcell--open-by-keyboard`,
+    `app-main-jobsscreen--command-links-by-keyboard`,
+    `app-editors-queryeditor--hyperlinks-by-keyboard`). A result link with no text was dropped; it
+    is now shown, named for what it opens (`HyperlinkName`), and a link whose text is its URL is
+    named by the URL's host and path. The schedule link's button now says which job and node it
+    edits.
+  * An annotation's event and annotation references (`#42`, `1234:5`) are links named "Annotation
+    42" and "Event 1234:5", followed with Enter (`app-annotations-decoratecomment--links-invoke-handlers`).
+  * The data viewer's "Part 1 of 3" and "Lines/Chars ... of ..." (which open dialogs), the time
+    range's and schedule's Quick Settings (now in groups named by their titles), the column value
+    filter's Select All / Select None and the XSD browser's Home / Back / Forward are text buttons
+    (`LinkButton`) that keep their look (`widgets-editors-viewers-xsdbrowser--keyboard-navigation`).
+  * The alert dialogs' "Show Detail / Hide Detail" was a GWT `Hyperlink`, which also added a
+    browser history entry; it is now a "Show Detail" button with `aria-expanded` and
+    `aria-controls` (`widgets-dialogs-alertdialog--show-detail`), and the pipeline's View Source
+    link is a toolbar button.
+  * The annotation chooser's "clear selection" link had no callers and is removed.
+* **Links whose purpose was unclear** (WCAG 2.4.4):
+  * Links that open a new browser tab didn't say so (or said it only in a title). Each now ends
+    with the visually hidden text " (opens in new tab)" and has `rel="noopener noreferrer"`
+    (`NewTabLink`): the quick filter help's link, the server's function and keyword help links,
+    every link in rendered Markdown (documentation, query help, Content Store details, Ask Stroom
+    AI) and the Content Store links (`widgets-inputs-quickfilter--with-help`,
+    `widgets-editors-viewers-markdowneditor--read-only-preview`).
+  * "Help Documentation" now says what it documents: "quick filter documentation",
+    "count documentation", "from keyword documentation".
+  * The Content Store's licence and Git links were the bare URL, and empty with no pack; they are
+    now "View licence" and "View Git repository", followed by the URL, and absent when there is
+    no URL (`app-main-contentstorescreen--links`). The empty links had been the only thing the
+    keyboard could reach in a pack's scrolling details (with both buttons disabled), so the
+    details are now a focusable region named "Content pack details", which the keyboard can
+    scroll (`app-main-contentstorescreen--install`).
+  * The query help's and column picker's path was GWT `Hyperlink`s (adding browser history
+    entries) whose root "Help" read as if it opened help. It is now a `nav` named "Breadcrumb",
+    the levels above are buttons ("Help Contents", "All Columns"), the level shown is
+    `aria-current="page"` and the separators are hidden from screen readers
+    (`app-editors-queryeditor--query-help`).
 * **The HTTP client's User Agent was never saved.** `HttpClientConfigPresenter` now reads and writes
   it (blank means the client's own user agent); the OpenAI model editor's play checks it is kept.
 * **Elastic's response timeout was ignored**: the response timeout was set from the connection
@@ -1015,6 +1116,35 @@ These were found by the review and fixed in the same change:
   arrow keys now stop on disabled items, but Enter, Space, a click and Arrow Right do nothing on
   them, and moving onto one closes the sub menu the previous item opened
   (`widgets-menu-menupanel--keyboard`, `widgets-menu-menupanel--submenus`).
+* **Menus that were empty, unnamed, opened twice, mouse only or unclear**:
+  * A user who could manage nodes but nothing in Administration saw an empty Administration
+    group: `NodeGroupsPlugin` and `ProcessorProfilePlugin` added the group, though their items go
+    in Monitoring. They no longer add it, and `MenuItems` leaves out any group with nothing in it
+    (`app-main-appshell--main-menu-no-empty-group`).
+  * The Help group's 'Help is not configured!' was an enabled item that did nothing; it is now
+    disabled, as other unavailable items are (`app-main-appshell--help-not-configured`).
+  * A right click on a feed in a grid opened `FeedRefCell`'s own menu and then the grid's, which
+    replaced it, so the cell's Open Feed and Copy Feed Details were lost. The cell now gives its
+    items to the grid's menu, as `DocRefCell` does (`widgets-cell-renderers-feedrefcell--context-menu`).
+  * The Jobs and Dependencies screens' row action menus were shown as plain popups, so they had no
+    name and the focus stayed behind; they are now shown as other menus are, named for their row,
+    with the focus in the menu (`app-main-jobsscreen--cross-navigation`,
+    `app-main-dependenciesscreen--action-menu`). A row's "Actions..." menu given no name is named
+    "Actions for row N" (`widgets-actionmenucell--actions`).
+  * An annotation history entry's menu opened only on a mouse press. Its actions icon is now a
+    button named for the entry, which opens the menu with Enter, Space, Shift+F10 or the context
+    menu key (`app-main-annotationeditor--entry-actions-by-keyboard`). The floor map editor's
+    canvas also opens its menu with Shift+F10 and the context menu key, as well as Enter and Space
+    (no story: the floor map has none).
+  * The code editor's options read "Wrap Lines (OFF)"; they are now check items
+    (`menuitemcheckbox`, `aria-checked`) with a tick while on, and no "(ON)" or "(OFF)"
+    (`CheckMenuItem`, `widgets-editors-viewers-aceeditorfeatures--context-menu`).
+  * The explorer's 'Copy', which opens a dialog to choose where to copy to, is 'Copy To...'.
+  * Menu items and buttons that open a new browser tab didn't say so: the Help group's Help and API
+    Specification end their names with the hidden text " (opens in new tab)"
+    (`app-main-appshell--help-menu`), and the titles of Help with Documentation, Help on Data Types,
+    a job's Help and View Selected Asset in Browser end with " (opens in new tab)"
+    (`app-editors-documentationeditor--edit-mode-toggle`, `app-main-jobsscreen--job-schedule`).
 * **Tick box labels and help**: a tick box had either a bold label above it or a label beside it,
   and a beside label's help went on an empty line above the box, where it looked like the help of
   the field before (e.g. Follow Redirects above Cookies Enabled). Every tick box now has its label
@@ -1280,10 +1410,10 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   (`TestRefreshInterval`).
 * #40: OK on a new Lucene index field with a blank name left the New Field dialog with OK and Cancel
   disabled and no message: `IndexFieldEditPresenter.write()` threw a `ValidationException` that
-  `IndexFieldListPresenter.onAdd()` didn't catch. `write()` now warns "An index field must have a
-  name" and returns `null`, as the Solr version does, and both `onAdd()` and `onEdit()` let the
-  dialog be used again (`TestIndexFieldEditPresenter`, the workbench's `App/Index/IndexEditor`
-  `NewFieldWithoutName`).
+  `IndexFieldListPresenter.onAdd()` didn't catch. `IndexFieldEditPresenter` now handles OK itself
+  (`onHideRequest`): it shows the error and lets the dialog be used again once the error is closed,
+  and passes only a valid field to `onAdd()` and `onEdit()` (`TestIndexFieldEditPresenter`, the
+  workbench's `App/Index/IndexEditor` `NewFieldWithoutName`).
 * #41: the batch edit dialogs' validation messages were never shown, so OK did nothing and said
   nothing for Batch Edit Current Processors with no change, no Run As user or no processors in the
   filter, and for Batch Edit Permissions For Filtered Documents with no documents in the filter.
@@ -1383,6 +1513,75 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   ignores the reply to an earlier click. It also added another link click handler to the tooltip
   each time it was shown, so a feed or stream link fired once per tooltip shown so far; it now adds
   one: `ProcessorTaskList` `InfoOfTwoRowsClickedQuickly` and `InfoFeedLinkOpensTheFeedOnce`.
+* **The value spinner wasn't a spin button, and rejected values without a word** (`ValueSpinner`):
+  its field was a plain text box (no `spinbutton` role, `aria-valuemin`/`-max` or `-now`), its
+  arrows were `div`s about 9px high with no role or name that stepped on mousedown, and a typed
+  value that wasn't a whole number within its bounds was quietly put back. The field is now a
+  WAI-ARIA spin button (`role="spinbutton"`, `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, and
+  `aria-valuetext` when a subclass's `formatValue` shows the value other than as the number): Up and
+  Down step it, Page Up and Page Down take ten steps, Home and End go to its bounds, and every step
+  starts from what has been typed. The arrows (down, then up) are 24px targets inside the end of its
+  border, for the pointer only, as the pattern allows (no tab stop, hidden from screen readers): they
+  work with a mouse, a finger or a pen, hold to repeat, and are dimmed when the field is disabled or
+  read only. A rejected value is put back and explained (WCAG 3.3.1): the field is marked invalid
+  and described by why, e.g. `"500" isn't allowed. Enter a whole number from 0 to 100.`, shown in
+  its form group's feedback (`FormGroup.setFeedback`, as #5409's dialogs do) or under the field,
+  and announced, until a value is accepted. It has its own BEM stylesheet, `value-spinner.css`. The
+  data grid's `ValueSpinnerCell` now looks the same (the widget's markup and stylesheet, in 110px
+  columns, `ColumnSizeConstants.VALUE_SPINNER_COL`, with its rows still 28px), and its field is a spin
+  button named by its column (a name is now required), with the same keys while it has the focus;
+  `valuespinner.css` is deleted. Naming it removed the `label` violations from the Jobs, Nodes and
+  Processors stories. The dashboard table settings' Maximum String Field
+  Length spinner, which had no label at all, is now named by `AccessibleName` (the tick box above it
+  says what it is, so it has no visible label of its own) (`BasicTableSettingsViewImpl`). Workbench:
+  `Widgets/Inputs/ValueSpinner`, `Widgets/Cell Renderers/ValueSpinnerCell`; real input: `value-spinner.mjs`.
+* **Drop-down arrows that didn't match, and field icons screen readers met unnamed** (`SvgIconBox`):
+  a selection box's arrow (`SvgImage.DROP_DOWN`) was a smaller, thinner arrow than the value
+  spinner's beside it, and the icon at the end of a selection, date, time or schedule box was a
+  `div` with no name that a screen reader could find. The selection box's arrow, and QuickFilter's
+  Recent Filters arrow, are now the value spinner's (`ARROW_DOWN`, 10px, in the drop-down arrow's
+  colour), and `DROP_DOWN` is deleted; the icons are pictures hidden from screen readers
+  (`aria-hidden`), as the field opens the same thing from the keyboard, with their own BEM stylesheet
+  (`svg-icon-box.css`). The date picker's year and month boxes touched, so a focused box's ring
+  covered the other; they are now 4px apart.
+* **The selection box only opened on Enter or a click** (`BaseSelectionBox`): the WAI-ARIA
+  combobox's keys did nothing. Down, Up and Alt+Down now open the list, and in a box that can't be
+  typed in, Space and typing a character do too; in the list, Alt+Up chooses the option with the
+  focus, and typing goes to the list's quick filter or to the next option starting with what was
+  typed. A long value ran under the drop-down arrow (and wrapped out of sight); it now ends in an
+  ellipsis clear of it. Its stylesheet is BEM (`selection-box.css`, `selection-popup.css`;
+  `SelectionBox.css`, its dead `ListBox` rules and the global `pointer` class are deleted). Workbench:
+  `Widgets/Selectors/SelectionBox` `KeysOpenTheList`, `AltUpChoosesTheOption`,
+  `TypingJumpsToAnOption`, `TypingFiltersALongList`, `LongValue`; real input: `selection-box.mjs`.
+* **Toolbars in dialogs lost their role, and unnamed parts of the date picker and term editor**
+  (`ButtonGroupFocus`, `DefaultMonthSelector`, `TermEditor`, `OperatorEditor`, `ListInputViewImpl`,
+  `SelectionList`): found by auditing the input controls this branch had changed. A dialog is laid
+  out hidden (`visibility: hidden`) and then shown; a toolbar in it took its buttons as hidden (as
+  visibility is inherited) and never looked again, as showing the dialog changes nothing inside the
+  toolbar. So the Set Date And Time dialog's Year and Month toolbars had no role or name, and both
+  buttons of each were tab stops. A group now only counts visibility set inside it, as it already
+  did for `display`. The calendar's Year and Month boxes are named, as are the term editor's Field,
+  Condition, value, From, To and Date parts, the expression's Operator box, and a dashboard list
+  input (for its component, so renaming the component renames it). A selection box's list is named
+  for the box by the box's `aria-labelledby` too, and has no name, rather than an empty one, when
+  the box has none. Workbench: `Widgets/Date & Time/DateTimePicker` `CalendarToolbarsInTheDialog`,
+  `Widgets/Selectors/SelectionBox` `TheListIsNamedForTheBox`.
+* **Text fields styled from three shared stylesheets, and unnamed on several screens** (`TextBox`,
+  `TextArea`, `LineColInput`): every text box and text area was styled by `.gwt-TextBox` and
+  `.gwt-TextArea` rules spread over `stroom.css`, `standard.css` and `standard_mod.css`. They are now
+  the BEM block `text-field` (a text area `text-field--multiline`) with its own stylesheet,
+  `text-field.css`, given by Stroom's copies of GWT's classes; they look as they did.
+  `LineColInput` turned a bad value red with a `highlight` class; it is marked invalid
+  (`aria-invalid`) like other fields. Fields that screen readers met unnamed are named: the
+  dashboard's Text Input and Key Value Input (for their component), the annotation editor's Title
+  and Subject (a placeholder is only a hint), a pipeline property's Value, Query Info, Dependency
+  Information, and the default activity form's Activity Code and Activity Description (now in their
+  labels; `expected.yaml` regenerated); the annotation history's hidden copy box is hidden from
+  screen readers too. Workbench: `Widgets/Inputs/TextInput` `MultiLine`,
+  `Widgets/Inputs/LineColInput` `InvalidValueIsMarked`. A text field's focus, invalid, placeholder
+  and autofill looks moved from `stroom.css` into `text-field.css` too (the bare element rules there
+  now leave text fields out), as did the password box's input; radio buttons' looks moved to
+  `radio-button.css`; the query data box's error now sets `aria-invalid` (it only added a class).
 
 ## Checked and not bugs
 

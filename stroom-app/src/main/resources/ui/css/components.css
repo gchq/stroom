@@ -251,7 +251,14 @@
 
 .tabBarContainer {
     display: flex;
+    align-items: center;
     border-bottom: 1px solid var(--border-color);
+}
+
+/* The Hide Sidebar button's toolbar, with room before it for its focus ring, which the pane it is
+   in would otherwise cut off */
+.tabBarContainer > .toolbar {
+    margin: 0 2px 0 6px;
 }
 
 .curveTabLayoutViewImpl-layout {
@@ -314,7 +321,6 @@
 
 .pipelineStructureViewImpl-viewSource {
     margin-left: auto;
-    text-decoration: underline;
 }
 
 .pipelineStructureViewImpl-property-added {
@@ -953,14 +959,18 @@
     overflow: hidden;
 }
 
+/* At the top right, as high as the tab bar's row (less its border) with its buttons centred in it,
+   leaving room around them for their focus rings, which the page would otherwise cut off */
 .mainToolbar {
     position: absolute;
     top: 0;
-    right: 0px;
+    right: 0;
     z-index: 1;
-    padding: 1px;
+    height: 33px;
+    padding: 0 4px 0 0;
+    box-sizing: border-box;
     display: flex;
-    gap: 0px;
+    gap: 0;
     align-items: center;
 }
 
@@ -1104,14 +1114,6 @@
     scrollbar-gutter: stable;
 }
 
-.chooserViewImpl-clearSelection {
-    display: none;
-    color: var(--link__text-color);
-    cursor: pointer;
-    text-decoration: underline;
-    padding: 6px 8px;
-}
-
 .steppingFilterViewImpl {
 }
 
@@ -1167,6 +1169,27 @@
 
 .preferencesViewImpl-buttons button {
     width: 250px;
+}
+
+/* The list of keyboard shortcuts fills what the tab has left below the filter, framed as a control */
+.keyBindingPreferences-list {
+    min-height: 0;
+    margin-top: var(--control__gap--vertical);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    background-color: var(--content-box__background-color);
+    overflow: hidden;
+}
+
+/* The keys of a keyboard shortcut being recorded */
+.keyShortcutRecorder-keys {
+    font-family: monospace;
+}
+
+/* What the user can do next while recording a keyboard shortcut, kept the same height as it changes */
+.keyShortcutRecorder-message {
+    min-height: 4.5em;
+    white-space: normal;
 }
 
 .default-min-sizes {
@@ -1267,6 +1290,13 @@
 .navigation-title-bar {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+}
+
+/* The Main Menu button's toolbar, with room after it for its focus ring, which the explorer would
+   otherwise cut off */
+.navigation-title-bar > .toolbar {
+    margin: 0 6px 0 0;
 }
 
 .navigation .explorerTreeViewImpl-nameFilterPanel {
@@ -1294,20 +1324,6 @@
     margin-top: .25rem;
 }
 
-button.main-menu {
-    background-color: transparent;
-    /*color: var(--navigation-icon-button__color);*/
-    color: var(--text-color);
-    opacity: 0.6;
-}
-
-button.main-menu svg {
-    width: 18px;
-    height: 18px;
-    margin-top: 6px;
-    margin-right: 12px;
-}
-
 .top-right-menu {
     position: absolute;
     top: 2px;
@@ -1315,15 +1331,6 @@ button.main-menu svg {
     width: 32px;
     height: 32px;
     z-index: 1;
-}
-
-.navigation-menu-button {
-    background-color: transparent;
-    opacity: 0.6;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .navigation-header {
@@ -1490,9 +1497,11 @@ button.main-menu svg {
 }
 
 .timeRange-quickSetting {
+    display: block;
     color: var(--link__text-color);
     cursor: pointer;
     padding-bottom: 0.2rem;
+    white-space: nowrap;
 }
 
 .timeRange-quickSetting:hover {
@@ -1681,12 +1690,12 @@ button.main-menu svg {
     padding: 0;
 }
 
-.FindViewImpl-top .gwt-TextArea {
+.FindViewImpl-top .text-field--multiline {
     /* Single line */
     height: 2.1rem;
 }
 
-.FindViewImpl-top .gwt-TextArea.multiLine {
+.FindViewImpl-top .text-field--multiline.multiLine {
     /* Multi line */
     height: 6.3rem;
 }
@@ -1868,17 +1877,6 @@ button.main-menu svg {
     visibility: hidden;
 }
 
-.SelectionPopup .listContainer {
-    min-width: 200px;
-    max-width: 400px;
-    max-height: 400px;
-}
-
-.SelectionPopup .selectionList {
-    width: auto;
-    height: auto;
-}
-
 .selectionList {
     width: 100%;
     height: 100%;
@@ -1929,8 +1927,8 @@ button.main-menu svg {
     opacity: 0.8;
 }
 
-.selectionList-links .gwt-HyperLink:hover {
-    text-decoration: underline;
+.selectionList-links .selectionList-pathLink {
+    color: var(--link__text-color);
 }
 
 .selectionItemCell {
@@ -2027,6 +2025,61 @@ button.main-menu svg {
     opacity: .8;
     color: var(--text-color);
     cursor: pointer;
+}
+
+/* A button in a table cell (RowActions), without the browser's button look, so it looks as the
+   icon it holds. :where() leaves the cell's own styles in charge */
+:where(.rowAction) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+/* A row action's icon also shows while it has the focus */
+.rowAction:focus .svg-image,
+.rowAction:focus .svg-image.hoverIcon {
+    opacity: .8;
+    color: var(--text-color);
+}
+
+/* Keyboard focus on a button or link in a table cell, an annotation's event or annotation
+   reference, or an annotation history entry's actions button */
+[data-row-action]:focus-visible,
+.annotationLink:focus-visible,
+.annotationHistoryActions:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+    border-radius: .25rem;
+}
+
+/* A text button drawn as the text around it (LinkButton), without the browser's button look;
+   the caller's style names give it its look. :where() leaves them in charge */
+:where(.linkButton) {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+.linkButton:hover {
+    text-decoration: underline;
+}
+
+.linkButton:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+    border-radius: .25rem;
 }
 
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate,
@@ -2135,7 +2188,10 @@ button.main-menu svg {
 }
 
 .ColumnValuesFilterViewImpl .link {
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
+	/* At least 24px high, the minimum target size (WCAG 2.5.8) */
+	min-height: 24px;
 	cursor: pointer;
 	padding: 2px 5px;
     text-decoration: underline;
@@ -2174,6 +2230,11 @@ button.main-menu svg {
 .contentstore-scroll-y {
     overflow-y: auto;
 }
+/* The details take the keyboard focus, to be scrolled with it */
+.contentstore-scroll-y:focus-visible {
+    outline: none;
+    box-shadow: inset var(--focus-shadow);
+}
 /* Details title */
 .contentstore-details .contentstore-details-heading {
     font-size: 120%;
@@ -2199,6 +2260,11 @@ button.main-menu svg {
 }
 .contentstore-details .contentstore-details-list > * {
     padding: 5px;
+}
+/* The URL shown after a link to it */
+.contentstore-details .contentstore-details-url {
+    margin-left: 0.5em;
+    overflow-wrap: anywhere;
 }
 /* Overall width of details table */
 .contentstore-details .contentstore-details-vertical {
@@ -2244,7 +2310,7 @@ button.main-menu svg {
 .gitrepo-settings-form #credentials-group {
     width: 400px;
 }
-.gitrepo-settings-form #credentials-group .SelectionBox {
+.gitrepo-settings-form #credentials-group .selection-box {
     width: 280px;
 }
 .gitrepo-settings-form button.credentials-button {

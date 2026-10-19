@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/* A plain menu button in the explorer's tab bar (CurveTabLayoutViewImpl), in the text colour. Icon
-   buttons are toolbar buttons, styled by toolbar.css. */
-.navigation-menu-button {
-    color: var(--button__text-color);
-}
-
 /* Fab buttons */
 .stroom-button-fab {
 	display: inline-block;

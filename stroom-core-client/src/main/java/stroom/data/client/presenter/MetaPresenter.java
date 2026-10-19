@@ -135,52 +135,59 @@ public class MetaPresenter
 
         // Process
         if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            streamListProcess = metaListPresenter.getToolbar().button(SvgImage.PROCESS, "Process",
+            streamListProcess = metaListPresenter.getToolbar().button(SvgImage.PROCESS, "Process Selected Streams",
                     () -> metaListPresenter.process());
             streamListProcess.setEnabled(false);
-            streamRelationListProcess = metaRelationListPresenter.getToolbar().button(SvgImage.PROCESS, "Process",
+            streamRelationListProcess = metaRelationListPresenter.getToolbar().button(SvgImage.PROCESS,
+                    "Process Selected Related Streams",
                     () -> metaRelationListPresenter.process());
             streamRelationListProcess.setEnabled(false);
         }
 
         // Delete, Undelete, DE-duplicate
         if (securityContext.hasAppPermission(AppPermission.DELETE_DATA_PERMISSION)) {
-            streamListDelete = metaListPresenter.getToolbar().button(SvgImage.DELETE, "Delete",
+            streamListDelete = metaListPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Streams",
                     () -> metaListPresenter.delete());
             streamListDelete.setEnabled(false);
-            streamRelationListDelete = metaRelationListPresenter.getToolbar().button(SvgImage.DELETE, "Delete",
+            streamRelationListDelete = metaRelationListPresenter.getToolbar().button(SvgImage.DELETE,
+                    "Delete Selected Related Streams",
                     () -> metaRelationListPresenter.delete());
             streamRelationListDelete.setEnabled(false);
-            streamListRestore = metaListPresenter.getToolbar().button(SvgImage.UNDO, "Restore",
+            streamListRestore = metaListPresenter.getToolbar().button(SvgImage.UNDO, "Restore Selected Streams",
                     () -> metaListPresenter.restore());
             streamListRestore.setEnabled(false);
-            streamRelationListRestore = metaRelationListPresenter.getToolbar().button(SvgImage.UNDO, "Restore",
+            streamRelationListRestore = metaRelationListPresenter.getToolbar().button(SvgImage.UNDO,
+                    "Restore Selected Related Streams",
                     () -> metaRelationListPresenter.restore());
             streamRelationListRestore.setEnabled(false);
         }
 
         // Selection information
-        streamListInfo = metaListPresenter.getToolbar().button(SvgImage.INFO, "Selection summary",
+        streamListInfo = metaListPresenter.getToolbar().button(SvgImage.INFO,
+                "Show Summary of Selected Streams",
                 () -> metaListPresenter.info());
 
         // Download
         if (securityContext.hasAppPermission(AppPermission.EXPORT_DATA_PERMISSION)) {
-            streamListDownload = metaListPresenter.getToolbar().button(SvgImage.DOWNLOAD, "Download",
+            streamListDownload = metaListPresenter.getToolbar().button(SvgImage.DOWNLOAD,
+                    "Download Selected Streams",
                     () -> metaListPresenter.download());
             streamListDownload.setEnabled(false);
-            streamRelationListDownload = metaRelationListPresenter.getToolbar().button(SvgImage.DOWNLOAD, "Download",
+            streamRelationListDownload = metaRelationListPresenter.getToolbar().button(SvgImage.DOWNLOAD,
+                    "Download Selected Related Streams",
                     () -> metaRelationListPresenter.download());
             streamRelationListDownload.setEnabled(false);
         }
 
         // Upload
         if (securityContext.hasAppPermission(AppPermission.IMPORT_DATA_PERMISSION)) {
-            streamListUpload = metaListPresenter.getToolbar().button(SvgImage.UPLOAD, "Upload",
+            streamListUpload = metaListPresenter.getToolbar().button(SvgImage.UPLOAD, "Upload Data to Feed",
                     () -> streamUploadPresenter.get().show(MetaPresenter.this, feedRef));
         }
 
         // Filter
-        streamListFilter = metaListPresenter.getToolbar().button(SvgImage.FILTER, "Filter", this::onStreamListFilter);
+        streamListFilter = metaListPresenter.getToolbar().button(SvgImage.FILTER, "Filter Streams",
+                this::onStreamListFilter);
 
         // Init the buttons
         setStreamListSelectableEnabled(null);

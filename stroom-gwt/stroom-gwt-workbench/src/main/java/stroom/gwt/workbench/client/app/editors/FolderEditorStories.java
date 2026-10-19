@@ -86,9 +86,9 @@ public final class FolderEditorStories {
                     // Processors: an administrator may edit but not add or duplicate (a folder has
                     // no single pipeline)
                     play.click(DocEditors.tab(play, "Processors"));
-                    play.expect(play.findByTitle("Edit Processor")).toBeInTheDocument();
-                    play.expect(play.queryByTitle("Add Processor")).toBeNull();
-                    play.expect(play.queryByTitle("Duplicate Processor")).toBeNull();
+                    play.expect(play.findByTitle("Edit Selected Processor")).toBeInTheDocument();
+                    play.expect(play.queryByTitle("New Processor")).toBeNull();
+                    play.expect(play.queryByTitle("Duplicate Selected Processor")).toBeNull();
                     play.click(DocEditors.tab(play, "Permissions"));
                     DocEditors.expectNoProblems(play);
                 })

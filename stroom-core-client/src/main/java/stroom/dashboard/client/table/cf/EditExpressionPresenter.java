@@ -78,11 +78,13 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         addTermButton = view.getToolbar().button(SvgImage.ADD, "Add Term", this::addTerm);
         addOperatorButton = view.getToolbar().button(SvgImage.OPERATOR, "Add Operator", this::addOperator);
-        copyButton = view.getToolbar().button(SvgImage.COPY, "Copy", this::copy);
+        copyButton = view.getToolbar().button(SvgImage.COPY, "Duplicate Selected Expression Item", this::copy);
         copyButton.setEnabled(false);
-        disableItemButton = view.getToolbar().button(SvgImage.DISABLE, "Disable", this::disable);
+        disableItemButton = view.getToolbar().button(SvgImage.DISABLE, "Disable Selected Expression Item",
+                this::disable);
         disableItemButton.setEnabled(false);
-        deleteItemButton = view.getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteItemButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Expression Item",
+                this::delete);
         deleteItemButton.setEnabled(false);
     }
 
@@ -115,18 +117,16 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
             // The title is the button's name, so it stays when the button is disabled
-            disableItemButton.setTitle(getEnableDisableText());
+            disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
 
             deleteItemButton.setEnabled(false);
-            deleteItemButton.setTitle("Delete");
 
             copyButton.setEnabled(false);
         } else {
             disableItemButton.setEnabled(true);
-            disableItemButton.setTitle(getEnableDisableText());
+            disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
 
             deleteItemButton.setEnabled(true);
-            deleteItemButton.setTitle("Delete");
 
             copyButton.setEnabled(true);
         }
@@ -215,9 +215,21 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                           final PopupPosition popupPosition) {
         ShowMenuEvent
                 .builder()
+                .name(getMenuName())
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);
+    }
+
+    // The context menu's accessible name, saying which term or operator it acts on
+    private String getMenuName() {
+        final stroom.query.client.Item selectedItem = getSelectedItem();
+        final String text = selectedItem != null
+                ? selectedItem.toString().trim()
+                : "";
+        return text.isEmpty()
+                ? "Expression Actions"
+                : "Actions for expression item '" + text + "'";
     }
 
     private void onChange() {

@@ -64,8 +64,10 @@ public final class ExpressionBuilderStories {
 
     private static final String ON_CHANGE = "onChange";
     private static final String FIELD_SOURCE = "fieldSource";
-    private static final List<String> TOOLBAR = List.of("Add Term", "Add Operator", "Copy", "Disable", "Delete");
-    private static final String POPUP = ".SelectionPopup";
+    private static final String DUPLICATE = "Duplicate Selected Expression Item";
+    private static final List<String> TOOLBAR = List.of("Add Term", "Add Operator", DUPLICATE,
+            "Disable Selected Expression Item", "Delete Selected Expression Item");
+    private static final String POPUP = ".selection-popup";
     // The field picker of the selected term (a Stroom SelectionBox), and its parts
     private static final String FIELD_PICKER = ".termEditor-item.field";
     private static final DocRef DATA_SOURCE = new DocRef("Index", "index-uuid-1", "Example Index");
@@ -126,7 +128,7 @@ public final class ExpressionBuilderStories {
                 .withPlay(play -> {
                     selectTermFieldPicker(play, "UserId");
                     // The arrow is the SelectionBox's SvgIconBox icon
-                    final Query arrowSvgPath = play.querySelector(FIELD_PICKER + " .svgIconBox-icon-outer svg path");
+                    final Query arrowSvgPath = play.querySelector(FIELD_PICKER + " .svg-icon-box__icon svg path");
                     play.expect(arrowSvgPath).not().toBeNull();
                     play.click(arrowSvgPath);
                     play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
@@ -136,7 +138,7 @@ public final class ExpressionBuilderStories {
                 .withPlay(play -> {
                     play.click(play.getByTitle("Add Term"));
                     // The field box's painted value is the SelectionBox's render box
-                    final Query picker = play.querySelector(FIELD_PICKER + " .SelectionBox-renderBox");
+                    final Query picker = play.querySelector(FIELD_PICKER + " .selection-box__value");
                     play.waitFor(() -> play.expect(picker).not().toBeNull());
                     play.expect(picker.textContent()).toBe("");
                     for (final QueryField field : fields()) {
@@ -165,7 +167,7 @@ public final class ExpressionBuilderStories {
         // Nothing is selected yet, so the selection's buttons are disabled and the others not
         play.expect(play.getByTitle("Add Term")).not().toHaveAttribute("aria-disabled");
         // Disabled with aria-disabled, not the disabled attribute, so it can still be reached
-        play.expect(play.getByTitle("Copy")).toHaveAttribute("aria-disabled", "true");
+        play.expect(play.getByTitle(DUPLICATE)).toHaveAttribute("aria-disabled", "true");
         play.expect(play.getByTitle("Add Term")).not().toHaveAttribute("disabled");
         // Focusable means focusable
         final Query addTerm = play.getByTitle("Add Term");
@@ -202,7 +204,7 @@ public final class ExpressionBuilderStories {
         final Query term = play.findByText(TextMatch.containing(label), ".expressionItemBox-label");
         play.click(term);
         // The field picker is a Stroom SelectionBox, whose text box takes the clicks
-        final Query picker = play.querySelector(FIELD_PICKER + " .SelectionBox-textBox");
+        final Query picker = play.querySelector(FIELD_PICKER + " .selection-box__input");
         play.waitFor(() -> play.expect(picker).not().toBeNull());
         return picker;
     }

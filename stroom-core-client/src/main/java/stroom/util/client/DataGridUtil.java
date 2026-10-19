@@ -359,11 +359,23 @@ public class DataGridUtil {
                 () -> new RedGreenTextCell(greenText, redText));
     }
 
+    /// A column of spinners (see [ValueSpinnerCell]), for values the user can change.
+    ///
+    /// @param name           What the value is, naming each row's field for screen readers, as the
+    ///                       column's heading does, e.g. `Priority`.
+    /// @param valueExtractor Gets a row's value.
+    /// @param minValue       The smallest value.
+    /// @param maxValue       The largest value.
+    /// @param <T_ROW>        The type of the grid's rows.
+    /// @return The column's builder.
     public static <T_ROW> ColumnBuilder<T_ROW, Number, ValueSpinnerCell> valueSpinnerColumnBuilder(
-            final Function<T_ROW, Number> valueExtractor, final long minValue, final long maxValue) {
+            final String name,
+            final Function<T_ROW, Number> valueExtractor,
+            final long minValue,
+            final long maxValue) {
         return new ColumnBuilder<T_ROW, Number, ValueSpinnerCell>(
                 valueExtractor,
-                () -> new ValueSpinnerCell(minValue, maxValue));
+                () -> new ValueSpinnerCell(name, minValue, maxValue));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, String, ColourSwatchCell> colourSwatchColumnBuilder(

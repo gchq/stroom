@@ -21,6 +21,7 @@ import stroom.data.table.client.MyCellTable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.TokenError;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.tab.client.event.CloseEvent;
 import stroom.widget.tab.client.event.CloseEvent.CloseHandler;
@@ -31,13 +32,13 @@ import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -49,7 +50,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.view.client.AsyncDataProvider;
@@ -70,8 +70,15 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private static final String ROLE = "role";
     private static final String ROLE_NONE = "none";
     private static final Set<String> TABLE_SECTIONS = Set.of("THEAD", "TBODY", "TFOOT");
+    // How long a pause in typing starts what is typed to jump to an option again
+    private static final int TYPE_AHEAD_PAUSE_MILLIS = 500;
 
     private final QuickFilter quickFilter;
+    private final SelectionEventManager<T, I> selectionEventManager;
+    // What has been typed to jump to an option (in a list with no quick filter), and when it was last
+    // typed to, so that a pause starts it again
+    private String typedPrefix = "";
+    private double lastTypedMillis;
     private final FlowPanel links;
     private final PagerViewImpl pagerView;
     private final CellTable<I> cellTable;
@@ -109,7 +116,14 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             @Override
             protected void onBrowserEvent2(final Event event) {
                 if (event.getTypeInt() == Event.ONKEYDOWN) {
-                    if (event.getKeyCode() == KeyCodes.KEY_UP) {
+                    final String key = keyOf(event);
+                    if (event.getAltKey() && event.getKeyCode() == KeyCodes.KEY_UP) {
+                        // Alt+Up chooses the option with the focus and closes the list (WAI-ARIA
+                        // combobox)
+                        chooseKeyboardSelected();
+                    } else if (isTypedCharacter(event, key)) {
+                        typeAhead(key);
+                    } else if (event.getKeyCode() == KeyCodes.KEY_UP) {
                         if (model.displayFilter()) {
                             if (cellTable.getKeyboardSelectedRow() == 0) {
                                 quickFilter.focus();
@@ -124,7 +138,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         };
 
         selectionModel = new MultiSelectionModelImpl<>();
-        final SelectionEventManager<T, I> selectionEventManager = new SelectionEventManager<>(cellTable,
+        selectionEventManager = new SelectionEventManager<>(cellTable,
                 selectionModel,
                 this);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
@@ -166,8 +180,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
         quickFilter.addStyleName("dock-min selectionList-quickFilter");
 
-        links = new FlowPanel();
+        // A breadcrumb trail: where the list is, with a button to go back to each level above
+        links = new FlowPanel("nav");
         links.setStyleName("dock-min selectionList-links");
+        links.getElement().setAttribute("aria-label", "Breadcrumb");
 
         final SimplePanel elementChooser = new SimplePanel();
         elementChooser.setStyleName("dock-max selectionList-elementChooser");
@@ -186,11 +202,16 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         quickFilter.registerPopupTextProvider(popupTextSupplier);
     }
 
-    /// Names the list for screen readers, e.g. after the box that opened it.
+    /// Names the list for screen readers, e.g. after the box that opened it. With no name, the
+    /// list has none, rather than an empty one.
     ///
-    /// @param name The list's accessible name.
+    /// @param name The list's accessible name, or null or blank for none.
     public void setAccessibleName(final String name) {
-        cellTable.getElement().setAttribute("aria-label", NullSafe.string(name));
+        if (NullSafe.isBlankString(name)) {
+            cellTable.getElement().removeAttribute("aria-label");
+        } else {
+            cellTable.getElement().setAttribute("aria-label", name);
+        }
     }
 
     /// @return The id of the list's list box element, for a box that controls it (`aria-controls`).
@@ -231,6 +252,82 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 }
             }
         }
+    }
+
+    /// Goes to what is typed, as typing in a WAI-ARIA combobox's list does: into the list's quick
+    /// filter, if it has one, applied at once; otherwise to the next option that starts with what has
+    /// been typed (characters typed within half a second of each other are taken together).
+    ///
+    /// @param text The text typed, e.g. a character.
+    public void typeAhead(final String text) {
+        if (model.displayFilter()) {
+            quickFilter.type(text);
+            return;
+        }
+        final double now = Duration.currentTimeMillis();
+        typedPrefix = now - lastTypedMillis < TYPE_AHEAD_PAUSE_MILLIS
+                ? typedPrefix + text
+                : text;
+        lastTypedMillis = now;
+        // The same character typed again (e.g. "dd") goes on to the next option starting with it
+        final boolean repeated = isOneCharacterRepeated(typedPrefix);
+        final String prefix = (repeated
+                ? typedPrefix.substring(0, 1)
+                : typedPrefix).toLowerCase(Locale.ROOT);
+        final List<I> items = cellTable.getVisibleItems();
+        final int current = Math.max(cellTable.getKeyboardSelectedRow(), 0);
+        // One character (or the same one again) moves on from the option with the focus; more
+        // characters keep to it while it still matches
+        final int start = repeated
+                ? current + 1
+                : current;
+        for (int i = 0; i < items.size(); i++) {
+            final int row = (start + i) % items.size();
+            final String label = NullSafe.string(items.get(row).getLabel()).toLowerCase(Locale.ROOT);
+            if (label.startsWith(prefix)) {
+                cellTable.setKeyboardSelectedRow(row, true);
+                return;
+            }
+        }
+    }
+
+    // Whether the text is one character, perhaps typed more than once (e.g. "d" or "ddd")
+    private static boolean isOneCharacterRepeated(final String text) {
+        for (int i = 1; i < text.length(); i++) {
+            if (text.charAt(i) != text.charAt(0)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Chooses the option with the focus, as Enter does, which closes the list
+    private void chooseKeyboardSelected() {
+        final int row = cellTable.getKeyboardSelectedRow();
+        final List<I> items = cellTable.getVisibleItems();
+        if (row >= 0 && row < items.size()) {
+            selectionEventManager.doSelect(items.get(row),
+                    new SelectionType(true, false, false, false, false),
+                    true);
+        } else {
+            CloseEvent.fire(SelectionList.this);
+        }
+    }
+
+    /// @param event An event's key.
+    /// @return The key's value (e.g. `a`, or `ArrowUp`), as the browser names it.
+    static native String keyOf(NativeEvent event) /*-{
+        return event.key || "";
+    }-*/;
+
+    /// @param event A key event.
+    /// @param key   Its key (see [#keyOf(NativeEvent)]).
+    /// @return Whether the key types a character (with no Ctrl, Alt or Meta, which make it a shortcut).
+    static boolean isTypedCharacter(final NativeEvent event, final String key) {
+        return key.length() == 1
+               && !event.getCtrlKey()
+               && !event.getAltKey()
+               && !event.getMetaKey();
     }
 
     public void setKeyboardSelectionPolicy(final KeyboardSelectionPolicy policy) {
@@ -503,31 +600,44 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private void updatePath() {
         links.clear();
         if (navigationStates.isEmpty()) {
-            links.add(new Label(model.getPathRoot()));
+            links.add(createCurrentLevel(model.getPathRoot()));
         } else {
-            links.add(createLink(model.getPathRoot(), null));
+            links.add(createLevelButton(model.getPathRoot(), null));
         }
         for (int i = 0; i < navigationStates.size(); i++) {
-            links.add(new Label("/"));
+            links.add(createSeparator());
             final NavigationState<I> navigationState = navigationStates.get(i);
             final I selectedItem = navigationState.getSelected();
             if (i < navigationStates.size() - 1) {
-                links.add(createLink(selectedItem.getLabel(), selectedItem));
+                links.add(createLevelButton(selectedItem.getLabel(), selectedItem));
             } else {
-                links.add(new Label(selectedItem.getLabel()));
+                links.add(createCurrentLevel(selectedItem.getLabel()));
             }
         }
     }
 
-    private Hyperlink createLink(final String label, final I row) {
-        final Hyperlink link = new Hyperlink();
-        link.setText(label);
-        link.addHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                navigateBack(row, false, false);
-            }
-        }, ClickEvent.getType());
-        return link;
+    // A level above the current one. It goes back within the list rather than to another page, so
+    // it is a button that looks like a link
+    private LinkButton createLevelButton(final String label, final I row) {
+        final LinkButton button = new LinkButton(label);
+        button.addStyleName("selectionList-pathLink");
+        // The button is replaced as the path changes, so the list takes the focus
+        button.addClickHandler(event -> navigateBack(row, false, true));
+        return button;
+    }
+
+    // The level the list shows, which screen readers announce as the current one
+    private static Label createCurrentLevel(final String label) {
+        final Label current = new Label(label);
+        current.getElement().setAttribute("aria-current", "page");
+        return current;
+    }
+
+    // Screen readers needn't read the separators out
+    private static Label createSeparator() {
+        final Label separator = new Label("/");
+        separator.getElement().setAttribute("aria-hidden", "true");
+        return separator;
     }
 
     private void navigate(final I selectionItem,

@@ -155,23 +155,27 @@ public class ProcessorPresenter
         if (removeButton == null) {
             if (allowCreate) {
                 processorListPresenter.getView().getToolbar().setName("Processor actions");
-                addButton = processorListPresenter.getView().getToolbar().button(SvgImage.ADD, "Add Processor",
+                addButton = processorListPresenter.getView().getToolbar().button(SvgImage.ADD, "New Processor",
                         this::onAdd);
             }
 
-            editButton = processorListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit Processor",
+            editButton = processorListPresenter.getView().getToolbar().button(
+                    SvgImage.EDIT,
+                    "Edit Selected Processor",
                     this::onEdit);
             editButton.setEnabled(false);
 
             if (allowCreate) {
                 duplicateButton = processorListPresenter.getView().getToolbar().button(
                         SvgImage.COPY,
-                        "Duplicate Processor",
+                        "Duplicate Selected Processor",
                         this::onDuplicate);
                 duplicateButton.setEnabled(false);
             }
 
-            removeButton = processorListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete Processor",
+            removeButton = processorListPresenter.getView().getToolbar().button(
+                    SvgImage.DELETE,
+                    "Delete Selected Processors",
                     this::onRemove);
             removeButton.setEnabled(false);
 
@@ -191,11 +195,13 @@ public class ProcessorPresenter
             if (allowUpdate) {
                 batchEditButton = processorListPresenter.getView().getToolbar().button(
                         SvgImage.GENERATE,
-                        "Batch Edit Current Processors",
+                        "Batch Edit Filtered Processors",
                         this::onBatchEdit);
             }
 
-            showTasksButton = processorListPresenter.getView().getToolbar().button(SvgImage.JOBS, "Show Tasks",
+            showTasksButton = processorListPresenter.getView().getToolbar().button(
+                    SvgImage.JOBS,
+                    "Show Tasks for Selected Processor",
                     this::showTasksTab);
 
             enableButtons(false);

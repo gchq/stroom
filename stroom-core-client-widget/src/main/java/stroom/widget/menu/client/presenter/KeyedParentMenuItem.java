@@ -56,6 +56,11 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
         this.menuKey = menuKey;
     }
 
+    /// @return The key of the menu whose items are this item's sub menu.
+    MenuKey getMenuKey() {
+        return menuKey;
+    }
+
     @Override
     public Future<List<Item>> getChildren() {
         final FutureImpl<List<Item>> future = new FutureImpl<>();

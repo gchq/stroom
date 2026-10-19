@@ -58,10 +58,18 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
         this.processorProfileClient = processorProfileClient;
 
         processorProfileListPresenter.getView().getToolbar().setName("Profile actions");
-        newButton = processorProfileListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::add);
-        openButton = processorProfileListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        newButton = processorProfileListPresenter.getView().getToolbar().button(
+                SvgImage.ADD,
+                "New Processor Profile",
+                this::add);
+        openButton = processorProfileListPresenter.getView().getToolbar().button(
+                SvgImage.EDIT,
+                "Edit Selected Processor Profile",
+                this::edit);
         openButton.setEnabled(false);
-        deleteButton = processorProfileListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete",
+        deleteButton = processorProfileListPresenter.getView().getToolbar().button(
+                SvgImage.DELETE,
+                "Delete Selected Processor Profiles",
                 this::delete);
         deleteButton.setEnabled(false);
 

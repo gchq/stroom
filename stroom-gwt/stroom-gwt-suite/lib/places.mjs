@@ -23,7 +23,8 @@
 // looked unreached. Comparing runs needs the place, not the route.
 //
 
-const HOPS = new Set(['Main Menu', 'Show Menu']);
+// `Show Menu` is the AI dock's menu button as runs before #5406 named it, now `Show Main Menu`.
+const HOPS = new Set(['Main Menu', 'Show Menu', 'Show Main Menu']);
 
 /**
  * The node's kind, the area or document it belongs to, and the last two steps of its path, with

@@ -17,6 +17,7 @@
 package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.menu.client.presenter.MenuOpener;
 import stroom.widget.tooltip.client.FocusTooltip;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.MouseUtil;
@@ -65,6 +66,21 @@ public class ToolbarButton extends ButtonBase implements ButtonView {
     /// @param focusOnMouseDown Whether pressing the button focuses it.
     public void setFocusOnMouseDown(final boolean focusOnMouseDown) {
         this.focusOnMouseDown = focusOnMouseDown;
+    }
+
+    /// Marks the button as one that opens a menu, so screen readers announce that it does and
+    /// whether the menu is open. The menu must be opened with this button's element as its opener
+    /// ([stroom.widget.menu.client.presenter.ShowMenuEvent.Builder#opener]), which keeps the open
+    /// state up to date. In a template:
+    /// `<b:ToolbarButton svg="ELLIPSES_VERTICAL" title="Show Main Menu" opensMenu="true"/>`.
+    ///
+    /// @param opensMenu Whether the button opens a menu.
+    public void setOpensMenu(final boolean opensMenu) {
+        if (opensMenu) {
+            MenuOpener.mark(getElement());
+        } else {
+            MenuOpener.unmark(getElement());
+        }
     }
 
     /// @param icon The button's icon.

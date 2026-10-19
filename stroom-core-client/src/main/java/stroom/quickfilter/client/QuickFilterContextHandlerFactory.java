@@ -169,6 +169,7 @@ public class QuickFilterContextHandlerFactory {
             // As wide as the quick filter, as a combo box's list is, and lined up with it
             final Rect relativeRect = new Rect(quickFilter.getElement()).growY(MENU_GAP);
             ShowMenuEvent.builder()
+                    .name("Recent Filters")
                     .items(items)
                     .width(Math.max(quickFilter.getOffsetWidth(), MIN_MENU_WIDTH) - 2 * MENU_PADDING)
                     .popupPosition(new PopupPosition(relativeRect, PopupLocation.BELOW))

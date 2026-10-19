@@ -521,7 +521,7 @@ public class PipelinePathViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         caret.setAttribute(ARIA_EXPANDED, "false");
         final Element arrow = createContent(describeCaret(step));
         arrow.setClassName(CARET_CLASS + "-target");
-        arrow.appendChild(createIcon(SvgImage.DROP_DOWN, CARET_CLASS + "-arrow"));
+        arrow.appendChild(createIcon(SvgImage.ARROW_DOWN, CARET_CLASS + "-arrow"));
         final SvgImage hiddenSeverityIcon = getSeverityIcon(step.hiddenSeverity());
         if (hiddenSeverityIcon != null) {
             final Element badge = createIcon(hiddenSeverityIcon, BRANCH_SEVERITY_CLASS);

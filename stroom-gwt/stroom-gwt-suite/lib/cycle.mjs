@@ -245,7 +245,8 @@ export async function openScreen(page, { clickMenuItem, settle }, group, leaf) {
  * `spec` describes ONE thing that can be created, edited and deleted through the UI:
  *
  *   { name, menu: [group, leaf], nameField, seed, edited,
- *     create: 'New', edit: 'Edit', remove: 'Delete', confirm: true,
+ *     create: 'New Node Group', edit: 'Edit Selected Node Group', remove: 'Delete Selected Node Group',
+ *     confirm: true,
  *     writes: [{ method: 'POST', path: /\/api\/node\/nodeGroup\// }, …] }
  *
  * Returns a record: every phase with `ok` and why, whether the row leaked, and the writes the guard
@@ -380,7 +381,7 @@ export async function runCycle(page, spec, { guard, settle, log = () => {} }) {
       if (!(await pick(spec.seed))) throw new Error('could not select the new row');
       await settle(600);
       // Some screens interpolate the ROW's name into the button: User Groups offers
-      // `Edit group 'Administrators'`, not `Edit`. So a spec may give a function of the name.
+      // `Edit Group 'Administrators'`, not `Edit`. So a spec may give a function of the name.
       const editLabel = typeof spec.edit === 'function' ? spec.edit(spec.seed) : (spec.edit ?? 'Edit');
       if (!(await clickButton(page, editLabel))) throw new Error(`no "${editLabel}" button (is it disabled without a selection?)`);
       await settle(1000);
@@ -843,7 +844,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
       if (!(await dialogCaptions(page)).length) throw new Error('New opened no dialog');
       // The name box is the full-width one that is not the folder picker's quick filter.
       const nameBox = page.locator('.resizableDialog-popup, .dialog-popup').last()
-        .locator('input.gwt-TextBox.w-100:not(.quickFilter-textBox)').first();
+        .locator('input.text-field.w-100:not(.quickFilter-textBox)').first();
       await nameBox.fill(spec.seed, { timeout: 10_000 });
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the New dialog');
       await settle(2000);
@@ -881,7 +882,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
       if (!(await dialogCaptions(page)).length) throw new Error('Rename opened no dialog');
       if (!(await fillField(page, null, spec.edited)) && !(await fillField(page, 'Name', spec.edited))) {
         // A pre-filled box: fillField(null) wants an empty one, so take the dialog's only text box.
-        const box = page.locator('.resizableDialog-popup, .dialog-popup').last().locator('input.gwt-TextBox').first();
+        const box = page.locator('.resizableDialog-popup, .dialog-popup').last().locator('input.text-field').first();
         await box.fill(spec.edited, { timeout: 5_000 });
       }
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the Rename dialog');
@@ -949,7 +950,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
 export async function chooseInSelectionBox(page, label, item, settle) {
   const scope = page.locator('.dialog-popup, .resizableDialog-popup').last();
   const group = scope.locator('.form-group').filter({ has: page.locator('.form-group__label', { hasText: label }) }).first();
-  await group.locator('.SelectionBox .svgIconBox-icon-outer').first().click({ timeout: 5_000 });
+  await group.locator('.selection-box .svg-icon-box__icon').first().click({ timeout: 5_000 });
   await settle(600);
   const at = await page.evaluate((wanted) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
@@ -967,7 +968,7 @@ export async function chooseInSelectionBox(page, label, item, settle) {
   await page.mouse.down();
   await page.mouse.up();
   await settle(400);
-  return (await group.locator('.SelectionBox-renderBox').first().textContent()).replace(/\s+/g, ' ').trim();
+  return (await group.locator('.selection-box__value').first().textContent()).replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -1069,7 +1070,7 @@ export function permissionSteps({ user = 'admin', from = 'Owner', to = 'View', c
   };
   return [
     ['open its Permissions', async (ctx) => {
-      await ctx.menuPath(ctx.name, ['Permissions']);
+      await ctx.menuPath(ctx.name, ['Edit Permissions']);
       await ctx.settle(1500);
       const row = await readBack(ctx);
       if (row['Explicit Permission'] !== from) throw new Error(`"${user}" starts as "${row['Explicit Permission']}", not "${from}"`);
@@ -1090,9 +1091,9 @@ export function permissionSteps({ user = 'admin', from = 'Owner', to = 'View', c
  * back to "never had a status", and each change adds history, so the cycle makes an annotation of
  * its own and deletes it rather than changing the seeded one:
  *
- *     Create Annotation on an event row -> read its id from the editor tab (`#<id> <title>`)
+ *     New Annotation on an event row -> read its id from the editor tab (`#<id> <title>`)
  *     -> `from "Annotations"` -> select its row -> Change Status -> re-run, read the status
- *     -> Change Assigned To (Assign Yourself) -> re-run, read the assignee
+ *     -> Change Assignee (Assign Yourself) -> re-run, read the assignee
  *     -> Delete Annotation in its editor -> re-run, read it absent
  *
  * `spec.query` names any Query document: its text is replaced in the browser and never saved.
@@ -1152,7 +1153,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
   const annotate = async (item) => {
     if (!(await selectRow(page, `${id}${title}`))) throw new Error(`no row for annotation #${id}`);
     await settle(500);
-    if (!(await clickButton(page, 'Annotate'))) throw new Error('no Annotate button');
+    if (!(await clickButton(page, 'Annotate Selected Rows'))) throw new Error('no Annotate Selected Rows button');
     await settle(800);
     if (!(await clickMenuItem(page, item))) throw new Error(`no "${item}" in the Annotate menu — is the row selected?`);
     await settle(1500);
@@ -1174,15 +1175,15 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     })) return rec;
 
     const allowedBefore = (guard.allowed ?? []).length;
-    const madeIt = await phase('create an annotation on an event (Create Annotation)', async () => {
+    const madeIt = await phase('create an annotation on an event (New Annotation)', async () => {
       await runQuery(spec.eventQuery);
       const first = (await readRows(page))[0];
       if (!first) throw new Error(`"${spec.eventQuery}" returned no rows`);
       if (!(await selectRow(page, first))) throw new Error('could not select the first event row');
       await settle(500);
-      if (!(await clickButton(page, 'Annotate'))) throw new Error('no Annotate button');
+      if (!(await clickButton(page, 'Annotate Selected Rows'))) throw new Error('no Annotate Selected Rows button');
       await settle(800);
-      if (!(await clickMenuItem(page, 'Create Annotation'))) throw new Error('no "Create Annotation" in the Annotate menu');
+      if (!(await clickMenuItem(page, 'New Annotation'))) throw new Error('no "New Annotation" in the Annotate menu');
       await settle(3000);
       const said = await alertText();
       if (said) throw new Error(`the create was refused: "${String(said).slice(0, 300)}"`);
@@ -1218,8 +1219,8 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       return `"${spec.status}" after re-running the query`;
     })) return rec;
 
-    await phase('change it to assigned to me (Change Assigned To)', async () => {
-      await annotate('Change Assigned To');
+    await phase('change it to assigned to me (Change Assignee)', async () => {
+      await annotate('Change Assignee');
       const dlg = page.locator('.dialog-popup, .resizableDialog-popup').last();
       await dlg.locator('.annotationAssignYourself').first().click({ timeout: 5_000 });
       await settle(600);
@@ -1261,7 +1262,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       return `"${comment}" in the history after reopening the editor`;
     })) {
       await phase('change the comment (Edit Comment)', async () => {
-        // A MOUSEDOWN on the entry opens its Edit Entry / Delete Entry menu (showEntryEditMenu);
+        // A MOUSEDOWN on the entry opens its Edit Comment / Delete Entry menu (showEntryEditMenu);
         // COMMENT is entry type 4.
         const box = await page.evaluate(() => {
           const el = [...document.querySelectorAll('[entryType="4"]')].find((e) => e.offsetWidth > 0);
@@ -1275,7 +1276,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
         await page.mouse.down();
         await page.mouse.up();
         await settle(600);
-        if (!(await clickMenuItem(page, 'Edit Entry'))) throw new Error('no "Edit Entry" in the entry\'s menu');
+        if (!(await clickMenuItem(page, 'Edit Comment'))) throw new Error('no "Edit Comment" in the entry\'s menu');
         await settle(1200);
         // The dialog's text is an Ace editor (CommentEditPresenter's editorPresenter), whose textarea
         // is only Ace's input catcher; and the query's own Ace editor is on the page behind it.
@@ -1431,7 +1432,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
     const allowedBefore = (guard.allowed ?? []).length;
     const done = await phase('delete the stream (Confirm Delete)', async () => {
       await tick();
-      await press('Delete');
+      await press('Delete Selected Streams');
       await okIn('Confirm');
       await okIn('Confirm Delete');
       const text = await said();
@@ -1452,12 +1453,14 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
     if (deleted) {
       const back = await phase('restore it (Confirm Restore, compensation)', async () => {
         await open();
-        if (!(await clickButton(page, 'Filter'))) throw new Error('no Filter button');
+        if (!(await clickButton(page, 'Filter Streams'))) throw new Error('no Filter Streams button');
         await settle(1200);
         const dlg = page.locator('.dialog-popup, .resizableDialog-popup').last();
         await dlg.getByText('Status = Unlocked', { exact: true }).click({ timeout: 5_000 });
         await settle(400);
-        if (!(await clickButton(page, 'Disable'))) throw new Error('no Disable for the Status term');
+        if (!(await clickButton(page, 'Disable Selected Expression Item'))) {
+          throw new Error('no Disable Selected Expression Item for the Status term');
+        }
         await settle(400);
         await okIn('Filter Streams');
         // "You are setting advanced filters! ..."
@@ -1465,7 +1468,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
         await settle(1500);
         if (!(await shown())) throw new Error(`the deleted row holding "${spec.row}" is not listed with the Status term off`);
         await tick();
-        await press('Restore');
+        await press('Restore Selected Streams');
         await okIn('Confirm');
         await okIn('Confirm Restore');
         const text = await said();
@@ -1498,9 +1501,14 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
  * group's reopened dialog, then delete it and read it gone. The group is new and no feed or index
  * uses it, so Stroom writes nothing to the volume; `path` should be a scratch directory.
  *
- * `fields` are any other boxes the Add Volume dialog needs filled (an index volume's "Node").
+ * `fields` are any other boxes the new volume's dialog needs filled (an index volume's "Node").
+ *
+ * `labels` names the buttons, which say what they act on: `{ editGroup, newVolume, deleteVolume }`,
+ * e.g. "Edit Selected Data Volume Group", "New Data Volume", "Delete Selected Data Volumes". The
+ * dialog `newVolume` opens is captioned the same as the button (e.g. "New Data Volume").
  */
-export function volumeSteps({ path, fields = {} }) {
+export function volumeSteps({ path, fields = {}, labels }) {
+  const { editGroup, newVolume, deleteVolume } = labels;
   /** The top dialog's grid rows as text. */
   const dialogRows = (page) => page.evaluate(() => {
     const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
@@ -1512,7 +1520,7 @@ export function volumeSteps({ path, fields = {} }) {
     await closeAnyDialogs(page, settle);
     if (!(await pick(name))) throw new Error(`could not select "${name}"`);
     await settle(400);
-    if (!(await clickButton(page, 'Edit'))) throw new Error('no Edit for the group');
+    if (!(await clickButton(page, editGroup))) throw new Error(`no "${editGroup}" for the group`);
     await settle(1500);
     if (!(await dialogCaptions(page)).length) throw new Error('the group\'s dialog did not open');
   };
@@ -1528,20 +1536,20 @@ export function volumeSteps({ path, fields = {} }) {
     return rows.some((r) => r.includes(path));
   };
   return [
-    [`add a volume at the scratch path (Add Volume)`, async (ctx) => {
+    [`add a volume at the scratch path (${newVolume})`, async (ctx) => {
       const { page, settle } = ctx;
       await openGroup(ctx);
-      if (!(await clickButton(page, 'New'))) throw new Error('no New in the group\'s dialog');
+      if (!(await clickButton(page, newVolume))) throw new Error(`no "${newVolume}" in the group's dialog`);
       await settle(1500);
       const top = (await dialogCaptions(page)).at(-1);
-      if (top !== 'Add Volume') throw new Error(`expected "Add Volume", found [${(await dialogCaptions(page)).join(', ')}]`);
+      if (top !== newVolume) throw new Error(`expected "${newVolume}", found [${(await dialogCaptions(page)).join(', ')}]`);
       // `{ choose }` is a selection box (an index volume's Node), anything else is typed.
       for (const [label, value] of Object.entries(fields)) {
         if (value?.choose) await chooseInSelectionBox(page, label, value.choose, settle);
-        else if (!(await fillField(page, label, value))) throw new Error(`no "${label}" box in Add Volume`);
+        else if (!(await fillField(page, label, value))) throw new Error(`no "${label}" box in ${newVolume}`);
       }
-      if (!(await fillField(page, 'Path', path))) throw new Error('no "Path" box in Add Volume');
-      if (!(await clickButton(page, 'OK'))) throw new Error('no OK in Add Volume');
+      if (!(await fillField(page, 'Path', path))) throw new Error(`no "Path" box in ${newVolume}`);
+      if (!(await clickButton(page, 'OK'))) throw new Error(`no OK in ${newVolume}`);
       await settle(2000);
       // A path that does not exist yet is a warning to confirm, not an error.
       if ((await dialogCaptions(page)).at(-1) === 'Confirm') {
@@ -1551,9 +1559,9 @@ export function volumeSteps({ path, fields = {} }) {
         ctx.warned = said;
       }
       const now = await dialogCaptions(page);
-      if (now.includes('Add Volume') || now.some((c) => /alert/i.test(c))) {
+      if (now.includes(newVolume) || now.some((c) => /alert/i.test(c))) {
         const said = (await readTopDialogBody(page))?.text ?? '';
-        throw new Error(`Add Volume did not close: [${now.join(', ')}] ${said.slice(0, 300)}`);
+        throw new Error(`${newVolume} did not close: [${now.join(', ')}] ${said.slice(0, 300)}`);
       }
       await closeGroup(page, settle);
       if (!(await listed(ctx))) throw new Error(`"${path}" is not in the group's volumes after reopening it`);
@@ -1574,7 +1582,7 @@ export function volumeSteps({ path, fields = {} }) {
       if (!box) { await closeGroup(page, settle); return 'no volume at the scratch path to delete'; }
       await page.mouse.click(box.x, box.y);
       await settle(600);
-      if (!(await clickButton(page, 'Delete'))) throw new Error('no enabled Delete for the volume');
+      if (!(await clickButton(page, deleteVolume))) throw new Error(`no enabled "${deleteVolume}" for the volume`);
       await settle(800);
       // "Are you sure you want to delete the selected volume?"
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the confirm');
@@ -1632,7 +1640,7 @@ export async function runProcessorBatchCycle(page, spec, { guard, settle, log = 
   });
   /** Choose a change in the batch dialog and see it through its Confirm and its info Alert. */
   const batch = async (change) => {
-    if (!(await clickButton(page, 'Batch Edit Current Processors'))) throw new Error('no "Batch Edit Current Processors" button');
+    if (!(await clickButton(page, 'Batch Edit Filtered Processors'))) throw new Error('no "Batch Edit Filtered Processors" button');
     await settle(2000);
     if ((await dialogCaptions(page)).at(-1) !== 'Batch Change All Filtered Processors') {
       throw new Error(`no batch dialog: [${(await dialogCaptions(page)).join(', ')}]`);

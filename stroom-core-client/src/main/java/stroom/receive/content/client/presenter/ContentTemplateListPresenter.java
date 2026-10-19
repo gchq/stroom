@@ -255,9 +255,19 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
         final List<Item> items = actionMenuItemProvider.apply(row);
         ShowMenuEvent
                 .builder()
+                .name(getActionMenuName(row))
                 .items(items)
                 .popupPosition(popupPosition)
                 .fire(this);
+    }
+
+    // e.g. "Actions for template 3 'My template'"
+    private static String getActionMenuName(final ContentTemplate row) {
+        final String name = row.getName();
+        return "Actions for template " + row.getTemplateNumber()
+               + (NullSafe.isBlankString(name)
+                ? ""
+                : " '" + name + "'");
     }
 
 //    private void addTickBoxColumn(final String name,

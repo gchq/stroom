@@ -16,6 +16,7 @@ each piece of work.
    - Its own stylesheet, `<block>.css`, imported by `app.css`: BEM names, states from ARIA
      attributes (a state with no ARIA attribute is a block modifier, said so in the stylesheet),
      colours only from theme tokens.
+   - The fewest elements the pattern and the layout need: no wrappers that only carry a style.
    - Workbench stories: behaviour, keyboard, names and roles, a UiBinder template, and comparison
      stories showing the old widget above the new one with Stroom's real content.
    - Real-input checks (real keys and mouse) in the component's own file under
@@ -38,30 +39,109 @@ Uses are rough: the number of files in `stroom-core-client` and the dashboard mo
 the component's classes (some names also match related classes), to help prioritise. Cells with
 `?` are settled by each component's research pass.
 
-| Component | Old classes | New | Pattern | Replace / retrofit | Uses | Status | Known gaps |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Toolbars | `ButtonPanel`, `SvgButton`, `InlineSvgButton`, `InlineSvgToggleButton`, `SvgToggleButton`, `BaseSvgButton`, `TableExpandButton`, `TableCollapseButton`, `HelpButton`, `Preset`, `SvgPresets` | `Toolbar`, `ToolbarRow`, `ToolbarSeparator`, `ToolbarButton`, `ToolbarToggleButton`, `ButtonGroupFocus`, `FocusTooltip`, `GroupLevelButtons` | toolbar | replaced | ~100 | done: every icon button is made in a toolbar (`toolbar.button`, `toolbar.toggle`, `toolbar.refresh` or a `<b:Toolbar>` child); the old button classes, `ButtonPanel`, `PagerView.addButton` and `Preset`/`SvgPresets` are deleted | buttons are 22px with a 2px gap, under 2.5.8's 24px (most of the `target-size` baseline entries); some toolbars unnamed; text/icon display preference (later); not tried with a screen reader |
-| Floating action button | `FabButton` | — | button | retrofit | ~8 | in part (one tab stop) | BEM pass not done (`stroom-button-fab`, `face`) |
-| Refresh button | `RefreshButton` | (a `ToolbarButton`, made by `Toolbar.refresh`) | button | retrofit | pagers, data navigators, visualisations | done (a visualisation's pause button is in a toolbar of its own) | — |
-| Split panes | `ThinSplitLayoutPanel`, `MySplitLayoutPanel` | `SplitPane` | window splitter | replaced | ~43 (37 thin, 6 wide) | done: every view uses `SplitPane` (User Groups first, then by area, ending with the main screen's explorer and docked AI chat); the old panels, their CSS, their stories and the comparison stories are deleted | 2.5.8 where splitters meet in a T at a centre (accepted, see below); theme colours to revisit (the line is drawn in `--border-color`, as other borders are: 1.3:1 dark, 1:1 light, under the 3:1 of 1.4.11); not tried with a screen reader or touch device; `ReadingOrder` deleted (no views need it now); views that call `onResize()` to force a relayout need checking (e.g. stepping) |
-| Dashboard splitters | `FlexLayout`, `Splitter` | (the same classes, with `FocusMemory`, `LayoutSizes` and `flex-layout.css`) | window splitter | retrofit (not `SplitPane`: a dashboard resizes on release, and its splitters must sit above the visualisations' floating frames) | every dashboard | built: splitters are tab stops in layout order (each after the panel before it, the dashboard's own width and height last), named for the panels either side ("Resize Query and Table"), with a value; arrow keys, Shift, Home and End; the focus is kept when the layout is rebuilt (maximise, restore); BEM CSS (`flex-layout.css`) | drags are mouse only (no touch or pen) and there is no live resize; Tab from a visualisation's frame goes to the end of the page; a splitter's name isn't refreshed when a tab is renamed while it has the focus; no real-input checks (drags are tested with synthetic events); line and focus contrast not measured; new `label` and `frame-title` baseline entries (from the dashboard content the stories show); not tried with a screen reader |
-| Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (in `AbstractTabBar`, shared with link tabs) | every document | in part: tab list, keys (and the tab menu from the keyboard), focus ring, panel link, sidebar toggle name and BEM CSS (`tab-bar.css`) done | left: link tabs are about 16px tall, under 2.5.8's 24px (baselined for the Data Retention impact stories, where one sits above a toolbar); link tab bars have no tab list name; a tab panel holding nothing focusable isn't a tab stop; a document tab's name is cut at 50 characters (with "..."), so a screen reader hears the shortened name; a tab's loading spinner isn't announced |
-| Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | in part: as document tabs (shared `AbstractTabBar`) | as document tabs |
-| Data grids | `MyDataGrid`, `MyCellTable`, `PagerViewImpl` | — | grid | probably retrofit (GWT cell table, many features) | ~78 (+14 cell tables, ~86 pagers) | not started | one tab stop with arrows inside; header and cell semantics; sortable headers are `role="button"` |
-| Explorer tree | explorer tree (cell tree, `explorerCell`), `EntityTreePresenter`, pickers | — | tree | ? | ~66 | not started | tree roles and keyboard |
-| Menus | `Menu`, `MenuPresenter`, menu items | — | menu / menubar | retrofit | ~19 places show menus | in part (items have `role="menuitem"`; `MenuRequest` lets widgets ask for one) | menu buttons don't say they open a menu (`ISSUES.md`) |
-| Dialogs and popups | popup support, `ResizableDialog` | — | dialog | ? | ~142 | ? | focus is restored on close (`CurrentFocus`); trapping, naming and Escape to check |
-| Quick filter | `QuickFilter` | — | search field | retrofit | ~83 | in part: Clear and syntax help are a toolbar (`quickFilter-toolbar`, one tab stop), in the form help icon's colour, Clear with its own icon (`CLEAR_OUTLINE`) | buttons below 24px (`target-size` baseline entries); not a `role="search"` or `type="search"` field; its syntax help is its own popup, not the shared `help-popup`; BEM pass not done (`quickFilter-…` classes) |
-| Form groups | `FormGroup`, `FormLabel`, `HelpButton` | `FormGroupHelpButton` | — | retrofit | most forms | done: its own help button (out of the tab order, F1 shows the same help), BEM names (`form-group__label-row`, `__label`, `__help`, `__description`, `__feedback`, …) in `form.css`, help popup `help-popup` | the disabled description's contrast (baselined, `ISSUES.md`) |
-| Password box | `PasswordTextBox` and a copied show/hide overlay | `PasswordBox` | text field with a toggle button | replaced | 9 fields | done: one control for every password field, its show/hide button in a toolbar and named for what it does, with a live region | — |
-| Selection box | `SelectionBox`, `BaseSelectionBox` | — | combobox | ? | ~211 | not started | no accessible name in places (`label` baseline entries); combobox roles and keys to check |
-| Tick box | `TickBox`, `CustomCheckBox` | — | checkbox | ? | ~154 | not started | no accessible name in places, e.g. in grid rows (jobs and nodes screens; `label` baseline entries) |
-| Value spinner | `ValueSpinner` | — | spinbutton | ? | ~58 | not started | no accessible name in places (`label` baseline entries) |
-| Date and time | `DateTimeBox`, `TimeBox`, `CustomDatePicker`, `DefaultMonthSelector`, `SvgIconBox` | — | text field, grid (calendar) | ? | ~16 | in part: the calendar's previous and next buttons are named "Year" and "Month" toolbars, one tab stop each | the calendar icon is a clickable `div` (`SvgIconBox`); the calendar grid's keys and names; no accessible name in places (`label` baseline entries) |
-| Text inputs | `TextBox`, `TextArea`, `LineColInput` | — | text field | retrofit | many | not started | no accessible name in places (`label` baseline entries) |
-| Code editor | Ace (`EditorPresenter`, `EditorViewImpl`) | — | — | retrofit around Ace | ~34 | not started | keyboard trap: Tab indents (`ISSUES.md`); Ace sources need human approval to change |
-| Layout panels | `DockLayoutPanel` and friends | (grid/flex, `SplitPane`) | — | replace as screens are touched | 6 (the floor map views) | in part: every view had its `DockLayoutPanel` replaced with grid or flex layout (`9dc39a1829`), but the floor map views added since use it again (`FloorMapEditorViewImpl`, `FloorMapFactListViewImpl`, `FloorMapGroupsViewImpl`, `FloorMapTimeListViewImpl`, `FloorMapTrackingViewImpl` and the template `FloorMapMapViewImpl.ui.xml`) | DOM order can differ from layout where a panel places its children (`ReadingOrder` is deleted, as no split panel is left); the floor map views not checked |
-| Content focus | tab pane | `ContentFocus` | — | added | all tabs | done (#5405) | — |
+| Component | Session | Old classes | New | Pattern | Replace / retrofit | Uses | Status | Known gaps |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Text inputs | 1 Inputs | `TextBox`, `TextArea`, `LineColInput` | (the same classes, with `text-field.css` and `linecolinput.css`) | text field | retrofit | many (~132 text boxes and ~39 text areas in templates) | built: every text box and text area is the BEM block `text-field` (a text area with `text-field--multiline`), given by Stroom's copies of GWT's `TextBox` and `TextArea` (one line each, approved), in its own stylesheet (`text-field.css`), which has all its looks (size, disabled, read only, keyboard focus, invalid from `aria-invalid`, placeholder, browser autofill), each at the weight of the rule it replaced, as `stroom.css`'s rules for bare inputs leave text fields out; the password box's input is a text field too; radio buttons' looks are in `radio-button.css`; the `.gwt-TextBox` and `.gwt-TextArea` rules in `stroom.css`, `standard.css` and `standard_mod.css` are gone; `LineColInput` is the block `line-col-input`, marking a value that is no position `aria-invalid` (it was red text from a `highlight` class); unnamed fields on Stroom's screens named (the dashboard's Text Input and Key Value Input, for their component; the annotation editor's Title and Subject; a pipeline property's Value; Query Info; Dependency Information; the default activity form's fields, in their labels), and the annotation history's copy box hidden from screen readers | `stroom.css` still gives bare `input`, `textarea` and `select` elements the field look, for inputs with no block of their own (hand-built forms, checkboxes, file inputs, and nine text fields whose template replaces the class with `styleName`: the pager's two page boxes, the query data box, the annotation editor's Title, Subject and comment, two include/exclude filter areas and Create Multiple Users' batch); GWT's `ValueBoxBase` still adds a `text-field-readonly` class (styled by nothing; the `[readonly]` attribute is used); a site's own activity form needs its own labels; not tried with a screen reader |
+| Password box | 1 Inputs | `PasswordTextBox` and a copied show/hide overlay | `PasswordBox` | text field with a toggle button | replaced | 9 fields | done: one control for every password field, its show/hide button in a toolbar and named for what it does, with a live region | — |
+| Quick filter | 1 Inputs | `QuickFilter` | — | search field | retrofit | ~83 | in part: Clear and syntax help are a toolbar (`quickFilter-toolbar`, one tab stop), in the form help icon's colour, Clear with its own icon (`CLEAR_OUTLINE`) | buttons below 24px (`target-size` baseline entries); not a `role="search"` or `type="search"` field; its syntax help is its own popup, not the shared `help-popup`; BEM pass not done (`quickFilter-…` classes) |
+| Form groups | 1 Inputs | `FormGroup`, `FormLabel`, `HelpButton` | `FormGroupHelpButton` | — | retrofit | most forms | done: its own help button (out of the tab order, F1 shows the same help), BEM names (`form-group__label-row`, `__label`, `__help`, `__description`, `__feedback`, …) in `form.css`, help popup `help-popup` | the disabled description's contrast (baselined, `ISSUES.md`) |
+| Selection box | 1 Inputs | `SelectionBox`, `BaseSelectionBox`, `SelectionPopup`, `SelectionList`, `SvgIconBox` | (the same classes, with `selection-box.css` and `selection-popup.css`) | combobox | retrofit | ~211 | built: the WAI-ARIA combobox's keys (Enter, Down, Up and Alt+Down open the list, and Space and typing a character in a box that can't be typed in; in the list, Enter or Alt+Up chooses, Escape closes, and typing goes to the list's quick filter, or to the next option starting with what was typed); its drop-down arrow is the value spinner's (`SvgIconBox.setDropDownWidget`, a picture hidden from screen readers), as is QuickFilter's Recent Filters arrow; its value stays on one line, ending in an ellipsis clear of the arrow; BEM CSS (`selection-box.css`, `selection-popup.css`, `svg-icon-box.css`); `SelectionBox.css`, the global `pointer` class and `DROP_DOWN` are deleted | no accessible name in places (`label` baseline entries); not tried with a screen reader; the list's own classes (`selectionList-*`, in `components.css`) aren't BEM yet; Home and End in the closed box don't open the list at its ends (optional in the pattern) |
+| Document and user pickers | 1 Inputs | `DocSelectionBoxPresenter`, `UserRefSelectionBoxPresenter`, `DropDownView` | — | combobox (its list a tree, for documents) | retrofit, with the selection box | ~49 (37 document, 12 user) | not started | no roles, names or keys of their own; whether they can share the selection box's keys and popup is for the research pass |
+| Tick box | 1 Inputs | `TickBox`, `CustomCheckBox`, `TickBoxCell` | — | checkbox | ? | ~154 | not started | no accessible name in places, e.g. in grid rows (jobs and nodes screens; `label` baseline entries) |
+| Value spinner | 1 Inputs | `ValueSpinner`, `Spinner`, `ValueSpinnerCell` | (the same classes, with `value-spinner.css`) | spinbutton | retrofit | ~58 | built: the field is a spin button (`aria-valuenow`, `-min`, `-max`, `-valuetext`) with Up, Down, Page Up, Page Down, Home and End; the arrows are 24px pointer-only targets inside its border (no tab stop, hidden from screen readers; mouse, finger or pen); a rejected value is put back and explained (in the form group's feedback, or under the field) and announced; BEM CSS (`value-spinner.css`); the component's own `label` baseline entries are gone, and no screen story has an unnamed spinner; the data grid's `ValueSpinnerCell` looks the same (the widget's markup and stylesheet, `value-spinner--cell`, in 110px columns with 28px rows), its field a named spin button with the same keys while it has the focus, and its arrows step it with the mouse (a finger's tap steps once) | not tried with a screen reader (VoiceOver on iOS may not step a custom spin button by swiping, though the value can still be typed); Home and End go to the bounds rather than moving the caret; its default width is now 96px (was 60px), for screens to check at rollout; the grid's spinner can't be reached from the keyboard (its field is `tabindex="-1"`, waiting on the data grid's keyboard pattern), is named by its column but not its row, changes a typed value silently (non-digits dropped, then kept within its bounds), doesn't repeat while a finger is held, and can't stop Page Up and Page Down scrolling, as the grid hands a cell its events after the browser has handled them |
+| Colour box | 1 Inputs | `ColourBox`, `ColourInputCell` | — | text field with a colour picker | ? | ~7 | not started | ? |
+| File upload | 1 Inputs | `CustomFileUpload` | — | button (a native file input) | retrofit | ~14 | not started | ? |
+| Icon picker | 1 Inputs | `FloorMapIconPicker` | — | listbox or grid | ? | 2 | not started | BEM names (`floormap-icon-picker__*`), in `stroom-floormap.css` |
+| Time zone | 1 Inputs | `TimeZoneWidget` | — | ? | ? | ~4 | not started | ? |
+| Term editor | 1 Inputs | `TermEditor`, `OperatorEditor` | — | (fields inside the expression tree) | retrofit, with the expression tree | ~4 (every expression) | not started | `TermEditor.css` not BEM (`termEditor-*`); its keys go with the expression tree's |
+| Raw GWT controls | 1 Inputs | `ListBox`, `IntegerBox`, `RadioButton`, `CheckBox` | (the controls above) | — | replace | ~12 (7, 2, 2, 1) | not started | each use to be replaced by a selection box, value spinner, radio group or tick box |
+| Date and time | 2 Date and time | `DateTimeBox`, `TimeBox`, `CustomDatePicker`, `DefaultMonthSelector`, `SvgIconBox`, `MyDateBox`, `CustomDateBox`, `DurationPicker` | — | text field, grid (calendar) | ? | ~16 (+17 date boxes, 15 duration pickers) | in part: the calendar's previous and next buttons are named "Year" and "Month" toolbars, one tab stop each; the year and month rows are 4px apart, so a box's focus ring doesn't cover the other; the calendar and clock icons are `SvgIconBox` pictures (BEM, `svg-icon-box.css`), hidden from screen readers, as Enter in the field opens the same dialog | the calendar grid's keys and names; no accessible name in places (`label` baseline entries) |
+| Schedule box | 2 Date and time | `ScheduleBox` | — | text field with a dialog button | retrofit | ~9 | not started | `ScheduleBox.css` not BEM (`ScheduleBox-*`) |
+| Time range selector | 2 Date and time | `TimeRangeSelector`, `TimeRangePopup` | — | combobox or button opening a dialog | ? | ~4 (every query) | not started | styles in `components.css` (`timeRange-*`), not BEM |
+| Menus | 3 Overlays | `Menu`, `MenuPresenter`, `MenuViewImpl`, `MenuItemCell`, `MenuOpener`, `EditorMenuPresenter`, context menus (`HasContextMenus`, `HasContextMenusCell`), the grid's `ActionMenuCell` and `HoverActionMenuCell` | — | menu / menubar, and menu buttons | retrofit | ~19 places show menus | in part (items have `role="menuitem"`; `MenuRequest` lets widgets ask for one) | menu buttons don't say they open a menu (`ISSUES.md`); BEM pass not done (`menuBar`, `menuItem`) |
+| Dialogs | 3 Overlays | `ResizableDialog`, `Dialog`, `DialogButtons`, `PopupManager`, `PopupSupportImpl`, alerts and confirmations (`CommonAlertPresenter`) | — | dialog (modal), alertdialog | retrofit | ~142 | in part: `role="dialog"`, `aria-modal`, named by its title (`aria-labelledby`); the focus is put back on close (`CurrentFocus`); toolbars in a dialog keep their role, though it is laid out hidden (`ButtonGroupFocus`) | trapping the focus and Escape to check; alerts aren't `alertdialog`s; BEM pass not done (`dialog-*`, `resizableDialog-*`) |
+| Popups | 3 Overlays | `SimplePopup`, `SimplePopupLayout`, `AbstractPopupPanel`, `Popup`, `IndicatorPopup`, `TextBoxPopup`, `ExplorerPopupPresenter`, the popup positioner | — | non-modal dialog, or none, case by case | retrofit | ? | not started | a popup that belongs to an input control is in that control's row (`SelectionPopup` and `DocSelectionPopup` with the selection box; `DateTimePopup`, `TimePopup`, `SchedulePopup` and `TimeRangePopup` with date and time); a lot of nesting (`popupContent` > `simplePopup-container` > two backgrounds > content); BEM pass not done (`simplePopup-*`, `popupSupport-*`) |
+| Tooltips and help popups | 3 Overlays | `FocusTooltip`, `TooltipPresenter`, the form group's help popup, the quick filter's syntax help | — | tooltip, non-modal dialog | retrofit | every button, most forms | in part: the form group's help popup is shared (`help-popup`) | the quick filter's syntax help is a popup of its own, not `help-popup`; a tooltip takes a button's title while it shows |
+| Data grids | 4 Grids | `MyDataGrid`, `PagerViewImpl` | — | grid | probably retrofit (GWT cell table, many features) | ~78 (+~86 pagers) | not started | one tab stop with arrows inside; header and cell semantics; sortable headers are `role="button"`; cells get their events after the browser has handled them (`AbstractHasData.onBrowserEvent` defers them), so a cell can't `preventDefault()` one, and touch events don't reach cells |
+| Cell tables | 4 Grids | `MyCellTable` | — | grid (or table, where read only) | ? | ~14 | not started | as data grids: no header or cell semantics, no keyboard inside; whether each one is a grid or a plain table is for its research pass |
+| Explorer tree | 5 Trees | explorer tree (cell tree, `explorerCell`), `EntityTreePresenter`, pickers | — | tree | ? | ~66 | not started | tree roles and keyboard |
+| Expression tree | 5 Trees | `ExpressionTreePresenter`, `ExpressionTreeViewImpl`, `ExpressionTreePanel`, `ExpressionItemBox`, `TermEditor` | — | tree | ? | every query, dashboard query and filter (~17 files) | not started | no roles, names or keys; terms are edited in place, so the tree's keys and the term editor's fields need working out together |
+| Pipeline tree | 5 Trees | `PipelineTreePresenter`, `PipelineTreeViewImpl`, `PipelineTreePanel`, `PipelineElementBox`, `DraggableTreePanel` | — | tree | retrofit | pipeline structure editor, stepping filter dialog | building, on branch `stepping_display` (not on this branch): a `tree` with `treeitem`s (level, position, selected), arrow keys, and moving elements with Ctrl+X and Ctrl+V (a keyboard alternative to dragging) | here: no roles or keys, mouse-only drag; on `stepping_display`: `PipelineElementBox.css` not BEM |
+| Pipeline bar | 5 Trees | (the stepping screen's pipeline tree) | `PipelinePath`, `PipelinePathViewImpl`, `PipelinePathPresenter` | toolbar, with menu buttons at forks | replaced (stepping screen only) | stepping screen | building, on branch `stepping_display` (not on this branch): a chevron bar showing one path, with drop downs at forks, severity icons, forced colours and announced progress; BEM CSS (`pipeline-path.css`) | not on this branch; not tried with a screen reader |
+| Code editor | 6 Code editor | Ace (`EditorPresenter`, `EditorViewImpl`) | — | — | retrofit around Ace | ~34 | not started | keyboard trap: Tab indents (`ISSUES.md`); Ace sources need human approval to change |
+| Toolbars | Tidy-ups | `ButtonPanel`, `SvgButton`, `InlineSvgButton`, `InlineSvgToggleButton`, `SvgToggleButton`, `BaseSvgButton`, `TableExpandButton`, `TableCollapseButton`, `HelpButton`, `Preset`, `SvgPresets` | `Toolbar`, `ToolbarRow`, `ToolbarSeparator`, `ToolbarButton`, `ToolbarToggleButton`, `ButtonGroupFocus`, `FocusTooltip`, `GroupLevelButtons` | toolbar | replaced | ~100 | done: every icon button is made in a toolbar (`toolbar.button`, `toolbar.toggle`, `toolbar.refresh` or a `<b:Toolbar>` child); the old button classes, `ButtonPanel`, `PagerView.addButton` and `Preset`/`SvgPresets` are deleted | buttons are 22px with a 2px gap, under 2.5.8's 24px (most of the `target-size` baseline entries); some toolbars unnamed; text/icon display preference (later); not tried with a screen reader |
+| Floating action button | Tidy-ups | `FabButton` | — | button | retrofit | ~8 | in part (one tab stop) | BEM pass not done (`stroom-button-fab`, `face`) |
+| Refresh button | Tidy-ups | `RefreshButton` | (a `ToolbarButton`, made by `Toolbar.refresh`) | button | retrofit | pagers, data navigators, visualisations | done (a visualisation's pause button is in a toolbar of its own) | — |
+| Split panes | Tidy-ups | `ThinSplitLayoutPanel`, `MySplitLayoutPanel` | `SplitPane` | window splitter | replaced | ~43 (37 thin, 6 wide) | done: every view uses `SplitPane` (User Groups first, then by area, ending with the main screen's explorer and docked AI chat); the old panels, their CSS, their stories and the comparison stories are deleted | 2.5.8 where splitters meet in a T at a centre (accepted, see below); theme colours to revisit (the line is drawn in `--border-color`, as other borders are: 1.3:1 dark, 1:1 light, under the 3:1 of 1.4.11); not tried with a screen reader or touch device; `ReadingOrder` deleted (no views need it now); views that call `onResize()` to force a relayout need checking (e.g. stepping) |
+| Dashboard splitters | Tidy-ups | `FlexLayout`, `Splitter` | (the same classes, with `FocusMemory`, `LayoutSizes` and `flex-layout.css`) | window splitter | retrofit (not `SplitPane`: a dashboard resizes on release, and its splitters must sit above the visualisations' floating frames) | every dashboard | built: splitters are tab stops in layout order (each after the panel before it, the dashboard's own width and height last), named for the panels either side ("Resize Query and Table"), with a value; arrow keys, Shift, Home and End; the focus is kept when the layout is rebuilt (maximise, restore); BEM CSS (`flex-layout.css`) | drags are mouse only (no touch or pen) and there is no live resize; Tab from a visualisation's frame goes to the end of the page; a splitter's name isn't refreshed when a tab is renamed while it has the focus; no real-input checks (drags are tested with synthetic events); line and focus contrast not measured; new `label` and `frame-title` baseline entries (from the dashboard content the stories show); not tried with a screen reader |
+| Tab bars (documents) | Tidy-ups | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (in `AbstractTabBar`, shared with link tabs) | every document | in part: tab list, keys (and the tab menu from the keyboard), focus ring, panel link, sidebar toggle name and BEM CSS (`tab-bar.css`) done | left: link tabs are about 16px tall, under 2.5.8's 24px (baselined for the Data Retention impact stories, where one sits above a toolbar); link tab bars have no tab list name; a tab panel holding nothing focusable isn't a tab stop; a document tab's name is cut at 50 characters (with "..."), so a screen reader hears the shortened name; a tab's loading spinner isn't announced |
+| Link tabs (inside documents) | Tidy-ups | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | in part: as document tabs (shared `AbstractTabBar`) | as document tabs |
+| Layout panels | Tidy-ups | `DockLayoutPanel` and friends | (grid/flex, `SplitPane`) | — | replace as screens are touched | 6 (the floor map views) | in part: every view had its `DockLayoutPanel` replaced with grid or flex layout (`9dc39a1829`), but the floor map views added since use it again (`FloorMapEditorViewImpl`, `FloorMapFactListViewImpl`, `FloorMapGroupsViewImpl`, `FloorMapTimeListViewImpl`, `FloorMapTrackingViewImpl` and the template `FloorMapMapViewImpl.ui.xml`) | DOM order can differ from layout where a panel places its children (`ReadingOrder` is deleted, as no split panel is left); the floor map views not checked |
+| Content focus | Tidy-ups | tab pane | `ContentFocus` | — | added | all tabs | done (#5405) | — |
+
+## Checklist
+
+Each component against the things it needs before it counts as done. The Status table above says
+what has been done and what is left in words; this one is for seeing at a glance what is missing.
+
+- **Roles and states**: the WAI-ARIA pattern's roles, and its states (`aria-expanded`,
+  `aria-selected`, `aria-valuenow` and so on) kept up to date.
+- **Names**: every use has an accessible name (no `label` baseline entries for it).
+- **Keyboard**: the pattern's keys, and nothing reachable only by the mouse.
+- **Focus**: tab stops as the pattern says (often one, with arrows inside), a visible focus ring,
+  and the focus kept or put back sensibly when the component changes or closes.
+- **Own CSS**: the component's styles in its own stylesheet, `<block>.css`, not spread through
+  shared ones.
+- **BEM**: every class the component uses is a BEM name of its block (`block`, `block__element`,
+  `block--modifier`), states from ARIA attributes where there is one; shared tokens and the
+  shared control classes (`stroom-control`, `allow-focus`) aside.
+- **Minimal DOM**: no more elements than the pattern and the layout need.
+- **Screen reader**: tried with a real screen reader (NVDA, VoiceOver), not only axe.
+
+`done`, `part`, `no`; `?` not yet checked; `—` doesn't apply. The quick filter, selection box, value spinner, date and time and icon box rows
+were audited on 2026-10-19, from their DOM in the workbench, their stories and their stylesheets. Pipeline tree and bar describe this
+branch, with `stepping_display` in brackets.
+
+| Component | Roles and states | Names | Keyboard | Focus | Own CSS | BEM | Minimal DOM | Screen reader |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Text inputs | done (native) | part (named on the screens found; the quick filter's is its placeholder) | done (native) | done | done (`text-field.css` has every look; nine fields that replace the class still get `stroom.css`'s bare element rules) | part (GWT's `text-field-readonly`; `FieldValidity` also sets the shared `invalid` class) | done | no |
+| Password box | done | done | done | done | done (`password-box.css`) | done | ? | no |
+| Quick filter | part (not a search field; its toolbar is one only while two buttons show, as it should be) | part (its placeholder, "Quick Filter", is its only name) | done | done | part (`QuickFilter.css`, and two rules in `components.css`) | no (`quickFilter-*`, `advancedQuickFilter-*`, `hasDropDown`) | done | no |
+| Form groups | done | done | done | done | done (`form.css`) | done | ? | no |
+| Selection box | done | part (unnamed in places; its list is named for it) | done | done | part (`selection-box.css`, `selection-popup.css`; also styled by `TermEditor.css`, `conditional-formatting.css`, `CustomDatePicker.css` and `components.css`) | part (the box is; its list's `selectionList-*`, `simplePopup-*`, `pager-*`, `explorerCell`, `selectionItemCell-text` and GWT's `gwt-TextBox` aren't) | part (the value is drawn in an element over the input; the list has about 40 elements before its first option, with a hidden quick filter and pager, and each option is three deep) | no |
+| Document and user pickers | ? | ? | ? | ? | ? | ? | ? | no |
+| Tick box | done (a native checkbox) | part | done | ? | part (`tickbox.css`, `tickboxcell.css`) | no | ? | no |
+| Value spinner | done | done (the grid's cell: part, its column but not its row) | done (the grid's cell: part, it can't be reached) | done (the grid's cell: no, it can't be reached) | part (`value-spinner.css`; the field's base look is the shared `.gwt-TextBox` rules in `stroom.css` and `standard.css`) | part (GWT's `gwt-TextBox` on the input) | done | no |
+| Icon box (`SvgIconBox`) | done (a picture hidden from screen readers) | — | — | — | done (`svg-icon-box.css`) | done | done | no |
+| Colour box | ? | ? | ? | ? | ? | ? | ? | no |
+| File upload | ? | ? | ? | ? | ? | ? | ? | no |
+| Icon picker | ? | ? | ? | ? | part (`stroom-floormap.css`) | done | ? | no |
+| Time zone | ? | ? | ? | ? | ? | ? | ? | no |
+| Term editor | no | ? | ? | ? | part (`TermEditor.css`) | no | ? | no |
+| Raw GWT controls | — | ? | — | — | — | — | — | — |
+| Date and time | part (the day table has no `grid` role, and its cells have `aria-selected` with no role to allow it) | part (the date field is unnamed in places) | part (arrows and Enter in the calendar; no Home, End, Page Up or Page Down) | done (the Year and Month toolbars are one tab stop each, in the dialog too) | part (`CustomDatePicker.css`; the date-time field borrows the schedule box's classes and stylesheet) | no (only the icon box is) | part (two wrappers in each day cell) | no |
+| Schedule box | ? | ? | ? | ? | part (`ScheduleBox.css`) | no | ? | no |
+| Time range selector | ? | ? | ? | ? | no (`components.css`) | no | ? | no |
+| Menus | part | ? | ? | ? | part (`celltable/Menu.css`, `menubar.css`) | no | ? | no |
+| Dialogs | part | done | ? | part | part (`Dialog.css`, `ResizableDialog.css`) | no | ? | no |
+| Popups | ? | ? | ? | ? | part (`SimplePopup.css`, `PopupSupport.css`) | no | no (much nesting) | no |
+| Tooltips and help popups | ? | ? | ? | ? | part (`focus-tooltip.css`, `form.css`) | part | ? | no |
+| Data grids | no | ? | no | no | part (`celltable/DataGrid.css`) | no | ? | no |
+| Cell tables | no | ? | no | no | part (`celltable/DefaultCellTable.css`) | no | ? | no |
+| Explorer tree | no | ? | ? | ? | part (`celltable/ExplorerTree.css`) | no | ? | no |
+| Expression tree | no | ? | no | ? | part (`ExpressionItemBox.css`, `TermEditor.css`) | no | ? | no |
+| Pipeline tree | no (done) | no (done) | no (done) | no (done) | part (`PipelineElementBox.css`) | no | ? | no |
+| Pipeline bar | — (done) | — (done) | — (done) | — (done) | — (done, `pipeline-path.css`) | — (done) | — (?) | — (no) |
+| Code editor | — (Ace) | ? | no (Tab is a trap) | ? | done (`editor.css`) | part | — (Ace) | no |
+| Toolbars | done | part | done | done | done (`toolbar.css`) | done | ? | no |
+| Floating action button | done | ? | done | ? | no (`stroom-button.css`) | no | ? | no |
+| Refresh button | done | done | done | done | done (`refresh-button.css`) | done | ? | no |
+| Split panes | done | done | done | done | done (`split-pane.css`) | done | ? | no |
+| Dashboard splitters | done | done | done | done | done (`flex-layout.css`) | done | ? | no |
+| Tab bars (documents) | done | done | done | part | done (`tab-bar.css`) | done | ? | no |
+| Link tabs (inside documents) | done | part | done | part | done (`tab-bar.css`) | done | ? | no |
+| Layout panels | — | — | — | — | — | — | part (the floor map views) | — |
+| Content focus | — | — | — | done | — | — | — | no |
 
 ## Tab decisions
 
@@ -112,15 +192,40 @@ Agreed for both tab bars (document and link tabs), following the WAI-ARIA tabs p
 4. Fill in the `?` cells above (uses, replace or retrofit) with a short research pass per
    component; that pass becomes each worktree's brief.
 
-## Order
+## Sessions
 
-1. Tab bars, both kinds: they shape the focus order of nearly every screen.
-2. Form controls (selection box, tick box, value spinner, date and time, text inputs): most of the
-   `label` baseline entries, and the controls that grids hold in their cells.
-3. Data grids.
-4. Explorer tree.
-5. Menus, dialogs, quick filter, code editor, as their briefs are ready.
-6. Then page-level focus-order stories, once the components that make up a page are rolled out.
+The work is done a session (a worktree and its conversations) at a time, each taking components
+that share code and behaviour, so the shared code is fixed once. The Status table's Session column
+says which session each component is in.
+
+| # | Session | Components | What they share |
+| --- | --- | --- | --- |
+| 1 | Inputs (this worktree, `worktree-quifilter_buttons`) | Text inputs, password box, quick filter, form groups, selection box with the document and user pickers, tick box, value spinner, colour box, file upload, icon picker, time zone, the term editor's fields, the raw GWT controls | The field's base look (the shared `.gwt-TextBox` rules and `stroom-control`), names from form groups and `AccessibleName`, explaining a rejected value |
+| 2 | Date and time | Date-time box, date box, calendar grid, time box, duration picker, schedule box, time range selector | The calendar grid's keys and semantics, `CustomDatePicker.css`, the schedule box classes the date box borrows, their dialogs |
+| 3 | Overlays | Dialogs, popups, menus and menu buttons, tooltips and help popups | `PopupSupport` and `PopupManager`, the popup positioner, Escape, keeping and putting back the focus, `aria-modal`, dialogs laid out hidden |
+| 4 | Grids | Data grids, cell tables, pagers, the cells grids hold (tick box, value spinner, colour, action and menu cells), the selection box's list | Stroom's copy of `AbstractHasData` (a cell gets its events after the browser has handled them, and no touch events), the grid's keyboard pattern, `celltable/*.css` |
+| 5 | Trees | Explorer tree, expression tree, pipeline tree, pipeline bar | The tree pattern, `htree` drawing, alternatives to dragging; the pipeline tree and bar are under way on `stepping_display` |
+| 6 | Code editor | Ace (`EditorPresenter`, `EditorViewImpl`) | Its keyboard trap (Tab indents); Ace's sources need human approval to change |
+| — | Tidy-ups | Floating action button, link tab gaps, the floor map views' `DockLayoutPanel`, refresh button | Small leftovers of finished work (toolbars, split panes, splitters, tab bars, content focus) |
+
+Where a component sits:
+
+- A popup that belongs to an input control is in that control's session (the selection box's
+  list popup in 1, the date and time dialogs in 2); the list inside the selection box's popup is a
+  cell table, so its markup and classes are in 4.
+- A control's grid cell is in 4, not with the control: the value spinner's and tick box's cells
+  wait on the grid's keyboard pattern. Cells that only show something or act as buttons
+  (`ActionCell`, `CopyTextCell`, `SvgCell` and the like) are in 4 too.
+- The term editor's fields are in 1; the expression tree around them is in 5.
+
+Order: 1, 2, 3, 4, 5, 6, with tidy-ups between.
+
+- 1 and 2 first: they hold most of the `label` baseline entries, and are what dialogs and grids
+  hold. 2 after 1, as it uses the field look and naming that 1 settles.
+- 3 before 4, as grids sit in dialogs and open menus; 5 after 4, as the explorer tree shares the
+  cell code.
+- 3, 4 and 6 share little code, so they can run side by side in their own worktrees.
+- Then page-level focus-order stories, once the components that make up a page are rolled out.
 
 Components that use each other (e.g. tabs inside split panes, grids using `ButtonGroupFocus`)
 merge dependency first; the dependent worktree rebases onto it.

@@ -39,6 +39,7 @@ import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -123,13 +124,13 @@ public final class DefaultMonthSelector extends MonthSelector {
     protected void setup() {
         // previous, next buttons
         yearToolbar = new Toolbar("Year");
-        yearBackwards = yearToolbar.button(SvgImage.ARROW_LEFT, "Previous year",
+        yearBackwards = yearToolbar.button(SvgImage.ARROW_LEFT, "Previous Year",
                 () -> addMonths(-DateTimeModel.MONTHS_IN_YEAR));
-        yearForwards = yearToolbar.button(SvgImage.ARROW_RIGHT, "Next year",
+        yearForwards = yearToolbar.button(SvgImage.ARROW_RIGHT, "Next Year",
                 () -> addMonths(DateTimeModel.MONTHS_IN_YEAR));
         monthToolbar = new Toolbar("Month");
-        monthBackwards = monthToolbar.button(SvgImage.ARROW_LEFT, "Previous month", () -> addMonths(-1));
-        monthForwards = monthToolbar.button(SvgImage.ARROW_RIGHT, "Next month", () -> addMonths(1));
+        monthBackwards = monthToolbar.button(SvgImage.ARROW_LEFT, "Previous Month", () -> addMonths(-1));
+        monthForwards = monthToolbar.button(SvgImage.ARROW_RIGHT, "Next Month", () -> addMonths(1));
 
         // month and year selector
         monthSelect = createMonthSelect();
@@ -146,6 +147,7 @@ public final class DefaultMonthSelector extends MonthSelector {
 
     private SelectionBox<IntItem> createMonthSelect() {
         final SelectionBox<IntItem> monthListBox = new SelectionBox<>();
+        AccessibleName.set(monthListBox, "Month");
 
         for (int i = 0; i < DateTimeModel.MONTHS_IN_YEAR; i++) {
             monthListBox.addItem(new IntItem(getModel().formatMonth(i), i));
@@ -170,6 +172,7 @@ public final class DefaultMonthSelector extends MonthSelector {
 
     private SelectionBox<IntItem> createYearSelect() {
         final SelectionBox<IntItem> yearListBox = new SelectionBox<>();
+        AccessibleName.set(yearListBox, "Year");
         yearListBox.addValueChangeHandler(e -> {
             final int previousYear = getModel().getCurrentMonth().getFullYear();
             final int newYear = yearListBox.getValue().getValue();

@@ -285,13 +285,20 @@ public final class ButtonGroupFocus {
     }-*/;
 
     // Shown if neither it nor anything between it and the group is display: none or hidden, so a
-    // group in a tab that isn't showing still keeps its tab stop
+    // group in a tab that isn't showing still keeps its tab stop. Visibility is inherited, so it
+    // only counts where it is set inside the group: a dialog laid out while hidden and then shown
+    // changes nothing in the group, so the group would never see its buttons again
     private native boolean isShown(Element button) /*-{
         var container = this.@stroom.widget.button.client.ButtonGroupFocus::container;
         var win = button.ownerDocument.defaultView;
         for (var node = button; node && node !== container; node = node.parentElement) {
             var style = win.getComputedStyle(node);
-            if (style.display === 'none' || style.visibility === 'hidden') {
+            if (style.display === 'none') {
+                return false;
+            }
+            if (style.visibility === 'hidden'
+                && node.parentElement
+                && win.getComputedStyle(node.parentElement).visibility !== 'hidden') {
                 return false;
             }
         }

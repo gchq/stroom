@@ -463,6 +463,13 @@
     justify-content: center;
 }
 
+/* Its arrow: that of every field that opens a list (a selection box's, svg-icon-box.css) */
+.pipeline-path__caret-arrow svg {
+    width: 10px;
+    height: 10px;
+    color: var(--icon-colour__black);
+}
+
 /* The standard icon of an element's severity (warnings or worse), after its name */
 .pipeline-path__severity {
     flex: 0 0 auto;

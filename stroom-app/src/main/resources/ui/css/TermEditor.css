@@ -44,16 +44,12 @@
 }
 
 .termEditor-inner input,
-.termEditor-inner .SelectionBox-renderBox {
+.termEditor-inner .selection-box__value {
     border: none !important;
     border-radius: 0 !important;
     background: none !important;
     padding: 3px 5px;
     min-width: auto;
-}
-
-.termEditor-item .svgIconBox-icon {
-    right: 1px;
 }
 
 .termEditor-item.wide {
