@@ -1285,7 +1285,7 @@ async function driveStep(step) {
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const sel = empty ? 'input[type="text"], input:not([type]), .text-field, textarea' : selector;
       const el = [...scope.querySelectorAll(sel)].find((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly
-        && (!empty || !String(e.value ?? '').trim()) && !e.classList.contains('quickFilter-textBox'));
+        && (!empty || !String(e.value ?? '').trim()) && !e.classList.contains('quick-filter__input'));
       if (!el) return null;
       const r = el.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1887,7 +1887,7 @@ if (DIRECTED.includes('process')) {
   seeds.push({ kind: 'dialog', presenter: 'ProcessorLimitsPresenter', seedDepth: 5,
     path: ['Dashboard (document)', 'Process', 'after filter', 'after select tree item (a pipeline)', 'OK'],
     route: [{ via: 'docType', type: 'Dashboard' }, { via: 'button', label: 'Process', opens: 'dialog' },
-      { via: 'fill', selector: 'input.quickFilter-textBox', text: 'Example', post: true, opens: 'changed' },
+      { via: 'fill', selector: 'input.quick-filter__input', text: 'Example', post: true, opens: 'changed' },
       { via: 'select-tree', selector: '.explorerCell', match: '.explorerCell-icon[title="Pipeline"]', post: true, opens: 'changed' },
       { via: 'button', label: 'OK', opens: 'dialog' }] });
   console.log('  + 1 directed process seed: a pipeline chosen for a dashboard\'s Process');
@@ -2872,7 +2872,7 @@ async function walk(node, state, arrivedAt) {
         // The alert is the topmost popup; the form is the one beneath it.
         const form = popups[popups.length - 2];
         return !!form && [...form.querySelectorAll('input[type="text"], input:not([type]), .text-field, textarea')]
-          .some((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !String(e.value ?? '').trim() && !e.classList.contains('quickFilter-textBox'));
+          .some((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !String(e.value ?? '').trim() && !e.classList.contains('quick-filter__input'));
       }).catch(() => false);
       if (hasEmpty) {
         const caption = String(node.path.at(-1) ?? 'value').replace(/[^A-Za-z0-9 ]+/g, ' ').trim().slice(0, 30);

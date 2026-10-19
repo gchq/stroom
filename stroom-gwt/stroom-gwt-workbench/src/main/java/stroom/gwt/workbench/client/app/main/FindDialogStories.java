@@ -83,7 +83,7 @@ public final class FindDialogStories {
                             RequestMatcher.post(FIND_PATH).toSpyMatcher());
                     // The quick filter is named for what it finds, and says what may be typed in it,
                     // not just its "Quick Filter" placeholder (#5409)
-                    final Query filter = screen.getByRole("textbox", "Find by name");
+                    final Query filter = screen.getByRole("searchbox", "Find by name");
                     play.expect(filter).toHaveAttribute("placeholder", StroomDom.QUICK_FILTER_PLACEHOLDER);
                     play.expect(filter).toHaveAccessibleDescription(
                             TextMatch.startingWith("Finds items whose name contains the text."));

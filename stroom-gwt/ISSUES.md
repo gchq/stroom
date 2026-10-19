@@ -629,7 +629,7 @@ the form group's parts named BEM style: `form-group__label-row`, `__label`, `__h
 `__help-icon`, `__description-row`, `__description` and `__feedback` (no longer Bootstrap's
 `invalid-feedback`, so its styles are its own), and the `form-group--indented` and
 `form-group--inline-tick` modifiers. The help popup is `help-popup`.
-The quick filter's Clear and syntax help buttons are made in a toolbar (`quickFilter-toolbar`, placed
+The quick filter's Clear and syntax help buttons are made in a toolbar (`quick-filter__toolbar`, placed
 over the end of the box) as regular toolbar buttons, so they are one tab stop with the arrow keys
 between them. Its help icon is the same size and colour everywhere (it was smaller, in the
 navigation colour, inside a form group), and Clear sits a toolbar gap from the help button (it
@@ -796,6 +796,10 @@ Identification):
   also `aria-invalid` and described by the reason, which is in a live region, so a screen reader
   says it as the user types (`QuickFilter.setFilterError`; the workbench's
   `Widgets/Inputs/QuickFilter` `RejectedFilter`).
+* A quick filter was a plain text box to assistive technology, so nothing said it searched. Its
+  input is now `type="search"` (a `searchbox`), with the browser's own clear button hidden as it
+  has its own (`QuickFilter`, `quick-filter.css`; the workbench's `Widgets/Inputs/QuickFilter`
+  `FiltersAList`).
 
 ### Keyboard trap in the code editor
 

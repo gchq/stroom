@@ -99,7 +99,7 @@ public final class QuickFilterHistoryStories {
                     play.expect(screen.findByText("display:\"Bob Brown\"")).toBeInTheDocument();
                     // The menu is as wide as the filter, as a combo box's list is, and lined up
                     // with it, however long its filters
-                    final Query box = play.querySelector(".quickFilter");
+                    final Query box = play.querySelector(".quick-filter");
                     final Query menu = screen.querySelector(".menuCellTable").closest(".simplePopup-container");
                     play.expect("menu's left edge", () -> Math.abs(menu.left().get() - box.left().get()))
                             .toBeLessThanOrEqual(1);

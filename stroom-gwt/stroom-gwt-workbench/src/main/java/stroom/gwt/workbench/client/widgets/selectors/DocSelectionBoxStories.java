@@ -90,7 +90,7 @@ public final class DocSelectionBoxStories {
                     play.tab();
                     play.expect(picker).toHaveFocus();
                     play.keyboard("{Enter}");
-                    play.waitFor(() -> play.expect(screen.getByRole("textbox", "Filter documents")).toHaveFocus());
+                    play.waitFor(() -> play.expect(screen.getByRole("searchbox", "Filter documents")).toHaveFocus());
                     play.expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
                     play.keyboard("{ArrowDown}");
                     play.waitFor(() -> play.expect(screen.querySelector(":focus")).toHaveTextContent("Ingest"));
@@ -102,7 +102,7 @@ public final class DocSelectionBoxStories {
                     play.tab();
                     play.expect(screen.getByRole("button", StroomDom.button("Cancel"))).toHaveFocus();
                     play.tab();
-                    play.expect(screen.getByRole("textbox", "Filter documents")).toHaveFocus();
+                    play.expect(screen.getByRole("searchbox", "Filter documents")).toHaveFocus();
                     play.tab(true);
                     play.expect(screen.getByRole("button", StroomDom.button("Cancel"))).toHaveFocus();
                     play.keyboard("{Escape}");
@@ -111,7 +111,7 @@ public final class DocSelectionBoxStories {
                     play.expect(play.getByText("Current value: \"Ingest\"")).toBeInTheDocument();
                     // Reopened, it starts on the value, not on what was cancelled
                     play.keyboard("{Enter}");
-                    play.waitFor(() -> play.expect(screen.getByRole("textbox", "Filter documents")).toHaveFocus());
+                    play.waitFor(() -> play.expect(screen.getByRole("searchbox", "Filter documents")).toHaveFocus());
                     play.keyboard("{ArrowDown}");
                     play.waitFor(() -> play.expect(screen.querySelector(":focus")).toHaveTextContent("Ingest"));
                     play.keyboard("{ArrowDown}");

@@ -67,7 +67,7 @@ export const CHECKS = {
     const box = page.getByRole('combobox');
     await box.focus();
     await page.keyboard.type('42');
-    const filter = page.locator('.selectionList-quickFilter .quickFilter-textBox');
+    const filter = page.locator('.selectionList-quickFilter .quick-filter__input');
     await waitFor(page, async () => (await filter.count()) > 0 && (await filter.inputValue()) === '42',
       'what is typed is the quick filter');
   },

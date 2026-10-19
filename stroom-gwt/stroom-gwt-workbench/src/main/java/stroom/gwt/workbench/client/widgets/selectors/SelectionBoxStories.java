@@ -161,7 +161,7 @@ public final class SelectionBoxStories {
                 .withPlay(play -> {
                     play.tab();
                     play.keyboard("15");
-                    final Query filter = play.screen().querySelector(".selectionList-quickFilter .quickFilter-textBox");
+                    final Query filter = play.screen().querySelector(".selectionList-quickFilter .quick-filter__input");
                     play.waitFor(() -> play.expect(filter).toHaveValue("15"));
                     play.expect(filter).toHaveFocus();
                     // Named for the box it filters, not only by its placeholder
@@ -246,7 +246,7 @@ public final class SelectionBoxStories {
                     play.click(play.querySelector(OPENER));
                     // Stroom's popup is on the page's body, not in the canvas
                     play.waitFor(() -> play.expect(play.screen().querySelector(".selectionList .pager")).toBeVisible());
-                    play.expect(play.screen().querySelector(".selectionList-quickFilter .quickFilter-textBox"))
+                    play.expect(play.screen().querySelector(".selectionList-quickFilter .quick-filter__input"))
                             .not().toBeNull();
                     // The pager is Stroom's PagerViewImpl, so it reads "N to M of T"
                     play.expect(play.screen().getByText(TextMatch.containingIgnoreCase("to"), ".pager *"))

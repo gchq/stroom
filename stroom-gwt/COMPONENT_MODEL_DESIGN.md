@@ -483,6 +483,31 @@ Stories `Widgets/Inputs/TickBox` (`Basic`, `ReadOnly`, `Disabled`, `NoLabel`) an
 Not yet done: the grid cell can't be reached from the keyboard (the data grid's keyboard pattern,
 session 4); it hasn't been tried with a screen reader.
 
+## Quick filter
+
+`QuickFilter` (`stroom.widget.dropdowntree.client.view`) is the BEM block `quick-filter`
+(`quick-filter.css`):
+
+- **A search field.** Its input (`quick-filter__input`) is `type="search"`, so assistive technology
+  meets a `searchbox`, not a text box. Chrome's own clear button and decoration are hidden, as the
+  filter has its own Clear button; its look, and its disabled, focused and invalid looks, are the
+  text field's (`text-field.css`). Escape clears it, as it did before (and as a search field does).
+- **Its buttons** are a toolbar (`quick-filter__toolbar`, one tab stop, a toolbar only while two
+  buttons show) over the end of the box: Clear, the recent filters (`quick-filter__recent`, shown
+  with the block's `quick-filter--recent` modifier, which leaves room for it in the box) and its
+  syntax help, each 24px.
+- **One stylesheet.** The rules other stylesheets had for it are in `quick-filter.css`: the column
+  function editor's and query help's flat filter (a bottom border only), and the gap under it in a
+  selection box's list. `quick-filter-layout` is a panel holding a quick filter above what it
+  filters (it was `quickFilter-container`). The state classes it no longer needs are gone
+  (`disabled`, which the input's own `:disabled` carries).
+
+Stories `Widgets/Inputs/QuickFilter` (`FiltersAList` checks the search role and the classes).
+
+Not yet done: its syntax help popup (`quickFilter-tooltip`, also the help manager's tooltip) and its
+Advanced Query dialog (`advancedQuickFilter-*`), with the popups and dialogs (session 3); it hasn't
+been tried with a screen reader.
+
 ## Pickers
 
 The document and user pickers (`DocSelectionBoxPresenter`, `UserRefSelectionBoxPresenter`, drawn by

@@ -164,7 +164,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       }
       const box = [...group.querySelectorAll('input[type="text"], input:not([type]), textarea')]
         .find((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly
-          && !e.classList.contains('quickFilter-textBox')
+          && !e.classList.contains('quick-filter__input')
           && !e.classList.contains('ace_text-input') && !e.closest('.ace_editor'));
       if (box) { out.push({ label, kind: 'text', value: String(box.value ?? ''), ...at(box) }); continue; }
       // A DOCUMENT CHOOSER — `DocSelectionBoxPresenter` over `DropDownViewImpl`, rendered as

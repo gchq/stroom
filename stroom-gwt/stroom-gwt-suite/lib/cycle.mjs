@@ -123,7 +123,7 @@ export async function fillField(page, label, text) {
     const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const boxes = [...scope.querySelectorAll('input[type="text"], input[type="password"], input:not([type]), textarea')]
-      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quickFilter-textBox'));
+      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quick-filter__input'));
     const want = wanted === null ? null : (Array.isArray(wanted) ? wanted : [wanted]);
     const el = want
       ? boxes.find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)))
@@ -526,7 +526,7 @@ export function readField(page, label) {
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const want = Array.isArray(wanted) ? wanted : [wanted];
     const el = [...scope.querySelectorAll('input[type="text"], input:not([type]), textarea')]
-      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quickFilter-textBox'))
+      .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quick-filter__input'))
       .find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)));
     return el ? String(el.value ?? '') : null;
   }, [label]).catch(() => null);
@@ -704,7 +704,7 @@ export function gridFilter(page) {
     const grid = [...document.querySelectorAll('.dataGridWidget, [role=grid]')].find((g) => g.offsetWidth > 0);
     if (!grid) return null;
     const g = grid.getBoundingClientRect();
-    const boxes = [...document.querySelectorAll('.quickFilter-textBox')].filter((e) => e.offsetWidth > 0);
+    const boxes = [...document.querySelectorAll('.quick-filter__input')].filter((e) => e.offsetWidth > 0);
     const mine = boxes
       .map((e) => ({ e, r: e.getBoundingClientRect() }))
       .filter(({ r }) => r.x + r.width > g.x && r.x < g.x + g.width && r.y <= g.y)
@@ -844,7 +844,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
       if (!(await dialogCaptions(page)).length) throw new Error('New opened no dialog');
       // The name box is the full-width one that is not the folder picker's quick filter.
       const nameBox = page.locator('.resizableDialog-popup, .dialog-popup').last()
-        .locator('input.text-field.w-100:not(.quickFilter-textBox)').first();
+        .locator('input.text-field.w-100:not(.quick-filter__input)').first();
       await nameBox.fill(spec.seed, { timeout: 10_000 });
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the New dialog');
       await settle(2000);

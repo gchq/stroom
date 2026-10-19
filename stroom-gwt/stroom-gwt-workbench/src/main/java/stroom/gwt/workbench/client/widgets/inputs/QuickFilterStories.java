@@ -84,7 +84,11 @@ public final class QuickFilterStories {
                     return InputWidgets.maxWidth(column, MAX_WIDTH);
                 })
                 .withPlay(play -> {
-                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    final Query textBox = play.querySelector(".quick-filter__input");
+                    // A search field, named BEM style
+                    play.expect(textBox).toHaveAttribute("type", "search");
+                    play.expect(play.getByRole("searchbox")).toHaveClass("quick-filter__input");
+                    play.expect(play.querySelector(".quick-filter")).not().toHaveClass("quickFilter");
                     play.type(textBox, "al");
                     play.click(play.getByTitle("Clear Filter"));
                     play.expect(textBox).toHaveValue("");
@@ -152,7 +156,7 @@ public final class QuickFilterStories {
                 // here the stand-in picks one at once
                 .story("RecentFilters", context -> withContext(context, quickFilter(context)))
                 .withPlay(play -> {
-                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    final Query textBox = play.querySelector(".quick-filter__input");
                     play.click(play.getByTitle("Show Recent Filters"));
                     play.expect(play.spy(ON_SHOW_RECENT_FILTERS)).toHaveBeenCalledTimes(1);
                     play.expect(textBox).toHaveValue(RECENT_FILTER);
@@ -170,7 +174,7 @@ public final class QuickFilterStories {
                 // one the server rejects. The stand-in server rejects a filter with a '('
                 .story("RecordsAcceptedFilters", context -> withContext(context, quickFilter(context)))
                 .withPlay(play -> {
-                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    final Query textBox = play.querySelector(".quick-filter__input");
                     play.type(textBox, "alpha");
                     // Applied after the 400ms pause, and accepted, but not committed
                     play.waitFor(() -> play.expect(play.spy(InputWidgets.ON_CHANGE)).toHaveBeenCalledWith("alpha"));
@@ -195,7 +199,7 @@ public final class QuickFilterStories {
                 // and the syntax help leads with it
                 .story("RejectedFilter", context -> withContext(context, quickFilter(context)))
                 .withPlay(play -> {
-                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    final Query textBox = play.querySelector(".quick-filter__input");
                     play.type(textBox, REJECTED_CHARACTER + "alpha{Enter}");
                     play.expect(textBox).toHaveAttribute("aria-invalid", "true");
                     play.expect(textBox).toHaveAttribute("title", REJECTION);

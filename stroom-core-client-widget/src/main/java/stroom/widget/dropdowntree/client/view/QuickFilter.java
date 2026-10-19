@@ -57,6 +57,7 @@ public class QuickFilter extends FlowPanel
 
     private static final int DEBOUNCE_DELAY_MS = 400;
     private static final String ARIA_LABEL = "aria-label";
+    private static final String BLOCK = "quick-filter";
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
             .bold("Quick Filter")
             .br()
@@ -97,21 +98,25 @@ public class QuickFilter extends FlowPanel
     };
 
     public QuickFilter() {
-        setStyleName("quickFilter");
-        textBox.addStyleName("quickFilter-textBox");
+        // BEM block quick-filter (quick-filter.css)
+        setStyleName(BLOCK);
+        textBox.addStyleName(BLOCK + "__input");
         textBox.addStyleName("allow-focus");
+        // A search field, to assistive technology (role searchbox); the browser's own clear button
+        // is hidden, as the filter has its own
+        textBox.getElement().setAttribute("type", "search");
         textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
         // The filter's buttons, at the end of its box
         final Toolbar toolbar = new Toolbar("Quick filter");
-        toolbar.addStyleName("quickFilter-toolbar");
+        toolbar.addStyleName(BLOCK + "__toolbar");
         // A plain cross, so that Clear and the drop-down, which both act on the text, look alike, and
         // only help, which doesn't, has a ring
         clearButton = toolbar.button(SvgImage.TAB_CLOSE, "Clear Filter", this::onClear);
         // Between clear and help: clear and the drop-down both act on the text, like a combo
         // box, and help stays outermost as it is on every screen. Hidden until a handler is set.
         dropDownButton = toolbar.button(SvgImage.ARROW_DOWN, "Show Recent Filters", this::showRecentFilters);
-        dropDownButton.addStyleName("quickFilter-recentFilters");
+        dropDownButton.addStyleName(BLOCK + "__recent");
         dropDownButton.setVisible(false);
         helpButton = toolbar.button(SvgImage.HELP_OUTLINE, "Quick Filter Syntax Help", this::showHelpPopup);
 
@@ -247,11 +252,8 @@ public class QuickFilter extends FlowPanel
         this.contextHandler = contextHandler;
         final boolean hasContext = contextHandler != null;
         dropDownButton.setVisible(hasContext);
-        if (hasContext) {
-            addStyleName("hasDropDown");
-        } else {
-            removeStyleName("hasDropDown");
-        }
+        // Leaves room in the box for the recent filters' button as well
+        setStyleName(BLOCK + "--recent", hasContext);
     }
 
     private void showRecentFilters() {
@@ -347,7 +349,6 @@ public class QuickFilter extends FlowPanel
     /// @param enabled Whether the filter can be typed in.
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
-        setStyleName("disabled", !enabled);
         enableButtons();
     }
 

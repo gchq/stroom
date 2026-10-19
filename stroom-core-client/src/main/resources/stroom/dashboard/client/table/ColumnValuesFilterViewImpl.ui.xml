@@ -9,7 +9,7 @@
             <g:Label ui:field="separator" styleName="gwt-Label" text="-"/>
             <btn:LinkButton ui:field="selectNoneLink" addStyleNames="link" text="Select None"/>
         </g:FlowPanel>
-        <g:FlowPanel styleName="dock-max dock-container-vertical quickFilter-container overflow-hidden">
+        <g:FlowPanel styleName="dock-max dock-container-vertical quick-filter-layout overflow-hidden">
             <view:QuickFilter accessibleName="Filter values" ui:field="quickFilter" addStyleNames="dock-min"/>
             <g:SimplePanel ui:field="data" styleName="dock-max form-control-border form-control-background overflow-hidden"/>
         </g:FlowPanel>

@@ -71,12 +71,12 @@ public final class UserRefSelectionBoxStories {
                     final String filter = "Filter users and groups";
                     play.tab();
                     play.keyboard("{Enter}");
-                    play.waitFor(() -> play.expect(screen.getByRole("textbox", filter)).toHaveFocus());
+                    play.waitFor(() -> play.expect(screen.getByRole("searchbox", filter)).toHaveFocus());
                     play.expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
                     play.waitFor(() -> play.expect(screen.querySelector(SELECTED_ROW))
                             .toHaveTextContent("Alice Anderson"));
                     play.keyboard("{ArrowDown}");
-                    play.expect(screen.getByRole("textbox", filter)).not().toHaveFocus();
+                    play.expect(screen.getByRole("searchbox", filter)).not().toHaveFocus();
                     play.keyboard("{ArrowDown}");
                     play.waitFor(() -> play.expect(screen.querySelector(SELECTED_ROW)).toHaveTextContent("Bob Brown"));
                     play.waitFor(() -> play.expect(screen.getByText("Bob Brown chosen")).toBeInTheDocument());
@@ -84,16 +84,16 @@ public final class UserRefSelectionBoxStories {
                     play.waitFor(() -> play.expect(screen.querySelector(SELECTED_ROW))
                             .toHaveTextContent("Alice Anderson"));
                     play.keyboard("{ArrowUp}");
-                    play.expect(screen.getByRole("textbox", filter)).toHaveFocus();
+                    play.expect(screen.getByRole("searchbox", filter)).toHaveFocus();
                     // Typed in the grid, the characters go to the filter
                     play.keyboard("{ArrowDown}");
                     play.keyboard("carol");
-                    play.waitFor(() -> play.expect(screen.getByRole("textbox", filter)).toHaveValue("carol"));
-                    play.expect(screen.getByRole("textbox", filter)).toHaveFocus();
+                    play.waitFor(() -> play.expect(screen.getByRole("searchbox", filter)).toHaveValue("carol"));
+                    play.expect(screen.getByRole("searchbox", filter)).toHaveFocus();
                     play.waitFor(() -> play.expect(screen.queryByText("Bob Brown")).toBeNull());
                     // Down goes to the first row (the chosen user isn't shown), which Enter chooses
                     play.keyboard("{ArrowDown}");
-                    play.waitFor(() -> play.expect(screen.getByRole("textbox", filter)).not().toHaveFocus());
+                    play.waitFor(() -> play.expect(screen.getByRole("searchbox", filter)).not().toHaveFocus());
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(screen.queryByRole("dialog")).toBeNull());
                     play.waitFor(() -> play.expect(play.getByText(TextMatch.startingWith("Selected: Carol")))
