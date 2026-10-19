@@ -166,6 +166,8 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
         return keepAlive;
     }
 
+    @JsonPropertyDescription("The maximum number of connections allowed per route. " +
+                             "Default: 1,024")
     @JsonProperty
     public int getMaxConnectionsPerRoute() {
         return maxConnectionsPerRoute;
@@ -205,6 +207,8 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
         return timeToLive;
     }
 
+    @JsonPropertyDescription("Whether cookies are enabled. " +
+                             "Default: false")
     @JsonProperty
     public boolean isCookiesEnabled() {
         return cookiesEnabled;
@@ -219,32 +223,41 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
         return followRedirects;
     }
 
+    @JsonPropertyDescription("The maximum total number of connections allowed. " +
+                             "Default: 1,024")
     @JsonProperty
     public int getMaxConnections() {
         return maxConnections;
     }
 
+    @JsonPropertyDescription("The maximum number of times a request will be retried after a failure. " +
+                             "Default: 0")
     @JsonProperty
     public int getRetries() {
         return retries;
     }
 
+    @JsonPropertyDescription("The user agent string to use for requests.")
     @JsonProperty
     public String getUserAgent() {
         return userAgent;
     }
 
+    @JsonPropertyDescription("The proxy configuration to use for requests.")
     @JsonProperty("proxy")
     @Nullable
     public HttpProxyConfiguration getProxyConfiguration() {
         return proxyConfiguration;
     }
 
+    @JsonPropertyDescription("The period after which an inactive pooled connection is validated. " +
+                             "Default: 0")
     @JsonProperty
     public StroomDuration getValidateAfterInactivityPeriod() {
         return validateAfterInactivityPeriod;
     }
 
+    @JsonPropertyDescription("The TLS configuration to use for secure requests.")
     @JsonProperty(PROP_NAME_TLS)
     @Nullable
     public HttpTlsConfiguration getTlsConfiguration() {

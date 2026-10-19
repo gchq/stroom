@@ -16,8 +16,7 @@
 
 package stroom.aws.common.shared;
 
-import stroom.util.shared.IsProxyConfig;
-import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.IsAtomicConfigValue;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -26,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@NotInjectableConfig
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "type"
@@ -52,9 +50,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
                 @DiscriminatorMapping(value = "session", schema = AwsSessionCredentials.class),
                 @DiscriminatorMapping(value = "system", schema = AwsSystemPropertyCredentials.class),
                 @DiscriminatorMapping(value = "web", schema = AwsWebCredentials.class)})
-public sealed interface AwsCredentials
-        extends IsProxyConfig, IsStroomConfig
-        permits
+@NotInjectableConfig
+public sealed interface AwsCredentials extends IsAtomicConfigValue permits
         AwsAnonymousCredentials,
         AwsBasicCredentials,
         AwsDefaultCredentials,
