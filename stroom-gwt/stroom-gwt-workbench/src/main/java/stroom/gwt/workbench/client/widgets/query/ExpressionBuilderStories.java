@@ -80,8 +80,8 @@ public final class ExpressionBuilderStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // Term value autocomplete is Stroom's suggestion service, which the stories don't answer
-        // (no suggestions are shown).
+        // Term value autocomplete is Stroom's suggestion service, which the stories answer with no
+        // suggestions.
         registry.component("Widgets/Query/ExpressionBuilder", ExpressionBuilderStories.class)
                 .layout(StoryLayout.CENTERED)
                 // A populated expression. Select a node to edit it inline; add, copy, disable or
@@ -157,6 +157,64 @@ public final class ExpressionBuilderStories {
                     play.waitFor(() -> play.expect(item(play, "AND, 2 items")).toBeInTheDocument());
                     play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled());
                     play.expect(play.querySelectorAll("[role='tree'] [tabindex='0']")).toHaveLength(1);
+                })
+                // Editing with the keyboard: Enter or F2 edits the focused item and focuses its first
+                // field, Tab and Shift+Tab move through its fields and past the last or first back to
+                // the item, as Escape does; leaving keeps what was entered
+                .story("KeyboardEditing", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    final Query fieldInput = play.querySelector(FIELD_PICKER + " .selection-box__input");
+                    final Query value = play.querySelector(".termEditor-item[aria-label='Value']");
+                    play.run("focus the toolbar's last button",
+                            () -> play.getByTitle("Delete Selected Expression Item").element().get().focus());
+                    play.keyboard("{Tab}{ArrowRight}");
+                    final Query userId = item(play, "UserId contains admin");
+                    play.waitFor(() -> play.expect(userId).toHaveFocus());
+
+                    // Enter edits it, in its first field; Tab goes through the rest
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(fieldInput).toHaveFocus());
+                    play.keyboard("{Tab}");
+                    play.expect(play.querySelector(".termEditor-item.condition .selection-box__input"))
+                            .toHaveFocus();
+                    play.keyboard("{Tab}");
+                    play.expect(value).toHaveFocus();
+                    play.keyboard("{End}s");
+                    play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled());
+
+                    // Tab past the last field: back to the item, shown as its text, the change kept
+                    play.keyboard("{Tab}");
+                    final Query admins = item(play, "UserId contains admins");
+                    play.waitFor(() -> play.expect(admins).toHaveFocus());
+                    play.expect(play.querySelector(FIELD_PICKER)).toBeNull();
+
+                    // Shift+Tab before the first field, likewise
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(fieldInput).toHaveFocus());
+                    play.keyboard("{Shift>}{Tab}{/Shift}");
+                    play.waitFor(() -> play.expect(admins).toHaveFocus());
+                    play.expect(play.querySelector(FIELD_PICKER)).toBeNull();
+
+                    // F2 edits too, and Escape goes back to the item from any field
+                    play.keyboard("{F2}");
+                    play.waitFor(() -> play.expect(fieldInput).toHaveFocus());
+                    play.keyboard("{Tab}{Tab}");
+                    play.expect(value).toHaveFocus();
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(admins).toHaveFocus());
+                    play.expect(play.querySelector(FIELD_PICKER)).toBeNull();
+                    // The arrow keys carry on from it
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(item(play, "OR, 3 items")).toHaveFocus());
+
+                    // An operator's one field
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(item(play, "AND, 4 items")).toHaveFocus());
+                    play.keyboard("{Enter}");
+                    final Query operator = play.querySelector(".termEditor-item .selection-box__input");
+                    play.waitFor(() -> play.expect(operator).toHaveFocus());
+                    play.keyboard("{Tab}");
+                    play.waitFor(() -> play.expect(item(play, "AND, 4 items")).toHaveFocus());
                 })
                 // A new, empty expression (just the root AND)
                 .story("NewExpression", context -> editor(context, emptyExpression(), false))
@@ -423,6 +481,8 @@ public final class ExpressionBuilderStories {
         final ScreenHarness harness = ScreenHarness.create(context, TreeFixtures.explorerRoutes(
                         TreeFixtures.fixtureTree())
                 .post(UserFixture.FIND, request -> RestReply.json(users.find(request.getBody())))
+                // Typing a value asks for suggestions
+                .post("/suggest/v1", RestReply.json("{\"list\": []}"))
                 .post(FieldFixture.FIND_FIELDS, request -> {
                     holder[0].spy(FIELD_SOURCE, FieldFixture.describe(request.getBody()));
                     return RestReply.json(fieldFixture.find(request.getBody()));

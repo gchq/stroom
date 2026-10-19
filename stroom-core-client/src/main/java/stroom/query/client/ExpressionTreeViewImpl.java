@@ -19,6 +19,7 @@ package stroom.query.client;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
 import stroom.pipeline.structure.client.view.TreeKeyboard;
 import stroom.preferences.client.UserPreferencesManager;
@@ -31,13 +32,22 @@ import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -45,8 +55,10 @@ import java.util.function.Predicate;
 ///
 /// It is a tree for assistive technology (`role="tree"`, see [ExpressionItemRenderer]) and for the
 /// keyboard (see [TreeKeyboard]): the arrow keys move the selection, showing the item selected as
-/// its label; a click edits an item (its editor in place of its label). Its items can be dragged to
-/// another operator.
+/// its label; a click edits an item (its editor in place of its label), as do Enter and F2, which
+/// focus its first field. Tab and Shift+Tab move through its fields, and past the last or first
+/// back to the item, which stops editing it (keeping what was entered), as Escape does. Its items
+/// can be dragged to another operator.
 public class ExpressionTreeViewImpl
         extends ViewWithUiHandlers<ExpressionUiHandlers>
         implements ExpressionTreeView {
@@ -151,6 +163,18 @@ public class ExpressionTreeViewImpl
             }
 
             @Override
+            protected boolean onKey(final KeyDownEvent event, final Item item) {
+                final int keyCode = event.getNativeKeyCode();
+                if (selectionModel != null
+                    && (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_F2)
+                    && !event.isAnyModifierKeyDown()) {
+                    startEditing(item);
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
             protected void onNavigate(final Item item) {
                 // Leaving an item ends its editing (keeping what was entered); the item moved to is
                 // shown as its label
@@ -160,7 +184,108 @@ public class ExpressionTreeViewImpl
         };
         // Moving items with the keyboard comes with their detached look
         keyboard.setAllowMoving(false);
+        // Before the fields' own handlers, which e.g. close a date's calendar on Escape
+        addKeyDownCaptureHandler(layoutPanel.getElement(), this::onFieldKeyDown);
     }
+
+    // Edits an item, and focuses its first field once its editor is shown
+    private void startEditing(final Item item) {
+        if (selectionModel.isSelected(item)) {
+            edit(item);
+        } else {
+            // Only the selected item shows its editor, and the focused one may not be selected (the
+            // root, the tab stop while nothing is): selecting it redraws the tree at the end of
+            // this event, showing its editor
+            treePanel.setEditingItem(item);
+            selectionModel.setSelected(item, true);
+        }
+        // After that redraw, and the editor showing itself (which it defers)
+        Scheduler.get().scheduleFinally(() -> Scheduler.get().scheduleDeferred(() -> {
+            final Box<Item> box = treePanel.getBox(item);
+            if (box != null) {
+                final List<Element> fields = getFields(box.getElement());
+                if (!fields.isEmpty()) {
+                    fields.get(0).focus();
+                }
+            }
+        }));
+    }
+
+    // Stops editing an item, keeping what was entered, and puts the focus back on it
+    private void stopEditing(final Item item) {
+        treePanel.hideEditorPopups();
+        endEditing();
+        treePanel.setEditingItem(null);
+        treePanel.refresh();
+        keyboard.moveTo(item);
+    }
+
+    // A key pressed in a field of the item being edited: Escape, and Tab past its last field
+    // (Shift+Tab past its first), stop editing it; the rest are the field's
+    private void onFieldKeyDown(final NativeEvent event) {
+        final Element target = event.getEventTarget().cast();
+        final Box<Item> box = treePanel.getTargetBox(Event.as(event), false);
+        if (box == null || box.getElement().equals(target) || !treePanel.isEditingItem(box.getItem())) {
+            return;
+        }
+        final int keyCode = event.getKeyCode();
+        final boolean stop;
+        if (keyCode == KeyCodes.KEY_ESCAPE) {
+            // Escape first closes a field's popup, which the field does
+            stop = !treePanel.isEditorPopupShowing();
+        } else if (keyCode == KeyCodes.KEY_TAB && !event.getCtrlKey() && !event.getAltKey()) {
+            final List<Element> fields = getFields(box.getElement());
+            final int index = indexOfField(fields, target);
+            stop = event.getShiftKey()
+                    ? index == 0
+                    : index == fields.size() - 1;
+        } else {
+            stop = false;
+        }
+        if (stop) {
+            event.preventDefault();
+            event.stopPropagation();
+            stopEditing(box.getItem());
+        }
+    }
+
+    // The index of the field that is, or holds, an element, or -1 for none
+    private static int indexOfField(final List<Element> fields, final Element element) {
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).isOrHasChild(element)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // The fields in an item's box that Tab moves through, in order
+    private static List<Element> getFields(final Element box) {
+        final List<Element> fields = new ArrayList<>();
+        final JsArray<Element> elements = getTabbable(box);
+        for (int i = 0; i < elements.length(); i++) {
+            fields.add(elements.get(i));
+        }
+        return fields;
+    }
+
+    private static native JsArray<Element> getTabbable(Element container) /*-{
+        var all = container.querySelectorAll("input, select, textarea, button, [tabindex]");
+        var tabbable = [];
+        for (var i = 0; i < all.length; i++) {
+            var element = all[i];
+            if (element.tabIndex >= 0 && !element.disabled && element.getClientRects().length > 0) {
+                tabbable.push(element);
+            }
+        }
+        return tabbable;
+    }-*/;
+
+    private static native void addKeyDownCaptureHandler(Element element, Consumer<NativeEvent> handler) /*-{
+        element.addEventListener("keydown", function (event) {
+            handler.@java.util.function.Consumer::accept(*)(event);
+        }, true);
+    }-*/;
 
     @Override
     public void setTree(final DefaultTreeForTreeLayout<Item> tree) {

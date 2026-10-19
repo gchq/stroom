@@ -197,6 +197,27 @@ public class TermEditor extends Composite {
         }
     }
 
+    /// @return Whether a field's own popup is open: a value's suggestions or a date's calendar
+    /// (whose keys, e.g. Escape to close it, are the field's).
+    public boolean isPopupShowing() {
+        return value.isSuggestionListShowing()
+               || valueFrom.isSuggestionListShowing()
+               || valueTo.isSuggestionListShowing()
+               || date.isDatePickerShowing()
+               || dateFrom.isDatePickerShowing()
+               || dateTo.isDatePickerShowing();
+    }
+
+    /// Closes the fields' own popups (see [#isPopupShowing]).
+    public void hidePopups() {
+        value.hideSuggestionList();
+        valueFrom.hideSuggestionList();
+        valueTo.hideSuggestionList();
+        date.hideDatePicker();
+        dateFrom.hideDatePicker();
+        dateTo.hideDatePicker();
+    }
+
     public void endEdit() {
         if (editing) {
             write(term);

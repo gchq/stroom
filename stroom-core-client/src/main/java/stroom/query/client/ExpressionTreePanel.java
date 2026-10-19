@@ -238,6 +238,19 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         }
     }
 
+    /// @return Whether a field of the editor has its own popup open (see
+    /// [TermEditor#isPopupShowing]).
+    public boolean isEditorPopupShowing() {
+        return termEditor != null && termEditor.isPopupShowing();
+    }
+
+    /// Closes the editor's fields' own popups.
+    public void hideEditorPopups() {
+        if (termEditor != null) {
+            termEditor.hidePopups();
+        }
+    }
+
     public void endEditing() {
         if (operatorEditor != null) {
             operatorEditor.endEdit();
