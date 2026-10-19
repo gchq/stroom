@@ -92,7 +92,7 @@ class TestTabSnapshots {
         final StoredTabSnapshot snapshot = tabSnapshots.read(stored.snapshotId()).orElseThrow();
         assertThat(snapshot.dirty()).isTrue();
         assertThat(tabSnapshots.note(CHAT, snapshot))
-                .startsWith("[Active tab: XSLT 'Event translation' (unsaved changes), /Security/Translations "
+                .startsWith("[Attached tab: XSLT 'Event translation' (unsaved changes), /Security/Translations "
                             + "(uuid xslt-uuid), showing its XSLT tab.")
                 .contains("Files: /tabs/1/code.xsl (17 B), /tabs/1/documentation.md (18 B).")
                 .contains("Preview of /tabs/1/code.xsl:\n<xsl:stylesheet/>")

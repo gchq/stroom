@@ -507,6 +507,32 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
+    public Boolean sendSteerNow(final int chatId, final int messageId) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "sendSteerNow"))
+                .withDescription("Send message " + messageId + " to the run of AI chat " + chatId + " now")
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AiChatMessage")
+                                        .withId(String.valueOf(messageId))
+                                        .addData(Data.builder()
+                                                .withName("ChatId")
+                                                .withValue(String.valueOf(chatId))
+                                                .build())
+                                        .addData(Data.builder()
+                                                .withName("Action")
+                                                .withValue("SendNow")
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().sendSteerNow(chatId, messageId))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
     public Boolean deleteMessage(final int chatId, final int messageId) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "deleteMessage"))

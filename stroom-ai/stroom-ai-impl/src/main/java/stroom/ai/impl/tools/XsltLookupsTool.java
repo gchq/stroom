@@ -248,7 +248,7 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
         }
         lines.add("XSLT '" + xslt.getName() + "' (" + xslt.getUuid() + ") in " + access.path(xslt)
                   + (analysis.unsaved.contains(xslt.getUuid())
-                ? ", as edited in the user's active tab (unsaved)"
+                ? ", as edited in the tab the user attached (unsaved)"
                 : "")
                   + (loaders
                 ? (pipelines.isEmpty()
@@ -443,7 +443,7 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
         private final Set<DocRef> read = new LinkedHashSet<>();
         private int notVisible;
         private int lookupCount;
-        /// The UUIDs of the XSLTs read as the user has them in their active tab, unsaved.
+        /// The UUIDs of the XSLTs read as the user has them in their attached tab, unsaved.
         private final Set<String> unsaved = new LinkedHashSet<>();
         private final int chatId;
         // The snapshot sent with the latest question, read once, when first needed.
@@ -489,7 +489,7 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
             return doc.map(found -> XsltLookupAnalyser.parse(xslt.getName(), xslt.getUuid(), text(xslt, found)));
         }
 
-        /// @return An XSLT's text: as the user has it in their active tab, unsaved, if it is shown there (as the
+        /// @return An XSLT's text: as the user has it in their attached tab, unsaved, if it is shown there (as the
         /// tab's document, or the selected element while stepping) and was shared in full; else as saved.
         private String text(final DocRef xslt, final XsltDoc saved) {
             final Optional<UnsavedPart> edited = tabSnapshots.unsavedPart(chatId, xslt, AiTabSnapshotPart.DATA)

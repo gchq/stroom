@@ -312,6 +312,14 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     Boolean deleteChat(@PathParam("chatId") int chatId);
 
     @POST
+    @Path("/sendSteerNow/{chatId}/{messageId}")
+    @Operation(
+            summary = "Send a message waiting for an AI chat's run to finish its current step now",
+            operationId = "sendSteerNow")
+    Boolean sendSteerNow(@PathParam("chatId") int chatId,
+                         @PathParam("messageId") int messageId);
+
+    @POST
     @Path("/deleteMessage/{chatId}/{messageId}")
     @Operation(
             summary = "Delete a message from an AI chat",

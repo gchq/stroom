@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 /// Runs a call that can block for a long time, e.g. an MCP tool call (whose client has no way to cancel it), so
@@ -47,6 +48,26 @@ final class StoppableCall {
     /// @throws StoppedException If `stop` was set before the call returned.
     /// @throws RuntimeException What the call threw, as it threw it if it was unchecked.
     static <T> T run(final Supplier<T> call, final AtomicBoolean stop, final Duration checkEvery) {
+        return run(call, stop, () -> false, checkEvery);
+    }
+
+    /// As [#run(Supplier, AtomicBoolean, Duration)], also giving up on the call when `cutShort` says to, e.g. as the
+    /// user has sent a message to be read now.
+    ///
+    /// @param call       The call. It must not need anything held by the calling thread (e.g. its security
+    ///                   context), as it runs on another.
+    /// @param stop       Set when the call is to be given up on.
+    /// @param cutShort   True when the call is to be given up on, without stopping the run. Asked as often as
+    ///                   `stop` is looked at, so it should be quick.
+    /// @param checkEvery How often to look at `stop` and ask `cutShort` while the call runs.
+    /// @return What the call returned.
+    /// @throws StoppedException  If `stop` was set before the call returned.
+    /// @throws CutShortException If `cutShort` said to give up before the call returned.
+    /// @throws RuntimeException  What the call threw, as it threw it if it was unchecked.
+    static <T> T run(final Supplier<T> call,
+                     final AtomicBoolean stop,
+                     final BooleanSupplier cutShort,
+                     final Duration checkEvery) {
         if (stop.get()) {
             throw new StoppedException();
         }
@@ -67,6 +88,11 @@ final class StoppableCall {
                         LOGGER.debug("Giving up on a call as a stop was requested");
                         thread.interrupt();
                         throw new StoppedException();
+                    }
+                    if (cutShort.getAsBoolean()) {
+                        LOGGER.debug("Giving up on a call as it was cut short");
+                        thread.interrupt();
+                        throw new CutShortException();
                     }
                 }
             }
@@ -94,6 +120,19 @@ final class StoppableCall {
 
         StoppedException() {
             super("Stopped by the user before it finished");
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Thrown when a call is given up on, without the run stopping, e.g. as the user has sent a message to be
+    /// read now.
+    static final class CutShortException extends RuntimeException {
+
+        CutShortException() {
+            super("Given up on before it finished");
         }
     }
 }

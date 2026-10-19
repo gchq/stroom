@@ -232,7 +232,7 @@ class TestXsltLookupsTool {
         final String result = run("{\"uuids\":[\"main-xslt\"],\"loaders\":false}");
 
         assertThat(result)
-                .contains("XSLT 'Main XSLT' (main-xslt) in /Lookups, as edited in the user's active tab (unsaved)")
+                .contains("XSLT 'Main XSLT' (main-xslt) in /Lookups, as edited in the tab the user attached (unsaved)")
                 .contains("stroom:lookup of map 'EDITED_MAP' (resolved)")
                 .doesNotContain("USER_TO_EMAIL");
     }
@@ -251,7 +251,7 @@ class TestXsltLookupsTool {
         final String result = run("{\"uuids\":[\"main-xslt\"],\"loaders\":false}");
 
         assertThat(result)
-                .contains("as edited in the user's active tab (unsaved)")
+                .contains("as edited in the tab the user attached (unsaved)")
                 .contains("stroom:lookup of map 'EDITED_MAP' (resolved)");
     }
 

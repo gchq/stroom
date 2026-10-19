@@ -39,6 +39,7 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.output.FinishReason;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -1035,6 +1036,76 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void queuedSteeringMessagesArePickedUpOnceAndShownAsSent() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("42 errors"))).build());
+        final McpToolset toolset = toolset(client, searchTool());
+        // Sent while the tool ran, waiting for it to finish; and one the run no longer has (e.g. taken back).
+        Mockito.when(aiService.getMessagesSince(7, 100)).thenReturn(List.of(
+                new AiChatMessage(101, 7, 0L, AiMessageType.QUEUED_STEER_MESSAGE,
+                        null, "only count firewall errors", 1, null),
+                new AiChatMessage(102, 7, 0L, AiMessageType.SEND_NOW_STEER_MESSAGE,
+                        null, "taken back", 1, null)));
+        Mockito.when(aiService.getMessagesSince(7, 102)).thenReturn(List.of());
+        Mockito.when(aiService.changeMessageType(7, 101, AiChatRunManager.QUEUED_STEERS,
+                AiMessageType.STEER_MESSAGE)).thenReturn(true);
+
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("There were 3 firewall errors."));
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 100, ContextBudget.UNKNOWN);
+
+        // Picked up by making it a steering message, so it is shown as sent.
+        Mockito.verify(aiService).changeMessageType(7, 101, AiChatRunManager.QUEUED_STEERS,
+                AiMessageType.STEER_MESSAGE);
+        assertThat(model.requests).hasSize(2);
+        assertThat(model.requests.get(1).messages())
+                .filteredOn(UserMessage.class::isInstance)
+                .extracting(message -> ((UserMessage) message).singleText())
+                .contains(McpAgentChat.STEER_PREFIX + "only count firewall errors")
+                .noneMatch(text -> text.contains("taken back"));
+    }
+
+    @Test
+    void sendingAMessageNowCutsShortTheToolRunningAndSkipsTheStepsOtherCalls() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        // A tool that waits far longer than the test, as waiting for processing does.
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class))).thenAnswer(invocation -> {
+            Thread.sleep(60_000);
+            return CallToolResult.builder().content(List.of(new TextContent("done"))).build();
+        });
+        final McpToolset toolset = toolset(client, searchTool());
+        Mockito.when(runManager.stopFlag(7)).thenReturn(new AtomicBoolean(false));
+        // Not asked to send now as the first call starts, then asked to while it runs.
+        Mockito.when(aiService.hasMessageOfType(7, AiMessageType.SEND_NOW_STEER_MESSAGE)).thenReturn(false, true);
+        Mockito.when(aiService.getMessagesSince(7, 100)).thenReturn(List.of());
+
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(
+                        ToolExecutionRequest.builder().id("1").name("search").arguments("{}").build(),
+                        ToolExecutionRequest.builder().id("2").name("search").arguments("{}").build())),
+                AiMessage.from("Stopped waiting."));
+        final long startMs = System.currentTimeMillis();
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 100, ContextBudget.UNKNOWN);
+
+        assertThat(System.currentTimeMillis() - startMs).isLessThan(30_000);
+        assertThat(model.requests).hasSize(2);
+        assertThat(model.requests.get(1).messages())
+                .filteredOn(ToolExecutionResultMessage.class::isInstance)
+                .extracting(message -> ((ToolExecutionResultMessage) message).text())
+                .containsExactly(McpAgentChat.CUT_SHORT_RESULT, McpAgentChat.SKIPPED_FOR_MESSAGE);
+        // The second call never reached its server.
+        Mockito.verify(client, Mockito.times(1)).callTool(Mockito.any(CallToolRequest.class));
+    }
+
+    @Test
     void steeringMessageSentAsTheModelFinishesGetsAnAnswer() {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of());
         Mockito.when(aiService.getMessagesSince(7, 100)).thenReturn(List.of(
@@ -1170,6 +1241,123 @@ class TestMcpAgentChat {
                 .map(m -> ((ToolExecutionResultMessage) m).text())
                 .toList())
                 .containsExactly(McpAgentChat.SHORTENED_RESULT, "r".repeat(1_000));
+    }
+
+    @Test
+    void contextOverflowAfterManyStepsShrinksFurtherAndCarriesOnInTheSameRun() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("r".repeat(1_000)))).build());
+        final McpToolset toolset = toolset(client, searchTool());
+        final List<ChatRequest> requests = new ArrayList<>();
+        final ChatModel model = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest chatRequest) {
+                requests.add(chatRequest);
+                if (requests.size() <= 3) {
+                    return ChatResponse.builder().aiMessage(AiMessage.from("Step " + requests.size(), List.of(
+                            ToolExecutionRequest.builder()
+                                    .id("call-" + requests.size())
+                                    .name("search")
+                                    .arguments("{\"query\":\"" + "q".repeat(500) + "\"}")
+                                    .build()))).build();
+                }
+                // Too large until the earlier steps are put in a note.
+                final boolean collapsed = chatRequest.messages().stream()
+                        .anyMatch(m -> m instanceof final UserMessage user
+                                       && user.singleText().startsWith(McpAgentChat.COLLAPSED_STEPS_NOTE));
+                if (!collapsed) {
+                    throw new RuntimeException("This model's maximum context length is 131072 tokens. However, "
+                                               + "you requested 140000 tokens (135904 in the messages, 4096 in "
+                                               + "the completion).");
+                }
+                return ChatResponse.builder().aiMessage(AiMessage.from("done")).build();
+            }
+        };
+
+        final ChatResponse response = agentChat.chat(model, null, 7, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(response.aiMessage().text()).isEqualTo("done");
+        // The fourth call is made again after each of shrink's steps: earlier results shortened, then the calls'
+        // arguments, then all but the latest result, then the earlier steps put in a note.
+        assertThat(requests).hasSize(8);
+        Mockito.verify(usageTracker, Mockito.times(4)).recordOverflow(Mockito.eq(7), Mockito.anyList(),
+                Mockito.any(), Mockito.any(), Mockito.anyInt());
+        final List<ChatMessage> last = requests.getLast().messages();
+        // The latest step is kept as it was, so the model carries on from it.
+        assertThat(last.stream().filter(AiMessage.class::isInstance).map(m -> ((AiMessage) m).text()).toList())
+                .containsExactly("Step 3");
+        assertThat(last).filteredOn(UserMessage.class::isInstance)
+                .extracting(m -> ((UserMessage) m).singleText())
+                .anySatisfy(text -> assertThat(text)
+                        .contains("- You said: Step 1")
+                        .contains("- search(")
+                        .contains("- You said: Step 2"));
+    }
+
+    @Test
+    void shrinkTakesTheLeastLossyStepFirstAndKeepsTheLatestStep() {
+        final List<ChatMessage> conversation = new ArrayList<>(List.of(
+                UserMessage.from("q"),
+                AiMessage.from("Looking", List.of(request("1", "{\"code\":\"" + "c".repeat(1_000) + "\"}"))),
+                ToolExecutionResultMessage.from("1", "t", "x".repeat(1_000)),
+                AiMessage.from(List.of(request("2", "{}"))),
+                ToolExecutionResultMessage.from("2", "t", "y".repeat(1_000)),
+                UserMessage.from(McpAgentChat.STEER_PREFIX + "also fw2"),
+                AiMessage.from(List.of(request("3", "{\"code\":\"" + "d".repeat(1_000) + "\"}"))),
+                ToolExecutionResultMessage.from("3", "t", "z".repeat(1_000))));
+
+        // 1: results but the latest two.
+        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(1);
+        // 2: the arguments of all but the latest step, still as JSON.
+        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(1);
+        final String arguments = ((AiMessage) conversation.get(1)).toolExecutionRequests().getFirst().arguments();
+        assertThat(JsonUtil.readValue(arguments, Map.class)).containsKey(McpAgentChat.SHORTENED_ARGUMENTS_KEY);
+        assertThat(((AiMessage) conversation.get(6)).toolExecutionRequests().getFirst().arguments())
+                .hasSizeGreaterThan(1_000);
+        // 3: results but the latest.
+        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(1);
+        // 4: the earlier steps, next to each other, put in one note, before what the user said.
+        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(2);
+        assertThat(conversation).hasSize(5);
+        assertThat(((UserMessage) conversation.get(1)).singleText())
+                .startsWith(McpAgentChat.COLLAPSED_STEPS_NOTE)
+                .contains("- You said: Looking")
+                .contains("- t(");
+        assertThat(((UserMessage) conversation.get(2)).singleText()).startsWith(McpAgentChat.STEER_PREFIX);
+        assertThat(conversation.get(3)).isInstanceOf(AiMessage.class);
+        assertThat(((ToolExecutionResultMessage) conversation.get(4)).text()).isEqualTo("z".repeat(1_000));
+        // Nothing more to shorten.
+        assertThat(McpAgentChat.shrink(conversation)).isZero();
+    }
+
+    @Test
+    void aReplyCutOffAtTheLengthLimitIsCarriedOnFrom() {
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
+                ToolSpecification.builder().name("noop").build(), (request, memoryId) -> "ok"));
+        final List<ChatRequest> requests = new ArrayList<>();
+        final ChatModel model = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest chatRequest) {
+                requests.add(chatRequest);
+                return requests.size() == 1
+                        ? ChatResponse.builder().aiMessage(AiMessage.from("The feed is set up and"))
+                                .finishReason(FinishReason.LENGTH).build()
+                        : ChatResponse.builder().aiMessage(AiMessage.from("The feed is set up.")).build();
+            }
+        };
+
+        final ChatResponse response = agentChat.chat(model, null, 7, messages, McpToolset.EMPTY, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 100, ContextBudget.UNKNOWN);
+
+        assertThat(response.aiMessage().text()).isEqualTo("The feed is set up.");
+        assertThat(requests).hasSize(2);
+        assertThat(requests.get(1).messages().getLast()).isEqualTo(UserMessage.from(McpAgentChat.CUT_OFF_NOTE));
+    }
+
+    private static ToolExecutionRequest request(final String id, final String arguments) {
+        return ToolExecutionRequest.builder().id(id).name("t").arguments(arguments).build();
     }
 
     @Test

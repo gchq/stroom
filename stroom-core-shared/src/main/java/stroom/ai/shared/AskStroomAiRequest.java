@@ -55,7 +55,7 @@ public class AskStroomAiRequest {
     }
 
     /// @param mode        How the agent works in the chat from now on, or null to keep the chat's current mode.
-    /// @param tabSnapshot What the user sees in the active tab, sent with a question, or null if no tab is shared.
+    /// @param tabSnapshot What the user sees in the attached tab, sent with a question, or null if no tab is shared.
     @JsonCreator
     public AskStroomAiRequest(@JsonProperty("aiChat") final AiChat aiChat,
                               @JsonProperty("config") final AskStroomAiConfig config,
@@ -92,7 +92,7 @@ public class AskStroomAiRequest {
         return mode;
     }
 
-    /// @return What the user sees in the active tab, sent with a question, or null if no tab is shared. Only its
+    /// @return What the user sees in the attached tab, sent with a question, or null if no tab is shared. Only its
     /// hash is sent if it hasn't changed since it was last sent to the chat.
     public AiTabSnapshot getTabSnapshot() {
         return tabSnapshot;

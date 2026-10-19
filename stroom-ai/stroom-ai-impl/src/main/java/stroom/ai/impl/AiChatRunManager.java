@@ -20,6 +20,7 @@ import stroom.ai.api.AiService;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
+import stroom.ai.shared.AiMessageType;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.HasSessionId;
 import stroom.security.api.SecurityContext;
@@ -83,6 +84,9 @@ public class AiChatRunManager {
     static final String TASK_NAME = "Ask Stroom AI";
     static final Duration HEARTBEAT_INTERVAL = Duration.ofSeconds(10);
     static final Duration STALE_AFTER = Duration.ofSeconds(60);
+    /// The types of the messages the user sent to steer a run that it has yet to pick up.
+    static final Set<AiMessageType> QUEUED_STEERS = Set.of(AiMessageType.QUEUED_STEER_MESSAGE,
+            AiMessageType.SEND_NOW_STEER_MESSAGE);
 
     /// How often a browser checking on a chat is recorded, at most.
     static final Duration PRESENCE_RECORD_INTERVAL = Duration.ofSeconds(30);
@@ -297,6 +301,9 @@ public class AiChatRunManager {
             runDao.compareAndSetStatus(run.getId(), ACTIVE, AiChatRunStatus.FAILED, null,
                     NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
         } finally {
+            // Anything the user sent that the run didn't pick up stays in the conversation, as sent, for the model to
+            // see on the chat's next run, rather than being shown as waiting forever.
+            aiDao.changeMessageTypes(run.getChatId(), QUEUED_STEERS, AiMessageType.STEER_MESSAGE);
             localRuns.remove(run.getChatId(), localRuns.get(run.getChatId()));
             // A slot has come free.
             startQueued();

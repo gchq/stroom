@@ -128,7 +128,10 @@ class GrepTool extends AbstractWorkspaceTool {
                                        && sb.length() < limits().getMaxCharsPerRead()) {
                                 sb.append(files.size() > 1
                                         ? file + ":"
-                                        : "").append(lineNo).append(": ").append(shortenLine(line)).append('\n');
+                                        : "").append(lineNo).append(": ").append(shortenLine(line))
+                                        .append(line.length() > MAX_LINE_CHARS
+                                                ? " (read_file shows the whole line)"
+                                                : "").append('\n');
                             }
                         }
                         lineNo++;
