@@ -73,6 +73,14 @@ public class AiConfigGeneralPresenter
                 config,
                 AskStroomAiConfig::getHistorySummaryPrompt,
                 AskStroomAiConfig.DEFAULT_HISTORY_SUMMARY_PROMPT));
+        getView().setShowToolCalls(NullSafe.getOrElse(
+                config,
+                AskStroomAiConfig::isShowToolCalls,
+                AskStroomAiConfig.DEFAULT_SHOW_TOOL_CALLS));
+        getView().setShowReasoning(NullSafe.getOrElse(
+                config,
+                AskStroomAiConfig::isShowReasoning,
+                AskStroomAiConfig.DEFAULT_SHOW_REASONING));
         getView().setEnableDebugDetail(NullSafe.getOrElse(
                 config,
                 AskStroomAiConfig::isEnableDebugDetail,
@@ -91,6 +99,8 @@ public class AiConfigGeneralPresenter
                 .dockLocation(getView().getDockBehaviour().getDockLocation())
                 .chatSystemPrompt(getView().getChatSystemPrompt())
                 .historySummaryPrompt(getView().getHistorySummaryPrompt())
+                .showToolCalls(getView().isShowToolCalls())
+                .showReasoning(getView().isShowReasoning())
                 .enableDebugDetail(getView().isEnableDebugDetail())
                 .browserNotifications(getView().isBrowserNotifications());
     }
@@ -127,6 +137,14 @@ public class AiConfigGeneralPresenter
         void setHistorySummaryPrompt(String prompt);
 
         String getHistorySummaryPrompt();
+
+        void setShowToolCalls(boolean show);
+
+        boolean isShowToolCalls();
+
+        void setShowReasoning(boolean show);
+
+        boolean isShowReasoning();
 
         void setEnableDebugDetail(boolean enabled);
 

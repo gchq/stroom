@@ -120,6 +120,8 @@ class TestAgentModeTools {
             Map.entry("validate_stroomql", false),
             // Only offers the user a button: the user creates the query.
             Map.entry("propose_query", false),
+            // Only offers the user a button: the user creates the dashboard.
+            Map.entry("propose_dashboard", false),
             // Only offers the user a button: the user applies the change to the Query's editor, unsaved.
             Map.entry("propose_query_change", false),
             // Only offers the user a button: the user applies the change to the editor, unsaved.
@@ -140,6 +142,7 @@ class TestAgentModeTools {
             bind(AiService.class).toInstance(aiService);
             bind(AiMemoryService.class).toInstance(Mockito.mock(AiMemoryService.class));
             bind(QueryService.class).toInstance(Mockito.mock(QueryService.class));
+            bind(DashboardBuilder.class).toInstance(Mockito.mock(DashboardBuilder.class));
             bind(ResourceStore.class).toInstance(Mockito.mock(ResourceStore.class));
             bind(Store.class).toInstance(Mockito.mock(Store.class));
             bind(SecurityContext.class).toInstance(Mockito.mock(SecurityContext.class));

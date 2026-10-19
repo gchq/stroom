@@ -581,6 +581,14 @@
     border-top: 1px solid var(--control__border-color);
 }
 
+/* ---- What of each turn's activity is shown (the user's settings) ---- */
+
+.ai-hide-tool-calls .ai-message--tool,
+.ai-hide-reasoning .ai-message--thinking,
+.ai-hide-request-detail .ai-message--debug-detail {
+    display: none;
+}
+
 /* ---- Code blocks ---- */
 
 /* The language and Copy button sit in a bar joined to the top of the code, as one box. */
@@ -1906,6 +1914,15 @@
     overflow: auto;
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+/* Joined to its header (language and Copy), as the chat's code blocks are: the rule above would otherwise put
+   a gap and rounded corners between them. */
+.ai-user-action .ai-code-header + pre {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top-style: dashed;
 }
 
 .ai-user-action pre code {

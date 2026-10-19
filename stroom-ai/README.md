@@ -295,6 +295,28 @@ What the agent can offer for the attached tab, all as buttons the user clicks, n
   change is tried by stepping the record with it, and refused if it gives errors the current code doesn't.
 * `current_results` takes a snapshot of the rows of a table the tab shows.
 
+The agent can also offer new documents, whichever tab is attached, as buttons that open Stroom's own New
+Query or New Dashboard dialog with a suggested name. Nothing is created unless the user confirms the dialog,
+which checks their permission to create the document in the folder they choose and logs it as any new
+document is logged.
+
+* _Create query…_: a StroomQL Query holding the agent's query.
+* _Create dashboard…_: a dashboard built from a StroomQL query the agent writes, with a query, a table and,
+  if the user wants one, a data preview (a Text widget showing the event of the selected row). Before
+  offering it, the agent asks, in one form:
+  * whether the query should be StroomQL or Expression Language (classic);
+  * which fields the table should show, unless the request says, offering sets of fields from the data
+    source to choose from;
+  * whether to add a data preview;
+  * which data source to use, if more than one could hold what was asked for.
+
+  A StroomQL dashboard holds the query in an Embedded Query, which shows its own table. For a classic
+  dashboard, Stroom turns the query's `where` into the Query's expression, and its `select` (with grouping,
+  sorting and `limit`) into the Table's columns, extracting values with the data source's default extraction
+  pipeline. A classic dashboard can't hold StroomQL's `window`, `filter`, `having` or `show` clauses, and a
+  data preview needs ungrouped rows; the agent is told why when either doesn't fit. The settings are built
+  again from the query when the button is clicked, so they follow the data source as it is then.
+
 
 ## Attached tables
 
@@ -371,6 +393,15 @@ All under `appConfig.ai` unless stated.
 | `workspace.maxEventBytes` | `1048576` | The largest source event `fetch_events` fetches, in bytes |
 | `workspaceFileRetention` | `P7D` | How long workspace files are kept |
 | `appConfig.askStroomAi.browserNotifications` | `true` | Browser notifications when a chat finishes or needs the user |
+| `appConfig.askStroomAi.showToolCalls` | `true` | Shows tool calls in each turn's activity (only hides them when off) |
+| `appConfig.askStroomAi.showReasoning` | `true` | Shows the model's reasoning in each turn's activity |
+| `appConfig.askStroomAi.enableDebugDetail` | `true` | Keeps and shows each answer's request detail |
+
+The `appConfig.askStroomAi` settings are the defaults for each user's own settings, which they change in the
+chat's settings (_Show tool calls_, _Show reasoning_, _Show request detail_, _Enable browser notifications_).
+Turning off tool calls or reasoning only hides them, in past turns too, and turning them on again shows them;
+the agent works the same either way. A model's own _Show reasoning_ setting decides whether its reasoning is
+kept at all. Turning off request detail stops it being kept for later answers, and hides what was kept.
 
 
 ## Troubleshooting

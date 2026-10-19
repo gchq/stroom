@@ -16955,6 +16955,12 @@
       "AiUserActionResult" : {
         "type" : "object",
         "properties" : {
+          "createDashboardConfig" : {
+            "$ref" : "#/components/schemas/DashboardConfig"
+          },
+          "createDashboardName" : {
+            "type" : "string"
+          },
           "createQueryName" : {
             "type" : "string"
           },
@@ -17600,6 +17606,12 @@
           },
           "modelRef" : {
             "$ref" : "#/components/schemas/DocRef"
+          },
+          "showReasoning" : {
+            "type" : "boolean"
+          },
+          "showToolCalls" : {
+            "type" : "boolean"
           },
           "tableAnalysis" : {
             "$ref" : "#/components/schemas/TableAnalysisConfig"
