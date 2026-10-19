@@ -58,6 +58,10 @@
             <g:Button ui:field="jumpToLatest" styleName="allow-focus askStroomAiViewImpl-jumpToLatest"
                       title="Scroll to the latest message, and follow the chat"/>
         </g:FlowPanel>
+        <!-- Suggestions float over the bottom of the conversation, in front of the bottom's shadow, taking no room. -->
+        <g:FlowPanel styleName="dock-min askStroomAiViewImpl-followUpsBar">
+            <g:FlowPanel ui:field="followUps" styleName="askStroomAiViewImpl-followUps"/>
+        </g:FlowPanel>
         <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
             <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
             <g:FlowPanel ui:field="taskList" styleName="dock-min askStroomAiViewImpl-taskList">
@@ -72,7 +76,6 @@
                 <g:HTML ui:field="commandReferenceContent"
                         styleName="markdown askStroomAiViewImpl-commandReference-content"/>
             </g:FlowPanel>
-            <g:FlowPanel ui:field="followUps" styleName="dock-min askStroomAiViewImpl-followUps"/>
             <g:FlowPanel ui:field="inputBox"
                          styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
                 <g:FlowPanel ui:field="commandSuggestions" styleName="dock-min askStroomAiViewImpl-commands"/>

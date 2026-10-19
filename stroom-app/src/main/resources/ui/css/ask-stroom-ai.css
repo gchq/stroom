@@ -180,6 +180,14 @@
     min-width: 0;
 }
 
+/* Between the tab's chips and the chips of the documents and tables attached. */
+.ai-attachment-chips-divider {
+    align-self: stretch;
+    width: 1px;
+    margin: 2px 3px;
+    background-color: var(--splitter__background-color);
+}
+
 /* On the right of the list, centred on its rows, removing all its tables after asking: a standard size icon button
    (as the auto-approve shield is). */
 .ai-attachment-remove-all {
@@ -613,7 +621,8 @@
 
 .askStroomAiViewImpl-jumpToLatest {
     position: absolute;
-    bottom: 12px;
+    /* Above the suggestions, when there are any. */
+    bottom: calc(12px + var(--ai-follow-ups-height, 0px));
     left: 50%;
     transform: translateX(-50%);
     cursor: pointer;
@@ -1168,12 +1177,26 @@
 
 /* ---- Commands suggested as the user types "/" ---- */
 
-/* Things the user might ask next, offered above the input after an answer. */
+/* Things the user might ask next, offered above the input after an answer. They float over the bottom of the
+   conversation, in front of the bottom's shadow, without making the bottom any taller; the conversation has room
+   below its latest message as tall as they are (--ai-follow-ups-height, set by the view), so they never hide it. */
+.askStroomAiViewImpl-followUpsBar {
+    position: relative;
+    height: 0;
+    overflow: visible;
+    z-index: 3;
+}
+
 .askStroomAiViewImpl-followUps {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 6px;
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    padding: 0 0 6px;
+    /* Only the suggestions take clicks; the conversation can be scrolled and clicked between them. */
+    pointer-events: none;
 }
 
 .askStroomAiViewImpl-followUp {
@@ -1190,12 +1213,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .askStroomAiViewImpl-followUp:hover,
 .askStroomAiViewImpl-followUp:focus-visible {
     background: var(--curve-tab__background-color--hover);
-    text-decoration: underline;
 }
 
 /* Up to ten commands high, then scrolls. */
@@ -2485,7 +2509,7 @@ a.ai-stroom-link::after {
    latest messages (e.g. a question asked, with the task list below) can always be scrolled clear of them. */
 .askStroomAiViewImpl-middle {
     padding-top: calc(var(--ai-overlay-reach) + 8px);
-    padding-bottom: calc(var(--ai-overlay-reach) + 12px);
+    padding-bottom: calc(var(--ai-overlay-reach) + 12px + var(--ai-follow-ups-height, 0px));
 }
 
 .ai-overview-content {
