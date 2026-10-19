@@ -30,15 +30,15 @@ import stroom.util.shared.NullSafe;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Applies a change to a dashboard component's settings that the AI chat proposed (see the server's
-/// `DashboardSettings`), as the component's Settings dialog would, and puts a component's settings back as they
-/// were if the change is undone. Values were checked by the server; anything else is refused here.
-public final class AiComponentSettings {
+/// Applies a change to one of a dashboard component's settings made outside its Settings dialog (e.g. a change
+/// proposed from elsewhere and checked there), as the dialog would, and puts a component's name and settings back
+/// as they were if the change is undone. Settings and values it doesn't know are refused.
+public final class ComponentSettingChanges {
 
     /// The value given for no document or component.
     static final String NONE = "none";
 
-    private AiComponentSettings() {
+    private ComponentSettingChanges() {
         // Static methods only.
     }
 
@@ -49,13 +49,31 @@ public final class AiComponentSettings {
         if (!(component instanceof AbstractComponentPresenter<?>)) {
             return null;
         }
-        final ComponentConfig config = component.write();
-        // A table's columns are changed in place, so they are copied.
-        return config.getSettings() instanceof final TableComponentSettings table
-                ? config.copy().settings(table.copy()
-                        .columns(new ArrayList<>(NullSafe.list(table.getColumns())))
-                        .build()).build()
-                : config;
+        // Not write(), which would write over the settings with what the Settings dialog last showed.
+        final ComponentConfig config = component.getComponentConfig();
+        if (config.getSettings() instanceof final TableComponentSettings table) {
+            // A table's columns are changed in place, so they are copied.
+            return config.copy().settings(table.copy()
+                    .columns(new ArrayList<>(NullSafe.list(table.getColumns())))
+                    .build()).build();
+        }
+        if (component instanceof final QueryPresenter query
+            && config.getSettings() instanceof final QueryComponentSettings settings) {
+            // The query keeps its expression in its editor until it is written.
+            return config.copy().settings(settings.copy().expression(query.getExpression()).build()).build();
+        }
+        return config;
+    }
+
+    /// Brings the Settings dialogs of changed components up to date with their settings.
+    ///
+    /// @param components The components.
+    static void syncSettingsDialogs(final Iterable<Component> components) {
+        for (final Component component : components) {
+            if (component instanceof final AbstractComponentPresenter<?> presenter) {
+                presenter.syncSettingsDialog();
+            }
+        }
     }
 
     /// Puts a component's name and settings back as they were, as unsaved edits.
@@ -83,7 +101,7 @@ public final class AiComponentSettings {
     ///
     /// @param component The component.
     /// @param setting   The setting's key.
-    /// @param value     Its value, as the server checked it.
+    /// @param value     Its value: true or false, a number, numbers separated by commas, or a duration.
     /// @param ref       For a setting naming a component, that component's id, or null.
     /// @param doc       For a setting naming a document, the document, or null.
     /// @return Why it couldn't be changed, or null if it was.
