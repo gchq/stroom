@@ -210,7 +210,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     public void setAccessibleName(final String name) {
         if (NullSafe.isBlankString(name)) {
             cellTable.getElement().removeAttribute("aria-label");
-            quickFilter.setAccessibleName(null);
+            // Still named, by what it filters, as a placeholder is only a hint
+            quickFilter.setAccessibleName("Filter options");
         } else {
             cellTable.getElement().setAttribute("aria-label", name);
             // Its quick filter too, by what it filters

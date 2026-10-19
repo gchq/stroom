@@ -1610,6 +1610,11 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   pulled the focus back from the list if Down was pressed in that time; it stops once the filter
   has had the focus. Workbench: `Widgets/Selectors/DocSelectionBox` and `UserRefSelectionBox`
   `KeysInTheDialog`.
+* **Tab in a selection box's open list lost the focus** (`SelectionPopup`): Tab from the last
+  option sent the focus to the page and left the list open (`aria-expanded` still true). Tab now
+  closes the list, leaving the value, and goes on to what follows the box; Shift+Tab closes it and
+  goes back to the box. The list's quick filter is named "Filter options" when the box has no name.
+  Workbench: `Widgets/Selectors/SelectionBox` `TabClosesTheList`.
 
 ## Checked and not bugs
 

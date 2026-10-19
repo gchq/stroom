@@ -22,9 +22,8 @@ import com.google.gwt.dom.client.Element;
 /// from its first to its last, rather than to the page behind it, which can't be used while the
 /// dialog is open (WAI-ARIA's modal dialog pattern).
 ///
-/// A tab stop is an element the browser would tab to: a button, link or form field, or an element
-/// with a `tabindex` of 0 or more, that is shown and not disabled. A key something inside the dialog
-/// has already handled (e.g. Tab in a code editor, which indents) is left alone.
+/// Its tab stops are [stroom.widget.util.client.TabOrder]'s. A key something inside the dialog has
+/// already handled (e.g. Tab in a code editor, which indents) is left alone.
 public final class DialogFocusTrap {
 
     private static final String INSTALLED_ATTRIBUTE = "data-focus-trap";
@@ -44,19 +43,8 @@ public final class DialogFocusTrap {
     }
 
     private static native void listen(Element dialog) /*-{
-        var selector = 'a[href], button, input, select, textarea, [tabindex]';
         var tabStops = function () {
-            return Array.prototype.filter.call(dialog.querySelectorAll(selector), function (element) {
-                if (element.tabIndex < 0 || element.disabled) {
-                    return false;
-                }
-                if (element.getClientRects().length === 0) {
-                    // Not shown (e.g. display: none, or in a hidden tab)
-                    return false;
-                }
-                var style = element.ownerDocument.defaultView.getComputedStyle(element);
-                return style.visibility !== 'hidden';
-            });
+            return @stroom.widget.util.client.TabOrder::tabStops(*)(dialog);
         };
         dialog.addEventListener('keydown', function (event) {
             if (event.key !== 'Tab' || event.defaultPrevented

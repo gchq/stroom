@@ -36,6 +36,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -167,6 +168,33 @@ public final class SelectionBoxStories {
                     play.expect(filter).toHaveAttribute("aria-label", "Filter Name");
                     play.waitFor(() -> play.expect(play.screen().getByRole("option", "Item 150")).toBeInTheDocument());
                     play.expect(play.screen().queryByRole("option", "Item 2")).toBeNull();
+                })
+                // Tab in the open list closes it, leaving the value, and goes on to what follows the
+                // box; Shift+Tab closes it and goes back to the box
+                .story("TabClosesTheList", context -> {
+                    final FlowPanel panel = named(selectionBox(context, NAMES));
+                    final TextBox after = new TextBox();
+                    AccessibleName.set(after, "After");
+                    panel.add(after);
+                    return panel;
+                })
+                .withPlay(play -> {
+                    final Query box = play.getByRole("combobox", "Name");
+                    play.tab();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Alpha")).toHaveFocus());
+                    play.tab();
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.expect(play.getByRole("textbox", "After")).toHaveFocus();
+                    play.expect(box).toHaveAttribute("aria-expanded", "false");
+                    play.tab(true);
+                    play.expect(box).toHaveFocus();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Alpha")).toHaveFocus());
+                    play.tab(true);
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.expect(box).toHaveFocus();
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
                 })
                 // The list is named for the box that opened it, here by the box's form group label
                 .story("TheListIsNamedForTheBox", context -> {
