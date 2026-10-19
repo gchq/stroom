@@ -78,6 +78,11 @@ public class DataGridSelectionEventManager<T>
     }
 
     @Override
+    protected void onSelectionFollowsFocus(final T item) {
+        doSelect(item, new SelectionType());
+    }
+
+    @Override
     protected void onSelect(final CellPreviewEvent<T> event) {
         // Called when user hits <space> so they can do single or multi-select
         // via the keyboard using up/down/j/k, then space or space + shift/ctrl

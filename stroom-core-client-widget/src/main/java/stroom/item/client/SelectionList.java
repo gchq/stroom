@@ -31,6 +31,7 @@ import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
+import stroom.widget.util.client.TypedKey;
 
 import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
@@ -116,12 +117,12 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             @Override
             protected void onBrowserEvent2(final Event event) {
                 if (event.getTypeInt() == Event.ONKEYDOWN) {
-                    final String key = keyOf(event);
+                    final String key = TypedKey.keyOf(event);
                     if (event.getAltKey() && event.getKeyCode() == KeyCodes.KEY_UP) {
                         // Alt+Up chooses the option with the focus and closes the list (WAI-ARIA
                         // combobox)
                         chooseKeyboardSelected();
-                    } else if (isTypedCharacter(event, key)) {
+                    } else if (TypedKey.isTypedCharacter(event, key)) {
                         typeAhead(key);
                     } else if (event.getKeyCode() == KeyCodes.KEY_UP) {
                         if (model.displayFilter()) {
@@ -317,21 +318,6 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         }
     }
 
-    /// @param event An event's key.
-    /// @return The key's value (e.g. `a`, or `ArrowUp`), as the browser names it.
-    static native String keyOf(NativeEvent event) /*-{
-        return event.key || "";
-    }-*/;
-
-    /// @param event A key event.
-    /// @param key   Its key (see [#keyOf(NativeEvent)]).
-    /// @return Whether the key types a character (with no Ctrl, Alt or Meta, which make it a shortcut).
-    static boolean isTypedCharacter(final NativeEvent event, final String key) {
-        return key.length() == 1
-               && !event.getCtrlKey()
-               && !event.getAltKey()
-               && !event.getMetaKey();
-    }
 
     public void setKeyboardSelectionPolicy(final KeyboardSelectionPolicy policy) {
         cellTable.setKeyboardSelectionPolicy(policy);

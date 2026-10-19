@@ -7,5 +7,7 @@
         <g:ScrollPanel addStyleNames="dock-max stroom-control">
             <g:SimplePanel ui:field="treeContainer" addStyleNames="max"/>
         </g:ScrollPanel>
+        <!-- Says which item is chosen, to screen readers -->
+        <g:Label ui:field="status" styleName="sr-only"/>
     </g:FlowPanel>
 </ui:UiBinder>

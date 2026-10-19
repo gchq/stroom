@@ -41,6 +41,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -79,6 +80,12 @@ public class ExplorerPopupPresenter
         getView().setUiHandlers(this);
 
         explorerTree = new ExtendedExplorerTree(this, restFactory, this);
+        // A picker's keys: Down in the filter goes to the chosen document, Up from the first item
+        // back to the filter, and typing in the tree goes to the filter; moving chooses
+        explorerTree.setAccessibleName("Documents");
+        explorerTree.setSelectionFollowsFocus(true);
+        explorerTree.setFilterKeys(getView()::focus, getView()::typeInFilter);
+        getView().setFilterMoveDown(explorerTree::focusSelected);
         explorerTree.setFilterErrorConsumer(getView()::setFilterError);
         getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
@@ -114,6 +121,9 @@ public class ExplorerPopupPresenter
     }
 
     public void show(final BiConsumer<DocRef, HidePopupRequestEvent> consumer, final PopupType popupType) {
+        // What was chosen when it opened, put back if it is cancelled (moving through the tree
+        // chooses)
+        final ExplorerNode initialSelection = explorerTree.getSelectionModel().getSelected();
         refresh();
         final PopupSize popupSize = PopupSize.resizable(500, 550);
 
@@ -121,6 +131,8 @@ public class ExplorerPopupPresenter
                 .popupType(popupType)
                 .popupSize(popupSize)
                 .caption(caption)
+                // Modal, as it asks for a choice: the page behind can't be used, and Tab stays in it
+                .modal(true)
                 .onShow(e -> {
                     getView().focus();
                 })
@@ -152,10 +164,19 @@ public class ExplorerPopupPresenter
                                     });
                         }
                     } else {
+                        restoreSelection(initialSelection);
                         e.hide();
                     }
                 })
                 .fire();
+    }
+
+    private void restoreSelection(final ExplorerNode selection) {
+        if (selection == null) {
+            explorerTree.getSelectionModel().clear();
+        } else {
+            explorerTree.getSelectionModel().setSelected(selection);
+        }
     }
 
     public void show(final Consumer<DocRef> consumer) {
@@ -187,11 +208,15 @@ public class ExplorerPopupPresenter
             // update the name of their selected item properly.
             if (initial) {
                 selectionChangeConsumer.accept(selected);
+                // Tabbing into the tree lands on the chosen document, once its rows are drawn
+                Scheduler.get().scheduleDeferred(explorerTree::showSelectedAsTabStop);
 
             } else if (selectionType.isDoubleSelect()) {
                 selectionChangeConsumer.accept(selected);
                 explorerTree.getSelectionModel().setSelected(selected);
                 HidePopupRequestEvent.builder(this).fire();
+            } else {
+                getView().announce(NullSafe.getOrElse(selected, ExplorerNode::getName, "None") + " chosen");
             }
         }
     }

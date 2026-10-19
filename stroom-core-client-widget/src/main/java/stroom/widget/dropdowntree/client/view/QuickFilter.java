@@ -81,6 +81,8 @@ public class QuickFilter extends FlowPanel
     private HelpPopup helpPopup = null;
     private String filterError = null;
     private QuickFilterContextHandler contextHandler = null;
+    // What Down in the filter does, e.g. moves into the list below it
+    private Runnable moveDown;
     private final QuickFilterHistoryTracker historyTracker = new QuickFilterHistoryTracker(text -> {
         if (contextHandler != null) {
             contextHandler.recordUse(text);
@@ -324,7 +326,20 @@ public class QuickFilter extends FlowPanel
             // Combo-box convention for opening the list from the keyboard.
             event.preventDefault();
             showRecentFilters();
+        } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN && moveDown != null
+                   && !event.isControlKeyDown() && !event.isShiftKeyDown() && !event.isMetaKeyDown()) {
+            // Into the list below the filter
+            event.preventDefault();
+            moveDown.run();
         }
+    }
+
+    /// Sets what Down in the filter does, e.g. moves the focus into the list it filters. Alt+Down
+    /// still shows the recent filters.
+    ///
+    /// @param moveDown What to do, or null for nothing.
+    public void setMoveDown(final Runnable moveDown) {
+        this.moveDown = moveDown;
     }
 
     /// Enables or disables the filter's text. Its syntax help stays available.
@@ -406,9 +421,27 @@ public class QuickFilter extends FlowPanel
         return textBox.addDomHandler(handler, KeyDownEvent.getType());
     }
 
+    /// Puts the focus in the filter, trying again for a moment (e.g. while the popup it is in
+    /// settles), but not once it has had the focus and it has moved on (e.g. the user has gone into
+    /// the list below with Down), which would pull it back.
     public void forceFocus() {
-        FocusUtil.forceFocus(this::focus);
+        final boolean[] hadFocus = {false};
+        FocusUtil.forceFocus(() -> {
+            if (!hadFocus[0] && !hasFocus()) {
+                focus();
+            }
+            // Once it has the focus, the later tries leave it wherever it goes
+            hadFocus[0] = hadFocus[0] || hasFocus();
+        });
     }
+
+    private boolean hasFocus() {
+        return isFocused(textBox.getElement());
+    }
+
+    private static native boolean isFocused(Element element) /*-{
+        return element.ownerDocument.activeElement === element;
+    }-*/;
 
     /// Adds typed text to the end of the filter, applies it at once, and puts the focus in the filter
     /// with the caret after it, so typing carries on there (e.g. a selection box passes on what was

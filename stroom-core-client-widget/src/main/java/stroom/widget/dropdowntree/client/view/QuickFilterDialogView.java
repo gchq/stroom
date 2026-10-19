@@ -44,4 +44,19 @@ public interface QuickFilterDialogView extends View, Focus, HasUiHandlers<QuickF
     ///
     /// @param accessibleName The name.
     void setAccessibleName(String accessibleName);
+
+    /// Sets what Down in the filter does, e.g. moves the focus into the list below it.
+    ///
+    /// @param moveDown What to do.
+    void setFilterMoveDown(Runnable moveDown);
+
+    /// Types characters in the filter (moving the focus to it), e.g. those typed in the list.
+    ///
+    /// @param text The characters.
+    void typeInFilter(String text);
+
+    /// Says something to screen readers (a polite live region), e.g. the item now chosen.
+    ///
+    /// @param message What to say.
+    void announce(String message);
 }

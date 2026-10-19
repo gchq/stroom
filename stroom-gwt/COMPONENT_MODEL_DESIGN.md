@@ -483,6 +483,37 @@ Stories `Widgets/Inputs/TickBox` (`Basic`, `ReadOnly`, `Disabled`, `NoLabel`) an
 Not yet done: the grid cell can't be reached from the keyboard (the data grid's keyboard pattern,
 session 4); it hasn't been tried with a screen reader.
 
+## Pickers
+
+The document and user pickers (`DocSelectionBoxPresenter`, `UserRefSelectionBoxPresenter`, drawn by
+`DropDownView`) are buttons (`aria-haspopup="dialog"`) that open a modal dialog to choose from: a
+quick filter over the explorer tree (`ExplorerPopupPresenter`) or a grid of users and groups
+(`UserRefPopupPresenter`). Enter or Space on a picker opens it.
+
+- **Modal.** The dialogs are shown `.modal(true)`: the glass covers the page, they are `aria-modal`,
+  and `DialogFocusTrap` keeps the focus in them (Tab from the last tab stop goes to the first, and
+  Shift+Tab back), as it does in every modal dialog. Escape cancels, and the focus goes back to the
+  picker (`CurrentFocus`).
+- **Filter and list.** The focus starts in the quick filter. Down goes to the chosen item (or the
+  first), Up from the first item back to the filter, and typing in the list goes to the filter
+  (`QuickFilter.setMoveDown`, and `AbstractSelectionEventManager.setMoveUpFromFirst` and
+  `setTypedHandler`, which other lists with a filter above them can use too).
+- **Choosing.** Moving chooses (selection follows focus,
+  `AbstractSelectionEventManager.setSelectionFollowsFocus`), as in a list that chooses one item;
+  what is chosen is announced in a live region ("Normalise chosen"). Tabbing into the list lands on
+  the chosen item. Enter on an item chooses it and closes the dialog, as OK does; on the grid it is
+  the row with the focus, even one only highlighted after filtering hid what was chosen. Cancel puts
+  back what was chosen when the dialog opened.
+- **The filter's focus.** `QuickFilter.forceFocus` tries again for half a second while a popup
+  settles, but no longer once the filter has had the focus, so it doesn't pull the focus back from
+  the list.
+
+The lists are named ("Documents", "Users and groups"), but the tree and grid have no roles or
+states yet; those come with sessions 5 (trees) and 4 (grids).
+
+Stories `Widgets/Selectors/DocSelectionBox` `KeysInTheDialog` and
+`Widgets/Selectors/UserRefSelectionBox` `KeysInTheDialog`.
+
 ## Value spinner
 
 `ValueSpinner` (`stroom.widget.valuespinner.client`, styled by `value-spinner.css`) is a field for a whole number with arrows that step it down and up. It is retrofitted rather than replaced, as its API (`setMin`, `setMax`, `setMinStep`, `setValue`, `formatValue`/`parseValue` for subclasses) is used by about 58 views; `Spinner` holds its value, bounds and the stepping while an arrow is held, and no longer owns any widgets.

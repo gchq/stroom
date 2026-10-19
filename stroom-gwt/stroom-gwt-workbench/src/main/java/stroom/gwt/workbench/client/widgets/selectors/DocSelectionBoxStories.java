@@ -23,9 +23,12 @@ import stroom.explorer.client.presenter.ExplorerPopupPresenter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.tree.ExplorerFixture;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.EventInit;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -72,18 +75,49 @@ public final class DocSelectionBoxStories {
                 })
                 // Pre-selected - the field starts with a chosen document name, and the popup offers a
                 // "None" row to clear it
-                .story("WithSelection", context -> {
-                    final ExplorerFixture fixture = TreeFixtures.fixtureTree();
-                    final ScreenHarness harness = harness(context, fixture);
-                    final DocSelectionBoxPresenter box = box(context, harness, "Choose Pipeline");
-                    box.setItemType("Pipeline");
-                    box.setSelectedEntityReference(fixture.toDocRef("Ingest"), false);
-                    final Label echo = echo("Current value: \"Ingest\"");
-                    harness.addRegistration(box.addDataSelectionHandler(event -> echo.setText(
-                            "Current value: \"" + (event.getSelectedItem() == null
-                                    ? "(none)"
-                                    : event.getSelectedItem().getName()) + "\"")));
-                    return frame(harness, box.getWidget(), echo);
+                .story("WithSelection", DocSelectionBoxStories::withSelection)
+                // The dialog from the keyboard: Enter opens it, modal, with the focus in its filter;
+                // Down goes to the chosen document, and moving chooses; Tab stays in the dialog;
+                // Escape cancels (putting back what was chosen) and Enter on a document chooses it,
+                // each returning the focus to the picker
+                .story("KeysInTheDialog", DocSelectionBoxStories::withSelection)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query picker = play.querySelector(".dropDownView-container");
+                    play.tab();
+                    play.expect(picker).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(screen.getByRole("textbox", "Filter documents")).toHaveFocus());
+                    play.expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.querySelector(":focus")).toHaveTextContent("Ingest"));
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.querySelector(":focus")).toHaveTextContent("Normalise"));
+                    play.waitFor(() -> play.expect(screen.getByText("Normalise chosen")).toBeInTheDocument());
+                    // Tab from Cancel goes back to the filter, and Shift+Tab from the filter to Cancel
+                    play.tab();
+                    play.tab();
+                    play.expect(screen.getByRole("button", StroomDom.button("Cancel"))).toHaveFocus();
+                    play.tab();
+                    play.expect(screen.getByRole("textbox", "Filter documents")).toHaveFocus();
+                    play.tab(true);
+                    play.expect(screen.getByRole("button", StroomDom.button("Cancel"))).toHaveFocus();
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog")).toBeNull());
+                    play.expect(picker).toHaveFocus();
+                    play.expect(play.getByText("Current value: \"Ingest\"")).toBeInTheDocument();
+                    // Reopened, it starts on the value, not on what was cancelled
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(screen.getByRole("textbox", "Filter documents")).toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.querySelector(":focus")).toHaveTextContent("Ingest"));
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.querySelector(":focus")).toHaveTextContent("Normalise"));
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog")).toBeNull());
+                    play.waitFor(() -> play.expect(play.getByText("Current value: \"Normalise\""))
+                            .toBeInTheDocument());
+                    play.expect(picker).toHaveFocus();
                 })
                 // Warning + disabled - the alert icon appears when the document can't be found (click
                 // it for the message); the disabled box doesn't open the popup
@@ -128,6 +162,20 @@ public final class DocSelectionBoxStories {
                     box.setIncludedTypes("Feed", "Pipeline");
                     return frame(harness, box.getWidget(), echo("Popup shows only Feeds & Pipelines."));
                 });
+    }
+
+    private static Widget withSelection(final StoryContext context) {
+        final ExplorerFixture fixture = TreeFixtures.fixtureTree();
+        final ScreenHarness harness = harness(context, fixture);
+        final DocSelectionBoxPresenter box = box(context, harness, "Choose Pipeline");
+        box.setItemType("Pipeline");
+        box.setSelectedEntityReference(fixture.toDocRef("Ingest"), false);
+        final Label echo = echo("Current value: \"Ingest\"");
+        harness.addRegistration(box.addDataSelectionHandler(event -> echo.setText(
+                "Current value: \"" + (event.getSelectedItem() == null
+                        ? "(none)"
+                        : event.getSelectedItem().getName()) + "\"")));
+        return frame(harness, box.getWidget(), echo);
     }
 
     private static ScreenHarness harness(final StoryContext context, final ExplorerFixture fixture) {

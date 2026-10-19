@@ -5,5 +5,7 @@
     <g:FlowPanel styleName="max dock-container-vertical quickFilter-container">
         <view:QuickFilter ui:field="quickFilter" addStyleNames="dock-min"/>
         <g:SimplePanel ui:field="data" styleName="dock-max form-control-border form-control-background"/>
+        <!-- Says which item is chosen, to screen readers -->
+        <g:Label ui:field="status" styleName="sr-only"/>
     </g:FlowPanel>
 </ui:UiBinder>
