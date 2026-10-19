@@ -35,9 +35,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Lets the agent ask the user the questions it needs answered, as VS Code's agent does: the chat shows them one at
-/// a time, each with answers to click (the recommended one first) and, unless the agent says otherwise, a box for
-/// the user's own answer. The run waits for the answers, which are the tool's result. It changes nothing in Stroom.
+/// Lets the agent ask the user the questions it needs answered to carry on, rather than listing them at the end of
+/// its answer and stopping: the chat shows them one at a time, each with answers to click (the recommended one
+/// first) and, unless the agent says otherwise, a box for the user's own answer. The run waits for the answers,
+/// which are the tool's result. It changes nothing in Stroom.
 class AskUserTool extends AbstractBuiltInTool {
 
     static final String NAME = "ask_user";
