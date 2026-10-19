@@ -43,6 +43,8 @@ import java.util.Map;
 ///                   against, or null. The proposed code is in `request` and the element's document in `doc`.
 /// @param dashboardChange For a proposed change to a dashboard table (apply_dashboard_change), what it changes,
 ///                        or null. The dashboard is in `doc`.
+/// @param newDashboard    For a proposed new dashboard (create_dashboard), how it is built, or null. Its StroomQL is
+///                        in `request`, its data source in `doc` and its suggested name in `name`.
 public record UserActionRecord(String id,
                                String action,
                                String label,
@@ -57,7 +59,28 @@ public record UserActionRecord(String id,
                                String outcome,
                                String name,
                                CodeChange codeChange,
-                               DashboardChange dashboardChange) {
+                               DashboardChange dashboardChange,
+                               NewDashboard newDashboard) {
+
+    /// An action that is not a proposed new dashboard.
+    public UserActionRecord(final String id,
+                            final String action,
+                            final String label,
+                            final String details,
+                            final String warning,
+                            final Integer filterId,
+                            final DocRef doc,
+                            final String request,
+                            final List<String> after,
+                            final long expiresMs,
+                            final Status status,
+                            final String outcome,
+                            final String name,
+                            final CodeChange codeChange,
+                            final DashboardChange dashboardChange) {
+        this(id, action, label, details, warning, filterId, doc, request, after, expiresMs, status, outcome, name,
+                codeChange, dashboardChange, null);
+    }
 
     /// An action that is not a proposed dashboard change.
     public UserActionRecord(final String id,
@@ -117,7 +140,7 @@ public record UserActionRecord(String id,
     /// @return This action with the status and outcome changed.
     public UserActionRecord withStatus(final Status status, final String outcome) {
         return new UserActionRecord(id, action, label, details, warning, filterId, doc, request, after, expiresMs,
-                status, outcome, name, codeChange, dashboardChange);
+                status, outcome, name, codeChange, dashboardChange, newDashboard);
     }
 
     /// A change to a stepping element's code that the agent proposed, which the user can review and apply to the
@@ -158,6 +181,16 @@ public record UserActionRecord(String id,
                                   boolean editable,
                                   List<Map<String, Object>> operations,
                                   List<String> changes) {
+
+    }
+
+    /// A new dashboard that the agent proposed, which the user can create with a button.
+    ///
+    /// @param queryType Whether its query is kept as StroomQL or turned into a classic expression query, as
+    ///                  [DashboardBuilder] names them.
+    /// @param preview   True if it has a data preview below its table.
+    public record NewDashboard(String queryType,
+                               boolean preview) {
 
     }
 

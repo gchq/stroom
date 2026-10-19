@@ -102,6 +102,51 @@ class TestUserActions {
     }
 
     @Test
+    void aCreateDashboardButtonIsOnlyOfferedByStroomsOwnTools() {
+        final DocRef view = new DocRef("View", OTHER_UUID, "Windows events");
+        Mockito.when(lookup.usableDataSource("from \"Windows events\" select User")).thenReturn(Optional.of(view));
+        final Map<String, Object> createDashboard = createDashboard("d1", DashboardBuilder.CLASSIC, true);
+
+        // From an MCP server, it is dropped.
+        assertThat(userActions.check(List.of(createDashboard), NOW)).isEmpty();
+
+        // From one of Stroom's own tools, it is offered, described by Stroom.
+        assertThat(userActions.check(null, List.of(createDashboard), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.CREATE_DASHBOARD);
+            assertThat(action.label()).isEqualTo("Create dashboard 'Windows users', reading View 'Windows events', "
+                                                 + "with a classic (expression) query and a table and a data "
+                                                 + "preview");
+            assertThat(action.name()).isEqualTo("Windows users");
+            assertThat(action.request()).isEqualTo("from \"Windows events\" select User");
+            assertThat(action.details()).isEqualTo("Who logged on");
+            assertThat(action.doc()).isEqualTo(view);
+            assertThat(action.newDashboard()).isEqualTo(new UserActionRecord.NewDashboard(DashboardBuilder.CLASSIC,
+                    true));
+        });
+        assertThat(userActions.check(null, List.of(createDashboard("d2", DashboardBuilder.STROOMQL, false)), NOW))
+                .singleElement()
+                .satisfies(action -> assertThat(action.label()).endsWith("with a StroomQL query and its table"));
+    }
+
+    @Test
+    void aCreateDashboardButtonNeedsAKnownQueryTypeAndAUsableDataSource() {
+        final DocRef view = new DocRef("View", OTHER_UUID, "Windows events");
+        Mockito.when(lookup.usableDataSource("from \"Windows events\" select User")).thenReturn(Optional.of(view));
+        final Map<String, Object> noPreview = new HashMap<>(createDashboard("d1", DashboardBuilder.CLASSIC, true));
+        noPreview.remove("preview");
+
+        assertThat(userActions.check(null, List.of(createDashboard("d1", "lucene", true)), NOW)).isEmpty();
+        assertThat(userActions.check(null, List.of(noPreview), NOW)).isEmpty();
+        final Map<String, Object> noQueryType = new HashMap<>(createDashboard("d1", DashboardBuilder.CLASSIC, true));
+        noQueryType.remove("query_type");
+        assertThat(userActions.check(null, List.of(noQueryType), NOW)).isEmpty();
+
+        Mockito.when(lookup.usableDataSource(Mockito.anyString())).thenReturn(Optional.empty());
+        assertThat(userActions.check(null, List.of(createDashboard("d1", DashboardBuilder.CLASSIC, true)), NOW))
+                .isEmpty();
+    }
+
+    @Test
     void aCodeChangeButtonIsOnlyOfferedByStroomsOwnTools() {
         final DocRef xslt = new DocRef("XSLT", OTHER_UUID, "Event translation");
         Mockito.when(lookup.find(new DocRef("XSLT", OTHER_UUID))).thenReturn(Optional.of(xslt));
@@ -495,6 +540,14 @@ class TestUserActions {
 
     private static Map<String, Object> createQuery(final String id, final String name, final String query) {
         return Map.of("id", id, "action", UserActions.CREATE_QUERY, "name", name, "query", query,
+                "description", "Who logged on");
+    }
+
+    private static Map<String, Object> createDashboard(final String id,
+                                                       final String queryType,
+                                                       final boolean preview) {
+        return Map.of("id", id, "action", UserActions.CREATE_DASHBOARD, "name", "Windows users",
+                "query", "from \"Windows events\" select User", "query_type", queryType, "preview", preview,
                 "description", "Who logged on");
     }
 

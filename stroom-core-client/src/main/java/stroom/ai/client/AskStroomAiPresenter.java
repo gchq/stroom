@@ -63,6 +63,8 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.event.ApplyDashboardChangeEvent;
 import stroom.dashboard.client.table.TableChange;
+import stroom.dashboard.shared.DashboardConfig;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.data.client.event.AskStroomAiBadgeEvent;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
@@ -2385,7 +2387,8 @@ public class AskStroomAiPresenter
             if (UserActionsUi.showsCode(action) && NullSafe.isNonBlankString(request)) {
                 // An Elasticsearch request is shown for the cluster admin to copy, and Stroom never runs it. A
                 // proposed query is shown before the user creates it.
-                row.elem(pre -> pre.code(code -> code.append(request)), PRE);
+                row.elem(pre -> pre.code(code -> code.append(request),
+                        Attribute.className("language-" + UserActionsUi.codeLanguage(action))), PRE);
             }
             if (UserActionsUi.ELASTICSEARCH_REQUEST.equals(action)) {
                 // No button.
@@ -2788,6 +2791,12 @@ public class AskStroomAiPresenter
                 createQuery(result.getCreateQueryName(), result.getCreateQueryText());
                 return;
             }
+            if (result.isDone() && result.getCreateDashboardConfig() != null) {
+                // The button can be used again, as the user may cancel the dialog.
+                button.removeAttribute("disabled");
+                createDashboard(result.getCreateDashboardName(), result.getCreateDashboardConfig());
+                return;
+            }
             if (result.getOpenDocument() != null) {
                 OpenDocumentEvent.fire(this, result.getOpenDocument(), true);
                 button.removeAttribute("disabled");
@@ -2821,6 +2830,26 @@ public class AskStroomAiPresenter
                     askStroomAiClient.setQueryText(docRef, queryText,
                             doc -> OpenDocumentEvent.fire(this, docRef, true),
                             error -> showError(error, "Unable to put the query in " + docRef.getName(), null),
+                            getView());
+                });
+    }
+
+    /// Opens Stroom's own New Dashboard dialog with the agent's suggested name, in the folder selected in the
+    /// Explorer tree. Once the user creates the dashboard, it is given the settings Stroom built from the agent's
+    /// query and opened. Nothing is saved unless the user creates it.
+    private void createDashboard(final String name, final DashboardConfig config) {
+        ShowCreateDocumentDialogEvent.fire(
+                this,
+                "New Dashboard",
+                selectedExplorerNode,
+                DashboardDoc.TYPE,
+                NullSafe.string(name),
+                true,
+                newNode -> {
+                    final DocRef docRef = newNode.getDocRef();
+                    askStroomAiClient.setDashboardConfig(docRef, config,
+                            doc -> OpenDocumentEvent.fire(this, docRef, true),
+                            error -> showError(error, "Unable to set up " + docRef.getName(), null),
                             getView());
                 });
     }
@@ -2992,8 +3021,10 @@ public class AskStroomAiPresenter
     }
 
     private void readModel() {
-        askStroomAiClient.getConfig(config ->
-                docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true), this);
+        askStroomAiClient.getConfig(config -> {
+            docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true);
+            AiDisplayOptions.apply(getView().getMarkdownContainer().getElement(), config);
+        }, this);
     }
 
     private void writeModel() {

@@ -108,6 +108,8 @@ public class ContextAssembler {
             (propose_query), ask them with ask_user before writing it. "Show me", "how many" or "find" mean run \
             it; "create", "make" or "save a query" mean a Query document. Ask this and which data source to use \
             in the same ask_user call.
+            - To make a dashboard, use propose_dashboard. First ask, in one ask_user call, what its description \
+            says to ask, leaving out what the request already answers.
             - Folders can hold standing instructions: Documentation docs named AGENTS, which apply to their folder \
             and below (one at the top of the tree applies everywhere). They say how things are done there, e.g. \
             which field holds the acting user, XSLT style, how fields are mapped, how things are named, or which \

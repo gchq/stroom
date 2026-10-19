@@ -52,6 +52,10 @@ public class AiConfigGeneralViewImpl
     @UiField
     TextArea historySummaryPrompt;
     @UiField
+    CustomCheckBox showToolCalls;
+    @UiField
+    CustomCheckBox showReasoning;
+    @UiField
     CustomCheckBox enableDebugDetail;
     @UiField
     CustomCheckBox browserNotifications;
@@ -123,6 +127,26 @@ public class AiConfigGeneralViewImpl
     @Override
     public String getHistorySummaryPrompt() {
         return historySummaryPrompt.getText();
+    }
+
+    @Override
+    public void setShowToolCalls(final boolean show) {
+        showToolCalls.setValue(show);
+    }
+
+    @Override
+    public boolean isShowToolCalls() {
+        return showToolCalls.getValue();
+    }
+
+    @Override
+    public void setShowReasoning(final boolean show) {
+        showReasoning.setValue(show);
+    }
+
+    @Override
+    public boolean isShowReasoning() {
+        return showReasoning.getValue();
     }
 
     @Override

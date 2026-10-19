@@ -882,4 +882,18 @@ class TestAskStroomAIService {
         Mockito.verify(aiDao).searchChats("user1", "fw", AskStroomAIService.MAX_SEARCH_HITS);
     }
 
+
+    @Test
+    void testDebugDetailFollowsTheUsersOwnSetting() {
+        final AskStroomAiConfig on = AskStroomAiConfig.builder().enableDebugDetail(true).build();
+        final AskStroomAiConfig off = AskStroomAiConfig.builder().enableDebugDetail(false).build();
+
+        // The user's setting wins over the default, either way.
+        assertThat(AskStroomAIService.isDebugDetailEnabled(off, on)).isFalse();
+        assertThat(AskStroomAIService.isDebugDetailEnabled(on, off)).isTrue();
+        // Without the user's settings, the default applies.
+        assertThat(AskStroomAIService.isDebugDetailEnabled(null, off)).isFalse();
+        assertThat(AskStroomAIService.isDebugDetailEnabled(null, null))
+                .isEqualTo(AskStroomAiConfig.DEFAULT_ENABLE_DEBUG_DETAIL);
+    }
 }

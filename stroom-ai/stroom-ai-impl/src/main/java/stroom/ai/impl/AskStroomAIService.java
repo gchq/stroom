@@ -1158,10 +1158,7 @@ public class AskStroomAIService {
         final OpenAIModelDoc modelDoc = getModelDoc(config);
         final ChatModel chatModel = getChatModel(modelDoc);
         final int maxContextTokens = modelDoc.getMaxContextWindowTokens();
-        final boolean debugEnabled = NullSafe.getOrElse(
-                defaultConfigProvider.get(),
-                AskStroomAiConfig::isEnableDebugDetail,
-                AskStroomAiConfig.DEFAULT_ENABLE_DEBUG_DETAIL);
+        final boolean debugEnabled = isDebugDetailEnabled(config, defaultConfigProvider.get());
 
         // Clear anything left behind by a previous question that did not get to clean up after
         // itself, or the chat would look like it was working forever.
@@ -1615,6 +1612,19 @@ public class AskStroomAIService {
     /**
      * Stores a DEBUG_DETAIL message in the chat history.
      */
+    /// @param config        The user's own settings, sent with the question, or null.
+    /// @param defaultConfig The default settings, or null.
+    /// @return True if a question's request detail is to be kept in the chat: as the user's settings say, else as
+    /// the default does.
+    static boolean isDebugDetailEnabled(final AskStroomAiConfig config, final AskStroomAiConfig defaultConfig) {
+        return NullSafe.getOrElse(
+                config != null
+                        ? config
+                        : defaultConfig,
+                AskStroomAiConfig::isEnableDebugDetail,
+                AskStroomAiConfig.DEFAULT_ENABLE_DEBUG_DETAIL);
+    }
+
     private void storeDebugDetail(final int chatId, final String debugDetail) {
         try {
             aiService.storeMessage(chatId, AiMessageType.DEBUG_DETAIL, debugDetail);
@@ -2131,6 +2141,12 @@ public class AskStroomAIService {
         globalConfigProvider.get().setString(currentConfig,
                 AskStroomAiConfig.PROP_NAME_ENABLE_DEBUG_DETAIL,
                 String.valueOf(config.isEnableDebugDetail()));
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_SHOW_TOOL_CALLS,
+                String.valueOf(config.isShowToolCalls()));
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_SHOW_REASONING,
+                String.valueOf(config.isShowReasoning()));
         globalConfigProvider.get().setString(currentConfig,
                 AskStroomAiConfig.PROP_NAME_BROWSER_NOTIFICATIONS,
                 String.valueOf(config.isBrowserNotifications()));

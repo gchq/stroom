@@ -16,6 +16,7 @@
 
 package stroom.ai.shared;
 
+import stroom.dashboard.shared.DashboardConfig;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,6 +42,10 @@ public class AiUserActionResult {
     private final String createQueryName;
     @JsonProperty
     private final String createQueryText;
+    @JsonProperty
+    private final String createDashboardName;
+    @JsonProperty
+    private final DashboardConfig createDashboardConfig;
 
     /// @param done         True if the action was done.
     /// @param message      What happened, or why it was not done.
@@ -48,7 +53,7 @@ public class AiUserActionResult {
     public AiUserActionResult(final Boolean done,
                               final String message,
                               final DocRef openDocument) {
-        this(done, message, openDocument, null, null);
+        this(done, message, openDocument, null, null, null, null);
     }
 
     /// @param done            True if the action was done.
@@ -57,17 +62,46 @@ public class AiUserActionResult {
     /// @param createQueryName For a create_query action, the name to suggest in Stroom's New Query dialog, or null.
     /// @param createQueryText For a create_query action, the StroomQL to put in the new query once created, or
     ///                        null.
+    public AiUserActionResult(final Boolean done,
+                              final String message,
+                              final DocRef openDocument,
+                              final String createQueryName,
+                              final String createQueryText) {
+        this(done, message, openDocument, createQueryName, createQueryText, null, null);
+    }
+
+    /// @param done            True if the action was done.
+    /// @param message         What happened, or why it was not done.
+    /// @param openDocument    A document for the browser to open, or null.
+    /// @param createQueryName For a create_query action, the name to suggest in Stroom's New Query dialog, or null.
+    /// @param createQueryText For a create_query action, the StroomQL to put in the new query once created, or
+    ///                        null.
+    /// @param createDashboardName   For a create_dashboard action, the name to suggest in Stroom's New Dashboard
+    ///                              dialog, or null.
+    /// @param createDashboardConfig For a create_dashboard action, the settings to give the new dashboard once
+    ///                              created, or null.
     @JsonCreator
     public AiUserActionResult(@JsonProperty("done") final Boolean done,
                               @JsonProperty("message") final String message,
                               @JsonProperty("openDocument") final DocRef openDocument,
                               @JsonProperty("createQueryName") final String createQueryName,
-                              @JsonProperty("createQueryText") final String createQueryText) {
+                              @JsonProperty("createQueryText") final String createQueryText,
+                              @JsonProperty("createDashboardName") final String createDashboardName,
+                              @JsonProperty("createDashboardConfig") final DashboardConfig createDashboardConfig) {
         this.done = Objects.requireNonNullElse(done, false);
         this.message = message;
         this.openDocument = openDocument;
         this.createQueryName = createQueryName;
         this.createQueryText = createQueryText;
+        this.createDashboardName = createDashboardName;
+        this.createDashboardConfig = createDashboardConfig;
+    }
+
+    /// @param name   The name to suggest in Stroom's New Dashboard dialog.
+    /// @param config The settings to give the new dashboard once created.
+    /// @return The result of a create_dashboard action that can be done.
+    public static AiUserActionResult createDashboard(final String name, final DashboardConfig config) {
+        return new AiUserActionResult(true, null, null, null, null, name, config);
     }
 
     /// @return True if the action was done.
@@ -93,5 +127,15 @@ public class AiUserActionResult {
     /// @return For a create_query action, the StroomQL to put in the new query once created, or null.
     public String getCreateQueryText() {
         return createQueryText;
+    }
+
+    /// @return For a create_dashboard action, the name to suggest in Stroom's New Dashboard dialog, or null.
+    public String getCreateDashboardName() {
+        return createDashboardName;
+    }
+
+    /// @return For a create_dashboard action, the settings to give the new dashboard once created, or null.
+    public DashboardConfig getCreateDashboardConfig() {
+        return createDashboardConfig;
     }
 }

@@ -31,6 +31,9 @@ final class UserActionsUi {
     static final String ELASTICSEARCH_REQUEST = "elasticsearch_request";
     /// A StroomQL query the agent proposed, which the button opens Stroom's New Query dialog to create.
     static final String CREATE_QUERY = "create_query";
+    /// A dashboard the agent proposed, built from StroomQL, which the button opens Stroom's New Dashboard dialog to
+    /// create.
+    static final String CREATE_DASHBOARD = "create_dashboard";
     /// A change to a stepping element's code the agent proposed, which the button opens a review of, from which
     /// the user can apply it to the element's editor (unsaved).
     static final String APPLY_CODE_CHANGE = "apply_code_change";
@@ -75,9 +78,17 @@ final class UserActionsUi {
 
     /// @param action An action.
     /// @return True if the action shows a request or query as code: an Elasticsearch request (only shown, for the
-    /// cluster admin) or a proposed query.
+    /// cluster admin), or the query of a proposed query or dashboard.
     static boolean showsCode(final String action) {
-        return ELASTICSEARCH_REQUEST.equals(action) || CREATE_QUERY.equals(action);
+        return ELASTICSEARCH_REQUEST.equals(action) || CREATE_QUERY.equals(action) || CREATE_DASHBOARD.equals(action);
+    }
+
+    /// @param action An action that shows code (see [#showsCode(String)]).
+    /// @return The language its code is in, as its code block's header names it.
+    static String codeLanguage(final String action) {
+        return ELASTICSEARCH_REQUEST.equals(action)
+                ? "elasticsearch"
+                : "stroomql";
     }
 
     /// @param action An action.
@@ -98,6 +109,8 @@ final class UserActionsUi {
             return "Open";
         } else if (CREATE_QUERY.equals(action)) {
             return "Create query…";
+        } else if (CREATE_DASHBOARD.equals(action)) {
+            return "Create dashboard…";
         } else if (APPLY_CODE_CHANGE.equals(action)) {
             return "Review and apply…";
         } else if (APPLY_QUERY_CHANGE.equals(action)) {

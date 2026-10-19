@@ -51,6 +51,7 @@ class TestUserActionsUi {
         assertThat(UserActionsUi.buttonText(UserActionsUi.DISABLE_PROCESSOR_FILTER)).isEqualTo("Disable");
         assertThat(UserActionsUi.buttonText(UserActionsUi.OPEN_DOCUMENT)).isEqualTo("Open");
         assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_QUERY)).isEqualTo("Create query…");
+        assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_DASHBOARD)).isEqualTo("Create dashboard…");
         assertThat(UserActionsUi.buttonText(UserActionsUi.APPLY_CODE_CHANGE)).isEqualTo("Review and apply…");
         assertThat(UserActionsUi.buttonText("something_else")).isEqualTo("Do it");
     }
@@ -66,6 +67,11 @@ class TestUserActionsUi {
     @Test
     void aProposedQueryAndAnElasticsearchRequestAreShownAsCode() {
         assertThat(UserActionsUi.showsCode(UserActionsUi.CREATE_QUERY)).isTrue();
+        // The dashboard's StroomQL.
+        assertThat(UserActionsUi.showsCode(UserActionsUi.CREATE_DASHBOARD)).isTrue();
+        assertThat(UserActionsUi.codeLanguage(UserActionsUi.ELASTICSEARCH_REQUEST)).isEqualTo("elasticsearch");
+        assertThat(UserActionsUi.codeLanguage(UserActionsUi.CREATE_QUERY)).isEqualTo("stroomql");
+        assertThat(UserActionsUi.codeLanguage(UserActionsUi.CREATE_DASHBOARD)).isEqualTo("stroomql");
         assertThat(UserActionsUi.showsCode(UserActionsUi.ELASTICSEARCH_REQUEST)).isTrue();
         assertThat(UserActionsUi.showsCode(UserActionsUi.OPEN_DOCUMENT)).isFalse();
     }

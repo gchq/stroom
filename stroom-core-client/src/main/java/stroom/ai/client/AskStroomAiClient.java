@@ -50,6 +50,9 @@ import stroom.ai.shared.SuggestAiPromptsRequest;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.ai.shared.UndoAiMemoryChangeRequest;
+import stroom.dashboard.shared.DashboardConfig;
+import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.DashboardResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -74,6 +77,7 @@ public class AskStroomAiClient {
 
     private static final AskStroomAiResource RESOURCE = GWT.create(AskStroomAiResource.class);
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
+    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
     private final RestFactory restFactory;
     private final UserPreferencesManager userPreferencesManager;
@@ -459,6 +463,33 @@ public class AskStroomAiClient {
                 .onSuccess(doc -> restFactory
                         .create(QUERY_RESOURCE)
                         .method(res -> res.update(docRef.getUuid(), doc.copy().query(queryText).build()))
+                        .onSuccess(consumer)
+                        .onFailure(errorHandler)
+                        .taskMonitorFactory(taskMonitorFactory)
+                        .exec())
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Gives a dashboard the user has just created its settings, e.g. a dashboard the agent proposed.
+    ///
+    /// @param docRef             The new dashboard.
+    /// @param config             Its settings.
+    /// @param consumer           Given the dashboard once saved.
+    /// @param errorHandler       Told if it couldn't be saved.
+    /// @param taskMonitorFactory Shows that it is being saved.
+    void setDashboardConfig(final DocRef docRef,
+                            final DashboardConfig config,
+                            final Consumer<DashboardDoc> consumer,
+                            final RestErrorHandler errorHandler,
+                            final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(DASHBOARD_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
+                .onSuccess(doc -> restFactory
+                        .create(DASHBOARD_RESOURCE)
+                        .method(res -> res.update(docRef.getUuid(), doc.copy().dashboardConfig(config).build()))
                         .onSuccess(consumer)
                         .onFailure(errorHandler)
                         .taskMonitorFactory(taskMonitorFactory)
