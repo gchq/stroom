@@ -211,7 +211,7 @@ class TestUserActionService {
         final DashboardConfig config = DashboardConfig.builder().build();
         Mockito.when(dashboardBuilder.build("Windows users", query, DashboardBuilder.CLASSIC, true))
                 .thenReturn(new DashboardBuilder.Built(config, new DocRef("View", "v", "V"),
-                        DashboardBuilder.CLASSIC, List.of("User"), false, true));
+                        DashboardBuilder.CLASSIC, List.of("User"), false, true, List.of()));
         storeResult(createDashboard(query));
 
         final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "d1");
@@ -520,7 +520,8 @@ class TestUserActionService {
     private static UserActionRecord createDashboard(final String query) {
         return new UserActionRecord("d1", UserActions.CREATE_DASHBOARD, "Create dashboard 'Windows users'", null,
                 null, null, new DocRef("View", "v", "V"), query, List.of(), Long.MAX_VALUE, Status.PENDING, null,
-                "Windows users", null, null, new UserActionRecord.NewDashboard(DashboardBuilder.CLASSIC, true));
+                "Windows users", null, null, new UserActionRecord.NewDashboard(DashboardBuilder.CLASSIC, true,
+                List.of()));
     }
 
     private String storeResult(final UserActionRecord action) {
