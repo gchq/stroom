@@ -27,30 +27,27 @@ class TestApplyDashboardChangeEvent {
 
     @Test
     void aChangeIsAppliedOnlyToAnEditableUnchangedDashboard() {
-        assertThat(ApplyDashboardChangeEvent.decide(true, "abc", "abc", false)).isEqualTo(Decision.APPLY);
+        assertThat(ApplyDashboardChangeEvent.decide(true, "abc", "abc")).isEqualTo(Decision.APPLY);
         // Hashes are hex, in either case.
-        assertThat(ApplyDashboardChangeEvent.decide(true, "ABC", "abc", false)).isEqualTo(Decision.APPLY);
+        assertThat(ApplyDashboardChangeEvent.decide(true, "ABC", "abc")).isEqualTo(Decision.APPLY);
     }
 
     @Test
     void aDashboardThatCantBeEditedIsRefusedFirst() {
-        assertThat(ApplyDashboardChangeEvent.decide(false, "abc", "abc", false)).isEqualTo(Decision.NOT_EDITABLE);
-        assertThat(ApplyDashboardChangeEvent.decide(false, "other", "abc", true)).isEqualTo(Decision.NOT_EDITABLE);
+        assertThat(ApplyDashboardChangeEvent.decide(false, "abc", "abc")).isEqualTo(Decision.NOT_EDITABLE);
+        assertThat(ApplyDashboardChangeEvent.decide(false, "other", "abc")).isEqualTo(Decision.NOT_EDITABLE);
     }
 
     @Test
     void aDashboardChangedSinceTheProposalIsRefused() {
-        assertThat(ApplyDashboardChangeEvent.decide(true, "other", "abc", false)).isEqualTo(Decision.CHANGED);
-        // Even with unsaved changes: saving them wouldn't make the proposal fit.
-        assertThat(ApplyDashboardChangeEvent.decide(true, "other", "abc", true)).isEqualTo(Decision.CHANGED);
-        assertThat(ApplyDashboardChangeEvent.decide(true, null, "abc", false)).isEqualTo(Decision.CHANGED);
+        assertThat(ApplyDashboardChangeEvent.decide(true, "other", "abc")).isEqualTo(Decision.CHANGED);
+        assertThat(ApplyDashboardChangeEvent.decide(true, null, "abc")).isEqualTo(Decision.CHANGED);
     }
 
     @Test
-    void unsavedChangesAreSavedFirstNeverAppliedOver() {
-        assertThat(ApplyDashboardChangeEvent.decide(true, "abc", "abc", true)).isEqualTo(Decision.SAVE_FIRST);
-        assertThat(ApplyDashboardChangeEvent.SAVE_FIRST)
-                .startsWith("This dashboard has unsaved changes. Save them first, so you can go back to them if "
-                            + "you don't want this change?");
+    void aChangeIsAppliedOverUnsavedChangesWithoutAskingToSave() {
+        // The hash is of the dashboard as the user has it, unsaved changes included, so a change proposed against
+        // them is applied as it is: there is no decision to save first.
+        assertThat(Decision.values()).containsExactly(Decision.NOT_EDITABLE, Decision.CHANGED, Decision.APPLY);
     }
 }

@@ -18,6 +18,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.DashboardBuilder;
 import stroom.ai.impl.DashboardChanges;
 import stroom.ai.impl.DashboardChanges.Change;
 import stroom.ai.impl.DashboardChanges.Checked;
@@ -90,6 +91,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     private final DataSourceAccess dataSourceAccess;
     private final Provider<QueryService> queryServiceProvider;
     private final AiAuditLog auditLog;
+    private final DashboardBuilder dashboardBuilder;
 
     @Inject
     ProposeDashboardChangeTool(final ChatWorkspace workspace,
@@ -97,40 +99,59 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                final DocumentAccess documentAccess,
                                final DataSourceAccess dataSourceAccess,
                                final Provider<QueryService> queryServiceProvider,
-                               final AiAuditLog auditLog) {
+                               final AiAuditLog auditLog,
+                               final DashboardBuilder dashboardBuilder) {
         super(workspace);
         this.tabSnapshots = tabSnapshots;
         this.documentAccess = documentAccess;
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
         this.auditLog = auditLog;
+        this.dashboardBuilder = dashboardBuilder;
     }
 
     @Override
     public ToolSpecification specification() {
         final JsonObjectSchema change = JsonObjectSchema.builder()
                 .addEnumProperty("op", DashboardChanges.OPERATIONS, "What to do.")
-                .addStringProperty("column", "The column, by its name as the user sees it (not for add_column).")
+                .addStringProperty("column", "The column, by its name as the user sees it (not for add_column, "
+                                             + "add_table or set_expression).")
+                .addStringProperty("table", "The table the change is to, if not the component: only a table an "
+                                            + "earlier add_table in these changes adds.")
                 .addIntegerProperty("level", "For group: the level to group at, from 1.")
-                .addStringProperty("name", "For add_column: the new column's name. For edit_column: its new name.")
+                .addStringProperty("name", "For add_column: the new column's name. For edit_column: its new name. "
+                                           + "For add_table: the new table's name.")
+                .addBooleanProperty("copy", "For add_table: true to start with the component's columns, false "
+                                            + "(the default) for none.")
                 .addStringProperty("expression", "For add_column or edit_column: the column's expression in "
                                                  + "Stroom's expression language, e.g. count() or "
                                                  + "${EventTime}.")
                 .addEnumProperty("format", DashboardChanges.FORMATS, "For add_column or edit_column: the format.")
-                .addIntegerProperty("position", "For add_column: where to add it, from 1 (default the end).")
+                .addIntegerProperty("position", "For add_column: where to add it, from 1 (default the end). For "
+                                                + "move_column: where to move it, from 1.")
                 .addEnumProperty("direction", List.of(DashboardChanges.ASCENDING, DashboardChanges.DESCENDING,
                         DashboardChanges.NONE), "For sort: the direction, or none to stop sorting by it.")
                 .addIntegerProperty("priority", "For sort: its priority, from 1 (sorted by first). By default "
                                                 + "after the table's other sorts.")
                 .addStringProperty("filter", "For filter: the column's filter text, as its filter box takes "
                                              + "it; empty to clear it.")
+                .addStringProperty("where", "For set_expression: the whole new set of conditions for the "
+                                            + "classic query that feeds the table, written as a StroomQL where "
+                                            + "clause has them (without 'where'), e.g. Text = \"*Afghan*\" or "
+                                            + "Text = \"*Kabul*\". Stroom turns them into the query's "
+                                            + "expression.")
                 .required("op")
                 .build();
         return ToolSpecification.builder()
                 .name(NAME)
                 .description("While the tab the user attached is a dashboard, proposes a change to one of its tables: "
-                             + "group or ungroup, add_column, edit_column, hide_column, show_column, sort, or "
-                             + "filter, applied in order. The user is shown the changes with an 'Apply to "
+                             + "group or ungroup, add_column, edit_column, move_column, hide_column, show_column, "
+                             + "sort, or filter, applied in order; set_expression, which replaces the expression "
+                             + "of the classic query that feeds the table (give its conditions in where, and show "
+                             + "the user the expression, never StroomQL); or add_table, which adds a table as a "
+                             + "tab beside it, fed by the same query, that the changes after it set up by naming "
+                             + "it as their table (e.g. a tab per event category: add_table, its columns, and a "
+                             + "filter on the category column). The user is shown the changes with an 'Apply to "
                              + "dashboard' button; nothing changes until they click it, and it is never saved. "
                              + "Columns and the table are named as the user sees them. Expressions are checked "
                              + "first; an invalid change is refused with the reason.")
@@ -191,35 +212,72 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                    + "column menus instead.";
         }
 
-        final Checked checked = DashboardChanges.check(changes, NullSafe.list(table.getColumns()));
+        final String tableName = NullSafe.nonBlankStringElse(table.getName(), table.getComponentId());
+        final Checked checked = DashboardChanges.check(changes, NullSafe.list(table.getColumns()), tableName,
+                NullSafe.list(tab.searches()).stream()
+                        .map(search -> NullSafe.nonBlankStringElse(search.getName(), search.getComponentId()))
+                        .toList());
         final List<String> problems = new ArrayList<>(checked.problems());
         problems.addAll(expressionProblems(checked.changes(), table));
+        final List<Change> built = withQueryExpressions(checked.changes(), table, problems);
         if (!problems.isEmpty()) {
             return "No change was proposed, as it isn't valid:\n- " + String.join("\n- ", problems)
                    + "\nCorrect it and propose it again.";
         }
 
-        final String tableName = NullSafe.nonBlankStringElse(table.getName(), table.getComponentId());
         final Map<String, Object> action = new LinkedHashMap<>();
         action.put("id", "apply-dashboard-change-" + SEQUENCE.incrementAndGet());
         action.put("action", UserActions.APPLY_DASHBOARD_CHANGE);
         action.put("doc", Map.of("type", dashboard.getType(), "uuid", dashboard.getUuid()));
         action.put("component", tableName);
         action.put("component_id", table.getComponentId());
-        action.put("changes", checked.changes().stream().map(Change::toMap).toList());
+        action.put("changes", built.stream().map(Change::toMap).toList());
         action.put("snapshot_hash", AiTabSnapshotPart.hashText(settings.text()));
         NullSafe.consume(summary, text -> action.put("summary", text));
         context.offerUserAction(request.id(), action);
         auditLog.documentViewed(chatId, dashboard, "Proposed a change to table '" + tableName + "' with the "
                                                    + NAME + " tool: "
-                                                   + String.join("; ", DashboardChanges.describe(checked.changes())));
+                                                   + String.join("; ", DashboardChanges.describe(built)));
 
         return "The user has been shown the change to table '" + tableName + "' on dashboard '"
                + dashboard.getName() + "' with an 'Apply to dashboard' button:\n- "
-               + String.join("\n- ", DashboardChanges.describe(checked.changes()))
+               + String.join("\n- ", DashboardChanges.describe(built))
                + "\nNothing changes until they click it, and it is never saved: it is applied to the open "
-                 + "dashboard as an unsaved change, which they can save, or undo by closing it without saving. "
+                 + "dashboard as an unsaved change, on top of any unsaved changes it has, which they can save, or "
+                 + "undo with Undo apply. "
                  + "Tell them about the button rather than saying the dashboard was changed.";
+    }
+
+    // Builds the query expression of each set_expression change from its conditions, against the table's data
+    // source, adding why to the problems if it can't be.
+    private List<Change> withQueryExpressions(final List<Change> changes,
+                                              final AiTabSearch table,
+                                              final List<String> problems) {
+        final List<Change> built = new ArrayList<>();
+        for (int i = 0; i < changes.size(); i++) {
+            final Change change = changes.get(i);
+            if (!DashboardChanges.SET_EXPRESSION.equals(change.op())) {
+                built.add(change);
+                continue;
+            }
+            final AskStroomAiContext request = table.getLive() != null
+                    ? table.getLive()
+                    : table.getResults();
+            final DocRef dataSource = ResultsRequests.dashboardDataSource(request);
+            if (dataSource == null || !dataSourceAccess.canUse(dataSource)) {
+                problems.add("Change " + (i + 1) + " (set_expression): the table's query has no data source you "
+                             + "can use, so its expression can't be set.");
+                built.add(change);
+                continue;
+            }
+            try {
+                built.add(change.withQuery(dashboardBuilder.whereExpression(dataSource, change.where())));
+            } catch (final IllegalArgumentException e) {
+                problems.add("Change " + (i + 1) + " (set_expression): " + e.getMessage());
+                built.add(change);
+            }
+        }
+        return built;
     }
 
     // Checks each expression a change gives, with the fields of the table's data source if they can be read.

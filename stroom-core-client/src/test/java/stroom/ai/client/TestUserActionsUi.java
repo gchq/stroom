@@ -18,11 +18,17 @@ package stroom.ai.client;
 
 import stroom.dashboard.client.event.ApplyDashboardChangeEvent;
 import stroom.dashboard.client.table.TableChange;
+import stroom.docref.DocRef;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Format;
 import stroom.query.api.Sort.SortDirection;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,6 +87,9 @@ class TestUserActionsUi {
         assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_CODE_CHANGE, "DONE")).isTrue();
         assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.APPLY_CODE_CHANGE, "PENDING")).isFalse();
         assertThat(UserActionsUi.isAppliedCodeChange(UserActionsUi.CREATE_QUERY, "DONE")).isFalse();
+        assertThat(UserActionsUi.isAppliedDashboardChange(UserActionsUi.APPLY_DASHBOARD_CHANGE, "DONE")).isTrue();
+        assertThat(UserActionsUi.isAppliedDashboardChange(UserActionsUi.APPLY_DASHBOARD_CHANGE, "PENDING")).isFalse();
+        assertThat(UserActionsUi.isAppliedDashboardChange(UserActionsUi.APPLY_QUERY_CHANGE, "DONE")).isFalse();
         // A proposed change is shown as a diff, not as code to copy.
         assertThat(UserActionsUi.showsCode(UserActionsUi.APPLY_CODE_CHANGE)).isFalse();
         assertThat(UserActionsUi.UNDO_WITHDRAWN).contains("Ctrl+Z");
@@ -103,7 +112,7 @@ class TestUserActionsUi {
     void aProposedOperationIsReadForTheDashboard() {
         final Map<String, String> fields = Map.of("op", "add_column", "name", "Count", "expression", "count()",
                 "format", "Number", "position", "2");
-        final TableChange change = UserActionsUi.tableChange(fields::get);
+        final TableChange change = UserActionsUi.tableChange(fields::get, null);
 
         assertThat(change.getOp()).isEqualTo(TableChange.ADD_COLUMN);
         assertThat(change.getName()).isEqualTo("Count");
@@ -113,11 +122,63 @@ class TestUserActionsUi {
         assertThat(change.getLevel()).isNull();
 
         final TableChange sort = UserActionsUi.tableChange(Map.of("op", "sort", "column", "Count",
-                "direction", "descending", "priority", "1.0")::get);
+                "direction", "descending", "priority", "1.0")::get, null);
         assertThat(sort.getSortDirection()).isEqualTo(SortDirection.DESCENDING);
         assertThat(sort.getPriority()).isEqualTo(1);
-        assertThat(UserActionsUi.tableChange(Map.of("op", "sort", "direction", "none")::get).getSortDirection())
+        assertThat(UserActionsUi.tableChange(Map.of("op", "sort", "direction", "none")::get, null)
+                .getSortDirection())
                 .isNull();
-        assertThat(UserActionsUi.tableChange(Map.of("op", "group", "level", "x")::get).getLevel()).isNull();
+        assertThat(UserActionsUi.tableChange(Map.of("op", "group", "level", "x")::get, null).getLevel()).isNull();
+    }
+
+    @Test
+    void aQueryExpressionIsReadAsTheServerWritesIt() {
+        // As the server's DashboardChanges.expressionToMap writes it.
+        final Map<String, Object> written = Map.of("op", "OR", "children", List.of(
+                Map.of("field", "Text", "condition", "EQUALS", "value", "*Afghan*"),
+                Map.of("op", "NOT", "children", List.of(Map.of("field", "User", "condition", "IN_DICTIONARY",
+                        "doc", Map.of("type", "Dictionary", "uuid", "dict-uuid", "name", "Bots")))),
+                Map.of("field", "Lang", "condition", "EQUALS", "value", "en", "enabled", false)));
+
+        final TableChange change = UserActionsUi.tableChange(Map.of("op", "set_expression")::get, written);
+
+        assertThat(change.getOp()).isEqualTo(TableChange.SET_EXPRESSION);
+        assertThat(change.getQuery()).isEqualTo(ExpressionOperator.builder()
+                .op(Op.OR)
+                .addTerm(ExpressionTerm.builder().field("Text").condition(Condition.EQUALS).value("*Afghan*")
+                        .build())
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.NOT)
+                        .addTerm(ExpressionTerm.builder().field("User").condition(Condition.IN_DICTIONARY)
+                                .docRef(new DocRef("Dictionary", "dict-uuid", "Bots")).build())
+                        .build())
+                .addTerm(ExpressionTerm.builder().field("Lang").condition(Condition.EQUALS).value("en")
+                        .enabled(false).build())
+                .build());
+    }
+
+    @Test
+    void aChangeToAnAddedTableNamesItsTable() {
+        final TableChange added = UserActionsUi.tableChange(Map.of("op", "add_table", "name", "Logons",
+                "copy", "true")::get, null);
+        final TableChange column = UserActionsUi.tableChange(Map.of("op", "move_column", "table", "Logons",
+                "column", "User", "position", "2.0")::get, null);
+
+        assertThat(added.getOp()).isEqualTo(TableChange.ADD_TABLE);
+        assertThat(added.isCopy()).isTrue();
+        assertThat(column.getTable()).isEqualTo("Logons");
+        assertThat(column.getPosition()).isEqualTo(2);
+        assertThat(UserActionsUi.tableChange(Map.of("op", "add_table", "name", "x")::get, null).isCopy())
+                .isFalse();
+    }
+
+    @Test
+    void anExpressionThatCantBeReadIsNull() {
+        assertThat(UserActionsUi.expression(Map.of("op", "XOR"))).isNull();
+        assertThat(UserActionsUi.expression(Map.of("op", "AND", "children", List.of(Map.of("field", "x",
+                "condition", "LIKE"))))).isNull();
+        assertThat(UserActionsUi.expression("not a map")).isNull();
+        // A term on its own isn't a query's expression.
+        assertThat(UserActionsUi.expression(Map.of("field", "x", "condition", "EQUALS"))).isNull();
     }
 }
