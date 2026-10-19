@@ -20,12 +20,14 @@ import stroom.config.common.HasDbConfig;
 import stroom.credentials.impl.db.CredentialsDbConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -38,6 +40,7 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
      */
     private final CredentialsDbConfig dbConfig;
     private final String keyStoreCachePath;
+    private final List<String> allowedKeyStoreFileDirs;
 
     /**
      * Default constructor. Configuration created with default values.
@@ -45,6 +48,7 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
     public CredentialsConfig() {
         dbConfig = new CredentialsDbConfig();
         keyStoreCachePath = DEFAULT_KEY_STORE_CACHE_PATH;
+        allowedKeyStoreFileDirs = List.of();
     }
 
     /**
@@ -54,9 +58,13 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
     @SuppressWarnings("unused")
     @JsonCreator
     public CredentialsConfig(@JsonProperty("db") final CredentialsDbConfig dbConfig,
-                             @JsonProperty("keyStoreCachePath") final String keyStoreCachePath) {
+                             @JsonProperty("keyStoreCachePath") final String keyStoreCachePath,
+                             @JsonProperty("allowedKeyStoreFileDirs") final List<String> allowedKeyStoreFileDirs) {
         this.dbConfig = dbConfig;
         this.keyStoreCachePath = keyStoreCachePath;
+        this.allowedKeyStoreFileDirs = NullSafe.stream(allowedKeyStoreFileDirs)
+                .filter(dir -> !NullSafe.isBlankString(dir))
+                .toList();
     }
 
     @Override
@@ -71,9 +79,17 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
         return keyStoreCachePath;
     }
 
-    /**
-     * DB configuration class.
-     */
+    /// @return The directories that 'Key Store File' credentials may refer to files in.
+    @JsonProperty
+    @JsonPropertyDescription("The directories on the local file system that 'Key Store File' credentials "
+                             + "may refer to key store files in, including any sub-directories. The same "
+                             + "directories must be present on every node. If empty (the default) then "
+                             + "'Key Store File' credentials cannot be created or used. Only list "
+                             + "directories that hold key stores for Stroom to use as a client, never ones "
+                             + "holding Stroom's own server key stores.")
+    public List<String> getAllowedKeyStoreFileDirs() {
+        return allowedKeyStoreFileDirs;
+    }
 
     @Override
     public boolean equals(final Object o) {
@@ -81,13 +97,14 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
             return false;
         }
         final CredentialsConfig that = (CredentialsConfig) o;
-        return Objects.equals(dbConfig, that.dbConfig) && Objects.equals(keyStoreCachePath,
-                that.keyStoreCachePath);
+        return Objects.equals(dbConfig, that.dbConfig)
+               && Objects.equals(keyStoreCachePath, that.keyStoreCachePath)
+               && Objects.equals(allowedKeyStoreFileDirs, that.allowedKeyStoreFileDirs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dbConfig, keyStoreCachePath);
+        return Objects.hash(dbConfig, keyStoreCachePath, allowedKeyStoreFileDirs);
     }
 
     @Override
@@ -95,6 +112,7 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
         return "CredentialsConfig{" +
                "dbConfig=" + dbConfig +
                ", keyStoreCachePath='" + keyStoreCachePath + '\'' +
+               ", allowedKeyStoreFileDirs=" + allowedKeyStoreFileDirs +
                '}';
     }
 }

@@ -20,6 +20,7 @@ import stroom.credentials.client.presenter.CredentialSettingsPresenter.Credentia
 import stroom.credentials.client.presenter.CredentialSettingsUiHandlers;
 import stroom.credentials.shared.CredentialType;
 import stroom.item.client.SelectionBox;
+import stroom.util.shared.NullSafe;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -69,6 +70,10 @@ public class CredentialSettingsViewImpl
     FormGroup secretFormGroup;
     @UiField
     SimplePanel secret;
+    @UiField
+    FormGroup keyStorePathFormGroup;
+    @UiField
+    Label keyStorePath;
     @UiField
     FormGroup storedSecretFormGroup;
     @UiField
@@ -144,6 +149,12 @@ public class CredentialSettingsViewImpl
         credentialType.setEnabled(!existing);
         secretFormGroup.setVisible(!existing);
         storedSecretFormGroup.setVisible(existing);
+    }
+
+    @Override
+    public void setKeyStorePath(final String keyStorePath) {
+        this.keyStorePath.setText(keyStorePath);
+        keyStorePathFormGroup.setVisible(!NullSafe.isBlankString(keyStorePath));
     }
 
     /**

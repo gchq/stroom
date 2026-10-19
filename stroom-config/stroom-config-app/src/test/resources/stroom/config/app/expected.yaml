@@ -249,6 +249,7 @@ appConfig:
     urls:
     - "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/content-store.yml"
   credentials:
+    allowedKeyStoreFileDirs: []
     db:
       connection:
         jdbcDriverClassName: null
@@ -764,7 +765,7 @@ appConfig:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
-      refreshAfterWrite: null
+      refreshAfterWrite: "PT10M"
       statisticsMode: "INTERNAL"
     parser:
       cache:

@@ -77,6 +77,13 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
                     credential,
                     Credential::getKeyStoreType,
                     KeyStoreType.PKCS12));
+        } else if (secretPresenter instanceof final KeyStoreFileSecretPresenter keyStoreFileSecretPresenter) {
+            // The type and path are not secret, so start from the current ones
+            keyStoreFileSecretPresenter.setType(NullSafe.getOrElse(
+                    credential,
+                    Credential::getKeyStoreType,
+                    KeyStoreType.PKCS12));
+            keyStoreFileSecretPresenter.getView().setPath(credential.getKeyStorePath());
         }
 
         getView().setCredentialName(credential.getName());
