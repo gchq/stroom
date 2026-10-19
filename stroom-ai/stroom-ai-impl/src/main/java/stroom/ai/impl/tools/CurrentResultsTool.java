@@ -76,7 +76,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// `current_results` - a snapshot of the rows of a table of results shown in the user's active tab (a query's
+/// `current_results` - a snapshot of the rows of a table of results shown in the tab the user attached (a query's
 /// results, or a table on a dashboard), taken when the model needs them, so the user never has to attach them. It
 /// is taken through Stroom's own download of search results, as the user (so with their permissions), as an
 /// attached table is, and kept as a hidden workspace file under `/tabs/results/`, with a profile.
@@ -106,8 +106,9 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     /// The most fields read to tell whether a data source has the event id fields.
     static final int MAX_FIELDS = 10_000;
     static final String RESULTS_FOLDER = "/tabs/results/";
-    static final String NO_TAB = "No tab with tables of results was shared with the user's latest question: ask "
-                                 + "the user to open the query or dashboard and ask again.";
+    static final String NO_TAB = "No tab with tables of results was attached to the chat with the user's latest "
+                                 + "question: ask the user to open the query or dashboard, attach its tab (+ by "
+                                 + "the chat's input) and ask again.";
     // A snapshot's table, or the first rows of one: its path without the extension (and the scope) is its record's.
     private static final Pattern SNAPSHOT_FILE = Pattern.compile(
             "(" + Pattern.quote(RESULTS_FOLDER) + ".+?)(?:-first-\\d+)?\\.md");
@@ -150,7 +151,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     public ToolSpecification specification() {
         return ToolSpecification.builder()
                 .name(NAME)
-                .description("Takes a snapshot of the rows of a table of results shown in the user's active tab "
+                .description("Takes a snapshot of the rows of a table of results shown in the tab the user attached "
                              + "(a query's results, or a table on a dashboard) as a workspace table, and gives its "
                              + "path, a profile, and its state: ok, stale (the tab's query, expression, parameters "
                              + "or time range have changed since) or incomplete (the search hadn't finished, the "
@@ -197,7 +198,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         if (tab == null || NullSafe.isEmptyCollection(tab.searches())) {
             return Outcome.problem(tab == null
                     ? NO_TAB
-                    : "The user's active tab, " + ReadDocumentTool.describe(tab.docRef())
+                    : "The tab the user attached, " + ReadDocumentTool.describe(tab.docRef())
                       + ", shows no tables of results.");
         }
         final AiTabSearch search = chooseTable(tab.searches(), stringArg(request, TABLE_ARG));

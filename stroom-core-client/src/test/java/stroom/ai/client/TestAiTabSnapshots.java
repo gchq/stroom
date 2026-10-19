@@ -55,8 +55,19 @@ class TestAiTabSnapshots {
     @Test
     void chipTooltipSaysWhatIsShared() {
         assertThat(AiTabSnapshots.chipTooltip(XSLT))
-                .contains("XSLT 'Event translation'")
-                .contains("stop sharing");
+                .contains("Attached to the chat: XSLT 'Event translation'")
+                .contains("whichever tab you are on")
+                .contains("remove it");
+    }
+
+    @Test
+    void attachingSaysWhichTabAndWhetherItReplacesTheAttachedOne() {
+        assertThat(AiTabSnapshots.attachText(XSLT)).isEqualTo("Event translation");
+        assertThat(AiTabSnapshots.attachText(null)).isEqualTo("Document");
+        assertThat(AiTabSnapshots.attachTooltip(XSLT, false))
+                .startsWith("Attach XSLT 'Event translation' to the chat")
+                .doesNotContain("in place of");
+        assertThat(AiTabSnapshots.attachTooltip(XSLT, true)).endsWith("in place of the tab attached now");
     }
 
     @Test

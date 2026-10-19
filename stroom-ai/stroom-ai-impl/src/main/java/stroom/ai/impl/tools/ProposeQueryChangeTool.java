@@ -41,7 +41,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/// `propose_query_change` - while the user's active tab is a StroomQL Query, offers them an "Apply to query" button
+/// `propose_query_change` - while the tab the user attached is a StroomQL Query, offers them an "Apply to query" button
 /// for a revised query, which puts it in the tab's editor, unsaved, with "Undo apply" after. The query is laid out
 /// a clause a line ([StroomQlFormatter]), must read a data source the user can use, and must be valid, as checked by
 /// Stroom's parser. It is applied only while the editor still holds the query it was proposed against (the tab's
@@ -52,8 +52,9 @@ class ProposeQueryChangeTool extends AbstractWorkspaceTool {
     static final String QUERY_ARG = "query";
     static final String SUMMARY_ARG = "summary";
     static final int MAX_SUMMARY_CHARS = 500;
-    static final String NOT_A_QUERY = "The user's active tab isn't a StroomQL Query, so no change was proposed. Give "
-                                      + "the query as a code block to copy, or propose_query for a new Query.";
+    static final String NOT_A_QUERY = "No StroomQL Query tab is attached to the chat, so no change was proposed. Give "
+                                      + "the query as a code block to copy, or propose_query for a new Query; or ask "
+                                      + "the user to attach the Query's tab (+ by the chat's input) and ask again.";
 
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
 
@@ -79,7 +80,7 @@ class ProposeQueryChangeTool extends AbstractWorkspaceTool {
     public ToolSpecification specification() {
         return ToolSpecification.builder()
                 .name(NAME)
-                .description("While the user's active tab is a StroomQL Query, offers them an 'Apply to query' "
+                .description("While the tab the user attached is a StroomQL Query, offers them an 'Apply to query' "
                              + "button that puts a revised query in that tab's editor, unsaved; they can undo it. "
                              + "Give the whole revised query. It is checked as propose_query's is, and laid out a "
                              + "clause a line. Nothing changes until the user clicks the button. For a new Query, "

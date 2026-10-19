@@ -34,7 +34,7 @@ public class AskStroomAiResponse {
     }
 
     /// @param message           A message, or null.
-    /// @param tabSnapshotNeeded True if only the active tab's hash was sent, but the server doesn't hold a copy with
+    /// @param tabSnapshotNeeded True if only the attached tab's hash was sent, but the server doesn't hold a copy with
     ///                          it, so the next question should send the tab in full.
     @JsonCreator
     public AskStroomAiResponse(@JsonProperty("message") final String message,
@@ -47,7 +47,7 @@ public class AskStroomAiResponse {
         return message;
     }
 
-    /// @return True if the next question should send the active tab in full, as the server doesn't hold the copy
+    /// @return True if the next question should send the attached tab in full, as the server doesn't hold the copy
     /// whose hash was sent.
     public boolean isTabSnapshotNeeded() {
         return tabSnapshotNeeded;

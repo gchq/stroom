@@ -36,8 +36,9 @@ public enum AiMessageType implements HasPrimitiveValue {
      */
     WARNING(10),
     /**
-     * A message the user sent while an agent run was working on their question, to steer it. It belongs to the
-     * question's turn, and the run picks it up at its next safe point.
+     * A message the user sent while an agent run was working on their question, to steer it, which the run has
+     * picked up (see {@link #QUEUED_STEER_MESSAGE}), or a note of something the user did with a button in the chat.
+     * It belongs to the question's turn.
      */
     STEER_MESSAGE(11),
     /**
@@ -101,7 +102,26 @@ public enum AiMessageType implements HasPrimitiveValue {
      * tool's result asked it to show the user). Shown to the user in its place in the conversation, e.g. above a
      * form the tool then asks them to fill in; never sent to the model (the tool call keeps it as its rationale).
      */
-    INTERIM_RESPONSE(23);
+    INTERIM_RESPONSE(23),
+    /**
+     * A message the user sent while an agent run was working, waiting for the run's current step to finish. Shown
+     * to the user as queued; never sent to the model as it is. When the run picks it up it becomes a
+     * {@link #STEER_MESSAGE}.
+     */
+    QUEUED_STEER_MESSAGE(24),
+    /**
+     * A {@link #QUEUED_STEER_MESSAGE} the user has asked to send now, rather than when the run's current step
+     * finishes: the run gives up waiting for a tool from an MCP server, and skips the rest of the step's tool calls,
+     * to pick it up.
+     */
+    SEND_NOW_STEER_MESSAGE(25);
+
+    /**
+     * @return True if this is a message the user sent to steer a run that the run has yet to pick up.
+     */
+    public boolean isQueuedSteer() {
+        return this == QUEUED_STEER_MESSAGE || this == SEND_NOW_STEER_MESSAGE;
+    }
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());

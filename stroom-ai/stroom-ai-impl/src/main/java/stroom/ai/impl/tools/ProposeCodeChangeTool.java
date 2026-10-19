@@ -39,6 +39,7 @@ import stroom.util.shared.diff.LineDiffResult;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.model.chat.request.json.JsonArraySchema;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -84,6 +85,9 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
     static final String NAME = "propose_code_change";
     static final String ELEMENT_ARG = "element";
     static final String CODE_ARG = "code";
+    static final String EDITS_ARG = "edits";
+    static final String OLD_TEXT_ARG = "oldText";
+    static final String NEW_TEXT_ARG = "newText";
     static final String SUMMARY_ARG = "summary";
     static final String ALLOW_ERRORS_ARG = "allowErrors";
     /// The most characters of the element's output with the proposed code given back.
@@ -94,10 +98,10 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
     /// The document types whose code can be proposed: both are XML.
     static final Set<String> CODE_TYPES = Set.of("XSLT", "TextConverter");
 
-    static final String NOT_STEPPING = "The user's active tab isn't a pipeline's stepping screen, so no change was "
-                                       + "proposed. Ask the user to open the pipeline, step to the record and "
-                                       + "select the element, then ask again. Meanwhile give the code as a code "
-                                       + "block to copy.";
+    static final String NOT_STEPPING = "No pipeline stepping screen is attached to the chat, so no change was "
+                                       + "proposed. Ask the user to open the pipeline, step to the record, select "
+                                       + "the element and attach the tab (+ by the chat's input), then ask again. "
+                                       + "Meanwhile give the code as a code block to copy.";
 
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
 
@@ -127,14 +131,22 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
 
     @Override
     public ToolSpecification specification() {
+        final JsonObjectSchema edit = JsonObjectSchema.builder()
+                .addStringProperty(OLD_TEXT_ARG, "Text to replace, exactly as it is in the code, and appearing "
+                                                 + "only once in it. A short unique part of a line is enough.")
+                .addStringProperty(NEW_TEXT_ARG, "The text to replace it with.")
+                .required(OLD_TEXT_ARG, NEW_TEXT_ARG)
+                .build();
         return ToolSpecification.builder()
                 .name(NAME)
                 .description("While the user is stepping a pipeline, proposes a change to the code (XSLT or "
                              + "text converter) of the element selected in their stepping screen. The user is "
                              + "shown a diff with a 'Review and apply' button; nothing changes until they apply it "
-                             + "to the element's editor, and it is never saved. Give the whole revised code, "
-                             + "changing only what is needed and keeping the rest exactly as it is. It must be "
-                             + "well formed XML. To change another element, ask the user to select it first. "
+                             + "to the element's editor, and it is never saved. Give either edits (best for small "
+                             + "changes: only the text to replace and its replacement, so nothing else need be "
+                             + "copied) or the whole revised code, changing only what is needed and keeping the "
+                             + "rest exactly as it is. The result must be well formed XML. To change another "
+                             + "element, ask the user to select it first. "
                              + "The change is tried first, by stepping the record with it: one that gives errors "
                              + "the current code doesn't (e.g. its output fails the pipeline's schema validation) "
                              + "is refused with them, so fix it and propose it again. The output it gave is "
@@ -142,12 +154,18 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(ELEMENT_ARG, "The element's id, as named in the pipeline (see the "
                                                         + "tab's structure file).")
-                        .addStringProperty(CODE_ARG, "The whole proposed code.")
+                        .addStringProperty(CODE_ARG, "The whole proposed code. Give this or " + EDITS_ARG
+                                                     + ", not both.")
+                        .addProperty(EDITS_ARG, JsonArraySchema.builder()
+                                .items(edit)
+                                .description("Replacements made to the element's current code, in order. Give "
+                                             + "this or " + CODE_ARG + ", not both.")
+                                .build())
                         .addStringProperty(SUMMARY_ARG, "A sentence saying what the change does and why, shown "
                                                         + "with the diff.")
                         .addBooleanProperty(ALLOW_ERRORS_ARG, "Optional. True to offer the change though it gives "
                                                               + "new errors, only when the user has said to.")
-                        .required(ELEMENT_ARG, CODE_ARG, SUMMARY_ARG)
+                        .required(ELEMENT_ARG, SUMMARY_ARG)
                         .build())
                 .build();
     }
@@ -158,6 +176,44 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
     /// only the model's real changes are shown and applied.
     static String withLineEndingOf(final String current, final String proposed) {
         return stripLineBreaks(proposed) + current.substring(stripLineBreaks(current).length());
+    }
+
+    /// @param current The element's code as it is.
+    /// @param edits   The model's edits argument: a list of objects each with the text to replace and its
+    ///                replacement.
+    /// @return The code with the edits made, in order, each to the code as the edits before it left it.
+    /// @throws WorkspaceException if the edits aren't a list of replacements, or the text one replaces isn't in
+    ///                            the code exactly once.
+    static String applyEdits(final String current, final Object edits) {
+        if (!(edits instanceof final List<?> list) || list.isEmpty()) {
+            throw new WorkspaceException("Give " + EDITS_ARG + " as a list of objects, each with " + OLD_TEXT_ARG
+                                         + " and " + NEW_TEXT_ARG + ".");
+        }
+        String code = current;
+        for (int i = 0; i < list.size(); i++) {
+            final String which = "Edit " + (i + 1);
+            if (!(list.get(i) instanceof final Map<?, ?> edit)
+                || !(edit.get(OLD_TEXT_ARG) instanceof final String oldText)
+                || !(edit.get(NEW_TEXT_ARG) instanceof final String newText)) {
+                throw new WorkspaceException(which + " needs " + OLD_TEXT_ARG + " and " + NEW_TEXT_ARG + ".");
+            }
+            if (oldText.isEmpty()) {
+                throw new WorkspaceException(which + " has no text to replace.");
+            }
+            final int index = code.indexOf(oldText);
+            if (index < 0) {
+                throw new WorkspaceException(which + "'s text to replace isn't in the element's code"
+                                             + (i > 0
+                        ? " (as the edits before it left it)"
+                        : "") + ". Read the code again and give text exactly as it is there.");
+            }
+            if (code.indexOf(oldText, index + 1) >= 0) {
+                throw new WorkspaceException(which + "'s text to replace appears more than once in the element's "
+                                             + "code. Give more of it, so it appears once.");
+            }
+            code = code.substring(0, index) + newText + code.substring(index + oldText.length());
+        }
+        return code;
     }
 
     private static String stripLineBreaks(final String text) {
@@ -172,14 +228,17 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
     String run(final ToolExecutionRequest request, final int chatId) {
         final String elementId = stringArg(request, ELEMENT_ARG);
         final String given = rawArg(request, CODE_ARG);
+        final Object edits = argsMap(request).get(EDITS_ARG);
         final String summary = stringArg(request, SUMMARY_ARG);
         if (elementId == null) {
             throw new WorkspaceException("Give the element's id, as named in the pipeline.");
         }
-        if (given == null || given.isBlank()) {
-            throw new WorkspaceException("Give the whole proposed code.");
+        final boolean hasCode = given != null && !given.isBlank();
+        if (hasCode == (edits != null)) {
+            throw new WorkspaceException("Give either " + EDITS_ARG + " or the whole proposed " + CODE_ARG
+                                         + ", but not both.");
         }
-        if (given.length() > UserActions.MAX_CODE_CHARS) {
+        if (hasCode && given.length() > UserActions.MAX_CODE_CHARS) {
             throw new WorkspaceException("The code may be at most " + UserActions.MAX_CODE_CHARS + " characters.");
         }
         if (summary != null && summary.length() > MAX_SUMMARY_CHARS) {
@@ -224,7 +283,12 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
         }
 
         // The model often drops or adds a final line break, which would show as a change of its own.
-        final String code = withLineEndingOf(base.text(), given);
+        final String code = hasCode
+                ? withLineEndingOf(base.text(), given)
+                : applyEdits(base.text(), edits);
+        if (code.length() > UserActions.MAX_CODE_CHARS) {
+            throw new WorkspaceException("The code may be at most " + UserActions.MAX_CODE_CHARS + " characters.");
+        }
         final String problem = xmlProblem(code);
         if (problem != null) {
             return "The proposed code isn't well formed XML, so no change was proposed: " + problem

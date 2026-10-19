@@ -61,7 +61,7 @@ public class AiChatPollResponse {
     @JsonProperty
     private final List<AiChatMessage> watchedMessages;
     /**
-     * False if an administrator has turned off sharing the active tab with chats, or null if not known.
+     * False if an administrator has turned off sharing tabs with chats, or null if not known.
      */
     @JsonProperty
     private final Boolean shareActiveTab;
@@ -141,7 +141,7 @@ public class AiChatPollResponse {
     }
 
     /**
-     * @return False if an administrator has turned off sharing the active tab with chats, or null if not known.
+     * @return False if an administrator has turned off sharing tabs with chats, or null if not known.
      */
     public Boolean getShareActiveTab() {
         return shareActiveTab;

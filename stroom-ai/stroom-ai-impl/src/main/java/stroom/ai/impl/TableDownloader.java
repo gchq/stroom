@@ -53,7 +53,7 @@ import java.util.List;
 /// download of search results (as the user, so with their permissions), with each row's stream and event ids. One
 /// row more than asked for is fetched, to tell whether there were more, and then left out.
 ///
-/// Used both for a table the user attaches to a chat and for a snapshot of the results shown in their active tab.
+/// Used both for a table the user attaches to a chat and for a snapshot of the results shown in their attached tab.
 public class TableDownloader {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableDownloader.class);

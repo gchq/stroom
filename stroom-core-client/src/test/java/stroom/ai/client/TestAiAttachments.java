@@ -95,7 +95,7 @@ class TestAiAttachments {
     }
 
     @Test
-    void theActiveTabsChipShowsTheTabsIconSizedAsADocumentChipsIs() {
+    void theAttachedTabsChipShowsTheTabsIconSizedAsADocumentChipsIs() {
         final HtmlBuilder hb = new HtmlBuilder();
         AiAttachments.tabChip(hb, SvgImage.DOCUMENT_XSLT, "Tab: Event translation", "Shared");
         final String html = hb.toSafeHtml().asString();
@@ -110,6 +110,21 @@ class TestAiAttachments {
         final HtmlBuilder plain = new HtmlBuilder();
         AiAttachments.tabChip(plain, null, "Tab: X", "Shared");
         assertThat(plain.toSafeHtml().asString()).contains(SvgImage.FILE.getClassName());
+    }
+
+    @Test
+    void theAttachTabButtonShowsAPlusAndTheTabsIcon() {
+        final HtmlBuilder hb = new HtmlBuilder();
+        AiAttachments.attachTabChip(hb, SvgImage.DOCUMENT_XSLT, "Event translation", "Attach");
+        final String html = hb.toSafeHtml().asString();
+
+        assertThat(html)
+                .startsWith("<button")
+                .contains(AiAttachments.ATTACH_TAB_ATTRIBUTE + "=\"true\"")
+                .contains(SvgImage.ADD.getSvg())
+                .contains(SvgImage.DOCUMENT_XSLT.getSvg())
+                .contains("Event translation")
+                .contains("title=\"Attach\"");
     }
 
     private static String chipHtml(final AiChatAttachment attachment, final boolean removable) {

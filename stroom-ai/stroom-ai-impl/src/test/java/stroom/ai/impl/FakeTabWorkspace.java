@@ -41,7 +41,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /// A chat's workspace held in memory, behind mocks of [ChatWorkspace], [WorkspaceStore] and [AiWorkspaceDao], for
-/// testing what keeps and reads the user's active tab and snapshots of its results. A file can be made
+/// testing what keeps and reads the tab the user attached and snapshots of its results. A file can be made
 /// unavailable, as when the user loses access to the document its content came from.
 public final class FakeTabWorkspace {
 
