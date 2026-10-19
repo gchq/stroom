@@ -486,6 +486,50 @@ class TestUserActionService {
     }
 
     @Test
+    void undoingAnAppliedDashboardChangeIsRecordedAndOffersTheChangeAgain() {
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
+        final String stored = storeResult(dashboardChange().withStatus(Status.DONE,
+                UserActionService.APPLIED_DASHBOARD));
+
+        final AiUserActionResult result = service.undoUserAction(CHAT, MESSAGE, "dash-1");
+
+        assertThat(result.isDone()).isTrue();
+        final ArgumentCaptor<String> written = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiDao).compareAndSetMessageText(Mockito.eq(MESSAGE), Mockito.eq(stored), written.capture());
+        assertThat(JsonUtil.readValue(written.getValue(), ToolResultRecord.class).userActions())
+                .singleElement()
+                .extracting(UserActionRecord::status)
+                .isEqualTo(Status.PENDING);
+        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(DASHBOARD),
+                Mockito.eq(UserActionService.UNDO_DASHBOARD_COMMAND), Mockito.contains("table 'Events'"),
+                Mockito.eq("Undid an applied change: Group by 'EventType' (level 1)"), Mockito.eq(true));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
+                Mockito.contains("I undid the proposed change I had applied to table 'Events'"));
+    }
+
+    @Test
+    void undoingADashboardChangeNeedsEditAndThatItWasApplied() {
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(false);
+        storeResult(dashboardChange().withStatus(Status.DONE, UserActionService.APPLIED_DASHBOARD));
+
+        final AiUserActionResult result = service.undoUserAction(CHAT, MESSAGE, "dash-1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).contains("permission to edit");
+        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.eq(DASHBOARD),
+                Mockito.eq(UserActionService.UNDO_DASHBOARD_COMMAND), Mockito.anyString(), Mockito.anyString(),
+                Mockito.eq(false));
+
+        // Not yet applied.
+        Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
+        storeResult(dashboardChange());
+        assertThat(service.undoUserAction(CHAT, MESSAGE, "dash-1").getMessage())
+                .contains("no applied change to undo");
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
+                Mockito.anyString());
+    }
+
+    @Test
     void onlyAnAppliedCodeChangeCanBeUndone() {
         Mockito.when(lookup.canEdit(XSLT)).thenReturn(true);
         storeResult(codeChange(Status.PENDING));

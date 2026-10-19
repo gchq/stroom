@@ -18,7 +18,16 @@ package stroom.ai.client;
 
 import stroom.dashboard.client.event.ApplyDashboardChangeEvent;
 import stroom.dashboard.client.table.TableChange;
+import stroom.docref.DocRef;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /// The actions an MCP tool's result can offer the user as buttons, as the server sends them (see the server's
@@ -42,8 +51,7 @@ final class UserActionsUi {
     /// A change to a dashboard table the agent proposed, which the button applies to the open dashboard (unsaved).
     static final String APPLY_DASHBOARD_CHANGE = "apply_dashboard_change";
     /// What an applied dashboard change's card says, as the server writes it.
-    static final String APPLIED_DASHBOARD = "Applied, not saved. Save the dashboard to keep it, or close it without "
-                                            + "saving to go back.";
+    static final String APPLIED_DASHBOARD = "Applied, not saved. Save the dashboard to keep it, or use Undo apply.";
     /// What an applied code change's card says, as the server writes it.
     static final String APPLIED = "Applied, not saved";
     /// The text of the button that undoes an applied code change.
@@ -99,6 +107,13 @@ final class UserActionsUi {
     }
 
     /// @param action An action.
+    /// @param status Its status, as stored.
+    /// @return True if it is a dashboard change that has been applied, so its card offers Undo apply.
+    static boolean isAppliedDashboardChange(final String action, final String status) {
+        return APPLY_DASHBOARD_CHANGE.equals(action) && "DONE".equals(status);
+    }
+
+    /// @param action An action.
     /// @return What its button says.
     static String buttonText(final String action) {
         if (ENABLE_PROCESSOR_FILTER.equals(action)) {
@@ -135,8 +150,10 @@ final class UserActionsUi {
     }
 
     /// @param field Gives each of a proposed operation's fields as text (numbers as digits), or null if it has none.
+    /// @param query For set_expression, the query's expression as the server wrote it ([#expression(Object)]), or
+    ///              null.
     /// @return The operation, for the dashboard to apply.
-    static TableChange tableChange(final Function<String, String> field) {
+    static TableChange tableChange(final Function<String, String> field, final Object query) {
         return new TableChange(field.apply("op"),
                 field.apply("column"),
                 number(field.apply("level")),
@@ -146,7 +163,79 @@ final class UserActionsUi {
                 number(field.apply("position")),
                 field.apply("direction"),
                 number(field.apply("priority")),
-                field.apply("filter"));
+                field.apply("filter"),
+                query == null
+                        ? null
+                        : expression(query),
+                field.apply("table"),
+                "true".equals(field.apply("copy")));
+    }
+
+    /// Reads a query's expression as the server writes it for a proposed dashboard change: an operator as `op`,
+    /// `enabled` and `children`, and a term as `field`, `condition` (the condition's name), `value`, `enabled` and
+    /// `doc`, given here as maps and lists.
+    ///
+    /// @param value The expression.
+    /// @return The expression, or null if it can't be read.
+    static ExpressionOperator expression(final Object value) {
+        return expressionItem(value) instanceof final ExpressionOperator operator
+                ? operator
+                : null;
+    }
+
+    private static ExpressionItem expressionItem(final Object value) {
+        if (!(value instanceof final Map<?, ?> map)) {
+            return null;
+        }
+        final Boolean enabled = Boolean.FALSE.equals(map.get("enabled"))
+                ? Boolean.FALSE
+                : null;
+        if (map.get("op") instanceof final String op) {
+            final List<ExpressionItem> children = new ArrayList<>();
+            if (map.get("children") instanceof final List<?> list) {
+                for (final Object child : list) {
+                    final ExpressionItem item = expressionItem(child);
+                    if (item == null) {
+                        return null;
+                    }
+                    children.add(item);
+                }
+            }
+            final Op parsed = enumValue(Op.values(), op);
+            return parsed == null
+                    ? null
+                    : ExpressionOperator.builder().op(parsed).enabled(enabled).children(children).build();
+        }
+        if (map.get("field") instanceof final String field && map.get("condition") instanceof final String name) {
+            final Condition condition = enumValue(Condition.values(), name);
+            if (condition == null) {
+                return null;
+            }
+            final ExpressionTerm.Builder term = ExpressionTerm.builder()
+                    .field(field)
+                    .condition(condition)
+                    .enabled(enabled);
+            if (map.get("value") instanceof final String text) {
+                term.value(text);
+            }
+            if (map.get("doc") instanceof final Map<?, ?> doc
+                && doc.get("type") instanceof final String type && doc.get("uuid") instanceof final String uuid) {
+                term.docRef(new DocRef(type, uuid, doc.get("name") instanceof final String docName
+                        ? docName
+                        : null));
+            }
+            return term.build();
+        }
+        return null;
+    }
+
+    private static <E extends Enum<E>> E enumValue(final E[] values, final String name) {
+        for (final E value : values) {
+            if (value.name().equals(name)) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private static Integer number(final String text) {

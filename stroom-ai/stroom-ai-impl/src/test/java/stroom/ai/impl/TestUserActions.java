@@ -245,6 +245,18 @@ class TestUserActions {
         final Map<String, Object> noHash = new HashMap<>(dashboardChange("d4"));
         noHash.remove("snapshot_hash");
         assertThat(userActions.check(null, List.of(badOp, notADashboard, noHash), NOW)).isEmpty();
+
+        // A query's expression must be one Stroom built, not just the model's conditions.
+        final Map<String, Object> conditionsOnly = new HashMap<>(dashboardChange("d5"));
+        conditionsOnly.put("changes", List.of(Map.of("op", "set_expression", "where", "EventType = \"Logon\"")));
+        assertThat(userActions.check(null, List.of(conditionsOnly), NOW)).isEmpty();
+        final Map<String, Object> built = new HashMap<>(dashboardChange("d6"));
+        built.put("changes", List.of(Map.of("op", "set_expression", "where", "EventType = \"Logon\"",
+                "query", Map.of("op", "AND", "children", List.of(Map.of("field", "EventType",
+                        "condition", "EQUALS", "value", "Logon"))))));
+        assertThat(userActions.check(null, List.of(built), NOW)).singleElement()
+                .satisfies(action -> assertThat(action.dashboardChange().changes())
+                        .containsExactly("Set the query to find: EventType is 'Logon'"));
     }
 
     @Test

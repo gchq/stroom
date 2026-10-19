@@ -541,7 +541,7 @@ public class AskStroomAiPresenter
                         return;
                     }
 
-                    // Undoing a proposed code change the user applied.
+                    // Undoing a proposed code, query or dashboard change the user applied.
                     final String undoMessage = button.getAttribute(USER_ACTION_UNDO_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(undoMessage)) {
                         onUndoCodeChange(button, Integer.parseInt(undoMessage),
@@ -2519,6 +2519,20 @@ public class AskStroomAiPresenter
         if (!pending) {
             row.div(text -> text.append(UserActionsUi.outcomeText(status, AiToolMessages.getString(json, "outcome"))),
                     Attribute.className("ai-approval-reason"));
+            if (UserActionsUi.isAppliedDashboardChange(UserActionsUi.APPLY_DASHBOARD_CHANGE, status)) {
+                final String actionId = NullSafe.string(AiToolMessages.getString(json, "id"));
+                final ApplyDashboardChangeEvent canUndo = ApplyDashboardChangeEvent.fireCanUndo(this,
+                        docRef(AiToolMessages.getString(json, "doc")), dashboardUndoKey(messageId, actionId));
+                if (canUndo.isHandled() && !canUndo.isCanUndo()) {
+                    row.div(text -> text.append(ApplyDashboardChangeEvent.UNDO_WITHDRAWN),
+                            Attribute.className("ai-approval-reason"));
+                } else {
+                    row.elem(UserActionsUi.UNDO_APPLY, BUTTON,
+                            Attribute.className("allow-focus ai-approval-button"),
+                            new Attribute(USER_ACTION_UNDO_ATTRIBUTE, String.valueOf(messageId)),
+                            new Attribute(USER_ACTION_ID_ATTRIBUTE, actionId));
+                }
+            }
             return;
         }
         final ApplyDashboardChangeEvent check = ApplyDashboardChangeEvent.fireCheck(this,
@@ -2539,9 +2553,9 @@ public class AskStroomAiPresenter
                 attributes.toArray(new Attribute[0]));
     }
 
-    /// Applies a proposed dashboard change to the dashboard, opening it if it isn't open. The dashboard refuses it
-    /// if it has changed since the proposal or can't be edited, and asks the user to save unsaved changes first.
-    /// Just before applying, the server checks Edit and records it. Nothing is saved.
+    /// Applies a proposed dashboard change to the dashboard, opening it if it isn't open, on top of any unsaved
+    /// changes. The dashboard refuses it if it has changed since the proposal or can't be edited. Just before
+    /// applying, the server checks Edit and records it. Nothing is saved, and it can be undone.
     private void onApplyDashboardChange(final Element button, final int messageId, final String actionId) {
         final String json = findUserAction(messageId, actionId);
         if (json == null || currentChat == null) {
@@ -2555,7 +2569,8 @@ public class AskStroomAiPresenter
             final JSONObject operation = operations.get(i).isObject();
             if (operation != null) {
                 final String operationJson = operation.toString();
-                changes.add(UserActionsUi.tableChange(name -> AiToolMessages.getString(operationJson, name)));
+                changes.add(UserActionsUi.tableChange(name -> AiToolMessages.getString(operationJson, name),
+                        AiToolMessages.toJava(operation.get("query"))));
             }
         }
         final DocRef dashboard = docRef(AiToolMessages.getString(json, "doc"));
@@ -2583,11 +2598,54 @@ public class AskStroomAiPresenter
                     if (message != null) {
                         AlertEvent.fireWarn(this, message, null);
                     }
-                });
+                },
+                dashboardUndoKey(messageId, actionId));
         if (!event.isHandled()) {
             button.removeAttribute("disabled");
             AlertEvent.fireWarn(this, "The dashboard can't be opened here.", null);
         }
+    }
+
+    /// @return What an applied dashboard change is known by, to undo it.
+    private static String dashboardUndoKey(final int messageId, final String actionId) {
+        return messageId + ":" + actionId;
+    }
+
+    /// Undoes a proposed dashboard change the user applied, putting the table back exactly as it was, if the
+    /// dashboard is open and hasn't changed since. The server checks Edit and records it first.
+    private void onUndoDashboardChange(final Element button, final int messageId, final String actionId) {
+        final String json = findUserAction(messageId, actionId);
+        if (json == null || currentChat == null) {
+            return;
+        }
+        final DocRef dashboard = docRef(AiToolMessages.getString(json, "doc"));
+        final String undoKey = dashboardUndoKey(messageId, actionId);
+        final ApplyDashboardChangeEvent canUndo = ApplyDashboardChangeEvent.fireCanUndo(this, dashboard, undoKey);
+        if (!canUndo.isHandled()) {
+            AlertEvent.fireInfo(this, "Open dashboard '" + NullSafe.get(dashboard, DocRef::getName)
+                                      + "' to undo the change there. If it was closed without saving, the change "
+                                      + "is already gone.", null);
+            return;
+        }
+        if (!canUndo.isCanUndo()) {
+            AlertEvent.fireInfo(this, ApplyDashboardChangeEvent.UNDO_WITHDRAWN, null);
+            // Withdraw the button.
+            showUserActionStatus(messageId, actionId, "DONE", UserActionsUi.APPLIED_DASHBOARD);
+            return;
+        }
+        button.setAttribute("disabled", "disabled");
+        askStroomAiClient.undoUserAction(currentChat.getId(), messageId, actionId, result -> {
+            if (!result.isDone()) {
+                button.removeAttribute("disabled");
+                AlertEvent.fireWarn(this, NullSafe.string(result.getMessage()), null);
+                return;
+            }
+            if (!ApplyDashboardChangeEvent.fireUndo(this, dashboard, undoKey).isUndone()) {
+                AlertEvent.fireWarn(this, ApplyDashboardChangeEvent.UNDO_WITHDRAWN, null);
+            }
+            showUserActionStatus(messageId, actionId, "PENDING", result.getMessage());
+            pollAfterAnswer();
+        }, this);
     }
 
     /// @param json A document reference, as JSON, or null.
@@ -2747,6 +2805,10 @@ public class AskStroomAiPresenter
         }
         if (UserActionsUi.APPLY_QUERY_CHANGE.equals(AiToolMessages.getString(json, "action"))) {
             onUndoQueryChange(button, messageId, actionId);
+            return;
+        }
+        if (UserActionsUi.APPLY_DASHBOARD_CHANGE.equals(AiToolMessages.getString(json, "action"))) {
+            onUndoDashboardChange(button, messageId, actionId);
             return;
         }
         final String codeChange = AiToolMessages.getString(json, "codeChange");

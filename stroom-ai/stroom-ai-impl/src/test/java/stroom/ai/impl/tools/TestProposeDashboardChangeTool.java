@@ -19,6 +19,8 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.DashboardBuilder;
+import stroom.ai.impl.DashboardChanges;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
@@ -30,12 +32,17 @@ import stroom.ai.shared.DashboardTableContext;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -65,6 +72,7 @@ class TestProposeDashboardChangeTool {
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
+    private final DashboardBuilder dashboardBuilder = Mockito.mock(DashboardBuilder.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
     private ProposeDashboardChangeTool tool;
 
@@ -79,7 +87,7 @@ class TestProposeDashboardChangeTool {
         Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
                 QueryField.createText("UserId"), QueryField.createText("EventType"))));
         tool = new ProposeDashboardChangeTool(workspace, tabSnapshots, documentAccess, dataSourceAccess,
-                () -> queryService, auditLog);
+                () -> queryService, auditLog, dashboardBuilder);
         dashboardTab(false);
     }
 
@@ -103,6 +111,45 @@ class TestProposeDashboardChangeTool {
                 .containsEntry("summary", "Counts events per user."));
         Mockito.verify(auditLog).documentViewed(Mockito.eq(CHAT), Mockito.eq(DASHBOARD),
                 Mockito.contains("Proposed a change to table 'Events'"));
+    }
+
+    @Test
+    void theClassicQuerysExpressionIsSetFromConditionsAndShownInWords() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .op(Op.OR)
+                .addTerm(ExpressionTerm.builder().field("EventType").condition(Condition.EQUALS).value("Logon")
+                        .build())
+                .addTerm(ExpressionTerm.builder().field("EventType").condition(Condition.EQUALS).value("Logoff")
+                        .build())
+                .build();
+        Mockito.when(dashboardBuilder.whereExpression(INDEX, "EventType = \"Logon\" or EventType = \"Logoff\""))
+                .thenReturn(expression);
+
+        final String result = run(List.of(Map.of("op", "set_expression",
+                "where", "EventType = \"Logon\"\nor EventType = \"Logoff\"")));
+
+        assertThat(result).contains("- Set the query to find: EventType is 'Logon' or EventType is 'Logoff'");
+        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+                .extractingByKey("changes")
+                .asInstanceOf(InstanceOfAssertFactories.LIST)
+                .singleElement()
+                .satisfies(change -> assertThat(asMap(change))
+                        .containsEntry("op", "set_expression")
+                        .containsEntry("query", DashboardChanges.expressionToMap(expression))));
+    }
+
+    @Test
+    void conditionsThatArentValidAreRefusedSayingWhy() {
+        Mockito.when(dashboardBuilder.whereExpression(Mockito.eq(INDEX), Mockito.anyString()))
+                .thenThrow(new IllegalArgumentException("The conditions aren't valid: unknown field 'Nope'"));
+
+        assertThat(run(List.of(Map.of("op", "set_expression", "where", "Nope = 1"))))
+                .startsWith("No change was proposed, as it isn't valid")
+                .contains("Change 1 (set_expression): The conditions aren't valid: unknown field 'Nope'");
+        assertThat(context.takeUserActions("c1")).isEmpty();
+
+        assertThat(run(List.of(Map.of("op", "set_expression"))))
+                .startsWith("Error: Change 1: set_expression needs where");
     }
 
     @Test
@@ -164,6 +211,11 @@ class TestProposeDashboardChangeTool {
     @Test
     void badChangesAreRefused() {
         assertThat(run(List.of(Map.of("op", "drop_table")))).startsWith("Error: Change 1: op must be one of");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asMap(final Object value) {
+        return (Map<String, Object>) value;
     }
 
     private void dashboardTab(final boolean cut) {

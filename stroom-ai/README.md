@@ -295,8 +295,22 @@ the agent is looking at without the user choosing it:
 What the agent can offer for the attached tab, all as buttons the user clicks, never saved by the agent:
 
 * A StroomQL Query: _Apply to query_ (the revised query in the editor, unsaved, with _Undo apply_).
-* A dashboard: _Apply to dashboard_ (table changes, unsaved; the user is asked to save first if the
-  dashboard has unsaved changes).
+* A dashboard: _Apply to dashboard_, with _Undo apply_. A proposal is for one table, and can:
+  * add, edit (name, expression, format), move, hide or show columns; group, sort and filter them. Column
+    expressions are in Stroom's expression language, checked against the data source's fields, so the agent
+    can derive what the user means (e.g. `if()`, `match()`, `decode()`, `formatDate()`) rather than only show
+    raw fields;
+  * set the expression of the classic query that feeds the table. The agent writes the conditions as a
+    StroomQL `where` clause has them; Stroom turns them into the expression, checks them against the data
+    source, and the card shows them in words. The agent never shows StroomQL for a classic query;
+  * add tables beside it as tabs, fed by the same query, starting with its columns or none, which the
+    changes after them set up, e.g. a tab per event category, each with columns that suit it and a filter
+    on the category column.
+
+  Changes are applied unsaved, on top of any unsaved changes the dashboard has (the agent proposed them
+  against the dashboard as the user has it), and all or none. _Undo apply_ puts the table and the query's
+  expression back exactly as they were and removes any tables added, while the dashboard is open and hasn't
+  been changed since; otherwise it is withdrawn, saying why.
 * A pipeline being stepped: a change to the selected XSLT or text converter, as a diff with _Review and
   apply_. The agent gives either the whole revised code or just the text to replace and its replacement, so a
   small change (e.g. adding `normalize-space()`) doesn't mean copying the whole XSLT. Before it is offered, the
@@ -427,3 +441,24 @@ kept at all. Turning off request detail stops it being kept for later answers, a
 * **A chat shows "Interrupted because the Stroom node running it stopped"**: the node running it went
   away. _Resume_ carries on from the last question.
 * **Nothing streams**: some OpenAI-compatible servers don't stream; the answer then arrives whole.
+
+
+## Roadmap
+
+Planned, not yet built.
+
+* **The remaining dashboard widget types.** The agent can create a dashboard with a query, a table and a data
+  preview, change tables and a classic query's expression, and add tables as tabs. Still to come:
+  * Visualisations: adding one to a dashboard from a Visualisation already in Stroom, set up for the table's
+    columns (which fields feed which of its settings), and changing an existing one's settings.
+  * New visualisations from scratch: a Visualisation document with its Script (JavaScript, written to Stroom's
+    visualisation API) and settings, proposed for review as a code change is, and tried before it is
+    offered. This is the largest piece, as the script is code the browser runs.
+  * The other widgets: Text (beyond the data preview), the inputs (text, list, key-value), the table filter,
+    and their links to tables and queries; and laying out widgets, e.g. adding one beside a table.
+* **Models per task.** A default model, with an administrator able to set others for kinds of work (tool
+  calling, code such as XSLT, writing). Rather than swapping the model mid-answer, the likely shape is: a
+  small utility model for side calls (titles, follow-ups, summaries, digests); choosing the model for a
+  question when it starts, from what is attached and the prompt used, shown and overridable; and tools that
+  hand a piece of work (e.g. writing code) to a specialist model. Open questions: one server or separate
+  endpoints, and whether these override a user's own choice of model.

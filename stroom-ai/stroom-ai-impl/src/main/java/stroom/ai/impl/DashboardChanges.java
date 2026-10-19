@@ -17,6 +17,12 @@
 
 package stroom.ai.impl;
 
+import stroom.docref.DocRef;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -24,12 +30,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /// The changes to a dashboard table that the agent can propose, and the user can apply with a button (see
-/// `propose_dashboard_change`): group or ungroup a column, add, edit, hide or show a column, sort by a column, or
-/// filter a column. Each is read from the model's arguments, checked against the table's columns as the user has
-/// them, and described in plain language for the user, by Stroom.
+/// `propose_dashboard_change`): group or ungroup a column, add, edit, move, hide or show a column, sort by a
+/// column, filter a column, set the expression of the classic query that feeds the table, or add a table beside
+/// it as a tab (fed by the same query), which the changes after it can set up by naming it as their `table`. Each
+/// is read from the model's arguments, checked against the columns of the table it changes, and described in
+/// plain language for the user, by Stroom.
 public final class DashboardChanges {
 
     public static final String GROUP = "group";
@@ -40,9 +49,20 @@ public final class DashboardChanges {
     public static final String SHOW_COLUMN = "show_column";
     public static final String SORT = "sort";
     public static final String FILTER = "filter";
+    /// Sets the expression of the classic query that feeds the table, from StroomQL conditions.
+    public static final String SET_EXPRESSION = "set_expression";
+    /// Moves a column to a position among the columns the user sees.
+    public static final String MOVE_COLUMN = "move_column";
+    /// Adds a table beside the table as a tab, fed by the same query, with its columns or none.
+    public static final String ADD_TABLE = "add_table";
     /// The operations, in the order they are described to the model.
-    public static final List<String> OPERATIONS = List.of(GROUP, UNGROUP, ADD_COLUMN, EDIT_COLUMN, HIDE_COLUMN,
-            SHOW_COLUMN, SORT, FILTER);
+    public static final List<String> OPERATIONS = List.of(GROUP, UNGROUP, ADD_COLUMN, EDIT_COLUMN, MOVE_COLUMN,
+            HIDE_COLUMN, SHOW_COLUMN, SORT, FILTER, SET_EXPRESSION, ADD_TABLE);
+    /// The most tables one proposal may add.
+    public static final int MAX_TABLES = 10;
+    /// The deepest an expression may nest, and the most items it may have, as read back from a stored change.
+    static final int MAX_EXPRESSION_DEPTH = 20;
+    static final int MAX_EXPRESSION_ITEMS = 500;
     /// The formats a column can be given, as the column menu names them.
     public static final List<String> FORMATS = List.of("General", "Number", "Date Time", "Text");
     public static final String ASCENDING = "ascending";
@@ -88,15 +108,70 @@ public final class DashboardChanges {
     /// @param columns The table's columns, by name, as the user has them.
     /// @return The changes with exact column names, and what is wrong with them, if anything.
     public static Checked check(final List<Change> changes, final List<String> columns) {
-        final List<String> names = new ArrayList<>(NullSafe.list(columns));
+        return check(changes, columns, null, List.of());
+    }
+
+    /// Checks changes against the columns of the tables they change: the table the proposal is for, and any
+    /// tables it adds (which start with its columns, or none). Each change follows the changes before it (e.g. a
+    /// column added, or one renamed), and is given its column's name exactly as its table has it.
+    ///
+    /// @param changes    The changes, as read.
+    /// @param columns    The columns of the table the proposal is for, by name, as the user has them.
+    /// @param table      The name of the table the proposal is for, or null.
+    /// @param tableNames The names of the dashboard's tables, which an added table may not take.
+    /// @return The changes with exact column names, and what is wrong with them, if anything.
+    public static Checked check(final List<Change> changes,
+                                final List<String> columns,
+                                final String table,
+                                final List<String> tableNames) {
+        // Each table's columns as the changes so far leave them, by table name (lower case); the proposal's own
+        // table under the empty name.
+        final Map<String, List<String>> tables = new LinkedHashMap<>();
+        tables.put("", new ArrayList<>(NullSafe.list(columns)));
         final List<Change> checked = new ArrayList<>();
         final List<String> problems = new ArrayList<>();
         for (int i = 0; i < changes.size(); i++) {
             final Change change = changes.get(i);
             final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
+            if (SET_EXPRESSION.equals(change.op())) {
+                // Of the table's query, not a column.
+                checked.add(change);
+                continue;
+            }
+            if (ADD_TABLE.equals(change.op())) {
+                final String key = change.name().toLowerCase(Locale.ROOT);
+                final boolean taken = tables.containsKey(key)
+                                      || change.name().equalsIgnoreCase(table)
+                                      || NullSafe.list(tableNames).stream().anyMatch(change.name()::equalsIgnoreCase);
+                if (taken) {
+                    problems.add(prefix + "the dashboard already has a table '" + change.name() + "'. Give "
+                                 + "another name.");
+                } else if (tables.size() > MAX_TABLES) {
+                    problems.add(prefix + "at most " + MAX_TABLES + " tables may be added at once.");
+                }
+                tables.put(key, Boolean.TRUE.equals(change.copy())
+                        ? new ArrayList<>(tables.get(""))
+                        : new ArrayList<>());
+                checked.add(change);
+                continue;
+            }
+            final String target = change.table() == null || change.table().equalsIgnoreCase(table)
+                    ? ""
+                    : change.table().toLowerCase(Locale.ROOT);
+            final List<String> names = tables.get(target);
+            if (names == null) {
+                problems.add(prefix + "there is no table '" + change.table() + "' to change. Changes are to table '"
+                             + NullSafe.nonBlankStringElse(table, "?") + "', or to a table added before them with "
+                             + "add_table.");
+                checked.add(change);
+                continue;
+            }
+            final String which = target.isEmpty()
+                    ? "the table"
+                    : "table '" + change.table() + "'";
             if (ADD_COLUMN.equals(change.op())) {
                 if (find(names, change.name()).isPresent()) {
-                    problems.add(prefix + "the table already has a column '" + change.name() + "'. Give another "
+                    problems.add(prefix + which + " already has a column '" + change.name() + "'. Give another "
                                  + "name, or use edit_column.");
                 }
                 final int position = change.position() == null
@@ -108,8 +183,10 @@ public final class DashboardChanges {
             }
             final Optional<String> column = find(names, change.column());
             if (column.isEmpty()) {
-                problems.add(prefix + "the table has no column '" + change.column() + "'. Its columns are: "
-                             + String.join(", ", names) + ".");
+                problems.add(prefix + which + " has no column '" + change.column() + "'. Its columns are: "
+                             + (names.isEmpty()
+                        ? "none yet"
+                        : String.join(", ", names)) + ".");
                 checked.add(change);
                 continue;
             }
@@ -117,9 +194,13 @@ public final class DashboardChanges {
             if (EDIT_COLUMN.equals(change.op()) && change.name() != null) {
                 final Optional<String> clash = find(names, change.name());
                 if (clash.isPresent() && !clash.get().equals(column.get())) {
-                    problems.add(prefix + "the table already has a column '" + change.name() + "'.");
+                    problems.add(prefix + which + " already has a column '" + change.name() + "'.");
                 }
                 names.set(names.indexOf(column.get()), change.name());
+            }
+            if (MOVE_COLUMN.equals(change.op())) {
+                names.remove(column.get());
+                names.add(Math.min(change.position() - 1, names.size()), column.get());
             }
             checked.add(exact);
         }
@@ -169,6 +250,31 @@ public final class DashboardChanges {
         if (filter != null && filter.length() > MAX_TEXT) {
             throw new IllegalArgumentException(prefix + "filter may be at most " + MAX_TEXT + " characters.");
         }
+        // Conditions are often written over several lines.
+        final Object whereValue = map.get("where");
+        final String where = whereValue == null
+                ? null
+                : text(Map.of("where", String.valueOf(whereValue).replaceAll("\\s+", " ")), "where", prefix);
+        final ExpressionOperator query = map.get("query") == null
+                ? null
+                : expressionFromMap(map.get("query"), prefix);
+        final String table = text(map, "table", prefix);
+        final Boolean copy = map.get("copy") instanceof final Boolean value
+                ? value
+                : null;
+        if (ADD_TABLE.equals(op)) {
+            if (name == null) {
+                throw new IllegalArgumentException(prefix + "add_table needs the new table's name.");
+            }
+            return new Change(op, null, null, name, null, null, null, null, null, null, null, null, null, copy);
+        }
+        if (SET_EXPRESSION.equals(op)) {
+            if (where == null && query == null) {
+                throw new IllegalArgumentException(prefix + "set_expression needs where: the query's conditions, "
+                                                   + "as a StroomQL where clause has them.");
+            }
+            return new Change(op, null, null, null, null, null, null, null, null, null, where, query, null, null);
+        }
         if (!ADD_COLUMN.equals(op) && column == null) {
             throw new IllegalArgumentException(prefix + op + " needs the column, by its name as the user sees it.");
         }
@@ -195,6 +301,12 @@ public final class DashboardChanges {
                                                        + "or none to stop sorting by the column.");
                 }
             }
+            case MOVE_COLUMN -> {
+                if (position == null) {
+                    throw new IllegalArgumentException(prefix + "move_column needs the position to move it to, "
+                                                       + "from 1.");
+                }
+            }
             case FILTER -> {
                 if (filter == null) {
                     throw new IllegalArgumentException(prefix + "filter needs the filter text, as the column's "
@@ -205,7 +317,93 @@ public final class DashboardChanges {
                 // Only the column is needed.
             }
         }
-        return new Change(op, column, level, name, expression, format, position, direction, priority, filter);
+        return new Change(op, column, level, name, expression, format, position, direction, priority, filter, null,
+                null, table, null);
+    }
+
+    /// @param expression An expression.
+    /// @return The expression as the browser is given it: an operator as `op`, `enabled` and `children`, and a term
+    /// as `field`, `condition` (the condition's name), `value`, `enabled` and, if it names one, `doc`.
+    public static Map<String, Object> expressionToMap(final ExpressionItem expression) {
+        final Map<String, Object> map = new LinkedHashMap<>();
+        if (expression instanceof final ExpressionOperator operator) {
+            map.put("op", Objects.requireNonNullElse(operator.op(), Op.AND).name());
+            if (!operator.enabled()) {
+                map.put("enabled", false);
+            }
+            map.put("children", NullSafe.list(operator.getChildren()).stream()
+                    .map(DashboardChanges::expressionToMap)
+                    .toList());
+        } else if (expression instanceof final ExpressionTerm term) {
+            map.put("field", term.getField());
+            NullSafe.consume(term.getCondition(), condition -> map.put("condition", condition.name()));
+            NullSafe.consume(term.getValue(), value -> map.put("value", value));
+            if (!term.enabled()) {
+                map.put("enabled", false);
+            }
+            NullSafe.consume(term.getDocRef(), doc -> map.put("doc", Map.of("type", doc.getType(),
+                    "uuid", doc.getUuid(), "name", NullSafe.string(doc.getName()))));
+        }
+        return map;
+    }
+
+    // Reads back an expression written by expressionToMap.
+    private static ExpressionOperator expressionFromMap(final Object value, final String prefix) {
+        final int[] items = new int[1];
+        if (!(expressionItemFromMap(value, 0, items) instanceof final ExpressionOperator operator)) {
+            throw new IllegalArgumentException(prefix + "the query's expression can't be read.");
+        }
+        return operator;
+    }
+
+    private static ExpressionItem expressionItemFromMap(final Object value, final int depth, final int[] items) {
+        if (!(value instanceof final Map<?, ?> map) || depth > MAX_EXPRESSION_DEPTH
+            || ++items[0] > MAX_EXPRESSION_ITEMS) {
+            return null;
+        }
+        final Boolean enabled = Boolean.FALSE.equals(map.get("enabled"))
+                ? Boolean.FALSE
+                : null;
+        if (map.get("op") instanceof final String op) {
+            final List<ExpressionItem> children = new ArrayList<>();
+            if (map.get("children") instanceof final List<?> list) {
+                for (final Object child : list) {
+                    final ExpressionItem item = expressionItemFromMap(child, depth + 1, items);
+                    if (item == null) {
+                        return null;
+                    }
+                    children.add(item);
+                }
+            }
+            try {
+                return ExpressionOperator.builder().op(Op.valueOf(op)).enabled(enabled).children(children).build();
+            } catch (final IllegalArgumentException e) {
+                return null;
+            }
+        }
+        if (map.get("field") instanceof final String field && map.get("condition") instanceof final String name) {
+            final Condition condition;
+            try {
+                condition = Condition.valueOf(name);
+            } catch (final IllegalArgumentException e) {
+                return null;
+            }
+            final ExpressionTerm.Builder term = ExpressionTerm.builder()
+                    .field(field)
+                    .condition(condition)
+                    .enabled(enabled);
+            if (map.get("value") instanceof final String text) {
+                term.value(text);
+            }
+            if (map.get("doc") instanceof final Map<?, ?> doc
+                && doc.get("type") instanceof final String type && doc.get("uuid") instanceof final String uuid) {
+                term.docRef(new DocRef(type, uuid, doc.get("name") instanceof final String docName
+                        ? docName
+                        : null));
+            }
+            return term.build();
+        }
+        return null;
     }
 
     private static String text(final Map<?, ?> map, final String key, final String prefix) {
@@ -270,6 +468,12 @@ public final class DashboardChanges {
     /// @param priority   For sort, the sort's priority, from 1 (sorted by first), or null to sort after the
     ///                   table's other sorts, as the column menu does.
     /// @param filter     For filter, the column's filter text, or empty to clear it.
+    /// @param where      For set_expression, the query's conditions as the model gave them, as a StroomQL where
+    ///                   clause has them, or null.
+    /// @param query      For set_expression, the query's expression built from them, or null until it has been.
+    /// @param table      The table it changes, by name, if not the table the proposal is for: one an earlier
+    ///                   add_table adds. Null for the proposal's table.
+    /// @param copy       For add_table, true to start the new table with the proposal table's columns.
     public record Change(String op,
                          String column,
                          Integer level,
@@ -279,16 +483,35 @@ public final class DashboardChanges {
                          Integer position,
                          String direction,
                          Integer priority,
-                         String filter) {
+                         String filter,
+                         String where,
+                         ExpressionOperator query,
+                         String table,
+                         Boolean copy) {
 
         /// @param column The column's name, exactly as the table has it.
         /// @return This change, of that column.
         Change withColumn(final String column) {
-            return new Change(op, column, level, name, expression, format, position, direction, priority, filter);
+            return new Change(op, column, level, name, expression, format, position, direction, priority, filter,
+                    where, query, table, copy);
+        }
+
+        /// @param query For set_expression, the query's expression, built from [#where()].
+        /// @return This change, with the expression.
+        public Change withQuery(final ExpressionOperator query) {
+            return new Change(op, column, level, name, expression, format, position, direction, priority, filter,
+                    where, query, table, copy);
         }
 
         /// @return The change in plain language, for the user.
         public String describe() {
+            final String text = describeOp();
+            return table == null
+                    ? text
+                    : "In table '" + table + "': " + text;
+        }
+
+        private String describeOp() {
             return switch (op) {
                 case GROUP -> "Group by '" + column + "' (level " + level + ")";
                 case UNGROUP -> "Stop grouping by '" + column + "'";
@@ -322,6 +545,14 @@ public final class DashboardChanges {
                 case FILTER -> filter == null || filter.isEmpty()
                         ? "Clear the filter on column '" + column + "'"
                         : "Filter column '" + column + "' by '" + filter + "'";
+                case MOVE_COLUMN -> "Move column '" + column + "' to position " + position;
+                case ADD_TABLE -> "Add table '" + name + "' as a tab beside this one, fed by the same query, "
+                                  + (Boolean.TRUE.equals(copy)
+                        ? "starting with this table's columns"
+                        : "with no columns yet");
+                case SET_EXPRESSION -> "Set the query to find: " + NullSafe.nonBlankStringElse(query == null
+                        ? where
+                        : ExpressionDescriber.describe(query), "everything");
                 default -> op + " '" + column + "'";
             };
         }
@@ -339,6 +570,10 @@ public final class DashboardChanges {
             NullSafe.consume(direction, value -> map.put("direction", value));
             NullSafe.consume(priority, value -> map.put("priority", value));
             NullSafe.consume(filter, value -> map.put("filter", value));
+            NullSafe.consume(where, value -> map.put("where", value));
+            NullSafe.consume(query, value -> map.put("query", expressionToMap(value)));
+            NullSafe.consume(table, value -> map.put("table", value));
+            NullSafe.consume(copy, value -> map.put("copy", value));
             return map;
         }
     }

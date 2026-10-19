@@ -18,14 +18,17 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.main.Component;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Format;
 import stroom.query.api.Sort.SortDirection;
 
 import java.util.List;
 
 /// One change to a dashboard table that the AI chat proposed and the user chose to apply (see the server's
-/// `DashboardChanges`): group or ungroup a column, add, edit, hide or show a column, sort by a column, or filter a
-/// column. The table applies them as its column menus would ([#apply(Component, List)]).
+/// `DashboardChanges`): group or ungroup a column, add, edit, hide or show a column, sort by a column, filter a
+/// column, or set the expression of the classic query that feeds the table. The table applies its own changes as
+/// its column menus would ([#apply(Component, List)]); the dashboard sets the query's expression.
 public final class TableChange {
 
     public static final String GROUP = "group";
@@ -36,6 +39,12 @@ public final class TableChange {
     public static final String SHOW_COLUMN = "show_column";
     public static final String SORT = "sort";
     public static final String FILTER = "filter";
+    /// Sets the expression of the classic query that feeds the table.
+    public static final String SET_EXPRESSION = "set_expression";
+    /// Moves a column to a position among the columns the user sees.
+    public static final String MOVE_COLUMN = "move_column";
+    /// Adds a table beside the table as a tab, fed by the same query.
+    public static final String ADD_TABLE = "add_table";
     public static final String ASCENDING = "ascending";
     public static final String DESCENDING = "descending";
 
@@ -49,6 +58,9 @@ public final class TableChange {
     private final String direction;
     private final Integer priority;
     private final String filter;
+    private final ExpressionOperator query;
+    private final String table;
+    private final boolean copy;
 
     /// @param op         What it does, e.g. [#GROUP].
     /// @param column     The column it changes, by name, or null to add one.
@@ -60,6 +72,10 @@ public final class TableChange {
     /// @param direction  For sort, ascending, descending or none.
     /// @param priority   For sort, its priority from 1, or null to sort after the table's other sorts.
     /// @param filter     For filter, the column's filter text, or empty to clear it.
+    /// @param query      For set_expression, the query's new expression, as Stroom built it, or null.
+    /// @param table      The table it changes, by name, if not the table the proposal is for (one an earlier
+    ///                   add_table adds), or null.
+    /// @param copy       For add_table, true to start the new table with the proposal table's columns.
     public TableChange(final String op,
                        final String column,
                        final Integer level,
@@ -69,7 +85,10 @@ public final class TableChange {
                        final Integer position,
                        final String direction,
                        final Integer priority,
-                       final String filter) {
+                       final String filter,
+                       final ExpressionOperator query,
+                       final String table,
+                       final boolean copy) {
         this.op = op;
         this.column = column;
         this.level = level;
@@ -80,6 +99,17 @@ public final class TableChange {
         this.direction = direction;
         this.priority = priority;
         this.filter = filter;
+        this.query = query;
+        this.table = table;
+        this.copy = copy;
+    }
+
+    /// @param table A dashboard component.
+    /// @return The id of the query that feeds it, if it is a table, or null.
+    public static String queryId(final Component table) {
+        return table instanceof final TablePresenter tablePresenter
+                ? tablePresenter.getTableComponentSettings().getQueryId()
+                : null;
     }
 
     /// Applies changes to a dashboard component, if it is a table, as its column menus would.
@@ -92,6 +122,43 @@ public final class TableChange {
             return "The component isn't a table.";
         }
         return tablePresenter.applyAiChanges(changes);
+    }
+
+    /// @param component A dashboard component.
+    /// @return A copy of its settings, if it is a table, to put back with
+    /// [#restore(Component, TableComponentSettings)] if a change is undone; otherwise null.
+    public static TableComponentSettings snapshot(final Component component) {
+        return component instanceof final TablePresenter tablePresenter
+                ? tablePresenter.aiSettingsSnapshot()
+                : null;
+    }
+
+    /// Puts back a table's settings as they were before a change, as an unsaved edit.
+    ///
+    /// @param component The table.
+    /// @param snapshot  Its settings, from [#snapshot(Component)].
+    /// @return True if they were put back.
+    public static boolean restore(final Component component, final TableComponentSettings snapshot) {
+        if (component instanceof final TablePresenter tablePresenter && snapshot != null) {
+            tablePresenter.restoreAiSettings(snapshot);
+            return true;
+        }
+        return false;
+    }
+
+    /// @return For set_expression, the query's new expression, or null.
+    public ExpressionOperator getQuery() {
+        return query;
+    }
+
+    /// @return The table it changes, by name, if not the table the proposal is for, or null.
+    public String getTable() {
+        return table;
+    }
+
+    /// @return For add_table, true to start the new table with the proposal table's columns.
+    public boolean isCopy() {
+        return copy;
     }
 
     /// @return What it does, e.g. [#GROUP].
