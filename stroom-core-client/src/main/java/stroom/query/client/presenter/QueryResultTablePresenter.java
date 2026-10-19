@@ -1063,15 +1063,15 @@ public class QueryResultTablePresenter
     }
 
     private void askStroomAi() {
-        final QueryTableContext context = aiResultsContext();
+        final QueryTableContext context = getResultsContext();
         if (context != null) {
             AskStroomAiEvent.fire(this, context);
         }
     }
 
-    /// @return The search request behind the results shown, for the AI chat to take a snapshot of them, or null
-    /// if no search has been run.
-    public QueryTableContext aiResultsContext() {
+    /// @return The search request behind the results shown, e.g. to fetch or analyse them, or null if no search has
+    /// been run.
+    public QueryTableContext getResultsContext() {
         if (currentSearchModel != null) {
             final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             final QuerySearchRequest currentSearch = currentSearchModel.getCurrentSearch();

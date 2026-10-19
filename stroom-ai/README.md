@@ -295,7 +295,8 @@ the agent is looking at without the user choosing it:
 What the agent can offer for the attached tab, all as buttons the user clicks, never saved by the agent:
 
 * A StroomQL Query: _Apply to query_ (the revised query in the editor, unsaved, with _Undo apply_).
-* A dashboard: _Apply to dashboard_, with _Undo apply_. A proposal is for one table, and can:
+* A dashboard: _Apply to dashboard_, with _Undo apply_. A proposal is for one of its tables, and can also
+  change the dashboard's other components. It can:
   * add, edit (name, expression, format), move, hide or show columns; group, sort and filter them. Column
     expressions are in Stroom's expression language, checked against the data source's fields, so the agent
     can derive what the user means (e.g. `if()`, `match()`, `decode()`, `formatDate()`) rather than only show
@@ -305,12 +306,15 @@ What the agent can offer for the attached tab, all as buttons the user clicks, n
     source, and the card shows them in words. The agent never shows StroomQL for a classic query;
   * add tables beside it as tabs, fed by the same query, starting with its columns or none, which the
     changes after them set up, e.g. a tab per event category, each with columns that suit it and a filter
-    on the category column.
+    on the category column;
   * add and remove conditional formatting rules: rows matching conditions on the table's columns (all or
     any of them) get a background or text colour from the rule editor's palette, bold or italic, or are
     hidden. The dashboard file lists each table's rules, numbered, so the agent can remove one;
   * add a Text widget in a pane below the table (or a table added before it), showing the event of the
-    selected row, which later changes can set up (e.g. the pipeline it shows the data through);
+    selected row, which later changes can set up (e.g. the pipeline it shows the data through, or its
+    stepping button). A grouped row has no single event, so on a grouped table the Text widget shows nothing
+    and stepping can't start until the table's detail rows are on; the agent is told to say so and offer to
+    turn them on;
   * rename any component (and so its tab), and change the settings of any table, query or text component,
     as its Settings dialog has them:
     * table: rows per page, row limits per group level, detail rows, value extraction and its pipeline, the
@@ -325,7 +329,11 @@ What the agent can offer for the attached tab, all as buttons the user clicks, n
   Changes are applied unsaved, on top of any unsaved changes the dashboard has (the agent proposed them
   against the dashboard as the user has it), and all or none. _Undo apply_ puts back exactly what they
   changed (the table, the query's expression, and each component's name and settings) and removes any tables
-  added, while the dashboard is open and hasn't been changed since; otherwise it is withdrawn, saying why.
+  or Text widgets added, while the dashboard is open and hasn't been changed since; otherwise it is withdrawn,
+  saying why.
+
+  These are for classic dashboards (a Query and its Tables). On a StroomQL dashboard, the Embedded Query's
+  table follows its StroomQL, which the agent can propose as a new dashboard or query instead.
 * A pipeline being stepped: a change to the selected XSLT or text converter, as a diff with _Review and
   apply_. The agent gives either the whole revised code or just the text to replace and its replacement, so a
   small change (e.g. adding `normalize-space()`) doesn't mean copying the whole XSLT. Before it is offered, the
@@ -462,15 +470,20 @@ kept at all. Turning off request detail stops it being kept for later answers, a
 
 Planned, not yet built.
 
-* **The remaining dashboard widget types.** The agent can create a dashboard with a query, a table and a data
-  preview, change tables and a classic query's expression, and add tables as tabs. Still to come:
-  * Visualisations: adding one to a dashboard from a Visualisation already in Stroom, set up for the table's
-    columns (which fields feed which of its settings), and changing an existing one's settings.
-  * New visualisations from scratch: a Visualisation document with its Script (JavaScript, written to Stroom's
-    visualisation API) and settings, proposed for review as a code change is, and tried before it is
-    offered. This is the largest piece, as the script is code the browser runs.
-  * The other widgets: Text (beyond the data preview), the inputs (text, list, key-value), the table filter,
-    and their links to tables and queries; and laying out widgets, e.g. adding one beside a table.
+* **The remaining dashboard widget types.** The agent can create a dashboard (a query, a table and a data
+  preview), change its tables, a classic query's expression, formatting and component settings, and add
+  tables as tabs and Text widgets below them. Still to come:
+  * Visualisations: adding one from a Visualisation already in Stroom, set up for a table's columns (its
+    `field` settings mapped to columns, its other settings given values), and changing an existing one's
+    settings. On a StroomQL dashboard, the `show` clause already does this.
+  * New visualisations from scratch: a Visualisation document with its Script and settings. Stroom ships no
+    chart libraries itself; the visualisations content pack provides them as Scripts (D3 3.4.8, so its
+    version 3 API, with Chroma, Leaflet, Underscore and shared helper scripts). A script runs in the
+    dashboard's visualisation frame, which isn't sandboxed, so it would have the user's Stroom session: it
+    would have to be reviewed before it is created, and tried against a snapshot of the table's rows first.
+  * The other widgets: the inputs (text, list, key-value), the table filter, the Embedded Query's settings,
+    and their links to tables and queries; and laying out widgets beyond a tab beside a table or a pane
+    below it.
 * **Models per task.** A default model, with an administrator able to set others for kinds of work (tool
   calling, code such as XSLT, writing). Rather than swapping the model mid-answer, the likely shape is: a
   small utility model for side calls (titles, follow-ups, summaries, digests); choosing the model for a

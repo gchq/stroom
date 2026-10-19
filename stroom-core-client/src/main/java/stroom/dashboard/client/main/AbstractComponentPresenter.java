@@ -148,13 +148,23 @@ public abstract class AbstractComponentPresenter<V extends View>
         }
     }
 
-    /// Sets the component's settings as its Settings dialog does on OK, e.g. for a change from the AI chat: it
+    /// Sets the component's settings as its Settings dialog does on OK, e.g. for a change made programmatically: it
     /// takes them as they are, then reacts to them.
     ///
     /// @param componentSettings The new settings.
     public void applySettings(final ComponentSettings componentSettings) {
         setSettings(componentSettings);
+        syncSettingsDialog();
         changeSettings();
+    }
+
+    /// Brings the component's Settings dialog, if it has been opened, up to date with the component's settings, so
+    /// a change made outside it (e.g. programmatically) isn't written back over with what the dialog last showed
+    /// when the component is next written (e.g. on save).
+    public void syncSettingsDialog() {
+        if (settingsPresenter != null) {
+            settingsPresenter.read(componentConfig);
+        }
     }
 
     protected void changeSettings() {

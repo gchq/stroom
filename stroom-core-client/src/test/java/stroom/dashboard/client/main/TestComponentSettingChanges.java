@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestAiComponentSettings {
+class TestComponentSettingChanges {
 
     private static final DocRef PIPELINE = new DocRef("Pipeline", "pipeline-uuid", "Extraction");
 
@@ -34,20 +34,20 @@ class TestAiComponentSettings {
     void aTablesSettingsAreChangedAsItsSettingsDialogWould() {
         final TableComponentSettings table = TableComponentSettings.builder().queryId("query-1").build();
 
-        assertThat(((TableComponentSettings) AiComponentSettings.table(table, "pageSize", "50", null, null))
+        assertThat(((TableComponentSettings) ComponentSettingChanges.table(table, "pageSize", "50", null, null))
                 .getPageSize()).isEqualTo(50);
-        assertThat(((TableComponentSettings) AiComponentSettings.table(table, "maxResults", "1000,10", null, null))
+        assertThat(((TableComponentSettings) ComponentSettingChanges.table(table, "maxResults", "1000,10", null, null))
                 .getMaxResults()).containsExactly(1000L, 10L);
-        assertThat(((TableComponentSettings) AiComponentSettings.table(table, "showDetail", "true", null, null))
+        assertThat(((TableComponentSettings) ComponentSettingChanges.table(table, "showDetail", "true", null, null))
                 .showDetail()).isTrue();
-        final TableComponentSettings piped = (TableComponentSettings) AiComponentSettings.table(table,
+        final TableComponentSettings piped = (TableComponentSettings) ComponentSettingChanges.table(table,
                 "extractionPipeline", "pipeline-uuid", null, PIPELINE);
         assertThat(piped.getExtractionPipeline()).isEqualTo(PIPELINE);
         assertThat(piped.extractValues()).isTrue();
         assertThat(piped.useDefaultExtractionPipeline()).isFalse();
-        assertThat(((TableComponentSettings) AiComponentSettings.table(table, "query", "Other", "query-2", null))
+        assertThat(((TableComponentSettings) ComponentSettingChanges.table(table, "query", "Other", "query-2", null))
                 .getQueryId()).isEqualTo("query-2");
-        final TableComponentSettings longer = (TableComponentSettings) AiComponentSettings.table(table,
+        final TableComponentSettings longer = (TableComponentSettings) ComponentSettingChanges.table(table,
                 "maxStringFieldLength", "2000", null, null);
         assertThat(longer.getMaxStringFieldLength()).isEqualTo(2000);
         assertThat(longer.overrideMaxStringFieldLength()).isTrue();
@@ -59,17 +59,17 @@ class TestAiComponentSettings {
                 .automate(Automate.builder().refreshInterval("10s").build())
                 .build();
 
-        final QueryComponentSettings onOpen = (QueryComponentSettings) AiComponentSettings.query(query,
+        final QueryComponentSettings onOpen = (QueryComponentSettings) ComponentSettingChanges.query(query,
                 "queryOnOpen", "true", null);
         assertThat(onOpen.getAutomate().isOpen()).isTrue();
         assertThat(onOpen.getAutomate().getRefreshInterval()).isEqualTo("10s");
-        assertThat(((QueryComponentSettings) AiComponentSettings.query(query, "refreshInterval", "1m", null))
+        assertThat(((QueryComponentSettings) ComponentSettingChanges.query(query, "refreshInterval", "1m", null))
                 .getAutomate().getRefreshInterval()).isEqualTo("1m");
         final DocRef view = new DocRef("View", "view-uuid", "Windows events");
-        assertThat(((QueryComponentSettings) AiComponentSettings.query(query, "dataSource", "view-uuid", view))
+        assertThat(((QueryComponentSettings) ComponentSettingChanges.query(query, "dataSource", "view-uuid", view))
                 .getDataSource()).isEqualTo(view);
         // Without automation set yet.
-        assertThat(((QueryComponentSettings) AiComponentSettings.query(QueryComponentSettings.builder().build(),
+        assertThat(((QueryComponentSettings) ComponentSettingChanges.query(QueryComponentSettings.builder().build(),
                 "autoRefresh", "true", null)).getAutomate().isRefresh()).isTrue();
     }
 
@@ -78,13 +78,13 @@ class TestAiComponentSettings {
         final TextComponentSettings text = TextComponentSettings.builder().tableId("table-1").pipeline(PIPELINE)
                 .build();
 
-        assertThat(((TextComponentSettings) AiComponentSettings.text(text, "table", "none", null, null))
+        assertThat(((TextComponentSettings) ComponentSettingChanges.text(text, "table", "none", null, null))
                 .getTableId()).isNull();
-        assertThat(((TextComponentSettings) AiComponentSettings.text(text, "table", "Mentions", "table-2", null))
+        assertThat(((TextComponentSettings) ComponentSettingChanges.text(text, "table", "Mentions", "table-2", null))
                 .getTableId()).isEqualTo("table-2");
-        assertThat(((TextComponentSettings) AiComponentSettings.text(text, "pipeline", "none", null, null))
+        assertThat(((TextComponentSettings) ComponentSettingChanges.text(text, "pipeline", "none", null, null))
                 .getPipeline()).isNull();
-        assertThat(((TextComponentSettings) AiComponentSettings.text(text, "showAsHtml", "true", null, null))
+        assertThat(((TextComponentSettings) ComponentSettingChanges.text(text, "showAsHtml", "true", null, null))
                 .isShowAsHtml()).isTrue();
     }
 
@@ -92,12 +92,12 @@ class TestAiComponentSettings {
     void unknownSettingsOrMissingValuesAreNotChanged() {
         final TableComponentSettings table = TableComponentSettings.builder().build();
 
-        assertThat(AiComponentSettings.table(table, "colour", "red", null, null)).isNull();
-        assertThat(AiComponentSettings.table(table, "extractionPipeline", "x", null, null)).isNull();
-        assertThat(AiComponentSettings.table(table, "query", "x", null, null)).isNull();
-        assertThat(AiComponentSettings.query(QueryComponentSettings.builder().build(), "dataSource", "x", null))
+        assertThat(ComponentSettingChanges.table(table, "colour", "red", null, null)).isNull();
+        assertThat(ComponentSettingChanges.table(table, "extractionPipeline", "x", null, null)).isNull();
+        assertThat(ComponentSettingChanges.table(table, "query", "x", null, null)).isNull();
+        assertThat(ComponentSettingChanges.query(QueryComponentSettings.builder().build(), "dataSource", "x", null))
                 .isNull();
-        assertThat(AiComponentSettings.text(TextComponentSettings.builder().build(), "pageSize", "1", null, null))
+        assertThat(ComponentSettingChanges.text(TextComponentSettings.builder().build(), "pageSize", "1", null, null))
                 .isNull();
     }
 }

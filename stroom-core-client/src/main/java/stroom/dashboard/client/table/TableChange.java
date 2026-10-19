@@ -26,10 +26,11 @@ import stroom.query.api.Sort.SortDirection;
 
 import java.util.List;
 
-/// One change to a dashboard table that the AI chat proposed and the user chose to apply (see the server's
-/// `DashboardChanges`): group or ungroup a column, add, edit, hide or show a column, sort by a column, filter a
-/// column, or set the expression of the classic query that feeds the table. The table applies its own changes as
-/// its column menus would ([#apply(Component, List)]); the dashboard sets the query's expression.
+/// One change to a dashboard table, made programmatically rather than from its menus or Settings dialog (e.g.
+/// one proposed elsewhere that the user chose to apply): a column (group, add, edit, move, hide, show, sort or
+/// filter one), a conditional formatting rule, the expression of the classic query that feeds the table, a table
+/// or Text widget added beside or below it, or a component's name or settings. The table applies its own changes
+/// as its column menus would ([#apply(Component, List)]); the dashboard applies the rest.
 public final class TableChange {
 
     public static final String GROUP = "group";
@@ -134,7 +135,7 @@ public final class TableChange {
         if (!(component instanceof final TablePresenter tablePresenter)) {
             return "The component isn't a table.";
         }
-        return tablePresenter.applyAiChanges(changes);
+        return tablePresenter.applyChanges(changes);
     }
 
     /// @param component A dashboard component.
@@ -142,7 +143,7 @@ public final class TableChange {
     /// [#restore(Component, TableComponentSettings)] if a change is undone; otherwise null.
     public static TableComponentSettings snapshot(final Component component) {
         return component instanceof final TablePresenter tablePresenter
-                ? tablePresenter.aiSettingsSnapshot()
+                ? tablePresenter.settingsSnapshot()
                 : null;
     }
 
@@ -153,7 +154,7 @@ public final class TableChange {
     /// @return True if they were put back.
     public static boolean restore(final Component component, final TableComponentSettings snapshot) {
         if (component instanceof final TablePresenter tablePresenter && snapshot != null) {
-            tablePresenter.restoreAiSettings(snapshot);
+            tablePresenter.restoreSettings(snapshot);
             return true;
         }
         return false;

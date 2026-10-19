@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.ai.shared.AiTabSearch;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
@@ -626,15 +625,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void askStroomAi() {
-        final DashboardTableContext context = aiResultsContext();
+        final DashboardTableContext context = getResultsContext();
         if (context != null) {
             AskStroomAiEvent.fire(this, context);
         }
     }
 
-    /// @return The search request behind the rows shown, for the AI chat to take a snapshot of them, or null if the
-    /// table's query hasn't been run.
-    public DashboardTableContext aiResultsContext() {
+    /// @return The search request behind the rows shown, e.g. to fetch or analyse them, or null if the table's query
+    /// hasn't been run.
+    public DashboardTableContext getResultsContext() {
         if (currentSearchModel != null) {
             final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             final Search currentSearch = currentSearchModel.getCurrentSearch();
@@ -645,26 +644,34 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return null;
     }
 
-    /// @param liveSearch The search the table's query would run now, as edited, or null.
-    /// @return The table for the AI chat: the search request behind the rows shown, if any, and the request a run
-    /// would use now.
-    public AiTabSearch aiTabSearch(final Search liveSearch) {
-        final DashboardTableContext live = liveSearch != null && currentSearchModel != null
-                ? tableContext(liveSearch, null, null)
+    /// @param search A search the table's query would run, e.g. as it is edited now, or null.
+    /// @return The request for just this table's rows from the search, or null if there is no search, or the table
+    /// isn't fed by a query.
+    public DashboardTableContext getContextFor(final Search search) {
+        return search != null && currentSearchModel != null
+                ? tableContext(search, null, null)
                 : null;
+    }
+
+    /// @return The names of the table's columns, as the user sees them, leaving out the hidden special columns.
+    public List<String> getColumnNames() {
         final List<String> columnNames = new ArrayList<>();
         for (final Column column : NullSafe.list(getTableComponentSettings().getColumns())) {
             if (!column.isSpecial()) {
                 columnNames.add(column.getName());
             }
         }
-        return new AiTabSearch(NullSafe.get(getComponentConfig(), ComponentConfig::getName),
-                NullSafe.get(getComponentConfig(), ComponentConfig::getId),
-                aiResultsContext(),
-                live,
-                columnNames,
-                currentTotalRows,
-                currentSearchModel != null && currentSearchModel.isSearching());
+        return columnNames;
+    }
+
+    /// @return How many rows the last search gave the table, or null if it hasn't had any.
+    public Long getTotalRows() {
+        return currentTotalRows;
+    }
+
+    /// @return True while the table's query is searching.
+    public boolean isSearching() {
+        return currentSearchModel != null && currentSearchModel.isSearching();
     }
 
     // A request to download just this table's rows, from a search.
@@ -1404,23 +1411,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .build();
     }
 
-    /// Applies changes the AI chat proposed and the user chose to apply, in order, through the code the column
-    /// menus use, so the result is what doing them by hand gives: each marks the dashboard as changed (unsaved),
-    /// updates the columns and refreshes the table as its menu item does. Nothing is saved.
-    ///
-    /// @param changes The changes.
-    /// @return Why a change couldn't be applied (those before it are applied), or null if they all were.
-    /// @return A copy of the table's settings, to put back with [#restoreAiSettings(TableComponentSettings)] if a
-    /// change from the AI chat is undone.
-    TableComponentSettings aiSettingsSnapshot() {
+    /// @return A copy of the table's settings, to put back with [#restoreSettings(TableComponentSettings)] if a
+    /// change is undone.
+    TableComponentSettings settingsSnapshot() {
         final TableComponentSettings settings = getTableComponentSettings();
         return settings.copy().columns(new ArrayList<>(NullSafe.list(settings.getColumns()))).build();
     }
 
-    /// Puts back the table's settings as they were before a change from the AI chat, as an unsaved edit.
+    /// Puts back the table's settings as they were before a change, as an unsaved edit.
     ///
-    /// @param settings The settings, from [#aiSettingsSnapshot()].
-    void restoreAiSettings(final TableComponentSettings settings) {
+    /// @param settings The settings, from [#settingsSnapshot()].
+    void restoreSettings(final TableComponentSettings settings) {
         setSettings(settings.copy().columns(new ArrayList<>(NullSafe.list(settings.getColumns()))).build());
         changeSettings();
         reset();
@@ -1430,7 +1431,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         getDashboardContext().fireComponentChangeEvent(this);
     }
 
-    String applyAiChanges(final List<TableChange> changes) {
+    /// Applies changes made programmatically (e.g. proposed elsewhere, that the user chose to apply), in order,
+    /// through the code the column menus use, so the result is what doing them by hand gives: each marks the
+    /// dashboard as changed (unsaved), updates the columns and refreshes the table as its menu item does. Nothing
+    /// is saved.
+    ///
+    /// @param changes The changes.
+    /// @return Why a change couldn't be applied (those before it are applied), or null if they all were.
+    String applyChanges(final List<TableChange> changes) {
         for (int i = 0; i < changes.size(); i++) {
             final TableChange change = changes.get(i);
             final String prefix = "Change " + (i + 1) + " (" + change.getOp() + "): ";

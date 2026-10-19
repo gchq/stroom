@@ -295,8 +295,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                + String.join("\n- ", DashboardChanges.describe(built))
                + "\nNothing changes until they click it, and it is never saved: it is applied to the open "
                  + "dashboard as an unsaved change, on top of any unsaved changes it has, which they can save, or "
-                 + "undo with Undo apply. "
-                 + "Tell them about the button rather than saying the dashboard was changed.";
+                 + "undo with Undo apply. Tell them about the button rather than saying the dashboard was changed."
+                 + eventNote(built, table, tableName);
     }
 
     // Resolves the component each rename and set_setting changes, by name (or a table these changes add), and checks
@@ -451,6 +451,29 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
             }
         }
         return built;
+    }
+
+    // A note for the model when the changes add or change a Text widget (which shows, and steps through, the event
+    // of the selected row) while the table's rows can't be traced to events: they are grouped, and the table doesn't
+    // show the detail rows under them, nor do the changes turn them on.
+    static String eventNote(final List<Change> changes, final AiTabSearch table, final String tableName) {
+        final List<String> textSettings = DashboardSettings.keys(DashboardComponents.TEXT);
+        final boolean text = changes.stream().anyMatch(change -> DashboardChanges.ADD_TEXT.equals(change.op())
+                                                                 || (DashboardChanges.SET_SETTING.equals(change.op())
+                                                                     && textSettings.contains(change.setting())));
+        final boolean detailOn = changes.stream().anyMatch(change -> DashboardChanges.SET_SETTING.equals(change.op())
+                                                                     && "showDetail".equals(change.setting())
+                                                                     && "true".equals(change.value()));
+        final AskStroomAiContext request = table.getLive() != null
+                ? table.getLive()
+                : table.getResults();
+        if (!text || detailOn || !ResultsRequests.isGrouped(request) || ResultsRequests.hasEventIdColumns(request)) {
+            return "";
+        }
+        return "\nNote: table '" + tableName + "' groups its rows and doesn't show the detail rows under them, so a "
+               + "selected row has no single event: a Text widget following it shows nothing, and its stepping "
+               + "button can't start. Tell the user, and offer to turn on the table's detail rows (set_setting "
+               + "showDetail true), so they can expand a group and select one of its events.";
     }
 
     // The settings each kind of component has, for the model.
