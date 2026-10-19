@@ -21,6 +21,7 @@ import stroom.ai.impl.UserActionRecord.Status;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiUserActionResult;
+import stroom.dashboard.shared.DashboardConfig;
 import stroom.docref.DocRef;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
@@ -56,8 +57,9 @@ class TestUserActionService {
     private final UserActionLookup lookup = Mockito.mock(UserActionLookup.class);
     private final ProcessorFilterService processorFilterService = Mockito.mock(ProcessorFilterService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
+    private final DashboardBuilder dashboardBuilder = Mockito.mock(DashboardBuilder.class);
     private final UserActionService service = new UserActionService(aiService, aiDao, new UserActions(lookup),
-            lookup, processorFilterService, auditLog);
+            lookup, processorFilterService, auditLog, dashboardBuilder);
 
     @BeforeEach
     void setUp() {
@@ -200,6 +202,58 @@ class TestUserActionService {
         assertThat(result.getCreateQueryText()).isNull();
         Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.eq(UserActions.CREATE_QUERY),
                 Mockito.anyString(), Mockito.contains("can't use"), Mockito.eq(false));
+    }
+
+    @Test
+    void createDashboardGivesTheBrowserTheSettingsBuiltFromTheQueryNow() {
+        final String query = "from \"Windows events\" select User";
+        Mockito.when(lookup.usableDataSource(query)).thenReturn(Optional.of(new DocRef("View", "v", "V")));
+        final DashboardConfig config = DashboardConfig.builder().build();
+        Mockito.when(dashboardBuilder.build("Windows users", query, DashboardBuilder.CLASSIC, true))
+                .thenReturn(new DashboardBuilder.Built(config, new DocRef("View", "v", "V"),
+                        DashboardBuilder.CLASSIC, List.of("User"), false, true));
+        storeResult(createDashboard(query));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "d1");
+
+        assertThat(result.isDone()).isTrue();
+        assertThat(result.getCreateDashboardName()).isEqualTo("Windows users");
+        assertThat(result.getCreateDashboardConfig()).isSameAs(config);
+        // The button can be used again (e.g. after the dialog was cancelled), so the result isn't changed.
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.eq(UserActions.CREATE_DASHBOARD),
+                Mockito.anyString(), Mockito.eq("Opened the New Dashboard dialog"), Mockito.eq(true));
+    }
+
+    @Test
+    void createDashboardIsRefusedOnceTheUserCanNoLongerRunTheQuery() {
+        final String query = "from \"Windows events\" select User";
+        Mockito.when(lookup.usableDataSource(query)).thenReturn(Optional.empty());
+        storeResult(createDashboard(query));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "d1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getCreateDashboardConfig()).isNull();
+        Mockito.verifyNoInteractions(dashboardBuilder);
+        Mockito.verify(auditLog).userAction(Mockito.eq(CHAT), Mockito.eq(UserActions.CREATE_DASHBOARD),
+                Mockito.anyString(), Mockito.contains("can't use"), Mockito.eq(false));
+    }
+
+    @Test
+    void createDashboardIsRefusedIfItCanNoLongerBeBuilt() {
+        final String query = "from \"Windows events\" select User";
+        Mockito.when(lookup.usableDataSource(query)).thenReturn(Optional.of(new DocRef("View", "v", "V")));
+        Mockito.when(dashboardBuilder.build(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
+                .thenThrow(new IllegalArgumentException("The query can't be read: bad field"));
+        storeResult(createDashboard(query));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "d1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).isEqualTo("The dashboard can no longer be built from the query: The query "
+                                                  + "can't be read: bad field");
     }
 
     @Test
@@ -461,6 +515,12 @@ class TestUserActionService {
         Mockito.doThrow(new AuthenticationException("Not your chat")).when(aiService).verifyOwnership(CHAT);
         assertThatThrownBy(() -> service.undoUserAction(CHAT, MESSAGE, "code-1"))
                 .isInstanceOf(AuthenticationException.class);
+    }
+
+    private static UserActionRecord createDashboard(final String query) {
+        return new UserActionRecord("d1", UserActions.CREATE_DASHBOARD, "Create dashboard 'Windows users'", null,
+                null, null, new DocRef("View", "v", "V"), query, List.of(), Long.MAX_VALUE, Status.PENDING, null,
+                "Windows users", null, null, new UserActionRecord.NewDashboard(DashboardBuilder.CLASSIC, true));
     }
 
     private String storeResult(final UserActionRecord action) {
