@@ -21,6 +21,8 @@
 	/* The tree sets a box's width (that of the widest box in its column) including its border and
 	   padding */
 	box-sizing: border-box;
+	/* Scrolled into view with room for its focus ring */
+	scroll-margin: 8px;
 	/* The colours of the stepping screen's pipeline bar (pipeline-path.css): its border, a fill
 	   over the elements' background in the toolbar buttons' states, and its selected colours */
 	--pipeline-element-box__fill: transparent;

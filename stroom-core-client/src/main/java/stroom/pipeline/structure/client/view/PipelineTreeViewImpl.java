@@ -110,6 +110,9 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
                 }
             }
         };
+        // The order of an element's children doesn't matter (the model moves nothing), so dropping
+        // an element where it came from leaves it as it was
+        layoutPanel.setPutBackOnOwnParent(true);
         layoutPanel.setWidth("100%");
         layoutPanel.setHeight("100%");
         layoutPanel.addDomHandler(this::onKeyDown, KeyDownEvent.getType());
@@ -375,9 +378,15 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
             focusAfterRedraw = null;
             if (box != null) {
                 box.getElement().focus();
+                // All of it, its focus ring included (scroll-margin), but scrolling no more than that
+                scrollIntoViewIfNeeded(box.getElement());
             }
         }
     }
+
+    private static native void scrollIntoViewIfNeeded(Element element) /*-{
+        element.scrollIntoView({block: "nearest", inline: "nearest"});
+    }-*/;
 
     // Redraws the tree, which fades the detached element (if any) and the elements after it, with
     // the connectors into them, and marks them
