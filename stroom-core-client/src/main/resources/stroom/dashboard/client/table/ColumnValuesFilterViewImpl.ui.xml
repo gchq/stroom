@@ -10,7 +10,7 @@
             <btn:LinkButton ui:field="selectNoneLink" addStyleNames="link" text="Select None"/>
         </g:FlowPanel>
         <g:FlowPanel styleName="dock-max dock-container-vertical quickFilter-container overflow-hidden">
-            <view:QuickFilter ui:field="quickFilter" addStyleNames="dock-min"/>
+            <view:QuickFilter accessibleName="Filter values" ui:field="quickFilter" addStyleNames="dock-min"/>
             <g:SimplePanel ui:field="data" styleName="dock-max form-control-border form-control-background overflow-hidden"/>
         </g:FlowPanel>
     </g:FlowPanel>

@@ -34,6 +34,12 @@ public interface ExplorerPopupView extends View, Focus, HasUiHandlers<ExplorerPo
 
     void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 
+    /// Names the quick filter's text box for screen readers, by what it filters (e.g. "Filter
+    /// users"), as nothing on screen names it.
+    ///
+    /// @param accessibleName The name.
+    void setAccessibleName(String accessibleName);
+
     void setCellTree(Widget widget);
 
     void setQuickFilterTooltipSupplier(final Supplier<SafeHtml> tooltipSupplier);

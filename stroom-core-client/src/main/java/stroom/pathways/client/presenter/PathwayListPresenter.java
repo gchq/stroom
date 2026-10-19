@@ -89,6 +89,7 @@ public class PathwayListPresenter
                                 final DateTimeFormatter dateTimeFormatter,
                                 final PathwayEditPresenter pathwayEditPresenter) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter pathways");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;

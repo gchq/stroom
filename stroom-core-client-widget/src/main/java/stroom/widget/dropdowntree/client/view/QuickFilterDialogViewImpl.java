@@ -70,6 +70,11 @@ public class QuickFilterDialogViewImpl extends ViewWithUiHandlers<QuickFilterUiH
     }
 
     @Override
+    public void setAccessibleName(final String accessibleName) {
+        quickFilter.setAccessibleName(accessibleName);
+    }
+
+    @Override
     public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
         quickFilter.setContextHandler(contextHandler);
     }

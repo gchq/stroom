@@ -70,7 +70,10 @@ public final class PasswordInputStories {
                 .withPlay(play -> {
                     final Query password = play.querySelector("input[type='password']");
                     play.expect(password).toHaveAttribute("aria-invalid", "true");
-                    play.expect(password).toHaveClass("invalid");
+                    play.expect(password).not().toHaveClass("invalid");
+                    // A text field (text-field.css), not GWT's gwt-PasswordTextBox
+                    play.expect(password).toHaveClass("text-field");
+                    play.expect(password).not().toHaveClass("gwt-PasswordTextBox");
                 })
                 // With a badge beside the button (the change password screen's length badge)
                 .story("WithOverlayPrefix", context -> {

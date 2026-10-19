@@ -87,6 +87,11 @@ public class ExplorerPopupViewImpl extends ViewWithUiHandlers<ExplorerPopupUiHan
     }
 
     @Override
+    public void setAccessibleName(final String accessibleName) {
+        nameFilter.setAccessibleName(accessibleName);
+    }
+
+    @Override
     public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
         nameFilter.setContextHandler(contextHandler);
     }

@@ -159,7 +159,7 @@ public final class QuickFilterHistoryStories {
                     play.findByText("Alice Anderson");
                     play.type(filter, REJECTED_FILTER + "{Enter}");
                     play.waitFor(() -> play.expect(play.queryByText("Alice Anderson")).toBeNull());
-                    play.expect(filter).toHaveClass("invalid");
+                    play.expect(filter).toHaveAttribute("aria-invalid", "true");
                     play.expect(filter).toHaveAttribute("title", REJECTION);
                     play.click(play.getByTitle("Quick Filter Syntax Help"));
                     play.expect(play.screen().findByText("This filter was not applied")).toBeInTheDocument();

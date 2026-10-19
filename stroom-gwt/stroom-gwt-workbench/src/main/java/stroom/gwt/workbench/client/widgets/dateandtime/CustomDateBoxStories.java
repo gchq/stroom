@@ -22,6 +22,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -76,6 +77,8 @@ public final class CustomDateBoxStories {
 
     private static MyDateBox dateBox(final StoryContext context, final String value, final boolean utc) {
         final MyDateBox dateBox = new MyDateBox();
+        // Named, as a form group's label would name it on Stroom's screens
+        AccessibleName.set(dateBox, "Date");
         dateBox.setUtc(utc);
         dateBox.setValue(value);
         final Spy onChange = context.fn(ON_CHANGE);

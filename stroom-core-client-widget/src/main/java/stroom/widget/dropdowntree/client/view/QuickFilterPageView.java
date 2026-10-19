@@ -42,4 +42,10 @@ public interface QuickFilterPageView extends View, Focus, HasUiHandlers<QuickFil
     void setFilterError(String filterError);
 
     void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
+
+    /// Names the quick filter's text box for screen readers, by what it filters (e.g. "Filter
+    /// users"), as nothing on screen names it.
+    ///
+    /// @param accessibleName The name.
+    void setAccessibleName(String accessibleName);
 }

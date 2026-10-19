@@ -122,7 +122,7 @@ console.log('feedback/invalid:', JSON.stringify(await page.evaluate(() => {
   const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
   const top = popups[popups.length - 1];
   return { feedback: [...top.querySelectorAll('.feedback, .form-group__feedback')].map((e) => e.textContent.trim()),
-    invalid: top.querySelectorAll('.invalid').length };
+    invalid: top.querySelectorAll('[aria-invalid="true"]').length };
 })));
 console.log('page errors:', JSON.stringify(errors, null, 1));
 await browser.close();

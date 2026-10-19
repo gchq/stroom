@@ -163,6 +163,8 @@ public final class SelectionBoxStories {
                     final Query filter = play.screen().querySelector(".selectionList-quickFilter .quickFilter-textBox");
                     play.waitFor(() -> play.expect(filter).toHaveValue("15"));
                     play.expect(filter).toHaveFocus();
+                    // Named for the box it filters, not only by its placeholder
+                    play.expect(filter).toHaveAttribute("aria-label", "Filter Name");
                     play.waitFor(() -> play.expect(play.screen().getByRole("option", "Item 150")).toBeInTheDocument());
                     play.expect(play.screen().queryByRole("option", "Item 2")).toBeNull();
                 })
@@ -207,6 +209,7 @@ public final class SelectionBoxStories {
                     final SimpleSelectionListModel<String> model = new ModelBackedListModel();
                     model.addItem("Only one");
                     box.setModel(model);
+                    AccessibleName.set(box, "Name");
                     final Spy onChange = context.fn(ON_CHANGE);
                     box.addValueChangeHandler(event -> onChange.call(event.getValue()));
                     return minWidth(box);

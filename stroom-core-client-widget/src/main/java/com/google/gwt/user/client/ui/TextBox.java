@@ -30,8 +30,6 @@ import com.google.gwt.dom.client.InputElement;
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.text-field { primary style (Stroom's, in text-field.css) }</li>
- * <li>.text-field-readonly { dependent style set when the text box is
- * read-only }</li>
  * </ul>
  *
  * <p>

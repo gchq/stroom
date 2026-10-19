@@ -97,6 +97,7 @@ public class UserRefPopupPresenter
                                  final UiConfigCache uiConfigCache,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
+        getView().setAccessibleName("Filter users and groups");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
 

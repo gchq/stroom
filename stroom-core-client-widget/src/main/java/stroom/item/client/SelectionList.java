@@ -209,8 +209,11 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     public void setAccessibleName(final String name) {
         if (NullSafe.isBlankString(name)) {
             cellTable.getElement().removeAttribute("aria-label");
+            quickFilter.setAccessibleName(null);
         } else {
             cellTable.getElement().setAttribute("aria-label", name);
+            // Its quick filter too, by what it filters
+            quickFilter.setAccessibleName("Filter " + name);
         }
     }
 

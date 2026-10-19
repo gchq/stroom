@@ -86,6 +86,7 @@ public class IndexFieldListPresenter
                                    final IndexFieldEditPresenter indexFieldEditPresenter,
                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter fields");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         view.setDataView(pagerView);

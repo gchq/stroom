@@ -1582,6 +1582,12 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   and autofill looks moved from `stroom.css` into `text-field.css` too (the bare element rules there
   now leave text fields out), as did the password box's input; radio buttons' looks moved to
   `radio-button.css`; the query data box's error now sets `aria-invalid` (it only added a class).
+  A text field's read-only and invalid states are now the attributes alone (Stroom's copy of GWT's
+  `ValueBoxBase` no longer adds a `-readonly` class, and `FieldValidity` no longer adds `invalid`),
+  the password box's input is a text field from Stroom's copy of `PasswordTextBox` (no
+  `gwt-PasswordTextBox`), and every quick filter is named for what it filters, not only by its
+  placeholder ("Filter users and groups", "Filter API keys", a selection box's list's "Filter" and
+  the box's name, and so on).
 
 ## Checked and not bugs
 

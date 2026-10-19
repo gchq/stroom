@@ -197,7 +197,7 @@ public final class QuickFilterStories {
                 .withPlay(play -> {
                     final Query textBox = play.querySelector(".quickFilter-textBox");
                     play.type(textBox, REJECTED_CHARACTER + "alpha{Enter}");
-                    play.expect(textBox).toHaveClass("invalid");
+                    play.expect(textBox).toHaveAttribute("aria-invalid", "true");
                     play.expect(textBox).toHaveAttribute("title", REJECTION);
                     // Screen readers are told too: the box is invalid and described by the reason,
                     // which is in a live region, as the focus stays in the box (#5409)
@@ -212,7 +212,7 @@ public final class QuickFilterStories {
                     play.keyboard("{Escape}");
                     // Clearing the box clears the error
                     play.click(play.getByTitle("Clear Filter"));
-                    play.expect(textBox).not().toHaveClass("invalid");
+                    play.expect(textBox).not().toHaveAttribute("aria-invalid");
                     play.expect(textBox).not().toHaveAttribute("title");
                     play.expect(textBox).not().toHaveAttribute("aria-invalid");
                     play.expect(textBox).not().toHaveAttribute("aria-describedby");

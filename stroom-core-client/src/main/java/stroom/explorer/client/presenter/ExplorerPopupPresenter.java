@@ -73,6 +73,7 @@ public class ExplorerPopupPresenter
                            final UiConfigCache uiConfigCache,
                            final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter documents");
         this.restFactory = restFactory;
 
         getView().setUiHandlers(this);

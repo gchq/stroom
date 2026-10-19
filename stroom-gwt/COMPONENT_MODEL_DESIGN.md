@@ -421,12 +421,19 @@ for that directory), so no screen needed editing.
 - **States** come from the element: `:disabled` (the filled field with no border that every
   disabled control has), `[readonly]` (the normal field, its value greyed), `:focus-visible`, and,
   for a rejected value, `aria-invalid` (`FieldValidity`: a red border, and a red ring with the
-  focus). Its placeholder and the browser's autofill colours are there too. GWT's `ValueBoxBase`
-  also adds `text-field-readonly` when read only; nothing styles it.
+  focus). Its placeholder and the browser's autofill colours are there too. Each state is the
+  attribute alone: Stroom's copy of GWT's `ValueBoxBase` no longer adds a `<primary>-readonly`
+  class, and `FieldValidity` no longer adds an `invalid` class (the fallback for inputs with no
+  block uses `[aria-invalid="true"]` too). The password box's input is a text field, given by
+  Stroom's copy of `PasswordTextBox`.
 - **One stylesheet.** `text-field.css` has every look a text field has. `stroom.css`'s rules for
   bare `input` and `textarea` elements (for inputs with no block of their own yet) leave text
   fields out, with `:where(:not(.text-field))`, which adds nothing to their weight. The password
   box's input is a text field too.
+- **Quick filters** are named for what they filter ("Filter users and groups"), as a placeholder is
+  only a hint: by a form group's label, in their template (`accessibleName`), or by their presenter
+  through the shared views' `setAccessibleName` (`QuickFilterPageView`, `QuickFilterDialogView`,
+  `ExplorerPopupView`). A selection box's list's filter is "Filter" and the box's name.
 - **Cascade.** `text-field.css` is imported straight after `stroom.css`, where the rules it replaces
   were, and each of its rules weighs what the rule it replaced did: its size at a class's weight
   (0,1,0), so a screen's `width: 100%` still wins; its look at an element and a class's (0,1,1) for a
