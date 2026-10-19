@@ -17,10 +17,17 @@
 package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
+import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiAttachmentType;
+import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiSuggestions;
+import stroom.docref.DocRef;
 
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -30,6 +37,7 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,7 +45,10 @@ class TestFollowUpSuggester {
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private AiConfig aiConfig = new AiConfig();
-    private final FollowUpSuggester suggester = new FollowUpSuggester(aiService, () -> aiConfig);
+    private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
+    private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+    private final FollowUpSuggester suggester = new FollowUpSuggester(aiService, () -> aiConfig, tabSnapshots,
+            documentAccess);
     private final List<ChatRequest> requests = new ArrayList<>();
     private final List<AiChatMessage> messages = new ArrayList<>();
 
@@ -62,6 +73,96 @@ class TestFollowUpSuggester {
         assertThat(((UserMessage) requests.getFirst().messages().getLast()).singleText())
                 .contains("How many failed logons were there today?")
                 .contains("There were 42 failed logons");
+    }
+
+    @Test
+    void anAttachedTabIsHintedSoSuggestionsActOnIt() {
+        turn(AiMessageType.USER_MESSAGE, "What does this dashboard show?");
+        turn(AiMessageType.AI_RESPONSE, "Failed logons by user.");
+        final DocRef dashboard = new DocRef("Dashboard", "d1", "Logons");
+        Mockito.when(tabSnapshots.forLatestQuestion(1)).thenReturn(Optional.of(new TabSnapshots.StoredTabSnapshot(
+                5, 1, dashboard, "/", "Logons", null, false, null, "h", 0L, List.of(), List.of(), null)));
+
+        suggester.suggest(1, model("Group by user"));
+
+        final String prompt = ((UserMessage) requests.getFirst().messages().getLast()).singleText();
+        assertThat(prompt).endsWith(AiSuggestions.tabHint(dashboard, null, false, List.of(), null));
+        assertThat(FollowUpSuggester.SYSTEM_PROMPT).contains("strongly prefer follow-ups that act on them");
+        // Without a tab, nothing is added.
+        assertThat(FollowUpSuggester.prompt("q", "a", "")).endsWith("The assistant's answer:\na");
+    }
+
+    @Test
+    void whatWasJustAttachedIsSuggestedForWithTheConversationSoFar() {
+        turn(AiMessageType.USER_MESSAGE, "Onboard the ACME feed");
+        turn(AiMessageType.AI_RESPONSE, "The ACME feed is set up, with a translation pipeline.");
+        final DocRef feed = new DocRef("Feed", "f1", "ACME");
+        final DocRef hidden = new DocRef("Feed", "f2", "SECRET");
+        Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of(
+                attachment(7, AiAttachmentType.DOCUMENT, feed, "Feed 'ACME'"),
+                attachment(8, AiAttachmentType.DOCUMENT, hidden, "Feed 'SECRET'"),
+                attachment(9, AiAttachmentType.DASHBOARD, null, "Dashboard 'Logons' -> Table 'By user'")));
+        Mockito.when(documentAccess.canView(feed)).thenReturn(true);
+
+        final List<String> suggested = suggester.suggestForAttached(1, model("Are there errors for ACME?"),
+                List.of(9, 8, 7, 99), null);
+
+        assertThat(suggested).containsExactly("Are there errors for ACME?");
+        assertThat(requests.getFirst().messages().getFirst())
+                .isEqualTo(SystemMessage.from(FollowUpSuggester.ATTACHED_SYSTEM_PROMPT));
+        final String prompt = ((UserMessage) requests.getFirst().messages().getLast()).singleText();
+        assertThat(prompt)
+                .startsWith("The user's latest questions:\n- Onboard the ACME feed")
+                .contains("The start of the assistant's latest answer:\nThe ACME feed is set up")
+                .contains("Attached:\n" + AiSuggestions.tableHint("Dashboard 'Logons' -> Table 'By user'")
+                          + "\n" + AiSuggestions.documentHint(feed))
+                // Not one the user can't view, or that isn't the chat's.
+                .doesNotContain("SECRET");
+        // Nothing is stored: the chat shows them.
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(),
+                Mockito.anyString());
+    }
+
+    @Test
+    void nothingIsSuggestedForOneThingAttachedWithoutAConversationOrWhenTurnedOff() {
+        final DocRef feed = new DocRef("Feed", "f1", "ACME");
+        Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of(
+                attachment(7, AiAttachmentType.DOCUMENT, feed, "Feed 'ACME'")));
+        Mockito.when(documentAccess.canView(feed)).thenReturn(true);
+
+        assertThat(suggester.suggestForAttached(1, model("x"), List.of(7), null)).isEmpty();
+        turn(AiMessageType.USER_MESSAGE, "q");
+        assertThat(suggester.suggestForAttached(1, model("x"), List.of(), null)).isEmpty();
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, false, null);
+        assertThat(suggester.suggestForAttached(1, model("x"), List.of(7), null)).isEmpty();
+        assertThat(requests).isEmpty();
+    }
+
+    @Test
+    void severalThingsAttachedAreSuggestedForTogetherEvenBeforeAnythingIsAsked() {
+        final DocRef feed = new DocRef("Feed", "f1", "ACME");
+        final DocRef pipeline = new DocRef("Pipeline", "p1", "ACME-Events");
+        Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of(
+                attachment(7, AiAttachmentType.DOCUMENT, feed, "Feed 'ACME'"),
+                attachment(8, AiAttachmentType.DOCUMENT, pipeline, "Pipeline 'ACME-Events'")));
+        Mockito.when(documentAccess.canView(Mockito.any())).thenReturn(true);
+
+        assertThat(suggester.suggestForAttached(1, model("Does ACME-Events process ACME?"), List.of(8, 7), null))
+                .containsExactly("Does ACME-Events process ACME?");
+        final String prompt = ((UserMessage) requests.getFirst().messages().getLast()).singleText();
+        assertThat(prompt)
+                .startsWith("Nothing has been asked yet.\n\nAttached:\n" + AiSuggestions.documentHint(pipeline)
+                            + "\n" + AiSuggestions.documentHint(feed));
+        assertThat(FollowUpSuggester.ATTACHED_SYSTEM_PROMPT).contains("uses them together");
+    }
+
+    private static AiChatAttachment attachment(final int id,
+                                               final AiAttachmentType type,
+                                               final DocRef docRef,
+                                               final String description) {
+        return new AiChatAttachment(id, 1, 0L, 0L, AiAttachmentStatus.READY, type, description, null, false, null,
+                docRef, null);
     }
 
     @Test

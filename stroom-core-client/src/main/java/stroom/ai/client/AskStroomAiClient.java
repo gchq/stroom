@@ -46,6 +46,7 @@ import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.SaveAiMemoryRequest;
 import stroom.ai.shared.SearchAiChatsRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
+import stroom.ai.shared.SuggestAiPromptsRequest;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.ai.shared.UndoAiMemoryChangeRequest;
@@ -652,6 +653,18 @@ public class AskStroomAiClient {
                 .method(res -> res.sendSteerNow(chatId, messageId))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    void suggestPrompts(final SuggestAiPromptsRequest request,
+                        final Consumer<List<String>> consumer) {
+        // Suggestions are a nicety, so a failure is only ignored, without a message or a busy indicator.
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.suggestPrompts(request))
+                .onSuccess(consumer)
+                .onFailure(error -> {
+                })
                 .exec();
     }
 

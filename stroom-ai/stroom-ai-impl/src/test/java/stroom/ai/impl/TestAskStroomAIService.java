@@ -44,6 +44,7 @@ import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
+import stroom.ai.shared.SuggestAiPromptsRequest;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
@@ -454,6 +455,15 @@ class TestAskStroomAIService {
         // One the run has already picked up, or not in the chat, isn't changed.
         assertThat(service().sendSteerNow(1, 10)).isFalse();
         Mockito.verify(aiService, Mockito.times(2)).verifyOwnership(1);
+    }
+
+    @Test
+    void testSuggestPrompts_needsTheChatsOwnerAndAChat() {
+        Mockito.doThrow(new PermissionException(null, "Not yours")).when(aiService).verifyOwnership(1);
+
+        assertThatThrownBy(() -> service().suggestPrompts(new SuggestAiPromptsRequest(chat, null, List.of(7),
+                null))).isInstanceOf(PermissionException.class);
+        assertThat(service().suggestPrompts(new SuggestAiPromptsRequest(null, null, List.of(7), null))).isEmpty();
     }
 
     @Test

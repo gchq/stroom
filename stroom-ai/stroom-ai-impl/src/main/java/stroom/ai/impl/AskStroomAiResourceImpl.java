@@ -53,6 +53,7 @@ import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.SaveAiMemoryRequest;
 import stroom.ai.shared.SearchAiChatsRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
+import stroom.ai.shared.SuggestAiPromptsRequest;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.ai.shared.UndoAiMemoryChangeRequest;
@@ -449,6 +450,13 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                         .build())
                 .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().setTableAnalysisConfig(config))
                 .getResultAndLog();
+    }
+
+    // Changes nothing, and only reads what the user attached, which was logged as they attached it.
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public List<String> suggestPrompts(final SuggestAiPromptsRequest request) {
+        return askStroomAIServiceProvider.get().suggestPrompts(request);
     }
 
     @AutoLogged(OperationType.UNLOGGED)
