@@ -64,7 +64,12 @@ class TestProposeDashboardChangeTool {
     private static final DocRef DASHBOARD = new DocRef("Dashboard", "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
             "Logons");
     private static final DocRef INDEX = new DocRef("Index", "index-uuid", "Windows events");
-    private static final String SETTINGS = "Time range: last hour\n## Table 'Events' (id table-1)\n- UserId\n";
+    private static final String SETTINGS = "Time range: last hour\n"
+                                           + "## Query 'Query' (id query-1)\n"
+                                           + "Data source: Index 'Windows events' (uuid index-uuid)\n"
+                                           + "## Table 'Events' (id table-1)\n- UserId\n"
+                                           + "## Text 'Preview' (id text-1)\n";
+    private static final DocRef PIPELINE = new DocRef("Pipeline", "pipeline-uuid", "Display");
 
     private final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
     private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
@@ -150,6 +155,92 @@ class TestProposeDashboardChangeTool {
 
         assertThat(run(List.of(Map.of("op", "set_expression"))))
                 .startsWith("Error: Change 1: set_expression needs where");
+    }
+
+    @Test
+    void anyComponentCanBeRenamedOrHaveItsSettingsChanged() {
+        Mockito.when(documentAccess.findDocRef("pipeline-uuid")).thenReturn(Optional.of(PIPELINE));
+        Mockito.when(documentAccess.canView(PIPELINE)).thenReturn(true);
+
+        final String result = run(List.of(
+                Map.of("op", "rename", "name", "Tweets"),
+                Map.of("op", "set_setting", "target", "query", "setting", "queryOnOpen", "value", "yes"),
+                Map.of("op", "set_setting", "target", "Preview", "setting", "pipeline", "value", "pipeline-uuid"),
+                Map.of("op", "set_setting", "target", "Preview", "setting", "table", "value", "events")));
+
+        assertThat(result)
+                .contains("- Rename this table to 'Tweets'")
+                .contains("- Set run the query when the dashboard opens (queryOnOpen) of 'query' to on")
+                .contains("(pipeline) of 'Preview' to Display");
+        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+                .extractingByKey("changes")
+                .asInstanceOf(InstanceOfAssertFactories.LIST)
+                .satisfiesExactly(
+                        rename -> assertThat(asMap(rename)).containsEntry("target_id", "table-1"),
+                        onOpen -> assertThat(asMap(onOpen)).containsEntry("target_id", "query-1")
+                                .containsEntry("value", "true"),
+                        pipeline -> assertThat(asMap(pipeline)).containsEntry("target_id", "text-1")
+                                .containsEntry("doc", Map.of("type", "Pipeline", "uuid", "pipeline-uuid",
+                                        "name", "Display")),
+                        table -> assertThat(asMap(table)).containsEntry("ref", "table-1")
+                                .containsEntry("value", "Events")));
+    }
+
+    @Test
+    void componentChangesThatDontFitAreRefusedSayingWhy() {
+        final String result = run(List.of(
+                Map.of("op", "set_setting", "target", "Nope", "setting", "pageSize", "value", "10"),
+                Map.of("op", "set_setting", "target", "Query", "setting", "pageSize", "value", "10"),
+                Map.of("op", "set_setting", "setting", "pageSize", "value", "lots"),
+                Map.of("op", "set_setting", "target", "Preview", "setting", "pipeline", "value", "nope"),
+                Map.of("op", "set_setting", "setting", "query", "value", "Events"),
+                Map.of("op", "rename", "target", "Query", "name", "preview")));
+
+        assertThat(result)
+                .startsWith("No change was proposed, as it isn't valid")
+                .contains("Change 1 (set_setting): the dashboard has no component 'Nope'. Its components are: "
+                          + "Query 'Query', Table 'Events', Text 'Preview'.")
+                .contains("Change 2 (set_setting): Query 'Query' has no setting 'pageSize'. Its settings are: "
+                          + "dataSource, queryOnOpen, autoRefresh, refreshInterval.")
+                .contains("Change 3 (set_setting): pageSize takes a whole number")
+                .contains("Change 4 (set_setting): no pipeline you can view has the UUID 'nope'")
+                .contains("Change 5 (set_setting): the dashboard has no Query 'Events'.")
+                .contains("Change 6 (rename): the dashboard already has a component 'preview'.");
+        assertThat(context.takeUserActions("c1")).isEmpty();
+    }
+
+    @Test
+    void aTableAddedByTheChangesCanBeRenamedAndSetUp() {
+        final String result = run(List.of(
+                Map.of("op", "add_table", "name", "Logons"),
+                Map.of("op", "set_setting", "target", "Logons", "setting", "pageSize", "value", "20"),
+                Map.of("op", "rename", "target", "Logons", "name", "Sign-ins")));
+
+        assertThat(result).contains("- Set rows per page (pageSize) of 'Logons' to 20")
+                .contains("- Rename 'Logons' to 'Sign-ins'");
+        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+                .extractingByKey("changes")
+                .asInstanceOf(InstanceOfAssertFactories.LIST)
+                .element(1)
+                .satisfies(change -> assertThat(asMap(change)).doesNotContainKey("target_id")
+                        .containsEntry("target", "Logons")));
+    }
+
+    @Test
+    void aTextWidgetCanBeAddedAndSetUpButNotNamedAsAnotherComponent() {
+        Mockito.when(documentAccess.findDocRef("pipeline-uuid")).thenReturn(Optional.of(PIPELINE));
+        Mockito.when(documentAccess.canView(PIPELINE)).thenReturn(true);
+
+        final String result = run(List.of(
+                Map.of("op", "add_text", "name", "Raw event"),
+                Map.of("op", "set_setting", "target", "Raw event", "setting", "pipeline", "value", "pipeline-uuid")));
+
+        assertThat(result).contains("- Add a Text widget 'Raw event' below this table")
+                .contains("(pipeline) of 'Raw event' to Display");
+        assertThat(context.takeUserActions("c1")).hasSize(1);
+
+        assertThat(run(List.of(Map.of("op", "add_text", "name", "preview"))))
+                .contains("Change 1 (add_text): the dashboard already has a component 'preview'");
     }
 
     @Test

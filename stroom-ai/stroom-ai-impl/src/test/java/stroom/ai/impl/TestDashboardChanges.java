@@ -152,6 +152,115 @@ class TestDashboardChanges {
     }
 
     @Test
+    void componentsAreRenamedAndTheirSettingsChangedAsResolved() {
+        final List<Change> changes = DashboardChanges.parse(List.of(
+                Map.of("op", "rename", "name", "Tweets"),
+                Map.of("op", "rename", "target", "Query", "name", "Search"),
+                Map.of("op", "set_setting", "target", "Query", "setting", "queryOnOpen", "value", true),
+                Map.of("op", "set_setting", "setting", "pageSize", "value", 50),
+                Map.of("op", "set_setting", "target", "Preview", "setting", "pipeline", "value", "p-uuid")));
+        final List<Change> resolved = List.of(
+                changes.get(0).withResolved("table-1", null, null, null),
+                changes.get(1).withResolved("query-1", null, null, null),
+                changes.get(2).withResolved("query-1", "true", null, null),
+                changes.get(3).withResolved("table-1", "50", null, null),
+                changes.get(4).withResolved("text-1", "p-uuid", null, new DocRef("Pipeline", "p-uuid", "Display")));
+
+        // Not columns, so they aren't checked against them.
+        assertThat(DashboardChanges.check(resolved, COLUMNS).problems()).isEmpty();
+        assertThat(DashboardChanges.describe(resolved)).containsExactly(
+                "Rename this table to 'Tweets'",
+                "Rename 'Query' to 'Search'",
+                "Set run the query when the dashboard opens (queryOnOpen) of 'Query' to on",
+                "Set rows per page (pageSize) of this table to 50",
+                "Set the pipeline it shows the data through (pipeline) of 'Preview' to Display");
+        // As stored with the button and read back when it is offered.
+        final Change readBack = DashboardChanges.parse(List.of(resolved.get(4).toMap())).getFirst();
+        assertThat(readBack).isEqualTo(resolved.get(4));
+
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "set_setting", "setting", "colour",
+                "value", "red"))))
+                .hasMessageContaining("set_setting needs a setting, one of pageSize");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "set_setting",
+                "setting", "pageSize"))))
+                .hasMessageContaining("set_setting needs the value");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "rename"))))
+                .hasMessageContaining("rename needs the new name");
+    }
+
+    @Test
+    void formattingRulesAreBuiltFromConditionsOnColumnsAndReadBackAsStored() {
+        final List<Change> changes = DashboardChanges.parse(List.of(
+                Map.of("op", "add_format_rule", "match", "any", "style", "red", "bold", true,
+                        "conditions", List.of(
+                                Map.of("column", "eventtype", "condition", "=", "value", "Logon Failure"),
+                                Map.of("column", "UserId", "condition", "starts with", "value", "admin"))),
+                Map.of("op", "add_format_rule", "position", 1, "hide", true,
+                        "conditions", List.of(Map.of("column", "EventTime", "condition", "is null"))),
+                Map.of("op", "remove_format_rule", "position", 3)));
+
+        final Checked checked = DashboardChanges.check(changes, COLUMNS);
+
+        assertThat(checked.problems()).isEmpty();
+        assertThat(DashboardChanges.describe(checked.changes())).containsExactly(
+                // Columns named as the table has them.
+                "Add a formatting rule: rows where EventType is 'Logon Failure' or UserId starts with 'admin' get "
+                + "a Red background, bold",
+                "Add a formatting rule at position 1: rows where EventTime is empty are hidden",
+                "Remove formatting rule 3");
+        final Change readBack = DashboardChanges.parse(List.of(checked.changes().getFirst().toMap())).getFirst();
+        assertThat(readBack).isEqualTo(checked.changes().getFirst());
+        assertThat(checked.changes().getFirst().toMap()).containsEntry("style", "Red")
+                .containsEntry("format_type", "background")
+                .containsEntry("bold", true);
+    }
+
+    @Test
+    void formattingRulesThatDontFitAreRefused() {
+        assertThat(DashboardChanges.check(DashboardChanges.parse(List.of(Map.of("op", "add_format_rule",
+                "style", "Red", "conditions", List.of(Map.of("column", "Nope", "condition", "=", "value", "x"))))),
+                COLUMNS).problems())
+                .singleElement().asString().contains("the table has no column 'Nope'");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "add_format_rule", "style", "Red"))))
+                .hasMessageContaining("add_format_rule needs conditions");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "add_format_rule",
+                "conditions", List.of(Map.of("column", "UserId", "condition", "=", "value", "x"))))))
+                .hasMessageContaining("needs something to do");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "add_format_rule", "style", "Mauve",
+                "conditions", List.of(Map.of("column", "UserId", "condition", "=", "value", "x"))))))
+                .hasMessageContaining("style must be one of Red");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "add_format_rule", "style", "Red",
+                "conditions", List.of(Map.of("column", "UserId", "condition", "like", "value", "x"))))))
+                .hasMessageContaining("needs a column and a condition, one of =");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "add_format_rule", "style", "Red",
+                "conditions", List.of(Map.of("column", "UserId", "condition", "="))))))
+                .hasMessageContaining("needs a value");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "remove_format_rule"))))
+                .hasMessageContaining("remove_format_rule needs the rule's number");
+    }
+
+    @Test
+    void aTextWidgetFollowsTheTableOrOneAddedBeforeIt() {
+        final List<Change> changes = DashboardChanges.parse(List.of(
+                Map.of("op", "add_text", "name", "Preview"),
+                Map.of("op", "add_table", "name", "Logons"),
+                Map.of("op", "add_text", "name", "Logon preview", "table", "Logons"),
+                Map.of("op", "add_text", "name", "Lost", "table", "Nope")));
+
+        final Checked checked = DashboardChanges.check(changes, COLUMNS, "Events", List.of("Events"));
+
+        assertThat(DashboardChanges.describe(checked.changes()).getFirst())
+                .isEqualTo("Add a Text widget 'Preview' below this table, showing the event of its selected row");
+        assertThat(DashboardChanges.describe(checked.changes()).get(2))
+                .isEqualTo("Add a Text widget 'Logon preview' below table 'Logons', showing the event of its "
+                           + "selected row");
+        assertThat(checked.problems()).singleElement().asString()
+                .contains("Change 4 (add_text): there is no table 'Nope' for it to follow");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "add_text"))))
+                .hasMessageContaining("add_text needs the new Text widget's name");
+    }
+
+    @Test
     void anExpressionThatCantBeReadIsRefused() {
         final Map<String, Object> unknownOp = Map.of("op", "XOR", "children", List.of());
         final Map<String, Object> unknownCondition = Map.of("op", "AND",
