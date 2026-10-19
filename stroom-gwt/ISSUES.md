@@ -1648,6 +1648,23 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   their controls are disabled; axe can't tell, so the story's `color-contrast` is in the baseline.
   Workbench: `App/Editors/ElasticClusterEditor` `TimeoutSpinners`, `App/Editors/FloorMapForms`,
   `Widgets/Inputs/RadioGroup`.
+* **Inputs found by the audit of the rest of the input controls** (`TimeZoneWidget`, `ColourBox`,
+  `CustomFileUpload`, `FloorMapIconPicker`, `FormGroup`):
+  * The floor map's icon picker could only be used with a mouse: its icons had no role, no tab stop
+    and only answered a click, and its name was dropped. It is now a radio group of native radio
+    buttons (one tab stop, the arrow keys choosing), with a focus ring apart from the chosen look.
+    Workbench: `App/Editors/FloorMapForms` `IconPicker`.
+  * A file upload's button was named only "Choose File", as its form group's label wasn't tied to it,
+    and nothing said which file was chosen. It is now named by the label and its text, described by
+    the chosen file ("No file chosen" until one is), which is announced, and marked invalid by its
+    group's feedback. A required picker's button no longer has `aria-required`, which a button can't
+    have; its description begins "Required." instead (a file upload's, and a document picker's).
+    Workbench: `Widgets/Inputs/FileChooser` `Basic`, `App/Data/DataUploadDialog` `Upload`.
+  * A time zone's offset was named "Hours" rather than by its "Time Zone Offset" label, as its minutes
+    are hidden. Workbench: `App/Editors/PlanBEditor` `MetricTimeZoneOffset`.
+  * A colour box had no class of its own, only `stroom.css`'s bare input rules.
+    It is now the `colour-box` block (`colour-box.css`). The unused `ColourInputCell` is deleted.
+  * Every form group had an empty feedback element; it is now only there while there is feedback.
 
 ## Checked and not bugs
 

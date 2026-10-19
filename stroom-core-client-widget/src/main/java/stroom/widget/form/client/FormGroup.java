@@ -168,6 +168,8 @@ public class FormGroup extends Composite implements HasWidgets {
         helpDescription.getElement().setId(DOM.createUniqueId());
         // So that a group of several controls can be labelled by it
         formLabel.getElement().setId(DOM.createUniqueId());
+        // Read by screen readers as the control's description, but not seen
+        helpDescription.setStyleName("form-group__help-text");
         helpDescription.setVisible(false);
         formGroupPanel.addStyleName("form-group");
         labelPanel.addStyleName("form-group__label-row");
@@ -264,7 +266,8 @@ public class FormGroup extends Composite implements HasWidgets {
             requiredControl.removeAttribute(ARIA_REQUIRED);
             requiredControl = null;
         }
-        if (required && labelledControl != null) {
+        // Only a form element can be required (a picker's button can't, as ARIA doesn't allow it)
+        if (required && labelledControl != null && isLabelable(labelledControl)) {
             requiredControl = labelledControl;
             requiredControl.setAttribute(ARIA_REQUIRED, "true");
         }
@@ -293,6 +296,18 @@ public class FormGroup extends Composite implements HasWidgets {
     // The feedback as shown: its short form, and, when there is a fuller one, that as its tooltip and
     // (in place of the short form, which is hidden from them) for screen readers
     private void showFeedbackText() {
+        // In the group only while there is feedback to show
+        if (feedback == null) {
+            feedbackLabel.removeFromParent();
+        } else if (feedbackLabel.getParent() != formGroupPanel) {
+            // Before the hidden help text, which is last (once the group has been laid out)
+            final int helpIndex = formGroupPanel.getWidgetIndex(helpDescription);
+            if (helpIndex >= 0) {
+                formGroupPanel.insert(feedbackLabel, helpIndex);
+            } else {
+                formGroupPanel.add(feedbackLabel);
+            }
+        }
         final Element element = feedbackLabel.getElement();
         if (feedback != null && fullFeedback != null) {
             element.setInnerText("");
@@ -347,7 +362,9 @@ public class FormGroup extends Composite implements HasWidgets {
             describedControl.removeAttribute(ARIA_KEY_SHORTCUTS);
             describedControl = null;
         }
-        final String description = getDescription();
+        final String description = isRequiredButton()
+                ? joinSentences("Required.", getDescription())
+                : getDescription();
         helpDescription.setText(description);
         final Element target = labelledControl != null
                 ? labelledControl
@@ -362,6 +379,18 @@ public class FormGroup extends Composite implements HasWidgets {
                 FieldValidity.addDescribedBy(describedControl, helpDescriptionId, false);
             }
         }
+    }
+
+    // Whether the control is required but can't say so itself (a picker's button can't be
+    // aria-required), so its description says it is
+    private boolean isRequiredButton() {
+        return required && labelledControl != null && !isLabelable(labelledControl);
+    }
+
+    private static String joinSentences(final String first, final String second) {
+        return second.isEmpty()
+                ? first
+                : first + " " + second;
     }
 
     // The screen reader text, or else the plain help text, or else nothing
@@ -495,6 +524,7 @@ public class FormGroup extends Composite implements HasWidgets {
     public void setRequired(final boolean required) {
         this.required = required;
         updateRequired();
+        updateHelpDescription();
     }
 
     /// Shows what is wrong with the control's value, under the control. The control is marked invalid
@@ -736,7 +766,9 @@ public class FormGroup extends Composite implements HasWidgets {
         if (childWidget != null) {
             formGroupPanel.add(childWidget);
         }
-        formGroupPanel.add(feedbackLabel);
+        if (feedback != null) {
+            formGroupPanel.add(feedbackLabel);
+        }
         formGroupPanel.add(helpDescription);
         updateHelpTitle();
         updateInlineTick();

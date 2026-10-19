@@ -505,6 +505,11 @@ replaces GWT's `RadioButton`, of which the floor map's layer style had three.
 Stories `Widgets/Inputs/RadioGroup` (`Basic`, `Disabled`, `AccessibleName`), and
 `App/Editors/FloorMapForms` `LayerStyle`.
 
+The floor map's icon picker (`FloorMapIconPicker`) is a radio group in the same way: each icon a
+label holding an unseen native radio button, so the grid is one tab stop with the arrow keys
+choosing, its chosen and focused looks drawn from the radio button's state (`:has(:checked)`,
+`:has(:focus-visible)`).
+
 ## Quick filter
 
 `QuickFilter` (`stroom.widget.dropdowntree.client.view`) is the BEM block `quick-filter`

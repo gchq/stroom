@@ -1120,28 +1120,55 @@
     overflow-y: auto;
 }
 
-.floormap-icon-picker--disabled {
-    pointer-events: none;
-}
-
+/* An icon: a label holding its radio button (unseen), its picture and its name */
 .floormap-icon-picker__cell {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 3px;
+    margin: 0;
     padding: 6px 3px 5px;
     border: 1px solid transparent;
     border-radius: 3px;
+    font-weight: normal;
     cursor: pointer;
+}
+
+/* The radio button, unseen but focusable: the cell shows its state. Under the cell, to outrank
+   radio-button.css's rules for every radio input */
+.floormap-icon-picker__cell > .floormap-icon-picker__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .floormap-icon-picker__cell:hover {
     background-color: rgba(128, 128, 128, 0.14);
 }
 
-.floormap-icon-picker__cell--selected {
-    border-color: var(--focus-border);
+/* The chosen icon */
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:checked) {
+    border-color: var(--blue-500);
     background-color: rgba(128, 128, 128, 0.2);
+}
+
+/* The focused icon (from the keyboard), as every control's focus is shown */
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:focus-visible) {
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+/* Disabled (its graphic isn't an icon): legible, but not chosen from */
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled) {
+    cursor: default;
+}
+
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled):hover {
+    background-color: transparent;
 }
 
 .floormap-icon-picker__glyph {
@@ -1152,6 +1179,7 @@
 }
 
 .floormap-icon-picker__label {
+    display: block;
     font-size: 0.72rem;
     line-height: 1.15;
     text-align: center;

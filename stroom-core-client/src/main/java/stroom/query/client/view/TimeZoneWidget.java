@@ -53,10 +53,6 @@ public final class TimeZoneWidget extends Composite {
     @Inject
     public TimeZoneWidget(final Binder binder) {
         final Widget widget = binder.createAndBindUi(this);
-        // Named by the part they are, as the Time Zone Offset label names the pair
-        AccessibleName.set(timeZoneOffsetHours, "Hours");
-        AccessibleName.set(timeZoneOffsetMinutes, "Minutes");
-
         timeZoneUse.addItem(Use.LOCAL);
         timeZoneUse.addItem(Use.UTC);
         timeZoneUse.addItem(Use.ID);
@@ -82,6 +78,12 @@ public final class TimeZoneWidget extends Composite {
 
         // FIXME:  Browsers don't support minute offsets so disable this for now.
         timeZoneOffsetMinutes.setVisible(false);
+        // While the minutes are hidden, the Time Zone Offset label names the hours alone. With both
+        // shown, the label names the pair and each is named by the part it is
+        if (timeZoneOffsetMinutes.isVisible()) {
+            AccessibleName.set(timeZoneOffsetHours, "Hours");
+            AccessibleName.set(timeZoneOffsetMinutes, "Minutes");
+        }
 
         changeVisible();
 

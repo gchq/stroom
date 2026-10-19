@@ -2384,12 +2384,6 @@
     background-color: var(--row__background-color--hovered);
 }
 
-.customFileUpload {
-    display: flex;
-    align-items: center;
-    gap: var(--control__gap--horizontal);
-}
-
 .dataGridWidget .dashboard-table-filter-cell {
     display: none;
     position: relative;

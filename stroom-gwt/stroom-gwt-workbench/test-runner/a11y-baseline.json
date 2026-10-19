@@ -51,6 +51,9 @@
   "app-editors-documentationeditor--read-only": [
     "frame-title"
   ],
+  "app-editors-floormapforms--icon-picker": [
+    "color-contrast"
+  ],
   "app-editors-floormapforms--layer-style": [
     "color-contrast"
   ],

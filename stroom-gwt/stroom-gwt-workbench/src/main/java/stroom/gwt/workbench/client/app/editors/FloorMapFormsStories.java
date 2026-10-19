@@ -22,6 +22,7 @@ import stroom.floormap.client.view.FloorMapGroupEditViewImpl;
 import stroom.floormap.client.view.FloorMapLayerStyleViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.client.view.FloorMapSetScaleViewImpl;
+import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -66,6 +67,30 @@ public final class FloorMapFormsStories {
                     play.expect(play.getByRole("radio", "Icon")).toBeChecked();
                     play.expect(play.getByRole("combobox", "Shape")).toBeDisabled();
                     play.expect(play.querySelectorAll(".gwt-RadioButton")).toHaveLength(0);
+                })
+                // The icons are a radio group too, named by their row: one tab stop, the arrow keys
+                // choosing (they were clickable cells the keyboard couldn't reach)
+                .story("IconPicker", context -> {
+                    final FloorMapLayerStyleViewImpl view = new FloorMapLayerStyleViewImpl();
+                    view.setMode(GraphicMode.ICON);
+                    return view.asWidget();
+                })
+                .withPlay(play -> {
+                    final Query icons = play.getByRole("radiogroup", "Icon");
+                    play.expect(icons).toHaveClass("floormap-icon-picker");
+                    play.expect(play.within(icons).getAllByRole("radio")).toHaveLength(FloorMapIcon.values().length);
+                    // From the graphic's Icon to the icons, the first having the focus as none is chosen
+                    play.click(play.getByRole("radio", "Icon"));
+                    play.tab();
+                    final Query first = play.within(icons).getByRole("radio", FloorMapIcon.values()[0].getLabel());
+                    play.expect(first).toHaveFocus();
+                    play.keyboard("{ArrowRight}");
+                    final Query second = play.within(icons).getByRole("radio", FloorMapIcon.values()[1].getLabel());
+                    play.expect(second).toBeChecked();
+                    play.expect(second).toHaveFocus();
+                    // Disabled with the rest of the row when the graphic isn't an icon
+                    play.click(play.getByRole("radio", "Shape"));
+                    play.expect(second).toBeDisabled();
                 })
                 // The set scale dialog: the distance's unit is a selection box of the metric units,
                 // named for what it is
@@ -115,6 +140,10 @@ public final class FloorMapFormsStories {
                     play.expect(useDefault).toHaveClass("tick-box__input");
                     play.click(useDefault);
                     play.expect(useDefault).not().toBeChecked();
+                    // The colour beside it is a colour box (colour-box.css), named for what it colours
+                    play.expect(play.querySelector("input[type='color']")).toHaveClass("colour-box");
+                    play.expect(play.querySelector("input[type='color']"))
+                            .toHaveAttribute("aria-label", "Area fill colour");
                     play.expect(play.querySelectorAll(".gwt-CheckBox")).toHaveLength(0);
                 });
     }

@@ -35,6 +35,7 @@
 @import url("editor.css");
 @import url("editor-themes.css");
 @import url("tick-box.css");
+@import url("file-upload.css");
 @import url("SimplePopup.css");
 @import url("Dialog.css");
 @import url("ResizableDialog.css");
@@ -79,7 +80,7 @@
 @import url("markdown.css");
 @import url("icon-colours.css");
 @import url("ColourSwatchCell.css");
-@import url("ColourInputCell.css");
+@import url("colour-box.css");
 @import url("PercentBarCell.css");
 @import url("RedGreenTextCell.css");
 @import url("conditional-formatting.css");

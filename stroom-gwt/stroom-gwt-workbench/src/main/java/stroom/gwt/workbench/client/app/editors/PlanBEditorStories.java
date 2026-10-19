@@ -134,6 +134,8 @@ public final class PlanBEditorStories {
                     play.expect(group.querySelectorAll("input").nth(0)).toHaveValue("-1");
                     play.expect(group.querySelectorAll("input").nth(1)).toHaveValue("30");
                     play.expect(group.querySelectorAll("input").nth(1)).not().toBeVisible();
+                    // The hours are named by the label, not only "Hours"
+                    play.expect(play.getByRole("spinbutton", "Time Zone Offset")).toHaveValue("-1");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // SESSION: has Condense Data and no Value Schema
