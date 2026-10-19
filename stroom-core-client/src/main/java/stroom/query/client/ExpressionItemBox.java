@@ -17,22 +17,40 @@
 package stroom.query.client;
 
 import stroom.pipeline.structure.client.view.Box;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.util.client.SvgImageUtil;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// An item of an expression tree (a term or an operator): its label, or its editor while it is
 /// being edited. It is an item of the tree for assistive technology too (see [#setTreeItem]).
+///
+/// While an item is moved (dragged, or detached with the keyboard) it shows whether it would take
+/// it ([#showHotspot], [#showRefused]), and the item moved shows that it is ([#setDetached]).
 public class ExpressionItemBox extends Box<Item> {
+
+    private static final String TARGET_CLASS = "expressionItemBox-target";
+    private static final String REFUSED_CLASS = "expressionItemBox-refused";
+    private static final String DETACHED_CLASS = "expressionItemBox-detached";
 
     private final SimplePanel background = new SimplePanel();
     private final TreeLayout<Item> treeLayout;
     private final Item expressionItem;
     private final boolean allowSelection;
     private boolean selected;
+    // The "not allowed" icon, at the start of the item's row while it refuses what is moved to it (so
+    // that that isn't told by colour alone), which is only in the document then
+    private Element refusedIcon;
+    // Its name (e.g. "StreamId > 1000"), and what is said after it while an item is detached
+    private String name;
+    private boolean detached;
+    private String detachedName;
+    private boolean canTake;
 
     public ExpressionItemBox(final TreeLayout<Item> treeLayout, final Item expressionItem,
                              final boolean allowSelection) {
@@ -92,15 +110,105 @@ public class ExpressionItemBox extends Box<Item> {
         element.setAttribute("tabindex", tabStop
                 ? "0"
                 : "-1");
-        element.setAttribute("aria-label", name);
+        this.name = name;
+        updateName();
     }
 
+    /// Shows (or stops showing) that the item would take what is moved to it: a green border.
+    ///
+    /// @param show Whether it would.
     @Override
     public void showHotspot(final boolean show) {
-        if (show) {
-            getElement().addClassName("expressionItemBox-hotspot");
+        toggleClass(TARGET_CLASS, show);
+    }
+
+    /// Shows (or stops showing) that the item refuses what is moved to it (a term can't have
+    /// children): a red border, and the "not allowed" icon at the start of its row.
+    ///
+    /// @param refused Whether it refuses it.
+    @Override
+    public void showRefused(final boolean refused) {
+        toggleClass(REFUSED_CLASS, refused);
+        final Element row = getRow();
+        if (refused && row != null) {
+            if (refusedIcon == null) {
+                refusedIcon = createRefusedIcon();
+            }
+            if (refusedIcon.getParentElement() != row) {
+                row.insertFirst(refusedIcon);
+            }
+        } else if (refusedIcon != null) {
+            refusedIcon.removeFromParent();
+        }
+    }
+
+    /// Shows (or stops showing) that the item is detached, or in the operator detached, to be
+    /// attached to another operator: faded, with a dashed border, and said so in its name.
+    ///
+    /// @param detached Whether it is.
+    @Override
+    public void setDetached(final boolean detached) {
+        this.detached = detached;
+        toggleClass(DETACHED_CLASS, detached);
+        updateName();
+    }
+
+    /// Says in the item's name whether it can take an item detached to be attached to another
+    /// operator, e.g. "OR, 3 items, can take StreamId > 1000", so that it is known before trying.
+    ///
+    /// @param detachedName The detached item's name, or null when none is detached (or this is
+    ///                     it, or in it).
+    /// @param canTake      Whether this item can take it.
+    @Override
+    public void setDetachedName(final String detachedName, final boolean canTake) {
+        this.detachedName = detachedName;
+        this.canTake = canTake;
+        updateName();
+    }
+
+    // e.g. "OR, 3 items", "StreamId > 1000, detached" or "OR, 3 items, can take StreamId > 1000"
+    private void updateName() {
+        if (name == null) {
+            return;
+        }
+        final StringBuilder sb = new StringBuilder(name);
+        if (detached) {
+            sb.append(", detached");
+        }
+        if (detachedName != null) {
+            sb.append(canTake
+                            ? ", can take "
+                            : ", can't take ")
+                    .append(detachedName);
+        }
+        getElement().setAttribute("aria-label", sb.toString());
+    }
+
+    // The row of the item's label or editor
+    private Element getRow() {
+        final Widget widget = background.getWidget();
+        return widget == null
+                ? null
+                : widget.getElement().getFirstChildElement();
+    }
+
+    // Its meaning is in the box's name (see setDetachedName), so it is hidden from assistive
+    // technology
+    private static Element createRefusedIcon() {
+        final Element holder = Document.get().createDivElement();
+        holder.setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.NOT_ALLOWED,
+                "svgIcon", "expressionItemBox-refusedIcon"));
+        final Element icon = holder.getFirstChildElement();
+        icon.removeFromParent();
+        icon.setAttribute("aria-hidden", "true");
+        return icon;
+    }
+
+    private void toggleClass(final String className, final boolean isSet) {
+        if (isSet) {
+            getElement().addClassName(className);
         } else {
-            getElement().removeClassName("expressionItemBox-hotspot");
+            getElement().removeClassName(className);
         }
     }
 

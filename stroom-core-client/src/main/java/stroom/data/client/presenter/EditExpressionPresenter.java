@@ -214,6 +214,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                 .enabled(hasSelection)
                 .command(this::delete)
                 .build());
+        menuItems.addAll(expressionPresenter.getMoveMenuItems(5));
 
         return menuItems;
     }

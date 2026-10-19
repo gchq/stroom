@@ -136,7 +136,8 @@
     --expression-item-box__background-color--disabled: #ccc;
     /* 4.5:1 on that grey */
     --expression-item-box__text-color--disabled: #555;
-    --expression-item-box__background-color--hotspot: var(--row__background-color--selected--hovered);
+    --expression-item-box__drop-target: var(--icon-colour__dark-green);
+    --expression-item-box__drop-refused: var(--icon-colour__red);
 
     /* Pipeline elements, in the pipeline structure tree (pipeline-element.css) and the stepping
        screen's pipeline bar (pipeline-path.css) */

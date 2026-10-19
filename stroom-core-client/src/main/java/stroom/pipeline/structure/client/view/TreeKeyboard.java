@@ -117,6 +117,14 @@ public abstract class TreeKeyboard<E> {
     protected void onNavigate(final E item) {
     }
 
+    /// Says where the items that move with an item are, e.g. in "rawWriter and the 1 element after
+    /// it detached".
+    ///
+    /// @return Where they are: "after it" by default, as in a pipeline.
+    protected String getBranchPlace() {
+        return "after it";
+    }
+
     /// Handles a key press on an item before the tree does, e.g. to start editing it.
     ///
     /// @param event The key press.
@@ -169,7 +177,7 @@ public abstract class TreeKeyboard<E> {
         announce(getName(item) + (count > 1
                 ? " and the " + (count - 1) + " " + (count == 2
                         ? itemName
-                        : itemsName) + " after it"
+                        : itemsName) + " " + getBranchPlace()
                 : "")
                  + " detached. Move to its new parent and press Control V to attach it, or Escape to put "
                  + "it back.");
@@ -209,9 +217,11 @@ public abstract class TreeKeyboard<E> {
             announce(getName(child) + " left under " + getName(target) + ".");
             selectionModel.setSelected(child, true);
         } else {
+            // Named as it was (e.g. "OR, 3 items"), before it takes it
+            final String targetName = getName(target);
             move(target, child);
             selectionModel.setSelected(child, true);
-            announce(getName(child) + " attached to " + getName(target) + ".");
+            announce(getName(child) + " attached to " + targetName + ".");
         }
     }
 

@@ -21,19 +21,48 @@ import stroom.widget.htree.client.treelayout.TreeLayout;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.CssColor;
 
+import java.util.function.Predicate;
+
 public class BracketConnectorRenderer<T> implements ConnectorRenderer<T> {
 
     private static final double RADIUS = 4;
     private static final double HALF_PI = Math.PI * 0.5;
     private static final double ONE_AND_HALF_PI = Math.PI * 1.5;
+    // As faded items are (e.g. those detached to be moved)
+    private static final double FADED_ALPHA = 0.75;
 
     private final CssColor lineColor;
 
     private final Context2d ctx;
+    private final Predicate<T> faded;
 
     public BracketConnectorRenderer(final Context2d ctx) {
+        this(ctx, item -> false);
+    }
+
+    /// @param ctx   Where to draw.
+    /// @param faded Whether an item is faded, whose bracket (to its children) is too.
+    public BracketConnectorRenderer(final Context2d ctx, final Predicate<T> faded) {
         this.ctx = ctx;
+        this.faded = faded;
         lineColor = CssColor.make("grey");
+    }
+
+    @Override
+    public void render(final TreeLayout<T> treeLayout,
+                       final T parent,
+                       final T child,
+                       final double x1,
+                       final double y1,
+                       final double x2,
+                       final double y2,
+                       final boolean firstChild,
+                       final boolean lastChild) {
+        ctx.setGlobalAlpha(faded.test(parent)
+                ? FADED_ALPHA
+                : 1);
+        render(treeLayout, x1, y1, x2, y2, firstChild, lastChild);
+        ctx.setGlobalAlpha(1);
     }
 
     @Override

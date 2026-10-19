@@ -58,7 +58,8 @@ import java.util.function.Predicate;
 /// its label; a click edits an item (its editor in place of its label), as do Enter and F2, which
 /// focus its first field. Tab and Shift+Tab move through its fields, and past the last or first
 /// back to the item, which stops editing it (keeping what was entered), as Escape does. Its items
-/// can be dragged to another operator.
+/// can be dragged to another operator, or moved with the keyboard (Ctrl+X and Ctrl+V) or the context
+/// menu (see [#detach]).
 public class ExpressionTreeViewImpl
         extends ViewWithUiHandlers<ExpressionUiHandlers>
         implements ExpressionTreeView {
@@ -84,6 +85,9 @@ public class ExpressionTreeViewImpl
                 userRefProvider,
                 uiConfigCache,
                 userPreferencesManager.isUtc());
+        // The copy of what is dragged, which is only to be seen
+        subTreePanel.getElement().setAttribute("aria-hidden", "true");
+        subTreePanel.getElement().setAttribute("inert", "");
 
         layoutPanel = new DraggableTreePanel<Item>(treePanel, subTreePanel) {
             @Override
@@ -112,6 +116,8 @@ public class ExpressionTreeViewImpl
 
             @Override
             protected void startDragging(final Item parent, final Item child) {
+                // Dragging replaces moving with the keyboard
+                keyboard.cancelDetach();
                 if (selectionModel != null) {
                     endEditing();
                     selectionModel.clear();
@@ -153,6 +159,7 @@ public class ExpressionTreeViewImpl
             @Override
             protected void remove(final Item item) {
                 if (removeHandler != null) {
+                    cancelDetach();
                     treePanel.setEditingItem(null);
                     removeHandler.accept(item);
                     // The focus goes to the item selected in its place, shown as its label
@@ -160,6 +167,12 @@ public class ExpressionTreeViewImpl
                         moveTo(selectionModel.getSelectedObject());
                     }
                 }
+            }
+
+            @Override
+            protected String getBranchPlace() {
+                // An operator's items
+                return "in it";
             }
 
             @Override
@@ -182,8 +195,8 @@ public class ExpressionTreeViewImpl
                 treePanel.setEditingItem(null);
             }
         };
-        // Moving items with the keyboard comes with their detached look
-        keyboard.setAllowMoving(false);
+        // A detached item and the items in it are faded, with the brackets to their items
+        treePanel.setFaded(keyboard::isDetached);
         // Before the fields' own handlers, which e.g. close a date's calendar on Escape
         addKeyDownCaptureHandler(layoutPanel.getElement(), this::onFieldKeyDown);
     }
@@ -289,6 +302,7 @@ public class ExpressionTreeViewImpl
 
     @Override
     public void setTree(final DefaultTreeForTreeLayout<Item> tree) {
+        keyboard.cancelDetach();
         treePanel.setTree(tree);
     }
 
@@ -299,6 +313,7 @@ public class ExpressionTreeViewImpl
         keyboard.setSelectionModel(selectionModel);
         // Without a selection model the tree is only for reading, so it can't be rearranged either
         layoutPanel.setAllowDragging(selectionModel != null);
+        keyboard.setAllowMoving(selectionModel != null);
     }
 
     @Override
@@ -337,6 +352,31 @@ public class ExpressionTreeViewImpl
     public void edit(final Item item) {
         treePanel.setEditingItem(item);
         treePanel.refresh();
+    }
+
+    @Override
+    public Item getDetached() {
+        return keyboard.getDetached();
+    }
+
+    @Override
+    public void detach(final Item item) {
+        keyboard.detach(item);
+    }
+
+    @Override
+    public boolean canAttach(final Item target) {
+        return keyboard.canAttach(target);
+    }
+
+    @Override
+    public void attach(final Item target) {
+        keyboard.attach(target);
+    }
+
+    @Override
+    public void cancelDetach() {
+        keyboard.cancelDetach();
     }
 
     @Override

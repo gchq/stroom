@@ -60,6 +60,10 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     private TreeLayout<Item> treeLayout;
     private ExpressionItemRenderer cellRenderer;
     private DefaultTreeForTreeLayout<Item> tree;
+    private Predicate<Item> faded = item -> false;
+    // Whether the tree is being drawn, and whether it was asked to be drawn again meanwhile
+    private boolean drawing;
+    private boolean redrawAfterDraw;
 
     public ExpressionTreePanel(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                final Provider<UserRefSelectionBoxPresenter> userRefProvider,
@@ -83,7 +87,8 @@ public class ExpressionTreePanel extends TreePanel<Item> {
             final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
 
             cellRenderer = new ExpressionItemRenderer(boxPanel, operatorEditor, termEditor);
-            final ConnectorRenderer<Item> connectorRenderer = new BracketConnectorRenderer<>(arrowContext);
+            final ConnectorRenderer<Item> connectorRenderer = new BracketConnectorRenderer<>(arrowContext,
+                    item -> faded.test(item));
 
             // setup the tree layout configuration
             final DefaultConfiguration<Item> layoutConfig = new DefaultConfiguration<>(HORIZONTAL_SEPARATION,
@@ -151,12 +156,30 @@ public class ExpressionTreePanel extends TreePanel<Item> {
 
     @Override
     public void refresh(final RefreshCallback callback) {
+        if (drawing) {
+            // Asked for while drawing, e.g. by a pending selection change that drawing resolves
+            // (reading the selection fires it): drawn again once this draw is done, rather than
+            // inside it, which would leave the first boxes in place too
+            redrawAfterDraw = true;
+            return;
+        }
         // Drawing replaces the boxes, so the focus is put back on the same item's box
         final Item focused = getFocusedItem();
         boxPanel.clear();
         if (renderer != null) {
             cellRenderer.clear();
-            renderer.draw();
+            drawing = true;
+            try {
+                renderer.draw();
+            } finally {
+                drawing = false;
+            }
+            if (redrawAfterDraw) {
+                redrawAfterDraw = false;
+                boxPanel.clear();
+                cellRenderer.clear();
+                renderer.draw();
+            }
             focus(focused);
             if (callback != null) {
                 callback.onRefresh();
@@ -236,6 +259,14 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         if (termEditor != null) {
             termEditor.write();
         }
+    }
+
+    /// Sets which items are faded, with the brackets to their items, e.g. those detached to be
+    /// attached to another operator. They are faded when the tree is next drawn.
+    ///
+    /// @param faded Whether an item is faded.
+    public void setFaded(final Predicate<Item> faded) {
+        this.faded = faded;
     }
 
     /// @return Whether a field of the editor has its own popup open (see

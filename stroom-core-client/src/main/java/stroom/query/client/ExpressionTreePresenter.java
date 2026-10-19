@@ -24,9 +24,11 @@ import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldSelectionListModel;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -195,6 +197,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
     public void delete() {
         getView().endEditing();
+        getView().cancelDetach();
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
             if (selectedItem != null) {
@@ -308,6 +311,46 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return getView().addContextMenuHandler(handler);
     }
 
+    /// Gets the context menu's items for moving the selected item (and the items in it) to another
+    /// operator, as dragging it does, and as Ctrl+X and Ctrl+V do in the tree: Detach, and while an
+    /// item is detached "Attach '…' here" (only where it would be taken) and "Put '…' back".
+    ///
+    /// @param priority The priority of the first, after which the others come.
+    /// @return The items, none if the tree can't be changed.
+    public List<stroom.widget.menu.client.presenter.Item> getMoveMenuItems(final int priority) {
+        final List<stroom.widget.menu.client.presenter.Item> menuItems = new ArrayList<>();
+        if (selectionModel == null) {
+            return menuItems;
+        }
+        final Item selectedItem = selectionModel.getSelectedObject();
+        final Item detached = getView().getDetached();
+        if (detached == null) {
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(priority)
+                    .icon(SvgImage.MOVE)
+                    .text("Detach")
+                    .enabled(selectedItem != null && tree.getParent(selectedItem) != null)
+                    .command(() -> getView().detach(selectedItem))
+                    .build());
+        } else {
+            final String name = ExpressionItemRenderer.getName(tree, detached);
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(priority)
+                    .icon(SvgImage.MOVE)
+                    .text("Attach '" + name + "' here")
+                    .enabled(getView().canAttach(selectedItem))
+                    .command(() -> getView().attach(selectedItem))
+                    .build());
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(priority + 1)
+                    .icon(SvgImage.UNDO)
+                    .text("Put '" + name + "' back")
+                    .command(() -> getView().cancelDetach())
+                    .build());
+        }
+        return menuItems;
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -335,6 +378,27 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         ///
         /// @param item The item.
         void edit(Item item);
+
+        /// @return The item detached (to be attached to another operator), or null for none.
+        Item getDetached();
+
+        /// Detaches an item (and the items in it) to be attached to another operator. The root
+        /// can't be.
+        ///
+        /// @param item The item.
+        void detach(Item item);
+
+        /// @param target An item.
+        /// @return Whether the item detached can be attached to it.
+        boolean canAttach(Item target);
+
+        /// Attaches the item detached to another operator, if that can take it.
+        ///
+        /// @param target The operator.
+        void attach(Item target);
+
+        /// Puts the item detached back where it was, if one is.
+        void cancelDetach();
 
         /// Sets what to do when the tree asks for an item to be removed, e.g. with the Delete key.
         ///

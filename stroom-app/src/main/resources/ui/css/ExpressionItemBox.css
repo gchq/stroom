@@ -63,8 +63,53 @@
 	background-color: var(--expression-item-box__background-color--disabled);
 }
 
-.expressionItemBox-selectable.expressionItemBox-hotspot .termEditor-inner {
-	background-color: var(--expression-item-box__background-color--hotspot);
+/* Moving an item (dragging it, or detaching it with the keyboard or the context menu): the item
+   under the pointer (or focused) has a green border if it would take it, or a red one if not (a term
+   can't have items), with the "not allowed" icon at the start of its row (ExpressionItemBox
+   .showRefused), so that that isn't told by colour alone. Outlines, inside the row, so that its
+   size doesn't change and forced colours keep them */
+.expressionItemBox-target .termEditor-inner {
+	outline: 2px solid var(--expression-item-box__drop-target);
+	outline-offset: -2px;
+}
+
+.expressionItemBox-refused .termEditor-inner {
+	outline: 2px solid var(--expression-item-box__drop-refused);
+	outline-offset: -2px;
+	cursor: not-allowed;
+}
+
+.expressionItemBox-refusedIcon {
+	flex-shrink: 0;
+	width: 14px;
+	height: 14px;
+	margin-left: 5px;
+}
+
+/* Detached (with the items in it) to be attached to another operator, until it is attached or put
+   back: a dashed border, and faded (as are the brackets to its items), to 75%, as the pipeline
+   tree's are */
+.expressionItemBox-detached {
+	opacity: .75;
+}
+
+.expressionItemBox-detached .termEditor-inner {
+	outline: 1px dashed currentColor;
+	outline-offset: -1px;
+}
+
+/* Forced colours (e.g. Windows High Contrast): the borders in the text colour, and the detached
+   items not faded, as fading lowers the contrast the user has chosen (their dashed borders say
+   they are detached) */
+@media (forced-colors: active) {
+	.expressionItemBox-background {
+		--expression-item-box__drop-target: CanvasText;
+		--expression-item-box__drop-refused: CanvasText;
+	}
+
+	.expressionItemBox-detached {
+		opacity: 1;
+	}
 }
 
 .expressionItemBox-label {

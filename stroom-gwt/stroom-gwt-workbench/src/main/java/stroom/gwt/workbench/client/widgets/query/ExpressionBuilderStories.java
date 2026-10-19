@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.selectors.SelectorWidgets;
 import stroom.gwt.workbench.client.widgets.selectors.UserFixture;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
+import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -71,6 +72,16 @@ public final class ExpressionBuilderStories {
     // The field picker of the selected term (a Stroom SelectionBox), and its parts
     private static final String FIELD_PICKER = ".termEditor-item.field";
     private static final DocRef DATA_SOURCE = new DocRef("Index", "index-uuid-1", "Example Index");
+    // The looks of an item while another is moved: one that would take it, one that won't, and the
+    // one moved (with the items in it)
+    private static final String TARGET = "expressionItemBox-target";
+    private static final String REFUSED = "expressionItemBox-refused";
+    private static final String DETACHED = "expressionItemBox-detached";
+    private static final String MARKED = "." + TARGET + ", ." + REFUSED + ", ." + DETACHED;
+    // The tree's live region, which says what moving with the keyboard did
+    private static final String STATUS = ".expression-tree-status";
+    private static final String USER_ID = "UserId contains admin";
+    private static final String EVENT_TIME = "EventTime between 2024-01-01T00:00:00.000Z,2024-02-01T00:00:00.000Z";
 
     private ExpressionBuilderStories() {
         // Static utility
@@ -215,6 +226,268 @@ public final class ExpressionBuilderStories {
                     play.waitFor(() -> play.expect(operator).toHaveFocus());
                     play.keyboard("{Tab}");
                     play.waitFor(() -> play.expect(item(play, "AND, 4 items")).toHaveFocus());
+                })
+                // Moving an item (and the items in it) to another operator with the keyboard: Ctrl+X
+                // detaches it, the arrow keys choose its new operator (each item saying whether it
+                // would take it), Ctrl+V attaches it there, and Escape puts it back
+                .story("KeyboardMove", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    final Query status = play.querySelector(STATUS);
+                    play.run("focus the toolbar's last button",
+                            () -> play.getByTitle("Delete Selected Expression Item").element().get().focus());
+                    play.keyboard("{Tab}");
+                    play.waitFor(() -> play.expect(item(play, "AND, 4 items")).toHaveFocus());
+
+                    // The root can't be detached
+                    play.keyboard("{Control>}x{/Control}");
+                    play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(0);
+
+                    // Ctrl+X detaches UserId, which stays where it is, faded
+                    play.keyboard("{ArrowRight}");
+                    play.waitFor(() -> play.expect(item(play, USER_ID)).toHaveFocus());
+                    play.keyboard("{Control>}x{/Control}");
+                    play.waitFor(() -> play.expect(item(play, USER_ID + ", detached")).toHaveClass(DETACHED));
+                    play.waitFor(() -> play.expect(status).toHaveTextContent(
+                            TextMatch.startingWith(USER_ID + " detached.")));
+
+                    // Moving on shows whether each item would take it: an operator would, a term won't
+                    play.keyboard("{ArrowDown}");
+                    final Query or = item(play, "OR, 3 items, can take " + USER_ID);
+                    play.waitFor(() -> play.expect(or).toHaveFocus());
+                    play.expect(or).toHaveClass(TARGET);
+                    play.keyboard("{ArrowRight}");
+                    final Query eventTime = item(play, EVENT_TIME + ", can't take " + USER_ID);
+                    play.waitFor(() -> play.expect(eventTime).toHaveFocus());
+                    play.expect(eventTime).toHaveClass(REFUSED);
+                    play.expect(or).not().toHaveClass(TARGET);
+                    // Not by colour alone: the "not allowed" icon
+                    play.expect(play.querySelector("." + REFUSED + " .expressionItemBox-refusedIcon"))
+                            .toBeVisible();
+                    play.keyboard("{Control>}v{/Control}");
+                    play.waitFor(() -> play.expect(status).toHaveTextContent(
+                            EVENT_TIME + " can't take " + USER_ID + "."));
+                    play.expect(item(play, USER_ID + ", detached")).toHaveClass(DETACHED);
+
+                    // Ctrl+V on the OR attaches it there, last, keeping the focus on it
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(or).toHaveFocus());
+                    play.keyboard("{Control>}v{/Control}");
+                    play.waitFor(() -> play.expect(status).toHaveTextContent(
+                            USER_ID + " attached to OR, 3 items."));
+                    play.waitFor(() -> play.expect(item(play, USER_ID)).toHaveFocus());
+                    play.expect(item(play, USER_ID)).toHaveAttribute("aria-level", "3");
+                    play.expect(item(play, USER_ID)).toHaveAttribute("aria-posinset", "4");
+                    play.expect(item(play, "OR, 4 items")).toBeInTheDocument();
+                    play.expect(play.querySelectorAll(MARKED)).toHaveLength(0);
+                    play.expect(play.querySelector(".expressionItemBox-refusedIcon")).toBeNull();
+                    play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled());
+
+                    // An operator is detached with its items, and Escape puts it back
+                    play.keyboard("{Home}{ArrowDown}");
+                    // The inner AND (the root has 3 items now too)
+                    final Query and = play.querySelector("[role='treeitem'][aria-level='3'][aria-label^='AND']");
+                    play.waitFor(() -> play.expect(and).toHaveFocus());
+                    play.keyboard("{Control>}x{/Control}");
+                    play.waitFor(() -> play.expect(status).toHaveTextContent(
+                            TextMatch.startingWith("AND, 3 items and the 5 items in it detached.")));
+                    play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(6);
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(status).toHaveTextContent("AND, 3 items put back."));
+                    play.expect(play.querySelectorAll(MARKED)).toHaveLength(0);
+                    play.expect(and).toHaveFocus();
+                })
+                // The keyboard's moves are in the context menu too, which Shift+F10 or the context
+                // menu key opens: Detach, and while an item is detached "Attach '…' here" (only where
+                // it would be taken) and "Put '…' back"
+                .story("KeyboardContextMenu", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query status = play.querySelector(STATUS);
+                    play.click(play.getByText(USER_ID, ".expressionItemBox-label"));
+                    play.waitFor(() -> play.expect(item(play, USER_ID)).toHaveFocus());
+
+                    // Shift+F10 opens the menu; Detach detaches UserId
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    play.click(screen.findByRole("menuitem", TextMatch.containing("Detach")));
+                    play.waitFor(() -> play.expect(item(play, USER_ID + ", detached")).toHaveClass(DETACHED));
+
+                    // A term won't take it, so it can't be attached there
+                    play.click(play.getByText(EVENT_TIME, ".expressionItemBox-label"));
+                    final Query eventTime = item(play, EVENT_TIME + ", can't take " + USER_ID);
+                    play.waitFor(() -> play.expect(eventTime).toHaveFocus());
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    play.expect(screen.findByRole("menuitem",
+                            TextMatch.containing("Attach '" + USER_ID + "' here")))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(screen.getByRole("menuitem", TextMatch.containing("Put '" + USER_ID + "' back")))
+                            .toBeInTheDocument();
+                    play.expect(screen.queryByRole("menuitem", TextMatch.containing("Detach"))).toBeNull();
+                    play.keyboard("{Escape}");
+                    play.expect(item(play, USER_ID + ", detached")).toHaveClass(DETACHED);
+
+                    // The OR takes it: the context menu key's menu attaches it there
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(item(play, "OR, 3 items, can take " + USER_ID)).toHaveFocus());
+                    play.keyboard("{ContextMenu}");
+                    play.click(screen.findByRole("menuitem", TextMatch.containing("Attach '" + USER_ID + "' here")));
+                    play.waitFor(() -> play.expect(status).toHaveTextContent(USER_ID + " attached to OR, 3 items."));
+                    play.waitFor(() -> play.expect(item(play, USER_ID)).toHaveAttribute("aria-level", "3"));
+                    play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(0);
+
+                    // "Put '…' back" puts it back
+                    play.waitFor(() -> play.expect(item(play, USER_ID)).toHaveFocus());
+                    play.keyboard("{Control>}x{/Control}");
+                    play.waitFor(() -> play.expect(item(play, USER_ID + ", detached")).toHaveClass(DETACHED));
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    play.click(screen.findByRole("menuitem", TextMatch.containing("Put '" + USER_ID + "' back")));
+                    play.waitFor(() -> play.expect(status).toHaveTextContent(USER_ID + " put back."));
+                    play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(0);
+                })
+                // Dragging an item (with the items in it) to another operator: the item under the
+                // pointer has a green border if it would take it, or a red one (and the "not allowed"
+                // icon) if not, and nothing else is marked; dropping on a green one moves it there,
+                // last, which reorders it when that is its own operator
+                .story("DragToMove", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    final Play tree = play.within(play.getByRole("tree", "Expression"));
+                    liftItem(play, tree, USER_ID);
+
+                    // A term can't have items: it refuses it, and is the only one marked
+                    final Query eventTime = item(play, EVENT_TIME);
+                    play.fireEvent().mouseMove(eventTime, EventInit.create().atCentreOf(eventTime).buttons(1));
+                    play.waitFor(() -> play.expect(item(play, EVENT_TIME)).toHaveClass(REFUSED));
+                    play.expect(play.querySelector("." + REFUSED + " .expressionItemBox-refusedIcon"))
+                            .toBeVisible();
+                    play.expect(play.querySelectorAll("." + TARGET)).toHaveLength(0);
+
+                    // The OR takes it: it is the target, and the term no longer refuses
+                    final Query or = operator(play, "OR");
+                    play.fireEvent().mouseMove(or, EventInit.create().atCentreOf(or).buttons(1));
+                    play.waitFor(() -> play.expect(operator(play, "OR")).toHaveClass(TARGET));
+                    play.expect(item(play, EVENT_TIME)).not().toHaveClass(REFUSED);
+                    play.expect(play.querySelector(".expressionItemBox-refusedIcon")).toBeNull();
+
+                    // Over nothing, nothing is marked; back over the OR, it is again
+                    final Query runAsUser = item(play, "RunAsUser is Alice Anderson, disabled");
+                    play.fireEvent().mouseMove(runAsUser, EventInit.create().relativeTo(runAsUser, 250, 10).buttons(1));
+                    play.waitFor(() -> play.expect(play.querySelectorAll(MARKED)).toHaveLength(0));
+                    play.fireEvent().mouseMove(or, EventInit.create().atCentreOf(or).buttons(1));
+                    play.waitFor(() -> play.expect(operator(play, "OR")).toHaveClass(TARGET));
+
+                    // Dropping it there moves it into the OR, last
+                    play.fireEvent().mouseUp(or, EventInit.create().atCentreOf(or));
+                    play.waitFor(() -> play.expect(tree.queryByText(USER_ID)).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(item(play, USER_ID)).toHaveAttribute("aria-level", "3"));
+                    play.expect(item(play, USER_ID)).toHaveAttribute("aria-posinset", "4");
+                    play.expect(play.querySelectorAll(MARKED)).toHaveLength(0);
+                    play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled());
+
+                    // Dropped on its own operator, an item goes last
+                    liftItem(play, tree, EVENT_TIME);
+                    final Query orAgain = operator(play, "OR");
+                    play.fireEvent().mouseMove(orAgain, EventInit.create().atCentreOf(orAgain).buttons(1));
+                    play.waitFor(() -> play.expect(operator(play, "OR")).toHaveClass(TARGET));
+                    play.fireEvent().mouseUp(orAgain, EventInit.create().atCentreOf(orAgain));
+                    play.waitFor(() -> play.expect(tree.queryByText(EVENT_TIME)).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(item(play, EVENT_TIME)).toHaveAttribute("aria-posinset", "4"));
+                })
+                // A drag that isn't dropped on an operator puts what is dragged back where it was,
+                // among its siblings as it was, changing nothing: released over nothing, over a term or
+                // with Escape pressed. Dragging while an item is detached with the keyboard puts that
+                // back first
+                .story("DragToCancel", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    final Play tree = play.within(play.getByRole("tree", "Expression"));
+                    final Query status = play.querySelector(STATUS);
+
+                    // Dragging puts back an item detached with the keyboard
+                    play.click(play.getByText(USER_ID, ".expressionItemBox-label"));
+                    play.waitFor(() -> play.expect(item(play, USER_ID)).toHaveFocus());
+                    play.keyboard("{Control>}x{/Control}");
+                    play.waitFor(() -> play.expect(item(play, USER_ID + ", detached")).toHaveClass(DETACHED));
+                    liftItem(play, tree, EVENT_TIME);
+                    play.waitFor(() -> play.expect(status).toHaveTextContent(USER_ID + " put back."));
+                    play.expect(play.querySelectorAll("." + DETACHED)).toHaveLength(0);
+
+                    // Released over nothing
+                    final Query runAsUser = item(play, "RunAsUser is Alice Anderson, disabled");
+                    play.fireEvent().mouseMove(runAsUser, EventInit.create().relativeTo(runAsUser, 250, 10).buttons(1));
+                    play.fireEvent().mouseUp(runAsUser, EventInit.create().relativeTo(runAsUser, 250, 10));
+                    expectEventTimeBack(play, tree);
+
+                    // Released over a term
+                    liftItem(play, tree, EVENT_TIME);
+                    final Query streamIds = item(play, "StreamId in 1,2,3");
+                    play.fireEvent().mouseMove(streamIds, EventInit.create().atCentreOf(streamIds).buttons(1));
+                    play.waitFor(() -> play.expect(item(play, "StreamId in 1,2,3")).toHaveClass(REFUSED));
+                    play.fireEvent().mouseUp(streamIds, EventInit.create().atCentreOf(streamIds));
+                    expectEventTimeBack(play, tree);
+
+                    // Escape over an operator that would take it
+                    liftItem(play, tree, EVENT_TIME);
+                    final Query root = operator(play, "AND, 4");
+                    play.fireEvent().mouseMove(root, EventInit.create().atCentreOf(root).buttons(1));
+                    play.waitFor(() -> play.expect(operator(play, "AND, 4")).toHaveClass(TARGET));
+                    play.keyboard("{Escape}");
+                    expectEventTimeBack(play, tree);
+                    // Releasing after Escape doesn't drop it
+                    play.fireEvent().mouseUp(root, EventInit.create().atCentreOf(root));
+                    expectEventTimeBack(play, tree);
+
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
+                })
+                // A tree too wide for its pane: moving to an item off screen with the keyboard
+                // scrolls it into view, pressing on the background and dragging pans it, and dragging
+                // an item to the pane's edge scrolls it, so that an operator off screen can take it
+                .story("ScrollAndPan", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    final Play tree = play.within(play.getByRole("tree", "Expression"));
+                    // The background, which the pointer is over between the items (the tree's, not
+                    // that of the copy of what is dragged)
+                    final Query background = play.querySelector(
+                            ".treePanel-panel:not([aria-hidden='true']) > .treePanel-canvas");
+                    final Query pane = play.querySelector(".dock-max");
+                    play.run("narrow the tree's pane, so that it scrolls",
+                            () -> pane.element().get().getStyle().setProperty("width", "200px"));
+                    play.waitFor(() -> play.expect("the pane's scrollable width",
+                            () -> scrollLeftMax(pane)).toBeGreaterThan(400));
+
+                    // Moving to Description contains test, off screen, scrolls all of it into view
+                    play.run("focus the toolbar's last button",
+                            () -> play.getByTitle("Delete Selected Expression Item").element().get().focus());
+                    play.keyboard("{Tab}{ArrowRight}{ArrowDown}{ArrowRight}{ArrowDown}{ArrowRight}");
+                    play.waitFor(() -> play.expect(item(play, "Feed is TEST_FEED")).toHaveFocus());
+                    play.keyboard("{End}{ArrowRight}");
+                    final Query description = item(play, "Description contains test");
+                    play.waitFor(() -> play.expect(description).toHaveFocus());
+                    play.waitFor(() -> play.expect("its right beyond the pane's",
+                            () -> description.right().get() - pane.right().get()).toBeLessThanOrEqual(0));
+
+                    // Pressing on the background and dragging pans it, and selects nothing
+                    play.run("scroll the pane", () -> pane.element().get().setScrollLeft(200));
+                    // On the last row, right of RunAsUser (relative to the pane, which doesn't move)
+                    play.fireEvent().mouseDown(background, EventInit.create().relativeTo(pane, 100, 212).buttons(1));
+                    play.fireEvent().mouseMove(background, EventInit.create().relativeTo(pane, 175, 212).buttons(1));
+                    play.fireEvent().mouseMove(background, EventInit.create().relativeTo(pane, 250, 212).buttons(1));
+                    play.fireEvent().mouseUp(background, EventInit.create().relativeTo(pane, 250, 212));
+                    play.expect("the pane's scroll", () -> scrollLeft(pane)).toBe(50.0);
+                    play.expect(item(play, "Description contains test")).toHaveAttribute("aria-selected", "true");
+
+                    // Dragging an item to the pane's left edge scrolls it back, as far as the tree goes,
+                    // so that an operator off screen can take it
+                    play.run("scroll the pane", () -> pane.element().get().setScrollLeft(300));
+                    liftItem(play, tree, "Description contains test");
+                    play.fireEvent().mouseMove(background, EventInit.create().relativeTo(pane, 5, 60).buttons(1));
+                    play.waitFor(() -> play.expect("the pane's scroll", () -> scrollLeft(pane)).toBe(0.0));
+                    // The disabled NOT, off screen before, takes it
+                    final Query not = item(play, "NOT, 1 item, disabled");
+                    play.fireEvent().mouseMove(not, EventInit.create().atCentreOf(not).buttons(1));
+                    play.waitFor(() -> play.expect(item(play, "NOT, 1 item, disabled")).toHaveClass(TARGET));
+                    play.fireEvent().mouseUp(not, EventInit.create().atCentreOf(not));
+                    play.waitFor(() -> play.expect(tree.queryByText("Description contains test")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(operator(play, "Description contains test"))
+                            .toHaveAttribute("aria-level", "3"));
+                    play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled());
                 })
                 // A new, empty expression (just the root AND)
                 .story("NewExpression", context -> editor(context, emptyExpression(), false))
@@ -468,6 +741,37 @@ public final class ExpressionBuilderStories {
     // An item of the expression tree, by its name
     private static Query item(final Play play, final String name) {
         return play.getByRole("treeitem", TextMatch.exact(name));
+    }
+
+    // An operator of the expression tree, by the start of its name (which says how many items it
+    // has, and whether it can take an item being moved)
+    private static Query operator(final Play play, final String start) {
+        return play.getByRole("treeitem", TextMatch.startingWith(start));
+    }
+
+    // Presses on an item (by the start of its name) and moves past the drag threshold, lifting it
+    // out of the tree
+    private static void liftItem(final Play play, final Play tree, final String name) {
+        final Query item = play.getByRole("treeitem", TextMatch.startingWith(name));
+        play.fireEvent().mouseDown(item, EventInit.create().atCentreOf(item).buttons(1));
+        play.fireEvent().mouseMove(item, EventInit.create().relativeTo(item, 60, 40).buttons(1));
+        play.waitFor(() -> play.expect(tree.queryByText(name)).toBeNull());
+    }
+
+    // EventTime is back where it was, the OR's first item, with nothing marked
+    private static void expectEventTimeBack(final Play play, final Play tree) {
+        play.waitFor(() -> play.expect(tree.queryByText(EVENT_TIME)).toBeInTheDocument());
+        play.waitFor(() -> play.expect(item(play, EVENT_TIME)).toHaveAttribute("aria-level", "3"));
+        play.expect(item(play, EVENT_TIME)).toHaveAttribute("aria-posinset", "1");
+        play.expect(play.querySelectorAll(MARKED)).toHaveLength(0);
+    }
+
+    private static double scrollLeft(final Query element) {
+        return element.element().get().getScrollLeft();
+    }
+
+    private static double scrollLeftMax(final Query element) {
+        return element.element().get().getScrollWidth() - element.element().get().getClientWidth();
     }
 
     private static ExpressionOperator emptyExpression() {

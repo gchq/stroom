@@ -115,7 +115,8 @@
     --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
     --expression-item-box__background-color--disabled: #333;
     --expression-item-box__text-color--disabled: #a6a6a6;
-    --expression-item-box__background-color--hotspot: var(--row__background-color--selected--hovered);
+    --expression-item-box__drop-target: var(--icon-colour__green);
+    --expression-item-box__drop-refused: var(--icon-colour__red);
 
     --pipeline-element__background-color: #454545;
     --pipeline-element__text-color: var(--text-color);
