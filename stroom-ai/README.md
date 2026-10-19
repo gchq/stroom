@@ -153,15 +153,22 @@ Some steps are the user's to take, such as enabling a processor filter. A truste
 can list them (`structuredContent.user_actions`, as FastMCP does), and the chat shows them as buttons in a
 _Steps for you_ card. The model can neither make nor click one.
 
-* Only four actions are shown: _Enable_ or _Disable_ a processor filter, _Open_ a document, and an
-  Elasticsearch request for the cluster admin. Anything else is dropped.
+* From an MCP server, only four actions are shown: _Enable_ or _Disable_ a processor filter, _Open_ a
+  document, and an Elasticsearch request for the cluster admin. Anything else is dropped.
+* Stroom's own tools add buttons that create documents or change what the user has open: _Create query…_,
+  _Create dashboard…_, _Apply to query_, _Apply to dashboard_ and _Review and apply_ (see _Attaching a tab_).
+  An MCP server can't offer these, even by naming them.
+* A proposed query is shown as a code block with a copy button. A proposed classic dashboard is shown as a
+  list of what its Query and Table will hold instead, as its StroomQL isn't what it will hold.
 * Stroom writes each button's text itself, from the filter as it is (pipeline, selection, task limit), and
   warns if the pipeline isn't tagged `mcp-generated`. The server's own wording is only shown for "Do first"
   conditions, as plain text.
 * When clicked, the step is checked again (the filter exists, is on that pipeline and still needs the
-  change), then done as the user, so their permissions apply. Each button works once, for 24 hours, only for
-  the chat's owner, and each click is audited (`AskStroomAi.userAction`). A note goes into the chat, so the
-  model knows on its next turn.
+  change), then done as the user, so their permissions apply. Each button works for 24 hours, only for the
+  chat's owner, and each click is audited (`AskStroomAi.userAction`). A button that changes something works
+  once, and a note goes into the chat, so the model knows on its next turn. _Open_ and the create buttons
+  change nothing themselves (the user creates the document in Stroom's dialog), so they can be used again,
+  e.g. after the dialog was cancelled.
 * An Elasticsearch request is shown read-only, with a copy button, only if it is `PUT _index_template/<name>`,
   `DELETE _data_stream/<index>` or `DELETE <index>` (no wildcards, lists or `_all`), for an index of an
   Elastic Index document used by a pipeline in the same result. Stroom never runs it.
@@ -255,7 +262,8 @@ _Steps for you_ card. The model can neither make nor click one.
   the model told to carry on from its steps. A reply cut off as the window filled up isn't taken as the
   answer: room is made and the model is told to carry on.
 * A rate limit (HTTP 429) is never taken as the context being too large, even if it mentions tokens. The
-  request detail of an attempt that overflowed shows what the model said.
+  _Request detail_ entry of an attempt that overflowed (with _Show request detail_ on) shows what the model
+  said.
 * The agent has memory: the user's own (`/memories/`, loaded into every chat) and the chat's
   (`/memories/session/`). Changes to the user's memory from a chat that has read tool output or data need
   the user's approval. Users view, edit and undo changes in **Memory**.
@@ -300,6 +308,10 @@ Query or New Dashboard dialog with a suggested name. Nothing is created unless t
 which checks their permission to create the document in the folder they choose and logs it as any new
 document is logged.
 
+Once created, the new document opens and is attached to the chat in place of any tab attached before, so
+the user can carry on with it there, e.g. asking the agent to refine it (with _Apply to query_ or _Apply to
+dashboard_).
+
 * _Create query…_: a StroomQL Query holding the agent's query.
 * _Create dashboard…_: a dashboard built from a StroomQL query the agent writes, with a query, a table and,
   if the user wants one, a data preview (a Text widget showing the event of the selected row). Before
@@ -313,9 +325,12 @@ document is logged.
   A StroomQL dashboard holds the query in an Embedded Query, which shows its own table. For a classic
   dashboard, Stroom turns the query's `where` into the Query's expression, and its `select` (with grouping,
   sorting and `limit`) into the Table's columns, extracting values with the data source's default extraction
-  pipeline. A classic dashboard can't hold StroomQL's `window`, `filter`, `having` or `show` clauses, and a
-  data preview needs ungrouped rows; the agent is told why when either doesn't fit. The settings are built
-  again from the query when the button is clicked, so they follow the data source as it is then.
+  pipeline; the button's card then lists what the Query and Table will hold (the expression in words, the
+  columns, grouping, sorting and row limit) rather than the StroomQL they come from, while a StroomQL
+  dashboard's card shows its query. A classic dashboard can't hold StroomQL's `window`, `filter`, `having`
+  or `show` clauses, and a data preview needs ungrouped rows; the agent is told why when either doesn't fit.
+  The settings are built again from the query when the button is clicked, so they follow the data source as
+  it is then.
 
 
 ## Attached tables

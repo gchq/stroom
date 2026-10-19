@@ -121,7 +121,7 @@ class TestUserActions {
             assertThat(action.details()).isEqualTo("Who logged on");
             assertThat(action.doc()).isEqualTo(view);
             assertThat(action.newDashboard()).isEqualTo(new UserActionRecord.NewDashboard(DashboardBuilder.CLASSIC,
-                    true));
+                    true, List.of("Query: User is 'jbloggs'", "Table columns: User")));
         });
         assertThat(userActions.check(null, List.of(createDashboard("d2", DashboardBuilder.STROOMQL, false)), NOW))
                 .singleElement()
@@ -548,7 +548,9 @@ class TestUserActions {
                                                        final boolean preview) {
         return Map.of("id", id, "action", UserActions.CREATE_DASHBOARD, "name", "Windows users",
                 "query", "from \"Windows events\" select User", "query_type", queryType, "preview", preview,
-                "description", "Who logged on");
+                "description", "Who logged on",
+                // Blank lines are dropped.
+                "outline", List.of("Query: User is 'jbloggs'", " ", "Table columns: User"));
     }
 
     private static Map<String, Object> dashboardChange(final String id) {

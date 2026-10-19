@@ -127,6 +127,12 @@ class TestDashboardBuilder {
         final TextComponentSettings text = (TextComponentSettings) components.get(2).getSettings();
         assertThat(text.getTableId()).isEqualTo(DashboardBuilder.TABLE_ID);
         assertThat(built.describe()).startsWith("A classic (expression) query and a table of 2 columns");
+        assertThat(built.outline()).containsExactly(
+                "Query: User is 'jbloggs', from View 'My View'",
+                "Table columns: EventTime, User",
+                "Sorted by: EventTime (descending)",
+                "At most 50 rows",
+                "A data preview of the selected row's event");
     }
 
     @Test
@@ -141,6 +147,11 @@ class TestDashboardBuilder {
         assertThat(table.getColumns().getFirst().getGroup()).isEqualTo(0);
         assertThat(built.grouped()).isTrue();
         assertThat(built.describe()).contains(", grouped");
+        // A query with no where selects everything.
+        assertThat(built.outline()).containsExactly(
+                "Query: everything, from View 'My View'",
+                "Table columns: User, Count",
+                "Grouped by: User");
     }
 
     @Test
@@ -160,6 +171,8 @@ class TestDashboardBuilder {
                 DashboardBuilder.STROOMQL, false);
 
         assertThat(built.columns()).containsExactly("User", "Count");
+        // The user is shown the StroomQL itself.
+        assertThat(built.outline()).isEmpty();
     }
 
     @Test

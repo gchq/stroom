@@ -352,6 +352,15 @@ public class UserActions {
         if (dataSource == null) {
             return Optional.empty();
         }
+        final List<String> outline = new ArrayList<>();
+        if (map.get("outline") instanceof final List<?> lines) {
+            for (final Object line : lines.subList(0, Math.min(lines.size(), MAX_AFTER))) {
+                final String text = string(line);
+                if (text != null && !text.isBlank()) {
+                    outline.add(truncate(text.strip(), MAX_DETAILS_CHARS));
+                }
+            }
+        }
         final String description = NullSafe.get(string(map.get("description")), String::strip);
         final String label = "Create dashboard '" + name + "', reading " + dataSource.getType() + " '"
                              + dataSource.getName() + "', with "
@@ -366,7 +375,7 @@ public class UserActions {
                         ? null
                         : truncate(description, MAX_DETAILS_CHARS),
                 null, null, dataSource, query, List.of(), expiresMs, Status.PENDING, null, name, null, null,
-                new UserActionRecord.NewDashboard(queryType, preview)));
+                new UserActionRecord.NewDashboard(queryType, preview, List.copyOf(outline))));
     }
 
     /// A button that opens a review of a change to a stepping element's code, for an element whose document exists

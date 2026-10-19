@@ -31,9 +31,11 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
+import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableSettings;
 import stroom.query.common.v2.ExpressionContextFactory;
@@ -48,6 +50,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -221,7 +224,53 @@ public class DashboardBuilder {
                 .designMode(false)
                 .modelVersion(DASHBOARD_MODEL_VERSION)
                 .build();
-        return new Built(config, dataSource, type, columnNames, grouped, preview);
+        final List<String> outline = CLASSIC.equals(type)
+                ? classicOutline(dataSource, mapped.getQuery().getExpression(), columns, table.getMaxResults(),
+                preview)
+                : List.of();
+        return new Built(config, dataSource, type, columnNames, grouped, preview, outline);
+    }
+
+    /// @return A classic dashboard in plain words, as its Query and Table hold it, for the user to see before they
+    /// create it: what the query selects, the table's columns, grouping and sorting, and how many rows it shows.
+    static List<String> classicOutline(final DocRef dataSource,
+                                       final ExpressionOperator expression,
+                                       final List<Column> columns,
+                                       final List<Long> maxResults,
+                                       final boolean preview) {
+        final List<String> outline = new ArrayList<>();
+        outline.add("Query: " + NullSafe.nonBlankStringElse(ExpressionDescriber.describe(expression),
+                "everything") + ", from " + dataSource.getType() + " '" + dataSource.getName() + "'");
+        outline.add("Table columns: " + String.join(", ", columns.stream()
+                .filter(Column::isVisible)
+                .map(Column::getName)
+                .toList()));
+        final List<String> groups = columns.stream()
+                .filter(column -> column.getGroup() != null)
+                .sorted(Comparator.comparing(Column::getGroup))
+                .map(Column::getName)
+                .toList();
+        if (!groups.isEmpty()) {
+            outline.add("Grouped by: " + String.join(", ", groups));
+        }
+        final List<String> sorts = columns.stream()
+                .filter(column -> column.getSort() != null)
+                .sorted(Comparator.comparing(column -> Objects.requireNonNullElse(column.getSort().getOrder(), 0)))
+                .map(column -> column.getName() + " (" + (column.getSort().getDirection() == SortDirection.DESCENDING
+                        ? "descending"
+                        : "ascending") + ")")
+                .toList();
+        if (!sorts.isEmpty()) {
+            outline.add("Sorted by: " + String.join(", ", sorts));
+        }
+        final Long limit = NullSafe.list(maxResults).stream().findFirst().orElse(null);
+        if (limit != null) {
+            outline.add("At most " + limit + " rows");
+        }
+        if (preview) {
+            outline.add("A data preview of the selected row's event");
+        }
+        return List.copyOf(outline);
     }
 
     private SearchRequest parse(final String query) {
@@ -279,12 +328,15 @@ public class DashboardBuilder {
     /// @param columns    The names of the table's visible columns.
     /// @param grouped    True if the table groups rows.
     /// @param preview    True if it has a data preview.
+    /// @param outline    For a classic dashboard, what its Query and Table hold, in plain words, as the user is
+    ///                   shown it in place of the StroomQL it was built from; empty for StroomQL.
     public record Built(DashboardConfig config,
                         DocRef dataSource,
                         String queryType,
                         List<String> columns,
                         boolean grouped,
-                        boolean preview) {
+                        boolean preview,
+                        List<String> outline) {
 
         /// @return What the dashboard holds, in a sentence, e.g. "A classic query and a table of 3 columns (EventTime,
         /// User, Action), with a data preview".

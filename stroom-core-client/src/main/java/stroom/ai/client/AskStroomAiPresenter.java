@@ -400,6 +400,10 @@ public class AskStroomAiPresenter
     // The tab the user has attached to each chat, by chat id (NEW_CHAT_KEY before the chat is made). It stays
     // attached, whichever tab the user is on, until they remove it or close it.
     private final Map<Integer, TabData> attachedTabs = new HashMap<>();
+    // A document the user has just created with a button in a chat, which is attached to that chat (by its key) once
+    // its tab opens, so they can carry on asking about it.
+    private DocRef attachWhenOpened;
+    private int attachWhenOpenedChatKey;
     // The tab whose unsaved state is followed, to keep its chip up to date, and the handler that follows it.
     private TabData followedTab;
     private HandlerRegistration followedTabDirtyRegistration;
@@ -2384,7 +2388,20 @@ public class AskStroomAiPresenter
                 dashboardChangeRow(row, messageId, json, status, pending);
                 return;
             }
-            if (UserActionsUi.showsCode(action) && NullSafe.isNonBlankString(request)) {
+            // A classic dashboard is shown as what Stroom builds from the StroomQL, rather than the StroomQL.
+            final JSONArray outline = UserActionsUi.CREATE_DASHBOARD.equals(action)
+                    ? AiToolMessages.getArray(AiToolMessages.getString(json, "newDashboard"), "outline")
+                    : null;
+            if (outline != null && outline.size() > 0) {
+                row.div(list -> {
+                    for (int i = 0; i < outline.size(); i++) {
+                        final JSONString item = outline.get(i).isString();
+                        if (item != null) {
+                            list.div("• " + item.stringValue());
+                        }
+                    }
+                }, Attribute.className("ai-user-action-details"));
+            } else if (UserActionsUi.showsCode(action) && NullSafe.isNonBlankString(request)) {
                 // An Elasticsearch request is shown for the cluster admin to copy, and Stroom never runs it. A
                 // proposed query is shown before the user creates it.
                 row.elem(pre -> pre.code(code -> code.append(request),
@@ -2828,7 +2845,7 @@ public class AskStroomAiPresenter
                 newNode -> {
                     final DocRef docRef = newNode.getDocRef();
                     askStroomAiClient.setQueryText(docRef, queryText,
-                            doc -> OpenDocumentEvent.fire(this, docRef, true),
+                            doc -> openCreatedDocument(docRef),
                             error -> showError(error, "Unable to put the query in " + docRef.getName(), null),
                             getView());
                 });
@@ -2848,10 +2865,18 @@ public class AskStroomAiPresenter
                 newNode -> {
                     final DocRef docRef = newNode.getDocRef();
                     askStroomAiClient.setDashboardConfig(docRef, config,
-                            doc -> OpenDocumentEvent.fire(this, docRef, true),
+                            doc -> openCreatedDocument(docRef),
                             error -> showError(error, "Unable to set up " + docRef.getName(), null),
                             getView());
                 });
+    }
+
+    /// Opens a document the user has just created with a button in the chat, and attaches its tab to the chat once
+    /// it opens, in place of any tab attached before.
+    private void openCreatedDocument(final DocRef docRef) {
+        attachWhenOpened = docRef;
+        attachWhenOpenedChatKey = chatKey();
+        OpenDocumentEvent.fire(this, docRef, true);
     }
 
     private void showUserActionStatus(final int messageId,
@@ -4686,6 +4711,19 @@ public class AskStroomAiPresenter
         currentTab = tabData instanceof AiTabSnapshotProvider && tabData instanceof DocumentTabData
                 ? tabData
                 : null;
+        if (attachWhenOpened != null
+            && currentTab instanceof final DocumentTabData documentTab
+            && attachWhenOpened.equals(documentTab.getDocRef())) {
+            // The document the user just created from the chat has opened.
+            attachWhenOpened = null;
+            attachedTabs.put(attachWhenOpenedChatKey, currentTab);
+            refreshAttachmentList();
+            if (attachWhenOpenedChatKey == chatKey()) {
+                // What can be done with it now, e.g. refining it from the chat.
+                offerAttachedSuggestions(true);
+            }
+            return;
+        }
         refreshAttachmentList();
     }
 
