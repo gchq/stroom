@@ -2004,6 +2004,14 @@ public class AskStroomAiPresenter
                 }
             }, Attribute.className("ai-context-details-parts"));
         }
+        if (usage.getShortenedParts() > 0) {
+            // The figure is what the model was last sent, which is less than the parts below, as stored.
+            hb.div(note -> note.append("To fit, the agent has shortened " + usage.getShortenedParts()
+                                       + " earlier step(s) or result(s) of this answer; they are still stored, "
+                                       + "and the agent can read them again. The parts above are as stored, "
+                                       + "before shortening."),
+                    Attribute.className("ai-context-details-note"));
+        }
         hb.div(note -> note.append("Earlier messages are compacted automatically at " + compactAt + "%."),
                 Attribute.className("ai-context-details-note"));
         hb.div(note -> note.append("Click to compact now."), Attribute.className("ai-context-details-note"));

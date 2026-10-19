@@ -250,6 +250,8 @@ class McpAgentChat {
                                        final int steerAfterMessageId,
                                        final ContextBudget budget) {
         final SteerFeed steerFeed = new SteerFeed(chatId, steerAfterMessageId);
+        // What this run shortens is counted afresh, as it starts from the stored chat.
+        usageTracker.resetShortened(chatId);
         // Anything in the chat that came from tools or Stroom data could hold planted instructions.
         if (aiService.getMessages(chatId).stream()
                 .anyMatch(m -> UNTRUSTED_MESSAGE_TYPES.contains(m.getMessageType()))) {
@@ -361,7 +363,7 @@ class McpAgentChat {
                         conversation.add(AiMessage.from(aiMessage.text()));
                     }
                     conversation.add(UserMessage.from(CUT_OFF_NOTE));
-                    shrink(conversation);
+                    usageTracker.recordShortened(chatId, shrink(conversation));
                     continue;
                 }
                 // If the user added something while the model worked, carry on with it.
@@ -740,6 +742,7 @@ class McpAgentChat {
                 if (shortened == 0) {
                     throw e;
                 }
+                usageTracker.recordShortened(chatId, shortened);
                 fitToBudget(conversation, tools, chatId, budget);
                 LOGGER.info(() -> "The request for chatId=" + chatId + " was too large for the context window ("
                                   + (size.isPresent()
@@ -763,6 +766,7 @@ class McpAgentChat {
             }
             shortened += step;
         }
+        usageTracker.recordShortened(chatId, shortened);
         if (shortened > 0) {
             final int total = shortened;
             LOGGER.debug(() -> "Shortened " + total + " part(s) of chatId=" + chatId
