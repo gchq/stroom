@@ -36,6 +36,8 @@ class ReadFileTool extends AbstractWorkspaceTool {
     static final String START_ARG = "startLine";
     static final String COUNT_ARG = "lineCount";
     static final int DEFAULT_LINES = 100;
+    /// Room left in a read for a line's number and the note saying it was cut short.
+    static final int LINE_NUMBER_ROOM = 100;
 
     @Inject
     ReadFileTool(final ChatWorkspace workspace) {
@@ -46,9 +48,10 @@ class ReadFileTool extends AbstractWorkspaceTool {
     public ToolSpecification specification() {
         return ToolSpecification.builder()
                 .name(NAME)
-                .description("Reads lines of a workspace file, numbered from 1. Give startLine to start part way "
-                             + "through, or a negative startLine to read from the end (-20 reads the last 20 "
-                             + "lines). Read large files a part at a time, or use grep to find what you need.")
+                .description("Reads lines of a workspace file, numbered from 1, each in full. Give startLine to "
+                             + "start part way through, or a negative startLine to read from the end (-20 reads "
+                             + "the last 20 lines). Read large files a part at a time, or use grep to find what "
+                             + "you need.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(PATH_ARG, "The file, e.g. /outputs/result.csv.")
                         .addIntegerProperty(START_ARG, "The first line to read (default 1), or negative to count "
@@ -74,12 +77,16 @@ class ReadFileTool extends AbstractWorkspaceTool {
             return path + " has " + total + " lines, so there is nothing from line " + (from + 1) + ".";
         }
         final List<String> lines = workspace.readLines(chatId, path, from, count);
+        // Lines are shown in full, however long, so code can be copied exactly; only a line too long for a whole
+        // read is cut short.
+        final int maxChars = limits().getMaxCharsPerRead();
+        final int lineLimit = Math.max(LINE_NUMBER_ROOM, maxChars - LINE_NUMBER_ROOM);
         final StringBuilder sb = new StringBuilder();
         long lineNo = from + 1;
         int shown = 0;
         for (final String line : lines) {
-            final String numbered = String.format("%6d\t%s%n", lineNo, shortenLine(line));
-            if (sb.length() + numbered.length() > limits().getMaxCharsPerRead()) {
+            final String numbered = String.format("%6d\t%s%n", lineNo, shortenLine(line, lineLimit));
+            if (shown > 0 && sb.length() + numbered.length() > maxChars) {
                 break;
             }
             sb.append(numbered);

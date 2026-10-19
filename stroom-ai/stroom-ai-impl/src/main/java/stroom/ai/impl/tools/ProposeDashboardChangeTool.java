@@ -56,7 +56,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/// `propose_dashboard_change` - offers the user a change to a table on the dashboard in their active tab (group or
+/// `propose_dashboard_change` - offers the user a change to a table on the dashboard in their attached tab (group or
 /// ungroup, add, edit, hide or show a column, sort, or filter a column), shown as a plain-language list with an
 /// "Apply to dashboard" button. It changes nothing itself: the button applies the change to the open dashboard
 /// through the same code its column menus use, as an unsaved edit (which needs Edit on the dashboard, checked when
@@ -79,8 +79,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     /// The most fields read to check a column expression's fields.
     static final int MAX_FIELDS = 10_000;
 
-    static final String NOT_DASHBOARD = "The user's active tab isn't a dashboard, so no change was proposed. Ask the "
-                                        + "user to open the dashboard, then ask again.";
+    static final String NOT_DASHBOARD = "No dashboard tab is attached to the chat, so no change was proposed. Ask the "
+                                        + "user to open the dashboard and attach its tab (+ by the chat's input), then "
+                                        + "ask again.";
 
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
 
@@ -127,7 +128,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                 .build();
         return ToolSpecification.builder()
                 .name(NAME)
-                .description("While the user's active tab is a dashboard, proposes a change to one of its tables: "
+                .description("While the tab the user attached is a dashboard, proposes a change to one of its tables: "
                              + "group or ungroup, add_column, edit_column, hide_column, show_column, sort, or "
                              + "filter, applied in order. The user is shown the changes with an 'Apply to "
                              + "dashboard' button; nothing changes until they click it, and it is never saved. "

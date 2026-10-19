@@ -41,8 +41,10 @@ final class AiAttachments {
     static final String OPEN_DOC_TYPE_ATTRIBUTE = "data-open-doc-type";
     static final String OPEN_DOC_UUID_ATTRIBUTE = "data-open-doc-uuid";
 
-    /// The attribute of the active tab chip's remove button, which stops sharing the tab.
-    static final String REMOVE_TAB_ATTRIBUTE = "data-remove-active-tab";
+    /// The attribute of the attached tab chip's remove button, which removes the tab from the chat.
+    static final String REMOVE_TAB_ATTRIBUTE = "data-remove-attached-tab";
+    /// The attribute of the button that attaches the tab the user is on to the chat.
+    static final String ATTACH_TAB_ATTRIBUTE = "data-attach-tab";
 
     private static final String CHIP_ID_PREFIX = "ai-attachment-";
     private static final String DASHBOARD_PREFIX = "Dashboard '";
@@ -280,8 +282,8 @@ final class AiAttachments {
                         attachment.getDocPath())));
     }
 
-    /// Adds the chip of the active tab, which is shared with the next question: its icon, what it says (e.g.
-    /// "Tab: Event translation (unsaved)") and a button that stops sharing it.
+    /// Adds the chip of the tab attached to the chat, which is shared with each question: its icon, what it says
+    /// (e.g. "Tab: Event translation (unsaved)") and a button that removes it from the chat.
     ///
     /// @param hb      Where to add it.
     /// @param icon    The tab's icon, or null.
@@ -301,8 +303,32 @@ final class AiAttachments {
                             Attribute.className("svg-image " + SvgImage.CLOSE.getClassName() + " face")),
                     SafeHtmlUtils.fromSafeConstant("button"),
                     Attribute.className("ai-attachment-chip-remove icon-button"),
-                    Attribute.title("Stop sharing this tab"),
+                    Attribute.title("Remove this tab from the chat"),
                     new Attribute(REMOVE_TAB_ATTRIBUTE, "true"));
         }, Attribute.className("ai-attachment-chip ai-attachment-chip--tab"), Attribute.title(tooltip));
+    }
+
+    /// Adds a button that attaches the tab the user is on to the chat: a plus, the tab's icon and what it says
+    /// (e.g. "Event translation").
+    ///
+    /// @param hb      Where to add it.
+    /// @param icon    The tab's icon, or null.
+    /// @param text    What the button says.
+    /// @param tooltip The button's tooltip.
+    static void attachTabChip(final HtmlBuilder hb, final SvgImage icon, final String text, final String tooltip) {
+        final SvgImage image = icon != null
+                ? icon
+                : SvgImage.FILE;
+        hb.elem(button -> {
+            button.div(div -> div.appendTrustedString(SvgImage.ADD.getSvg()),
+                    Attribute.className("svg-image " + SvgImage.ADD.getClassName() + " face ai-attach-tab-plus"));
+            button.div(box -> box.div(div -> div.appendTrustedString(image.getSvg()),
+                            Attribute.className("svg-image " + image.getClassName() + " face")),
+                    Attribute.className("ai-attachment-chip-icon"));
+            button.span(text, Attribute.className("ai-attachment-chip-label"));
+        }, SafeHtmlUtils.fromSafeConstant("button"),
+                Attribute.className("allow-focus ai-attachment-chip ai-attachment-chip--attach-tab"),
+                Attribute.title(tooltip),
+                new Attribute(ATTACH_TAB_ATTRIBUTE, "true"));
     }
 }

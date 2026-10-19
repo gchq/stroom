@@ -39,7 +39,7 @@ public enum AiAttachmentType implements HasPrimitiveValue {
     /// A Stroom document the user attached to the chat as a reference, from the Explorer tree. It has no content
     /// of its own: the agent reads the document with its document tools.
     DOCUMENT(5),
-    /// What the user saw in their active tab when they sent a question (unsaved changes included): a record of the
+    /// What the user saw in their attached tab when they sent a question (unsaved changes included): a record of the
     /// snapshot, and its parts as files under `/tabs/<id>/`. Kept with the chat like attachments.
     TAB_SNAPSHOT(6);
 

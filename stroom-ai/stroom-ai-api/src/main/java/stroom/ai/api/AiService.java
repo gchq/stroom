@@ -35,6 +35,7 @@ import dev.langchain4j.model.scoring.ScoringModel;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface AiService {
 
@@ -129,6 +130,28 @@ public interface AiService {
     /// @param messageId The message.
     /// @param question  The question's text.
     void askAsQuestion(int messageId, String question);
+
+    /// Changes a message's type, if it is one of the given types, e.g. to deliver a queued steering message.
+    ///
+    /// @param chatId    The chat the message must belong to.
+    /// @param messageId The message.
+    /// @param from      The types it may have now.
+    /// @param to        The type it is to have.
+    /// @return True if it was changed, false if the chat has no such message of those types.
+    boolean changeMessageType(int chatId, int messageId, Set<AiMessageType> from, AiMessageType to);
+
+    /// Changes the type of all the chat's messages of the given types.
+    ///
+    /// @param chatId The chat.
+    /// @param from   The types to change.
+    /// @param to     The type they are to have.
+    /// @return How many were changed.
+    int changeMessageTypes(int chatId, Set<AiMessageType> from, AiMessageType to);
+
+    /// @param chatId The chat.
+    /// @param type   A message type.
+    /// @return True if the chat has a message of that type.
+    boolean hasMessageOfType(int chatId, AiMessageType type);
 
     void deleteMessage(int messageId);
 

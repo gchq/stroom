@@ -27,6 +27,7 @@ import stroom.util.json.JsonUtil;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.exception.HttpException;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -274,6 +275,12 @@ class TestChatCompactor {
                 new RuntimeException("wrapped", new IllegalStateException("prompt is too long")))).isTrue();
         assertThat(ChatCompactor.isContextOverflowError(new RuntimeException("connection refused"))).isFalse();
         assertThat(ChatCompactor.isContextOverflowError(new RuntimeException((String) null))).isFalse();
+        // A rate limit, or a message that only names a setting, isn't the request being too large.
+        assertThat(ChatCompactor.isContextOverflowError(new HttpException(429, "too many tokens per minute")))
+                .isFalse();
+        assertThat(ChatCompactor.isContextOverflowError(new HttpException(413, "payload"))).isTrue();
+        assertThat(ChatCompactor.isContextOverflowError(new RuntimeException("max_tokens must be at least 1")))
+                .isFalse();
     }
 
     @Test

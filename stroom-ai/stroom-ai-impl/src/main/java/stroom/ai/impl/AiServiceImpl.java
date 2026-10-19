@@ -90,6 +90,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Singleton
 public class AiServiceImpl implements AiService {
@@ -657,6 +658,27 @@ public class AiServiceImpl implements AiService {
     @Override
     public void askAsQuestion(final int messageId, final String question) {
         aiDao.askAsQuestion(messageId, question);
+    }
+
+    // No ownership check — internal-only, called from background processing.
+    @Override
+    public boolean changeMessageType(final int chatId,
+                                     final int messageId,
+                                     final Set<AiMessageType> from,
+                                     final AiMessageType to) {
+        return aiDao.changeMessageType(chatId, messageId, from, to);
+    }
+
+    // No ownership check — internal-only, called from background processing.
+    @Override
+    public int changeMessageTypes(final int chatId, final Set<AiMessageType> from, final AiMessageType to) {
+        return aiDao.changeMessageTypes(chatId, from, to);
+    }
+
+    // No ownership check — internal-only, called from background processing.
+    @Override
+    public boolean hasMessageOfType(final int chatId, final AiMessageType type) {
+        return aiDao.hasMessageOfType(chatId, type);
     }
 
     // No ownership check — internal-only, called from background processing.

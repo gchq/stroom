@@ -47,6 +47,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -288,6 +289,24 @@ public class MockAiService implements AiService {
     @Override
     public void askAsQuestion(final int messageId, final String question) {
 
+    }
+
+    @Override
+    public boolean changeMessageType(final int chatId,
+                                     final int messageId,
+                                     final Set<AiMessageType> from,
+                                     final AiMessageType to) {
+        return false;
+    }
+
+    @Override
+    public int changeMessageTypes(final int chatId, final Set<AiMessageType> from, final AiMessageType to) {
+        return 0;
+    }
+
+    @Override
+    public boolean hasMessageOfType(final int chatId, final AiMessageType type) {
+        return false;
     }
 
     @Override

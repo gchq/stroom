@@ -54,6 +54,7 @@ import stroom.query.impl.QueryService;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.UserRef;
 
 import org.junit.jupiter.api.Test;
@@ -63,6 +64,7 @@ import org.mockito.Mockito;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -418,12 +420,13 @@ class TestAskStroomAIService {
     void testAskStroomAi_steersAnActiveRun() {
         final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
         Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running));
-        Mockito.when(aiService.storeMessage(1, AiMessageType.STEER_MESSAGE, "also check yesterday"))
-                .thenReturn(message(9, AiMessageType.STEER_MESSAGE, "also check yesterday"));
+        Mockito.when(aiService.storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, "also check yesterday"))
+                .thenReturn(message(9, AiMessageType.QUEUED_STEER_MESSAGE, "also check yesterday"));
 
         service().askStroomAi(new AskStroomAiRequest(chat, null, null, "also check yesterday"));
 
-        Mockito.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, "also check yesterday");
+        // It waits for the run's current step to finish.
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, "also check yesterday");
         Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
     }
 
@@ -432,14 +435,34 @@ class TestAskStroomAIService {
         final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
         // Active when checked, but gone once the message has been stored.
         Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running), Optional.empty());
-        Mockito.when(aiService.storeMessage(1, AiMessageType.STEER_MESSAGE, "late"))
-                .thenReturn(message(9, AiMessageType.STEER_MESSAGE, "late"));
+        Mockito.when(aiService.storeMessage(1, AiMessageType.QUEUED_STEER_MESSAGE, "late"))
+                .thenReturn(message(9, AiMessageType.QUEUED_STEER_MESSAGE, "late"));
 
         service().askStroomAi(new AskStroomAiRequest(chat, null, null, "late"));
 
         // The steer is taken back and the message is asked as a new question.
         Mockito.verify(aiService).deleteMessage(9);
         Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testSendSteerNow_onlyAQueuedMessageOfTheChatIsSentNow() {
+        Mockito.when(aiService.changeMessageType(1, 9, Set.of(AiMessageType.QUEUED_STEER_MESSAGE),
+                AiMessageType.SEND_NOW_STEER_MESSAGE)).thenReturn(true);
+
+        assertThat(service().sendSteerNow(1, 9)).isTrue();
+        // One the run has already picked up, or not in the chat, isn't changed.
+        assertThat(service().sendSteerNow(1, 10)).isFalse();
+        Mockito.verify(aiService, Mockito.times(2)).verifyOwnership(1);
+    }
+
+    @Test
+    void testSendSteerNow_needsTheChatsOwner() {
+        Mockito.doThrow(new PermissionException(null, "Not yours")).when(aiService).verifyOwnership(1);
+
+        assertThatThrownBy(() -> service().sendSteerNow(1, 9)).isInstanceOf(PermissionException.class);
+        Mockito.verify(aiService, Mockito.never()).changeMessageType(Mockito.anyInt(), Mockito.anyInt(),
+                Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -799,16 +822,19 @@ class TestAskStroomAIService {
         Mockito.when(aiService.getAttachmentsByChatId(1)).thenReturn(List.of());
         Mockito.when(aiService.getWorkingMessage(1)).thenReturn(Optional.empty());
         Mockito.when(aiService.getMessagesSince(1, 9)).thenReturn(List.of());
-        // A form cancelled as the run stopped, and a message that isn't a form.
+        // A form cancelled as the run stopped, a steering message the run has picked up, and a message that is
+        // neither.
         final AiChatMessage cancelled = message(4, AiMessageType.ELICITATION, "{\"status\":\"CANCELLED\"}");
+        final AiChatMessage sent = message(5, AiMessageType.STEER_MESSAGE, "also fw2");
         Mockito.when(aiDao.getMessagesSince(1, 3)).thenReturn(List.of(
                 cancelled,
+                sent,
                 message(6, AiMessageType.TOOL_RESULT, "secret")));
 
         final AiChatPollResponse response = service().pollMessages(1,
-                new AiChatPollRequest(9, false, List.of(4, 6)));
+                new AiChatPollRequest(9, false, List.of(4, 5, 6)));
 
-        assertThat(response.getWatchedMessages()).containsExactly(cancelled);
+        assertThat(response.getWatchedMessages()).containsExactly(cancelled, sent);
         // Nothing watched, nothing looked up.
         assertThat(service().pollMessages(1, new AiChatPollRequest(9, false, List.of())).getWatchedMessages())
                 .isNull();

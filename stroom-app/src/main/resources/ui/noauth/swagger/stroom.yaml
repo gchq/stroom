@@ -960,6 +960,33 @@ paths:
         \ them, most recently active first"
       tags:
       - AI
+  /ai/v1/sendSteerNow/{chatId}/{messageId}:
+    post:
+      operationId: sendSteerNow
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: messageId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Send a message waiting for an AI chat's run to finish its current step
+        now
+      tags:
+      - AI
   /ai/v1/setAgentMode/{chatId}/{mode}:
     put:
       operationId: setAiAgentMode
@@ -11361,6 +11388,8 @@ components:
           - SUGGESTIONS
           - TASK_LIST
           - INTERIM_RESPONSE
+          - QUEUED_STEER_MESSAGE
+          - SEND_NOW_STEER_MESSAGE
         tokenCount:
           type: integer
           format: int32
@@ -14879,6 +14908,8 @@ components:
         messageId:
           type: integer
           format: int32
+        tabSnapshot:
+          $ref: "#/components/schemas/AiTabSnapshot"
     ElasticClusterDoc:
       type: object
       properties:

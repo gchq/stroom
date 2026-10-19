@@ -133,7 +133,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         return result + savedVersionNote(chatId, docRef);
     }
 
-    // For a document that is the user's active tab with unsaved changes, a note that what was read is as saved,
+    // For a document that is the tab the user attached with unsaved changes, a note that what was read is as saved,
     // and where the tab's content as edited is.
     private String savedVersionNote(final int chatId, final DocRef docRef) {
         if (tabSnapshots == null) {
@@ -143,7 +143,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                 .filter(TabSnapshots.StoredTabSnapshot::dirty)
                 .filter(snapshot -> snapshot.docRef() != null
                                     && docRef.getUuid().equals(snapshot.docRef().getUuid()))
-                .map(snapshot -> "\n\nThis is the document as saved. It is the user's active tab, with unsaved "
+                .map(snapshot -> "\n\nThis is the document as saved. It is the tab the user attached, with unsaved "
                                  + "changes: its content as edited is in /tabs/" + snapshot.number() + "/.")
                 .orElse("");
     }
@@ -209,7 +209,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
             return "A dictionary has no part '" + part + "'. Leave part out for its words combined with its "
                    + "imports', or give part 'own' for only its own words.";
         }
-        // While the dictionary is the user's active tab with unsaved changes, its own words are as edited there.
+        // While the dictionary is the tab the user attached with unsaved changes, its own words are as edited there.
         final UnsavedPart unsaved = NullSafe.get(tabSnapshots, snapshots ->
                 snapshots.unsavedPart(chatId, docRef, AiTabSnapshotPart.DATA).orElse(null));
         final boolean useUnsaved = unsaved != null && !unsaved.cut();
@@ -219,11 +219,11 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         final StringBuilder sb = new StringBuilder(describe(docRef)).append(", ")
                 .append(documentAccess.path(docRef)).append(".\n");
         if (useUnsaved) {
-            sb.append("It is the user's active tab, with unsaved changes: its own words are as edited there (")
+            sb.append("It is the tab the user attached, with unsaved changes: its own words are as edited there (")
                     .append(unsaved.path()).append("), not as saved. The words of the dictionaries it imports are "
                                                + "as saved.\n");
         } else if (unsaved != null) {
-            sb.append("It is the user's active tab, with unsaved changes, but its words as edited were too many "
+            sb.append("It is the tab the user attached, with unsaved changes, but its words as edited were too many "
                       + "to share, so its words as saved are used. Say so.\n");
         }
         if (part != null) {

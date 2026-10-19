@@ -240,8 +240,18 @@ class TestWorkspaceTools {
                 .filter(line -> line.matches("\\s*\\d+\\t.*"))
                 .count()).isLessThanOrEqualTo(10);
         aiConfig = new AiConfig();
+        // A long line is shown in full, so it can be copied exactly; grep cuts it short and says so.
         assertThat(run(new ReadFileTool(workspace), "{\"path\":\"/outputs/long.txt\"}"))
-                .contains("… (3000 more characters)");
+                .contains("x".repeat(5_000))
+                .doesNotContain("more characters");
+        assertThat(run(new GrepTool(workspace), "{\"pattern\":\"x\",\"path\":\"/outputs/long.txt\"}"))
+                .contains("… (3000 more characters) (read_file shows the whole line)");
+        // Only a line too long for a whole read is cut short.
+        workspace.write(chatId, WorkspacePath.parse("/outputs/huge.txt"), "y".repeat(30_000) + "\nz\n", null);
+        assertThat(run(new ReadFileTool(workspace), "{\"path\":\"/outputs/huge.txt\"}"))
+                .contains("… (10100 more characters)")
+                .contains("     2\tz")
+                .hasSizeLessThan(20_200);
     }
 
     @Test

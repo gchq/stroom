@@ -57,7 +57,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What the user saw in their active tab when they asked a question (unsaved changes included), kept with the
+/// What the user saw in their attached tab when they asked a question (unsaved changes included), kept with the
 /// chat. Each snapshot is a folder of workspace files, `/tabs/<n>/`: one for each of its text parts (e.g.
 /// `code.xsl`, `query.sql`), the search requests behind any tables of results it shows (`searches.json`), and a
 /// record of it all (`snapshot.json`), whose file id is recorded on the question it was sent with.
@@ -114,12 +114,12 @@ public class TabSnapshots {
         this.aiConfigProvider = aiConfigProvider;
     }
 
-    /// @return True if an administrator allows the user's active tab to be shared with their questions.
+    /// @return True if an administrator allows the tab the user attached to be shared with their questions.
     public boolean isEnabled() {
         return NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::isShareActiveTab, true);
     }
 
-    /// Keeps what the user saw in their active tab when they asked a question, if they can view the document it
+    /// Keeps what the user saw in their attached tab when they asked a question, if they can view the document it
     /// shows. If it hasn't changed since the chat's last snapshot, or only its hash was sent and that matches the
     /// last snapshot, the last snapshot is used again. Each time, the document is logged as viewed.
     ///
@@ -227,7 +227,7 @@ public class TabSnapshots {
     /// longer view the document, it says only that the tab is no longer available.
     public String note(final int chatId, final StoredTabSnapshot snapshot) {
         if (snapshot.docRef() == null || !documentAccess.canView(snapshot.docRef())) {
-            return "[The user's active tab is no longer available (the user may no longer view it). Do not guess "
+            return "[The tab the user attached is no longer available (the user may no longer view it). Do not guess "
                    + "what it held.]";
         }
         return note(snapshot, part -> readPart(chatId, part));
@@ -239,7 +239,7 @@ public class TabSnapshots {
     static String note(final StoredTabSnapshot snapshot,
                        final Function<StoredPart, Optional<String>> reader) {
         final DocRef docRef = snapshot.docRef();
-        final StringBuilder sb = new StringBuilder("[Active tab: ")
+        final StringBuilder sb = new StringBuilder("[Attached tab: ")
                 .append(DocumentReferenceContext.describe(docRef));
         if (snapshot.dirty()) {
             sb.append(" (unsaved changes)");
@@ -581,8 +581,8 @@ public class TabSnapshots {
 
     private void logViewed(final int chatId, final DocRef docRef, final boolean dirty) {
         documentAccess.logView(chatId, docRef, dirty
-                ? "Shared with a question as the user's active tab, with unsaved changes"
-                : "Shared with a question as the user's active tab");
+                ? "Shared with a question as the tab attached to the chat, with unsaved changes"
+                : "Shared with a question as the tab attached to the chat");
     }
 
     private static String safeName(final String name) {
@@ -624,7 +624,7 @@ public class TabSnapshots {
 
     }
 
-    /// A snapshot of the user's active tab, as kept.
+    /// A snapshot of the tab the user attached, as kept.
     ///
     /// @param id        The id of its record's file, recorded on the questions it was sent with (not stored).
     /// @param number    The number of its folder, `/tabs/<number>/`.
@@ -660,7 +660,7 @@ public class TabSnapshots {
         }
     }
 
-    /// A part of the user's active tab, as they had it, unsaved.
+    /// A part of the tab the user attached, as they had it, unsaved.
     ///
     /// @param text The part's text, as kept.
     /// @param cut  True if it was cut short to fit the limit, so is incomplete.

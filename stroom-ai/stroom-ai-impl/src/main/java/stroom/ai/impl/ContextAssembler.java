@@ -101,7 +101,7 @@ public class ContextAssembler {
             ask them which to use with ask_user, one option for each, with its type and what it holds. Judge \
             what each holds from its documentation (describe_data_source gives it, with the documentation of \
             the pipelines that feed it), not from its name alone. Go ahead \
-            without asking only if they named the data source, the active tab's query already reads one, or just \
+            without asking only if they named the data source, the attached tab's query already reads one, or just \
             one fits.
             - "Query" can mean two things. If it isn't clear whether the user wants you to run a search and give \
             them the results (run_stroomql), or to set up a Query document they can run themselves \
@@ -123,7 +123,7 @@ public class ContextAssembler {
             [ACME-EVENTS](?action=open-doc&docType=Feed&docUuid=<uuid>). Write a stream as \
             [stream 1234](?action=open-stream&id=1234), and one of its events as \
             [event 1234:5](?action=open-stream&id=1234&recordNo=5). Never make up a UUID or id.
-            - When the user's active tab shows tables of results, take a snapshot of the rows with \
+            - When the tab the user attached shows tables of results, take a snapshot of the rows with \
             current_results rather than guessing from what was said. If the user asks about the first n rows, \
             pass rows. If it says the snapshot is stale (the tab's query, expression, parameters or time range \
             have changed since) or incomplete (the search hadn't finished, the row limit cut it, or it holds \
@@ -156,9 +156,9 @@ public class ContextAssembler {
             its search can read (e.g. its streams have been deleted or aged off). Say so, and check with \
             stream_meta (the streams of its feeds) or ask the user, rather than searching again.""";
 
-    /// What the model is told while the user's active tab is a StroomQL Query.
+    /// What the model is told while the tab the user attached is a StroomQL Query.
     static final String QUERY_GUIDANCE = """
-            ## The active tab is a StroomQL query
+            ## The attached tab is a StroomQL query
             - Check queries against the data source's fields (describe_data_source) rather than guessing field \
             names, and follow what its AGENTS docs say about them; find data sources with list_data_sources.
             - Validate a query with validate_stroomql before you show or propose it, and fix any errors.
@@ -169,9 +169,9 @@ public class ContextAssembler {
             the query was changed until they apply it. To make a new query, use propose_query, which gives the \
             user a button to create it.""";
 
-    /// What the model is told while the user's active tab is a pipeline's stepping screen.
+    /// What the model is told while the tab the user attached is a pipeline's stepping screen.
     static final String STEPPING_GUIDANCE = """
-            ## The active tab is stepping a pipeline
+            ## The attached tab is stepping a pipeline
             - The tab note gives the files of the selected element: its code as edited (unsaved changes \
             included), its input and output panes as shown, and the pipeline's structure with the step's errors. \
             Only the selected element is shared in full. If the user asks about another element, ask them to \
@@ -196,9 +196,9 @@ public class ContextAssembler {
             - Once the user has applied a change and stepped again, check the new output against what you \
             expected.""";
 
-    /// What the model is told while the user's active tab is a dashboard.
+    /// What the model is told while the tab the user attached is a dashboard.
     static final String DASHBOARD_GUIDANCE = """
-            ## The active tab is a dashboard
+            ## The attached tab is a dashboard
             - Name components (queries and tables) and columns as the user sees them, from the tab's dashboard \
             file, which has each query's data source and expression and each table's columns as edited.
             - Work out figures from snapshots of the tables' rows (current_results, then table), not from what \
@@ -399,7 +399,7 @@ public class ContextAssembler {
         final List<AiChatMessage> relevantHistory = selectHistoryForModel(history);
         final Map<Integer, List<AiChatMessage>> toolMessagesByTurn = toolMessagesByTurn(history);
 
-        // The user's active tab when they asked the question, if it was shared.
+        // The tab the user attached when they asked the question, if it was shared.
         final TabSnapshots.StoredTabSnapshot tab = latestTab(chatId, history);
 
         // A model with tools is told how to use them well; one without is not told about tools it doesn't have.
@@ -464,7 +464,9 @@ public class ContextAssembler {
     /**
      * @param history All the messages in the chat, in order.
      * @return What has happened so far in answering the latest question: the tool calls that have results, and
-     * anything the user added, in order. Calls without results (waiting for approval) are left to the agent loop.
+     * anything the user added, in order. Calls made together, with what the model said as it made them, are given
+     * as one step, as the model made them, so it can carry on where it was. Calls without results (waiting for
+     * approval) are left to the agent loop.
      */
     static List<ChatMessage> currentTurn(final List<AiChatMessage> history) {
         int question = history.size() - 1;
@@ -485,20 +487,18 @@ public class ContextAssembler {
                 }
             }
         }
+        final Step step = new Step(messages);
         for (final AiChatMessage message : turn) {
             switch (message.getMessageType()) {
-                case STEER_MESSAGE -> messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + message.getMessage()));
+                case STEER_MESSAGE -> {
+                    step.end();
+                    messages.add(new UserMessage(McpAgentChat.STEER_PREFIX + message.getMessage()));
+                }
                 case TOOL_CALL -> {
                     final ToolCallRecord call = readRecord(message, ToolCallRecord.class);
                     final ToolResultRecord result = NullSafe.get(call, ToolCallRecord::callId, results::get);
                     if (result != null) {
-                        final ToolExecutionRequest request = ToolExecutionRequest.builder()
-                                .id(call.callId())
-                                .name(call.tool())
-                                .arguments(call.arguments())
-                                .build();
-                        messages.add(AiMessage.from(List.of(request)));
-                        messages.add(ToolExecutionResultMessage.from(request, NullSafe.string(result.text())));
+                        step.add(call, result);
                     }
                 }
                 default -> {
@@ -506,6 +506,7 @@ public class ContextAssembler {
                 }
             }
         }
+        step.end();
         return messages;
     }
 
@@ -716,7 +717,7 @@ public class ContextAssembler {
                 : DocumentReferences.unavailableNote(attachment.getDescription());
     }
 
-    /// @return The snapshot of the user's active tab sent with the latest question, or null if none was, it can no
+    /// @return The snapshot of the tab the user attached sent with the latest question, or null if none was, it can no
     /// longer be used, or tabs aren't shared.
     private TabSnapshots.StoredTabSnapshot latestTab(final int chatId, final List<AiChatMessage> history) {
         if (tabSnapshots == null || !tabSnapshots.isEnabled()) {
@@ -730,7 +731,7 @@ public class ContextAssembler {
                 .orElse(null);
     }
 
-    /// @param tab The snapshot of the user's active tab sent with the question, or null.
+    /// @param tab The snapshot of the tab the user attached sent with the question, or null.
     /// @return The guidance for the kind of tab it is, after a blank line, or an empty string if there is none.
     static String tabGuidance(final TabSnapshots.StoredTabSnapshot tab) {
         if (tab != null && tab.stepping() != null) {
@@ -745,7 +746,7 @@ public class ContextAssembler {
                 : "";
     }
 
-    /// @return For an earlier question sent with the user's active tab, a short note of where the snapshot of it
+    /// @return For an earlier question sent with the tab the user attached, a short note of where the snapshot of it
     /// is, before the question; otherwise an empty string.
     private String earlierTabNote(final AiChatMessage question) {
         if (tabSnapshots == null || question.getAttachmentId() == null || workspaceDao == null) {
@@ -754,7 +755,7 @@ public class ContextAssembler {
         return workspaceDao.getFileInfo(question.getAttachmentId())
                 .map(AiWorkspaceDao.FileInfo::path)
                 .filter(path -> path.startsWith("/tabs/"))
-                .map(path -> "[Asked with the user's active tab shared; its snapshot is in "
+                .map(path -> "[Asked with a tab attached; its snapshot is in "
                              + path.substring(0, path.lastIndexOf('/') + 1) + "]\n")
                 .orElse("");
     }
@@ -955,5 +956,51 @@ public class ContextAssembler {
             }
         }
         return sb.toString();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Gathers the calls of one of the model's steps (calls made together, with the same thing said), to add them
+    /// to the messages as the model made them: what it said with all its calls, then their results.
+    private static final class Step {
+
+        private final List<ChatMessage> messages;
+        private final List<ToolExecutionRequest> requests = new ArrayList<>();
+        private final List<String> results = new ArrayList<>();
+        private String rationale;
+
+        private Step(final List<ChatMessage> messages) {
+            this.messages = messages;
+        }
+
+        void add(final ToolCallRecord call, final ToolResultRecord result) {
+            if (!requests.isEmpty() && !Objects.equals(rationale, call.rationale())) {
+                end();
+            }
+            rationale = call.rationale();
+            requests.add(ToolExecutionRequest.builder()
+                    .id(call.callId())
+                    .name(call.tool())
+                    .arguments(call.arguments())
+                    .build());
+            results.add(NullSafe.string(result.text()));
+        }
+
+        void end() {
+            if (requests.isEmpty()) {
+                return;
+            }
+            messages.add(NullSafe.isNonBlankString(rationale)
+                    ? AiMessage.from(rationale, List.copyOf(requests))
+                    : AiMessage.from(List.copyOf(requests)));
+            for (int i = 0; i < requests.size(); i++) {
+                messages.add(ToolExecutionResultMessage.from(requests.get(i), results.get(i)));
+            }
+            requests.clear();
+            results.clear();
+            rationale = null;
+        }
     }
 }

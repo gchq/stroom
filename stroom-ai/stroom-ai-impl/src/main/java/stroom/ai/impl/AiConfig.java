@@ -93,7 +93,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         maxTabSnapshotBytes = DEFAULT_MAX_TAB_SNAPSHOT_BYTES;
     }
 
-    /// As the constructor that reads the config, with the active tab shared and the default tab snapshot limit.
+    /// As the constructor that reads the config, with the attached tab shared and the default tab snapshot limit.
     public AiConfig(final AiDbConfig dbConfig,
                     final CacheConfig chatResponseCache,
                     final StroomDuration maxRunDuration,
@@ -172,17 +172,17 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
 
     /// @return True if what the user sees in their active document tab (unsaved changes included) is shared with
     /// the questions they ask in a chat.
-    @JsonPropertyDescription("If true, what the user sees in their active document tab (unsaved changes "
-                             + "included) is shared with each question they ask in an 'Ask Stroom AI' chat, shown "
-                             + "as a chip by the input that they can remove. Only documents the user can view are "
-                             + "shared.")
+    @JsonPropertyDescription("If true, users can attach a document tab to an 'Ask Stroom AI' chat (the + chip by "
+                             + "the input), and what they see in it (unsaved changes included) is shared with each "
+                             + "question until they remove it or close the tab. Only documents the user can view "
+                             + "are shared.")
     @JsonProperty("shareActiveTab")
     public boolean isShareActiveTab() {
         return shareActiveTab;
     }
 
     /// @return The most bytes of a tab's content kept for one question; parts beyond it are cut short.
-    @JsonPropertyDescription("The most bytes of an active tab's content (its text parts, as edited) kept for one "
+    @JsonPropertyDescription("The most bytes of an attached tab's content (its text parts, as edited) kept for one "
                              + "question in an 'Ask Stroom AI' chat. Parts beyond the limit are cut short, and the "
                              + "agent is told so.")
     @JsonProperty("maxTabSnapshotBytes")

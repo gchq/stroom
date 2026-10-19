@@ -70,7 +70,7 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
                              + "you suggest, and once the user creates it there, the query is saved with your "
                              + "StroomQL and opened. Validate the query first. If more than one data source could "
                              + "hold what the user asked for, ask them which to use with ask_user first. To change "
-                             + "the query open in the user's active tab, use propose_query_change instead.")
+                             + "the query open in the tab the user attached, use propose_query_change instead.")
                 .parameters(JsonObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "The name to suggest for the new query.")
                         .addStringProperty(QUERY_ARG, "The StroomQL.")

@@ -222,6 +222,39 @@
     line-height: 16px;
 }
 
+/* Offers to attach the tab the user is on: dashed and muted until hovered, so it reads as an option, not as
+   something already shared. */
+.ai-attachment-chip--attach-tab {
+    border: 1.5px dashed rgba(var(--blue-500-rgb), 0.75);
+    background-color: transparent;
+    color: var(--text-color--secondary);
+    font: inherit;
+    font-size: var(--ai-font-size--meta);
+    cursor: pointer;
+}
+
+.ai-attachment-chip--attach-tab:hover,
+.ai-attachment-chip--attach-tab:focus-visible {
+    color: inherit;
+    border-color: var(--blue-300);
+    background-color: var(--curve-tab__background-color--hover);
+}
+
+.ai-attach-tab-plus {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    margin-left: 3px;
+    color: var(--blue-300);
+}
+
+/* The icon's own size is far larger than the chip, so it is made to fit its box. */
+.ai-attach-tab-plus svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
 /* The chip's buttons are icon buttons, sized to the chip's line, with their icons centred in them. */
 .ai-attachment-chip-icon,
 .ai-attachment-chip-remove {
@@ -451,8 +484,25 @@
     margin-bottom: 0;
 }
 
-.ai-message--steer {
-    border-style: dashed;
+/* A message sent while the run works, waiting for its current step to finish: a prominent dashed outline and a
+   lighter fill set it apart from messages sent. Once the run picks it up it is shown as any other message. */
+.ai-message--queued {
+    background: rgba(25, 118, 210, 0.08);
+    border: 2px dashed rgba(25, 118, 210, 0.75);
+}
+
+.ai-queued-steer-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: var(--ai-font-size--meta);
+    color: var(--text-color--secondary);
+}
+
+.ai-queued-steer-send {
+    flex-shrink: 0;
 }
 
 .ai-message--assistant {
@@ -1533,6 +1583,12 @@
 }
 
 .ai-question-custom {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.ai-question-nav {
+    display: flex;
     margin-bottom: 6px;
 }
 

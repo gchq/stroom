@@ -201,7 +201,7 @@ class TestReadDocumentTool {
         dictionary(TOP, "1.1.1.1", MIDDLE);
         dictionary(MIDDLE, "2.2.2.2\n4.4.4.4");
         combined(TOP, List.of("2.2.2.2", "4.4.4.4", "1.1.1.1"), List.of(MIDDLE, MIDDLE, TOP));
-        // The dictionary is the user's active tab: 1.1.1.1 has been removed, 3.3.3.3 and 4.4.4.4 added, unsaved.
+        // The dictionary is the tab the user attached: 1.1.1.1 has been removed, 3.3.3.3 and 4.4.4.4 added, unsaved.
         Mockito.when(tabSnapshots.unsavedPart(1, TOP, AiTabSnapshotPart.DATA)).thenReturn(Optional.of(
                 new TabSnapshots.UnsavedPart("3.3.3.3\n4.4.4.4\n", false, "/tabs/3/words.txt")));
 

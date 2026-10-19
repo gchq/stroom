@@ -190,6 +190,15 @@ _Steps for you_ card. The model can neither make nor click one.
   the model) so they survive a refresh. None are offered while the chat is working, once the user asks
   something else, or after a turn in which the agent asked the user for something (a form, an approval, or
   steps to carry out). `stroom.ai.suggestFollowUps: false` turns them off.
+* A message sent while the chat works steers the run. It is shown queued (a dashed outline, "Waiting for the
+  current step to finish") and the run picks it up once its current step finishes, before its next call to the
+  model; it is then shown as any other message. _Send now_ (the fast-forward button on it) has the run give up
+  waiting for a tool from an MCP server (within about 2 seconds; the server may still finish what it started,
+  and the model is told so) and skip the rest of the step's tool calls. Built-in tools, which limit their own
+  time, and a reply the model is writing, are not cut short. A message the run never picks up (e.g. it was
+  stopped) stays in the conversation, as sent, for the next run.
+* A message sent while the chat waits for the user to fill in a form or approve a tool call answers it instead:
+  the form is put aside, or the calls are denied with the message as the reason, and the run carries on.
 * A message sent just after an answer appears, while the run is still finishing (e.g. naming the chat), is
   answered as the next question in the same run, rather than being taken as steering a run that has
   already answered.
@@ -209,9 +218,54 @@ _Steps for you_ card. The model can neither make nor click one.
 * When a chat reaches `compaction.thresholdPercent` of the window, earlier turns are replaced (for the
   model only) by short digests, keeping the last `compaction.turnsKeptInFull` turns. Users can compact
   with `/compact [focus]`, and undo the latest compaction.
+* A long run (e.g. onboarding a feed) fills the window with its own steps, which compaction doesn't cover.
+  Before each call to the model, if the run is getting too large, it is made smaller a step at a time, least
+  lossy first: earlier tool results, the arguments of earlier tool calls (e.g. whole code proposed), all but
+  the latest result, then earlier steps put as a line or two each in a note. The latest step is always kept,
+  and everything stays stored: the model can read it again with `read_turn`.
+* Token counts are estimated (characters / 4, corrected by what the model reported for the chat's last call;
+  25% more until a call has been measured, as XML and JSON take more tokens than that). If the model says a
+  request is too large anyway, the estimate is corrected from the size it gave (e.g. vLLM's "135904 in the
+  messages"), the run is made smaller again and the call made again, up to 4 times, so the run carries on
+  where it was. Only if that fails is the chat compacted as far as it will go and the run started again, with
+  the model told to carry on from its steps. A reply cut off as the window filled up isn't taken as the
+  answer: room is made and the model is told to carry on.
+* A rate limit (HTTP 429) is never taken as the context being too large, even if it mentions tokens. The
+  request detail of an attempt that overflowed shows what the model said.
 * The agent has memory: the user's own (`/memories/`, loaded into every chat) and the chat's
   (`/memories/session/`). Changes to the user's memory from a chat that has read tool output or data need
   the user's approval. Users view, edit and undo changes in **Memory**.
+
+
+## Attaching a tab
+
+The user decides which tab, if any, the chat sees, as in VS Code:
+
+* Above the input, a dashed _+_ chip names the document tab the user is on (or, when the chat is open as a tab of
+  its own, the one they were on before). Clicking it attaches that tab to the chat, in place of any attached
+  before; one tab is attached at a time.
+* The attached tab is shown as a chip, "Tab: _name_" with its icon, and "(unsaved)" while it has unsaved changes.
+  It stays attached whichever tab the user is on, until they remove it (× on the chip) or close the tab, so
+  switching tabs (e.g. from one dashboard to another) never changes what the chat sees without the user
+  choosing it. Attachments are kept per chat, in the browser, until the page is reloaded.
+* Each question is sent with the attached tab as the user sees it then: unsaved changes, the inner tab shown
+  (e.g. a pipeline's _Stepping_ view, with the selected element's input, output and code), and the tables of
+  results shown. A tab that hasn't changed since the last question is sent as its hash only. The agent is
+  given it as a snapshot in `/tabs/<n>/` with a note on the latest question; earlier questions keep a short
+  note of where theirs is.
+* Editing a question, or _Ask again_, sends the attached tab as it is now.
+* Only documents the user can view are shared. `shareActiveTab: false` turns attaching tabs off.
+
+What the agent can offer for the attached tab, all as buttons the user clicks, never saved by the agent:
+
+* A StroomQL Query: _Apply to query_ (the revised query in the editor, unsaved, with _Undo apply_).
+* A dashboard: _Apply to dashboard_ (table changes, unsaved; the user is asked to save first if the
+  dashboard has unsaved changes).
+* A pipeline being stepped: a change to the selected XSLT or text converter, as a diff with _Review and
+  apply_. The agent gives either the whole revised code or just the text to replace and its replacement, so a
+  small change (e.g. adding `normalize-space()`) doesn't mean copying the whole XSLT. Before it is offered, the
+  change is tried by stepping the record with it, and refused if it gives errors the current code doesn't.
+* `current_results` takes a snapshot of the rows of a table the tab shows.
 
 
 ## Attached tables
@@ -278,6 +332,8 @@ All under `appConfig.ai` unless stated.
 | `maxRunDuration` | `PT2H` | The longest a run may take |
 | `maxRunsPerNode` | `20` | Runs working at once on a node |
 | `maxRunsPerUser` | `3` | Runs working at once for a user |
+| `maxTabSnapshotBytes` | `2097152` | The most bytes of an attached tab's content kept for one question |
+| `shareActiveTab` | `true` | Lets users attach a document tab to a chat |
 | `toolGroupThreshold` | `24` | More MCP tools than this are offered as groups (0 never groups) |
 | `unattendedAfter` | `PT10M` | When a run with no one watching becomes unattended |
 | `workspace.maxQueryLength` | `10000` | The longest StroomQL query `run_stroomql` may run, in characters |
