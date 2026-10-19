@@ -26,6 +26,7 @@ import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -103,6 +104,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     private double userScrollUntilMs;
     private boolean pointerHeld;
     private double summaryClickMs;
+    // The height of the suggestions floating over the bottom of the conversation, as last measured.
+    private int followUpsHeight;
 
     @UiField
     FlowPanel inputBox;
@@ -249,6 +252,14 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
             }
         }, ScrollEvent.getType());
         watchUserScrolling(markdownPreview.getElement());
+        // Suggestions wrap onto more lines as the chat gets narrower, needing more room below the conversation.
+        followUps.addAttachHandler(event -> {
+            if (event.isAttached()) {
+                GlobalResizeObserver.addListener(followUps.getElement(), element -> onFollowUpsResized());
+            } else {
+                GlobalResizeObserver.removeListener(followUps.getElement());
+            }
+        });
         // Content below the conversation, e.g. the task list, takes its room from the conversation as it grows.
         markdownPreview.addAttachHandler(event -> {
             if (event.isAttached()) {
@@ -874,7 +885,28 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
             followUps.add(button);
         }
         followUps.setVisible(!suggestions.isEmpty());
+        // Measured once laid out; their size is followed from then on (see the constructor).
+        Scheduler.get().scheduleDeferred(this::onFollowUpsResized);
     }
+
+    // The conversation keeps room below its latest message as tall as the suggestions floating over it, so they
+    // never hide it, and stays at its latest message if it was following it.
+    private void onFollowUpsResized() {
+        final int height = followUps.isVisible()
+                ? followUps.getOffsetHeight()
+                : 0;
+        if (height != followUpsHeight) {
+            followUpsHeight = height;
+            setCssVariable(root.getElement(), "--ai-follow-ups-height", height + "px");
+            if (getUiHandlers() != null) {
+                getUiHandlers().onConversationResized();
+            }
+        }
+    }
+
+    private static native void setCssVariable(Element element, String name, String value) /*-{
+        element.style.setProperty(name, value);
+    }-*/;
 
     @Override
     public boolean isEmptyState() {

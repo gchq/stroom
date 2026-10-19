@@ -69,6 +69,7 @@ import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.SaveAiMemoryRequest;
 import stroom.ai.shared.SetAiApproveEverythingRequest;
+import stroom.ai.shared.SuggestAiPromptsRequest;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.ai.shared.UndoAiMemoryChangeRequest;
@@ -1902,6 +1903,28 @@ public class AskStroomAIService {
      * @param text What to look for. Text shorter than {@link #MIN_SEARCH_CHARS} finds nothing.
      * @return The chats found, most recently active first, each with part of the latest matching question.
      */
+    /// Suggests what the user might ask about what they have just attached to a chat, given the conversation so
+    /// far, with the chat's model.
+    ///
+    /// @param request The chat, its settings, its attachments not yet sent and the attached tab.
+    /// @return Up to three suggestions, or none.
+    public List<String> suggestPrompts(final SuggestAiPromptsRequest request) {
+        final Integer chatId = NullSafe.get(request, SuggestAiPromptsRequest::getAiChat, AiChat::getId);
+        if (chatId == null) {
+            return List.of();
+        }
+        aiService.verifyOwnership(chatId);
+        final ChatModel model;
+        try {
+            model = getChatModel(getModelDoc(request.getConfig()));
+        } catch (final RuntimeException e) {
+            // E.g. no model is set up: suggestions are a nicety, so the chat offers its own.
+            LOGGER.debug(() -> "No model to suggest prompts for chatId=" + chatId, e);
+            return List.of();
+        }
+        return followUpSuggester.suggestForAttached(chatId, model, request.getAttachmentIds(), request.getTab());
+    }
+
     public List<AiChatSearchHit> searchChats(final String text) {
         final String userUuid = NullSafe.get(securityContext.getUserRef(), UserRef::getUuid);
         final String trimmed = NullSafe.string(text).strip();
