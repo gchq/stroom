@@ -190,6 +190,16 @@ _Steps for you_ card. The model can neither make nor click one.
   the model) so they survive a refresh. None are offered while the chat is working, once the user asks
   something else, or after a turn in which the agent asked the user for something (a form, an approval, or
   steps to carry out). `stroom.ai.suggestFollowUps: false` turns them off.
+* When the user attaches something (a tab, a document from the Explorer, or a table), up to three questions about
+  it are offered at once, from what that kind of thing offers (e.g. a feed: what it has received, which pipelines
+  process it, processing errors; a query with no results: why), drawn from everything attached, the most
+  recently attached first. Removing something offers them again for what is left (or the follow-ups to the latest
+  answer, with nothing left). If the chat already has a conversation, or several things are attached, the chat's
+  model is then asked (`POST /ai/v1/suggestPrompts`) for suggestions that also fit what the user has been asking
+  and use the attached things together, given only the latest two questions, the start of the latest
+  answer and a two-line hint of each thing attached (what it is and what the agent can do with it, never its
+  content; documents the user can't view are left out). Follow-ups after an answer get the same hints for the
+  attached tab and documents, and lean towards acting on them.
 * A message sent while the chat works steers the run. It is shown queued (a dashed outline, "Waiting for the
   current step to finish") and the run picks it up once its current step finishes, before its next call to the
   model; it is then shown as any other message. _Send now_ (the fast-forward button on it) has the run give up

@@ -1077,6 +1077,29 @@ paths:
       summary: "Set the table analysis settings, which apply to everyone"
       tags:
       - AI
+  /ai/v1/suggestPrompts:
+    post:
+      operationId: suggestAiPrompts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuggestAiPromptsRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+          description: default response
+      summary: "Suggest what the user might ask about what they have just attached\
+        \ to an AI chat, given the conversation so far"
+      tags:
+      - AI
   /ai/v1/undoCompaction:
     post:
       operationId: undoCompaction
@@ -22955,6 +22978,20 @@ components:
       properties:
         string:
           type: string
+    SuggestAiPromptsRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        attachmentIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        config:
+          $ref: "#/components/schemas/AskStroomAiConfig"
+        tab:
+          $ref: "#/components/schemas/AiTabSnapshot"
     Suggestions:
       type: object
       properties:

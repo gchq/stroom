@@ -205,6 +205,15 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     Boolean setTableAnalysisConfig(@Parameter(description = "config", required = true) TableAnalysisConfig config);
 
     @POST
+    @Path("/suggestPrompts")
+    @Operation(
+            summary = "Suggest what the user might ask about what they have just attached to an AI chat, given the "
+                      + "conversation so far",
+            operationId = "suggestAiPrompts")
+    List<String> suggestPrompts(@Parameter(description = "request", required = true)
+                                SuggestAiPromptsRequest request);
+
+    @POST
     @Path("/searchChats")
     @Operation(
             summary = "Search the user's chats by their titles and the user's questions in them, most recently "
