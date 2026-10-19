@@ -73,8 +73,8 @@ final class AiElicitationCard {
     }
 
     /// @param fields A form's fields, from [AiElicitationForm#fields(String)].
-    /// @return The form's one field if it is a single yes or no question, to answer with Yes and No buttons as
-    /// VS Code does, or null if the form has other fields.
+    /// @return The form's one field if it is a single yes or no question, to answer with Yes and No buttons rather
+    /// than a form, or null if the form has other fields.
     static AiElicitationForm.Field yesNoQuestion(final List<AiElicitationForm.Field> fields) {
         if (fields.size() != 1) {
             return null;

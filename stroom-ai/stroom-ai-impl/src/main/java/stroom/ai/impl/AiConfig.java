@@ -199,8 +199,10 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     }
 
     @JsonPropertyDescription("If true, after each answer the chat's model is asked for up to three things the user "
-                             + "might ask next, shown as links above the input. One small extra call to the model "
-                             + "per answer; not made when the agent asked the user for something during the turn.")
+                             + "might ask next, shown as links above the input (one small extra call to the model "
+                             + "per answer; not made when the agent asked the user for something during the turn), "
+                             + "and, when the user attaches something to a chat that has a conversation or several "
+                             + "things attached, for questions about what is attached.")
     @JsonProperty("suggestFollowUps")
     public boolean isSuggestFollowUps() {
         return suggestFollowUps;
