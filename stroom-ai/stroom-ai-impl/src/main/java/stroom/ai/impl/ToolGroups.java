@@ -40,7 +40,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/// Offers a large set of MCP tools as groups, as VS Code does with its virtual tools: the model is given one
+/// Offers a large set of MCP tools as groups: the model is given one
 /// `activate_<group>` tool per group, with a summary of the group's tools, and once it calls one, the group's
 /// tools are offered from the next request. This keeps tool definitions the model does not need out of its
 /// context.
