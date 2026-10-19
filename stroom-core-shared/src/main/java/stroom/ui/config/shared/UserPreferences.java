@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -86,6 +88,18 @@ public class UserPreferences {
     @JsonProperty
     private final AskStroomAiConfig askStroomAiConfig;
 
+    @JsonProperty
+    @JsonPropertyDescription("The keyboard shortcuts that the user has changed from the defaults, by action " +
+                             "name. Each shortcut is either a key combination, e.g. `Ctrl+Shift+S`, or two keys " +
+                             "pressed one after the other, e.g. `G U`. An empty list means the action has no " +
+                             "shortcut.")
+    private final Map<String, List<String>> keyBindings;
+
+    @JsonProperty
+    @JsonPropertyDescription("Whether keyboard shortcuts made only of character keys, e.g. `W` or `G U`, are " +
+                             "turned on. Users of speech input may want to turn them off.")
+    private final Boolean enableCharacterKeyShortcuts;
+
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
@@ -98,7 +112,9 @@ public class UserPreferences {
                            @JsonProperty("timeZone") final UserTimeZone timeZone,
                            @JsonProperty("enableTransparency") final Boolean enableTransparency,
                            @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles,
-                           @JsonProperty("askStroomAiConfig") final AskStroomAiConfig askStroomAiConfig) {
+                           @JsonProperty("askStroomAiConfig") final AskStroomAiConfig askStroomAiConfig,
+                           @JsonProperty("keyBindings") final Map<String, List<String>> keyBindings,
+                           @JsonProperty("enableCharacterKeyShortcuts") final Boolean enableCharacterKeyShortcuts) {
         this.theme = theme;
         this.editorTheme = editorTheme;
         this.editorKeyBindings = Objects.requireNonNullElse(
@@ -113,6 +129,8 @@ public class UserPreferences {
         this.enableTransparency = Objects.requireNonNullElse(enableTransparency, true);
         this.hideConditionalStyles = hideConditionalStyles;
         this.askStroomAiConfig = askStroomAiConfig;
+        this.keyBindings = keyBindings;
+        this.enableCharacterKeyShortcuts = Objects.requireNonNullElse(enableCharacterKeyShortcuts, true);
     }
 
     public String getTheme() {
@@ -163,6 +181,17 @@ public class UserPreferences {
         return askStroomAiConfig;
     }
 
+    /// @return The keyboard shortcuts that the user has changed from the defaults, by action name,
+    /// or null if they haven't changed any.
+    public Map<String, List<String>> getKeyBindings() {
+        return keyBindings;
+    }
+
+    /// @return Whether keyboard shortcuts made only of character keys are turned on.
+    public Boolean getEnableCharacterKeyShortcuts() {
+        return enableCharacterKeyShortcuts;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -183,7 +212,9 @@ public class UserPreferences {
                Objects.equals(timeZone, that.timeZone) &&
                Objects.equals(enableTransparency, that.enableTransparency) &&
                Objects.equals(hideConditionalStyles, that.hideConditionalStyles) &&
-               Objects.equals(askStroomAiConfig, that.askStroomAiConfig);
+               Objects.equals(askStroomAiConfig, that.askStroomAiConfig) &&
+               Objects.equals(keyBindings, that.keyBindings) &&
+               Objects.equals(enableCharacterKeyShortcuts, that.enableCharacterKeyShortcuts);
     }
 
     @Override
@@ -198,7 +229,9 @@ public class UserPreferences {
                 dateTimePattern,
                 timeZone,
                 enableTransparency,
-                hideConditionalStyles);
+                hideConditionalStyles,
+                keyBindings,
+                enableCharacterKeyShortcuts);
     }
 
     @Override
@@ -216,6 +249,8 @@ public class UserPreferences {
                ", enableTransparency=" + enableTransparency +
                ", hideConditionalStyles=" + hideConditionalStyles +
                ", askStroomAiConfig='" + askStroomAiConfig + '\'' +
+               ", keyBindings=" + keyBindings +
+               ", enableCharacterKeyShortcuts=" + enableCharacterKeyShortcuts +
                '}';
     }
 
@@ -285,6 +320,8 @@ public class UserPreferences {
         private Boolean enableTransparency;
         private Boolean hideConditionalStyles;
         private AskStroomAiConfig askStroomAiConfig;
+        private Map<String, List<String>> keyBindings;
+        private Boolean enableCharacterKeyShortcuts;
 
         private Builder() {
             theme = DEFAULT_THEME_NAME;
@@ -298,6 +335,7 @@ public class UserPreferences {
             timeZone = UserTimeZone.builder().use(Use.UTC).build();
             enableTransparency = true;
             askStroomAiConfig = new AskStroomAiConfig();
+            enableCharacterKeyShortcuts = true;
         }
 
         private Builder(final UserPreferences userPreferences) {
@@ -313,6 +351,8 @@ public class UserPreferences {
             this.enableTransparency = userPreferences.enableTransparency;
             this.hideConditionalStyles = userPreferences.hideConditionalStyles;
             this.askStroomAiConfig = userPreferences.askStroomAiConfig;
+            this.keyBindings = userPreferences.keyBindings;
+            this.enableCharacterKeyShortcuts = userPreferences.enableCharacterKeyShortcuts;
         }
 
         public Builder theme(final String theme) {
@@ -375,6 +415,22 @@ public class UserPreferences {
             return this;
         }
 
+        /// @param keyBindings The keyboard shortcuts that the user has changed from the defaults, by
+        ///                    action name, or null if they haven't changed any.
+        /// @return This builder.
+        public Builder keyBindings(final Map<String, List<String>> keyBindings) {
+            this.keyBindings = keyBindings;
+            return this;
+        }
+
+        /// @param enableCharacterKeyShortcuts Whether keyboard shortcuts made only of character
+        ///                                    keys are turned on.
+        /// @return This builder.
+        public Builder enableCharacterKeyShortcuts(final Boolean enableCharacterKeyShortcuts) {
+            this.enableCharacterKeyShortcuts = enableCharacterKeyShortcuts;
+            return this;
+        }
+
         public UserPreferences build() {
             return new UserPreferences(
                     theme,
@@ -388,7 +444,9 @@ public class UserPreferences {
                     timeZone,
                     enableTransparency,
                     hideConditionalStyles,
-                    askStroomAiConfig);
+                    askStroomAiConfig,
+                    keyBindings,
+                    enableCharacterKeyShortcuts);
         }
     }
 
