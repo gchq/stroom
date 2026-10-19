@@ -154,21 +154,49 @@ final class UserActionsUi {
     ///              null.
     /// @return The operation, for the dashboard to apply.
     static TableChange tableChange(final Function<String, String> field, final Object query) {
-        return new TableChange(field.apply("op"),
-                field.apply("column"),
-                number(field.apply("level")),
-                field.apply("name"),
-                field.apply("expression"),
-                field.apply("format"),
-                number(field.apply("position")),
-                field.apply("direction"),
-                number(field.apply("priority")),
-                field.apply("filter"),
-                query == null
+        return tableChange(field, query, null);
+    }
+
+    /// @param field Gives each of a proposed operation's fields as text (numbers as digits), or null if it has none.
+    /// @param query For set_expression, the query's expression as the server wrote it ([#expression(Object)]), or
+    ///              null.
+    /// @param doc   For set_setting of a document, the document as the server wrote it (`type`, `uuid` and
+    ///              `name`), or null.
+    /// @return The operation, for the dashboard to apply.
+    static TableChange tableChange(final Function<String, String> field, final Object query, final Object doc) {
+        return TableChange.builder(field.apply("op"))
+                .column(field.apply("column"))
+                .level(number(field.apply("level")))
+                .name(field.apply("name"))
+                .expression(field.apply("expression"))
+                .format(field.apply("format"))
+                .position(number(field.apply("position")))
+                .direction(field.apply("direction"))
+                .priority(number(field.apply("priority")))
+                .filter(field.apply("filter"))
+                .query(query == null
                         ? null
-                        : expression(query),
-                field.apply("table"),
-                "true".equals(field.apply("copy")));
+                        : expression(query))
+                .table(field.apply("table"))
+                .copy("true".equals(field.apply("copy")))
+                .target(field.apply("target"))
+                .targetId(field.apply("target_id"))
+                .setting(field.apply("setting"))
+                .value(field.apply("value"))
+                .ref(field.apply("ref"))
+                .doc(doc instanceof final Map<?, ?> map
+                     && map.get("type") instanceof final String type
+                     && map.get("uuid") instanceof final String uuid
+                        ? new DocRef(type, uuid, map.get("name") instanceof final String name
+                        ? name
+                        : null)
+                        : null)
+                .style(field.apply("style"))
+                .formatType(field.apply("format_type"))
+                .bold("true".equals(field.apply("bold")))
+                .italic("true".equals(field.apply("italic")))
+                .hide("true".equals(field.apply("hide")))
+                .build();
     }
 
     /// Reads a query's expression as the server writes it for a proposed dashboard change: an operator as `op`,
