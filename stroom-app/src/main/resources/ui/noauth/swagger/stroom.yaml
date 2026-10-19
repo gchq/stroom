@@ -11593,6 +11593,9 @@ components:
           additionalProperties:
             type: integer
             format: int64
+        shortenedParts:
+          type: integer
+          format: int32
         usedTokens:
           type: integer
           format: int64
