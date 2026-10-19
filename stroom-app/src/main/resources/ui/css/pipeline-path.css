@@ -46,7 +46,7 @@
 }
 
 .pipeline-path__segment {
-    --pipeline-path__border: var(--pipeline-element-box__border-color);
+    --pipeline-path__border: var(--pipeline-element__border-color);
     --pipeline-path__fill: transparent;
     /* A darkening over the fill, e.g. while the selected chevron is pressed */
     --pipeline-path__shade: transparent;
@@ -114,7 +114,7 @@
        square to the slanted edges), room for the 4px focus ring */
     margin-left: -4px;
     border-radius: 0;
-    color: var(--pipeline-element-box__text-color);
+    color: var(--pipeline-element__text-color);
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
@@ -174,7 +174,7 @@
     inset: 1px;
     border-radius: inherit;
     clip-path: var(--pipeline-path__fill-shape);
-    background-color: var(--pipeline-element-box__background-color);
+    background-color: var(--pipeline-element__background-color);
     background-image: linear-gradient(var(--pipeline-path__shade), var(--pipeline-path__shade)),
     linear-gradient(var(--pipeline-path__fill), var(--pipeline-path__fill));
 }
@@ -283,7 +283,7 @@
    down chevron that is pressed) */
 .pipeline-path__segment:active:not(:has(.pipeline-path__caret:active)) {
     /* The pressed name colour (the selected element keeps its own) */
-    --pipeline-element-box__text-color: var(--pipeline-element-box__text-color--pressed);
+    --pipeline-element__text-color: var(--pipeline-element__text-color--pressed);
     --pipeline-path__fill: var(--icon-button__background-color--active);
 }
 
@@ -295,21 +295,21 @@
    (pressing it darkens it), and a bold name, so that it isn't told from the others by colour
    alone. Its element's icon and drop down chevron keep their own colours */
 .pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]) {
-    --pipeline-path__fill: var(--pipeline-path__background-color--selected);
-    color: var(--pipeline-path__text-color--selected);
+    --pipeline-path__fill: var(--pipeline-element__background-color--selected);
+    color: var(--pipeline-element__text-color--selected);
 }
 
 .pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]):hover {
-    --pipeline-path__fill: var(--pipeline-path__background-color--selected--hover);
+    --pipeline-path__fill: var(--pipeline-element__background-color--selected--hover);
 }
 
 .pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]):active:not(:has(.pipeline-path__caret:active)) {
-    --pipeline-path__fill: var(--pipeline-path__background-color--selected--hover);
+    --pipeline-path__fill: var(--pipeline-element__background-color--selected--hover);
     --pipeline-path__shade: rgba(0, 0, 0, .15);
 }
 
 .pipeline-path__segment:has(> .pipeline-path__button[aria-current="true"]):active:not(:hover) {
-    --pipeline-path__fill: var(--pipeline-path__background-color--selected);
+    --pipeline-path__fill: var(--pipeline-element__background-color--selected);
     --pipeline-path__shade: rgba(0, 0, 0, .1);
 }
 
@@ -528,20 +528,19 @@
 @media (forced-colors: active) {
     .pipeline-path__segment {
         forced-color-adjust: none;
-        --pipeline-element-box__background-color: Canvas;
+        --pipeline-element__background-color: Canvas;
         --pipeline-path__border: CanvasText;
-        --pipeline-element-box__text-color: CanvasText;
-        --pipeline-element-box__text-color--pressed: CanvasText;
+        --pipeline-element__text-color: CanvasText;
+        --pipeline-element__text-color--pressed: CanvasText;
         --icon-button__background-color--hover: Canvas;
         --icon-button__background-color--active: Canvas;
         --icon-button__background-color--active-outside: Canvas;
-        --pipeline-path__background-color--selected: Highlight;
-        --pipeline-path__background-color--selected--hover: Highlight;
-        --pipeline-path__text-color--selected: HighlightText;
+        --pipeline-element__background-color--selected: Highlight;
+        --pipeline-element__background-color--selected--hover: Highlight;
+        --pipeline-element__text-color--selected: HighlightText;
         --pipeline-path__warn: CanvasText;
         --pipeline-path__error: CanvasText;
         --error: CanvasText;
-        --pipeline-element-box__border-color--fatal-error: CanvasText;
         --focus-border: Highlight;
         --focus-ring__color: Highlight;
         --focus-shadow: 0 0 0 2px Highlight;

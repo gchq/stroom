@@ -71,12 +71,12 @@ public final class PipelineEditorStories {
     /// The name of the spy recording the editor's dirty state (its `DirtyEvent`s).
     static final String ON_DIRTY = "onDirty";
     // The classes of the box a dragged element would be dropped on, and of one that won't take it
-    private static final String HOTSPOT = "pipelineElementBox-hotspot";
-    private static final String REFUSED = "pipelineElementBox-refused";
+    private static final String HOTSPOT = "pipeline-element--target";
+    private static final String REFUSED = "pipeline-element--refused";
     // The class of an element detached with the keyboard, to be attached to another parent
-    private static final String DETACHED = "pipelineElementBox-detached";
+    private static final String DETACHED = "pipeline-element--detached";
     // The tree's tab stop: one box, the selected element's (or the source's when none is)
-    private static final String TREE_TAB_STOP = ".treePanel-boxPanel [tabindex='0']";
+    private static final String TREE_TAB_STOP = ".pipeline-tree__items [tabindex='0']";
     /// The name of the spy recording embedded documents created.
     static final String ON_EMBED = "onEmbed";
 
@@ -301,7 +301,7 @@ public final class PipelineEditorStories {
                 .withPlay(play -> {
                     openStructure(play);
                     play.findByText("rawWriter");
-                    final Play tree = play.within(play.querySelector(".treePanel-boxPanel"));
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
                     play.expect(play.getByRole("tree", "Pipeline structure")).toBeInTheDocument();
                     play.expect(play.querySelectorAll(TREE_TAB_STOP)).toHaveLength(1);
 
@@ -361,7 +361,7 @@ public final class PipelineEditorStories {
                     play.keyboard("{ArrowRight}");
                     play.waitFor(() -> play.expect(elementBox(tree, "parser")).toHaveFocus());
                     play.keyboard("{Tab}");
-                    play.expect(play.querySelector(".treePanel-boxPanel :focus")).toBeNull();
+                    play.expect(play.querySelector(".pipeline-tree__items :focus")).toBeNull();
                     play.keyboard("{Shift>}{Tab}{/Shift}");
                     play.expect(elementBox(tree, "parser")).toHaveFocus();
                     expectNoProblems(play);
@@ -374,8 +374,8 @@ public final class PipelineEditorStories {
                     final Play screen = play.screen();
                     openStructure(play);
                     play.findByText("rawWriter");
-                    final Play tree = play.within(play.querySelector(".treePanel-boxPanel"));
-                    final Query status = play.querySelector(".pipelineTree-status");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    final Query status = play.querySelector(".pipeline-tree-status");
                     play.click(elementBox(tree, "rawWriter"));
                     play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
 
@@ -419,7 +419,7 @@ public final class PipelineEditorStories {
                     // Each element's name says whether it can take it, before trying
                     play.expect(elementBox(tree, "decoration")).toHaveAttribute("aria-label",
                             "decoration, XSLT Filter, can take rawWriter");
-                    play.expect(refusedIcon(tree, "decoration")).not().toBeVisible();
+                    play.expect(refusedIcon(tree, "decoration")).toBeNull();
                     play.keyboard("{ArrowRight}{ArrowRight}");
                     play.waitFor(() -> play.expect(elementBox(tree, "indexWriter")).toHaveFocus());
                     play.waitFor(() -> play.expect(elementBox(tree, "indexWriter")).toHaveClass(REFUSED));
@@ -428,7 +428,7 @@ public final class PipelineEditorStories {
                     play.expect(elementBox(tree, "indexWriter")).toHaveAttribute("aria-label",
                             "indexWriter, XML Writer, can't take rawWriter");
                     play.expect(refusedIcon(tree, "indexWriter")).toBeVisible();
-                    play.expect(typeIcon(tree, "indexWriter")).not().toBeVisible();
+                    play.expect(typeIcon(tree, "indexWriter")).toBeNull();
                     // A writer can't take another: Ctrl+V says so and keeps it detached
                     play.keyboard("{Control>}v{/Control}");
                     play.waitFor(() -> play.expect(status).toHaveTextContent("indexWriter can't take rawWriter."));
@@ -474,8 +474,8 @@ public final class PipelineEditorStories {
                     final Play screen = play.screen();
                     openStructure(play);
                     play.findByText("rawWriter");
-                    final Play tree = play.within(play.querySelector(".treePanel-boxPanel"));
-                    final Query status = play.querySelector(".pipelineTree-status");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    final Query status = play.querySelector(".pipeline-tree-status");
                     play.click(elementBox(tree, "rawWriter"));
                     play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
 
@@ -522,8 +522,8 @@ public final class PipelineEditorStories {
                 .withPlay(play -> {
                     openStructure(play);
                     play.findByText("rawWriter");
-                    final Play tree = play.within(play.querySelector(".treePanel-boxPanel"));
-                    final Query status = play.querySelector(".pipelineTree-status");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    final Query status = play.querySelector(".pipeline-tree-status");
                     play.click(elementBox(tree, "rawWriter"));
                     play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
                     play.keyboard("{Control>}x{/Control}");
@@ -556,7 +556,7 @@ public final class PipelineEditorStories {
                     play.findByText("rawWriter");
                     play.expect(play.spy(ON_DIRTY)).not().toHaveBeenCalledWith(true);
                     // The tree's boxes, not those of the dragged copy (a second tree panel)
-                    final Play tree = play.within(play.querySelector(".treePanel-boxPanel"));
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
 
                     // Pressing on rawWriter and moving past the drag threshold lifts it (and
                     // rawAppender) out of the tree
@@ -578,7 +578,7 @@ public final class PipelineEditorStories {
                     play.fireEvent().mouseMove(decoration, EventInit.create().atCentreOf(decoration).buttons(1));
                     play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveClass(HOTSPOT));
                     play.expect(elementBox(tree, "streamAppender")).not().toHaveClass(REFUSED);
-                    play.expect(refusedIcon(tree, "streamAppender")).not().toBeVisible();
+                    play.expect(refusedIcon(tree, "streamAppender")).toBeNull();
                     play.expect(typeIcon(tree, "streamAppender")).toBeVisible();
 
                     // Over nothing, nothing is marked; back over decoration, it is again
@@ -609,7 +609,7 @@ public final class PipelineEditorStories {
                 .withPlay(play -> {
                     openStructure(play);
                     play.findByText("rawWriter");
-                    final Play tree = play.within(play.querySelector(".treePanel-boxPanel"));
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
                     final Query streamAppender = elementBox(tree, "streamAppender");
                     final Query decoration = elementBox(tree, "decoration");
                     final Query parser = elementBox(tree, "parser");
@@ -657,8 +657,8 @@ public final class PipelineEditorStories {
                 .withPlay(play -> {
                     openStructure(play);
                     play.findByText("rawWriter");
-                    final Play tree = play.within(play.querySelector(".treePanel-boxPanel"));
-                    final Query boxPanel = play.querySelector(".treePanel-boxPanel");
+                    final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
+                    final Query boxPanel = play.querySelector(".pipeline-tree__items");
                     final Query pane = play.querySelector(".pipelineStructureViewImpl-treeContainer");
                     play.run("narrow the tree's pane, so that it scrolls",
                             () -> pane.element().get().getStyle().setProperty("width", "360px"));
@@ -1049,7 +1049,7 @@ public final class PipelineEditorStories {
 
     // The box of an element of the tree
     private static Query elementBox(final Play tree, final String name) {
-        return tree.getByText(name, ".pipelineElementBox-label").closest(".pipelineElementBox-background");
+        return tree.getByText(name, ".pipeline-element__label").closest(".pipeline-element");
     }
 
     // How far an element is scrolled across, and how far it can be
@@ -1080,13 +1080,14 @@ public final class PipelineEditorStories {
         play.expect(play.querySelectorAll("." + HOTSPOT + ", ." + REFUSED)).toHaveLength(0);
     }
 
-    // A box's type icon, and the "not allowed" icon shown in its place while it refuses what is moved
+    // A box's type icon, and the "not allowed" icon that takes its place while it refuses what is
+    // moved
     private static Query typeIcon(final Play tree, final String name) {
-        return tree.within(elementBox(tree, name)).querySelector(".pipelineElementBox-typeIcon");
+        return tree.within(elementBox(tree, name)).querySelector(".pipeline-element__type-icon");
     }
 
     private static Query refusedIcon(final Play tree, final String name) {
-        return tree.within(elementBox(tree, name)).querySelector(".pipelineElementBox-refusedIcon");
+        return tree.within(elementBox(tree, name)).querySelector(".pipeline-element__refused-icon");
     }
 
     private static void expectNoProblems(final Play play) {

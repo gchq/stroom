@@ -80,6 +80,10 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     public PipelineTreeViewImpl() {
         treePanel = new PipelineTreePanel();
         subTreePanel = new PipelineTreePanel();
+        // The copy of what is dragged, which follows the pointer, is for sight only: not a second
+        // tree for assistive technology, nor focusable
+        subTreePanel.getElement().setAttribute("aria-hidden", "true");
+        subTreePanel.getElement().setAttribute("inert", "");
 
         layoutPanel = new DraggableTreePanel<>(treePanel, subTreePanel) {
             @Override
@@ -121,7 +125,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         treePanel.setFaded(element -> detached != null && isInBranch(element, detached));
 
         liveRegion = Document.get().createDivElement();
-        liveRegion.setClassName("sr-only pipelineTree-status");
+        liveRegion.setClassName("sr-only pipeline-tree-status");
         liveRegion.setAttribute("role", "status");
         liveRegion.setAttribute("aria-live", "polite");
         layoutPanel.getElement().appendChild(liveRegion);
@@ -192,7 +196,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
 
     @Override
     public void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
-        treePanel.setSeverities(elementIdToSeveritiesMap);
+        // The structure editor doesn't show problems (the stepping screen's pipeline bar does)
     }
 
     @Override

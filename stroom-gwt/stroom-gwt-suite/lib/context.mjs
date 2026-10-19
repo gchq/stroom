@@ -45,8 +45,7 @@
 export const TARGETS = [
   { sel: '.explorerCell', what: 'an explorer row', skip: /^(Favourites|System)$/ },
   { sel: '.ExpressionTreeViewImpl-layoutPanel .expressionItem, .expressionItem', what: 'an expression term' },
-  // Seen in the application as `pipelineElementBox-background` / `-label`, not `pipelineElementBox`.
-  { sel: '[class*=pipelineElementBox]', what: 'a pipeline element' },
+  { sel: '.pipeline-element', what: 'a pipeline element' },
   { sel: '.ace_content', what: 'the editor' },
   { sel: '.dataGridWidget tbody tr', what: 'a grid row' },
 ];

@@ -1384,7 +1384,7 @@ async function driveStep(step) {
       // `match` picks an element by name — the pipeline REFERENCE list is enabled only for an element
       // with a pipelineReference property, which is the XSLT filter, not the Reference Data Filter
       // (that one LOADS reference data; the XSLT filter CONSUMES it).
-      const boxes = [...document.querySelectorAll('.pipelineElementBox-label')].filter((e) => e.offsetWidth > 0);
+      const boxes = [...document.querySelectorAll('.pipeline-element__label')].filter((e) => e.offsetWidth > 0);
       const el = match ? boxes.find((e) => new RegExp(match, 'i').test(e.textContent)) : boxes[boxes.length - 1];
       if (!el) return null;
       const r = el.getBoundingClientRect();

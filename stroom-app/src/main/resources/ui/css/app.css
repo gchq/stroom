@@ -56,7 +56,9 @@
 @import url("alert.css");
 @import url("spinner.css");
 @import url("menubar.css");
-@import url("PipelineElementBox.css");
+@import url("draggable-tree.css");
+@import url("pipeline-tree.css");
+@import url("pipeline-element.css");
 @import url("pipeline-path.css");
 @import url("stepping-screen.css");
 @import url("valuespinner.css");

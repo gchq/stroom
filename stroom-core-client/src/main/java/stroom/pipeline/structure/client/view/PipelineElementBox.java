@@ -16,15 +16,11 @@
 
 package stroom.pipeline.structure.client.view;
 
-import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.OutputState;
-import stroom.util.shared.Severity;
 import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -32,57 +28,45 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.Widget;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+/// A pipeline element's box in the pipeline structure tree (see pipeline-element.css, a BEM block):
+/// its type icon, name and any embedded document icon, and the dots where its connectors join it
+/// (its ::before and ::after). It is an item of the tree for assistive technology, named by all
+/// that the icons show (which are hover tips only).
 public class PipelineElementBox extends Box<PipelineElement> {
 
-    private static final String BASE_CLASS = "pipelineElementBox";
-    private static final String SELECTED_CLASS = BASE_CLASS + "-backgroundSelected";
-    private static final String HOTSPOT_CLASS = BASE_CLASS + "-hotspot";
-    private static final String REFUSED_CLASS = BASE_CLASS + "-refused";
-    private static final String DETACHED_CLASS = BASE_CLASS + "-detached";
-    private static final String TYPE_ICON_CLASS = BASE_CLASS + "-typeIcon";
-    private static final String REFUSED_ICON_CLASS = BASE_CLASS + "-refusedIcon";
-    private static final String DISABLED_CLASS = BASE_CLASS + "-disabled";
-    private static final String SEVERITY_INFO_CLASS = BASE_CLASS + "-severityInfo";
-    private static final String SEVERITY_WARN_CLASS = BASE_CLASS + "-severityWarn";
-    private static final String SEVERITY_ERROR_CLASS = BASE_CLASS + "-severityError";
-    private static final String SEVERITY_FATAL_ERROR_CLASS = BASE_CLASS + "-severityFatalError";
-    private static final String BULLET = "•";
-    private static final String PORT_CLASS = BASE_CLASS + "-port";
-    private static final String PORT_FLOW_ATTRIBUTE = "data-flow";
-    private static final String ROLE = "role";
-    private static final String ROLE_IMG = "img";
-    private static final String ARIA_LABEL = "aria-label";
-    private static final String EMBEDDED_ICON_NAME = "Has embedded document";
-    private static final String INHERITED_EMBEDDED_ICON_NAME = "Has embedded document inherited from parent pipeline";
-    private static final String ACTIVE_FILTERS_NAME = "Has active stepping filters";
-
-    private static final Map<String, String> severityNameToClassMap = new HashMap<>();
-
-    static {
-        severityNameToClassMap.put(Severity.INFO.name(), SEVERITY_INFO_CLASS);
-        severityNameToClassMap.put(Severity.WARNING.name(), SEVERITY_WARN_CLASS);
-        severityNameToClassMap.put(Severity.ERROR.name(), SEVERITY_ERROR_CLASS);
-        severityNameToClassMap.put(Severity.FATAL_ERROR.name(), SEVERITY_FATAL_ERROR_CLASS);
-    }
+    private static final String BLOCK = "pipeline-element";
+    private static final String TARGET_CLASS = BLOCK + "--target";
+    private static final String REFUSED_CLASS = BLOCK + "--refused";
+    private static final String DETACHED_CLASS = BLOCK + "--detached";
+    private static final String IMAGE_CLASS = BLOCK + "__image";
+    private static final String TYPE_ICON_CLASS = BLOCK + "__type-icon";
+    private static final String REFUSED_ICON_CLASS = BLOCK + "__refused-icon";
+    private static final String LABEL_CLASS = BLOCK + "__label";
+    private static final String EMBEDDED_CLASS = BLOCK + "__embedded";
+    // What flows along the connectors into and out of it, which colour its dots
+    private static final String FLOW_IN_ATTRIBUTE = "data-flow-in";
+    private static final String FLOW_OUT_ATTRIBUTE = "data-flow-out";
+    private static final String ARIA_HIDDEN = "aria-hidden";
+    private static final String EMBEDDED_NAME = "has embedded document";
+    private static final String INHERITED_EMBEDDED_NAME = "has embedded document inherited from parent pipeline";
 
     private final PipelineModel pipelineModel;
     private PipelineElement pipelineElement;
-    private final Widget filterIcon;
     private final Label label;
-    // The dots over the box's left and right borders, where its connectors join it
-    private final Element inPort;
-    private final Element outPort;
+    // Its type icon, if it has one, and the "not allowed" icon that takes its place while it refuses
+    // what is being moved to it (so that that isn't told by colour alone), which is only in the
+    // document then
+    private final Element typeIcon;
+    private final Element refusedIcon;
+    private boolean refused;
     // The element's type, for its name as a tree item, e.g. "XSLT Filter"
     private final String typeName;
+    // What its embedded document icon says, if it has one, e.g. "has embedded document"
+    private String embeddedName;
     private boolean detached;
     // While an element is detached, its name, and whether this one can take it, for this one's name
     private String detachedName;
@@ -98,38 +82,24 @@ public class PipelineElementBox extends Box<PipelineElement> {
         this.typeName = iconName;
 
         final FlowPanel background = new FlowPanel();
-        background.setStyleName(BASE_CLASS + "-background");
+        background.setStyleName(BLOCK);
 
         label = new Label("", false);
-        label.addStyleName(BASE_CLASS + "-label");
+        label.addStyleName(LABEL_CLASS);
         setLabelText(pipelineElement.getDisplayName());
-
-        label.getElement().setAttribute("title", pipelineElement.getDescription() != null
-                ? pipelineElement.getDescription()
-                : "");
+        setDescription(pipelineElement.getDescription());
 
         if (icon != null) {
-            final SimplePanel image = new SimplePanel();
-            SvgImageUtil.setSvgAsInnerHtml(
-                    image,
-                    icon,
-                    "svgIcon",
-                    BASE_CLASS + "-image");
-            // Give the type icon a text alternative so a screen reader can say what type of
-            // element this is
-            nameImage(image, iconName);
-            image.addStyleName(TYPE_ICON_CLASS);
-            background.add(image);
+            typeIcon = createIcon(icon, TYPE_ICON_CLASS);
+            // Its type is in the box's name (see updateName)
+            hideIcon(typeIcon, iconName);
+            background.getElement().appendChild(typeIcon);
+        } else {
+            typeIcon = null;
         }
-
-        // Shown in place of the type icon while the element won't take what is being moved to it
-        // (see showRefused), so that that isn't told by colour alone. Its name says so instead (see
-        // setDetachedName)
-        final SimplePanel refusedIcon = new SimplePanel();
-        SvgImageUtil.setSvgAsInnerHtml(refusedIcon, SvgImage.NOT_ALLOWED, "svgIcon", BASE_CLASS + "-image");
-        refusedIcon.addStyleName(REFUSED_ICON_CLASS);
-        refusedIcon.getElement().setAttribute("aria-hidden", "true");
-        background.add(refusedIcon);
+        // Its name says so too (see setDetachedName)
+        refusedIcon = createIcon(SvgImage.NOT_ALLOWED, REFUSED_ICON_CLASS);
+        hideIcon(refusedIcon, null);
 
         background.add(label);
 
@@ -140,44 +110,31 @@ public class PipelineElementBox extends Box<PipelineElement> {
                 .findAny();
 
         if (embeddedProperty.isPresent()) {
-            final SimplePanel embeddedIcon = new SimplePanel();
-            if (pipelineModel.getPipelineLayer().getPipelineData().getProperties() != null &&
-                pipelineModel.getPipelineLayer().getPipelineData().getProperties().getAdd() != null &&
-                pipelineModel.getPipelineLayer().getPipelineData().getProperties().getAdd().contains(
-                        embeddedProperty.get())) {
-                SvgImageUtil.setSvgAsInnerHtml(embeddedIcon, SvgImage.CODE, "svgIcon",
-                        BASE_CLASS + " icon-colour__blue");
-                nameImage(embeddedIcon, EMBEDDED_ICON_NAME);
-            } else {
-                SvgImageUtil.setSvgAsInnerHtml(embeddedIcon, SvgImage.EXPLORER, "svgIcon",
-                        BASE_CLASS + " icon-colour__blue");
-                nameImage(embeddedIcon, INHERITED_EMBEDDED_ICON_NAME);
-            }
-            background.add(embeddedIcon);
+            final boolean ownEmbedded = pipelineModel.getPipelineLayer().getPipelineData().getProperties() != null
+                    && pipelineModel.getPipelineLayer().getPipelineData().getProperties().getAdd() != null
+                    && pipelineModel.getPipelineLayer().getPipelineData().getProperties().getAdd().contains(
+                            embeddedProperty.get());
+            embeddedName = ownEmbedded
+                    ? EMBEDDED_NAME
+                    : INHERITED_EMBEDDED_NAME;
+            final Element embeddedIcon = createIcon(ownEmbedded
+                            ? SvgImage.CODE
+                            : SvgImage.EXPLORER,
+                    EMBEDDED_CLASS + " icon-colour__blue");
+            // What it says is in the box's name (see updateName)
+            hideIcon(embeddedIcon, capitalise(embeddedName));
+            background.getElement().appendChild(embeddedIcon);
         }
-
-        filterIcon = new SimplePanel();
-        SvgImageUtil.setSvgAsInnerHtml(
-                filterIcon,
-                SvgImage.FILTER,
-                "svgIcon",
-                BASE_CLASS + "-filterImage icon-colour__green");
-
-        background.add(filterIcon);
-        updateFilterState();
-
-        inPort = createPort(PORT_CLASS + "--in");
-        outPort = createPort(PORT_CLASS + "--out");
-        background.getElement().appendChild(inPort);
-        background.getElement().appendChild(outPort);
 
         initWidget(background);
         updateName();
     }
 
+    /// Selects (or not) the element: `aria-selected`, which its style follows.
+    ///
+    /// @param selected Whether it is selected.
     @Override
     public void setSelected(final boolean selected) {
-        toggleClass(SELECTED_CLASS, selected);
         getElement().setAttribute("aria-selected", String.valueOf(selected));
     }
 
@@ -200,6 +157,10 @@ public class PipelineElementBox extends Box<PipelineElement> {
         element.setAttribute("aria-level", String.valueOf(level));
         element.setAttribute("aria-posinset", String.valueOf(position));
         element.setAttribute("aria-setsize", String.valueOf(count));
+        // Always expanded, as the tree can't be collapsed, but kept deliberately: in a flat tree
+        // (items with aria-level, not nested groups) it is what tells assistive technology that an
+        // item has children, which an item without it (an end item) doesn't. Left goes to the
+        // parent, as on a collapsed or end item in the ARIA tree pattern, rather than collapsing
         if (hasChildren) {
             element.setAttribute("aria-expanded", "true");
         } else {
@@ -233,8 +194,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
         updateName();
     }
 
-    // e.g. "translation, XSLT Filter", "rawWriter, XML Writer, detached" or "decoration, XSLT
-    // Filter, can take rawWriter"
+    // e.g. "translation, XSLT Filter", "translation, XSLT Filter, has embedded document",
+    // "rawWriter, XML Writer, detached" or "decoration, XSLT Filter, can take rawWriter"
     private void updateName() {
         if (getWidget() == null) {
             // Not built yet: the constructor names it once it is
@@ -243,6 +204,9 @@ public class PipelineElementBox extends Box<PipelineElement> {
         final StringBuilder sb = new StringBuilder(NullSafe.string(label.getText()));
         if (NullSafe.isNonBlankString(typeName) && !typeName.equals(label.getText())) {
             sb.append(", ").append(typeName);
+        }
+        if (embeddedName != null) {
+            sb.append(", ").append(embeddedName);
         }
         if (detached) {
             sb.append(", detached");
@@ -258,17 +222,35 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
     @Override
     public void showHotspot(final boolean show) {
-        toggleClass(HOTSPOT_CLASS, show);
+        toggleClass(TARGET_CLASS, show);
     }
 
     @Override
     public void showRefused(final boolean refused) {
         toggleClass(REFUSED_CLASS, refused);
+        if (refused != this.refused) {
+            this.refused = refused;
+            // The "not allowed" icon takes the type icon's place (or the start, if it has none)
+            final Element shown = refused
+                    ? typeIcon
+                    : refusedIcon;
+            final Element showing = refused
+                    ? refusedIcon
+                    : typeIcon;
+            if (shown != null) {
+                getElement().replaceChild(showing, shown);
+            } else if (refused) {
+                getElement().insertFirst(refusedIcon);
+            } else {
+                refusedIcon.removeFromParent();
+            }
+        }
     }
 
+    /// Disables (or not) the element: `aria-disabled`, which its style follows.
+    ///
+    /// @param disabled Whether it is disabled.
     public void setDisabled(final boolean disabled) {
-        toggleClass(DISABLED_CLASS, disabled);
-        // Tell assistive technology too, not only show it
         if (disabled) {
             getElement().setAttribute(DisabledState.ARIA_DISABLED, "true");
         } else {
@@ -276,88 +258,36 @@ public class PipelineElementBox extends Box<PipelineElement> {
         }
     }
 
-    private void updateFilterState() {
+    // An icon: the SVG in SvgImageUtil's div (its own element, not in one of ours), with the given
+    // classes too
+    private static Element createIcon(final SvgImage svgImage, final String className) {
+        final Element holder = Document.get().createDivElement();
+        holder.setInnerSafeHtml(SvgImageUtil.toSafeHtml(svgImage, "svgIcon", IMAGE_CLASS, className));
+        final Element icon = holder.getFirstChildElement();
+        icon.removeFromParent();
+        return icon;
+    }
 
-        if (pipelineElement != null && pipelineModel != null && pipelineModel.hasActiveFilters(pipelineElement)) {
-            filterIcon.addStyleName(BASE_CLASS + "-filterOn");
-            filterIcon.removeStyleName(BASE_CLASS + "-filterOff");
-            final String filterIconTitle = buildFilterIconTitle();
-            filterIcon.setTitle(filterIconTitle);
-            filterIcon.getElement().setAttribute(ROLE, ROLE_IMG);
-            filterIcon.getElement().setAttribute(ARIA_LABEL, NullSafe.isBlankString(filterIconTitle)
-                    ? ACTIVE_FILTERS_NAME
-                    : filterIconTitle);
+    // An icon whose meaning is in the box's name: hidden from assistive technology, with a hover
+    // tip for those who can see it
+    private static void hideIcon(final Element icon, final String tip) {
+        icon.setAttribute(ARIA_HIDDEN, "true");
+        if (!NullSafe.isBlankString(tip)) {
+            icon.setTitle(tip);
+        }
+    }
+
+    private static String capitalise(final String text) {
+        return text.substring(0, 1).toUpperCase() + text.substring(1);
+    }
+
+    // The element's description as its name's hover tip, if it has one
+    private void setDescription(final String description) {
+        if (NullSafe.isBlankString(description)) {
+            label.getElement().removeAttribute("title");
         } else {
-            // Only the icon inside is hidden, so the empty holder mustn't be an image either
-            filterIcon.addStyleName(BASE_CLASS + "-filterOff");
-            filterIcon.removeStyleName(BASE_CLASS + "-filterOn");
-            filterIcon.setTitle(null);
-            filterIcon.getElement().removeAttribute(ROLE);
-            filterIcon.getElement().removeAttribute(ARIA_LABEL);
+            label.getElement().setAttribute("title", description);
         }
-    }
-
-    // Exposes an icon to assistive technology as an image with the given name, and shows the
-    // name as a hover tip
-    private static void nameImage(final Widget image, final String name) {
-        if (!NullSafe.isBlankString(name)) {
-            image.getElement().setAttribute(ROLE, ROLE_IMG);
-            image.getElement().setAttribute(ARIA_LABEL, name);
-            image.setTitle(name);
-        }
-    }
-
-    private String buildFilterIconTitle() {
-        if (pipelineElement == null || pipelineModel == null || pipelineModel.getStepFilterMap() == null) {
-            return null;
-        }
-
-        final SteppingFilterSettings settings = pipelineModel.getStepFilterMap().get(pipelineElement.getId());
-        if (settings == null) {
-            return null;
-        }
-
-        final Severity skipToSeverity = settings.getSkipToSeverity();
-        final OutputState skipToOutput = settings.getSkipToOutput();
-        final List<XPathFilter> xPathFilters = NullSafe.list(settings.getFilters());
-        if (skipToSeverity != null || skipToOutput != null || !xPathFilters.isEmpty()) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Has active stepping filters:");
-
-            if (skipToSeverity != null) {
-                sb.append("\n  ")
-                        .append(BULLET)
-                        .append(" Jump to ")
-                        .append(skipToSeverity);
-            }
-
-            if (skipToOutput != null) {
-                final String outputStateStr = OutputState.EMPTY.equals(skipToOutput)
-                        ? "empty"
-                        : "non-empty";
-
-                sb.append("\n  ")
-                        .append(BULLET)
-                        .append(" Jump to ")
-                        .append(outputStateStr)
-                        .append(" output");
-            }
-            final int xPathFilterCount = xPathFilters.size();
-            if (xPathFilterCount == 1) {
-                sb.append("\n  ")
-                        .append(BULLET)
-                        .append(" XPath filter");
-            } else if (xPathFilterCount > 1) {
-                sb.append("\n  ")
-                        .append(BULLET)
-                        .append(" ")
-                        .append(xPathFilterCount)
-                        .append(" XPath filters");
-            }
-            return sb.toString();
-        }
-
-        return null;
     }
 
     /// Shows the dots where the box's connectors join it, over its borders, coloured by what flows
@@ -367,26 +297,21 @@ public class PipelineElementBox extends Box<PipelineElement> {
     /// @param hasChildren Whether the element has children in the tree shown.
     public void setPorts(final boolean hasChildren) {
         final PipelineElement parent = NullSafe.get(pipelineModel.getParentMap(), map -> map.get(pipelineElement));
-        setPort(inPort, parent == null
+        setFlow(FLOW_IN_ATTRIBUTE, parent == null
                 ? null
                 : PipelineConnectorRenderer.getFlow(pipelineModel.getElementType(parent)));
-        setPort(outPort, hasChildren
+        setFlow(FLOW_OUT_ATTRIBUTE, hasChildren
                 ? PipelineConnectorRenderer.getFlow(pipelineModel.getElementType(pipelineElement))
                 : null);
     }
 
-    // A port dot, for sight only (the tree's structure is the connectors')
-    private static Element createPort(final String className) {
-        final Element port = Document.get().createSpanElement();
-        port.setClassName(PORT_CLASS + " " + className);
-        port.setAttribute("aria-hidden", "true");
-        return port;
-    }
-
-    private static void setPort(final Element port, final PipelineConnectorRenderer.Flow flow) {
-        port.setAttribute(PORT_FLOW_ATTRIBUTE, flow == null
-                ? ""
-                : flow.getName());
+    // What flows along a side's connectors, for its dot's colour (none without)
+    private void setFlow(final String attribute, final PipelineConnectorRenderer.Flow flow) {
+        if (flow == null) {
+            getElement().removeAttribute(attribute);
+        } else {
+            getElement().setAttribute(attribute, flow.getName());
+        }
     }
 
     public void refresh(final PipelineElement pipelineElement) {
@@ -394,14 +319,11 @@ public class PipelineElementBox extends Box<PipelineElement> {
         setLabelText(pipelineElement.getName() != null
                 ? pipelineElement.getName()
                 : pipelineElement.getId());
-        label.getElement().setAttribute("title", pipelineElement.getDescription() != null
-                ? pipelineElement.getDescription()
-                : "");
-        updateFilterState();
+        setDescription(pipelineElement.getDescription());
     }
 
     // The element's name, also in data-text, so that the label keeps room for it in bold (see
-    // PipelineElementBox.css)
+    // pipeline-element.css)
     private void setLabelText(final String text) {
         label.setText(text);
         label.getElement().setAttribute("data-text", text == null
@@ -421,42 +343,6 @@ public class PipelineElementBox extends Box<PipelineElement> {
     @Override
     public PipelineElement getItem() {
         return pipelineElement;
-    }
-
-    /**
-     * Set the severity for this pipe element or null if there isn't one.
-     * Not all severities are rendered.
-     */
-    public void setSeverity(final Severity severity) {
-        final String newClassName = severity != null
-                ? severityNameToClassMap.get(severity.name())
-                : null;
-        final String classAttr = getElement().getClassName();
-        for (final String severityClassName : severityNameToClassMap.values()) {
-            if (!severityClassName.equals(newClassName) && classAttr.contains(severityClassName)) {
-//                GWT.log("Un-setting " + this.pipelineElement.getId() + " from " + severity);
-                getElement().removeClassName(severityClassName);
-            }
-        }
-        if (newClassName != null && !classAttr.contains(newClassName)) {
-//            GWT.log("Setting " + this.pipelineElement.getId() + " to " + severity);
-            getElement().addClassName(newClassName);
-        }
-        setSeverityHoverTip(severity);
-    }
-
-    private void setSeverityHoverTip(final Severity severity) {
-        final String namePart = pipelineElement.getType()
-                                + " '" + pipelineElement.getId() + "'";
-        if (severity == null) {
-            getElement().setTitle(namePart);
-        } else {
-            String severityPart = severity.getSummaryValue().toLowerCase();
-            if (Severity.INFO.equals(severity)) {
-                severityPart += " messages";
-            }
-            getElement().setTitle(namePart + " has " + severityPart);
-        }
     }
 
     @Override

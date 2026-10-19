@@ -19,7 +19,6 @@ package stroom.pipeline.structure.client.view;
 import stroom.data.grid.client.MouseHelper;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
-import stroom.util.shared.Severity;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
 import stroom.widget.htree.client.TreeRenderer;
@@ -39,7 +38,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -70,7 +68,8 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
     public PipelineTreePanel() {
         panel = new FlowPanel();
-        panel.setStyleName("treePanel-panel");
+        // The BEM block pipeline-tree (see pipeline-tree.css)
+        panel.setStyleName("pipeline-tree");
         initWidget(panel);
     }
 
@@ -123,12 +122,12 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
         clear();
 
         boxPanel = new FlowPanel();
-        boxPanel.setStyleName("treePanel-boxPanel");
+        boxPanel.setStyleName("pipeline-tree__items");
         // The boxes are the tree's items (PipelineElementRenderer), for assistive technology
         boxPanel.getElement().setAttribute("role", "tree");
         boxPanel.getElement().setAttribute("aria-label", "Pipeline structure");
         fadedGroup = new FlowPanel();
-        fadedGroup.setStyleName("treePanel-faded");
+        fadedGroup.setStyleName("pipeline-tree__faded");
         // Not a group of the tree's: its boxes are items of the tree as the others are
         fadedGroup.getElement().setAttribute("role", "none");
         boxPanel.add(fadedGroup);
@@ -158,7 +157,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
-            canvas.setStyleName("treePanel-canvas");
+            canvas.setStyleName("pipeline-tree__canvas");
             panel.add(canvas);
         }
 
@@ -296,25 +295,6 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             cellRenderer.getBoxes().stream()
                     .filter(b -> disabledElements.contains(b.getItem()))
                     .forEach(b -> b.setDisabled(true));
-        }
-    }
-
-    public void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
-        if (renderer != null) {
-            if (elementIdToSeveritiesMap == null || elementIdToSeveritiesMap.isEmpty()) {
-                cellRenderer.getBoxes().forEach(pipelineElementBox -> {
-                    if (pipelineElementBox != null) {
-                        pipelineElementBox.setSeverity(null);
-                    }
-                });
-            } else {
-                cellRenderer.getBoxes().forEach(pipelineElementBox -> {
-                    if (pipelineElementBox != null) {
-                        pipelineElementBox.setSeverity(
-                                elementIdToSeveritiesMap.get(pipelineElementBox.getItem().getElementId().getId()));
-                    }
-                });
-            }
         }
     }
 }

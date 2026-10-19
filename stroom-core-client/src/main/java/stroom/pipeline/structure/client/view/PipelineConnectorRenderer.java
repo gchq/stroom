@@ -35,8 +35,9 @@ import java.util.function.Predicate;
 /// (see [#getFlow(PipelineElementType)]). The port dots at their ends are the boxes' own (see
 /// [PipelineElementBox#setPorts]), so that they sit over the boxes' borders. The colours are the
 /// theme's (`--pipeline-connector__*` in the theme's CSS), read when each connector is drawn, so
-/// that they follow a change of theme. A connector into a faded element is drawn on the faded
-/// context instead (one faded as a whole with the faded elements' boxes, see [PipelineTreePanel]).
+/// that they follow a change of theme; in forced colours they are the user's text colour. A
+/// connector into a faded element is drawn on the faded context instead (one faded as a whole with
+/// the faded elements' boxes, see [PipelineTreePanel]).
 public class PipelineConnectorRenderer implements ConnectorRenderer<PipelineElement> {
 
     private static final double LINE_WIDTH = 2;
@@ -111,7 +112,11 @@ public class PipelineConnectorRenderer implements ConnectorRenderer<PipelineElem
                              final double y1,
                              final double x2,
                              final double y2) {
-        final String colour = getColour(ctx.getCanvas(), flow.getProperty());
+        // In forced colours (e.g. Windows High Contrast), which don't change what a canvas draws, the
+        // user's text colour (the canvas's own colour, which they set)
+        final String colour = isForcedColours()
+                ? getForcedColour(ctx.getCanvas())
+                : getColour(ctx.getCanvas(), flow.getProperty());
         final CssColor cssColour = CssColor.make(NullSafe.isBlankString(colour)
                 ? FALLBACK_COLOUR
                 : colour);
@@ -127,6 +132,14 @@ public class PipelineConnectorRenderer implements ConnectorRenderer<PipelineElem
 
     private static native String getColour(Element element, String property) /*-{
         return $wnd.getComputedStyle(element).getPropertyValue(property).trim();
+    }-*/;
+
+    private static native boolean isForcedColours() /*-{
+        return !!($wnd.matchMedia && $wnd.matchMedia("(forced-colors: active)").matches);
+    }-*/;
+
+    private static native String getForcedColour(Element element) /*-{
+        return $wnd.getComputedStyle(element).color;
     }-*/;
 
 

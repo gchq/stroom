@@ -60,8 +60,10 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
     private static final int EDGE_TICK_MILLIS = 16;
     // Room left beyond the tree's items when scrolling to its extents
     private static final int EXTENT_MARGIN = 20;
-    private static final String PANNABLE_CLASS = "draggableTreePanel--pannable";
-    private static final String PANNING_CLASS = "draggableTreePanel--panning";
+    // The BEM block draggable-tree (see draggable-tree.css)
+    private static final String BLOCK = "draggable-tree";
+    private static final String PANNABLE_CLASS = BLOCK + "--pannable";
+    private static final String PANNING_CLASS = BLOCK + "--panning";
 
     private final TreePanel<E> treePanel;
     private final TreePanel<E> subTreePanel;
@@ -104,6 +106,7 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         this.subTreePanel = subTreePanel;
 
         layoutPanel = new FlowPanel();
+        layoutPanel.setStyleName(BLOCK);
         layoutPanel.add(treePanel);
         initWidget(layoutPanel);
 
@@ -319,7 +322,7 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         final int dy = event.getClientY() - panStartY;
         if (!panned && (Math.abs(dx) > PANNING_THRESHOLD || Math.abs(dy) > PANNING_THRESHOLD)) {
             panned = true;
-            Document.get().getBody().addClassName(PANNING_CLASS);
+            getElement().addClassName(PANNING_CLASS);
         }
         if (panned) {
             scroller.setScrollLeft(panScrollLeft - dx);
@@ -332,7 +335,7 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         if (panning) {
             panning = false;
             panned = false;
-            Document.get().getBody().removeClassName(PANNING_CLASS);
+            getElement().removeClassName(PANNING_CLASS);
         }
     }
 

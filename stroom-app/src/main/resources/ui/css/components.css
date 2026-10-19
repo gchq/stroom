@@ -307,17 +307,6 @@
 	padding: 10px 5px;
 }
 
-/* A draggable tree (DraggableTreePanel) whose background can be grabbed to pan it, and while it is
-   (the cursor kept whatever it is over) */
-.draggableTreePanel--pannable {
-	cursor: grab;
-}
-
-body.draggableTreePanel--panning,
-body.draggableTreePanel--panning * {
-	cursor: grabbing !important;
-}
-
 
 .pipelineStructureViewImpl-label {
 	margin: 0 10px 0 15px;
