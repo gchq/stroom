@@ -51,8 +51,9 @@ import java.util.regex.Pattern;
 ///
 /// Tool results carry data from Stroom, so their text may have been written to mislead. So:
 ///
-/// - only six actions are kept, each with typed arguments; any other entry is dropped. create_query and
-///   apply_code_change are only kept when one of Stroom's own tools offers them;
+/// - only the actions named here are kept, each with typed arguments; any other entry is dropped. Those that
+///   create documents or change editors (e.g. create_query, create_dashboard and apply_code_change) are only kept
+///   when one of Stroom's own tools offers them;
 /// - each button's text is written by Stroom, from its own state, never from the server's `summary`;
 /// - a filter must exist, be on the pipeline named, and be disabled (to enable it) or enabled (to disable it);
 /// - an Elasticsearch request is only shown if it is one of three simple requests naming an index of the
@@ -80,6 +81,9 @@ public class UserActions {
     /// A change to a dashboard table that the agent proposed (only from Stroom's own propose_dashboard_change tool),
     /// which the button applies to the open dashboard, unsaved.
     public static final String APPLY_DASHBOARD_CHANGE = "apply_dashboard_change";
+    /// Opens Stroom's New Dashboard dialog with a suggested name; once created, the dashboard is given a query, a
+    /// table and optionally a data preview, built from the StroomQL (only from Stroom's own propose_dashboard tool).
+    public static final String CREATE_DASHBOARD = "create_dashboard";
 
     /// How long a button works for, as for approvals and forms.
     static final Duration EXPIRY = Duration.ofHours(24);
@@ -201,6 +205,9 @@ public class UserActions {
                 case APPLY_DASHBOARD_CHANGE -> builtIn.contains(map)
                         ? dashboardChange(id, map, expiresMs)
                         : Optional.empty();
+                case CREATE_DASHBOARD -> builtIn.contains(map)
+                        ? createDashboard(id, map, expiresMs)
+                        : Optional.empty();
                 default -> Optional.empty();
             };
             if (record.isPresent()) {
@@ -232,7 +239,7 @@ public class UserActions {
             result.add(new UserActionRecord(record.id(), record.action(), record.label(), record.details(),
                     record.warning(), record.filterId(), record.doc(), record.request(), List.copyOf(after),
                     record.expiresMs(), Status.PENDING, null, record.name(), record.codeChange(),
-                    record.dashboardChange()));
+                    record.dashboardChange(), record.newDashboard()));
         }
         return List.copyOf(result);
     }
@@ -327,6 +334,39 @@ public class UserActions {
                         ? null
                         : truncate(description, MAX_DETAILS_CHARS),
                 null, null, dataSource, query, List.of(), expiresMs, Status.PENDING, null, name));
+    }
+
+    /// A button that opens Stroom's New Dashboard dialog with the suggested name, for a dashboard built from a query
+    /// the user may run: its data source must exist and the user must have Use on it.
+    private Optional<UserActionRecord> createDashboard(final String id, final Map<?, ?> map, final long expiresMs) {
+        final String name = NullSafe.get(string(map.get("name")), String::strip);
+        final String query = NullSafe.get(string(map.get("query")), String::strip);
+        final String queryType = string(map.get("query_type"));
+        if (name == null || name.isEmpty() || name.length() > MAX_NAME_CHARS || hasControlCharacters(name)
+            || query == null || query.isEmpty() || query.length() > MAX_REQUEST_CHARS
+            || queryType == null || !DashboardBuilder.QUERY_TYPES.contains(queryType)
+            || !(map.get("preview") instanceof final Boolean preview)) {
+            return Optional.empty();
+        }
+        final DocRef dataSource = lookup.usableDataSource(query).orElse(null);
+        if (dataSource == null) {
+            return Optional.empty();
+        }
+        final String description = NullSafe.get(string(map.get("description")), String::strip);
+        final String label = "Create dashboard '" + name + "', reading " + dataSource.getType() + " '"
+                             + dataSource.getName() + "', with "
+                             + (DashboardBuilder.CLASSIC.equals(queryType)
+                ? "a classic (expression) query and a table"
+                : "a StroomQL query and its table")
+                             + (preview
+                ? " and a data preview"
+                : "");
+        return Optional.of(new UserActionRecord(id, CREATE_DASHBOARD, label,
+                NullSafe.isBlankString(description)
+                        ? null
+                        : truncate(description, MAX_DETAILS_CHARS),
+                null, null, dataSource, query, List.of(), expiresMs, Status.PENDING, null, name, null, null,
+                new UserActionRecord.NewDashboard(queryType, preview)));
     }
 
     /// A button that opens a review of a change to a stepping element's code, for an element whose document exists

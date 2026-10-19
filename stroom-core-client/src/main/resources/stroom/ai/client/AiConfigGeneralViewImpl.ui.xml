@@ -21,15 +21,21 @@
         <form:FormGroup identity="historySummaryPrompt" label="History Summary Prompt">
             <g:TextArea ui:field="historySummaryPrompt" width="100%" visibleLines="3"/>
         </form:FormGroup>
-        <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="enableDebugDetail"
-                                    identity="enableDebugDetail"
-                                    label="Enable Debug Detail"/>
+        <form:FormGroup identity="showToolCalls"
+                        helpText="Show the tools the agent calls, with their arguments and results, in each turn's activity. Turning this off only hides them: the agent still uses its tools.">
+            <tickbox:CustomCheckBox ui:field="showToolCalls" label="Show tool calls"/>
         </form:FormGroup>
-        <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="browserNotifications"
-                                    identity="browserNotifications"
-                                    label="Notify me when a chat finishes or needs me while I'm in another tab"/>
+        <form:FormGroup identity="showReasoning"
+                        helpText="Show the model's reasoning in each turn's activity, when the model gives any and its settings allow it to be shown.">
+            <tickbox:CustomCheckBox ui:field="showReasoning" label="Show reasoning"/>
+        </form:FormGroup>
+        <form:FormGroup identity="enableDebugDetail"
+                        helpText="Keep the full exchange with the model (the messages sent and the response received) with each answer, and show it as a 'Request detail' entry in the turn's activity. Useful for working out why the agent did something.">
+            <tickbox:CustomCheckBox ui:field="enableDebugDetail" label="Show request detail"/>
+        </form:FormGroup>
+        <form:FormGroup identity="browserNotifications"
+                        helpText="Show a browser notification when a chat finishes, or needs you to answer something, while you're in another browser tab.">
+            <tickbox:CustomCheckBox ui:field="browserNotifications" label="Enable browser notifications"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>
