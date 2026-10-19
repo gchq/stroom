@@ -74,6 +74,9 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         panel.setStyleName("treePanel-panel");
         boxPanel = new FlowPanel();
         boxPanel.setStyleName("treePanel-boxPanel");
+        // The boxes are the tree's items (ExpressionItemRenderer), for assistive technology
+        boxPanel.getElement().setAttribute("role", "tree");
+        boxPanel.getElement().setAttribute("aria-label", "Expression");
 
         final LayeredCanvas canvas = LayeredCanvas.createIfSupported();
         if (canvas != null) {
@@ -148,11 +151,59 @@ public class ExpressionTreePanel extends TreePanel<Item> {
 
     @Override
     public void refresh(final RefreshCallback callback) {
+        // Drawing replaces the boxes, so the focus is put back on the same item's box
+        final Item focused = getFocusedItem();
         boxPanel.clear();
         if (renderer != null) {
             cellRenderer.clear();
             renderer.draw();
+            focus(focused);
+            if (callback != null) {
+                callback.onRefresh();
+            }
+            fireAfterRefresh();
         }
+    }
+
+    // The item whose box itself (not a field in it) has the focus, if any
+    private Item getFocusedItem() {
+        if (renderer != null) {
+            final Element active = getActiveElement();
+            for (final ExpressionItemBox box : cellRenderer.getBoxes()) {
+                if (box.getElement().equals(active)) {
+                    return box.getItem();
+                }
+            }
+        }
+        return null;
+    }
+
+    private void focus(final Item item) {
+        if (item != null) {
+            final Box<Item> box = getBox(item);
+            if (box != null) {
+                box.getElement().focus();
+            }
+        }
+    }
+
+    private static native Element getActiveElement() /*-{
+        return $doc.activeElement;
+    }-*/;
+
+    /// Sets the item opened for editing, which shows its editor while it is selected, or none.
+    ///
+    /// @param item The item, or null for none.
+    public void setEditingItem(final Item item) {
+        if (cellRenderer != null) {
+            cellRenderer.setEditingItem(item);
+        }
+    }
+
+    /// @param item An item.
+    /// @return Whether it is the item opened for editing (see [#setEditingItem]).
+    public boolean isEditingItem(final Item item) {
+        return cellRenderer != null && cellRenderer.isEditingItem(item);
     }
 
     @Override

@@ -18,6 +18,15 @@
 	position: absolute;
 	left: -100000px;
 	top: -100000px;
+	/* Scrolled into view with room for its focus ring */
+	scroll-margin: 8px;
+	outline: none;
+}
+
+/* Keyboard focus on an item (not a field of its editor): the focus border and ring used elsewhere
+   (as the pipeline tree's), round its row */
+.expressionItemBox-background:focus-visible .termEditor-inner {
+	box-shadow: 0 0 0 1px var(--focus-border), 0 0 0 5px var(--focus-ring__color);
 }
 
 .expressionItemBox-background .termEditor-inner {

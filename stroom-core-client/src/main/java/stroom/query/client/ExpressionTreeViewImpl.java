@@ -20,6 +20,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
+import stroom.pipeline.structure.client.view.TreeKeyboard;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
@@ -37,15 +38,24 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+/// An expression's tree of terms and operators.
+///
+/// It is a tree for assistive technology (`role="tree"`, see [ExpressionItemRenderer]) and for the
+/// keyboard (see [TreeKeyboard]): the arrow keys move the selection, showing the item selected as
+/// its label; a click edits an item (its editor in place of its label). Its items can be dragged to
+/// another operator.
 public class ExpressionTreeViewImpl
         extends ViewWithUiHandlers<ExpressionUiHandlers>
         implements ExpressionTreeView {
 
     private final ExpressionTreePanel treePanel;
     private final DraggableTreePanel<Item> layoutPanel;
+    private final TreeKeyboard<Item> keyboard;
     private MySingleSelectionModel<Item> selectionModel;
+    private Consumer<Item> removeHandler;
 
     @Inject
     public ExpressionTreeViewImpl(final Provider<DocSelectionBoxPresenter> docRefProvider,
@@ -72,9 +82,18 @@ public class ExpressionTreeViewImpl
             @Override
             protected void setSelected(final Item item) {
                 if (selectionModel != null) {
-                    if (!selectionModel.isSelected(item)) {
+                    if (item == null) {
                         endEditing();
-                        selectionModel.setSelected(item, true);
+                        selectionModel.setSelected(null, true);
+                    } else if (!selectionModel.isSelected(item)) {
+                        // A clicked item is edited, and has the focus, so that the keyboard carries
+                        // on from it
+                        endEditing();
+                        treePanel.setEditingItem(item);
+                        keyboard.moveTo(item);
+                    } else if (!treePanel.isEditingItem(item)) {
+                        // Selected with the keyboard: a click edits it
+                        edit(item);
                     }
                 }
             }
@@ -96,6 +115,51 @@ public class ExpressionTreeViewImpl
         };
         layoutPanel.setAllowDragging(true);
         layoutPanel.addStyleName("ExpressionTreeViewImpl-layoutPanel");
+
+        keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "expression-tree-status", "item", "items") {
+            @Override
+            protected String getName(final Item item) {
+                return ExpressionItemRenderer.getName(treePanel.getTree(), item);
+            }
+
+            @Override
+            protected boolean canTake(final Item parent, final Item child) {
+                return parent instanceof Operator;
+            }
+
+            @Override
+            protected void move(final Item parent, final Item child) {
+                final DefaultTreeForTreeLayout<Item> tree = treePanel.getTree();
+                tree.removeChild(child);
+                tree.addChild(parent, child);
+                treePanel.refresh();
+                if (getUiHandlers() != null) {
+                    getUiHandlers().onChange();
+                }
+            }
+
+            @Override
+            protected void remove(final Item item) {
+                if (removeHandler != null) {
+                    treePanel.setEditingItem(null);
+                    removeHandler.accept(item);
+                    // The focus goes to the item selected in its place, shown as its label
+                    if (selectionModel != null && selectionModel.getSelectedObject() != null) {
+                        moveTo(selectionModel.getSelectedObject());
+                    }
+                }
+            }
+
+            @Override
+            protected void onNavigate(final Item item) {
+                // Leaving an item ends its editing (keeping what was entered); the item moved to is
+                // shown as its label
+                endEditing();
+                treePanel.setEditingItem(null);
+            }
+        };
+        // Moving items with the keyboard comes with their detached look
+        keyboard.setAllowMoving(false);
     }
 
     @Override
@@ -107,6 +171,7 @@ public class ExpressionTreeViewImpl
     public void setSelectionModel(final MySingleSelectionModel<Item> selectionModel) {
         this.selectionModel = selectionModel;
         treePanel.setSelectionModel(selectionModel);
+        keyboard.setSelectionModel(selectionModel);
         // Without a selection model the tree is only for reading, so it can't be rearranged either
         layoutPanel.setAllowDragging(selectionModel != null);
     }
@@ -141,6 +206,17 @@ public class ExpressionTreeViewImpl
     @Override
     public void endEditing() {
         treePanel.endEditing();
+    }
+
+    @Override
+    public void edit(final Item item) {
+        treePanel.setEditingItem(item);
+        treePanel.refresh();
+    }
+
+    @Override
+    public void setRemoveHandler(final Consumer<Item> removeHandler) {
+        this.removeHandler = removeHandler;
     }
 
     @Override

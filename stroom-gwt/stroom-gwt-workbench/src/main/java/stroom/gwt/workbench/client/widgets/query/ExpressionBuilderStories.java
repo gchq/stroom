@@ -87,6 +87,77 @@ public final class ExpressionBuilderStories {
                 // A populated expression. Select a node to edit it inline; add, copy, disable or
                 // delete with the toolbar, or drag a node onto an operator to move it.
                 .story("Populated", context -> editor(context, populatedExpression(), false))
+                // A larger expression, with no play, to look at: AND, OR and NOT operators four deep,
+                // a disabled operator and a disabled term, and each kind of value (text, number, a
+                // date range, a list, a document and a user)
+                .story("ComplexExpression", context -> editor(context, complexExpression(), false))
+                // Moving round the tree with the keyboard: it is one tab stop, Left goes to an item's
+                // operator and Right into its first item, Up and Down to its siblings and Home and
+                // End to the first and last of them; the selection follows the focus, shown as the
+                // item's text (not its editor), and a click edits; Delete deletes
+                .story("KeyboardNavigation", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    final Query tree = play.getByRole("tree", "Expression");
+                    play.expect(tree).toBeInTheDocument();
+                    play.expect(play.querySelectorAll("[role='tree'] [tabindex='0']")).toHaveLength(1);
+                    final Query root = item(play, "AND, 4 items");
+                    play.expect(root).toHaveAttribute("tabindex", "0");
+                    play.expect(root).toHaveAttribute("aria-level", "1");
+
+                    // Into the tree from the toolbar
+                    play.run("focus the toolbar's last button",
+                            () -> play.getByTitle("Delete Selected Expression Item").element().get().focus());
+                    play.keyboard("{Tab}");
+                    play.expect(root).toHaveFocus();
+
+                    // Right, Down, Right (quickly): into the OR's first term
+                    play.keyboard("{ArrowRight}{ArrowDown}{ArrowRight}");
+                    final Query eventTime = item(play,
+                            "EventTime between 2024-01-01T00:00:00.000Z,2024-02-01T00:00:00.000Z");
+                    play.waitFor(() -> play.expect(eventTime).toHaveFocus());
+                    play.expect(eventTime).toHaveAttribute("aria-level", "3");
+                    play.expect(eventTime).toHaveAttribute("aria-posinset", "1");
+                    play.expect(eventTime).toHaveAttribute("aria-setsize", "3");
+                    play.expect(eventTime).toHaveAttribute("aria-selected", "true");
+                    play.expect(item(play, "OR, 3 items")).toHaveAttribute("aria-expanded", "true");
+                    // Selected with the keyboard: shown as its text, not its editor
+                    play.expect(play.querySelector(FIELD_PICKER)).toBeNull();
+
+                    // Up and Down stop at the ends; Home and End go to them
+                    play.keyboard("{ArrowUp}");
+                    play.expect(eventTime).toHaveFocus();
+                    play.keyboard("{End}");
+                    play.waitFor(() -> play.expect(item(play, "StreamId in 1,2,3")).toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    play.expect(item(play, "StreamId in 1,2,3")).toHaveFocus();
+                    play.keyboard("{Home}{ArrowDown}{ArrowRight}{ArrowDown}");
+                    final Query streamId = item(play, "StreamId > 1000");
+                    play.waitFor(() -> play.expect(streamId).toHaveFocus());
+                    play.expect(streamId).toHaveAttribute("aria-level", "4");
+                    // Left goes back to its operator
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(item(play, "AND, 3 items")).toHaveFocus());
+
+                    // A disabled item says so
+                    play.expect(item(play, "NOT, 1 item, disabled")).toBeInTheDocument();
+                    play.expect(item(play, "RunAsUser is Alice Anderson, disabled")).toBeInTheDocument();
+
+                    // A click edits the item
+                    play.click(play.getByText("StreamId > 1000", ".expressionItemBox-label"));
+                    play.waitFor(() -> play.expect(play.querySelector(FIELD_PICKER)).not().toBeNull());
+                    play.waitFor(() -> play.expect(item(play, "StreamId > 1000")).toHaveFocus());
+
+                    // Delete deletes the focused item, and the focus goes to the item selected in its
+                    // place
+                    play.keyboard("{ArrowUp}");
+                    play.waitFor(() -> play.expect(item(play, "Feed is TEST_FEED")).toHaveFocus());
+                    play.expect(play.querySelector(FIELD_PICKER)).toBeNull();
+                    play.keyboard("{Delete}");
+                    play.waitFor(() -> play.expect(play.queryByText("Feed is TEST_FEED")).toBeNull());
+                    play.waitFor(() -> play.expect(item(play, "AND, 2 items")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled());
+                    play.expect(play.querySelectorAll("[role='tree'] [tabindex='0']")).toHaveLength(1);
+                })
                 // A new, empty expression (just the root AND)
                 .story("NewExpression", context -> editor(context, emptyExpression(), false))
                 // Read only - the populated expression, with no selection, editing or dragging
@@ -263,6 +334,82 @@ public final class ExpressionBuilderStories {
                         .docRef(new DocRef("User", "u-alice", "Alice Anderson"))
                         .build())
                 .build();
+    }
+
+    /// `UserId contains admin AND (EventTime between … OR (Feed is TEST_FEED AND StreamId > 1000 AND
+    /// NOT (Description contains test OR Description = sample)) OR StreamId in 1, 2, 3) AND NOT
+    /// UserId = system AND RunAsUser is Alice`, the NOT operator before the user and the user term
+    /// disabled.
+    private static ExpressionOperator complexExpression() {
+        return ExpressionOperator.builder()
+                .op(Op.AND)
+                .addTerm(ExpressionTerm.builder()
+                        .field("UserId")
+                        .condition(Condition.CONTAINS)
+                        .value("admin")
+                        .build())
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.OR)
+                        .addTerm(ExpressionTerm.builder()
+                                .field("EventTime")
+                                .condition(Condition.BETWEEN)
+                                .value("2024-01-01T00:00:00.000Z,2024-02-01T00:00:00.000Z")
+                                .build())
+                        .addOperator(ExpressionOperator.builder()
+                                .op(Op.AND)
+                                .addTerm(ExpressionTerm.builder()
+                                        .field("Feed")
+                                        .condition(Condition.IS_DOC_REF)
+                                        .value("TEST_FEED")
+                                        .docRef(new DocRef("Feed", "feed-uuid-1", "TEST_FEED"))
+                                        .build())
+                                .addTerm(ExpressionTerm.builder()
+                                        .field("StreamId")
+                                        .condition(Condition.GREATER_THAN)
+                                        .value("1000")
+                                        .build())
+                                .addOperator(ExpressionOperator.builder()
+                                        .op(Op.NOT)
+                                        .addTerm(ExpressionTerm.builder()
+                                                .field("Description")
+                                                .condition(Condition.CONTAINS)
+                                                .value("test")
+                                                .build())
+                                        .addTerm(ExpressionTerm.builder()
+                                                .field("Description")
+                                                .condition(Condition.EQUALS)
+                                                .value("sample")
+                                                .build())
+                                        .build())
+                                .build())
+                        .addTerm(ExpressionTerm.builder()
+                                .field("StreamId")
+                                .condition(Condition.IN)
+                                .value("1,2,3")
+                                .build())
+                        .build())
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.NOT)
+                        .enabled(false)
+                        .addTerm(ExpressionTerm.builder()
+                                .field("UserId")
+                                .condition(Condition.EQUALS)
+                                .value("system")
+                                .build())
+                        .build())
+                .addTerm(ExpressionTerm.builder()
+                        .enabled(false)
+                        .field("RunAsUser")
+                        .condition(Condition.IS_USER_REF)
+                        .value("Alice Anderson")
+                        .docRef(new DocRef("User", "u-alice", "Alice Anderson"))
+                        .build())
+                .build();
+    }
+
+    // An item of the expression tree, by its name
+    private static Query item(final Play play, final String name) {
+        return play.getByRole("treeitem", TextMatch.exact(name));
     }
 
     private static ExpressionOperator emptyExpression() {

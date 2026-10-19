@@ -39,6 +39,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePresenter.ExpressionTreeView>
@@ -54,6 +55,13 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         super(eventBus, view);
         selectionModel = new MySingleSelectionModel<>();
         view.setSelectionModel(selectionModel);
+        // The Delete key deletes the focused item, as the toolbar's Delete does the selected one
+        view.setRemoveHandler(item -> {
+            if (selectionModel != null) {
+                selectionModel.setSelected(item, true);
+                delete();
+            }
+        });
     }
 
     @Override
@@ -254,6 +262,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
             if (operator != null) {
                 tree.addChild(operator, item);
+                // A new item is edited at once
+                getView().edit(item);
                 selectionModel.setSelected(item, true);
             }
 
@@ -319,5 +329,16 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         void endEditing();
 
         void refresh();
+
+        /// Opens an item for editing: it shows its editor while it is selected (others show their
+        /// labels).
+        ///
+        /// @param item The item.
+        void edit(Item item);
+
+        /// Sets what to do when the tree asks for an item to be removed, e.g. with the Delete key.
+        ///
+        /// @param removeHandler What to do.
+        void setRemoveHandler(Consumer<Item> removeHandler);
     }
 }

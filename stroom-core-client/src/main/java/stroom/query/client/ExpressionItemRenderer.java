@@ -21,6 +21,7 @@ import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
 import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 import stroom.widget.htree.client.treelayout.TreeLayout;
+import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.dom.client.Style;
@@ -40,6 +41,9 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
     private final TermEditor termEditor;
     private final List<ExpressionItemBox> boxes = new ArrayList<>();
     private SelectionModel<Item> selectionModel;
+    // The item opened for editing (e.g. by a click), which shows its editor while it is selected;
+    // others are shown as their labels, selected or not
+    private Item editingItem;
 
     public ExpressionItemRenderer(final FlowPanel panel,
                                   final OperatorEditor operatorEditor,
@@ -53,10 +57,13 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
     @Override
     public void render(final TreeLayout<Item> treeLayout, final Bounds bounds, final Item item) {
         final boolean selected = selectionModel != null && selectionModel.isSelected(item);
-        Item editing = null;
+        Item selectedItem = null;
         if (selectionModel != null && selectionModel instanceof MySingleSelectionModel<?>) {
-            editing = ((MySingleSelectionModel<Item>) selectionModel).getSelectedObject();
+            selectedItem = ((MySingleSelectionModel<Item>) selectionModel).getSelectedObject();
         }
+        final Item editing = selectedItem != null && selectedItem.equals(editingItem)
+                ? selectedItem
+                : null;
 
         final double height = 25;
         final double x = bounds.getX();
@@ -107,6 +114,68 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
 
         box.setInnerWidget(widget);
         box.setSelected(selected);
+        setTreeItem(box, (DefaultTreeForTreeLayout<Item>) treeLayout.getTree(), item, selected, selectedItem);
+    }
+
+    // The box's place in the tree, its name, and whether it is the tree's tab stop: the selected
+    // item, else the root when nothing is selected (or the tree can't be selected)
+    private void setTreeItem(final ExpressionItemBox box,
+                             final DefaultTreeForTreeLayout<Item> tree,
+                             final Item item,
+                             final boolean selected,
+                             final Item selectedItem) {
+        int level = 1;
+        Item parent = tree.getParent(item);
+        final List<Item> siblings = parent == null
+                ? List.of(item)
+                : tree.getChildrenList(parent);
+        while (parent != null) {
+            level++;
+            parent = tree.getParent(parent);
+        }
+        final boolean tabStop = selected || (selectedItem == null && tree.getParent(item) == null);
+        box.setTreeItem(level,
+                siblings.indexOf(item) + 1,
+                siblings.size(),
+                !tree.getChildrenList(item).isEmpty(),
+                tabStop,
+                getName(tree, item) + (box.isEnabled()
+                        ? ""
+                        : ", disabled"));
+    }
+
+    /// Gets an item's name, e.g. for assistive technology: a term's text ("StreamId > 1000"), or an
+    /// operator's and how many items it has ("OR, 2 items").
+    ///
+    /// @param tree The tree.
+    /// @param item The item.
+    /// @return Its name.
+    public static String getName(final DefaultTreeForTreeLayout<Item> tree, final Item item) {
+        if (item instanceof Operator) {
+            final int count = tree == null
+                    ? 0
+                    : tree.getChildrenList(item).size();
+            return item + ", " + count + (count == 1
+                    ? " item"
+                    : " items");
+        }
+        final String text = item.toString().trim();
+        return text.isEmpty()
+                ? "New term"
+                : text;
+    }
+
+    /// Sets the item opened for editing, which shows its editor while it is selected, or none.
+    ///
+    /// @param item The item, or null for none.
+    public void setEditingItem(final Item item) {
+        this.editingItem = item;
+    }
+
+    /// @param item An item.
+    /// @return Whether it is the item opened for editing (see [#setEditingItem]).
+    public boolean isEditingItem(final Item item) {
+        return item != null && item.equals(editingItem);
     }
 
     @Override
