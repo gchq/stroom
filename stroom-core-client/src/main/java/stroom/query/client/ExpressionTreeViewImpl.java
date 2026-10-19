@@ -132,7 +132,7 @@ public class ExpressionTreeViewImpl
             }
         };
         layoutPanel.setAllowDragging(true);
-        layoutPanel.addStyleName("ExpressionTreeViewImpl-layoutPanel");
+        layoutPanel.addStyleName("expression-tree-view");
 
         keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "expression-tree-status", "item", "items") {
             @Override

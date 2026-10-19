@@ -27,8 +27,6 @@ import stroom.widget.util.client.MySingleSelectionModel;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.ArrayList;
@@ -77,42 +75,20 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
         panel.add(box);
         boxes.add(box);
 
-        Widget widget = null;
-
-        if (editing != null) {
-            if (editing.equals(item)) {
-                if (item instanceof final Operator operator) {
-                    operatorEditor.startEdit(operator);
-                } else if (item instanceof final Term term) {
-                    termEditor.startEdit(term);
-                }
-
-                if (item instanceof Operator) {
-                    widget = operatorEditor;
-                } else if (item instanceof Term) {
-                    widget = termEditor;
-                }
-            }
+        if (editing != null && editing.equals(item) && item instanceof final Operator operator) {
+            operatorEditor.startEdit(operator);
+            box.setEditor(operatorEditor, operatorEditor.getRow());
+        } else if (editing != null && editing.equals(item) && item instanceof final Term term) {
+            termEditor.startEdit(term);
+            box.setEditor(termEditor, termEditor.getRow());
         } else {
-            operatorEditor.removeFromParent();
-            termEditor.removeFromParent();
+            if (editing == null) {
+                operatorEditor.removeFromParent();
+                termEditor.removeFromParent();
+            }
+            box.setLabel(item.toString());
         }
 
-        if (widget == null) {
-            final Label label = new Label(item.toString(), false);
-            label.addStyleName("expressionItemBox-label");
-
-            final FlowPanel inner = new FlowPanel();
-            inner.setStyleName("termEditor-inner");
-            inner.add(label);
-
-            final FlowPanel layout = new FlowPanel();
-            layout.add(inner);
-            layout.setStyleName("termEditor-outer");
-            widget = layout;
-        }
-
-        box.setInnerWidget(widget);
         box.setSelected(selected);
         setTreeItem(box, (DefaultTreeForTreeLayout<Item>) treeLayout.getTree(), item, selected, selectedItem);
     }

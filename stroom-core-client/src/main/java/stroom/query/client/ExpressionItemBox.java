@@ -30,19 +30,31 @@ import com.google.gwt.user.client.ui.Widget;
 /// An item of an expression tree (a term or an operator): its label, or its editor while it is
 /// being edited. It is an item of the tree for assistive technology too (see [#setTreeItem]).
 ///
-/// While an item is moved (dragged, or detached with the keyboard) it shows whether it would take
-/// it ([#showHotspot], [#showRefused]), and the item moved shows that it is ([#setDetached]).
+/// Its looks (expression-item.css, named BEM style) are drawn on its row: its label, or the row of
+/// its editor's fields. They come from its ARIA attributes where it has them (`aria-selected`, only
+/// in a tree that can be changed, and the focus) and from modifiers: `--disabled` for an item left
+/// out of the expression (which can still be selected and edited, so not `aria-disabled`; its name
+/// says so), and those of moving items. While an item is moved (dragged, or detached with the
+/// keyboard) it shows whether it would take it ([#showHotspot], [#showRefused]), and the item moved
+/// shows that it is ([#setDetached]).
 public class ExpressionItemBox extends Box<Item> {
 
-    private static final String TARGET_CLASS = "expressionItemBox-target";
-    private static final String REFUSED_CLASS = "expressionItemBox-refused";
-    private static final String DETACHED_CLASS = "expressionItemBox-detached";
+    private static final String BLOCK = "expression-item";
+    private static final String ROW_CLASS = BLOCK + "__row";
+    private static final String LABEL_CLASS = BLOCK + "__label";
+    private static final String REFUSED_ICON_CLASS = BLOCK + "__refused-icon";
+    private static final String DISABLED_CLASS = BLOCK + "--disabled";
+    private static final String TARGET_CLASS = BLOCK + "--target";
+    private static final String REFUSED_CLASS = BLOCK + "--refused";
+    private static final String DETACHED_CLASS = BLOCK + "--detached";
 
+    // Holds its editor, if it has one
     private final SimplePanel background = new SimplePanel();
     private final TreeLayout<Item> treeLayout;
     private final Item expressionItem;
     private final boolean allowSelection;
-    private boolean selected;
+    // Its label, or the row of its editor's fields
+    private Element row;
     // The "not allowed" icon, at the start of the item's row while it refuses what is moved to it (so
     // that that isn't told by colour alone), which is only in the document then
     private Element refusedIcon;
@@ -58,26 +70,40 @@ public class ExpressionItemBox extends Box<Item> {
         this.expressionItem = expressionItem;
         this.allowSelection = allowSelection;
 
-        if (allowSelection) {
-            background.setStyleName("expressionItemBox-background expressionItemBox-selectable");
-        } else {
-            background.setStyleName("expressionItemBox-background");
-        }
-
+        background.setStyleName(BLOCK);
         initWidget(background);
+        toggleClass(DISABLED_CLASS, !isEnabled());
     }
 
-    public void setInnerWidget(final Widget innerWidget) {
-        background.setWidget(innerWidget);
+    /// Shows the item as its label, e.g. "StreamId > 1000" or "OR".
+    ///
+    /// @param text Its text.
+    public void setLabel(final String text) {
+        row = Document.get().createDivElement();
+        row.setClassName(ROW_CLASS + " " + LABEL_CLASS);
+        row.setInnerText(text);
+        getElement().appendChild(row);
     }
 
+    /// Shows the item as its editor.
+    ///
+    /// @param editor The editor.
+    /// @param row    The row of its fields, on which the item's looks are drawn.
+    public void setEditor(final Widget editor, final Element row) {
+        background.setWidget(editor);
+        this.row = row;
+        row.addClassName(ROW_CLASS);
+    }
+
+    /// Selects (or not) the item: `aria-selected`, which its looks follow, in a tree whose items
+    /// can be selected (one that can be changed).
+    ///
+    /// @param selected Whether it is selected.
     @Override
     public void setSelected(final boolean selected) {
-        this.selected = selected;
         if (allowSelection) {
             getElement().setAttribute("aria-selected", String.valueOf(selected));
         }
-        updateStyle();
     }
 
     /// Makes the box an item of the tree for assistive technology (`role="treeitem"`), with a name,
@@ -129,7 +155,6 @@ public class ExpressionItemBox extends Box<Item> {
     @Override
     public void showRefused(final boolean refused) {
         toggleClass(REFUSED_CLASS, refused);
-        final Element row = getRow();
         if (refused && row != null) {
             if (refusedIcon == null) {
                 refusedIcon = createRefusedIcon();
@@ -184,20 +209,12 @@ public class ExpressionItemBox extends Box<Item> {
         getElement().setAttribute("aria-label", sb.toString());
     }
 
-    // The row of the item's label or editor
-    private Element getRow() {
-        final Widget widget = background.getWidget();
-        return widget == null
-                ? null
-                : widget.getElement().getFirstChildElement();
-    }
-
     // Its meaning is in the box's name (see setDetachedName), so it is hidden from assistive
     // technology
     private static Element createRefusedIcon() {
         final Element holder = Document.get().createDivElement();
         holder.setInnerSafeHtml(SvgImageUtil.toSafeHtml(SvgImage.NOT_ALLOWED,
-                "svgIcon", "expressionItemBox-refusedIcon"));
+                "svgIcon", REFUSED_ICON_CLASS));
         final Element icon = holder.getFirstChildElement();
         icon.removeFromParent();
         icon.setAttribute("aria-hidden", "true");
@@ -209,22 +226,6 @@ public class ExpressionItemBox extends Box<Item> {
             getElement().addClassName(className);
         } else {
             getElement().removeClassName(className);
-        }
-    }
-
-    private void updateStyle() {
-        final boolean enabled = isEnabled();
-
-        if (enabled) {
-            getElement().removeClassName("expressionItemBox-disabled");
-        } else {
-            getElement().addClassName("expressionItemBox-disabled");
-        }
-
-        if (selected) {
-            getElement().addClassName("expressionItemBox-selected");
-        } else {
-            getElement().removeClassName("expressionItemBox-selected");
         }
     }
 

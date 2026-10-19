@@ -131,13 +131,11 @@
     --navigation-icon-button__background-color--hover: var(--icon-button__background-color--hover);
     --navigation-icon-button__border-color--hover: var(--icon-button__border-color--hover);
 
-    --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
-    --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
-    --expression-item-box__background-color--disabled: #ccc;
+    --expression-item__background-color--disabled: #ccc;
     /* 4.5:1 on that grey */
-    --expression-item-box__text-color--disabled: #555;
-    --expression-item-box__drop-target: var(--icon-colour__dark-green);
-    --expression-item-box__drop-refused: var(--icon-colour__red);
+    --expression-item__text-color--disabled: #555;
+    --expression-item__drop-target: var(--icon-colour__dark-green);
+    --expression-item__drop-refused: var(--icon-colour__red);
 
     /* Pipeline elements, in the pipeline structure tree (pipeline-element.css) and the stepping
        screen's pipeline bar (pipeline-path.css) */

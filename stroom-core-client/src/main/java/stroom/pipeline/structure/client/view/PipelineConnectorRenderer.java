@@ -21,12 +21,12 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.util.shared.NullSafe;
+import stroom.widget.htree.client.CanvasColours;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.CssColor;
-import com.google.gwt.dom.client.Element;
 
 import java.util.function.Predicate;
 
@@ -114,9 +114,9 @@ public class PipelineConnectorRenderer implements ConnectorRenderer<PipelineElem
                              final double y2) {
         // In forced colours (e.g. Windows High Contrast), which don't change what a canvas draws, the
         // user's text colour (the canvas's own colour, which they set)
-        final String colour = isForcedColours()
-                ? getForcedColour(ctx.getCanvas())
-                : getColour(ctx.getCanvas(), flow.getProperty());
+        final String colour = CanvasColours.isForcedColours()
+                ? CanvasColours.getTextColour(ctx.getCanvas())
+                : CanvasColours.getProperty(ctx.getCanvas(), flow.getProperty());
         final CssColor cssColour = CssColor.make(NullSafe.isBlankString(colour)
                 ? FALLBACK_COLOUR
                 : colour);
@@ -130,17 +130,6 @@ public class PipelineConnectorRenderer implements ConnectorRenderer<PipelineElem
         ctx.stroke();
     }
 
-    private static native String getColour(Element element, String property) /*-{
-        return $wnd.getComputedStyle(element).getPropertyValue(property).trim();
-    }-*/;
-
-    private static native boolean isForcedColours() /*-{
-        return !!($wnd.matchMedia && $wnd.matchMedia("(forced-colors: active)").matches);
-    }-*/;
-
-    private static native String getForcedColour(Element element) /*-{
-        return $wnd.getComputedStyle(element).color;
-    }-*/;
 
 
     // --------------------------------------------------------------------------------

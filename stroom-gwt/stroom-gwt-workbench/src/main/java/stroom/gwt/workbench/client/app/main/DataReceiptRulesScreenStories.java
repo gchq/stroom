@@ -85,7 +85,7 @@ public final class DataReceiptRulesScreenStories {
     private static final String SAVE = "Save Rules";
     // The expression panel has no class of its own; it is the expression tree's
     // view (ExpressionTreeViewImpl)
-    private static final String EXPRESSION_PANEL = ".ExpressionTreeViewImpl-layoutPanel";
+    private static final String EXPRESSION_PANEL = ".expression-tree-view";
 
     private DataReceiptRulesScreenStories() {
         // Static utility
@@ -119,7 +119,7 @@ public final class DataReceiptRulesScreenStories {
                     // Select the rule -> its expression shows, read only
                     play.click(play.getByText("Reject test feeds"));
                     play.waitFor(() -> play.expect(panel.getByText(TextMatch.regex("Feed\\s+contains\\s+TEST", "i")))
-                            .toHaveClass("expressionItemBox-label"));
+                            .toHaveClass("expression-item__label"));
                     play.expect(panel.queryByDisplayValue("TEST")).toBeNull();
                     expectNoProblems(play);
                 })

@@ -74,9 +74,9 @@ public final class ExpressionBuilderStories {
     private static final DocRef DATA_SOURCE = new DocRef("Index", "index-uuid-1", "Example Index");
     // The looks of an item while another is moved: one that would take it, one that won't, and the
     // one moved (with the items in it)
-    private static final String TARGET = "expressionItemBox-target";
-    private static final String REFUSED = "expressionItemBox-refused";
-    private static final String DETACHED = "expressionItemBox-detached";
+    private static final String TARGET = "expression-item--target";
+    private static final String REFUSED = "expression-item--refused";
+    private static final String DETACHED = "expression-item--detached";
     private static final String MARKED = "." + TARGET + ", ." + REFUSED + ", ." + DETACHED;
     // The tree's live region, which says what moving with the keyboard did
     private static final String STATUS = ".expression-tree-status";
@@ -154,7 +154,7 @@ public final class ExpressionBuilderStories {
                     play.expect(item(play, "RunAsUser is Alice Anderson, disabled")).toBeInTheDocument();
 
                     // A click edits the item
-                    play.click(play.getByText("StreamId > 1000", ".expressionItemBox-label"));
+                    play.click(play.getByText("StreamId > 1000", ".expression-item__label"));
                     play.waitFor(() -> play.expect(play.querySelector(FIELD_PICKER)).not().toBeNull());
                     play.waitFor(() -> play.expect(item(play, "StreamId > 1000")).toHaveFocus());
 
@@ -261,7 +261,7 @@ public final class ExpressionBuilderStories {
                     play.expect(eventTime).toHaveClass(REFUSED);
                     play.expect(or).not().toHaveClass(TARGET);
                     // Not by colour alone: the "not allowed" icon
-                    play.expect(play.querySelector("." + REFUSED + " .expressionItemBox-refusedIcon"))
+                    play.expect(play.querySelector("." + REFUSED + " .expression-item__refused-icon"))
                             .toBeVisible();
                     play.keyboard("{Control>}v{/Control}");
                     play.waitFor(() -> play.expect(status).toHaveTextContent(
@@ -279,7 +279,7 @@ public final class ExpressionBuilderStories {
                     play.expect(item(play, USER_ID)).toHaveAttribute("aria-posinset", "4");
                     play.expect(item(play, "OR, 4 items")).toBeInTheDocument();
                     play.expect(play.querySelectorAll(MARKED)).toHaveLength(0);
-                    play.expect(play.querySelector(".expressionItemBox-refusedIcon")).toBeNull();
+                    play.expect(play.querySelector(".expression-item__refused-icon")).toBeNull();
                     play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled());
 
                     // An operator is detached with its items, and Escape puts it back
@@ -303,7 +303,7 @@ public final class ExpressionBuilderStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     final Query status = play.querySelector(STATUS);
-                    play.click(play.getByText(USER_ID, ".expressionItemBox-label"));
+                    play.click(play.getByText(USER_ID, ".expression-item__label"));
                     play.waitFor(() -> play.expect(item(play, USER_ID)).toHaveFocus());
 
                     // Shift+F10 opens the menu; Detach detaches UserId
@@ -312,7 +312,7 @@ public final class ExpressionBuilderStories {
                     play.waitFor(() -> play.expect(item(play, USER_ID + ", detached")).toHaveClass(DETACHED));
 
                     // A term won't take it, so it can't be attached there
-                    play.click(play.getByText(EVENT_TIME, ".expressionItemBox-label"));
+                    play.click(play.getByText(EVENT_TIME, ".expression-item__label"));
                     final Query eventTime = item(play, EVENT_TIME + ", can't take " + USER_ID);
                     play.waitFor(() -> play.expect(eventTime).toHaveFocus());
                     play.keyboard("{Shift>}{F10}{/Shift}");
@@ -356,7 +356,7 @@ public final class ExpressionBuilderStories {
                     final Query eventTime = item(play, EVENT_TIME);
                     play.fireEvent().mouseMove(eventTime, EventInit.create().atCentreOf(eventTime).buttons(1));
                     play.waitFor(() -> play.expect(item(play, EVENT_TIME)).toHaveClass(REFUSED));
-                    play.expect(play.querySelector("." + REFUSED + " .expressionItemBox-refusedIcon"))
+                    play.expect(play.querySelector("." + REFUSED + " .expression-item__refused-icon"))
                             .toBeVisible();
                     play.expect(play.querySelectorAll("." + TARGET)).toHaveLength(0);
 
@@ -365,7 +365,7 @@ public final class ExpressionBuilderStories {
                     play.fireEvent().mouseMove(or, EventInit.create().atCentreOf(or).buttons(1));
                     play.waitFor(() -> play.expect(operator(play, "OR")).toHaveClass(TARGET));
                     play.expect(item(play, EVENT_TIME)).not().toHaveClass(REFUSED);
-                    play.expect(play.querySelector(".expressionItemBox-refusedIcon")).toBeNull();
+                    play.expect(play.querySelector(".expression-item__refused-icon")).toBeNull();
 
                     // Over nothing, nothing is marked; back over the OR, it is again
                     final Query runAsUser = item(play, "RunAsUser is Alice Anderson, disabled");
@@ -401,7 +401,7 @@ public final class ExpressionBuilderStories {
                     final Query status = play.querySelector(STATUS);
 
                     // Dragging puts back an item detached with the keyboard
-                    play.click(play.getByText(USER_ID, ".expressionItemBox-label"));
+                    play.click(play.getByText(USER_ID, ".expression-item__label"));
                     play.waitFor(() -> play.expect(item(play, USER_ID)).toHaveFocus());
                     play.keyboard("{Control>}x{/Control}");
                     play.waitFor(() -> play.expect(item(play, USER_ID + ", detached")).toHaveClass(DETACHED));
@@ -445,7 +445,7 @@ public final class ExpressionBuilderStories {
                     // The background, which the pointer is over between the items (the tree's, not
                     // that of the copy of what is dragged)
                     final Query background = play.querySelector(
-                            ".treePanel-panel:not([aria-hidden='true']) > .treePanel-canvas");
+                            ".expression-tree:not([aria-hidden='true']) > .expression-tree__canvas");
                     final Query pane = play.querySelector(".dock-max");
                     play.run("narrow the tree's pane, so that it scrolls",
                             () -> pane.element().get().getStyle().setProperty("width", "200px"));
@@ -497,12 +497,12 @@ public final class ExpressionBuilderStories {
                     // Stroom shows a read only expression (e.g. a processor filter's, or a query in
                     // the history) as the tree alone, with no toolbar, rather than a toolbar of
                     // disabled buttons
-                    play.findAllByText(TextMatch.containing("UserId"), ".expressionItemBox-label");
+                    play.findAllByText(TextMatch.containing("UserId"), ".expression-item__label");
                     for (final String title : TOOLBAR) {
                         play.expect(play.queryByTitle(title)).toBeNull();
                     }
                     // Nothing can be selected
-                    play.click(play.getByText(TextMatch.containing("UserId"), ".expressionItemBox-label"));
+                    play.click(play.getByText(TextMatch.containing("UserId"), ".expression-item__label"));
                     play.expect(play.querySelector(FIELD_PICKER)).toBeNull();
                 })
                 // The toolbar is made of real buttons (ToolbarButton)
@@ -581,7 +581,7 @@ public final class ExpressionBuilderStories {
 
     private static void playAsyncFieldSource(final Play play) {
         // Terms are on screen, as labels. Nothing has been asked of the server.
-        play.waitFor(() -> play.expect("labels", () -> play.querySelectorAll(".expressionItemBox-label")
+        play.waitFor(() -> play.expect("labels", () -> play.querySelectorAll(".expression-item__label")
                 .count().get()).toBeGreaterThan(0));
         play.expect(play.spy(FIELD_SOURCE)).not().toHaveBeenCalled();
 
@@ -603,7 +603,7 @@ public final class ExpressionBuilderStories {
     /// Selects the term whose label contains the text, and returns its field picker (the part of
     /// Stroom's SelectionBox that takes clicks).
     private static Query selectTermFieldPicker(final Play play, final String label) {
-        final Query term = play.findByText(TextMatch.containing(label), ".expressionItemBox-label");
+        final Query term = play.findByText(TextMatch.containing(label), ".expression-item__label");
         play.click(term);
         // The field picker is a Stroom SelectionBox, whose text box takes the clicks
         final Query picker = play.querySelector(FIELD_PICKER + " .selection-box__input");

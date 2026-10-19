@@ -75,9 +75,9 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         termEditor.setUtc(utc);
 
         final FlowPanel panel = new FlowPanel();
-        panel.setStyleName("treePanel-panel");
+        panel.setStyleName("expression-tree");
         boxPanel = new FlowPanel();
-        boxPanel.setStyleName("treePanel-boxPanel");
+        boxPanel.setStyleName("expression-tree__items");
         // The boxes are the tree's items (ExpressionItemRenderer), for assistive technology
         boxPanel.getElement().setAttribute("role", "tree");
         boxPanel.getElement().setAttribute("aria-label", "Expression");
@@ -100,7 +100,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
             renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
-            canvas.setStyleName("treePanel-canvas");
+            canvas.setStyleName("expression-tree__canvas");
             panel.add(canvas);
         }
 

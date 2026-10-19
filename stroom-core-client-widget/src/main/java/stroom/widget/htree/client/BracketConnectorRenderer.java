@@ -25,13 +25,14 @@ import java.util.function.Predicate;
 
 public class BracketConnectorRenderer<T> implements ConnectorRenderer<T> {
 
+    private static final String COLOUR = "grey";
     private static final double RADIUS = 4;
     private static final double HALF_PI = Math.PI * 0.5;
     private static final double ONE_AND_HALF_PI = Math.PI * 1.5;
     // As faded items are (e.g. those detached to be moved)
     private static final double FADED_ALPHA = 0.75;
 
-    private final CssColor lineColor;
+    private CssColor lineColor = CssColor.make(COLOUR);
 
     private final Context2d ctx;
     private final Predicate<T> faded;
@@ -45,7 +46,6 @@ public class BracketConnectorRenderer<T> implements ConnectorRenderer<T> {
     public BracketConnectorRenderer(final Context2d ctx, final Predicate<T> faded) {
         this.ctx = ctx;
         this.faded = faded;
-        lineColor = CssColor.make("grey");
     }
 
     @Override
@@ -58,7 +58,14 @@ public class BracketConnectorRenderer<T> implements ConnectorRenderer<T> {
                        final double y2,
                        final boolean firstChild,
                        final boolean lastChild) {
-        ctx.setGlobalAlpha(faded.test(parent)
+        // In forced colours (e.g. Windows High Contrast), which don't change what a canvas draws, the
+        // user's text colour (the canvas's own colour, which they set), not faded, as fading lowers
+        // the contrast the user has chosen
+        final boolean forced = CanvasColours.isForcedColours();
+        lineColor = CssColor.make(forced
+                ? CanvasColours.getTextColour(ctx.getCanvas())
+                : COLOUR);
+        ctx.setGlobalAlpha(faded.test(parent) && !forced
                 ? FADED_ALPHA
                 : 1);
         render(treeLayout, x1, y1, x2, y2, firstChild, lastChild);
