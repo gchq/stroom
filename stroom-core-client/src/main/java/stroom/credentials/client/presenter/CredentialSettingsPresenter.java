@@ -18,6 +18,7 @@ package stroom.credentials.client.presenter;
 
 import stroom.ai.shared.KeyStoreType;
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.credentials.client.presenter.CredentialSettingsPresenter.CredentialSettingsView;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
@@ -36,6 +37,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
@@ -43,49 +45,32 @@ public class CredentialSettingsPresenter
         extends MyPresenterWidget<CredentialSettingsView>
         implements CredentialSettingsUiHandlers {
 
-    private final AccessTokenSecretPresenter accessTokenSecretPresenter;
-    private final SshKeySecretPresenter sshKeySecretPresenter;
-    private final KeyStoreSecretPresenter keyStoreSecretPresenter;
-    private final UsernamePasswordSecretPresenter usernamePasswordSecretPresenter;
+    private final SecretPresenters secretPresenters;
 
     private DocRef docRef;
+
+    /// The credentials being edited, or null if new credentials are being created.
+    private Credential existingCredential;
 
     @Inject
     public CredentialSettingsPresenter(final EventBus eventBus,
                                        final CredentialSettingsView view,
-                                       final AccessTokenSecretPresenter accessTokenSecretPresenter,
-                                       final SshKeySecretPresenter sshKeySecretPresenter,
-                                       final KeyStoreSecretPresenter keyStoreSecretPresenter,
-                                       final UsernamePasswordSecretPresenter usernamePasswordSecretPresenter,
+                                       final SecretPresenters secretPresenters,
                                        final Provider<DateTimePopup> dateTimePopupProvider) {
         super(eventBus, view);
         view.setUiHandlers(this);
         view.getExpiryTime().setPopupProvider(dateTimePopupProvider);
 
-        this.accessTokenSecretPresenter = accessTokenSecretPresenter;
-        this.sshKeySecretPresenter = sshKeySecretPresenter;
-        this.keyStoreSecretPresenter = keyStoreSecretPresenter;
-        this.usernamePasswordSecretPresenter = usernamePasswordSecretPresenter;
+        this.secretPresenters = secretPresenters;
     }
 
     @Override
     public void onTypeChange(final CredentialType type) {
-        final View secretView = getSecretView(type);
-        getView().setSecretView(secretView);
+        getView().setSecretView(getSecretPresenter(type).getView());
     }
 
     private SecretPresenter<?> getSecretPresenter(final CredentialType credentialType) {
-        return switch (credentialType) {
-            case ACCESS_TOKEN -> accessTokenSecretPresenter;
-            case KEY_STORE -> keyStoreSecretPresenter;
-            case SSH_KEY -> sshKeySecretPresenter;
-            case USERNAME_PASSWORD -> usernamePasswordSecretPresenter;
-        };
-    }
-
-    private View getSecretView(final CredentialType credentialType) {
-        return getSecretPresenter(credentialType)
-                .getView();
+        return secretPresenters.get(credentialType);
     }
 
     /**
@@ -98,12 +83,16 @@ public class CredentialSettingsPresenter
     public void read(final DocRef docRef,
                      final CredentialWithPerms cwp) {
         this.docRef = docRef;
+        this.existingCredential = NullSafe.get(cwp, CredentialWithPerms::getCredential);
+        // Existing secrets are never sent to the browser so can't be shown or edited here.
+        // They can only be replaced, using the separate Replace Secret dialog.
+        getView().setExistingCredential(existingCredential != null);
         if (cwp == null) {
             getView().setName("");
             getView().setCredExpire(false);
             getView().getExpiryTime().setValue(System.currentTimeMillis());
             getView().setCredentialType(CredentialType.USERNAME_PASSWORD);
-            keyStoreSecretPresenter.setType(KeyStoreType.PKCS12);
+            onTypeChange(getView().getCredentialType());
         } else {
             final Credential credential = cwp.getCredential();
             getView().setName(credential.getName());
@@ -113,15 +102,9 @@ public class CredentialSettingsPresenter
             } else {
                 getView().getExpiryTime().setValue(System.currentTimeMillis());
             }
-            final CredentialType credentialType = credential.getCredentialType();
-            getView().setCredentialType(credentialType);
-            keyStoreSecretPresenter.setType(NullSafe.getOrElse(
-                    credential,
-                    Credential::getKeyStoreType,
-                    KeyStoreType.PKCS12));
+            // No secret presenter is needed as the secret is hidden for existing credentials
+            getView().setCredentialType(credential.getCredentialType());
         }
-
-        onTypeChange(getView().getCredentialType());
     }
 
     private Secret getSecret() {
@@ -132,8 +115,18 @@ public class CredentialSettingsPresenter
         final String message = validate();
         if (message != null) {
             AlertEvent.fireError(this, message, () -> consumer.accept(false));
-        } else {
+        } else if (existingCredential == null) {
             getSecretPresenter(getView().getCredentialType()).onOk(consumer);
+        } else if (!Objects.equals(existingCredential.getName(), getView().getName())) {
+            // Other settings refer to credentials by name, so a rename breaks them
+            ConfirmEvent.fireWarn(this,
+                    "Other settings, such as HTTP TLS key stores, refer to credentials by name. "
+                    + "Anything that refers to '" + existingCredential.getName()
+                    + "' will stop working until it is changed to use '" + getView().getName()
+                    + "'. Are you sure you want to rename these credentials?",
+                    consumer::accept);
+        } else {
+            consumer.accept(true);
         }
     }
 
@@ -151,7 +144,10 @@ public class CredentialSettingsPresenter
     }
 
     public PutCredentialRequest write() {
-        final Secret secret = getSecret();
+        // The secret of existing credentials is left as it is
+        final Secret secret = existingCredential == null
+                ? getSecret()
+                : null;
         final KeyStoreType keyStoreType;
         if (secret instanceof final KeyStoreSecret keyStoreSecret) {
             keyStoreType = keyStoreSecret.getKeyStoreType();
@@ -199,5 +195,11 @@ public class CredentialSettingsPresenter
         DateTimeBox getExpiryTime();
 
         void setSecretView(View view);
+
+        /// Sets whether existing credentials are being edited. If so the type is fixed and the
+        /// secret fields are replaced by a note that the secret can't be shown.
+        ///
+        /// @param existing True if editing existing credentials, false if creating new ones.
+        void setExistingCredential(boolean existing);
     }
 }
