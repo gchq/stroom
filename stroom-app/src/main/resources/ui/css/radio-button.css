@@ -1,0 +1,74 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   Radio buttons (GWT's RadioButton, one of the raw GWT controls still to be replaced by a radio
+   group). Not BEM yet: they keep GWT's gwt-RadioButton classes until then. Moved here from
+   stroom.css so every input's looks are in its own stylesheet.
+*/
+
+input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--control__border-color);
+    border-radius: 50%;
+    background-color: var(--control__background-color);
+    vertical-align: middle;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+input[type="radio"]:checked {
+    border-color: #2196F3;
+    background: radial-gradient(circle, white 0 3.5px, #2196F3 4px);
+}
+
+input[type="radio"]:focus-visible {
+    outline: 0;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+input[type="radio"]:disabled {
+    background-color: var(--control__background-color--disabled);
+    border-color: var(--control__border-color--disabled);
+    cursor: default;
+}
+
+input[type="radio"]:disabled:checked {
+    background: radial-gradient(circle, var(--control__text-color--disabled) 0 3.5px, transparent 4px),
+                var(--control__background-color--disabled);
+}
+
+.gwt-RadioButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gwt-RadioButton label {
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.gwt-RadioButton-disabled label {
+    color: var(--control__text-color--disabled);
+    cursor: default;
+}

@@ -1283,7 +1283,7 @@ async function driveStep(step) {
     const box = await page.evaluate(([selector, empty]) => {
       const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
-      const sel = empty ? 'input[type="text"], input:not([type]), .gwt-TextBox, textarea' : selector;
+      const sel = empty ? 'input[type="text"], input:not([type]), .text-field, textarea' : selector;
       const el = [...scope.querySelectorAll(sel)].find((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly
         && (!empty || !String(e.value ?? '').trim()) && !e.classList.contains('quickFilter-textBox'));
       if (!el) return null;
@@ -2871,7 +2871,7 @@ async function walk(node, state, arrivedAt) {
         const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
         // The alert is the topmost popup; the form is the one beneath it.
         const form = popups[popups.length - 2];
-        return !!form && [...form.querySelectorAll('input[type="text"], input:not([type]), .gwt-TextBox, textarea')]
+        return !!form && [...form.querySelectorAll('input[type="text"], input:not([type]), .text-field, textarea')]
           .some((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !String(e.value ?? '').trim() && !e.classList.contains('quickFilter-textBox'));
       }).catch(() => false);
       if (hasEmpty) {

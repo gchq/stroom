@@ -29,8 +29,8 @@ import com.google.gwt.dom.client.InputElement;
  *
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
- * <li>.gwt-TextBox { primary style }</li>
- * <li>.gwt-TextBox-readonly { dependent style set when the text box is
+ * <li>.text-field { primary style (Stroom's, in text-field.css) }</li>
+ * <li>.text-field-readonly { dependent style set when the text box is
  * read-only }</li>
  * </ul>
  *
@@ -76,7 +76,8 @@ public class TextBox extends TextBoxBase {
      * Creates an empty text box.
      */
     public TextBox() {
-        this(Document.get().createTextInputElement(), "gwt-TextBox");
+        // Stroom: the text field block (text-field.css), in place of GWT's gwt-TextBox
+        this(Document.get().createTextInputElement(), "text-field");
     }
 
     /**

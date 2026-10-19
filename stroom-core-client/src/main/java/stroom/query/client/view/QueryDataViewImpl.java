@@ -4,6 +4,7 @@ import stroom.query.client.presenter.QueryDataUiHandlers;
 import stroom.query.client.presenter.QueryDataView;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
+import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -76,7 +77,8 @@ public class QueryDataViewImpl extends ViewWithUiHandlers<QueryDataUiHandlers> i
         if (error != null && !error.trim().isEmpty()) {
             errorLabel.setText(error);
             errorContainer.setVisible(true);
-            query.addStyleName("invalid");
+            // Shown, and told to screen readers (aria-invalid)
+            FieldValidity.setInvalid(query.getElement(), true);
         } else {
             clearError();
         }
@@ -86,7 +88,7 @@ public class QueryDataViewImpl extends ViewWithUiHandlers<QueryDataUiHandlers> i
     public void clearError() {
         errorLabel.setText("");
         errorContainer.setVisible(false);
-        query.removeStyleName("invalid");
+        FieldValidity.setInvalid(query.getElement(), false);
     }
 
     @Override

@@ -1566,6 +1566,22 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   for the box by the box's `aria-labelledby` too, and has no name, rather than an empty one, when
   the box has none. Workbench: `Widgets/Date & Time/DateTimePicker` `CalendarToolbarsInTheDialog`,
   `Widgets/Selectors/SelectionBox` `TheListIsNamedForTheBox`.
+* **Text fields styled from three shared stylesheets, and unnamed on several screens** (`TextBox`,
+  `TextArea`, `LineColInput`): every text box and text area was styled by `.gwt-TextBox` and
+  `.gwt-TextArea` rules spread over `stroom.css`, `standard.css` and `standard_mod.css`. They are now
+  the BEM block `text-field` (a text area `text-field--multiline`) with its own stylesheet,
+  `text-field.css`, given by Stroom's copies of GWT's classes; they look as they did.
+  `LineColInput` turned a bad value red with a `highlight` class; it is marked invalid
+  (`aria-invalid`) like other fields. Fields that screen readers met unnamed are named: the
+  dashboard's Text Input and Key Value Input (for their component), the annotation editor's Title
+  and Subject (a placeholder is only a hint), a pipeline property's Value, Query Info, Dependency
+  Information, and the default activity form's Activity Code and Activity Description (now in their
+  labels; `expected.yaml` regenerated); the annotation history's hidden copy box is hidden from
+  screen readers too. Workbench: `Widgets/Inputs/TextInput` `MultiLine`,
+  `Widgets/Inputs/LineColInput` `InvalidValueIsMarked`. A text field's focus, invalid, placeholder
+  and autofill looks moved from `stroom.css` into `text-field.css` too (the bare element rules there
+  now leave text fields out), as did the password box's input; radio buttons' looks moved to
+  `radio-button.css`; the query data box's error now sets `aria-invalid` (it only added a class).
 
 ## Checked and not bugs
 

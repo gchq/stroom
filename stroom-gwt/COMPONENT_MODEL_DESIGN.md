@@ -410,6 +410,46 @@ Stories `App/Editors/DashboardEditor` (`DashboardKeyboardStories`): `TabOrder*` 
 
 Not yet done: drags read mouse events only (no touch or pen, and no pointer capture); Tab from inside a visualisation's frame goes to the end of the page, as the frame isn't in the layout; and the name isn't refreshed when a tab is renamed while its splitter has the focus.
 
+## Text fields
+
+Every text box and text area is the BEM block `text-field` (`text-field.css`), a text area with the
+`text-field--multiline` modifier. Stroom builds them from its own copies of GWT's `TextBox` and
+`TextArea` (`stroom-core-client-widget/src/main/java/com/google/gwt/user/client/ui`), and those give
+the class in place of GWT's `gwt-TextBox` and `gwt-TextArea` (a one-line change in each, approved
+for that directory), so no screen needed editing.
+
+- **States** come from the element: `:disabled` (the filled field with no border that every
+  disabled control has), `[readonly]` (the normal field, its value greyed), `:focus-visible`, and,
+  for a rejected value, `aria-invalid` (`FieldValidity`: a red border, and a red ring with the
+  focus). Its placeholder and the browser's autofill colours are there too. GWT's `ValueBoxBase`
+  also adds `text-field-readonly` when read only; nothing styles it.
+- **One stylesheet.** `text-field.css` has every look a text field has. `stroom.css`'s rules for
+  bare `input` and `textarea` elements (for inputs with no block of their own yet) leave text
+  fields out, with `:where(:not(.text-field))`, which adds nothing to their weight. The password
+  box's input is a text field too.
+- **Cascade.** `text-field.css` is imported straight after `stroom.css`, where the rules it replaces
+  were, and each of its rules weighs what the rule it replaced did: its size at a class's weight
+  (0,1,0), so a screen's `width: 100%` still wins; its look at an element and a class's (0,1,1) for a
+  text box; its states in `:where()`. So a later stylesheet's rules for a particular field win or
+  lose as they did, and screenshots of every text field's states were unchanged by the move.
+  Radio buttons' looks moved from `stroom.css` to `radio-button.css`.
+- **Names.** A field in a form group is named by its label. Where nothing on screen names a field,
+  it is named with `AccessibleName` (the annotation editor's Title and Subject, whose placeholders
+  are only hints; Query Info; Dependency Information; a pipeline property's Value, whose control is
+  set after its form group's label), or for its component (the dashboard's Text Input and Key Value
+  Input, renamed with it). Fields in configured HTML (the activity form) are named by wrapping them
+  in their `<label>`: a field's `id` there is the id of the property it sets, so a label can't point
+  at one.
+- **`LineColInput`** (`line-col-input`, `linecolinput.css`) is a text field for `line:column`; a
+  value that is no such position is marked invalid (`FieldValidity`), rather than turned red.
+
+Stories `Widgets/Inputs/TextInput` (`Basic`, `MultiLine`, `Invalid`, `DisabledAndReadonly`) and
+`Widgets/Inputs/LineColInput` (`InvalidValueIsMarked`).
+
+Not yet done: the bare element rules in `stroom.css` (to go once every input has a block); nine
+fields whose template replaces the class with `styleName` (so they get those rules instead); it
+hasn't been tried with a screen reader.
+
 ## Value spinner
 
 `ValueSpinner` (`stroom.widget.valuespinner.client`, styled by `value-spinner.css`) is a field for a whole number with arrows that step it down and up. It is retrofitted rather than replaced, as its API (`setMin`, `setMax`, `setMinStep`, `setValue`, `formatValue`/`parseValue` for subclasses) is used by about 58 views; `Spinner` holds its value, bounds and the stepping while an arrow is held, and no longer owns any widgets.

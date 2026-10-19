@@ -481,13 +481,13 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
         // The ValueSpinner widget's markup (value-spinner.css), with the grid's modifier: a spin
         // button (WAI-ARIA) that the grid's keyboard doesn't reach yet (tabindex -1)
         @Template("<div class=\"value-spinner value-spinner--cell\"><div class=\"value-spinner__field\">"
-                  + "<input class=\"gwt-TextBox value-spinner__input\" type=\"text\" role=\"spinbutton\""
+                  + "<input class=\"text-field value-spinner__input\" type=\"text\" role=\"spinbutton\""
                   + " value=\"{0}\" aria-valuenow=\"{1}\" aria-label=\"{2}\" aria-valuemin=\"{3}\""
                   + " aria-valuemax=\"{4}\" tabindex=\"-1\"></input>{5}</div></div>")
         SafeHtml input(String text, String value, String name, String min, String max, SafeHtml steps);
 
         @Template("<div class=\"value-spinner value-spinner--cell\"><div class=\"value-spinner__field\">"
-                  + "<input class=\"gwt-TextBox value-spinner__input\" type=\"text\" role=\"spinbutton\""
+                  + "<input class=\"text-field value-spinner__input\" type=\"text\" role=\"spinbutton\""
                   + " value=\"{0}\" aria-valuenow=\"{0}\" aria-label=\"{1}\" aria-valuemin=\"{2}\""
                   + " aria-valuemax=\"{3}\" tabindex=\"-1\" readonly></input>{4}</div></div>")
         SafeHtml readOnlyInput(String value, String name, String min, String max, SafeHtml steps);

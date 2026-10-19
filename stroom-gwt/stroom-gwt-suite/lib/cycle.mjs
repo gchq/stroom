@@ -844,7 +844,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
       if (!(await dialogCaptions(page)).length) throw new Error('New opened no dialog');
       // The name box is the full-width one that is not the folder picker's quick filter.
       const nameBox = page.locator('.resizableDialog-popup, .dialog-popup').last()
-        .locator('input.gwt-TextBox.w-100:not(.quickFilter-textBox)').first();
+        .locator('input.text-field.w-100:not(.quickFilter-textBox)').first();
       await nameBox.fill(spec.seed, { timeout: 10_000 });
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the New dialog');
       await settle(2000);
@@ -882,7 +882,7 @@ export async function runDocCycle(page, spec, { guard, settle, log = () => {} })
       if (!(await dialogCaptions(page)).length) throw new Error('Rename opened no dialog');
       if (!(await fillField(page, null, spec.edited)) && !(await fillField(page, 'Name', spec.edited))) {
         // A pre-filled box: fillField(null) wants an empty one, so take the dialog's only text box.
-        const box = page.locator('.resizableDialog-popup, .dialog-popup').last().locator('input.gwt-TextBox').first();
+        const box = page.locator('.resizableDialog-popup, .dialog-popup').last().locator('input.text-field').first();
         await box.fill(spec.edited, { timeout: 5_000 });
       }
       if (!(await clickButton(page, 'OK'))) throw new Error('no OK in the Rename dialog');

@@ -43,7 +43,7 @@ export function field(scope, label) {
 export async function setField(scope, label, value) {
   const g = field(scope, label);
   if (!(await g.count())) return false;
-  const box = g.locator('input.gwt-TextBox, input[type=text], input[type=password], textarea').first();
+  const box = g.locator('input.text-field, input[type=text], input[type=password], textarea').first();
   if (!(await box.count())) return false;
   return box
     .fill(String(value), { timeout: 5_000 })
@@ -77,7 +77,7 @@ export async function saveDocument(page, { budgetMs = 15_000 } = {}) {
         (x) => norm(x.querySelector('.dialog-titleText')?.textContent) === 'Alert',
       );
       if (!p) return null;
-      const detail = [...p.querySelectorAll('textarea, .gwt-TextArea')].map((t) => t.value || t.textContent).join(' ');
+      const detail = [...p.querySelectorAll('textarea, .text-field--multiline')].map((t) => t.value || t.textContent).join(' ');
       return `${norm(p.querySelector('.dialog-content')?.textContent)} ${detail}`.replace(/(Show|Hide) Detail/g, '').trim();
     });
     if (alert) return `rejected: ${alert.slice(0, 300)}`;

@@ -598,6 +598,8 @@ public class AnnotationEditPresenter
             final TextArea textCopy = new TextArea();
             textCopy.setTabIndex(-2);
             textCopy.setStyleName("annotationHistoryText");
+            // Only there to copy the history from, behind the history itself
+            textCopy.getElement().setAttribute("aria-hidden", "true");
             textCopy.setText(text.toString());
 
             final Button copyToClipboard = new Button();

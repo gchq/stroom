@@ -63,7 +63,8 @@ public class PasswordBox extends Composite
     private boolean shown;
 
     public PasswordBox() {
-        input.addStyleName(BLOCK + "__input");
+        // A text field (text-field.css) like any other, as GWT's PasswordTextBox isn't one
+        input.addStyleName("text-field " + BLOCK + "__input");
 
         final Toolbar toolbar = new Toolbar("Password");
         toolbar.addStyleName(BLOCK + "__toolbar");

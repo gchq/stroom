@@ -41,8 +41,8 @@
     position: relative;
 }
 
-/* Its padding leaves room at its end for the two arrows. Under its parent, to outrank stroom.css's
-   input[type="text"] padding */
+/* Its padding leaves room at its end for the two arrows. Under its parent, to outrank the text field's
+   padding (text-field.css) */
 .value-spinner__field > .value-spinner__input {
     width: 100%;
     margin: 0;

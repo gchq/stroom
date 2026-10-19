@@ -25,8 +25,8 @@
     position: relative;
 }
 
-/* The field, leaving room at its end for the icon. Under the block, to outrank stroom.css's
-   input[type="text"] padding */
+/* The field, leaving room at its end for the icon. Under the block, to outrank the text field's
+   padding (text-field.css) */
 .svg-icon-box .svg-icon-box__field {
     height: 100%;
     width: 100%;

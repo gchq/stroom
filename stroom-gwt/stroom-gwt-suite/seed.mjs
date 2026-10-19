@@ -129,7 +129,7 @@ async function createDoc(parentLabel, category, type, name) {
   const d = dialog();
   await d.waitFor({ state: 'visible', timeout: 20_000 });
   await page.waitForTimeout(500);
-  const nameBox = d.locator('input.gwt-TextBox.w-100:not(.quickFilter-textBox)').first();
+  const nameBox = d.locator('input.text-field.w-100:not(.quickFilter-textBox)').first();
   await nameBox.waitFor({ state: 'visible', timeout: 10_000 });
   await nameBox.fill(name);
   await d.getByText('OK', { exact: true }).first().click();

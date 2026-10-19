@@ -1704,12 +1704,12 @@
     padding: 0;
 }
 
-.FindViewImpl-top .gwt-TextArea {
+.FindViewImpl-top .text-field--multiline {
     /* Single line */
     height: 2.1rem;
 }
 
-.FindViewImpl-top .gwt-TextArea.multiLine {
+.FindViewImpl-top .text-field--multiline.multiLine {
     /* Multi line */
     height: 6.3rem;
 }

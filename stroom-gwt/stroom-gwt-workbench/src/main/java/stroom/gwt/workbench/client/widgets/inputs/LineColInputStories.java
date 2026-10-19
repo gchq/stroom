@@ -20,11 +20,13 @@ import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.widgets.StoryArgs;
 import stroom.gwt.workbench.framework.client.args.ArgType;
 import stroom.gwt.workbench.framework.client.args.Args;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.shared.Location;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.linecolinput.client.LineColInput;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -71,6 +73,17 @@ public final class LineColInputStories {
                             : "L:" + location.getLineNo() + " C:" + location.getColNo()));
                     return StoryPanels.column(8, input, result);
                 })
+                // A value that is no position (here two colons) is marked invalid
+                .story("InvalidValueIsMarked", context -> lineColInput(context, null, null))
+                .withPlay(play -> {
+                    final Query box = play.getByRole("textbox", "Position");
+                    play.expect(box).toHaveClass("line-col-input__field");
+                    play.type(box, "12::");
+                    play.waitFor(() -> play.expect(box).toHaveAttribute("aria-invalid", "true"));
+                    play.clear(box);
+                    play.type(box, "12:5");
+                    play.waitFor(() -> play.expect(box).not().toHaveAttribute("aria-invalid"));
+                })
                 // Disabled line:col input
                 .story("Disabled", LineColInputStories::fromArgs)
                 .withArgs(Args.of(LINE, 1, COL, 1, ENABLED, false));
@@ -94,6 +107,8 @@ public final class LineColInputStories {
 
     private static LineColInput lineColInput(final StoryContext context, final Integer line, final Integer col) {
         final LineColInput input = new LineColInput();
+        // As a form group's label would name it on Stroom's screens
+        AccessibleName.set(input.getTextBox(), "Position");
         input.setValue(line, col);
         final Spy onChange = context.fn(ON_CHANGE);
         onCommit(input, location -> {

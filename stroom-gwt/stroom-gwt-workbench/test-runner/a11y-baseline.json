@@ -15,12 +15,6 @@
   "app-ai-askstroomaidialog--view-attachment-data": [
     "button-name"
   ],
-  "app-annotations-decoratecomment--decorates-links": [
-    "label"
-  ],
-  "app-annotations-decoratecomment--links-invoke-handlers": [
-    "label"
-  ],
   "app-dashboard-queryresultvis--pause-button-reports-up": [
     "frame-title"
   ],
@@ -33,59 +27,8 @@
   "app-editors-analyticruleeditor--table-preferences-persist-on-the-doc": [
     "target-size"
   ],
-  "app-editors-dashboardeditor--dock-onto-middle-panel": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--focus-kept-when-maximised": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--inner-split-dock": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--input-drives-query": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--migrate-legacy-dashboard": [
-    "label"
-  ],
   "app-editors-dashboardeditor--splitter-above-visualisation": [
     "frame-title"
-  ],
-  "app-editors-dashboardeditor--splitter-dragging": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--splitter-focused": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--splitter-keeps-third-panel": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--splitter-keyboard-resize": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--splitter-keyboard-resize-stacked": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-after-docking-left": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-deeply-nested": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-nested-column": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-nested-row": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-side-by-side": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-stacked": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--tab-order-tabbed": [
-    "label"
   ],
   "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [
     "color-contrast"
@@ -206,42 +149,6 @@
   ],
   "app-idp-authenticationerror--with-config-message": [
     "link-in-text-block"
-  ],
-  "app-main-annotationeditor--annotation-editable": [
-    "label"
-  ],
-  "app-main-annotationeditor--annotation-read-only": [
-    "label"
-  ],
-  "app-main-annotationeditor--comment-buttons-tab-order": [
-    "label"
-  ],
-  "app-main-annotationeditor--editor": [
-    "label"
-  ],
-  "app-main-annotationeditor--entry-actions": [
-    "label"
-  ],
-  "app-main-annotationeditor--entry-actions-by-keyboard": [
-    "label"
-  ],
-  "app-main-annotationeditor--failed-comment-change-keeps-dialog-usable": [
-    "label"
-  ],
-  "app-main-annotationeditor--grouped-history": [
-    "label"
-  ],
-  "app-main-annotationeditor--history-rich-prose": [
-    "label"
-  ],
-  "app-main-annotationeditor--labels-and-tabs": [
-    "label"
-  ],
-  "app-main-annotationeditor--read-only": [
-    "label"
-  ],
-  "app-main-annotationeditor--status-setting-block": [
-    "label"
   ],
   "app-main-appshell--activity-chooser": [
     "button-name"
@@ -403,9 +310,6 @@
   "app-main-contentstorescreen--upgrade-check-promotes-row": [
     "image-alt"
   ],
-  "app-main-currentactivity--requires-query-info-gate": [
-    "label"
-  ],
   "app-main-datareceiptrulesscreen--obfuscation-warning": [
     "scrollable-region-focusable"
   ],
@@ -429,12 +333,6 @@
   ],
   "app-main-dataretentionscreen--row-action-menu": [
     "target-size"
-  ],
-  "app-main-dependencyinfodialog--dependency-info": [
-    "label"
-  ],
-  "app-main-dependencyinfodialog--missing-dependency-still-renders": [
-    "label"
   ],
   "app-main-executionschedulesscreen--batch-edit": [
     "aria-command-name"
@@ -476,11 +374,7 @@
     "aria-command-name"
   ],
   "app-main-manageactivitydialog--validation-blocks-save": [
-    "label",
     "scrollable-region-focusable"
-  ],
-  "app-main-pipelineeditor--embedded-property": [
-    "label"
   ],
   "app-main-resultstoresdialog--settings": [
     "scrollable-region-focusable"
@@ -577,15 +471,6 @@
   ],
   "widgets-editors-viewers-markdowneditor--read-only-preview": [
     "frame-title"
-  ],
-  "widgets-inputs-linecolinput--basic": [
-    "label"
-  ],
-  "widgets-inputs-linecolinput--disabled": [
-    "label"
-  ],
-  "widgets-inputs-textinput--disabled-and-readonly": [
-    "label"
   ],
   "widgets-inputs-tickbox--no-label": [
     "label"
