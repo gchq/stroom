@@ -1661,10 +1661,16 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
     have; its description begins "Required." instead (a file upload's, and a document picker's).
     Workbench: `Widgets/Inputs/FileChooser` `Basic`, `App/Data/DataUploadDialog` `Upload`.
   * A time zone's offset was named "Hours" rather than by its "Time Zone Offset" label, as its minutes
-    are hidden. Workbench: `App/Editors/PlanBEditor` `MetricTimeZoneOffset`.
+    were hidden. The always hidden minutes spinner is gone, its value kept as it was set.
+    Workbench: `App/Editors/PlanBEditor` `MetricTimeZoneOffset`, `TimeZoneOffsetKeepsItsMinutes`.
   * A colour box had no class of its own, only `stroom.css`'s bare input rules.
     It is now the `colour-box` block (`colour-box.css`). The unused `ColourInputCell` is deleted.
   * Every form group had an empty feedback element; it is now only there while there is feedback.
+* **Selection boxes stretched across the screen** (`selection-box.css`): the old `SelectionBox.css`
+  gave a box 200px; that was lost when it became `selection-box.css`, so a box in a form group (a
+  column flexbox) took the whole width, e.g. every Plan B setting. It is 200px again, as a text field
+  is, at a class's weight so a screen's `w-100` or width still wins. Workbench:
+  `App/Editors/PlanBEditor` `Metric`.
 
 ## Checked and not bugs
 

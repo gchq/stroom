@@ -23,6 +23,13 @@
    they follow its text box's disabled and aria-readonly.
 */
 
+/* As wide as a text field, unless a screen sizes it (e.g. w-100 or dock-max), at a class's weight so
+   that it can (it was lost when SelectionBox.css became this, so a box in a form group, a column
+   flexbox, stretched across the screen) */
+.selection-box {
+    width: 200px;
+}
+
 /* The value as it is drawn (the text box, which holds it as text, sits over it, unseen unless the box
    can be typed in). It draws the box's border (stroom-control); the box's field shows through it, and
    its text stays on one line, ending in an ellipsis clear of the drop-down arrow */

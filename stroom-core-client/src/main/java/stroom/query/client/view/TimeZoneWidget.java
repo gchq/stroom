@@ -21,7 +21,6 @@ import stroom.item.client.SelectionBox;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.widget.customdatebox.client.MomentJs;
-import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -45,9 +44,10 @@ public final class TimeZoneWidget extends Composite {
     SelectionBox<String> timeZoneId;
     @UiField
     ValueSpinner timeZoneOffsetHours;
-    @UiField
-    ValueSpinner timeZoneOffsetMinutes;
 
+    // The offset's minutes, which can't be set here, as browsers don't support minute offsets: kept
+    // as they were set, so a time zone that has them keeps them
+    private int timeZoneOffsetMinutes;
     private ChangeUiHandlers uiHandlers;
 
     @Inject
@@ -69,22 +69,6 @@ public final class TimeZoneWidget extends Composite {
         timeZoneOffsetHours.setMinStep(1);
         timeZoneOffsetHours.setMaxStep(1);
 
-        timeZoneOffsetMinutes.setMin(0);
-        timeZoneOffsetMinutes.setMax(45);
-        timeZoneOffsetMinutes.setValue(0);
-        timeZoneOffsetMinutes.setMinStep(15);
-        timeZoneOffsetMinutes.setMaxStep(15);
-        timeZoneOffsetMinutes.setDelta(15);
-
-        // FIXME:  Browsers don't support minute offsets so disable this for now.
-        timeZoneOffsetMinutes.setVisible(false);
-        // While the minutes are hidden, the Time Zone Offset label names the hours alone. With both
-        // shown, the label names the pair and each is named by the part it is
-        if (timeZoneOffsetMinutes.isVisible()) {
-            AccessibleName.set(timeZoneOffsetHours, "Hours");
-            AccessibleName.set(timeZoneOffsetMinutes, "Minutes");
-        }
-
         changeVisible();
 
         initWidget(widget);
@@ -95,7 +79,7 @@ public final class TimeZoneWidget extends Composite {
                 .use(timeZoneUse.getValue())
                 .id(timeZoneId.getValue())
                 .offsetHours(timeZoneOffsetHours.getIntValue())
-                .offsetMinutes(timeZoneOffsetMinutes.getIntValue())
+                .offsetMinutes(timeZoneOffsetMinutes)
                 .build();
     }
 
@@ -104,7 +88,9 @@ public final class TimeZoneWidget extends Composite {
             timeZoneUse.setValue(userTimeZone.getUse());
             timeZoneId.setValue(userTimeZone.getId());
             timeZoneOffsetHours.setValue(userTimeZone.getOffsetHours());
-            timeZoneOffsetMinutes.setValue(userTimeZone.getOffsetMinutes());
+            timeZoneOffsetMinutes = userTimeZone.getOffsetMinutes() != null
+                    ? userTimeZone.getOffsetMinutes()
+                    : 0;
             changeVisible();
         }
     }
@@ -143,19 +129,15 @@ public final class TimeZoneWidget extends Composite {
     }
 
     public Integer getTimeZoneOffsetMinutes() {
-        final int val = this.timeZoneOffsetMinutes.getIntValue();
-        if (val == 0) {
-            return null;
-        }
-        return val;
+        return timeZoneOffsetMinutes == 0
+                ? null
+                : timeZoneOffsetMinutes;
     }
 
     public void setTimeZoneOffsetMinutes(final Integer timeZoneOffsetMinutes) {
-        if (timeZoneOffsetMinutes == null) {
-            this.timeZoneOffsetMinutes.setValue(0);
-        } else {
-            this.timeZoneOffsetMinutes.setValue(timeZoneOffsetMinutes);
-        }
+        this.timeZoneOffsetMinutes = timeZoneOffsetMinutes != null
+                ? timeZoneOffsetMinutes
+                : 0;
     }
 
     public void changeVisible() {
@@ -175,7 +157,6 @@ public final class TimeZoneWidget extends Composite {
         timeZoneUse.setReadOnly(readOnly);
         timeZoneId.setReadOnly(readOnly);
         timeZoneOffsetHours.setReadOnly(readOnly);
-        timeZoneOffsetMinutes.setReadOnly(readOnly);
     }
 
     /// Enables or disables every part of the time zone.
@@ -185,7 +166,6 @@ public final class TimeZoneWidget extends Composite {
         timeZoneUse.setEnabled(enabled);
         timeZoneId.setEnabled(enabled);
         timeZoneOffsetHours.setEnabled(enabled);
-        timeZoneOffsetMinutes.setEnabled(enabled);
     }
 
     @UiHandler("timeZoneUse")
@@ -202,12 +182,6 @@ public final class TimeZoneWidget extends Composite {
 
     @UiHandler("timeZoneOffsetHours")
     public void onTimeZoneOffsetHours(final ValueChangeEvent<Long> event) {
-        changeVisible();
-        fireChange();
-    }
-
-    @UiHandler("timeZoneOffsetMinutes")
-    public void onTimeZoneOffsetMinutes(final ValueChangeEvent<Long> event) {
         changeVisible();
         fireChange();
     }

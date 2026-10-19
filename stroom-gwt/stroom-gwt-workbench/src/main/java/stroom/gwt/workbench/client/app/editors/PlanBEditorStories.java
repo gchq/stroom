@@ -17,8 +17,10 @@
 package stroom.gwt.workbench.client.app.editors;
 
 import stroom.docref.DocRef;
+import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.gin.query.QueryScreenGinjector;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
+import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -71,6 +73,7 @@ public final class PlanBEditorStories {
                     ", \"keySchema\": {\"timeZone\": {\"use\": \"OFFSET\", \"offsetHours\": -1, "
                             + "\"offsetMinutes\": 30}}")
                     .replace("planb-METRIC", "planb-METRIC-OFFSET")))
+            .put("/planB/v1/planb-METRIC-OFFSET", request -> RestReply.json(request.getBody()))
             // MaxStoreSizeDefaultsWhenUnset: no maxStoreSize
             .get("/planB/v1/planb-STATE-UNSET", RestReply.json(doc("STATE", "state", "", "")
                     .replace("planb-STATE", "planb-STATE-UNSET")))
@@ -121,21 +124,43 @@ public final class PlanBEditorStories {
                     }
                     // The key schema's TimeZoneWidget
                     play.expect(play.getByText("Time Zone", "label")).toBeInTheDocument();
+                    // A selection box in a form group is as wide as a text field, not the screen (its
+                    // width was once lost, so they stretched across it)
+                    play.expect(play.getByRole("combobox", "Temporal Resolution").closest(".selection-box"))
+                            .toHaveStyle("width", "200px");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The Time Zone control shows the offset when Use is Offset (TimeZoneWidget)
                 .story("MetricTimeZoneOffset", context -> render(context, "planb-METRIC-OFFSET", false))
                 .withPlay(play -> {
-                    // Stroom has one 'Time Zone Offset' group of two spinners, and hides the minutes
-                    // spinner (TimeZoneWidget: "Browsers don't support minute offsets so disable
-                    // this for now")
+                    // The offset is whole hours: its minutes can't be set, as browsers don't support
+                    // minute offsets, so there is no minutes spinner (it was always hidden)
                     final Query offset = play.findByText("Time Zone Offset", "label");
                     final Play group = play.within(offset.closest(FORM_GROUP));
+                    play.expect(group.querySelectorAll("input")).toHaveLength(1);
                     play.expect(group.querySelectorAll("input").nth(0)).toHaveValue("-1");
-                    play.expect(group.querySelectorAll("input").nth(1)).toHaveValue("30");
-                    play.expect(group.querySelectorAll("input").nth(1)).not().toBeVisible();
                     // The hours are named by the label, not only "Hours"
                     play.expect(play.getByRole("spinbutton", "Time Zone Offset")).toHaveValue("-1");
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // An offset's minutes, which can't be set here (there is no minutes spinner), are kept
+                // when the time zone is saved
+                .story("TimeZoneOffsetKeepsItsMinutes",
+                        context -> renderSaving(context, "planb-METRIC-OFFSET"))
+                .withPlay(play -> {
+                    final Query hours = play.findByRole("spinbutton", "Time Zone Offset");
+                    play.waitFor(() -> play.expect(hours).toHaveValue("-1"));
+                    play.click(hours);
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(hours).toHaveValue("-2"));
+                    final Query save = play.getByRole("button", "Save");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put("/planB/v1/planb-METRIC-OFFSET")
+                                    .withJsonBodyContaining("{\"settings\": {\"keySchema\": {\"timeZone\": "
+                                                            + "{\"offsetHours\": -2, \"offsetMinutes\": 30}}}}")
+                                    .toSpyMatcher()));
                     DocumentEditors.expectNoProblems(play);
                 })
                 // SESSION: has Condense Data and no Value Schema
@@ -260,6 +285,22 @@ public final class PlanBEditorStories {
         // Opened once Stroom has started, as PlanBPlugin opens a document
         harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getPlanBPresenter(), docRef,
                 resource, res -> res.fetch(docRef.getUuid())));
+        return harness.asWidget();
+    }
+
+    // As render, with Save sending the document (PUT /planB/v1/{uuid}), as DocumentPlugin does
+    private static Widget renderSaving(final StoryContext context, final String uuid) {
+        final QueryScreenGinjector injector = GWT.create(QueryScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
+                .injector(injector)
+                .build();
+        harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
+        final DocRef docRef = new DocRef(PlanBDoc.TYPE, uuid, uuid);
+        final PlanBDocResource resource = GWT.create(PlanBDocResource.class);
+        harness.afterStartUp(() -> DocEditors.open(harness, docRef, injector.getPlanBPresenter(),
+                DocResource.of(
+                        restFactory -> restFactory.create(resource).method(res -> res.fetch(uuid)),
+                        (restFactory, doc) -> restFactory.create(resource).method(res -> res.update(uuid, doc)))));
         return harness.asWidget();
     }
 }
