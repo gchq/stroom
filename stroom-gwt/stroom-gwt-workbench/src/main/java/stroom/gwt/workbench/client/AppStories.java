@@ -35,6 +35,7 @@ import stroom.gwt.workbench.client.app.editors.DashboardEditorStories;
 import stroom.gwt.workbench.client.app.editors.DataGenEditorStories;
 import stroom.gwt.workbench.client.app.editors.DocumentationEditorStories;
 import stroom.gwt.workbench.client.app.editors.ElasticClusterEditorStories;
+import stroom.gwt.workbench.client.app.editors.FloorMapEditorStories;
 import stroom.gwt.workbench.client.app.editors.FolderEditorStories;
 import stroom.gwt.workbench.client.app.editors.GitRepoEditorStories;
 import stroom.gwt.workbench.client.app.editors.OpenAiModelEditorStories;
@@ -115,6 +116,7 @@ import stroom.gwt.workbench.client.app.main.SigningKeysScreenStories;
 import stroom.gwt.workbench.client.app.main.StepFilterDialogStories;
 import stroom.gwt.workbench.client.app.main.SteppingScreenStories;
 import stroom.gwt.workbench.client.app.main.TabSessionChooserDialogStories;
+import stroom.gwt.workbench.client.app.main.TopBarStories;
 import stroom.gwt.workbench.client.app.main.TracesScreenStories;
 import stroom.gwt.workbench.client.app.main.UserAccessScreenStories;
 import stroom.gwt.workbench.client.app.main.UserGroupsScreenStories;
@@ -265,6 +267,8 @@ public final class AppStories {
         SteppingScreenStories.addTo(registry);
         // App/Main/TabSessionChooserDialog
         TabSessionChooserDialogStories.addTo(registry);
+        // App/Main/TopBar
+        TopBarStories.addTo(registry);
         // App/Main/TracesScreen
         TracesScreenStories.addTo(registry);
         // App/Main/UserAccessScreen
@@ -300,6 +304,8 @@ public final class AppStories {
         DocumentationEditorStories.addTo(registry);
         // App/Editors/ElasticClusterEditor
         ElasticClusterEditorStories.addTo(registry);
+        // App/Editors/FloorMapEditor
+        FloorMapEditorStories.addTo(registry);
         // App/Editors/FolderEditor
         FolderEditorStories.addTo(registry);
         // App/Editors/GitRepoEditor

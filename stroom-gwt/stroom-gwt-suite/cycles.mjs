@@ -86,9 +86,12 @@ const SPECS = [
     // The OK handler this cycle drives, for the inventory's `cycle` join: `onHideRequest` at
     // NodeGroupEditPresenter:139, which the read-only guard otherwise leaves `ok-blocked`.
     // The CREATE dialog is a different presenter from the edit one, and the cycle drives both:
-    // `NewNodeGroupPresenter:61` is captioned "New", which is the button this spec presses.
+    // `NewNodeGroupPresenter:61` is captioned "New", and opens from the screen's New Node Group.
     okPresenters: ['NodeGroupEditPresenter', 'NewNodeGroupPresenter'],
     menu: ['Monitoring', 'Node Groups'],
+    create: 'New Node Group',
+    edit: 'Edit Selected Node Group',
+    remove: 'Delete Selected Node Group',
     // Create is `NameViewImpl` ("Name"). The edit view's name box is DISABLED — a node group
     // cannot be renamed — so the edit under test is its `Enabled` tick box, and the oracle is that
     // the row renders differently after a reload.
@@ -101,12 +104,20 @@ const SPECS = [
   },
   {
     name: 'data volume group',
-    // The create dialog is `NewFsVolumeGroupPresenter:59` ("New"), as the index volume group's is.
+    // The create dialog is `NewFsVolumeGroupPresenter:59` ("New Data Volume Group"), as the index
+    // volume group's is ("New Index Volume Group").
     okPresenters: ['FsVolumeGroupEditPresenter', 'NewFsVolumeGroupPresenter', 'FsVolumeEditPresenter'],   // onHideRequest at :203
-    // FsVolumeEditPresenter's OK (:68) is the volume's own dialog, Add Volume, inside the group's.
-    provedBy: { FsVolumeEditPresenter: '\\(Add Volume\\)$' },
-    steps: volumeSteps({ path: `${VOLUME_SCRATCH}/${STAMP}-data` }),
+    // FsVolumeEditPresenter's OK (:68) is the volume's own dialog, New Data Volume, inside the group's.
+    provedBy: { FsVolumeEditPresenter: '\\(New Data Volume\\)$' },
+    steps: volumeSteps({ path: `${VOLUME_SCRATCH}/${STAMP}-data`, labels: {
+      editGroup: 'Edit Selected Data Volume Group',
+      newVolume: 'New Data Volume',
+      deleteVolume: 'Delete Selected Data Volumes',
+    } }),
     menu: ['Administration', 'Data Volumes'],
+    create: 'New Data Volume Group',
+    edit: 'Edit Selected Data Volume Group',
+    remove: 'Delete Selected Data Volume Group',
     // Edit is `FsVolumeGroupEditViewImpl` — ui.xml labels its only box "Volume Group Name", the same
     // shape as the index volume group below, which is why this spec needs nothing new.
     nameField: ['Name', 'Volume Group Name'],
@@ -120,12 +131,12 @@ const SPECS = [
   {
     name: 'user group',
     menu: ['Security', 'User Groups'],
-    // This screen names the ROW in its buttons — `Create Group`, then `Edit group '<name>'` and
-    // `Delete group '<name>'` — so the edit and delete labels are functions of the name. Read from a
-    // crawl of the screen with a row selected, not guessed.
+    // This screen names the ROW in its buttons — `Create Group`, then `Edit Group '<name>'` and
+    // `Delete Group '<name>'` — so the edit and delete labels are functions of the name. Read from
+    // UserAndGroupsPresenter.onSelection, which titles them for the selected group.
     create: 'Create Group',
-    edit: (n) => `Edit group '${n}'`,
-    remove: (n) => `Delete group '${n}'`,
+    edit: (n) => `Edit Group '${n}'`,
+    remove: (n) => `Delete Group '${n}'`,
     nameField: ['Name', 'Display Name'],
     // 163 groups over 100 to a page, so `zz-cycle-…` lands on page two: the row has to be found
     // through the grid's own quick filter, not by reading the visible rows.
@@ -139,10 +150,17 @@ const SPECS = [
   {
     name: 'index volume group',
     okPresenters: ['IndexVolumeGroupEditPresenter', 'NewIndexVolumeGroupPresenter', 'IndexVolumeEditPresenter'], // :217 and :65
-    // IndexVolumeEditPresenter's OK (:64), Add Volume; an index volume also names its node.
-    provedBy: { IndexVolumeEditPresenter: '\\(Add Volume\\)$' },
-    steps: volumeSteps({ path: `${VOLUME_SCRATCH}/${STAMP}-index`, fields: { Node: { choose: 'node1a' } } }),
+    // IndexVolumeEditPresenter's OK (:64), New Index Volume; an index volume also names its node.
+    provedBy: { IndexVolumeEditPresenter: '\\(New Index Volume\\)$' },
+    steps: volumeSteps({ path: `${VOLUME_SCRATCH}/${STAMP}-index`, fields: { Node: { choose: 'node1a' } }, labels: {
+      editGroup: 'Edit Selected Index Volume Group',
+      newVolume: 'New Index Volume',
+      deleteVolume: 'Delete Selected Index Volumes',
+    } }),
     menu: ['Administration', 'Index Volumes'],
+    create: 'New Index Volume Group',
+    edit: 'Edit Selected Index Volume Group',
+    remove: 'Delete Selected Index Volume Group',
     // Edit is `IndexVolumeGroupEditViewImpl` ("Volume Group Name").
     nameField: ['Name', 'Volume Group Name'],
     seed: `${STAMP} index volume group`,
@@ -156,8 +174,10 @@ const SPECS = [
     name: 'credentials',
     // CredentialEditPresenter's onHideRequest (:92), for both New Credentials and the edit dialog.
     okPresenters: ['CredentialEditPresenter'],
-    menu: ['Security', 'Credentials Manager'],
-    create: 'Add',
+    menu: ['Security', 'Credentials'],
+    create: 'New Credential',
+    edit: 'Edit Selected Credential',
+    remove: 'Delete Selected Credential',
     // CredentialSettingsViewImpl's "Name", on the dialog's Settings tab (the one it opens on). The
     // type stays the default; its secret fields are optional for a store.
     nameField: 'Name',
@@ -177,16 +197,16 @@ const SPECS = [
     // Edit Account. The User ID is the account's identity, and changing it would make the account a
     // second Stroom user, so the edit is its First Name.
     okPresenters: ['EditAccountPresenter'],
-    menu: ['Security', 'Manage Accounts'],
-    create: 'Add new account',
-    edit: 'Edit account',
-    remove: 'Delete selected account',
+    menu: ['Security', 'Accounts'],
+    create: 'New Account',
+    edit: 'Edit Selected Account',
+    remove: 'Delete Selected Account',
     nameField: 'User ID',
     editNameField: 'First Name',
     seed: `${STAMP}-account`,
     edited: `${STAMP} first name`,
     // Creating an account makes a Stroom user of the same name, which deleting the account keeps.
-    alsoRemove: { what: 'Stroom user', menu: ['Security', 'Users'], remove: (n) => `Delete user '${n}'` },
+    alsoRemove: { what: 'Stroom user', menu: ['Security', 'Users'], remove: (n) => `Delete User '${n}'` },
     // AccountResource: @POST /account/v1, @PUT /{id}, @DELETE /{id}; UserResource for the user.
     writes: [{ path: /\/api\/account\/v\d+/ }, { method: 'DELETE', path: /\/api\/users\/v\d+\/[^/]+$/ }],
   },
@@ -196,6 +216,7 @@ const SPECS = [
     // ManageGlobalPropertyEditPresenter's onHideRequest (:359).
     okPresenters: ['ManageGlobalPropertyEditPresenter'],
     menu: ['Administration', 'Properties'],
+    opener: 'Edit Selected Property',
     // The About dialog's text: shown nowhere else, so a test value in it for a minute disturbs
     // nothing. No property has a database value on the dev instance, so the edit ticks "Set
     // Database value" and the revert unticks it, which deletes the row again
@@ -348,6 +369,12 @@ const SPECS = [
     // cycles open — while the edit dialog is AnnotationTagEditPresenter. Both are driven.
     okPresenters: ['AnnotationTagEditPresenter', 'AnnotationTagCreatePresenter'],
       menu: ['Annotations', leaf],
+      // AnnotationTagPresenter names its buttons after the screen's tag type, e.g. "New Annotation Status"
+      ...((type) => ({
+        create: `New Annotation ${type}`,
+        edit: `Edit Selected Annotation ${type}`,
+        remove: `Delete Selected Annotation ${type}`,
+      }))({ Collections: 'Collection', Comments: 'Comment', Labels: 'Label', Statuses: 'Status' }[leaf.split(' ')[1]]),
       nameField: 'Name',
       seed: `${STAMP} ${leaf.toLowerCase()}`,
       edited: `${STAMP} ${leaf.toLowerCase()} (edited)`,
@@ -390,7 +417,7 @@ const reloadTree = async () => {
   await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   await gwt.waitForApp(page);
   await settleExplorer(page, { label: 'reload' }).catch(() => {});
-  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await page.locator('button[title="Expand All Folders"]').first().click({ timeout: 10_000 }).catch(() => {});
   await settleExplorer(page, { label: 'expand' }).catch(() => {});
 };
 // A Query document, opened for its editor: the cycle replaces its text and never saves it.

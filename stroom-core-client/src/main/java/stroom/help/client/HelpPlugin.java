@@ -56,12 +56,16 @@ public class HelpPlugin extends Plugin {
                             .icon(SvgImage.HELP)
                             .text("Help")
                             .command(() -> Window.open(helpUrl, "_blank", ""))
+                            .opensNewTab()
                             .build();
                 } else {
+                    // Shown, as other unavailable items are, as disabled, so that it isn't
+                    // announced as something to choose
                     helpMenuItem = new IconMenuItem.Builder()
                             .priority(1)
                             .icon(SvgImage.HELP)
                             .text("Help is not configured!")
+                            .enabled(false)
                             .build();
                 }
 
@@ -75,6 +79,7 @@ public class HelpPlugin extends Plugin {
                 .text("API Specification")
                 .command(() ->
                         Window.open("/swagger-ui", "_blank", ""))
+                .opensNewTab()
                 .build();
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, apiMenuItem);
     }

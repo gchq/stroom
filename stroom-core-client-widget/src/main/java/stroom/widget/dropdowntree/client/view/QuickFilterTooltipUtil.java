@@ -142,7 +142,7 @@ public class QuickFilterTooltipUtil {
         if (NullSafe.isNonBlankString(quickFilterHelpUrl)) {
             final HtmlBuilder hb = new HtmlBuilder();
             hb.appendTrustedString("For more information see the ");
-            hb.appendLink(quickFilterHelpUrl, "Help Documentation");
+            hb.appendLink(quickFilterHelpUrl, "quick filter documentation");
             hb.appendTrustedString(".");
 
             tb

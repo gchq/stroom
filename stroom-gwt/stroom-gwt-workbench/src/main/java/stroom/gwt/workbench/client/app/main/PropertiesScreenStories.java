@@ -126,7 +126,8 @@ public final class PropertiesScreenStories {
                             .closest(StroomDom.DIALOG));
                     // The per-node values are in a separate popup, opened by the icon by Effective
                     // Value; both nodes agree on this property, so it's the INFO icon
-                    final Query info = dialog.findByTitle("All nodes have the same effective value");
+                    final Query info = dialog.findByTitle(
+                            "Show Cluster Values (all nodes have the same effective value)");
                     play.waitFor(() -> play.expect(info).toBeVisible());
                     play.click(info);
                     final Query clusterCaption = screen.findByText("Cluster values - " + HOME_NAME);

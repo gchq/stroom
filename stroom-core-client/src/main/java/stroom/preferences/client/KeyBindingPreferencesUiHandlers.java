@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.query.client.presenter;
+package stroom.preferences.client;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 
-public interface NavUiHandlers extends UiHandlers {
+/// Handles the changes the user makes in a
+/// [KeyBindingPreferencesPresenter.KeyBindingPreferencesView].
+public interface KeyBindingPreferencesUiHandlers extends ChangeUiHandlers {
 
-    void forward();
-
-    void backward();
+    /// Called when the user changes the text that filters the list of shortcuts.
+    ///
+    /// @param filter The filter text.
+    void onFilterChange(String filter);
 }

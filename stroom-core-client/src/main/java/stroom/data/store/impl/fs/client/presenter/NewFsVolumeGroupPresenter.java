@@ -68,7 +68,7 @@ public class NewFsVolumeGroupPresenter
         ShowPopupEvent
                 .builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-                .caption("New")
+                .caption("New Data Volume Group")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {

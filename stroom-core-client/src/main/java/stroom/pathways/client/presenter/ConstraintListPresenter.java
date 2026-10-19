@@ -46,6 +46,10 @@ import java.util.stream.Collectors;
 public class ConstraintListPresenter
         extends MyPresenterWidget<PagerView> {
 
+    private static final String NEW_TITLE = "New Constraint";
+    private static final String EDIT_TITLE = "Edit Selected Constraint";
+    private static final String DELETE_TITLE = "Delete Selected Constraints";
+
 //    private static final ConstraintsResource PATHWAYS_RESOURCE = GWT.create(ConstraintsResource.class);
 
     //    private final DateTimeFormatter dateTimeFormatter;
@@ -85,10 +89,10 @@ public class ConstraintListPresenter
         this.constraintEditPresenter = constraintEditPresenter;
 
         pagerView.getToolbar().setName("Constraint actions");
-        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New", this::onNew);
-        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit", this::onEditClicked);
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, this::onEditClicked);
         editButton.setEnabled(false);
-        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete", this::onRemoveClicked);
+        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, this::onRemoveClicked);
         removeButton.setEnabled(false);
 
         addColumns();
@@ -146,15 +150,13 @@ public class ConstraintListPresenter
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
-            newButton.setTitle("New constraint disabled as read only");
-            editButton.setTitle("Edit constraint disabled as read only");
-            removeButton.setTitle("Remove constraint disabled as read only");
-        } else {
-            newButton.setTitle("New Constraint");
-            editButton.setTitle("Edit Constraint");
-            removeButton.setTitle("Remove Constraint");
-        }
+        // The names stay, with why the buttons are disabled when read only
+        final String suffix = readOnly
+                ? " (read only)"
+                : "";
+        newButton.setTitle(NEW_TITLE + suffix);
+        editButton.setTitle(EDIT_TITLE + suffix);
+        removeButton.setTitle(DELETE_TITLE + suffix);
     }
 
     private void addColumns() {

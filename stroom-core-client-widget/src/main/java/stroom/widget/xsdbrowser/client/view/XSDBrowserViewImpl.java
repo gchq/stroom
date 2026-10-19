@@ -16,6 +16,7 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter.XSDBrowserView;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserUiHandlers;
 
@@ -23,8 +24,8 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -33,11 +34,13 @@ public class XSDBrowserViewImpl extends ViewWithUiHandlers<XSDBrowserUiHandlers>
 
     private final Widget widget;
     @UiField
-    Label homeLink;
+    FlowPanel navigation;
     @UiField
-    Label backLink;
+    LinkButton homeLink;
     @UiField
-    Label forwardLink;
+    LinkButton backLink;
+    @UiField
+    LinkButton forwardLink;
     @UiField
     HTML documentation;
     @UiField
@@ -48,6 +51,9 @@ public class XSDBrowserViewImpl extends ViewWithUiHandlers<XSDBrowserUiHandlers>
     @Inject
     public XSDBrowserViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // The navigation buttons are a group, named for what they move around
+        navigation.getElement().setAttribute("role", "group");
+        navigation.getElement().setAttribute("aria-label", "Schema navigation");
     }
 
     @Override

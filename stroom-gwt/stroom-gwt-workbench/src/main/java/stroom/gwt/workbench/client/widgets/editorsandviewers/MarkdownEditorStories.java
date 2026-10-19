@@ -49,7 +49,7 @@ import com.google.web.bindery.event.shared.EventBus;
 /// Stories for Stroom's Markdown editor ([MarkdownEditPresenter], as used for documentation
 /// tabs).
 ///
-/// The presenter's toolbar (Edit and Documentation help), which Stroom shows in the document
+/// The presenter's toolbar (Edit Documentation and Help with Documentation), which Stroom shows in the document
 /// tab's tool bar, is shown above it. The presenter reads the help URL from the UI config, so
 /// the stories use a [ScreenHarness].
 public final class MarkdownEditorStories {
@@ -72,7 +72,7 @@ public final class MarkdownEditorStories {
             ## Highlights
 
             - **Bold** and *italic* and `inline code`
-            - A [link to the docs](https://example.com) (opens in a new tab)
+            - A [link to the docs](https://example.com)
             - ~~Struck-through~~ text
 
             ### A code block
@@ -110,7 +110,7 @@ public final class MarkdownEditorStories {
         registry.component("Widgets/Editors & Viewers/MarkdownEditor", MarkdownEditorStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // Edit and preview split: GWT opens a non-blank document in preview mode, so the
-                // story clicks the Edit button once
+                // story clicks the Edit Documentation button once
                 .story("EditPreviewSplit", context -> {
                     final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
                     final Widget widget = markdownEditor(harness, SAMPLE_MARKDOWN, false);
@@ -127,13 +127,16 @@ public final class MarkdownEditorStories {
                     final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
                     return markdownEditor(harness, SAMPLE_MARKDOWN, true);
                 })
-                // The rendered document says it is in English, for screen readers (gchq/stroom#5408)
+                // The rendered document says it is in English, for screen readers (gchq/stroom#5408),
+                // and its link, which opens in a new tab, says so (gchq/stroom#5406)
                 .withPlay(play -> {
                     final Query frame = play.querySelector("iframe#markdown-frame");
                     play.waitFor(() -> play.expect(FrameDocuments.language(frame)).toBe("en"));
+                    play.expect(FrameDocuments.newTabLinks(frame))
+                            .toBe("link to the docs (opens in new tab) | noopener noreferrer");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 })
-                // With no help URL configured, "Documentation help" shows "Help is not configured!"
+                // With no help URL configured, "Help with Documentation" shows "Help is not configured!"
                 .story("HelpNotConfigured", context -> {
                     final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                             .uiConfig(NO_HELP_UI_CONFIG)
@@ -205,12 +208,12 @@ public final class MarkdownEditorStories {
         return harness.asWidget();
     }
 
-    /// Clicks the toolbar's Edit button (`editModeButton`) when the story renders.
+    /// Clicks the toolbar's Edit Documentation button (`editModeButton`) when the story renders.
     private static void clickEditButton(final Widget widget) {
         final NodeList<Element> buttons = widget.getElement().getElementsByTagName("button");
         for (int i = 0; i < buttons.getLength(); i++) {
             final Element button = buttons.getItem(i);
-            if ("Edit".equals(button.getTitle())) {
+            if ("Edit Documentation".equals(button.getTitle())) {
                 // A real button: a click presses it
                 button.dispatchEvent(Document.get().createClickEvent(
                         1, 0, 0, 0, 0, false, false, false, false));

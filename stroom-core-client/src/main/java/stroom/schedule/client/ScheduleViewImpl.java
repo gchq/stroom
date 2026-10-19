@@ -25,6 +25,7 @@ import stroom.util.shared.scheduler.FrequencyExpression;
 import stroom.util.shared.scheduler.FrequencyExpressions;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.button.client.Button;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -32,6 +33,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
@@ -152,25 +154,28 @@ public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> imp
         final Label label = new Label(name, false);
         label.addStyleName("timeRange-quickSettingPanel-title");
         panel.add(label);
+        // A group of buttons named by its title
+        final String labelId = DOM.createUniqueId();
+        label.getElement().setId(labelId);
+        panel.getElement().setAttribute("role", "group");
+        panel.getElement().setAttribute("aria-labelledby", labelId);
         return panel;
     }
 
-    private Label createLabel(final CronExpression cronExpression) {
-        final Label label = new Label(cronExpression.getName(), false);
-        label.addStyleName("timeRange-quickSetting");
-        label.addClickHandler(event -> {
-            expression.setValue(cronExpression.getExpression(), true);
-        });
-        return label;
+    private LinkButton createLabel(final CronExpression cronExpression) {
+        return createButton(cronExpression.getName(), cronExpression.getExpression());
     }
 
-    private Label createLabel(final FrequencyExpression cronExpression) {
-        final Label label = new Label(cronExpression.getName(), false);
-        label.addStyleName("timeRange-quickSetting");
-        label.addClickHandler(event -> {
-            expression.setValue(cronExpression.getExpression(), true);
-        });
-        return label;
+    private LinkButton createLabel(final FrequencyExpression cronExpression) {
+        return createButton(cronExpression.getName(), cronExpression.getExpression());
+    }
+
+    // A quick setting, which sets the expression
+    private LinkButton createButton(final String name, final String expressionValue) {
+        final LinkButton button = new LinkButton(name);
+        button.addStyleName("timeRange-quickSetting");
+        button.addClickHandler(event -> expression.setValue(expressionValue, true));
+        return button;
     }
 
     @Override

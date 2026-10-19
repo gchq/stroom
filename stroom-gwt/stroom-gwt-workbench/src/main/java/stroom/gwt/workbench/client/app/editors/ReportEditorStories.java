@@ -136,7 +136,7 @@ public final class ReportEditorStories {
                     play.expect(play.queryByText(TextMatch.containingIgnoreCase("include rule documentation")))
                             .toBeNull();
                     openTab(play, "Notifications");
-                    play.click(play.findByRole("button", "Add Notification"));
+                    play.click(play.findByRole("button", "New Notification"));
                     // The dialog is captioned 'Add Notification'. A new notification defaults to
                     // Stream
                     final Play dialog = AnalyticRuleEditorStories.dialog(screen, "Add Notification");
@@ -149,7 +149,7 @@ public final class ReportEditorStories {
                 .withPlay(play -> {
                     play.expect(play.findByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     openTab(play, "Notifications");
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Add Notification")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.getByRole("button", "New Notification")).toBeInTheDocument());
                     // 'Feed For Errors' is on the Settings tab, so the play shows that too
                     openTab(play, "Settings");
                     play.waitFor(() -> play.expect(play.getByText("Feed For Errors")).toBeInTheDocument());
@@ -195,7 +195,7 @@ public final class ReportEditorStories {
     // Opens the Notifications tab and waits for its list
     private static void showNotifications(final Play play, final boolean readOnly) {
         openTab(play, "Notifications");
-        play.waitFor(() -> play.expect(play.getByRole("button", "Add Notification")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByRole("button", "New Notification")).toBeInTheDocument());
         expectReadOnlyNote(play, readOnly);
         DocumentEditors.expectNoProblems(play);
     }
@@ -204,7 +204,7 @@ public final class ReportEditorStories {
     private static void showExecution(final Play play, final boolean readOnly) {
         openTab(play, "Execution");
         play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
-        play.waitFor(() -> play.expect(play.getByRole("button", "Add Execution Schedule")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByRole("button", "New Execution Schedule")).toBeInTheDocument());
         expectReadOnlyNote(play, readOnly);
         DocumentEditors.expectNoProblems(play);
     }

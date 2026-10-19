@@ -269,10 +269,11 @@ public final class PipelineEditorStories {
                     // The reference loader grid shows the element's references, with a New button
                     play.expect(play.getByText("Ref Pipeline")).toBeInTheDocument();
                     play.expect(play.getByText("MY_FEED")).toBeInTheDocument();
-                    play.expect(play.getByTitle("New Reference")).toBeInTheDocument();
-                    // View Source opens the pipeline's JSON, captioned 'Pipeline Source'.
-                    // 'View Source' is a GWT Hyperlink (a link, not a button)
-                    play.click(play.getByText("View Source"));
+                    play.expect(play.getByTitle("New Pipeline Reference")).toBeInTheDocument();
+                    // View Source opens the pipeline's JSON, captioned 'Pipeline Source'. It is
+                    // a toolbar button (it was a GWT Hyperlink, which added a browser history
+                    // entry)
+                    play.click(play.getByRole("button", "View Source"));
                     final Play source = dialog(screen, "Pipeline Source");
                     play.click(source.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Pipeline Source", StroomDom.DIALOG_TITLE))
@@ -314,7 +315,7 @@ public final class PipelineEditorStories {
                 .withPlay(play -> {
                     openStructure(play);
                     play.findByText("parser");
-                    play.click(play.findByTitle("Enter Stepping Mode"));
+                    play.click(play.findByTitle("Stepping Mode"));
                     // The stream list shows; selecting a stream mounts the stepper.
                     // The stream list is a grid of streams
                     play.click(play.findAllByText("MY_FEED").nth(0));
@@ -330,14 +331,14 @@ public final class PipelineEditorStories {
                     play.click(play.findByText("Processors", StroomDom.LINK_TAB_LABEL));
                     // The filter grid shows the filter (status Complete) and an Add button
                     play.findByText("Complete");
-                    play.click(play.getByTitle("Add Processor"));
+                    play.click(play.getByTitle("New Processor"));
                     final Play add = dialog(screen, "Add Filter");
                     play.expect(add.getByText("Run As User")).toBeInTheDocument();
                     play.expect(add.getByRole("button", TextMatch.startingWith("Set Feed Dependencies")))
                             .toBeInTheDocument();
                     play.click(add.getByRole("button", StroomDom.button("Cancel")));
                     // Batch Edit -> OK confirms with the number of filters affected
-                    play.click(play.getByTitle("Batch Edit Current Processors"));
+                    play.click(play.getByTitle("Batch Edit Filtered Processors"));
                     final Play batch = dialog(screen, "Batch Change All Filtered Processors");
                     play.click(batch.getByRole("button", StroomDom.button("OK")));
                     // GWT counts the processor row as well as its filter, so it asks to 'change 2
@@ -359,10 +360,10 @@ public final class PipelineEditorStories {
                     play.waitFor(() -> play.expect(play.queryByText("Complete")).toBeNull());
                     play.click(play.querySelectorAll(".expanderCell .expanderIcon").nth(0));
                     play.findByText("Complete");
-                    // Show Tasks is enabled once a single filter row is selected
+                    // Show Tasks for Selected Processor is enabled once a single filter row is selected
                     play.expect(play.getByText("Active Tasks", StroomDom.LINK_TAB_LABEL)).toBeInTheDocument();
                     play.click(play.getByText("Complete"));
-                    play.waitFor(() -> play.expect(play.getByTitle("Show Tasks"))
+                    play.waitFor(() -> play.expect(play.getByTitle("Show Tasks for Selected Processor"))
                             .not().toHaveAttribute("aria-disabled"));
                     expectNoProblems(play);
                 })
@@ -394,7 +395,7 @@ public final class PipelineEditorStories {
                     final Play screen = play.screen();
                     play.click(play.findByText("Processors", StroomDom.LINK_TAB_LABEL));
                     play.findByText("Complete");
-                    play.click(play.getByTitle("Batch Edit Current Processors"));
+                    play.click(play.getByTitle("Batch Edit Filtered Processors"));
                     final Play batch = dialog(screen, "Batch Change All Filtered Processors");
                     play.click(batch.getByRole("button", StroomDom.button("OK")));
                     play.click(dialogWith(screen, TextMatch.exact("Are you sure you want to change 2 processors?"))
@@ -449,9 +450,9 @@ public final class PipelineEditorStories {
                     openStructure(play);
                     play.click(play.findByText("xslt"));
                     play.click(play.findByText("Ref Pipeline"));
-                    play.click(play.getByTitle("Remove Reference"));
+                    play.click(play.getByTitle("Remove Selected Pipeline Reference"));
                     play.waitFor(() -> play.expect(play.queryByText("Ref Pipeline")).toBeNull());
-                    play.click(play.getByTitle("Enter Stepping Mode"));
+                    play.click(play.getByTitle("Stepping Mode"));
                     play.click(play.findAllByText("MY_FEED").nth(0));
                     play.findByTitle("Step Forward");
                     play.click(play.getByText("xslt"));
@@ -491,14 +492,16 @@ public final class PipelineEditorStories {
                             .toBeInTheDocument();
                     // Select the row and Remove it: it stays, struck through (a cell class)
                     play.click(play.getByText("REF_FEED"));
-                    play.click(play.getByTitle("Remove Reference"));
+                    play.click(play.getByTitle("Remove Selected Pipeline Reference"));
                     play.findByText("Inherited Ref");
                     // GWT puts the class on the cell's text, not on the cell
                     play.waitFor(() -> play.expect(play.getByText("REF_FEED"))
                             .toHaveClass("pipelineStructureViewImpl-property-removed"));
-                    // Remove again restores it
+                    // Remove again restores it, which the button's title then says
                     play.click(play.getByText("REF_FEED"));
-                    play.click(play.getByTitle("Remove Reference"));
+                    play.waitFor(() -> play.expect(play.queryByTitle("Remove Selected Pipeline Reference"))
+                            .toBeNull());
+                    play.click(play.getByTitle("Restore Selected Pipeline Reference"));
                     play.waitFor(() -> play.expect(play.getByText("REF_FEED"))
                             .toHaveClass("pipelineStructureViewImpl-property-inherited"));
                     expectNoProblems(play);

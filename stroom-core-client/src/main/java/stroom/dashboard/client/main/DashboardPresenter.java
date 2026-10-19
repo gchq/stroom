@@ -174,21 +174,22 @@ public class DashboardPresenter
         view.setContent(flexLayout);
 
         editToolbar = new Toolbar("Dashboard actions");
-        editModeButton = editToolbar.toggle(SvgImage.EDIT, "Enter Design Mode", pressed -> onDesign());
+        editModeButton = editToolbar.toggle(SvgImage.EDIT, "Design Mode", pressed -> onDesign());
 
         addComponentButton = editToolbar.button(SvgImage.ADD, "Add Component", this::onAdd);
         addComponentButton.setVisible(false);
+        addComponentButton.setOpensMenu(true);
 
-        setConstraintsButton = editToolbar.button(SvgImage.RESIZE, "Set Constraints", this::onConstraints);
+        setConstraintsButton = editToolbar.button(SvgImage.RESIZE, "Set Layout Constraints", this::onConstraints);
         setConstraintsButton.setVisible(false);
 
         selectionInfoButton = editToolbar.button(SvgImage.SELECTION, "View Current Selection",
                 this::onSelectionInfo);
         selectionInfoButton.setVisible(false);
 
-        maximiseTabsButton = editToolbar.button(SvgImage.MAXIMISE, "Maximise", this::onMaximiseTabs);
+        maximiseTabsButton = editToolbar.button(SvgImage.MAXIMISE, "Maximise All Panes", this::onMaximiseTabs);
 
-        restoreTabsButton = editToolbar.button(SvgImage.MINIMISE, "Restore", this::onRestoreTabs);
+        restoreTabsButton = editToolbar.button(SvgImage.MINIMISE, "Restore Pane Layout", this::onRestoreTabs);
         restoreTabsButton.setVisible(false);
 
 //                <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
@@ -319,13 +320,7 @@ public class DashboardPresenter
         getView().setDesignMode(designMode);
 //        components.forEach(component -> component.setDesignMode(designMode));
 
-        if (designMode) {
-            editModeButton.setTitle("Exit Design Mode");
-            editModeButton.setState(true);
-        } else {
-            editModeButton.setTitle("Enter Design Mode");
-            editModeButton.setState(false);
-        }
+        editModeButton.setState(designMode);
     }
 
 //    public boolean isDesignMode() {
@@ -365,8 +360,10 @@ public class DashboardPresenter
 
         ShowMenuEvent
                 .builder()
+                .name("Add Component")
                 .items(menuItems)
                 .popupPosition(popupPosition)
+                .opener(target)
                 .fire(this);
     }
 

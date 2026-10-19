@@ -21,6 +21,7 @@ import stroom.data.table.client.MyCellTable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.TokenError;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.tab.client.event.CloseEvent;
 import stroom.widget.tab.client.event.CloseEvent.CloseHandler;
@@ -38,7 +39,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -50,7 +50,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.view.client.AsyncDataProvider;
@@ -181,8 +180,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
         quickFilter.addStyleName("dock-min selectionList-quickFilter");
 
-        links = new FlowPanel();
+        // A breadcrumb trail: where the list is, with a button to go back to each level above
+        links = new FlowPanel("nav");
         links.setStyleName("dock-min selectionList-links");
+        links.getElement().setAttribute("aria-label", "Breadcrumb");
 
         final SimplePanel elementChooser = new SimplePanel();
         elementChooser.setStyleName("dock-max selectionList-elementChooser");
@@ -594,31 +595,44 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private void updatePath() {
         links.clear();
         if (navigationStates.isEmpty()) {
-            links.add(new Label(model.getPathRoot()));
+            links.add(createCurrentLevel(model.getPathRoot()));
         } else {
-            links.add(createLink(model.getPathRoot(), null));
+            links.add(createLevelButton(model.getPathRoot(), null));
         }
         for (int i = 0; i < navigationStates.size(); i++) {
-            links.add(new Label("/"));
+            links.add(createSeparator());
             final NavigationState<I> navigationState = navigationStates.get(i);
             final I selectedItem = navigationState.getSelected();
             if (i < navigationStates.size() - 1) {
-                links.add(createLink(selectedItem.getLabel(), selectedItem));
+                links.add(createLevelButton(selectedItem.getLabel(), selectedItem));
             } else {
-                links.add(new Label(selectedItem.getLabel()));
+                links.add(createCurrentLevel(selectedItem.getLabel()));
             }
         }
     }
 
-    private Hyperlink createLink(final String label, final I row) {
-        final Hyperlink link = new Hyperlink();
-        link.setText(label);
-        link.addHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                navigateBack(row, false, false);
-            }
-        }, ClickEvent.getType());
-        return link;
+    // A level above the current one. It goes back within the list rather than to another page, so
+    // it is a button that looks like a link
+    private LinkButton createLevelButton(final String label, final I row) {
+        final LinkButton button = new LinkButton(label);
+        button.addStyleName("selectionList-pathLink");
+        // The button is replaced as the path changes, so the list takes the focus
+        button.addClickHandler(event -> navigateBack(row, false, true));
+        return button;
+    }
+
+    // The level the list shows, which screen readers announce as the current one
+    private static Label createCurrentLevel(final String label) {
+        final Label current = new Label(label);
+        current.getElement().setAttribute("aria-current", "page");
+        return current;
+    }
+
+    // Screen readers needn't read the separators out
+    private static Label createSeparator() {
+        final Label separator = new Label("/");
+        separator.getElement().setAttribute("aria-hidden", "true");
+        return separator;
     }
 
     private void navigate(final I selectionItem,

@@ -400,6 +400,9 @@ public class ApiKeysListPresenter
                                         getActionScreensToInclude(),
                                         this,
                                         null),
+                                null,
+                                (HashedApiKey hashedApiKey) -> UserAndGroupHelper.buildActionsForMsg(
+                                        NullSafe.get(hashedApiKey, HashedApiKey::getOwner)),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();

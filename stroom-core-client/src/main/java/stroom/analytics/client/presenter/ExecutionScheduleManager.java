@@ -217,13 +217,15 @@ public class ExecutionScheduleManager
 
         filterButton = this.getView().getToolbar().button(SvgImage.FILTER, "Filter Schedules", this::onFilter);
 
-        clearFilterButton = this.getView().getToolbar().button(SvgImage.CLEAR, "Clear Filter", this::onClearFilter);
+        clearFilterButton = this.getView().getToolbar().button(SvgImage.CLEAR, "Clear Schedule Filter",
+                this::onClearFilter);
         clearFilterButton.setEnabled(false);
 
         runJobNowButton = this.getView().getToolbar().button(SvgImage.STEP_FORWARD, "Run Schedules Now",
                 () -> executionScheduleRunNowPresenter.show());
 
-        deleteButton = this.getView().getToolbar().button(SvgImage.DELETE, "Delete Schedules", this::onDelete);
+        deleteButton = this.getView().getToolbar().button(SvgImage.DELETE, "Delete Selected Schedules",
+                this::onDelete);
         deleteButton.setEnabled(false);
 
         setButtonState();

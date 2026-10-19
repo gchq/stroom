@@ -156,9 +156,9 @@ public final class UserTabScreenStories {
                     final Play row = play.within(rowElement);
                     play.expect(row.getByTitle(StroomDom.ACTIONS_TITLE)).toBeInTheDocument();
                     play.expect(row.querySelector(".svgCell-icon")).toBeInTheDocument();
-                    // Remove is a pager toolbar button, not a per-row one
-                    play.expect(row.queryByTitle("Remove")).toBeNull();
-                    play.expect(play.getAllByTitle("Remove").count()).toBeGreaterThan(0);
+                    // Remove from Selected Group is a pager toolbar button, not a per-row one
+                    play.expect(row.queryByTitle("Remove from Selected Group")).toBeNull();
+                    play.expect(play.getAllByTitle("Remove from Selected Group").count()).toBeGreaterThan(0);
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The Application Permissions tab changes a permission

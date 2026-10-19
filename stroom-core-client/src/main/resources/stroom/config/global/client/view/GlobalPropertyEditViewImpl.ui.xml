@@ -10,7 +10,7 @@
             <g:FlowPanel addStyleNames="inline-label-icon">
                 <g:Label ui:field="name" addStyleNames="globalProperties stroom-control-label"/>
                 <b:Toolbar name="Name actions" addStyleNames="globalPropertyEditViewImpl-nameActions">
-                    <b:ToolbarButton ui:field="copyNameButton" title="Copy" addStyleNames="svgIcon copyNameIcon"/>
+                    <b:ToolbarButton ui:field="copyNameButton" title="Copy Property Name" addStyleNames="svgIcon copyNameIcon"/>
                 </b:Toolbar>
             </g:FlowPanel>
         </form:FormGroup>

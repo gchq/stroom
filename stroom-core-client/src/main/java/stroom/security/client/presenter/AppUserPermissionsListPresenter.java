@@ -278,6 +278,9 @@ public class AppUserPermissionsListPresenter
                                                 UserScreen.allExcept(UserScreen.APP_PERMISSIONS),
                                                 this,
                                                 null),
+                                null,
+                                (AppUserPermissions appUsrPerms) ->
+                                        UserAndGroupHelper.buildActionsForMsg(appUsrPerms.getUserRef()),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();

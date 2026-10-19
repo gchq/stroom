@@ -119,8 +119,8 @@ public final class DataGenEditorStories {
                     // There is no 'Execution history' heading; the history list is the second grid,
                     // headed by its columns
                     play.expect(play.getByText("Execution Time")).toBeInTheDocument();
-                    // The button's name is its title, 'Add Execution Schedule'
-                    play.click(play.getByRole("button", "Add Execution Schedule"));
+                    // The button's name is its title, 'New Execution Schedule'
+                    play.click(play.getByRole("button", "New Execution Schedule"));
                     play.waitFor(() -> play.expect(screen.getByText("Create Schedule", StroomDom.DIALOG_TITLE))
                             .toBeInTheDocument());
                     DocEditors.expectNoProblems(play);
@@ -138,7 +138,7 @@ public final class DataGenEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).toHaveAttribute("readonly"));
-                    play.expect(play.getByRole("button", "Save is not available as this document is read only"))
+                    play.expect(play.getByRole("button", "Save (read only)"))
                             .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })

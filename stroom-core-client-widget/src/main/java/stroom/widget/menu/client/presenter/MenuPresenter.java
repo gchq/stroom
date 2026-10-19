@@ -25,6 +25,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Scheduler;
@@ -46,6 +47,8 @@ public class MenuPresenter
 
     private static final int HORIZONTAL_PADDING = 2;
     private static final int VERTICAL_PADDING = 4;
+    private static final String ITEM_TEXT_CLASS = "menuItem-text";
+    private static final String SIMPLE_ITEM_TEXT_CLASS = "menuItem-simpleText";
 
     private final Provider<MenuPresenter> menuPresenterProvider;
     private MenuPresenter currentMenu;
@@ -108,6 +111,9 @@ public class MenuPresenter
 
                         final MenuPresenter presenter = menuPresenterProvider.get();
                         presenter.setParent(MenuPresenter.this, menuItem);
+                        // Named by the text of its parent item. Not by reference to the item's
+                        // element, which loses any id it is given when the menu redraws its rows
+                        presenter.setName(getItemText(element));
 //                        presenter.setHighlightItems(getHighlightItems());
                         presenter.setData(children);
 
@@ -148,6 +154,35 @@ public class MenuPresenter
                 });
             }
         }
+    }
+
+    // The text of a menu item's row, without its shortcut or arrow
+    private static String getItemText(final Element rowElement) {
+        if (rowElement == null) {
+            return null;
+        }
+        final Element text = ElementUtil.findChild(rowElement, MenuPresenter::isItemText);
+        final String name = text != null
+                ? text.getInnerText()
+                : rowElement.getInnerText();
+        return name == null
+                ? null
+                : name.trim();
+    }
+
+    // Whether an element holds a menu item's text. Its class is read as an attribute, as an SVG
+    // element's className isn't a string
+    private static boolean isItemText(final Element element) {
+        final String className = ElementUtil.getClassName(element);
+        if (className == null) {
+            return false;
+        }
+        for (final String name : className.split(" ")) {
+            if (ITEM_TEXT_CLASS.equals(name) || SIMPLE_ITEM_TEXT_CLASS.equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -267,6 +302,20 @@ public class MenuPresenter
         getView().setAllowCloseOnMoveLeft(allowCloseOnMoveLeft);
     }
 
+    /// Gives the menu an accessible name, which screen readers announce on entering it.
+    ///
+    /// @param name The name, as plain text without the word "menu", or null for none.
+    public void setName(final String name) {
+        getView().setName(name);
+    }
+
+    /// Names the menu by another element, e.g. the button that opened it.
+    ///
+    /// @param id The id of the element that names the menu, or null for none.
+    public void setLabelledBy(final String id) {
+        getView().setLabelledBy(id);
+    }
+
     /// Gives the menu a fixed width rather than fitting it to its items. See
     /// [ShowMenuEvent.Builder#width(int)].
     ///
@@ -300,5 +349,16 @@ public class MenuPresenter
         ///
         /// @param width The menu's width in pixels.
         void setWidth(int width);
+
+        /// Gives the menu an accessible name (`aria-label`), replacing any element it was
+        /// labelled by.
+        ///
+        /// @param name The name, as plain text, or null or empty for none.
+        void setName(String name);
+
+        /// Names the menu by another element (`aria-labelledby`), replacing any name it was given.
+        ///
+        /// @param id The id of the element that names the menu, or null or empty for none.
+        void setLabelledBy(String id);
     }
 }

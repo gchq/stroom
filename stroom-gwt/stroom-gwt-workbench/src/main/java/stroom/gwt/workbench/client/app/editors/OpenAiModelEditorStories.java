@@ -231,8 +231,7 @@ public final class OpenAiModelEditorStories {
                 })
                 .story("ReadOnly", context -> render(context, null, true))
                 .withPlay(play -> {
-                    final Query save = play.findByRole("button",
-                            "Save is not available as this document is read only");
+                    final Query save = play.findByRole("button", "Save (read only)");
                     // Read only, not disabled: the fields can be read and copied but not changed
                     play.waitFor(() -> play.expect(play.querySelector(BASE_URL)).toHaveAttribute("readonly"));
                     play.expect(play.querySelector(BASE_URL)).not().toBeDisabled();

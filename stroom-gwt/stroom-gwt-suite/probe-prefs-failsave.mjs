@@ -50,7 +50,7 @@ const press = async (name) => {
   console.log(`after ${name}: ${JSON.stringify(await dialogs())}`);
 };
 
-await page.locator('[title="Show Menu"]').first().click();
+await page.locator('[title="Show Main Menu"]').first().click();
 await page.waitForTimeout(600);
 await page.getByText('User', { exact: true }).first().hover();
 await page.waitForTimeout(600);

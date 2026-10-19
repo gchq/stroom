@@ -102,7 +102,7 @@ public final class SolrIndexEditorStories {
                             .toBeInTheDocument();
                     // Editing a field shows the field dialog, with the fetched native types
                     play.click(play.getByText("EventTime"));
-                    play.click(play.getByRole("button", "Edit Field"));
+                    play.click(play.getByRole("button", "Edit Selected Index Field"));
                     play.waitFor(() -> play.expect(screen.getByText("Default Value", "label")).toBeInTheDocument());
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Default Value", "label")).toBeNull());
@@ -124,7 +124,7 @@ public final class SolrIndexEditorStories {
 
                     // Rename EventTime to EventTimestamp
                     play.click(play.getByText("EventTime"));
-                    play.click(play.getByRole("button", "Edit Field"));
+                    play.click(play.getByRole("button", "Edit Selected Index Field"));
                     play.waitFor(() -> play.expect(screen.getByText("Field Name", "label")).toBeInTheDocument());
                     final Query name = screen.querySelector(FIELD_NAME);
                     play.clear(name);
@@ -133,13 +133,15 @@ public final class SolrIndexEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("EventTimestamp")).toBeInTheDocument());
 
                     // Add a new field, then remove it
-                    play.click(play.getByRole("button", "New Field"));
+                    play.click(play.getByRole("button", "New Index Field"));
                     play.waitFor(() -> play.expect(screen.getByText("Field Name", "label")).toBeInTheDocument());
                     play.type(screen.querySelector(FIELD_NAME), "TempField");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.getByText("TempField")).toBeInTheDocument());
                     play.click(play.getByText("TempField"));
-                    play.click(play.getByRole("button", "Remove Field"));
+                    play.click(play.getByRole("button", "Remove Selected Index Fields"));
+                    play.expect(screen.findByText("Are you sure you want to remove the selected field?"))
+                            .toBeInTheDocument();
                     play.click(screen.findByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.queryByText("TempField")).toBeNull());
 
@@ -169,7 +171,7 @@ public final class SolrIndexEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("Field100")).toBeInTheDocument());
                     play.expect(play.queryByText("Field000")).toBeNull();
                     play.click(play.getByText("Field100"));
-                    play.click(play.getByRole("button", "Edit Field"));
+                    play.click(play.getByRole("button", "Edit Selected Index Field"));
                     play.waitFor(() -> play.expect(screen.querySelector(FIELD_NAME)).toHaveValue("Field100"));
                     DocEditors.expectNoProblems(play);
                 })

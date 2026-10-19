@@ -45,6 +45,9 @@ import java.util.function.Consumer;
 public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         implements HasDocumentRead<DictionaryDoc>, HasDocumentWrite<DictionaryDoc>, HasChangeHandlers {
 
+    private static final String ADD_TITLE = "Add Imported Dictionary";
+    private static final String REMOVE_TITLE = "Remove Imported Dictionary";
+
     private final DocRefListPresenter docRefListPresenter;
     private final Provider<DocSelectionPopup> dictionarySelection;
     private final ButtonView addButton;
@@ -66,8 +69,8 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         view.setView(docRefListPresenter.getView());
 
         docRefListPresenter.getView().getToolbar().setName("Dictionary actions");
-        addButton = docRefListPresenter.getView().getToolbar().button(SvgImage.ADD, "Add", this::onAdd);
-        removeButton = docRefListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::onRemove);
+        addButton = docRefListPresenter.getView().getToolbar().button(SvgImage.ADD, ADD_TITLE, this::onAdd);
+        removeButton = docRefListPresenter.getView().getToolbar().button(SvgImage.DELETE, REMOVE_TITLE, this::onRemove);
         removeButton.setEnabled(false);
         docRefListPresenter.initTableColumns("Document Name", true);
 
@@ -167,13 +170,12 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         addButton.setEnabled(!readOnly);
         removeButton.setEnabled(!readOnly && NullSafe.hasItems(selectionModel.getSelectedItems()));
 
-        if (readOnly) {
-            addButton.setTitle("Add import disabled as this dictionary is read only");
-            removeButton.setTitle("Remove import disabled as this dictionary is read only");
-        } else {
-            addButton.setTitle("Add Import");
-            removeButton.setTitle("Remove Import");
-        }
+        // The name stays, with why the buttons are disabled for a read-only dictionary
+        final String suffix = readOnly
+                ? " (dictionary is read only)"
+                : "";
+        addButton.setTitle(ADD_TITLE + suffix);
+        removeButton.setTitle(REMOVE_TITLE + suffix);
     }
 
     private void refresh() {

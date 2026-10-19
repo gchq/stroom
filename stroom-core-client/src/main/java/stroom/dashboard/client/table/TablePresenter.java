@@ -245,18 +245,21 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Download
         pagerView.getToolbar().setName("Table actions");
-        downloadButton = pagerView.getToolbar().button(SvgImage.DOWNLOAD, "Download", this::onDownload);
+        downloadButton = pagerView.getToolbar().button(SvgImage.DOWNLOAD, "Download Table Results",
+                this::onDownload);
         downloadButton.setEnabled(false);
         downloadButton.setVisible(securityContext
                 .hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Filter values
-        valueFilterButton = pagerView.getToolbar().toggle(SvgImage.FILTER, "Show Column Filters",
+        valueFilterButton = pagerView.getToolbar().toggle(SvgImage.FILTER, "Column Filters",
                 pressed -> toggleShowValueFilters());
 
         // Annotate
-        annotateButton = pagerView.getToolbar().button(SvgImage.EDIT, "Annotate", this::showAnnotationMenu);
+        annotateButton = pagerView.getToolbar().button(SvgImage.EDIT, "Annotate Selected Rows",
+                this::showAnnotationMenu);
         annotateButton.setVisible(annotationManager.isEnabled());
+        annotateButton.setOpensMenu(true);
 
         // Ask AI
         askAiButton = pagerView.getToolbar().button(SvgImage.AI, "Ask Stroom AI", this::onAskAi);
@@ -466,11 +469,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void setShowValueFilters(final boolean showValueFilters) {
         valueFilterButton.setState(showValueFilters);
-        if (showValueFilters) {
-            valueFilterButton.setTitle("Hide Column Filters");
-        } else {
-            valueFilterButton.setTitle("Show Column Filters");
-        }
         if (showValueFilters) {
             dataGrid.addStyleName("showValueFilters");
         } else {

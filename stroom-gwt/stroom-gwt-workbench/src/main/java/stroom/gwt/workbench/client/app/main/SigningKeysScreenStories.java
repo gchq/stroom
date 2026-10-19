@@ -44,8 +44,8 @@ import com.google.gwt.user.client.ui.Widget;
 /// presenter comes from GIN and is opened as `SigningKeyPlugin` opens it (refreshed).
 public final class SigningKeysScreenStories {
 
-    private static final String REVOKE_TITLE = "Revoke the selected signing key";
-    private static final String REVOKE_ALL_TITLE = "Revoke every signing key still in use";
+    private static final String REVOKE_TITLE = "Revoke Selected Signing Key";
+    private static final String REVOKE_ALL_TITLE = "Revoke All Signing Keys Still in Use";
 
     // The active key has no end date at all
     private static final String ACTIVE = "{\"id\": 1, \"status\": \"ACTIVE\", \"issuedMs\": 1700000000000}";

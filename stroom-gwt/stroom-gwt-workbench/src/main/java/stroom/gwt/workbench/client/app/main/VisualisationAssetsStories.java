@@ -114,13 +114,13 @@ public final class VisualisationAssetsStories {
                 });
     }
 
-    /// 'Add file' then 'Upload File' opens the upload dialog.
+    /// 'Add File or Folder' then 'Upload File' opens the upload dialog.
     ///
     /// @return The dialog.
     private static Play openUploadDialog(final Play play) {
         final Play screen = play.screen();
-        // GWT reaches Upload File through the toolbar's 'Add file' button's menu
-        play.click(play.findByTitle("Add file"));
+        // GWT reaches Upload File through the toolbar's 'Add File or Folder' button's menu
+        play.click(play.findByTitle("Add File or Folder"));
         play.click(screen.findByText("Upload File", StroomDom.MENU_ITEM_TEXT));
         // The dialog's caption is 'Add File', and Stroom's dialogs have no role="dialog"
         return screen.within(screen.findByText("Add File", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));

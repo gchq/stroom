@@ -78,6 +78,7 @@ public class PropertyListPresenter
     private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
     private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
     private static final String DEFAULT = "pipelineStructureViewImpl-property-default";
+    private static final String EDIT_TITLE = "Edit Selected Property";
 
     private final MyDataGrid<PipelineProperty> dataGrid;
     private final MultiSelectionModelImpl<PipelineProperty> selectionModel;
@@ -111,7 +112,7 @@ public class PropertyListPresenter
         this.documentPluginRegistry = documentPluginRegistry;
 
         view.getToolbar().setName("Property actions");
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit",
+        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE,
                 () -> onEdit(selectionModel.getSelected(), readOnly));
         editButton.setEnabled(false);
 
@@ -548,9 +549,9 @@ public class PropertyListPresenter
         editButton.setEnabled(!readOnly && selected != null);
 
         if (readOnly) {
-            editButton.setTitle("Edit disabled as this pipeline is read only");
+            editButton.setTitle(EDIT_TITLE + " (read only)");
         } else {
-            editButton.setTitle("Edit Property");
+            editButton.setTitle(EDIT_TITLE);
         }
     }
 

@@ -123,7 +123,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         final Toolbar userActions = userList.getToolbar();
         userActions.setName("User and group actions");
         createButton = userActions.button(SvgImage.ADD, "Create Group", this::onCreateUserOrGroup);
-        editButton = userActions.button(SvgImage.EDIT, "Edit Group", this::onEditUserOrGroup);
+        editButton = userActions.button(SvgImage.EDIT, "Edit Selected Group", this::onEditUserOrGroup);
         editButton.setEnabled(false);
 
         // Only want to let user create a stroom user if they are using an external IDP.
@@ -137,19 +137,21 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         }, this);
 
         // You can only delete groups on this screen, UsersPresenter for user deletion
-        deleteButton = userActions.button(SvgImage.DELETE, "Delete Group", this::onDelete);
+        deleteButton = userActions.button(SvgImage.DELETE, "Delete Selected Group", this::onDelete);
         deleteButton.setEnabled(false);
 
         final Toolbar memberOfActions = parentsList.getToolbar();
         memberOfActions.setName("Member of actions");
-        addMemberOfButton = memberOfActions.button(SvgImage.ADD, "Add", this::onAddMemberOf);
-        removeMemberOfButton = memberOfActions.button(SvgImage.REMOVE, "Remove", this::onRemoveMemberOf);
+        addMemberOfButton = memberOfActions.button(SvgImage.ADD, "Add to Group", this::onAddMemberOf);
+        removeMemberOfButton = memberOfActions.button(SvgImage.REMOVE, "Remove from Selected Group",
+                this::onRemoveMemberOf);
         removeMemberOfButton.setEnabled(false);
 
         final Toolbar membersActions = childrenList.getToolbar();
         membersActions.setName("Members actions");
-        addMembersInButton = membersActions.button(SvgImage.ADD, "Add", this::onAddMembersIn);
-        removeMembersInButton = membersActions.button(SvgImage.REMOVE, "Remove", this::onRemoveMembersIn);
+        addMembersInButton = membersActions.button(SvgImage.ADD, "Add Member to Group", this::onAddMembersIn);
+        removeMembersInButton = membersActions.button(SvgImage.REMOVE, "Remove Selected Member From Group",
+                this::onRemoveMembersIn);
         removeMembersInButton.setEnabled(false);
 
         /// Initialise state.
@@ -312,9 +314,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 deleteButton.setTitle("Delete " + getDescription(selected));
                 deleteButton.setEnabled(true);
             } else {
-                editButton.setTitle("User editing is not supported");
+                editButton.setTitle("Edit Selected Group (users cannot be edited here)");
                 editButton.setEnabled(false);
-                deleteButton.setTitle("Users can only be deleted on the Users screen");
+                deleteButton.setTitle("Delete Selected Group (users can only be deleted on the Users screen)");
                 deleteButton.setEnabled(false);
             }
             addMemberOfButton.setEnabled(true);
@@ -330,9 +332,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             getView().setParentsEnabled(false);
             getView().setChildrenEnabled(false);
             getView().setChildrenVisible(true);
-            editButton.setTitle("No Selection");
+            editButton.setTitle("Edit Selected Group");
             editButton.setEnabled(false);
-            deleteButton.setTitle("No Selection");
+            deleteButton.setTitle("Delete Selected Group");
             deleteButton.setEnabled(false);
             addMemberOfButton.setEnabled(false);
             addMembersInButton.setEnabled(false);
@@ -495,7 +497,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
     private static String getDescription(final UserRef userRef) {
-        return userRef.getType(CaseType.LOWER)
+        return userRef.getType(CaseType.SENTENCE)
                + " '" + userRef.toDisplayString() + "'";
     }
 

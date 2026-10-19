@@ -31,7 +31,7 @@ export const SEED_DATA = {
   annotation: {
     title: 'Seed annotation with a comment',
     subject: 'seeded',
-    comment: 'A seeded comment entry — Edit Entry opens CommentEditPresenter',
+    comment: 'A seeded comment entry — Edit Comment opens CommentEditPresenter',
   },
   visualisation: 'Seed Visualisation',
   asset: 'seed.js',

@@ -102,9 +102,9 @@ public class AccountsListPresenter
 
         final Toolbar toolbar = pagerView.getToolbar();
         toolbar.setName("Account actions");
-        addButton = toolbar.button(SvgImage.ADD, "Add new account", this::createNewAccount);
-        editButton = toolbar.button(SvgImage.EDIT, "Edit account", this::editSelectedAccount);
-        deleteButton = toolbar.button(SvgImage.DELETE, "Delete selected account", this::deleteSelectedAccount);
+        addButton = toolbar.button(SvgImage.ADD, "New Account", this::createNewAccount);
+        editButton = toolbar.button(SvgImage.EDIT, "Edit Selected Account", this::editSelectedAccount);
+        deleteButton = toolbar.button(SvgImage.DELETE, "Delete Selected Account", this::deleteSelectedAccount);
         setButtonStates();
         initTableColumns();
 

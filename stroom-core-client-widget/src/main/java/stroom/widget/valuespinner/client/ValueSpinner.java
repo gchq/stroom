@@ -47,7 +47,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// Styled by value-spinner.css: `value-spinner`, `value-spinner__field`, `value-spinner__input`,
 /// `value-spinner__steps`, `value-spinner__step`, `value-spinner__icon`, `value-spinner__feedback`
 /// and `value-spinner__status`.
-/// (`ValueSpinnerCell`, the data grid's spinner, has its own markup, styled by valuespinner.css.)
+/// (`ValueSpinnerCell`, the data grid's spinner, renders the same markup with `value-spinner--cell`.)
 public class ValueSpinner
         extends Composite
         implements Focus, HasValue<Long> {

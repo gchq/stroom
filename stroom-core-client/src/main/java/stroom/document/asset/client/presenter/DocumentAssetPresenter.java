@@ -110,28 +110,31 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     // The tab's buttons, for its document's toolbar
     private final Toolbar toolbar = new Toolbar("Asset actions");
     private final ToolbarButton revertButton =
-            toolbar.button(SvgImage.REFRESH, "Revert changes", this::onRevertButtonClick);
+            toolbar.button(SvgImage.REFRESH, "Revert Asset Changes", this::onRevertButtonClick);
 
     /**
      * Button to add stuff to the tree
      */
-    private final ToolbarButton addButton = toolbar.button(SvgImage.ADD, "Add file", this::showAddMenu);
+    private final ToolbarButton addButton = toolbar.button(SvgImage.ADD, "Add File or Folder",
+            this::showAddMenu);
 
     /**
      * Button to delete stuff from the tree
      */
     private final ToolbarButton deleteButton =
-            toolbar.button(SvgImage.DELETE, "Delete", this::onDeleteButtonClick);
+            toolbar.button(SvgImage.DELETE, "Delete Selected Asset", this::onDeleteButtonClick);
 
     /**
      * Button to edit stuff from the tree
      */
-    private final ToolbarButton editButton = toolbar.button(SvgImage.EDIT, "Rename", this::onEditFilename);
+    private final ToolbarButton editButton = toolbar.button(SvgImage.EDIT, "Rename Selected Asset",
+            this::onEditFilename);
 
     /**
      * Button to view stuff
      */
-    private final ToolbarButton viewButton = toolbar.button(SvgImage.EYE, "View in browser", this::onViewAsset);
+    private final ToolbarButton viewButton = toolbar.button(SvgImage.EYE,
+            "View Selected Asset in Browser (opens in new tab)", this::onViewAsset);
 
     /**
      * Dialog that appears when user wants to upload a file
@@ -194,6 +197,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                                         final DocumentAssetEditAssetDialogPresenter editAssetDialog,
                                         final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
+        addButton.setOpensMenu(true);
 
         this.restFactory = restFactory;
         this.uploadFileDialog = uploadFileDialog;
@@ -291,14 +295,14 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                 .priority(0)
                 .icon(SvgImage.FOLDER)
                 .iconColour(IconColour.BLUE)
-                .text("Add New Folder")
+                .text("New Folder")
                 .command(() -> this.onCreateNewItem(false))
                 .enabled(true)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(1)
                 .icon(SvgImage.FILE)
-                .text("Add New File")
+                .text("New File")
                 .command(() -> this.onCreateNewItem(true))
                 .enabled(true)
                 .build());
@@ -317,8 +321,10 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         final Rect relativeRect = new Rect(addButton.getElement()).grow(3);
         final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
         ShowMenuEvent.builder()
+                .name("Add")
                 .items(menuItems)
                 .popupPosition(position)
+                .opener(addButton.getElement())
                 .allowCloseOnMoveLeft()
                 .fire(this);
     }

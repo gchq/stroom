@@ -75,10 +75,12 @@ public class ApiKeysPresenter
         view.setList(listPresenter.getView());
 
         listPresenter.getToolbar().setName("API key actions");
-        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "Add new API Key", this::createNewKey);
-        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit API Key", this::editSelectedKey);
+        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "New API Key", this::createNewKey);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected API Key",
+                this::editSelectedKey);
         editButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete API Key", this::deleteSelectedKeys);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected API Key",
+                this::deleteSelectedKeys);
         deleteButton.setEnabled(false);
 
 //        uiConfigCache.get(uiConfig -> {
@@ -96,9 +98,9 @@ public class ApiKeysPresenter
         editButton.setEnabled(selectedCount == 1);
         deleteButton.setEnabled(selectedCount > 0);
         if (selectedCount > 1) {
-            deleteButton.setTitle("Delete " + selectedCount + " API Keys");
+            deleteButton.setTitle("Delete " + selectedCount + " Selected API Keys");
         } else {
-            deleteButton.setTitle("Delete API Key");
+            deleteButton.setTitle("Delete Selected API Key");
         }
     }
 

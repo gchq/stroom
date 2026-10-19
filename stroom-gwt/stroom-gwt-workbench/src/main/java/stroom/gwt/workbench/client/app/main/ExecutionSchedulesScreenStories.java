@@ -123,7 +123,7 @@ public final class ExecutionSchedulesScreenStories {
                     // Schedule.toString() prefixes the type
                     play.expect(play.getByText("Cron 0 0 * * * ?")).toBeInTheDocument();
                     play.click(play.getByText("Daily report"));
-                    final Query delete = play.getByTitle("Delete Schedules");
+                    final Query delete = play.getByTitle("Delete Selected Schedules");
                     play.waitFor(() -> play.expect(delete).not().toHaveAttribute("aria-disabled"));
                     play.click(delete);
                     // GWT's message is 'You are about to delete 1 schedule.'
@@ -207,7 +207,7 @@ public final class ExecutionSchedulesScreenStories {
                     // GWT's Clear Filter button is always there, but only enabled
                     // for an expression with terms (setButtonState), so an empty filter leaves it
                     // disabled
-                    play.expect(play.getByTitle("Clear Filter")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("Clear Schedule Filter")).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     expectNoErrors(play);
                 })

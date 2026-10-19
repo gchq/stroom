@@ -81,8 +81,6 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
     private static final String PING_SEVERITY_CLASS_SUFFIX_HEALTHY = "__healthy";
     private static final String PING_SEVERITY_CLASS_SUFFIX_WARN = "__warn";
     private static final String PING_SEVERITY_CLASS_SUFFIX_MAX = "__max";
-    private static final String AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off";
-    private static final String AUTO_REFRESH_OFF_TITLE = "Turn Auto Refresh On";
 
     private final MyDataGrid<NodeStatusResult> dataGrid;
     private final NodeClient nodeClient;
@@ -120,7 +118,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         this.redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
 
         getView().getToolbar().setName("Node actions");
-        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, AUTO_REFRESH_ON_TITLE,
+        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Auto Refresh",
                 pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
 
@@ -181,10 +179,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
     private void onAutoRefreshToggled() {
         autoRefresh = !autoRefresh;
         if (autoRefresh) {
-            autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
             internalRefresh();
-        } else {
-            autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
         }
     }
 
