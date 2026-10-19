@@ -60,13 +60,39 @@ the component's classes (some names also match related classes), to help priorit
 | Form groups | `FormGroup`, `FormLabel`, `HelpButton` | `FormGroupHelpButton` | — | retrofit | most forms | done: its own help button (out of the tab order, F1 shows the same help), BEM names (`form-group__label-row`, `__label`, `__help`, `__description`, `__feedback`, …) in `form.css`, help popup `help-popup` | the disabled description's contrast (baselined, `ISSUES.md`) |
 | Password box | `PasswordTextBox` and a copied show/hide overlay | `PasswordBox` | text field with a toggle button | replaced | 9 fields | done: one control for every password field, its show/hide button in a toolbar and named for what it does, with a live region | — |
 | Selection box | `SelectionBox`, `BaseSelectionBox`, `SelectionPopup`, `SelectionList`, `SvgIconBox` | (the same classes, with `selection-box.css` and `selection-popup.css`) | combobox | retrofit | ~211 | built: the WAI-ARIA combobox's keys (Enter, Down, Up and Alt+Down open the list, and Space and typing a character in a box that can't be typed in; in the list, Enter or Alt+Up chooses, Escape closes, and typing goes to the list's quick filter, or to the next option starting with what was typed); its drop-down arrow is the value spinner's (`SvgIconBox.setDropDownWidget`, a picture hidden from screen readers), as is QuickFilter's Recent Filters arrow; its value stays on one line, ending in an ellipsis clear of the arrow; BEM CSS (`selection-box.css`, `selection-popup.css`, `svg-icon-box.css`); `SelectionBox.css`, the global `pointer` class and `DROP_DOWN` are deleted | no accessible name in places (`label` baseline entries); not tried with a screen reader; the list's own classes (`selectionList-*`, in `components.css`) aren't BEM yet; Home and End in the closed box don't open the list at its ends (optional in the pattern) |
-| Tick box | `TickBox`, `CustomCheckBox` | — | checkbox | ? | ~154 | not started | no accessible name in places, e.g. in grid rows (jobs and nodes screens; `label` baseline entries) |
+| Document and user pickers | `DocSelectionBoxPresenter`, `UserRefSelectionBoxPresenter`, `DropDownView` | — | combobox (its list a tree, for documents) | retrofit, with the selection box | ~49 (37 document, 12 user) | not started | no roles, names or keys of their own; whether they can share the selection box's keys and popup is for the research pass |
+| Tick box | `TickBox`, `CustomCheckBox`, `TickBoxCell` | — | checkbox | ? | ~154 | not started | no accessible name in places, e.g. in grid rows (jobs and nodes screens; `label` baseline entries) |
 | Value spinner | `ValueSpinner`, `Spinner`, `ValueSpinnerCell` | (the same classes, with `value-spinner.css`) | spinbutton | retrofit | ~58 | built: the field is a spin button (`aria-valuenow`, `-min`, `-max`, `-valuetext`) with Up, Down, Page Up, Page Down, Home and End; the arrows are 24px pointer-only targets inside its border (no tab stop, hidden from screen readers; mouse, finger or pen); a rejected value is put back and explained (in the form group's feedback, or under the field) and announced; BEM CSS (`value-spinner.css`); the component's own `label` baseline entries are gone, and no screen story has an unnamed spinner; the data grid's `ValueSpinnerCell` looks the same (the widget's markup and stylesheet, `value-spinner--cell`, in 110px columns with 28px rows), its field a named spin button with the same keys while it has the focus, and its arrows step it with the mouse (a finger's tap steps once) | not tried with a screen reader (VoiceOver on iOS may not step a custom spin button by swiping, though the value can still be typed); Home and End go to the bounds rather than moving the caret; its default width is now 96px (was 60px), for screens to check at rollout; the grid's spinner can't be reached from the keyboard (its field is `tabindex="-1"`, waiting on the data grid's keyboard pattern), is named by its column but not its row, changes a typed value silently (non-digits dropped, then kept within its bounds), doesn't repeat while a finger is held, and can't stop Page Up and Page Down scrolling, as the grid hands a cell its events after the browser has handled them |
-| Date and time | `DateTimeBox`, `TimeBox`, `CustomDatePicker`, `DefaultMonthSelector`, `SvgIconBox` | — | text field, grid (calendar) | ? | ~16 | in part: the calendar's previous and next buttons are named "Year" and "Month" toolbars, one tab stop each; the year and month rows are 4px apart, so a box's focus ring doesn't cover the other; the calendar and clock icons are `SvgIconBox` pictures (BEM, `svg-icon-box.css`), hidden from screen readers, as Enter in the field opens the same dialog | the calendar grid's keys and names; no accessible name in places (`label` baseline entries) |
+| Date and time | `DateTimeBox`, `TimeBox`, `CustomDatePicker`, `DefaultMonthSelector`, `SvgIconBox`, `MyDateBox`, `CustomDateBox`, `DurationPicker` | — | text field, grid (calendar) | ? | ~16 (+17 date boxes, 15 duration pickers) | in part: the calendar's previous and next buttons are named "Year" and "Month" toolbars, one tab stop each; the year and month rows are 4px apart, so a box's focus ring doesn't cover the other; the calendar and clock icons are `SvgIconBox` pictures (BEM, `svg-icon-box.css`), hidden from screen readers, as Enter in the field opens the same dialog | the calendar grid's keys and names; no accessible name in places (`label` baseline entries) |
+| Schedule box | `ScheduleBox` | — | text field with a dialog button | retrofit | ~9 | not started | `ScheduleBox.css` not BEM (`ScheduleBox-*`) |
+| Time range selector | `TimeRangeSelector`, `TimeRangePopup` | — | combobox or button opening a dialog | ? | ~4 (every query) | not started | styles in `components.css` (`timeRange-*`), not BEM |
+| Time zone | `TimeZoneWidget` | — | ? | ? | ~4 | not started | ? |
+| Colour box | `ColourBox`, `ColourInputCell` | — | text field with a colour picker | ? | ~7 | not started | ? |
+| File upload | `CustomFileUpload` | — | button (a native file input) | retrofit | ~14 | not started | ? |
+| Icon picker | `FloorMapIconPicker` | — | listbox or grid | ? | 2 | not started | BEM names (`floormap-icon-picker__*`), in `stroom-floormap.css` |
+| Term editor | `TermEditor`, `OperatorEditor` | — | (fields inside the expression tree) | retrofit, with the expression tree | ~4 (every expression) | not started | `TermEditor.css` not BEM (`termEditor-*`); its keys go with the expression tree's |
+| Raw GWT controls | `ListBox`, `IntegerBox`, `RadioButton`, `CheckBox` | (the controls above) | — | replace | ~12 (7, 2, 2, 1) | not started | each use to be replaced by a selection box, value spinner, radio group or tick box |
 | Text inputs | `TextBox`, `TextArea`, `LineColInput` | — | text field | retrofit | many | not started | no accessible name in places (`label` baseline entries) |
 | Code editor | Ace (`EditorPresenter`, `EditorViewImpl`) | — | — | retrofit around Ace | ~34 | not started | keyboard trap: Tab indents (`ISSUES.md`); Ace sources need human approval to change |
 | Layout panels | `DockLayoutPanel` and friends | (grid/flex, `SplitPane`) | — | replace as screens are touched | 6 (the floor map views) | in part: every view had its `DockLayoutPanel` replaced with grid or flex layout (`9dc39a1829`), but the floor map views added since use it again (`FloorMapEditorViewImpl`, `FloorMapFactListViewImpl`, `FloorMapGroupsViewImpl`, `FloorMapTimeListViewImpl`, `FloorMapTrackingViewImpl` and the template `FloorMapMapViewImpl.ui.xml`) | DOM order can differ from layout where a panel places its children (`ReadingOrder` is deleted, as no split panel is left); the floor map views not checked |
 | Content focus | tab pane | `ContentFocus` | — | added | all tabs | done (#5405) | — |
+
+### Input controls
+
+The input controls: the fields a form is made of, and the controls a grid's cells hold. They are
+this worktree's (`worktree-quifilter_buttons`), the rest of the table being other worktrees':
+
+- Text inputs (`TextBox`, `TextArea`, `LineColInput`), password box, quick filter.
+- Selection box, and the document and user pickers built on its drop-down.
+- Tick box (and its grid cell), value spinner (and its grid cell).
+- Date and time (with the date box and duration picker), schedule box, time range selector, time
+  zone.
+- Colour box (and its grid cell), file upload, icon picker.
+- Term editor (the fields; the expression tree around it is the trees' work).
+- The raw GWT controls, replaced by the ones above.
+
+Other cells in grids only show something or act as buttons (`ActionCell`, `CopyTextCell`,
+`SvgCell` and the like), so they go with the data grids.
 
 ## Checklist
 
@@ -111,9 +137,18 @@ branch, with `stepping_display` in brackets.
 | Form groups | done | done | done | done | done (`form.css`) | done | ? | no |
 | Password box | done | done | done | done | done (`password-box.css`) | done | ? | no |
 | Selection box | done | part | done | done | done (`selection-box.css`, `selection-popup.css`) | part (the list's `selectionList-*`) | ? | no |
+| Document and user pickers | ? | ? | ? | ? | ? | ? | ? | no |
 | Tick box | done (a native checkbox) | part | done | ? | part (`tickbox.css`, `tickboxcell.css`) | no | ? | no |
 | Value spinner | done | done (the grid's cell: part) | done (the grid's cell: part) | done | done (`value-spinner.css`) | done | done | no |
 | Date and time | part | part | part | ? | part (`CustomDatePicker.css`, `svg-icon-box.css`) | part | ? | no |
+| Schedule box | ? | ? | ? | ? | part (`ScheduleBox.css`) | no | ? | no |
+| Time range selector | ? | ? | ? | ? | no (`components.css`) | no | ? | no |
+| Time zone | ? | ? | ? | ? | ? | ? | ? | no |
+| Colour box | ? | ? | ? | ? | ? | ? | ? | no |
+| File upload | ? | ? | ? | ? | ? | ? | ? | no |
+| Icon picker | ? | ? | ? | ? | part (`stroom-floormap.css`) | done | ? | no |
+| Term editor | no | ? | ? | ? | part (`TermEditor.css`) | no | ? | no |
+| Raw GWT controls | — | ? | — | — | — | — | — | — |
 | Text inputs | done (native) | part | done (native) | done | no (`stroom.css`, `stroom-control.css`) | no | ? | no |
 | Code editor | — (Ace) | ? | no (Tab is a trap) | ? | done (`editor.css`) | part | — (Ace) | no |
 | Layout panels | — | — | — | — | — | — | part (the floor map views) | — |
@@ -171,8 +206,8 @@ Agreed for both tab bars (document and link tabs), following the WAI-ARIA tabs p
 ## Order
 
 1. Tab bars, both kinds: they shape the focus order of nearly every screen.
-2. Form controls (selection box, tick box, value spinner, date and time, text inputs): most of the
-   `label` baseline entries, and the controls that grids hold in their cells.
+2. Input controls (listed under Status, above): most of the `label` baseline entries, and the
+   controls that grids hold in their cells.
 3. Data grids and cell tables.
 4. Trees: explorer, expression and pipeline (the pipeline tree and bar are under way on `stepping_display`).
 5. Menus, dialogs, quick filter, code editor, as their briefs are ready.
