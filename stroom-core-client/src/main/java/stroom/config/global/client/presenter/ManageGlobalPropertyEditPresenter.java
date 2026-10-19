@@ -113,11 +113,12 @@ public final class ManageGlobalPropertyEditPresenter
         this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
 
         this.effectiveValueWarningsButton = view.getEffectiveValueToolbar().button(
-                SvgImage.ALERT, "Click to see cluster values", this::onOpenClusterValues);
+                SvgImage.ALERT, "Show Cluster Values", this::onOpenClusterValues);
         this.effectiveValueInfoButton = view.getEffectiveValueToolbar().button(
-                SvgImage.INFO, "All nodes have the same effective value", this::onOpenClusterValues);
+                SvgImage.INFO, "Show Cluster Values (all nodes have the same effective value)",
+                this::onOpenClusterValues);
         this.dataTypeHelpButton = view.getDataTypeToolbar().button(
-                SvgImage.HELP, "Help", () -> showHelp("Data Types"));
+                SvgImage.HELP, "Help on Data Types (opens in new tab)", () -> showHelp("Data Types"));
 
         this.effectiveValueWarningsButton.setVisible(false);
         this.effectiveValueInfoButton.setVisible(false);
@@ -196,7 +197,7 @@ public final class ManageGlobalPropertyEditPresenter
                 }
 
                 // show warning
-                effectiveValueWarningsButton.setTitle(msg);
+                effectiveValueWarningsButton.setTitle("Show Cluster Values (" + msg + ")");
                 effectiveValueInfoButton.setVisible(false);
                 effectiveValueWarningsButton.setVisible(true);
             } else {

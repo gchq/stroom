@@ -86,10 +86,11 @@ public class SteppingFilterPresenter extends
         this.xPathFilterPresenter = xPathFilterProvider;
 
         xPathListPresenter.getToolbar().setName("XPath actions");
-        addXPath = xPathListPresenter.getToolbar().button(SvgImage.ADD, "Add XPath Filter", this::addXPathFilter);
-        editXPath = xPathListPresenter.getToolbar().button(SvgImage.EDIT, "Edit XPath Filter", this::editXPathFilter);
+        addXPath = xPathListPresenter.getToolbar().button(SvgImage.ADD, "New XPath Filter", this::addXPathFilter);
+        editXPath = xPathListPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected XPath Filter",
+                this::editXPathFilter);
         editXPath.setEnabled(false);
-        removeXPath = xPathListPresenter.getToolbar().button(SvgImage.REMOVE, "Delete XPath Filter",
+        removeXPath = xPathListPresenter.getToolbar().button(SvgImage.REMOVE, "Delete Selected XPath Filters",
                 this::removeXPathFilter);
         removeXPath.setEnabled(false);
         editXPath.setEnabled(false);

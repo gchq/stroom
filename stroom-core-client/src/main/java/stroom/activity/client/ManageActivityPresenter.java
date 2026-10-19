@@ -100,10 +100,10 @@ public class ManageActivityPresenter
                 ActivityResource.QUICK_FILTER_CONTEXT, this, this));
 
         listPresenter.getToolbar().setName("Activity actions");
-        newButton = listPresenter.getToolbar().button(SvgImage.ADD, "New", this::onNew);
-        openButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit", this::onOpen);
+        newButton = listPresenter.getToolbar().button(SvgImage.ADD, "New Activity", this::onNew);
+        openButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Activity", this::onOpen);
         openButton.setEnabled(false);
-        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete", this::onDelete);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Activity", this::onDelete);
         deleteButton.setEnabled(false);
 
         updateQuickFilterTooltipContentSupplier();

@@ -19,6 +19,7 @@ package stroom.editor.client.view;
 import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.Option;
+import stroom.widget.menu.client.presenter.CheckMenuItem;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -42,15 +43,13 @@ public class EditorMenuPresenter {
         this.xmlEditorPresenter = xmlEditorPresenter;
         ShowMenuEvent
                 .builder()
+                .name("Editor Options")
                 .items(getMenuItems())
                 .popupPosition(popupPosition)
                 .fire(xmlEditorPresenter);
     }
 
-    /**
-     * Update the labels of the context menu items depending on the current XML
-     * editor settings.
-     */
+    // The context menu's items, ticked to show the editor's current settings
     private List<Item> getMenuItems() {
         // TODO @AT Consider using MenuBuilder.builder() instead
         int position = 0;
@@ -71,12 +70,15 @@ public class EditorMenuPresenter {
         return menuItems;
     }
 
+    // An option is a setting that is on or off, so its item is ticked while it is on
     private void addMenuItem(final int position, final List<Item> menuItems, final Option option) {
         if (option.isAvailable()) {
-            menuItems.add(createItem(
-                    option.getText(),
-                    () -> option.setOn(!option.isOn()),
-                    position));
+            menuItems.add(new CheckMenuItem.Builder()
+                    .priority(position)
+                    .text(option.getName())
+                    .checked(option.isOn())
+                    .command(() -> option.setOn(!option.isOn()))
+                    .build());
         }
     }
 

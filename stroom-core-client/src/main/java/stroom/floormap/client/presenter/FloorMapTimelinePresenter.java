@@ -315,6 +315,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         final Rect relativeRect = new Rect(getView().getSpeedBadgeWidget().getElement()).grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.ABOVE);
         ShowMenuEvent.builder()
+                .name("Playback Speed")
                 .items(items)
                 .popupPosition(popupPosition)
                 .fire(this);

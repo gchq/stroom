@@ -8,7 +8,7 @@
         <g:FlowPanel styleName="dock-min navigation-title-bar">
             <g:Button ui:field="logo" styleName="navigation-logo"/>
             <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet">
-                <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu"/>
+                <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu" opensMenu="true"/>
             </b:Toolbar>
         </g:FlowPanel>
 

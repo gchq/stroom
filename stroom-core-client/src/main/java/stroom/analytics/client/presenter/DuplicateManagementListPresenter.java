@@ -74,7 +74,8 @@ public class DuplicateManagementListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
         view.getToolbar().setName("Duplicate check actions");
-        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete", this::onDelete);
+        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Duplicate Check Rows",
+                this::onDelete);
         deleteButton.setEnabled(false);
 
         criteria = new FindDuplicateCheckCriteria();

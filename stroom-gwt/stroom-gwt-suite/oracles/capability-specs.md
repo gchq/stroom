@@ -33,15 +33,15 @@ predict.
 `extra` = seen but not mined (the miner is incomplete — chrome, menu items, column headers).
 
 * **AskStroomAiPresenter** — expected 3, saw 6, MISSING: Close, OK, Cancel, extra: Download, Delete All Messages, New Conversation, Conversation History, Configure, None
-* **IndexFieldListPresenter** — expected 3, saw 17, MISSING: New, Edit, Delete, extra: Save, Edit Field, Remove Field, First, Backward, Forward
-* **SolrIndexFieldListPresenter** — expected 3, saw 10, MISSING: New, Edit, Delete, extra: Save, Edit Field, Remove Field, First, Backward, Forward
-* **BatchDocumentPermissionsPresenter** — expected 3, saw 8, MISSING: OK, Cancel, Close, extra: Edit Permissions For Selected Document, First, Backward, Filter Documents To Apply Permissions Changes On, Batch Edit Permissions For Filtered Documents, Forward
+* **IndexFieldListPresenter** — expected 3, saw 17, MISSING: New Index Field, Edit Selected Index Field, Delete Selected Index Fields, extra: Save, Edit Selected Index Field, Delete Selected Index Fields, First, Backward, Forward
+* **SolrIndexFieldListPresenter** — expected 3, saw 10, MISSING: New Index Field, Edit Selected Index Field, Remove Selected Index Fields, extra: Save, Edit Selected Index Field, Remove Selected Index Fields, First, Backward, Forward
+* **BatchDocumentPermissionsPresenter** — expected 3, saw 8, MISSING: OK, Cancel, Close, extra: Edit Permissions For Selected Document, First, Backward, Filter Documents to Apply Permission Changes To, Batch Edit Permissions For Filtered Documents, Forward
 * **TracesPresenter** — expected 2, saw 12, MISSING: Save, Save As, extra: First, Backward, Forward, Last, Refresh, Operation
 * **AnnotationPresenter** — expected 2, saw 25, MISSING: Save As, extra: First, Backward, Forward, Last, Edit Permissions For Selected User, Copy History
 * **QueryResultTablePresenter** — expected 4, saw 30, MISSING: Undo, extra: First, Backward, Forward, Last, Insert, Expand
 * **SteppingFilterPresenter** — expected 6, saw 26, MISSING: Has active filter(s), extra: First, Backward, Forward, Last, Refresh, Ctrl+Enter
 * **UserTaskManagerPresenter** — expected 1, saw 0, MISSING: Close
-* **XMLSchemaPresenter** — expected 3, saw 31, MISSING: Alert, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, Schema is valid
+* **XMLSchemaPresenter** — expected 3, saw 31, MISSING: Alert, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, Show Validation Result (schema is valid)
 * **GlobalPropertyTabPresenter** — expected 2, saw 9, MISSING: Show Warnings, extra: First, Backward, Forward, Last, Refresh, Name
 * **CommonAlertPresenter** — expected 3, saw 7, extra: drag by the caption, resize by the SE handle, Escape, Ctrl+Enter
 * **AiChatHistoryPresenter** — expected 2, saw 13, extra: First, Backward, Forward, Last, Refresh, Ctrl+Enter
@@ -54,19 +54,19 @@ predict.
 * **RecentItemsPresenter** — expected 1, saw 11, extra: First, Backward, Forward, Last, Refresh, drag by the caption
 * **TabSessionChooserPresenter** — no mined spec, saw 8
 * **TextBoxPopup** — expected 2, saw 12, extra: Enter, OK (illegal text in "Name"), drag by the caption, resize by the SE handle, Name - Click for help, typed "Name"
-* **UserPreferencesPresenter** — expected 2, saw 191, extra: Set As Default, Revert To Default, Close, chose "Light" "Theme", chose "Comfortable" "Layout Density", ticked "Enable Transparency"
+* **UserPreferencesPresenter** — expected 2, saw 189, extra: Set As Default, Revert To Default, Close, chose "Light" "Theme", chose "Comfortable" "Layout Density", ticked "Enable Transparency"
 * **CurrentPasswordPresenter** — expected 2, saw 6, extra: Show Password, Ctrl+Enter, Current Password - Click for help, Escape
 * **AboutPresenter** — expected 1, saw 4, extra: Escape, right-click an explorer row, right-click a grid row
 * **ContentTemplateEditPresenter** — expected 0, saw 35, extra: Template Name - Click for help, Template Description - Click for help, Template Type - Click for help, Copy Pipeline Element Dependencies - Click for help, Pipeline - Click for help, Processor Priority - Click for help
-* **EditExpressionPresenter** — expected 5, saw 9, extra: OK, Cancel, Ctrl+Enter, Enable
+* **EditExpressionPresenter** — expected 5, saw 9, extra: OK, Cancel, Ctrl+Enter, Enable Selected Expression Item
 * **InfoDocumentPresenter** — expected 1, saw 6, extra: right-click an explorer row, drag by the caption, resize by the SE handle, right-click the editor, right-click a grid row
 * **ExplorerPopupPresenter** — expected 2, saw 33, extra: drag by the caption, resize by the SE handle, right-click a grid row, mouseover on "Temporal Ordering Tolerance" spinner, mouseout on "Temporal Ordering Tolerance" spinner, mousedown on "Temporal Ordering Tolerance" spinner
-* **FolderPresenter** — expected 0, saw 34, extra: First, Backward, Forward, Last, Show Tasks, Edit Permissions For Selected User
+* **FolderPresenter** — expected 0, saw 34, extra: First, Backward, Forward, Last, Show Tasks for Selected Processor, Edit Permissions For Selected User
 * **ExpressionPresenter** — expected 0, saw 26, extra: OK, Cancel, Close, Ctrl+Enter, right-click a pipeline element, Escape
 * **BatchProcessorFilterEditPresenter** — expected 2, saw 18, extra: Close, Escape, Ctrl+Enter, Change - Click for help, mouseover on "spinner 1" spinner, mouseout on "spinner 1" spinner
-* **FolderRootPresenter** — expected 0, saw 43, extra: First, Backward, Last, Forward, Show Tasks, Edit Permissions For Selected User
+* **FolderRootPresenter** — expected 0, saw 43, extra: First, Backward, Last, Forward, Show Tasks for Selected Processor, Edit Permissions For Selected User
 * **SourceTabPresenter** — no mined spec, saw 23
-* **PipelineStructurePresenter** — expected 0, saw 17, extra: Save, Edit Pipeline Element, Edit Property, First, Backward, Forward
+* **PipelineStructurePresenter** — expected 0, saw 17, extra: Save, Edit Pipeline Element, Edit Selected Property, First, Backward, Forward
 * **NewElementPresenter** — expected 2, saw 11, extra: Enter, OK (illegal text in "Name"), Ctrl+Enter, right-click a pipeline element, Name - Click for help, Description (optional) - Click for help
 * **AddEventLinkPresenter** — expected 2, saw 3, extra: Close
 * **DurationPresenter** — expected 2, saw 9, extra: mouseover on "Retain For" spinner, mouseout on "Retain For" spinner, mousedown on "Retain For" spinner, mouseup on "Retain For" spinner, stepped the spinner "Retain For", Retain For - Click for help
@@ -74,19 +74,19 @@ predict.
 * **CreateDocumentPresenter** — expected 2, saw 17, extra: Close, Enter, OK (illegal text in "Name"), Ctrl+Enter, Select the parent folder - Click for help, Name - Click for help
 * **FindAnnotationPresenter** — expected 2, saw 12, extra: First, Backward, Forward, Last, Refresh, Ctrl+Enter
 * **NewPropertyPresenter** — expected 0, saw 11, extra: Element Id - Click for help, Name - Click for help, Description - Click for help, Source - Click for help, Value - Click for help, Default Value - Click for help
-* **PathwaysPresenter** — expected 2, saw 42, extra: Close, New path disabled as read only, Edit path disabled as read only, Remove path disabled as read only, View Matching Traces, Edit Pathway
+* **PathwaysPresenter** — expected 2, saw 42, extra: Close, New Path (read only), Edit Selected Path (read only), Delete Selected Path (read only), View Matching Traces, Edit Selected Pathway
 * **CommentEditPresenter** — no mined spec, saw 2
 * **NewPipelineReferencePresenter** — expected 0, saw 9, extra: OK, Close, Cancel, Element Id - Click for help, Pipeline - Click for help, None
 * **CustomRowStylePresenter** — expected 2, saw 16, extra: Light Background Colour - Click for help, Light Text Colour - Click for help, Dark Background Colour - Click for help, Dark Text Colour - Click for help, Escape, Enter
 * **ColumnValuesFilterPresenter** — no mined spec, saw 20
-* **DashboardPresenter** — expected 0, saw 15, extra: Expand, Collapse, Download, First, Backward, Forward
+* **DashboardPresenter** — expected 0, saw 15, extra: Expand, Collapse, Download Results, First, Backward, Forward
 * **RenameColumnPresenter** — expected 2, saw 12, extra: Escape, Enter, OK (illegal text in "Name"), Ctrl+Enter, drag by the caption, resize by the SE handle
 * **StepLocationPresenter** — no mined spec, saw 21
 * **DocumentUserPermissionsEditPresenter** — expected 2, saw 16, extra: Ctrl+Enter, Close, Document - Click for help, User - Click for help, Permission - Click for help, chose "Use" "Permission"
 * **DataPreviewTabPresenter** — no mined spec, saw 7
-* **TableSettingsPresenter** — expected 0, saw 34, extra: Enable, First, Backward, Forward, Last, OK
+* **TableSettingsPresenter** — expected 0, saw 34, extra: Enable Selected Expression Item, Enable Selected Formatting Rule, Enable Selected Selection Handler, First, Backward, Forward
 * **SelectionHandlerPresenter** — expected 0, saw 11, extra: OK, Cancel, Ctrl+Enter, Enabled - Click for help, Additional Query Expression - Click for help, Current Selection - Click for help
-* **QuerySettingsPresenter** — expected 0, saw 19, extra: Enable, First, Backward, Forward, Last, OK
+* **QuerySettingsPresenter** — expected 0, saw 19, extra: Enable Selected Expression Item, Enable Selected Formatting Rule, Enable Selected Selection Handler, First, Backward, Forward
 * **GitRepoPresenter** — expected 2, saw 40, extra: typed "Git repository URL", Git repository URL - Click for help, Git branch - Click for help, Git path - Click for help, Git commit - Click for help, Automatically push - Click for help
 * **HttpClientConfigPresenter** — expected 2, saw 68, extra: Timeout - Click for help, Connection Timeout - Click for help, Connection Request Timeout - Click for help, Time To Live - Click for help, Help, Max Connections - Click for help
 * **GitRepoCommitDialogPresenter** — expected 2, saw 7, extra: Commit message - Click for help, Enter, OK (illegal text in "Commit message"), typed "Commit message", Close
@@ -105,7 +105,7 @@ predict.
 * **EditApiKeyPresenter** — expected 2, saw 24, extra: Escape, Owner - Click for help, API Key Name - Click for help, Hash Algorithm - Click for help, Enabled - Click for help, Comments - Click for help
 * **UserTabPresenter** — expected 0, saw 29, extra: First, Backward, Forward, Last, Display Name - Click for help, Full Name - Click for help
 * **CreateNewGroupPresenter** — expected 0, saw 12, extra: Escape, Enter, OK (illegal text in "Name"), Ctrl+Enter, OK, Close
-* **VisualisationAssetsPresenter** — expected 0, saw 6, extra: Save, Revert changes, Save As, Add file, Rename, View in browser
+* **VisualisationAssetsPresenter** — expected 0, saw 6, extra: Save, Revert Asset Changes, Save As, Add File or Folder, Rename Selected Asset, View Selected Asset in Browser
 * **VisualisationAssetsUploadFileDialogPresenter** — expected 2, saw 10, extra: Escape, Choose File, Ctrl+Enter, Close, drag by the caption, resize by the SE handle
 * **VisualisationAssetsEditAssetDialogPresenter** — expected 2, saw 6, extra: Escape, Enter, Name - Click for help, typed "Name"
 * **WelcomePresenter** — expected 0, saw 0
@@ -122,33 +122,33 @@ predict.
 * **CurrentSelectionPresenter** — no mined spec, saw 1
 * **BatchExecutionScheduleEditPresenter** — expected 1, saw 24, extra: Apply to Selection, Apply to Filtered, None, Schedule Name - Click for help, Enabled - Click for help, Processing Node - Click for help
 * **ExecutionScheduleRunNowPresenter** — expected 1, saw 3, extra: Apply to Selection, Apply to Filtered
-* **ProcessorProfileEditPresenter** — expected 2, saw 42, extra: Remove Period, First, Backward, Forward, Last, New Period
-* **AnalyticRulePresenter** — expected 2, saw 79, extra: First, Backward, Forward, Last, Insert, Copy
+* **ProcessorProfileEditPresenter** — expected 2, saw 42, extra: Remove Selected Profile Period, First, Backward, Forward, Last, New Profile Period
+* **AnalyticRulePresenter** — expected 2, saw 79, extra: First, Backward, Forward, Last, Insert, Duplicate Selected Expression Item
 * **AnalyticNotificationEditPresenter** — no mined spec, saw 35
 * **ScheduledProcessEditPresenter** — expected 2, saw 18, extra: Close, typed "Name", ticked "Enabled", chose "node2a" "Processing Node", typed "Schedule (Cron)", typed "Start Time"
-* **DashboardSuperPresenter** — expected 2, saw 47, extra: Copy, Expand, Collapse, Download, First, Backward
-* **DictionaryPresenter** — expected 3, saw 39, extra: Remove Import, First, Backward, Forward, Last, Edit Permissions For Selected User
-* **DocumentationPresenter** — expected 3, saw 20, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, Edit
+* **DashboardSuperPresenter** — expected 2, saw 47, extra: Duplicate Selected Expression Item, Duplicate Selected Formatting Rule, Duplicate Selected Selection Handler, Expand, Collapse, Download Results
+* **DictionaryPresenter** — expected 3, saw 39, extra: Remove Imported Dictionary, First, Backward, Forward, Last, Edit Permissions For Selected User
+* **DocumentationPresenter** — expected 3, saw 20, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, Edit Documentation
 * **FeedPresenter** — expected 2, saw 63, extra: First, Backward, Forward, Last, Edit Permissions For Selected User, Refresh
 * **DataUploadPresenter** — expected 2, saw 16, extra: Choose File, Enter, Ctrl+Enter, Close, OK (illegal time in "Effective Date"), Meta Data - Click for help
-* **KafkaConfigPresenter** — expected 3, saw 24, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, Edit
+* **KafkaConfigPresenter** — expected 3, saw 24, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, Edit Documentation
 * **OpenAIModelPresenter** — expected 2, saw 34, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed "Base URL (optional)"
 * **ElasticClusterPresenter** — expected 2, saw 24, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed "Connection URLs"
-* **DataGenPresenter** — expected 2, saw 48, extra: Edit Execution Schedule, Remove Execution Schedule, First, Backward, Forward, Last
+* **DataGenPresenter** — expected 2, saw 48, extra: Edit Selected Execution Schedule, Delete Selected Execution Schedule, First, Backward, Forward, Last
 * **TextConverterPresenter** — expected 2, saw 32, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed in the editor "Conversion"
 * **XsltPresenter** — expected 2, saw 21, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed in the editor "XSLT"
 * **ElasticIndexPresenter** — expected 2, saw 49, extra: First, Backward, Forward, Last, Edit Permissions For Selected User, typed "Index name or pattern"
-* **SolrIndexPresenter** — expected 2, saw 41, extra: Edit Field, Remove Field, First, Backward, Forward, Last
-* **VisualisationPresenter** — expected 2, saw 30, extra: Revert changes, Rename, View in browser, Edit Permissions For Selected User, First, Backward
-* **StatisticsDataSourcePresenter** — expected 2, saw 33, extra: Edit Field, Remove Field, First, Backward, Forward, Last
+* **SolrIndexPresenter** — expected 2, saw 41, extra: Edit Selected Index Field, Remove Selected Index Fields, First, Backward, Forward, Last
+* **VisualisationPresenter** — expected 2, saw 30, extra: Revert Asset Changes, Rename Selected Asset, View Selected Asset in Browser, Edit Permissions For Selected User, First, Backward
+* **StatisticsDataSourcePresenter** — expected 2, saw 33, extra: Edit Selected Statistic Field, Remove Selected Statistic Fields, First, Backward, Forward, Last
 * **PipelinePresenter** — expected 2, saw 72, extra: First, Backward, Forward, Last, Add New Pipeline Element, Remove Pipeline Element
-* **ProcessorEditPresenter** — expected 2, saw 51, extra: Remove Reference, First, Backward, Forward, Last, mouseover on "Max Processing Tasks" spinner
+* **ProcessorEditPresenter** — expected 2, saw 51, extra: Remove Selected Feed Dependency, First, Backward, Forward, Last, mouseover on "Max Processing Tasks" spinner
 * **PlanBPresenter** — expected 2, saw 64, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, chose "State" "State Type"
-* **ScriptPresenter** — expected 2, saw 26, extra: Remove Dependency, First, Backward, Forward, Last, Edit Permissions For Selected User
-* **ViewPresenter** — expected 2, saw 21, extra: Copy, Disable, Edit Permissions For Selected User, First, Backward, Forward
+* **ScriptPresenter** — expected 2, saw 26, extra: Remove Selected Script Dependency, First, Backward, Forward, Last, Edit Permissions For Selected User
+* **ViewPresenter** — expected 2, saw 21, extra: Duplicate Selected Expression Item, Disable Selected Expression Item, Edit Permissions For Selected User, First, Backward, Forward
 * **ReportPresenter** — expected 2, saw 75, extra: First, Backward, Forward, Last, Insert, Copy
 * **S3ConfigPresenter** — expected 3, saw 31, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed in the editor "Config"
-* **IndexPresenter** — expected 2, saw 72, extra: Delete Selected Shards, First, Backward, Forward, Last, Edit Field
+* **IndexPresenter** — expected 2, saw 72, extra: Delete Selected Index Shards, First, Backward, Forward, Last, Edit Selected Index Field
 * **BrowseAnnotationPresenter** — no mined spec, saw 5
 * **CachePresenter** — expected 0, saw 5, extra: First, Backward, Forward, Last, Refresh
 * **ContentStorePresenter** — no mined spec, saw 7
@@ -159,15 +159,15 @@ predict.
 * **DependenciesTabPresenter** — expected 0, saw 10, extra: First, Backward, Forward, Last, Refresh, From (Type)
 * **IndexVolumeGroupPresenter** — expected 3, saw 8, extra: First, Backward, Forward, Last, Refresh
 * **DatabaseTablesMonitoringPresenter** — expected 0, saw 10, extra: First, Backward, Forward, Last, Refresh, Database
-* **JobPresenter** — expected 0, saw 9, extra: First, Backward, Forward, Last, Refresh, Click to show only enabled jobs
+* **JobPresenter** — expected 0, saw 9, extra: First, Backward, Forward, Last, Refresh, Show Only Enabled Jobs
 * **NodeGroupPresenter** — expected 3, saw 10, extra: First, Backward, Forward, Last, Refresh, Name
 * **NodePresenter** — no mined spec, saw 14
 * **ProcessorProfilePresenter** — expected 3, saw 10, extra: First, Backward, Forward, Last, Refresh, Name
 * **ContentTemplateTabPresenter** — expected 8, saw 13, extra: First, Backward, Forward, Last, Refresh
 * **DataRetentionPresenter** — expected 0, saw 12, extra: First, Backward, Forward, Last, Refresh
-* **RuleSetPresenter** — expected 2, saw 14, extra: Select one or more rules with the same enabled state to enable/disable them., First, Backward, Forward, Last, Refresh
+* **RuleSetPresenter** — expected 2, saw 14, extra: Enable or Disable Selected Rules, First, Backward, Forward, Last, Refresh
 * **BatchDocumentPermissionsEditPresenter** — expected 2, saw 4, extra: Ctrl+Enter, type a row number in the pager
-* **TaskManagerPresenter** — expected 0, saw 14, extra: First, Backward, Forward, Last, Turn Auto Refresh Off, Terminate Task
+* **TaskManagerPresenter** — expected 0, saw 14, extra: First, Backward, Forward, Last, Auto Refresh, Terminate Selected Tasks
 
 ## Specs
 
@@ -191,7 +191,7 @@ predict.
 
 ### AbstractNotificationListPresenter
 
-**buttons** (3): `Add` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Notification` · `Edit Selected Notification` _(disabled at rest)_ · `Remove Selected Notification` _(disabled at rest)_
 
 **columns** (5): `Enabled` · `Type` · `Destination` · `Limit` · `Max`
 
@@ -255,7 +255,7 @@ predict.
 
 ### AnalyticNotificationListPresenter
 
-**buttons** (3): `Add` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Notification` · `Edit Selected Notification` _(disabled at rest)_ · `Remove Selected Notification` _(disabled at rest)_
 
 **columns** (5): `Enabled` · `Type` · `Destination` · `Limit` · `Max`
 
@@ -287,7 +287,7 @@ predict.
 
 ### AnnotationPresenter
 
-**buttons** (2): `Save` _(disabled at rest)_ · `Save As` _(disabled at rest)_
+**buttons** (2): `Save Annotation Description` _(disabled at rest)_ · `Save As` _(disabled at rest)_
 
 ### AnnotationResourceClient
 
@@ -309,7 +309,7 @@ predict.
 
 ### AnnotationTagPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Annotation Tag` · `Edit Selected Annotation Tag` _(disabled at rest)_ · `Delete Selected Annotation Tag` _(disabled at rest)_
 
 ### ApiKeysListPresenter
 
@@ -323,7 +323,7 @@ predict.
 
 ### ApiKeysPresenter
 
-**buttons** (3): `Add new API Key` · `Edit API Key` _(disabled at rest)_ · `Delete API Key` _(disabled at rest)_
+**buttons** (3): `New API Key` · `Edit Selected API Key` _(disabled at rest)_ · `Delete Selected API Key` _(disabled at rest)_
 
 **resources** (2): `API_KEY_RESOURCE.deleteBatch` · `API_KEY_RESOURCE.delete`
 
@@ -457,7 +457,7 @@ predict.
 
 ### ConstraintListPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Constraint` · `Edit Selected Constraint` _(disabled at rest)_ · `Delete Selected Constraints` _(disabled at rest)_
 
 ### ContentStoreContentPackDetailsPresenter
 
@@ -477,7 +477,7 @@ predict.
 
 ### ContentTemplateTabPresenter
 
-**buttons** (8): `Delete template` _(disabled at rest)_ · `Add new template above the selected one` · `Add new template below the selected one` · `Copy template` _(disabled at rest)_ · `Edit template` _(disabled at rest)_ · `Move template up` _(disabled at rest)_ · `Move template down` _(disabled at rest)_ · `Save templates` _(disabled at rest)_
+**buttons** (8): `Delete Selected Template` _(disabled at rest)_ · `Add Template Above` · `Add Template Below` · `Duplicate Selected Template` _(disabled at rest)_ · `Edit Selected Template` _(disabled at rest)_ · `Move Template Up` _(disabled at rest)_ · `Move Template Down` _(disabled at rest)_ · `Save Templates` _(disabled at rest)_
 
 **resources** (2): `CONTENT_TEMPLATE_RESOURCE` · `CONTENT_TEMPLATE_RESOURCE.update`
 
@@ -515,7 +515,7 @@ predict.
 
 ### CredentialsListPresenter
 
-**buttons** (3): `Add` · `Delete` _(disabled at rest)_ · `Edit` _(disabled at rest)_
+**buttons** (3): `New Credential` · `Delete Selected Credential` _(disabled at rest)_ · `Edit Selected Credential` _(disabled at rest)_
 
 **columns** (4): `Name` · `Credential Type` · `Key Store Type` · `Expires`
 
@@ -575,7 +575,7 @@ predict.
 
 ### DataRetentionImpactPresenter
 
-**buttons** (7): `Run` · `Stop` · `Filter` · `Table` · `Nested Table` · `Expand All` · `Collapse All`
+**buttons** (7): `Run` · `Stop` · `Filter` · `Table` · `Nested Table` · `Expand All Results` · `Collapse All Results`
 
 **resources** (2): `RETENTION_RULES_RESOURCE.getRetentionDeletionSummary` · `RETENTION_RULES_RESOURCE.cancelQuery`
 
@@ -585,7 +585,7 @@ predict.
 
 ### DataRetentionPolicyPresenter
 
-**buttons** (7): `Delete rule` _(disabled at rest)_ · `Add new rule above the selected one` · `Copy rule` _(disabled at rest)_ · `Edit rule` _(disabled at rest)_ · `Move rule up` _(disabled at rest)_ · `Move rule down` _(disabled at rest)_ · `Save rules` _(disabled at rest)_
+**buttons** (7): `Delete Selected Rule` _(disabled at rest)_ · `Add Rule Above` · `Duplicate Selected Rule` _(disabled at rest)_ · `Edit Selected Rule` _(disabled at rest)_ · `Move Rule Up` _(disabled at rest)_ · `Move Rule Down` _(disabled at rest)_ · `Save Rules` _(disabled at rest)_
 
 **resources** (2): `DATA_RETENTION_RULES_RESOURCE` · `DATA_RETENTION_RULES_RESOURCE.update`
 
@@ -629,7 +629,7 @@ predict.
 
 ### DictionaryListPresenter
 
-**buttons** (2): `Add` · `Delete` _(disabled at rest)_
+**buttons** (2): `Add Imported Dictionary` · `Remove Imported Dictionary` _(disabled at rest)_
 
 ### DictionaryPlugin
 
@@ -637,7 +637,7 @@ predict.
 
 ### DictionaryPresenter
 
-**buttons** (3): `Save` _(disabled at rest)_ · `Save As` _(disabled at rest)_ · `Download Dictionary words` _(disabled at rest)_
+**buttons** (3): `Save` _(disabled at rest)_ · `Save As` _(disabled at rest)_ · `Download Dictionary Words` _(disabled at rest)_
 
 **resources** (1): `DICTIONARY_RESOURCE.download`
 
@@ -667,7 +667,7 @@ predict.
 
 ### DocumentationPresenter
 
-**buttons** (3): `Save` _(disabled at rest)_ · `Save As` _(disabled at rest)_ · `Download` _(disabled at rest)_
+**buttons** (3): `Save` _(disabled at rest)_ · `Save As` _(disabled at rest)_ · `Download Documentation` _(disabled at rest)_
 
 **resources** (1): `DOCUMENTATION_RESOURCE.download`
 
@@ -713,7 +713,7 @@ predict.
 
 ### DuplicateManagementListPresenter
 
-**buttons** (1): `Delete` _(disabled at rest)_
+**buttons** (1): `Delete Selected Duplicate Check Rows` _(disabled at rest)_
 
 **resources** (2): `DUPLICATE_CHECK_RESOURCE.find` · `DUPLICATE_CHECK_RESOURCE.delete`
 
@@ -739,11 +739,11 @@ predict.
 
 ### EditApiKeyViewImpl
 
-**buttons** (1): `Copy API Key to clipboard` _(disabled at rest)_
+**buttons** (1): `Copy API Key to Clipboard` _(disabled at rest)_
 
 ### EditExpressionPresenter
 
-**buttons** (5): `Add Operator` · `Copy` _(disabled at rest)_ · `Disable` _(disabled at rest)_ · `Delete` _(disabled at rest)_ · `Add Term`
+**buttons** (5): `Add Operator` · `Duplicate Selected Expression Item` _(disabled at rest)_ · `Disable Selected Expression Item` _(disabled at rest)_ · `Delete Selected Expression Item` _(disabled at rest)_ · `Add Term`
 
 ### EditFeedDependencyPresenter
 
@@ -807,7 +807,7 @@ predict.
 
 ### ExplorerNodeEditTagsViewImpl
 
-**buttons** (4): `Add selected tags from 'All Known Tags'` · `Remove selected tags` · `Clear entered tag(s)` _(disabled at rest)_ · `Add entered tag(s)`
+**buttons** (4): `Add Selected Tags from All Known Tags` · `Remove Selected Tags` · `Clear Entered Tags` _(disabled at rest)_ · `Add Entered Tags`
 
 ### ExplorerNodeRemoveTagsPresenter
 
@@ -843,7 +843,7 @@ predict.
 
 ### FeedDependencyListPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Remove` _(disabled at rest)_
+**buttons** (3): `New Feed Dependency` · `Edit Selected Feed Dependency` _(disabled at rest)_ · `Remove Selected Feed Dependency` _(disabled at rest)_
 
 **columns** (1): `Type`
 
@@ -865,7 +865,7 @@ predict.
 
 ### FieldListPresenter
 
-**buttons** (3): `New Field` · `Edit Field` _(disabled at rest)_ · `Remove Field` _(disabled at rest)_
+**buttons** (3): `New Field` · `Edit Selected Field` _(disabled at rest)_ · `Delete Selected Fields` _(disabled at rest)_
 
 **columns** (3): `Name` · `Type` · `Obfuscated?`
 
@@ -903,7 +903,7 @@ predict.
 
 ### FsVolumeGroupEditPresenter
 
-**buttons** (6): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_ · `Rescan Volumes` · `OK` · `Cancel`
+**buttons** (6): `New Data Volume` · `Edit Selected Data Volume` _(disabled at rest)_ · `Delete Selected Data Volumes` _(disabled at rest)_ · `Rescan Data Volumes` · `OK` · `Cancel`
 
 **resources** (5): `FS_VOLUME_RESOURCE` · `FS_VOLUME_RESOURCE.fetch` · `FS_VOLUME_RESOURCE.delete` · `FS_VOLUME_GROUP_RESOURCE.fetchByName` · `FS_VOLUME_GROUP_RESOURCE.update`
 
@@ -915,7 +915,7 @@ predict.
 
 ### FsVolumeGroupPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Data Volume Group` · `Edit Selected Data Volume Group` _(disabled at rest)_ · `Delete Selected Data Volume Group` _(disabled at rest)_
 
 **resources** (2): `FS_VOLUME_GROUP_RESOURCE.fetch` · `FS_VOLUME_GROUP_RESOURCE.delete`
 
@@ -943,7 +943,7 @@ predict.
 
 ### GlobalPropertyTabPresenter
 
-**buttons** (2): `Edit` _(disabled at rest)_ · `Show Warnings`
+**buttons** (2): `Edit Selected Property` _(disabled at rest)_ · `Show Warnings`
 
 ### HttpClientConfigPresenter
 
@@ -979,7 +979,7 @@ predict.
 
 ### IndexFieldListPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Index Field` · `Edit Selected Index Field` _(disabled at rest)_ · `Delete Selected Index Fields` _(disabled at rest)_
 
 **columns** (1): `Case Sensitive`
 
@@ -999,7 +999,7 @@ predict.
 
 ### IndexShardPresenter
 
-**buttons** (2): `Flush Selected Shards` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (2): `Flush Selected Index Shards` _(disabled at rest)_ · `Delete Selected Index Shards` _(disabled at rest)_
 
 **columns** (3): `Path` · `Bytes pd` · `Index Version`
 
@@ -1013,7 +1013,7 @@ predict.
 
 ### IndexVolumeGroupEditPresenter
 
-**buttons** (6): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_ · `Rescan Volumes` · `OK` · `Cancel`
+**buttons** (6): `New Index Volume` · `Edit Selected Index Volume` _(disabled at rest)_ · `Delete Selected Index Volumes` _(disabled at rest)_ · `Rescan Index Volumes` · `OK` · `Cancel`
 
 **resources** (5): `INDEX_VOLUME_RESOURCE.rescan` · `INDEX_VOLUME_RESOURCE.fetch` · `INDEX_VOLUME_RESOURCE.delete` · `INDEX_VOLUME_GROUP_RESOURCE.fetchByName` · `INDEX_VOLUME_GROUP_RESOURCE.update`
 
@@ -1025,7 +1025,7 @@ predict.
 
 ### IndexVolumeGroupPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Index Volume Group` · `Edit Selected Index Volume Group` _(disabled at rest)_ · `Delete Selected Index Volume Group` _(disabled at rest)_
 
 **resources** (2): `INDEX_VOLUME_GROUP_RESOURCE.fetch` · `INDEX_VOLUME_GROUP_RESOURCE.delete`
 
@@ -1055,7 +1055,7 @@ predict.
 
 ### JobListPresenter
 
-**buttons** (1): `Help`
+**buttons** (1): `Help (opens in new tab)`
 
 **columns** (3): `Enabled` · `Job` · `Description`
 
@@ -1083,7 +1083,7 @@ predict.
 
 ### KafkaConfigPresenter
 
-**buttons** (3): `Save` _(disabled at rest)_ · `Save As` _(disabled at rest)_ · `Download` _(disabled at rest)_
+**buttons** (3): `Save` _(disabled at rest)_ · `Save As` _(disabled at rest)_ · `Download Kafka Config` _(disabled at rest)_
 
 **resources** (1): `KAFKA_CONFIG_RESOURCE.download`
 
@@ -1103,7 +1103,7 @@ predict.
 
 ### ManageActivityPresenter
 
-**buttons** (4): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_ · `Close`
+**buttons** (4): `New Activity` · `Edit Selected Activity` _(disabled at rest)_ · `Delete Selected Activity` _(disabled at rest)_ · `Close`
 
 **resources** (3): `ACTIVITY_RESOURCE` · `ACTIVITY_RESOURCE.fetch` · `ACTIVITY_RESOURCE.delete`
 
@@ -1113,7 +1113,7 @@ predict.
 
 ### ManageGlobalPropertyEditPresenter
 
-**buttons** (5): `Click to see cluster values` · `All nodes have the same effective value` · `Help` · `OK` · `Cancel`
+**buttons** (5): `Show Cluster Values` · `Show Cluster Values (all nodes have the same effective value)` · `Help on Data Types (opens in new tab)` · `OK` · `Cancel`
 
 **resources** (4): `GLOBAL_CONFIG_RESOURCE_RESOURCE.getPropertyByName` · `GLOBAL_CONFIG_RESOURCE_RESOURCE.getYamlValueByNodeAndName` · `GLOBAL_CONFIG_RESOURCE_RESOURCE.create` · `GLOBAL_CONFIG_RESOURCE_RESOURCE.update`
 
@@ -1125,7 +1125,7 @@ predict.
 
 ### MarkdownEditPresenter
 
-**buttons** (1): `Documentation help`
+**buttons** (1): `Help with Documentation (opens in new tab)`
 
 ### MarkdownTabProvider
 
@@ -1143,7 +1143,7 @@ predict.
 
 ### MetaPresenter
 
-**buttons** (7): `Process` _(disabled at rest)_ · `Delete` _(disabled at rest)_ · `Selection summary` · `Download` _(disabled at rest)_ · `Upload` · `Filter` · `Restore` _(disabled at rest)_
+**buttons** (11): `Process Selected Streams` _(disabled at rest)_ · `Process Selected Related Streams` _(disabled at rest)_ · `Delete Selected Streams` _(disabled at rest)_ · `Delete Selected Related Streams` _(disabled at rest)_ · `Show Summary of Selected Streams` · `Download Selected Streams` _(disabled at rest)_ · `Download Selected Related Streams` _(disabled at rest)_ · `Upload Data to Feed` · `Filter Streams` · `Restore Selected Streams` _(disabled at rest)_ · `Restore Selected Related Streams` _(disabled at rest)_
 
 **resources** (1): `META_RESOURCE.getSelectionSummary`
 
@@ -1217,7 +1217,7 @@ predict.
 
 ### NodeGroupPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Node Group` · `Edit Selected Node Group` _(disabled at rest)_ · `Delete Selected Node Group` _(disabled at rest)_
 
 ### NodeGroupsPlugin
 
@@ -1257,7 +1257,7 @@ predict.
 
 ### PathwayListPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Pathway` · `Edit Selected Pathway` _(disabled at rest)_ · `Delete Selected Pathways` _(disabled at rest)_
 
 **columns** (1): `Root`
 
@@ -1275,7 +1275,7 @@ predict.
 
 ### PathwayTreePresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Path` · `Edit Selected Path` _(disabled at rest)_ · `Delete Selected Path` _(disabled at rest)_
 
 ### PermissionChangeClient
 
@@ -1299,7 +1299,7 @@ predict.
 
 ### PipelineReferenceListPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Remove` _(disabled at rest)_
+**buttons** (3): `New Pipeline Reference` · `Edit Selected Pipeline Reference` _(disabled at rest)_ · `Remove Selected Pipeline Reference` _(disabled at rest)_
 
 **columns** (4): `Pipeline` · `Feed` · `Type` · `Inherited From`
 
@@ -1341,7 +1341,7 @@ predict.
 
 ### ProcessorPresenter
 
-**buttons** (4): `Add Processor` · `Edit Processor` _(disabled at rest)_ · `Duplicate Processor` _(disabled at rest)_ · `Delete Processor` _(disabled at rest)_
+**buttons** (4): `New Processor` · `Edit Selected Processor` _(disabled at rest)_ · `Duplicate Selected Processor` _(disabled at rest)_ · `Delete Selected Processors` _(disabled at rest)_
 
 **resources** (2): `PROCESSOR_FILTER_RESOURCE.fetch` · `PROCESSOR_FILTER_RESOURCE.delete`
 
@@ -1357,7 +1357,7 @@ predict.
 
 ### ProcessorProfilePresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Processor Profile` · `Edit Selected Processor Profile` _(disabled at rest)_ · `Delete Selected Processor Profiles` _(disabled at rest)_
 
 ### ProcessorTaskListPresenter
 
@@ -1377,13 +1377,13 @@ predict.
 
 ### ProfilePeriodListPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Remove` _(disabled at rest)_
+**buttons** (3): `New Profile Period` · `Edit Selected Profile Period` _(disabled at rest)_ · `Remove Selected Profile Period` _(disabled at rest)_
 
 **columns** (5): `Days` · `Start Time` · `End Time` · `Max Node Threads` · `Max Cluster Threads`
 
 ### PropertyListPresenter
 
-**buttons** (1): `Edit` _(disabled at rest)_
+**buttons** (1): `Edit Selected Property` _(disabled at rest)_
 
 **columns** (1): `Property Name`
 
@@ -1437,13 +1437,13 @@ predict.
 
 ### QueryPresenter
 
-**buttons** (9): `Copy` _(disabled at rest)_ · `Disable` _(disabled at rest)_ · `Delete` _(disabled at rest)_ · `History` _(disabled at rest)_ · `Favourites` _(disabled at rest)_ · `Download` _(disabled at rest)_ · `Process` _(disabled at rest)_ · `Add Term` · `Add Operator`
+**buttons** (9): `Duplicate Selected Expression Item` _(disabled at rest)_ · `Disable Selected Expression Item` _(disabled at rest)_ · `Delete Selected Expression Item` _(disabled at rest)_ · `Show Query History` _(disabled at rest)_ · `Show Favourite Queries` _(disabled at rest)_ · `Download Query` _(disabled at rest)_ · `Process Query with Pipeline` _(disabled at rest)_ · `Add Term` · `Add Operator`
 
 **resources** (2): `PROCESSOR_FILTER_RESOURCE.create` · `DASHBOARD_RESOURCE.downloadQuery`
 
 ### QueryResultTablePresenter
 
-**buttons** (4): `Download` _(disabled at rest)_ · `Undo` _(disabled at rest)_ · `Annotate` · `Ask Stroom AI`
+**buttons** (4): `Download Results` _(disabled at rest)_ · `Undo` _(disabled at rest)_ · `Annotate Selected Rows` · `Ask Stroom AI`
 
 **resources** (2): `QUERY_RESOURCE.downloadSearchResults` · `QUERY_RESOURCE.fetchDataSourceFromQueryString`
 
@@ -1477,7 +1477,7 @@ predict.
 
 ### ReportNotificationListPresenter
 
-**buttons** (3): `Add` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Notification` · `Edit Selected Notification` _(disabled at rest)_ · `Remove Selected Notification` _(disabled at rest)_
 
 **columns** (5): `Enabled` · `Type` · `Destination` · `Limit` · `Max`
 
@@ -1493,7 +1493,7 @@ predict.
 
 ### ResultStoreListPresenter
 
-**buttons** (3): `Terminate Search` · `Delete Store` _(disabled at rest)_ · `Store Settings`
+**buttons** (3): `Terminate Search` · `Delete Selected Result Store` _(disabled at rest)_ · `Edit Result Store Settings`
 
 **columns** (1): `User Display Name`
 
@@ -1523,17 +1523,17 @@ predict.
 
 ### RuleSetPresenter
 
-**buttons** (2): `Save all rules` _(disabled at rest)_ · `Show Warnings`
+**buttons** (2): `Save Rules` _(disabled at rest)_ · `Show Warnings`
 
 **resources** (1): `RULES_RESOURCE`
 
 ### RuleSetSettingsPresenter
 
-**buttons** (7): `Add new rule` · `Edit selected rule` _(disabled at rest)_ · `Copy selected rule` _(disabled at rest)_ · `Disable/enable selected rule` _(disabled at rest)_ · `Delete selected rule` _(disabled at rest)_ · `Move selected rule up` _(disabled at rest)_ · `Move selected rule down` _(disabled at rest)_
+**buttons** (7): `New Rule` · `Edit Selected Rule` _(disabled at rest)_ · `Duplicate Selected Rule` _(disabled at rest)_ · `Enable or Disable Selected Rules` _(disabled at rest)_ · `Delete Selected Rules` _(disabled at rest)_ · `Move Rule Up` _(disabled at rest)_ · `Move Rule Down` _(disabled at rest)_
 
 ### RulesPresenter
 
-**buttons** (7): `Add` · `Edit` _(disabled at rest)_ · `Copy` _(disabled at rest)_ · `Disable` _(disabled at rest)_ · `Delete` _(disabled at rest)_ · `Up` _(disabled at rest)_ · `Down` _(disabled at rest)_
+**buttons** (7): `New Formatting Rule` · `Edit Selected Formatting Rule` _(disabled at rest)_ · `Duplicate Selected Formatting Rule` _(disabled at rest)_ · `Disable Selected Formatting Rule` _(disabled at rest)_ · `Delete Selected Formatting Rule` _(disabled at rest)_ · `Move Formatting Rule Up` _(disabled at rest)_ · `Move Formatting Rule Down` _(disabled at rest)_
 
 ### S3ConfigPlugin
 
@@ -1541,7 +1541,7 @@ predict.
 
 ### S3ConfigPresenter
 
-**buttons** (3): `Save` _(disabled at rest)_ · `Save As` _(disabled at rest)_ · `Download` _(disabled at rest)_
+**buttons** (3): `Save` _(disabled at rest)_ · `Save As` _(disabled at rest)_ · `Download S3 Configuration` _(disabled at rest)_
 
 **resources** (1): `S3_CONFIG_RESOURCE.download`
 
@@ -1553,7 +1553,7 @@ predict.
 
 ### ScheduledProcessHistoryListPresenter
 
-**buttons** (1): `Rerun`
+**buttons** (1): `Replay Selected Execution`
 
 **resources** (1): `EXECUTION_SCHEDULE_RESOURCE.fetchExecutionHistory`
 
@@ -1563,7 +1563,7 @@ predict.
 
 ### ScheduledProcessListPresenter
 
-**buttons** (3): `Add` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Execution Schedule` · `Edit Selected Execution Schedule` _(disabled at rest)_ · `Delete Selected Execution Schedule` _(disabled at rest)_
 
 **columns** (1): `Enabled`
 
@@ -1579,7 +1579,7 @@ predict.
 
 ### ScriptDependencyListPresenter
 
-**buttons** (2): `Add` · `Remove` _(disabled at rest)_
+**buttons** (2): `Add Script Dependency` · `Remove Selected Script Dependency` _(disabled at rest)_
 
 ### ScriptListPresenter
 
@@ -1607,7 +1607,7 @@ predict.
 
 ### SelectionHandlersPresenter
 
-**buttons** (7): `Add` · `Edit` _(disabled at rest)_ · `Copy` _(disabled at rest)_ · `Disable` _(disabled at rest)_ · `Delete` _(disabled at rest)_ · `Up` _(disabled at rest)_ · `Down` _(disabled at rest)_
+**buttons** (7): `New Selection Handler` · `Edit Selected Selection Handler` _(disabled at rest)_ · `Duplicate Selected Selection Handler` _(disabled at rest)_ · `Disable Selected Selection Handler` _(disabled at rest)_ · `Delete Selected Selection Handler` _(disabled at rest)_ · `Move Selection Handler Up` _(disabled at rest)_ · `Move Selection Handler Down` _(disabled at rest)_
 
 ### SelectionSummaryPresenter
 
@@ -1627,7 +1627,7 @@ predict.
 
 ### SigningKeyPresenter
 
-**buttons** (2): `Revoke the selected signing key` _(disabled at rest)_ · `Clear` _(disabled at rest)_
+**buttons** (2): `Revoke Selected Signing Key` _(disabled at rest)_ · `Clear` _(disabled at rest)_
 
 **resources** (2): `SIGNING_KEY_RESOURCE.revoke` · `SIGNING_KEY_RESOURCE`
 
@@ -1641,7 +1641,7 @@ predict.
 
 ### SolrIndexFieldListPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Delete` _(disabled at rest)_
+**buttons** (3): `New Index Field` · `Edit Selected Index Field` _(disabled at rest)_ · `Remove Selected Index Fields` _(disabled at rest)_
 
 **resources** (1): `SOLR_INDEX_RESOURCE.fetchSolrTypes`
 
@@ -1669,7 +1669,7 @@ predict.
 
 ### StatisticsCustomMaskListPresenter
 
-**buttons** (3): `New` · `Auto-generate roll-up permutations` · `Remove` _(disabled at rest)_
+**buttons** (3): `New Roll-up Permutation` · `Auto-generate Roll-up Permutations` · `Remove Selected Roll-up Permutation` _(disabled at rest)_
 
 ### StatisticsDataSourcePresenter
 
@@ -1681,7 +1681,7 @@ predict.
 
 ### StatisticsFieldListPresenter
 
-**buttons** (3): `New` · `Edit` _(disabled at rest)_ · `Remove` _(disabled at rest)_
+**buttons** (3): `New Statistic Field` · `Edit Selected Statistic Field` _(disabled at rest)_ · `Remove Selected Statistic Fields` _(disabled at rest)_
 
 **columns** (1): `Name`
 
@@ -1691,7 +1691,7 @@ predict.
 
 ### SteppingFilterPresenter
 
-**buttons** (6): `Has active filter(s)` · `Add XPath Filter` · `Edit XPath Filter` _(disabled at rest)_ · `Delete XPath Filter` _(disabled at rest)_ · `OK` · `Cancel`
+**buttons** (6): `Has active filter(s)` · `New XPath Filter` · `Edit Selected XPath Filter` _(disabled at rest)_ · `Delete Selected XPath Filters` _(disabled at rest)_ · `OK` · `Cancel`
 
 ### SteppingMetaListPresenter
 
@@ -1703,7 +1703,7 @@ predict.
 
 ### SteppingPresenter
 
-**buttons** (1): `Filter`
+**buttons** (1): `Filter Streams`
 
 **resources** (2): `STEPPING_RESOURCE.step` · `STEPPING_RESOURCE.terminateStepping`
 
@@ -1741,7 +1741,7 @@ predict.
 
 ### TablePresenter
 
-**buttons** (4): `Download` _(disabled at rest)_ · `Annotate` · `Add Column` · `Ask Stroom AI`
+**buttons** (4): `Download Table Results` _(disabled at rest)_ · `Annotate Selected Rows` · `Add Column` · `Ask Stroom AI`
 
 **resources** (1): `DASHBOARD_RESOURCE.downloadSearchResults`
 
@@ -1755,7 +1755,7 @@ predict.
 
 ### TaskManagerListPresenter
 
-**buttons** (4): `Delete` _(disabled at rest)_ · `Expand All` · `Collapse All` · `Show Warnings`
+**buttons** (4): `Terminate Selected Tasks` _(disabled at rest)_ · `Expand All Tasks` · `Collapse All Tasks` · `Show Task Warnings`
 
 **resources** (2): `TASK_RESOURCE.find` · `TASK_RESOURCE.terminate`
 
@@ -1819,7 +1819,7 @@ predict.
 
 ### UserAccessPresenter
 
-**buttons** (2): `End this user's sessions and revoke their tokens` _(disabled at rest)_ · `Open this user, where they can be disabled` _(disabled at rest)_
+**buttons** (2): `End Sessions and Revoke Tokens for Selected User` _(disabled at rest)_ · `Open Selected User (to disable them)` _(disabled at rest)_
 
 **resources** (1): `USER_ACCESS_RESOURCE.revokeAccess`
 
@@ -1831,7 +1831,7 @@ predict.
 
 ### UserAndGroupsPresenter
 
-**buttons** (5): `Create Group` · `Edit Group` _(disabled at rest)_ · `Delete Group` _(disabled at rest)_ · `Add` · `Remove` _(disabled at rest)_
+**buttons** (7): `Create Group` · `Edit Selected Group` _(disabled at rest)_ · `Delete Selected Group` _(disabled at rest)_ · `Add to Group` · `Add Member to Group` · `Remove from Selected Group` _(disabled at rest)_ · `Remove Selected Member From Group` _(disabled at rest)_
 
 **resources** (3): `USER_RESOURCE.addUserToGroup` · `USER_RESOURCE.removeUserFromGroup` · `USER_RESOURCE.copyGroupsAndPermissions`
 
@@ -1877,7 +1877,7 @@ predict.
 
 ### UserSessionsListPresenter
 
-**buttons** (1): `End this session` _(disabled at rest)_
+**buttons** (1): `End Selected Session` _(disabled at rest)_
 
 **columns** (1): `Node`
 
@@ -1889,7 +1889,7 @@ predict.
 
 ### UsersPresenter
 
-**buttons** (2): `Create User` · `Delete User` _(disabled at rest)_
+**buttons** (2): `Create User` · `Delete Selected User` _(disabled at rest)_
 
 ### UserTabPlugin
 

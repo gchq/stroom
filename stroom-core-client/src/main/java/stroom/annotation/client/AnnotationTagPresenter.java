@@ -64,10 +64,13 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
         this.annotationResourceClient = annotationResourceClient;
 
         annotationTagListPresenter.getView().getToolbar().setName("Tag actions");
-        newButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::add);
-        openButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        newButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.ADD, "New Annotation Tag",
+                this::add);
+        openButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+                "Edit Selected Annotation Tag", this::edit);
         openButton.setEnabled(false);
-        deleteButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete",
+        deleteButton = annotationTagListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+                "Delete Selected Annotation Tag",
                 this::delete);
         deleteButton.setEnabled(false);
 
@@ -169,5 +172,10 @@ public class AnnotationTagPresenter extends ContentTabPresenter<WrapperView> {
     public void setAnnotationTagType(final AnnotationTagType annotationTagType) {
         this.annotationTagType = annotationTagType;
         annotationTagListPresenter.setAnnotationTagType(annotationTagType);
+        // Name the buttons after the kind of tag this screen lists, e.g. "New Annotation Status"
+        final String tagName = "Annotation " + annotationTagType.getDisplayValue();
+        newButton.setTitle("New " + tagName);
+        openButton.setTitle("Edit Selected " + tagName);
+        deleteButton.setTitle("Delete Selected " + tagName);
     }
 }

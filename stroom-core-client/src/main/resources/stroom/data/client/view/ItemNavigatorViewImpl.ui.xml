@@ -4,7 +4,7 @@
              xmlns:btn="urn:import:stroom.widget.button.client"
              xmlns:refresh-button="urn:import:stroom.data.pager.client">
     <g:FlowPanel styleName="itemNavigator">
-        <g:Label ui:field="lblDetail" styleName="itemNavigator-label"/>
+        <btn:LinkButton ui:field="lblDetail" addStyleNames="itemNavigator-label"/>
         <btn:Toolbar name="Navigation">
             <btn:ToolbarButton ui:field="firstPageBtn" svg="FAST_BACKWARD" title="First"/>
             <btn:ToolbarButton ui:field="previousPageBtn" svg="STEP_BACKWARD" title="Backward"/>

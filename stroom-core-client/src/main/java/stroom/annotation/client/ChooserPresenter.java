@@ -162,10 +162,6 @@ public class ChooserPresenter<T>
         selectionModel.setSelected(value, true);
     }
 
-    public void setClearSelectionText(final String text) {
-        getView().setClearSelectionText(text);
-    }
-
     public HandlerRegistration addDataSelectionHandler(final SelectionChangeEvent.Handler handler) {
         return selectionModel.addSelectionChangeHandler(handler);
     }
@@ -180,11 +176,6 @@ public class ChooserPresenter<T>
                 }
             });
         }
-    }
-
-    @Override
-    public void onClearSelection() {
-        selectionModel.clear();
     }
 
     public void setDataSupplier(final DataSupplier<T> dataSupplier) {
@@ -211,7 +202,5 @@ public class ChooserPresenter<T>
         void setBottomWidget(Widget widget);
 
         void clearFilter();
-
-        void setClearSelectionText(String text);
     }
 }

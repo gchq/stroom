@@ -55,7 +55,7 @@ await page.locator('.explorerCell', { hasText: 'System' }).first().dblclick();
 await page.waitForTimeout(2_500);
 await page.locator('.tab-bar--link .tab-bar__label', { hasText: 'Processors' }).first().click({ force: true });
 await page.waitForTimeout(2_000);
-await page.locator('[title="Batch Edit Current Processors"]').first().click();
+await page.locator('[title="Batch Edit Filtered Processors"]').first().click();
 await page.waitForTimeout(1_500);
 console.log(`opened: ${JSON.stringify(await dialogs())}`);
 

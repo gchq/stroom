@@ -84,7 +84,8 @@ public class AnnotationPresenter
             if (markdownEditPresenter == null) {
                 markdownEditPresenter = markdownEditPresenterProvider.get();
                 markdownEditPresenter.setAddButtonsFirst(markdownToolbar -> {
-                    saveButton = markdownToolbar.button(SvgImage.SAVE, "Save", this::saveDescription);
+                    saveButton = markdownToolbar.button(SvgImage.SAVE, "Save Annotation Description",
+                            this::saveDescription);
                     saveButton.setEnabled(descriptionDirty);
                 });
                 markdownEditPresenter.addDirtyHandler(e -> setDescriptionDirty(e.isDirty()));

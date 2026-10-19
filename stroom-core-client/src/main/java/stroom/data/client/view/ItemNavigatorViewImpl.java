@@ -19,6 +19,7 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.data.pager.client.RefreshButton;
 import stroom.util.shared.HasItems;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -28,7 +29,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FocusWidget;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -49,7 +49,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     // Selection controls for the char data in the selected record and/or part
     // Always visible
     @UiField
-    Label lblDetail;
+    LinkButton lblDetail;
 
     @UiField
     ToolbarButton firstPageBtn;
@@ -74,6 +74,8 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     public ItemNavigatorViewImpl(final EventBus eventBus,
                                  final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Opens the dialog that selects the item to show
+        lblDetail.setOpensDialog(true);
         initButtons();
     }
 
@@ -130,6 +132,9 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
                     + getLongValueForLabel(display.getTotalItemsCount().asOptional());
 
             lblDetail.setText(lbl);
+            // Says what pressing it does, as well as what it shows
+            lblDetail.setTitle("Select " + display.getName());
+            lblDetail.setAriaLabel("Select " + display.getName() + " (" + lbl + ")");
 
             firstPageBtn.setEnabled(!display.isFirstPage());
             previousPageBtn.setEnabled(!display.isFirstPage());

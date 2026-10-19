@@ -1392,7 +1392,7 @@ public class FloorMapEditorPresenter
     ///   - "Edit Properties" — selects the object and opens the property editor
     ///   - "Add Time Version" — creates a new effective time entry at the scrubber
     ///     position, cloned from the current version
-    ///   - "Duplicate Object" — clones the object with a new key, offset slightly
+    ///   - "Duplicate" — clones the object with a new key, offset slightly
     ///   - "Delete From This Time" — confirms and stages a version at the scrubber
     ///     position that marks the object deleted, keeping its history
     ///   - "Erase History" — confirms and stages deletion of all time entries
@@ -1414,9 +1414,12 @@ public class FloorMapEditorPresenter
         }
 
         final List<Item> menuItems = new ArrayList<>();
+        // The menu's accessible name, saying what it acts on
+        final String menuName;
 
         if (vertexIndex >= 0) {
             // ---- Right-clicked an area vertex handle ----
+            menuName = "Actions for area vertex " + (vertexIndex + 1);
             menuItems.add(new IconMenuItem.Builder()
                     .priority(1)
                     .icon(SvgImage.DELETE)
@@ -1425,6 +1428,7 @@ public class FloorMapEditorPresenter
                     .build());
         } else if (objectId == null) {
             // ---- Right-clicked on empty canvas ----
+            menuName = "Map Actions";
             menuItems.add(new IconMenuItem.Builder()
                     .priority(1)
                     .icon(SvgImage.ADD)
@@ -1449,26 +1453,28 @@ public class FloorMapEditorPresenter
             // ---- Right-clicked within a multi-selection: group actions ----
             final List<String> keys = new ArrayList<>(model.getSelectedFactKeys());
             final int n = keys.size();
+            menuName = "Actions for " + n + " selected objects";
             menuItems.add(new IconMenuItem.Builder()
                     .priority(1)
                     .icon(SvgImage.COPY)
-                    .text("Duplicate Selected (" + n + ")")
+                    .text("Duplicate")
                     .command(() -> onDuplicateObjects(keys))
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .priority(2)
                     .icon(SvgImage.REMOVE)
-                    .text("Delete Selected From This Time (" + n + ")")
+                    .text("Delete From This Time")
                     .command(() -> onEndFacts(keys))
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .priority(3)
                     .icon(SvgImage.DELETE)
-                    .text("Erase History of Selected (" + n + ")")
+                    .text("Erase History")
                     .command(() -> onDeleteObjects(keys))
                     .build());
         } else {
             // ---- Right-clicked on a single object ----
+            menuName = "Actions for object '" + floorMapCanvasPresenter.displayNameOrId(objectId) + "'";
 
             // Edit Properties
             menuItems.add(new IconMenuItem.Builder()
@@ -1534,11 +1540,11 @@ public class FloorMapEditorPresenter
                     })
                     .build());
 
-            // Duplicate Object
+            // Duplicate
             menuItems.add(new IconMenuItem.Builder()
                     .priority(3)
                     .icon(SvgImage.COPY)
-                    .text("Duplicate Object")
+                    .text("Duplicate")
                     .command(() -> onDuplicateObject(objectId))
                     .build());
 
@@ -1584,6 +1590,7 @@ public class FloorMapEditorPresenter
         final PopupPosition popupPosition = new PopupPosition(clientX, clientY);
         ShowMenuEvent
                 .builder()
+                .name(menuName)
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);

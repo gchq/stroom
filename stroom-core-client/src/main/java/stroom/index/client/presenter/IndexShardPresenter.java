@@ -70,6 +70,8 @@ public class IndexShardPresenter
         implements Refreshable {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
+    private static final String FLUSH_TITLE = "Flush Selected Index Shards";
+    private static final String DELETE_TITLE = "Delete Selected Index Shards";
 
     private final MyDataGrid<IndexShard> dataGrid;
     private final TooltipPresenter tooltipPresenter;
@@ -111,9 +113,9 @@ public class IndexShardPresenter
 
         if (securityContext.hasAppPermission(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION)) {
             view.getToolbar().setName("Shard actions");
-            buttonFlush = view.getToolbar().button(SvgImage.SHARD_FLUSH, "Flush Selected Shards", this::flush);
+            buttonFlush = view.getToolbar().button(SvgImage.SHARD_FLUSH, FLUSH_TITLE, this::flush);
             buttonFlush.setEnabled(false);
-            buttonDelete = view.getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+            buttonDelete = view.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, this::delete);
             buttonDelete.setEnabled(false);
         }
 
@@ -130,20 +132,20 @@ public class IndexShardPresenter
     private void enableButtons() {
         final boolean enabled = !readOnly && !selectionCriteria.getIndexShardIdSet().isMatchNothing();
         if (buttonFlush != null) {
-            if (readOnly) {
-                buttonFlush.setTitle("Flush is not available as index is read only");
-            } else {
-                buttonFlush.setTitle("Flush Selected Shards");
-            }
+            // The name stays, with why the button is disabled for a read-only index
+            buttonFlush.setTitle(readOnly
+                    ? FLUSH_TITLE + " (index is read only)"
+                    : FLUSH_TITLE);
             buttonFlush.setEnabled(enabled);
         }
         if (buttonDelete != null) {
+            // The name stays, with why the button is disabled
             if (readOnly) {
-                buttonDelete.setTitle("Delete is not available as index is read only");
+                buttonDelete.setTitle(DELETE_TITLE + " (index is read only)");
             } else if (!allowDelete) {
-                buttonDelete.setTitle("You do not have delete permissions on this index");
+                buttonDelete.setTitle(DELETE_TITLE + " (no delete permission)");
             } else {
-                buttonDelete.setTitle("Delete Selected Shards");
+                buttonDelete.setTitle(DELETE_TITLE);
             }
             buttonDelete.setEnabled(allowDelete && enabled);
         }

@@ -123,13 +123,13 @@ public final class DefaultMonthSelector extends MonthSelector {
     protected void setup() {
         // previous, next buttons
         yearToolbar = new Toolbar("Year");
-        yearBackwards = yearToolbar.button(SvgImage.ARROW_LEFT, "Previous year",
+        yearBackwards = yearToolbar.button(SvgImage.ARROW_LEFT, "Previous Year",
                 () -> addMonths(-DateTimeModel.MONTHS_IN_YEAR));
-        yearForwards = yearToolbar.button(SvgImage.ARROW_RIGHT, "Next year",
+        yearForwards = yearToolbar.button(SvgImage.ARROW_RIGHT, "Next Year",
                 () -> addMonths(DateTimeModel.MONTHS_IN_YEAR));
         monthToolbar = new Toolbar("Month");
-        monthBackwards = monthToolbar.button(SvgImage.ARROW_LEFT, "Previous month", () -> addMonths(-1));
-        monthForwards = monthToolbar.button(SvgImage.ARROW_RIGHT, "Next month", () -> addMonths(1));
+        monthBackwards = monthToolbar.button(SvgImage.ARROW_LEFT, "Previous Month", () -> addMonths(-1));
+        monthForwards = monthToolbar.button(SvgImage.ARROW_RIGHT, "Next Month", () -> addMonths(1));
 
         // month and year selector
         monthSelect = createMonthSelect();

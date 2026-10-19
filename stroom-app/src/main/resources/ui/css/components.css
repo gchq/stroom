@@ -321,7 +321,6 @@
 
 .pipelineStructureViewImpl-viewSource {
     margin-left: auto;
-    text-decoration: underline;
 }
 
 .pipelineStructureViewImpl-property-added {
@@ -1115,14 +1114,6 @@
     scrollbar-gutter: stable;
 }
 
-.chooserViewImpl-clearSelection {
-    display: none;
-    color: var(--link__text-color);
-    cursor: pointer;
-    text-decoration: underline;
-    padding: 6px 8px;
-}
-
 .stepToolbar {
     align-items: center;
 }
@@ -1520,9 +1511,11 @@
 }
 
 .timeRange-quickSetting {
+    display: block;
     color: var(--link__text-color);
     cursor: pointer;
     padding-bottom: 0.2rem;
+    white-space: nowrap;
 }
 
 .timeRange-quickSetting:hover {
@@ -1959,8 +1952,8 @@
     opacity: 0.8;
 }
 
-.selectionList-links .gwt-HyperLink:hover {
-    text-decoration: underline;
+.selectionList-links .selectionList-pathLink {
+    color: var(--link__text-color);
 }
 
 .selectionItemCell {
@@ -2057,6 +2050,61 @@
     opacity: .8;
     color: var(--text-color);
     cursor: pointer;
+}
+
+/* A button in a table cell (RowActions), without the browser's button look, so it looks as the
+   icon it holds. :where() leaves the cell's own styles in charge */
+:where(.rowAction) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+/* A row action's icon also shows while it has the focus */
+.rowAction:focus .svg-image,
+.rowAction:focus .svg-image.hoverIcon {
+    opacity: .8;
+    color: var(--text-color);
+}
+
+/* Keyboard focus on a button or link in a table cell, an annotation's event or annotation
+   reference, or an annotation history entry's actions button */
+[data-row-action]:focus-visible,
+.annotationLink:focus-visible,
+.annotationHistoryActions:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+    border-radius: .25rem;
+}
+
+/* A text button drawn as the text around it (LinkButton), without the browser's button look;
+   the caller's style names give it its look. :where() leaves them in charge */
+:where(.linkButton) {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+.linkButton:hover {
+    text-decoration: underline;
+}
+
+.linkButton:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+    border-radius: .25rem;
 }
 
 .AnalyticEmailDestinationViewImpl #analyticEmailDestinationSubjectTemplate,
@@ -2165,7 +2213,10 @@
 }
 
 .ColumnValuesFilterViewImpl .link {
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
+	/* At least 24px high, the minimum target size (WCAG 2.5.8) */
+	min-height: 24px;
 	cursor: pointer;
 	padding: 2px 5px;
     text-decoration: underline;
@@ -2204,6 +2255,11 @@
 .contentstore-scroll-y {
     overflow-y: auto;
 }
+/* The details take the keyboard focus, to be scrolled with it */
+.contentstore-scroll-y:focus-visible {
+    outline: none;
+    box-shadow: inset var(--focus-shadow);
+}
 /* Details title */
 .contentstore-details .contentstore-details-heading {
     font-size: 120%;
@@ -2229,6 +2285,11 @@
 }
 .contentstore-details .contentstore-details-list > * {
     padding: 5px;
+}
+/* The URL shown after a link to it */
+.contentstore-details .contentstore-details-url {
+    margin-left: 0.5em;
+    overflow-wrap: anywhere;
 }
 /* Overall width of details table */
 .contentstore-details .contentstore-details-vertical {

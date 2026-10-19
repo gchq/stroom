@@ -53,6 +53,10 @@ public class PathwayTreePresenter
 
     private static final int ROW_HEIGHT = 22;
     private static final int INDENT = 20;
+    private static final String NEW_TITLE = "New Path";
+    private static final String EDIT_TITLE = "Edit Selected Path";
+    private static final String DELETE_TITLE = "Delete Selected Path";
+    private static final String READ_ONLY_SUFFIX = " (read only)";
 
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -72,10 +76,10 @@ public class PathwayTreePresenter
     public PathwayTreePresenter(final EventBus eventBus,
                                 final PathwayTreeView view) {
         super(eventBus, view);
-        newButton = view.getToolbar().button(SvgImage.ADD, "New", null);
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", null);
+        newButton = view.getToolbar().button(SvgImage.ADD, NEW_TITLE, null);
+        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, null);
         editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.DELETE, "Delete", null);
+        removeButton = view.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, null);
         removeButton.setEnabled(false);
 
         viewTracesButton = view.getToolbar().button(SvgImage.EYE, "View Matching Traces", this::onViewTraces);
@@ -363,15 +367,12 @@ public class PathwayTreePresenter
         }
         viewTracesButton.setEnabled(pathNode != null);
 
-        if (readOnly) {
-            newButton.setTitle("New path disabled as read only");
-            editButton.setTitle("Edit path disabled as read only");
-            removeButton.setTitle("Remove path disabled as read only");
-        } else {
-            newButton.setTitle("New Path");
-            editButton.setTitle("Edit Path");
-            removeButton.setTitle("Remove Path");
-        }
+        final String readOnlySuffix = readOnly
+                ? READ_ONLY_SUFFIX
+                : "";
+        newButton.setTitle(NEW_TITLE + readOnlySuffix);
+        editButton.setTitle(EDIT_TITLE + readOnlySuffix);
+        removeButton.setTitle(DELETE_TITLE + readOnlySuffix);
     }
 
     public MySingleSelectionModel<PathNode> getSelectionModel() {

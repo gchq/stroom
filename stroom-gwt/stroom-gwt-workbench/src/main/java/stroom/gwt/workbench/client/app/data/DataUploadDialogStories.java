@@ -138,7 +138,7 @@ public final class DataUploadDialogStories {
             // The feed's data browser, which the dialog refreshes after an upload (its info
             // message is fired from it). Created after start-up, as it reads the UI config.
             final MetaPresenter metaPresenter = harness.unbindOnCleanUp(injector.getMetaPresenter());
-            // As MetaPresenter's 'Upload' button shows it
+            // As MetaPresenter's 'Upload Data to Feed' button shows it
             presenter.show(metaPresenter, feedRef);
         });
         return harness.asWidget();

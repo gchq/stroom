@@ -31,6 +31,7 @@ import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.RowActions;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
@@ -146,6 +147,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         sinkEvents(Event.ONCONTEXTMENU);
 
         aiSupport = new MyDataGridAiSupport<>(globalEventBus, this);
+
+        // Rows drawn afresh have every row action out of the tab order
+        addRedrawHandler(this::updateRowActionTabStops);
     }
 
     public String getTableName() {
@@ -241,6 +245,17 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         super.onBrowserEvent2(event);
     }
 
+    /// Also puts the row actions (see [RowActions]) of the keyboard selected row in the tab order.
+    @Override
+    protected void setKeyboardSelected(final int index, final boolean selected, final boolean stealFocus) {
+        super.setKeyboardSelected(index, selected, stealFocus);
+        updateRowActionTabStops();
+    }
+
+    private void updateRowActionTabStops() {
+        RowActions.updateTabStops(getTableBodyElement(), getKeyboardSelectedRow());
+    }
+
     public void hasContextMenu(final boolean hasContextMenu) {
         this.hasContextMenu = hasContextMenu;
     }
@@ -328,7 +343,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.OPEN)
-                    .text("Follow URL")
+                    .text("Open Link")
                     .command(() -> HyperlinkEvent.fire(
                             globalEventBus,
                             finalHyperlink,
@@ -339,7 +354,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 if ("self".equals(hyperlink.getTarget())) {
                     menuItems.add(new Builder()
                             .icon(SvgImage.OPEN)
-                            .text("Open In New Tab")
+                            .text("Open Link in New Tab")
                             .command(() -> HyperlinkEvent.fire(
                                     globalEventBus,
                                     finalHyperlink.copy().target("tab").build(),
@@ -348,7 +363,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 } else {
                     menuItems.add(new Builder()
                             .icon(SvgImage.OPEN)
-                            .text("Open In This Tab")
+                            .text("Open Link in This Tab")
                             .command(() -> HyperlinkEvent.fire(
                                     globalEventBus,
                                     finalHyperlink.copy().target("self").build(),
@@ -415,14 +430,14 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
             copyMenuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.COPY)
-                    .text("Column For Selected Rows")
+                    .text("Column for Selected Rows")
                     .command(() -> exportColumnForSelectedRows(colIndex))
                     .build());
         }
 
         copyMenuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.COPY)
-                .text("Table")
+                .text("Current Page")
                 .command(this::copyTableAsCSV)
                 .build());
 
@@ -441,9 +456,35 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         menuItems.add(aiSupport.createContextMenu(rowIndex, colIndex));
 
         ShowMenuEvent.builder()
+                .name(getContextMenuName(rowIndex, colIndex))
                 .items(menuItems)
                 .popupPosition(new PopupPosition(x, y))
                 .fire(globalEventBus);
+    }
+
+    // The context menu's accessible name, saying which cell it is for, e.g.
+    // "Actions for column 'Name', row 3"
+    private String getContextMenuName(final int rowIndex, final int colIndex) {
+        if (rowIndex < 0 || colIndex < 0) {
+            return "Table Actions";
+        }
+        final String row = "row " + (getPageStart() + rowIndex + 1);
+        final String heading = getHeadingText(colIndex);
+        return heading.isEmpty()
+                ? "Actions for " + row
+                : "Actions for column '" + heading + "', " + row;
+    }
+
+    // The text of a column's heading, or "" if it has none
+    private String getHeadingText(final int colIndex) {
+        final TableSectionElement head = getTableHeadElement();
+        if (head != null && head.getRows().getLength() > 0) {
+            final TableRowElement headerRow = head.getRows().getItem(0);
+            if (colIndex < headerRow.getCells().getLength()) {
+                return normalizeWhitespace(headerRow.getCells().getItem(colIndex).getInnerText());
+            }
+        }
+        return "";
     }
 
     String getCellText(final int row, final int col) {

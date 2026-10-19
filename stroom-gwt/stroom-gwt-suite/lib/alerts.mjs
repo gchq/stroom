@@ -32,7 +32,7 @@
  *
  * GWT's `CommonAlertViewImpl` lays an alert out as `.alert-icon` (the SVG says which of
  * question / info / warning / error the presenter fired), `.alert-message`, an `.alert-showHide`
- * link and `.alert-detail` — the detail pane is in the DOM, hidden, whether or not `Show Detail`
+ * button (`Show Detail`, `aria-expanded` when the detail is shown) and `.alert-detail` — the detail pane is in the DOM, hidden, whether or not `Show Detail`
  * was pressed, and it is where the exception class and the failing request live. A non-alert
  * dialog has none of these; its `.dialog-content` text is kept instead (the first 400 characters).
  */
@@ -50,8 +50,8 @@ export function readTopDialogBody(page) {
         ?? /svg-image__([a-z-]+)/.exec(top.querySelector('.alert-icon')?.innerHTML ?? '')?.[1] ?? null;
       // The alert presenter is ONE instance reused for every alert, and its detail pane keeps the
       // LAST detail it was given: a validation warning read straight after a failed request
-      // carried that request's exception and classed as `environment`. The `Show Detail` link is
-      // shown only when this alert has a detail, so the pane counts only when the link does.
+      // carried that request's exception and classed as `environment`. The `Show Detail` button is
+      // shown only when this alert has a detail, so the pane counts only when the button does.
       const showHide = top.querySelector('.alert-showHide');
       const hasDetail = !!showHide && showHide.offsetWidth > 0 && showHide.offsetHeight > 0;
       return {

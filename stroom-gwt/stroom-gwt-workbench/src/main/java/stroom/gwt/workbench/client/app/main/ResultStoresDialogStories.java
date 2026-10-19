@@ -101,7 +101,7 @@ public final class ResultStoresDialogStories {
                             .getByRole("button", StroomDom.button("Close")));
                     // The analytic store can't be terminated or deleted
                     play.click(screen.findByText("analyst"));
-                    play.waitFor(() -> play.expect(screen.getByTitle("Delete Store"))
+                    play.waitFor(() -> play.expect(screen.getByTitle("Delete Selected Result Store"))
                             .toHaveAttribute("aria-disabled", "true"));
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
@@ -110,9 +110,9 @@ public final class ResultStoresDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.click(screen.findByText("admin"));
-                    // GWT: the toolbar button is titled "Store Settings"; the dialog it opens is
+                    // GWT: the toolbar button is titled "Edit Result Store Settings"; the dialog it opens is
                     // captioned "Change Result Store Settings"
-                    final Query settings = screen.getByTitle("Store Settings");
+                    final Query settings = screen.getByTitle("Edit Result Store Settings");
                     play.waitFor(() -> play.expect(settings).not().toHaveAttribute("aria-disabled"));
                     play.click(settings);
                     final Play dialog = screen.within(screen.findByText("Change Result Store Settings")

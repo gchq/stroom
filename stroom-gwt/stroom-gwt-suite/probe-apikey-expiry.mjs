@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Does `Add new API Key` survive an EMPTY expiry date?
+// Does `New API Key` survive an EMPTY expiry date?
 //
 // EditApiKeyPresenter.handlePreCreateModeHide:259 reads
 //     final long expireTimeEpochMs = getView().getExpiresOnMs();
@@ -41,12 +41,12 @@ const click = async (name) => {
   await el.click({ timeout: 10_000 });
   await page.waitForTimeout(900);
 };
-// Security › Manage API Keys, by the main menu.
+// Security › API Keys, by the main menu.
 await click('Main Menu');
 await click('Security');
-await click('Manage API Keys');
+await click('API Keys');
 await page.waitForTimeout(1500);
-await click('Add new API Key');
+await click('New API Key');
 await page.waitForTimeout(1200);
 
 const before = await page.evaluate(() => {

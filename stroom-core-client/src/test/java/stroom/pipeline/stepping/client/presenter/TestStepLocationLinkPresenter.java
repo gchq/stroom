@@ -16,13 +16,14 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
+import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter.StepLocationLinkView;
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.GWTMockUtilities;
-import com.google.gwt.user.client.ui.Label;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import org.junit.jupiter.api.AfterEach;
@@ -43,16 +44,17 @@ class TestStepLocationLinkPresenter {
     private StepLocationLinkView view;
     private StepLocationLinkPresenter presenter;
     private ClickHandler clickHandler;
+    private LinkButton button;
 
     @BeforeEach
     void setUp() {
-        // The label is a GWT widget, which can only be made in a browser
+        // The button is a GWT widget, which can only be made in a browser
         GWTMockUtilities.disarm();
         eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
 
-        final Label label = Mockito.mock(Label.class);
+        button = Mockito.mock(LinkButton.class);
         view = Mockito.mock(StepLocationLinkView.class);
-        Mockito.when(view.getLabel()).thenReturn(label);
+        Mockito.when(view.getButton()).thenReturn(button);
 
         // The real presenter, as the popup is fired from it onto the event bus
         final StepLocationPresenter stepLocationPresenter = new StepLocationPresenter(
@@ -62,7 +64,7 @@ class TestStepLocationLinkPresenter {
         presenter.bind();
 
         final ArgumentCaptor<ClickHandler> clickHandlerCaptor = ArgumentCaptor.forClass(ClickHandler.class);
-        Mockito.verify(label).addClickHandler(clickHandlerCaptor.capture());
+        Mockito.verify(button).addClickHandler(clickHandlerCaptor.capture());
         clickHandler = clickHandlerCaptor.getValue();
     }
 
@@ -103,5 +105,20 @@ class TestStepLocationLinkPresenter {
         assertThat(shown)
                 .hasSize(1);
         Mockito.verify(view).setEnabled(true);
+    }
+
+    @Test
+    void name_noLocation() {
+        // The text is a code, so the button is named for what it does as well as what it shows
+        Mockito.verify(button).setText("[??:??:??]");
+        Mockito.verify(button).setAriaLabel("Set Location ([??:??:??], none chosen)");
+    }
+
+    @Test
+    void name_location() {
+        presenter.setStepLocation(new StepLocation(123L, 0L, 3L));
+
+        Mockito.verify(button).setText("[123:1:4]");
+        Mockito.verify(button).setAriaLabel("Set Location ([123:1:4], stream 123, part 1, record 4)");
     }
 }

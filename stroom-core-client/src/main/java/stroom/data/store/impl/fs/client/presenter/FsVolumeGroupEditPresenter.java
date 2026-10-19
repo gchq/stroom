@@ -79,12 +79,15 @@ public class FsVolumeGroupEditPresenter
         this.restFactory = restFactory;
 
         volumeStatusListPresenter.getView().getToolbar().setName("Volume actions");
-        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::create);
-        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+                "New Data Volume", this::create);
+        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+                "Edit Selected Data Volume", this::edit);
         openButton.setEnabled(false);
-        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+                "Delete Selected Data Volumes", this::delete);
         deleteButton.setEnabled(false);
-        rescanButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.REFRESH, "Rescan Volumes",
+        rescanButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.REFRESH, "Rescan Data Volumes",
                 this::onRescan);
 
         view.setListView(volumeStatusListPresenter.getView());
@@ -117,7 +120,7 @@ public class FsVolumeGroupEditPresenter
         final FsVolume fsVolume = FsVolume.builder()
                 .volumeGroup(volumeGroup)
                 .build();
-        editVolume(fsVolume, "Add Volume");
+        editVolume(fsVolume, "New Data Volume");
     }
 
     private void edit() {
@@ -126,7 +129,7 @@ public class FsVolumeGroupEditPresenter
             restFactory
                     .create(FS_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
-                    .onSuccess(result -> editVolume(result, "Edit Volume"))
+                    .onSuccess(result -> editVolume(result, "Edit Data Volume"))
                     .taskMonitorFactory(this)
                     .exec();
         }

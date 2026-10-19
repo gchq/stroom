@@ -114,10 +114,13 @@ public class ScheduledProcessListPresenter
         view.setDataWidget(dataGrid);
 
         view.getToolbar().setName("Schedule actions");
-        addButton = view.getToolbar().button(SvgImage.ADD, "Add", () -> scheduledProcessingPresenter.add());
-        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", () -> scheduledProcessingPresenter.edit());
+        addButton = view.getToolbar().button(SvgImage.ADD, "New Execution Schedule",
+                () -> scheduledProcessingPresenter.add());
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit Selected Execution Schedule",
+                () -> scheduledProcessingPresenter.edit());
         editButton.setEnabled(false);
-        removeButton = view.getToolbar().button(SvgImage.DELETE, "Delete", () -> scheduledProcessingPresenter.remove());
+        removeButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Execution Schedule",
+                () -> scheduledProcessingPresenter.remove());
         removeButton.setEnabled(false);
 
         addColumns();
@@ -302,9 +305,6 @@ public class ScheduledProcessListPresenter
         addButton.setEnabled(editable);
         editButton.setEnabled(editable && selectionModel.hasSelectedItems());
         removeButton.setEnabled(editable && selectionModel.hasSelectedItems());
-        addButton.setTitle("Add Execution Schedule");
-        editButton.setTitle("Edit Execution Schedule");
-        removeButton.setTitle("Remove Execution Schedule");
     }
 
     public void read(final DocRef ownerDocRef) {

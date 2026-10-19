@@ -278,8 +278,11 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         this.docRef = docRef;
         setSaveEnabled(isDirty());
         setSaveAsEnabled(true);
-        if (readOnly && saveButton != null) {
-            saveButton.setTitle("Save is not available as this document is read only");
+        // Set on every read, so a document read again as editable gets its plain name back
+        if (saveButton != null) {
+            saveButton.setTitle(readOnly
+                    ? "Save (read only)"
+                    : "Save");
         }
         setReadOnlyStatus(readOnly);
         tabContentProvider.read(docRef, document, readOnly);

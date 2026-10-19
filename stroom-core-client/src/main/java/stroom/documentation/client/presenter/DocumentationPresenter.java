@@ -64,7 +64,7 @@ public class DocumentationPresenter
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
-        downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download", null);
+        downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download Documentation", null);
         downloadButton.setEnabled(false);
 
         addTab(DOCUMENTATION, new MarkdownTabProvider<DocumentationDoc>(eventBus, markdownEditPresenterProvider) {

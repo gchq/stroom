@@ -53,7 +53,7 @@ public class AnnotationCreatePlugin extends Plugin {
                             .priority(1)
                             .icon(SvgImage.EDIT)
                             .iconColour(IconColour.GREY)
-                            .text("Create New Annotation")
+                            .text("New Annotation")
                             .command(this::create)
                             .build());
         }

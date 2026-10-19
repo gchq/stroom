@@ -224,16 +224,11 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         setDefaultTab(defaultTab);
 
-        steppingModeButton = toolbar.toggle(SvgImage.STEP, "Enter Stepping Mode", this::onSteppingModeToggled);
+        steppingModeButton = toolbar.toggle(SvgImage.STEP, "Stepping Mode", this::onSteppingModeToggled);
         steppingModeButton.setVisible(false);
     }
 
     private void onSteppingModeToggled(final boolean steppingMode) {
-        if (steppingMode) {
-            steppingModeButton.setTitle("Exit Stepping Mode");
-        } else {
-            steppingModeButton.setTitle("Enter Stepping Mode");
-        }
         showSteppingMode(steppingMode);
     }
 

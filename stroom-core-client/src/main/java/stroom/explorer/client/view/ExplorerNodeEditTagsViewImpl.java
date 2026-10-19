@@ -96,26 +96,26 @@ public class ExplorerNodeEditTagsViewImpl
 
         addFromAllTagsButton = nodeTagsButtonPanel.button(
                 SvgImage.ARROW_RIGHT,
-                "Add selected tags from 'All Known Tags'",
+                "Add Selected Tags from All Known Tags",
                 this::onAddFromAllTagsClicked);
         addFromAllTagsButton.setEnabled(false);
 
         removeButton = nodeTagsButtonPanel.button(
                 SvgImage.ARROW_LEFT,
-                "Remove selected tags",
+                "Remove Selected Tags",
                 this::onDeleteClicked);
         removeButton.setEnabled(false);
 
         // Hidden/visible, never disabled
         clearInputButton = clearButtonPanel.button(
                 SvgImage.CLEAR,
-                "Clear entered tag(s)",
+                "Clear Entered Tags",
                 this::onClearInputClicked);
         clearInputButton.addStyleName("clear");
 
         addFromInputButton = inputButtonPanel.button(
                 SvgImage.ADD,
-                "Add entered tag(s)",
+                "Add Entered Tags",
                 this::onAddFromInputClicked);
         addFromInputButton.setEnabled(false);
 

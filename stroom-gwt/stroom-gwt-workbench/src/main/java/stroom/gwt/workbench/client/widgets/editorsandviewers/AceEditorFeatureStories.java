@@ -50,6 +50,8 @@ import java.util.List;
 public final class AceEditorFeatureStories {
 
     private static final String WIDTH = "720px";
+    // The tick of a check item that is on
+    private static final String TICK = ".svg-image__tick";
     private static final String HEIGHT = "300px";
 
     private static final String SAMPLE_QUERY = """
@@ -236,8 +238,9 @@ public final class AceEditorFeatureStories {
                     play.waitFor(() -> play.expect(play.querySelector(".ace_gutter-cell.stroom_error"))
                             .toHaveTextContent("5"));
                 })
-                // The editor's context menu (a secondary mouse down): its options, and turning
-                // the line numbers off hides the gutter
+                // The editor's context menu (a secondary mouse down): its options are check items,
+                // ticked while on (with no '(ON)' or '(OFF)' in their text), and turning the line
+                // numbers off hides the gutter and unticks them
                 .story("ContextMenu", context -> {
                     final StoryPopups popups = StoryPopups.create(context).withMenus();
                     final EditorPresenter editor = editor(popups.getEventBus(), AceEditorStories.SAMPLE_XML,
@@ -250,16 +253,29 @@ public final class AceEditorFeatureStories {
                     final Query gutter = play.querySelector(".ace_gutter");
                     play.waitFor(() -> play.expect(gutter).toBeVisible());
                     play.rightClick(play.querySelector(".ace_content"));
-                    // Each item's ON or OFF is in a span of its own, so the items' whole text is compared
                     final Value<List<String>> items = screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT)
                             .textContents();
                     play.waitFor(() -> play.expect("the menu's items", () -> String.join(", ", items.get()))
-                            .toBe("Styles (ON), Line Numbers (ON), Wrap Lines (OFF), Show Indent Guides (ON), "
-                                  + "Show Hidden Characters (OFF), Highlight Active Line (ON), "
-                                  + "Vim Key Bindings (OFF), Auto Completion (ON), Snippets (ON), "
-                                  + "Live Auto Completion (OFF), Format"));
-                    play.click(screen.getByText(TextMatch.containing("Line Numbers"), StroomDom.MENU_ITEM_TEXT));
+                            .toBe("Syntax Highlighting, Line Numbers, Wrap Lines, "
+                                  + "Show Indent Guides, Show Hidden Characters, "
+                                  + "Highlight Active Line, Vim Key Bindings, "
+                                  + "Basic Auto Completion, Snippets, "
+                                  + "Live Auto Completion, Format"));
+                    // An option that is on is a ticked check item, one that is off an unticked one
+                    final Query lineNumbers = screen.getByRole("menuitemcheckbox", "Line Numbers");
+                    play.expect(lineNumbers).toHaveAttribute("aria-checked", "true");
+                    play.expect(play.within(lineNumbers).querySelector(TICK)).toBeInTheDocument();
+                    final Query wrapLines = screen.getByRole("menuitemcheckbox", "Wrap Lines");
+                    play.expect(wrapLines).toHaveAttribute("aria-checked", "false");
+                    play.expect(play.within(wrapLines).querySelector(TICK)).toBeNull();
+                    // An action is a plain item
+                    play.expect(screen.getByRole("menuitem", "Format")).not().toHaveAttribute("aria-checked");
+                    play.expect(screen.getAllByRole("menuitemcheckbox")).toHaveLength(10);
+                    play.click(lineNumbers);
                     play.waitFor(() -> play.expect(gutter).not().toBeVisible());
+                    play.rightClick(play.querySelector(".ace_content"));
+                    play.waitFor(() -> play.expect(screen.getByRole("menuitemcheckbox", "Line Numbers"))
+                            .toHaveAttribute("aria-checked", "false"));
                 })
                 // Formatting JSON (js-beautify, as the editor isn't XML), from the context menu
                 .story("FormatJson", context -> {
