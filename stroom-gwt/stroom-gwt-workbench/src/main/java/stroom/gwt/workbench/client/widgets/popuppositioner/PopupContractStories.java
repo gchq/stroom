@@ -120,13 +120,13 @@ public final class PopupContractStories {
                 .opener(".svg-icon-box__icon")
                 // Both of GWT's partners (BaseSelectionBox: the text box and the icon box), each
                 // with an inner child
-                .partners(".SelectionBox-outer", ".SelectionBox-renderBox", ".svg-icon-box__icon",
+                .partners(".selection-box__control", ".selection-box__value", ".svg-icon-box__icon",
                         ".svg-icon-box__image")
-                .panel(".SelectionPopup")
+                .panel(".selection-popup")
                 .insideTarget(".selectionList")
                 // SelectionPopup positions itself with a shadow width of 4
                 // (PositionUtil.getPosition(4, ...)), which grows the anchor by 4px
-                .placement("input.SelectionBox-textBox", PopupLocation.BELOW, 4,
+                .placement("input.selection-box__input", PopupLocation.BELOW, 4,
                         "SelectionPopup.show — new PopupPosition(new Rect(relativeElement), BELOW)"));
         cases.add(PopupCase.of("CustomDateBox", PopupHarnesses::dateBox)
                 .opener("input")

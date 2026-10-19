@@ -119,13 +119,13 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       };
       // A SelectionBox first: its inner text box is an <input> too, and typing into one does
       // nothing — the value is chosen from the popup its icon opens.
-      const select = group.querySelector('.SelectionBox');
+      const select = group.querySelector('.selection-box');
       // A disabled box can't be driven (Batch Edit Schedules' until its enable box is ticked), and
       // trying to opened nothing, so the Escape meant for its list closed the dialog instead.
       if (select && select.offsetWidth > 0 && /\bdisabled\b/.test(select.className)) continue;
       if (select && select.offsetWidth > 0) {
         const icon = select.querySelector('.svg-icon-box__icon') ?? select;
-        out.push({ label, kind: 'select', value: norm(select.querySelector('.SelectionBox-renderBox')?.textContent
+        out.push({ label, kind: 'select', value: norm(select.querySelector('.selection-box__value')?.textContent
           ?? select.querySelector('input')?.value), ...at(icon) });
         continue;
       }

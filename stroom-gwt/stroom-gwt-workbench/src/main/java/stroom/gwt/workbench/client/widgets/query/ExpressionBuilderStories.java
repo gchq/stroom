@@ -65,7 +65,7 @@ public final class ExpressionBuilderStories {
     private static final String ON_CHANGE = "onChange";
     private static final String FIELD_SOURCE = "fieldSource";
     private static final List<String> TOOLBAR = List.of("Add Term", "Add Operator", "Copy", "Disable", "Delete");
-    private static final String POPUP = ".SelectionPopup";
+    private static final String POPUP = ".selection-popup";
     // The field picker of the selected term (a Stroom SelectionBox), and its parts
     private static final String FIELD_PICKER = ".termEditor-item.field";
     private static final DocRef DATA_SOURCE = new DocRef("Index", "index-uuid-1", "Example Index");
@@ -136,7 +136,7 @@ public final class ExpressionBuilderStories {
                 .withPlay(play -> {
                     play.click(play.getByTitle("Add Term"));
                     // The field box's painted value is the SelectionBox's render box
-                    final Query picker = play.querySelector(FIELD_PICKER + " .SelectionBox-renderBox");
+                    final Query picker = play.querySelector(FIELD_PICKER + " .selection-box__value");
                     play.waitFor(() -> play.expect(picker).not().toBeNull());
                     play.expect(picker.textContent()).toBe("");
                     for (final QueryField field : fields()) {
@@ -202,7 +202,7 @@ public final class ExpressionBuilderStories {
         final Query term = play.findByText(TextMatch.containing(label), ".expressionItemBox-label");
         play.click(term);
         // The field picker is a Stroom SelectionBox, whose text box takes the clicks
-        final Query picker = play.querySelector(FIELD_PICKER + " .SelectionBox-textBox");
+        final Query picker = play.querySelector(FIELD_PICKER + " .selection-box__input");
         play.waitFor(() -> play.expect(picker).not().toBeNull());
         return picker;
     }

@@ -44,7 +44,7 @@
 }
 
 .termEditor-inner input,
-.termEditor-inner .SelectionBox-renderBox {
+.termEditor-inner .selection-box__value {
     border: none !important;
     border-radius: 0 !important;
     background: none !important;

@@ -155,7 +155,7 @@ export async function fillDocumentationTab(page, text) {
 export async function pickDocRef(page, label, name) {
   const g = field(page, label);
   if (!(await g.count())) return false;
-  const box = g.locator('input.SelectionBox-textBox, .SelectionBox').first();
+  const box = g.locator('input.selection-box__input, .selection-box').first();
   if (!(await box.count())) return false;
   await box.click();
   await page.waitForTimeout(800);

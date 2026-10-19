@@ -59,7 +59,7 @@ await page.waitForTimeout(1_500);
 console.log(`opened: ${JSON.stringify(await dialogs())}`);
 
 // The second selection box is Layout Density: choose whichever option isn't chosen
-const density = page.locator('.SelectionBox-textBox').nth(1);
+const density = page.locator('.selection-box__input').nth(1);
 const before = await density.inputValue();
 await density.click();
 await page.waitForTimeout(600);

@@ -1882,17 +1882,6 @@ button.main-menu svg {
     visibility: hidden;
 }
 
-.SelectionPopup .listContainer {
-    min-width: 200px;
-    max-width: 400px;
-    max-height: 400px;
-}
-
-.SelectionPopup .selectionList {
-    width: auto;
-    height: auto;
-}
-
 .selectionList {
     width: 100%;
     height: 100%;
@@ -2258,7 +2247,7 @@ button.main-menu svg {
 .gitrepo-settings-form #credentials-group {
     width: 400px;
 }
-.gitrepo-settings-form #credentials-group .SelectionBox {
+.gitrepo-settings-form #credentials-group .selection-box {
     width: 280px;
 }
 .gitrepo-settings-form button.credentials-button {

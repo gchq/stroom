@@ -1415,6 +1415,15 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   (`aria-hidden`), as the field opens the same thing from the keyboard, with their own BEM stylesheet
   (`svg-icon-box.css`). The date picker's year and month boxes touched, so a focused box's ring
   covered the other; they are now 4px apart.
+* **The selection box only opened on Enter or a click** (`BaseSelectionBox`): the WAI-ARIA
+  combobox's keys did nothing. Down, Up and Alt+Down now open the list, and in a box that can't be
+  typed in, Space and typing a character do too; in the list, Alt+Up chooses the option with the
+  focus, and typing goes to the list's quick filter or to the next option starting with what was
+  typed. A long value ran under the drop-down arrow (and wrapped out of sight); it now ends in an
+  ellipsis clear of it. Its stylesheet is BEM (`selection-box.css`, `selection-popup.css`;
+  `SelectionBox.css`, its dead `ListBox` rules and the global `pointer` class are deleted). Workbench:
+  `Widgets/Selectors/SelectionBox` `KeysOpenTheList`, `AltUpChoosesTheOption`,
+  `TypingJumpsToAnOption`, `TypingFiltersALongList`, `LongValue`; real input: `selection-box.mjs`.
 
 ## Checked and not bugs
 

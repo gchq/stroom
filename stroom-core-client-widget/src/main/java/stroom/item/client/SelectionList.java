@@ -31,6 +31,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -70,8 +71,15 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private static final String ROLE = "role";
     private static final String ROLE_NONE = "none";
     private static final Set<String> TABLE_SECTIONS = Set.of("THEAD", "TBODY", "TFOOT");
+    // How long a pause in typing starts what is typed to jump to an option again
+    private static final int TYPE_AHEAD_PAUSE_MILLIS = 500;
 
     private final QuickFilter quickFilter;
+    private final SelectionEventManager<T, I> selectionEventManager;
+    // What has been typed to jump to an option (in a list with no quick filter), and when it was last
+    // typed to, so that a pause starts it again
+    private String typedPrefix = "";
+    private double lastTypedMillis;
     private final FlowPanel links;
     private final PagerViewImpl pagerView;
     private final CellTable<I> cellTable;
@@ -109,7 +117,14 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             @Override
             protected void onBrowserEvent2(final Event event) {
                 if (event.getTypeInt() == Event.ONKEYDOWN) {
-                    if (event.getKeyCode() == KeyCodes.KEY_UP) {
+                    final String key = keyOf(event);
+                    if (event.getAltKey() && event.getKeyCode() == KeyCodes.KEY_UP) {
+                        // Alt+Up chooses the option with the focus and closes the list (WAI-ARIA
+                        // combobox)
+                        chooseKeyboardSelected();
+                    } else if (isTypedCharacter(event, key)) {
+                        typeAhead(key);
+                    } else if (event.getKeyCode() == KeyCodes.KEY_UP) {
                         if (model.displayFilter()) {
                             if (cellTable.getKeyboardSelectedRow() == 0) {
                                 quickFilter.focus();
@@ -124,7 +139,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         };
 
         selectionModel = new MultiSelectionModelImpl<>();
-        final SelectionEventManager<T, I> selectionEventManager = new SelectionEventManager<>(cellTable,
+        selectionEventManager = new SelectionEventManager<>(cellTable,
                 selectionModel,
                 this);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
@@ -231,6 +246,82 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 }
             }
         }
+    }
+
+    /// Goes to what is typed, as typing in a WAI-ARIA combobox's list does: into the list's quick
+    /// filter, if it has one, applied at once; otherwise to the next option that starts with what has
+    /// been typed (characters typed within half a second of each other are taken together).
+    ///
+    /// @param text The text typed, e.g. a character.
+    public void typeAhead(final String text) {
+        if (model.displayFilter()) {
+            quickFilter.type(text);
+            return;
+        }
+        final double now = Duration.currentTimeMillis();
+        typedPrefix = now - lastTypedMillis < TYPE_AHEAD_PAUSE_MILLIS
+                ? typedPrefix + text
+                : text;
+        lastTypedMillis = now;
+        // The same character typed again (e.g. "dd") goes on to the next option starting with it
+        final boolean repeated = isOneCharacterRepeated(typedPrefix);
+        final String prefix = (repeated
+                ? typedPrefix.substring(0, 1)
+                : typedPrefix).toLowerCase(Locale.ROOT);
+        final List<I> items = cellTable.getVisibleItems();
+        final int current = Math.max(cellTable.getKeyboardSelectedRow(), 0);
+        // One character (or the same one again) moves on from the option with the focus; more
+        // characters keep to it while it still matches
+        final int start = repeated
+                ? current + 1
+                : current;
+        for (int i = 0; i < items.size(); i++) {
+            final int row = (start + i) % items.size();
+            final String label = NullSafe.string(items.get(row).getLabel()).toLowerCase(Locale.ROOT);
+            if (label.startsWith(prefix)) {
+                cellTable.setKeyboardSelectedRow(row, true);
+                return;
+            }
+        }
+    }
+
+    // Whether the text is one character, perhaps typed more than once (e.g. "d" or "ddd")
+    private static boolean isOneCharacterRepeated(final String text) {
+        for (int i = 1; i < text.length(); i++) {
+            if (text.charAt(i) != text.charAt(0)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Chooses the option with the focus, as Enter does, which closes the list
+    private void chooseKeyboardSelected() {
+        final int row = cellTable.getKeyboardSelectedRow();
+        final List<I> items = cellTable.getVisibleItems();
+        if (row >= 0 && row < items.size()) {
+            selectionEventManager.doSelect(items.get(row),
+                    new SelectionType(true, false, false, false, false),
+                    true);
+        } else {
+            CloseEvent.fire(SelectionList.this);
+        }
+    }
+
+    /// @param event An event's key.
+    /// @return The key's value (e.g. `a`, or `ArrowUp`), as the browser names it.
+    static native String keyOf(NativeEvent event) /*-{
+        return event.key || "";
+    }-*/;
+
+    /// @param event A key event.
+    /// @param key   Its key (see [#keyOf(NativeEvent)]).
+    /// @return Whether the key types a character (with no Ctrl, Alt or Meta, which make it a shortcut).
+    static boolean isTypedCharacter(final NativeEvent event, final String key) {
+        return key.length() == 1
+               && !event.getCtrlKey()
+               && !event.getAltKey()
+               && !event.getMetaKey();
     }
 
     public void setKeyboardSelectionPolicy(final KeyboardSelectionPolicy policy) {

@@ -122,7 +122,7 @@ public final class AnalyticRuleEditorStories {
                     // The process type is a selection box's text box
                     play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
                     play.click(play.getByDisplayValue("Scheduled Query"));
-                    play.click(screen.findByText("Table Builder", ".SelectionPopup *"));
+                    play.click(screen.findByText("Table Builder", ".selection-popup *"));
                     play.waitFor(() -> play.expect(DocumentEditors.tab(play, "Shards")).toBeVisible());
                     play.expect(DocumentEditors.tab(play, "Duplicate Management")).not().toBeVisible();
                     play.waitFor(() -> play.expect(play.getByText("Processing Info")).toBeInTheDocument());
@@ -282,7 +282,7 @@ public final class AnalyticRuleEditorStories {
 
     private static void pickDestinationType(final Play play, final Play dialog, final String type) {
         play.click(destinationType(dialog));
-        play.click(play.screen().findByText(type, ".SelectionPopup *"));
+        play.click(play.screen().findByText(type, ".selection-popup *"));
     }
 
     // Opens the Settings tab and waits for its fields

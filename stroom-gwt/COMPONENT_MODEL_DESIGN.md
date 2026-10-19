@@ -434,7 +434,18 @@ Not yet done: it hasn't been tried with a screen reader, and VoiceOver on iOS ma
 - **Other icons** (the calendar and clock) are 16px (`--icon-width`) in `--icon-colour__grey`, as before.
 - **Read only.** `setReadonly` dims the icon and stops it opening anything (`svg-icon-box--readonly`, a state with no ARIA attribute on the box, so a modifier): the selection, date, time and schedule boxes set it when their field is disabled or read only.
 
-Not yet done: the selection box's combobox keys (Alt+Down and Alt+Up, typing to jump) and its rendered value's padding, and the rest of `SelectionBox.css` (`SelectionBox-*`, `SelectionPopup-*`), are the selection box's own work.
+## Selection box
+
+`BaseSelectionBox` (`stroom.item.client`, styled by `selection-box.css`) is a WAI-ARIA combobox: its text box (`role="combobox"`, `aria-haspopup="listbox"`, `aria-expanded`, `aria-controls`) sits over a picture of its value (`selection-box__value`, `aria-hidden`), with an icon box's drop-down arrow at its end. Its list is a `SelectionPopup` (`selection-popup.css`) holding a `SelectionList`: a quick filter over 10 items, a pager over 100, and a list box whose rows are options. Opening the list moves the focus into it (to its quick filter if it has one, else to the chosen option), rather than keeping it in the box with `aria-activedescendant`.
+
+- **Keys on the box** (the list closed): Enter, Down, Up and Alt+Down open the list; in a box that can't be typed in (`selection-box--select-only`), Space does too, and typing a character opens the list and goes to it. Characters typed before the list has the focus are kept and passed on (`SelectionPopup.type`).
+- **Keys in the list**: Up and Down move between options (and Up from the first option to the quick filter); Enter or Alt+Up chooses the option with the focus and closes the list; Escape closes it; the focus goes back to the box. Typing goes to what is typed (`SelectionList.typeAhead`): into the quick filter, applied at once, with the caret after it (`QuickFilter.type`), or, in a list with no quick filter, to the next option that starts with it, characters typed within half a second being taken together, and the same character again going on to the next option starting with it. The list hands keys on after the browser has handled them (as the data grid does), so a key can't be cancelled there.
+- **Value.** The picture of the value stays on one line and ends in an ellipsis, clear of the arrow (`padding-right: 26px`). It draws the box's border (`stroom-control`).
+- **States.** Disabled and read only are modifiers (`selection-box--disabled`, `selection-box--readonly`), as the box has no ARIA attribute for them; they follow the text box's `disabled` and `aria-readonly`. A box that can't be typed in shows a pointer over it while it can be changed.
+
+Stories `Widgets/Selectors/SelectionBox` (`SelectionBoxStories`): `KeysOpenTheList`, `AltUpChoosesTheOption`, `TypingJumpsToAnOption`, `TypingFiltersALongList` and `LongValue`, beside the earlier ones. Real input (`test-runner/lib/real-input/selection-box.mjs`): typing, Alt+Up, Space and Escape pressed for real, and typing into a long list's quick filter.
+
+Not yet done: it hasn't been tried with a screen reader; the list's own classes (`selectionList-*`, in `components.css`) aren't BEM; and Home and End in the closed box don't open the list at its ends (optional in the pattern).
 
 ## CSS for new widgets
 

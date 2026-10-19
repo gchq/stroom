@@ -1339,7 +1339,7 @@ async function driveStep(step) {
     await page.mouse.down();
     await page.mouse.up();
     await page.waitForTimeout(400);
-    const shows = await page.evaluate((selector) => [...document.querySelectorAll(selector)].find((e) => e.offsetWidth > 0)?.querySelector('.SelectionBox-renderBox')?.textContent.trim(), step.selector);
+    const shows = await page.evaluate((selector) => [...document.querySelectorAll(selector)].find((e) => e.offsetWidth > 0)?.querySelector('.selection-box__value')?.textContent.trim(), step.selector);
     console.log(`      (set-select ${step.selector} = "${step.value}" → box reads "${shows}")`);
   } else if (step.via === 'click-in-header') {
     // A child of a column HEADER — the `.column-valueFilterIcon` that opens ColumnValuesFilterPresenter.

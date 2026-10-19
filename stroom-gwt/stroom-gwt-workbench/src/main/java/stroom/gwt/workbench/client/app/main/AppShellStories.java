@@ -1182,7 +1182,7 @@ public final class AppShellStories {
     private static void chooseTheme(final Play play, final Play dialog, final String theme) {
         play.click(dialog.getByText("Theme", StroomDom.LINK_TAB_LABEL));
         // The box is a combo box, which says when its list is open, and the list is named after it
-        final Query box = dialog.querySelector("#userPreferencesTheme .SelectionBox-textBox");
+        final Query box = dialog.querySelector("#userPreferencesTheme .selection-box__input");
         play.expect(box).toHaveAttribute("role", "combobox");
         play.expect(box).toHaveAttribute("aria-expanded", "false");
         play.click(box);
@@ -1193,9 +1193,9 @@ public final class AppShellStories {
         // Its options, the current theme's selected
         play.waitFor(() -> play.expect(play.screen().within(list).getAllByRole("option").count())
                 .toBeGreaterThan(1));
-        play.click(play.screen().findByText(theme, ".SelectionPopup .selectionItemCell-text"));
+        play.click(play.screen().findByText(theme, ".selection-popup .selectionItemCell-text"));
         play.waitFor(() -> play.expect(box).toHaveAttribute("aria-expanded", "false"));
-        play.waitFor(() -> play.expect(dialog.querySelector("#userPreferencesTheme .SelectionBox-renderBox"))
+        play.waitFor(() -> play.expect(dialog.querySelector("#userPreferencesTheme .selection-box__value"))
                 .toHaveTextContent(theme));
     }
 
@@ -1204,15 +1204,15 @@ public final class AppShellStories {
     private static void expectEditorThemes(final Play play, final Play dialog, final String... themes) {
         final Play screen = play.screen();
         play.click(dialog.getByText("Editor", StroomDom.LINK_TAB_LABEL));
-        play.click(dialog.querySelector("#userPreferencesEditorTheme .SelectionBox-textBox"));
+        play.click(dialog.querySelector("#userPreferencesEditorTheme .selection-box__input"));
         final Play list = screen.within(screen.findByText(themes[0], ".selectionItemCell-text")
-                .closest(".SelectionPopup"));
+                .closest(".selection-popup"));
         play.expect(list.querySelector(".selectionItemCell-text")).toHaveTextContent(themes[0]);
         for (final String theme : themes) {
             play.expect(list.getByText(theme, ".selectionItemCell-text")).toBeInTheDocument();
         }
         play.keyboard("{Escape}");
-        play.waitFor(() -> play.expect(screen.querySelector(".SelectionPopup")).toBeNull());
+        play.waitFor(() -> play.expect(screen.querySelector(".selection-popup")).toBeNull());
     }
 
     private static Query menuItem(final Play screen, final String title) {

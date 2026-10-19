@@ -291,8 +291,8 @@ public final class DashboardSearchStories {
                             RequestMatcher.get("/wordList/v1/d1").toSpyMatcher()));
                     // A selection box that allows free text opens with its drop down button
                     play.click(play.querySelector(".ListInputView .svg-icon-box__icon"));
-                    screen.findByText("red", ".SelectionPopup *");
-                    play.expect(screen.getByText("blue", ".SelectionPopup *")).toBeInTheDocument();
+                    screen.findByText("red", ".selection-popup *");
+                    play.expect(screen.getByText("blue", ".selection-popup *")).toBeInTheDocument();
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A List Input's value that isn't one of its dictionary's words is cleared, but

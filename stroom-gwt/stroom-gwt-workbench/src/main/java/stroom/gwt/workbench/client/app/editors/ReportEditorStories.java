@@ -103,7 +103,7 @@ public final class ReportEditorStories {
                     play.expect(play.getByText("Send Empty Reports")).toBeInTheDocument();
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     play.click(fileType);
-                    play.click(screen.findByText("Markdown", ".SelectionPopup *"));
+                    play.click(screen.findByText("Markdown", ".selection-popup *"));
                     play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
                             .not().toHaveAttribute("aria-disabled"));
                     DocumentEditors.expectNoProblems(play);
@@ -115,7 +115,7 @@ public final class ReportEditorStories {
                     openTab(play, "Settings");
                     play.waitFor(() -> play.expect(play.getByText("File Type", "label")).toBeInTheDocument());
                     play.expect(play.within(play.getByText("File Type", "label").closest(".form-group"))
-                            .querySelector(".SelectionBox")).toHaveClass("readonly");
+                            .querySelector(".selection-box")).toHaveClass("selection-box--readonly");
                     play.expect(play.getByRole("checkbox", "Send Empty Reports"))
                             .toHaveAttribute("aria-readonly", "true");
                     play.expect(picker(play, "Feed For Errors")).toHaveAttribute("aria-disabled", "true");

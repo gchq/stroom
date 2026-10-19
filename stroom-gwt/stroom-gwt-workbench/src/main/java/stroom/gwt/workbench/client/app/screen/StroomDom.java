@@ -42,7 +42,7 @@ public final class StroomDom {
     /// pressed (a mousedown), not when its text is clicked. Its parent's title says what it opens.
     public static final String COMMAND_LINK_OPEN = ".commandLinkOpen";
     /// The text box of Stroom's `SelectionBox` (a drop-down), which opens its list when clicked.
-    public static final String SELECTION_BOX = ".SelectionBox-textBox";
+    public static final String SELECTION_BOX = ".selection-box__input";
     /// The placeholder of a `QuickFilter`'s text box, which has no label.
     public static final String QUICK_FILTER_PLACEHOLDER = "Quick Filter";
     /// The label of a link tab (e.g. a document editor's 'Words', 'Permissions' sub-tabs), for

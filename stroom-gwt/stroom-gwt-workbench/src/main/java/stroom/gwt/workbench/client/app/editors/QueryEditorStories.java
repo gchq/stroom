@@ -521,7 +521,7 @@ public final class QueryEditorStories {
                     play.click(screen.findByText("Format", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Format 'Name'");
                     play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
-                    play.click(screen.findByText("Number", ".SelectionPopup *"));
+                    play.click(screen.findByText("Number", ".selection-popup *"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     // The play formats 'Name' ('Count' is a Number already, so choosing Number would
                     // change nothing)

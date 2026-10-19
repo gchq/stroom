@@ -43,6 +43,10 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
 
     private final PopupPanel popupPanel;
     private final SelectionList<T, I> selectionList;
+    // What was typed to open the list, which it goes to once shown, or null if nothing was
+    private String typed;
+    // Whether the list has been shown and has the focus
+    private boolean shown;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
@@ -75,7 +79,8 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
 
         popupPanel.add(simplePopupLayout);
         popupPanel.setAutoHideEnabled(true);
-        popupPanel.setStyleName("SelectionPopup");
+        // Styled by selection-popup.css
+        popupPanel.setStyleName("selection-popup");
     }
 
     public void addAutoHidePartner(final Element partner) {
@@ -101,6 +106,16 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     }
 
     public void show(final Element relativeElement) {
+        show(relativeElement, null);
+    }
+
+    /// Shows the list below an element, and goes to what was typed to open it, if anything (see
+    /// [SelectionList#typeAhead(String)]).
+    ///
+    /// @param relativeElement The element to show the list below, e.g. the box that opened it.
+    /// @param typed           What was typed to open the list, or null if nothing was.
+    public void show(final Element relativeElement, final String typed) {
+        this.typed = typed;
         final Rect relativeRect = new Rect(relativeElement);
         final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.BELOW);
         show(position);
@@ -139,7 +154,29 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     }
 
     private void afterShow() {
-        Scheduler.get().scheduleDeferred(selectionList::focus);
+        Scheduler.get().scheduleDeferred(() -> {
+            shown = true;
+            if (typed == null) {
+                selectionList.focus();
+            } else {
+                selectionList.typeAhead(typed);
+                typed = null;
+            }
+        });
+    }
+
+    /// Goes to more typed text: what is typed in the box after it opened the list, before the list
+    /// took the focus. It is kept until the list is shown.
+    ///
+    /// @param text The text typed, e.g. a character.
+    public void type(final String text) {
+        if (shown) {
+            selectionList.typeAhead(text);
+        } else {
+            typed = typed == null
+                    ? text
+                    : typed + text;
+        }
     }
 
     public void hide() {

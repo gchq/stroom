@@ -410,6 +410,17 @@ public class QuickFilter extends FlowPanel
         FocusUtil.forceFocus(this::focus);
     }
 
+    /// Adds typed text to the end of the filter, applies it at once, and puts the focus in the filter
+    /// with the caret after it, so typing carries on there (e.g. a selection box passes on what was
+    /// typed in it when it opened its list).
+    ///
+    /// @param text The text typed.
+    public void type(final String text) {
+        setText(getText() + text, true);
+        textBox.setFocus(true);
+        textBox.setCursorPos(textBox.getText().length());
+    }
+
     public void focus() {
         textBox.selectAll();
         textBox.setFocus(true);
