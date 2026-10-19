@@ -472,7 +472,7 @@ public class QueryEditPresenter
         final String description = "Query '" + name + "'";
         return new AiTabSearch(name,
                 null,
-                tablePresenter.aiResultsContext(),
+                tablePresenter.getResultsContext(),
                 new QueryTableContext(description, null, liveRequest),
                 tablePresenter.getCurrentColumnNames(),
                 tablePresenter.getCurrentTotalRows(),

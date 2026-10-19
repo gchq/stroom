@@ -666,7 +666,7 @@ public class QueryPresenter
     /// @return The search a run would start now, from the query as edited (its expression, with the dashboard's
     /// parameters and selections applied, and the dashboard's time range), without starting it, or null if it has
     /// no data source.
-    public Search aiLiveSearch() {
+    public Search buildLiveSearch() {
         if (getQuerySettings().getDataSource() == null) {
             return null;
         }

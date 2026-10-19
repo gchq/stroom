@@ -37,7 +37,7 @@ public final class DashboardSettings {
             new Setting(DashboardComponents.TABLE, "maxResults", Kind.INTEGERS,
                     "the most rows at each group level, e.g. 1000,10 (the top level first)"),
             new Setting(DashboardComponents.TABLE, "showDetail", Kind.BOOLEAN,
-                    "show the detail rows under grouped rows"),
+                    "show the detail rows (events) under grouped rows, which a Text widget needs to show an event"),
             new Setting(DashboardComponents.TABLE, "extractValues", Kind.BOOLEAN,
                     "extract values with the extraction pipeline"),
             new Setting(DashboardComponents.TABLE, "extractionPipeline", Kind.PIPELINE,

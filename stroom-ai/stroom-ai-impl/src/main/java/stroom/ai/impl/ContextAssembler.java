@@ -216,6 +216,8 @@ public class ContextAssembler {
             to give the user what they mean rather than only raw fields, e.g. if(), match(), decode(), \
             replace(), substringBefore(), concat(), formatDate(); try an expression with table's eval on a \
             snapshot of the rows first.
+            - A Text widget shows, and steps through, the event of the selected row, which a grouped row \
+            doesn't have: on a grouped table, turn on its detail rows (showDetail) so an event can be selected.
             - For tables by category (e.g. a tab per event type), find the categories from the rows, then \
             propose add_table for each, with columns that suit it and a filter on the category column.
             - To change a table on the dashboard (group or ungroup, add, edit, hide or show a column, sort, or \
