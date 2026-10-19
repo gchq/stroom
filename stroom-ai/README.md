@@ -306,11 +306,26 @@ What the agent can offer for the attached tab, all as buttons the user clicks, n
   * add tables beside it as tabs, fed by the same query, starting with its columns or none, which the
     changes after them set up, e.g. a tab per event category, each with columns that suit it and a filter
     on the category column.
+  * add and remove conditional formatting rules: rows matching conditions on the table's columns (all or
+    any of them) get a background or text colour from the rule editor's palette, bold or italic, or are
+    hidden. The dashboard file lists each table's rules, numbered, so the agent can remove one;
+  * add a Text widget in a pane below the table (or a table added before it), showing the event of the
+    selected row, which later changes can set up (e.g. the pipeline it shows the data through);
+  * rename any component (and so its tab), and change the settings of any table, query or text component,
+    as its Settings dialog has them:
+    * table: rows per page, row limits per group level, detail rows, value extraction and its pipeline, the
+      row of column filters, the query that feeds it, and the longest text a cell shows;
+    * query: data source, run when the dashboard opens, refresh on a timer and how often;
+    * text: the table it follows (or any), the pipeline it shows data through (or none), HTML, and the
+      stepping button.
+
+    Each value is checked first (a pipeline the user can view, a data source they can use, a component the
+    dashboard has), and the dashboard file the agent reads lists each component's settings as they are.
 
   Changes are applied unsaved, on top of any unsaved changes the dashboard has (the agent proposed them
-  against the dashboard as the user has it), and all or none. _Undo apply_ puts the table and the query's
-  expression back exactly as they were and removes any tables added, while the dashboard is open and hasn't
-  been changed since; otherwise it is withdrawn, saying why.
+  against the dashboard as the user has it), and all or none. _Undo apply_ puts back exactly what they
+  changed (the table, the query's expression, and each component's name and settings) and removes any tables
+  added, while the dashboard is open and hasn't been changed since; otherwise it is withdrawn, saying why.
 * A pipeline being stepped: a change to the selected XSLT or text converter, as a diff with _Review and
   apply_. The agent gives either the whole revised code or just the text to replace and its replacement, so a
   small change (e.g. adding `normalize-space()`) doesn't mean copying the whole XSLT. Before it is offered, the

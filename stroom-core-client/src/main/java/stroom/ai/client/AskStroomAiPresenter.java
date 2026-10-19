@@ -2570,7 +2570,7 @@ public class AskStroomAiPresenter
             if (operation != null) {
                 final String operationJson = operation.toString();
                 changes.add(UserActionsUi.tableChange(name -> AiToolMessages.getString(operationJson, name),
-                        AiToolMessages.toJava(operation.get("query"))));
+                        AiToolMessages.toJava(operation.get("query")), AiToolMessages.toJava(operation.get("doc"))));
             }
         }
         final DocRef dashboard = docRef(AiToolMessages.getString(json, "doc"));

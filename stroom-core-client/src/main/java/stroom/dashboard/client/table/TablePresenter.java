@@ -65,6 +65,8 @@ import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.ConditionalFormattingStyle;
+import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
@@ -84,6 +86,7 @@ import stroom.query.api.Sort;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
+import stroom.query.api.TextAttributes;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
@@ -1447,6 +1450,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         .build());
                 continue;
             }
+            if (TableChange.ADD_FORMAT_RULE.equals(change.getOp())
+                || TableChange.REMOVE_FORMAT_RULE.equals(change.getOp())) {
+                final String failed = changeFormatRules(change);
+                if (failed != null) {
+                    return prefix + failed;
+                }
+                continue;
+            }
             final Column column = columnsManager.getColumns().stream()
                     .filter(col -> !col.isSpecial() && Objects.equals(col.getName(), change.getColumn()))
                     .findFirst()
@@ -1512,6 +1523,51 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 }
             }
         }
+        return null;
+    }
+
+    // Adds or removes a conditional formatting rule, as the rules editor would.
+    private String changeFormatRules(final TableChange change) {
+        final List<ConditionalFormattingRule> rules = new ArrayList<>(
+                NullSafe.list(getTableComponentSettings().getConditionalFormattingRules()));
+        if (TableChange.REMOVE_FORMAT_RULE.equals(change.getOp())) {
+            final int index = change.getPosition() == null
+                    ? -1
+                    : change.getPosition() - 1;
+            if (index < 0 || index >= rules.size()) {
+                return "the table has no formatting rule " + change.getPosition() + "; it has " + rules.size()
+                       + ".";
+            }
+            rules.remove(index);
+        } else {
+            if (change.getQuery() == null) {
+                return "the rule's conditions can't be read.";
+            }
+            ConditionalFormattingStyle style = null;
+            for (final ConditionalFormattingStyle each : ConditionalFormattingStyle.values()) {
+                if (each.getDisplayValue().equalsIgnoreCase(change.getStyle())) {
+                    style = each;
+                }
+            }
+            final ConditionalFormattingRule rule = ConditionalFormattingRule.builder()
+                    .id(RandomId.createId(5))
+                    .expression(change.getQuery())
+                    .hide(change.isHide())
+                    .enabled(true)
+                    .formattingType("text".equals(change.getFormatType())
+                            ? ConditionalFormattingType.TEXT
+                            : ConditionalFormattingType.BACKGROUND)
+                    .formattingStyle(style)
+                    .textAttributes(TextAttributes.builder().bold(change.isBold()).italic(change.isItalic())
+                            .build())
+                    .build();
+            final int index = change.getPosition() == null
+                    ? rules.size()
+                    : Math.max(0, Math.min(change.getPosition() - 1, rules.size()));
+            rules.add(index, rule);
+        }
+        setSettings(getTableComponentSettings().copy().conditionalFormattingRules(rules).build());
+        changeSettings();
         return null;
     }
 

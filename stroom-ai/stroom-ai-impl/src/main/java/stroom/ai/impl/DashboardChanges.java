@@ -18,6 +18,7 @@
 package stroom.ai.impl;
 
 import stroom.docref.DocRef;
+import stroom.query.api.ConditionalFormattingStyle;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -26,6 +27,8 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -55,9 +58,30 @@ public final class DashboardChanges {
     public static final String MOVE_COLUMN = "move_column";
     /// Adds a table beside the table as a tab, fed by the same query, with its columns or none.
     public static final String ADD_TABLE = "add_table";
+    /// Adds a Text widget in a new pane below a table, showing the event of the table's selected row.
+    public static final String ADD_TEXT = "add_text";
+    /// Adds a conditional formatting rule to a table: rows matching conditions on its columns are coloured, made
+    /// bold or italic, or hidden.
+    public static final String ADD_FORMAT_RULE = "add_format_rule";
+    /// Removes one of a table's conditional formatting rules, by its number.
+    public static final String REMOVE_FORMAT_RULE = "remove_format_rule";
+    /// The colours a rule can give, as the rule editor names them.
+    public static final List<String> FORMAT_STYLES = Arrays.stream(ConditionalFormattingStyle.values())
+            .filter(style -> style != ConditionalFormattingStyle.NONE)
+            .map(ConditionalFormattingStyle::getDisplayValue)
+            .toList();
+    /// What a rule's colour is given to.
+    public static final List<String> FORMAT_TYPES = List.of("background", "text");
+    /// The conditions a rule's terms can have, as the model gives them, with the condition each is.
+    public static final Map<String, Condition> RULE_CONDITIONS = ruleConditions();
+    /// Renames a component (a table, query, text and so on), and so its tab.
+    public static final String RENAME = "rename";
+    /// Changes one of a component's settings, as its Settings dialog has them (see [DashboardSettings]).
+    public static final String SET_SETTING = "set_setting";
     /// The operations, in the order they are described to the model.
     public static final List<String> OPERATIONS = List.of(GROUP, UNGROUP, ADD_COLUMN, EDIT_COLUMN, MOVE_COLUMN,
-            HIDE_COLUMN, SHOW_COLUMN, SORT, FILTER, SET_EXPRESSION, ADD_TABLE);
+            HIDE_COLUMN, SHOW_COLUMN, SORT, FILTER, SET_EXPRESSION, ADD_TABLE, ADD_TEXT, RENAME, SET_SETTING,
+            ADD_FORMAT_RULE, REMOVE_FORMAT_RULE);
     /// The most tables one proposal may add.
     public static final int MAX_TABLES = 10;
     /// The deepest an expression may nest, and the most items it may have, as read back from a stored change.
@@ -133,8 +157,20 @@ public final class DashboardChanges {
         for (int i = 0; i < changes.size(); i++) {
             final Change change = changes.get(i);
             final String prefix = "Change " + (i + 1) + " (" + change.op() + "): ";
-            if (SET_EXPRESSION.equals(change.op())) {
-                // Of the table's query, not a column.
+            if (SET_EXPRESSION.equals(change.op()) || RENAME.equals(change.op())
+                || SET_SETTING.equals(change.op())) {
+                // Of the table's query, or of a component: checked against the dashboard's components.
+                checked.add(change);
+                continue;
+            }
+            if (ADD_TEXT.equals(change.op())) {
+                // The table it follows: the proposal's, or one added before it.
+                if (change.table() != null && !change.table().equalsIgnoreCase(table)
+                    && !tables.containsKey(change.table().toLowerCase(Locale.ROOT))) {
+                    problems.add(prefix + "there is no table '" + change.table() + "' for it to follow. It follows "
+                                 + "table '" + NullSafe.nonBlankStringElse(table, "?") + "', or a table added "
+                                 + "before it with add_table.");
+                }
                 checked.add(change);
                 continue;
             }
@@ -169,6 +205,24 @@ public final class DashboardChanges {
             final String which = target.isEmpty()
                     ? "the table"
                     : "table '" + change.table() + "'";
+            if (ADD_FORMAT_RULE.equals(change.op())) {
+                // Its terms name columns: each must be one of the table's, as the table names it.
+                final List<String> missing = new ArrayList<>();
+                final ExpressionOperator exact = withColumnNames(change.query(), names, missing);
+                if (!missing.isEmpty()) {
+                    problems.add(prefix + which + " has no column " + String.join(", ", missing.stream()
+                            .map(name -> "'" + name + "'")
+                            .toList()) + ". Its columns are: " + (names.isEmpty()
+                            ? "none yet"
+                            : String.join(", ", names)) + ".");
+                }
+                checked.add(change.withQuery(exact));
+                continue;
+            }
+            if (REMOVE_FORMAT_RULE.equals(change.op())) {
+                checked.add(change);
+                continue;
+            }
             if (ADD_COLUMN.equals(change.op())) {
                 if (find(names, change.name()).isPresent()) {
                     problems.add(prefix + which + " already has a column '" + change.name() + "'. Give another "
@@ -262,18 +316,37 @@ public final class DashboardChanges {
         final Boolean copy = map.get("copy") instanceof final Boolean value
                 ? value
                 : null;
+        if (RENAME.equals(op) || SET_SETTING.equals(op)) {
+            return componentChange(op, map, name, prefix);
+        }
+        if (ADD_FORMAT_RULE.equals(op)) {
+            return formatRule(map, query, position, table, prefix);
+        }
+        if (REMOVE_FORMAT_RULE.equals(op)) {
+            if (position == null) {
+                throw new IllegalArgumentException(prefix + "remove_format_rule needs the rule's number (position), "
+                                                   + "from 1, as the dashboard file lists them.");
+            }
+            return Change.builder(op).position(position).table(table).build();
+        }
+        if (ADD_TEXT.equals(op)) {
+            if (name == null) {
+                throw new IllegalArgumentException(prefix + "add_text needs the new Text widget's name.");
+            }
+            return Change.builder(op).name(name).table(table).build();
+        }
         if (ADD_TABLE.equals(op)) {
             if (name == null) {
                 throw new IllegalArgumentException(prefix + "add_table needs the new table's name.");
             }
-            return new Change(op, null, null, name, null, null, null, null, null, null, null, null, null, copy);
+            return Change.builder(op).name(name).copy(copy).build();
         }
         if (SET_EXPRESSION.equals(op)) {
             if (where == null && query == null) {
                 throw new IllegalArgumentException(prefix + "set_expression needs where: the query's conditions, "
                                                    + "as a StroomQL where clause has them.");
             }
-            return new Change(op, null, null, null, null, null, null, null, null, null, where, query, null, null);
+            return Change.builder(op).where(where).query(query).build();
         }
         if (!ADD_COLUMN.equals(op) && column == null) {
             throw new IllegalArgumentException(prefix + op + " needs the column, by its name as the user sees it.");
@@ -317,8 +390,176 @@ public final class DashboardChanges {
                 // Only the column is needed.
             }
         }
-        return new Change(op, column, level, name, expression, format, position, direction, priority, filter, null,
-                null, table, null);
+        return Change.builder(op)
+                .column(column)
+                .level(level)
+                .name(name)
+                .expression(expression)
+                .format(format)
+                .position(position)
+                .direction(direction)
+                .priority(priority)
+                .filter(filter)
+                .table(table)
+                .build();
+    }
+
+    // A conditional formatting rule: its conditions (as the model gives them, or as stored), and what it does.
+    private static Change formatRule(final Map<?, ?> map,
+                                     final ExpressionOperator stored,
+                                     final Integer position,
+                                     final String table,
+                                     final String prefix) {
+        ExpressionOperator expression = stored;
+        if (expression == null) {
+            if (!(map.get("conditions") instanceof final List<?> conditions) || conditions.isEmpty()
+                || conditions.size() > MAX_CHANGES) {
+                throw new IllegalArgumentException(prefix + "add_format_rule needs conditions: up to " + MAX_CHANGES
+                                                   + ", each with a column, a condition and (for most) a value.");
+            }
+            final String match = NullSafe.nonBlankStringElse(text(map, "match", prefix), "all");
+            if (!List.of("all", "any").contains(match.toLowerCase(Locale.ROOT))) {
+                throw new IllegalArgumentException(prefix + "match must be all or any.");
+            }
+            final ExpressionOperator.Builder builder = ExpressionOperator.builder()
+                    .op("any".equalsIgnoreCase(match)
+                            ? Op.OR
+                            : Op.AND);
+            for (int i = 0; i < conditions.size(); i++) {
+                final String termPrefix = prefix + "condition " + (i + 1) + ": ";
+                if (!(conditions.get(i) instanceof final Map<?, ?> term)) {
+                    throw new IllegalArgumentException(termPrefix + "give it as an object with column, condition "
+                                                       + "and value.");
+                }
+                final String column = text(term, "column", termPrefix);
+                final String conditionName = NullSafe.get(text(term, "condition", termPrefix),
+                        name -> name.toLowerCase(Locale.ROOT));
+                final Condition condition = conditionName == null
+                        ? null
+                        : RULE_CONDITIONS.get(conditionName);
+                if (column == null || condition == null) {
+                    throw new IllegalArgumentException(termPrefix + "needs a column and a condition, one of "
+                                                       + String.join(", ", RULE_CONDITIONS.keySet()) + ".");
+                }
+                final Object valueObject = term.get("value");
+                final String value = valueObject == null
+                        ? null
+                        : text(Map.of("value", String.valueOf(valueObject)), "value", termPrefix);
+                if (value == null && condition != Condition.IS_NULL && condition != Condition.IS_NOT_NULL) {
+                    throw new IllegalArgumentException(termPrefix + "needs a value.");
+                }
+                builder.addTerm(ExpressionTerm.builder().field(column).condition(condition).value(value).build());
+            }
+            expression = builder.build();
+        }
+        final String style = NullSafe.get(text(map, "style", prefix), name -> FORMAT_STYLES.stream()
+                .filter(name::equalsIgnoreCase)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(prefix + "style must be one of "
+                                                                + String.join(", ", FORMAT_STYLES) + ".")));
+        final String formatType = NullSafe.nonBlankStringElse(NullSafe.get(text(map, "format_type", prefix),
+                name -> name.toLowerCase(Locale.ROOT)), FORMAT_TYPES.getFirst());
+        if (!FORMAT_TYPES.contains(formatType)) {
+            throw new IllegalArgumentException(prefix + "format_type must be background or text.");
+        }
+        final boolean bold = Boolean.TRUE.equals(map.get("bold"));
+        final boolean italic = Boolean.TRUE.equals(map.get("italic"));
+        final boolean hide = Boolean.TRUE.equals(map.get("hide"));
+        if (style == null && !bold && !italic && !hide) {
+            throw new IllegalArgumentException(prefix + "add_format_rule needs something to do: a style, bold, "
+                                               + "italic, or hide.");
+        }
+        return Change.builder(ADD_FORMAT_RULE)
+                .position(position)
+                .query(expression)
+                .table(table)
+                .rule(new FormatRule(style, formatType, bold, italic, hide))
+                .build();
+    }
+
+    private static Map<String, Condition> ruleConditions() {
+        final Map<String, Condition> conditions = new LinkedHashMap<>();
+        conditions.put("=", Condition.EQUALS);
+        conditions.put("!=", Condition.NOT_EQUALS);
+        conditions.put(">", Condition.GREATER_THAN);
+        conditions.put(">=", Condition.GREATER_THAN_OR_EQUAL_TO);
+        conditions.put("<", Condition.LESS_THAN);
+        conditions.put("<=", Condition.LESS_THAN_OR_EQUAL_TO);
+        conditions.put("contains", Condition.CONTAINS);
+        conditions.put("starts with", Condition.STARTS_WITH);
+        conditions.put("ends with", Condition.ENDS_WITH);
+        conditions.put("between", Condition.BETWEEN);
+        conditions.put("in", Condition.IN);
+        conditions.put("matches regex", Condition.MATCHES_REGEX);
+        conditions.put("is null", Condition.IS_NULL);
+        conditions.put("is not null", Condition.IS_NOT_NULL);
+        return Collections.unmodifiableMap(conditions);
+    }
+
+    // An expression with each term's field given as the column is named, adding any it doesn't name to missing.
+    private static ExpressionOperator withColumnNames(final ExpressionOperator expression,
+                                                      final List<String> names,
+                                                      final List<String> missing) {
+        if (expression == null) {
+            return null;
+        }
+        final List<ExpressionItem> children = new ArrayList<>();
+        for (final ExpressionItem child : NullSafe.list(expression.getChildren())) {
+            if (child instanceof final ExpressionOperator operator) {
+                children.add(withColumnNames(operator, names, missing));
+            } else if (child instanceof final ExpressionTerm term) {
+                final Optional<String> column = find(names, term.getField());
+                if (column.isEmpty()) {
+                    missing.add(term.getField());
+                    children.add(term);
+                } else {
+                    children.add(term.copy().field(column.get()).build());
+                }
+            }
+        }
+        return expression.copy().children(children).build();
+    }
+
+    // A change to a component: a rename, or one of its settings, with what was resolved for it if it was.
+    private static Change componentChange(final String op, final Map<?, ?> map, final String name,
+                                          final String prefix) {
+        final String target = text(map, "target", prefix);
+        final String targetId = text(map, "target_id", prefix);
+        if (RENAME.equals(op)) {
+            if (name == null) {
+                throw new IllegalArgumentException(prefix + "rename needs the new name.");
+            }
+            return Change.builder(op).name(name).target(target).targetId(targetId).build();
+        }
+        final String setting = text(map, "setting", prefix);
+        if (setting == null || DashboardSettings.SETTINGS.stream().noneMatch(s -> s.key().equals(setting))) {
+            throw new IllegalArgumentException(prefix + "set_setting needs a setting, one of "
+                                               + String.join(", ", DashboardSettings.SETTINGS.stream()
+                    .map(DashboardSettings.Setting::key)
+                    .toList()) + ".");
+        }
+        final Object valueObject = map.get("value");
+        final String value = valueObject == null
+                ? null
+                : text(Map.of("value", String.valueOf(valueObject)), "value", prefix);
+        if (value == null) {
+            throw new IllegalArgumentException(prefix + "set_setting needs the value.");
+        }
+        final DocRef doc = map.get("doc") instanceof final Map<?, ?> docMap
+                           && docMap.get("type") instanceof final String type
+                           && docMap.get("uuid") instanceof final String uuid
+                ? new DocRef(type, uuid, docMap.get("name") instanceof final String docName
+                        ? docName
+                        : null)
+                : null;
+        return Change.builder(op)
+                .target(target)
+                .targetId(targetId)
+                .setting(setting)
+                .value(value)
+                .ref(text(map, "ref", prefix))
+                .doc(doc)
+                .build();
     }
 
     /// @param expression An expression.
@@ -474,6 +715,16 @@ public final class DashboardChanges {
     /// @param table      The table it changes, by name, if not the table the proposal is for: one an earlier
     ///                   add_table adds. Null for the proposal's table.
     /// @param copy       For add_table, true to start the new table with the proposal table's columns.
+    /// @param target     For rename and set_setting, the component it changes, by name, or null for the
+    ///                   proposal's table.
+    /// @param targetId   For rename and set_setting, the component's id, once resolved, or null for a table
+    ///                   added by these changes (known by its name).
+    /// @param setting    For set_setting, the setting's key (see [DashboardSettings]).
+    /// @param value      For set_setting, its value: as given, then as checked.
+    /// @param ref        For set_setting of a component (e.g. the query that feeds a table), its id, once resolved.
+    /// @param doc        For set_setting of a document (e.g. a pipeline), the document, once resolved.
+    /// @param rule       For add_format_rule, what the rule does; its conditions are in `query`, and where to add
+    ///                   it in `position` (default the end).
     public record Change(String op,
                          String column,
                          Integer level,
@@ -487,26 +738,71 @@ public final class DashboardChanges {
                          String where,
                          ExpressionOperator query,
                          String table,
-                         Boolean copy) {
+                         Boolean copy,
+                         String target,
+                         String targetId,
+                         String setting,
+                         String value,
+                         String ref,
+                         DocRef doc,
+                         FormatRule rule) {
 
         /// @param column The column's name, exactly as the table has it.
         /// @return This change, of that column.
         Change withColumn(final String column) {
-            return new Change(op, column, level, name, expression, format, position, direction, priority, filter,
-                    where, query, table, copy);
+            return toBuilder().column(column).build();
         }
 
         /// @param query For set_expression, the query's expression, built from [#where()].
         /// @return This change, with the expression.
         public Change withQuery(final ExpressionOperator query) {
-            return new Change(op, column, level, name, expression, format, position, direction, priority, filter,
-                    where, query, table, copy);
+            return toBuilder().query(query).build();
+        }
+
+        /// @param targetId For rename and set_setting, the component's id, or null for an added table.
+        /// @param value    For set_setting, the value as checked.
+        /// @param ref      For set_setting of a component, its id.
+        /// @param doc      For set_setting of a document, the document.
+        /// @return This change, with what was resolved for it.
+        public Change withResolved(final String targetId, final String value, final String ref, final DocRef doc) {
+            return toBuilder().targetId(targetId).value(value).ref(ref).doc(doc).build();
+        }
+
+        /// @param op What the change does, one of [#OPERATIONS].
+        /// @return A builder for a change, with only the fields its operation has set.
+        public static Builder builder(final String op) {
+            return new Builder(op);
+        }
+
+        /// @return A builder holding this change's fields, to make a changed copy of it.
+        public Builder toBuilder() {
+            return new Builder(op)
+                    .column(column)
+                    .level(level)
+                    .name(name)
+                    .expression(expression)
+                    .format(format)
+                    .position(position)
+                    .direction(direction)
+                    .priority(priority)
+                    .filter(filter)
+                    .where(where)
+                    .query(query)
+                    .table(table)
+                    .copy(copy)
+                    .target(target)
+                    .targetId(targetId)
+                    .setting(setting)
+                    .value(value)
+                    .ref(ref)
+                    .doc(doc)
+                    .rule(rule);
         }
 
         /// @return The change in plain language, for the user.
         public String describe() {
             final String text = describeOp();
-            return table == null
+            return table == null || ADD_TEXT.equals(op)
                     ? text
                     : "In table '" + table + "': " + text;
         }
@@ -546,6 +842,35 @@ public final class DashboardChanges {
                         ? "Clear the filter on column '" + column + "'"
                         : "Filter column '" + column + "' by '" + filter + "'";
                 case MOVE_COLUMN -> "Move column '" + column + "' to position " + position;
+                case ADD_FORMAT_RULE -> "Add a formatting rule" + (position == null
+                        ? ""
+                        : " at position " + position) + ": rows where "
+                                         + NullSafe.nonBlankStringElse(ExpressionDescriber.describe(query),
+                        "anything matches") + " " + NullSafe.get(rule, FormatRule::describe);
+                case REMOVE_FORMAT_RULE -> "Remove formatting rule " + position;
+                case ADD_TEXT -> "Add a Text widget '" + name + "' below " + (table == null
+                        ? "this table"
+                        : "table '" + table + "'") + ", showing the event of its selected row";
+                case RENAME -> "Rename " + (target == null
+                        ? "this table"
+                        : "'" + target + "'") + " to '" + name + "'";
+                case SET_SETTING -> {
+                    final String label = DashboardSettings.SETTINGS.stream()
+                            .filter(s -> s.key().equals(setting))
+                            .findFirst()
+                            .map(s -> s.label().replaceAll(" \\(.*\\)$", "") + " (" + s.key() + ")")
+                            .orElse(setting);
+                    final String shown = doc != null
+                            ? NullSafe.nonBlankStringElse(doc.getName(), doc.getUuid())
+                            : DashboardSettings.SETTINGS.stream()
+                                    .filter(s -> s.key().equals(setting))
+                                    .findFirst()
+                                    .map(s -> DashboardSettings.describe(s, value))
+                                    .orElse(value);
+                    yield "Set " + label + " of " + (target == null
+                            ? "this table"
+                            : "'" + target + "'") + " to " + shown;
+                }
                 case ADD_TABLE -> "Add table '" + name + "' as a tab beside this one, fed by the same query, "
                                   + (Boolean.TRUE.equals(copy)
                         ? "starting with this table's columns"
@@ -573,8 +898,231 @@ public final class DashboardChanges {
             NullSafe.consume(where, value -> map.put("where", value));
             NullSafe.consume(query, value -> map.put("query", expressionToMap(value)));
             NullSafe.consume(table, value -> map.put("table", value));
-            NullSafe.consume(copy, value -> map.put("copy", value));
+            NullSafe.consume(copy, v -> map.put("copy", v));
+            NullSafe.consume(target, v -> map.put("target", v));
+            NullSafe.consume(targetId, v -> map.put("target_id", v));
+            NullSafe.consume(setting, v -> map.put("setting", v));
+            NullSafe.consume(value, v -> map.put("value", v));
+            NullSafe.consume(ref, v -> map.put("ref", v));
+            NullSafe.consume(doc, d -> map.put("doc", Map.of("type", d.getType(), "uuid", d.getUuid(),
+                    "name", NullSafe.string(d.getName()))));
+            if (rule != null) {
+                NullSafe.consume(rule.style(), v -> map.put("style", v));
+                map.put("format_type", rule.formatType());
+                map.put("bold", rule.bold());
+                map.put("italic", rule.italic());
+                map.put("hide", rule.hide());
+            }
             return map;
+        }
+
+        // ----------------------------------------------------------------------------
+
+
+        /// Builds a [Change], setting only the fields its operation has.
+        public static final class Builder {
+
+            private final String op;
+            private String column;
+            private Integer level;
+            private String name;
+            private String expression;
+            private String format;
+            private Integer position;
+            private String direction;
+            private Integer priority;
+            private String filter;
+            private String where;
+            private ExpressionOperator query;
+            private String table;
+            private Boolean copy;
+            private String target;
+            private String targetId;
+            private String setting;
+            private String value;
+            private String ref;
+            private DocRef doc;
+            private FormatRule rule;
+
+            private Builder(final String op) {
+                this.op = op;
+            }
+
+            /// @param column The column it changes, by name.
+            /// @return This builder.
+            public Builder column(final String column) {
+                this.column = column;
+                return this;
+            }
+
+            /// @param level For group, the level, from 1.
+            /// @return This builder.
+            public Builder level(final Integer level) {
+                this.level = level;
+                return this;
+            }
+
+            /// @param name A new column's, table's, Text widget's or component's name.
+            /// @return This builder.
+            public Builder name(final String name) {
+                this.name = name;
+                return this;
+            }
+
+            /// @param expression A column's expression.
+            /// @return This builder.
+            public Builder expression(final String expression) {
+                this.expression = expression;
+                return this;
+            }
+
+            /// @param format A column's format.
+            /// @return This builder.
+            public Builder format(final String format) {
+                this.format = format;
+                return this;
+            }
+
+            /// @param position A position, from 1.
+            /// @return This builder.
+            public Builder position(final Integer position) {
+                this.position = position;
+                return this;
+            }
+
+            /// @param direction For sort, the direction.
+            /// @return This builder.
+            public Builder direction(final String direction) {
+                this.direction = direction;
+                return this;
+            }
+
+            /// @param priority For sort, its priority, from 1.
+            /// @return This builder.
+            public Builder priority(final Integer priority) {
+                this.priority = priority;
+                return this;
+            }
+
+            /// @param filter For filter, the filter text.
+            /// @return This builder.
+            public Builder filter(final String filter) {
+                this.filter = filter;
+                return this;
+            }
+
+            /// @param where For set_expression, the conditions as given.
+            /// @return This builder.
+            public Builder where(final String where) {
+                this.where = where;
+                return this;
+            }
+
+            /// @param query An expression: the query's, or a rule's conditions.
+            /// @return This builder.
+            public Builder query(final ExpressionOperator query) {
+                this.query = query;
+                return this;
+            }
+
+            /// @param table The table it changes or follows, if not the proposal's.
+            /// @return This builder.
+            public Builder table(final String table) {
+                this.table = table;
+                return this;
+            }
+
+            /// @param copy For add_table, true to start with the proposal table's columns.
+            /// @return This builder.
+            public Builder copy(final Boolean copy) {
+                this.copy = copy;
+                return this;
+            }
+
+            /// @param target For rename and set_setting, the component, by name.
+            /// @return This builder.
+            public Builder target(final String target) {
+                this.target = target;
+                return this;
+            }
+
+            /// @param targetId For rename and set_setting, the component's id.
+            /// @return This builder.
+            public Builder targetId(final String targetId) {
+                this.targetId = targetId;
+                return this;
+            }
+
+            /// @param setting For set_setting, the setting's key.
+            /// @return This builder.
+            public Builder setting(final String setting) {
+                this.setting = setting;
+                return this;
+            }
+
+            /// @param value For set_setting, its value.
+            /// @return This builder.
+            public Builder value(final String value) {
+                this.value = value;
+                return this;
+            }
+
+            /// @param ref For set_setting of a component, its id.
+            /// @return This builder.
+            public Builder ref(final String ref) {
+                this.ref = ref;
+                return this;
+            }
+
+            /// @param doc For set_setting of a document, the document.
+            /// @return This builder.
+            public Builder doc(final DocRef doc) {
+                this.doc = doc;
+                return this;
+            }
+
+            /// @param rule For add_format_rule, what the rule does.
+            /// @return This builder.
+            public Builder rule(final FormatRule rule) {
+                this.rule = rule;
+                return this;
+            }
+
+            /// @return The change.
+            public Change build() {
+                return new Change(op, column, level, name, expression, format, position, direction, priority, filter,
+                        where, query, table, copy, target, targetId, setting, value, ref, doc, rule);
+            }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What a conditional formatting rule does to the rows it matches.
+    ///
+    /// @param style      The colour (one of [#FORMAT_STYLES]), or null for none.
+    /// @param formatType What the colour is given to: background or text.
+    /// @param bold       True to make the rows bold.
+    /// @param italic     True to make the rows italic.
+    /// @param hide       True to hide the rows.
+    public record FormatRule(String style, String formatType, boolean bold, boolean italic, boolean hide) {
+
+        /// @return What it does, in plain language, e.g. "get a Red background, bold".
+        public String describe() {
+            if (hide) {
+                return "are hidden";
+            }
+            final List<String> parts = new ArrayList<>();
+            NullSafe.consume(style, colour -> parts.add("a " + colour + " " + formatType));
+            if (bold) {
+                parts.add("bold");
+            }
+            if (italic) {
+                parts.add("italic");
+            }
+            return "get " + String.join(", ", parts);
         }
     }
 

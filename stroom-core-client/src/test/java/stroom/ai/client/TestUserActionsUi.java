@@ -173,6 +173,39 @@ class TestUserActionsUi {
     }
 
     @Test
+    void aSettingsChangeNamesItsComponentAndAnyDocument() {
+        final TableChange change = UserActionsUi.tableChange(Map.of("op", "set_setting", "target", "Preview",
+                        "target_id", "text-1", "setting", "pipeline", "value", "p-uuid")::get, null,
+                Map.of("type", "Pipeline", "uuid", "p-uuid", "name", "Display"));
+
+        assertThat(change.getTarget()).isEqualTo("Preview");
+        assertThat(change.getTargetId()).isEqualTo("text-1");
+        assertThat(change.getSetting()).isEqualTo("pipeline");
+        assertThat(change.getValue()).isEqualTo("p-uuid");
+        assertThat(change.getDoc()).isEqualTo(new DocRef("Pipeline", "p-uuid", "Display"));
+        assertThat(UserActionsUi.tableChange(Map.of("op", "rename", "name", "Tweets")::get, null, "not a doc")
+                .getDoc()).isNull();
+    }
+
+    @Test
+    void aFormattingRuleIsReadWithWhatItDoes() {
+        final Map<String, Object> conditions = Map.of("op", "AND", "children", List.of(
+                Map.of("field", "EventType", "condition", "EQUALS", "value", "Logon Failure")));
+
+        final TableChange rule = UserActionsUi.tableChange(Map.of("op", "add_format_rule", "style", "Red",
+                "format_type", "text", "bold", "true", "position", "2.0")::get, conditions);
+
+        assertThat(rule.getOp()).isEqualTo(TableChange.ADD_FORMAT_RULE);
+        assertThat(rule.getQuery().getChildren()).hasSize(1);
+        assertThat(rule.getStyle()).isEqualTo("Red");
+        assertThat(rule.getFormatType()).isEqualTo("text");
+        assertThat(rule.isBold()).isTrue();
+        assertThat(rule.isItalic()).isFalse();
+        assertThat(rule.isHide()).isFalse();
+        assertThat(rule.getPosition()).isEqualTo(2);
+    }
+
+    @Test
     void anExpressionThatCantBeReadIsNull() {
         assertThat(UserActionsUi.expression(Map.of("op", "XOR"))).isNull();
         assertThat(UserActionsUi.expression(Map.of("op", "AND", "children", List.of(Map.of("field", "x",
