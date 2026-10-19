@@ -36,6 +36,7 @@ import stroom.gwt.workbench.client.app.editors.DataGenEditorStories;
 import stroom.gwt.workbench.client.app.editors.DocumentationEditorStories;
 import stroom.gwt.workbench.client.app.editors.ElasticClusterEditorStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapEditorStories;
+import stroom.gwt.workbench.client.app.editors.FloorMapFormsStories;
 import stroom.gwt.workbench.client.app.editors.FolderEditorStories;
 import stroom.gwt.workbench.client.app.editors.GitRepoEditorStories;
 import stroom.gwt.workbench.client.app.editors.OpenAiModelEditorStories;
@@ -306,6 +307,8 @@ public final class AppStories {
         ElasticClusterEditorStories.addTo(registry);
         // App/Editors/FloorMapEditor
         FloorMapEditorStories.addTo(registry);
+        // App/Editors/FloorMapForms
+        FloorMapFormsStories.addTo(registry);
         // App/Editors/FolderEditor
         FolderEditorStories.addTo(registry);
         // App/Editors/GitRepoEditor

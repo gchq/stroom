@@ -1006,13 +1006,6 @@
     opacity: 0.45;
 }
 
-/* Shape | Image mode radios, side by side */
-.floormap-layer-style-modes {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-
 /* Asset picker + Upload button on one line, picker taking the slack */
 .floormap-layer-style-image {
     display: flex;

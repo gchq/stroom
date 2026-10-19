@@ -67,8 +67,9 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
 
 **Reported.**
 
-* The connection and response timeout `IntegerBox` values are unboxed to `int`, so a blank box
-  would throw a `NullPointerException` on save (not tried at run time).
+* Fixed: the connection and response timeouts were `IntegerBox`es unboxed to `int`, so a blank box
+  would throw a `NullPointerException` on save. They are now value spinners, which can't be blank
+  (`App/Editors/ElasticClusterEditor` `TimeoutSpinners`).
 * The index's Minimum rerank score is read with `Float.parseFloat` on the raw text, so a blank or
   non-numeric value throws on save; there is no check that it is between 0 and 1.
 
@@ -1636,6 +1637,17 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   what screen readers read (`FormGroup.setFeedback(short, full)`, `DropDownView.setProblem`).
   Workbench: `Widgets/Selectors/DocSelectionBox` `WarningAndDisabled` and `ProblemInAFormGroup`,
   `Widgets/Selectors/DropDownSelector` `Warning`.
+* **GWT's own controls on the Elastic cluster and floor map screens** (`ElasticClusterSettingsViewImpl`,
+  `FloorMapSettingsPresenter`, `FloorMapSetScaleViewImpl`, `FloorMapGroupEditViewImpl`,
+  `FloorMapObjectEditViewImpl`, `FloorMapLayerStyleViewImpl`): two `IntegerBox`es, two `ListBox`es,
+  two `CheckBox`es and three `RadioButton`s, which looked and behaved unlike Stroom's controls. They
+  are now value spinners, selection boxes, tick boxes and a radio group (`RadioGroup`, new). The
+  layer style's Shape box had no name (its row's label named the selection box's wrapper, not its
+  combobox); it is named "Shape" (`FloorMapAria.labelledByCellInnerControl`). The layer style's rows
+  that the chosen graphic doesn't use are dimmed below 4.5:1 contrast, which WCAG 1.4.3 allows, as
+  their controls are disabled; axe can't tell, so the story's `color-contrast` is in the baseline.
+  Workbench: `App/Editors/ElasticClusterEditor` `TimeoutSpinners`, `App/Editors/FloorMapForms`,
+  `Widgets/Inputs/RadioGroup`.
 
 ## Checked and not bugs
 

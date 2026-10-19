@@ -145,6 +145,8 @@ public class FormGroup extends Composite implements HasWidgets {
     private Element ariaLabelledControl;
     // The child, when it holds several form controls, marked as a group labelled by the label
     private Element groupElement;
+    // Whether the group's role is ours to remove (a radio group's is its own)
+    private boolean groupRoleAdded;
     // The control (or group) that has the description and F1 as its shortcut, or null for none
     private Element describedControl;
 
@@ -239,7 +241,11 @@ public class FormGroup extends Composite implements HasWidgets {
                 // One label can't be for several controls, so the child is a group that the label
                 // names, and each control is named by controlNames, e.g. 'Retain For, group, Unit'
                 groupElement = childWidget.getElement();
-                groupElement.setAttribute(ROLE, GROUP_ROLE);
+                // A group of a kind of its own (a radio group) keeps its role
+                groupRoleAdded = !groupElement.hasAttribute(ROLE);
+                if (groupRoleAdded) {
+                    groupElement.setAttribute(ROLE, GROUP_ROLE);
+                }
                 groupElement.setAttribute(ARIA_LABELLED_BY, formLabel.getElement().getId());
             }
         }
@@ -321,7 +327,9 @@ public class FormGroup extends Composite implements HasWidgets {
 
     private void clearGroup() {
         if (groupElement != null) {
-            groupElement.removeAttribute(ROLE);
+            if (groupRoleAdded) {
+                groupElement.removeAttribute(ROLE);
+            }
             groupElement.removeAttribute(ARIA_LABELLED_BY);
             groupElement = null;
         }

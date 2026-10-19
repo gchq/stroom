@@ -483,6 +483,28 @@ Stories `Widgets/Inputs/TickBox` (`Basic`, `ReadOnly`, `Disabled`, `NoLabel`) an
 Not yet done: the grid cell can't be reached from the keyboard (the data grid's keyboard pattern,
 session 4); it hasn't been tried with a screen reader.
 
+## Radio group
+
+`RadioGroup<T>` (`stroom.widget.form.client`) is a choice of one of a few options, all shown. It
+replaces GWT's `RadioButton`, of which the floor map's layer style had three.
+
+- **Native radio buttons.** Its options are native radio inputs sharing a name, so the browser
+  makes the group one tab stop, and the arrow keys move between the options, choosing as they go.
+  Each option is a label holding its radio button and text, so its text names it, and clicking the
+  text chooses it.
+- **A named radio group.** The block is `role="radiogroup"`, named by its form group's label, or by
+  `setAccessibleName` where there is none. A form group marks a child holding several controls as a
+  `group`; it now leaves a child that has a role of its own (a radio group's) as it is.
+- **Value.** `addItem(value, label[, title])`, then `getValue`, `setValue(value[, fireEvents])`
+  and a value change handler, which a choice fires once (the browser fires `change` only on the
+  radio button chosen).
+- **CSS.** `radio-button.css`: the BEM block `radio-group`, its `__option`, `__input` and `__label`.
+  Every radio input looks the same, including those in an activity's form, which have no classes
+  of their own.
+
+Stories `Widgets/Inputs/RadioGroup` (`Basic`, `Disabled`, `AccessibleName`), and
+`App/Editors/FloorMapForms` `LayerStyle`.
+
 ## Quick filter
 
 `QuickFilter` (`stroom.widget.dropdowntree.client.view`) is the BEM block `quick-filter`
