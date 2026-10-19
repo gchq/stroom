@@ -103,6 +103,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -125,6 +126,9 @@ public class DashboardPresenter
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final FlexLayout layoutPresenter;
     private final Components components;
+    // Changes from the AI chat that have been applied, by their undo key, so each can be undone while the
+    // dashboard is as the change left it.
+    private final Map<String, AiUndo> aiUndos = new HashMap<>();
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final QueryInfo queryInfo;
     private final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider;
@@ -1136,13 +1140,21 @@ public class DashboardPresenter
         return AiTabSnapshotPart.hashText(aiDashboardText());
     }
 
-    /// Applies changes the AI chat proposed to one of the dashboard's tables, as its column menus would, unsaved.
+    /// Applies changes the AI chat proposed to one of the dashboard's tables, as its column menus would, unsaved:
+    /// changes to the table, to the expression of the classic query that feeds it, and tables added beside it as
+    /// tabs (fed by the same query), which later changes name as their table. They are applied all or none: if one
+    /// can't be, the dashboard is put back as it was. Once applied, they can be undone with
+    /// [#undoAiTableChanges(String)] while the dashboard is as they left it.
     ///
     /// @param componentId The table's component id.
     /// @param name        The table's name, used if no component has the id.
     /// @param changes     The changes, in order.
+    /// @param undoKey     What the changes are known by, to undo them, or null if they can't be undone.
     /// @return Why they couldn't all be applied, or null if they were.
-    public String applyAiTableChanges(final String componentId, final String name, final List<TableChange> changes) {
+    public String applyAiTableChanges(final String componentId,
+                                      final String name,
+                                      final List<TableChange> changes,
+                                      final String undoKey) {
         Component component = componentId == null
                 ? null
                 : components.get(componentId);
@@ -1156,7 +1168,150 @@ public class DashboardPresenter
         if (component == null) {
             return "The dashboard has no table '" + name + "'.";
         }
-        return TableChange.apply(component, changes);
+        ExpressionOperator expression = null;
+        for (final TableChange change : changes) {
+            if (TableChange.SET_EXPRESSION.equals(change.getOp())) {
+                expression = change.getQuery();
+                if (expression == null) {
+                    return "The query's new expression can't be read.";
+                }
+            }
+        }
+        final QueryPresenter query;
+        if (expression != null) {
+            final String queryId = TableChange.queryId(component);
+            query = queryId != null && components.get(queryId) instanceof final QueryPresenter queryPresenter
+                    ? queryPresenter
+                    : null;
+            if (query == null) {
+                return "Table '" + name + "' isn't fed by a classic query on this dashboard, so its expression "
+                       + "can't be set.";
+            }
+        } else {
+            query = null;
+        }
+
+        final TableComponentSettings before = TableChange.snapshot(component);
+        final ExpressionOperator expressionBefore = query != null
+                ? query.getExpression()
+                : null;
+        // The tables added, by the name the changes give them (lower case).
+        final Map<String, Component> added = new LinkedHashMap<>();
+        for (int i = 0; i < changes.size(); i++) {
+            final TableChange change = changes.get(i);
+            final String prefix = "Change " + (i + 1) + " (" + change.getOp() + "): ";
+            String failed = null;
+            if (TableChange.ADD_TABLE.equals(change.getOp())) {
+                final Component table = addAiTable(component, change.getName(), change.isCopy());
+                if (table == null) {
+                    failed = prefix + "the table couldn't be added.";
+                } else {
+                    added.put(NullSafe.string(change.getName()).toLowerCase(), table);
+                }
+            } else if (!TableChange.SET_EXPRESSION.equals(change.getOp())) {
+                final Component target = change.getTable() == null || change.getTable().equalsIgnoreCase(name)
+                        ? component
+                        : added.get(change.getTable().toLowerCase());
+                failed = target == null
+                        ? prefix + "there is no table '" + change.getTable() + "'."
+                        : TableChange.apply(target, List.of(change));
+            }
+            if (failed != null) {
+                added.values().forEach(this::removeAiTable);
+                TableChange.restore(component, before);
+                return failed;
+            }
+        }
+        if (query != null) {
+            query.setExpression(expression);
+            query.onChange();
+        }
+        if (undoKey != null && before != null) {
+            aiUndos.put(undoKey, new AiUndo(component.getComponentConfig().getId(), before,
+                    NullSafe.get(query, Component::getId), expressionBefore,
+                    added.values().stream().map(Component::getId).toList(), aiDashboardHash()));
+        }
+        return null;
+    }
+
+    // Adds a table beside another as a tab, fed by the same query, with its columns or none, named as the AI chat
+    // asked (made unique if the dashboard has the name already).
+    private Component addAiTable(final Component source, final String name, final boolean copyColumns) {
+        final TableComponentSettings settings = TableChange.snapshot(source);
+        final MutableTabConfig sourceTab = source.getTabConfig();
+        if (settings == null || sourceTab == null || sourceTab.getParent() == null) {
+            return null;
+        }
+        final ComponentType type = source.getComponentType();
+        final ComponentId componentId = new ComponentNameSet(components).createUnique(type, name);
+        final ComponentConfig componentConfig = ComponentConfig.builder()
+                .type(type.getId())
+                .id(componentId.id)
+                .name(componentId.name)
+                .settings(settings.copy()
+                        .columns(copyColumns
+                                ? new ArrayList<>(NullSafe.list(settings.getColumns()))
+                                : new ArrayList<>())
+                        .build())
+                .build();
+        final Component table = addComponent(componentConfig.getType(), componentConfig);
+        if (table == null) {
+            return null;
+        }
+        table.link();
+        final MutableTabConfig tabConfig = new MutableTabConfig(componentId.id, true);
+        table.setTabConfig(tabConfig);
+        sourceTab.getParent().add(tabConfig);
+        layoutPresenter.clear();
+        layoutPresenter.refresh();
+        onChange();
+        return table;
+    }
+
+    // Removes a table the AI chat added, with its tab.
+    private void removeAiTable(final Component table) {
+        if (table.getTabConfig() != null && table.getTabConfig().getParent() != null) {
+            layoutPresenter.closeTab(table.getTabConfig());
+        }
+        if (table instanceof final Queryable queryable) {
+            queryable.removeSearchStateListener(this);
+            queryable.removeSearchErrorListener(this);
+        }
+        components.remove(table.getId());
+        dashboardContext.fireContextChangeEvent();
+        enableQueryButtons();
+    }
+
+    /// @param undoKey What applied changes are known by.
+    /// @return True if they can be undone: they were applied here, and the dashboard is as they left it.
+    public boolean canUndoAiTableChanges(final String undoKey) {
+        final AiUndo undo = undoKey == null
+                ? null
+                : aiUndos.get(undoKey);
+        return undo != null && components.get(undo.componentId) != null && undo.hashAfter.equals(aiDashboardHash());
+    }
+
+    /// Undoes changes from the AI chat, putting the table back as it was before them, as an unsaved edit, if the
+    /// dashboard is as they left it.
+    ///
+    /// @param undoKey What the changes are known by.
+    /// @return True if they were undone.
+    public boolean undoAiTableChanges(final String undoKey) {
+        if (!canUndoAiTableChanges(undoKey)) {
+            return false;
+        }
+        final AiUndo undo = aiUndos.remove(undoKey);
+        for (final String addedId : undo.addedIds) {
+            final Component table = components.get(addedId);
+            if (table != null) {
+                removeAiTable(table);
+            }
+        }
+        if (undo.queryId != null && components.get(undo.queryId) instanceof final QueryPresenter query) {
+            query.setExpression(undo.expressionBefore);
+            query.onChange();
+        }
+        return TableChange.restore(components.get(undo.componentId), undo.before);
     }
 
     /// @return Each table's search requests, for the AI chat to take snapshots of their rows.
@@ -1251,6 +1406,37 @@ public class DashboardPresenter
             currentIdSet.add(id);
             currentNameSet.add(name);
             return new ComponentId(id, name);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A change from the AI chat that has been applied: the table it changed and its settings before, the query
+    // whose expression it set (if it did) and that expression before, the tables it added, and the hash of the
+    // dashboard's settings just after, which they must still have for it to be undone.
+    private static class AiUndo {
+
+        private final String componentId;
+        private final TableComponentSettings before;
+        private final String queryId;
+        private final ExpressionOperator expressionBefore;
+        private final List<String> addedIds;
+        private final String hashAfter;
+
+        private AiUndo(final String componentId,
+                       final TableComponentSettings before,
+                       final String queryId,
+                       final ExpressionOperator expressionBefore,
+                       final List<String> addedIds,
+                       final String hashAfter) {
+            this.componentId = componentId;
+            this.before = before;
+            this.queryId = queryId;
+            this.expressionBefore = expressionBefore;
+            this.addedIds = addedIds;
+            this.hashAfter = hashAfter;
         }
     }
 

@@ -212,11 +212,17 @@ public class ContextAssembler {
             over all the data, suggest the scalable route as text to copy: a column from the dashboard's \
             extraction pipeline, or a query on an indexed field.
             - Write column expressions in Stroom's expression language (the functions table's eval uses), with \
-            the data source's fields as ${Field}; check field names with describe_data_source.
+            the data source's fields as ${Field}; check field names with describe_data_source. Use its functions \
+            to give the user what they mean rather than only raw fields, e.g. if(), match(), decode(), \
+            replace(), substringBefore(), concat(), formatDate(); try an expression with table's eval on a \
+            snapshot of the rows first.
+            - For tables by category (e.g. a tab per event type), find the categories from the rows, then \
+            propose add_table for each, with columns that suit it and a filter on the category column.
             - To change a table on the dashboard (group or ungroup, add, edit, hide or show a column, sort, or \
-            filter a column), use propose_dashboard_change. It shows the user the changes with an Apply to \
-            dashboard button; nothing changes until they click it, and it is never saved. Changes to a query's \
-            expression are the user's to make: give the terms to copy.""";
+            filter a column), or the expression of the classic query that feeds it (set_expression, conditions \
+            in where), use propose_dashboard_change. It shows the user the changes with an Apply to dashboard \
+            button; nothing changes until they click it, and it is never saved. A classic query is an \
+            expression, not StroomQL: never show the user StroomQL for it; describe its conditions in words.""";
 
     /// What the model is told in Agent mode. The user may have switched from Ask or Plan mode, where earlier
     /// answers will have said the model couldn't change anything; it is told that no longer applies.

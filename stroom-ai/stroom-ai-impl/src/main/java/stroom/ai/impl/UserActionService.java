@@ -53,11 +53,11 @@ public class UserActionService {
     /// What a proposed code change's card says once it has been applied.
     static final String APPLIED = "Applied, not saved";
     /// What a proposed dashboard change's card says once it has been applied.
-    static final String APPLIED_DASHBOARD = "Applied, not saved. Save the dashboard to keep it, or close it without "
-                                            + "saving to go back.";
+    static final String APPLIED_DASHBOARD = "Applied, not saved. Save the dashboard to keep it, or use Undo apply.";
     static final String APPLY_COMMAND = "Apply proposed code change";
     static final String UNDO_COMMAND = "Undo applied code change";
     static final String APPLY_DASHBOARD_COMMAND = "Apply proposed dashboard change";
+    static final String UNDO_DASHBOARD_COMMAND = "Undo applied dashboard change";
     private static final String NOT_IN_CHAT = "This action is not in the chat.";
 
     /// The most lines of each rejected part of a code change described to the model, on each side.
@@ -171,6 +171,9 @@ public class UserActionService {
                 : find(result, actionId);
         if (action == null) {
             return new AiUserActionResult(false, NOT_IN_CHAT, null);
+        }
+        if (UserActions.APPLY_DASHBOARD_CHANGE.equals(action.action()) && action.status() == Status.DONE) {
+            return undoDashboardChange(chatId, message, result, action);
         }
         if (!isCodeChange(action) || action.status() != Status.DONE) {
             return new AiUserActionResult(false, "There is no applied change to undo.", null);
@@ -402,6 +405,36 @@ public class UserActionService {
                                                                      + "proposed change to " + target + " ("
                                                                      + operations + "). It is not saved.");
         return new AiUserActionResult(true, APPLIED_DASHBOARD, null);
+    }
+
+    /// Records that the user undid a proposed dashboard change they had applied, if they may still edit the
+    /// dashboard. The browser puts the table back as it was once this says it may; nothing is saved. The button
+    /// can then be used to apply the change again.
+    private AiUserActionResult undoDashboardChange(final int chatId,
+                                                   final AiChatMessage message,
+                                                   final ToolResultRecord result,
+                                                   final UserActionRecord action) {
+        final DashboardChange change = action.dashboardChange();
+        final String target = change == null
+                ? describeDoc(action)
+                : "table '" + change.component() + "' on " + describeDoc(action);
+        if (action.doc() == null || !lookup.canEdit(action.doc())) {
+            final String problem = "You don't have permission to edit " + describeDoc(action) + ", so the change "
+                                   + "can't be undone here. Close the dashboard without saving to go back.";
+            auditLog.processed(chatId, action.doc(), UNDO_DASHBOARD_COMMAND, target, problem, false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        final String outcome = "Undid the applied change, not saved";
+        if (update(message, result, action.withStatus(Status.PENDING, outcome)) == null) {
+            return new AiUserActionResult(false, "This has already changed. Try again.", null);
+        }
+        auditLog.processed(chatId, action.doc(), UNDO_DASHBOARD_COMMAND, target,
+                "Undid an applied change: " + String.join("; ", NullSafe.list(NullSafe.get(change,
+                        DashboardChange::changes))), true);
+        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I undid the "
+                                                                     + "proposed change I had applied to "
+                                                                     + target + ". Nothing was saved.");
+        return new AiUserActionResult(true, outcome, null);
     }
 
     private static String describeDoc(final UserActionRecord action) {

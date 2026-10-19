@@ -24,7 +24,9 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Reads the JSON held by TOOL_CALL and TOOL_RESULT chat messages, for display.
@@ -74,6 +76,41 @@ final class AiToolMessages {
         return value != null
                 ? value.isArray()
                 : null;
+    }
+
+    /// @param value A JSON value, or null.
+    /// @return The value as plain Java: maps for objects, lists for arrays, and strings, numbers (as doubles) and
+    /// booleans; null for null or a missing value.
+    static Object toJava(final JSONValue value) {
+        if (value == null || value.isNull() != null) {
+            return null;
+        }
+        final JSONObject object = value.isObject();
+        if (object != null) {
+            final Map<String, Object> map = new LinkedHashMap<>();
+            for (final String key : object.keySet()) {
+                map.put(key, toJava(object.get(key)));
+            }
+            return map;
+        }
+        final JSONArray array = value.isArray();
+        if (array != null) {
+            final List<Object> list = new ArrayList<>();
+            for (int i = 0; i < array.size(); i++) {
+                list.add(toJava(array.get(i)));
+            }
+            return list;
+        }
+        if (value.isString() != null) {
+            return value.isString().stringValue();
+        }
+        if (value.isBoolean() != null) {
+            return value.isBoolean().booleanValue();
+        }
+        if (value.isNumber() != null) {
+            return value.isNumber().doubleValue();
+        }
+        return null;
     }
 
     private static JSONValue getValue(final String json, final String name) {

@@ -17,7 +17,6 @@
 package stroom.dashboard.client;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.dashboard.client.event.ApplyDashboardChangeEvent;
@@ -82,20 +81,31 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         registerHandler(eventBus.addHandler(ApplyDashboardChangeEvent.getType(), this::onApplyDashboardChange));
     }
 
-    // A change to a dashboard table proposed in the AI chat: whether it can be applied, or applying it.
+    // A change to a dashboard table proposed in the AI chat: whether it can be applied, applying it, or undoing it.
     private void onApplyDashboardChange(final ApplyDashboardChangeEvent event) {
         final DocRef docRef = event.getDashboard();
         if (docRef == null || !getType().equals(docRef.getType())) {
             return;
         }
         if (ApplyDashboardChangeEvent.Operation.CHECK == event.getOperation()) {
-            DashboardSuperPresenter open = null;
-            for (final DocumentTabData tabData : getOpenDocuments(List.of(docRef))) {
-                if (open == null && tabData instanceof final DashboardSuperPresenter dashboard) {
-                    open = dashboard;
-                }
-            }
+            final DashboardSuperPresenter open = openDashboard(docRef);
             event.setHandled(open != null, open != null && !open.isReadOnly());
+            return;
+        }
+        if (ApplyDashboardChangeEvent.Operation.CAN_UNDO == event.getOperation()
+            || ApplyDashboardChangeEvent.Operation.UNDO == event.getOperation()) {
+            // Only an open dashboard can be undone: the change was never saved, so a closed one doesn't have it.
+            final DashboardSuperPresenter open = openDashboard(docRef);
+            if (open == null) {
+                return;
+            }
+            if (ApplyDashboardChangeEvent.Operation.CAN_UNDO == event.getOperation()) {
+                event.setCanUndo(!open.isReadOnly()
+                                 && open.getDashboardPresenter().canUndoAiTableChanges(event.getUndoKey()));
+            } else {
+                event.setUndone(!open.isReadOnly()
+                                && open.getDashboardPresenter().undoAiTableChanges(event.getUndoKey()));
+            }
             return;
         }
         event.setHandled(true, true);
@@ -111,26 +121,22 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
     private void applyDashboardChange(final DashboardSuperPresenter dashboard, final ApplyDashboardChangeEvent event) {
         final ApplyDashboardChangeEvent.Decision decision = ApplyDashboardChangeEvent.decide(!dashboard.isReadOnly(),
-                dashboard.getDashboardPresenter().aiDashboardHash(), event.getSnapshotHash(), dashboard.isDirty());
+                dashboard.getDashboardPresenter().aiDashboardHash(), event.getSnapshotHash());
         switch (decision) {
             case NOT_EDITABLE -> event.notApplied(ApplyDashboardChangeEvent.NOT_EDITABLE);
             case CHANGED -> event.notApplied(ApplyDashboardChangeEvent.CHANGED);
-            case SAVE_FIRST -> ConfirmEvent.fire(this, ApplyDashboardChangeEvent.SAVE_FIRST, ok -> {
-                if (!ok) {
-                    event.notApplied(null);
-                    return;
-                }
-                // The dashboard's own Save, with its own checks and logging.
-                save(dashboard, () -> {
-                    if (dashboard.isDirty()) {
-                        event.notApplied(ApplyDashboardChangeEvent.NOT_SAVED);
-                    } else {
-                        approveAndApply(dashboard, event);
-                    }
-                });
-            });
             default -> approveAndApply(dashboard, event);
         }
+    }
+
+    // The dashboard's open tab, or null if it isn't open.
+    private DashboardSuperPresenter openDashboard(final DocRef docRef) {
+        for (final DocumentTabData tabData : getOpenDocuments(List.of(docRef))) {
+            if (tabData instanceof final DashboardSuperPresenter dashboard) {
+                return dashboard;
+            }
+        }
+        return null;
     }
 
     // Applies the change once the chat's approver (the server, which checks Edit and records it) says it may.
@@ -142,7 +148,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 return;
             }
             final String failed = dashboard.getDashboardPresenter().applyAiTableChanges(event.getComponentId(),
-                    event.getComponentName(), event.getChanges());
+                    event.getComponentName(), event.getChanges(), event.getUndoKey());
             if (failed != null) {
                 event.notApplied(failed);
             } else {
