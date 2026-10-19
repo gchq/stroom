@@ -416,10 +416,19 @@ public final class PipelineEditorStories {
                     play.keyboard("{ArrowDown}{ArrowRight}");
                     play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveFocus());
                     play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveClass(HOTSPOT));
+                    // Each element's name says whether it can take it, before trying
+                    play.expect(elementBox(tree, "decoration")).toHaveAttribute("aria-label",
+                            "decoration, XSLT Filter, can take rawWriter");
+                    play.expect(refusedIcon(tree, "decoration")).not().toBeVisible();
                     play.keyboard("{ArrowRight}{ArrowRight}");
                     play.waitFor(() -> play.expect(elementBox(tree, "indexWriter")).toHaveFocus());
                     play.waitFor(() -> play.expect(elementBox(tree, "indexWriter")).toHaveClass(REFUSED));
                     play.expect(elementBox(tree, "decoration")).not().toHaveClass(HOTSPOT);
+                    // It refuses it: not by colour alone, its type icon is the "not allowed" icon
+                    play.expect(elementBox(tree, "indexWriter")).toHaveAttribute("aria-label",
+                            "indexWriter, XML Writer, can't take rawWriter");
+                    play.expect(refusedIcon(tree, "indexWriter")).toBeVisible();
+                    play.expect(typeIcon(tree, "indexWriter")).not().toBeVisible();
                     // A writer can't take another: Ctrl+V says so and keeps it detached
                     play.keyboard("{Control>}v{/Control}");
                     play.waitFor(() -> play.expect(status).toHaveTextContent("indexWriter can't take rawWriter."));
@@ -431,6 +440,9 @@ public final class PipelineEditorStories {
                     play.keyboard("{Control>}v{/Control}");
                     play.waitFor(() -> play.expect(status).toHaveTextContent("rawWriter attached to decoration."));
                     play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
+                    play.expect(elementBox(tree, "indexWriter"))
+                            .toHaveAttribute("aria-label", "indexWriter, XML Writer");
+                    play.expect(typeIcon(tree, "indexWriter")).toBeVisible();
                     final Query movedWriter = elementBox(tree, "rawWriter");
                     final Query xmlWriter = elementBox(tree, "xmlWriter");
                     play.waitFor(() -> play.expect("rawWriter's left less xmlWriter's",
@@ -559,6 +571,7 @@ public final class PipelineEditorStories {
                     play.fireEvent().mouseMove(streamAppender,
                             EventInit.create().atCentreOf(streamAppender).buttons(1));
                     play.waitFor(() -> play.expect(elementBox(tree, "streamAppender")).toHaveClass(REFUSED));
+                    play.expect(refusedIcon(tree, "streamAppender")).toBeVisible();
                     play.expect(elementBox(tree, "parser")).toHaveClass(HOTSPOT);
 
                     // decoration takes it: it is the target, and the appender no longer refuses
@@ -567,6 +580,8 @@ public final class PipelineEditorStories {
                     play.waitFor(() -> play.expect(elementBox(tree, "decoration")).toHaveClass(HOTSPOT));
                     play.expect(elementBox(tree, "parser")).not().toHaveClass(HOTSPOT);
                     play.expect(elementBox(tree, "streamAppender")).not().toHaveClass(REFUSED);
+                    play.expect(refusedIcon(tree, "streamAppender")).not().toBeVisible();
+                    play.expect(typeIcon(tree, "streamAppender")).toBeVisible();
 
                     // Dropping it there moves it into decoration's children's column, as wide as them
                     play.fireEvent().mouseUp(decoration, EventInit.create().atCentreOf(decoration));
@@ -929,6 +944,15 @@ public final class PipelineEditorStories {
     // The box of an element of the tree
     private static Query elementBox(final Play tree, final String name) {
         return tree.getByText(name, ".pipelineElementBox-label").closest(".pipelineElementBox-background");
+    }
+
+    // A box's type icon, and the "not allowed" icon shown in its place while it refuses what is moved
+    private static Query typeIcon(final Play tree, final String name) {
+        return tree.within(elementBox(tree, name)).querySelector(".pipelineElementBox-typeIcon");
+    }
+
+    private static Query refusedIcon(final Play tree, final String name) {
+        return tree.within(elementBox(tree, name)).querySelector(".pipelineElementBox-refusedIcon");
     }
 
     private static void expectNoProblems(final Play play) {

@@ -48,6 +48,8 @@ public class PipelineElementBox extends Box<PipelineElement> {
     private static final String HOTSPOT_CLASS = BASE_CLASS + "-hotspot";
     private static final String REFUSED_CLASS = BASE_CLASS + "-refused";
     private static final String DETACHED_CLASS = BASE_CLASS + "-detached";
+    private static final String TYPE_ICON_CLASS = BASE_CLASS + "-typeIcon";
+    private static final String REFUSED_ICON_CLASS = BASE_CLASS + "-refusedIcon";
     private static final String DISABLED_CLASS = BASE_CLASS + "-disabled";
     private static final String SEVERITY_INFO_CLASS = BASE_CLASS + "-severityInfo";
     private static final String SEVERITY_WARN_CLASS = BASE_CLASS + "-severityWarn";
@@ -82,6 +84,9 @@ public class PipelineElementBox extends Box<PipelineElement> {
     // The element's type, for its name as a tree item, e.g. "XSLT Filter"
     private final String typeName;
     private boolean detached;
+    // While an element is detached, its name, and whether this one can take it, for this one's name
+    private String detachedName;
+    private boolean canTake;
 
     public PipelineElementBox(final PipelineModel pipelineModel,
                               final PipelineElement pipelineElement,
@@ -113,8 +118,18 @@ public class PipelineElementBox extends Box<PipelineElement> {
             // Give the type icon a text alternative so a screen reader can say what type of
             // element this is
             nameImage(image, iconName);
+            image.addStyleName(TYPE_ICON_CLASS);
             background.add(image);
         }
+
+        // Shown in place of the type icon while the element won't take what is being moved to it
+        // (see showRefused), so that that isn't told by colour alone. Its name says so instead (see
+        // setDetachedName)
+        final SimplePanel refusedIcon = new SimplePanel();
+        SvgImageUtil.setSvgAsInnerHtml(refusedIcon, SvgImage.NOT_ALLOWED, "svgIcon", BASE_CLASS + "-image");
+        refusedIcon.addStyleName(REFUSED_ICON_CLASS);
+        refusedIcon.getElement().setAttribute("aria-hidden", "true");
+        background.add(refusedIcon);
 
         background.add(label);
 
@@ -206,7 +221,20 @@ public class PipelineElementBox extends Box<PipelineElement> {
         updateName();
     }
 
-    // e.g. "translation, XSLT Filter" or "rawWriter, XML Writer, detached"
+    /// Says in the element's name whether it can take an element detached to be attached to another
+    /// parent, e.g. "indexWriter, XML Writer, can't take rawWriter", so that it is known before trying.
+    ///
+    /// @param detachedName The detached element's name, or null when none is detached (or this is
+    ///                     it, or after it).
+    /// @param canTake      Whether this element can take it.
+    public void setDetachedName(final String detachedName, final boolean canTake) {
+        this.detachedName = detachedName;
+        this.canTake = canTake;
+        updateName();
+    }
+
+    // e.g. "translation, XSLT Filter", "rawWriter, XML Writer, detached" or "decoration, XSLT
+    // Filter, can take rawWriter"
     private void updateName() {
         if (getWidget() == null) {
             // Not built yet: the constructor names it once it is
@@ -218,6 +246,12 @@ public class PipelineElementBox extends Box<PipelineElement> {
         }
         if (detached) {
             sb.append(", detached");
+        }
+        if (detachedName != null) {
+            sb.append(canTake
+                            ? ", can take "
+                            : ", can't take ")
+                    .append(detachedName);
         }
         getElement().setAttribute("aria-label", sb.toString());
     }

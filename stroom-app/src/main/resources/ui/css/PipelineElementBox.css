@@ -176,6 +176,17 @@
 	cursor: pointer;
 }
 
+/* An element that won't take what is being moved to it shows the "not allowed" icon in place of its
+   type icon, so that that isn't told by its red border alone (and its width doesn't change) */
+.pipelineElementBox-refusedIcon,
+.pipelineElementBox-refused .pipelineElementBox-typeIcon {
+	display: none;
+}
+
+.pipelineElementBox-refused .pipelineElementBox-refusedIcon {
+	display: block;
+}
+
 /* An element's name. It is as wide as its name in bold, so that its column (whose width is that of
    its widest box) doesn't change when it is selected: an invisible bold copy of the name (::after,
    from its data-text) shares its one column */

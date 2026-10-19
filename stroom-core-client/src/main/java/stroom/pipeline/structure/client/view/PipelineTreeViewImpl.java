@@ -399,7 +399,12 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         for (final PipelineElement element : getAllElements(tree)) {
             final Box<PipelineElement> box = treePanel.getBox(element);
             if (box instanceof final PipelineElementBox pipelineElementBox) {
-                pipelineElementBox.setDetached(detached != null && isInBranch(element, detached));
+                final boolean inDetached = detached != null && isInBranch(element, detached);
+                pipelineElementBox.setDetached(inDetached);
+                pipelineElementBox.setDetachedName(detached == null || inDetached
+                                ? null
+                                : detached.getDisplayName(),
+                        !inDetached && canAttach(element));
                 final boolean isTarget = detached != null && element.equals(target) && !isInBranch(element, detached);
                 pipelineElementBox.showHotspot(isTarget && canAttach(element));
                 pipelineElementBox.showRefused(isTarget && !canAttach(element));
