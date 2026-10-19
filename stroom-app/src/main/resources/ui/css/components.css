@@ -2258,9 +2258,6 @@
 .gitrepo-settings-form #credentials-group {
     width: 400px;
 }
-.gitrepo-settings-form #credentials-group .selection-box {
-    width: 280px;
-}
 .gitrepo-settings-form button.credentials-button {
     width: 120px;
 }

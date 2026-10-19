@@ -19,9 +19,9 @@
    block__element, block--modifier): a field for a whole number, with down and up arrows inside the
    end of its border, as a drop-down's arrow is. The arrows are for the mouse only (Up and Down in
    the field step it from the keyboard), so they have no focus states. Their disabled look comes
-   from the field's own disabled and read only states.
+   from the field's own disabled and read only states. The field is a text field (text-field.css).
 
-   The data grid's spinner (ValueSpinnerCell) has its own markup, styled by valuespinner.css.
+   The data grid's spinner (ValueSpinnerCell) is the value-spinner--cell variant, at the end.
 */
 
 /* The spinner: its field, and under it any feedback. A width given to the spinner (e.g.

@@ -1315,32 +1315,19 @@
     background-color: rgba(128, 128, 128, 0.12);
 }
 
-/* GWT renders a CheckBox as <span><input><label>, and those two align on the
-   text baseline rather than on their centres — so the label reads a couple of
-   pixels high against the box, which Stroom's global input rules make taller
-   still by giving it a border and vertical padding. Centre them with flex
-   instead of leaning on baseline alignment. */
-.floormap-group-edit-member .gwt-CheckBox {
+/* A member's tick box (tick-box.css) takes the row's slack, leaving its type at the end */
+.floormap-group-edit-member .tick-box {
     flex: 1 1 auto;
     min-width: 0;
-    display: inline-flex;
-    align-items: center;
-}
-
-.floormap-group-edit-member .gwt-CheckBox input[type="checkbox"] {
-    flex: 0 0 auto;
-    /* Breathing room between the box and the name it labels. */
-    margin: 0 6px 0 0;
 }
 
 /* min-width:0 is what lets a long name ellipsise inside the flex line rather
    than pushing the type label out of the row. */
-.floormap-group-edit-member .gwt-CheckBox label {
+.floormap-group-edit-member .tick-box__label {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    cursor: pointer;
 }
 
 .floormap-group-edit-member-detail {
