@@ -111,7 +111,7 @@
     --navigation-icon-button__background-color--hover: rgb(52, 53, 55);
     --navigation-icon-button__border-color--hover: rgb(18, 19, 21);
 
-    --expression-item__background-color--disabled: #333;
+    /* 6.9:1 on the page */
     --expression-item__text-color--disabled: #a6a6a6;
     --expression-item__drop-target: var(--icon-colour__green);
     --expression-item__drop-refused: var(--icon-colour__red);

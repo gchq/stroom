@@ -131,8 +131,7 @@
     --navigation-icon-button__background-color--hover: var(--icon-button__background-color--hover);
     --navigation-icon-button__border-color--hover: var(--icon-button__border-color--hover);
 
-    --expression-item__background-color--disabled: #ccc;
-    /* 4.5:1 on that grey */
+    /* 7.5:1 on the page */
     --expression-item__text-color--disabled: #555;
     --expression-item__drop-target: var(--icon-colour__dark-green);
     --expression-item__drop-refused: var(--icon-colour__red);

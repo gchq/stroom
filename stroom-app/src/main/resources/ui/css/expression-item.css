@@ -59,12 +59,9 @@
 	background-color: var(--row__background-color--hovered);
 }
 
-/* A disabled item looks disabled in a read-only tree too: a grey row, and its text grey and struck
-   through, so that it isn't told by colour alone */
-.expression-item--disabled .expression-item__row {
-	background-color: var(--expression-item__background-color--disabled);
-}
-
+/* A disabled item looks disabled in a read-only tree too: its text grey and struck through, so
+   that it isn't told by colour alone (with no fill, so that it draws the eye less than the items
+   that count) */
 .expression-item--disabled .expression-item__label {
 	text-decoration: line-through;
 }
@@ -168,7 +165,6 @@
 		--row__background-color--hovered: Canvas;
 		--row__background-color--selected--focussed: Highlight;
 		--row__text-color--selected: HighlightText;
-		--expression-item__background-color--disabled: Canvas;
 		--expression-item__text-color--disabled: GrayText;
 		--control__text-color--readonly: CanvasText;
 		--expression-item__drop-target: CanvasText;
