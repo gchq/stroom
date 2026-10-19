@@ -23,8 +23,10 @@ import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
+import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.SpecialColumns;
 import stroom.query.common.v2.ExpressionContextFactory;
@@ -207,6 +209,34 @@ class TestDashboardBuilder {
         assertThatThrownBy(() -> builder.build("Logons", "select from where", DashboardBuilder.STROOMQL, false))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageStartingWith("The query can't be read");
+    }
+
+    @Test
+    void testConditionsBecomeAClassicQuerysExpression() {
+        Mockito.when(queryService.validateQuery(Mockito.anyString()))
+                .thenReturn(new ValidateExpressionResult(true, "ok", false));
+
+        final ExpressionOperator expression = builder.whereExpression(VIEW,
+                "User = \"jbloggs\" or User = \"asmith\"");
+
+        assertThat(expression.getChildren()).extracting(item -> ((ExpressionTerm) item).getValue())
+                .containsExactly("jbloggs", "asmith");
+        // Checked as StroomQL is, against the data source.
+        Mockito.verify(queryService).validateQuery("from \"My View\" where User = \"jbloggs\" or User = \"asmith\"");
+    }
+
+    @Test
+    void testConditionsThatArentValidAreRefused() {
+        Mockito.when(queryService.validateQuery(Mockito.anyString()))
+                .thenReturn(new ValidateExpressionResult(false, "Unknown field 'Usr'", false));
+
+        assertThatThrownBy(() -> builder.whereExpression(VIEW, "Usr = \"x\""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("The conditions aren't valid: Unknown field 'Usr'");
+        assertThatThrownBy(() -> builder.whereExpression(VIEW, " "))
+                .hasMessage("Give the query's conditions.");
+        assertThatThrownBy(() -> builder.whereExpression(null, "User = \"x\""))
+                .hasMessageContaining("data source isn't known");
     }
 
     @Test

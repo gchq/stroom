@@ -28,6 +28,7 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
+import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
@@ -271,6 +272,41 @@ public class DashboardBuilder {
             outline.add("A data preview of the selected row's event");
         }
         return List.copyOf(outline);
+    }
+
+    /// Builds the expression of a classic dashboard query from conditions written as a StroomQL where clause has
+    /// them, checked as StroomQL is against the data source's fields.
+    ///
+    /// @param dataSource The data source the query reads.
+    /// @param where      The conditions, e.g. `EventType = "Logon" and User = "jbloggs"`.
+    /// @return The expression.
+    /// @throws IllegalArgumentException saying why, if the conditions can't be read or aren't valid.
+    public ExpressionOperator whereExpression(final DocRef dataSource, final String where) {
+        if (dataSource == null || NullSafe.isBlankString(dataSource.getName())) {
+            throw new IllegalArgumentException("The table's data source isn't known, so its query can't be set.");
+        }
+        if (NullSafe.isBlankString(where)) {
+            throw new IllegalArgumentException("Give the query's conditions.");
+        }
+        final String query = "from \"" + dataSource.getName().replace("\"", "\\\"") + "\" where " + where.strip();
+        final ValidateExpressionResult validation;
+        try {
+            validation = queryServiceProvider.get().validateQuery(query);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to validate the conditions: " + e.getMessage(), e);
+            throw new IllegalArgumentException("The conditions can't be read: "
+                                               + NullSafe.nonBlankStringElse(e.getMessage(), e.getClass().getName()));
+        }
+        if (validation == null || !validation.isOk()) {
+            throw new IllegalArgumentException("The conditions aren't valid: "
+                                               + NullSafe.nonBlankStringElse(NullSafe.get(validation,
+                    ValidateExpressionResult::getString), "the parser gave no reason"));
+        }
+        final ExpressionOperator expression = NullSafe.get(parse(query), SearchRequest::getQuery,
+                Query::getExpression);
+        return expression != null
+                ? expression
+                : ExpressionOperator.builder().build();
     }
 
     private SearchRequest parse(final String query) {

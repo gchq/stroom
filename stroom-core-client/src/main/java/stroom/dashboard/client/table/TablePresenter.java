@@ -1407,6 +1407,26 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     ///
     /// @param changes The changes.
     /// @return Why a change couldn't be applied (those before it are applied), or null if they all were.
+    /// @return A copy of the table's settings, to put back with [#restoreAiSettings(TableComponentSettings)] if a
+    /// change from the AI chat is undone.
+    TableComponentSettings aiSettingsSnapshot() {
+        final TableComponentSettings settings = getTableComponentSettings();
+        return settings.copy().columns(new ArrayList<>(NullSafe.list(settings.getColumns()))).build();
+    }
+
+    /// Puts back the table's settings as they were before a change from the AI chat, as an unsaved edit.
+    ///
+    /// @param settings The settings, from [#aiSettingsSnapshot()].
+    void restoreAiSettings(final TableComponentSettings settings) {
+        setSettings(settings.copy().columns(new ArrayList<>(NullSafe.list(settings.getColumns()))).build());
+        changeSettings();
+        reset();
+        updateColumns();
+        refresh();
+        onChange();
+        getDashboardContext().fireComponentChangeEvent(this);
+    }
+
     String applyAiChanges(final List<TableChange> changes) {
         for (int i = 0; i < changes.size(); i++) {
             final TableChange change = changes.get(i);
@@ -1463,6 +1483,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     columnsManager.hideColumn(column);
                 }
                 case TableChange.SHOW_COLUMN -> columnsManager.showColumn(column);
+                case TableChange.MOVE_COLUMN -> {
+                    moveColumn(column, change.getPosition() == null
+                            ? 0
+                            : change.getPosition() - 1);
+                    onChange();
+                    updateColumns();
+                    refresh();
+                }
                 case TableChange.SORT -> {
                     columnsManager.changeSort(column, change.getSortDirection());
                     if (change.getSortDirection() != null && change.getPriority() != null) {
@@ -1485,6 +1513,25 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }
         return null;
+    }
+
+    // Moves a column to a position (0 first) among the columns the user sees, leaving the special columns where
+    // they are.
+    private void moveColumn(final Column column, final int position) {
+        final List<Column> columns = getTableComponentSettings().getColumns();
+        columns.remove(column);
+        int seen = 0;
+        int index = columns.size();
+        for (int i = 0; i < columns.size(); i++) {
+            if (!columns.get(i).isSpecial()) {
+                if (seen == position) {
+                    index = i;
+                    break;
+                }
+                seen++;
+            }
+        }
+        columns.add(index, column);
     }
 
     // Moves a sorted column's sort to a priority (0 first), keeping the order of the other sorts.

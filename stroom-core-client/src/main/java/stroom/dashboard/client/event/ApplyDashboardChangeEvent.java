@@ -28,25 +28,24 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /// Asks the dashboards to do something with a change to a dashboard table proposed in the AI chat: say whether
-/// the dashboard is open and can be edited, or apply the change to it (opening it first if it isn't open). The
-/// chat fires this rather than using the dashboard screens directly, so it needs nothing from them to compile.
+/// the dashboard is open and can be edited, apply the change to it (opening it first if it isn't open), or say
+/// whether an applied change can be undone, and undo it. The chat fires this rather than using the dashboard
+/// screens directly, so it needs nothing from them to compile.
 ///
 /// Events are handled straight away, so once fired, [#isHandled()] says whether they were taken; applying then
-/// goes on as needed (opening, saving first), and ends by calling one of the callbacks given.
+/// goes on as needed (opening first), and ends by calling one of the callbacks given.
 public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEvent.Handler> {
 
     /// Why a change isn't applied to a dashboard that has changed since it was proposed.
     public static final String CHANGED = "The dashboard has changed since this was proposed. Ask again for an "
                                          + "up-to-date change.";
+    /// Why an applied change can no longer be undone.
+    public static final String UNDO_WITHDRAWN = "The dashboard has been changed since this was applied, so Undo "
+                                                + "apply would lose those changes. Close the dashboard without "
+                                                + "saving to go back, or change the table by hand.";
     /// Why a change can't be applied to a dashboard the user can't edit.
     public static final String NOT_EDITABLE = "You can't edit this dashboard: it is read-only, or you don't have "
                                               + "permission to edit it.";
-    /// What the user is asked before a change is applied to a dashboard with unsaved changes.
-    public static final String SAVE_FIRST = "This dashboard has unsaved changes. Save them first, so you can go "
-                                            + "back to them if you don't want this change?\n\nOK saves the "
-                                            + "dashboard, then applies the change. Cancel does nothing.";
-    /// Why a change isn't applied when saving the dashboard first didn't work.
-    public static final String NOT_SAVED = "The dashboard's changes weren't saved, so the change wasn't applied.";
 
     private static Type<Handler> TYPE;
 
@@ -59,10 +58,13 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
     private final Approver approver;
     private final Runnable onApplied;
     private final Consumer<String> onNotApplied;
+    private final String undoKey;
 
     private boolean handled;
     private boolean open;
     private boolean editable;
+    private boolean canUndo;
+    private boolean undone;
 
     private ApplyDashboardChangeEvent(final Operation operation,
                                       final DocRef dashboard,
@@ -72,7 +74,8 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
                                       final String snapshotHash,
                                       final Approver approver,
                                       final Runnable onApplied,
-                                      final Consumer<String> onNotApplied) {
+                                      final Consumer<String> onNotApplied,
+                                      final String undoKey) {
         this.operation = operation;
         this.dashboard = dashboard;
         this.componentId = componentId;
@@ -82,6 +85,7 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
         this.approver = approver;
         this.onApplied = onApplied;
         this.onNotApplied = onNotApplied;
+        this.undoKey = undoKey;
     }
 
     /// Asks whether a dashboard is open, and if so whether the user can edit it.
@@ -91,14 +95,14 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
     /// @return The event, once handled.
     public static ApplyDashboardChangeEvent fireCheck(final HasHandlers handlers, final DocRef dashboard) {
         final ApplyDashboardChangeEvent event = new ApplyDashboardChangeEvent(Operation.CHECK, dashboard, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
         handlers.fireEvent(event);
         return event;
     }
 
     /// Asks for a change to be applied to a table on a dashboard, unsaved: the dashboard is opened if it isn't
-    /// open, it isn't applied if the dashboard has changed since it was proposed or can't be edited, and if the
-    /// dashboard has unsaved changes the user is asked to save them first.
+    /// open, and it isn't applied if the dashboard has changed since it was proposed or can't be edited. It is
+    /// applied on top of any unsaved changes, as it was proposed against the dashboard with them.
     ///
     /// @param handlers      Where to fire it.
     /// @param dashboard     The dashboard.
@@ -109,6 +113,7 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
     /// @param approver      Asked just before the change is applied (e.g. to record it on the server).
     /// @param onApplied     Called once it has been applied.
     /// @param onNotApplied  Called with why it wasn't applied, or null if the user chose not to.
+    /// @param undoKey       What the change is known by, to undo it with [#fireUndo(HasHandlers, DocRef, String)].
     /// @return The event, once handled.
     public static ApplyDashboardChangeEvent fireApply(final HasHandlers handlers,
                                                       final DocRef dashboard,
@@ -118,9 +123,41 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
                                                       final String snapshotHash,
                                                       final Approver approver,
                                                       final Runnable onApplied,
-                                                      final Consumer<String> onNotApplied) {
+                                                      final Consumer<String> onNotApplied,
+                                                      final String undoKey) {
         final ApplyDashboardChangeEvent event = new ApplyDashboardChangeEvent(Operation.APPLY, dashboard,
-                componentId, componentName, changes, snapshotHash, approver, onApplied, onNotApplied);
+                componentId, componentName, changes, snapshotHash, approver, onApplied, onNotApplied, undoKey);
+        handlers.fireEvent(event);
+        return event;
+    }
+
+    /// Asks whether an applied change can still be undone: its dashboard is open, and is as the change left it.
+    ///
+    /// @param handlers  Where to fire it.
+    /// @param dashboard The dashboard.
+    /// @param undoKey   What the change is known by.
+    /// @return The event, once handled; [#isCanUndo()] gives the answer if it was.
+    public static ApplyDashboardChangeEvent fireCanUndo(final HasHandlers handlers,
+                                                        final DocRef dashboard,
+                                                        final String undoKey) {
+        final ApplyDashboardChangeEvent event = new ApplyDashboardChangeEvent(Operation.CAN_UNDO, dashboard, null,
+                null, null, null, null, null, null, undoKey);
+        handlers.fireEvent(event);
+        return event;
+    }
+
+    /// Undoes an applied change, putting its table back as it was, unsaved, if the dashboard is open and as the
+    /// change left it.
+    ///
+    /// @param handlers  Where to fire it.
+    /// @param dashboard The dashboard.
+    /// @param undoKey   What the change is known by.
+    /// @return The event, once handled; [#isUndone()] says whether it was undone.
+    public static ApplyDashboardChangeEvent fireUndo(final HasHandlers handlers,
+                                                     final DocRef dashboard,
+                                                     final String undoKey) {
+        final ApplyDashboardChangeEvent event = new ApplyDashboardChangeEvent(Operation.UNDO, dashboard, null,
+                null, null, null, null, null, null, undoKey);
         handlers.fireEvent(event);
         return event;
     }
@@ -130,22 +167,18 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
     /// @param editable     True if the user can edit the dashboard.
     /// @param currentHash  The hash of the dashboard's settings now.
     /// @param proposedHash The hash of its settings when the change was proposed.
-    /// @param dirty        True if the dashboard has unsaved changes.
-    /// @return What to do. A change is never applied on top of unsaved changes, or to a dashboard that has
-    /// changed since it was proposed.
+    /// @return What to do. A change is applied to the dashboard as the user has it, unsaved changes included, as
+    /// those are what it was proposed against; never to a dashboard that has changed since it was proposed.
     public static Decision decide(final boolean editable,
                                   final String currentHash,
-                                  final String proposedHash,
-                                  final boolean dirty) {
+                                  final String proposedHash) {
         if (!editable) {
             return Decision.NOT_EDITABLE;
         }
         if (currentHash == null || !currentHash.equalsIgnoreCase(proposedHash)) {
             return Decision.CHANGED;
         }
-        return dirty
-                ? Decision.SAVE_FIRST
-                : Decision.APPLY;
+        return Decision.APPLY;
     }
 
     /// @return The event's type.
@@ -196,6 +229,11 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
         return snapshotHash;
     }
 
+    /// @return What the change is known by, to undo it, or null.
+    public String getUndoKey() {
+        return undoKey;
+    }
+
     /// @return Asked just before the change is applied.
     public Approver getApprover() {
         return approver;
@@ -242,6 +280,32 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
         return editable;
     }
 
+    /// Marks a [Operation#CAN_UNDO] event as taken.
+    ///
+    /// @param canUndo True if the change can be undone.
+    public void setCanUndo(final boolean canUndo) {
+        this.handled = true;
+        this.canUndo = canUndo;
+    }
+
+    /// @return For [Operation#CAN_UNDO], true if the change can be undone.
+    public boolean isCanUndo() {
+        return canUndo;
+    }
+
+    /// Marks an [Operation#UNDO] event as taken.
+    ///
+    /// @param undone True if the change was undone.
+    public void setUndone(final boolean undone) {
+        this.handled = true;
+        this.undone = undone;
+    }
+
+    /// @return For [Operation#UNDO], true if the change was undone.
+    public boolean isUndone() {
+        return undone;
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -252,8 +316,6 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
         NOT_EDITABLE,
         /// Refuse it: the dashboard has changed since it was proposed.
         CHANGED,
-        /// Ask the user to save the dashboard's unsaved changes first, then apply it.
-        SAVE_FIRST,
         /// Apply it.
         APPLY
     }
@@ -267,7 +329,11 @@ public class ApplyDashboardChangeEvent extends GwtEvent<ApplyDashboardChangeEven
         /// Say whether the dashboard is open and can be edited.
         CHECK,
         /// Apply the change.
-        APPLY
+        APPLY,
+        /// Say whether an applied change can be undone.
+        CAN_UNDO,
+        /// Undo an applied change.
+        UNDO
     }
 
 

@@ -19,6 +19,11 @@ package stroom.ai.impl;
 
 import stroom.ai.impl.DashboardChanges.Change;
 import stroom.ai.impl.DashboardChanges.Checked;
+import stroom.docref.DocRef;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 
 import org.junit.jupiter.api.Test;
 
@@ -60,6 +65,105 @@ class TestDashboardChanges {
                 "Clear the filter on column 'EventType'");
         // Only the fields each has are given to the browser.
         assertThat(changes.get(1).toMap()).containsOnlyKeys("op", "column");
+    }
+
+    @Test
+    void aQueryExpressionIsReadBackAsItWasWrittenAndDescribedInWords() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .op(Op.OR)
+                .addTerm(ExpressionTerm.builder().field("Text").condition(Condition.EQUALS).value("*Afghan*")
+                        .build())
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.NOT)
+                        .addTerm(ExpressionTerm.builder().field("User").condition(Condition.IN_DICTIONARY)
+                                .docRef(new DocRef("Dictionary", "dict-uuid", "Bots")).build())
+                        .build())
+                .addTerm(ExpressionTerm.builder().field("Lang").condition(Condition.EQUALS).value("en")
+                        .enabled(false).build())
+                .build();
+        final Change built = DashboardChanges.parse(List.of(Map.of("op", "set_expression",
+                "where", "Text = \"*Afghan*\"\n  and not User in dictionary \"Bots\""))).getFirst()
+                .withQuery(expression);
+
+        // As stored with the button and read back when it is offered.
+        final Change readBack = DashboardChanges.parse(List.of(built.toMap())).getFirst();
+
+        assertThat(readBack.query()).isEqualTo(expression);
+        // Line breaks in the conditions are kept as spaces.
+        assertThat(readBack.where()).isEqualTo("Text = \"*Afghan*\" and not User in dictionary \"Bots\"");
+        assertThat(DashboardChanges.check(List.of(readBack), COLUMNS).problems()).isEmpty();
+        assertThat(readBack.describe()).startsWith("Set the query to find: Text is '*Afghan*' or not (");
+    }
+
+    @Test
+    void tablesAddedAsTabsAreSetUpByTheChangesAfterThem() {
+        // A tab per event category, each with its own columns and a filter on the category.
+        final List<Change> changes = DashboardChanges.parse(List.of(
+                Map.of("op", "add_table", "name", "Logons"),
+                Map.of("op", "add_column", "table", "Logons", "name", "User", "expression", "${UserId}"),
+                Map.of("op", "add_column", "table", "logons", "name", "EventType", "expression", "${EventType}"),
+                Map.of("op", "filter", "table", "Logons", "column", "eventtype", "filter", "Logon"),
+                Map.of("op", "add_table", "name", "Everything", "copy", true),
+                Map.of("op", "move_column", "table", "Everything", "column", "EventType", "position", 1),
+                Map.of("op", "move_column", "column", "UserId", "position", 3)));
+
+        final Checked checked = DashboardChanges.check(changes, COLUMNS, "Events", List.of("Events", "Errors"));
+
+        assertThat(checked.problems()).isEmpty();
+        assertThat(DashboardChanges.describe(checked.changes())).containsExactly(
+                "Add table 'Logons' as a tab beside this one, fed by the same query, with no columns yet",
+                "In table 'Logons': Add column 'User' with expression ${UserId}, at the end",
+                "In table 'logons': Add column 'EventType' with expression ${EventType}, at the end",
+                // Its column, as the new table has it.
+                "In table 'Logons': Filter column 'EventType' by 'Logon'",
+                "Add table 'Everything' as a tab beside this one, fed by the same query, starting with this "
+                + "table's columns",
+                "In table 'Everything': Move column 'EventType' to position 1",
+                "Move column 'UserId' to position 3");
+        assertThat(checked.changes().get(4).toMap()).containsEntry("copy", true);
+    }
+
+    @Test
+    void addedTablesMustHaveNewNamesAndChangesOnlyTheirOwnTables() {
+        final List<Change> changes = DashboardChanges.parse(List.of(
+                Map.of("op", "add_table", "name", "errors"),
+                Map.of("op", "hide_column", "table", "Errors", "column", "UserId"),
+                Map.of("op", "add_table", "name", "Empty"),
+                Map.of("op", "hide_column", "table", "Empty", "column", "UserId"),
+                Map.of("op", "move_column", "column", "Nope", "position", 1)));
+
+        assertThat(DashboardChanges.check(changes, COLUMNS, "Events", List.of("Events", "Errors")).problems())
+                .containsExactly(
+                        "Change 1 (add_table): the dashboard already has a table 'errors'. Give another name.",
+                        // Checked as the table it would add, which has no columns.
+                        "Change 2 (hide_column): table 'Errors' has no column 'UserId'. Its columns are: none yet.",
+                        "Change 4 (hide_column): table 'Empty' has no column 'UserId'. Its columns are: none yet.",
+                        "Change 5 (move_column): the table has no column 'Nope'. Its columns are: EventTime, UserId, "
+                        + "EventType.");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "add_table"))))
+                .hasMessageContaining("add_table needs the new table's name");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "move_column", "column", "UserId"))))
+                .hasMessageContaining("move_column needs the position");
+        // An existing table other than the proposal's can't be changed from it.
+        assertThat(DashboardChanges.check(DashboardChanges.parse(List.of(Map.of("op", "hide_column",
+                "table", "Other", "column", "UserId"))), COLUMNS, "Events", List.of("Events", "Other"))
+                .problems())
+                .singleElement().asString().contains("there is no table 'Other' to change");
+    }
+
+    @Test
+    void anExpressionThatCantBeReadIsRefused() {
+        final Map<String, Object> unknownOp = Map.of("op", "XOR", "children", List.of());
+        final Map<String, Object> unknownCondition = Map.of("op", "AND",
+                "children", List.of(Map.of("field", "x", "condition", "LIKE")));
+
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "set_expression", "query", unknownOp))))
+                .hasMessageContaining("the query's expression can't be read");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "set_expression",
+                "query", unknownCondition))))
+                .hasMessageContaining("the query's expression can't be read");
+        assertThatThrownBy(() -> DashboardChanges.parse(List.of(Map.of("op", "set_expression"))))
+                .hasMessageContaining("set_expression needs where");
     }
 
     @Test

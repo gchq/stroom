@@ -471,6 +471,12 @@ public class UserActions {
             LOGGER.debug(() -> "Dropping a dashboard change that can't be read: " + e.getMessage());
             return Optional.empty();
         }
+        // A query's expression is applied as Stroom built it from the model's conditions, never as given.
+        if (changes.stream().anyMatch(change -> DashboardChanges.SET_EXPRESSION.equals(change.op())
+                                                && change.query() == null)) {
+            LOGGER.debug("Dropping a dashboard change that sets a query's expression without one");
+            return Optional.empty();
+        }
         final DocRef dashboard = lookup.find(named).orElse(null);
         if (dashboard == null) {
             return Optional.empty();
