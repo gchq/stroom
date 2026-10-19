@@ -39,6 +39,7 @@ import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -146,6 +147,7 @@ public final class DefaultMonthSelector extends MonthSelector {
 
     private SelectionBox<IntItem> createMonthSelect() {
         final SelectionBox<IntItem> monthListBox = new SelectionBox<>();
+        AccessibleName.set(monthListBox, "Month");
 
         for (int i = 0; i < DateTimeModel.MONTHS_IN_YEAR; i++) {
             monthListBox.addItem(new IntItem(getModel().formatMonth(i), i));
@@ -170,6 +172,7 @@ public final class DefaultMonthSelector extends MonthSelector {
 
     private SelectionBox<IntItem> createYearSelect() {
         final SelectionBox<IntItem> yearListBox = new SelectionBox<>();
+        AccessibleName.set(yearListBox, "Year");
         yearListBox.addValueChangeHandler(e -> {
             final int previousYear = getModel().getCurrentMonth().getFullYear();
             final int newYear = yearListBox.getValue().getValue();

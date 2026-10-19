@@ -36,9 +36,6 @@
   "app-editors-dashboardeditor--dock-onto-middle-panel": [
     "label"
   ],
-  "app-editors-dashboardeditor--embedded-query-settings-fields": [
-    "label"
-  ],
   "app-editors-dashboardeditor--focus-kept-when-maximised": [
     "label"
   ],
@@ -46,12 +43,6 @@
     "label"
   ],
   "app-editors-dashboardeditor--input-drives-query": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--list-input-dictionary": [
-    "label"
-  ],
-  "app-editors-dashboardeditor--list-input-dictionary-resolves-stale-value": [
     "label"
   ],
   "app-editors-dashboardeditor--migrate-legacy-dashboard": [
@@ -200,9 +191,6 @@
   ],
   "app-editors-reporteditor--table-preferences-persist-on-the-doc": [
     "target-size"
-  ],
-  "app-editors-vieweditor--add-term-enables-save": [
-    "label"
   ],
   "app-editors-visualisationeditor--assets": [
     "aria-required-parent",
@@ -521,16 +509,13 @@
     "target-size"
   ],
   "widgets-date-time-calendargrid--basic": [
-    "aria-allowed-attr",
-    "label"
+    "aria-allowed-attr"
   ],
   "widgets-date-time-calendargrid--no-selection": [
-    "aria-allowed-attr",
-    "label"
+    "aria-allowed-attr"
   ],
   "widgets-date-time-calendargrid--past-date": [
-    "aria-allowed-attr",
-    "label"
+    "aria-allowed-attr"
   ],
   "widgets-date-time-customdatebox--default": [
     "label"
@@ -548,6 +533,10 @@
     "label"
   ],
   "widgets-date-time-datetimepicker--basic": [
+    "label"
+  ],
+  "widgets-date-time-datetimepicker--calendar-toolbars-in-the-dialog": [
+    "aria-allowed-attr",
     "label"
   ],
   "widgets-date-time-datetimepicker--disabled": [
@@ -676,19 +665,7 @@
   "widgets-popuppositioner-popup-contract--trigger-click-closes-and-stays-closed": [
     "label"
   ],
-  "widgets-query-expressionbuilder--add-term-starts-with-no-field": [
-    "label"
-  ],
   "widgets-query-expressionbuilder--async-field-source-fetches-only-when-needed": [
-    "label"
-  ],
-  "widgets-query-expressionbuilder--clicking-the-dropdown-arrow-opens-the-picker": [
-    "label"
-  ],
-  "widgets-query-expressionbuilder--dynamic-fields-always-show-picker-chrome": [
-    "label"
-  ],
-  "widgets-query-expressionbuilder--static-fields-have-no-picker-chrome": [
     "label"
   ],
   "widgets-selectors-docselectionbox--warning-and-disabled": [

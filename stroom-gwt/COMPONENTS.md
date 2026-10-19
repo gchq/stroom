@@ -113,7 +113,8 @@ what has been done and what is left in words; this one is for seeing at a glance
 - **Minimal DOM**: no more elements than the pattern and the layout need.
 - **Screen reader**: tried with a real screen reader (NVDA, VoiceOver), not only axe.
 
-`done`, `part`, `no`; `?` not yet checked; `—` doesn't apply. Pipeline tree and bar describe this
+`done`, `part`, `no`; `?` not yet checked; `—` doesn't apply. The quick filter, selection box, value spinner, date and time and icon box rows
+were audited on 2026-10-19, from their DOM in the workbench, their stories and their stylesheets. Pipeline tree and bar describe this
 branch, with `stepping_display` in brackets.
 
 | Component | Roles and states | Names | Keyboard | Focus | Own CSS | BEM | Minimal DOM | Screen reader |
@@ -133,14 +134,15 @@ branch, with `stepping_display` in brackets.
 | Pipeline bar | — (done) | — (done) | — (done) | — (done) | — (done, `pipeline-path.css`) | — (done) | — (?) | — (no) |
 | Menus | part | ? | ? | ? | part (`celltable/Menu.css`, `menubar.css`) | no | ? | no |
 | Dialogs and popups | part | done | ? | part | part (`Dialog.css`, `ResizableDialog.css`, `PopupSupport.css`) | no | ? | no |
-| Quick filter | part | ? | part | done | done (`QuickFilter.css`) | no | ? | no |
+| Quick filter | part (not a search field; its toolbar is one only while two buttons show, as it should be) | part (its placeholder, "Quick Filter", is its only name) | done | done | part (`QuickFilter.css`, and two rules in `components.css`) | no (`quickFilter-*`, `advancedQuickFilter-*`, `hasDropDown`) | done | no |
 | Form groups | done | done | done | done | done (`form.css`) | done | ? | no |
 | Password box | done | done | done | done | done (`password-box.css`) | done | ? | no |
-| Selection box | done | part | done | done | done (`selection-box.css`, `selection-popup.css`) | part (the list's `selectionList-*`) | ? | no |
+| Selection box | done | part (unnamed in places; its list is named for it) | done | done | part (`selection-box.css`, `selection-popup.css`; also styled by `TermEditor.css`, `conditional-formatting.css`, `CustomDatePicker.css` and `components.css`) | part (the box is; its list's `selectionList-*`, `simplePopup-*`, `pager-*`, `explorerCell`, `selectionItemCell-text` and GWT's `gwt-TextBox` aren't) | part (the value is drawn in an element over the input; the list has about 40 elements before its first option, with a hidden quick filter and pager, and each option is three deep) | no |
 | Document and user pickers | ? | ? | ? | ? | ? | ? | ? | no |
 | Tick box | done (a native checkbox) | part | done | ? | part (`tickbox.css`, `tickboxcell.css`) | no | ? | no |
-| Value spinner | done | done (the grid's cell: part) | done (the grid's cell: part) | done | done (`value-spinner.css`) | done | done | no |
-| Date and time | part | part | part | ? | part (`CustomDatePicker.css`, `svg-icon-box.css`) | part | ? | no |
+| Value spinner | done | done (the grid's cell: part, its column but not its row) | done (the grid's cell: part, it can't be reached) | done (the grid's cell: no, it can't be reached) | part (`value-spinner.css`; the field's base look is the shared `.gwt-TextBox` rules in `stroom.css` and `standard.css`) | part (GWT's `gwt-TextBox` on the input) | done | no |
+| Date and time | part (the day table has no `grid` role, and its cells have `aria-selected` with no role to allow it) | part (the date field is unnamed in places) | part (arrows and Enter in the calendar; no Home, End, Page Up or Page Down) | done (the Year and Month toolbars are one tab stop each, in the dialog too) | part (`CustomDatePicker.css`; the date-time field borrows the schedule box's classes and stylesheet) | no (only the icon box is) | part (two wrappers in each day cell) | no |
+| Icon box (`SvgIconBox`) | done (a picture hidden from screen readers) | — | — | — | done (`svg-icon-box.css`) | done | done | no |
 | Schedule box | ? | ? | ? | ? | part (`ScheduleBox.css`) | no | ? | no |
 | Time range selector | ? | ? | ? | ? | no (`components.css`) | no | ? | no |
 | Time zone | ? | ? | ? | ? | ? | ? | ? | no |

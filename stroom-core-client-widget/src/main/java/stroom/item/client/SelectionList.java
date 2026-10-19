@@ -202,11 +202,16 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         quickFilter.registerPopupTextProvider(popupTextSupplier);
     }
 
-    /// Names the list for screen readers, e.g. after the box that opened it.
+    /// Names the list for screen readers, e.g. after the box that opened it. With no name, the
+    /// list has none, rather than an empty one.
     ///
-    /// @param name The list's accessible name.
+    /// @param name The list's accessible name, or null or blank for none.
     public void setAccessibleName(final String name) {
-        cellTable.getElement().setAttribute("aria-label", NullSafe.string(name));
+        if (NullSafe.isBlankString(name)) {
+            cellTable.getElement().removeAttribute("aria-label");
+        } else {
+            cellTable.getElement().setAttribute("aria-label", name);
+        }
     }
 
     /// @return The id of the list's list box element, for a box that controls it (`aria-controls`).

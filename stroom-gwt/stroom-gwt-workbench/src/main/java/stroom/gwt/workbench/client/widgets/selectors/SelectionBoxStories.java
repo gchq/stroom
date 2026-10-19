@@ -29,6 +29,7 @@ import stroom.item.client.SelectionBox;
 import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.item.client.SimpleSelectionListModel;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -164,6 +165,22 @@ public final class SelectionBoxStories {
                     play.expect(filter).toHaveFocus();
                     play.waitFor(() -> play.expect(play.screen().getByRole("option", "Item 150")).toBeInTheDocument());
                     play.expect(play.screen().queryByRole("option", "Item 2")).toBeNull();
+                })
+                // The list is named for the box that opened it, here by the box's form group label
+                .story("TheListIsNamedForTheBox", context -> {
+                    final FormGroup formGroup = new FormGroup();
+                    formGroup.setIdentity("colour");
+                    formGroup.setLabel("Colour");
+                    formGroup.add(selectionBox(context, NAMES));
+                    return minWidth(formGroup);
+                })
+                .withPlay(play -> {
+                    final Query box = play.getByRole("combobox", "Colour");
+                    play.tab();
+                    play.expect(box).toHaveFocus();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("listbox", "Colour")).toBeInTheDocument());
+                    play.keyboard("{Escape}");
                 })
                 // A value too long for the box stops clear of its drop-down arrow
                 .story("LongValue", context -> {

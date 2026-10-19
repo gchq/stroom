@@ -229,12 +229,28 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         popup.show(textBox.getElement(), typed);
     }
 
-    // The box's name: the text of its label, else its aria-label
+    // The box's name, as a screen reader works it out: the elements it is labelled by
+    // (aria-labelledby, as a form group names it), else its aria-label, else its label
     private static native String getAccessibleName(Element element) /*-{
+        var ids = (element.getAttribute("aria-labelledby") || "").trim();
+        if (ids) {
+            var doc = element.ownerDocument;
+            var text = ids.split(/\s+/).map(function (id) {
+                var label = doc.getElementById(id);
+                return label ? label.textContent.trim() : "";
+            }).join(" ").trim();
+            if (text) {
+                return text;
+            }
+        }
+        var ariaLabel = (element.getAttribute("aria-label") || "").trim();
+        if (ariaLabel) {
+            return ariaLabel;
+        }
         if (element.labels && element.labels.length > 0) {
             return element.labels[0].textContent.trim();
         }
-        return element.getAttribute("aria-label") || "";
+        return "";
     }-*/;
 
     private void hidePopup() {

@@ -1553,6 +1553,19 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   `SelectionBox.css`, its dead `ListBox` rules and the global `pointer` class are deleted). Workbench:
   `Widgets/Selectors/SelectionBox` `KeysOpenTheList`, `AltUpChoosesTheOption`,
   `TypingJumpsToAnOption`, `TypingFiltersALongList`, `LongValue`; real input: `selection-box.mjs`.
+* **Toolbars in dialogs lost their role, and unnamed parts of the date picker and term editor**
+  (`ButtonGroupFocus`, `DefaultMonthSelector`, `TermEditor`, `OperatorEditor`, `ListInputViewImpl`,
+  `SelectionList`): found by auditing the input controls this branch had changed. A dialog is laid
+  out hidden (`visibility: hidden`) and then shown; a toolbar in it took its buttons as hidden (as
+  visibility is inherited) and never looked again, as showing the dialog changes nothing inside the
+  toolbar. So the Set Date And Time dialog's Year and Month toolbars had no role or name, and both
+  buttons of each were tab stops. A group now only counts visibility set inside it, as it already
+  did for `display`. The calendar's Year and Month boxes are named, as are the term editor's Field,
+  Condition, value, From, To and Date parts, the expression's Operator box, and a dashboard list
+  input (for its component, so renaming the component renames it). A selection box's list is named
+  for the box by the box's `aria-labelledby` too, and has no name, rather than an empty one, when
+  the box has none. Workbench: `Widgets/Date & Time/DateTimePicker` `CalendarToolbarsInTheDialog`,
+  `Widgets/Selectors/SelectionBox` `TheListIsNamedForTheBox`.
 
 ## Checked and not bugs
 

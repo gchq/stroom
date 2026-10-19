@@ -19,6 +19,7 @@ package stroom.query.client;
 import stroom.item.client.EventBinder;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ExpressionOperator.Op;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -46,6 +47,7 @@ public class OperatorEditor extends Composite {
 
     public OperatorEditor() {
         listBox = new SelectionBox<>();
+        AccessibleName.set(listBox, "Operator");
         listBox.addItems(Op.values());
 
         fixStyle(listBox, 55);
