@@ -168,14 +168,14 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
           && !e.classList.contains('ace_text-input') && !e.closest('.ace_editor'));
       if (box) { out.push({ label, kind: 'text', value: String(box.value ?? ''), ...at(box) }); continue; }
       // A DOCUMENT CHOOSER — `DocSelectionBoxPresenter` over `DropDownViewImpl`, rendered as
-      // `.dropDownView-container`. It opens on MOUSEDOWN, not click (`addDomHandler(...,
+      // `.drop-down`. It opens on MOUSEDOWN, not click (`addDomHandler(...,
       // MouseDownEvent.getType())`), and picking a document fires `addDataSelectionHandler`, which
       // the presenter turns into onChange -> setDirty (`DataGenSettingsPresenter:61`). DataGen's
       // destination feed and Script's dependencies are reachable no other way.
-      const chooser = group.querySelector('.dropDownView-container');
+      const chooser = group.querySelector('.drop-down');
       if (chooser && chooser.offsetWidth > 0) {
         out.push({ label, kind: 'chooser',
-          value: norm(chooser.querySelector('.dropDownView-label')?.textContent), ...at(chooser, 0.4) });
+          value: norm(chooser.querySelector('.drop-down__value')?.textContent), ...at(chooser, 0.4) });
         continue;
       }
       // An ACE editor. Every other probe avoids it — the popup framework ignores keys typed there,

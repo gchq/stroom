@@ -67,7 +67,7 @@ public final class UserRefSelectionBoxStories {
                         UserFixture.fixtureUsers().get("u-alice")))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    final Query picker = play.querySelector(".dropDownView-container");
+                    final Query picker = play.querySelector(".drop-down");
                     final String filter = "Filter users and groups";
                     play.tab();
                     play.keyboard("{Enter}");

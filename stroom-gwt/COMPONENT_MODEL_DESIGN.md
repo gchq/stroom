@@ -511,6 +511,20 @@ quick filter over the explorer tree (`ExplorerPopupPresenter`) or a grid of user
 The lists are named ("Documents", "Users and groups"), but the tree and grid have no roles or
 states yet; those come with sessions 5 (trees) and 4 (grids).
 
+The picker itself is the BEM block `drop-down` (`drop-down.css`): its value (`drop-down__value`,
+filling the box and ending in an ellipsis clear of the icon) and the "…" icon (`drop-down__icon`).
+Its field look, and its read-only and disabled looks, are the shared `stroom-control` classes'.
+
+A document that can't be found (deleted, or not visible to the user) is a problem with the field's
+value, so it is shown as #5409's form feedback is, not behind a button: the picker is
+`aria-invalid`, with the red border of an invalid field, and described by a message under it
+(`DropDownView.setProblem(short, full)`). The message is short ("'Deleted Feed' can't be found, or
+you don't have permission to see it."), with the full one (the id, and what to do) as its tooltip
+and what screen readers read; in a form group it is the group's feedback
+(`FormGroup.setFeedback(short, full)`), and outside one a line of the picker's own
+(`drop-down__feedback`), added while there is a problem. It replaced a 17px warning button that only
+a mouse could use, which sat inside the picker's own button, and opened an alert.
+
 Stories `Widgets/Selectors/DocSelectionBox` `KeysInTheDialog` and
 `Widgets/Selectors/UserRefSelectionBox` `KeysInTheDialog`.
 

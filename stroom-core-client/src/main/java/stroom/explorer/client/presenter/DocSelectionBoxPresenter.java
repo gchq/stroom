@@ -16,7 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -71,14 +70,6 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         view.setUiHandlers(this);
 //        explorerPopupPresenter.setSelectionChangeConsumer(this::changeSelection);
         changeSelection(null);
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(getView().addWarningClickHandler(event -> {
-            event.getNativeEvent().stopPropagation();
-            AlertEvent.fireWarn(DocSelectionBoxPresenter.this, getErrorMsg(), null);
-        }));
     }
 
     @Override
@@ -257,6 +248,16 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         NullSafe.run(onDocRefNotFound);
     }
 
+    // The not-found problem in brief, as shown under the picker; the full message (with the id and
+    // what to do) is its tooltip and what screen readers read
+    private String buildShortNotFoundMessage(final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        }
+        final String name = NullSafe.getOrElse(docRef.getName(), n -> "'" + n + "'", "It");
+        return name + " can't be found, or you don't have permission to see it.";
+    }
+
     public String buildNotFoundMessage(final DocRef docRef) {
         if (docRef != null) {
             final String type = Objects.requireNonNullElseGet(this.itemType, () ->
@@ -311,9 +312,13 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     private void setFieldValue(final DocRef value, final String errorMsg) {
         this.value = value;
         this.errorMsg = errorMsg;
-        getView().setText(
-                NullSafe.getOrElse(value, DocRef::getDisplayValue, NONE_DISPLAY_VALUE),
-                NullSafe.isNonBlankString(errorMsg));
+        getView().setText(NullSafe.getOrElse(value, DocRef::getDisplayValue, NONE_DISPLAY_VALUE));
+        // A document that can't be found is shown as a problem with the field, under it
+        if (NullSafe.isNonBlankString(errorMsg)) {
+            getView().setProblem(buildShortNotFoundMessage(value), errorMsg);
+        } else {
+            getView().setProblem(null, null);
+        }
     }
 
     /// Makes the selection read only: it can be read and stays in the tab order, but the
@@ -328,9 +333,5 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         getView().setEnabled(enabled);
-    }
-
-    private String getErrorMsg() {
-        return errorMsg;
     }
 }

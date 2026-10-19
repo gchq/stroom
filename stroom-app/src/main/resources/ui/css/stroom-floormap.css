@@ -1054,7 +1054,7 @@
  * the leftover space rather than a fixed 200px, so longer asset paths stay
  * readable.
  */
-.floormap-layer-style-image .dropDownView-container {
+.floormap-layer-style-image .drop-down {
     width: 100%;
     min-width: 0;
 }
@@ -1066,7 +1066,7 @@
  * to sit inside — the `overflow: hidden` it already carries never gets to bite.
  * (The dialog's overall width is capped by the definite width above, not here.)
  */
-.floormap-layer-style-image .dropDownView-label {
+.floormap-layer-style-image .drop-down__value {
     flex: 1 1 0;
     min-width: 0;
     /*

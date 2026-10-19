@@ -460,14 +460,6 @@
   "widgets-query-expressionbuilder--async-field-source-fetches-only-when-needed": [
     "label"
   ],
-  "widgets-selectors-docselectionbox--warning-and-disabled": [
-    "nested-interactive",
-    "target-size"
-  ],
-  "widgets-selectors-dropdownselector--warning": [
-    "nested-interactive",
-    "target-size"
-  ],
   "widgets-selectors-selectionbox--basic": [
     "label"
   ],

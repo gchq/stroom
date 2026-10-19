@@ -131,6 +131,9 @@ public class FormGroup extends Composite implements HasWidgets {
     private Element requiredControl;
     // What is wrong with the control's value, or null if nothing is
     private String feedback;
+    // The full form of the feedback, the tooltip and what screen readers read, or null if the shown
+    // feedback says it all
+    private String fullFeedback;
     // The control (or group) marked invalid and described by the feedback, or null for none
     private Element invalidControl;
     // The names of the controls in a group of several, in the order they are shown
@@ -269,7 +272,7 @@ public class FormGroup extends Composite implements HasWidgets {
             FieldValidity.removeDescribedBy(invalidControl, feedbackLabel.getElement().getId());
             invalidControl = null;
         }
-        feedbackLabel.setText(NullSafe.string(feedback));
+        showFeedbackText();
         final Element target = labelledControl != null
                 ? labelledControl
                 : groupElement;
@@ -278,6 +281,27 @@ public class FormGroup extends Composite implements HasWidgets {
             FieldValidity.setInvalid(invalidControl, true);
             // The message is read first, before any help the control also has
             FieldValidity.addDescribedBy(invalidControl, ensureId(feedbackLabel.getElement()), true);
+        }
+    }
+
+    // The feedback as shown: its short form, and, when there is a fuller one, that as its tooltip and
+    // (in place of the short form, which is hidden from them) for screen readers
+    private void showFeedbackText() {
+        final Element element = feedbackLabel.getElement();
+        if (feedback != null && fullFeedback != null) {
+            element.setInnerText("");
+            final Element shown = DOM.createSpan();
+            shown.setInnerText(feedback);
+            shown.setAttribute("aria-hidden", "true");
+            final Element full = DOM.createSpan();
+            full.setClassName("sr-only");
+            full.setInnerText(fullFeedback);
+            element.appendChild(shown);
+            element.appendChild(full);
+            element.setTitle(fullFeedback);
+        } else {
+            feedbackLabel.setText(NullSafe.string(feedback));
+            element.removeAttribute("title");
         }
     }
 
@@ -473,9 +497,23 @@ public class FormGroup extends Composite implements HasWidgets {
     /// @param feedback What is wrong with the value, e.g. `You must provide a name`, or null or blank
     ///                 to clear it (see [#clearFeedback()]).
     public void setFeedback(final String feedback) {
+        setFeedback(feedback, null);
+    }
+
+    /// Shows what is wrong with the control's value, as [#setFeedback(String)] does, in a short form
+    /// under the control, with a full form (e.g. with what to do about it) as its tooltip and as what
+    /// a screen reader reads.
+    ///
+    /// @param feedback     What is wrong with the value, briefly, or null or blank to clear it.
+    /// @param fullFeedback The full message, or null or blank if the short one says it all.
+    public void setFeedback(final String feedback, final String fullFeedback) {
         this.feedback = NullSafe.isBlankString(feedback)
                 ? null
                 : feedback;
+        this.fullFeedback = this.feedback == null || NullSafe.isBlankString(fullFeedback)
+                            || fullFeedback.equals(feedback)
+                ? null
+                : fullFeedback;
         updateFeedback();
     }
 

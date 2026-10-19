@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.client.presenter.ExplorerPopupPresenter;
 import stroom.explorer.shared.NodeFlag;
+import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
@@ -30,10 +31,12 @@ import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -83,7 +86,7 @@ public final class DocSelectionBoxStories {
                 .story("KeysInTheDialog", DocSelectionBoxStories::withSelection)
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    final Query picker = play.querySelector(".dropDownView-container");
+                    final Query picker = play.querySelector(".drop-down");
                     play.tab();
                     play.expect(picker).toHaveFocus();
                     play.keyboard("{Enter}");
@@ -119,8 +122,9 @@ public final class DocSelectionBoxStories {
                             .toBeInTheDocument());
                     play.expect(picker).toHaveFocus();
                 })
-                // Warning + disabled - the alert icon appears when the document can't be found (click
-                // it for the message); the disabled box doesn't open the popup
+                // Warning + disabled - a document that can't be found is a problem with the field,
+                // shown under it (briefly, with the full message as its tooltip and for screen
+                // readers); the disabled box doesn't open the popup
                 .story("WarningAndDisabled", context -> {
                     final ScreenHarness harness = harness(context, TreeFixtures.fixtureTree());
                     final DocSelectionBoxPresenter warning = box(context, harness, null);
@@ -138,6 +142,44 @@ public final class DocSelectionBoxStories {
                     column.add(disabled.getWidget());
                     return harness.asWidget();
                 })
+                .withPlay(play -> {
+                    // BEM (drop-down.css), with no old classes and no warning button
+                    play.expect(play.querySelectorAll(".drop-down")).toHaveLength(2);
+                    play.expect(play.querySelectorAll("[class*=dropDownView]")).toHaveLength(0);
+                    play.expect(play.queryByTitle("Show Warnings")).toBeNull();
+                    // Once Stroom has checked the document, the picker is invalid and described by the
+                    // message under it, shown briefly with the full message for screen readers
+                    final Query deleted = play.getByRole("button", TextMatch.startingWith("Deleted Feed"));
+                    play.waitFor(() -> play.expect(deleted).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(play.querySelector(".drop-down__feedback")).toHaveTextContent(TextMatch.containing(
+                            "'Deleted Feed' can't be found, or you don't have permission to see it."));
+                    play.expect(deleted).toHaveAccessibleDescription(TextMatch.containing("doesn't exist"));
+                    play.expect(play.querySelector(".drop-down__feedback")).toHaveAttribute("title",
+                            "Feed 'Deleted Feed' (deleted-feed) doesn't exist or you do not have permission "
+                            + "to view it.\nSelect a different feed or speak to your administrator.");
+                    // The disabled picker has no problem
+                    play.expect(play.getByRole("button", TextMatch.startingWith("Locked Pipeline")))
+                            .not().toHaveAttribute("aria-invalid");
+                })
+                // In a form group, the problem is the group's feedback, as any field's is
+                .story("ProblemInAFormGroup", context -> {
+                    final ScreenHarness harness = harness(context, TreeFixtures.fixtureTree());
+                    final DocSelectionBoxPresenter box = box(context, harness, null);
+                    final FormGroup formGroup = new FormGroup();
+                    formGroup.setIdentity("feed");
+                    formGroup.setLabel("Feed");
+                    formGroup.add(box.getWidget());
+                    box.setSelectedEntityReference(new DocRef("Feed", "deleted-feed", "Deleted Feed"), true);
+                    return frame(harness, formGroup, null);
+                })
+                .withPlay(play -> {
+                    final Query picker = play.getByRole("button", TextMatch.startingWith("Feed"));
+                    play.waitFor(() -> play.expect(picker).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(play.querySelector(".form-group__feedback")).toHaveTextContent(TextMatch.containing(
+                            "'Deleted Feed' can't be found, or you don't have permission to see it."));
+                    play.expect(picker).toHaveAccessibleDescription(TextMatch.containing("doesn't exist"));
+                    play.expect(play.querySelectorAll(".drop-down__feedback")).toHaveLength(0);
+                })
                 // The node flags filter (e.g. data sources) is sent with the popup's tree fetch
                 .story("NodeFlagsForwarded", context -> {
                     final ScreenHarness harness = harness(context, new ExplorerFixture());
@@ -149,7 +191,7 @@ public final class DocSelectionBoxStories {
                 })
                 .withPlay(play -> {
                     // Open the popup, which fetches the tree with the node flags filter
-                    play.fireEvent().mouseDown(play.querySelector(".dropDownView-container"), EventInit.create());
+                    play.fireEvent().mouseDown(play.querySelector(".drop-down"), EventInit.create());
                     // The request is Stroom's, checked with the request spy
                     // (NodeFlag DATA_SOURCE is sent as its short form, "D")
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -179,11 +221,15 @@ public final class DocSelectionBoxStories {
     }
 
     private static ScreenHarness harness(final StoryContext context, final ExplorerFixture fixture) {
-        return ScreenHarness.create(context, TreeFixtures.explorerRoutes(fixture)
+        return ScreenHarness.create(context, fixtures(fixture));
+    }
+
+    private static RestFixtures fixtures(final ExplorerFixture fixture) {
+        return TreeFixtures.explorerRoutes(fixture)
                 // Stroom checks a document exists (and gets its current name) with `decorate`;
                 // only the stories' "Deleted Feed" is checked, and it doesn't exist
                 .post(TreeFixtures.DECORATE, RestReply.json("null"))
-                .build());
+                .build();
     }
 
     private static DocSelectionBoxPresenter box(final StoryContext context,

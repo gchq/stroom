@@ -261,7 +261,7 @@ public final class ProcessorFilterEditDialogStories {
                     play.click(alert.getByRole("button", StroomDom.button("Close")));
                     // The feed is a document picker (DocSelectionBoxPresenter): open it and choose
                     // MY_FEED from the explorer tree
-                    play.fireEvent().mouseDown(editor.querySelector(".dropDownView-container"), EventInit.create());
+                    play.fireEvent().mouseDown(editor.querySelector(".drop-down"), EventInit.create());
                     final Play picker = dialog(screen, "Choose item");
                     play.click(picker.findByText("MY_FEED"));
                     play.click(picker.getByRole("button", StroomDom.button("OK")));

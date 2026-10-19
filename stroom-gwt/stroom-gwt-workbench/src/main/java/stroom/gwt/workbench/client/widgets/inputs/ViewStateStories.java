@@ -556,7 +556,7 @@ public final class ViewStateStories {
         private final DropDownViewImpl view = new DropDownViewImpl(GWT.create(DropDownViewImpl.Binder.class));
 
         private PickerField() {
-            view.setText("My Pipeline", false);
+            view.setText("My Pipeline");
             initWidget(view.asWidget());
         }
     }

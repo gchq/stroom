@@ -1615,6 +1615,23 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   closes the list, leaving the value, and goes on to what follows the box; Shift+Tab closes it and
   goes back to the box. The list's quick filter is named "Filter options" when the box has no name.
   Workbench: `Widgets/Selectors/SelectionBox` `TabClosesTheList`.
+* **A picker's value was cut off mid-letter, and its styles were spread about** (`DropDownViewImpl`):
+  the value was only as wide as its text and rounded down, so its last letter was clipped, with no
+  ellipsis, however much room the box had. The picker is now the BEM block `drop-down` with its own
+  stylesheet (`drop-down.css`; its `dropDownView-*` rules are gone from `components.css`, and the
+  rules for it in `ask-stroom-ai.css` and `stroom-floormap.css` use the new names); its value fills
+  the box and ends in an ellipsis clear of the icon; and the warning's toolbar is only in the page
+  while there is a warning. Workbench: `Widgets/Selectors/DocSelectionBox` `WarningAndDisabled`.
+* **A picker's "can't be found" warning could only be seen with a mouse** (`DocSelectionBoxPresenter`,
+  `DropDownViewImpl`): a 17px warning button (under 2.5.8's 24px) that only answered a mouse down,
+  inside the picker's own button (nested controls), opened an alert; Enter on it opened the
+  picker's dialog, so a keyboard user could never see it, and a screen reader met nothing on the
+  picker to say its value was broken. It is now shown as form feedback is: the picker is
+  `aria-invalid` with the red border and described by a short message under it, in its form group's
+  feedback or a line of its own, with the full message (the id, and what to do) as its tooltip and
+  what screen readers read (`FormGroup.setFeedback(short, full)`, `DropDownView.setProblem`).
+  Workbench: `Widgets/Selectors/DocSelectionBox` `WarningAndDisabled` and `ProblemInAFormGroup`,
+  `Widgets/Selectors/DropDownSelector` `Warning`.
 
 ## Checked and not bugs
 
