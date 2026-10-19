@@ -20,6 +20,8 @@ package stroom.gwt.workbench.client.widgets.query;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.client.view.EditExpressionViewImpl;
 import stroom.docref.DocRef;
+import stroom.gwt.workbench.client.app.main.ContentStorySupport;
+import stroom.gwt.workbench.client.app.rest.RestHandler;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.selectors.SelectorWidgets;
@@ -489,6 +491,36 @@ public final class ExpressionBuilderStories {
                             .toHaveAttribute("aria-level", "3"));
                     play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled());
                 })
+                // Editing a term and leaving it keeps what it was: its condition, and its document
+                // (which Stroom checks exists)
+                .story("EditingKeepsATerm", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    for (final String name : List.of("StreamId in 1,2,3", "Feed is TEST_FEED", "StreamId > 1000")) {
+                        play.click(play.getByText(name, ".expression-item__label"));
+                        play.waitFor(() -> play.expect(play.querySelector(FIELD_PICKER)).not().toBeNull());
+                        play.click(play.getByText(USER_ID, ".expression-item__label"));
+                        play.waitFor(() -> play.expect(item(play, name)).toBeInTheDocument());
+                    }
+                })
+                // A term's document is kept if checking it fails (e.g. the server can't be reached),
+                // as it is if the document doesn't exist
+                .story("DocumentKeptIfCheckingItFails", context -> editor(context, complexExpression(), false,
+                        request -> RestReply.error(500, "Server error")))
+                .withPlay(play -> {
+                    play.click(play.getByText("Feed is TEST_FEED", ".expression-item__label"));
+                    play.waitFor(() -> play.expect(play.querySelector(FIELD_PICKER)).not().toBeNull());
+                    play.click(play.getByText(USER_ID, ".expression-item__label"));
+                    play.waitFor(() -> play.expect(item(play, "Feed is TEST_FEED")).toBeInTheDocument());
+                })
+                // A term's document is kept if the term is left before checking it is done
+                .story("DocumentKeptIfLeftBeforeItIsChecked", context -> editor(context, complexExpression(), false,
+                        request -> ContentStorySupport.decorate(request).delayed(3000)))
+                .withPlay(play -> {
+                    play.click(play.getByText("Feed is TEST_FEED", ".expression-item__label"));
+                    play.waitFor(() -> play.expect(play.querySelector(FIELD_PICKER)).not().toBeNull());
+                    play.click(play.getByText(USER_ID, ".expression-item__label"));
+                    play.waitFor(() -> play.expect(item(play, "Feed is TEST_FEED")).toBeInTheDocument());
+                })
                 // A new, empty expression (just the root AND)
                 .story("NewExpression", context -> editor(context, emptyExpression(), false))
                 // Read only - the populated expression, with no selection, editing or dragging
@@ -619,7 +651,8 @@ public final class ExpressionBuilderStories {
                 textField("UserId"),
                 textField("Description"),
                 QueryField.createDate("EventTime"),
-                QueryField.createLong("StreamId"),
+                // An ID, as Stroom's StreamId is (whose conditions include "in")
+                QueryField.createId("StreamId"),
                 QueryField.createDocRefByUniqueName("Feed", "Feed"),
                 QueryField.createUserRef("RunAsUser"));
     }
@@ -779,11 +812,18 @@ public final class ExpressionBuilderStories {
     }
 
     private static ScreenHarness harness(final StoryContext context) {
+        return harness(context, ContentStorySupport::decorate);
+    }
+
+    // The stories' services; `decorate` answers Stroom's check that a term's document exists (and
+    // its current name)
+    private static ScreenHarness harness(final StoryContext context, final RestHandler decorate) {
         final UserFixture users = UserFixture.fixtureUsers();
         final FieldFixture fieldFixture = new FieldFixture(fields());
         final ScreenHarness[] holder = new ScreenHarness[1];
         final ScreenHarness harness = ScreenHarness.create(context, TreeFixtures.explorerRoutes(
                         TreeFixtures.fixtureTree())
+                .post(TreeFixtures.DECORATE, decorate)
                 .post(UserFixture.FIND, request -> RestReply.json(users.find(request.getBody())))
                 // Typing a value asks for suggestions
                 .post("/suggest/v1", RestReply.json("{\"list\": []}"))
@@ -802,7 +842,16 @@ public final class ExpressionBuilderStories {
     private static Widget editor(final StoryContext context,
                                  final ExpressionOperator expression,
                                  final boolean dynamicFields) {
-        final ScreenHarness harness = harness(context);
+        return editor(context, expression, dynamicFields, ContentStorySupport::decorate);
+    }
+
+    /// The editor in the stories' frame, with Stroom's check that a document exists answered as
+    /// given.
+    private static Widget editor(final StoryContext context,
+                                 final ExpressionOperator expression,
+                                 final boolean dynamicFields,
+                                 final RestHandler decorate) {
+        final ScreenHarness harness = harness(context, decorate);
         final ExpressionTreePresenter treePresenter = treePresenter(harness);
         final EditExpressionPresenter presenter = new EditExpressionPresenter(harness.getEventBus(),
                 new EditExpressionViewImpl(GWT.create(EditExpressionViewImpl.Binder.class)),
