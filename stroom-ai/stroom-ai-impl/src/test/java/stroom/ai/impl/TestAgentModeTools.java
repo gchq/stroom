@@ -41,6 +41,7 @@ import stroom.docstore.api.DocumentTypeName;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.meta.api.MetaService;
+import stroom.node.api.NodeService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.common.v2.DataSourceProviderRegistry;
@@ -127,6 +128,7 @@ class TestAgentModeTools {
             // Only offers the user a button: the user applies the change to the editor, unsaved.
             Map.entry("propose_code_change", false),
             Map.entry("stream_meta", false),
+            Map.entry("processor_tasks", false),
             Map.entry("document_links", false),
             Map.entry("find_in_content", false),
             Map.entry("xslt_lookups", false),
@@ -163,6 +165,7 @@ class TestAgentModeTools {
             bind(MetaService.class).toInstance(Mockito.mock(MetaService.class));
             bind(ProcessorFilterService.class).toInstance(Mockito.mock(ProcessorFilterService.class));
             bind(ProcessorTaskService.class).toInstance(Mockito.mock(ProcessorTaskService.class));
+            bind(NodeService.class).toInstance(Mockito.mock(NodeService.class));
             bind(ResultStoreManager.class).toInstance(Mockito.mock(ResultStoreManager.class));
             bind(CodeChangeStepper.class).toInstance(Mockito.mock(CodeChangeStepper.class));
             bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));

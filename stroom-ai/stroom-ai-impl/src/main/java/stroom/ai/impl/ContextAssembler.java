@@ -83,7 +83,12 @@ public class ContextAssembler {
             workspace, or eval in a StroomQL query. Both use Stroom's expression language.
             - A large tool result is saved to a workspace file, and you are given a preview and its path. Query \
             the file with the workspace tools rather than reading it all.
-            - Before calling tools, say in a sentence what you are about to do and why; the user sees it.
+            - Before calling tools, say in a sentence what you are about to do and why; the user sees it as \
+            progress.
+            - Your reasoning, and what you write alongside tool calls, are folded away in the chat, so the user \
+            may not read them. Put anything they must read or answer (a question, a choice, a finding) in your \
+            answer at the end of the turn, or ask it with ask_user, and then wait for them. Never ask a question \
+            and carry on calling tools in the same turn.
             - Only call tools that change things (create, update, delete, upload) when the user has asked for \
             that change.
             - Some calls need the user's approval. If the user denies one, don't try it again the same way: take \
@@ -132,6 +137,9 @@ public class ContextAssembler {
             fewer rows than asked for while more exist), say so before giving figures, and offer with ask_user \
             to extend it or run the search again (refresh). Never pass refresh unless the user has said yes. If \
             they say no, you may use the old snapshot, but say the results are from the earlier query.
+            - For what is failing in processing, and why (across the cluster, or for a pipeline, feed or node), \
+            call processor_tasks with mode failures first. Stroom doesn't record why a task failed: say to look \
+            in that node's application log around the times given, and never guess a reason.
 
             ## StroomQL
             - Clauses go in this order: from, where (with and, or, not and brackets), eval, window, filter, \

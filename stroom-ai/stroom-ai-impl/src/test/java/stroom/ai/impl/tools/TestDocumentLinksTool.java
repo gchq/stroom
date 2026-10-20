@@ -20,10 +20,16 @@ import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.security.shared.AppPermission;
 
 import event.logging.MultiObject;
 import event.logging.OtherObject;
@@ -31,9 +37,11 @@ import event.logging.SearchEventAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,11 +52,13 @@ class TestDocumentLinksTool {
     Path tempDir;
 
     private ToolTestFixture fixture;
+    private final ProcessorFilterService processorFilterService = Mockito.mock(ProcessorFilterService.class);
 
     @BeforeEach
     void setUp() {
         fixture = new ToolTestFixture(tempDir);
         final DocRef feed = fixture.add(new DocRef(FeedDoc.TYPE, "feed", "WINDOWS-EVENTS"), null, true);
+        final DocRef hiddenFeed = fixture.add(new DocRef(FeedDoc.TYPE, "hidden-feed", "SECRET-EVENTS"), null, false);
         final DocRef pipeline = fixture.add(new DocRef(PipelineDoc.TYPE, "pipeline", "Windows pipeline"), null,
                 true);
         final DocRef hiddenPipeline = fixture.add(new DocRef(PipelineDoc.TYPE, "hidden-pipeline", "Secret pipeline"),
@@ -65,6 +75,7 @@ class TestDocumentLinksTool {
         final DocRef hiddenFilter = new DocRef(ProcessorFilter.ENTITY_TYPE, "hidden-filter", null);
 
         fixture.link(filter, feed);
+        fixture.link(filter, hiddenFeed);
         fixture.link(filter, pipeline);
         fixture.link(hiddenFilter, feed);
         fixture.link(hiddenFilter, hiddenPipeline);
@@ -101,6 +112,60 @@ class TestDocumentLinksTool {
                 .contains("1 document(s) found")
                 .contains("- Processor filter (filter) of pipeline 'Windows pipeline' (pipeline): 1 link(s) away")
                 .doesNotContain("hidden-filter");
+    }
+
+    @Test
+    void aPipelinesFiltersSayWhatTheySelectToAUserWhoMayManageProcessors() {
+        canManageProcessors(true);
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, new DocRef(FeedDoc.TYPE, "feed",
+                        "WINDOWS-EVENTS"))
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, "Raw Events")
+                .build();
+        Mockito.when(processorFilterService.fetchByUuid("filter")).thenReturn(Optional.of(filter()
+                .enabled(true)
+                .queryData(QueryData.builder().expression(expression).build())
+                .build()));
+
+        final String result = run("{\"uuids\":[\"pipeline\"],\"depth\":1}");
+
+        assertThat(result)
+                .contains("1 document(s) found")
+                .contains("- Processor filter (filter) of pipeline 'Windows pipeline' (pipeline): 1 link(s) away, "
+                          + "via Pipeline 'Windows pipeline' → used by Processor filter. It selects streams where "
+                          + "Feed is 'WINDOWS-EVENTS' and Type is 'Raw Events'; enabled.");
+    }
+
+    @Test
+    void aFilterThatSelectsEverythingSaysSo() {
+        canManageProcessors(true);
+        Mockito.when(processorFilterService.fetchByUuid("filter")).thenReturn(Optional.of(filter().build()));
+
+        assertThat(run("{\"uuids\":[\"pipeline\"],\"depth\":1}"))
+                .contains("used by Processor filter. It selects all streams; disabled.");
+    }
+
+    @Test
+    void withoutManageProcessorsAFilterGivesOnlyTheFeedsItLinksToThatTheUserCanView() {
+        final String result = run("{\"uuids\":[\"pipeline\"],\"depth\":1}");
+
+        assertThat(result)
+                .contains("used by Processor filter. It links to Feed 'WINDOWS-EVENTS'; what it selects needs the "
+                          + "Manage Processors permission, as the Processors tab does.")
+                .doesNotContain("SECRET")
+                .doesNotContain("hidden-feed")
+                .doesNotContain("selects streams");
+        Mockito.verifyNoInteractions(processorFilterService);
+    }
+
+    @Test
+    void aFilterThatCantBeReadFallsBackToItsVisibleFeeds() {
+        canManageProcessors(true);
+        Mockito.when(processorFilterService.fetchByUuid("filter")).thenThrow(new IllegalStateException("no"));
+
+        assertThat(run("{\"uuids\":[\"pipeline\"],\"depth\":1}"))
+                .contains("It links to Feed 'WINDOWS-EVENTS'; what it selects couldn't be read.")
+                .doesNotContain("SECRET");
     }
 
     @Test
@@ -160,9 +225,23 @@ class TestDocumentLinksTool {
                 .hasMessageContaining("dependants or dependencies");
     }
 
+    private void canManageProcessors(final boolean can) {
+        Mockito.when(fixture.securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION))
+                .thenReturn(can);
+    }
+
+    private static ProcessorFilter.Builder filter() {
+        return ProcessorFilter.builder()
+                .id(7)
+                .uuid("filter")
+                .pipelineUuid("pipeline")
+                .pipelineName("Windows pipeline");
+    }
+
     private String run(final String arguments) {
         final DocumentLinksTool tool = new DocumentLinksTool(fixture.workspace, () -> fixture.dependencyService,
-                fixture.documentAccess(), fixture.auditLog());
+                fixture.documentAccess(), fixture.processorFilterAccess(processorFilterService),
+                fixture.auditLog());
         return tool.run(ToolTestFixture.request(DocumentLinksTool.NAME, arguments), 1);
     }
 }

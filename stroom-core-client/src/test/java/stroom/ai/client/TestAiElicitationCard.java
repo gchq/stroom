@@ -51,6 +51,58 @@ class TestAiElicitationCard {
     }
 
     @Test
+    void theMessageKeepsItsLineBreaksAsMarkdown() {
+        assertThat(AiElicitationCard.messageMarkdown("Line one\nLine two")).isEqualTo("Line one  \nLine two");
+        assertThat(AiElicitationCard.messageMarkdown("Line one\r\nLine two")).isEqualTo("Line one  \nLine two");
+        assertThat(AiElicitationCard.messageMarkdown(null)).isEmpty();
+        assertThat(AiElicitationCard.messageMarkdown("")).isEmpty();
+    }
+
+    @Test
+    void theMessagesListsCodeAndTablesAreLeftAsTheyAre() {
+        // As the Stroom MCP server writes a confirmation: a summary, then its details as a list.
+        final String confirmation = """
+                Use Elasticsearch index template 'ecs-acme-v2'
+
+                - index template: ecs-acme-v2
+                - applies to: ecs-acme-* (priority 200)
+                1. first
+                2) second
+                * starred
+                + plus""";
+        assertThat(AiElicitationCard.messageMarkdown(confirmation)).isEqualTo(confirmation);
+
+        final String code = """
+                The template:
+                ```json
+                {
+                  "index_patterns": ["ecs-acme-*"]
+                }
+                ```
+                ~~~
+                a
+                b
+                ~~~
+                | a | b |
+                | --- | --- |
+                | 1 | 2 |
+                > quoted
+                # Heading
+                Title
+                ---""";
+        assertThat(AiElicitationCard.messageMarkdown(code)).isEqualTo(code);
+    }
+
+    @Test
+    void aParagraphInsideAListKeepsItsBreaks() {
+        assertThat(AiElicitationCard.messageMarkdown("- notes: one\n  two\n- next"))
+                .isEqualTo("- notes: one  \n  two\n- next");
+        // Text straight after code keeps its break.
+        assertThat(AiElicitationCard.messageMarkdown("```\nx\n```\nAfter\nmore"))
+                .isEqualTo("```\nx\n```\nAfter  \nmore");
+    }
+
+    @Test
     void withoutAQuestionTheFallbackIsUsed() {
         assertThat(AiElicitationCard.firstLine(null, "A form from fastmcp")).isEqualTo("A form from fastmcp");
         assertThat(AiElicitationCard.firstLine(" \n** **\n", "A form from fastmcp")).isEqualTo("A form from fastmcp");
