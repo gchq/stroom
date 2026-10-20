@@ -23,7 +23,7 @@ jobs:
           AUTHOR: ${{ github.event.pull_request.user.login }}
           AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
         run: |
-          echo "Author: ${AUTHOR}, author_association: ${AUTHOR_ASSOCIATION}"
+          echo "PR: ${PR}, author: ${AUTHOR}, author_association: ${AUTHOR_ASSOCIATION}"
           gh pr close "$PR" --repo "$GITHUB_REPOSITORY" \
           --comment "This repository only accepts pull requests from organisation members or approved outside collaborators. This pull request has been closed automatically."
 
