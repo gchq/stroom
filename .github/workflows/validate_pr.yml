@@ -36,7 +36,7 @@ jobs:
       - name: Check if author is a member of the "Stroom Administrators" org level team
         id: check_team
         env:
-          GH_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           set -euo pipefail
