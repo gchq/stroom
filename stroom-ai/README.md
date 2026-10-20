@@ -521,6 +521,29 @@ JSON, XML or a map value, and `Bearer`/`Basic` credentials). Each search or list
 naming the properties given, each `get` as a View event of them, and a refusal as a failed Search event.
 
 
+## Elasticsearch index templates (`elastic_index_templates`)
+
+The `elastic_index_templates` tool helps an administrator review or reproduce the Elasticsearch templates behind an
+Elastic Index document, given its UUID. It reads, from the document's cluster with the document's own cluster
+connection (as a search does, and as `POST /elasticIndex/v1/templates` does), the index template that applies to
+the document's index and each component template it is composed of. It only reads and changes nothing in
+Elasticsearch.
+
+The result names the document (as a link), its index name and the newest index or data stream it resolves to (or
+why it couldn't be resolved), the index template that applies and any overlapping lower-priority templates (name,
+index patterns and priority, which don't apply), and then each template under a heading with its name, and its
+body indented, in a `json` code block. The bodies are for review, not Dev Tools requests: they are as Elasticsearch
+returns them, so they may hold fields Elasticsearch sets itself (such as `created_date_millis`), which it rejects in
+a PUT request. A
+part Elasticsearch didn't give is shown with its status (`NOT_FOUND`, `FORBIDDEN` with Elasticsearch's own message
+naming the missing privilege, or `ERROR`), and a cluster that can't be reached is said so, with the reason.
+
+Permissions: the user needs View on the Elastic Index document, checked first; a document they can't view is
+refused with the same words as one that doesn't exist. Stroom then checks Read on it again as it reads the
+templates. The cluster's credentials need the Elasticsearch privileges to read templates. Each successful read is
+logged as a View event of the document. Its output is treated as untrusted, as it comes from Elasticsearch.
+
+
 ## Retention and limits
 
 The _AI Chat Retention_ job (hourly) removes:

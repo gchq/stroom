@@ -80,8 +80,8 @@ class TestMcpToolNameClashes {
         try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
             final McpToolset toolset = FakeMcpServer.toolset(first, second, third);
             final ToolConsent toolConsent = Mockito.mock(ToolConsent.class);
-            Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(), Mockito.any(),
-                    Mockito.anyBoolean())).thenReturn(ToolConsent.Verdict.RUN);
+            Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
+                    Mockito.any(), Mockito.any(), Mockito.anyBoolean())).thenReturn(ToolConsent.Verdict.RUN);
             final McpAgentChat agentChat = world.agentChat(toolConsent, Mockito.mock(AiChatRunManager.class));
 
             // First see what is offered.

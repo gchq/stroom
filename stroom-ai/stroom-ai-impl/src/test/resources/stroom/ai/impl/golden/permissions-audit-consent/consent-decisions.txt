@@ -6,11 +6,12 @@
 - ask_user (read-only, reads only trusted content): RUN in every situation
 - config_properties (read-only, reads untrusted content): RUN in every situation
 - current_results (read-only, reads untrusted content): RUN in every situation
-- delete_file (changes things, reads only trusted content): RUN in every situation
+- delete_file (changes things, reads only trusted content): RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes the chat's files or memory."} | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes the chat's files or memory."}
 - describe_data_source (read-only, reads untrusted content): RUN in every situation
 - document_documentation (read-only, reads untrusted content): RUN in every situation
 - document_info (read-only, reads untrusted content): RUN in every situation
 - document_links (read-only, reads untrusted content): RUN in every situation
+- elastic_index_templates (read-only, reads untrusted content): RUN in every situation
 - fetch_events (read-only, reads untrusted content): RUN in every situation
 - find_in_content (read-only, reads untrusted content): RUN in every situation
 - folder_contents (read-only, reads untrusted content): RUN in every situation
@@ -23,7 +24,7 @@
 - jq (read-only, reads untrusted content): RUN in every situation
 - list_data_sources (read-only, reads untrusted content): RUN in every situation
 - ls (read-only, reads untrusted content): RUN in every situation
-- memory (changes things, reads only trusted content): RUN in every situation
+- memory (changes things, reads only trusted content): RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes the chat's files or memory."} | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes the chat's files or memory."}
 - pipeline (read-only, reads untrusted content): RUN in every situation
 - processor_tasks (read-only, reads untrusted content): RUN in every situation
 - propose_code_change (read-only, reads untrusted content): RUN in every situation
@@ -38,14 +39,14 @@
 - search_events (read-only, reads untrusted content): RUN in every situation
 - search_history (read-only, reads untrusted content): RUN in every situation
 - server_tasks (read-only, reads untrusted content): RUN in every situation
-- str_replace (changes things, reads only trusted content): RUN in every situation
+- str_replace (changes things, reads only trusted content): RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes the chat's files or memory."} | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes the chat's files or memory."}
 - stream_meta (read-only, reads untrusted content): RUN in every situation
 - summarise_column (read-only, reads untrusted content): RUN in every situation
 - table (read-only, reads untrusted content): RUN in every situation
 - task_list (read-only, reads only trusted content): RUN in every situation
 - validate_stroomql (read-only, reads only trusted content): RUN in every situation
 - wc (read-only, reads only trusted content): RUN in every situation
-- write_file (changes things, reads only trusted content): RUN in every situation
+- write_file (changes things, reads only trusted content): RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes the chat's files or memory."} | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes the chat's files or memory."}
 - xpath (read-only, reads untrusted content): RUN in every situation
 - xslt_lookups (read-only, reads untrusted content): RUN in every situation
 

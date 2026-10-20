@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.CodeChangeStepper;
+import stroom.ai.api.ElasticIndexTemplates;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.tools.BuiltInTools;
@@ -141,7 +142,8 @@ class TestAgentModeTools {
             Map.entry("xslt_lookups", false),
             // Only offers the user a button: the user applies the change to the dashboard, unsaved.
             Map.entry("propose_dashboard_change", false),
-            Map.entry("config_properties", false)));
+            Map.entry("config_properties", false),
+            Map.entry("elastic_index_templates", false)));
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
@@ -178,6 +180,7 @@ class TestAgentModeTools {
             bind(NodeService.class).toInstance(Mockito.mock(NodeService.class));
             bind(ResultStoreManager.class).toInstance(Mockito.mock(ResultStoreManager.class));
             bind(CodeChangeStepper.class).toInstance(Mockito.mock(CodeChangeStepper.class));
+            bind(ElasticIndexTemplates.class).toInstance(Mockito.mock(ElasticIndexTemplates.class));
             bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
             bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
             bind(ContentIndex.class).toInstance(Mockito.mock(ContentIndex.class));

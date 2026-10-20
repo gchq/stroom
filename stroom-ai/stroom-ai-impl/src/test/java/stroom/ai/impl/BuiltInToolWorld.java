@@ -18,6 +18,11 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.CodeChangeStepper;
+import stroom.ai.api.ElasticIndexTemplates;
+import stroom.ai.api.ElasticIndexTemplates.ComponentTemplate;
+import stroom.ai.api.ElasticIndexTemplates.IndexTemplate;
+import stroom.ai.api.ElasticIndexTemplates.IndexTemplates;
+import stroom.ai.api.ElasticIndexTemplates.Status;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.TabSnapshots.StoredPart;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
@@ -77,6 +82,7 @@ import stroom.query.impl.QueryService;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.AppPermission;
@@ -146,6 +152,9 @@ public final class BuiltInToolWorld implements AutoCloseable {
     public static final DocRef QUERY = new DocRef("Query", "query-uuid", "Test query");
     public static final DocRef DASHBOARD = new DocRef("Dashboard", "dashboard-uuid", "Test dashboard");
     public static final DocRef AGENTS = new DocRef(DocumentationDoc.TYPE, "agents-uuid", AgentInstructions.DOC_NAME);
+    /// An Elastic Index, kept out of the folder's listing so the other tools' outputs don't change with it.
+    public static final DocRef ELASTIC_INDEX = new DocRef(ElasticIndexDoc.TYPE, "elastic-index-uuid",
+            "Test elastic index");
 
     /// The XSLT's text: it makes a lookup, so the lookup tools have something to find.
     public static final String XSLT_TEXT = """
@@ -212,7 +221,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("xslt_lookups", "{\"uuids\":[\"xslt-uuid\"]}"),
             Map.entry("propose_dashboard_change", "{\"component\":\"table-1\",\"changes\":[{\"op\":\"hide_column\","
                                                   + "\"column\":\"UserId\"}],\"summary\":\"Hide the user.\"}"),
-            Map.entry("config_properties", "{\"mode\":\"get\",\"paths\":[\"stroom.ui.defaultMaxResults\"]}"));
+            Map.entry("config_properties", "{\"mode\":\"get\",\"paths\":[\"stroom.ui.defaultMaxResults\"]}"),
+            Map.entry("elastic_index_templates", "{\"uuid\":\"elastic-index-uuid\"}"));
 
     private final Set<AppPermission> appPermissions;
     private final Set<DocumentPermission> documentPermissions;
@@ -235,6 +245,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
     private final ExecutorProvider executorProvider = Mockito.mock(ExecutorProvider.class);
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final GlobalConfigReader globalConfigReader = Mockito.mock(GlobalConfigReader.class);
+    private final ElasticIndexTemplates elasticIndexTemplates = Mockito.mock(ElasticIndexTemplates.class);
     /// The workspace's files, by path.
     private final Map<String, String> files = new LinkedHashMap<>();
     private final Map<String, DocRef> docRefs = new LinkedHashMap<>();
@@ -267,6 +278,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
         stubQueries();
         stubChat();
         stubConfig();
+        stubElasticIndexTemplates();
         Mockito.when(nodeInfo.getThisNodeName()).thenReturn("node1");
         Mockito.when(nodeService.findNodeNames(Mockito.any())).thenReturn(List.of("node1"));
         Mockito.when(executorProvider.get()).thenReturn(executorService);
@@ -505,6 +517,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(NodeService.class).toInstance(nodeService);
                 bind(ResultStoreManager.class).toInstance(Mockito.mock(ResultStoreManager.class));
                 bind(CodeChangeStepper.class).toInstance(Mockito.mock(CodeChangeStepper.class));
+                bind(ElasticIndexTemplates.class).toInstance(elasticIndexTemplates);
                 bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
                 bind(DocFinder.class).toInstance(docFinder);
                 bind(ContentIndex.class).toInstance(Mockito.mock(ContentIndex.class));
@@ -529,6 +542,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
         add(DASHBOARD, null);
         add(AGENTS, new DocumentationDoc(AGENTS.getUuid(), AGENTS.getName(), null, null, null, null, null, null,
                 "Feeds in /Test are test feeds."));
+        // Found by its UUID, but with no handler, as its templates are read by ElasticIndexTemplates.
+        docRefs.put(ELASTIC_INDEX.getUuid(), ELASTIC_INDEX);
     }
 
     private void add(final DocRef docRef, final Object document) {
@@ -667,6 +682,23 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 .thenReturn(OverrideValue.unSet(String.class));
     }
 
+    // The Elastic Index's templates: one index template, composed of two component templates.
+    private void stubElasticIndexTemplates() {
+        Mockito.when(elasticIndexTemplates.read(Mockito.any())).thenReturn(new IndexTemplates(
+                "test-events",
+                "test-events-000001",
+                null,
+                new IndexTemplate(Status.OK, "test-events",
+                        "{\"index_patterns\":[\"test-events*\"],\"composed_of\":[\"test-mappings\","
+                        + "\"test-settings\"],\"priority\":200}",
+                        List.of(), null),
+                List.of(new ComponentTemplate("test-mappings", Status.OK,
+                                "{\"template\":{\"mappings\":{\"properties\":{\"UserId\":{\"type\":"
+                                + "\"keyword\"}}}}}", null),
+                        new ComponentTemplate("test-settings", Status.OK,
+                                "{\"template\":{\"settings\":{\"number_of_shards\":1}}}", null))));
+    }
+
     private void stubExplorer() {
         Mockito.when(explorerNodeService.getNodeByUuid(Mockito.anyString())).thenAnswer(invocation ->
                 Optional.ofNullable(docRefs.get(invocation.<String>getArgument(0))).map(BuiltInToolWorld::node));
@@ -693,6 +725,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
             if (FOLDER.equals(folder)) {
                 return docRefs.values().stream()
                         .filter(docRef -> !FOLDER.equals(docRef))
+                        .filter(docRef -> !ELASTIC_INDEX.equals(docRef))
                         .map(BuiltInToolWorld::node)
                         .toList();
             }

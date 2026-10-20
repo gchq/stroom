@@ -91,8 +91,8 @@ class TestMcpAgentChat {
 
     {
         // Tool calls run unless a test says otherwise.
-        Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(), Mockito.any(),
-                Mockito.anyBoolean())).thenReturn(ToolConsent.Verdict.RUN);
+        Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.anyBoolean())).thenReturn(ToolConsent.Verdict.RUN);
         // Stored messages get an id and turn, as the DAO would give them.
         Mockito.when(aiService.storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString()))
                 .thenAnswer(invocation -> new AiChatMessage(1000, invocation.getArgument(0), 0L,
@@ -529,7 +529,7 @@ class TestMcpAgentChat {
 
         // The user isn't asked to allow a tool that doesn't exist.
         Mockito.verify(toolConsent, Mockito.never()).decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
-                Mockito.any(), Mockito.anyBoolean());
+                Mockito.any(), Mockito.any(), Mockito.anyBoolean());
         assertThat(lastToolResult(model.requests.get(1)))
                 .isEqualTo("Error: no such tool 'describe_event_logging_schema'. Call only the tools you are "
                            + "offered.");
@@ -636,7 +636,7 @@ class TestMcpAgentChat {
                 .doesNotContain("activate_pipeline");
         // Turning a group on changes nothing, so the user is not asked.
         Mockito.verify(toolConsent, Mockito.never()).decide(Mockito.anyInt(), Mockito.eq("activate_pipeline"),
-                Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
         Mockito.verify(client).callTool(Mockito.any(CallToolRequest.class));
     }
 
@@ -664,8 +664,8 @@ class TestMcpAgentChat {
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
                 .thenReturn(CallToolResult.builder().content(List.of(new TextContent("found"))).build());
         final McpToolset toolset = toolset(client, searchTool());
-        Mockito.when(toolConsent.decide(Mockito.eq(7), Mockito.eq("search"), Mockito.any(), Mockito.any(),
-                        Mockito.anyBoolean()))
+        Mockito.when(toolConsent.decide(Mockito.eq(7), Mockito.eq("search"), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
                 .thenReturn(ToolConsent.Verdict.RUN,
                         new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", "Not trusted.", true, false,
                                 List.of("untrusted server")),
@@ -700,7 +700,7 @@ class TestMcpAgentChat {
         // A gate that answers at once, as an MCP session's form could: the chat's loop never has one.
         final ToolConsentGate gate = Mockito.mock(ToolConsentGate.class);
         Mockito.when(gate.checkCall(Mockito.eq(ToolSession.chat(7)), Mockito.eq("search"), Mockito.any(),
-                        Mockito.any(), Mockito.anyBoolean()))
+                        Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
                 .thenReturn(new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", "Not trusted.", true,
                         false, List.of("untrusted server")));
         Mockito.when(gate.requestCallApproval(Mockito.eq(ToolSession.chat(7)), Mockito.any()))
@@ -720,10 +720,11 @@ class TestMcpAgentChat {
     @Test
     void deniedByAChatDecisionIsNotRun() {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
-        Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(), Mockito.any(),
-                Mockito.anyBoolean())).thenReturn(new ToolConsent.Verdict(ToolConsent.Kind.DENY,
-                "You chose not to allow this tool in this chat.", "You chose not to allow this tool in this chat.",
-                false, false, List.of()));
+        Mockito.when(toolConsent.decide(Mockito.anyInt(), Mockito.anyString(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
+                .thenReturn(new ToolConsent.Verdict(ToolConsent.Kind.DENY,
+                        "You chose not to allow this tool in this chat.",
+                        "You chose not to allow this tool in this chat.", false, false, List.of()));
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder().id("1").name("search").arguments("{}")
                         .build())),

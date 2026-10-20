@@ -109,4 +109,12 @@ class MemoryTool extends AbstractBuiltInTool {
     public boolean isReadOnly() {
         return false;
     }
+
+    /// @return True for `list` and `read`, which change nothing; false for the other commands, and for a call
+    /// whose command can't be read, so that it is treated as a change.
+    @Override
+    public boolean isReadOnly(final ToolCall call) {
+        final String command = stringArg(call, COMMAND_ARG);
+        return "list".equals(command) || "read".equals(command);
+    }
 }
