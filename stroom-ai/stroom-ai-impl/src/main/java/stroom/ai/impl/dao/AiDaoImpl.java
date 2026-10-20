@@ -132,6 +132,8 @@ public class AiDaoImpl implements AiDao {
                 .set(AI_CHAT.UPDATE_USER, userName)
                 .set(AI_CHAT.USER_UUID, userUuid)
                 .set(AI_CHAT.TITLE, title)
+                // A new chat is open, so is the one to show again after a page refresh.
+                .set(AI_CHAT.LAST_OPENED_MS, now)
                 .returning(AI_CHAT.ID)
                 .fetchOne(AI_CHAT.ID));
 
