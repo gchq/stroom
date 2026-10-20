@@ -163,8 +163,7 @@ public final class JobsScreenStories {
                     // A job's help opens the docs in a new browser tab, which its name says
                     play.expect(play.getAllByTitle("Help (opens in new tab)").count()).toBeGreaterThanOrEqual(1);
                     // Select the job: the bottom per-node grid loads
-                    play.click(play.getByText("Data Retention"));
-                    play.findByText("node1");
+                    showDataRetentionNodes(play);
                     play.findByText("node2");
                     // Types render; the CRON node has a schedule, the DISTRIBUTED node has no Run Now
                     play.expect(play.getByText("Cron")).toBeInTheDocument();
@@ -202,9 +201,7 @@ public final class JobsScreenStories {
                 .story("BatchSchedule", context -> render(context, CRON_FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    play.findByText("Data Retention");
-                    play.click(play.getByText("Data Retention"));
-                    play.findByText("node1");
+                    showDataRetentionNodes(play);
                     play.findByText("node3");
                     // Multi-select the two CRON nodes: select node1, then Ctrl-mousedown node3.
                     // A selected row has GWT's 'dataGridSelectedRow' class, not
@@ -243,9 +240,7 @@ public final class JobsScreenStories {
                 .story("CrossNavigation", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    play.findByText("Data Retention");
-                    play.click(play.getByText("Data Retention"));
-                    play.findByText("node1");
+                    showDataRetentionNodes(play);
                     // The Node cell is a link that opens the Nodes screen: pressing its 'open'
                     // button, named for what it opens, runs its command
                     play.click(play.getByRole("button", OPEN_NODE1));
@@ -268,8 +263,7 @@ public final class JobsScreenStories {
                 .story("EditSchedule", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    play.findByText("Data Retention");
-                    play.click(play.getByText("Data Retention"));
+                    showDataRetentionNodes(play);
                     // node1 (CRON) has a Schedule link showing its expression.
                     // GWT's CommandLinkCell runs its command when its 'open'
                     // button (named for the job and node) is pressed, not its text
@@ -293,8 +287,7 @@ public final class JobsScreenStories {
                 .story("CommandLinksByKeyboard", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    play.findByText("Data Retention");
-                    play.click(play.getByText("Data Retention"));
+                    showDataRetentionNodes(play);
                     play.findByText("0 0 * * ?");
                     // Pressing a row's text gives its row the keyboard focus
                     play.click(play.getByText("node1"));
@@ -332,6 +325,16 @@ public final class JobsScreenStories {
     // implicit), so a cell's row is its closest <tr>, not its closest [role="row"]
     private static Query row(final Play play, final String text) {
         return play.getByText(text).closest("tr");
+    }
+
+    // Selects Data Retention and waits for its nodes, with their states. The enabled nodes are a
+    // request of their own, and until its reply redraws the grid every row is drawn disabled, its
+    // links and menu items doing nothing, so the stories wait for node1's "Enabled"
+    private static void showDataRetentionNodes(final Play play) {
+        play.findByText("Data Retention");
+        play.click(play.getByText("Data Retention"));
+        play.findByText("node1");
+        play.waitFor(() -> play.expect(play.within(row(play, "node1")).getByText("Enabled")).toBeInTheDocument());
     }
 
     // Runs node1's job now from its row's action menu, and waits for the confirmation

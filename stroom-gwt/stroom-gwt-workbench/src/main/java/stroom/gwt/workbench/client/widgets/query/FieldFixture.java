@@ -35,7 +35,9 @@ public final class FieldFixture {
     /// The field search's path, relative to the REST root.
     public static final String FIND_FIELDS = "/dataSource/v1/findFields";
 
-    // Stroom's DataSourceClient.findFieldByName asks for `==` and the quoted name
+    // Stroom's DataSourceClient.findFieldByName asks for `=` and the quoted name
+    // (StringExpressionUtil.equalTo), which matches ignoring case; `==` matches it exactly
+    private static final String EQUALS = "=";
     private static final String EQUALS_CASE_SENSITIVE = "==";
 
     private final List<QueryField> fields;
@@ -60,15 +62,19 @@ public final class FieldFixture {
     ///
     /// @param requestJson The request's body, a `FindFieldCriteria`.
     /// @return The reply's body, a `ResultPage` of the fields whose names match the request's filter
-    /// (a case-insensitive contains, or an exact name for `==` and a quoted name).
+    /// (a case-insensitive contains, a name ignoring case for `=` and a quoted name, or an exact name for
+    /// `==` and a quoted name).
     public String find(final String requestJson) {
         final String filter = filterOf(requestJson);
         final String name = nameOf(filter);
+        final boolean caseSensitive = filter != null && filter.startsWith(EQUALS_CASE_SENSITIVE);
         final List<QueryField> matches = new ArrayList<>();
         for (final QueryField field : fields) {
             final boolean matched;
             if (name != null) {
-                matched = field.getFldName().equals(name);
+                matched = caseSensitive
+                        ? field.getFldName().equals(name)
+                        : field.getFldName().equalsIgnoreCase(name);
             } else {
                 matched = filter == null || field.getFldName().toLowerCase(Locale.ROOT)
                         .contains(filter.toLowerCase(Locale.ROOT));
@@ -109,13 +115,18 @@ public final class FieldFixture {
         return null;
     }
 
-    /// @return The name in an `=="name"` filter, or null for any other filter.
+    /// @return The name in an `="name"` or `=="name"` filter, or null for any other filter.
     private static String nameOf(final String filter) {
-        if (filter != null
-            && filter.startsWith(EQUALS_CASE_SENSITIVE + "\"")
+        if (filter == null) {
+            return null;
+        }
+        final String operator = filter.startsWith(EQUALS_CASE_SENSITIVE)
+                ? EQUALS_CASE_SENSITIVE
+                : EQUALS;
+        if (filter.startsWith(operator + "\"")
             && filter.endsWith("\"")
-            && filter.length() > EQUALS_CASE_SENSITIVE.length() + 1) {
-            return filter.substring(EQUALS_CASE_SENSITIVE.length() + 1, filter.length() - 1);
+            && filter.length() > operator.length() + 1) {
+            return filter.substring(operator.length() + 1, filter.length() - 1);
         }
         return null;
     }

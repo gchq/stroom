@@ -57,8 +57,9 @@
 
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
     --heading-color: var(--blue-300);
-    /* <code> blocks, e.g. in markdown or in FormGroup help/description */
-    --code-color: var(--pink-300);
+    /* <code> blocks, e.g. in markdown or in FormGroup help/description. Pink 200, 5.5:1 on a tooltip
+       or help popup and 7.1:1 on the page (pink 300 was 4.0:1 on a popup) */
+    --code-color: var(--pink-200);
     --code-color--disabled: rgb(from var(--code-color) r g b / 0.7);
     --border-color: #363a43;
 

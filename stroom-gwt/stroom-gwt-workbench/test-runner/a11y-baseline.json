@@ -463,9 +463,6 @@
   "widgets-editors-viewers-markdowneditor--read-only-preview": [
     "frame-title"
   ],
-  "widgets-query-expressionbuilder--async-field-source-fetches-only-when-needed": [
-    "label"
-  ],
   "widgets-selectors-selectionbox--basic": [
     "label"
   ],
