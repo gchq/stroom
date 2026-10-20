@@ -39,6 +39,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `document_documentation` | A document's Documentation tab | all | yes | | | View | workspace | `describe_document` (type Documentation) |
 | `document_info` | A document's type, path, tags, history, version and dependencies | all | yes | | | View | no | `describe_document` (part) |
 | `document_links` | Follows dependency links (dependants or dependencies) from documents | all | yes | | Manage Processors | View | workspace | |
+| `elastic_index_templates` | An Elastic Index's index template and its component templates, read from its cluster, each by name with its JSON body | all | yes | | | View | no | none (`check_index_template` and `propose_index_template` take templates the user gives) |
 | `fetch_events` | Fetches the events behind StreamId/EventId rows into an XML file | all | yes | View Data | | | yes (workspace) | `read_stream`, `locate_event` (part) |
 | `find_in_content` | Finds text in documents' content (XSLTs, converters, dictionaries) | all | yes | | | View | workspace | `find_documents` (with `content`) |
 | `folder_contents` | An Explorer folder's documents, streams, processor filters and task counts | all | yes | | Manage Processors | View | no | `processing_status` (part) |
@@ -126,6 +127,11 @@ services directly as the user, and those listed here only read.
   with steps for applying it by hand.
 * **`propose_dashboard` and `verify_index`**: the built-in offers a button and the user creates the dashboard; MCP
   creates a verification dashboard in its workspace folder after a confirmation.
+* **`elastic_index_templates` and `check_index_template`, `propose_index_template`**: MCP reads no templates from
+  Elasticsearch: it asks the user for the index template and its component templates (Dev Tools requests or GET
+  output). The built-in reads them from the Elastic Index document's cluster, each by name with its body as
+  Elasticsearch returns it, for review. That body may hold fields Elasticsearch sets itself (such as
+  `created_date_millis`), which it rejects in a PUT request, so it can't be applied as it is.
 * **`ask_user`**: MCP has no general question tool. Each tool asks within itself, for a confirmation or approval
   (`confirmation_id`, `approval_id`, `reviewed`) or a choice (e.g. a feed name it couldn't find).
 

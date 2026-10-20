@@ -34,8 +34,9 @@ import java.util.Optional;
 /// Decides whether a tool call the model asks for runs straight away, needs the user's approval first, or is not
 /// run:
 ///
-/// - built-in tools run, while the user is away too (they only reach the chat's own workspace and memory, which
-///   have their own controls);
+/// - built-in tools run (they only reach the chat's own workspace and memory, which have their own controls),
+///   except that while the user is away only calls that only read run, and the others wait for the user, as for
+///   MCP tools;
 /// - an MCP tool with an ALLOW policy runs, ASK_ALWAYS always asks, DENY tools are never offered;
 /// - a trusted server's tool marked `_meta.confirms` runs, even while the user is away, as it asks the user
 ///   itself through a form (unless its policy is ASK_ALWAYS);
@@ -77,6 +78,9 @@ public class ToolConsent {
         this.aiConfigProvider = aiConfigProvider;
     }
 
+    /// Decides about a call whose arguments aren't known, so a built-in tool with some commands that change
+    /// something is judged as if the call changes something.
+    ///
     /// @param chatId       The chat.
     /// @param toolName     The tool, as the model named it.
     /// @param builtInTools The built-in tools.
@@ -88,10 +92,28 @@ public class ToolConsent {
                           final BuiltInTools builtInTools,
                           final McpToolset toolset,
                           final boolean unattended) {
+        return decide(chatId, toolName, null, builtInTools, toolset, unattended);
+    }
+
+    /// @param chatId       The chat.
+    /// @param toolName     The tool, as the model named it.
+    /// @param arguments    The call's arguments as JSON, or null if not known.
+    /// @param builtInTools The built-in tools.
+    /// @param toolset      The MCP tools.
+    /// @param unattended   True if the user is away.
+    /// @return What to do.
+    public Verdict decide(final int chatId,
+                          final String toolName,
+                          final String arguments,
+                          final BuiltInTools builtInTools,
+                          final McpToolset toolset,
+                          final boolean unattended) {
         if (builtInTools.toolMap().keySet().stream().anyMatch(spec -> spec.name().equals(toolName))) {
-            // Even those that change things only reach the chat's own workspace and memory, which have their own
-            // controls (S6, S7), so they run while the user is away too.
-            return Verdict.RUN;
+            // They only reach the chat's own workspace and memory, which have their own controls (S6, S7), but
+            // while the user is away only what reads runs (S3): a change waits for them, as an MCP tool's does.
+            return unattended && !builtInTools.isReadOnlyCall(toolName, arguments)
+                    ? Verdict.ask(builtInAwayReason(), false, false, List.of())
+                    : Verdict.RUN;
         }
         final McpToolInfo info = toolset.toolInfo(toolName).orElse(null);
         if (info == null) {
@@ -228,6 +250,10 @@ public class ToolConsent {
 
     private static String awayReason() {
         return "You were away when the agent wanted to do this, and the tool can modify data.";
+    }
+
+    private static String builtInAwayReason() {
+        return "You were away when the agent wanted to do this, and it changes the chat's files or memory.";
     }
 
     /// What to do about a tool call.

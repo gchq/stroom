@@ -187,6 +187,13 @@ Needs: Use (document)
 - nothing: REFUSED or limited: You can't use the data source these results come from, so they can't be read.
 - admin: runs (the same as with everything)
 
+## elastic_index_templates {"uuid":"elastic-index-uuid"}
+Needs: View (document)
+- everything: runs: Elastic Index [Test elastic index](?action=open-doc&docType=ElasticIndex&docUuid=elastic-index-uuid)
+- without View (document): REFUSED or limited: You don't have permission to view this document.
+- nothing: REFUSED or limited: You don't have permission to view this document.
+- admin: runs (the same as with everything)
+
 ## Tools with no permission check of their own (the same with everything and with nothing)
 - ask_user: same (it fails here, as McpElicitations is mocked)
 - delete_file: same
