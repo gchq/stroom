@@ -54,7 +54,7 @@ public final class TickBoxCellStories {
     private static final String TICKED = "Ticked";
     private static final String HALF_TICKED = "Half-Ticked";
     private static final String NOT_TICKED = "Not Ticked";
-    private static final String HEADER_TICK_BOX = "th .tickBox";
+    private static final String HEADER_TICK_BOX = "th .tick-box";
 
     private TickBoxCellStories() {
         // Static utility
@@ -74,7 +74,7 @@ public final class TickBoxCellStories {
                 .story("ReadOnly", context -> grid(context, false, "Bravo", "Delta"))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getAllByTitle(TICKED)).toHaveLength(2));
-                    play.expect(play.querySelectorAll(".tickBox-noBorder")).toHaveLength(NAMES.size());
+                    play.expect(play.querySelectorAll(".tick-box[aria-readonly='true']")).toHaveLength(NAMES.size());
                     // To assistive technology, each is a check box that can't be changed
                     play.expect(play.getAllByRole("checkbox")).toHaveLength(NAMES.size());
                     play.expect(rowTickBox(play, "Bravo")).toBeChecked();
@@ -94,6 +94,11 @@ public final class TickBoxCellStories {
         // To assistive technology, each is a check box: the half-ticked header is 'mixed'
         play.expect(play.getAllByRole("checkbox")).toHaveLength(NAMES.size() + 1);
         play.expect(play.querySelector(HEADER_TICK_BOX)).toHaveAttribute("aria-checked", "mixed");
+        // Drawn as the form's tick box (tick-box.css): the block with the cell modifier, holding the
+        // drawn box and nothing else (the mixed square is drawn by the stylesheet)
+        play.expect(play.querySelector(HEADER_TICK_BOX)).toHaveClass("tick-box--cell");
+        play.expect(play.querySelectorAll(".tick-box--cell > .tick-box__mark")).toHaveLength(NAMES.size() + 1);
+        play.expect(play.querySelectorAll(".tick-box--cell > .tick-box__mark > div")).toHaveLength(0);
         play.expect(rowTickBox(play, "Bravo")).toBeChecked();
         play.expect(rowTickBox(play, "Alpha")).not().toBeChecked();
         play.expect(rowTickBox(play, "Alpha")).toHaveAttribute("aria-readonly", "false");
@@ -118,7 +123,7 @@ public final class TickBoxCellStories {
 
     /// @return The tick box in the row with the name.
     private static Query rowTickBox(final Play play, final String name) {
-        return play.within(play.getByText(name).closest("tr")).querySelector(".tickBox");
+        return play.within(play.getByText(name).closest("tr")).querySelector(".tick-box");
     }
 
     /// A grid of [#NAMES] with a tick box column, as Stroom's list presenters build them.

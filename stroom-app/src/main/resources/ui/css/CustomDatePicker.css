@@ -152,17 +152,6 @@ td:hover .customDatePickerDayIsValue {
     padding-left: 1rem;
 }
 
-.customDatePickerMonth .selection-box,
-.customDatePickerYear .selection-box {
-    flex-grow: 1;
-    width: 5px;
-}
-
-.customDatePickerMonth .selection-box input,
-.customDatePickerYear .selection-box input {
-    min-width: 5px;
-}
-
 .DateTimeView-date,
 .DateTimeView-time {
     padding: 5px 0 10px 0;

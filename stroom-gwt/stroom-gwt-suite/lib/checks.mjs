@@ -261,7 +261,7 @@ export function readFeedback(page) {
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const texts = [...scope.querySelectorAll('.feedback, .form-group__feedback')]
       .filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent)).filter(Boolean);
-    const invalid = scope.querySelectorAll('.invalid').length;
+    const invalid = scope.querySelectorAll('[aria-invalid="true"]').length;
     return { texts, invalid };
   }).catch(() => null);
 }

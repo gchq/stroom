@@ -321,7 +321,7 @@ body,table td,select {
 }
 
 /* INPUT CONTROLS */
-.gwt-PasswordTextBox,.gwt-ListBox,.gwt-DateBox,.stroom-DropDownTree {
+.gwt-ListBox,.gwt-DateBox,.stroom-DropDownTree {
 	width: 200px;
 	margin: 0px;
 	padding: 1px;

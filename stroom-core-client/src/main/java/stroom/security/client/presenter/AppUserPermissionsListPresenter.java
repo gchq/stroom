@@ -92,6 +92,7 @@ public class AppUserPermissionsListPresenter
                                            final ClientSecurityContext securityContext,
                                            final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter users");
         this.restFactory = restFactory;
         this.pagerView = pagerView;
         this.uiConfigCache = uiConfigCache;

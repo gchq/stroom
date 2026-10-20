@@ -275,7 +275,8 @@ public final class ValueSpinnerStories {
                     play.type(input, "20{Enter}");
                     play.expect(input).toHaveValue("20");
                     play.expect(input).not().toHaveAttribute("aria-invalid");
-                    play.expect(play.querySelector(".form-group__feedback")).toHaveTextContent("");
+                    // The feedback is gone, and its element with it
+                    play.expect(play.querySelectorAll(".form-group__feedback")).toHaveLength(0);
                 })
                 // An empty field asks for a value
                 .story("EmptyValueIsExplained", ValueSpinnerStories::contractHarness)

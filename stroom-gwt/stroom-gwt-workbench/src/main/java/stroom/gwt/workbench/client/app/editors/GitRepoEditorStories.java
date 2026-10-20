@@ -124,7 +124,8 @@ public final class GitRepoEditorStories {
                     // Settings shows the git fields, and (no commit) the Auto-push group and Push
                     play.waitFor(() -> play.expect(play.getByText("Git repository URL", "label")).toBeInTheDocument());
                     play.expect(play.getByText("Git branch", "label")).toBeInTheDocument();
-                    play.expect(play.getByText("Automatically push", "label")).toBeVisible();
+                    // The tick box (its check box is unseen, over the drawn box)
+                    play.expect(play.getByRole("checkbox", "Automatically push").closest(".tick-box")).toBeVisible();
                     play.expect(play.getByRole("button", StroomDom.button("Push to Git"))).toBeInTheDocument();
                     play.expect(play.getByRole("button", StroomDom.button("Pull from Git"))).toBeInTheDocument();
                     play.expect(play.getByRole("button", StroomDom.button("Check for updates"))).toBeInTheDocument();

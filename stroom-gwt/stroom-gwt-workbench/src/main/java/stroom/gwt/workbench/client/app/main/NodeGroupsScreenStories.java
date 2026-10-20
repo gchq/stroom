@@ -123,7 +123,7 @@ public final class NodeGroupsScreenStories {
                     play.findByText("Processing");
                     // Toggle "Processing" enabled -> update. GWT's grid tick is a TickBoxCell div.
                     // The grid's rows are <tr> elements with no role attribute
-                    play.click(play.within(play.getByText("Processing").closest("tr")).querySelector(".tickBox"));
+                    play.click(play.within(play.getByText("Processing").closest("tr")).querySelector(".tick-box"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/node/nodeGroup/v2/2")
                                     .withJsonBodyContaining("{\"id\": 2, \"enabled\": true}")

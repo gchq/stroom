@@ -21,6 +21,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -36,12 +37,15 @@ public class QuickFilterDialogViewImpl extends ViewWithUiHandlers<QuickFilterUiH
     QuickFilter quickFilter;
     @UiField
     SimplePanel data;
+    @UiField
+    Label status;
 
     private final Widget widget;
 
     @Inject
     public QuickFilterDialogViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        status.getElement().setAttribute("aria-live", "polite");
     }
 
     @Override
@@ -70,8 +74,28 @@ public class QuickFilterDialogViewImpl extends ViewWithUiHandlers<QuickFilterUiH
     }
 
     @Override
+    public void setAccessibleName(final String accessibleName) {
+        quickFilter.setAccessibleName(accessibleName);
+    }
+
+    @Override
     public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
         quickFilter.setContextHandler(contextHandler);
+    }
+
+    @Override
+    public void setFilterMoveDown(final Runnable moveDown) {
+        quickFilter.setMoveDown(moveDown);
+    }
+
+    @Override
+    public void typeInFilter(final String text) {
+        quickFilter.type(text);
+    }
+
+    @Override
+    public void announce(final String message) {
+        status.setText(message);
     }
 
     @UiHandler("quickFilter")

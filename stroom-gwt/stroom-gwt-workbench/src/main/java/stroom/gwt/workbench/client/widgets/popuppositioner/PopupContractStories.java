@@ -62,7 +62,7 @@ public final class PopupContractStories {
     private static final String HELP_PANEL = ".help-popup";
     private static final String QUICK_FILTER_PANEL = ".quickFilter-tooltip:not(.help-popup)";
     // A quick filter's help button
-    private static final String QUICK_FILTER_HELP = ".quickFilter-toolbar button[title='Quick Filter Syntax Help']";
+    private static final String QUICK_FILTER_HELP = ".quick-filter__toolbar button[title='Quick Filter Syntax Help']";
     // Stroom's menus and submenus are each a `simplePopup-popup` holding a cell table of
     // `menuItem-outer` rows
     private static final String MENU_PANEL = ".simplePopup-popup:has(.menuItem-outer)";
@@ -333,7 +333,7 @@ public final class PopupContractStories {
                 .withPlay(play -> {
                     final PopupCase c = find("QuickFilter help");
                     openPopup(play, c);
-                    final String filter = c.within(".quickFilter");
+                    final String filter = c.within(".quick-filter");
                     play.expect("left should be filter.left + 4",
                                     () -> Math.abs(PopupDom.rect(c.getPanel())[0] - (PopupDom.rect(filter)[0] + 4)))
                             .toBeLessThanOrEqual(1);

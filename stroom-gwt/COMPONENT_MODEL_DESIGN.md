@@ -421,12 +421,19 @@ for that directory), so no screen needed editing.
 - **States** come from the element: `:disabled` (the filled field with no border that every
   disabled control has), `[readonly]` (the normal field, its value greyed), `:focus-visible`, and,
   for a rejected value, `aria-invalid` (`FieldValidity`: a red border, and a red ring with the
-  focus). Its placeholder and the browser's autofill colours are there too. GWT's `ValueBoxBase`
-  also adds `text-field-readonly` when read only; nothing styles it.
+  focus). Its placeholder and the browser's autofill colours are there too. Each state is the
+  attribute alone: Stroom's copy of GWT's `ValueBoxBase` no longer adds a `<primary>-readonly`
+  class, and `FieldValidity` no longer adds an `invalid` class (the fallback for inputs with no
+  block uses `[aria-invalid="true"]` too). The password box's input is a text field, given by
+  Stroom's copy of `PasswordTextBox`.
 - **One stylesheet.** `text-field.css` has every look a text field has. `stroom.css`'s rules for
   bare `input` and `textarea` elements (for inputs with no block of their own yet) leave text
   fields out, with `:where(:not(.text-field))`, which adds nothing to their weight. The password
   box's input is a text field too.
+- **Quick filters** are named for what they filter ("Filter users and groups"), as a placeholder is
+  only a hint: by a form group's label, in their template (`accessibleName`), or by their presenter
+  through the shared views' `setAccessibleName` (`QuickFilterPageView`, `QuickFilterDialogView`,
+  `ExplorerPopupView`). A selection box's list's filter is "Filter" and the box's name.
 - **Cascade.** `text-field.css` is imported straight after `stroom.css`, where the rules it replaces
   were, and each of its rules weighs what the rule it replaced did: its size at a class's weight
   (0,1,0), so a screen's `width: 100%` still wins; its look at an element and a class's (0,1,1) for a
@@ -449,6 +456,129 @@ Stories `Widgets/Inputs/TextInput` (`Basic`, `MultiLine`, `Invalid`, `DisabledAn
 Not yet done: the bare element rules in `stroom.css` (to go once every input has a block); nine
 fields whose template replaces the class with `styleName` (so they get those rules instead); it
 hasn't been tried with a screen reader.
+
+## Tick box
+
+The tick box is the BEM block `tick-box` (`tick-box.css`), in two forms that look the same:
+
+- **The widget** (`CustomCheckBox`): a `label` element wrapping a native check box
+  (`tick-box__input`, unseen and over the box, so it has the focus, the clicks and the state), the
+  box drawn for it (`tick-box__mark`) and its text (`tick-box__label`). The label wraps the check
+  box, so its text names it and clicking anywhere on it ticks it, with no `for` and no id needed.
+  Its states are the check box's: `:checked`, `:disabled` and `aria-readonly` (a read-only tick box
+  can be focused and read, but a click is cancelled). It has no part-ticked state.
+- **The grid's cell** (`TickBoxCell`, `tick-box--cell`, an icon's size): an element with
+  `role="checkbox"`, `aria-checked` (`true`, `false` or `mixed`, part ticked, e.g. a header's
+  select-all) and `aria-readonly`, holding the drawn box. The part-ticked square is drawn by the
+  stylesheet, so the box has nothing inside it but the tick. A cell that can't be clicked is
+  `aria-readonly`, which gives it the read-only look (`NoBorderAppearance` no longer adds a class).
+  `ColumnValueCell` draws the same markup for its read-only ticks.
+
+Ticked is a white tick on the widget's blue (`--blue-500`); read only, a grey tick on the normal
+box; disabled, a grey tick on the filled box with no border every disabled control has.
+
+Stories `Widgets/Inputs/TickBox` (`Basic`, `ReadOnly`, `Disabled`, `NoLabel`) and
+`Widgets/Cell Renderers/TickBoxCell` (`InGrid`, `ReadOnly`).
+
+Not yet done: the grid cell can't be reached from the keyboard (the data grid's keyboard pattern,
+session 4); it hasn't been tried with a screen reader.
+
+## Radio group
+
+`RadioGroup<T>` (`stroom.widget.form.client`) is a choice of one of a few options, all shown. It
+replaces GWT's `RadioButton`, of which the floor map's layer style had three.
+
+- **Native radio buttons.** Its options are native radio inputs sharing a name, so the browser
+  makes the group one tab stop, and the arrow keys move between the options, choosing as they go.
+  Each option is a label holding its radio button and text, so its text names it, and clicking the
+  text chooses it.
+- **A named radio group.** The block is `role="radiogroup"`, named by its form group's label, or by
+  `setAccessibleName` where there is none. A form group marks a child holding several controls as a
+  `group`; it now leaves a child that has a role of its own (a radio group's) as it is.
+- **Value.** `addItem(value, label[, title])`, then `getValue`, `setValue(value[, fireEvents])`
+  and a value change handler, which a choice fires once (the browser fires `change` only on the
+  radio button chosen).
+- **CSS.** `radio-button.css`: the BEM block `radio-group`, its `__option`, `__input` and `__label`.
+  Every radio input looks the same, including those in an activity's form, which have no classes
+  of their own.
+
+Stories `Widgets/Inputs/RadioGroup` (`Basic`, `Disabled`, `AccessibleName`), and
+`App/Editors/FloorMapForms` `LayerStyle`.
+
+The floor map's icon picker (`FloorMapIconPicker`) is a radio group in the same way: each icon a
+label holding an unseen native radio button, so the grid is one tab stop with the arrow keys
+choosing, its chosen and focused looks drawn from the radio button's state (`:has(:checked)`,
+`:has(:focus-visible)`).
+
+## Quick filter
+
+`QuickFilter` (`stroom.widget.dropdowntree.client.view`) is the BEM block `quick-filter`
+(`quick-filter.css`):
+
+- **A search field.** Its input (`quick-filter__input`) is `type="search"`, so assistive technology
+  meets a `searchbox`, not a text box. Chrome's own clear button and decoration are hidden, as the
+  filter has its own Clear button; its look, and its disabled, focused and invalid looks, are the
+  text field's (`text-field.css`). Escape clears it, as it did before (and as a search field does).
+- **Its buttons** are a toolbar (`quick-filter__toolbar`, one tab stop, a toolbar only while two
+  buttons show) over the end of the box: Clear, the recent filters (`quick-filter__recent`, shown
+  with the block's `quick-filter--recent` modifier, which leaves room for it in the box) and its
+  syntax help, each 24px.
+- **One stylesheet.** The rules other stylesheets had for it are in `quick-filter.css`: the column
+  function editor's and query help's flat filter (a bottom border only), and the gap under it in a
+  selection box's list. `quick-filter-layout` is a panel holding a quick filter above what it
+  filters (it was `quickFilter-container`). The state classes it no longer needs are gone
+  (`disabled`, which the input's own `:disabled` carries).
+
+Stories `Widgets/Inputs/QuickFilter` (`FiltersAList` checks the search role and the classes).
+
+Not yet done: its syntax help popup (`quickFilter-tooltip`, also the help manager's tooltip) and its
+Advanced Query dialog (`advancedQuickFilter-*`), with the popups and dialogs (session 3); it hasn't
+been tried with a screen reader.
+
+## Pickers
+
+The document and user pickers (`DocSelectionBoxPresenter`, `UserRefSelectionBoxPresenter`, drawn by
+`DropDownView`) are buttons (`aria-haspopup="dialog"`) that open a modal dialog to choose from: a
+quick filter over the explorer tree (`ExplorerPopupPresenter`) or a grid of users and groups
+(`UserRefPopupPresenter`). Enter or Space on a picker opens it.
+
+- **Modal.** The dialogs are shown `.modal(true)`: the glass covers the page, they are `aria-modal`,
+  and `DialogFocusTrap` keeps the focus in them (Tab from the last tab stop goes to the first, and
+  Shift+Tab back), as it does in every modal dialog. Escape cancels, and the focus goes back to the
+  picker (`CurrentFocus`).
+- **Filter and list.** The focus starts in the quick filter. Down goes to the chosen item (or the
+  first), Up from the first item back to the filter, and typing in the list goes to the filter
+  (`QuickFilter.setMoveDown`, and `AbstractSelectionEventManager.setMoveUpFromFirst` and
+  `setTypedHandler`, which other lists with a filter above them can use too).
+- **Choosing.** Moving chooses (selection follows focus,
+  `AbstractSelectionEventManager.setSelectionFollowsFocus`), as in a list that chooses one item;
+  what is chosen is announced in a live region ("Normalise chosen"). Tabbing into the list lands on
+  the chosen item. Enter on an item chooses it and closes the dialog, as OK does; on the grid it is
+  the row with the focus, even one only highlighted after filtering hid what was chosen. Cancel puts
+  back what was chosen when the dialog opened.
+- **The filter's focus.** `QuickFilter.forceFocus` tries again for half a second while a popup
+  settles, but no longer once the filter has had the focus, so it doesn't pull the focus back from
+  the list.
+
+The lists are named ("Documents", "Users and groups"), but the tree and grid have no roles or
+states yet; those come with sessions 5 (trees) and 4 (grids).
+
+The picker itself is the BEM block `drop-down` (`drop-down.css`): its value (`drop-down__value`,
+filling the box and ending in an ellipsis clear of the icon) and the "…" icon (`drop-down__icon`).
+Its field look, and its read-only and disabled looks, are the shared `stroom-control` classes'.
+
+A document that can't be found (deleted, or not visible to the user) is a problem with the field's
+value, so it is shown as #5409's form feedback is, not behind a button: the picker is
+`aria-invalid`, with the red border of an invalid field, and described by a message under it
+(`DropDownView.setProblem(short, full)`). The message is short ("'Deleted Feed' can't be found, or
+you don't have permission to see it."), with the full one (the id, and what to do) as its tooltip
+and what screen readers read; in a form group it is the group's feedback
+(`FormGroup.setFeedback(short, full)`), and outside one a line of the picker's own
+(`drop-down__feedback`), added while there is a problem. It replaced a 17px warning button that only
+a mouse could use, which sat inside the picker's own button, and opened an alert.
+
+Stories `Widgets/Selectors/DocSelectionBox` `KeysInTheDialog` and
+`Widgets/Selectors/UserRefSelectionBox` `KeysInTheDialog`.
 
 ## Value spinner
 
@@ -479,7 +609,7 @@ Not yet done: it hasn't been tried with a screen reader, and VoiceOver on iOS ma
 `BaseSelectionBox` (`stroom.item.client`, styled by `selection-box.css`) is a WAI-ARIA combobox: its text box (`role="combobox"`, `aria-haspopup="listbox"`, `aria-expanded`, `aria-controls`) sits over a picture of its value (`selection-box__value`, `aria-hidden`), with an icon box's drop-down arrow at its end. Its list is a `SelectionPopup` (`selection-popup.css`) holding a `SelectionList`: a quick filter over 10 items, a pager over 100, and a list box whose rows are options. Opening the list moves the focus into it (to its quick filter if it has one, else to the chosen option), rather than keeping it in the box with `aria-activedescendant`.
 
 - **Keys on the box** (the list closed): Enter, Down, Up and Alt+Down open the list; in a box that can't be typed in (`selection-box--select-only`), Space does too, and typing a character opens the list and goes to it. Characters typed before the list has the focus are kept and passed on (`SelectionPopup.type`).
-- **Keys in the list**: Up and Down move between options (and Up from the first option to the quick filter); Enter or Alt+Up chooses the option with the focus and closes the list; Escape closes it; the focus goes back to the box. Typing goes to what is typed (`SelectionList.typeAhead`): into the quick filter, applied at once, with the caret after it (`QuickFilter.type`), or, in a list with no quick filter, to the next option that starts with it, characters typed within half a second being taken together, and the same character again going on to the next option starting with it. The list hands keys on after the browser has handled them (as the data grid does), so a key can't be cancelled there.
+- **Keys in the list**: Up and Down move between options (and Up from the first option to the quick filter), only highlighting, as a combobox's list does; Enter or Alt+Up chooses the option with the focus and closes the list; Escape closes it, and the focus goes back to the box. Tab closes it, leaving the value, and goes on to what follows the box (`TabOrder.focusNext`); Shift+Tab closes it and goes back to the box. (It once sent the focus to the page, leaving the list open.) Typing goes to what is typed (`SelectionList.typeAhead`): into the quick filter, applied at once, with the caret after it (`QuickFilter.type`), or, in a list with no quick filter, to the next option that starts with it, characters typed within half a second being taken together, and the same character again going on to the next option starting with it. The list hands keys on after the browser has handled them (as the data grid does), so a key can't be cancelled there.
 - **Value.** The picture of the value stays on one line and ends in an ellipsis, clear of the arrow (`padding-right: 26px`). It draws the box's border (`stroom-control`).
 - **States.** Disabled and read only are modifiers (`selection-box--disabled`, `selection-box--readonly`), as the box has no ARIA attribute for them; they follow the text box's `disabled` and `aria-readonly`. A box that can't be typed in shows a pointer over it while it can be changed.
 

@@ -920,14 +920,15 @@ textarea:where(:not(.text-field)):focus-visible {
   border: thin solid var(--focus-border) !important;
   box-shadow: var(--focus-shadow);
 }
-select.invalid:focus-visible,
-input:where(:not(.text-field)).invalid:focus-visible,
-textarea:where(:not(.text-field)).invalid:focus-visible {
+select[aria-invalid="true"]:focus-visible,
+input:where(:not(.text-field))[aria-invalid="true"]:focus-visible,
+textarea:where(:not(.text-field))[aria-invalid="true"]:focus-visible {
   box-shadow: var(--focus-shadow--invalid);
 }
-select.invalid,
-input:where(:not(.text-field)).invalid,
-textarea:where(:not(.text-field)).invalid {
+/* A rejected value (aria-invalid, as FieldValidity sets it) */
+select[aria-invalid="true"],
+input:where(:not(.text-field))[aria-invalid="true"],
+textarea:where(:not(.text-field))[aria-invalid="true"] {
   border: thin solid var(--focus-border--invalid) !important;
 }
 

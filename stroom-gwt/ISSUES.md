@@ -67,8 +67,9 @@ Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK
 
 **Reported.**
 
-* The connection and response timeout `IntegerBox` values are unboxed to `int`, so a blank box
-  would throw a `NullPointerException` on save (not tried at run time).
+* Fixed: the connection and response timeouts were `IntegerBox`es unboxed to `int`, so a blank box
+  would throw a `NullPointerException` on save. They are now value spinners, which can't be blank
+  (`App/Editors/ElasticClusterEditor` `TimeoutSpinners`).
 * The index's Minimum rerank score is read with `Float.parseFloat` on the raw text, so a blank or
   non-numeric value throws on save; there is no check that it is between 0 and 1.
 
@@ -629,7 +630,7 @@ the form group's parts named BEM style: `form-group__label-row`, `__label`, `__h
 `__help-icon`, `__description-row`, `__description` and `__feedback` (no longer Bootstrap's
 `invalid-feedback`, so its styles are its own), and the `form-group--indented` and
 `form-group--inline-tick` modifiers. The help popup is `help-popup`.
-The quick filter's Clear and syntax help buttons are made in a toolbar (`quickFilter-toolbar`, placed
+The quick filter's Clear and syntax help buttons are made in a toolbar (`quick-filter__toolbar`, placed
 over the end of the box) as regular toolbar buttons, so they are one tab stop with the arrow keys
 between them. Its help icon is the same size and colour everywhere (it was smaller, in the
 navigation colour, inside a form group), and Clear sits a toolbar gap from the help button (it
@@ -796,6 +797,10 @@ Identification):
   also `aria-invalid` and described by the reason, which is in a live region, so a screen reader
   says it as the user types (`QuickFilter.setFilterError`; the workbench's
   `Widgets/Inputs/QuickFilter` `RejectedFilter`).
+* A quick filter was a plain text box to assistive technology, so nothing said it searched. Its
+  input is now `type="search"` (a `searchbox`), with the browser's own clear button hidden as it
+  has its own (`QuickFilter`, `quick-filter.css`; the workbench's `Widgets/Inputs/QuickFilter`
+  `FiltersAList`).
 
 ### Keyboard trap in the code editor
 
@@ -1582,6 +1587,90 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   and autofill looks moved from `stroom.css` into `text-field.css` too (the bare element rules there
   now leave text fields out), as did the password box's input; radio buttons' looks moved to
   `radio-button.css`; the query data box's error now sets `aria-invalid` (it only added a class).
+  A text field's read-only and invalid states are now the attributes alone (Stroom's copy of GWT's
+  `ValueBoxBase` no longer adds a `-readonly` class, and `FieldValidity` no longer adds `invalid`),
+  the password box's input is a text field from Stroom's copy of `PasswordTextBox` (no
+  `gwt-PasswordTextBox`), and every quick filter is named for what it filters, not only by its
+  placeholder ("Filter users and groups", "Filter API keys", a selection box's list's "Filter" and
+  the box's name, and so on).
+* **Two tick boxes that didn't match, neither BEM** (`CustomCheckBox`, `TickBoxCell`): a form's
+  tick box (`SimpleTickBox`, a `checkbox-container` div around its check box and box, then a
+  separate label) and a grid's (`tickBox-*`, an SVG tick on Bootstrap's darker blue, its half-tick
+  an inner div) had different markup, stylesheets and blues. Both are now the BEM block `tick-box`
+  (`tick-box.css`; `tickbox.css` and `tickboxcell.css` are deleted): the widget a label wrapping its
+  check box, box and text (one wrapper fewer, and the whole of it clickable), its states from the
+  check box alone (no `-disabled` or `-readonly` classes); the grid's cell the same box
+  (`tick-box--cell`), its states from `aria-checked` and `aria-readonly`, in the widget's blue
+  with its tick. The widget looks as it did. Workbench: `Widgets/Inputs/TickBox` `Basic`,
+  `ReadOnly`, `NoLabel`; `Widgets/Cell Renderers/TickBoxCell` `InGrid`.
+* **The pickers' dialogs couldn't be used well from the keyboard, and the focus left them**
+  (`ExplorerPopupPresenter`, `UserRefPopupPresenter`, `QuickFilter`, `PopupUtil`): Down in the
+  quick filter did nothing; tabbing into the tree landed on "None", not the chosen document, and
+  into the grid on an unnamed element; moving only highlighted, Space choosing; Enter on a user did
+  nothing; and Tab from Cancel went to the page behind, as no dialog kept the focus in it (and the
+  pickers' dialogs weren't modal). Now Down goes to the chosen item, Up from the first back to the
+  filter, typing in the list goes to the filter, moving chooses (announced), Enter chooses and
+  closes, Cancel puts back what was chosen, the dialogs are modal, and every modal dialog keeps the
+  focus in it (`DialogFocusTrap`). `QuickFilter.forceFocus`, which tried again for half a second,
+  pulled the focus back from the list if Down was pressed in that time; it stops once the filter
+  has had the focus. Workbench: `Widgets/Selectors/DocSelectionBox` and `UserRefSelectionBox`
+  `KeysInTheDialog`.
+* **Tab in a selection box's open list lost the focus** (`SelectionPopup`): Tab from the last
+  option sent the focus to the page and left the list open (`aria-expanded` still true). Tab now
+  closes the list, leaving the value, and goes on to what follows the box; Shift+Tab closes it and
+  goes back to the box. The list's quick filter is named "Filter options" when the box has no name.
+  Workbench: `Widgets/Selectors/SelectionBox` `TabClosesTheList`.
+* **A picker's value was cut off mid-letter, and its styles were spread about** (`DropDownViewImpl`):
+  the value was only as wide as its text and rounded down, so its last letter was clipped, with no
+  ellipsis, however much room the box had. The picker is now the BEM block `drop-down` with its own
+  stylesheet (`drop-down.css`; its `dropDownView-*` rules are gone from `components.css`, and the
+  rules for it in `ask-stroom-ai.css` and `stroom-floormap.css` use the new names); its value fills
+  the box and ends in an ellipsis clear of the icon; and the warning's toolbar is only in the page
+  while there is a warning. Workbench: `Widgets/Selectors/DocSelectionBox` `WarningAndDisabled`.
+* **A picker's "can't be found" warning could only be seen with a mouse** (`DocSelectionBoxPresenter`,
+  `DropDownViewImpl`): a 17px warning button (under 2.5.8's 24px) that only answered a mouse down,
+  inside the picker's own button (nested controls), opened an alert; Enter on it opened the
+  picker's dialog, so a keyboard user could never see it, and a screen reader met nothing on the
+  picker to say its value was broken. It is now shown as form feedback is: the picker is
+  `aria-invalid` with the red border and described by a short message under it, in its form group's
+  feedback or a line of its own, with the full message (the id, and what to do) as its tooltip and
+  what screen readers read (`FormGroup.setFeedback(short, full)`, `DropDownView.setProblem`).
+  Workbench: `Widgets/Selectors/DocSelectionBox` `WarningAndDisabled` and `ProblemInAFormGroup`,
+  `Widgets/Selectors/DropDownSelector` `Warning`.
+* **GWT's own controls on the Elastic cluster and floor map screens** (`ElasticClusterSettingsViewImpl`,
+  `FloorMapSettingsPresenter`, `FloorMapSetScaleViewImpl`, `FloorMapGroupEditViewImpl`,
+  `FloorMapObjectEditViewImpl`, `FloorMapLayerStyleViewImpl`): two `IntegerBox`es, two `ListBox`es,
+  two `CheckBox`es and three `RadioButton`s, which looked and behaved unlike Stroom's controls. They
+  are now value spinners, selection boxes, tick boxes and a radio group (`RadioGroup`, new). The
+  layer style's Shape box had no name (its row's label named the selection box's wrapper, not its
+  combobox); it is named "Shape" (`FloorMapAria.labelledByCellInnerControl`). The layer style's rows
+  that the chosen graphic doesn't use are dimmed below 4.5:1 contrast, which WCAG 1.4.3 allows, as
+  their controls are disabled; axe can't tell, so the story's `color-contrast` is in the baseline.
+  Workbench: `App/Editors/ElasticClusterEditor` `TimeoutSpinners`, `App/Editors/FloorMapForms`,
+  `Widgets/Inputs/RadioGroup`.
+* **Inputs found by the audit of the rest of the input controls** (`TimeZoneWidget`, `ColourBox`,
+  `CustomFileUpload`, `FloorMapIconPicker`, `FormGroup`):
+  * The floor map's icon picker could only be used with a mouse: its icons had no role, no tab stop
+    and only answered a click, and its name was dropped. It is now a radio group of native radio
+    buttons (one tab stop, the arrow keys choosing), with a focus ring apart from the chosen look.
+    Workbench: `App/Editors/FloorMapForms` `IconPicker`.
+  * A file upload's button was named only "Choose File", as its form group's label wasn't tied to it,
+    and nothing said which file was chosen. It is now named by the label and its text, described by
+    the chosen file ("No file chosen" until one is), which is announced, and marked invalid by its
+    group's feedback. A required picker's button no longer has `aria-required`, which a button can't
+    have; its description begins "Required." instead (a file upload's, and a document picker's).
+    Workbench: `Widgets/Inputs/FileChooser` `Basic`, `App/Data/DataUploadDialog` `Upload`.
+  * A time zone's offset was named "Hours" rather than by its "Time Zone Offset" label, as its minutes
+    were hidden. The always hidden minutes spinner is gone, its value kept as it was set.
+    Workbench: `App/Editors/PlanBEditor` `MetricTimeZoneOffset`, `TimeZoneOffsetKeepsItsMinutes`.
+  * A colour box had no class of its own, only `stroom.css`'s bare input rules.
+    It is now the `colour-box` block (`colour-box.css`). The unused `ColourInputCell` is deleted.
+  * Every form group had an empty feedback element; it is now only there while there is feedback.
+* **Selection boxes stretched across the screen** (`selection-box.css`): the old `SelectionBox.css`
+  gave a box 200px; that was lost when it became `selection-box.css`, so a box in a form group (a
+  column flexbox) took the whole width, e.g. every Plan B setting. It is 200px again, as a text field
+  is, at a class's weight so a screen's `w-100` or width still wins. Workbench:
+  `App/Editors/PlanBEditor` `Metric`.
 
 ## Checked and not bugs
 

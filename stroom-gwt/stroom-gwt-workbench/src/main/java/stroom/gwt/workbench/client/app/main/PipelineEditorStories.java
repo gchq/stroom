@@ -425,7 +425,7 @@ public final class PipelineEditorStories {
                     play.findByText("Parser A");
                     play.findByText("xslt");
                     // Open the Inherit From picker and choose Parent B
-                    play.fireEvent().mouseDown(play.querySelector(".dropDownView-container"), EventInit.create());
+                    play.fireEvent().mouseDown(play.querySelector(".drop-down"), EventInit.create());
                     final Play picker = dialog(screen, "Choose item");
                     play.click(picker.findByText("Parent B"));
                     play.click(picker.getByRole("button", StroomDom.button("OK")));

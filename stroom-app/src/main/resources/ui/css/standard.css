@@ -335,13 +335,6 @@ a, a:visited, a:hover {
   background: url(images/corner.png) no-repeat -5px -41px;
 }
 
-.gwt-PasswordTextBox {
-  padding: 2px;
-}
-.gwt-PasswordTextBox-readonly {
-  color: #888;
-}
-
 .gwt-PopupPanel {
   border: 3px solid #C3D9FF;
   padding: 3px;

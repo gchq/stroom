@@ -30,6 +30,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -71,7 +72,10 @@ final class PopupHarnesses {
     /// @param popups The story's popups.
     /// @return The widget.
     static Widget quickFilter(final StoryPopups popups) {
-        return new QuickFilter();
+        final QuickFilter quickFilter = new QuickFilter();
+        // Named, as a screen would name it
+        quickFilter.setAccessibleName("Filter items");
+        return quickFilter;
     }
 
     /// Stroom's `FormGroup`, whose help button's popup is shown by `HelpManager`.
@@ -137,6 +141,7 @@ final class PopupHarnesses {
     /// @return The widget.
     static Widget selectionBox(final StoryPopups popups) {
         final SelectionBox<String> selectionBox = new SelectionBox<>();
+        AccessibleName.set(selectionBox, "Item");
         // Stroom's selection popup only has a quick filter (whose help popup
         // NestedRealWidgetsRouteEscapeToTheInnermost opens) for more than 10 items, so there are
         // 11.
@@ -151,6 +156,7 @@ final class PopupHarnesses {
     /// @return The widget.
     static Widget dateBox(final StoryPopups popups) {
         final MyDateBox dateBox = new MyDateBox();
+        AccessibleName.set(dateBox, "Date");
         dateBox.setUtc(true);
         dateBox.setMilliseconds(DATE_MILLIS);
         return dateBox;

@@ -25,9 +25,13 @@ import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.Rect;
+import stroom.widget.util.client.TabOrder;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -68,6 +72,17 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
                     && KeyBinding.test(event.getNativeEvent()) == Action.CLOSE) {
                     event.cancel();
                     hide();
+                } else if (event.getTypeInt() == Event.ONKEYDOWN && isTabInList(event.getNativeEvent())) {
+                    // Tab closes the list, leaving the value as it is, and goes on to what follows the
+                    // box; Shift+Tab closes it and goes back to the box (which takes the focus when
+                    // the list closes)
+                    final boolean backwards = event.getNativeEvent().getShiftKey();
+                    event.cancel();
+                    event.getNativeEvent().preventDefault();
+                    hide();
+                    if (!backwards) {
+                        TabOrder.focusNext(activeElement(), false);
+                    }
                 }
             }
         };
@@ -82,6 +97,19 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         // Styled by selection-popup.css
         popupPanel.setStyleName("selection-popup");
     }
+
+    // Whether a key is Tab (or Shift+Tab) with the focus in the list
+    private boolean isTabInList(final NativeEvent event) {
+        final EventTarget target = event.getEventTarget();
+        return event.getKeyCode() == KeyCodes.KEY_TAB
+               && !event.getCtrlKey() && !event.getAltKey() && !event.getMetaKey()
+               && Element.is(target)
+               && popupPanel.getElement().isOrHasChild(Element.as(target));
+    }
+
+    private static native Element activeElement() /*-{
+        return $doc.activeElement;
+    }-*/;
 
     public void addAutoHidePartner(final Element partner) {
         popupPanel.addAutoHidePartner(partner);

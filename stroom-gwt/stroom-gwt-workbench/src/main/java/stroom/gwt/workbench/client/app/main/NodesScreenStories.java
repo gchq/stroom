@@ -166,7 +166,7 @@ public final class NodesScreenStories {
                     play.expect(play.getByText("42").closest("[title]").attribute("title")).toBe("Ping: 42 ms");
                     // Toggle node2b's Enabled tick box: the last tick in the row (Master is read only)
                     final Query ticks = play.within(play.getByText("node2b").closest("tr"))
-                            .querySelectorAll(".tickBox");
+                            .querySelectorAll(".tick-box");
                     play.click(ticks.nth(1));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/node/v1/enabled/node2b").withJsonBody("true").toSpyMatcher()));

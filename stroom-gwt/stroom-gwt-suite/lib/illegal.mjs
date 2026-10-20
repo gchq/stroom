@@ -46,7 +46,7 @@ export function readFields(page) {
     const caption = norm(form.querySelector('.dialog-titleText')?.textContent);
     const boxes = [...form.querySelectorAll('input[type="text"], input[type="number"], input:not([type]), .text-field, textarea')]
       .filter((e) => e.offsetWidth > 0 && e.offsetHeight > 0 && !e.disabled && !e.readOnly
-        && !e.classList.contains('quickFilter-textBox')
+        && !e.classList.contains('quick-filter__input')
         // ACE's hidden input IS a textarea. Typing into it goes to the editor, sets no `.value`,
         // and moves focus somewhere the popup framework deliberately ignores keys — so a dialog
         // hosting an editor had its editor probed as if it were the form's first field.

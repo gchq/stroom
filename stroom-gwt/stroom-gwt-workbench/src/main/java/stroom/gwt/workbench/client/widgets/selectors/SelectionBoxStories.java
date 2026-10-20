@@ -36,6 +36,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -160,11 +161,40 @@ public final class SelectionBoxStories {
                 .withPlay(play -> {
                     play.tab();
                     play.keyboard("15");
-                    final Query filter = play.screen().querySelector(".selectionList-quickFilter .quickFilter-textBox");
+                    final Query filter = play.screen().querySelector(".selectionList-quickFilter .quick-filter__input");
                     play.waitFor(() -> play.expect(filter).toHaveValue("15"));
                     play.expect(filter).toHaveFocus();
+                    // Named for the box it filters, not only by its placeholder
+                    play.expect(filter).toHaveAttribute("aria-label", "Filter Name");
                     play.waitFor(() -> play.expect(play.screen().getByRole("option", "Item 150")).toBeInTheDocument());
                     play.expect(play.screen().queryByRole("option", "Item 2")).toBeNull();
+                })
+                // Tab in the open list closes it, leaving the value, and goes on to what follows the
+                // box; Shift+Tab closes it and goes back to the box
+                .story("TabClosesTheList", context -> {
+                    final FlowPanel panel = named(selectionBox(context, NAMES));
+                    final TextBox after = new TextBox();
+                    AccessibleName.set(after, "After");
+                    panel.add(after);
+                    return panel;
+                })
+                .withPlay(play -> {
+                    final Query box = play.getByRole("combobox", "Name");
+                    play.tab();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Alpha")).toHaveFocus());
+                    play.tab();
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.expect(play.getByRole("textbox", "After")).toHaveFocus();
+                    play.expect(box).toHaveAttribute("aria-expanded", "false");
+                    play.tab(true);
+                    play.expect(box).toHaveFocus();
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(play.screen().getByRole("option", "Alpha")).toHaveFocus());
+                    play.tab(true);
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.expect(box).toHaveFocus();
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
                 })
                 // The list is named for the box that opened it, here by the box's form group label
                 .story("TheListIsNamedForTheBox", context -> {
@@ -207,6 +237,7 @@ public final class SelectionBoxStories {
                     final SimpleSelectionListModel<String> model = new ModelBackedListModel();
                     model.addItem("Only one");
                     box.setModel(model);
+                    AccessibleName.set(box, "Name");
                     final Spy onChange = context.fn(ON_CHANGE);
                     box.addValueChangeHandler(event -> onChange.call(event.getValue()));
                     return minWidth(box);
@@ -215,7 +246,7 @@ public final class SelectionBoxStories {
                     play.click(play.querySelector(OPENER));
                     // Stroom's popup is on the page's body, not in the canvas
                     play.waitFor(() -> play.expect(play.screen().querySelector(".selectionList .pager")).toBeVisible());
-                    play.expect(play.screen().querySelector(".selectionList-quickFilter .quickFilter-textBox"))
+                    play.expect(play.screen().querySelector(".selectionList-quickFilter .quick-filter__input"))
                             .not().toBeNull();
                     // The pager is Stroom's PagerViewImpl, so it reads "N to M of T"
                     play.expect(play.screen().getByText(TextMatch.containingIgnoreCase("to"), ".pager *"))
