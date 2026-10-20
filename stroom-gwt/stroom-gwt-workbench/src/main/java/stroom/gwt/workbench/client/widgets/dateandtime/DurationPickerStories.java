@@ -21,6 +21,7 @@ import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.widgets.StoryArgs;
 import stroom.gwt.workbench.framework.client.args.ArgType;
 import stroom.gwt.workbench.framework.client.args.Args;
+import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -28,7 +29,9 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.customdatebox.client.DurationPicker;
+import stroom.widget.form.client.FormGroup;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -74,7 +77,66 @@ public final class DurationPickerStories {
                         TimeUnit.MILLISECONDS, true)))
                 // Disabled
                 .story("Disabled", DurationPickerStories::fromArgs)
-                .withArgs(Args.of(TIME, 7, TIME_UNIT, "Days", ENABLED, false));
+                .withArgs(Args.of(TIME, 7, TIME_UNIT, "Days", ENABLED, false))
+                // In a form group, as on every Stroom screen: a group named by the label, its parts
+                // "Amount" and "Unit"
+                .story("InAFormGroup", context -> {
+                    final FormGroup formGroup = new FormGroup();
+                    formGroup.setLabel("Retain For");
+                    formGroup.add(durationPicker(context, 30, TimeUnit.DAYS, false));
+                    return formGroup;
+                })
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play group = screen.within(screen.getByRole("group", "Retain For"));
+                    play.expect(group.getByRole("spinbutton", "Amount")).toHaveValue("30");
+                    play.expect(group.getByRole("combobox", "Unit")).toBeInTheDocument();
+                })
+                // The arrow keys step the amount, each step firing the new duration
+                .story("KeysChangeTheAmount", context -> withDurationLabel(durationPicker(context, 30,
+                        TimeUnit.MINUTES, false)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.tab();
+                    play.keyboard("{ArrowUp}{ArrowUp}");
+                    play.expect(play.spy(ON_CHANGE)).toHaveBeenLastCalledWith("32 Minutes");
+                    play.expect(screen.getByText("Duration: 32 Minutes")).toBeInTheDocument();
+                })
+                // The largest amount and the longest unit both fit, beside their arrows (the picker was
+                // 200px, so the amount was squeezed until its arrows hid it, and the unit's arrow was
+                // cut off)
+                .story("LargestValuesFit", context -> durationPicker(context, 1000000, TimeUnit.MILLISECONDS,
+                        true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.expect("the amount's text fits",
+                            () -> fits(screen.getByRole("spinbutton", "Amount").element().get()))
+                            .toBe(true);
+                    play.expect("the unit's text fits",
+                            () -> fits(play.querySelector(".selection-box__value").element().get()))
+                            .toBe(true);
+                    play.expect("the picker is as wide as its parts",
+                            () -> fits(play.querySelector(".duration-picker").element().get()))
+                            .toBe(true);
+                })
+                // setValue(value, true) fires the duration, and setValue(null, false) gives the
+                // default (both were ignored: it never fired, and it threw on null)
+                .story("SetValueFiresWhenAsked", context -> {
+                    final DurationPicker picker = durationPicker(context, 30, TimeUnit.MINUTES, false);
+                    picker.setValue(null, false);
+                    picker.setValue(SimpleDuration.builder().time(7).timeUnit(TimeUnit.DAYS).build(), true);
+                    return picker;
+                })
+                .withPlay(play -> {
+                    play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledTimes(1);
+                    play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledWith("7 Days");
+                    play.expect(play.screen().getByRole("spinbutton", "Amount")).toHaveValue("7");
+                });
+    }
+
+    /// @return Whether an element's content fits in it, so none is cut off or scrolled away.
+    private static boolean fits(final Element element) {
+        return element.getScrollWidth() <= element.getClientWidth();
     }
 
     /// A picker made entirely from the story's args, so the Controls addon changes it.

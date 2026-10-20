@@ -1715,6 +1715,14 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   `FieldEnd` (`ResizeObserver`) sets the padding where what is over the end changes width, and the
   stylesheets where it doesn't. Measured on every such field on `Widgets/Inputs/ViewStates`
   `AllControls`; workbench: `Widgets/Inputs/FieldEnds` `TextStaysClearOfTheEnd`.
+* **A duration's amount couldn't be seen** (`DurationPicker`): the picker was 200px, as wide as its
+  unit's selection box alone (200px since the selection box's width was restored), so its amount's
+  spinner was squeezed to 62px, all of it its arrows, hiding the value on every duration field (13,
+  e.g. HTTP client timeouts, processing delays, Retain For), and the unit's arrow and focus ring were
+  cut off. Each part is now as wide as its longest value needs (`duration-picker.css`). Its
+  `setValue(value, fireEvents)` never fired and threw on null; it does as `setValue(value)`, then
+  fires. Workbench: `Widgets/Date & Time/DurationPicker` `LargestValuesFit`, `SetValueFiresWhenAsked`,
+  `InAFormGroup`, `KeysChangeTheAmount`.
 * **The time range's dialog was a bare popup** (`TimeRangeSelector`): the range was a `Label` made to
   act as a button, opening a GWT `PopupPanel` with no role or name, which Escape didn't close; the focus
   neither moved into it nor came back when it closed. The range is now a real button named "Time
