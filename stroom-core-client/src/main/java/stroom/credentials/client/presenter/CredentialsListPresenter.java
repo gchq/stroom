@@ -31,7 +31,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.ExpiryFormatter;
 import stroom.util.shared.NullSafe;
@@ -149,9 +149,14 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         dataGrid.setWidth("100%");
         this.gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
 
-        btnAdd = this.getView().addButton(SvgPresets.ADD);
-        btnDelete = this.getView().addButton(SvgPresets.DELETE);
-        btnEdit = this.getView().addButton(SvgPresets.EDIT);
+        this.getView().getToolbar().setName("Credential actions");
+        btnAdd = this.getView().getToolbar().button(SvgImage.ADD, "New Credential", this::handleAddButtonClick);
+        btnDelete = this.getView().getToolbar().button(SvgImage.DELETE, "Delete Selected Credential",
+                this::handleDeleteButtonClick);
+        btnDelete.setEnabled(false);
+        btnEdit = this.getView().getToolbar().button(SvgImage.EDIT, "Edit Selected Credential",
+                this::handleEditButtonClick);
+        btnEdit.setEnabled(false);
 
         this.initColumns(dataGrid);
 
@@ -267,9 +272,6 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
             dataProvider.addDataDisplay(dataGrid);
         }
 
-        btnAdd.addClickHandler(event -> handleAddButtonClick());
-        btnDelete.addClickHandler(event -> handleDeleteButtonClick());
-        btnEdit.addClickHandler(event -> handleEditButtonClick());
 
         registerHandler(gridSelectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
@@ -335,6 +337,16 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         final CredentialWithPerms selectedCwp = gridSelectionModel.getSelected();
         if (selectedCwp != null) {
             return selectedCwp.getCredential().getUuid();
+        } else {
+            return null;
+        }
+    }
+
+    /// @return The name of the currently selected credentials, or null if nothing is selected.
+    public String getSelectedCredentialsName() {
+        final CredentialWithPerms selectedCwp = gridSelectionModel.getSelected();
+        if (selectedCwp != null) {
+            return selectedCwp.getCredential().getName();
         } else {
             return null;
         }

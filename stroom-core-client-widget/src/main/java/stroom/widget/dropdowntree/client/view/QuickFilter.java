@@ -17,9 +17,15 @@
 package stroom.widget.dropdowntree.client.view;
 
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.form.client.FieldValidity;
 import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -30,11 +36,15 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -46,6 +56,8 @@ public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
     private static final int DEBOUNCE_DELAY_MS = 400;
+    private static final String ARIA_LABEL = "aria-label";
+    private static final String BLOCK = "quick-filter";
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
             .bold("Quick Filter")
             .br()
@@ -54,13 +66,29 @@ public class QuickFilter extends FlowPanel
             .toSafeHtml();
 
     private final TextBox textBox = new TextBox();
-    private final InlineSvgButton clearButton;
-    private final InlineSvgButton helpButton;
+    // Hidden, the description of the text box, saying what to type, read when it is focused
+    private final Label description = new Label();
+    // Why the server rejected the filter, for screen readers only (sighted users have the box's
+    // invalid styling and hover text). A live region, as the focus stays in the box while typing,
+    // and the box's description, so it is read again when the box is focused.
+    private final Label errorMessage = new Label();
+    private final ToolbarButton clearButton;
+    private final ToolbarButton dropDownButton;
+    private final ToolbarButton helpButton;
     private final HandlerManager handlerManager = new HandlerManager(this);
     private Supplier<SafeHtml> popupTextSupplier;
     private String lastInput = "";
     private boolean updateOnValueChange = true;
     private HelpPopup helpPopup = null;
+    private String filterError = null;
+    private QuickFilterContextHandler contextHandler = null;
+    // What Down in the filter does, e.g. moves into the list below it
+    private Runnable moveDown;
+    private final QuickFilterHistoryTracker historyTracker = new QuickFilterHistoryTracker(text -> {
+        if (contextHandler != null) {
+            contextHandler.recordUse(text);
+        }
+    });
 
     private final Timer filterRefreshTimer = new Timer() {
         @Override
@@ -70,31 +98,51 @@ public class QuickFilter extends FlowPanel
     };
 
     public QuickFilter() {
-        setStyleName("quickFilter");
-        textBox.addStyleName("quickFilter-textBox");
+        // BEM block quick-filter (quick-filter.css)
+        setStyleName(BLOCK);
+        textBox.addStyleName(BLOCK + "__input");
         textBox.addStyleName("allow-focus");
+        // A search field, to assistive technology (role searchbox); the browser's own clear button
+        // is hidden, as the filter has its own
+        textBox.getElement().setAttribute("type", "search");
         textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
-        clearButton = new InlineSvgButton();
-        clearButton.setSvg(SvgImage.CLEAR);
-        clearButton.setTitle("Clear Filter");
-        clearButton.addStyleName("clear");
+        // The filter's buttons, at the end of its box
+        final Toolbar toolbar = new Toolbar("Quick filter");
+        toolbar.addStyleName(BLOCK + "__toolbar");
+        // A plain cross, so that Clear and the drop-down, which both act on the text, look alike, and
+        // only help, which doesn't, has a ring
+        clearButton = toolbar.button(SvgImage.TAB_CLOSE, "Clear Filter", this::onClear);
+        // Between clear and help: clear and the drop-down both act on the text, like a combo
+        // box, and help stays outermost as it is on every screen. Hidden until a handler is set.
+        dropDownButton = toolbar.button(SvgImage.ARROW_DOWN, "Show Recent Filters", this::showRecentFilters);
+        dropDownButton.addStyleName(BLOCK + "__recent");
+        dropDownButton.setVisible(false);
+        helpButton = toolbar.button(SvgImage.HELP_OUTLINE, "Quick Filter Syntax Help", this::showHelpPopup);
 
-        helpButton = new InlineSvgButton();
-        helpButton.setSvg(SvgImage.HELP_OUTLINE);
-        helpButton.setTitle("Quick Filter Syntax Help");
-        helpButton.addStyleName("help-button info");
+        description.setVisible(false);
+        description.getElement().setId(DOM.createUniqueId());
+        // Not hidden (display: none), which would hide it from screen readers too
+        errorMessage.setStyleName("sr-only");
+        errorMessage.getElement().setId(DOM.createUniqueId());
+        errorMessage.getElement().setAttribute("aria-live", "polite");
 
         add(textBox);
-        add(clearButton);
-        add(helpButton);
+        add(toolbar);
+        add(description);
+        add(errorMessage);
 
         textBox.addValueChangeHandler(event -> onValueChange());
         textBox.addKeyDownHandler(this::onKeyDown);
-        helpButton.addClickHandler(event -> showHelpPopup());
-        clearButton.addClickHandler(event -> clear());
+        textBox.addBlurHandler(this::onBlur);
 
         enableButtons();
+    }
+
+    private void onClear() {
+        clear();
+        // The button hides itself once the text is empty, which would leave focus nowhere
+        textBox.setFocus(true);
     }
 
     private void showHelpPopup() {
@@ -102,22 +150,134 @@ public class QuickFilter extends FlowPanel
             helpPopup.hide();
             helpPopup = null;
         } else {
-            final SafeHtml popupText = Optional.ofNullable(popupTextSupplier)
+            final SafeHtml syntaxHelp = Optional.ofNullable(popupTextSupplier)
                     .map(Supplier::get)
                     .filter(safeHtml -> !safeHtml.asString().isEmpty())
                     .orElse(DEFAULT_POPUP_TEXT);
 
-            final HelpPopup popup = new HelpPopup(popupText);
+            final HelpPopup popup = new HelpPopup(withFilterError(syntaxHelp));
             popup.setStyleName("quickFilter-tooltip");
+            // A mousedown on the help button mustn't auto-hide the popup, so that its click can
+            // toggle it shut
+            popup.addAutoHidePartner(helpButton.getElement());
+            // Forget the popup however it is hidden (e.g. auto-hidden by a click elsewhere, or by
+            // Escape), so that the next click on the help button shows it again
+            popup.addCloseHandler(event -> {
+                if (helpPopup == popup) {
+                    helpPopup = null;
+                }
+            });
             popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
 
-                // Position it below the filter
+                // Position it below the filter, clear of the buttons in it whatever its height
                 popup.setPopupPosition(
                         getAbsoluteLeft() + 4,
-                        getAbsoluteTop() + 26);
+                        getAbsoluteTop() + getOffsetHeight());
             });
             this.helpPopup = popup;
         }
+    }
+
+    /**
+     * Show why the server rejected this filter, or clear it when passed null.
+     * <p>
+     * A rejected filter and a filter that matched nothing both come back as an empty grid, so
+     * without this the user has no way to tell "your syntax is not supported here" from "there is
+     * nothing to find". The message travels back on the response - see
+     * {@code ResultPage.filterError} - and this is what puts it in front of the user.
+     * <p>
+     * Deliberately not positional. The diagnostic carries the offending token's location, but a
+     * TextBox cannot underline a substring, so the location is unused for now; see
+     * docs/query-filter-surface-syntax-spec.md §10.5 for the options if that becomes worth doing.
+     */
+    public void setFilterError(final String filterError) {
+        // Every result, accepted or not, comes through here, so this is where the widget learns
+        // whether the text it sent was good. lastInput is the text the answered query was sent
+        // with - near enough: if the user has typed on since, the next verdict overrides this.
+        historyTracker.verdict(lastInput, filterError == null);
+        applyFilterError(filterError);
+    }
+
+    private void applyFilterError(final String filterError) {
+        if (Objects.equals(this.filterError, filterError)) {
+            return;
+        }
+        this.filterError = filterError;
+
+        // Reuse the app-wide invalid styling rather than inventing one - it is already themed for
+        // light and dark, and already handles the focused state. FieldValidity also marks the box
+        // aria-invalid, so assistive technology is told too.
+        final Element textBoxElement = textBox.getElement();
+        final String errorMessageId = errorMessage.getElement().getId();
+        if (filterError == null) {
+            FieldValidity.setInvalid(textBoxElement, false);
+            FieldValidity.removeDescribedBy(textBoxElement, errorMessageId);
+            errorMessage.setText("");
+            textBoxElement.removeAttribute("title");
+        } else {
+            FieldValidity.setInvalid(textBoxElement, true);
+            // Read before what may be typed (see setDescription)
+            FieldValidity.addDescribedBy(textBoxElement, errorMessageId, true);
+            errorMessage.setText(filterError);
+            // Native title so it is discoverable on hover without opening the help popup.
+            textBoxElement.setAttribute("title", filterError);
+        }
+        // If the popup is already open, reopen it so it picks up the change.
+        if (helpPopup != null) {
+            helpPopup.hide();
+            helpPopup = null;
+            showHelpPopup();
+        }
+    }
+
+    private SafeHtml withFilterError(final SafeHtml syntaxHelp) {
+        if (filterError == null) {
+            return syntaxHelp;
+        }
+        return new HtmlBuilder()
+                .bold("This filter was not applied")
+                .br()
+                .append(filterError)
+                .br()
+                .br()
+                .append(syntaxHelp)
+                .toSafeHtml();
+    }
+
+    /**
+     * Give this quick filter a context: an arrow appears on the right, and the filters the user
+     * commits here are remembered and offered back. See {@link QuickFilterContextHandler}.
+     */
+    public void setContextHandler(final QuickFilterContextHandler contextHandler) {
+        this.contextHandler = contextHandler;
+        final boolean hasContext = contextHandler != null;
+        dropDownButton.setVisible(hasContext);
+        // Leaves room in the box for the recent filters' button as well
+        setStyleName(BLOCK + "--recent", hasContext);
+    }
+
+    private void showRecentFilters() {
+        if (contextHandler != null && textBox.isEnabled()) {
+            contextHandler.showRecentFilters(this, text -> {
+                setText(text, true);
+                historyTracker.chosen(text);
+                focus();
+            });
+        }
+    }
+
+    /**
+     * The user has committed the current text - Enter, or leaving the box. Whether that becomes
+     * a history entry is {@link QuickFilterHistoryTracker}'s decision.
+     */
+    private void commit() {
+        if (contextHandler != null) {
+            historyTracker.commit(textBox.getText());
+        }
+    }
+
+    private void onBlur(final BlurEvent event) {
+        commit();
     }
 
     private void onValueChange() {
@@ -150,9 +310,11 @@ public class QuickFilter extends FlowPanel
 
     private void enableButtons() {
         final String text = textBox.getText();
-        final boolean isNotEmpty = !text.isEmpty();
+        final boolean isNotEmpty = !text.isEmpty() && textBox.isEnabled();
         clearButton.setEnabled(isNotEmpty);
         clearButton.setVisible(isNotEmpty);
+        // Choosing a recent filter would write into a box that cannot be typed in
+        dropDownButton.setEnabled(textBox.isEnabled());
     }
 
     protected void onKeyDown(final KeyDownEvent event) {
@@ -161,7 +323,33 @@ public class QuickFilter extends FlowPanel
             clear();
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             onChange(true);
+            commit();
+        } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN && event.isAltKeyDown()) {
+            // Combo-box convention for opening the list from the keyboard.
+            event.preventDefault();
+            showRecentFilters();
+        } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN && moveDown != null
+                   && !event.isControlKeyDown() && !event.isShiftKeyDown() && !event.isMetaKeyDown()) {
+            // Into the list below the filter
+            event.preventDefault();
+            moveDown.run();
         }
+    }
+
+    /// Sets what Down in the filter does, e.g. moves the focus into the list it filters. Alt+Down
+    /// still shows the recent filters.
+    ///
+    /// @param moveDown What to do, or null for nothing.
+    public void setMoveDown(final Runnable moveDown) {
+        this.moveDown = moveDown;
+    }
+
+    /// Enables or disables the filter's text. Its syntax help stays available.
+    ///
+    /// @param enabled Whether the filter can be typed in.
+    public void setEnabled(final boolean enabled) {
+        textBox.setEnabled(enabled);
+        enableButtons();
     }
 
     public void reset() {
@@ -171,7 +359,39 @@ public class QuickFilter extends FlowPanel
     @Override
     public void clear() {
         textBox.setText("");
+        // Not setFilterError(null): clearing is not a server verdict on the old text.
+        historyTracker.cleared();
+        applyFilterError(null);
         onChange(true);
+    }
+
+    /// Names the filter's text box for screen readers, in place of its placeholder, which is only a
+    /// hint and is lost once something is typed.
+    ///
+    /// @param accessibleName What the filter is for, e.g. `Find by name`, or null or blank to name it
+    ///                       by its placeholder.
+    public void setAccessibleName(final String accessibleName) {
+        if (accessibleName == null || accessibleName.isBlank()) {
+            textBox.getElement().removeAttribute(ARIA_LABEL);
+        } else {
+            textBox.getElement().setAttribute(ARIA_LABEL, accessibleName);
+        }
+    }
+
+    /// Says what may be typed in the filter, so a screen reader reads it when the text box is
+    /// focused. The syntax help button gives the full detail.
+    ///
+    /// @param descriptionText What may be typed, or null or blank for nothing.
+    public void setDescription(final String descriptionText) {
+        final Element textBoxElement = textBox.getElement();
+        final String id = description.getElement().getId();
+        FieldValidity.removeDescribedBy(textBoxElement, id);
+        if (descriptionText == null || descriptionText.isBlank()) {
+            description.setText("");
+        } else {
+            description.setText(descriptionText);
+            FieldValidity.addDescribedBy(textBoxElement, id, false);
+        }
     }
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
@@ -202,8 +422,37 @@ public class QuickFilter extends FlowPanel
         return textBox.addDomHandler(handler, KeyDownEvent.getType());
     }
 
+    /// Puts the focus in the filter, trying again for a moment (e.g. while the popup it is in
+    /// settles), but not once it has had the focus and it has moved on (e.g. the user has gone into
+    /// the list below with Down), which would pull it back.
     public void forceFocus() {
-        FocusUtil.forceFocus(this::focus);
+        final boolean[] hadFocus = {false};
+        FocusUtil.forceFocus(() -> {
+            if (!hadFocus[0] && !hasFocus()) {
+                focus();
+            }
+            // Once it has the focus, the later tries leave it wherever it goes
+            hadFocus[0] = hadFocus[0] || hasFocus();
+        });
+    }
+
+    private boolean hasFocus() {
+        return isFocused(textBox.getElement());
+    }
+
+    private static native boolean isFocused(Element element) /*-{
+        return element.ownerDocument.activeElement === element;
+    }-*/;
+
+    /// Adds typed text to the end of the filter, applies it at once, and puts the focus in the filter
+    /// with the caret after it, so typing carries on there (e.g. a selection box passes on what was
+    /// typed in it when it opened its list).
+    ///
+    /// @param text The text typed.
+    public void type(final String text) {
+        setText(getText() + text, true);
+        textBox.setFocus(true);
+        textBox.setCursorPos(textBox.getText().length());
     }
 
     public void focus() {
@@ -231,7 +480,21 @@ public class QuickFilter extends FlowPanel
 
 //            setWidget(new Label(popupTextSupplier.get(), true));
             setWidget(new HTMLPanel(content));
+            // A dialog (not modal) for screen readers, named after the button that opens it
+            getElement().setAttribute("role", "dialog");
+            getElement().setAttribute("aria-label", "Quick Filter Syntax Help");
 //            setWidget(new HTMLPanel(SafeHtmlUtils.fromTrustedString("<b>hello</b>")));
+        }
+
+        @Override
+        protected void onPreviewNativeEvent(final NativePreviewEvent event) {
+            super.onPreviewNativeEvent(event);
+            // Escape closes it, as it does Stroom's other popups
+            if (event.getTypeInt() == Event.ONKEYDOWN
+                && KeyBinding.test(event.getNativeEvent()) == Action.CLOSE) {
+                event.cancel();
+                hide();
+            }
         }
     }
 }

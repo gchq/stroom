@@ -2,13 +2,12 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
-    <g:FlowPanel styleName="chooserViewImpl-container max default-min-sizes dock-container-vertical quickFilter-container overflow-hidden">
+    <g:FlowPanel styleName="chooserViewImpl-container max default-min-sizes dock-container-vertical quick-filter-layout overflow-hidden">
         <g:FlowPanel ui:field="top" styleName="chooserViewImpl-top">
-            <v:QuickFilter ui:field="nameFilter"/>
+            <v:QuickFilter accessibleName="Filter options" ui:field="nameFilter"/>
         </g:FlowPanel>
         <g:FlowPanel ui:field="bottom" styleName="chooserViewImpl-bottom">
         </g:FlowPanel>
-        <g:Label ui:field="clearSelection" styleName="chooserViewImpl-clearSelection"/>
     </g:FlowPanel>
 </ui:UiBinder>
 

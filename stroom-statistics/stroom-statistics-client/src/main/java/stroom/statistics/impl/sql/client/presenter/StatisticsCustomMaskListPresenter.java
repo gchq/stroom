@@ -28,12 +28,10 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
 import stroom.statistics.impl.sql.client.presenter.State.Mask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -65,32 +63,21 @@ public class StatisticsCustomMaskListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-        newButton = view.addButton(SvgPresets.NEW_ITEM);
-        autoGenerateButton = view.addButton(SvgPresets.GENERATE);
-        removeButton = view.addButton(SvgPresets.REMOVE);
+        view.getToolbar().setName("Roll-up actions");
+        newButton = view.getToolbar().button(SvgImage.ADD, "New Roll-up Permutation", this::onAdd);
+        autoGenerateButton = view.getToolbar().button(SvgImage.GENERATE, "Auto-generate Roll-up Permutations",
+                this::onAutoGenerate);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove Selected Roll-up Permutation",
+                this::onRemove);
+        removeButton.setEnabled(false);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAdd(event);
-            }
-        }));
 
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onRemove(event);
-            }
-        }));
 
-        registerHandler(autoGenerateButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAutoGenerate(event);
-            }
-        }));
 
         registerHandler(selectionModel.addSelectionHandler(event -> enableButtons()));
     }
@@ -102,15 +89,12 @@ public class StatisticsCustomMaskListPresenter
         final Mask selectedElement = selectionModel.getSelected();
         removeButton.setEnabled(!isReadOnly() && selectedElement != null);
 
-        if (isReadOnly()) {
-            newButton.setTitle("New roll-up permutation disabled as read only");
-            autoGenerateButton.setTitle("Auto-generate roll-up permutations disabled as read only");
-            removeButton.setTitle("Remove roll-up permutation disabled as read only");
-        } else {
-            newButton.setTitle("New roll-up permutation");
-            autoGenerateButton.setTitle("Auto-generate roll-up permutations");
-            removeButton.setTitle("Remove roll-up permutation");
-        }
+        final String reason = isReadOnly()
+                ? " (read only)"
+                : "";
+        newButton.setTitle("New Roll-up Permutation" + reason);
+        autoGenerateButton.setTitle("Auto-generate Roll-up Permutations" + reason);
+        removeButton.setTitle("Remove Selected Roll-up Permutation" + reason);
     }
 
     private void addColumns() {
@@ -147,13 +131,13 @@ public class StatisticsCustomMaskListPresenter
         columns.add(rolledUpColumn);
     }
 
-    private void onAdd(final ClickEvent event) {
+    private void onAdd() {
         this.state.addMask(new HashSet<>());
         refresh();
         DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
     }
 
-    private void onAutoGenerate(final ClickEvent event) {
+    private void onAutoGenerate() {
         final StatisticsCustomMaskListPresenter thisInstance = this;
         ConfirmEvent.fire(this,
                 "Are you sure you want to clear the existing roll-ups and generate all possible " +
@@ -167,7 +151,7 @@ public class StatisticsCustomMaskListPresenter
                 });
     }
 
-    private void onRemove(final ClickEvent event) {
+    private void onRemove() {
         final List<Mask> list = selectionModel.getSelectedItems();
         if (list != null && list.size() > 0) {
             state.removeMasks(list);

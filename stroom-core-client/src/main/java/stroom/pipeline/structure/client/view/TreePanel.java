@@ -24,6 +24,9 @@ import com.google.gwt.view.client.SelectionModel;
 
 public abstract class TreePanel<E> extends Composite {
 
+    // Told when a redraw is complete, e.g. to put the keyboard focus back on a box
+    private Runnable afterRefresh;
+
     public abstract Box<E> getBox(E item);
 
     public abstract Box<E> getTargetBox(Event event, boolean usePosition);
@@ -37,6 +40,21 @@ public abstract class TreePanel<E> extends Composite {
     public abstract DefaultTreeForTreeLayout<E> getTree();
 
     public abstract void setTree(DefaultTreeForTreeLayout<E> tree);
+
+    /// Sets what to do when a redraw is complete, e.g. to put the keyboard focus back on a box
+    /// (as redrawing replaces them).
+    ///
+    /// @param afterRefresh What to do, or null for nothing.
+    public void setAfterRefresh(final Runnable afterRefresh) {
+        this.afterRefresh = afterRefresh;
+    }
+
+    /// Tells what was set by [#setAfterRefresh] that a redraw is complete.
+    protected void fireAfterRefresh() {
+        if (afterRefresh != null) {
+            afterRefresh.run();
+        }
+    }
 
     public interface RefreshCallback {
 

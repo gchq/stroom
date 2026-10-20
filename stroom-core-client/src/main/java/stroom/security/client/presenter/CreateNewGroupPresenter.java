@@ -23,6 +23,7 @@ import stroom.entity.client.presenter.NameDocumentView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
@@ -65,9 +66,16 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
     public void create(final Consumer<User> consumer,
                        final HidePopupRequestEvent event,
                        final TaskMonitorFactory taskMonitorFactory) {
+        final String name = NullSafe.trim(getView().getName());
+        if (name.isEmpty()) {
+            // Said under the field, which is focused, so a screen reader reads it
+            getView().setNameInvalid("You must provide a name for the group");
+            event.reset();
+            return;
+        }
         restFactory
                 .create(USER_RESOURCE)
-                .method(res -> res.createGroup(getView().getName()))
+                .method(res -> res.createGroup(name))
                 .onSuccess(result -> {
                     if (!result.isEnabled()) {
                         enable(result, consumer, event, taskMonitorFactory);

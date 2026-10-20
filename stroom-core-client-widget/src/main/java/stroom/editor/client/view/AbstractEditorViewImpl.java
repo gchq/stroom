@@ -56,17 +56,17 @@ public abstract class AbstractEditorViewImpl extends ViewImpl {
 
     public AbstractEditorViewImpl() {
         editor = new Editor();
-        editor.getElement().setClassName("editor " + NullSafe.string(getAdditionalClassNames()));
+        editor.getElement().setClassName("code-editor__ace " + NullSafe.string(getAdditionalClassNames()));
     }
 
     protected void initOptions() {
         // Don't forget to add any new options into EditorPresenter
         stylesOption = new Option(
-                "Styles", true, true, (on) -> setMode(mode, on));
+                "Syntax Highlighting", true, true, (on) -> setMode(mode, on));
         lineNumbersOption = new Option(
                 "Line Numbers", true, true, (on) -> editor.setShowGutter(on));
         indicatorsOption = new Option(
-                "Indicators", SHOW_INDICATORS_DEFAULT, false, this::doLayout);
+                "Error and Warning Indicators", SHOW_INDICATORS_DEFAULT, false, this::doLayout);
         lineWrapOption = new Option(
                 "Wrap Lines", false, true, (on) -> editor.setUseWrapMode(on));
         showIndentGuides = new Option(
@@ -75,7 +75,7 @@ public abstract class AbstractEditorViewImpl extends ViewImpl {
                 "Show Hidden Characters", false, true, (on) -> editor.setShowInvisibles(on));
         useVimBindingsOption = buildVimBindingsOption(false);
         basicAutoCompletionOption = new Option(
-                "Auto Completion", true, true, (on) -> editor.setUseBasicAutoCompletion(on));
+                "Basic Auto Completion", true, true, (on) -> editor.setUseBasicAutoCompletion(on));
         liveAutoCompletionOption = buildLiveAutoCompleteOption(false);
         snippetsOption = new Option(
                 "Snippets", true, true, (on) -> editor.setUseSnippets(on));
@@ -123,6 +123,10 @@ public abstract class AbstractEditorViewImpl extends ViewImpl {
 
     public boolean isClean() {
         return editor.isClean();
+    }
+
+    public void destroy() {
+        editor.destroy();
     }
 
     public void markClean() {

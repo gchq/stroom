@@ -7,19 +7,19 @@
         <g:Label ui:field="lblTitle" styleName="pager-label"/>
         <g:HTMLPanel styleName="pager-space">&nbsp;</g:HTMLPanel>
         <g:Label ui:field="lblFrom" styleName="pager-label"/>
-        <g:TextBox ui:field="txtFrom" styleName="pager-textBox" visible="false"/>
+        <g:TextBox ui:field="txtFrom" addStyleNames="pager-textBox" visible="false"/>
         <g:Label ui:field="lblToSeparator" text="&nbsp;to&nbsp;" styleName="pager-label"/>
         <g:Label ui:field="lblTo" styleName="pager-label"/>
-        <g:TextBox ui:field="txtTo" styleName="pager-textBox" visible="false"/>
+        <g:TextBox ui:field="txtTo" addStyleNames="pager-textBox" visible="false"/>
         <g:Label ui:field="lblOfSeparator" text="&nbsp;of&nbsp;" styleName="pager-label"/>
         <g:Label ui:field="lblOf" styleName="pager-label"/>
         <g:HTMLPanel styleName="pager-space">&nbsp;</g:HTMLPanel>
-        <g:FlowPanel styleName="button-container">
-            <paging:SvgButton ui:field="first"/>
-            <paging:SvgButton ui:field="prev"/>
-            <paging:SvgButton ui:field="next"/>
-            <paging:SvgButton ui:field="last"/>
+        <paging:Toolbar name="Paging">
+            <paging:ToolbarButton ui:field="first" svg="FAST_BACKWARD" title="First"/>
+            <paging:ToolbarButton ui:field="prev" svg="STEP_BACKWARD" title="Backward"/>
+            <paging:ToolbarButton ui:field="next" svg="STEP_FORWARD" title="Forward"/>
+            <paging:ToolbarButton ui:field="last" svg="FAST_FORWARD" title="Last"/>
             <refresh-button:RefreshButton ui:field="refresh"/>
-        </g:FlowPanel>
+        </paging:Toolbar>
     </g:FlowPanel>
 </ui:UiBinder>

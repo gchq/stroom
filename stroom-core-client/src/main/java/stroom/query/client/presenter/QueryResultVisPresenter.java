@@ -71,20 +71,8 @@ public class QueryResultVisPresenter
     private static final long UPDATE_INTERVAL = 2000;
 
 
-    private static final JavaScriptObject EMPTY_DATA;
-
-    static {
-        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(
-                "{" +
-                        "\"values\": []," +
-                        "\"min\": []," +
-                        "\"max\": []," +
-                        "\"sum\": []," +
-                        "\"types\": []," +
-                        "\"sortDirections\": []" +
-                        "}"));
-        EMPTY_DATA = dataObject.getJavaScriptObject();
-    }
+    // Built on first use rather than when the class loads, as parsing JSON needs a browser
+    private static JavaScriptObject emptyData;
 
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
@@ -195,9 +183,7 @@ public class QueryResultVisPresenter
         registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 visFrame.setClassName(getClassName(event.getTheme()))));
 
-        registerHandler(getView().getRefreshButton().addClickHandler(e -> {
-            setPause(!pause, true);
-        }));
+        getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
     }
 
     private void setPause(final boolean pause,
@@ -236,7 +222,7 @@ public class QueryResultVisPresenter
     public void startSearch() {
         nextUpdate = 0;
         currentSettings = null;
-        currentData = EMPTY_DATA;
+        currentData = getEmptyData();
         lastData = null;
 
         if (!searching) {
@@ -268,22 +254,35 @@ public class QueryResultVisPresenter
         }
     }
 
+    /// Fetches the latest vis data from the search model and shows it.
+    ///
+    /// Does nothing if this presenter has no search model, e.g. once it has been removed.
+    /// A result that arrives after this presenter has been removed is ignored.
     public void refresh() {
+        final QueryModel searchModel = currentSearchModel;
+        if (searchModel == null) {
+            return;
+        }
+
         getView().getRefreshButton().setRefreshing(true);
-        currentSearchModel.refresh(QueryModel.VIS_COMPONENT_ID, result -> {
-            try {
-                if (result != null) {
-                    setDataInternal(result);
+        searchModel.refresh(QueryModel.VIS_COMPONENT_ID, result -> {
+            // This presenter may have been removed while the refresh was in flight, e.g. when the
+            // search ended with no vis data, so only use the result if it is still wanted
+            if (searchModel == currentSearchModel) {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
                 }
-            } catch (final Exception e) {
-                GWT.log(e.getMessage());
+                getView().getRefreshButton().setRefreshing(searchModel.isSearching());
             }
-            getView().getRefreshButton().setRefreshing(currentSearchModel.isSearching());
         });
     }
 
     public void clear() {
-        currentData = EMPTY_DATA;
+        currentData = getEmptyData();
         currentError = null;
         update();
 
@@ -351,8 +350,24 @@ public class QueryResultVisPresenter
         }
     }
 
+    private static JavaScriptObject getEmptyData() {
+        if (emptyData == null) {
+            final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(
+                    "{" +
+                            "\"values\": []," +
+                            "\"min\": []," +
+                            "\"max\": []," +
+                            "\"sum\": []," +
+                            "\"types\": []," +
+                            "\"sortDirections\": []" +
+                            "}"));
+            emptyData = dataObject.getJavaScriptObject();
+        }
+        return emptyData;
+    }
+
     private JavaScriptObject getJSONData(final QLVisResult visResult) {
-        JavaScriptObject data = EMPTY_DATA;
+        JavaScriptObject data = getEmptyData();
 
         // Turn JSON result text into an object.
         final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJsonData()));
@@ -468,7 +483,7 @@ public class QueryResultVisPresenter
             } else if (LoadStatus.FAILURE.equals(function.getStatus())) {
                 // Try and clear the current visualisation.
                 try {
-                    currentData = EMPTY_DATA;
+                    currentData = getEmptyData();
                     currentError = null;
 
                     update();

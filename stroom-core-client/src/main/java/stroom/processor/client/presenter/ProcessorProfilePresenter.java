@@ -22,7 +22,6 @@ import stroom.data.grid.client.WrapperView;
 import stroom.data.table.client.Refreshable;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
@@ -58,9 +57,21 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
         this.editProvider = editProvider;
         this.processorProfileClient = processorProfileClient;
 
-        newButton = processorProfileListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
-        openButton = processorProfileListPresenter.getView().addButton(SvgPresets.EDIT);
-        deleteButton = processorProfileListPresenter.getView().addButton(SvgPresets.DELETE);
+        processorProfileListPresenter.getView().getToolbar().setName("Profile actions");
+        newButton = processorProfileListPresenter.getView().getToolbar().button(
+                SvgImage.ADD,
+                "New Processor Profile",
+                this::add);
+        openButton = processorProfileListPresenter.getView().getToolbar().button(
+                SvgImage.EDIT,
+                "Edit Selected Processor Profile",
+                this::edit);
+        openButton.setEnabled(false);
+        deleteButton = processorProfileListPresenter.getView().getToolbar().button(
+                SvgImage.DELETE,
+                "Delete Selected Processor Profiles",
+                this::delete);
+        deleteButton.setEnabled(false);
 
         view.setView(processorProfileListPresenter.getView());
     }
@@ -73,9 +84,6 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
                 edit();
             }
         }));
-        registerHandler(newButton.addClickHandler(event -> add()));
-        registerHandler(openButton.addClickHandler(event -> edit()));
-        registerHandler(deleteButton.addClickHandler(event -> delete()));
     }
 
     private void add() {

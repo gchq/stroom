@@ -317,8 +317,9 @@ compileJava {
 }
 
 shadowJar {
-    // We want to run the tests before we build the fat jar.
-    dependsOn test
+    // If the tests and the fat jar are both requested, run the tests first. Ordering only, so
+    // that assemble (which Shadow wires to shadowJar) does not run the tests.
+    mustRunAfter test
     // We want to compile all GWT and React content before we build the fat jar.
     dependsOn ":stroom-app-gwt:gwtCompile"
 //    dependsOn ":stroom-dashboard-gwt:gwtCompile"

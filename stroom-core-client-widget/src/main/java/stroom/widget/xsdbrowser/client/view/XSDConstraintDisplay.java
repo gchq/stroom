@@ -19,9 +19,9 @@ package stroom.widget.xsdbrowser.client.view;
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
 
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 import java.util.List;
 
@@ -65,7 +65,8 @@ public class XSDConstraintDisplay extends Composite {
             }
             lblRestrictionType.addStyleName("restrictionType");
 
-            final VerticalPanel layout = new VerticalPanel();
+            // The restriction's type, then its values, one above another
+            final FlowPanel layout = new FlowPanel();
             layout.add(lblRestrictionType);
 
             for (final String value : list) {

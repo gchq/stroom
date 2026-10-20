@@ -18,6 +18,7 @@ package stroom.receive.content.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.CellIcon;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.event.CloseContentEvent;
@@ -33,8 +34,6 @@ import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.Conte
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.ContentTemplates;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
@@ -67,16 +66,16 @@ public class ContentTemplateTabPresenter
     private static final ContentTemplateResource CONTENT_TEMPLATE_RESOURCE = GWT.create(
             ContentTemplateResource.class);
 
-    private static final Preset DELETE_TEMPLATE_SVG_PRESET = SvgPresets.DELETE.title("Delete template");
-    //    private static final Preset DISABLE_TEMPLATE_SVG_PRESET = SvgPresets.DISABLE.title("Enable/Disable template");
-    protected static final Preset ADD_ABOVE_SVG_PRESET = SvgPresets.ADD_ABOVE.title(
+    private static final CellIcon DELETE_TEMPLATE_ICON = CellIcon.of(SvgImage.DELETE, "Delete template", false);
+    //    private static final Preset DISABLE_TEMPLATE_ICON = SvgPresets.DISABLE.title("Enable/Disable template");
+    protected static final CellIcon ADD_ABOVE_ICON = CellIcon.of(SvgImage.ADD_ABOVE,
             "Add new template above the selected one");
-    protected static final Preset ADD_BELOW_SVG_PRESET = SvgPresets.ADD_BELOW.title(
+    protected static final CellIcon ADD_BELOW_ICON = CellIcon.of(SvgImage.ADD_BELOW,
             "Add new template below the selected one");
-    protected static final Preset COPY_TEMPLATE_SVG_PRESET = SvgPresets.COPY.title("Copy template");
-    protected static final Preset EDIT_TEMPLATE_SVG_PRESET = SvgPresets.EDIT.title("Edit template");
-    protected static final Preset MOVE_TEMPLATE_UP_SVG_PRESET = SvgPresets.UP.title("Move template up");
-    protected static final Preset MOVE_TEMPLATE_DOWN_SVG_PRESET = SvgPresets.DOWN.title("Move template down");
+    protected static final CellIcon COPY_TEMPLATE_ICON = CellIcon.of(SvgImage.COPY, "Copy template", false);
+    protected static final CellIcon EDIT_TEMPLATE_ICON = CellIcon.of(SvgImage.EDIT, "Edit template", false);
+    protected static final CellIcon MOVE_TEMPLATE_UP_ICON = CellIcon.of(SvgImage.UP, "Move template up", false);
+    protected static final CellIcon MOVE_TEMPLATE_DOWN_ICON = CellIcon.of(SvgImage.DOWN, "Move template down", false);
 
     private final ContentTemplateListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
@@ -120,14 +119,27 @@ public class ContentTemplateTabPresenter
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        saveButton = listPresenter.add(SvgPresets.SAVE.title("Save templates"));
-        addAboveButton = listPresenter.add(ADD_ABOVE_SVG_PRESET);
-        addBelowButton = listPresenter.add(ADD_BELOW_SVG_PRESET);
-        editButton = listPresenter.add(EDIT_TEMPLATE_SVG_PRESET);
-        copyButton = listPresenter.add(COPY_TEMPLATE_SVG_PRESET);
-        deleteButton = listPresenter.add(DELETE_TEMPLATE_SVG_PRESET);
-        moveUpButton = listPresenter.add(MOVE_TEMPLATE_UP_SVG_PRESET);
-        moveDownButton = listPresenter.add(MOVE_TEMPLATE_DOWN_SVG_PRESET);
+        listPresenter.getToolbar().setName("Content template actions");
+        saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save Templates", this::onSave);
+        saveButton.setEnabled(false);
+        addAboveButton = listPresenter.getToolbar().button(
+                SvgImage.ADD_ABOVE,
+                "Add Template Above",
+                this::onAddAbove);
+        addBelowButton = listPresenter.getToolbar().button(
+                SvgImage.ADD_BELOW,
+                "Add Template Below",
+                this::onAddBelow);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Template", this::onEdit);
+        editButton.setEnabled(false);
+        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Duplicate Selected Template", this::onCopy);
+        copyButton.setEnabled(false);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Template", this::onDelete);
+        deleteButton.setEnabled(false);
+        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move Template Up", this::onMoveUp);
+        moveUpButton.setEnabled(false);
+        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Template Down", this::onMoveDown);
+        moveDownButton.setEnabled(false);
 
         listPresenter.getView()
                 .asWidget()
@@ -165,6 +177,72 @@ public class ContentTemplateTabPresenter
         return contentTemplates.size() - 1;
     }
 
+    private void onSave() {
+        // Get the user's rules without our default one
+        restFactory
+                .create(CONTENT_TEMPLATE_RESOURCE)
+                .method(res ->
+                        res.update(contentTemplatesWrapper.copy()
+                                .contentTemplates(getTemplates())
+                                .build()))
+                .onSuccess(result -> {
+                    contentTemplatesWrapper = result;
+                    contentTemplates = new ArrayList<>(result.getContentTemplates());
+                    getSelectionModel().clear();
+                    update();
+                    setDirty(false);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    private void onAddAbove() {
+        if (contentTemplates != null) {
+            addNewRule(AddMode.ABOVE);
+        }
+    }
+
+    private void onAddBelow() {
+        if (contentTemplates != null) {
+            addNewRule(AddMode.BELOW);
+        }
+    }
+
+    private void onEdit() {
+        if (contentTemplates != null) {
+            final ContentTemplate selected = getSelected();
+            editRule(selected);
+        }
+    }
+
+    private void onCopy() {
+        if (contentTemplates != null) {
+            final ContentTemplate selected = getSelected();
+            copyRule(selected);
+        }
+    }
+
+    private void onDelete() {
+        if (contentTemplates != null) {
+            final ContentTemplate contentTemplate = getSelected();
+            deleteRule(contentTemplate);
+        }
+    }
+
+    private void onMoveUp() {
+        if (contentTemplates != null) {
+            final ContentTemplate contentTemplate = getSelected();
+            moveRuleUp(contentTemplate);
+        }
+    }
+
+    private void onMoveDown() {
+        if (contentTemplates != null) {
+            final ContentTemplate contentTemplate = getSelected();
+            moveRuleDown(contentTemplate);
+        }
+    }
+
     @Override
     protected void onBind() {
         addSaveButtonHandler();
@@ -192,31 +270,31 @@ public class ContentTemplateTabPresenter
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.ADD_ABOVE)
-                                .text("Add new template above")
+                                .text("Add Template Above")
                                 .command(() ->
                                         addNewRule(contentTemplate.getTemplateIndex())))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.ADD_BELOW)
-                                .text("Add new template below")
+                                .text("Add Template Below")
                                 .command(() ->
                                         addNewRule(contentTemplate.getTemplateNumber())))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.EDIT)
-                                .text("Edit template")
+                                .text("Edit Template")
                                 .command(() ->
                                         editRule(contentTemplate)))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.COPY)
-                                .text("Copy template")
+                                .text("Duplicate Template")
                                 .command(() ->
                                         copyRule(contentTemplate)))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.DELETE)
-                                .text("Delete template")
+                                .text("Delete Template")
                                 .command(() ->
                                         deleteRule(contentTemplate)))
 //                .withIconMenuItem(itemBuilder ->
@@ -228,14 +306,14 @@ public class ContentTemplateTabPresenter
                 .withIconMenuItemIf(contentTemplate.getTemplateNumber() > 1, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.UP)
-                                .text("Move template Up")
+                                .text("Move Template Up")
                                 .command(() ->
                                         moveRuleUp(contentTemplate)))
                 .withIconMenuItemIf(contentTemplate.getTemplateNumber() < getTemplateCount(),
                         itemBuilder ->
                                 itemBuilder
                                         .icon(SvgImage.DOWN)
-                                        .text("Move template Down")
+                                        .text("Move Template Down")
                                         .command(() ->
                                                 moveRuleDown(contentTemplate)))
                 .build();
@@ -283,12 +361,6 @@ public class ContentTemplateTabPresenter
     }
 
     private void addMoveDownButtonHandler() {
-        registerHandler(moveDownButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                final ContentTemplate contentTemplate = getSelected();
-                moveRuleDown(contentTemplate);
-            }
-        }));
     }
 
     private void moveRuleDown(final ContentTemplate rule) {
@@ -309,12 +381,6 @@ public class ContentTemplateTabPresenter
     }
 
     private void addMoveUpButtonHandler() {
-        registerHandler(moveUpButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                final ContentTemplate contentTemplate = getSelected();
-                moveRuleUp(contentTemplate);
-            }
-        }));
     }
 
     private void moveRuleUp(final ContentTemplate rule) {
@@ -337,12 +403,6 @@ public class ContentTemplateTabPresenter
     }
 
     private void addDeleteButtonHandler() {
-        registerHandler(deleteButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                final ContentTemplate contentTemplate = getSelected();
-                deleteRule(contentTemplate);
-            }
-        }));
     }
 
     private void deleteRule(final ContentTemplate rule) {
@@ -378,12 +438,6 @@ public class ContentTemplateTabPresenter
     }
 
     private void addCopyButtonHandler() {
-        registerHandler(copyButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                final ContentTemplate selected = getSelected();
-                copyRule(selected);
-            }
-        }));
     }
 
     private boolean nameExists(final String name) {
@@ -429,12 +483,6 @@ public class ContentTemplateTabPresenter
     }
 
     private void addEditButtonHandler() {
-        registerHandler(editButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                final ContentTemplate selected = getSelected();
-                editRule(selected);
-            }
-        }));
     }
 
     private void editRule(final ContentTemplate rule) {
@@ -444,40 +492,12 @@ public class ContentTemplateTabPresenter
     }
 
     private void addAddAboveButtonHandler() {
-        registerHandler(addAboveButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                addNewRule(AddMode.ABOVE);
-            }
-        }));
     }
 
     private void addAddBelowButtonHandler() {
-        registerHandler(addBelowButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                addNewRule(AddMode.BELOW);
-            }
-        }));
     }
 
     private void addSaveButtonHandler() {
-        registerHandler(saveButton.addClickHandler(event -> {
-            // Get the user's rules without our default one
-            restFactory
-                    .create(CONTENT_TEMPLATE_RESOURCE)
-                    .method(res ->
-                            res.update(contentTemplatesWrapper.copy()
-                                    .contentTemplates(getTemplates())
-                                    .build()))
-                    .onSuccess(result -> {
-                        contentTemplatesWrapper = result;
-                        contentTemplates = new ArrayList<>(result.getContentTemplates());
-                        getSelectionModel().clear();
-                        update();
-                        setDirty(false);
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
-        }));
     }
 
     private void addNewRule(final AddMode addMode) {

@@ -68,7 +68,13 @@ public class CharacterRangeSelectionPresenter extends MyPresenterWidget<Characte
                 .caption("Set Source Range")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
-                    if (!e.isOk() || isDataRangeValid()) {
+                    final String problem = e.isOk()
+                            ? getDataRangeProblem()
+                            : null;
+                    if (problem != null) {
+                        // Let the user correct the range or cancel
+                        AlertEvent.fireError(CharacterRangeSelectionPresenter.this, problem, e::reset);
+                    } else {
                         if (e.isOk()) {
                             write();
                             dataRangeConsumer.accept(getDataRange());
@@ -79,9 +85,9 @@ public class CharacterRangeSelectionPresenter extends MyPresenterWidget<Characte
                 .fire();
     }
 
-    private boolean isDataRangeValid() {
-        boolean result = true;
-        String msg = "";
+    // Says what is wrong with the range entered, or null if nothing is
+    private String getDataRangeProblem() {
+        String msg = null;
 
         final DataRange dataRange = getView().getDataRange();
 
@@ -90,32 +96,24 @@ public class CharacterRangeSelectionPresenter extends MyPresenterWidget<Characte
                 && dataRange.getLocationTo().isBefore(dataRange.getLocationFrom())) {
             msg = "To location " + dataRange.getLocationTo()
                     + " is before from location " + dataRange.getLocationFrom();
-            result = false;
         } else if (dataRange.getLocationFrom() != null
                 && dataRange.getLocationTo() != null
                 && dataRange.getLocationTo().equals(dataRange.getLocationFrom())) {
             msg = "From location " + dataRange.getLocationFrom()
                     + " is equal to the to location " + dataRange.getLocationTo();
-            result = false;
         } else if (dataRange.getCharOffsetFrom() != null
                 && dataRange.getCharOffsetTo() != null
                 && dataRange.getCharOffsetTo() < dataRange.getCharOffsetFrom()) {
-            msg = "To offset " + dataRange.getCharOffsetTo() + 1 // to one based
-                    + " is before from offset " + dataRange.getCharOffsetFrom() + 1; // to one based
-            result = false;
+            msg = "To offset " + (dataRange.getCharOffsetTo() + 1) // to one based
+                    + " is before from offset " + (dataRange.getCharOffsetFrom() + 1); // to one based
         } else if (dataRange.getCharOffsetFrom() != null
                 && dataRange.getCharOffsetTo() != null
                 && dataRange.getCharOffsetTo().equals(dataRange.getCharOffsetFrom())) {
-            msg = "From offset " + dataRange.getCharOffsetFrom() + 1 // to one based
-                    + " is equal to to offset" + dataRange.getCharOffsetTo() + 1; // to one based
-            result = false;
+            msg = "From offset " + (dataRange.getCharOffsetFrom() + 1) // to one based
+                    + " is equal to the to offset " + (dataRange.getCharOffsetTo() + 1); // to one based
         }
 
-        if (!result) {
-            AlertEvent.fireError(CharacterRangeSelectionPresenter.this, msg, null);
-        }
-
-        return result;
+        return msg;
     }
 
     public interface CharacterRangeSelectionView extends View, Focus {

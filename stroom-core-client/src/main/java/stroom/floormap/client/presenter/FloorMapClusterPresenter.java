@@ -25,14 +25,12 @@ import stroom.floormap.client.cluster.FloorMapClusterMember;
 import stroom.floormap.client.overlay.FloorMapAreaCellText;
 import stroom.floormap.client.overlay.FloorMapAreaMembership;
 import stroom.floormap.client.presenter.FloorMapClusterPresenter.FloorMapClusterView;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -99,7 +97,7 @@ public class FloorMapClusterPresenter
     private final ListDataProvider<FloorMapClusterMember> dataProvider = new ListDataProvider<>();
     private final SingleSelectionModel<FloorMapClusterMember> selectionModel =
             new SingleSelectionModel<>();
-    private final ButtonView trackButton;
+    private final ToolbarButton trackButton;
 
     /// Every member of the cluster being shown, name-sorted — the list the search
     /// and dropdowns filter. Held because filtering must always run against the
@@ -126,8 +124,8 @@ public class FloorMapClusterPresenter
         pagerView.setDataWidget(dataGrid);
         dataProvider.addDataDisplay(dataGrid);
 
-        trackButton = pagerView.addButton(
-                SvgPresets.enabled(SvgImage.LOCATE, "Track this entity"));
+        pagerView.getToolbar().setName("Cluster member actions");
+        trackButton = pagerView.getToolbar().button(SvgImage.LOCATE, "Track this entity", this::trackSelected);
         trackButton.setEnabled(false);
 
         initGridColumns();
@@ -140,12 +138,6 @@ public class FloorMapClusterPresenter
         //noinspection unused e
         registerHandler(selectionModel.addSelectionChangeHandler(e ->
                 trackButton.setEnabled(selectionModel.getSelectedObject() != null)));
-
-        registerHandler(trackButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                trackSelected();
-            }
-        }));
 
         // Double-click is the shortcut for the button, so a member can be
         // followed without a second aim at the toolbar.

@@ -17,6 +17,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
+import stroom.analytics.api.EmailService;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateCheckResource;
 import stroom.analytics.shared.ExecutionSchedule;
@@ -94,6 +95,7 @@ public class AnalyticsModule extends AbstractModule {
         bind(ExecutionScheduleResource.class).to(ExecutionScheduleResourceImpl.class);
 
         bind(AnalyticsService.class).to(AnalyticsServiceImpl.class);
+        bind(EmailService.class).to(EmailSender.class);
         bind(DuplicateCheckFactory.class).to(DuplicateCheckFactoryImpl.class);
         bind(ExecutionScheduleResource.class).to(ExecutionScheduleResourceImpl.class);
 

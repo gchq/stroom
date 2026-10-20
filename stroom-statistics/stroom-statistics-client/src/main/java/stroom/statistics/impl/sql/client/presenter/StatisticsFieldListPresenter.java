@@ -24,10 +24,9 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.statistics.impl.sql.client.presenter.State.Field;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -65,9 +64,14 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
 
         this.statisticsFieldEditPresenter = statisticsFieldEditPresenter;
 
-        newButton = view.addButton(SvgPresets.NEW_ITEM);
-        editButton = view.addButton(SvgPresets.EDIT);
-        removeButton = view.addButton(SvgPresets.REMOVE);
+        view.getToolbar().setName("Field actions");
+        newButton = view.getToolbar().button(SvgImage.ADD, "New Statistic Field", this::onAdd);
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit Selected Statistic Field",
+                this::onEdit);
+        editButton.setEnabled(false);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove Selected Statistic Fields",
+                this::onRemove);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
@@ -76,21 +80,6 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(newButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAdd();
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onEdit();
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onRemove();
-            }
-        }));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
@@ -106,15 +95,12 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
         editButton.setEnabled(enabled);
         removeButton.setEnabled(enabled);
 
-        if (isReadOnly()) {
-            newButton.setTitle("New field disabled as fields are read only");
-            editButton.setTitle("Edit field disabled as fields are read only");
-            removeButton.setTitle("Remove field disabled as fields are read only");
-        } else {
-            newButton.setTitle("New Field");
-            editButton.setTitle("Edit Field");
-            removeButton.setTitle("Remove Field");
-        }
+        final String reason = isReadOnly()
+                ? " (fields are read only)"
+                : "";
+        newButton.setTitle("New Statistic Field" + reason);
+        editButton.setTitle("Edit Selected Statistic Field" + reason);
+        removeButton.setTitle("Remove Selected Statistic Fields" + reason);
     }
 
     private void addColumns() {

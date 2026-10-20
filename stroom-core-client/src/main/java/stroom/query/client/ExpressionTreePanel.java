@@ -22,6 +22,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
@@ -46,6 +47,7 @@ import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class ExpressionTreePanel extends TreePanel<Item> {
 
@@ -58,6 +60,10 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     private TreeLayout<Item> treeLayout;
     private ExpressionItemRenderer cellRenderer;
     private DefaultTreeForTreeLayout<Item> tree;
+    private Predicate<Item> faded = item -> false;
+    // Whether the tree is being drawn, and whether it was asked to be drawn again meanwhile
+    private boolean drawing;
+    private boolean redrawAfterDraw;
 
     public ExpressionTreePanel(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                final Provider<UserRefSelectionBoxPresenter> userRefProvider,
@@ -69,16 +75,20 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         termEditor.setUtc(utc);
 
         final FlowPanel panel = new FlowPanel();
-        panel.setStyleName("treePanel-panel");
+        panel.setStyleName("expression-tree");
         boxPanel = new FlowPanel();
-        boxPanel.setStyleName("treePanel-boxPanel");
+        boxPanel.setStyleName("expression-tree__items");
+        // The boxes are the tree's items (ExpressionItemRenderer), for assistive technology
+        boxPanel.getElement().setAttribute("role", "tree");
+        boxPanel.getElement().setAttribute("aria-label", "Expression");
 
         final LayeredCanvas canvas = LayeredCanvas.createIfSupported();
         if (canvas != null) {
             final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
 
             cellRenderer = new ExpressionItemRenderer(boxPanel, operatorEditor, termEditor);
-            final ConnectorRenderer<Item> connectorRenderer = new BracketConnectorRenderer<>(arrowContext);
+            final ConnectorRenderer<Item> connectorRenderer = new BracketConnectorRenderer<>(arrowContext,
+                    item -> faded.test(item), "--expression-tree__bracket");
 
             // setup the tree layout configuration
             final DefaultConfiguration<Item> layoutConfig = new DefaultConfiguration<>(HORIZONTAL_SEPARATION,
@@ -90,7 +100,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
             renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
-            canvas.setStyleName("treePanel-canvas");
+            canvas.setStyleName("expression-tree__canvas");
             panel.add(canvas);
         }
 
@@ -146,11 +156,77 @@ public class ExpressionTreePanel extends TreePanel<Item> {
 
     @Override
     public void refresh(final RefreshCallback callback) {
+        if (drawing) {
+            // Asked for while drawing, e.g. by a pending selection change that drawing resolves
+            // (reading the selection fires it): drawn again once this draw is done, rather than
+            // inside it, which would leave the first boxes in place too
+            redrawAfterDraw = true;
+            return;
+        }
+        // Drawing replaces the boxes, so the focus is put back on the same item's box
+        final Item focused = getFocusedItem();
         boxPanel.clear();
         if (renderer != null) {
             cellRenderer.clear();
-            renderer.draw();
+            drawing = true;
+            try {
+                renderer.draw();
+            } finally {
+                drawing = false;
+            }
+            if (redrawAfterDraw) {
+                redrawAfterDraw = false;
+                boxPanel.clear();
+                cellRenderer.clear();
+                renderer.draw();
+            }
+            focus(focused);
+            if (callback != null) {
+                callback.onRefresh();
+            }
+            fireAfterRefresh();
         }
+    }
+
+    // The item whose box itself (not a field in it) has the focus, if any
+    private Item getFocusedItem() {
+        if (renderer != null) {
+            final Element active = getActiveElement();
+            for (final ExpressionItemBox box : cellRenderer.getBoxes()) {
+                if (box.getElement().equals(active)) {
+                    return box.getItem();
+                }
+            }
+        }
+        return null;
+    }
+
+    private void focus(final Item item) {
+        if (item != null) {
+            final Box<Item> box = getBox(item);
+            if (box != null) {
+                box.getElement().focus();
+            }
+        }
+    }
+
+    private static native Element getActiveElement() /*-{
+        return $doc.activeElement;
+    }-*/;
+
+    /// Sets the item opened for editing, which shows its editor while it is selected, or none.
+    ///
+    /// @param item The item, or null for none.
+    public void setEditingItem(final Item item) {
+        if (cellRenderer != null) {
+            cellRenderer.setEditingItem(item);
+        }
+    }
+
+    /// @param item An item.
+    /// @return Whether it is the item opened for editing (see [#setEditingItem]).
+    public boolean isEditingItem(final Item item) {
+        return cellRenderer != null && cellRenderer.isEditingItem(item);
     }
 
     @Override
@@ -172,12 +248,37 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         termEditor.init(restFactory, dataSource, fieldSelectionListModel);
     }
 
+    public void setConditionFilter(final Predicate<Condition> conditionFilter) {
+        termEditor.setConditionFilter(conditionFilter);
+    }
+
     public void write() {
         if (operatorEditor != null) {
             operatorEditor.write();
         }
         if (termEditor != null) {
             termEditor.write();
+        }
+    }
+
+    /// Sets which items are faded, with the brackets to their items, e.g. those detached to be
+    /// attached to another operator. They are faded when the tree is next drawn.
+    ///
+    /// @param faded Whether an item is faded.
+    public void setFaded(final Predicate<Item> faded) {
+        this.faded = faded;
+    }
+
+    /// @return Whether a field of the editor has its own popup open (see
+    /// [TermEditor#isPopupShowing]).
+    public boolean isEditorPopupShowing() {
+        return termEditor != null && termEditor.isPopupShowing();
+    }
+
+    /// Closes the editor's fields' own popups.
+    public void hideEditorPopups() {
+        if (termEditor != null) {
+            termEditor.hidePopups();
         }
     }
 

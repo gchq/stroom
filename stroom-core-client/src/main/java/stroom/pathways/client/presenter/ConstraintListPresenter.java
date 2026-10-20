@@ -26,10 +26,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.pathway.Constraint;
 import stroom.pathways.shared.pathway.PathNode;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.user.cellview.client.Column;
@@ -46,6 +45,10 @@ import java.util.stream.Collectors;
 
 public class ConstraintListPresenter
         extends MyPresenterWidget<PagerView> {
+
+    private static final String NEW_TITLE = "New Constraint";
+    private static final String EDIT_TITLE = "Edit Selected Constraint";
+    private static final String DELETE_TITLE = "Delete Selected Constraints";
 
 //    private static final ConstraintsResource PATHWAYS_RESOURCE = GWT.create(ConstraintsResource.class);
 
@@ -85,39 +88,39 @@ public class ConstraintListPresenter
 
         this.constraintEditPresenter = constraintEditPresenter;
 
-        newButton = pagerView.addButton(SvgPresets.NEW_ITEM);
-        editButton = pagerView.addButton(SvgPresets.EDIT);
-        removeButton = pagerView.addButton(SvgPresets.DELETE);
+        pagerView.getToolbar().setName("Constraint actions");
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, this::onEditClicked);
+        editButton.setEnabled(false);
+        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, this::onRemoveClicked);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
+    }
+
+    private void onNew() {
+        if (!readOnly) {
+            onAdd();
+        }
+    }
+
+    private void onEditClicked() {
+        if (!readOnly) {
+            onEdit();
+        }
+    }
+
+    private void onRemoveClicked() {
+        if (!readOnly) {
+            onRemove();
+        }
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onAdd();
-                }
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onEdit();
-                }
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onRemove();
-                }
-            }
-        }));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             if (!readOnly) {
                 enableButtons();
@@ -147,15 +150,13 @@ public class ConstraintListPresenter
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
-            newButton.setTitle("New constraint disabled as read only");
-            editButton.setTitle("Edit constraint disabled as read only");
-            removeButton.setTitle("Remove constraint disabled as read only");
-        } else {
-            newButton.setTitle("New Constraint");
-            editButton.setTitle("Edit Constraint");
-            removeButton.setTitle("Remove Constraint");
-        }
+        // The names stay, with why the buttons are disabled when read only
+        final String suffix = readOnly
+                ? " (read only)"
+                : "";
+        newButton.setTitle(NEW_TITLE + suffix);
+        editButton.setTitle(EDIT_TITLE + suffix);
+        removeButton.setTitle(DELETE_TITLE + suffix);
     }
 
     private void addColumns() {

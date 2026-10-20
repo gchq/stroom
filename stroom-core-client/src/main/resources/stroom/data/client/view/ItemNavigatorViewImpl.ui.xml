@@ -4,13 +4,13 @@
              xmlns:btn="urn:import:stroom.widget.button.client"
              xmlns:refresh-button="urn:import:stroom.data.pager.client">
     <g:FlowPanel styleName="itemNavigator">
-        <g:Label ui:field="lblDetail" styleName="itemNavigator-label"/>
-        <g:FlowPanel styleName="button-container">
-            <btn:SvgButton ui:field="firstPageBtn"/>
-            <btn:SvgButton ui:field="previousPageBtn"/>
-            <btn:SvgButton ui:field="nextPageBtn"/>
-            <btn:SvgButton ui:field="lastPageBtn"/>
+        <btn:LinkButton ui:field="lblDetail" addStyleNames="itemNavigator-label"/>
+        <btn:Toolbar name="Navigation">
+            <btn:ToolbarButton ui:field="firstPageBtn" svg="FAST_BACKWARD" title="First"/>
+            <btn:ToolbarButton ui:field="previousPageBtn" svg="STEP_BACKWARD" title="Backward"/>
+            <btn:ToolbarButton ui:field="nextPageBtn" svg="STEP_FORWARD" title="Forward"/>
+            <btn:ToolbarButton ui:field="lastPageBtn" svg="FAST_FORWARD" title="Last"/>
             <refresh-button:RefreshButton ui:field="refresh"/>
-        </g:FlowPanel>
+        </btn:Toolbar>
     </g:FlowPanel>
 </ui:UiBinder>

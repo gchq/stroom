@@ -18,9 +18,9 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.data.pager.client.RefreshButton;
-import stroom.svg.client.SvgPresets;
 import stroom.util.shared.HasItems;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.LinkButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -29,7 +29,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FocusWidget;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -50,16 +49,16 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     // Selection controls for the char data in the selected record and/or part
     // Always visible
     @UiField
-    Label lblDetail;
+    LinkButton lblDetail;
 
-    @UiField(provided = true)
-    SvgButton firstPageBtn;
-    @UiField(provided = true)
-    SvgButton previousPageBtn;
-    @UiField(provided = true)
-    SvgButton nextPageBtn;
-    @UiField(provided = true)
-    SvgButton lastPageBtn;
+    @UiField
+    ToolbarButton firstPageBtn;
+    @UiField
+    ToolbarButton previousPageBtn;
+    @UiField
+    ToolbarButton nextPageBtn;
+    @UiField
+    ToolbarButton lastPageBtn;
     @UiField
     RefreshButton refresh;
 
@@ -74,8 +73,10 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     @Inject
     public ItemNavigatorViewImpl(final EventBus eventBus,
                                  final Binder binder) {
-        initButtons();
         widget = binder.createAndBindUi(this);
+        // Opens the dialog that selects the item to show
+        lblDetail.setOpensDialog(true);
+        initButtons();
     }
 
     @Override
@@ -85,11 +86,6 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
     }
 
     private void initButtons() {
-
-        firstPageBtn = SvgButton.create(SvgPresets.FAST_BACKWARD_BLUE);
-        previousPageBtn = SvgButton.create(SvgPresets.STEP_BACKWARD_BLUE);
-        nextPageBtn = SvgButton.create(SvgPresets.STEP_FORWARD_BLUE);
-        lastPageBtn = SvgButton.create(SvgPresets.FAST_FORWARD_BLUE);
 
         setupButton(firstPageBtn, true, false);
         setupButton(previousPageBtn, true, false);
@@ -109,7 +105,7 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
         lastPageBtn.setTitle("Last " + text);
     }
 
-    private void setupButton(final SvgButton button,
+    private void setupButton(final ToolbarButton button,
                              final boolean isEnabled,
                              final boolean isVisible) {
         button.setEnabled(isEnabled);
@@ -136,6 +132,9 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
                     + getLongValueForLabel(display.getTotalItemsCount().asOptional());
 
             lblDetail.setText(lbl);
+            // Says what pressing it does, as well as what it shows
+            lblDetail.setTitle("Select " + display.getName());
+            lblDetail.setAriaLabel("Select " + display.getName() + " (" + lbl + ")");
 
             firstPageBtn.setEnabled(!display.isFirstPage());
             previousPageBtn.setEnabled(!display.isFirstPage());

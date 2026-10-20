@@ -1,0 +1,1176 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// The workbench of Stroom's GWT widgets and screens. The stories are added to the workbench
+// framework (stroom-gwt-workbench-framework), which mimics Storybook, so that the real GWT widgets
+// and screens can be viewed and tested in isolation.
+//
+// Tasks (deliberately NOT named gwtCompile etc. so that `./gradlew gwtCompile` and the CI
+// build are unaffected by this module):
+//
+//   workbenchCompile       Full GWT compile into the workbench war dir.
+//   workbenchDraftCompile  Quick unoptimised GWT compile into the workbench war dir.
+//   workbenchCodeServer    SuperDevMode code server; recompiles on browser refresh. Changes to
+//                          the stories (this module) and the workbench framework
+//                          (stroom-gwt-workbench-framework) are picked up live; re-run it after changing
+//                          code in any other module.
+//   workbenchServe         Serves the workbench on http://localhost:6008 (-PworkbenchPort=NNNN).
+//   workbenchFetchAxe      Downloads axe-core with npm for the Accessibility addon (run by
+//                          workbenchServe; without npm the addon explains what is missing).
+//                          It is kept in the Gradle user home, so `clean` doesn't remove it.
+//                          Use -PworkbenchAxeVersion=N.N.N for a different version.
+//
+// workbenchDraftCompile and workbenchCodeServer only support Chrome-family browsers and Firefox
+// (see StroomWorkbenchSuperDevMode.gwt.xml). workbenchCompile supports all browsers.
+//
+// Run these from the root of the repository with the project prefix, e.g.
+//
+//   ./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchDraftCompile
+//   ./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchServe
+// or, for live editing, run workbenchCodeServer and workbenchServe in two terminals.
+
+import java.time.Duration
+import java.time.Instant
+
+ext.moduleName = 'stroom.gwt.workbench'
+
+// The GWT module to compile and the static web content that hosts it
+def gwtModule = 'stroom.gwt.workbench.StroomWorkbench'
+def gwtSuperDevModule = 'stroom.gwt.workbench.StroomWorkbenchSuperDevMode'
+def webappDir = file('src/main/webapp')
+def warDir = layout.buildDirectory.dir('workbench-war').get().asFile.toString()
+// Stroom's real CSS, fonts, images and scripts are served from here under /ui/
+def stroomResourcesDir = project(':stroom-app').file('src/main/resources')
+def workbenchPort = findProperty('workbenchPort') ?: '6008'
+// axe-core runs the Accessibility addon's checks. It is downloaded with npm rather than added to
+// the repository.
+def axeVersion = findProperty('workbenchAxeVersion') ?: '4.12.1'
+// Kept outside the build dir, keyed by version, so that `clean` doesn't force a re-download.
+// This is a static root for workbenchServe, which serves it as /__workbench/axe.min.js
+def axeDir = new File(gradle.gradleUserHomeDir, "caches/stroom-gwt-workbench/axe-core-${axeVersion}").toString()
+def codeServerPort = findProperty('workbenchCodeServerPort') ?: '9877'
+
+// The GWT build directory, under this project's build directory rather than /tmp: /tmp is often
+// a RAM-backed tmpfs with a per-user quota, which GWT's compile cache can fill. Override with
+// -PworkbenchGwtBuildDir=<dir>. The copied/transformed sources kept here let later builds skip
+// copying when nothing has changed; the compile's scratch directories (tmp, work, deploy, extra)
+// are deleted after each compile (see workbenchCleanGwtScratch). GWT's persistent unit cache, which
+// speeds up later compiles, is kept next to the war directory (build/gwt-unitCache).
+def gwtBuildDir = (findProperty('workbenchGwtBuildDir')
+        ?: layout.buildDirectory.dir('gwt').get().asFile).toString()
+logger.info('gwtBuildDir: ' + gwtBuildDir)
+
+def gwtTmpDir = "${gwtBuildDir}/tmp"
+def workDir = "${gwtBuildDir}/work"
+def deployDir = "${gwtBuildDir}/deploy"
+def extraDir = "${gwtBuildDir}/extra"
+def codeServerLauncherDir = "${gwtBuildDir}/launcher"
+
+def allSourceDir = "${gwtBuildDir}/all-source"
+def transformedSourceDir = "${gwtBuildDir}/transformed-source"
+def transformedBuildDir = "${gwtBuildDir}/transformed-build"
+def rsyncOutputDir = "${gwtBuildDir}/rsync-output"
+
+// The directories of the stories and the workbench framework's own source. They contain no
+// jakarta imports so need no transforming, and the code server is given them ahead of the
+// copied source so that it sees changes to them when the page is refreshed. The workbench's
+// JVM-only server code (stroom.gwt.workbench.framework.server) is never compiled by GWT, as
+// WorkbenchFramework.gwt.xml only has the 'client' package as source.
+def liveSourceDirs = [
+        project(':stroom-gwt:stroom-gwt-workbench'),
+        project(':stroom-gwt:stroom-gwt-workbench-framework'),
+].collectMany { prj ->
+    [prj.file('src/main/java'), prj.file('src/main/resources')]
+}
+
+// The same versions as stroom-app-gwt uses for its GWT compile, as gwt-jackson needs jackson 2.9.
+// Only applied to the GWT source sets' configurations, so that workbenchServe and the tests (which
+// use the main/test runtime classpaths) get the normal, current versions.
+configurations.matching { it.name.startsWith('gwtSource') || it.name.startsWith('gwtDevSource') }
+        .configureEach {
+            resolutionStrategy {
+                eachDependency { DependencyResolveDetails details ->
+                    if (details.requested.group == 'javax.xml.bind') {
+                        details.useVersion "2.3.1"
+                    }
+                    if (details.requested.group == 'com.fasterxml.jackson.core') {
+                        details.useVersion "2.9.6"
+                    }
+                }
+            }
+        }
+
+// Declare a source set just for our GWT compile that is separate from the Java compilation source set.
+sourceSets {
+    gwtSource
+    gwtDevSource
+    jakartaTransformer
+}
+
+dependencies {
+    implementation project(':stroom-gwt:stroom-gwt-workbench-framework')
+    implementation project(':stroom-core-client')
+    // The statistic store editor (the query batch's App/Editors/StatisticStoreEditor)
+    implementation project(':stroom-statistics:stroom-statistics-client')
+    implementation project(':stroom-core-client-widget')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-sqlstore:stroom-sqlstore-shared')
+    implementation project(':stroom-util-shared')
+
+    // These source deps are all needed for the GWT transpiling to javascript
+    implementation libs.gin
+    implementation libs.gwt.user
+    implementation libs.gwtp.mvp.client
+    implementation libs.jackson.annotations
+    implementation libs.jaxb.api.gwt
+    implementation libs.restygwt
+    implementation libs.swagger.annotations
+    implementation libs.ws.rs.api.gwt
+
+    gwtSourceImplementation libs.gin
+    gwtSourceImplementation libs.gwt.user
+    gwtSourceImplementation libs.gwtp.mvp.client
+    gwtSourceImplementation libs.jaxb.api.gwt
+    gwtSourceImplementation libs.swagger.annotations
+    gwtSourceImplementation libs.restygwt
+    gwtSourceImplementation libs.ws.rs.api.gwt
+
+    gwtDevSourceImplementation project(':stroom-gwt:stroom-gwt-compiler')
+    gwtDevSourceImplementation libs.gwt.dev
+
+    jakartaTransformerImplementation libs.eclipse.transformer.cli
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
+}
+
+// Define a list of projects that contain the source code we want to compile with GWT.
+def clientProjects = [
+        project(':stroom-gwt:stroom-gwt-workbench-framework'),
+        project(':stroom-gwt:stroom-gwt-workbench'),
+        project(':stroom-core-client'),
+        project(':stroom-statistics:stroom-statistics-client'),
+        project(':stroom-core-client-widget'),
+        project(':stroom-core-shared'),
+        project(':stroom-docref'),
+        project(':stroom-query:stroom-query-api'),
+        project(':stroom-sqlstore:stroom-sqlstore-shared'),
+        project(':stroom-util-shared'),
+]
+
+// Copy the source of each client project then change all imports from jakarta => javax
+// so that GWT can use them. See the equivalent task in stroom-app-gwt for details.
+tasks.register('workbenchCopySources') {
+    group = "workbench"
+
+    // This file has all the rename mappings for TransformerCLI to use
+    def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
+    def inputProjectPath = "${gwtBuildDir}/raw-source"
+
+    // So that it only re-runs when the source or the dependencies change
+    clientProjects.each { prj ->
+        inputs.files(prj.fileTree('src/main/java') { exclude 'stroom/gwt/workbench/framework/server/**' })
+                .withPropertyName("${prj.name}-java")
+        inputs.files(prj.fileTree('src/main/resources'))
+                .withPropertyName("${prj.name}-resources")
+    }
+    inputs.file(propFilePath).withPropertyName('renames')
+    inputs.files(sourceSets.gwtSource.compileClasspath).withPropertyName('gwtSourceClasspath')
+    inputs.files(sourceSets.jakartaTransformer.compileClasspath).withPropertyName('transformerClasspath')
+    outputs.dir(transformedSourceDir).withPropertyName('transformedSource')
+    outputs.dir(allSourceDir).withPropertyName('allSource')
+    // The outputs are outside the build dir and very large, so don't cache them
+    outputs.cacheIf { false }
+
+    doLast {
+
+        delete inputProjectPath
+
+        def start = Instant.now()
+
+        println("copy project source (java/resources) => ${inputProjectPath}")
+        clientProjects.each { prj ->
+            println('  ' + prj.projectDir)
+            copy {
+                from prj.projectDir.toPath().resolve('src').resolve('main').resolve('java')
+                into inputProjectPath
+                // The workbench's file server is JVM only and needs libs GWT doesn't have
+                exclude 'stroom/gwt/workbench/framework/server/**'
+            }
+            copy {
+                from prj.projectDir.toPath().resolve('src').resolve('main').resolve('resources')
+                into inputProjectPath
+            }
+        }
+        delete "${inputProjectPath}/module-info.java"
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        println 'Running eclipse TransformerCLI'
+        println('  input: ' + inputProjectPath)
+        println('  output: ' + transformedSourceDir)
+        delete transformedSourceDir
+
+        providers.javaexec {
+            classpath = files(sourceSets.jakartaTransformer.compileClasspath)
+            mainClass = "org.eclipse.transformer.cli.TransformerCLI"
+            args = [
+                    inputProjectPath,
+                    transformedSourceDir,
+                    '-tr', propFilePath,
+            ]
+        }.result.get()
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        delete allSourceDir
+
+        println("copy dep jars => ${allSourceDir}")
+        sourceSets.gwtSource.compileClasspath.files.forEach { zipFile ->
+            copy {
+                from zipTree(zipFile)
+                into allSourceDir
+            }
+        }
+        println("${Duration.between(start, Instant.now())}")
+
+        copy {
+            from transformedSourceDir
+            into allSourceDir
+        }
+    }
+}
+
+tasks.register('workbenchCompileSources', JavaCompile) {
+    group = "workbench"
+    dependsOn workbenchCopySources
+
+    source = file(transformedSourceDir)
+    destinationDirectory.set(file(transformedBuildDir))
+    classpath = files(transformedSourceDir, sourceSets.gwtSource.compileClasspath)
+    options.sourcepath = files(transformedSourceDir)
+    // The output is outside the build dir, so don't cache it
+    outputs.cacheIf { false }
+}
+
+tasks.register('workbenchMakeGwtSourceDirs') {
+    group = "workbench"
+    dependsOn workbenchCompileSources
+
+    inputs.dir(allSourceDir).withPropertyName('allSource')
+    inputs.dir(transformedBuildDir).withPropertyName('transformedBuild')
+    outputs.dir(rsyncOutputDir).withPropertyName('rsyncOutput')
+    outputs.cacheIf { false }
+
+    doLast {
+        def rsyncInputDir = "${gwtBuildDir}/rsync-input"
+        delete rsyncInputDir
+        new File(rsyncInputDir).mkdirs()
+
+        copy {
+            from allSourceDir
+            into rsyncInputDir
+        }
+        copy {
+            from transformedBuildDir
+            into rsyncInputDir
+        }
+
+        // Rsync the files so that we don't delete all the files that the code server is
+        // monitoring, which it doesn't like.
+        println "rsync ${rsyncInputDir} => ${rsyncOutputDir}"
+        providers.exec {
+            executable = 'rsync'
+            args = [
+                    "--recursive",
+                    "--checksum",
+                    "--delete",
+                    rsyncInputDir + "/",
+                    rsyncOutputDir]
+        }.result.get()
+        delete rsyncInputDir
+    }
+}
+
+// The classpath for the GWT compiler
+def gwtClasspath = { ->
+    files(sourceSets.gwtDevSource.compileClasspath, rsyncOutputDir)
+}
+
+def ensureGwtBuildDirs = {
+    [gwtBuildDir, gwtTmpDir, workDir, deployDir, extraDir, codeServerLauncherDir].each {
+        new File(it).mkdirs()
+    }
+}
+
+// The compiles don't use -strict/-failOnError, as the inherited Stroom modules contain classes
+// that depend on the whole app (GWT reports these as 'Ignored N units with compilation errors').
+// Only the classes reachable from the entry point need to compile, and GWT still fails the
+// compile, showing the errors, if any of those are broken, e.g. a story (in AllStories) using a
+// JRE class that GWT doesn't emulate. Plain Java errors are caught first by compileJava.
+
+tasks.register('workbenchCompile', JavaExec) {
+    group = "workbench"
+    description = "Fully compiles the workbench into ${warDir}"
+    dependsOn classes
+    dependsOn 'workbenchMakeGwtSourceDirs'
+
+    doFirst {
+        delete gwtTmpDir, workDir, deployDir, extraDir
+        // Remove any code server launcher so that workbenchServe uses this compile
+        delete codeServerLauncherDir
+        ensureGwtBuildDirs()
+    }
+
+    mainClass.set(gwtCompilerProps.mainClass.toString())
+    classpath { gwtClasspath() }
+
+    args = [
+            '-sourceLevel', '17',
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-XfragmentCount', '5',
+            '-optimize', '9',
+            '-localWorkers', gwtCompilerProps.workers,
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            // Not -strict/-failOnError, see the comment above workbenchCompile
+            gwtModule
+    ]
+
+    jvmArgs = [
+            "-Djava.io.tmpdir=${gwtTmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
+}
+
+tasks.register('workbenchDraftCompile', JavaExec) {
+    group = "workbench"
+    description = "Quickly compiles an unoptimised workbench into ${warDir}"
+    dependsOn classes
+    dependsOn 'workbenchMakeGwtSourceDirs'
+
+    doFirst {
+        // Remove any code server launcher so that workbenchServe uses this compile
+        delete codeServerLauncherDir
+        ensureGwtBuildDirs()
+    }
+
+    mainClass = 'com.google.gwt.dev.Compiler'
+    classpath { gwtClasspath() }
+
+    args = [
+            '-sourceLevel', '17',
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-draftCompile',
+            '-XfragmentCount', '0',
+            '-optimize', '0',
+            '-localWorkers', '5',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            // Not -strict/-failOnError, see the comment above workbenchCompile
+            gwtSuperDevModule
+    ]
+
+    jvmArgs = [
+            "-Djava.io.tmpdir=${gwtTmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
+}
+
+tasks.register('workbenchCodeServer', JavaExec) {
+    group = "workbench"
+    description = "Runs the GWT SuperDevMode code server for the workbench"
+    dependsOn classes
+    dependsOn 'workbenchMakeGwtSourceDirs'
+
+    doFirst {
+        ensureGwtBuildDirs()
+        println """
+        To develop the workbench in SuperDevMode:
+          * Leave this task running.
+          * In another terminal run: ./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchServe
+          * Visit http://localhost:${workbenchPort} in Chrome/Edge or Firefox - refreshing the
+            page recompiles changed code.
+
+          Changes to stroom-gwt-workbench and stroom-gwt-workbench-framework are picked up live. Changes in any
+          other module need this task to be re-run, as the code server only sees a copy of them.
+          GWT compile errors are shown in this terminal (and in the browser).
+        """.stripIndent().trim()
+    }
+
+    mainClass = 'com.google.gwt.dev.codeserver.CodeServer'
+    // The live source dirs come before the copied source so that they win, letting changes to
+    // the stories and the workbench framework be recompiled on refresh.
+    classpath { files(sourceSets.gwtDevSource.compileClasspath, liveSourceDirs, rsyncOutputDir) }
+
+    args = [
+            '-sourceLevel', '17',
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-port', codeServerPort,
+            // Incremental compiles need every class in the inherited modules to compile,
+            // see the comment about -strict below.
+            '-noincremental',
+            // Writes a workbench.nocache.js that loads the code from the code server and
+            // triggers a recompile on page load.
+            '-launcherDir', codeServerLauncherDir,
+            // Not -strict/-failOnError, see the comment above workbenchCompile
+            gwtSuperDevModule
+    ]
+
+    jvmArgs = [
+            "-Djava.io.tmpdir=${gwtTmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
+}
+
+tasks.register('workbenchFetchAxe') {
+    group = "workbench"
+    description = "Downloads axe-core ${axeVersion} with npm for the Accessibility addon"
+    def axeFile = file("${axeDir}/__workbench/axe.min.js")
+    outputs.file(axeFile)
+    // Only download each version once
+    onlyIf { !axeFile.exists() }
+
+    doLast {
+        // Not under axeDir, as that is served by workbenchServe
+        def tmpDir = file("${axeDir}-tmp")
+        delete tmpDir
+        tmpDir.mkdirs()
+        try {
+            providers.exec {
+                workingDir = tmpDir
+                // Give up quickly when offline, rather than after npm's default retries
+                // npm is a batch file on Windows
+                commandLine System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
+                        ? 'npm.cmd'
+                        : 'npm',
+                        'pack', "axe-core@${axeVersion}", '--silent',
+                        '--prefer-offline',
+                        '--fetch-retries=1',
+                        '--fetch-retry-mintimeout=2000',
+                        '--fetch-retry-maxtimeout=5000',
+                        '--fetch-timeout=30000'
+            }.result.get()
+        } catch (Exception e) {
+            logger.warn("Unable to download axe-core with npm, so the workbench's Accessibility addon "
+                    + "won't work: ${e.message}")
+            delete tmpDir
+            return
+        }
+        def tarball = tmpDir.listFiles()?.find { it.name.endsWith('.tgz') }
+        if (tarball == null) {
+            throw new GradleException("'npm pack axe-core@${axeVersion}' succeeded but no .tgz file "
+                    + "was found in ${tmpDir}. Check that ${axeVersion} is a valid axe-core version "
+                    + "(-PworkbenchAxeVersion).")
+        }
+        copy {
+            from(tarTree(resources.gzip(tarball))) {
+                include 'package/axe.min.js'
+                eachFile { it.path = it.name }
+            }
+            includeEmptyDirs = false
+            into axeFile.parentFile
+        }
+        delete tmpDir
+    }
+}
+
+tasks.register('workbenchServe', JavaExec) {
+    group = "workbench"
+    description = "Serves the workbench on http://localhost:${workbenchPort}"
+    dependsOn classes
+    dependsOn 'workbenchFetchAxe'
+
+    mainClass = 'stroom.gwt.workbench.framework.server.WorkbenchServer'
+    classpath = sourceSets.main.runtimeClasspath
+
+    doFirst {
+        // A launcher left behind by a code server that has since stopped would stop the page
+        // loading, so remove it so that the last compile is used instead.
+        boolean codeServerRunning = false
+        try {
+            new Socket('localhost', codeServerPort as int).close()
+            codeServerRunning = true
+        } catch (IOException ignored) {
+            // Not running
+        }
+        if (!codeServerRunning) {
+            delete codeServerLauncherDir
+        }
+    }
+
+    // The Java sources, so the workbench's API can open stories in an editor, find components
+    // to create stories for, and mark stories whose source has changed in git
+    def sourceRootArgs = clientProjects.collect { prj ->
+        "--source-root=${prj.file('src/main/java')}".toString()
+    }
+    def storiesSourceRoot = file('src/main/java')
+    def storiesPackage = 'stroom.gwt.workbench.client.widgets'
+    // The 'Create a new story' dialog creates 'Widgets/...' stories, so registers them here
+    def allStoriesFile = file('src/main/java/stroom/gwt/workbench/client/WidgetsStories.java')
+
+    // Earlier roots take precedence. The code server launcher dir comes before the war dir
+    // so that a running workbenchCodeServer wins over a previous compile.
+    args = [workbenchPort] + sourceRootArgs + [
+            "--stories-root=${storiesSourceRoot}".toString(),
+            "--stories-package=${storiesPackage}".toString(),
+            "--all-stories=${allStoriesFile}".toString(),
+            webappDir.toString(),
+            codeServerLauncherDir,
+            warDir,
+            axeDir,
+            stroomResourcesDir.toString(),
+    ]
+}
+
+// Deletes the compile's scratch directories once a compile has finished, whether or not it
+// succeeded. Every compile deletes them before it starts, so they're of no use to later builds.
+tasks.register('workbenchCleanGwtScratch') {
+    group = "workbench"
+    description = "Deletes the GWT compile's scratch directories (tmp, work, deploy, extra)"
+    doLast {
+        delete gwtTmpDir, workDir, deployDir, extraDir
+    }
+}
+
+tasks.named('workbenchCompile') { finalizedBy 'workbenchCleanGwtScratch' }
+tasks.named('workbenchDraftCompile') { finalizedBy 'workbenchCleanGwtScratch' }
+
+tasks.register('workbenchClean') {
+    group = "workbench"
+    doLast {
+        delete gwtBuildDir
+    }
+}
+
+tasks.clean.dependsOn(tasks.workbenchClean)
+tasks.workbenchCopySources.mustRunAfter(tasks.workbenchClean)
+
+// ------------------------------------------------------------------------------------------------
+// Testing the stories (see test-runner/README.md).
+// None of these are part of build/check, so normal builds don't need npm, Node or Playwright.
+//
+//   workbenchTest            Runs every story (and its play function) in headless Chromium, like
+//                            Storybook's test-runner. Starts a workbench server on a free port
+//                            (after a draft compile) for the duration, or
+//                            tests a running one given by -PworkbenchUrl=http://localhost:6008.
+//                            -PworkbenchTestFilter=<id/title prefix or glob>[,...]
+//                            -PworkbenchTestWorkers=N  -PworkbenchTestScreenshots
+//                            -PworkbenchLeakCheck (after each story passes, close and open its
+//                            screen many times and fail it if each close keeps more of the page)
+//                            -PworkbenchTestTheme=light (show the stories in the light theme, rather
+//                            than the default dark, e.g. to check colour contrast after changing
+//                            the palette; not with the screenshot tasks, whose baseline is dark)
+//                            -PworkbenchTestArgs='<more test-runner/run.mjs options>' (split on
+//                            spaces, except within '...' or "...")
+//                            -PworkbenchTestPort=N (the server's port, which must be free)
+//                            -PworkbenchSkipCompile (use the existing compile)
+//                            -PworkbenchTestSkipIfNoNpm (skip, rather than fail, without npm)
+//                            -PworkbenchTestSkipSelfTest (don't run test-runner/selftest/selftest.mjs)
+//                            Reports are written to build/workbench-test. The previous run's are
+//                            deleted before any task runs, so they can't be mistaken for this run's.
+//   workbenchPresenterCoverage
+//                            Prints which of Stroom's screens and dialogs no story covers (a static
+//                            analysis of the source; see PresenterCoverage).
+//   workbenchScreenshotBaseline
+//                            Runs workbenchTest with a screenshot of every story, and makes them the
+//                            baseline in screenshots/ (git-ignored), replacing the previous one.
+//   workbenchScreenshotDiff  Runs workbenchTest with a screenshot of every story, and compares them
+//                            with the baseline using ImageMagick's 'compare' (which must be
+//                            installed). Writes each changed story's expected, actual and diff PNGs
+//                            to build/workbench-screenshot-diff. It reports, rather than fails on,
+//                            changes. -PworkbenchScreenshotFuzz=2% (default 1%) and
+//                            -PworkbenchScreenshotMaxVisiblePixels=N (default 0) tune it. Both take
+//                            workbenchTest's options, e.g. -PworkbenchSkipCompile.
+// ------------------------------------------------------------------------------------------------
+
+dependencies {
+    // For reading the coverage evidence in PresenterCoverage
+    testImplementation libs.jackson.databind
+    testImplementation libs.slf4j.api
+}
+
+def testRunnerDir = file('test-runner')
+def workbenchTestDir = layout.buildDirectory.dir('workbench-test').get().asFile
+// On Windows npm and npx are batch files, which ProcessBuilder only finds by their full names
+def isWindows = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
+def npmCommand = isWindows ? 'npm.cmd' : 'npm'
+def npxCommand = isWindows ? 'npx.cmd' : 'npx'
+def skipTestsIfNoNpm = findProperty('workbenchTestSkipIfNoNpm') != null
+
+// Whether npm (and so Node) can be run, checked at most once per build
+def npmAvailableResult = null
+def npmAvailable = { ->
+    if (npmAvailableResult == null) {
+        try {
+            // providers.exec, as this may run while the task graph is built
+            npmAvailableResult = providers.exec {
+                commandLine npmCommand, '--version'
+                ignoreExitValue = true
+            }.result.get().exitValue == 0
+        } catch (Exception ignored) {
+            // npm isn't on the path
+            npmAvailableResult = false
+        }
+    }
+    return npmAvailableResult
+}
+def noNpmMessage = "npm isn't available, so the workbench test runner can't be run. Install Node.js " +
+        "(which includes npm) to run it; see test-runner/README.md."
+
+// Whether the test runner can be run. If npm isn't available this fails the build, so that e.g. a
+// CI build without Node doesn't pass without running the tests, unless -PworkbenchTestSkipIfNoNpm
+// is given, when it logs a warning and returns false.
+def checkNpm = { String taskName ->
+    if (npmAvailable()) {
+        return true
+    }
+    if (skipTestsIfNoNpm) {
+        logger.warn("Skipping ${taskName}: ${noNpmMessage}")
+        return false
+    }
+    throw new GradleException("${noNpmMessage} Use -PworkbenchTestSkipIfNoNpm to skip the workbench "
+            + "tests when npm isn't available.")
+}
+
+// Stops a process and everything it started (e.g. npx's node, and Playwright's Chromium), politely
+// at first, then forcibly after 10s.
+def destroyProcessTree = { Process process ->
+    // The descendants must be found before the process stops, as they are then orphaned
+    def handles = [process.toHandle()] + process.descendants().toList()
+    handles.each { it.destroy() }
+    def deadline = System.currentTimeMillis() + 10_000
+    handles.each { handle ->
+        def remaining = deadline - System.currentTimeMillis()
+        if (remaining > 0) {
+            try {
+                handle.onExit().get(remaining, java.util.concurrent.TimeUnit.MILLISECONDS)
+            } catch (Exception ignored) {
+                // Stopped forcibly below
+            }
+        }
+        if (handle.isAlive()) {
+            handle.destroyForcibly()
+        }
+    }
+}
+
+// Gradle's (internal) build cancellation token, used to stop the processes as soon as the build is
+// cancelled (e.g. Ctrl-C), or null if this Gradle version doesn't have it. Without it the
+// processes are still stopped, by a shutdown hook, if the Gradle daemon is stopped.
+def cancellationToken = { ->
+    try {
+        return project.services.get(Class.forName('org.gradle.initialization.BuildCancellationToken'))
+    } catch (Throwable ignored) {
+        return null
+    }
+}
+
+// Runs body with a process that has been started, making sure that the process and everything it
+// started are stopped when body finishes, fails, or is interrupted, and if the build is cancelled
+// or the Gradle JVM exits meanwhile.
+def withProcessTree = { Process process, Closure body ->
+    Runnable stop = { if (process.isAlive()) { destroyProcessTree(process) } }
+    def shutdownHook = new Thread(stop, 'workbench-test-cleanup')
+    Runtime.runtime.addShutdownHook(shutdownHook)
+    def token = cancellationToken()
+    token?.addCallback(stop)
+    try {
+        return body()
+    } finally {
+        stop.run()
+        token?.removeCallback(stop)
+        try {
+            Runtime.runtime.removeShutdownHook(shutdownHook)
+        } catch (IllegalStateException ignored) {
+            // The JVM is already shutting down, so the hook is running
+        }
+    }
+}
+
+// Runs a command in the test runner's directory, showing its output as it runs, and returns its
+// exit code. The output is read on another thread, so that this one can be interrupted if the
+// build is cancelled, which stops the command and everything it started.
+def runInTestRunnerDir = { List command ->
+    def process = new ProcessBuilder(command.collect { it.toString() })
+            .directory(testRunnerDir)
+            .redirectErrorStream(true)
+            .start()
+    return withProcessTree(process) {
+        def lines = new java.util.concurrent.LinkedBlockingQueue<java.util.Optional<String>>()
+        def reader = new Thread({
+            try {
+                process.inputStream.newReader('UTF-8').eachLine { line -> lines.put(java.util.Optional.of(line)) }
+            } catch (IOException ignored) {
+                // The process was stopped
+            } finally {
+                lines.put(java.util.Optional.empty())
+            }
+        }, 'workbench-test-output')
+        reader.daemon = true
+        reader.start()
+        while (true) {
+            def line = lines.take()
+            if (!line.isPresent()) {
+                break
+            }
+            println line.get()
+        }
+        return process.waitFor()
+    }
+}
+
+// Splits -PworkbenchTestArgs into arguments at white space, except within '...' or "...", e.g.
+// `--filter 'Widgets/Date & Time' -v` is ['--filter', 'Widgets/Date & Time', '-v'].
+def splitArgs = { String text ->
+    def args = []
+    def current = new StringBuilder()
+    boolean inArg = false
+    Character quote = null
+    for (char c : text.toCharArray()) {
+        if (quote != null) {
+            if (c == quote) {
+                quote = null
+            } else {
+                current.append(c)
+            }
+        } else if (c == '\'' as char || c == '"' as char) {
+            quote = c
+            inArg = true
+        } else if (Character.isWhitespace(c)) {
+            if (inArg) {
+                args << current.toString()
+                current.setLength(0)
+                inArg = false
+            }
+        } else {
+            current.append(c)
+            inArg = true
+        }
+    }
+    if (quote != null) {
+        throw new GradleException("Unbalanced ${quote} in -PworkbenchTestArgs: ${text}")
+    }
+    if (inArg) {
+        args << current.toString()
+    }
+    return args
+}
+
+// What the test runner's (run.mjs's) exit code means, for the task's failure message
+def testRunnerFailure = { int exitCode ->
+    switch (exitCode) {
+        case 1:
+            return "Workbench stories failed. See ${workbenchTestDir}/results.json and junit.xml"
+        case 2:
+            return "The workbench test run failed, or couldn't run the stories (exit code 2); see the "
+                    + "output above, and any reports in ${workbenchTestDir}"
+        case 3:
+            return "No workbench stories match -PworkbenchTestFilter/-PworkbenchTestArgs (exit code 3); "
+                    + "use '--list' in -PworkbenchTestArgs to see which stories they select"
+        default:
+            return exitCode >= 128
+                    ? "The workbench test runner was stopped (exit code ${exitCode})"
+                    : "The workbench test runner failed (exit code ${exitCode}); see the output above"
+    }
+}
+
+// The browser self-test of the workbench's own test tooling, run after the stories if present
+def selfTestScript = new File(testRunnerDir, 'selftest/selftest.mjs')
+
+// Runs the browser self-test (test-runner/selftest/selftest.mjs) against the workbench at testUrl, if
+// it exists and isn't skipped (-PworkbenchTestSkipSelfTest). Returns a failure message, or null.
+def runSelfTest = { String testUrl ->
+    if (findProperty('workbenchTestSkipSelfTest') != null) {
+        return null
+    }
+    if (!selfTestScript.isFile()) {
+        logger.info("No browser self-test (${selfTestScript}), so it isn't run")
+        return null
+    }
+    println "\nRunning the browser self-test (test-runner/selftest/selftest.mjs) against ${testUrl}"
+    def exitCode = runInTestRunnerDir(['node', 'selftest/selftest.mjs', '--url', testUrl])
+    return exitCode == 0
+            ? null
+            : "The browser self-test (test-runner/selftest/selftest.mjs) failed (exit code ${exitCode})"
+}
+
+// The stories' clock for workbenchScreenshotBaseline and workbenchScreenshotDiff (run.mjs
+// --fixed-time)
+def SCREENSHOT_FIXED_TIME = '2026-01-01T12:00:00Z'
+
+// Whether workbenchScreenshotBaseline or workbenchScreenshotDiff is to be run, which need a
+// screenshot of every story (set once the task graph is ready)
+def screenshotTaskRequested = false
+gradle.taskGraph.whenReady { graph ->
+    // Strings, not GStrings, which never equal a task's path
+    def screenshotTasks = ['workbenchScreenshotBaseline', 'workbenchScreenshotDiff'].collect {
+        "${project.path}:${it}".toString()
+    }
+    screenshotTaskRequested = graph.allTasks.any { it.path in screenshotTasks }
+}
+
+// Runs the test runner (run.mjs), then the browser self-test, against the workbench at testUrl,
+// failing if any story or the self-test fails
+def runTestRunner = { String testUrl ->
+    def command = ['node', 'run.mjs', '--url', testUrl, '--output-dir', workbenchTestDir.toString()]
+    def filter = findProperty('workbenchTestFilter')
+    if (filter) {
+        filter.toString().split(',').each { command += ['--filter', it.trim()] }
+    }
+    if (findProperty('workbenchTestWorkers')) {
+        command += ['--workers', findProperty('workbenchTestWorkers').toString()]
+    }
+    if (findProperty('workbenchTestScreenshots') != null || screenshotTaskRequested) {
+        command += ['--screenshots']
+    }
+    if (findProperty('workbenchLeakCheck') != null) {
+        command += ['--leak-check']
+    }
+    if (findProperty('workbenchTestTheme')) {
+        if (screenshotTaskRequested) {
+            throw new GradleException('-PworkbenchTestTheme can\'t be used with the screenshot tasks, '
+                    + 'whose baseline is in the default (dark) theme; use workbenchTest')
+        }
+        command += ['--theme', findProperty('workbenchTestTheme').toString()]
+    }
+    if (screenshotTaskRequested) {
+        // So that the times the stories show are the same in the baseline and each comparison. A
+        // story that fails once under the load of a full run with screenshots is retried (and
+        // reported as flaky), so that one flaky story doesn't stop the screenshots being used.
+        // A longer settle lets a story's last asynchronous updates finish before its screenshot.
+        command += ['--fixed-time', SCREENSHOT_FIXED_TIME, '--retries', '1', '--settle', '750']
+    }
+    if (findProperty('workbenchTestArgs')) {
+        command += splitArgs(findProperty('workbenchTestArgs').toString())
+    }
+    def exitCode = runInTestRunnerDir(command)
+    // The self-test runs whatever the stories did, so that both are reported, unless the run was
+    // stopped
+    def failures = [exitCode == 0 ? null : testRunnerFailure(exitCode),
+                    exitCode >= 128 ? null : runSelfTest(testUrl)].findAll { it != null }
+    if (!failures.isEmpty()) {
+        throw new GradleException(failures.join('\n'))
+    }
+}
+
+// The previous run's reports. They are deleted before any task runs when workbenchTest is to be
+// run, so that they can't be mistaken for this run's even if it is skipped (e.g. without npm) or
+// a task it depends on fails. run.mjs also deletes them when it starts.
+def deleteWorkbenchTestReports = { ->
+    ['results.json', 'junit.xml', 'screenshots'].each { delete(new File(workbenchTestDir, it)) }
+}
+gradle.taskGraph.whenReady { graph ->
+    if (!gradle.startParameter.dryRun && graph.allTasks.any { it.path == "${project.path}:workbenchTest" }) {
+        deleteWorkbenchTestReports()
+    }
+}
+
+// Writes a java launcher argument file (see 'java Command-Line Argument Files' in the java
+// documentation) giving the classpath, quoted and escaped as the launcher expects: within "...",
+// a backslash escapes the next character, and \n, \r, \t and \f stand for those characters. The
+// launcher reads the file in the system's native encoding (not UTF-8 unless that is the native
+// encoding), so it is written in that. Returns the launcher arguments for the classpath: @<file>,
+// or, if the classpath can't be written in the native encoding, -cp <classpath>.
+def classpathArguments = { String classpath, File argFile ->
+    def nativeCharset = java.nio.charset.Charset.forName(
+            System.getProperty('sun.jnu.encoding') ?: System.getProperty('native.encoding'))
+    def escaped = new StringBuilder()
+    classpath.each { String c ->
+        switch (c) {
+            case '\\': escaped << '\\\\'; break
+            case '"': escaped << '\\"'; break
+            case '\n': escaped << '\\n'; break
+            case '\r': escaped << '\\r'; break
+            case '\t': escaped << '\\t'; break
+            case '\f': escaped << '\\f'; break
+            default: escaped << c
+        }
+    }
+    def content = "-cp \"${escaped}\"\n".toString()
+    if (!nativeCharset.newEncoder().canEncode(content)) {
+        logger.info("The classpath can't be written in ${nativeCharset}, so is passed on the command line")
+        argFile.delete()
+        return ['-cp', classpath]
+    }
+    argFile.setText(content, nativeCharset.name())
+    return ["@${argFile.absolutePath}".toString()]
+}
+
+tasks.register('workbenchTestRunnerInstall') {
+    group = "workbench"
+    description = "Installs the workbench test runner's npm packages (Playwright)"
+    inputs.files(file("${testRunnerDir}/package.json"), file("${testRunnerDir}/package-lock.json"))
+            .withPropertyName('packageFiles')
+    outputs.dir(file("${testRunnerDir}/node_modules")).withPropertyName('nodeModules')
+    outputs.cacheIf { false }
+    // Without npm, run (and so fail in checkNpm) unless skipping is allowed
+    onlyIf { npmAvailable() || !skipTestsIfNoNpm }
+
+    doLast {
+        checkNpm(name)
+        def exitCode = runInTestRunnerDir([npmCommand, 'ci', '--no-audit', '--no-fund', '--prefer-offline'])
+        if (exitCode != 0) {
+            throw new GradleException("'npm ci' failed in ${testRunnerDir} (exit code ${exitCode})")
+        }
+    }
+}
+
+tasks.register('workbenchTestRunnerBrowser') {
+    group = "workbench"
+    description = "Installs Playwright's Chromium for the workbench test runner, if it is missing"
+    dependsOn 'workbenchTestRunnerInstall'
+    onlyIf { npmAvailable() || !skipTestsIfNoNpm }
+
+    doLast {
+        checkNpm(name)
+        // Does nothing if this Playwright version's Chromium is already in Playwright's cache
+        // (~/.cache/ms-playwright by default, or $PLAYWRIGHT_BROWSERS_PATH)
+        def exitCode = runInTestRunnerDir([npxCommand, '--no-install', 'playwright', 'install', 'chromium'])
+        if (exitCode != 0) {
+            throw new GradleException("'npx playwright install chromium' failed (exit code ${exitCode})")
+        }
+    }
+}
+
+tasks.register('workbenchTest') {
+    group = "workbench"
+    description = "Runs every workbench story and its play function in headless Chromium"
+    dependsOn 'workbenchTestRunnerBrowser'
+    // For the Accessibility addon, as with workbenchServe
+    dependsOn 'workbenchFetchAxe'
+    // The workbench server's classpath, so that it is built
+    inputs.files(sourceSets.main.runtimeClasspath).withPropertyName('serverClasspath')
+    // Only compile when testing a server started by this task, and when it can actually run
+    dependsOn(provider {
+        findProperty('workbenchUrl')
+                || findProperty('workbenchSkipCompile') != null
+                || (skipTestsIfNoNpm && !npmAvailable())
+                ? []
+                : ['workbenchDraftCompile']
+    })
+    // Always run, as the result depends on the running/compiled workbench
+    outputs.upToDateWhen { false }
+
+    doLast {
+        if (!checkNpm(name)) {
+            return
+        }
+        // In case they were written since the task graph was ready
+        deleteWorkbenchTestReports()
+        workbenchTestDir.mkdirs()
+        String url = findProperty('workbenchUrl')
+        try {
+            if (!url) {
+                int port = (findProperty('workbenchTestPort') ?: new ServerSocket(0).withCloseable {
+                    it.localPort
+                }) as int
+                // The server listens on localhost as Java resolves it. The runner is given that
+                // address, as Chromium might resolve localhost to the other of IPv4 and IPv6.
+                def serverAddress = InetAddress.getByName('localhost')
+                def serverHost = serverAddress instanceof Inet6Address
+                        ? "[${serverAddress.hostAddress}]"
+                        : serverAddress.hostAddress
+                // Fail now if anything is already using the port on any loopback address, rather
+                // than risk testing it instead
+                def loopbackAddresses = ([InetAddress.getByName('127.0.0.1'), InetAddress.getByName('::1')]
+                        + InetAddress.getAllByName('localhost').toList()).unique()
+                boolean portInUse = loopbackAddresses.any { address ->
+                    try {
+                        new Socket().withCloseable { it.connect(new InetSocketAddress(address, port), 1000) }
+                        return true
+                    } catch (IOException ignored) {
+                        return false
+                    }
+                }
+                if (!portInUse) {
+                    try {
+                        new ServerSocket(port, 1, serverAddress).close()
+                    } catch (IOException ignored) {
+                        portInUse = true
+                    }
+                }
+                if (portInUse) {
+                    throw new GradleException("Port ${port} is already in use, so the workbench server can't "
+                            + "be started on it. Use a different -PworkbenchTestPort (or none, for a free port), "
+                            + "or -PworkbenchUrl=http://localhost:${port} to test a workbench already running there.")
+                }
+
+                // A file only this run's server serves, to check that it is this server that is
+                // listening on the port, rather than another that started meanwhile
+                def nonce = UUID.randomUUID().toString()
+                def tokenDir = new File(workbenchTestDir, 'token')
+                delete tokenDir
+                tokenDir.mkdirs()
+                def tokenFile = new File(tokenDir, "__workbench-test-${nonce}.txt")
+                tokenFile.text = nonce
+
+                // The same Java as workbenchServe
+                def javaExecutable = tasks.named('workbenchServe', JavaExec).get().javaLauncher.get()
+                        .executablePath.asFile.absolutePath
+                // The classpath is in an argument file, as it may be too long for a Windows command line
+                def classpathArgs = classpathArguments(sourceSets.main.runtimeClasspath.asPath,
+                        new File(workbenchTestDir, 'server-classpath.args'))
+                def serverLog = new File(workbenchTestDir, 'server.log')
+                // The same roots as workbenchServe (see there), and the token's
+                def serverCommand = [javaExecutable] + classpathArgs + [
+                        'stroom.gwt.workbench.framework.server.WorkbenchServer',
+                        port.toString(),
+                        webappDir.toString(),
+                        codeServerLauncherDir,
+                        warDir,
+                        axeDir,
+                        stroomResourcesDir.toString(),
+                        tokenDir.absolutePath]
+                def server = new ProcessBuilder(serverCommand.collect { it.toString() })
+                        .redirectErrorStream(true)
+                        .redirectOutput(serverLog)
+                        .start()
+                def waitForServerThenTest = {
+                    // Wait for the server to serve the token
+                    def serverUrl = "http://${serverHost}:${port}"
+                    def tokenUrl = URI.create("${serverUrl}/${tokenFile.name}").toURL()
+                    def deadline = System.currentTimeMillis() + 60_000
+                    while (true) {
+                        // e.g. it couldn't listen on the port, as another server took it meanwhile
+                        if (!server.isAlive()) {
+                            throw new GradleException("The workbench server failed to start (exit code "
+                                    + "${server.exitValue()}), see ${serverLog}")
+                        }
+                        String served = null
+                        try {
+                            def connection = (HttpURLConnection) tokenUrl.openConnection()
+                            connection.connectTimeout = 1000
+                            connection.readTimeout = 5000
+                            if (connection.responseCode == 200) {
+                                served = connection.inputStream.getText('UTF-8').trim()
+                            }
+                            connection.disconnect()
+                        } catch (IOException ignored) {
+                            // Not listening yet
+                        }
+                        if (served == nonce) {
+                            break
+                        }
+                        // Anything else answering is another server, which this one can't
+                        // have started on the same port, so it will stop
+                        if (System.currentTimeMillis() > deadline) {
+                            throw new GradleException("The workbench server didn't start within 60s, "
+                                    + "see ${serverLog}")
+                        }
+                        Thread.sleep(200)
+                    }
+                    println "Started a workbench server on ${serverUrl} (log: ${serverLog})"
+                    runTestRunner(serverUrl)
+                }
+                // withProcessTree stops the server however the tests end
+                withProcessTree(server, waitForServerThenTest)
+            } else {
+                runTestRunner(url)
+            }
+        } finally {
+            delete new File(workbenchTestDir, 'token')
+        }
+    }
+}
+
+// Whether workbenchTest is only to run some stories
+def storiesFiltered = { ->
+    findProperty('workbenchTestFilter') != null || findProperty('workbenchTestArgs') != null
+}
+
+// The local (git-ignored) baseline of story screenshots, and where workbenchScreenshotDiff writes
+// its results
+def screenshotBaselineDir = file('screenshots')
+def screenshotDiffDir = layout.buildDirectory.dir('workbench-screenshot-diff').get().asFile
+
+tasks.register('workbenchScreenshotBaseline') {
+    group = "workbench"
+    description = "Runs every story (workbenchTest) and makes their screenshots the baseline in screenshots/"
+    dependsOn 'workbenchTest'
+    doLast {
+        def screenshots = new File(workbenchTestDir, 'screenshots')
+        if (!screenshots.isDirectory()) {
+            throw new GradleException("workbenchTest saved no screenshots (${screenshots})")
+        }
+        // Replaces the baseline, so that stories that no longer exist leave none behind, unless only
+        // some stories were run, when just theirs are replaced. A retried story's attempts
+        // (<id>.attempt-<n>.png) aren't part of it.
+        if (storiesFiltered()) {
+            println("Only some stories were run (-PworkbenchTestFilter/-PworkbenchTestArgs), so only "
+                    + "their screenshots are replaced")
+        } else {
+            delete fileTree(screenshotBaselineDir) { include '*.png' }
+        }
+        copy {
+            from screenshots
+            into screenshotBaselineDir
+            include '*.png'
+            exclude '*.attempt-*.png'
+        }
+        def count = fileTree(screenshotBaselineDir) { include '*.png' }.files.size()
+        println "The baseline in ${screenshotBaselineDir} has ${count} screenshots"
+    }
+}
+
+tasks.register('workbenchScreenshotDiff') {
+    group = "workbench"
+    description = "Runs every story (workbenchTest) and compares their screenshots with the baseline"
+    dependsOn 'workbenchTest'
+    doLast {
+        def command = ['node', 'screenshot-diff.mjs',
+                       '--baseline', screenshotBaselineDir.toString(),
+                       '--actual', new File(workbenchTestDir, 'screenshots').toString(),
+                       '--output', screenshotDiffDir.toString()]
+        if (storiesFiltered()) {
+            // The stories that weren't run aren't missing
+            command += ['--ignore-missing']
+        }
+        if (findProperty('workbenchScreenshotFuzz')) {
+            command += ['--fuzz', findProperty('workbenchScreenshotFuzz').toString()]
+        }
+        if (findProperty('workbenchScreenshotMaxVisiblePixels')) {
+            command += ['--max-visible-pixels', findProperty('workbenchScreenshotMaxVisiblePixels').toString()]
+        }
+        def exitCode = runInTestRunnerDir(command)
+        if (exitCode != 0) {
+            throw new GradleException("test-runner/screenshot-diff.mjs failed (exit code ${exitCode})")
+        }
+    }
+}
+
+tasks.register('workbenchPresenterCoverage', JavaExec) {
+    group = "workbench"
+    description = "Prints which of Stroom's screens and dialogs the workbench's stories cover"
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'stroom.gwt.workbench.client.PresenterCoverage'
+    systemProperty 'workbench.repoRoot', rootDir.absolutePath
+}
+

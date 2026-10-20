@@ -26,10 +26,8 @@ import stroom.security.client.presenter.SigningKeyPresenter.SigningKeyView;
 import stroom.security.identity.shared.SigningKeyResource;
 import stroom.security.identity.shared.SigningKeyRow;
 import stroom.security.identity.shared.SigningKeyStatus;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -70,28 +68,19 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
 
         view.setList(listPresenter.getView());
 
-        revokeButton = listPresenter.addButton(
-                SvgPresets.DELETE.title("Revoke the selected signing key"));
-        // Enabled explicitly because SvgPresets.CLEAR is one of the presets that starts disabled, and
-        // this button is never enabled anywhere else: it acts on every key rather than the selected
-        // one, so setButtonStates() — which is driven by the selection — has nothing to say about it.
-        revokeAllButton = listPresenter.addButton(
-                SvgPresets.CLEAR.with("Revoke every signing key still in use", true));
+        listPresenter.getToolbar().setName("Signing key actions");
+        revokeButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Revoke Selected Signing Key",
+                this::revokeSelected);
+        revokeButton.setEnabled(false);
+        // Always enabled: it acts on every key rather than the selected one, so setButtonStates() —
+        // which is driven by the selection — has nothing to say about it.
+        revokeAllButton = listPresenter.getToolbar().button(SvgImage.CLEAR, "Revoke All Signing Keys Still in Use",
+                this::revokeAll);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(revokeButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                revokeSelected();
-            }
-        }));
-        registerHandler(revokeAllButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                revokeAll();
-            }
-        }));
         registerHandler(getSelectionModel().addSelectionHandler(e -> setButtonStates()));
         setButtonStates();
     }

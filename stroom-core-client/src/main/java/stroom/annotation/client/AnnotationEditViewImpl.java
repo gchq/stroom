@@ -21,6 +21,7 @@ import stroom.annotation.shared.AnnotationTag;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 
@@ -45,7 +46,13 @@ import java.util.List;
 
 public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiHandlers> implements AnnotationEditView {
 
+    /// Shows that a field has no value ("None", "Nobody") in the muted text colour.
+    static final String EMPTY_VALUE_STYLE = "annotationLabel--empty";
+
     private final Widget widget;
+
+    private boolean readOnly;
+    private boolean assignYourselfEnabled;
 
     @UiField
     Label annotationId;
@@ -90,8 +97,13 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @Inject
     public AnnotationEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        AssignYourselfLink.init(assignYourself, this::assignYourself);
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
+        // Named, as a placeholder is only a hint, and the title each is given (its value, for when
+        // it is too long to show) would otherwise be read as its name
+        AccessibleName.set(titleTextBox, "Title");
+        AccessibleName.set(subjectTextBox, "Subject");
         create.setIcon(SvgImage.ADD);
         delete.setIcon(SvgImage.DELETE);
 
@@ -141,10 +153,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setStatus(final AnnotationTag status) {
         if (status == null) {
             this.status.setText("None");
-            this.status.getElement().getStyle().setOpacity(0.5);
+            this.status.addStyleName(EMPTY_VALUE_STYLE);
         } else {
             this.status.setText(status.getName());
-            this.status.getElement().getStyle().setOpacity(1);
+            this.status.removeStyleName(EMPTY_VALUE_STYLE);
         }
     }
 
@@ -152,10 +164,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setAssignedTo(final UserRef assignedTo) {
         if (assignedTo == null) {
             this.assignedTo.setText("Nobody");
-            this.assignedTo.getElement().getStyle().setOpacity(0.5);
+            this.assignedTo.addStyleName(EMPTY_VALUE_STYLE);
         } else {
             this.assignedTo.setText(assignedTo.toDisplayString());
-            this.assignedTo.getElement().getStyle().setOpacity(1);
+            this.assignedTo.removeStyleName(EMPTY_VALUE_STYLE);
         }
     }
 
@@ -163,14 +175,14 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setLabels(final List<AnnotationTag> labels) {
         if (labels == null || labels.isEmpty()) {
             this.labels.setText("None");
-            this.labels.getElement().getStyle().setOpacity(0.5);
+            this.labels.addStyleName(EMPTY_VALUE_STYLE);
         } else {
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             for (final AnnotationTag annotationTag : labels) {
                 htmlBuilder.div(div -> Lozenge.append(div, annotationTag), Attribute.className("lozengeOuter"));
             }
             this.labels.setHTML(htmlBuilder.toSafeHtml());
-            this.labels.getElement().getStyle().setOpacity(1);
+            this.labels.removeStyleName(EMPTY_VALUE_STYLE);
         }
     }
 
@@ -178,14 +190,14 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setCollections(final List<AnnotationTag> collections) {
         if (collections == null || collections.isEmpty()) {
             this.collections.setText("None");
-            this.collections.getElement().getStyle().setOpacity(0.5);
+            this.collections.addStyleName(EMPTY_VALUE_STYLE);
         } else {
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             for (final AnnotationTag annotationTag : collections) {
                 htmlBuilder.div(div -> Lozenge.append(div, annotationTag), Attribute.className("lozengeOuter"));
             }
             this.collections.setHTML(htmlBuilder.toSafeHtml());
-            this.collections.getElement().getStyle().setOpacity(1);
+            this.collections.removeStyleName(EMPTY_VALUE_STYLE);
         }
     }
 
@@ -193,10 +205,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setRetentionPeriod(final String retentionPeriod) {
         if (retentionPeriod == null || retentionPeriod.trim().isEmpty()) {
             this.retentionPeriod.setText("None");
-            this.retentionPeriod.getElement().getStyle().setOpacity(0.5);
+            this.retentionPeriod.addStyleName(EMPTY_VALUE_STYLE);
         } else {
             this.retentionPeriod.setText(retentionPeriod);
-            this.retentionPeriod.getElement().getStyle().setOpacity(1);
+            this.retentionPeriod.removeStyleName(EMPTY_VALUE_STYLE);
         }
     }
 
@@ -226,8 +238,26 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     }
 
     @Override
-    public void setAssignYourselfVisible(final boolean visible) {
-        assignYourself.setVisible(visible);
+    public void setAssignYourselfEnabled(final boolean enabled) {
+        this.assignYourselfEnabled = enabled;
+        AssignYourselfLink.update(assignYourself, !enabled, readOnly);
+    }
+
+    @Override
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        titleTextBox.setReadOnly(readOnly);
+        subjectTextBox.setReadOnly(readOnly);
+        comment.setReadOnly(readOnly);
+        commentButton.setEnabled(!readOnly);
+        create.setEnabled(!readOnly);
+        delete.setEnabled(!readOnly);
+        statusBlock.setReadOnly(readOnly);
+        assignedToBlock.setReadOnly(readOnly);
+        annotationLabelBlock.setReadOnly(readOnly);
+        annotationCollectionBlock.setReadOnly(readOnly);
+        annotationRetentionPeriodBlock.setReadOnly(readOnly);
+        AssignYourselfLink.update(assignYourself, !assignYourselfEnabled, readOnly);
     }
 
     @Override
@@ -319,10 +349,14 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
     @UiHandler("assignYourself")
     public void onAssignYourself(final ClickEvent e) {
+        AssignYourselfLink.runIfEnabled(assignYourself, this::assignYourself);
+        e.stopPropagation();
+    }
+
+    private void assignYourself() {
         if (getUiHandlers() != null) {
             getUiHandlers().assignYourself();
         }
-        e.stopPropagation();
     }
 
     @UiHandler("annotationLabelBlock")

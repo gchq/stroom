@@ -16,13 +16,19 @@
 
 package stroom.floormap.client;
 
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.tooltip.client.event.ShowHelpEvent;
+
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 /// Static help content for the Floor Map **Editor** tab.
 ///
 /// Each method returns the HTML body shown in the in-app help popup fired by a
-/// [stroom.widget.help.client.HelpButton] placed on the corresponding panel.
+/// help button (see [#addHelpButton]) placed on the corresponding panel.
 /// The strings are developer-authored constants (no user input), so they are wrapped
 /// with [SafeHtmlUtils#fromTrustedString(String)] — the same mechanism the
 /// Settings tab uses for its `<form:HelpHTML>` content, and rendered with the
@@ -36,6 +42,31 @@ public final class FloorMapEditorHelp {
 
     private FloorMapEditorHelp() {
         // Utility class.
+    }
+
+    /// Adds a help button to a toolbar, which shows the help in the in-app help popup.
+    ///
+    /// @param toolbar The toolbar to add the button to.
+    /// @param name    The button's name, e.g. "Fact List help".
+    /// @param heading The heading at the top of the help popup.
+    /// @param content The help to show.
+    /// @return The help button.
+    public static ToolbarButton addHelpButton(final Toolbar toolbar,
+                                              final String name,
+                                              final String heading,
+                                              final SafeHtml content) {
+        final ToolbarButton helpButton = toolbar.button(SvgImage.HELP_OUTLINE, name, null);
+        // Showing help leaves the focus where it was
+        helpButton.setFocusOnMouseDown(false);
+        helpButton.setOnClick(() -> ShowHelpEvent.builder(helpButton.getElement())
+                .withContent(new SafeHtmlBuilder()
+                        .appendHtmlConstant("<h4>")
+                        .appendEscaped(heading)
+                        .appendHtmlConstant("</h4>")
+                        .append(content)
+                        .toSafeHtml())
+                .fire());
+        return helpButton;
     }
 
     /// Help for the map canvas — the interaction model: selecting, moving,

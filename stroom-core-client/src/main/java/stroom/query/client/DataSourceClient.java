@@ -66,7 +66,7 @@ public class DataSourceClient {
                     PageRequest.oneRow(),
                     FindFieldCriteria.DEFAULT_SORT_LIST,
                     dataSourceRef,
-                    StringExpressionUtil.equalsCaseSensitive(fieldName),
+                    StringExpressionUtil.equalTo(fieldName),
                     queryable);
             restFactory
                     .create(DATA_SOURCE_RESOURCE)

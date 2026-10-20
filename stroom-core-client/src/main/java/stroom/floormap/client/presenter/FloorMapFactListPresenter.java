@@ -23,13 +23,10 @@ import stroom.floormap.client.presenter.FloorMapFactListPresenter.FloorMapFactLi
 import stroom.floormap.client.value.ValuePathAccessor;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.JSONUtil;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
-import stroom.widget.help.client.HelpButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.json.client.JSONObject;
@@ -84,9 +81,8 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
     private Runnable showTimeFilteredConsumer;
     private boolean showingAll = false;
 
-    private final ButtonView addButton;
-    private final ButtonView endButton;
-    private final ButtonView deleteButton;
+    private final ToolbarButton endButton;
+    private final ToolbarButton deleteButton;
     private Runnable addConsumer;
     private Consumer<String> endConsumer;
     private Consumer<String> deleteConsumer;
@@ -134,44 +130,57 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         dataProvider.addDataDisplay(dataGrid);
 
         // Toolbar
-        final ButtonPanel buttonPanel = new ButtonPanel();
-        addButton = buttonPanel.addButton(SvgPresets.ADD);
-        addButton.setTitle("Add New Object");
-        endButton = buttonPanel.addButton(SvgPresets.REMOVE);
-        endButton.setTitle(END_TITLE);
+        final Toolbar toolbar = new Toolbar("Fact list actions");
+        toolbar.button(SvgImage.ADD, "Add New Object", this::onAdd);
+        endButton = toolbar.button(SvgImage.REMOVE, END_TITLE, this::onEnd);
         endButton.setEnabled(false);
-        deleteButton = buttonPanel.addButton(SvgPresets.DELETE);
-        deleteButton.setTitle("Erase History (delete every version)");
+        deleteButton = toolbar.button(SvgImage.DELETE, "Erase History (delete every version)", this::onDelete);
         deleteButton.setEnabled(false);
 
-        // Show All toggle button
-        final InlineSvgToggleButton showAllButton = new InlineSvgToggleButton();
-        showAllButton.setSvg(SvgImage.HISTORY); // Clock image so correct for time stuff
-        showAllButton.setTitle("Show All (ignore time filter)");
-        showAllButton.setState(false);
-        buttonPanel.addButton(showAllButton);
+        // Show All toggle button. Clock image so correct for time stuff.
+        toolbar.toggle(SvgImage.HISTORY, "Show All (ignore time filter)", this::onShowAll);
 
         // Help button (Editor-only panel).
-        final HelpButton helpButton = HelpButton.create("Fact List help");
-        helpButton.setHelpContentHeading("Fact List");
-        helpButton.setHelpContent(FloorMapEditorHelp.factList());
-        buttonPanel.addButton(helpButton);
+        FloorMapEditorHelp.addHelpButton(toolbar, "Fact List help", "Fact List", FloorMapEditorHelp.factList());
 
-        view.setToolbar(buttonPanel);
+        view.setToolbar(toolbar);
+    }
 
-        //noinspection unused e
-        showAllButton.addClickHandler(e -> {
-            showingAll = showAllButton.getState();
-            if (showingAll) {
-                if (showAllConsumer != null) {
-                    showAllConsumer.run();
-                }
-            } else {
-                if (showTimeFilteredConsumer != null) {
-                    showTimeFilteredConsumer.run();
-                }
+    private void onShowAll(final boolean showAll) {
+        showingAll = showAll;
+        if (showingAll) {
+            if (showAllConsumer != null) {
+                showAllConsumer.run();
             }
-        });
+        } else {
+            if (showTimeFilteredConsumer != null) {
+                showTimeFilteredConsumer.run();
+            }
+        }
+    }
+
+    private void onAdd() {
+        if (addConsumer != null) {
+            addConsumer.run();
+        }
+    }
+
+    private void onEnd() {
+        if (endConsumer != null) {
+            final FactObject selected = selectionModel.getSelected();
+            if (selected != null) {
+                endConsumer.accept(selected.getKey());
+            }
+        }
+    }
+
+    private void onDelete() {
+        if (deleteConsumer != null) {
+            final FactObject selected = selectionModel.getSelected();
+            if (selected != null) {
+                deleteConsumer.accept(selected.getKey());
+            }
+        }
     }
 
     @Override
@@ -206,33 +215,6 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
                             }
                         });
                     }
-                }
-            }
-        }));
-
-        //noinspection unused e
-        registerHandler(addButton.addClickHandler(e -> {
-            if (addConsumer != null) {
-                addConsumer.run();
-            }
-        }));
-
-        //noinspection unused e
-        registerHandler(endButton.addClickHandler(e -> {
-            if (endConsumer != null) {
-                final FactObject selected = selectionModel.getSelected();
-                if (selected != null) {
-                    endConsumer.accept(selected.getKey());
-                }
-            }
-        }));
-
-        //noinspection unused e
-        registerHandler(deleteButton.addClickHandler(e -> {
-            if (deleteConsumer != null) {
-                final FactObject selected = selectionModel.getSelected();
-                if (selected != null) {
-                    deleteConsumer.accept(selected.getKey());
                 }
             }
         }));

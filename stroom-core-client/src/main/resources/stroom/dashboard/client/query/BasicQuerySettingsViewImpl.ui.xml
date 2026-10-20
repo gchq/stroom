@@ -4,13 +4,16 @@
              xmlns:v="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="basicQuerySettingsId" label="Id">
+        <form:FormGroup identity="basicQuerySettingsId" label="Id"
+                        helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. query-AB1C2). It cannot be changed.">
             <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicQuerySettingsName" label="Name">
+        <form:FormGroup identity="basicQuerySettingsName" label="Name"
+                        helpText="Name of this component, shown in its tab on the dashboard.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicQuerySettingsDataSource" label="Data Source">
+        <form:FormGroup identity="basicQuerySettingsDataSource" label="Data Source"
+                        helpText="Data source that the query searches, e.g. an index or the Stream Store. You need Use permission on it.">
             <g:SimplePanel ui:field="dataSource" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
@@ -19,7 +22,9 @@
         <form:FormGroup>
             <v:CustomCheckBox ui:field="autoRefresh" identity="basicQuerySettingsAutoRefresh" label="Auto Refresh"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval">
+        <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval"
+                        helpText="How often the query is re-run when Auto Refresh is ticked. Enter a number with a unit of ms, s, m, h or d (e.g. 30s or 5m); a number with no unit is in milliseconds. The minimum is 10 seconds. Default is 10s."
+                        screenReaderText="Number with unit, e.g. 30s or 5m. Minimum 10 seconds.">
             <g:TextBox ui:field="refreshInterval" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

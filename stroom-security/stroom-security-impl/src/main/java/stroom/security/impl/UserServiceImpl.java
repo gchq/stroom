@@ -18,6 +18,7 @@ package stroom.security.impl;
 
 import stroom.activity.api.ActivityService;
 import stroom.docref.DocRef;
+import stroom.quickfilter.shared.QuickFilterHistoryService;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
@@ -69,6 +70,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     private final UserCache userCache;
     private final StoredQueryService storedQueryService;
     private final UserPreferencesService userPreferencesService;
+    private final QuickFilterHistoryService quickFilterHistoryService;
     private final ActivityService activityService;
     // A Provider, because the revocation service reaches back into session and identity machinery
     // that ultimately depends on this class - injecting it directly would be a construction cycle.
@@ -82,6 +84,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                     final UserCache userCache,
                     final StoredQueryService storedQueryService,
                     final UserPreferencesService userPreferencesService,
+                    final QuickFilterHistoryService quickFilterHistoryService,
                     final ActivityService activityService,
                     final Provider<UserAccessRevocationService> userAccessRevocationServiceProvider) {
         this.securityContext = securityContext;
@@ -91,12 +94,16 @@ class UserServiceImpl implements UserService, ContentPackUserService {
         this.userCache = userCache;
         this.storedQueryService = storedQueryService;
         this.userPreferencesService = userPreferencesService;
+        this.quickFilterHistoryService = quickFilterHistoryService;
         this.activityService = activityService;
         this.userAccessRevocationServiceProvider = userAccessRevocationServiceProvider;
     }
 
     @Override
     public User getOrCreateUser(final UserDesc userDesc, final Consumer<User> onCreateAction) {
+        if (NullSafe.isBlankString(NullSafe.get(userDesc, UserDesc::getSubjectId))) {
+            throw new IllegalArgumentException("A user must have a unique identity");
+        }
         final Optional<User> optional = userDao.getUserBySubjectId(userDesc.getSubjectId());
         return optional.orElseGet(() -> {
             final String subjectId = userDesc.getSubjectId();
@@ -123,6 +130,9 @@ class UserServiceImpl implements UserService, ContentPackUserService {
 
     @Override
     public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
+        if (NullSafe.isBlankString(name)) {
+            throw new IllegalArgumentException("A user group must have a name");
+        }
         final Optional<User> optional = userDao.getGroupByName(name);
         return optional.orElseGet(() -> {
             final User user = User
@@ -427,13 +437,21 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                 LOGGER.error("Error deleting activities for user {}", userRef.toInfoString(), e);
                 // Swallow and carry on
             }
+            int quickFilterHistoryCount = 0;
+            try {
+                quickFilterHistoryCount = quickFilterHistoryService.delete(userRef);
+            } catch (final Exception e) {
+                LOGGER.error("Error deleting quick filter history for user {}", userRef.toInfoString(), e);
+                // Swallow and carry on
+            }
 
             LOGGER.info("Deleted the following associated records for deleted user {}, stored queries: {}, " +
-                        "user preferences: {}, activities: {}",
+                        "user preferences: {}, activities: {}, quick filter history: {}",
                     userRef.toInfoString(),
                     storedQueryCount,
                     userPrefCount,
-                    activityCount);
+                    activityCount,
+                    quickFilterHistoryCount);
 
             // Search result stores will get cleaned up by
             // stroom.query.common.v2.ResultStoreManager.evictExpiredElements

@@ -27,12 +27,9 @@
         <!-- Histogram canvas sits above the bar, in the same grid column -->
         <g:SimplePanel ui:field="histogramContainer" addStyleNames="stroom-floormap-timeline-histogram-container" />
 
-        <!-- Left controls: step-back, play/pause, step-forward -->
-        <g:FlowPanel addStyleNames="stroom-floormap-timeline-left-controls">
-            <b:SvgButton ui:field="stepBackButton" addStyleNames="stroom-floormap-timeline-step-button" />
-            <b:SvgButton ui:field="playPauseButton" addStyleNames="stroom-floormap-timeline-play-button" />
-            <b:SvgButton ui:field="stepForwardButton" addStyleNames="stroom-floormap-timeline-step-button" />
-        </g:FlowPanel>
+        <!-- Left controls: step-back, play/pause, step-forward, added by the view -->
+        <b:Toolbar ui:field="playbackToolbar" name="Playback controls"
+                   addStyleNames="stroom-floormap-timeline-left-controls" />
 
         <!-- Centre section: the timeline scrubber bar -->
         <g:FlowPanel addStyleNames="stroom-floormap-timeline-centre">
@@ -43,11 +40,11 @@
             </g:FlowPanel>
         </g:FlowPanel>
 
-        <!-- Right controls: speed badge (clickable — opens the speed menu), settings gear icon,
-             optional help button -->
+        <!-- Right controls: speed badge (clickable — opens the speed menu), settings gear icon
+             (added by the view), optional help button -->
         <g:FlowPanel ui:field="rightControls" addStyleNames="stroom-floormap-timeline-right-controls">
             <g:Label ui:field="speedBadge" addStyleNames="stroom-floormap-timeline-speed-badge" />
-            <b:SvgButton ui:field="settingsButton" addStyleNames="stroom-floormap-timeline-settings-button" />
+            <b:Toolbar ui:field="settingsToolbar" name="Playback settings" />
         </g:FlowPanel>
 
         <!-- Date labels sit below the playback row, inset to align with the bar ends -->

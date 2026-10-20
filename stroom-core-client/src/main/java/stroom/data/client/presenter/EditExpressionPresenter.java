@@ -22,19 +22,19 @@ import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.HasChangeHandlers;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -45,11 +45,14 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView>
         implements HasChangeHandlers, Focus {
 
     private final ExpressionTreePresenter expressionPresenter;
+    private final MySingleSelectionModel<stroom.query.client.Item> selectionModel;
+    private boolean readOnly;
 
     private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
@@ -63,6 +66,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                                    final ExpressionTreePresenter expressionPresenter) {
         super(eventBus, view);
         this.expressionPresenter = expressionPresenter;
+        this.selectionModel = expressionPresenter.getSelectionModel();
 
         view.setExpressionView(expressionPresenter.getView());
 
@@ -78,12 +82,15 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
             }
         });
 
-        addTermButton = view.addButton(SvgPresets.ADD);
-        addTermButton.setTitle("Add Term");
-        addOperatorButton = view.addButton(SvgPresets.OPERATOR);
-        copyButton = view.addButton(SvgPresets.COPY.enabled(false));
-        disableItemButton = view.addButton(SvgPresets.DISABLE);
-        deleteItemButton = view.addButton(SvgPresets.DELETE);
+        addTermButton = view.getToolbar().button(SvgImage.ADD, "Add Term", this::addTerm);
+        addOperatorButton = view.getToolbar().button(SvgImage.OPERATOR, "Add Operator", this::addOperator);
+        copyButton = view.getToolbar().button(SvgImage.COPY, "Duplicate Selected Expression Item", this::copy);
+        copyButton.setEnabled(false);
+        disableItemButton = view.getToolbar().button(SvgImage.DISABLE,
+                "Disable Selected Expression Item", this::disable);
+        disableItemButton.setEnabled(false);
+        deleteItemButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Expression Item", this::delete);
+        deleteItemButton.setEnabled(false);
     }
 
     @Override
@@ -92,34 +99,12 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
+            if (readOnly) {
+                return;
+            }
             final List<Item> menuItems = addExpressionActionsToMenu();
             if (NullSafe.hasItems(menuItems)) {
                 showMenu(menuItems, event.getPopupPosition());
-            }
-        }));
-        registerHandler(addOperatorButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                addOperator();
-            }
-        }));
-        registerHandler(copyButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                copy();
-            }
-        }));
-        registerHandler(addTermButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                addTerm();
-            }
-        }));
-        registerHandler(disableItemButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                disable();
-            }
-        }));
-        registerHandler(deleteItemButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                delete();
             }
         }));
     }
@@ -139,22 +124,38 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         expressionPresenter.init(restFactory, dataSource, fieldSelectionListModel);
     }
 
-    private void setButtonsEnabled() {
-        final stroom.query.client.Item selectedItem = getSelectedItem();
+    /// Stops the expression being changed, for a document the user can't change: terms can't be
+    /// selected, edited or dragged, and the add, copy, disable and delete buttons and the
+    /// context menu do nothing.
+    ///
+    /// @param readOnly Whether the expression can't be changed.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        expressionPresenter.setSelectionModel(readOnly
+                ? null
+                : selectionModel);
+        addTermButton.setEnabled(!readOnly);
+        addOperatorButton.setEnabled(!readOnly);
+        setButtonsEnabled();
+        // The read-only look: the terms greyed, as a read-only field's value is
+        expressionPresenter.setReadOnlyLook(readOnly);
+    }
 
-        if (selectedItem == null) {
-            copyButton.setEnabled(false);
-            disableItemButton.setEnabled(false);
-            disableItemButton.setTitle("");
-            deleteItemButton.setEnabled(false);
-            deleteItemButton.setTitle("");
-        } else {
-            copyButton.setEnabled(true);
-            disableItemButton.setEnabled(true);
-            disableItemButton.setTitle(getEnableDisableText());
-            deleteItemButton.setEnabled(true);
-            deleteItemButton.setTitle("Delete");
-        }
+    private void setButtonsEnabled() {
+        final boolean canChangeItem = !readOnly && getSelectedItem() != null;
+        copyButton.setEnabled(canChangeItem);
+        disableItemButton.setEnabled(canChangeItem);
+        // The title is the button's name, so it stays when the button is disabled; it follows the
+        // selected item, enabling a disabled one
+        disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
+        deleteItemButton.setEnabled(canChangeItem);
+    }
+
+    /**
+     * @see ExpressionTreePresenter#setConditionFilter(Predicate)
+     */
+    public void setConditionFilter(final Predicate<Condition> conditionFilter) {
+        expressionPresenter.setConditionFilter(conditionFilter);
     }
 
     public void read(final ExpressionOperator expressionOperator) {
@@ -213,6 +214,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                 .enabled(hasSelection)
                 .command(this::delete)
                 .build());
+        menuItems.addAll(expressionPresenter.getMoveMenuItems(5));
 
         return menuItems;
     }
@@ -236,9 +238,21 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                           final PopupPosition popupPosition) {
         ShowMenuEvent
                 .builder()
+                .name(getMenuName())
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);
+    }
+
+    // The context menu's accessible name, saying which term or operator it acts on
+    private String getMenuName() {
+        final stroom.query.client.Item selectedItem = getSelectedItem();
+        final String text = selectedItem != null
+                ? selectedItem.toString().trim()
+                : "";
+        return text.isEmpty()
+                ? "Expression Actions"
+                : "Actions for expression item '" + text + "'";
     }
 
     private void onChange() {
@@ -256,7 +270,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
     public interface EditExpressionView extends View {
 
-        ButtonView addButton(Preset preset);
+        /// The toolbar for the view's buttons, e.g. `getToolbar().button(SvgImage.ADD, "Add", this::add)`.
+        ///
+        /// @return The toolbar.
+        Toolbar getToolbar();
 
         void setExpressionView(View view);
     }

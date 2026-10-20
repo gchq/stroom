@@ -18,6 +18,7 @@ package stroom.importexport.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -36,8 +37,7 @@ import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
@@ -54,6 +54,7 @@ import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Focus;
@@ -383,40 +384,42 @@ public class ImportConfigConfirmPresenter extends
 
     }
 
-    private Preset createInfoColSvgPreset(final Severity severity) {
+    private CellIcon createInfoColIcon(final Severity severity) {
 
         final String title = "Click to see " + severity.getSummaryValue()
                 .toLowerCase();
 
-        final Preset svgPreset;
+        final CellIcon cellIcon;
         switch (severity) {
             case INFO:
-                svgPreset = SvgPresets.INFO;
+                cellIcon = CellIcon.of(SvgImage.INFO, "Info");
                 break;
             case WARNING:
-                svgPreset = SvgPresets.ALERT;
+                cellIcon = CellIcon.of(SvgImage.ALERT, "Alert");
                 break;
             default:
-                svgPreset = SvgPresets.ERROR;
+                cellIcon = CellIcon.of(SvgImage.ERROR, "Error");
         }
-        return svgPreset.title(title);
+        return cellIcon.withName(title);
     }
 
     protected void addInfoColumn() {
         // Info column.
         final InfoColumn<ImportState> infoColumn = new InfoColumn<ImportState>() {
             @Override
-            public Preset getValue(final ImportState object) {
+            public CellIcon getValue(final ImportState object) {
                 if (object.getMessageList().size() > 0 || object.getUpdatedFieldList().size() > 0) {
                     final Severity severity = object.getSeverity();
-                    return createInfoColSvgPreset(severity);
+                    return createInfoColIcon(severity);
                 } else {
                     return null;
                 }
             }
 
             @Override
-            protected void showInfo(final ImportState action, final PopupPosition popupPosition) {
+            protected void showInfo(final ImportState action,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 if (action.getMessageList().size() > 0) {
 
@@ -438,7 +441,7 @@ public class ImportConfigConfirmPresenter extends
                     action.getUpdatedFieldList().forEach(tb::row);
                     htmlBuilder.div(tb::write, Attribute.className("infoTable"));
                 }
-                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

@@ -16,7 +16,8 @@
   -->
 
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.widget.layout.client">
     <g:DockLayoutPanel unit='PX' styleName="max stroom-border-top" ui:field="mainDockPanel">
         <!-- Timeline strip: docked south at a fixed height with no splitter, so it is
              not user-resizable — matches TIMELINE_HEIGHT in FloorMapEditorViewImpl -->
@@ -25,15 +26,12 @@
         </g:south>
         <!-- The SVG map with the right-hand dock docked east -->
         <g:center>
-            <g:ThinSplitLayoutPanel ui:field="topSplitPanel" hSplits="0.25" styleName="max">
-                <g:east size="250">
-                    <g:SimplePanel ui:field="dockPanel"
-                                   addStyleNames="max dashboard-panel overflow-hidden"/>
-                </g:east>
-                <g:center>
-                    <g:SimplePanel ui:field="mapPanel" addStyleNames="max"/>
-                </g:center>
-            </g:ThinSplitLayoutPanel>
+            <l:SplitPane ui:field="topSplitPane" thin="true" sizes="*, 25%" names="Map, Controls"
+                         addStyleNames="max">
+                <g:SimplePanel ui:field="mapPanel" addStyleNames="max"/>
+                <g:SimplePanel ui:field="dockPanel"
+                               addStyleNames="max dashboard-panel overflow-hidden"/>
+            </l:SplitPane>
         </g:center>
     </g:DockLayoutPanel>
 </ui:UiBinder>

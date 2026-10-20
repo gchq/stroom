@@ -3,9 +3,9 @@ package stroom.query.client.view;
 import stroom.query.client.presenter.QueryDataUiHandlers;
 import stroom.query.client.presenter.QueryDataView;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.form.client.FieldValidity;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -34,23 +34,21 @@ public class QueryDataViewImpl extends ViewWithUiHandlers<QueryDataUiHandlers> i
     @UiField
     Label errorLabel;
     @UiField
-    InlineSvgButton undo;
-    @UiField
-    InlineSvgButton run;
-    @UiField
-    InlineSvgButton stop;
-    @UiField
-    InlineSvgButton createDashboard;
+    Toolbar toolbar;
     @UiField
     SimplePanel tableContainer;
 
     @Inject
     public QueryDataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        undo.setSvg(SvgImage.UNDO);
-        run.setSvg(SvgImage.PLAY);
-        stop.setSvg(SvgImage.STOP);
-        createDashboard.setSvg(SvgImage.DOCUMENT_DASHBOARD);
+        toolbar.button(SvgImage.UNDO, "Reset to Default", this::onUndo)
+                .addStyleName("QueryButtons-button undo");
+        toolbar.button(SvgImage.PLAY, "Run", this::onRun)
+                .addStyleName("QueryButtons-button play");
+        toolbar.button(SvgImage.STOP, "Stop", this::onStop)
+                .addStyleName("QueryButtons-button stop");
+        toolbar.button(SvgImage.DOCUMENT_DASHBOARD, "Create Dashboard", this::onCreateDashboard)
+                .addStyleName("QueryButtons-button create-dashboard");
     }
 
     @Override
@@ -79,7 +77,8 @@ public class QueryDataViewImpl extends ViewWithUiHandlers<QueryDataUiHandlers> i
         if (error != null && !error.trim().isEmpty()) {
             errorLabel.setText(error);
             errorContainer.setVisible(true);
-            query.addStyleName("invalid");
+            // Shown, and told to screen readers (aria-invalid)
+            FieldValidity.setInvalid(query.getElement(), true);
         } else {
             clearError();
         }
@@ -89,7 +88,7 @@ public class QueryDataViewImpl extends ViewWithUiHandlers<QueryDataUiHandlers> i
     public void clearError() {
         errorLabel.setText("");
         errorContainer.setVisible(false);
-        query.removeStyleName("invalid");
+        FieldValidity.setInvalid(query.getElement(), false);
     }
 
     @Override
@@ -98,33 +97,25 @@ public class QueryDataViewImpl extends ViewWithUiHandlers<QueryDataUiHandlers> i
         query.setSelectionRange(pos, length);
     }
 
-    @UiHandler("undo")
-    @SuppressWarnings("unused")
-    public void onUndo(final ClickEvent event) {
+    private void onUndo() {
         if (getUiHandlers() != null) {
             getUiHandlers().onReset();
         }
     }
 
-    @UiHandler("run")
-    @SuppressWarnings("unused")
-    public void onRun(final ClickEvent event) {
+    private void onRun() {
         if (getUiHandlers() != null) {
             getUiHandlers().onRun();
         }
     }
 
-    @UiHandler("stop")
-    @SuppressWarnings("unused")
-    public void onStop(final ClickEvent event) {
+    private void onStop() {
         if (getUiHandlers() != null) {
             getUiHandlers().onStop();
         }
     }
 
-    @UiHandler("createDashboard")
-    @SuppressWarnings("unused")
-    public void onCreateDashboard(final ClickEvent event) {
+    private void onCreateDashboard() {
         if (getUiHandlers() != null) {
             getUiHandlers().onCreateDashboard();
         }

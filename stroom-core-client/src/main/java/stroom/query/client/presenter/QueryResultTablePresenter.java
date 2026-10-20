@@ -33,9 +33,8 @@ import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.FormatPresenter;
+import stroom.dashboard.client.table.GroupLevelButtons;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.dashboard.client.table.TableCollapseButton;
-import stroom.dashboard.client.table.TableExpandButton;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.table.cf.RulesPresenter;
@@ -70,16 +69,15 @@ import stroom.query.shared.QuerySearchRequest;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -130,15 +128,14 @@ public class QueryResultTablePresenter
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
     private GroupSelection groupSelection = new GroupSelection();
 
-    private final TableExpandButton expandButton;
-    private final TableCollapseButton collapseButton;
+    private final GroupLevelButtons groupLevelButtons;
 
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
-    private final InlineSvgToggleButton valueFilterButton;
+    private final ToolbarToggleButton valueFilterButton;
     private final ButtonView resetButton;
-    private final ButtonView annotateButton;
+    private final ToolbarButton annotateButton;
     private final EventBus eventBus;
     private final ButtonView askAiButton;
 
@@ -217,35 +214,31 @@ public class QueryResultTablePresenter
 
         pagerView.getRefreshButton().setAllowPause(true);
 
-        expandButton = TableExpandButton.create();
-        pagerView.addButton(expandButton);
-
-        collapseButton = TableCollapseButton.create();
-        pagerView.addButton(collapseButton);
+        groupLevelButtons = new GroupLevelButtons(
+                pagerView.getToolbar(), () -> groupSelection, () -> maxDepth, this::setGroupSelection);
 
         // Download
-        downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
+        pagerView.getToolbar().setName("Table actions");
+        downloadButton = pagerView.getToolbar().button(SvgImage.DOWNLOAD, "Download Results", this::onDownload);
+        downloadButton.setEnabled(false);
         downloadButton.setVisible(securityContext.hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Filter values
-        valueFilterButton = new InlineSvgToggleButton();
-        valueFilterButton.setSvg(SvgImage.FILTER);
-        valueFilterButton.setTitle("Filter Values");
-        pagerView.addButton(valueFilterButton);
+        valueFilterButton = pagerView.getToolbar().toggle(SvgImage.FILTER, "Column Filters",
+                pressed -> toggleShowValueFilters());
 
         // Reset button
-        resetButton = pagerView.addButton(SvgPresets.UNDO);
-        resetButton.setEnabled(true);
-        resetButton.setTitle("Reset table customisation");
+        resetButton = pagerView.getToolbar().button(SvgImage.UNDO, "Reset Table Customisation",
+                this::resetTableCustomisation);
 
         // Annotate
-        annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
+        annotateButton = pagerView.getToolbar().button(SvgImage.EDIT, "Annotate Selected Rows",
+                this::showAnnotationMenu);
         annotateButton.setVisible(annotationManager.isEnabled());
+        annotateButton.setOpensMenu(true);
 
         // Ask AI
-        askAiButton = pagerView.addButton(SvgPresets.AI);
-        askAiButton.setTitle("Ask Stroom AI");
-        pagerView.addButton(askAiButton);
+        askAiButton = pagerView.getToolbar().button(SvgImage.AI, "Ask Stroom AI", this::onAskAi);
 
         annotationManager.setColumnSupplier(() -> currentColumns);
     }
@@ -280,6 +273,50 @@ public class QueryResultTablePresenter
         return requestedRange;
     }
 
+    private void onDownload() {
+        if (currentSearchModel != null) {
+            if (currentSearchModel.isSearching()) {
+                ConfirmEvent.fire(QueryResultTablePresenter.this,
+                        "Search still in progress. Do you want to download the current results? " +
+                        "Note that these may be incomplete.",
+                        ok -> {
+                            if (ok) {
+                                download();
+                            }
+                        });
+            } else {
+                download();
+            }
+        }
+    }
+
+    private void resetTableCustomisation() {
+        setPreferredColumns(Collections.emptyList());
+        refresh();
+    }
+
+    private void onAskAi() {
+        if (currentSearchModel != null) {
+            if (currentSearchModel.isSearching()) {
+                ConfirmEvent.fire(QueryResultTablePresenter.this,
+                        "Search still in progress. AI response may be based on incomplete data. " +
+                        "Do you wish to continue? ",
+                        ok -> {
+                            if (ok) {
+                                askStroomAi();
+                            }
+                        });
+            } else {
+                askStroomAi();
+            }
+        }
+    }
+
+    // The menu opens below the button
+    private void showAnnotationMenu() {
+        annotationManager.showAnnotationMenu(annotateButton.getElement(), selectionModel.getSelectedItems());
+    }
+
     @Override
     protected void onBind() {
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
@@ -300,67 +337,13 @@ public class QueryResultTablePresenter
 //            }
 //        }));
 
-        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
+        pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
 
-        registerHandler(expandButton.addClickHandler(event -> {
-            groupSelection = expandButton.expand(groupSelection, maxDepth);
-            refresh();
-        }));
 
-        registerHandler(collapseButton.addClickHandler(event -> {
-            groupSelection = collapseButton.collapse(groupSelection);
-            refresh();
-        }));
 
-        registerHandler(downloadButton.addClickHandler(event -> {
-            if (currentSearchModel != null) {
-                if (currentSearchModel.isSearching()) {
-                    ConfirmEvent.fire(QueryResultTablePresenter.this,
-                            "Search still in progress. Do you want to download the current results? " +
-                            "Note that these may be incomplete.",
-                            ok -> {
-                                if (ok) {
-                                    download();
-                                }
-                            });
-                } else {
-                    download();
-                }
-            }
-        }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> toggleShowValueFilters()));
 
-        registerHandler(resetButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                setPreferredColumns(Collections.emptyList());
-                refresh();
-            }
-        }));
 
-        registerHandler(annotateButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                annotationManager.showAnnotationMenu(event.getNativeEvent(),
-                        selectionModel.getSelectedItems());
-            }
-        }));
-
-        registerHandler(askAiButton.addClickHandler(event -> {
-            if (currentSearchModel != null) {
-                if (currentSearchModel.isSearching()) {
-                    ConfirmEvent.fire(QueryResultTablePresenter.this,
-                            "Search still in progress. AI response may be based on incomplete data. " +
-                            "Do you wish to continue? ",
-                            ok -> {
-                                if (ok) {
-                                    askStroomAi();
-                                }
-                            });
-                } else {
-                    askStroomAi();
-                }
-            }
-        }));
 
         registerHandler(selectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
@@ -468,6 +451,12 @@ public class QueryResultTablePresenter
         } else {
             RefreshRequestEvent.fire(this);
         }
+    }
+
+    // Shows the table's groups opened and closed as the selection says
+    private void setGroupSelection(final GroupSelection groupSelection) {
+        this.groupSelection = groupSelection;
+        refresh();
     }
 
     public void refresh() {
@@ -807,8 +796,7 @@ public class QueryResultTablePresenter
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
-        expandButton.update(groupSelection, maxDepth);
-        collapseButton.update(groupSelection, maxDepth);
+        groupLevelButtons.update(groupSelection, maxDepth);
 
         return processed;
     }

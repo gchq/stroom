@@ -23,12 +23,11 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -57,11 +56,12 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
 
         view.setView(docRefListPresenter.getView());
 
-        addButton = docRefListPresenter.getView().addButton(SvgPresets.ADD);
-        addButton.setTitle("Add Dictionary");
+        docRefListPresenter.getView().getToolbar().setName("Dictionary actions");
+        addButton = docRefListPresenter.getView().getToolbar().button(SvgImage.ADD, "Add Dictionary", this::onAdd);
 
-        removeButton = docRefListPresenter.getView().addButton(SvgPresets.DELETE);
-        removeButton.setTitle("Remove Dictionary");
+        removeButton = docRefListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Remove Dictionary",
+                this::onRemove);
+        removeButton.setEnabled(false);
 
         docRefListPresenter.getView().getRefreshButton().setVisible(false);
         docRefListPresenter.initTableColumns("Dictionary Name", false);
@@ -73,13 +73,10 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
     @Override
     protected void onBind() {
         super.onBind();
-
-        registerHandler(addButton.addClickHandler(this::onAdd));
-        registerHandler(removeButton.addClickHandler(this::onRemove));
         registerHandler(docRefListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
     }
 
-    private void onAdd(final ClickEvent event) {
+    private void onAdd() {
         final DocSelectionPopup chooser = dictionarySelection.get();
         chooser.setCaption("Choose Dictionary");
         chooser.setIncludedTypes(DictionaryDoc.TYPE);
@@ -92,7 +89,7 @@ public class IncludeExcludeFilterDictionaryPresenter extends MyPresenterWidget<W
         });
     }
 
-    public void onRemove(final ClickEvent event) {
+    public void onRemove() {
         final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
         final List<DocRef> selected = selectionModel.getSelectedItems();
         if (NullSafe.hasItems(selected)) {

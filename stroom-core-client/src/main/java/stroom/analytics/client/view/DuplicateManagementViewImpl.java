@@ -18,6 +18,7 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
 import stroom.document.client.event.ChangeUiHandlers;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -33,7 +34,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class DuplicateManagementViewImpl
         extends ViewWithUiHandlers<ChangeUiHandlers>
-        implements DuplicateManagementView {
+        implements DuplicateManagementView, ReadOnlyChangeHandler {
 
     private final Widget widget;
 
@@ -57,6 +58,14 @@ public class DuplicateManagementViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        rememberNotifications.setReadOnly(readOnly);
+        suppressDuplicateNotifications.setReadOnly(readOnly);
+        chooseColumns.setReadOnly(readOnly);
+        columns.setReadOnly(readOnly);
     }
 
     @Override

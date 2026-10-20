@@ -17,6 +17,7 @@
 package stroom.preferences.client;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
@@ -49,11 +50,13 @@ public final class UserPreferencesPresenter
     private static final TabData THEME = new TabDataImpl("Theme");
     private static final TabData EDITOR = new TabDataImpl("Editor");
     private static final TabData DATE_AND_TIME = new TabDataImpl("Date and Time");
+    private static final TabData KEYBOARD_SHORTCUTS = new TabDataImpl("Keyboard Shortcuts");
 
     private final UserPreferencesManager userPreferencesManager;
     private final ThemePreferencesPresenter themePreferencesPresenter;
     private final EditorPreferencesPresenter editorPreferencesPresenter;
     private final TimePreferencesPresenter timePreferencesPresenter;
+    private final KeyBindingPreferencesPresenter keyBindingPreferencesPresenter;
     private UserPreferences fetchedUserPreferences;
 
     @Inject
@@ -64,12 +67,14 @@ public final class UserPreferencesPresenter
             final ThemePreferencesPresenter themePreferencesPresenter,
             final EditorPreferencesPresenter editorPreferencesPresenter,
             final TimePreferencesPresenter timePreferencesPresenter,
+            final KeyBindingPreferencesPresenter keyBindingPreferencesPresenter,
             final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.userPreferencesManager = userPreferencesManager;
         this.themePreferencesPresenter = themePreferencesPresenter;
         this.editorPreferencesPresenter = editorPreferencesPresenter;
         this.timePreferencesPresenter = timePreferencesPresenter;
+        this.keyBindingPreferencesPresenter = keyBindingPreferencesPresenter;
         view.setUiHandlers(this);
         view.setAsDefaultVisible(clientSecurityContext
                 .hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION));
@@ -77,6 +82,7 @@ public final class UserPreferencesPresenter
         addTab(THEME, themePreferencesPresenter);
         addTab(EDITOR, editorPreferencesPresenter);
         addTab(DATE_AND_TIME, timePreferencesPresenter);
+        addTab(KEYBOARD_SHORTCUTS, keyBindingPreferencesPresenter);
         view.getTabBar().selectTab(THEME);
         switchTab(THEME);
     }
@@ -93,6 +99,7 @@ public final class UserPreferencesPresenter
         registerHandler(themePreferencesPresenter.addChangeHandler(this::onChange));
         registerHandler(editorPreferencesPresenter.addChangeHandler(this::onChange));
         registerHandler(timePreferencesPresenter.addChangeHandler(this::onChange));
+        registerHandler(keyBindingPreferencesPresenter.addChangeHandler(this::onChange));
     }
 
     private void switchTab(final TabData tabData) {
@@ -103,6 +110,8 @@ public final class UserPreferencesPresenter
             setLayer(editorPreferencesPresenter);
         } else if (Objects.equals(DATE_AND_TIME, tabData)) {
             setLayer(timePreferencesPresenter);
+        } else if (Objects.equals(KEYBOARD_SHORTCUTS, tabData)) {
+            setLayer(keyBindingPreferencesPresenter);
         }
     }
 
@@ -173,7 +182,7 @@ public final class UserPreferencesPresenter
             read(userPreferences);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(PopupSize.resizable(533, 588, 533, 588))
+                    .popupSize(PopupSize.resizable(640, 588, 533, 588))
                     .caption(caption)
                     .onShow(e -> themePreferencesPresenter.getView().focus())
                     .onHideRequest(e -> {
@@ -182,7 +191,11 @@ public final class UserPreferencesPresenter
                             final UserPreferences newUserPreferences = write(before);
                             userPreferencesManager.setCurrentPreferences(newUserPreferences);
                             if (!Objects.equals(newUserPreferences, fetchedUserPreferences)) {
-                                userPreferencesManager.update(newUserPreferences, (result) -> e.hide(), this);
+                                // If the save fails, let the user try again or cancel
+                                userPreferencesManager.update(newUserPreferences,
+                                        (result) -> e.hide(),
+                                        RestErrorHandler.forPopup(this, e),
+                                        this);
                             } else {
                                 e.hide();
                             }
@@ -201,6 +214,7 @@ public final class UserPreferencesPresenter
         themePreferencesPresenter.read(userPreferences);
         editorPreferencesPresenter.read(userPreferences);
         timePreferencesPresenter.read(userPreferences);
+        keyBindingPreferencesPresenter.read(userPreferences);
     }
 
     private UserPreferences write(final UserPreferences userPreferences) {
@@ -208,6 +222,7 @@ public final class UserPreferencesPresenter
         themePreferencesPresenter.write(builder);
         editorPreferencesPresenter.write(builder);
         timePreferencesPresenter.write(builder);
+        keyBindingPreferencesPresenter.write(builder);
         return builder.build();
     }
 

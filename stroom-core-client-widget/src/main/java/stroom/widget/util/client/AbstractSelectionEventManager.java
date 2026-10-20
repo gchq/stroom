@@ -24,6 +24,7 @@ import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class AbstractSelectionEventManager<T>
         implements CellPreviewEvent.Handler<T> {
@@ -32,14 +33,59 @@ public abstract class AbstractSelectionEventManager<T>
 
     protected final AbstractHasData<T> cellTable;
 
+    // Optional behaviour for a list with a filter above it, e.g. a picker's dialog
+    private Runnable moveUpFromFirst;
+    private Consumer<String> typedHandler;
+    private boolean selectionFollowsFocus;
+
     public AbstractSelectionEventManager(final AbstractHasData<T> cellTable) {
         this.cellTable = cellTable;
+    }
+
+    /// Sets what Up on the first row does, e.g. moves the focus back to a filter above the list.
+    ///
+    /// @param moveUpFromFirst What to do, or null for nothing (the first row keeps the focus).
+    public void setMoveUpFromFirst(final Runnable moveUpFromFirst) {
+        this.moveUpFromFirst = moveUpFromFirst;
+    }
+
+    /// Sends the characters typed in the list somewhere else, e.g. to a filter above it. Space
+    /// still chooses the row.
+    ///
+    /// @param typedHandler Given each character typed, or null to leave typing to the list.
+    public void setTypedHandler(final Consumer<String> typedHandler) {
+        this.typedHandler = typedHandler;
+    }
+
+    /// Sets whether moving to a row with the keyboard also chooses it, as in a list that chooses
+    /// one item (a picker's), rather than only moving a highlight that Space chooses.
+    ///
+    /// @param selectionFollowsFocus Whether the selection follows the focus.
+    public void setSelectionFollowsFocus(final boolean selectionFollowsFocus) {
+        this.selectionFollowsFocus = selectionFollowsFocus;
     }
 
     @Override
     public void onCellPreview(final CellPreviewEvent<T> event) {
         final NativeEvent nativeEvent = event.getNativeEvent();
         final String type = nativeEvent.getType();
+
+        if (isKeyEvent(type) && RowActions.isRowActionEvent(nativeEvent)) {
+            // A button or link in a cell has the focus: its keys are its own, not the table's
+            if (BrowserEvents.KEYDOWN.equals(type)) {
+                onRowActionKeyDown(event);
+            }
+            return;
+        }
+
+        if (typedHandler != null && BrowserEvents.KEYDOWN.equals(type)) {
+            final String key = TypedKey.keyOf(nativeEvent);
+            if (TypedKey.isTypedCharacter(nativeEvent, key) && !" ".equals(key)) {
+                handledEvent(event);
+                typedHandler.accept(key);
+                return;
+            }
+        }
 
 //        GWT.log("AbstractSelectionEventManager calling cellPreview test");
         final Action action = KeyBinding.test(nativeEvent);
@@ -120,7 +166,11 @@ public abstract class AbstractSelectionEventManager<T>
     }
 
     protected void onMoveUp(final CellPreviewEvent<T> e) {
-        move(e, cellTable.getKeyboardSelectedRow() - 1, -1, 1);
+        if (moveUpFromFirst != null && cellTable.getKeyboardSelectedRow() <= 0) {
+            moveUpFromFirst.run();
+        } else {
+            move(e, cellTable.getKeyboardSelectedRow() - 1, -1, 1);
+        }
     }
 
     protected void onMoveDown(final CellPreviewEvent<T> e) {
@@ -171,9 +221,33 @@ public abstract class AbstractSelectionEventManager<T>
 
         if (row != originalRow) {
             onKeyboardSelectRow(row, true);
+            if (selectionFollowsFocus) {
+                onSelectionFollowsFocus(items.get(row));
+            }
         }
     }
 
+    /// Chooses the row the keyboard has moved to, when the selection follows the focus (see
+    /// [#setSelectionFollowsFocus(boolean)]). Does nothing unless overridden.
+    ///
+    /// @param item The row's item.
+    protected void onSelectionFollowsFocus(final T item) {
+    }
+
+
+    private static boolean isKeyEvent(final String type) {
+        return BrowserEvents.KEYDOWN.equals(type)
+               || BrowserEvents.KEYPRESS.equals(type)
+               || BrowserEvents.KEYUP.equals(type);
+    }
+
+    /// Called for a key pressed on a row action (see [RowActions]), e.g. Enter on a link in a
+    /// cell, which the table otherwise leaves alone. A cell's buttons act on their own keys in
+    /// their cell; this is for row actions that no cell handles.
+    ///
+    /// @param e The key down event.
+    protected void onRowActionKeyDown(final CellPreviewEvent<T> e) {
+    }
 
     protected void onMoveRight(final CellPreviewEvent<T> e) {
     }

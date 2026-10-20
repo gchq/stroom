@@ -21,7 +21,6 @@ import stroom.aws.common.shared.AwsAssumeRole;
 import stroom.aws.common.shared.AwsCredentials;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.IsAtomicConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -31,22 +30,25 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.constraints.NotBlank;
 
 import java.util.Objects;
 
 @NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
-public class SqsConfig
-        extends AbstractConfig
-        implements IsStroomConfig, IsProxyConfig, IsAtomicConfig {
+public class SqsConfig extends AbstractConfig implements IsStroomConfig, IsProxyConfig {
+
+    public static final String PROP_NAME_AWS_REGION_NAME = "awsRegionName";
+    public static final String PROP_NAME_QUEUE_URL = "queueUrl";
+    public static final String PROP_NAME_DEAD_LETTER_QUEUE_URL = "deadLetterQueueUrl";
 
     public static final StroomDuration DEFAULT_POLL_MAX_WAIT_TIME = StroomDuration.ofSeconds(10);
     public static final StroomDuration DEFAULT_VISIBILITY_TIMEOUT = StroomDuration.ofMinutes(3);
     public static final int DEFAULT_MAX_NUMBER_OF_MESSAGES = 1_000;
 
+    /// An atomic config value
     @JsonProperty
     private final AwsCredentials credentials;
+    /// An atomic config value
     @JsonProperty
     private final AwsAssumeRole assumeRole;
     @JsonProperty
@@ -80,9 +82,9 @@ public class SqsConfig
     @JsonCreator
     public SqsConfig(@JsonProperty("credentials") final AwsCredentials credentials,
                      @JsonProperty("assumeRole") final AwsAssumeRole assumeRole,
-                     @JsonProperty("awsRegionName") final String awsRegionName,
-                     @JsonProperty("queueUrl") final String queueUrl,
-                     @JsonProperty("deadLetterQueueUrl") final String deadLetterQueueUrl,
+                     @JsonProperty(PROP_NAME_AWS_REGION_NAME) final String awsRegionName,
+                     @JsonProperty(PROP_NAME_QUEUE_URL) final String queueUrl,
+                     @JsonProperty(PROP_NAME_DEAD_LETTER_QUEUE_URL) final String deadLetterQueueUrl,
                      @JsonProperty("pollMaxWaitTime") final StroomDuration pollMaxWaitTime,
                      @JsonProperty("visibilityTimeout") final StroomDuration visibilityTimeout,
                      @JsonProperty("maxNumberOfMessages") final Integer maxNumberOfMessages,
@@ -108,30 +110,31 @@ public class SqsConfig
                 .build();
     }
 
+    @JsonPropertyDescription("The details of the AWS credentials to use. If null, the " +
+                             "default credentials provider chain will be used.")
     @JsonProperty
     public AwsCredentials getCredentials() {
         return credentials;
     }
 
+    @JsonPropertyDescription("The details of the AWS role to assume.")
     @JsonProperty
     public AwsAssumeRole getAssumeRole() {
         return assumeRole;
     }
 
-    @NotBlank
+    @JsonPropertyDescription("The name of the AWS region to use.")
     @JsonProperty
     public String getAwsRegionName() {
         return awsRegionName;
     }
 
-    @NotBlank
     @JsonPropertyDescription("The URL of the SQS queue to poll.")
     @JsonProperty
     public String getQueueUrl() {
         return queueUrl;
     }
 
-    @NotBlank
     @JsonPropertyDescription("The URL of the SQS queue to send messages that have failed to be processed to. " +
                              "If not set then messages that fail to be processed will be deleted from the " +
                              "main queue.")
@@ -164,6 +167,9 @@ public class SqsConfig
         return maxNumberOfMessages;
     }
 
+    @JsonPropertyDescription(
+            "The HTTP client configuration to use when making requests to the SQS API. Only required if " +
+            "using non-standard HTTP client configuration, e.g. certificates.")
     @JsonProperty
     public HttpClientConfiguration getHttpClient() {
         return httpClient;

@@ -26,11 +26,10 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionResource;
 import stroom.security.shared.UserAccessResource;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -78,18 +77,15 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-        endSessionButton = view.addButton(SvgPresets.DELETE.title("End this session"));
+        view.getToolbar().setName("Session actions");
+        endSessionButton = view.getToolbar().button(SvgImage.DELETE, "End Selected Session", this::endSelectedSession);
+        endSessionButton.setEnabled(false);
         initTableColumns();
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(endSessionButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                endSelectedSession();
-            }
-        }));
         registerHandler(selectionModel.addSelectionHandler(e -> setButtonStates()));
         setButtonStates();
     }

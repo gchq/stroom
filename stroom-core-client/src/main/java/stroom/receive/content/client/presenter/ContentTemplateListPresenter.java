@@ -23,10 +23,9 @@ import stroom.data.client.presenter.DocRefCell;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.receive.content.shared.ContentTemplate;
-import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -256,9 +255,19 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
         final List<Item> items = actionMenuItemProvider.apply(row);
         ShowMenuEvent
                 .builder()
+                .name(getActionMenuName(row))
                 .items(items)
                 .popupPosition(popupPosition)
                 .fire(this);
+    }
+
+    // e.g. "Actions for template 3 'My template'"
+    private static String getActionMenuName(final ContentTemplate row) {
+        final String name = row.getName();
+        return "Actions for template " + row.getTemplateNumber()
+               + (NullSafe.isBlankString(name)
+                ? ""
+                : " '" + name + "'");
     }
 
 //    private void addTickBoxColumn(final String name,
@@ -319,8 +328,11 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
         return selectionModel;
     }
 
-    public ButtonView add(final Preset preset) {
-        return getView().addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return getView().getToolbar();
     }
 
     public void setEnabledStateHandler(final BiConsumer<ContentTemplate, Boolean> enabledStateHandler) {

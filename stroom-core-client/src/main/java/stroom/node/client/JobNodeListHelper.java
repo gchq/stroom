@@ -19,6 +19,7 @@ package stroom.node.client;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.ActionCell;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -39,8 +40,6 @@ import stroom.job.shared.JobNodeUtil;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -48,17 +47,18 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.scheduler.Schedule;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.Column;
 
@@ -73,13 +73,10 @@ import java.util.stream.Collectors;
 public class JobNodeListHelper {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
-    private static final String FILTER_BTN_TITLE_ON = "Click to show all jobs";
-    private static final String FILTER_BTN_TITLE_OFF = "Click to show only enabled jobs";
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
     private final SchedulePopup schedulePresenter;
-    private final MenuPresenter menuPresenter;
 
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final TaskMonitorFactory taskMonitorFactory;
@@ -91,7 +88,6 @@ public class JobNodeListHelper {
     public JobNodeListHelper(final DateTimeFormatter dateTimeFormatter,
                              final RestFactory restFactory,
                              final SchedulePopup schedulePresenter,
-                             final MenuPresenter menuPresenter,
                              final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel,
                              final TaskMonitorFactory taskMonitorFactory,
                              final HasHandlers hasHandlers,
@@ -99,7 +95,6 @@ public class JobNodeListHelper {
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
         this.schedulePresenter = schedulePresenter;
-        this.menuPresenter = menuPresenter;
         this.selectionModel = selectionModel;
         this.taskMonitorFactory = taskMonitorFactory;
         this.hasHandlers = hasHandlers;
@@ -131,10 +126,14 @@ public class JobNodeListHelper {
                 "\n\nThe job will execute shortly, likely within ten seconds. " +
                 "You can check it has run by refreshing the table until the 'Last Executed' " +
                 "column has been updated.",
-                ok -> restFactory.create(JOB_NODE_RESOURCE)
-                        .call(resource -> resource.execute(jobNode.getId()))
-                        .taskMonitorFactory(taskMonitorFactory)
-                        .exec());
+                ok -> {
+                    if (ok) {
+                        restFactory.create(JOB_NODE_RESOURCE)
+                                .call(resource -> resource.execute(jobNode.getId()))
+                                .taskMonitorFactory(taskMonitorFactory)
+                                .exec();
+                    }
+                });
     }
 
     public void showSchedule(final JobNodeAndInfo jobNodeAndInfo) {
@@ -208,7 +207,7 @@ public class JobNodeListHelper {
                                          + jobNode.getJobType() + "'.", null);
                 } else {
                     final String msg = "Are you sure you want to change the schedule of job '"
-                                       + jobNode.getJobName() + " for " + nodeCount + " nodes?\n\n" +
+                                       + jobNode.getJobName() + "' for " + nodeCount + " nodes?\n\n" +
                                        "All of the following nodes will be set to the same schedule.\n\n"
                                        + selectedItems.stream()
                                                .map(JobNode::getNodeName)
@@ -314,12 +313,11 @@ public class JobNodeListHelper {
                         : "Disabled");
     }
 
-    public static Preset buildRunIconPreset(final JobNodeAndInfo jobNodeAndInfo) {
+    public static CellIcon buildRunIcon(final JobNodeAndInfo jobNodeAndInfo) {
         if (jobNodeAndInfo != null
             && jobNodeAndInfo.getJobType() != JobType.DISTRIBUTED
             && jobNodeAndInfo.getJobType() != JobType.UNKNOWN) {
-            return SvgPresets.RUN
-                    .title("Execute job on node " + jobNodeAndInfo.getNodeName() + " now.");
+            return CellIcon.of(SvgImage.PLAY, "Execute job on node " + jobNodeAndInfo.getNodeName() + " now.");
         }
         return null;
     }
@@ -338,20 +336,15 @@ public class JobNodeListHelper {
         }
     }
 
-    public InlineSvgToggleButton buildJobFilterButton() {
-        final InlineSvgToggleButton showEnabledToggleBtn = new InlineSvgToggleButton();
-        showEnabledToggleBtn.setSvg(SvgImage.FILTER);
-        showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_OFF);
-        showEnabledToggleBtn.setOff();
-
-        showEnabledToggleBtn.addClickHandler(event -> {
-            if (showEnabledToggleBtn.isOn()) {
-                showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_ON);
-            } else {
-                showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_OFF);
-            }
-            refreshFunc.run();
-        });
+    /// Adds the button that filters the list to the enabled jobs, starting off.
+    ///
+    /// @param toolbar The list's toolbar, to add the button to.
+    /// @return The button, whose state the list reads when it fetches its rows.
+    public ToolbarToggleButton addJobFilterButton(final Toolbar toolbar) {
+        // One name; whether it is on is the button's pressed state
+        final ToolbarToggleButton showEnabledToggleBtn = toolbar.toggle(
+                SvgImage.FILTER, "Show Only Enabled Jobs", null);
+        showEnabledToggleBtn.setOnToggle(showEnabled -> refreshFunc.run());
         return showEnabledToggleBtn;
     }
 
@@ -361,9 +354,11 @@ public class JobNodeListHelper {
             final String schedule = NullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getSchedule);
 
             if (schedule != null) {
+                // Says which job and node, as the button's name is heard on its own
                 return new CommandLink(
                         schedule,
-                        "Edit schedule",
+                        "Edit schedule for job '" + jobNodeAndInfo.getJobName()
+                        + "' on node '" + jobNodeAndInfo.getNodeName() + "'",
                         () ->
                                 showSchedule(jobNodeAndInfo));
             } else {
@@ -512,18 +507,25 @@ public class JobNodeListHelper {
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder(
                                 Function.identity(),
-                                () -> new ActionCell<JobNodeAndInfo>((jobNodeAndInfo, event) -> {
-                                    selectionModel.setSelected(jobNodeAndInfo);
-                                    final PopupPosition popupPosition = new PopupPosition(
-                                            event.getClientX() + 10, event.getClientY());
-                                    final List<Item> menuItems = buildActionMenu(jobNodeAndInfo);
-                                    menuPresenter.setData(menuItems);
-                                    ShowPopupEvent.builder(menuPresenter)
-                                            .popupType(PopupType.POPUP)
-                                            .popupPosition(popupPosition)
-                                            .fire();
-                                })
+                                () -> new ActionCell<JobNodeAndInfo>(this::showActionMenu)
                         )
                         .build(), "", 40);
+    }
+
+    // Shown as Stroom's other menus are, so that it is named and takes the focus
+    private void showActionMenu(final JobNodeAndInfo jobNodeAndInfo, final NativeEvent event) {
+        selectionModel.setSelected(jobNodeAndInfo);
+        final PopupPosition popupPosition = new PopupPosition(
+                event.getClientX() + 10, event.getClientY());
+        final Element opener = Element.is(event.getEventTarget())
+                ? Element.as(event.getEventTarget())
+                : null;
+        ShowMenuEvent.builder()
+                .name("Actions for job '" + jobNodeAndInfo.getJobName()
+                      + "' on node '" + jobNodeAndInfo.getNodeName() + "'")
+                .items(buildActionMenu(jobNodeAndInfo))
+                .popupPosition(popupPosition)
+                .opener(opener)
+                .fire(hasHandlers);
     }
 }

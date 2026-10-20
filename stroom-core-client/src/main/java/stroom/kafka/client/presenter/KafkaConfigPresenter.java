@@ -29,9 +29,8 @@ import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgButton;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -49,7 +48,7 @@ public class KafkaConfigPresenter extends DocTabPresenter<LinkTabPanelView, Kafk
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final ButtonView downloadButton;
+    private final ToolbarButton downloadButton;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
 
@@ -68,8 +67,8 @@ public class KafkaConfigPresenter extends DocTabPresenter<LinkTabPanelView, Kafk
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
-        downloadButton = SvgButton.create(SvgPresets.DOWNLOAD);
-        toolbar.addButton(downloadButton);
+        downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download Kafka Config", null);
+        downloadButton.setEnabled(false);
 
         addTab(CONFIG, new AbstractTabProvider<KafkaConfigDoc, EditorPresenter>(eventBus) {
             @Override

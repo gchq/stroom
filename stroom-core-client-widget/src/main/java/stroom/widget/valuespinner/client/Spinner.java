@@ -16,36 +16,20 @@
 
 package stroom.widget.valuespinner.client;
 
-import stroom.svg.shared.SvgImage;
-import stroom.widget.util.client.SvgImageUtil;
-
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.dom.client.MouseOutEvent;
-import com.google.gwt.event.dom.client.MouseOutHandler;
-import com.google.gwt.event.dom.client.MouseOverEvent;
-import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
- * The {@link Spinner} provide two arrows for in- and decreasing values.
+ * The value of a {@link ValueSpinner}, its bounds, and the stepping while a button is held.
  */
 public class Spinner implements HasValueChangeHandlers<Long> {
 
     private static final int INITIAL_SPEED = 7;
-    private final SimplePanel decrementArrow = new SimplePanel();
-    private final SimplePanel incrementArrow = new SimplePanel();
     private final HandlerManager handlerManager = new HandlerManager(this);
     private final boolean constrained = true;
     private int step = 1;
@@ -91,87 +75,50 @@ public class Spinner implements HasValueChangeHandlers<Long> {
     private boolean enabled = true;
 
     public Spinner() {
-        final SafeHtml upSafeHtml = SvgImageUtil.toSafeHtml(SvgImage.ARROW_UP);
-//        GWT.log("up: " + upSafeHtml.asString());
-        incrementArrow.getElement().setInnerSafeHtml(upSafeHtml);
-//                "valueSpinner-arrow",
-//                "valueSpinner-arrowUp"));
-        final MouseUpHandler mouseUpHandler = event -> {
-            if (enabled) {
-                cancelTimer((Widget) event.getSource());
-            }
-        };
-        incrementArrow.addDomHandler(mouseUpHandler, MouseUpEvent.getType());
-        final MouseDownHandler mouseDownHandler = event -> {
-            if (enabled) {
-                final Widget sender = (Widget) event.getSource();
-                if (sender == incrementArrow) {
-                    sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUpPressed");
-                    increment = true;
-                    increase();
-                } else {
-                    sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDownPressed");
-                    increment = false;
-                    decrease();
-                }
-                timer.scheduleRepeating(30);
-            }
-        };
-        incrementArrow.addDomHandler(mouseDownHandler, MouseDownEvent.getType());
-        final MouseOverHandler mouseOverHandler = event -> {
-            if (enabled) {
-                final Widget sender = (Widget) event.getSource();
-                if (sender == incrementArrow) {
-                    sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUpHover");
-                } else {
-                    sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDownHover");
-                }
-            }
-        };
-        incrementArrow.addDomHandler(mouseOverHandler, MouseOverEvent.getType());
-        final MouseOutHandler mouseOutHandler = event -> {
-            if (enabled) {
-                cancelTimer((Widget) event.getSource());
-            }
-        };
-        incrementArrow.addDomHandler(mouseOutHandler, MouseOutEvent.getType());
-        incrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUp");
-//        incrementArrow.getElement().addClassName("valueSpinner-arrow");
-//        incrementArrow.getElement().addClassName("valueSpinner-arrowUp");
-
-        final SafeHtml downSafeHtml = SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN);
-//        GWT.log("down: " + upSafeHtml.asString());
-        decrementArrow.getElement().setInnerSafeHtml(downSafeHtml);
-//                "valueSpinner-arrow",
-//                "valueSpinner-arrowDown"));
-        decrementArrow.addDomHandler(mouseUpHandler, MouseUpEvent.getType());
-        decrementArrow.addDomHandler(mouseDownHandler, MouseDownEvent.getType());
-        decrementArrow.addDomHandler(mouseOverHandler, MouseOverEvent.getType());
-        decrementArrow.addDomHandler(mouseOutHandler, MouseOutEvent.getType());
-        decrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDown");
-//        decrementArrow.getElement().addClassName("valueSpinner-arrow");
-//        decrementArrow.getElement().addClassName("valueSpinner-arrowDown");
-
         ValueChangeEvent.fire(this, value);
+    }
+
+    /// Steps the value once, then keeps stepping, faster and faster, until [#stopRepeating()] is
+    /// called, e.g. while a button is held down. Does nothing while the spinner is disabled.
+    ///
+    /// @param increment Whether to step up (true) or down (false).
+    public void startRepeating(final boolean increment) {
+        if (enabled) {
+            this.increment = increment;
+            if (increment) {
+                increase();
+            } else {
+                decrease();
+            }
+            timer.scheduleRepeating(30);
+        }
+    }
+
+    /// Stops the stepping started by [#startRepeating(boolean)].
+    public void stopRepeating() {
+        timer.cancel();
+    }
+
+    /// Takes several steps at once (e.g. for Page Up), stopping at the bounds rather than wrapping.
+    ///
+    /// @param steps The number of steps, negative to step down.
+    public void stepBy(final int steps) {
+        moveTo(value + (long) steps * minStep);
+    }
+
+    /// Changes the value, kept within the bounds, telling its handlers if it changed.
+    ///
+    /// @param newValue The value to change it to.
+    public void moveTo(final long newValue) {
+        final long bounded = Math.max(min, Math.min(max, newValue));
+        if (bounded != value) {
+            setValue(bounded, true);
+        }
     }
 
     @Override
     public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<Long> handler) {
         return handlerManager.addHandler(ValueChangeEvent.getType(), handler);
-    }
-
-    /**
-     * @return the image representing the decreasing arrow
-     */
-    public SimplePanel getDecrementArrow() {
-        return decrementArrow;
-    }
-
-    /**
-     * @return the image representing the increasing arrow
-     */
-    public SimplePanel getIncrementArrow() {
-        return incrementArrow;
     }
 
     /**
@@ -273,13 +220,6 @@ public class Spinner implements HasValueChangeHandlers<Long> {
      */
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
-        if (enabled) {
-            incrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUp");
-            decrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDown");
-        } else {
-            incrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUpDisabled");
-            decrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDownDisabled");
-        }
         if (!enabled) {
             timer.cancel();
         }
@@ -334,15 +274,6 @@ public class Spinner implements HasValueChangeHandlers<Long> {
             }
         }
         ValueChangeEvent.fire(this, value);
-    }
-
-    private void cancelTimer(final Widget sender) {
-        if (sender == incrementArrow) {
-            sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUp");
-        } else {
-            sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDown");
-        }
-        timer.cancel();
     }
 
     @Override

@@ -22,9 +22,11 @@ import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.UrlParameters;
 import stroom.dispatch.client.RestFactory;
-import stroom.svg.client.SvgPresets;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -32,7 +34,6 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
@@ -79,7 +80,8 @@ public class ManageActivityPresenter
                                    final RestFactory restFactory,
                                    final UiConfigCache uiConfigCache,
                                    final UrlParameters urlParameters,
-                                   final CurrentActivity currentActivity) {
+                                   final CurrentActivity currentActivity,
+                                   final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
@@ -91,10 +93,18 @@ public class ManageActivityPresenter
         getView().setUiHandlers(this);
 
         setInSlot(LIST, listPresenter);
+        // A rejected filter comes back as an empty page like any other, so surface the reason on
+        // the filter box. See ResultPage.filterError.
+        listPresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                ActivityResource.QUICK_FILTER_CONTEXT, this, this));
 
-        newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
-        openButton = listPresenter.addButton(SvgPresets.EDIT);
-        deleteButton = listPresenter.addButton(SvgPresets.DELETE);
+        listPresenter.getToolbar().setName("Activity actions");
+        newButton = listPresenter.getToolbar().button(SvgImage.ADD, "New Activity", this::onNew);
+        openButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Activity", this::onOpen);
+        openButton.setEnabled(false);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Activity", this::onDelete);
+        deleteButton.setEnabled(false);
 
         updateQuickFilterTooltipContentSupplier();
     }
@@ -110,27 +120,6 @@ public class ManageActivityPresenter
 //                onOpen();
             }
         }));
-        if (newButton != null) {
-            registerHandler(newButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    onNew();
-                }
-            }));
-        }
-        if (openButton != null) {
-            registerHandler(openButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    onOpen();
-                }
-            }));
-        }
-        if (deleteButton != null) {
-            registerHandler(deleteButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    onDelete();
-                }
-            }));
-        }
 
         super.onBind();
     }
@@ -323,6 +312,14 @@ public class ManageActivityPresenter
     public interface ManageActivityView extends View, Focus, HasUiHandlers<ManageActivityUiHandlers> {
 
         void setTooltipContentSupplier(final Supplier<SafeHtml> tooltipSupplier);
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code ResultPage.filterError}.
+         */
+        void setFilterError(String filterError);
+
+        void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
     }
 
     private class NameFilterTimer extends Timer {

@@ -97,7 +97,13 @@ td:hover .customDatePickerDayIsValue {
 }
 */
 
+/* The year's and month's rows, one above the other, as far apart as the 4px focus ring
+   (--focus-shadow) reaches, so a focused box's ring doesn't overlap the box below or above it (and as
+   far apart as each row's box and buttons are) */
 .customDatePickerMonthSelector {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 .customDatePickerYear,
 .customDatePickerMonth {
@@ -107,15 +113,20 @@ td:hover .customDatePickerDayIsValue {
     gap: 4px;
     padding: 0 2px;
 }
-.customDatePickerYear .icon-button,
-.customDatePickerMonth .icon-button {
+/* The year's and month's Previous and Next buttons, a toolbar beside each select box, spaced as the
+   row is */
+.customDatePickerYear > .toolbar,
+.customDatePickerMonth > .toolbar {
+    margin: 0;
+    gap: 4px;
+}
+.customDatePickerYear .toolbar-button,
+.customDatePickerMonth .toolbar-button {
     width: 26px;
     height: 26px;
 }
-.customDatePickerPreviousButton svg,
-.customDatePickerNextButton svg,
-.customDatePickerPreviousYearButton svg,
-.customDatePickerNextYearButton svg {
+.customDatePickerYear .toolbar-button__icon,
+.customDatePickerMonth .toolbar-button__icon {
     color: var(--navigation__text-color);
     width: 10px;
     height: 10px;
@@ -139,17 +150,6 @@ td:hover .customDatePickerDayIsValue {
 
 .DateTimeView-right {
     padding-left: 1rem;
-}
-
-.customDatePickerMonth .SelectionBox,
-.customDatePickerYear .SelectionBox {
-    flex-grow: 1;
-    width: 5px;
-}
-
-.customDatePickerMonth .SelectionBox input,
-.customDatePickerYear .SelectionBox input {
-    min-width: 5px;
 }
 
 .DateTimeView-date,

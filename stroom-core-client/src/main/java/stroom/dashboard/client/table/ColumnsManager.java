@@ -199,6 +199,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
                                 ShowMenuEvent
                                         .builder()
+                                        .name("Options for column '" + column.getName() + "'")
                                         .items(menuItems)
                                         .popupPosition(popupPosition)
                                         .addAutoHidePartner(th)
@@ -588,7 +589,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         return new IconMenuItem.Builder()
                 .priority(1)
                 .icon(SvgImage.FIELDS_EXPRESSION)
-                .text("Expression")
+                .text("Edit Expression")
                 .command(() -> showExpression(column))
                 .highlight(highlight)
                 .build();
@@ -608,7 +609,8 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                         SortIcon.SORT_DESCENDING_ICON,
                         SortIcon.SORT_DESCENDING,
                         SortDirection.DESCENDING));
-        menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, SortIcon.UNSORTED, null));
+        // An action, so not SortIcon.UNSORTED, which names the state
+        menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, "Clear Sort", null));
         return new IconParentMenuItem.Builder()
                 .priority(2)
                 .icon(SortIcon.SORT_ASCENDING_ICON)
@@ -661,7 +663,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
         final Item item = new IconMenuItem.Builder()
                 .priority(maxGroup + 1)
-                .text("Not grouped")
+                .text("Ungroup")
                 .command(() -> setGroup(column, null))
                 .build();
         menuItems.add(item);
@@ -760,7 +762,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         return new IconMenuItem.Builder()
                 .priority(6)
                 .icon(SvgImage.STEP_BACKWARD)
-                .text("Move First")
+                .text("Move Column to Start")
                 .command(() -> moveFirst(column))
                 .build();
     }
@@ -769,7 +771,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         return new IconMenuItem.Builder()
                 .priority(7)
                 .icon(SvgImage.STEP_FORWARD)
-                .text("Move Last")
+                .text("Move Column to End")
                 .command(() -> moveLast(column))
                 .build();
     }
@@ -787,7 +789,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         return new IconMenuItem.Builder()
                 .priority(9)
                 .icon(SvgImage.HIDE)
-                .text("Hide")
+                .text("Hide Column")
                 .command(() -> hideColumn(column))
                 .build();
     }
@@ -815,7 +817,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         return new IconParentMenuItem.Builder()
                 .priority(10)
                 .icon(SvgImage.SHOW)
-                .text("Show")
+                .text("Show Hidden Column")
                 .children(menuItems)
                 .build();
     }

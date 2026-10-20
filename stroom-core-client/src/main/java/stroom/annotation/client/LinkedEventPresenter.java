@@ -30,7 +30,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -86,11 +86,10 @@ public class LinkedEventPresenter
 
         this.addEventLinkPresenter = addEventLinkPresenter;
 
-        addEventButton = pagerView.addButton(SvgPresets.ADD);
-        addEventButton.setTitle("Add Event Link");
+        pagerView.getToolbar().setName("Linked event actions");
+        addEventButton = pagerView.getToolbar().button(SvgImage.ADD, "Add Event Link", this::onAddEvent);
         addEventButton.setEnabled(false);
-        removeEventButton = pagerView.addButton(SvgPresets.DELETE);
-        removeEventButton.setTitle("Remove Event Link");
+        removeEventButton = pagerView.getToolbar().button(SvgImage.DELETE, "Remove Event Link", this::onRemoveEvent);
         removeEventButton.setEnabled(false);
 
         view.setEventListView(pagerView);
@@ -121,31 +120,34 @@ public class LinkedEventPresenter
         }
     }
 
+    private void onRemoveEvent() {
+        final EventId selected = selectionModel.getSelected();
+        if (selected != null) {
+            nextSelection = null;
+            if (currentData != null && currentData.size() > 1) {
+                int index = currentData.indexOf(selected);
+                index--;
+                index = Math.max(0, index);
+                nextSelection = currentData.get(index);
+            }
+
+            unlinkEvent(selected);
+        }
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
         registerHandler(selectionModel.addSelectionHandler(e -> onSelection()));
 
-        registerHandler(addEventButton.addClickHandler(e -> addEventLinkPresenter.show(eventId -> {
+    }
+
+    private void onAddEvent() {
+        addEventLinkPresenter.show(eventId -> {
             if (eventId != null) {
                 linkEvent(eventId);
             }
-        })));
-
-        registerHandler(removeEventButton.addClickHandler(e -> {
-            final EventId selected = selectionModel.getSelected();
-            if (selected != null) {
-                nextSelection = null;
-                if (currentData != null && currentData.size() > 1) {
-                    int index = currentData.indexOf(selected);
-                    index--;
-                    index = Math.max(0, index);
-                    nextSelection = currentData.get(index);
-                }
-
-                unlinkEvent(selected);
-            }
-        }));
+        });
     }
 
     @Override

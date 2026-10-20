@@ -52,6 +52,7 @@ import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -76,6 +77,8 @@ public class ProcessorTaskListPresenter
     private final DateTimeFormatter dateTimeFormatter;
     private final ExpressionCriteria criteria;
     private RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>> dataProvider;
+    // Counts the Info clicks, so that only the latest click's tooltip is shown
+    private int infoRequestCount;
 
     @Inject
     public ProcessorTaskListPresenter(final EventBus eventBus,
@@ -95,6 +98,7 @@ public class ProcessorTaskListPresenter
 
         criteria = new ExpressionCriteria();
         addColumns();
+        OpenLinkUtil.addClickHandler(this, tooltipPresenter.getView().asWidget());
     }
 
     @Override
@@ -106,20 +110,29 @@ public class ProcessorTaskListPresenter
         // Info column.
         dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
             @Override
-            protected void showInfo(final ProcessorTask row, final PopupPosition popupPosition) {
+            protected void showInfo(final ProcessorTask row,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
                 findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
+                final int requestCount = ++infoRequestCount;
 
                 restFactory
                         .create(META_RESOURCE)
                         .method(res -> res.findMetaRow(findMetaCriteria))
                         .onSuccess(metaRows -> {
+                            // Ignore the reply to an earlier click. Showing the tooltip again while
+                            // it is showing hides it, so the reply to the latest click would hide
+                            // the earlier click's tooltip rather than show its own
+                            if (requestCount != infoRequestCount) {
+                                return;
+                            }
                             // Should only get one back
                             final Meta meta = Optional.ofNullable(metaRows)
                                     .map(ResultPage::getFirst)
                                     .map(MetaRow::getMeta)
                                     .orElse(null);
-                            showTooltip(popupPosition, row, meta);
+                            showTooltip(popupPosition, anchor, row, meta);
                         })
                         .taskMonitorFactory(getView())
                         .exec();
@@ -210,6 +223,7 @@ public class ProcessorTaskListPresenter
     }
 
     private void showTooltip(final PopupPosition popupPosition,
+                             final Element anchor,
                              final ProcessorTask processorTask,
                              final Meta meta) {
 
@@ -274,9 +288,7 @@ public class ProcessorTaskListPresenter
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
-        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
-
-        OpenLinkUtil.addClickHandler(this, tooltipPresenter.getView().asWidget());
+        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
     }
 
     private String toDateString(final Long ms) {

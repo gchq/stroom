@@ -63,6 +63,7 @@ public class ReceiveDataConfig
     public static final String DEFAULT_X509_CERT_DN_HEADER = "X-SSL-CLIENT-S-DN";
     public static final DNFormat DEFAULT_X509_CERT_DN_FORMAT = DNFormat.LDAP;
     public static final String PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS = "allowedCertificateProviders";
+    public static final String PROP_NAME_S3_EVENT = "s3Event";
     public static final String DEFAULT_OWNER_META_KEY = StandardHeaderArguments.ACCOUNT_ID;
 
     public static final boolean DEFAULT_AUTHENTICATION_REQUIRED = true;
@@ -169,7 +170,7 @@ public class ReceiveDataConfig
             @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode,
             @JsonProperty("fallbackReceiveAction") final ReceiveAction fallbackReceiveAction,
             @JsonProperty("maxRequestSize") final ByteSize maxRequestSize,
-            @JsonProperty("s3Event") final S3EventConfig s3Event) {
+            @JsonProperty(PROP_NAME_S3_EVENT) final S3EventConfig s3Event) {
 
         this.metaTypes = NullSafe.getOrElse(metaTypes, ReceiveDataConfig::cleanSet, DEFAULT_META_TYPES);
         this.enabledAuthenticationTypes = NullSafe.getOrElse(

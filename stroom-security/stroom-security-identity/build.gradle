@@ -27,6 +27,7 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-identity-db')
     implementation project(':stroom-security:stroom-security-openid-api')

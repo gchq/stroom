@@ -19,11 +19,12 @@ package stroom.document.asset.client.view;
 import stroom.document.asset.client.presenter.DocumentAssetPresenter.DocumentAssetView;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -33,15 +34,15 @@ public class DocumentAssetViewImpl extends ViewImpl
         implements DocumentAssetView, ReadOnlyChangeHandler {
 
     private final Widget widget;
+    // Shown in the editor's place while no file is selected, so the area says what it is for
+    private final Label editorPlaceholder = new Label("Select a file to view or edit it");
+    private Widget editor;
 
     @UiField
     FlowPanel rootPanel;
 
     @UiField
-    ThinSplitLayoutPanel splitLayoutPanel;
-
-    /** Size of tree panel */
-    private static final double TREE_SIZE = 200;
+    SplitPane splitPane;
 
     @Inject
     public DocumentAssetViewImpl(final Binder binder) {
@@ -60,9 +61,20 @@ public class DocumentAssetViewImpl extends ViewImpl
 
     @Override
     public void setTreeAndEditor(final Tree tree, final EditorPresenter editorPresenter) {
-        // Note that .add() must be called last
-        splitLayoutPanel.addWest(tree, TREE_SIZE);
-        splitLayoutPanel.add(editorPresenter.getWidget());
+        editor = editorPresenter.getWidget();
+        editorPlaceholder.setStyleName("visualisationAssets-placeholder");
+        final FlowPanel editorArea = new FlowPanel();
+        editorArea.setStyleName("max visualisationAssets-editorArea");
+        editorArea.add(editorPlaceholder);
+        editorArea.add(editor);
+        splitPane.add(tree);
+        splitPane.add(editorArea);
+    }
+
+    @Override
+    public void setEditorVisible(final boolean visible) {
+        editor.setVisible(visible);
+        editorPlaceholder.setVisible(!visible);
     }
 
     // --------------------------------------------------------------------------------

@@ -37,13 +37,12 @@ import stroom.pathways.shared.UpdatePathway;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -61,6 +60,10 @@ public class PathwayListPresenter
         implements QuickFilterUiHandlers {
 
     private static final PathwaysResource PATHWAYS_RESOURCE = GWT.create(PathwaysResource.class);
+    private static final String NEW_TITLE = "New Pathway";
+    private static final String EDIT_TITLE = "Edit Selected Pathway";
+    private static final String DELETE_TITLE = "Delete Selected Pathways";
+    private static final String READ_ONLY_SUFFIX = " (read only)";
 
     private final DateTimeFormatter dateTimeFormatter;
     private final PagerView pagerView;
@@ -86,6 +89,7 @@ public class PathwayListPresenter
                                 final DateTimeFormatter dateTimeFormatter,
                                 final PathwayEditPresenter pathwayEditPresenter) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter pathways");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -99,39 +103,39 @@ public class PathwayListPresenter
 
         this.pathwayEditPresenter = pathwayEditPresenter;
 
-        newButton = pagerView.addButton(SvgPresets.NEW_ITEM);
-        editButton = pagerView.addButton(SvgPresets.EDIT);
-        removeButton = pagerView.addButton(SvgPresets.DELETE);
+        pagerView.getToolbar().setName("Pathway actions");
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, this::onEditClicked);
+        editButton.setEnabled(false);
+        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, this::onRemoveClicked);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
+    }
+
+    private void onNew() {
+        if (!readOnly) {
+            onAdd();
+        }
+    }
+
+    private void onEditClicked() {
+        if (!readOnly) {
+            onEdit();
+        }
+    }
+
+    private void onRemoveClicked() {
+        if (!readOnly) {
+            onRemove();
+        }
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onAdd();
-                }
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onEdit();
-                }
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onRemove();
-                }
-            }
-        }));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             if (!readOnly) {
                 enableButtons();
@@ -165,15 +169,12 @@ public class PathwayListPresenter
             removeButton.setEnabled(false);
         }
 
-        if (readOnly) {
-            newButton.setTitle("New pathway disabled as read only");
-            editButton.setTitle("Edit pathway disabled as read only");
-            removeButton.setTitle("Remove pathway disabled as read only");
-        } else {
-            newButton.setTitle("New Pathway");
-            editButton.setTitle("Edit Pathway");
-            removeButton.setTitle("Remove Pathway");
-        }
+        final String readOnlySuffix = readOnly
+                ? READ_ONLY_SUFFIX
+                : "";
+        newButton.setTitle(NEW_TITLE + readOnlySuffix);
+        editButton.setTitle(EDIT_TITLE + readOnlySuffix);
+        removeButton.setTitle(DELETE_TITLE + readOnlySuffix);
     }
 
     private void addColumns() {

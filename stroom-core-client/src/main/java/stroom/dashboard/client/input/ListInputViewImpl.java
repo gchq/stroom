@@ -22,6 +22,7 @@ import stroom.docref.DocRef;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;
@@ -115,6 +116,11 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
     public void setAllowTextEntry(final boolean allowTextEntry) {
         this.allowTextEntry = allowTextEntry;
         this.valueSelectionBox.setAllowTextEntry(allowTextEntry);
+    }
+
+    @Override
+    public void setAccessibleName(final String name) {
+        AccessibleName.set(valueSelectionBox, name);
     }
 
     @UiHandler("valueSelectionBox")

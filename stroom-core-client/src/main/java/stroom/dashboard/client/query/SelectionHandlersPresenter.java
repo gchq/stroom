@@ -44,7 +44,7 @@ import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
@@ -106,13 +106,26 @@ public class SelectionHandlersPresenter
         // Stop users from selecting expression items.
 //        expressionPresenter.setSelectionModel(null);
 
-        addButton = listPresenter.add(SvgPresets.ADD);
-        editButton = listPresenter.add(SvgPresets.EDIT);
-        copyButton = listPresenter.add(SvgPresets.COPY);
-        disableButton = listPresenter.add(SvgPresets.DISABLE);
-        deleteButton = listPresenter.add(SvgPresets.DELETE);
-        moveUpButton = listPresenter.add(SvgPresets.UP);
-        moveDownButton = listPresenter.add(SvgPresets.DOWN);
+        listPresenter.getToolbar().setName("Selection handler actions");
+        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "New Selection Handler", this::add);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected Selection Handler",
+                this::onEdit);
+        editButton.setEnabled(false);
+        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Duplicate Selected Selection Handler",
+                this::onCopy);
+        copyButton.setEnabled(false);
+        disableButton = listPresenter.getToolbar().button(SvgImage.DISABLE, "Disable Selected Selection Handler",
+                this::onDisable);
+        disableButton.setEnabled(false);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected Selection Handler",
+                this::confirmDelete);
+        deleteButton.setEnabled(false);
+        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move Selection Handler Up",
+                this::onMoveUp);
+        moveUpButton.setEnabled(false);
+        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move Selection Handler Down",
+                this::onMoveDown);
+        moveDownButton.setEnabled(false);
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
@@ -128,84 +141,89 @@ public class SelectionHandlersPresenter
         dynamicFieldSelectionListModel.setDataSourceRefConsumer(dataSourceRefConsumer);
     }
 
-    @Override
-    protected void onBind() {
-        registerHandler(addButton.addClickHandler(event ->
-                add()));
-        registerHandler(editButton.addClickHandler(event -> {
-            final ComponentSelectionHandler selected = listPresenter.getSelectionModel().getSelected();
-            if (selected != null) {
-                edit(selected);
+    private void onEdit() {
+        final ComponentSelectionHandler selected = listPresenter.getSelectionModel().getSelected();
+        if (selected != null) {
+            edit(selected);
+        }
+    }
+
+    private void onCopy() {
+        final ComponentSelectionHandler selected = listPresenter.getSelectionModel().getSelected();
+        if (selected != null) {
+            final ComponentSelectionHandler listener = selected
+                    .copy()
+                    .build();
+
+            final int index = selectionHandlers.indexOf(selected);
+
+            if (index < selectionHandlers.size() - 1) {
+                selectionHandlers.add(index + 1, listener);
+            } else {
+                selectionHandlers.add(listener);
             }
-        }));
-        registerHandler(copyButton.addClickHandler(event -> {
-            final ComponentSelectionHandler selected = listPresenter.getSelectionModel().getSelected();
-            if (selected != null) {
-                final ComponentSelectionHandler listener = selected
-                        .copy()
-                        .build();
 
-                final int index = selectionHandlers.indexOf(selected);
+            update();
+            listPresenter.getSelectionModel().setSelected(listener);
+        }
+    }
 
-                if (index < selectionHandlers.size() - 1) {
-                    selectionHandlers.add(index + 1, listener);
-                } else {
-                    selectionHandlers.add(listener);
-                }
+    private void onDisable() {
+        final ComponentSelectionHandler selected = listPresenter.getSelectionModel().getSelected();
+        if (selected != null) {
+            final ComponentSelectionHandler newRule = selected
+                    .copy()
+                    .enabled(!selected.isEnabled())
+                    .build();
+            final int index = selectionHandlers.indexOf(selected);
+            selectionHandlers.remove(index);
+            selectionHandlers.add(index, newRule);
+            listPresenter.getSelectionModel().setSelected(newRule);
+            update();
+            setDirty(true);
+        }
+    }
 
-                update();
-                listPresenter.getSelectionModel().setSelected(listener);
-            }
-        }));
-        registerHandler(disableButton.addClickHandler(event -> {
-            final ComponentSelectionHandler selected = listPresenter.getSelectionModel().getSelected();
-            if (selected != null) {
-                final ComponentSelectionHandler newRule = selected
-                        .copy()
-                        .enabled(!selected.isEnabled())
-                        .build();
-                final int index = selectionHandlers.indexOf(selected);
-                selectionHandlers.remove(index);
-                selectionHandlers.add(index, newRule);
-                listPresenter.getSelectionModel().setSelected(newRule);
+    private void onMoveUp() {
+        final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
+        if (rule != null) {
+            final int index = selectionHandlers.indexOf(rule);
+            if (index > 0) {
+                selectionHandlers.remove(rule);
+                selectionHandlers.add(index - 1, rule);
                 update();
                 setDirty(true);
             }
-        }));
-        registerHandler(deleteButton.addClickHandler(event ->
-                ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
-                    if (ok) {
-                        final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
-                        selectionHandlers.remove(rule);
-                        listPresenter.getSelectionModel().clear();
-                        update();
-                        setDirty(true);
-                    }
-                })));
-        registerHandler(moveUpButton.addClickHandler(event -> {
-            final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
-            if (rule != null) {
-                final int index = selectionHandlers.indexOf(rule);
-                if (index > 0) {
-                    selectionHandlers.remove(rule);
-                    selectionHandlers.add(index - 1, rule);
-                    update();
-                    setDirty(true);
-                }
+        }
+    }
+
+    private void onMoveDown() {
+        final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
+        if (rule != null) {
+            final int index = selectionHandlers.indexOf(rule);
+            if (index < selectionHandlers.size() - 1) {
+                selectionHandlers.remove(rule);
+                selectionHandlers.add(index + 1, rule);
+                update();
+                setDirty(true);
             }
-        }));
-        registerHandler(moveDownButton.addClickHandler(event -> {
-            final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
-            if (rule != null) {
-                final int index = selectionHandlers.indexOf(rule);
-                if (index < selectionHandlers.size() - 1) {
-                    selectionHandlers.remove(rule);
-                    selectionHandlers.add(index + 1, rule);
-                    update();
-                    setDirty(true);
-                }
+        }
+    }
+
+    private void confirmDelete() {
+        ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
+            if (ok) {
+                final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
+                selectionHandlers.remove(rule);
+                listPresenter.getSelectionModel().clear();
+                update();
+                setDirty(true);
             }
-        }));
+        });
+    }
+
+    @Override
+    protected void onBind() {
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
@@ -411,9 +429,9 @@ public class SelectionHandlersPresenter
         }
 
         if (selection != null && selection.isEnabled()) {
-            disableButton.setTitle("Disable");
+            disableButton.setTitle("Disable Selected Selection Handler");
         } else {
-            disableButton.setTitle("Enable");
+            disableButton.setTitle("Enable Selected Selection Handler");
         }
 
         addButton.setEnabled(loadedPolicy);

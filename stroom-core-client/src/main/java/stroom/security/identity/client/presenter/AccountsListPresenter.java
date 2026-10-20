@@ -28,20 +28,21 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.ExpressionOperator;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.util.shared.TokenError;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -71,9 +72,9 @@ public class AccountsListPresenter
     private final MultiSelectionModelImpl<Account> selectionModel;
     private RestDataProvider<Account, ResultPage<Account>> dataProvider;
     private final MyDataGrid<Account> dataGrid;
-    private final InlineSvgButton addButton;
-    private final InlineSvgButton editButton;
-    private final InlineSvgButton deleteButton;
+    private final ToolbarButton addButton;
+    private final ToolbarButton editButton;
+    private final ToolbarButton deleteButton;
     private final PagerView pagerView;
     private final FindAccountRequest.Builder requestBuilder = new FindAccountRequest.Builder();
 
@@ -84,8 +85,10 @@ public class AccountsListPresenter
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter,
                                  final Provider<EditAccountPresenter> editAccountPresenterProvider,
-                                 final UiConfigCache uiConfigCache) {
+                                 final UiConfigCache uiConfigCache,
+                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter accounts");
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -98,10 +101,12 @@ public class AccountsListPresenter
         this.dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
 
-        addButton = new InlineSvgButton();
-        editButton = new InlineSvgButton();
-        deleteButton = new InlineSvgButton();
-        initButtons();
+        final Toolbar toolbar = pagerView.getToolbar();
+        toolbar.setName("Account actions");
+        addButton = toolbar.button(SvgImage.ADD, "New Account", this::createNewAccount);
+        editButton = toolbar.button(SvgImage.EDIT, "Edit Selected Account", this::editSelectedAccount);
+        deleteButton = toolbar.button(SvgImage.DELETE, "Delete Selected Account", this::deleteSelectedAccount);
+        setButtonStates();
         initTableColumns();
 
         selectionModel.addSelectionHandler(event -> {
@@ -124,6 +129,8 @@ public class AccountsListPresenter
 
         view.setDataView(pagerView);
         view.setUiHandlers(this);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                AccountFields.QUICK_FILTER_CONTEXT, this, this));
     }
 
     @Override
@@ -144,25 +151,6 @@ public class AccountsListPresenter
         return account.getFailureLockedUntilMs() == null
                 ? "Locked"
                 : "Locked until " + dateTimeFormatter.format(account.getFailureLockedUntilMs());
-    }
-
-    private void initButtons() {
-        addButton.setSvg(SvgImage.ADD);
-        addButton.setTitle("Add new account");
-        addButton.addClickHandler(event -> createNewAccount());
-        pagerView.addButton(addButton);
-
-        editButton.setSvg(SvgImage.EDIT);
-        editButton.setTitle("Edit account");
-        editButton.addClickHandler(event -> editSelectedAccount());
-        pagerView.addButton(editButton);
-
-        deleteButton.setSvg(SvgImage.DELETE);
-        deleteButton.setTitle("Delete selected account");
-        deleteButton.addClickHandler(event -> deleteSelectedAccount());
-        pagerView.addButton(deleteButton);
-
-        setButtonStates();
     }
 
     private void setButtonStates() {
@@ -358,7 +346,11 @@ public class AccountsListPresenter
                     restFactory
                             .create(ACCOUNT_RESOURCE)
                             .method(res -> res.find(requestBuilder.build()))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(resultPage -> {
+                                getView().setFilterError(NullSafe.get(
+                                        resultPage.getFilterError(), TokenError::getText));
+                                dataConsumer.accept(resultPage);
+                            })
                             .onFailure(throwable ->
                                     AlertEvent.fireError(
                                             this,
@@ -383,9 +375,8 @@ public class AccountsListPresenter
             }
         }
 
-        final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(text, AccountFields.DEFAULT_FIELDS, AccountFields.ALL_FIELDS_MAP);
-        requestBuilder.expression(expression);
+        // The filter text goes to the server verbatim - see FindAccountRequest.
+        requestBuilder.quickFilter(text);
         refresh();
     }
 

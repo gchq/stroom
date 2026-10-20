@@ -18,11 +18,11 @@ package stroom.floormap.client.view;
 
 import stroom.floormap.client.presenter.FloorMapMapPresenter;
 import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
+import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -41,7 +41,7 @@ public class FloorMapMapViewImpl extends ViewImpl implements FloorMapMapView {
     private final Widget widget;
 
     @UiField
-    ThinSplitLayoutPanel topSplitPanel;
+    SplitPane topSplitPane;
     @UiField
     SimplePanel mapPanel;
     @UiField
@@ -74,7 +74,7 @@ public class FloorMapMapViewImpl extends ViewImpl implements FloorMapMapView {
     @Override
     public void setDockVisible(final boolean visible) {
         // Hides the dock and its splitter while retaining the dragged width.
-        topSplitPanel.setWidgetHidden(dockPanel, !visible);
+        topSplitPane.setPaneHidden(dockPanel, !visible);
     }
 
     public interface Binder extends UiBinder<Widget, FloorMapMapViewImpl> {

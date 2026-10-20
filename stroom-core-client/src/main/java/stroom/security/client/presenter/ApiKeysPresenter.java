@@ -26,13 +26,11 @@ import stroom.security.client.presenter.ApiKeysPresenter.ApiKeysView;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.HashedApiKey;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -76,9 +74,14 @@ public class ApiKeysPresenter
 //        view.setUiHandlers(this);
         view.setList(listPresenter.getView());
 
-        addButton = listPresenter.addButton(SvgPresets.ADD.title("Add new API Key"));
-        editButton = listPresenter.addButton(SvgPresets.EDIT.title("Edit API Key"));
-        deleteButton = listPresenter.addButton(SvgPresets.DELETE.title("Delete API Key"));
+        listPresenter.getToolbar().setName("API key actions");
+        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "New API Key", this::createNewKey);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected API Key",
+                this::editSelectedKey);
+        editButton.setEnabled(false);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete Selected API Key",
+                this::deleteSelectedKeys);
+        deleteButton.setEnabled(false);
 
 //        uiConfigCache.get(uiConfig -> {
 //            if (uiConfig != null) {
@@ -95,30 +98,15 @@ public class ApiKeysPresenter
         editButton.setEnabled(selectedCount == 1);
         deleteButton.setEnabled(selectedCount > 0);
         if (selectedCount > 1) {
-            deleteButton.setTitle("Delete " + selectedCount + " API Keys");
+            deleteButton.setTitle("Delete " + selectedCount + " Selected API Keys");
         } else {
-            deleteButton.setTitle("Delete API Key");
+            deleteButton.setTitle("Delete Selected API Key");
         }
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(addButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                createNewKey();
-            }
-        }));
-        registerHandler(editButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                editSelectedKey();
-            }
-        }));
-        registerHandler(deleteButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                deleteSelectedKeys();
-            }
-        }));
         registerHandler(getSelectionModel().addSelectionHandler(e -> {
             onSelection();
             if (e.getSelectionType().isDoubleSelect()

@@ -22,7 +22,7 @@ import stroom.query.client.presenter.TextUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.FabButton;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -39,8 +39,8 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
 
     private final Widget widget;
 
-    @UiField(provided = true)
-    InlineSvgButton close;
+    @UiField
+    ToolbarButton close;
     @UiField
     SimplePanel content;
     @UiField(provided = true)
@@ -53,12 +53,6 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
     @Inject
     public TextViewImpl(final Binder binder, final ClassificationLabel classification) {
         this.classification = classification;
-
-        close = new InlineSvgButton();
-        close.setSvg(SvgImage.CLOSE);
-//        close.getElement().addClassName("navigation-header-button add");
-        close.setTitle("Close");
-        close.setEnabled(true);
 
         widget = binder.createAndBindUi(this);
         spinner.setVisible(false);

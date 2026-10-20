@@ -16,7 +16,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -53,6 +52,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     private final ExplorerPopupPresenter explorerPopupPresenter;
     private final RestFactory restFactory;
     private boolean enabled = true;
+    private boolean readOnly;
     private DocRef value = null;
     private String errorMsg = null;
     private String itemType = null;
@@ -70,14 +70,6 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         view.setUiHandlers(this);
 //        explorerPopupPresenter.setSelectionChangeConsumer(this::changeSelection);
         changeSelection(null);
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(getView().addWarningClickHandler(event -> {
-            event.getNativeEvent().stopPropagation();
-            AlertEvent.fireWarn(DocSelectionBoxPresenter.this, getErrorMsg(), null);
-        }));
     }
 
     @Override
@@ -212,6 +204,11 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                                            final Consumer<DocRef> onDocRefDecoration,
                                            final Runnable onDocRefNotFound) {
         if (docRef != null && decorateDocRef) {
+            // Selected as given at once, so that it is the value until decorating it is done, and if
+            // that fails (rather than the value before, or none, which whatever reads the value,
+            // e.g. a query expression's term editor, would save in its place)
+            explorerPopupPresenter.setSelectedEntityReference(docRef);
+            setFieldValue(docRef, null);
             // The docRef may have come from the data within a Doc so the name may be out of date,
             // so decorate it to ensure we have the right name
             restFactory
@@ -220,6 +217,11 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                             resource.decorate(DecorateRequest.createWithPermCheck(
                                     docRef, getRequiredPermissions())))
                     .onSuccess(decoratedDocRef -> {
+                        if (!Objects.equals(value, docRef)) {
+                            // Another has been selected since, e.g. by a term editor moving on to
+                            // another term: this one's reply is too late
+                            return;
+                        }
                         if (decoratedDocRef != null) {
                             explorerPopupPresenter.setSelectedEntityReference(decoratedDocRef);
                             setFieldValue(decoratedDocRef, null);
@@ -256,6 +258,16 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         NullSafe.run(onDocRefNotFound);
     }
 
+    // The not-found problem in brief, as shown under the picker; the full message (with the id and
+    // what to do) is its tooltip and what screen readers read
+    private String buildShortNotFoundMessage(final DocRef docRef) {
+        if (docRef == null) {
+            return null;
+        }
+        final String name = NullSafe.getOrElse(docRef.getName(), n -> "'" + n + "'", "It");
+        return name + " can't be found, or you don't have permission to see it.";
+    }
+
     public String buildNotFoundMessage(final DocRef docRef) {
         if (docRef != null) {
             final String type = Objects.requireNonNullElseGet(this.itemType, () ->
@@ -282,7 +294,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
 
     @Override
     public void showPopup() {
-        if (enabled) {
+        if (enabled && !readOnly) {
             final DocRef oldDocRef = getSelectedEntityReference();
             explorerPopupPresenter.show(selectedDocRef -> {
 //                GWT.log("currentSelectionRef: " + selectedDocRef);
@@ -310,21 +322,26 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     private void setFieldValue(final DocRef value, final String errorMsg) {
         this.value = value;
         this.errorMsg = errorMsg;
-        getView().setText(
-                NullSafe.getOrElse(value, DocRef::getDisplayValue, NONE_DISPLAY_VALUE),
-                NullSafe.isNonBlankString(errorMsg));
+        getView().setText(NullSafe.getOrElse(value, DocRef::getDisplayValue, NONE_DISPLAY_VALUE));
+        // A document that can't be found is shown as a problem with the field, under it
+        if (NullSafe.isNonBlankString(errorMsg)) {
+            getView().setProblem(buildShortNotFoundMessage(value), errorMsg);
+        } else {
+            getView().setProblem(null, null);
+        }
+    }
+
+    /// Makes the selection read only: it can be read and stays in the tab order, but the
+    /// picker doesn't open. It looks like the normal field with its value greyed.
+    ///
+    /// @param readOnly Whether the selection is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        getView().setReadOnly(readOnly);
     }
 
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
-        if (!enabled) {
-            getView().asWidget().getElement().addClassName("disabled");
-        } else {
-            getView().asWidget().getElement().removeClassName("disabled");
-        }
-    }
-
-    private String getErrorMsg() {
-        return errorMsg;
+        getView().setEnabled(enabled);
     }
 }

@@ -16,7 +16,6 @@
 
 package stroom.cell.info.client;
 
-import stroom.svg.client.Preset;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -27,7 +26,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
-public class SvgCell extends AbstractCell<Preset> {
+public class SvgCell extends AbstractCell<CellIcon> {
 
     private final boolean isButton;
 
@@ -45,9 +44,9 @@ public class SvgCell extends AbstractCell<Preset> {
     @Override
     public void onBrowserEvent(final Context context,
                                final Element parent,
-                               final Preset value,
+                               final CellIcon value,
                                final NativeEvent event,
-                               final ValueUpdater<Preset> valueUpdater) {
+                               final ValueUpdater<CellIcon> valueUpdater) {
         if (isButton) {
             super.onBrowserEvent(context, parent, value, event, valueUpdater);
             if ("click".equals(event.getType())) {
@@ -66,10 +65,11 @@ public class SvgCell extends AbstractCell<Preset> {
     @Override
     protected void onEnterKeyDown(final Context context,
                                   final Element parent,
-                                  final Preset value,
+                                  final CellIcon value,
                                   final NativeEvent event,
-                                  final ValueUpdater<Preset> valueUpdater) {
-        if (isButton) {
+                                  final ValueUpdater<CellIcon> valueUpdater) {
+        // A disabled icon is drawn as disabled, so it mustn't act either
+        if (isButton && value != null && value.isEnabled()) {
             if (valueUpdater != null) {
                 valueUpdater.update(value);
             }
@@ -77,7 +77,7 @@ public class SvgCell extends AbstractCell<Preset> {
     }
 
     @Override
-    public void render(final Context context, final Preset value, final SafeHtmlBuilder sb) {
+    public void render(final Context context, final CellIcon value, final SafeHtmlBuilder sb) {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
@@ -91,18 +91,18 @@ public class SvgCell extends AbstractCell<Preset> {
             }
 
             sb.append(SvgImageUtil.toSafeHtml(
-                    value.getTitle(),
-                    value.getSvgImage(),
+                    value.getName(),
+                    value.getIcon(),
                     className));
 //            if (value.getTitle() != null && !value.getTitle().isEmpty()) {
 //                sb.append(template.icon(
 //                        className,
 //                        value.getTitle(),
-//                        SafeHtmlUtils.fromSafeConstant(value.getSvgImage().getSvg())));
+//                        SafeHtmlUtils.fromSafeConstant(value.getIcon().getSvg())));
 //            } else {
 //                sb.append(template.icon(
 //                        className,
-//                        SafeHtmlUtils.fromSafeConstant(value.getSvgImage().getSvg())));
+//                        SafeHtmlUtils.fromSafeConstant(value.getIcon().getSvg())));
 //            }
         }
     }

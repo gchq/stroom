@@ -17,6 +17,7 @@
 package stroom.job.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
@@ -27,7 +28,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.job.client.event.JobChangeEvent;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -174,8 +175,8 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
         // Help
         dataGrid.addColumn(
-                DataGridUtil.svgPresetColumnBuilder(true, (JobWrapper job) ->
-                                SvgPresets.HELP)
+                DataGridUtil.cellIconColumnBuilder(true, (JobWrapper job) ->
+                                CellIcon.of(SvgImage.HELP, "Help (opens in new tab)"))
                         .enabledWhen(job ->
                                 NullSafe.getOrElse(job, JobWrapper::getJob, Job::isEnabled, false))
                         .withBrowserEventHandler((context, elem, row, event) -> {

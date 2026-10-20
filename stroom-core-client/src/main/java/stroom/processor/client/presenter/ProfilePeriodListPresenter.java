@@ -19,16 +19,14 @@ package stroom.processor.client.presenter;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.processor.shared.ProfilePeriod;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.Days;
 import stroom.util.shared.time.Time;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -41,6 +39,11 @@ import java.util.UUID;
 @SuppressWarnings("checkstyle:Indentation")
 public class ProfilePeriodListPresenter
         extends MyPresenterWidget<PagerView> {
+
+    private static final String NEW_TITLE = "New Profile Period";
+    private static final String EDIT_TITLE = "Edit Selected Profile Period";
+    private static final String REMOVE_TITLE = "Remove Selected Profile Period";
+    private static final String READ_ONLY_SUFFIX = " (read only)";
 
     private final MyDataGrid<ProfilePeriod> dataGrid;
     private final MultiSelectionModelImpl<ProfilePeriod> selectionModel;
@@ -67,9 +70,12 @@ public class ProfilePeriodListPresenter
 
         this.newConcurrencyTimeRangePresenter = newConcurrencyTimeRangePresenter;
 
-        addButton = view.addButton(SvgPresets.NEW_ITEM);
-        editButton = view.addButton(SvgPresets.EDIT);
-        removeButton = view.addButton(SvgPresets.REMOVE);
+        addButton = view.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onAdd);
+        view.getToolbar().setName("Profile period actions");
+        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, () -> onEdit(selectionModel.getSelected()));
+        editButton.setEnabled(false);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, REMOVE_TITLE, this::onRemove);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
@@ -81,21 +87,6 @@ public class ProfilePeriodListPresenter
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onEdit(selectionModel.getSelected());
-            }
-        }));
-        registerHandler(addButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAdd(event);
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onEdit(selectionModel.getSelected());
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onRemove();
             }
         }));
     }
@@ -184,7 +175,7 @@ public class ProfilePeriodListPresenter
         enableButtons();
     }
 
-    private void onAdd(final ClickEvent event) {
+    private void onAdd() {
         final ProfilePeriod profilePeriod = ProfilePeriod.builder().uuid(UUID.randomUUID().toString()).build();
         showEditor(profilePeriod);
     }
@@ -234,17 +225,14 @@ public class ProfilePeriodListPresenter
 
         final ProfilePeriod selected = selectionModel.getSelected();
 
-        editButton.setEnabled(!readOnly);
+        editButton.setEnabled(!readOnly && selected != null);
         removeButton.setEnabled(!readOnly && selected != null);
 
-        if (readOnly) {
-            addButton.setTitle("New period disabled as profile is read only");
-            editButton.setTitle("Edit period disabled as profile is read only");
-            removeButton.setTitle("Remove period disabled as profile is read only");
-        } else {
-            addButton.setTitle("New Period");
-            editButton.setTitle("Edit Period");
-            removeButton.setTitle("Remove Period");
-        }
+        final String readOnlySuffix = readOnly
+                ? READ_ONLY_SUFFIX
+                : "";
+        addButton.setTitle(NEW_TITLE + readOnlySuffix);
+        editButton.setTitle(EDIT_TITLE + readOnlySuffix);
+        removeButton.setTitle(REMOVE_TITLE + readOnlySuffix);
     }
 }

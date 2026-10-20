@@ -224,6 +224,29 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 	}-*/;
 
     /**
+     * Set whether Ace's keyboard accessibility mode is on: the editor's content and gutter are
+     * tab stops, Enter on the content starts editing and Escape stops, so Tab can leave the
+     * editor rather than indenting.
+     *
+     * @param enabled true to turn the mode on, false to turn it off
+     */
+    public native void setKeyboardAccessibility(boolean enabled) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.setOption("enableKeyboardAccessibility", enabled);
+	}-*/;
+
+    /**
+     * Set the name Ace puts before the cursor's row in its text input's label, which Ace sets
+     * when the input gets the focus in keyboard accessibility mode.
+     *
+     * @param label the name, e.g. "Code editor"
+     */
+    public native void setTextInputAriaLabel(String label) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.setOption("textInputAriaLabel", label);
+	}-*/;
+
+    /**
      * Replace the selected text with the passed text
      *
      * @param text text to use in place of the selected text
@@ -383,6 +406,31 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		// Try to force the editor to resize and display itself fully.  See:
 		//    https://groups.google.com/group/ace-discuss/browse_thread/thread/237262b521dcea33
 		editor.resize();
+
+		// Ace labels a gutter annotation for screen readers only when its class is one of Ace's own
+		// (ace_error etc.), so Stroom's classes would be read as "undefined". Label them after each
+		// render of the gutter, in Ace's words.
+		var gutterLabels = {
+			stroom_info: "Info",
+			stroom_warning: "Warning",
+			stroom_error: "Error",
+			stroom_fatal_error: "Fatal error"
+		};
+		var gutterLayer = editor.renderer.$gutterLayer;
+		gutterLayer.on("afterRender", function() {
+			var nodes = gutterLayer.element.querySelectorAll(".ace_gutter_annotation");
+			for (var i = 0; i < nodes.length; i++) {
+				var node = nodes[i];
+				var cell = node.parentNode;
+				for (var type in gutterLabels) {
+					if (cell.classList.contains(type)) {
+						node.setAttribute("aria-label", gutterLabels[type] + ", read annotations row "
+							+ cell.textContent.trim());
+						break;
+					}
+				}
+			}
+		});
 
 
 //		if (typeof editor.completers === 'undefined') {
@@ -716,11 +764,9 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
      *               {@link AceAnnotationType} enumeration)
      */
     public void addAnnotation(final int row, final int column, final String text, final AceAnnotationType type) {
-        final AceAnnotation aceAnnotation = AceAnnotation.create(row, column, text, type.getName());
-
-        // If you find the gutter markers not showing after uplifting the Ace version then grep
-        // for 'this.setAnnotations = function(annotations) {' in ace.js as we have customised it
-        // for stroom. You will need to compare it to an older version to get our custom code back
+        // Stroom's gutter class goes in as the annotation's className, which Ace uses for the row
+        final AceAnnotation aceAnnotation = AceAnnotation.create(row, column, text, type.getAceType(),
+                type.getName());
 
 //        GWT.log("Adding annotation of type " + type.getName() + " to row " + row + " with text: " + text);
         annotations.push(aceAnnotation);

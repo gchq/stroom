@@ -180,13 +180,13 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        indexName.setEnabled(!readOnly);
-        searchSlices.setEnabled(!readOnly);
-        searchScrollSize.setEnabled(!readOnly);
-        timeField.setEnabled(!readOnly);
-        rerankTextFieldSuffix.setEnabled(!readOnly);
-        rerankScoreFieldSuffix.setEnabled(!readOnly);
-        rerankScoreMinimum.setEnabled(!readOnly);
+        indexName.setReadOnly(readOnly);
+        searchSlices.setReadOnly(readOnly);
+        searchScrollSize.setReadOnly(readOnly);
+        timeField.setReadOnly(readOnly);
+        rerankTextFieldSuffix.setReadOnly(readOnly);
+        rerankScoreFieldSuffix.setReadOnly(readOnly);
+        rerankScoreMinimum.setReadOnly(readOnly);
     }
 
     @UiHandler("indexName")

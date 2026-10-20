@@ -28,6 +28,7 @@ import com.google.gwt.safehtml.shared.annotations.IsSafeUri;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.Label;
@@ -35,9 +36,21 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
 
+/// Chooses a file to upload: a button that opens the browser's file dialog, and the name of the
+/// chosen file beside it. The BEM block `file-upload` (`file-upload.css`): its button
+/// (`file-upload__button`), the file's name (`file-upload__name`) and the hidden file input
+/// (`file-upload__input`).
+///
+/// In a form group the button is named by the group's label and its own text (e.g. "File, Choose
+/// File"), as a picker is, and described by the chosen file's name, which is announced when it
+/// changes.
 public class CustomFileUpload extends Composite {
 
+    private static final String NO_FILE = "No file chosen";
+    private static final String NO_FILE_MODIFIER = "file-upload__name--empty";
     private static final Binder BINDER = GWT.create(Binder.class);
+    private static final FileUploadTransport DEFAULT_TRANSPORT = FileUploadSubmitter::submit;
+    private static FileUploadTransport uploadTransport = DEFAULT_TRANSPORT;
     private final Widget widget;
 
     @UiField
@@ -53,6 +66,15 @@ public class CustomFileUpload extends Composite {
     private CustomFileUpload() {
         widget = BINDER.createAndBindUi(this);
         fileUpload.setVisible(false);
+        // A picker, to a form group, which names it by its label and its own text
+        chooseFile.getElement().setAttribute("role", "button");
+        chooseFile.getElement().setAttribute("aria-haspopup", "dialog");
+        // Described by the chosen file, which is announced when it changes
+        final String fileNameId = DOM.createUniqueId();
+        fileName.getElement().setId(fileNameId);
+        fileName.getElement().setAttribute("aria-live", "polite");
+        FieldValidity.addDescribedBy(chooseFile.getElement(), fileNameId, false);
+        showFileName();
         initWidget(widget);
     }
 
@@ -61,8 +83,12 @@ public class CustomFileUpload extends Composite {
         return widget;
     }
 
+    /// Gets the name of the chosen file, without the (fake) path that browsers give a file input's
+    /// value, e.g. `stream.txt` for `C:\fakepath\stream.txt`.
+    ///
+    /// @return The name of the chosen file, or an empty string if no file has been chosen.
     public String getFilename() {
-        return fileUpload.getFilename();
+        return FileUploadUtil.getFileName(fileUpload.getFilename());
     }
 
     /**
@@ -101,9 +127,20 @@ public class CustomFileUpload extends Composite {
     }
 
     public void submit() {
-        // Upload via XMLHttpRequest rather than a native form submission so we can attach the
-        // X-CSRF header that the server requires for session-authenticated requests.
-        FileUploadSubmitter.submit(actionUrl, fileUpload.getElement(), resultHandler);
+        // By default this uploads via XMLHttpRequest rather than a native form submission so we
+        // can attach the X-CSRF header that the server requires for session-authenticated requests.
+        resultHandler.onUploadStart();
+        uploadTransport.upload(actionUrl, fileUpload.getElement(), resultHandler);
+    }
+
+    /// Sets how every [CustomFileUpload] sends its file, e.g. to fake uploads in tests.
+    ///
+    /// @param transport The transport, or null for Stroom's default, which uploads the file with
+    ///                  an `XMLHttpRequest`.
+    public static void setUploadTransport(final FileUploadTransport transport) {
+        uploadTransport = transport != null
+                ? transport
+                : DEFAULT_TRANSPORT;
     }
 
     public void focus() {
@@ -117,18 +154,16 @@ public class CustomFileUpload extends Composite {
 
     @UiHandler("fileUpload")
     void onFileUpload(final ChangeEvent e) {
-        String name = fileUpload.getFilename();
-        if (name != null) {
-            int index = name.lastIndexOf("/");
-            if (index != -1) {
-                name = name.substring(index + 1);
-            }
-            index = name.lastIndexOf("\\");
-            if (index != -1) {
-                name = name.substring(index + 1);
-            }
-        }
-        fileName.setText(name);
+        showFileName();
+    }
+
+    private void showFileName() {
+        final String name = getFilename();
+        final boolean none = name.isEmpty();
+        fileName.setText(none
+                ? NO_FILE
+                : name);
+        fileName.setStyleName(NO_FILE_MODIFIER, none);
     }
 
     public interface Binder extends UiBinder<Widget, CustomFileUpload> {

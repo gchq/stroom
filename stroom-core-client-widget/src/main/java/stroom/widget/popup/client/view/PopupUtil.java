@@ -24,11 +24,71 @@ import stroom.widget.popup.client.presenter.PositionUtil;
 import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public class PopupUtil {
 
     private static final int POPUP_SHADOW_WIDTH = 9;
+    private static final String ROLE = "role";
+    private static final String DIALOG_ROLE = "dialog";
+    private static final String ALERT_DIALOG_ROLE = "alertdialog";
+    private static final String ARIA_DESCRIBED_BY = "aria-describedby";
+    private static final String ARIA_MODAL = "aria-modal";
+    // The least room left between a dialog and each edge of the window
+    private static final int WINDOW_MARGIN = 10;
+
+    /// Makes a popup a dialog for screen readers, named by its title.
+    ///
+    /// @param popup The popup's element.
+    /// @param title The element holding the dialog's title.
+    public static void setDialogRole(final Element popup, final Element title) {
+        if (title.getId() == null || title.getId().isEmpty()) {
+            title.setId(DOM.createUniqueId());
+        }
+        popup.setAttribute(ROLE, DIALOG_ROLE);
+        popup.setAttribute("aria-labelledby", title.getId());
+    }
+
+    /// Makes the dialog holding some content an alert dialog for screen readers, described by its
+    /// message, so that a screen reader reads the message as soon as the dialog opens, even though
+    /// the focus goes to its buttons. Call it once the content is in the dialog (e.g. when it is
+    /// attached).
+    ///
+    /// @param content The element of the dialog's content.
+    /// @param message The element holding the message, or null to describe the dialog by nothing.
+    /// @return True if the content is in a dialog, which is now an alert dialog.
+    public static boolean setAlertDialogRole(final Element content, final Element message) {
+        final Element dialog = findDialog(content);
+        if (dialog == null) {
+            return false;
+        }
+        dialog.setAttribute(ROLE, ALERT_DIALOG_ROLE);
+        if (message == null) {
+            dialog.removeAttribute(ARIA_DESCRIBED_BY);
+        } else {
+            if (message.getId() == null || message.getId().isEmpty()) {
+                message.setId(DOM.createUniqueId());
+            }
+            dialog.setAttribute(ARIA_DESCRIBED_BY, message.getId());
+        }
+        return true;
+    }
+
+    // The dialog (or alert dialog) the element is in, or null if it isn't in one
+    private static Element findDialog(final Element element) {
+        Element current = element;
+        while (current != null) {
+            final String role = current.getAttribute(ROLE);
+            if (DIALOG_ROLE.equals(role) || ALERT_DIALOG_ROLE.equals(role)) {
+                return current;
+            }
+            current = current.getParentElement();
+        }
+        return null;
+    }
 
     public static void showPopup(final Popup popup,
                                  final boolean isModal,
@@ -48,9 +108,21 @@ public class PopupUtil {
         if (isModal) {
             popupPanel.setGlassEnabled(isModal);
         }
+        // A dialog shown modal tells screen readers that the rest of the page can't be used
+        final Element element = popupPanel.getElement();
+        final String role = element.getAttribute(ROLE);
+        if (DIALOG_ROLE.equals(role) || ALERT_DIALOG_ROLE.equals(role)) {
+            if (isModal) {
+                element.setAttribute(ARIA_MODAL, "true");
+                // And keeps the focus in it, as the rest of the page can't be used
+                DialogFocusTrap.install(element);
+            } else {
+                element.removeAttribute(ARIA_MODAL);
+            }
+        }
 
-        // Attach the popup to the DOM.
-        CurrentFocus.push();
+        // Attach the popup to the DOM, returning the focus to where it is now when it closes
+        CurrentFocus.remember(popupPanel);
         popupPanel.show();
         // Defer the command to position and make visible because we need the
         // popup to size first.
@@ -67,6 +139,12 @@ public class PopupUtil {
             if (popupSize != null) {
                 newWidth = getSize(newWidth, popupSize.getWidth());
                 newHeight = getSize(newHeight, popupSize.getHeight());
+            }
+            if (popupType != PopupType.POPUP) {
+                // A dialog is no bigger than the window, so none of it (e.g. its title or its buttons)
+                // is off the screen; its content scrolls instead
+                newWidth = Math.min(newWidth, Window.getClientWidth() - (2 * WINDOW_MARGIN));
+                newHeight = Math.min(newHeight, Window.getClientHeight() - (2 * WINDOW_MARGIN));
             }
             if (newWidth != w) {
                 popupPanel.setWidth(newWidth + "px");

@@ -37,8 +37,12 @@ public interface SelectionListModel<T, I extends SelectionItem> {
 
     boolean displayPager();
 
+    /// The name of the top level, shown first in the path. It names a button that goes back to
+    /// the top, so it says what is there rather than e.g. "Help", which reads as if it opens help.
+    ///
+    /// @return The top level's name.
     default String getPathRoot() {
-        return "Help";
+        return "Help Contents";
     }
 
     I wrap(T item);

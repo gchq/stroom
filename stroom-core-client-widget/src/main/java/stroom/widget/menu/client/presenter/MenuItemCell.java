@@ -20,6 +20,7 @@ import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.NewTabLink;
 import stroom.widget.util.client.SvgImageUtil;
 import stroom.widget.util.client.Templates;
 
@@ -48,6 +49,16 @@ public class MenuItemCell extends AbstractCell<Item> {
             } else if (value instanceof GroupHeading) {
                 new GroupHeadingAppearance().render(this, context, (GroupHeading) value, sb);
             }
+        }
+    }
+
+
+    // Tells screen readers that an item opens a new browser tab, with hidden text after the item's
+    // text. It is kept out of the text's own element, which other code reads as the item's
+    // visible text (e.g. to name a sub menu)
+    private static void appendNewTabHint(final MenuItem menuItem, final SafeHtmlBuilder sb) {
+        if (menuItem.isOpensNewTab()) {
+            sb.append(NewTabLink.hiddenHint());
         }
     }
 
@@ -151,12 +162,13 @@ public class MenuItemCell extends AbstractCell<Item> {
 
                 inner.append(
                         TEMPLATE.inner("menuItem-text", value.getText()));
+                appendNewTabHint(value, inner);
 
                 if (value.getAction() != null) {
                     final String shortcut = KeyBinding.getShortcut(value.getAction());
                     if (shortcut != null) {
                         inner.append(TEMPLATE.inner("menuItem-shortcut",
-                                SafeHtmlUtils.fromTrustedString(shortcut)));
+                                SafeHtmlUtils.fromString(shortcut)));
                     }
                 }
 
@@ -215,12 +227,13 @@ public class MenuItemCell extends AbstractCell<Item> {
                         TEMPLATE.inner(
                                 "menuItem-simpleText",
                                 value.getText()));
+                appendNewTabHint(value, inner);
 
                 if (value.getAction() != null) {
                     final String shortcut = KeyBinding.getShortcut(value.getAction());
                     if (shortcut != null) {
                         inner.append(TEMPLATE.inner("menuItem-shortcut",
-                                SafeHtmlUtils.fromTrustedString(shortcut)));
+                                SafeHtmlUtils.fromString(shortcut)));
                     }
                 }
 

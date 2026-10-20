@@ -31,7 +31,23 @@ public class PipelineElementBoxFactory {
     }
 
     public PipelineElementBox create(final PipelineElement pipelineElement) {
-        final SvgImage icon = NullSafe.get(pipelineModel.getElementType(pipelineElement), PipelineElementType::getIcon);
-        return new PipelineElementBox(pipelineModel, pipelineElement, icon);
+        final PipelineElementType elementType = pipelineModel.getElementType(pipelineElement);
+        final SvgImage icon = NullSafe.get(elementType, PipelineElementType::getIcon);
+        return new PipelineElementBox(pipelineModel, pipelineElement, icon, getIconName(elementType));
+    }
+
+    /// Gets the text alternative for the icon of an element type, i.e. the type's display name,
+    /// e.g. `XSLT Filter`, so a screen reader can say what type of element the icon represents.
+    ///
+    /// @param elementType The type of the element. Can be null.
+    /// @return The type's display name, else its type name if it has no display name, else null
+    /// if there is no type.
+    public static String getIconName(final PipelineElementType elementType) {
+        if (elementType == null) {
+            return null;
+        }
+        return NullSafe.isBlankString(elementType.getDisplayValue())
+                ? elementType.getType()
+                : elementType.getDisplayValue();
     }
 }

@@ -18,16 +18,15 @@ package stroom.explorer.client.view;
 
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
-import stroom.svg.client.SvgPresets;
+import stroom.item.client.SelectionList;
+import stroom.item.client.SimpleSelectionItemWrapper;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -37,7 +36,6 @@ import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.regexp.shared.SplitResult;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -52,6 +50,13 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/// Edits a document's tags, or picks tags to add to several documents: tags are typed in (which
+/// also filters the known tags) or moved from the list of all known tags to the document's.
+///
+/// Both lists are selection lists of several choices ([SelectionList#setMultiSelect]). Enter, or a
+/// double click, on the known tags adds those chosen; Enter, a double click, Delete or Backspace on
+/// the document's tags removes those chosen. Down in the field goes to the known tags, and Up from
+/// their first goes back.
 public class ExplorerNodeEditTagsViewImpl
         extends ViewWithUiHandlers<HideRequestUiHandlers>
         implements ExplorerNodeEditTagsView {
@@ -60,33 +65,33 @@ public class ExplorerNodeEditTagsViewImpl
     private static final Predicate<String> ALWAYS_TRUE_PREDICATE = (str) -> true;
 
     private final Widget widget;
-    private final ButtonView removeButton;
-    private final ButtonView addFromInputButton;
-    private final ButtonView clearInputButton;
-    private final ButtonView addFromAllTagsButton;
+    private final ToolbarButton removeButton;
+    private final ToolbarButton addFromInputButton;
+    private final ToolbarButton clearInputButton;
+    private final ToolbarButton addFromAllTagsButton;
     private final KeyPressHandler tagsKeyPressHandler = new TagsKeyPressHandler();
+    private final TagListModel allTagsModel = new TagListModel();
+    private final TagListModel nodeTagsModel = new TagListModel();
 
-    //    private SelectionBoxModel<String> model;
-    private Set<String> nodeTags = new HashSet<>();
-    private Set<String> allTags = new HashSet<>();
-    private String selectedValue = null;
+    private final Set<String> nodeTags = new HashSet<>();
+    private final Set<String> allTags = new HashSet<>();
 
     @UiField
     TextBox textBox;
     @UiField
-    ButtonPanel clearButtonPanel;
+    Toolbar clearButtonPanel;
     @UiField
-    ButtonPanel inputButtonPanel;
+    Toolbar inputButtonPanel;
     @UiField
     FormGroup allTagsFormGroup;
     @UiField
-    ListBox allTagsListBox;
+    SelectionList<String, SimpleSelectionItemWrapper<String>> allTagsList;
     @UiField
-    ButtonPanel nodeTagsButtonPanel;
+    Toolbar nodeTagsButtonPanel;
     @UiField
     FormGroup nodeTagsFormGroup;
     @UiField
-    ListBox nodeTagsListBox;
+    SelectionList<String, SimpleSelectionItemWrapper<String>> nodeTagsList;
     private List<DocRef> docRefs;
 
     @Inject
@@ -94,225 +99,108 @@ public class ExplorerNodeEditTagsViewImpl
         widget = binder.createAndBindUi(this);
         widget.addAttachHandler(event -> focus());
 
-        addFromAllTagsButton = nodeTagsButtonPanel.addButton(
-                SvgPresets.ARROW_RIGHT.title("Add selected tags from 'All Known Tags'"));
+        addFromAllTagsButton = nodeTagsButtonPanel.button(
+                SvgImage.ARROW_RIGHT,
+                "Add Selected Tags from All Known Tags",
+                this::addSelectedTags);
         addFromAllTagsButton.setEnabled(false);
-        addFromAllTagsButton.addClickHandler(this::onAddFromAllTagsClicked);
 
-        removeButton = nodeTagsButtonPanel.addButton(
-                SvgPresets.ARROW_LEFT.title("Remove selected tags"));
+        removeButton = nodeTagsButtonPanel.button(
+                SvgImage.ARROW_LEFT,
+                "Remove Selected Tags",
+                this::removeSelectedNodeTags);
         removeButton.setEnabled(false);
-        removeButton.addClickHandler(this::onDeleteClicked);
 
-        clearInputButton = clearButtonPanel.addButton(
-                SvgPresets.CLEAR.title("Clear entered tag(s)"));
-        clearInputButton.setEnabled(true); // hidden/visible, never disabled
-        clearInputButton.addClickHandler(this::onClearInputClicked);
-        clearInputButton.asWidget().addStyleName("clear");
+        // Hidden/visible, never disabled
+        clearInputButton = clearButtonPanel.button(
+                SvgImage.CLEAR,
+                "Clear Entered Tags",
+                this::onClearInputClicked);
+        clearInputButton.addStyleName("clear");
 
-        addFromInputButton = inputButtonPanel.addButton(
-                SvgPresets.ADD.title("Add entered tag(s)"));
+        addFromInputButton = inputButtonPanel.button(
+                SvgImage.ADD,
+                "Add Entered Tags",
+                this::addTagsFromTextInput);
         addFromInputButton.setEnabled(false);
-        addFromInputButton.addClickHandler(this::onAddFromInputClicked);
 
-        nodeTagsListBox.setMultipleSelect(true);
-        nodeTagsListBox.addKeyDownHandler(this::handleNodeTagsKeyDownEvent);
-        nodeTagsListBox.addClickHandler(this::handleNodeTagsClickEvent);
-        nodeTagsListBox.addDoubleClickHandler(this::handleNodeTagsDoubleClickEvent);
-        allTagsListBox.setTitle("All tags currently in use across all documents");
+        nodeTagsList.setMultiSelect(true);
+        nodeTagsList.init(nodeTagsModel);
+        nodeTagsList.getSelectionModel().addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                removeSelectedNodeTags();
+            } else {
+                updateButtonStates();
+            }
+        });
+        nodeTagsList.addDomHandler(this::handleNodeTagsKeyDownEvent, KeyDownEvent.getType());
 
         textBox.addKeyPressHandler(tagsKeyPressHandler);
         textBox.addKeyUpHandler(this::handleTextBoxKeyUpEvent);
         textBox.setTitle("Enter tags manually or filter 'All Known Tags'");
 
-        allTagsListBox.setMultipleSelect(true);
-        allTagsListBox.addKeyDownHandler(this::handleAllTagsKeyDownEvent);
-        allTagsListBox.addClickHandler(this::handleAllTagsClickEvent);
-        allTagsListBox.addDoubleClickHandler(this::handleAllTagsDoubleClickEvent);
-        allTagsListBox.setTitle("All tags currently in use across all documents");
-
+        allTagsList.setMultiSelect(true);
+        allTagsList.init(allTagsModel);
+        allTagsList.getSelectionModel().addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                addSelectedTags();
+            } else {
+                updateButtonStates();
+            }
+        });
+        // Up from the first known tag goes back to the field that filters them
+        allTagsList.setMoveUpFromFirst(() -> {
+            textBox.setFocus(true);
+            textBox.selectAll();
+        });
+        allTagsList.setTitle("All tags currently in use across all documents");
     }
 
     private void handleNodeTagsKeyDownEvent(final KeyDownEvent event) {
         switch (event.getNativeKeyCode()) {
             case KeyCodes.KEY_DELETE:
             case KeyCodes.KEY_BACKSPACE:
-            case KeyCodes.KEY_H:
-            case KeyCodes.KEY_LEFT:
-                removedSelectedNodeTags();
+                // Backspace would otherwise go back a page in some browsers
+                event.preventDefault();
+                removeSelectedNodeTags();
                 break;
-            case KeyCodes.KEY_J:
-                moveSelectionDown(nodeTagsListBox);
-                break;
-            case KeyCodes.KEY_K:
-                moveSelectionUp(nodeTagsListBox);
-                break;
-//            case KeyCodes.KEY_TAB:
-//                textBox.setText(allTagsListBox.getSelectedValue());
-//                break;
-        }
-    }
-
-    private void moveSelectionDown(final ListBox listBox) {
-        final int selectedIndex = listBox.getSelectedIndex();
-        final int lastIdx = listBox.getItemCount() - 1;
-        final int newIdx;
-        if (selectedIndex == -1) {
-            newIdx = 0;
-        } else if (selectedIndex == lastIdx) {
-            newIdx = selectedIndex;
-        } else {
-            newIdx = selectedIndex + 1;
-        }
-        listBox.setSelectedIndex(newIdx);
-        selectedValue = listBox.getSelectedValue();
-    }
-
-    private void moveSelectionUp(final ListBox listBox) {
-        final int selectedIndex = listBox.getSelectedIndex();
-        final int newIdx;
-        if (selectedIndex == -1) {
-            newIdx = 0;
-        } else if (selectedIndex == 0) {
-            newIdx = selectedIndex;
-        } else {
-            newIdx = selectedIndex - 1;
-        }
-        listBox.setSelectedIndex(newIdx);
-        selectedValue = listBox.getSelectedValue();
-    }
-
-    private void handleNodeTagsClickEvent(final ClickEvent event) {
-        updateButtonStates();
-    }
-
-    private void handleNodeTagsDoubleClickEvent(final DoubleClickEvent event) {
-        NullSafe.consume(nodeTagsListBox.getSelectedValue(), selectedTag -> {
-            nodeTags.remove(selectedTag);
-            updateAllListBoxes();
-        });
-    }
-
-    private void handleAllTagsClickEvent(final ClickEvent event) {
-        updateButtonStates();
-        selectedValue = allTagsListBox.getSelectedValue();
-    }
-
-    private void handleAllTagsDoubleClickEvent(final DoubleClickEvent event) {
-        selectedValue = allTagsListBox.getSelectedValue();
-        addSelectedTags();
-//            clearInput();
-        updateAllTagsListBoxContents();
-    }
-
-    private void handleAllTagsKeyDownEvent(final KeyDownEvent event) {
-        //            GWT.log("allTagsListBox eventTarget: " + event.getNativeEvent().getEventTarget());
-        //noinspection EnhancedSwitchMigration
-        switch (event.getNativeKeyCode()) {
-            case KeyCodes.KEY_DOWN:
-//                textBox.setText(allTagsListBox.getSelectedValue());
-                selectedValue = allTagsListBox.getSelectedValue();
-                break;
-            case KeyCodes.KEY_J:
-                moveSelectionDown(allTagsListBox);
-                break;
-            case KeyCodes.KEY_UP:
-//                textBox.setText(allTagsListBox.getSelectedValue());
-                // Allow the user to move up from the list to the text field
-                if (allTagsListBox.getItemCount() == 0
-                        || (allTagsListBox.getSelectedIndex() == 0
-                        && Objects.equals(allTagsListBox.getSelectedValue(), selectedValue))) {
-                    textBox.setFocus(true);
-                    textBox.selectAll();
-                }
-                selectedValue = allTagsListBox.getSelectedValue();
-                break;
-            case KeyCodes.KEY_K:
-                moveSelectionUp(allTagsListBox);
-                break;
-            case KeyCodes.KEY_ENTER:
-            case KeyCodes.KEY_L:
-            case KeyCodes.KEY_RIGHT:
-//                    GWT.log("allTagsListBox ENTER clicked");
-                addSelectedTags();
-
-                textBox.setFocus(true);
-//                if (allTagsListBox.getItemCount() == 0) {
-                // None left so go back up
-//                    textBox.setFocus(true);
-//                }
-//                clearInput();
-                updateAllTagsListBoxContents();
-                break;
-//            case KeyCodes.KEY_TAB:
-//                textBox.setText(allTagsListBox.getSelectedValue());
-//                break;
         }
     }
 
     private void handleTextBoxKeyUpEvent(final KeyUpEvent event) {
-//            GWT.log("textBox eventTarget: " + event.getNativeEvent().getEventTarget());
         //noinspection EnhancedSwitchMigration
         switch (event.getNativeKeyCode()) {
             case KeyCodes.KEY_ENTER:
-//                    GWT.log("textBox ENTER clicked");
                 addTagsFromTextInput();
                 break;
             case KeyCodes.KEY_DOWN:
-                allTagsListBox.setFocus(true);
-                selectedValue = allTagsListBox.getSelectedValue();
-//                textBox.setText(allTagsListBox.getSelectedValue());
+                allTagsList.focus();
                 break;
             default:
-//                final String text = cleanTag(textBox.getText());
-////                    if (!Objects.equals(textBox.getText(), text)) {
-////                        // replace any uppercase with lowercase
-////                        textBox.setText(text);
-////                    }
                 updateButtonStates();
-                updateAllTagsListBoxContents();
+                updateAllTagsListContents();
         }
     }
 
-    private void onDeleteClicked(final ClickEvent event) {
-        removedSelectedNodeTags();
-//        if (nodeTagsListBox.getItemCount() > 0
-//                && nodeTagsListBox.getSelectedValue() != null) {
-//            if (nodeTagsListBox.isMultipleSelect()) {
-//                for (int i = 0; i < nodeTagsListBox.getItemCount(); i++) {
-//                    if (nodeTagsListBox.isItemSelected(i)) {
-//                        nodeTags.remove(nodeTagsListBox.getValue(i));
-//                    }
-//                }
-//            } else {
-//                nodeTags.remove(nodeTagsListBox.getSelectedValue());
-//            }
-//            updateAllListBoxes();
-//        }
-    }
-
-    private void removedSelectedNodeTags() {
-        if (nodeTagsListBox.getItemCount() > 0
-                && nodeTagsListBox.getSelectedValue() != null) {
-            if (nodeTagsListBox.isMultipleSelect()) {
-                for (int i = 0; i < nodeTagsListBox.getItemCount(); i++) {
-                    if (nodeTagsListBox.isItemSelected(i)) {
-                        nodeTags.remove(nodeTagsListBox.getValue(i));
-                    }
-                }
+    private void removeSelectedNodeTags() {
+        final List<String> selected = TagListModel.getSelectedTags(nodeTagsList);
+        if (!selected.isEmpty()) {
+            selected.forEach(nodeTags::remove);
+            updateAllLists();
+            // The tags removed are gone from the list, so it keeps the focus for the next, or the
+            // field has it once there are none
+            if (nodeTags.isEmpty()) {
+                textBox.setFocus(true);
             } else {
-                nodeTags.remove(nodeTagsListBox.getSelectedValue());
+                nodeTagsList.focus();
             }
-            updateAllListBoxes();
         }
     }
 
-    private void onAddFromInputClicked(final ClickEvent event) {
-        addTagsFromTextInput();
-    }
-
-    private void onClearInputClicked(final ClickEvent event) {
+    private void onClearInputClicked() {
         clearInput();
+        // The button hides itself once the input is empty, which would leave focus nowhere
+        textBox.setFocus(true);
     }
 
     private void addTagsFromTextInput() {
@@ -321,28 +209,17 @@ public class ExplorerNodeEditTagsViewImpl
             // Add the tags from the text box
             nodeTags.addAll(inputToTags(input));
             clearInput();
-            updateAllListBoxes();
+            updateAllLists();
         }
     }
 
-    private void onAddFromAllTagsClicked(final ClickEvent event) {
-        addSelectedTags();
-    }
-
     private void addSelectedTags() {
-        if (allTagsListBox.getItemCount() > 0
-                && allTagsListBox.getSelectedIndex() != -1) {
-
-            if (allTagsListBox.isMultipleSelect()) {
-                for (int i = 0; i < allTagsListBox.getItemCount(); i++) {
-                    if (allTagsListBox.isItemSelected(i)) {
-                        nodeTags.add(allTagsListBox.getValue(i));
-                    }
-                }
-            } else {
-                nodeTags.add(allTagsListBox.getSelectedValue());
-            }
-            updateAllListBoxes();
+        final List<String> selected = TagListModel.getSelectedTags(allTagsList);
+        if (!selected.isEmpty()) {
+            nodeTags.addAll(selected);
+            updateAllLists();
+            // As after adding typed tags, ready to type or filter for the next
+            textBox.setFocus(true);
         }
     }
 
@@ -383,13 +260,12 @@ public class ExplorerNodeEditTagsViewImpl
         return new HashSet<>(nodeTags);
     }
 
-    private void updateAllListBoxes() {
-        updateNodeTagsListBoxContents();
-        updateAllTagsListBoxContents();
+    private void updateAllLists() {
+        updateNodeTagsListContents();
+        updateAllTagsListContents();
     }
 
-    private void updateNodeTagsListBoxContents() {
-        //noinspection SimplifyStreamApiCallChains
+    private void updateNodeTagsListContents() {
         final List<String> tagsList = NullSafe.stream(nodeTags)
                 .sorted()
                 .collect(Collectors.toList());
@@ -397,74 +273,35 @@ public class ExplorerNodeEditTagsViewImpl
         nodeTagsFormGroup.setLabel(documentCount > 1
                 ? "Tags to add to " + documentCount + " Documents"
                 : "Document Tags");
-
-        nodeTagsListBox.clear();
-        for (final String string : tagsList) {
-            nodeTagsListBox.addItem(string);
-        }
-        if (nodeTagsListBox.getItemCount() > 0) {
-            nodeTagsListBox.setSelectedIndex(0);
-            updateButtonStates();
-        }
+        nodeTagsModel.setTags(nodeTagsList, tagsList);
     }
 
-//    private void updateAllTagsListBoxContents() {
-//        updateAllTagsListBoxContents(null);
-//    }
-
-    private void updateAllTagsListBoxContents() {
+    private void updateAllTagsListContents() {
         final String filter = textBox.getText();
-        allTagsListBox.clear();
 
         final Predicate<String> predicate;
         if (NullSafe.isBlankString(filter)) {
             predicate = ALWAYS_TRUE_PREDICATE;
         } else {
             final String lowerCaseFilter = cleanTag(filter);
-            GWT.log("lowerCaseFilter: '" + lowerCaseFilter + "'");
             predicate = tag -> tag.contains(lowerCaseFilter);
         }
 
-        // Include any newly added node tags in the list of all tags
-        allTags.stream()
+        final List<String> tagsList = allTags.stream()
                 .filter(tag -> !nodeTags.contains(tag)) // No point including ones we already have on the node
                 .filter(predicate)
                 .distinct()
                 .sorted()
-                .forEach(allTagsListBox::addItem);
-
-        if (allTagsListBox.getItemCount() > 0) {
-            if (selectedValue != null) {
-                int selectedIdx = -1;
-                for (int i = 0; i < allTagsListBox.getItemCount(); i++) {
-                    if (Objects.equals(selectedValue, allTagsListBox.getValue(i))) {
-                        selectedIdx = i;
-                        break;
-                    }
-                }
-                if (selectedIdx != -1) {
-                    allTagsListBox.setSelectedIndex(selectedIdx);
-                } else {
-                    allTagsListBox.setSelectedIndex(0);
-                }
-            } else {
-                allTagsListBox.setSelectedIndex(0);
-            }
-        }
+                .collect(Collectors.toList());
+        allTagsModel.setTags(allTagsList, tagsList);
         updateButtonStates();
-//        updateAddFromAllTagsEnabledState();
     }
 
     private void updateButtonStates() {
         updateAddFromInputEnabledState();
         updateClearInputVisibleState();
-        updateAddFromAllTagsEnabledState();
-        updateRemoveEnabledState();
-    }
-
-    private void updateAddFromAllTagsEnabledState() {
-        addFromAllTagsButton.setEnabled(allTagsListBox.getItemCount() > 0
-                && allTagsListBox.getSelectedIndex() != -1);
+        addFromAllTagsButton.setEnabled(allTagsList.getSelectionModel().getSelectedCount() > 0);
+        removeButton.setEnabled(nodeTagsList.getSelectionModel().getSelectedCount() > 0);
     }
 
     private void updateClearInputVisibleState() {
@@ -481,11 +318,6 @@ public class ExplorerNodeEditTagsViewImpl
         addFromInputButton.setEnabled(!NullSafe.isBlankString(textBox.getText()));
     }
 
-    private void updateRemoveEnabledState() {
-        removeButton.setEnabled(nodeTagsListBox.getItemCount() > 0
-                && nodeTagsListBox.getSelectedIndex() != -1);
-    }
-
     @Override
     public void setData(final List<DocRef> nodeDocRefs,
                         final Set<String> nodeTags,
@@ -497,22 +329,17 @@ public class ExplorerNodeEditTagsViewImpl
         this.docRefs = nodeDocRefs;
         this.nodeTags.addAll(NullSafe.set(nodeTags));
         this.allTags.addAll(NullSafe.set(allTags));
-        updateNodeTagsListBoxContents();
-        updateAllTagsListBoxContents();
+        // A new set of tags starts with none chosen
+        nodeTagsList.getSelectionModel().clear();
+        allTagsList.getSelectionModel().clear();
+        updateAllLists();
     }
 
     private void clearInput() {
         textBox.setText("");
-//        selectedValue = null;
         updateButtonStates();
-        updateAllListBoxes();
+        updateAllLists();
     }
-
-//    private void setInput(final String text) {
-//        textBox.setText(text);
-////        selectedValue = null;
-//        updateClearInputEnabledState();
-//    }
 
 
     // --------------------------------------------------------------------------------
@@ -521,6 +348,7 @@ public class ExplorerNodeEditTagsViewImpl
     public interface Binder extends UiBinder<Widget, ExplorerNodeEditTagsViewImpl> {
 
     }
+
 
     // --------------------------------------------------------------------------------
 
@@ -532,8 +360,6 @@ public class ExplorerNodeEditTagsViewImpl
 
         @Override
         public void onKeyPress(final KeyPressEvent event) {
-
-//            GWT.log("keypress: " + event.getCharCode());
 
             switch (event.getNativeEvent().getKeyCode()) {
                 case KeyCodes.KEY_ALT:

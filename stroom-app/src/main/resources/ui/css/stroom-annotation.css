@@ -61,7 +61,7 @@
 .annotationId {
     font-size: var(--font-size-24);
     padding: var(--input__padding--vertical) var(--input__padding--horizontal) var(--input__padding--vertical) var(--input__padding--horizontal);
-    opacity: 0.4;
+    color: var(--text-color--muted);
 }
 
 .annotationTitle {
@@ -78,6 +78,11 @@
     background: transparent !important;
     cursor: pointer;
     flex-grow: 1;
+}
+
+/* A read-only value is already greyed (the read-only text colour), so isn't faded as well */
+.annotationTextBox[readonly] {
+    opacity: 1;
 }
 
 .annotationTextBox:focus {
@@ -111,9 +116,9 @@
 
 
 
-.annotationSetting {
-    width: 100%;
-    padding: 5px 0;
+/* 5px above and below as well as the form's room for focus rings */
+.form.max.annotationSetting {
+    padding: calc(var(--focus-ring__room) + 5px) var(--focus-ring__room);
 }
 
 .annotationSettingHeading {
@@ -144,6 +149,11 @@
     flex-grow: 1;
 }
 
+/* A field with no value ("None", "Nobody") */
+.annotationLabel--empty {
+    color: var(--text-color--muted);
+}
+
 .annotationCommentContainer {
     display: flex;
     flex-flow: column;
@@ -155,16 +165,19 @@
 .annotationHistory {
 }
 
+/* A text field as wide as the history above it */
 .annotationComment {
+    width: 100%;
     padding: 5px;
     min-height: 300px;
 }
 
+/* At the right, in the order they are shown (and the Tab key reaches them) */
 .annotationButtons {
     padding: var(--control__gap--vertical) 0;
     display: flex;
     gap: var(--control__gap--horizontal);
-    flex-direction: row-reverse;
+    justify-content: flex-end;
 }
 
 .annotationAssignYourself {
@@ -173,6 +186,13 @@
     cursor: pointer;
     padding-top: 5px;
     text-decoration: underline;
+}
+
+/* Already assigned to you, or read only: shown, but greyed and not underlined */
+.annotationAssignYourself.disabled {
+    color: var(--text-color--disabled);
+    cursor: default;
+    text-decoration: none;
 }
 
 .annotationDurationLabel {
@@ -219,7 +239,7 @@
 .annotationHistoryCommentBorder {
     flex-grow: 1;
     border: 1px solid var(--border-color);
-    background-color: var(--control__background-color);
+    background-color: var(--content-box__background-color);
     border-radius: 5px;
 }
 
@@ -367,6 +387,8 @@
     height: 0.8rem !important;
 }
 
+/* An entry's actions button also shows while it has the focus */
+.annotationHistoryActions:focus,
 .annotationHistoryItem:hover .setting-block-icon,
 .annotationHistoryGroupHeader:hover .setting-block-icon,
 .annotationHistoryCommentHeader:hover .setting-block-icon,
@@ -449,3 +471,15 @@
     resize: none;
 }
 
+/* A read-only annotation's settings: their values greyed, no ellipsis hint, no pointer */
+.setting-block.setting-block--readonly {
+    cursor: default;
+}
+
+.setting-block.setting-block--readonly .gwt-Label {
+    color: var(--control__text-color--readonly);
+}
+
+.setting-block.setting-block--readonly .setting-block-icon {
+    display: none;
+}

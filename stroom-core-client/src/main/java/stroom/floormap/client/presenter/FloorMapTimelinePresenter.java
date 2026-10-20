@@ -18,14 +18,14 @@ package stroom.floormap.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
+import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.floormap.client.event.TimeChangeEvent;
 import stroom.floormap.client.playback.FloorMapPlaybackRange;
 import stroom.floormap.client.playback.FloorMapQueryThrottle;
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter.FloorMapTimelineView;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.help.client.HelpButton;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.histogram.client.HistogramLayout;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -65,11 +65,6 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         AFTER
     }
 
-    private static final Preset PLAY_PRESET = new Preset(SvgImage.PLAY, "Play", true);
-    private static final Preset PAUSE_PRESET = new Preset(SvgImage.PAUSE, "Pause", true);
-    private static final Preset SETTINGS_PRESET = new Preset(SvgImage.SETTINGS, "Playback Settings", true);
-    private static final Preset STEP_BACK_PRESET = new Preset(SvgImage.STEP_BACKWARD, "Step Back", true);
-    private static final Preset STEP_FORWARD_PRESET = new Preset(SvgImage.STEP_FORWARD, "Step Forward", true);
     private static final double SPEED_MULTIPLIER = 1000.0;
 
     /// Playback speed multipliers offered in the speed badge menu.
@@ -226,10 +221,10 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
             }
             playing = !playing;
             if (playing) {
-                getView().setPlayPausePreset(PAUSE_PRESET);
+                getView().setPlayPauseIcon(SvgImage.PAUSE, "Pause");
                 startPlayback();
             } else {
-                getView().setPlayPausePreset(PLAY_PRESET);
+                getView().setPlayPauseIcon(SvgImage.PLAY, "Play");
                 cancelPlayback();
             }
             if (playStateChangeHandler != null) {
@@ -293,10 +288,10 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
             }
         });
 
-        getView().setPlayPausePreset(PLAY_PRESET);
-        getView().setStepBackPreset(STEP_BACK_PRESET);
-        getView().setStepForwardPreset(STEP_FORWARD_PRESET);
-        getView().setSettingsPreset(SETTINGS_PRESET);
+        getView().setPlayPauseIcon(SvgImage.PLAY, "Play");
+        getView().setStepBackIcon(SvgImage.STEP_BACKWARD, "Step Back");
+        getView().setStepForwardIcon(SvgImage.STEP_FORWARD, "Step Forward");
+        getView().setSettingsIcon(SvgImage.SETTINGS, "Playback Settings");
 
         setPlaybackSpeed(1.0);
     }
@@ -320,6 +315,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         final Rect relativeRect = new Rect(getView().getSpeedBadgeWidget().getElement()).grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.ABOVE);
         ShowMenuEvent.builder()
+                .name("Playback Speed")
                 .items(items)
                 .popupPosition(popupPosition)
                 .fire(this);
@@ -458,7 +454,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         if (playing) {
             playing = false;
             cancelPlayback();
-            getView().setPlayPausePreset(PLAY_PRESET);
+            getView().setPlayPauseIcon(SvgImage.PLAY, "Play");
             if (playStateChangeHandler != null) {
                 playStateChangeHandler.accept(false);
             }
@@ -673,7 +669,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
                             if (playStateChangeHandler != null) {
                                 playStateChangeHandler.accept(false);
                             }
-                            getView().setPlayPausePreset(PLAY_PRESET);
+                            getView().setPlayPauseIcon(SvgImage.PLAY, "Play");
                             setCurrentTime(newTime);
                             lastFrameTime = 0;
                             queryThrottle.reset();
@@ -771,10 +767,9 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     ///
     /// @param helpContent the HTML help body to show in the popup
     public void setHelpContent(final SafeHtml helpContent) {
-        final HelpButton helpButton = HelpButton.create("Timeline help");
-        helpButton.setHelpContentHeading("Timeline");
-        helpButton.setHelpContent(helpContent);
-        getView().addRightControl(helpButton);
+        final Toolbar toolbar = new Toolbar("Timeline help");
+        FloorMapEditorHelp.addHelpButton(toolbar, "Timeline help", "Timeline", helpContent);
+        getView().addRightControl(toolbar);
     }
 
     public interface FloorMapTimelineView extends View {
@@ -814,15 +809,16 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         /// Set the text label shown at the right end of the timeline bar (end date).
         void setEndDateLabel(String text);
 
-        void setPlayPausePreset(Preset preset);
+        /// Set the icon and title of the play/pause button.
+        void setPlayPauseIcon(SvgImage icon, String title);
 
         void setPlayPauseHandler(Runnable handler);
 
-        /// Set the icon/title for the step-back button.
-        void setStepBackPreset(Preset preset);
+        /// Set the icon and title of the step-back button.
+        void setStepBackIcon(SvgImage icon, String title);
 
-        /// Set the icon/title for the step-forward button.
-        void setStepForwardPreset(Preset preset);
+        /// Set the icon and title of the step-forward button.
+        void setStepForwardIcon(SvgImage icon, String title);
 
         /// Set the click handler for the step-back button.
         void setStepBackHandler(Runnable handler);
@@ -830,8 +826,8 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         /// Set the click handler for the step-forward button.
         void setStepForwardHandler(Runnable handler);
 
-        /// Set the icon/title for the settings gear button.
-        void setSettingsPreset(Preset preset);
+        /// Set the icon and title of the settings gear button.
+        void setSettingsIcon(SvgImage icon, String title);
 
         /// Set the click handler for the settings gear button.
         void setSettingsHandler(Runnable handler);

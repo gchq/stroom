@@ -25,15 +25,13 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.ExpressionOperator;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
-import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
@@ -41,8 +39,9 @@ import stroom.util.client.ExpiryFormatter;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -84,9 +83,9 @@ public class ApiKeysListPresenter
 //    private final QuickFilterTimer timer = new QuickFilterTimer();
     private final MyDataGrid<HashedApiKey> dataGrid;
     private final UiConfigCache uiConfigCache;
-//    private final InlineSvgButton addButton;
-//    private final InlineSvgButton editButton;
-//    private final InlineSvgButton deleteButton;
+//    private final ToolbarButton addButton;
+//    private final ToolbarButton editButton;
+//    private final ToolbarButton deleteButton;
 
     private RestDataProvider<HashedApiKey, ResultPage<HashedApiKey>> dataProvider = null;
     private Map<Integer, HashedApiKey> apiKeys = new HashMap<>();
@@ -101,8 +100,10 @@ public class ApiKeysListPresenter
                                 final RestFactory restFactory,
                                 final ExpiryFormatter expiryFormatter,
                                 final ClientSecurityContext securityContext,
-                                final UiConfigCache uiConfigCache) {
+                                final UiConfigCache uiConfigCache,
+                                final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, listView);
+        getView().setAccessibleName("Filter API keys");
         this.restFactory = restFactory;
         this.expiryFormatter = expiryFormatter;
         this.securityContext = securityContext;
@@ -132,10 +133,12 @@ public class ApiKeysListPresenter
 
         listView.setDataView(pagerView);
         listView.setUiHandlers(this);
+        listView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                FindApiKeyCriteria.QUICK_FILTER_CONTEXT, this, this));
 
-//        addButton = new InlineSvgButton();
-//        editButton = new InlineSvgButton();
-//        deleteButton = new InlineSvgButton();
+//        addButton = new ToolbarButton();
+//        editButton = new ToolbarButton();
+//        deleteButton = new ToolbarButton();
 //        initButtons();
 //        initTableColumns();
 //        selectionModel.addSelectionHandler(event -> {
@@ -293,7 +296,7 @@ public class ApiKeysListPresenter
         if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
             && owner == null) {
             dataGrid.addColumn(
-                    DataGridUtil.svgPresetColumnBuilder(false, (HashedApiKey row) ->
+                    DataGridUtil.cellIconColumnBuilder(false, (HashedApiKey row) ->
                                     UserAndGroupHelper.mapUserRefTypeToIcon(row.getOwner()))
                             .withSorting(UserFields.FIELD_IS_GROUP)
                             .centerAligned()
@@ -398,6 +401,9 @@ public class ApiKeysListPresenter
                                         getActionScreensToInclude(),
                                         this,
                                         null),
+                                null,
+                                (HashedApiKey hashedApiKey) -> UserAndGroupHelper.buildActionsForMsg(
+                                        NullSafe.get(hashedApiKey, HashedApiKey::getOwner)),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();
@@ -426,10 +432,8 @@ public class ApiKeysListPresenter
                            final Consumer<ResultPage<HashedApiKey>> dataConsumer,
                            final RestErrorHandler errorHandler,
                            final TaskMonitorFactory taskMonitorFactory) {
-        final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(filter, FindApiKeyCriteria.DEFAULT_FIELDS, FindApiKeyCriteria.ALL_FIELDs_MAP);
-
-        criteriaBuilder.expression(expression);
+        // The filter text goes to the server verbatim - see FindApiKeyCriteria.
+        criteriaBuilder.quickFilter(filter);
         criteriaBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
         criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
 
@@ -437,6 +441,10 @@ public class ApiKeysListPresenter
                 .create(API_KEY_RESOURCE)
                 .method(res -> res.find(criteriaBuilder.build()))
                 .onSuccess(response -> {
+                    // A rejected filter comes back as an empty page like any other, so surface
+                    // the reason on the filter box. See ResultPage.filterError.
+                    getView().setFilterError(
+                            NullSafe.get(response.getFilterError(), TokenError::getText));
                     apiKeys.clear();
                     response.stream()
                             .forEach(apiKey -> apiKeys.put(apiKey.getId(), apiKey));
@@ -552,8 +560,11 @@ public class ApiKeysListPresenter
         return isExternalIdp;
     }
 
-    public ButtonView addButton(final Preset preset) {
-        return pagerView.addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return pagerView.getToolbar();
     }
 
     @Override

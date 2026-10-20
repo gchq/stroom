@@ -18,6 +18,7 @@ package stroom.security.identity.shared;
 
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,9 +32,15 @@ import java.util.List;
 @JsonPropertyOrder(alphabetic = true)
 public class AccountResultPage extends ResultPage<Account> {
 
+    public AccountResultPage(final List<Account> values,
+                             final PageResponse pageResponse) {
+        this(values, pageResponse, null);
+    }
+
     @JsonCreator
     public AccountResultPage(@JsonProperty("values") final List<Account> values,
-                             @JsonProperty("pageResponse") final PageResponse pageResponse) {
-        super(values, pageResponse);
+                             @JsonProperty("pageResponse") final PageResponse pageResponse,
+                             @JsonProperty("filterError") final TokenError filterError) {
+        super(values, pageResponse, filterError);
     }
 }

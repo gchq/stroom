@@ -1,0 +1,201 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   Split panes (stroom.widget.layout.client.SplitPane), named BEM style (block, block__element,
+   block--modifier); states come from ARIA attributes and pseudo-classes, not modifiers, but for
+   split-pane--resizing (a splitter is being dragged), which ARIA has no attribute for.
+
+   The split pane is a grid of its panes and splitters, in order; SplitPane sets the tracks
+   (grid-template-columns, or -rows when stacked), with each splitter's track
+   var(--split-pane__splitter-size).
+*/
+
+/* Panes side by side, split by gaps a splitter can be dragged by */
+.split-pane {
+    --split-pane__splitter-size: var(--split__size);
+    --split-pane__grab-size: var(--split__size);
+    /* A thin splitter's colour, set on each split pane so a nested one doesn't take its parent's */
+    --split-pane__splitter-colour: var(--splitter__line-color);
+    display: grid;
+    grid-template-rows: 100%;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Panes stacked one above another */
+.split-pane--vertical {
+    grid-template-rows: none;
+    grid-template-columns: 100%;
+}
+
+/* Split by thin lines, which can still be dragged by the space either side of them */
+.split-pane--thin {
+    --split-pane__splitter-size: 1px;
+}
+
+/* A pane. It is a stacking context of its own, so the split pane's splitters are above all it
+   holds, including the splitters of a split pane nested in it: where two splitters meet in a T,
+   the outer one (and its handle) is on top, and takes the pointer */
+.split-pane__pane {
+    isolation: isolate;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* A pane's widget fills it, as GWT's layout panels make their children fill their layers (two
+   classes deep, so it outranks a widget's own single class rules) */
+.split-pane > .split-pane__pane > * {
+    position: absolute;
+    inset: 0;
+}
+
+/* A splitter. It can be grabbed by more than its track (its margins reach into the panes): a
+   regular splitter's track is the gap between its panes, a thin splitter's its 1px line. */
+.split-pane__splitter {
+    --split-pane__overhang: calc(
+        (var(--split-pane__grab-size) - var(--split-pane__splitter-size)) / 2);
+    position: relative;
+    z-index: 10;
+    margin: 0 calc(-1 * var(--split-pane__overhang));
+    cursor: col-resize;
+    outline: none;
+    touch-action: none;
+    user-select: none;
+}
+
+.split-pane--vertical > .split-pane__splitter {
+    margin: calc(-1 * var(--split-pane__overhang)) 0;
+    cursor: row-resize;
+}
+
+/* A splitter's line, drawn by ::before: 1px across, in the middle of the splitter. A thin
+   splitter's always shows; a regular splitter's (in the middle of its gap) only while it is
+   hovered, dragged or has the keyboard focus */
+.split-pane__splitter::before {
+    content: "";
+    position: absolute;
+    inset: 0 calc(50% - 0.5px);
+}
+
+.split-pane--vertical > .split-pane__splitter::before {
+    inset: calc(50% - 0.5px) 0;
+}
+
+.split-pane--thin > .split-pane__splitter::before,
+.split-pane__splitter:hover::before,
+.split-pane__splitter:active::before {
+    background-color: var(--split-pane__splitter-colour);
+}
+
+/* Beside the explorer, whose splitter is drawn in the navigation colours */
+.split-pane--navigation {
+    --split-pane__splitter-colour: var(--navigation__splitter__line-color);
+}
+
+/* A splitter's handle, drawn by ::after: a short rounded bar across the middle of its line,
+   shown while it is hovered, and lighter (darker in the light theme) while it is dragged. It is
+   5px across, an odd width, so it is centred on the line, 2px either side (the splitter is the
+   7px it can be grabbed by, so its middle less 2.5px is a whole pixel) */
+.split-pane__splitter {
+    --split-pane__handle-length: min(56px, 100%);
+}
+
+.split-pane__splitter::after {
+    content: "";
+    position: absolute;
+    top: calc(50% - var(--split-pane__handle-length) / 2);
+    left: calc(50% - 2.5px);
+    width: 5px;
+    height: var(--split-pane__handle-length);
+    border-radius: 2.5px;
+    background-color: var(--splitter__handle-color);
+    visibility: hidden;
+}
+
+.split-pane--vertical > .split-pane__splitter::after {
+    top: calc(50% - 2.5px);
+    left: calc(50% - var(--split-pane__handle-length) / 2);
+    width: var(--split-pane__handle-length);
+    height: 5px;
+}
+
+.split-pane__splitter:hover::after,
+.split-pane__splitter:active::after {
+    visibility: visible;
+}
+
+.split-pane__splitter:active::after {
+    background-color: var(--splitter__handle-color--active);
+}
+
+/* With the keyboard focus, the line is drawn in the focus colour, with the focus ring either side
+   of it (as the app draws focus, e.g. a toolbar button's), and the handle shows in the focus
+   colour too, without a ring of its own */
+.split-pane__splitter:focus-visible {
+    outline: none;
+}
+
+.split-pane__splitter:focus-visible::before {
+    background-color: var(--splitter__focus-color);
+    box-shadow: var(--focus-shadow);
+}
+
+.split-pane__splitter:focus-visible::after {
+    visibility: visible;
+    background-color: var(--splitter__focus-color);
+}
+
+/* While a splitter is dragged (the one state that is a modifier), its cursor shows everywhere,
+   and the panes don't take the pointer (e.g. a frame in a pane) or select text */
+.split-pane--resizing {
+    cursor: col-resize;
+    user-select: none;
+}
+
+.split-pane--resizing.split-pane--vertical {
+    cursor: row-resize;
+}
+
+.split-pane--resizing > .split-pane__pane {
+    pointer-events: none;
+}
+
+/* In forced colours (e.g. Windows high contrast) backgrounds are replaced, which would leave a
+   splitter's line and handle invisible, so they are drawn in system colours instead */
+@media (forced-colors: active) {
+    .split-pane__splitter::before,
+    .split-pane__splitter::after {
+        forced-color-adjust: none;
+    }
+
+    .split-pane--thin > .split-pane__splitter::before,
+    .split-pane__splitter:hover::before,
+    .split-pane__splitter:active::before,
+    .split-pane__splitter::after {
+        background-color: CanvasText;
+    }
+
+    .split-pane__splitter:active::after,
+    .split-pane__splitter:focus-visible::before,
+    .split-pane__splitter:focus-visible::after {
+        background-color: Highlight;
+        box-shadow: none;
+    }
+}

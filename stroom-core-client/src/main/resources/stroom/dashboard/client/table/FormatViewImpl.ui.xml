@@ -5,12 +5,16 @@
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="formatType" label="Type">
+        <form:FormGroup identity="formatType" label="Type"
+                        helpText="How values in this column are formatted: General, Number, Date Time or Text. Number and Date Time show further options."
+                        screenReaderText="General, Number, Date Time or Text.">
             <i:SelectionBox ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
 
         <!-- Number format settings -->
-        <form:FormGroup ui:field="formatDecimalPlaces" identity="formatDecimalPlaces" label="Decimal Places">
+        <form:FormGroup ui:field="formatDecimalPlaces" identity="formatDecimalPlaces" label="Decimal Places"
+                        helpText="Number of decimal places to show, from 0 to 10."
+                        screenReaderText="0 to 10.">
             <valuespinner:ValueSpinner ui:field="decimalPlaces"
                                        addStyleNames="w-100"/>
         </form:FormGroup>
@@ -22,22 +26,32 @@
         <form:FormGroup ui:field="formatUsePreferences">
             <v:CustomCheckBox ui:field="usePreferences" identity="formatUsePreferences" label="Use Preferences"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="formatFormat" identity="formatFormat" label="Format">
+        <form:FormGroup ui:field="formatFormat" identity="formatFormat" label="Format"
+                        helpText="Date and time format to use, chosen from a list of standard formats. Ignored when Use Preferences is ticked."
+                        screenReaderText="Ignored when Use Preferences is ticked.">
             <i:SelectionBox ui:field="format" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatCustom">
             <v:CustomCheckBox ui:field="custom" identity="formatCustom" label="Custom"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="formatCustomFormat" identity="formatCustomFormat" label="Custom Format">
+        <form:FormGroup ui:field="formatCustomFormat" identity="formatCustomFormat" label="Custom Format"
+                        helpText="Your own date and time pattern, e.g. dd/MM/yyyy HH:mm. Used only when Custom is ticked."
+                        screenReaderText="Pattern, e.g. dd/MM/yyyy HH:mm. Used when Custom is ticked.">
             <g:TextBox ui:field="text" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="formatTimeZone" identity="formatTimeZone" label="Time Zone">
+        <form:FormGroup ui:field="formatTimeZone" identity="formatTimeZone" label="Time Zone"
+                        helpText="Time zone used to show dates when Use Preferences is not ticked: Local (your browser's time zone), UTC, Id (a named zone) or Offset (a fixed offset from UTC). Default is UTC."
+                        screenReaderText="Local, UTC, Id or Offset. Used when Use Preferences is not ticked.">
             <i:SelectionBox ui:field="timeZoneUse" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="formatTimeZoneId" identity="formatTimeZoneId" label="Time Zone Id">
+        <form:FormGroup ui:field="formatTimeZoneId" identity="formatTimeZoneId" label="Time Zone Id"
+                        helpText="Named time zone to use, e.g. Europe/London."
+                        screenReaderText="e.g. Europe/London.">
             <i:SelectionBox ui:field="timeZoneId" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="formatTimeZoneOffset" identity="formatTimeZoneOffset" label="Time Zone Offset">
+        <form:FormGroup ui:field="formatTimeZoneOffset" identity="formatTimeZoneOffset" label="Time Zone Offset"
+                        helpText="Fixed offset from UTC, as hours (-12 to +12) and minutes (0 to 59)."
+                        screenReaderText="Hours, then minutes.">
             <g:FlowPanel>
                 <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
                 <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes"/>

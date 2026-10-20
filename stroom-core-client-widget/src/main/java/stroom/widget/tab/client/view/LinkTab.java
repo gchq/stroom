@@ -30,21 +30,23 @@ public class LinkTab extends AbstractTab {
 
     public LinkTab(final String text, final String tooltip) {
         element = DOM.createDiv();
-        element.setClassName("linkTab");
+        element.setClassName("tab-bar__tab");
         NullSafe.consumeNonBlankString(tooltip, element::setTitle);
 
         background = DOM.createDiv();
-        background.setClassName("linkTab-background");
+        background.setClassName("tab-bar__sizer");
         background.setInnerText(text);
+        // An invisible copy of the label that sizes the tab, so screen readers don't read it
+        background.setAttribute("aria-hidden", "true");
         element.appendChild(background);
 
         label = DOM.createDiv();
-        label.setClassName("linkTab-label");
+        label.setClassName("tab-bar__label");
         label.setInnerText(text);
         element.appendChild(label);
 
         hotspot = DOM.createDiv();
-        hotspot.setClassName("linkTab-hotspot");
+        hotspot.setClassName("tab-bar__hotspot");
         element.appendChild(hotspot);
 
         setElement(element);
@@ -54,29 +56,11 @@ public class LinkTab extends AbstractTab {
         return hotspot;
     }
 
-    @Override
-    protected void setKeyboardSelected(final boolean selected) {
-        if (selected) {
-            element.addClassName("linkTab-keyboardSelected");
-        } else {
-            element.removeClassName("linkTab-keyboardSelected");
-        }
-    }
-
-    @Override
-    public void setSelected(final boolean selected) {
-        if (selected) {
-            element.addClassName("linkTab-selected");
-        } else {
-            element.removeClassName("linkTab-selected");
-        }
-    }
-
     public void setHighlight(final boolean highlight) {
         if (highlight) {
-            hotspot.addClassName("linkTab-hotspotVisible");
+            hotspot.addClassName("tab-bar__hotspot--visible");
         } else {
-            hotspot.removeClassName("linkTab-hotspotVisible");
+            hotspot.removeClassName("tab-bar__hotspot--visible");
         }
     }
 

@@ -5,18 +5,18 @@
              xmlns:refresh-button="urn:import:stroom.data.pager.client">
     <g:FlowPanel styleName="characterNavigator">
         <g:FlowPanel styleName="characterNavigator-labels">
-            <g:Label ui:field="lblLines"
-                     styleName="characterNavigator-label"/>
-            <g:Label ui:field="lblCharacters"
-                     styleName="characterNavigator-label"/>
+            <btn:LinkButton ui:field="lblLines" addStyleNames="characterNavigator-label"/>
+            <btn:LinkButton ui:field="lblCharacters" addStyleNames="characterNavigator-label"/>
         </g:FlowPanel>
         <!--        <g:SimplePanel ui:field="progressBarPanel"-->
         <!--                       styleName="characterNavigator-progressBarPanel"/>-->
-        <g:FlowPanel styleName="button-container">
-            <btn:SvgButton ui:field="showHeadCharactersBtn"/>
-            <btn:SvgButton ui:field="advanceCharactersBackwardBtn"/>
-            <btn:SvgButton ui:field="advanceCharactersForwardBtn"/>
+        <btn:Toolbar name="Character navigation">
+            <btn:ToolbarButton ui:field="showHeadCharactersBtn" svg="FAST_BACKWARD" title="Show Beginning"/>
+            <btn:ToolbarButton ui:field="advanceCharactersBackwardBtn" svg="STEP_BACKWARD"
+                               title="Advance Range Backwards"/>
+            <btn:ToolbarButton ui:field="advanceCharactersForwardBtn" svg="STEP_FORWARD"
+                               title="Advance Range Forwards"/>
             <refresh-button:RefreshButton ui:field="refresh"/>
-        </g:FlowPanel>
+        </btn:Toolbar>
     </g:FlowPanel>
 </ui:UiBinder>

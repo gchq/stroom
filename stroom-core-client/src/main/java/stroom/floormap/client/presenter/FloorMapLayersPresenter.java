@@ -20,7 +20,8 @@ import stroom.floormap.client.FloorMapSwatchHtml;
 import stroom.floormap.client.presenter.FloorMapLayersPresenter.FloorMapLayersView;
 import stroom.floormap.shared.TypeStyle;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DataTransfer.DropEffect;
@@ -287,12 +288,12 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         final FlowPanel footer = new FlowPanel();
         footer.addStyleName("floormap-layers-footer");
 
-        final InlineSvgButton discover = new InlineSvgButton();
-        discover.setSvg(SvgImage.REFRESH);
-        discover.setTitle("Discover types from the facts store");
-        //noinspection unused event
-        discover.addClickHandler(event -> discoverHandler.run());
-        footer.add(discover);
+        final Toolbar toolbar = new Toolbar("Discover types");
+        toolbar.addStyleName("floormap-layer-toolbar");
+        final ToolbarButton discover = toolbar.button(
+                SvgImage.REFRESH, "Discover types from the facts store", () -> discoverHandler.run());
+        discover.addStyleName("floormap-layers-discover");
+        footer.add(toolbar);
 
         final Label label = new Label("Discover types");
         label.addStyleName("floormap-layers-footer-label");
@@ -319,13 +320,12 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         name.setTitle("Discovered type — not yet a saved layer");
         row.add(name);
 
-        final InlineSvgButton add = new InlineSvgButton();
+        final Toolbar toolbar = new Toolbar(type + " layer actions");
+        toolbar.addStyleName("floormap-layer-toolbar");
+        final ToolbarButton add = toolbar.button(
+                SvgImage.ADD, "Add the discovered type " + type + " as a layer", () -> promote(type));
         add.addStyleName("floormap-layer-add");
-        add.setSvg(SvgImage.ADD);
-        add.setTitle("Add the discovered type " + type + " as a layer");
-        //noinspection unused event
-        add.addClickHandler(event -> promote(type));
-        row.add(add);
+        row.add(toolbar);
         return row;
     }
 
@@ -519,11 +519,15 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         name.addStyleName("floormap-layer-name");
         applyNameState(name, state);
 
-        final InlineSvgButton eye = new InlineSvgButton();
+        // The row's eye and lock buttons, as one tab stop
+        final Toolbar toolbar = new Toolbar(type + " layer actions");
+        toolbar.addStyleName("floormap-layer-toolbar");
+
+        // Its icon and name are set by applyEyeState
+        final ToolbarButton eye = toolbar.button(SvgImage.EYE, type + " layer visibility", null);
         eye.addStyleName("floormap-layer-eye");
         applyEyeState(eye, type, state);
-        //noinspection unused event
-        eye.addClickHandler(event -> {
+        eye.setOnClick(() -> {
             // Cycle full → 30% → off → full.
             final int next = (visibilityByType.getOrDefault(type, FULL) + 2) % 3;
             visibilityByType.put(type, next);
@@ -534,16 +538,14 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
             }
         });
 
-        row.add(eye);
-
         // Editor-only: a lock toggle. Locked layers stay visible but their items
         // can't be moved on the canvas. Transient (per session).
         if (editorMode) {
-            final InlineSvgButton lock = new InlineSvgButton();
+            // Its icon and name are set by applyLockState
+            final ToolbarButton lock = toolbar.button(SvgImage.UNLOCKED_DEFAULT_COLOUR, type + " layer lock", null);
             lock.addStyleName("floormap-layer-lock");
             applyLockState(lock, type, lockedTypes.contains(type));
-            //noinspection unused event
-            lock.addClickHandler(event -> {
+            lock.setOnClick(() -> {
                 final boolean nowLocked = !lockedTypes.contains(type);
                 if (nowLocked) {
                     lockedTypes.add(type);
@@ -555,9 +557,9 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
                     changeHandler.run();
                 }
             });
-            row.add(lock);
         }
 
+        row.add(toolbar);
         row.add(name);
 
         // Editor-only: a swatch previewing the layer's graphic — its image if it
@@ -604,7 +606,7 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
     /// Disabled controls are exempt, but none of these are disabled.
     private static final double MIN_ENABLED_ICON_OPACITY = 0.7;
 
-    private void applyLockState(final InlineSvgButton lock,
+    private void applyLockState(final ToolbarButton lock,
                                 final String type,
                                 final boolean locked) {
         lock.setSvg(locked
@@ -620,7 +622,7 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
                 : MIN_ENABLED_ICON_OPACITY);
     }
 
-    private void applyEyeState(final InlineSvgButton eye,
+    private void applyEyeState(final ToolbarButton eye,
                                final String type,
                                final int state) {
         switch (state) {

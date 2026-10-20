@@ -19,9 +19,11 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.presenter.FindUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -31,6 +33,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
+import java.util.function.Supplier;
 
 public class FindViewImpl
         extends ViewWithUiHandlers<FindUiHandlers>
@@ -49,6 +53,16 @@ public class FindViewImpl
     public FindViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         setDialogMode(true);
+    }
+
+    @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        nameFilter.setContextHandler(contextHandler);
     }
 
     @Override
@@ -73,6 +87,17 @@ public class FindViewImpl
         } else {
             widget.removeStyleName("FindViewImpl--dialog");
         }
+    }
+
+    @Override
+    public void setFilterGuidance(final String accessibleName, final String description) {
+        nameFilter.setAccessibleName(accessibleName);
+        nameFilter.setDescription(description);
+    }
+
+    @Override
+    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+        nameFilter.registerPopupTextProvider(popupTextSupplier);
     }
 
     @UiHandler("nameFilter")

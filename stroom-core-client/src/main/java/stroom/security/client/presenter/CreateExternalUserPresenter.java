@@ -23,6 +23,7 @@ import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExtern
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserDesc;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
@@ -58,8 +59,15 @@ public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExterna
     public void create(final Consumer<User> consumer,
                        final HidePopupRequestEvent event,
                        final TaskMonitorFactory taskMonitorFactory) {
+        final String subjectId = NullSafe.trim(getView().getSubjectId());
+        if (subjectId.isEmpty()) {
+            // Said under the field, which is focused, so a screen reader reads it
+            getView().setSubjectIdInvalid("You must provide the user's unique identity");
+            event.reset();
+            return;
+        }
         final UserDesc userDesc = new UserDesc(
-                getView().getSubjectId(),
+                subjectId,
                 getView().getDisplayName(),
                 getView().getFullName());
         restFactory
@@ -123,6 +131,12 @@ public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExterna
         @Override
         void focus();
 
+        /// Clears the fields and any message about them being invalid.
         void clear();
+
+        /// Shows why the unique identity is invalid, under its field, and focuses the field.
+        ///
+        /// @param message What is wrong with the unique identity.
+        void setSubjectIdInvalid(String message);
     }
 }

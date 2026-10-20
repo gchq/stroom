@@ -28,7 +28,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.query.api.ExpressionOperator;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
@@ -36,17 +36,16 @@ import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.security.shared.PermissionShowLevel;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -96,8 +95,11 @@ public class DocumentUserPermissionsListPresenter
                                                 final RestFactory restFactory,
                                                 final UiConfigCache uiConfigCache,
                                                 final DocumentTypeCache documentTypeCache,
-                                                final ClientSecurityContext securityContext) {
+                                                final ClientSecurityContext securityContext,
+                                                final QuickFilterContextHandlerFactory
+                                                        quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
+        getView().setAccessibleName("Filter users");
         this.restFactory = restFactory;
         this.pagerView = pagerView;
         this.securityContext = securityContext;
@@ -108,6 +110,8 @@ public class DocumentUserPermissionsListPresenter
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
+        // In a dialog, the table and its toolbar are framed as a control (see components.css)
+        pagerView.asWidget().addStyleName("documentUserPermissions-table");
 
         // Not easy to determine if we are dealing in users or groups at this point so just
         // call it Quick Filter
@@ -122,6 +126,8 @@ public class DocumentUserPermissionsListPresenter
 
         userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
+        userListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                UserFields.QUICK_FILTER_CONTEXT, this, this));
 
 //        criteriaBuilder.sortList(List.of(
 //                new CriteriaFieldSort(
@@ -148,9 +154,8 @@ public class DocumentUserPermissionsListPresenter
         }
         // Clear to ensure we go back to page one
         clear();
-        final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
-        criteriaBuilder.expression(expression);
+        // The filter text goes to the server verbatim - see FindUserCriteria.
+        criteriaBuilder.quickFilter(text);
         refresh();
     }
 
@@ -170,6 +175,8 @@ public class DocumentUserPermissionsListPresenter
                                     .create(DOC_PERMISSION_RESOURCE)
                                     .method(res -> res.fetchDocumentUserPermissions(request))
                                     .onSuccess(response -> {
+                                        getView().setFilterError(NullSafe.get(
+                                                response.getFilterError(), TokenError::getText));
                                         GWT.log("Fetched " + response.size() + " records");
                                         dataConsumer.accept(response);
                                     })
@@ -203,7 +210,7 @@ public class DocumentUserPermissionsListPresenter
     private void setupColumns(final DocumentTypes documentTypes) {
         // Icon
         dataGrid.addColumn(
-                DataGridUtil.svgPresetColumnBuilder(false, (DocumentUserPermissions row) ->
+                DataGridUtil.cellIconColumnBuilder(false, (DocumentUserPermissions row) ->
                                 UserAndGroupHelper.mapUserRefTypeToIcon(row.getUserRef()))
                         .withSorting(UserFields.FIELD_IS_GROUP)
                         .centerAligned()
@@ -350,12 +357,11 @@ public class DocumentUserPermissionsListPresenter
         }
     }
 
-    public ButtonView addButton(final Preset preset) {
-        return pagerView.addButton(preset);
-    }
-
-    public void addButton(final ButtonView buttonView) {
-        pagerView.addButton(buttonView);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return pagerView.getToolbar();
     }
 
     public MultiSelectionModel<DocumentUserPermissions> getSelectionModel() {

@@ -5,10 +5,10 @@
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="mainToolbar">
         <s:Spinner ui:field="spinner" styleName="spinner mainViewImpl-spinner"/>
-        <b:InlineSvgToggleButton  ui:field="showAi" title="Ask Stroom AI"
-                                  addStyleNames="mainViewImpl-menu navigation-menu-button focus-without-border"/>
-        <b:InlineSvgButton ui:field="menu" title="Show Menu"
-                           addStyleNames="mainViewImpl-menu navigation-menu-button focus-without-border"/>
+        <b:Toolbar name="Application" addStyleNames="toolbar--quiet">
+            <b:ToolbarToggleButton ui:field="showAi" svg="AI" title="Ask Stroom AI"/>
+            <b:ToolbarButton ui:field="menu" svg="ELLIPSES_VERTICAL" title="Show Main Menu" opensMenu="true"/>
+        </b:Toolbar>
     </g:FlowPanel>
 </ui:UiBinder>
 

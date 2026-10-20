@@ -27,12 +27,11 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -45,6 +44,9 @@ import java.util.function.Consumer;
 
 public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         implements HasDocumentRead<DictionaryDoc>, HasDocumentWrite<DictionaryDoc>, HasChangeHandlers {
+
+    private static final String ADD_TITLE = "Add Imported Dictionary";
+    private static final String REMOVE_TITLE = "Remove Imported Dictionary";
 
     private final DocRefListPresenter docRefListPresenter;
     private final Provider<DocSelectionPopup> dictionarySelection;
@@ -66,8 +68,10 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
 
         view.setView(docRefListPresenter.getView());
 
-        addButton = docRefListPresenter.getView().addButton(SvgPresets.ADD);
-        removeButton = docRefListPresenter.getView().addButton(SvgPresets.DELETE);
+        docRefListPresenter.getView().getToolbar().setName("Dictionary actions");
+        addButton = docRefListPresenter.getView().getToolbar().button(SvgImage.ADD, ADD_TITLE, this::onAdd);
+        removeButton = docRefListPresenter.getView().getToolbar().button(SvgImage.DELETE, REMOVE_TITLE, this::onRemove);
+        removeButton.setEnabled(false);
         docRefListPresenter.initTableColumns("Document Name", true);
 
         enableButtons();
@@ -76,13 +80,10 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     @Override
     protected void onBind() {
         super.onBind();
-
-        registerHandler(addButton.addClickHandler(this::onAdd));
-        registerHandler(removeButton.addClickHandler(this::onRemove));
         registerHandler(docRefListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
     }
 
-    private void onAdd(final ClickEvent event) {
+    private void onAdd() {
         final DocSelectionPopup chooser = dictionarySelection.get();
         chooser.setCaption("Import a dictionary");
         chooser.setIncludedTypes(DictionaryDoc.TYPE);
@@ -96,7 +97,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         });
     }
 
-    public void onRemove(final ClickEvent event) {
+    public void onRemove() {
         final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
         final List<DocRef> selected = selectionModel.getSelectedItems();
         if (NullSafe.hasItems(selected)) {
@@ -169,13 +170,12 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         addButton.setEnabled(!readOnly);
         removeButton.setEnabled(!readOnly && NullSafe.hasItems(selectionModel.getSelectedItems()));
 
-        if (readOnly) {
-            addButton.setTitle("Add import disabled as this dictionary is read only");
-            removeButton.setTitle("Remove import disabled as this dictionary is read only");
-        } else {
-            addButton.setTitle("Add Import");
-            removeButton.setTitle("Remove Import");
-        }
+        // The name stays, with why the buttons are disabled for a read-only dictionary
+        final String suffix = readOnly
+                ? " (dictionary is read only)"
+                : "";
+        addButton.setTitle(ADD_TITLE + suffix);
+        removeButton.setTitle(REMOVE_TITLE + suffix);
     }
 
     private void refresh() {

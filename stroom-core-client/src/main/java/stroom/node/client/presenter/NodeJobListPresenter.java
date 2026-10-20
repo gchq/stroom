@@ -40,12 +40,10 @@ import stroom.schedule.client.SchedulePopup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.InlineSvgToggleButton;
-import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -65,17 +63,15 @@ import java.util.stream.Collectors;
 public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading> implements Refreshable {
 
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
-    private static final String AUTO_REFRESH_ON_TITLE = "Turn Auto Refresh Off";
-    private static final String AUTO_REFRESH_OFF_TITLE = "Turn Auto Refresh On";
 
     private final JobNodeListHelper jobNodeListHelper;
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
     private final MyDataGrid<JobNodeAndInfo> dataGrid;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
-    private final InlineSvgToggleButton showEnabledToggleBtn;
+    private final ToolbarToggleButton showEnabledToggleBtn;
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final NodeClient nodeClient;
-    private final InlineSvgToggleButton autoRefreshButton;
+    private final ToolbarToggleButton autoRefreshButton;
 
     private boolean autoRefresh;
 
@@ -84,7 +80,6 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
                                 final PagerViewWithHeading view,
                                 final RestFactory restFactory,
                                 final SchedulePopup schedulePresenter,
-                                final MenuPresenter menuPresenter,
                                 final DateTimeFormatter dateTimeFormatter,
                                 final NodeClient nodeClient) {
         super(eventBus, view);
@@ -99,21 +94,18 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
                 dateTimeFormatter,
                 restFactory,
                 schedulePresenter,
-                menuPresenter,
                 selectionModel,
                 getView(),
                 NodeJobListPresenter.this,
                 this::internalRefresh);
 
-        this.showEnabledToggleBtn = jobNodeListHelper.buildJobFilterButton();
-        view.addButton(showEnabledToggleBtn);
+        view.getToolbar().setName("Node job actions");
+        this.showEnabledToggleBtn = jobNodeListHelper.addJobFilterButton(view.getToolbar());
 
         autoRefresh = false;
-        autoRefreshButton = new InlineSvgToggleButton();
-        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
-        autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
+        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Auto Refresh",
+                pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
-        getView().addButton(autoRefreshButton);
 
         // Must call this after initialising JobNodeListHelper
         initTable();
@@ -130,21 +122,16 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         }, getView());
     }
 
+    private void onAutoRefreshToggled() {
+        autoRefresh = !autoRefresh;
+        if (autoRefresh) {
+            internalRefresh();
+        }
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
-
-        registerHandler(autoRefreshButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                autoRefresh = !autoRefresh;
-                if (autoRefresh) {
-                    autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
-                    internalRefresh();
-                } else {
-                    autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
-                }
-            }
-        }));
 
         // NodeLisPresenter may change a node
         // Currently the node state does not affect how the job nodes are displayed

@@ -58,9 +58,8 @@ import stroom.sqlstore.shared.TemporalStoreTimeRange;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.Console;
 import stroom.util.shared.TemporalEntry;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.InlineSvgToggleButton;
-import stroom.widget.help.client.HelpButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -73,7 +72,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -185,19 +183,22 @@ public class FloorMapEditorPresenter
     /// The GWT-free model containing all shared state and pure logic.
     private final FloorMapEditorModel model;
 
-    /// Toolbar toggle controlling the canvas grid overlay. Shown next to the
-    /// document save buttons via [HasToolbar] whenever the Editor tab is
-    /// active. On by default — the grid is the primary editing aid.
-    private final InlineSvgToggleButton showGridButton;
+    /// The Editor tab's buttons for the document toolbar (Save / Save As …), shown
+    /// via [HasToolbar#getDocumentButtons()] whenever the Editor tab is active.
+    private final Toolbar editorToolbar = new Toolbar("Floor map editor actions");
 
-    /// Contribution to the document toolbar (Save / Save As …): a single help
-    /// button for the map-interaction help, shown only while the Editor tab is
-    /// active (via [HasToolbar#getToolbars()]).
-    private final ButtonPanel helpToolbar;
+    /// Toolbar toggle controlling the canvas grid overlay. On by default — the
+    /// grid is the primary editing aid.
+    private final ToolbarToggleButton showGridButton;
 
     /// Toolbar toggle that shows/hides the right-hand dock, which holds the Layers
     /// panel. On by default, matching the view, which starts the dock visible.
-    private final InlineSvgToggleButton dockToggleButton;
+    private final ToolbarToggleButton dockToggleButton;
+
+    /// A toolbar after the document toolbar holding a single help button for the
+    /// map-interaction help, shown only while the Editor tab is active (via
+    /// [HasToolbar#getToolbars()]).
+    private final Toolbar helpToolbar;
 
     /// The Editor's pending document-level edits — the area-support upgrade and
     /// the Layers-panel type-styles list — with their read/write invariants. The
@@ -268,17 +269,15 @@ public class FloorMapEditorPresenter
 
         // Grid on/off toggle, surfaced next to the save buttons (HasToolbar).
         // SvgImage has no dedicated grid glyph; TABLE renders as a grid of cells.
-        showGridButton = new InlineSvgToggleButton();
-        showGridButton.setSvg(SvgImage.TABLE);
-        showGridButton.setTitle("Toggle Grid");
-        showGridButton.setState(true);
+        showGridButton = editorToolbar.toggle(
+                SvgImage.TABLE, "Toggle Grid", floorMapCanvasPresenter::setShowGrid);
+        showGridButton.setPressed(true);
 
         // Show/hide the right-hand dock (the Layers panel). On by default, to
         // match FloorMapEditorViewImpl, which starts the dock visible.
-        dockToggleButton = new InlineSvgToggleButton();
-        dockToggleButton.setSvg(SvgImage.SHOW_MENU);
-        dockToggleButton.setTitle("Toggle Controls");
-        dockToggleButton.setState(true);
+        dockToggleButton = editorToolbar.toggle(
+                SvgImage.SHOW_MENU, "Toggle Controls", getView()::setDockVisible);
+        dockToggleButton.setPressed(true);
         // Persist a drag as a single translate of the whole selection.
         floorMapCanvasPresenter.setDragHandler(this::onFactsTransformed);
         floorMapCanvasPresenter.setGeometryHandler(this::onFactGeometryEdited);
@@ -329,14 +328,6 @@ public class FloorMapEditorPresenter
     @Override
     protected void onBind() {
         super.onBind();
-
-        // ---- Toolbar ---------------------------------------------------------
-        //noinspection unused e
-        registerHandler(showGridButton.addClickHandler(e ->
-                floorMapCanvasPresenter.setShowGrid(showGridButton.getState())));
-        //noinspection unused e
-        registerHandler(dockToggleButton.addClickHandler(e ->
-                getView().setDockVisible(dockToggleButton.getState())));
 
         // Event objects are produced by the events query and broadcast
         // on the shared event bus (driven by the Map tab). Listen here too so
@@ -395,31 +386,33 @@ public class FloorMapEditorPresenter
     /// describing the map interaction model, pushed to the right-hand end of the
     /// toolbar.
     ///
-    /// @return the help toolbar panel
-    private ButtonPanel createHelpToolbar() {
-        final ButtonPanel buttonPanel = new ButtonPanel();
-        // Float the panel to the right-hand end of the flex toolbar container,
+    /// @return the help toolbar
+    private Toolbar createHelpToolbar() {
+        final Toolbar toolbar = new Toolbar("Floor map editor help");
+        // Float the toolbar to the right-hand end of the flex toolbar container,
         // past the save and grid buttons.
-        buttonPanel.getElement().getStyle().setProperty("marginLeft", "auto");
-        final HelpButton helpButton = HelpButton.create("Floor Map Editor help");
-        helpButton.setHelpContentHeading("Floor Map Editor");
-        helpButton.setHelpContent(FloorMapEditorHelp.canvas());
-        buttonPanel.addButton(helpButton);
-        return buttonPanel;
+        toolbar.getElement().getStyle().setProperty("marginLeft", "auto");
+        FloorMapEditorHelp.addHelpButton(
+                toolbar, "Floor Map Editor help", "Floor Map Editor", FloorMapEditorHelp.canvas());
+        return toolbar;
     }
 
     /// {@inheritDoc}
     ///
-    /// Contributes the Editor tab's toolbar buttons whenever the tab is shown:
-    /// the grid toggle (next to the document Save / Save As buttons) and, at the
-    /// right-hand end, the map help button. `DocTabPresenter` appends these
-    /// after the save buttons.
+    /// Contributes the grid and dock toggles to the document toolbar, after the
+    /// Save / Save As buttons, whenever the Editor tab is shown.
+    @Override
+    public List<Widget> getDocumentButtons() {
+        return Collections.singletonList(editorToolbar);
+    }
+
+    /// {@inheritDoc}
+    ///
+    /// Contributes the map help button, at the right-hand end of the toolbar
+    /// row, whenever the Editor tab is shown.
     @Override
     public List<Widget> getToolbars() {
-        final ButtonPanel gridToolbar = new ButtonPanel();
-        gridToolbar.addButton(showGridButton);
-        gridToolbar.addButton(dockToggleButton);
-        return Arrays.asList(gridToolbar, helpToolbar);
+        return Collections.singletonList(helpToolbar);
     }
 
     // -----------------------------------------------------------------------
@@ -1399,7 +1392,7 @@ public class FloorMapEditorPresenter
     ///   - "Edit Properties" — selects the object and opens the property editor
     ///   - "Add Time Version" — creates a new effective time entry at the scrubber
     ///     position, cloned from the current version
-    ///   - "Duplicate Object" — clones the object with a new key, offset slightly
+    ///   - "Duplicate" — clones the object with a new key, offset slightly
     ///   - "Delete From This Time" — confirms and stages a version at the scrubber
     ///     position that marks the object deleted, keeping its history
     ///   - "Erase History" — confirms and stages deletion of all time entries
@@ -1421,9 +1414,12 @@ public class FloorMapEditorPresenter
         }
 
         final List<Item> menuItems = new ArrayList<>();
+        // The menu's accessible name, saying what it acts on
+        final String menuName;
 
         if (vertexIndex >= 0) {
             // ---- Right-clicked an area vertex handle ----
+            menuName = "Actions for area vertex " + (vertexIndex + 1);
             menuItems.add(new IconMenuItem.Builder()
                     .priority(1)
                     .icon(SvgImage.DELETE)
@@ -1432,6 +1428,7 @@ public class FloorMapEditorPresenter
                     .build());
         } else if (objectId == null) {
             // ---- Right-clicked on empty canvas ----
+            menuName = "Map Actions";
             menuItems.add(new IconMenuItem.Builder()
                     .priority(1)
                     .icon(SvgImage.ADD)
@@ -1456,26 +1453,28 @@ public class FloorMapEditorPresenter
             // ---- Right-clicked within a multi-selection: group actions ----
             final List<String> keys = new ArrayList<>(model.getSelectedFactKeys());
             final int n = keys.size();
+            menuName = "Actions for " + n + " selected objects";
             menuItems.add(new IconMenuItem.Builder()
                     .priority(1)
                     .icon(SvgImage.COPY)
-                    .text("Duplicate Selected (" + n + ")")
+                    .text("Duplicate")
                     .command(() -> onDuplicateObjects(keys))
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .priority(2)
                     .icon(SvgImage.REMOVE)
-                    .text("Delete Selected From This Time (" + n + ")")
+                    .text("Delete From This Time")
                     .command(() -> onEndFacts(keys))
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .priority(3)
                     .icon(SvgImage.DELETE)
-                    .text("Erase History of Selected (" + n + ")")
+                    .text("Erase History")
                     .command(() -> onDeleteObjects(keys))
                     .build());
         } else {
             // ---- Right-clicked on a single object ----
+            menuName = "Actions for object '" + floorMapCanvasPresenter.displayNameOrId(objectId) + "'";
 
             // Edit Properties
             menuItems.add(new IconMenuItem.Builder()
@@ -1541,11 +1540,11 @@ public class FloorMapEditorPresenter
                     })
                     .build());
 
-            // Duplicate Object
+            // Duplicate
             menuItems.add(new IconMenuItem.Builder()
                     .priority(3)
                     .icon(SvgImage.COPY)
-                    .text("Duplicate Object")
+                    .text("Duplicate")
                     .command(() -> onDuplicateObject(objectId))
                     .build());
 
@@ -1591,6 +1590,7 @@ public class FloorMapEditorPresenter
         final PopupPosition popupPosition = new PopupPosition(clientX, clientY);
         ShowMenuEvent
                 .builder()
+                .name(menuName)
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);

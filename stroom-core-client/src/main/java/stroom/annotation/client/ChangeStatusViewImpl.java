@@ -56,10 +56,10 @@ public class ChangeStatusViewImpl extends ViewWithUiHandlers<ChangeStatusUiHandl
     public void setStatus(final AnnotationTag status) {
         if (status == null) {
             this.status.setText("None");
-            this.status.getElement().getStyle().setOpacity(0.5);
+            this.status.addStyleName(AnnotationEditViewImpl.EMPTY_VALUE_STYLE);
         } else {
             this.status.setText(status.getName());
-            this.status.getElement().getStyle().setOpacity(1);
+            this.status.removeStyleName(AnnotationEditViewImpl.EMPTY_VALUE_STYLE);
         }
     }
 

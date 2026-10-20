@@ -22,12 +22,11 @@ import stroom.security.client.presenter.UserListPresenter.Mode;
 import stroom.security.client.presenter.UsersPresenter.UsersView;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -49,9 +48,8 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     private final CreateUserPresenter createUserPresenter;
     private final Provider<CreateNewGroupPresenter> createNewGroupPresenterProvider;
 
-    private ButtonView createButton = null;
-    //    private ButtonView editButton = null;
-    private ButtonView deleteButton = null;
+    //    private final ToolbarButton editButton;
+    private final ToolbarButton deleteButton;
 
     @Inject
     public UsersPresenter(final EventBus eventBus,
@@ -78,9 +76,12 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
         this.userList.setShowEnabledCol(true);
         this.userList.setValidUserScreensForActionMenu(UserScreen.allExcept(UserScreen.USERS));
 
-        createButton = userList.addButton(SvgPresets.ADD.title("Create User"));
-//        editButton = userList.addButton(SvgPresets.EDIT.title("Edit User"));
-        deleteButton = userList.addButton(SvgPresets.DELETE.title("Delete User"));
+        final Toolbar toolbar = userList.getToolbar();
+        toolbar.setName("User actions");
+        toolbar.button(SvgImage.ADD, "Create User", this::onCreateUserOrGroup);
+//        editButton = toolbar.button(SvgImage.EDIT, "Edit User", this::onEditUserOrGroup);
+        deleteButton = toolbar.button(SvgImage.DELETE, "Delete Selected User", this::onDelete);
+        deleteButton.setEnabled(false);
 
         /// Initialise state.
         onSelection();
@@ -89,21 +90,6 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(createButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onCreateUserOrGroup();
-            }
-        }));
-//        registerHandler(editButton.addClickHandler(e -> {
-//            if (MouseUtil.isPrimary(e)) {
-//                onEditUserOrGroup();
-//            }
-//        }));
-        registerHandler(deleteButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onDelete();
-            }
-        }));
         registerHandler(userList.getSelectionModel().addSelectionHandler(e -> {
             onSelection();
         }));
@@ -138,15 +124,14 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
             deleteButton.setTitle("Delete " + getDescription(selected));
             deleteButton.setEnabled(true);
         } else {
-//            editButton.setTitle("No Selection");
 //            editButton.setEnabled(false);
-            deleteButton.setTitle("No Selection");
+            deleteButton.setTitle("Delete Selected User");
             deleteButton.setEnabled(false);
         }
     }
 
     private String getDescription(final User user) {
-        return "user '" + user.asRef().toDisplayString() + "'";
+        return "User '" + user.asRef().toDisplayString() + "'";
     }
 
     @Override

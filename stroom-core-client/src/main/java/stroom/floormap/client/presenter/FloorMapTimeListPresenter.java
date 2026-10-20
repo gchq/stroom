@@ -23,12 +23,11 @@ import stroom.floormap.client.editor.FloorMapEditorModel;
 import stroom.floormap.client.presenter.FloorMapTimeListPresenter.FloorMapTimeListView;
 import stroom.floormap.shared.FloorMapJsonKeys;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.TemporalEntry;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.help.client.HelpButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.json.client.JSONObject;
@@ -64,9 +63,8 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
     private final ListDataProvider<TemporalEntry> dataProvider = new ListDataProvider<>();
     private final SingleSelectionModel<TemporalEntry> selectionModel = new SingleSelectionModel<>();
 
-    private final ButtonView editButton;
-    private final ButtonView addButton;
-    private final ButtonView deleteButton;
+    private final ToolbarButton editButton;
+    private final ToolbarButton deleteButton;
 
     private Consumer<TemporalEntry> selectionConsumer;
     private Consumer<TemporalEntry> editConsumer;
@@ -90,20 +88,41 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         initGridColumns();
         dataProvider.addDataDisplay(dataGrid);
 
-        final ButtonPanel toolbar = new ButtonPanel();
-        editButton = toolbar.addButton(SvgPresets.EDIT);
+        final Toolbar toolbar = new Toolbar("Time list actions");
+        editButton = toolbar.button(SvgImage.EDIT, "Edit", this::onEdit);
         editButton.setEnabled(false);
-        addButton = toolbar.addButton(SvgPresets.ADD);
-        deleteButton = toolbar.addButton(SvgPresets.DELETE);
+        toolbar.button(SvgImage.ADD, "Add", this::onAdd);
+        deleteButton = toolbar.button(SvgImage.DELETE, "Delete", this::onDelete);
         deleteButton.setEnabled(false);
 
         // Help button (Editor-only panel).
-        final HelpButton helpButton = HelpButton.create("Time List help");
-        helpButton.setHelpContentHeading("Time List");
-        helpButton.setHelpContent(FloorMapEditorHelp.timeList());
-        toolbar.addButton(helpButton);
+        FloorMapEditorHelp.addHelpButton(toolbar, "Time List help", "Time List", FloorMapEditorHelp.timeList());
 
         view.setToolbar(toolbar);
+    }
+
+    private void onEdit() {
+        if (editConsumer != null) {
+            final TemporalEntry selected = selectionModel.getSelectedObject();
+            if (selected != null) {
+                editConsumer.accept(selected);
+            }
+        }
+    }
+
+    private void onAdd() {
+        if (addConsumer != null) {
+            addConsumer.run();
+        }
+    }
+
+    private void onDelete() {
+        if (deleteConsumer != null) {
+            final TemporalEntry selected = selectionModel.getSelectedObject();
+            if (selected != null) {
+                deleteConsumer.accept(selected);
+            }
+        }
     }
 
     @Override
@@ -144,33 +163,6 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
                             }
                         });
                     }
-                }
-            }
-        }));
-
-        //noinspection unused
-        registerHandler(editButton.addClickHandler(e -> {
-            if (editConsumer != null) {
-                final TemporalEntry selected = selectionModel.getSelectedObject();
-                if (selected != null) {
-                    editConsumer.accept(selected);
-                }
-            }
-        }));
-
-        //noinspection unused
-        registerHandler(addButton.addClickHandler(e -> {
-            if (addConsumer != null) {
-                addConsumer.run();
-            }
-        }));
-
-        //noinspection unused
-        registerHandler(deleteButton.addClickHandler(e -> {
-            if (deleteConsumer != null) {
-                final TemporalEntry selected = selectionModel.getSelectedObject();
-                if (selected != null) {
-                    deleteConsumer.accept(selected);
                 }
             }
         }));

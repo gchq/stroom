@@ -22,7 +22,6 @@ import stroom.data.grid.client.WrapperView;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.NodeGroup;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 
@@ -60,9 +59,14 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
         this.nodeGroupClient = nodeGroupClient;
         this.newNodeGroupPresenterProvider = newNodeGroupPresenterProvider;
 
-        newButton = nodeGroupListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
-        openButton = nodeGroupListPresenter.getView().addButton(SvgPresets.EDIT);
-        deleteButton = nodeGroupListPresenter.getView().addButton(SvgPresets.DELETE);
+        nodeGroupListPresenter.getView().getToolbar().setName("Node group actions");
+        newButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.ADD, "New Node Group", this::add);
+        openButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+                "Edit Selected Node Group", this::edit);
+        openButton.setEnabled(false);
+        deleteButton = nodeGroupListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+                "Delete Selected Node Group", this::delete);
+        deleteButton.setEnabled(false);
 
         view.setView(nodeGroupListPresenter.getView());
         refresh();
@@ -76,9 +80,6 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
                 edit();
             }
         }));
-        registerHandler(newButton.addClickHandler(event -> add()));
-        registerHandler(openButton.addClickHandler(event -> edit()));
-        registerHandler(deleteButton.addClickHandler(event -> delete()));
     }
 
     private void add() {

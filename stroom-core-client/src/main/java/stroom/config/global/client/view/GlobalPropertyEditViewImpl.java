@@ -18,12 +18,11 @@ package stroom.config.global.client.view;
 
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.form.client.PasswordBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -32,7 +31,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -47,7 +45,7 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     Label name;
     @UiField
-    InlineSvgButton copyNameButton;
+    ToolbarButton copyNameButton;
     @UiField
     TextArea description;
     @UiField
@@ -59,7 +57,7 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     TextArea databaseValue;
     @UiField
-    PasswordTextBox databaseValuePassword;
+    PasswordBox databaseValuePassword;
     @UiField
     TextArea effectiveValue;
     @UiField
@@ -72,14 +70,14 @@ public final class GlobalPropertyEditViewImpl
     CustomCheckBox requireUiRestart;
     @UiField
     CustomCheckBox readOnly;
-    // TODO This btn panel doesn't appear to be used. Probably not needed as the effectiveValueButtonPanel
+    // TODO This toolbar doesn't appear to be used. Probably not needed as the effectiveValueToolbar
     //  does the job of showing what values are effective on the nodes.
     @UiField
-    ButtonPanel yamlValueButtonPanel;
+    Toolbar yamlValueToolbar;
     @UiField
-    ButtonPanel effectiveValueButtonPanel;
+    Toolbar effectiveValueToolbar;
     @UiField
-    ButtonPanel dataTypeButtonPanel;
+    Toolbar dataTypeToolbar;
 
     private boolean password;
 
@@ -217,18 +215,18 @@ public final class GlobalPropertyEditViewImpl
     }
 
     @Override
-    public ButtonView addYamlValueWarningIcon(final Preset preset) {
-        return yamlValueButtonPanel.addButton(preset);
+    public Toolbar getYamlValueToolbar() {
+        return yamlValueToolbar;
     }
 
     @Override
-    public ButtonView addEffectiveValueIcon(final Preset preset) {
-        return effectiveValueButtonPanel.addButton(preset);
+    public Toolbar getEffectiveValueToolbar() {
+        return effectiveValueToolbar;
     }
 
     @Override
-    public ButtonView addDataTypeHelpIcon(final Preset preset) {
-        return dataTypeButtonPanel.addButton(preset);
+    public Toolbar getDataTypeToolbar() {
+        return dataTypeToolbar;
     }
 
     @UiHandler("copyNameButton")

@@ -20,7 +20,9 @@ import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.client.presenter.LoginUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.PasswordBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -30,7 +32,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -38,6 +39,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implements LoginView {
+
+    private static final String PASSWORD_HELP = "Enter your Stroom account password.";
 
     private final Widget widget;
 
@@ -48,9 +51,9 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     @UiField
     Label userNameFeedback;
     @UiField
-    PasswordTextBox password;
+    FormGroup passwordGroup;
     @UiField
-    InlineSvgButton showPassword;
+    PasswordBox password;
     @UiField
     Label passwordFeedback;
     @UiField
@@ -67,13 +70,9 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
 
         userName.getElement().setAttribute("placeholder", "Enter User Name");
 
-        showPassword.setSvg(SvgImage.EYE);
-        showPassword.setTitle("Show Password");
-        showPassword.setEnabled(true);
+        password.setPlaceholder("Enter Password");
 
-        password.getElement().setAttribute("placeholder", "Enter Password");
-
-        forgotPasswordLink.setVisible(false);
+        setAllowPasswordResets(false);
     }
 
     @Override
@@ -101,22 +100,22 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     public boolean validate() {
         boolean valid = true;
 
-        userName.removeStyleName("invalid");
         if (userName.getValue().length() == 0) {
-            userNameFeedback.setText("User name is required");
-            userName.addStyleName("invalid");
+            FieldValidity.setInvalid(userName, userNameFeedback, "User name is required");
             valid = false;
         } else {
-            userNameFeedback.setText("");
+            FieldValidity.setValid(userName, userNameFeedback);
         }
 
-        password.removeStyleName("invalid");
         if (password.getValue().length() == 0) {
-            passwordFeedback.setText("Password is required");
-            password.addStyleName("invalid");
+            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is required");
             valid = false;
         } else {
-            passwordFeedback.setText("");
+            FieldValidity.setValid(password.getInput(), passwordFeedback);
+        }
+
+        if (!valid) {
+            FieldValidity.focusFirstInvalid(userName, password.getInput());
         }
 
         return valid;
@@ -131,6 +130,10 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     @Override
     public void setAllowPasswordResets(final boolean allowPasswordResets) {
         forgotPasswordLink.setVisible(allowPasswordResets);
+        // Point to the 'Forgot password?' link only when it is shown
+        passwordGroup.setHelpText(allowPasswordResets
+                ? PASSWORD_HELP + " If you have forgotten it, use the 'Forgot password?' link."
+                : PASSWORD_HELP + " If you have forgotten it, ask your administrator to reset it.");
     }
 
     @UiHandler("userName")
@@ -155,20 +158,6 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
         getUiHandlers().signIn();
     }
 
-    @UiHandler("showPassword")
-    public void onShowPassword(final ClickEvent e) {
-        final String type = password.getElement().getAttribute("type");
-        if (type == null || "password".equals(type)) {
-            password.getElement().setAttribute("type", "text");
-            showPassword.setSvg(SvgImage.EYE_OFF);
-            showPassword.setTitle("Hide Password");
-        } else {
-            password.getElement().setAttribute("type", "password");
-            showPassword.setSvg(SvgImage.EYE);
-            showPassword.setTitle("Show Password");
-        }
-    }
-
     @UiHandler("signInButton")
     public void onSignInButton(final ClickEvent e) {
         signIn();
@@ -179,9 +168,7 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
         getUiHandlers().emailResetPassword();
     }
 
-
     // --------------------------------------------------------------------------------
-
 
     public interface Binder extends UiBinder<Widget, LoginViewImpl> {
 

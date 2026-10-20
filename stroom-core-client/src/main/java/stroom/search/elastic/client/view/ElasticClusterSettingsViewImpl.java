@@ -21,15 +21,15 @@ import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.El
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.form.client.PasswordBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.IntegerBox;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -54,11 +54,11 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @UiField
     TextBox apiKeyId;
     @UiField
-    PasswordTextBox apiKeySecret;
+    PasswordBox apiKeySecret;
     @UiField
-    IntegerBox connectionTimeoutMillis;
+    ValueSpinner connectionTimeoutMillis;
     @UiField
-    IntegerBox responseTimeoutMillis;
+    ValueSpinner responseTimeoutMillis;
     @UiField
     Button testConnection;
 
@@ -66,6 +66,15 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     public ElasticClusterSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         testConnection.setIcon(SvgImage.OK);
+        // Milliseconds, in steps of a second. An empty box can't be saved (an IntegerBox's was null,
+        // which failed when read as an int)
+        for (final ValueSpinner timeout : Arrays.asList(connectionTimeoutMillis, responseTimeoutMillis)) {
+            timeout.setMin(0);
+            timeout.setMax(Integer.MAX_VALUE);
+            timeout.setMinStep(1000);
+            timeout.setMaxStep(10000);
+            timeout.setDelta(1000);
+        }
 
         updateAuthenticationControlEnabledState(useAuthentication.getValue());
     }
@@ -130,7 +139,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
 
     @Override
     public int getConnectionTimeoutMillis() {
-        return connectionTimeoutMillis.getValue();
+        return connectionTimeoutMillis.getIntValue();
     }
 
     @Override
@@ -140,7 +149,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
 
     @Override
     public int getResponseTimeoutMillis() {
-        return responseTimeoutMillis.getValue();
+        return responseTimeoutMillis.getIntValue();
     }
 
     @Override
@@ -148,17 +157,17 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
         this.responseTimeoutMillis.setValue(responseTimeoutMillis);
     }
 
+    // Read only: every field can be read and copied but not changed (the API key fields were once
+    // left editable, as reading the document enabled them again)
     @Override
     public void onReadOnly(final boolean readOnly) {
-        connectionUrls.setEnabled(!readOnly);
-        caCertificate.setEnabled(!readOnly);
-        useAuthentication.setEnabled(!readOnly);
-        if (readOnly) {
-            apiKeyId.setEnabled(false);
-            apiKeySecret.setEnabled(false);
-        }
-        connectionTimeoutMillis.setEnabled(!readOnly);
-        responseTimeoutMillis.setEnabled(!readOnly);
+        connectionUrls.setReadOnly(readOnly);
+        caCertificate.setReadOnly(readOnly);
+        useAuthentication.setReadOnly(readOnly);
+        apiKeyId.setReadOnly(readOnly);
+        apiKeySecret.setReadOnly(readOnly);
+        connectionTimeoutMillis.setReadOnly(readOnly);
+        responseTimeoutMillis.setReadOnly(readOnly);
     }
 
     @UiHandler("connectionUrls")
@@ -182,12 +191,12 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     }
 
     @UiHandler("connectionTimeoutMillis")
-    public void onConnectionTimeoutMillis(final ValueChangeEvent<Integer> event) {
+    public void onConnectionTimeoutMillis(final ValueChangeEvent<Long> event) {
         getUiHandlers().onChange();
     }
 
     @UiHandler("responseTimeoutMillis")
-    public void onResponseTimeoutMillis(final ValueChangeEvent<Integer> event) {
+    public void onResponseTimeoutMillis(final ValueChangeEvent<Long> event) {
         getUiHandlers().onChange();
     }
 

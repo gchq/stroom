@@ -10,14 +10,18 @@
             <g:Label>Total characters:</g:Label>
             <g:Label ui:field="lblTotalCharCount"/>
         </g:FlowPanel>
-        <form:FormGroup identity="characterRangeSelectionFrom" label="From">
+        <form:FormGroup identity="characterRangeSelectionFrom" label="From"
+                        helpText="Where the range starts, as a line and column (for example 10:5) or as a character offset. Both are counted from 1 and are inclusive."
+                        screenReaderText="Line:column such as 10:5, or a character offset. Counted from 1.">
             <g:FlowPanel styleName="characterRangeSelectionViewImpl-options">
                 <l:SelectionBox ui:field="fromType" addStyleNames="allow-focus"/>
                 <lci:LineColInput ui:field="fromLineCol" addStyleNames="allow-focus"/>
                 <v:ValueSpinner ui:field="fromCharOffset" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="characterRangeSelectionTo" label="To">
+        <form:FormGroup identity="characterRangeSelectionTo" label="To"
+                        helpText="Where the range ends, as a line and column, a character offset, or a number of characters from the From position. Line, column and offset are counted from 1 and are inclusive."
+                        screenReaderText="End as line:column, character offset or character count.">
             <g:FlowPanel styleName="characterRangeSelectionViewImpl-options">
                 <l:SelectionBox ui:field="toType" addStyleNames="allow-focus"/>
                 <lci:LineColInput ui:field="toLineCol" addStyleNames="allow-focus"/>

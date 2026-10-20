@@ -18,15 +18,12 @@ package stroom.credentials.client.view;
 
 import stroom.credentials.client.presenter.SshKeySecretPresenter.SshKeySecretView;
 import stroom.document.client.event.DirtyUiHandlers;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.form.client.PasswordBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -40,9 +37,7 @@ public class SshKeySecretViewImpl
     private final Widget widget;
 
     @UiField
-    PasswordTextBox passPhrase;
-    @UiField
-    InlineSvgButton showPassPhrase;
+    PasswordBox passPhrase;
     @UiField
     TextArea privateKey;
     @UiField
@@ -55,10 +50,8 @@ public class SshKeySecretViewImpl
     public SshKeySecretViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        showPassPhrase.setSvg(SvgImage.EYE);
-        showPassPhrase.setTitle("Show Pass Phrase");
-        showPassPhrase.setEnabled(true);
-        passPhrase.getElement().setAttribute("placeholder", "Enter Pass Phrase");
+        passPhrase.setPlaceholder("Enter Pass Phrase");
+        passPhrase.setSecretName("pass phrase");
         privateKey.getElement().setAttribute("placeholder", """
                 Example:
                 -----BEGIN OPENSSH PRIVATE KEY-----
@@ -122,20 +115,6 @@ public class SshKeySecretViewImpl
     @Override
     public void focus() {
         passPhrase.setFocus(true);
-    }
-
-    @UiHandler("showPassPhrase")
-    public void onShowPassword(final ClickEvent e) {
-        final String type = passPhrase.getElement().getAttribute("type");
-        if (type == null || "password".equals(type)) {
-            passPhrase.getElement().setAttribute("type", "text");
-            showPassPhrase.setSvg(SvgImage.EYE_OFF);
-            showPassPhrase.setTitle("Hide Password");
-        } else {
-            passPhrase.getElement().setAttribute("type", "password");
-            showPassPhrase.setSvg(SvgImage.EYE);
-            showPassPhrase.setTitle("Show Password");
-        }
     }
 
     public interface Binder extends UiBinder<Widget, SshKeySecretViewImpl> {

@@ -17,6 +17,7 @@
 package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.ColourSwatchCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.info.client.CommandLinkCell;
@@ -41,7 +42,6 @@ import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.client.Preset;
 import stroom.util.client.DataGridComparatorFactory.Builder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtUtil;
@@ -76,7 +76,8 @@ public class DataGridUtil {
     public static final int DEFAULT_PCT_DANGER_THRESHOLD = 90;
 
     private static final String DISABLED_CELL_CLASS = "dataGridDisabledCell";
-    private static final String LOW_LIGHT_COLOUR = "#666666";
+    // The theme's muted text colour, which is 4.5:1 on rows in both themes (#666666 wasn't on dark ones)
+    private static final String LOW_LIGHT_COLOUR = "var(--text-color--muted)";
 
     private DataGridUtil() {
     }
@@ -153,9 +154,9 @@ public class DataGridUtil {
     /**
      * Non-clickable SVG icon column
      */
-    public static <T_ROW> Column<T_ROW, Preset> svgStatusColumn(
-            final Function<T_ROW, Preset> cellValueExtractor) {
-        final Column<T_ROW, Preset> column = column(cellValueExtractor, () -> new SvgCell(false));
+    public static <T_ROW> Column<T_ROW, CellIcon> svgStatusColumn(
+            final Function<T_ROW, CellIcon> cellValueExtractor) {
+        final Column<T_ROW, CellIcon> column = column(cellValueExtractor, () -> new SvgCell(false));
         column.setCellStyleNames("statusIcon");
         return column;
     }
@@ -259,7 +260,7 @@ public class DataGridUtil {
 
     public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addStatusIconColumn(
             final T_VIEW view,
-            final Function<T_ROW, Preset> statusIconExtractor) {
+            final Function<T_ROW, CellIcon> statusIconExtractor) {
 
         view.addColumn(
                 svgStatusColumn(statusIconExtractor),
@@ -358,11 +359,23 @@ public class DataGridUtil {
                 () -> new RedGreenTextCell(greenText, redText));
     }
 
+    /// A column of spinners (see [ValueSpinnerCell]), for values the user can change.
+    ///
+    /// @param name           What the value is, naming each row's field for screen readers, as the
+    ///                       column's heading does, e.g. `Priority`.
+    /// @param valueExtractor Gets a row's value.
+    /// @param minValue       The smallest value.
+    /// @param maxValue       The largest value.
+    /// @param <T_ROW>        The type of the grid's rows.
+    /// @return The column's builder.
     public static <T_ROW> ColumnBuilder<T_ROW, Number, ValueSpinnerCell> valueSpinnerColumnBuilder(
-            final Function<T_ROW, Number> valueExtractor, final long minValue, final long maxValue) {
+            final String name,
+            final Function<T_ROW, Number> valueExtractor,
+            final long minValue,
+            final long maxValue) {
         return new ColumnBuilder<T_ROW, Number, ValueSpinnerCell>(
                 valueExtractor,
-                () -> new ValueSpinnerCell(minValue, maxValue));
+                () -> new ValueSpinnerCell(name, minValue, maxValue));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, String, ColourSwatchCell> colourSwatchColumnBuilder(
@@ -630,10 +643,10 @@ public class DataGridUtil {
         return new ColumnBuilder<>(valueExtractor, () -> new HasContextMenusCell<>(hasContextMenus));
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, Preset, Cell<Preset>> svgPresetColumnBuilder(
+    public static <T_ROW> ColumnBuilder<T_ROW, CellIcon, Cell<CellIcon>> cellIconColumnBuilder(
             final boolean isButton,
-            final Function<T_ROW, Preset> valueExtractor) {
-        return new ColumnBuilder<T_ROW, Preset, Cell<Preset>>(valueExtractor, () -> new SvgCell(isButton));
+            final Function<T_ROW, CellIcon> valueExtractor) {
+        return new ColumnBuilder<T_ROW, CellIcon, Cell<CellIcon>>(valueExtractor, () -> new SvgCell(isButton));
     }
 
     public static HeadingBuilder headingBuilder(final String headingText) {

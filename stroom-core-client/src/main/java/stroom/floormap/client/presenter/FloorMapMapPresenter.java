@@ -58,8 +58,8 @@ import stroom.query.client.presenter.ResultStoreModel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.histogram.client.HistogramDataModel;
 import stroom.widget.histogram.client.HistogramLayout;
 import stroom.widget.histogram.client.HistogramQueryHelper;
@@ -310,15 +310,19 @@ public class FloorMapMapPresenter
     /// Set once the wrong events store type has been reported, so it is said once per read.
     private boolean wrongEventsStoreTypeReported;
 
-    /// Toolbar toggle controlling the canvas grid overlay. Shown next to the
-    /// document save buttons via [HasToolbar] whenever the Map tab is
-    /// active. Off by default — the Map tab is view-focused, so the grid is
-    /// opt-in (unlike the Editor tab, where it defaults on).
-    private final InlineSvgToggleButton showGridButton;
+    /// The Map tab's buttons for the document toolbar, shown next to the document
+    /// save buttons via [HasToolbar#getDocumentButtons()] whenever the Map tab is
+    /// active.
+    private final Toolbar mapToolbar = new Toolbar("Floor map actions");
+
+    /// Toolbar toggle controlling the canvas grid overlay. Off by default — the
+    /// Map tab is view-focused, so the grid is opt-in (unlike the Editor tab,
+    /// where it defaults on).
+    private final ToolbarToggleButton showGridButton;
 
     /// Toolbar toggle that shows/hides the right-hand dock. On by default on the
     /// Map tab, which always has the Tracking panel to show.
-    private final InlineSvgToggleButton dockToggleButton;
+    private final ToolbarToggleButton dockToggleButton;
 
     /// Toolbar toggle controlling whether entities too close together on screen are
     /// merged into one summary glyph. **On** by default: the state it
@@ -328,7 +332,7 @@ public class FloorMapMapPresenter
     /// It has to be switchable, though. Zooming in separates entities that are
     /// merely close, but nothing separates entities at the same position, so this
     /// button is the only way to look underneath a cluster on the canvas.
-    private final InlineSvgToggleButton clusterToggleButton;
+    private final ToolbarToggleButton clusterToggleButton;
 
     private long selectedTime;
 
@@ -426,24 +430,24 @@ public class FloorMapMapPresenter
 
         // Grid on/off toggle, surfaced next to the save buttons (HasToolbar).
         // SvgImage has no dedicated grid glyph; TABLE renders as a grid of cells.
-        showGridButton = new InlineSvgToggleButton();
-        showGridButton.setSvg(SvgImage.TABLE);
-        showGridButton.setTitle("Toggle Grid");
-        showGridButton.setState(false);
-
-        // Show/hide the right-hand dock
-        dockToggleButton = new InlineSvgToggleButton();
-        dockToggleButton.setSvg(SvgImage.SHOW_MENU);
-        dockToggleButton.setTitle("Toggle Controls");
-        dockToggleButton.setState(true);
+        // Buttons are in toolbar order: grid, clustering, then the dock.
+        showGridButton = mapToolbar.toggle(
+                SvgImage.TABLE, "Toggle Grid", floorMapCanvasPresenter::setShowGrid);
+        showGridButton.setPressed(false);
 
         // Merge crowded entities into summary glyphs. On by default; the canvas
         // is told explicitly below rather than relying on its field default, so
         // the button and the canvas cannot start out disagreeing.
-        clusterToggleButton = new InlineSvgToggleButton();
-        clusterToggleButton.setSvg(SvgImage.FIELDS_GROUP);
-        clusterToggleButton.setTitle("Toggle Clustering of Nearby Entities");
-        clusterToggleButton.setState(true);
+        clusterToggleButton = mapToolbar.toggle(
+                SvgImage.FIELDS_GROUP,
+                "Toggle Clustering of Nearby Entities",
+                floorMapCanvasPresenter::setClusterNearbyEntities);
+        clusterToggleButton.setPressed(true);
+
+        // Show/hide the right-hand dock
+        dockToggleButton = mapToolbar.toggle(
+                SvgImage.SHOW_MENU, "Toggle Controls", getView()::setDockVisible);
+        dockToggleButton.setPressed(true);
         floorMapCanvasPresenter.setClusterNearbyEntities(true);
         // Cluster tooltips name their members through the same resolver the
         // Tracking and Groups panels use, so one entity reads the same way
@@ -488,18 +492,6 @@ public class FloorMapMapPresenter
     @Override
     protected void onBind() {
         super.onBind();
-
-        // ---- Toolbar ---------------------------------------------------------
-        //noinspection unused e
-        registerHandler(showGridButton.addClickHandler(e ->
-                floorMapCanvasPresenter.setShowGrid(showGridButton.getState())));
-        //noinspection unused e
-        registerHandler(dockToggleButton.addClickHandler(e ->
-                getView().setDockVisible(dockToggleButton.getState())));
-        //noinspection unused e
-        registerHandler(clusterToggleButton.addClickHandler(e ->
-                floorMapCanvasPresenter.setClusterNearbyEntities(
-                        clusterToggleButton.getState())));
 
         // Only react to this tab's own timeline — the Editor tab has its own
         // timeline firing the same event type, and the tabs must not time-sync.
@@ -634,16 +626,12 @@ public class FloorMapMapPresenter
                 floorMapTrackingPresenter.getGridElementId());
     }
 
-    /// Returns the Map tab's toolbar widgets. [FloorMapPresenter]'s
-    /// base class (`DocTabPresenter`) appends these after the document
-    /// save buttons whenever this tab is selected.
+    /// Returns the Map tab's buttons. [FloorMapPresenter]'s base class
+    /// (`DocTabPresenter`) adds these to the document toolbar, after the
+    /// save buttons, whenever this tab is selected.
     @Override
-    public List<Widget> getToolbars() {
-        final ButtonPanel toolbar = new ButtonPanel();
-        toolbar.addButton(showGridButton);
-        toolbar.addButton(clusterToggleButton);
-        toolbar.addButton(dockToggleButton);
-        return Collections.singletonList(toolbar);
+    public List<Widget> getDocumentButtons() {
+        return Collections.singletonList(mapToolbar);
     }
 
     /// {@inheritDoc}

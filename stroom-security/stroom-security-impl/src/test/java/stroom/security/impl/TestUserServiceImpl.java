@@ -23,10 +23,14 @@ import stroom.util.shared.UserDesc;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,6 +47,7 @@ class TestUserServiceImpl {
         final UserServiceImpl userService = new UserServiceImpl(
                 new MockSecurityContext(),
                 mockUserDao,
+                null,
                 null,
                 null,
                 null,
@@ -82,6 +87,7 @@ class TestUserServiceImpl {
                 null,
                 null,
                 null,
+                null,
                 null);
 
         final UserDesc userDesc = UserDesc.builder(SUBJECT_ID)
@@ -104,6 +110,57 @@ class TestUserServiceImpl {
                 .isEqualTo(DISPLAY_NAME);  // No display name so use sub
         Assertions.assertThat(user.getFullName())
                 .isEqualTo(FULL_NAME);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", " ", "\t"})
+    void testGetOrCreateUser_blankSubjectId(final String subjectId) {
+        final UserServiceImpl userService = userServiceWith(null);
+        // The constructor trims, so a blank identity becomes an empty one
+        final UserDesc userDesc = new UserDesc(subjectId, DISPLAY_NAME, FULL_NAME);
+
+        Assertions.assertThatThrownBy(() -> userService.getOrCreateUser(userDesc, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("A user must have a unique identity");
+        Mockito.verifyNoInteractions(mockUserDao);
+    }
+
+    @Test
+    void testGetOrCreateUser_nullUserDesc() {
+        final UserServiceImpl userService = userServiceWith(null);
+
+        Assertions.assertThatThrownBy(() -> userService.getOrCreateUser(null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("A user must have a unique identity");
+        Mockito.verifyNoInteractions(mockUserDao);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "\t"})
+    void testGetOrCreateUserGroup_blankName(final String name) {
+        final UserServiceImpl userService = userServiceWith(null);
+
+        Assertions.assertThatThrownBy(() -> userService.getOrCreateUserGroup(name, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("A user group must have a name");
+        Mockito.verifyNoInteractions(mockUserDao);
+    }
+
+    @Test
+    void testGetOrCreateUserGroup_new() {
+        final UserServiceImpl userService = userServiceWith(null);
+        Mockito.when(mockUserDao.getGroupByName("Admins"))
+                .thenReturn(Optional.empty());
+        Mockito.when(mockUserDao.tryCreate(Mockito.any(User.class), Mockito.any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        final User group = userService.getOrCreateUserGroup("Admins", null);
+
+        Assertions.assertThat(group.getSubjectId())
+                .isEqualTo("Admins");
+        Assertions.assertThat(group.isGroup())
+                .isTrue();
     }
 
     // --- Disabling a user cuts off live access ------------------------------------------------------
@@ -153,6 +210,7 @@ class TestUserServiceImpl {
                 new MockSecurityContext(),
                 mockUserDao,
                 Mockito.mock(stroom.security.impl.event.PermissionChangeEventBus.class),
+                null,
                 null,
                 null,
                 null,

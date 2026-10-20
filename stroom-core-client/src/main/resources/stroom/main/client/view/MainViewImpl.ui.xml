@@ -6,9 +6,11 @@
     <g:FocusPanel ui:field="root" styleName="mainViewImpl">
         <g:FlowPanel styleName="mainViewImpl">
             <g:SimplePanel ui:field="banner" styleName="mainViewImpl-banner"/>
+            <!-- The main toolbar is shown at the top right, over the content, but comes first so
+                 that the Tab key reaches it before the content -->
             <g:FlowPanel ui:field="main" styleName="mainViewImpl">
-                <g:ResizeLayoutPanel ui:field="contentPanel" styleName="mainViewImpl-contentPanel"/>
                 <s:MainToolbar ui:field="mainToolbar"/>
+                <g:ResizeLayoutPanel ui:field="contentPanel" styleName="mainViewImpl-contentPanel"/>
             </g:FlowPanel>
         </g:FlowPanel>
     </g:FocusPanel>

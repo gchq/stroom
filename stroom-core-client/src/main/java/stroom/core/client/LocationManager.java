@@ -19,6 +19,7 @@ package stroom.core.client;
 import stroom.core.client.event.WindowCloseEvent;
 
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
@@ -31,13 +32,14 @@ import javax.inject.Singleton;
 public class LocationManager implements HasHandlers {
 
     private final EventBus eventBus;
+    private final HandlerRegistration windowClosingRegistration;
     private boolean ignoreClose;
 
     @Inject
     public LocationManager(final EventBus eventBus,
                            final HasSaveRegistry hasSaveRegistry) {
         this.eventBus = eventBus;
-        Window.addWindowClosingHandler(event -> {
+        windowClosingRegistration = Window.addWindowClosingHandler(event -> {
             if (!ignoreClose) {
                 WindowCloseEvent.fire(this);
                 if (hasSaveRegistry.isDirty()) {
@@ -47,6 +49,12 @@ public class LocationManager implements HasHandlers {
                 ignoreClose = false;
             }
         });
+    }
+
+    /// Stops listening for the window closing, e.g. when the UI that created this is being thrown
+    /// away without the window closing, so that it no longer warns about unsaved changes.
+    public void removeWindowClosingHandler() {
+        windowClosingRegistration.removeHandler();
     }
 
     public void replace(final String newURL) {

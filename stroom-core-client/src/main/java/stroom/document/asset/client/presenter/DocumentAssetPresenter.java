@@ -41,8 +41,8 @@ import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.Console;
 import stroom.util.shared.ResourceKey;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -107,27 +107,34 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     /**
      * Button to revert any changes and go back to live version
      */
-    private final InlineSvgButton revertButton = new InlineSvgButton();
+    // The tab's buttons, for its document's toolbar
+    private final Toolbar toolbar = new Toolbar("Asset actions");
+    private final ToolbarButton revertButton =
+            toolbar.button(SvgImage.REFRESH, "Revert Asset Changes", this::onRevertButtonClick);
 
     /**
      * Button to add stuff to the tree
      */
-    private final InlineSvgButton addButton = new InlineSvgButton();
+    private final ToolbarButton addButton = toolbar.button(SvgImage.ADD, "Add File or Folder",
+            this::showAddMenu);
 
     /**
      * Button to delete stuff from the tree
      */
-    private final InlineSvgButton deleteButton = new InlineSvgButton();
+    private final ToolbarButton deleteButton =
+            toolbar.button(SvgImage.DELETE, "Delete Selected Asset", this::onDeleteButtonClick);
 
     /**
      * Button to edit stuff from the tree
      */
-    private final InlineSvgButton editButton = new InlineSvgButton();
+    private final ToolbarButton editButton = toolbar.button(SvgImage.EDIT, "Rename Selected Asset",
+            this::onEditFilename);
 
     /**
      * Button to view stuff
      */
-    private final InlineSvgButton viewButton = new InlineSvgButton();
+    private final ToolbarButton viewButton = toolbar.button(SvgImage.EYE,
+            "View Selected Asset in Browser (opens in new tab)", this::onViewAsset);
 
     /**
      * Dialog that appears when user wants to upload a file
@@ -190,6 +197,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                                         final DocumentAssetEditAssetDialogPresenter editAssetDialog,
                                         final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
+        addButton.setOpensMenu(true);
 
         this.restFactory = restFactory;
         this.uploadFileDialog = uploadFileDialog;
@@ -260,42 +268,9 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
         return nonClashingLabel;
     }
 
-    /**
-     * Sets up the toolbar for the tab.
-     */
+    /// The tab's buttons, for its document's toolbar. This is asked each time the tab is shown.
     @Override
-    public List<Widget> getToolbars() {
-        revertButton.setSvg(SvgImage.REFRESH);
-        revertButton.setTitle("Revert changes");
-        revertButton.setVisible(true);
-        revertButton.addClickHandler(event -> DocumentAssetPresenter.this.onRevertButtonClick());
-
-        addButton.setSvg(SvgImage.ADD);
-        addButton.setTitle("Add file");
-        addButton.setVisible(true);
-
-        deleteButton.setSvg(SvgImage.DELETE);
-        deleteButton.setTitle("Delete");
-        deleteButton.setVisible(true);
-        deleteButton.addClickHandler(event -> DocumentAssetPresenter.this.onDeleteButtonClick());
-
-        editButton.setSvg(SvgImage.EDIT);
-        editButton.setTitle("Rename");
-        editButton.setVisible(true);
-        editButton.addClickHandler(event -> DocumentAssetPresenter.this.onEditFilename());
-
-        viewButton.setSvg(SvgImage.EYE);
-        viewButton.setTitle("View in browser");
-        viewButton.setVisible(true);
-        viewButton.addClickHandler(event -> DocumentAssetPresenter.this.onViewAsset());
-
-        final ButtonPanel toolbar = new ButtonPanel();
-        toolbar.addButton(revertButton);
-        toolbar.addButton(addButton);
-        toolbar.addButton(deleteButton);
-        toolbar.addButton(editButton);
-        toolbar.addButton(viewButton);
-
+    public List<Widget> getDocumentButtons() {
         // Ensure state is set correctly
         updateState();
 
@@ -320,14 +295,14 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                 .priority(0)
                 .icon(SvgImage.FOLDER)
                 .iconColour(IconColour.BLUE)
-                .text("Add New Folder")
+                .text("New Folder")
                 .command(() -> this.onCreateNewItem(false))
                 .enabled(true)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
                 .priority(1)
                 .icon(SvgImage.FILE)
-                .text("Add New File")
+                .text("New File")
                 .command(() -> this.onCreateNewItem(true))
                 .enabled(true)
                 .build());
@@ -340,15 +315,18 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                 .enabled(true)
                 .build());
 
-        addButton.addClickHandler(event -> {
-            final Rect relativeRect = new Rect(addButton.getElement()).grow(3);
-            final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
-            ShowMenuEvent.builder()
-                    .items(menuItems)
-                    .popupPosition(position)
-                    .allowCloseOnMoveLeft()
-                    .fire(this);
-        });
+    }
+
+    private void showAddMenu() {
+        final Rect relativeRect = new Rect(addButton.getElement()).grow(3);
+        final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
+        ShowMenuEvent.builder()
+                .name("Add")
+                .items(menuItems)
+                .popupPosition(position)
+                .opener(addButton.getElement())
+                .allowCloseOnMoveLeft()
+                .fire(this);
     }
 
     /**
@@ -967,7 +945,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
     private void disableEditor() {
         editorPresenter.setText("");
         editorPresenter.setReadOnly(true);
-        editorPresenter.getWidget().setVisible(false);
+        getView().setEditorVisible(false);
     }
 
     /**
@@ -999,7 +977,7 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
                             editorMode = AceEditorMode.PLAIN_TEXT;
                         }
 
-                        editorPresenter.getWidget().setVisible(true);
+                        getView().setEditorVisible(true);
                         editorPresenter.setText(result.getContent());
                         editorPresenter.setReadOnly(isReadOnly());
                         editorPresenter.setMode(editorMode);
@@ -1137,5 +1115,10 @@ public class DocumentAssetPresenter<D extends AbstractDoc>
          * Sets the cell tree within the view.
          */
         void setTreeAndEditor(final Tree cellTree, final EditorPresenter editor);
+
+        /// Shows the editor, or in its place a message asking for a file to be selected.
+        ///
+        /// @param visible Whether the editor is shown.
+        void setEditorVisible(boolean visible);
     }
 }

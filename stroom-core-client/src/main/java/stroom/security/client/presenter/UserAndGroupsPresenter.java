@@ -26,16 +26,15 @@ import stroom.security.client.presenter.UserListPresenter.Mode;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -62,15 +61,15 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private final Provider<UserRefPopupPresenter> userRefPopupPresenterProvider;
     private final RestFactory restFactory;
 
-    private ButtonView createButton = null;
-    private ButtonView editButton = null;
-    private ButtonView deleteButton = null;
+    private final ToolbarButton createButton;
+    private final ToolbarButton editButton;
+    private final ToolbarButton deleteButton;
 
-    private ButtonView addMemberOfButton = null;
-    private ButtonView removeMemberOfButton = null;
+    private final ToolbarButton addMemberOfButton;
+    private final ToolbarButton removeMemberOfButton;
 
-    private ButtonView addMembersInButton = null;
-    private ButtonView removeMembersInButton = null;
+    private final ToolbarButton addMembersInButton;
+    private final ToolbarButton removeMembersInButton;
     private UserRef userRef = null;
 
     @Inject
@@ -121,8 +120,11 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         view.setParentsView(parentsList.getView());
         view.setChildrenView(childrenList.getView());
 
-        createButton = userList.addButton(SvgPresets.ADD.title("Create Group"));
-        editButton = userList.addButton(SvgPresets.EDIT.title("Edit Group"));
+        final Toolbar userActions = userList.getToolbar();
+        userActions.setName("User and group actions");
+        createButton = userActions.button(SvgImage.ADD, "Create Group", this::onCreateUserOrGroup);
+        editButton = userActions.button(SvgImage.EDIT, "Edit Selected Group", this::onEditUserOrGroup);
+        editButton.setEnabled(false);
 
         // Only want to let user create a stroom user if they are using an external IDP.
         // If internal then all users are available to be picked from the account tbl.
@@ -135,13 +137,22 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         }, this);
 
         // You can only delete groups on this screen, UsersPresenter for user deletion
-        deleteButton = userList.addButton(SvgPresets.DELETE.title("Delete Group"));
+        deleteButton = userActions.button(SvgImage.DELETE, "Delete Selected Group", this::onDelete);
+        deleteButton.setEnabled(false);
 
-        addMemberOfButton = parentsList.addButton(SvgPresets.ADD);
-        removeMemberOfButton = parentsList.addButton(SvgPresets.REMOVE);
+        final Toolbar memberOfActions = parentsList.getToolbar();
+        memberOfActions.setName("Member of actions");
+        addMemberOfButton = memberOfActions.button(SvgImage.ADD, "Add to Group", this::onAddMemberOf);
+        removeMemberOfButton = memberOfActions.button(SvgImage.REMOVE, "Remove from Selected Group",
+                this::onRemoveMemberOf);
+        removeMemberOfButton.setEnabled(false);
 
-        addMembersInButton = childrenList.addButton(SvgPresets.ADD);
-        removeMembersInButton = childrenList.addButton(SvgPresets.REMOVE);
+        final Toolbar membersActions = childrenList.getToolbar();
+        membersActions.setName("Members actions");
+        addMembersInButton = membersActions.button(SvgImage.ADD, "Add Member to Group", this::onAddMembersIn);
+        removeMembersInButton = membersActions.button(SvgImage.REMOVE, "Remove Selected Member From Group",
+                this::onRemoveMembersIn);
+        removeMembersInButton.setEnabled(false);
 
         /// Initialise state.
         onSelection();
@@ -150,21 +161,6 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(createButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onCreateUserOrGroup();
-            }
-        }));
-        registerHandler(editButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onEditUserOrGroup();
-            }
-        }));
-        registerHandler(deleteButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onDelete();
-            }
-        }));
         registerHandler(userList.getSelectionModel().addSelectionHandler(e -> {
             onSelection();
         }));
@@ -176,35 +172,6 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             removeMemberOfButton.setEnabled(group != null && user != null);
         }));
 
-        registerHandler(addMemberOfButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                final User user = userList.getSelectionModel().getSelected();
-                if (user != null) {
-                    final UserRefPopupPresenter userRefPopupPresenter = userRefPopupPresenterProvider.get();
-                    userRefPopupPresenter.setAdditionalTerm(ExpressionTerm
-                            .builder()
-                            .field(UserFields.IS_GROUP.getFldName())
-                            .condition(Condition.EQUALS)
-                            .value("true")
-                            .build());
-
-                    userRefPopupPresenter.show("Select Group", groupRef -> {
-                        if (groupRef != null) {
-                            addUserToGroup(user.asRef(), groupRef, parentsList, groupRef);
-                        }
-                    });
-                }
-            }
-        }));
-
-        registerHandler(removeMemberOfButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                final User user = userList.getSelectionModel().getSelected();
-                final User group = parentsList.getSelectionModel().getSelected();
-                removeUserFromGroup(user, group, parentsList);
-            }
-        }));
-
         // Deal with Members in Group pane.
         registerHandler(childrenList.getSelectionModel().addSelectionHandler(e -> {
             final User group = userList.getSelectionModel().getSelected();
@@ -212,27 +179,49 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             removeMembersInButton.setEnabled(group != null && user != null);
         }));
 
-        registerHandler(addMembersInButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                final User group = userList.getSelectionModel().getSelected();
-                if (group != null) {
-                    final UserRefPopupPresenter userRefPopupPresenter = userRefPopupPresenterProvider.get();
-                    userRefPopupPresenter.show("Add User Or Group", userRef -> {
-                        if (userRef != null) {
-                            addUserToGroup(userRef, group.asRef(), childrenList, userRef);
-                        }
-                    });
-                }
-            }
-        }));
+    }
 
-        registerHandler(removeMembersInButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                final User group = userList.getSelectionModel().getSelected();
-                final User user = childrenList.getSelectionModel().getSelected();
-                removeUserFromGroup(user, group, childrenList);
-            }
-        }));
+    private void onAddMemberOf() {
+        final User user = userList.getSelectionModel().getSelected();
+        if (user != null) {
+            final UserRefPopupPresenter userRefPopupPresenter = userRefPopupPresenterProvider.get();
+            userRefPopupPresenter.setAdditionalTerm(ExpressionTerm
+                    .builder()
+                    .field(UserFields.IS_GROUP.getFldName())
+                    .condition(Condition.EQUALS)
+                    .value("true")
+                    .build());
+
+            userRefPopupPresenter.show("Select Group", groupRef -> {
+                if (groupRef != null) {
+                    addUserToGroup(user.asRef(), groupRef, parentsList, groupRef);
+                }
+            });
+        }
+    }
+
+    private void onRemoveMemberOf() {
+        final User user = userList.getSelectionModel().getSelected();
+        final User group = parentsList.getSelectionModel().getSelected();
+        removeUserFromGroup(user, group, parentsList);
+    }
+
+    private void onAddMembersIn() {
+        final User group = userList.getSelectionModel().getSelected();
+        if (group != null) {
+            final UserRefPopupPresenter userRefPopupPresenter = userRefPopupPresenterProvider.get();
+            userRefPopupPresenter.show("Add User Or Group", userRef -> {
+                if (userRef != null) {
+                    addUserToGroup(userRef, group.asRef(), childrenList, userRef);
+                }
+            });
+        }
+    }
+
+    private void onRemoveMembersIn() {
+        final User group = userList.getSelectionModel().getSelected();
+        final User user = childrenList.getSelectionModel().getSelected();
+        removeUserFromGroup(user, group, childrenList);
     }
 
     private void setParentsListExtraTerm(final UserRef userRef) {
@@ -314,7 +303,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             setParentsListExtraTerm(selected);
             setChildrenListAdditionalTerm(selected);
 
-            getView().setParentsVisible(true);
+            getView().setParentsEnabled(true);
+            getView().setChildrenEnabled(true);
+            // A user has no members, so the members pane only applies to a group
             getView().setChildrenVisible(selected.isGroup());
 
             if (selected.isGroup()) {
@@ -323,9 +314,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                 deleteButton.setTitle("Delete " + getDescription(selected));
                 deleteButton.setEnabled(true);
             } else {
-                editButton.setTitle("User editing is not supported");
+                editButton.setTitle("Edit Selected Group (users cannot be edited here)");
                 editButton.setEnabled(false);
-                deleteButton.setTitle("Users can only be deleted on the Users screen");
+                deleteButton.setTitle("Delete Selected Group (users can only be deleted on the Users screen)");
                 deleteButton.setEnabled(false);
             }
             addMemberOfButton.setEnabled(true);
@@ -334,11 +325,16 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         } else {
             parentsList.getView().setLabel("No Selection");
             childrenList.getView().setLabel("No Selection");
-            getView().setParentsVisible(false);
-            getView().setChildrenVisible(false);
-            editButton.setTitle("No Selection");
+            // The panes stay shown (dimmed), so empty them rather than leave the last selection's
+            // groups and members under 'No Selection'
+            parentsList.clear();
+            childrenList.clear();
+            getView().setParentsEnabled(false);
+            getView().setChildrenEnabled(false);
+            getView().setChildrenVisible(true);
+            editButton.setTitle("Edit Selected Group");
             editButton.setEnabled(false);
-            deleteButton.setTitle("No Selection");
+            deleteButton.setTitle("Delete Selected Group");
             deleteButton.setEnabled(false);
             addMemberOfButton.setEnabled(false);
             addMembersInButton.setEnabled(false);
@@ -501,7 +497,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
     private static String getDescription(final UserRef userRef) {
-        return userRef.getType(CaseType.LOWER)
+        return userRef.getType(CaseType.SENTENCE)
                + " '" + userRef.toDisplayString() + "'";
     }
 
@@ -538,7 +534,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     @Override
     public SvgImage getIcon() {
-        return UsersAndGroupsPlugin.ICON.getSvgImage();
+        return UsersAndGroupsPlugin.ICON;
     }
 
     @Override
@@ -588,10 +584,18 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
         void setParentsView(View view);
 
-        void setParentsVisible(boolean visible);
+        /// Enables the Member Of pane, or dims it and makes it inert while nothing is selected.
+        ///
+        /// @param enabled Whether the pane is enabled.
+        void setParentsEnabled(boolean enabled);
 
         void setChildrenView(View view);
 
         void setChildrenVisible(boolean visible);
+
+        /// Enables the members pane, or dims it and makes it inert while nothing is selected.
+        ///
+        /// @param enabled Whether the pane is enabled.
+        void setChildrenEnabled(boolean enabled);
     }
 }

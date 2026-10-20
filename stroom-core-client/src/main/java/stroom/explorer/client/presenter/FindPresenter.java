@@ -20,6 +20,9 @@ import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -35,14 +38,33 @@ public class FindPresenter
         extends AbstractFindPresenter<FindProxy>
         implements ShowFindEvent.Handler {
 
+    // Read by a screen reader when the filter is focused; the syntax help has the full detail
+    private static final String FILTER_DESCRIPTION = "Finds items whose name contains the text. "
+                                                     + "Separate several terms with spaces. "
+                                                     + "Use type:, uuid: or tag: to match other fields, "
+                                                     + "e.g. type:Feed.";
+
     private boolean showing;
 
     @Inject
     public FindPresenter(final EventBus eventBus,
                          final FindView view,
                          final FindProxy proxy,
-                         final FindDocResultListPresenter findResultListPresenter) {
-        super(eventBus, view, proxy, findResultListPresenter);
+                         final FindDocResultListPresenter findResultListPresenter,
+                         final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory,
+                         final UiConfigCache uiConfigCache) {
+        super(eventBus, view, proxy, findResultListPresenter, quickFilterContextHandlerFactory);
+
+        view.setFilterGuidance("Find by name", FILTER_DESCRIPTION);
+        // The same fields as the explorer tree's filter
+        uiConfigCache.get(uiConfig -> {
+            if (uiConfig != null) {
+                view.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                        "Find Quick Filter",
+                        ExplorerTreeFilter.FIELD_DEFINITIONS,
+                        uiConfig.getHelpUrlQuickFilter()));
+            }
+        }, this);
     }
 
     @ProxyEvent

@@ -27,7 +27,7 @@ import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.FindUiHandlers;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -67,31 +67,31 @@ public class AnnotationLinkPresenter
         view.setUiHandlers(this);
         listPresenter.setFindResultListHandler(this);
 
-        add = listPresenter.getView().addButton(SvgPresets.ADD);
-        add.setTitle("Add Annotation Link");
+        listPresenter.getView().getToolbar().setName("Link actions");
+        add = listPresenter.getView().getToolbar().button(SvgImage.ADD, "Add Annotation Link",
+                () -> ShowFindAnnotationEvent.fire(this, this::link));
         add.setEnabled(false);
         add.setVisible(false);
-        remove = listPresenter.getView().addButton(SvgPresets.DELETE);
-        remove.setTitle("Remove Annotation Link");
+        remove = listPresenter.getView().getToolbar().button(SvgImage.DELETE, "Remove Annotation Link", this::onRemove);
         remove.setEnabled(false);
         remove.setVisible(false);
+    }
+
+    private void onRemove() {
+        final Annotation annotation = listPresenter.getSelected();
+        if (annotation != null) {
+            ConfirmEvent.fire(this, "Are you sure you want to remove this reference?", ok -> {
+                if (ok) {
+                    unlink(annotation);
+                }
+            });
+        }
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(add.addClickHandler(e -> ShowFindAnnotationEvent.fire(this, this::link)));
-        registerHandler(remove.addClickHandler(e -> {
-            final Annotation annotation = listPresenter.getSelected();
-            if (annotation != null) {
-                ConfirmEvent.fire(this, "Are you sure you want to remove this reference?", ok -> {
-                    if (ok) {
-                        unlink(annotation);
-                    }
-                });
-            }
-        }));
         registerHandler(listPresenter.addSelectionHandler(e -> enableButtons()));
     }
 

@@ -24,11 +24,10 @@ import stroom.floormap.client.overlay.FloorMapAreaCellText;
 import stroom.floormap.client.overlay.FloorMapAreaMembership;
 import stroom.floormap.client.presenter.FloorMapTrackingPresenter.FloorMapTrackingView;
 import stroom.floormap.shared.FloorMapGroup;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.Separator;
@@ -116,9 +115,9 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
     private final SingleSelectionModel<EntityEntry> selectionModel = new SingleSelectionModel<>();
     private Consumer<EntityEntry> selectionConsumer;
 
-    private final ButtonView stopTrackingButton;
-    private final ButtonView addToGroupButton;
-    private final InlineSvgToggleButton showFactsButton;
+    private final ToolbarButton stopTrackingButton;
+    private final ToolbarButton addToGroupButton;
+    private final ToolbarToggleButton showFactsButton;
 
     /// Supplies the current groups for the "Add to Group" menu; may be `null`.
     private Supplier<List<FloorMapGroup>> groupsSupplier;
@@ -168,23 +167,19 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         dataProvider.addDataDisplay(dataGrid);
 
         // Toolbar
-        final ButtonPanel buttonPanel = new ButtonPanel();
-        stopTrackingButton = buttonPanel.addButton(SvgPresets.CLEAR);
-        stopTrackingButton.setTitle("Stop Tracking");
+        final Toolbar toolbar = new Toolbar("Tracking actions");
+        stopTrackingButton = toolbar.button(SvgImage.CLEAR, "Stop Tracking", selectionModel::clear);
+        stopTrackingButton.setEnabled(false);
 
         // Puts the selected row into a group without leaving this panel. Group
         // membership is otherwise edited from the Groups tab.
-        addToGroupButton = buttonPanel.addButton(SvgPresets.ADD);
-        addToGroupButton.setTitle("Add to Group");
+        addToGroupButton = toolbar.button(SvgImage.ADD, "Add to Group", this::showAddToGroupMenu);
         addToGroupButton.setEnabled(false);
 
-        showFactsButton = new InlineSvgToggleButton();
-        showFactsButton.setSvg(SvgImage.LOCATE);
-        showFactsButton.setState(showFacts);
-        showFactsButton.setTitle(showFactsTitle());
-        buttonPanel.addButton(showFactsButton);
+        showFactsButton = toolbar.toggle(SvgImage.LOCATE, showFactsTitle(), this::setShowFacts);
+        showFactsButton.setPressed(showFacts);
 
-        view.setToolbar(buttonPanel);
+        view.setToolbar(toolbar);
     }
 
     @Override
@@ -214,16 +209,6 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
             }
         }));
 
-        //noinspection unused e
-        registerHandler(stopTrackingButton.addClickHandler(e ->
-                selectionModel.clear()));
-
-        //noinspection unused e
-        registerHandler(showFactsButton.addClickHandler(e ->
-                setShowFacts(showFactsButton.getState())));
-
-        //noinspection unused e
-        registerHandler(addToGroupButton.addClickHandler(e -> showAddToGroupMenu()));
     }
 
     /// Wires up the "Add to Group" action. Without this the button stays disabled,
@@ -298,8 +283,9 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
                 .build());
 
         final Rect relativeRect = new Rect(
-                addToGroupButton.asWidget().getElement()).grow(3);
+                addToGroupButton.getElement()).grow(3);
         ShowMenuEvent.builder()
+                .name("Add '" + selected.getDisplayName() + "' to Group")
                 .items(items)
                 .popupPosition(new PopupPosition(relativeRect, PopupLocation.BELOW))
                 .fire(this);
@@ -547,7 +533,7 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
     /// Flips the Show Facts state, its button and the visible rows together.
     private void setShowFacts(final boolean showFacts) {
         this.showFacts = showFacts;
-        showFactsButton.setState(showFacts);
+        showFactsButton.setPressed(showFacts);
         showFactsButton.setTitle(showFactsTitle());
         applyFilter();
     }

@@ -30,7 +30,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
@@ -63,6 +63,7 @@ public class ScheduledProcessHistoryListPresenter
     private ExecutionHistoryRequest request;
     private final ButtonView replayButton;
     private ScheduledProcessingPresenter scheduledProcessingPresenter;
+    private boolean readOnly;
 
     @Inject
     public ScheduledProcessHistoryListPresenter(final EventBus eventBus,
@@ -88,7 +89,8 @@ public class ScheduledProcessHistoryListPresenter
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setDataWidget(dataGrid);
 
-        replayButton = view.addButton(SvgPresets.RERUN);
+        view.getToolbar().setName("History actions");
+        replayButton = view.getToolbar().button(SvgImage.RERUN, "Replay Selected Execution", this::replay);
 
         addColumns();
         enableButtons();
@@ -96,7 +98,6 @@ public class ScheduledProcessHistoryListPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(replayButton.addClickHandler(ignored -> replay()));
         registerHandler(selectionModel.addSelectionHandler(ignored -> enableButtons()));
         registerHandler(dataGrid.addColumnSortHandler(ignored -> refresh()));
     }
@@ -147,6 +148,9 @@ public class ScheduledProcessHistoryListPresenter
     }
 
     private void replay() {
+        if (readOnly) {
+            return;
+        }
         final ExecutionHistory executionHistory = selectionModel.getSelected();
         scheduledProcessingPresenter.replay(executionHistory);
     }
@@ -193,8 +197,16 @@ public class ScheduledProcessHistoryListPresenter
     }
 
     private void enableButtons() {
-        replayButton.setEnabled(selectionModel.hasSelectedItems());
-        replayButton.setTitle("Replay Execution");
+        // Replaying adds a new schedule, which isn't allowed if the owning document is read only
+        replayButton.setEnabled(!readOnly && selectionModel.hasSelectedItems());
+    }
+
+    /// Sets whether the owning document is read only. When it is, executions can't be replayed.
+    ///
+    /// @param readOnly True if the owning document is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {

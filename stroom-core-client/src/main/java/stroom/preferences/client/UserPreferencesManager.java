@@ -17,6 +17,7 @@
 package stroom.preferences.client;
 
 import stroom.config.global.shared.UserPreferencesResource;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.query.api.UserTimeZone;
@@ -29,6 +30,7 @@ import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.datepicker.client.ClientTimeZone;
 import stroom.widget.util.client.ClientStringUtil;
+import stroom.widget.util.client.KeyBinding;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -41,6 +43,14 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+/// Holds and applies the current user's preferences.
+///
+/// The app fetches the user's preferences, and sets them with
+/// [#setCurrentPreferences(UserPreferences)], before it shows anything else (see `App` and
+/// `DashboardApp`), so after start up they are always the user's. Before then (and on pages
+/// shown without signing in) [#getCurrentUserPreferences()] gives defaults rather than null.
+/// Code that changes and saves the preferences uses [#whenLoaded(Consumer)], so that it never
+/// saves the defaults over the user's preferences.
 @Singleton
 public class UserPreferencesManager {
 
@@ -48,7 +58,7 @@ public class UserPreferencesManager {
     private final RestFactory restFactory;
     private final CurrentPreferences currentPreferences;
 
-    private UserPreferences currentUserPreferences;
+    private final UserPreferencesHolder userPreferencesHolder = new UserPreferencesHolder();
 
     @Inject
     public UserPreferencesManager(final RestFactory restFactory,
@@ -77,6 +87,26 @@ public class UserPreferencesManager {
                 .exec();
     }
 
+    /// Saves the user's preferences, telling the caller if they can't be saved, e.g. so that a
+    /// dialog waiting for the save can be used again.
+    ///
+    /// @param userPreferences    The preferences to save.
+    /// @param consumer           Called once they have been saved.
+    /// @param errorHandler       Called if they can't be saved.
+    /// @param taskMonitorFactory Shows that the save is in progress.
+    public void update(final UserPreferences userPreferences,
+                       final Consumer<Boolean> consumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(PREFERENCES_RESOURCE)
+                .method(res -> res.update(userPreferences))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
                                           final Consumer<UserPreferences> consumer,
                                           final TaskMonitorFactory taskMonitorFactory) {
@@ -98,19 +128,49 @@ public class UserPreferencesManager {
                 .exec();
     }
 
+    /// Sets and applies the user's preferences, e.g. once they have been fetched when the app
+    /// starts or after the user changes them. The first time, this calls any consumers waiting in
+    /// [#whenLoaded(Consumer)].
+    ///
+    /// @param userPreferences The user's preferences.
     public void setCurrentPreferences(final UserPreferences userPreferences) {
-        this.currentUserPreferences = userPreferences;
+        Objects.requireNonNull(userPreferences, "userPreferences");
         applyUserPreferences(this.currentPreferences, userPreferences);
 
         final Element element = RootPanel.getBodyElement().getParentElement();
-        final String className = getCurrentPreferenceClasses();
+        final String className = ThemeCssUtil.getCurrentPreferenceClasses(userPreferences);
         element.setClassName(className);
 
-        ClientTimeZone.setTimeZone(getTimeZone(currentUserPreferences));
+        ClientTimeZone.setTimeZone(getTimeZone(userPreferences));
+
+        KeyBinding.applyUserBindings(
+                userPreferences.getKeyBindings(),
+                isCharacterKeyShortcutsEnabled(userPreferences));
+
+        // Last, so that waiting consumers see the preferences applied
+        userPreferencesHolder.set(userPreferences);
+    }
+
+    /// @return True once the user's preferences have been loaded and set.
+    public boolean isLoaded() {
+        return userPreferencesHolder.isLoaded();
+    }
+
+    /// Calls the consumer with the user's preferences: at once if they have been loaded,
+    /// otherwise once, when they are. Unlike [#getCurrentUserPreferences()] it never gives the
+    /// defaults, so use it to change and save the preferences without losing the user's.
+    ///
+    /// @param consumer Called once with the user's preferences.
+    public void whenLoaded(final Consumer<UserPreferences> consumer) {
+        userPreferencesHolder.whenLoaded(consumer);
     }
 
     private String getTimeZone(final UserPreferences userPreferences) {
         final UserTimeZone userTimeZone = userPreferences.getTimeZone();
+        if (userTimeZone == null) {
+            // e.g. the server's own default preferences, which have no time zone
+            return "UTC";
+        }
         String timeZone = null;
         switch (userTimeZone.getUse()) {
             case UTC: {
@@ -169,8 +229,10 @@ public class UserPreferencesManager {
         return "Etc/GMT" + offset;
     }
 
+    /// @return The user's preferences, or defaults if they haven't been loaded yet (see the class
+    /// description). Never null.
     public UserPreferences getCurrentUserPreferences() {
-        return currentUserPreferences;
+        return userPreferencesHolder.get();
     }
 
     public CurrentPreferences getCurrentPreferences() {
@@ -185,11 +247,17 @@ public class UserPreferencesManager {
      * @return A space delimited list of css classes for theme, density, font and font size.
      */
     public String getCurrentPreferenceClasses() {
-        return ThemeCssUtil.getCurrentPreferenceClasses(currentUserPreferences);
+        return ThemeCssUtil.getCurrentPreferenceClasses(getCurrentUserPreferences());
+    }
+
+    /// @param userPreferences The user's preferences.
+    /// @return Whether the user has keyboard shortcuts made only of character keys turned on.
+    public static boolean isCharacterKeyShortcutsEnabled(final UserPreferences userPreferences) {
+        return Objects.requireNonNullElse(userPreferences.getEnableCharacterKeyShortcuts(), true);
     }
 
     public boolean isHideConditionalStyles() {
-        return Objects.requireNonNullElse(currentUserPreferences.getHideConditionalStyles(), false);
+        return Objects.requireNonNullElse(getCurrentUserPreferences().getHideConditionalStyles(), false);
     }
 
     public List<String> getThemes() {
@@ -215,20 +283,10 @@ public class UserPreferencesManager {
     }
 
     public boolean isUtc() {
-        if (currentUserPreferences != null &&
-            currentUserPreferences.getTimeZone() != null &&
-            currentUserPreferences.getTimeZone().getUse() != null &&
-            currentUserPreferences.getTimeZone().getUse() != Use.UTC) {
-            return false;
-        }
-        return true;
-    }
-
-    static CurrentPreferences buildCurrentPreferences(final UserPreferences userPreferences) {
-        Objects.requireNonNull(userPreferences);
-        final CurrentPreferences currentPreferences = new CurrentPreferences();
-        applyUserPreferences(currentPreferences, userPreferences);
-        return currentPreferences;
+        final UserPreferences userPreferences = getCurrentUserPreferences();
+        return userPreferences.getTimeZone() == null
+               || userPreferences.getTimeZone().getUse() == null
+               || userPreferences.getTimeZone().getUse() == Use.UTC;
     }
 
     static void applyUserPreferences(final CurrentPreferences currentPreferences,

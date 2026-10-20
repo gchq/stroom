@@ -24,7 +24,6 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
@@ -66,9 +65,15 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         this.restFactory = restFactory;
         this.newFsVolumeGroupPresenterProvider = newFsVolumeGroupPresenterProvider;
 
-        newButton = volumeStatusListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
-        openButton = volumeStatusListPresenter.getView().addButton(SvgPresets.EDIT);
-        deleteButton = volumeStatusListPresenter.getView().addButton(SvgPresets.DELETE);
+        volumeStatusListPresenter.getView().getToolbar().setName("Volume group actions");
+        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD,
+                "New Data Volume Group", this::add);
+        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT,
+                "Edit Selected Data Volume Group", this::edit);
+        openButton.setEnabled(false);
+        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE,
+                "Delete Selected Data Volume Group", this::delete);
+        deleteButton.setEnabled(false);
 
         view.setView(volumeStatusListPresenter.getView());
     }
@@ -81,9 +86,6 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
                 edit();
             }
         }));
-        registerHandler(newButton.addClickHandler(event -> add()));
-        registerHandler(openButton.addClickHandler(event -> edit()));
-        registerHandler(deleteButton.addClickHandler(event -> delete()));
     }
 
     private void add() {
@@ -109,7 +111,7 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
     private void edit(final FsVolumeGroup volumeGroup) {
         final FsVolumeGroupEditPresenter editor = editProvider.get();
-        editor.show(volumeGroup, "Edit Volume Group - " + volumeGroup.getName(), result -> {
+        editor.show(volumeGroup, "Edit Data Volume Group - " + volumeGroup.getName(), result -> {
             if (result != null) {
                 refresh();
             }

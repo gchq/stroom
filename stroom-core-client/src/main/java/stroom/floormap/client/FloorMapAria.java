@@ -85,7 +85,7 @@ public final class FloorMapAria {
     /// widget's wrapper element.
     ///
     /// Use for a composite that wraps exactly one control — `CustomCheckBox`,
-    /// whose root is a `div.SimpleTickBox` with the `<input>` inside it.
+    /// whose root is a `label.tick-box` with the `<input>` inside it.
     /// [#label(UIObject, String)] on such a widget lands the name on the wrapper,
     /// where it is dropped; [#group(UIObject, String)] would work but describes a
     /// single checkbox as a group of controls, which is a worse reading than naming the
@@ -190,6 +190,34 @@ public final class FloorMapAria {
         if (grid == null || target == null) {
             return;
         }
+        labelledBy(target, cellId(grid, row, column));
+    }
+
+    /// As [#labelledByCell(Grid, int, int, UIObject)], for a composite widget whose real control
+    /// is inside it, e.g. a selection box, whose combobox is its text box: the name goes on that
+    /// control, where on the wrapper it would be dropped (see [#labelInnerControl(UIObject, String)]).
+    ///
+    /// @param grid   The grid holding the label's cell.
+    /// @param row    The label cell's row.
+    /// @param column The label cell's column.
+    /// @param target The composite widget holding the control to name.
+    public static void labelledByCellInnerControl(final Grid grid,
+                                                  final int row,
+                                                  final int column,
+                                                  final UIObject target) {
+        if (grid == null || target == null) {
+            return;
+        }
+        final Element control = firstFocusable(target.getElement());
+        if (control == null) {
+            labelledByCell(grid, row, column, target);
+            return;
+        }
+        control.setAttribute(ARIA_LABELLEDBY, cellId(grid, row, column));
+    }
+
+    // The id of a grid cell, given one if it has none
+    private static String cellId(final Grid grid, final int row, final int column) {
         final Element cell = grid.getCellFormatter().getElement(row, column);
         // Reuse an id if the cell already has one — labelling two controls from
         // the same cell (a value box and its unit list, say) must not renumber it.
@@ -198,7 +226,7 @@ public final class FloorMapAria {
             id = uniqueId("floormap-label");
             cell.setId(id);
         }
-        labelledBy(target, id);
+        return id;
     }
 
     /// Hides `uiObject` from assistive technology while leaving it visible.

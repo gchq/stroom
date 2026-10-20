@@ -16,6 +16,7 @@
 
 package stroom.security.identity.client;
 
+import stroom.cell.info.client.CellIcon;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
@@ -26,8 +27,7 @@ import stroom.security.identity.client.event.OpenAccountEvent;
 import stroom.security.identity.client.presenter.AccountsPresenter;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.shared.AppPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.welcome.client.presenter.WelcomePresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -43,8 +43,8 @@ import javax.inject.Singleton;
 @Singleton
 public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
 
-    public static final String SCREEN_NAME = "Manage Accounts";
-    public static final Preset ICON = SvgPresets.USER;
+    public static final String SCREEN_NAME = "Accounts";
+    public static final SvgImage ICON = SvgImage.USER;
 
     final Provider<UiConfigCache> uiConfigCacheProvider;
 
@@ -100,8 +100,8 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
         return Action.GOTO_USER_ACCOUNTS;
     }
 
-    Preset getIcon() {
-        return SvgPresets.USER;
+    CellIcon getIcon() {
+        return CellIcon.of(SvgImage.USER, "User");
     }
 
     private void addMenuItem(final BeforeRevealMenubarEvent event) {

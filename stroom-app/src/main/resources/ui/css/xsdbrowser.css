@@ -51,10 +51,26 @@
 	overflow: auto;
 }
 
+/* A box: its title, then its content below it, centred */
 .xsdBrowser .box {
 	width: 100%;
 	height: 100%;
 	border: 1px solid var(--xsdbrowser-box__border-color);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.xsdBrowser .boxContent {
+	flex: 1 1 auto;
+	max-width: 100%;
+}
+
+/* A box title's image, then its text beside it */
+.xsdBrowser .boxTitle-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .xsdBrowser .boxTitle {
@@ -75,6 +91,9 @@
 }
 
 .xsdBrowser .outerBox {
+	display: flex;
+	flex-direction: column;
+	width: fit-content;
 	background-color: var(--xsdbrowser-box__background-color);
 	border: 1px solid var(--control__background-color);
 	border-radius: .25rem;
@@ -88,8 +107,46 @@
 	padding: 5px;
 }
 
+/* The schema's boxes (its elements and its types) side by side */
 .xsdBrowser .midPanel {
-	border-spacing: 5px;
+	display: flex;
+	align-items: flex-start;
+	gap: 5px;
+	padding: 5px;
+}
+
+/* An element or a type's boxes, in two columns side by side */
+.xsdBrowser .xsdBrowser-columns {
+	display: flex;
+	align-items: flex-start;
+	gap: 40px;
+}
+
+.xsdBrowser .xsdBrowser-column {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.xsdBrowser .xsdBrowser-column--centred {
+	align-items: center;
+}
+
+/* The rows of a node's children, as wide as they need, each cell's content in its middle */
+.xsdBrowser .xsdBrowser-nodeGrid {
+	display: grid;
+	width: max-content;
+}
+
+.xsdBrowser .xsdBrowser-nodeGrid__cell {
+	display: flex;
+	align-items: center;
+}
+
+/* An empty cell holds a space, as the table this grid replaced did, so that a column left empty
+   (e.g. the occurrences, when they aren't shown) still spaces out the columns either side of it */
+.xsdBrowser .xsdBrowser-nodeGrid__cell:empty::before {
+	content: "\00a0";
 }
 
 .xsdBrowser .displayTypeBox {

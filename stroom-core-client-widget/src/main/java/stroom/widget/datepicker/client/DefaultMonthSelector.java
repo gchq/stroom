@@ -35,9 +35,11 @@ package stroom.widget.datepicker.client;
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -54,11 +56,14 @@ import java.util.Objects;
 
 public final class DefaultMonthSelector extends MonthSelector {
 
-    private InlineSvgButton monthBackwards;
-    private InlineSvgButton monthForwards;
+    // The year's and month's Previous and Next buttons, each pair a toolbar beside its select box
+    private Toolbar yearToolbar;
+    private Toolbar monthToolbar;
+    private ToolbarButton monthBackwards;
+    private ToolbarButton monthForwards;
     private FlowPanel layout;
-    private InlineSvgButton yearBackwards;
-    private InlineSvgButton yearForwards;
+    private ToolbarButton yearBackwards;
+    private ToolbarButton yearForwards;
     private SelectionBox<IntItem> monthSelect;
     private SelectionBox<IntItem> yearSelect;
     private int monthColumn;
@@ -118,10 +123,14 @@ public final class DefaultMonthSelector extends MonthSelector {
     @Override
     protected void setup() {
         // previous, next buttons
-        monthBackwards = createNavigationButton(SvgImage.ARROW_LEFT, -1, css().previousButton());
-        monthForwards = createNavigationButton(SvgImage.ARROW_RIGHT, 1, css().nextButton());
-        yearBackwards = createNavigationButton(SvgImage.ARROW_LEFT, -12, css().previousYearButton());
-        yearForwards = createNavigationButton(SvgImage.ARROW_RIGHT, 12, css().nextYearButton());
+        yearToolbar = new Toolbar("Year");
+        yearBackwards = yearToolbar.button(SvgImage.ARROW_LEFT, "Previous Year",
+                () -> addMonths(-DateTimeModel.MONTHS_IN_YEAR));
+        yearForwards = yearToolbar.button(SvgImage.ARROW_RIGHT, "Next Year",
+                () -> addMonths(DateTimeModel.MONTHS_IN_YEAR));
+        monthToolbar = new Toolbar("Month");
+        monthBackwards = monthToolbar.button(SvgImage.ARROW_LEFT, "Previous Month", () -> addMonths(-1));
+        monthForwards = monthToolbar.button(SvgImage.ARROW_RIGHT, "Next Month", () -> addMonths(1));
 
         // month and year selector
         monthSelect = createMonthSelect();
@@ -136,19 +145,9 @@ public final class DefaultMonthSelector extends MonthSelector {
         initWidget(layout);
     }
 
-    private InlineSvgButton createNavigationButton(
-            final SvgImage svgImage, final int noOfMonths, final String styleName) {
-        final InlineSvgButton button = new InlineSvgButton();
-        button.setSvg(svgImage);
-        button.addClickHandler(event -> addMonths(noOfMonths));
-        button.addStyleName(styleName);
-        button.setTabIndex(-2);
-
-        return button;
-    }
-
     private SelectionBox<IntItem> createMonthSelect() {
         final SelectionBox<IntItem> monthListBox = new SelectionBox<>();
+        AccessibleName.set(monthListBox, "Month");
 
         for (int i = 0; i < DateTimeModel.MONTHS_IN_YEAR; i++) {
             monthListBox.addItem(new IntItem(getModel().formatMonth(i), i));
@@ -173,6 +172,7 @@ public final class DefaultMonthSelector extends MonthSelector {
 
     private SelectionBox<IntItem> createYearSelect() {
         final SelectionBox<IntItem> yearListBox = new SelectionBox<>();
+        AccessibleName.set(yearListBox, "Year");
         yearListBox.addValueChangeHandler(e -> {
             final int previousYear = getModel().getCurrentMonth().getFullYear();
             final int newYear = yearListBox.getValue().getValue();
@@ -193,7 +193,7 @@ public final class DefaultMonthSelector extends MonthSelector {
 
     private boolean isDatePickerConfigChanged() {
         final boolean isMonthCurrentlySelectable = monthSelect.getParent() != null;
-        final boolean isYearNavigationCurrentlyEnabled = yearBackwards.getParent() != null;
+        final boolean isYearNavigationCurrentlyEnabled = yearToolbar.getParent() != null;
 
         return getDatePicker().isYearAndMonthDropdownVisible() != isMonthCurrentlySelectable ||
                 getDatePicker().isYearArrowsVisible() != isYearNavigationCurrentlyEnabled;
@@ -246,14 +246,12 @@ public final class DefaultMonthSelector extends MonthSelector {
             final FlowPanel year = new FlowPanel();
             year.setStyleName(css().year());
             year.add(yearSelect);
-            year.add(yearBackwards);
-            year.add(yearForwards);
+            year.add(yearToolbar);
 
             final FlowPanel month = new FlowPanel();
             month.setStyleName(css().month());
             month.add(monthSelect);
-            month.add(monthBackwards);
-            month.add(monthForwards);
+            month.add(monthToolbar);
 
 //            if (getModel().isMonthBeforeYear()) {
 //                layout.add(month);

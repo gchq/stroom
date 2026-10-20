@@ -19,8 +19,10 @@ package stroom.query.client;
 import stroom.item.client.EventBinder;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ExpressionOperator.Op;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -29,6 +31,8 @@ import com.google.gwt.user.client.ui.Widget;
 public class OperatorEditor extends Composite {
 
     private final FlowPanel layout;
+    // The row of its field
+    private final FlowPanel inner;
     private final SelectionBox<Op> listBox;
     private Operator operator;
     private boolean reading;
@@ -46,11 +50,12 @@ public class OperatorEditor extends Composite {
 
     public OperatorEditor() {
         listBox = new SelectionBox<>();
+        AccessibleName.set(listBox, "Operator");
         listBox.addItems(Op.values());
 
         fixStyle(listBox, 55);
 
-        final FlowPanel inner = new FlowPanel();
+        inner = new FlowPanel();
         inner.setStyleName("termEditor-inner");
         inner.add(listBox);
 
@@ -113,6 +118,12 @@ public class OperatorEditor extends Composite {
                 uiHandlers.onChange();
             }
         }
+    }
+
+    /// @return The row of its fields, on which the item it edits draws its looks (e.g. being
+    /// selected).
+    public Element getRow() {
+        return inner.getElement();
     }
 
     public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {

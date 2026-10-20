@@ -30,12 +30,12 @@
 	border-radius: var(--dialog__border-radius);
 	box-shadow: var(--popup__shadow);
 	overflow: hidden;
-	background-color: var(--dialog__background-color);
+	background-color: var(--popup__background-color);
 	z-index: -1;
 }
 
 .transparency .simplePopup-background-behind {
-	background-color: var(--transparency__background-color);
+	background-color: var(--popup__background-color--transparent);
 	backdrop-filter: var(--transparency__backdrop-filter);
 }
 

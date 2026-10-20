@@ -17,6 +17,7 @@
 package stroom.main.client.presenter;
 
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.CorePresenter;
@@ -32,9 +33,11 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
+import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.GlobalKeyHandler;
 import stroom.widget.util.client.Size;
@@ -73,6 +76,8 @@ public class MainPresenter
     private final MenuItems menuItems;
     private int taskCount;
     private boolean showingAi;
+    private String baseTitle = "Stroom";
+    private String selectedTabLabel;
 
     @Inject
     public MainPresenter(final EventBus eventBus,
@@ -101,11 +106,22 @@ public class MainPresenter
             taskCount--;
             updateSpinnerState();
         });
+        // Reflect the selected content tab in the browser page title
+        registerHandler(eventBus.addHandler(ContentTabSelectionChangeEvent.getType(), event -> {
+            final TabData tabData = event.getTabData();
+            selectedTabLabel = tabData != null
+                    ? tabData.getLabel()
+                    : null;
+            updatePageTitle();
+        }));
+        // Show the menus that widgets with no event bus ask for (e.g. a split pane's splitter)
+        registerHandler(MenuRequest.relay(this));
         registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
                     final ExtendedUiConfig uiConfig = event.getProperties();
                     if (uiConfig.getHtmlTitle() != null) {
-                        Window.setTitle(uiConfig.getHtmlTitle());
+                        baseTitle = uiConfig.getHtmlTitle();
+                        updatePageTitle();
                     }
                     if (uiConfig.getTheme() != null) {
                         getView().setBorderStyle(uiConfig.getTheme().getPageBorder());
@@ -165,6 +181,10 @@ public class MainPresenter
         startAutoRefresh();
     }
 
+    private void updatePageTitle() {
+        Window.setTitle(PageTitle.build(baseTitle, selectedTabLabel));
+    }
+
     private void updateSpinnerState() {
         if (taskCount < 0) {
             GWT.log("Negative task count");
@@ -205,9 +225,11 @@ public class MainPresenter
         if (items != null && !items.isEmpty()) {
             ShowMenuEvent
                     .builder()
+                    // Named here, as the button that opens it is titled "Show Main Menu"
+                    .name("Main")
                     .items(items)
                     .popupPosition(popupPosition)
-                    .addAutoHidePartner(autoHidePartner)
+                    .opener(autoHidePartner)
                     .fire(this);
         }
     }

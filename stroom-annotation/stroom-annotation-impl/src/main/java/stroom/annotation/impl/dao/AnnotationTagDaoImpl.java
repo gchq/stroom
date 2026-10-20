@@ -18,19 +18,23 @@ package stroom.annotation.impl.dao;
 
 import stroom.annotation.impl.AnnotationTagDao;
 import stroom.annotation.impl.db.AnnotationDbConnProvider;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagFields;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
+import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.db.util.JooqUtil.BooleanOperator;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.ConditionalFormattingStyle;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
+import stroom.query.language.filter.QuickFilter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
@@ -40,7 +44,9 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Record;
+import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -107,68 +113,101 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
 
     @Override
     public AnnotationTag createAnnotationTag(final CreateAnnotationTagRequest request) {
-        return JooqUtil.contextResult(connectionProvider, context ->
-                context.transactionResult(config -> {
-                    // Check a tag with the same type and name already exists.
-                    final Optional<AnnotationTag> existing = config.dsl()
-                            .select(ANNOTATION_TAG.ID,
-                                    ANNOTATION_TAG.UUID,
-                                    ANNOTATION_TAG.TYPE_ID,
-                                    ANNOTATION_TAG.NAME,
-                                    ANNOTATION_TAG.STYLE_ID,
-                                    ANNOTATION_TAG.TAG_TEXT)
-                            .from(ANNOTATION_TAG)
-                            .where(ANNOTATION_TAG.TYPE_ID.eq(request.getType().getPrimitiveValue()))
-                            .and(ANNOTATION_TAG.NAME.eq(request.getName()))
-                            .limit(1)
-                            .fetchOptional()
-                            .map(this::mapToAnnotationTag);
+        return JooqUtil.transactionResult(connectionProvider, context -> {
+            // Check a tag with the same type and name already exists.
+            final Optional<AnnotationTag> existing = context
+                    .select(ANNOTATION_TAG.ID,
+                            ANNOTATION_TAG.UUID,
+                            ANNOTATION_TAG.TYPE_ID,
+                            ANNOTATION_TAG.NAME,
+                            ANNOTATION_TAG.STYLE_ID,
+                            ANNOTATION_TAG.TAG_TEXT)
+                    .from(ANNOTATION_TAG)
+                    .where(ANNOTATION_TAG.TYPE_ID.eq(request.getType().getPrimitiveValue()))
+                    .and(ANNOTATION_TAG.NAME.eq(request.getName()))
+                    .limit(1)
+                    .fetchOptional()
+                    .map(this::mapToAnnotationTag);
 
-                    if (existing.isPresent()) {
-                        config.dsl()
-                                .update(ANNOTATION_TAG)
-                                .set(ANNOTATION_TAG.DELETED, false)
-                                .set(ANNOTATION_TAG.TAG_TEXT, request.getTagText())
-                                .where(ANNOTATION_TAG.ID.eq(existing.get().getId()))
-                                .execute();
-                        return existing.get().copy().tagText(request.getTagText()).build();
-                    }
+            if (existing.isPresent()) {
+                context
+                        .update(ANNOTATION_TAG)
+                        .set(ANNOTATION_TAG.DELETED, false)
+                        .set(ANNOTATION_TAG.TAG_TEXT, request.getTagText())
+                        .where(ANNOTATION_TAG.ID.eq(existing.get().getId()))
+                        .execute();
+                return existing.get().copy().tagText(request.getTagText()).build();
+            }
 
-                    // Insert a new tag.
-                    final String uuid = UUID.randomUUID().toString();
-                    final Integer id = config.dsl()
-                            .insertInto(ANNOTATION_TAG,
-                                    ANNOTATION_TAG.UUID,
-                                    ANNOTATION_TAG.TYPE_ID,
-                                    ANNOTATION_TAG.NAME,
-                                    ANNOTATION_TAG.TAG_TEXT)
-                            .values(uuid,
-                                    request.getType().getPrimitiveValue(),
-                                    request.getName(),
-                                    request.getTagText())
-                            .returning(ANNOTATION_TAG.ID)
-                            .fetchOne(ANNOTATION_TAG.ID);
-                    return AnnotationTag.builder()
-                            .id(id)
-                            .uuid(uuid)
-                            .type(request.getType())
-                            .name(request.getName())
-                            .tagText(request.getTagText())
-                            .build();
-                }));
+            // Insert a new tag.
+            final String uuid = UUID.randomUUID().toString();
+            final Integer id = context
+                    .insertInto(ANNOTATION_TAG,
+                            ANNOTATION_TAG.UUID,
+                            ANNOTATION_TAG.TYPE_ID,
+                            ANNOTATION_TAG.NAME,
+                            ANNOTATION_TAG.TAG_TEXT)
+                    .values(uuid,
+                            request.getType().getPrimitiveValue(),
+                            request.getName(),
+                            request.getTagText())
+                    .returning(ANNOTATION_TAG.ID)
+                    .fetchOne(ANNOTATION_TAG.ID);
+            return AnnotationTag.builder()
+                    .id(id)
+                    .uuid(uuid)
+                    .type(request.getType())
+                    .name(request.getName())
+                    .tagText(request.getTagText())
+                    .build();
+        });
     }
 
     @Override
     public AnnotationTag updateAnnotationTag(final AnnotationTag annotationTag) {
-        JooqUtil.context(connectionProvider, context -> context
-                .update(ANNOTATION_TAG)
-                .set(ANNOTATION_TAG.NAME, annotationTag.getName())
-                .set(ANNOTATION_TAG.STYLE_ID,
-                        NullSafe.get(annotationTag.getStyle(), ConditionalFormattingStyle::getPrimitiveValue))
-                .set(ANNOTATION_TAG.TAG_TEXT, annotationTag.getTagText())
-                .where(ANNOTATION_TAG.UUID.eq(annotationTag.getUuid()))
-                .execute());
+        JooqUtil.transaction(connectionProvider, context -> {
+            checkNameIsFree(context, annotationTag);
+            context
+                    .update(ANNOTATION_TAG)
+                    .set(ANNOTATION_TAG.NAME, annotationTag.getName())
+                    .set(ANNOTATION_TAG.STYLE_ID,
+                            NullSafe.get(annotationTag.getStyle(), ConditionalFormattingStyle::getPrimitiveValue))
+                    .set(ANNOTATION_TAG.TAG_TEXT, annotationTag.getTagText())
+                    .where(ANNOTATION_TAG.UUID.eq(annotationTag.getUuid()))
+                    .execute();
+        });
         return annotationTag;
+    }
+
+    // Deleted tags keep their name, as creating a tag of that name restores them, so a rename must not take
+    // the name of another tag of the same type, deleted or not. The lookup uses the column's collation, so it
+    // matches names the same way the unique index does.
+    private void checkNameIsFree(final DSLContext context, final AnnotationTag annotationTag) {
+        final Byte typeId = context
+                .select(ANNOTATION_TAG.TYPE_ID)
+                .from(ANNOTATION_TAG)
+                .where(ANNOTATION_TAG.UUID.eq(annotationTag.getUuid()))
+                .fetchOne(ANNOTATION_TAG.TYPE_ID);
+        if (typeId == null) {
+            return;
+        }
+        final Optional<Boolean> otherTagDeleted = context
+                .select(ANNOTATION_TAG.DELETED)
+                .from(ANNOTATION_TAG)
+                .where(ANNOTATION_TAG.TYPE_ID.eq(typeId))
+                .and(ANNOTATION_TAG.NAME.eq(annotationTag.getName()))
+                .and(ANNOTATION_TAG.UUID.ne(annotationTag.getUuid()))
+                .limit(1)
+                .fetchOptional(ANNOTATION_TAG.DELETED);
+        if (otherTagDeleted.isPresent()) {
+            final String name = annotationTag.getName();
+            if (otherTagDeleted.get()) {
+                throw new RuntimeException(LogUtil.message(
+                        "A deleted tag is called '{}'. Create a tag called '{}' to restore it, "
+                        + "or choose another name.", name, name));
+            }
+            throw new RuntimeException(LogUtil.message("A tag called '{}' already exists.", name));
+        }
     }
 
     @Override
@@ -180,25 +219,46 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                 .execute()) > 0;
     }
 
-    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
+    public ResultPage<AnnotationTag> findAnnotationTags(final FindAnnotationTagCriteria request) {
         return findAnnotationTags(request, uuid -> true);
     }
 
     @Override
-    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request,
+    public ResultPage<AnnotationTag> findAnnotationTags(final FindAnnotationTagCriteria request,
                                                         final Predicate<String> uuidPredicate) {
         final long offset = NullSafe.getOrElse(
                 request,
-                ExpressionCriteria::getPageRequest,
+                FindAnnotationTagCriteria::getPageRequest,
                 PageRequest::getOffset,
                 0);
         final int length = NullSafe.getOrElse(
                 request,
-                ExpressionCriteria::getPageRequest,
+                FindAnnotationTagCriteria::getPageRequest,
                 PageRequest::getLength,
                 Integer.MAX_VALUE);
         final long maxPos = offset + length;
-        final Condition condition = expressionMapper.apply(request.getExpression());
+
+        final Condition condition;
+        try {
+            // The type is a structural constraint applied here, not something the filter can
+            // reach - see FindAnnotationTagCriteria. The user's text can only narrow within it.
+            final Condition typeCondition = NullSafe.getOrElseGet(
+                    request.getType(),
+                    type -> ANNOTATION_TAG.TYPE_ID.eq(type.getPrimitiveValue()),
+                    DSL::trueCondition);
+            final ExpressionOperator quickFilter = QuickFilter.parse(
+                    request.getQuickFilter(),
+                    AnnotationTagFields.QUICK_FILTER_DEFAULT_FIELDS,
+                    AnnotationTagFields.QUICK_FILTER_FIELDS);
+            condition = quickFilter == null
+                    ? typeCondition
+                    : typeCondition.and(expressionMapper.apply(quickFilter));
+        } catch (final TokenException e) {
+            // Debounced filter - match nothing and say why rather than erroring at the user
+            // mid-keystroke. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
+        }
         final List<AnnotationTag> list = new ArrayList<>();
         final AtomicLong count = new AtomicLong();
         JooqUtil.context(connectionProvider, context -> context

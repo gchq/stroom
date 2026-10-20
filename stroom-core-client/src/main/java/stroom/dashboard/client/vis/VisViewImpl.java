@@ -19,6 +19,7 @@ package stroom.dashboard.client.vis;
 import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.data.grid.client.MessagePanelImpl;
 import stroom.data.pager.client.RefreshButton;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.Rect;
@@ -46,8 +47,10 @@ public class VisViewImpl extends ViewImpl implements VisView {
         visContainer = new SimplePanel();
         visContainer.setStyleName("dashboardVis-innerLayout");
 
-        refreshButton = new RefreshButton();
-        refreshButton.addStyleName("dashboardVis-refresh");
+        // Its pause and resume button, over its top right corner. The presenter sets what it does.
+        final Toolbar toolbar = new Toolbar("Visualisation");
+        toolbar.addStyleName("dashboardVis-refresh");
+        refreshButton = toolbar.refresh(null);
         refreshButton.setAllowPause(true);
 
         widget = new FlowPanel() {
@@ -75,7 +78,7 @@ public class VisViewImpl extends ViewImpl implements VisView {
         };
         widget.setStyleName("dashboardVis-outerLayout");
         widget.add(visContainer);
-        widget.add(refreshButton);
+        widget.add(toolbar);
         widget.add(messagePanel);
     }
 

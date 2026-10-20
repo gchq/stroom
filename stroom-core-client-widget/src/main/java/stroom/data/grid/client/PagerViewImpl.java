@@ -18,12 +18,9 @@ package stroom.data.grid.client;
 
 import stroom.data.pager.client.Pager;
 import stroom.data.pager.client.RefreshButton;
-import stroom.svg.client.Preset;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ToggleButtonView;
+import stroom.widget.button.client.Toolbar;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -48,7 +45,8 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     FlowPanel listContainer;
 
     private int taskCount;
-    private ButtonPanel buttonPanel;
+    // Made when first asked for, so that a list without buttons has no toolbar
+    private Toolbar toolbar;
 
     private final Widget widget;
     private final MessagePanelImpl messagePanel = new MessagePanelImpl();
@@ -72,27 +70,12 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     }
 
     @Override
-    public ButtonView addButton(final Preset preset) {
-        return getButtonPanel().addButton(preset);
-    }
-
-    @Override
-    public void addButton(final ButtonView buttonView) {
-        getButtonPanel().addButton(buttonView);
-    }
-
-    @Override
-    public ToggleButtonView addToggleButton(final Preset primaryPreset,
-                                            final Preset secondaryPreset) {
-        return getButtonPanel().addToggleButton(primaryPreset, secondaryPreset);
-    }
-
-    private ButtonPanel getButtonPanel() {
-        if (buttonPanel == null) {
-            buttonPanel = new ButtonPanel();
-            toolbarWidgets.add(buttonPanel);
+    public Toolbar getToolbar() {
+        if (toolbar == null) {
+            toolbar = new Toolbar("List actions");
+            toolbarWidgets.add(toolbar);
         }
-        return buttonPanel;
+        return toolbar;
     }
 
     @Override

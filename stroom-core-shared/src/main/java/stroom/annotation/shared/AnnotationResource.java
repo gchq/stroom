@@ -17,7 +17,6 @@
 package stroom.annotation.shared;
 
 import stroom.docref.DocRef;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -140,7 +139,7 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             summary = "Finds annotation tags matching request",
             operationId = "findAnnotationTags")
     ResultPage<AnnotationTag> findAnnotationTags(
-            @Parameter(description = "request", required = true) ExpressionCriteria request);
+            @Parameter(description = "request", required = true) FindAnnotationTagCriteria request);
 
     @POST
     @Path("fetchAnnotationEntry")

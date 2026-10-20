@@ -33,7 +33,7 @@
     display: flex;
 }
 
-.DashboardViewImpl .linkTab {
+.DashboardViewImpl .tab-bar--link .tab-bar__tab {
     opacity: 0.8 !important;
     color: var(--link-tab__text-color) !important;
     transition: none;
@@ -45,20 +45,20 @@
 }
 
 /*
-.DashboardViewImpl .linkTab {
+.DashboardViewImpl .tab-bar--link .tab-bar__tab {
     cursor: default;
     text-decoration: none;
 }
 
-.DashboardViewImpl.dashboard__designMode .linkTab {
+.DashboardViewImpl.dashboard__designMode .tab-bar--link .tab-bar__tab {
   cursor: pointer;
 }
 
-.DashboardViewImpl .linkTab:hover {
+.DashboardViewImpl .tab-bar--link .tab-bar__tab:hover {
     text-decoration: none;
 }
 
-.DashboardViewImpl.dashboard__designMode .linkTab:hover {
+.DashboardViewImpl.dashboard__designMode .tab-bar--link .tab-bar__tab:hover {
     text-decoration: underline;
 }
 */
@@ -76,6 +76,11 @@
     justify-content: space-between;
 }
 
+/* Holds the errors button, which sits in the row as if on its own */
+.QueryToolbarViewImpl-errors {
+    margin: 0;
+}
+
 .DashboardViewImpl-top-buttons {
     display: flex;
     gap: var(--control__gap--horizontal);
@@ -86,7 +91,7 @@
 .DashboardViewImpl-content {
     display: flex;
     flex-grow: 1;
-	background-color: var(--control__background-color);
+	background-color: var(--content-box__background-color);
 }
 
 .fullScreenViewImpl-root {
@@ -112,10 +117,6 @@
 	user-select: none;
 	-webkit-user-select: none;
 	-moz-user-select: none;
-}
-
-.QueryEditViewImpl.dashboard-scrollPanel {
-    background-color: var(--dashboard-panel__background-color);
 }
 
 .dashboard-scrollPanel {
@@ -166,130 +167,8 @@
 .dashboard-panel {
 }
 
-.flexLayout-glass {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	margin: 0px;
-	padding: 0px;
-	border-width: 0px;
-	/* We need to set the background color or mouse events will go right */
-	/* through the glassElem. If the layout contains an iframe, the */
-	/* iframe will capture the event and the slider will stop moving. */
-	background-color: white;
-	opacity: 0;
-	z-index: 10;
-}
-
-.flexLayout-glassVisible {
-}
-
-.flexLayout-marker {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	margin: 0px;
-	padding: 0px;
-	/*
-	border-width: 1px;
-	border-style: solid;
-	border-color: var(--splitter__border-color);
-	*/
-	background: var(--splitter__background-color--highlight);
-	opacity: 0.6;
-	z-index: 5;
-}
-
-.flexLayout-markerVisible {
-}
-
-.flexLayout-marker-tab {
-   	opacity: 0.8;
-}
-
-.flexLayout-splitter {
-	position: absolute;
-    background-color: var(--splitter__background-color);
-    z-index: 6;
-}
-/*
-.dashboard__designMode .flexLayout-splitter {
-	display: block;
-}
-
-.dashboard__designMode .flexLayout-splitter:hover {
-	display: block;
-	opacity: 1;
-}
-
-.flexLayout-splitterVisible {
-	display: block;
-	opacity: 1;
-}
-*/
-.flexLayout-splitterDown {
-    width: 100%;
-	height: 1px;
-}
-
-.flexLayout-splitterAcross {
-    width: 1px;
-	height: 100%;
-}
-
-.flexLayout-splitter-dragger {
-	/*display: none;*/
-    position: absolute;
-}
-
-/*
-.dashboard__designMode .flexLayout-splitter-dragger {
-	display: block;
-}
-*/
-/*
-.dashboard__designMode .flexLayout-splitter-dragger:hover, .flexLayout-splitterVisible .flexLayout-splitter-dragger {
-	opacity: 1;
-	background: red;
-}
-*/
-
-.flexLayout-markerVisible .marker {
-    position: absolute;
-	background: var(--splitter__background-color--highlight);
-}
-
-
-.flexLayout-markerVisible.flexLayout-splitterAcross .marker {
-    width: var(--split__size) !important;
-	height: 100%;
-	left: var(--split__offset);
-	cursor: col-resize;
-}
-
-.flexLayout-markerVisible.flexLayout-splitterDown .marker {
-    width: 100%;
-	height: var(--split__size) !important;
-	top: var(--split__offset);
-	cursor: row-resize;
-}
-
-
-.flexLayout-splitterAcross .flexLayout-splitter-dragger {
-    width: var(--split__size);
-	height: 100%;
-	left: var(--split__offset);
-	cursor: col-resize;
-}
-
-.flexLayout-splitterDown .flexLayout-splitter-dragger {
-    width: 100%;
-	height: var(--split__size);
-	top: var(--split__offset);
-	cursor: row-resize;
-}
-
-
+/* A dashboard's splitters, and the glass and marker FlexLayout shows while dragging, are in
+   flex-layout.css */
 
 .flexLayout-selected {
     text-decoration: underline;
@@ -351,8 +230,14 @@
     -webkit-transition: opacity 0.3s;
 }
 
-.tabLayout:hover .tabLayout-buttons {
+.tabLayout:hover .tabLayout-buttons,
+/* Keyboard users can tab to the buttons, so they show when the pane has focus */
+.tabLayout:focus-within .tabLayout-buttons {
 	opacity: 0.6;
+}
+
+.tabLayout-buttons:focus-within {
+	opacity: 1;
 }
 
 .tabLayout-buttons button {
@@ -517,14 +402,20 @@
     height: 100%;
 }
 
+/* A visualisation's toolbar (its pause and resume button), over its top right corner. Not
+   visibility: hidden, which left its icon showing but took the button itself out of the tab order
+   and away from screen readers */
 .dashboardVis-refresh {
 	position: absolute;
 	right: 9px;
 	top: 27px;
 	z-index: 5;
+	margin: 0;
+}
+
+.dashboardVis-refresh > .toolbar-button {
 	width: 18px;
 	height: 18px;
-	visibility: hidden;
 }
 
 .DashboardViewImpl-content .dashboardVis-refresh {
@@ -609,14 +500,6 @@
 
 .tabLayout .tabLayout-contentInner {
     background-color: blue;
-}
-
-.flexLayout-splitterAcross {
-	background: red;
-}
-
-.flexLayout-splitterDown {
-    background: green;
 }
 */
 

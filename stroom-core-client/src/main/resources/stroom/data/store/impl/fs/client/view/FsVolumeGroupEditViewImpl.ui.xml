@@ -3,7 +3,10 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="fsVolumeGroupEditVolumeGroupName" label="Volume Group Name">
+        <form:FormGroup identity="fsVolumeGroupEditVolumeGroupName" label="Volume Group Name"
+                        helpText="A unique name for the volume group."
+                        screenReaderText="Must be unique."
+                        required="true">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="list" styleName="dock-max stroom-control"/>

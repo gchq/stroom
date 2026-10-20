@@ -16,13 +16,13 @@
 
 package stroom.data.client.presenter;
 
+import stroom.cell.info.client.CellIcon;
 import stroom.data.grid.client.EventCell;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUserEvent;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.NullSafe;
@@ -31,6 +31,7 @@ import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.RowActions;
 import stroom.widget.util.client.SvgImageUtil;
 import stroom.widget.util.client.Templates;
 
@@ -73,7 +74,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                         final Function<T_ROW, UserRef> docRefFunction,
                         final Function<T_ROW, String> cssClassFunction,
                         final DisplayType displayType) {
-        super(BrowserEvents.MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN, BrowserEvents.KEYDOWN);
         this.eventBus = eventBus;
         this.securityContext = securityContext;
         this.showIcon = showIcon;
@@ -100,10 +101,13 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                                final T_ROW value,
                                final NativeEvent event,
                                final ValueUpdater<T_ROW> valueUpdater) {
-        super.onBrowserEvent(context, parent, value, event, valueUpdater);
         final UserRef userRef = docRefFunction.apply(value);
         if (userRef != null) {
             if (BrowserEvents.MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
+                onEnterKeyDown(context, parent, value, event, valueUpdater);
+            } else if (RowActions.isKeyPress(event)) {
+                // Enter or Space on the open button; the button's own click would come too
+                event.preventDefault();
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
         }
@@ -167,12 +171,12 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
 
                 if (showIcon) {
                     final String title = userRef.getType(CaseType.SENTENCE) + " " + cellPlainText;
-                    final Preset icon = userRef.isGroup()
+                    final SvgImage icon = userRef.isGroup()
                             ? UserTabPlugin.GROUP_ICON
                             : UserTabPlugin.USER_ICON;
                     final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
                             title,
-                            icon.getSvgImage(),
+                            icon,
                             ICON_CLASS_NAME,
                             IconColour.BLUE.getClassName(),
                             "userRefLinkIcon");
@@ -188,10 +192,12 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
 
                 // Not all users should be able to open the user
                 if (userRef.getUuid() != null && hasPermissionToOpen(userRef)) {
+                    // A button the keyboard reaches from its row (a row action)
                     final SafeHtml openSvg = SvgImageUtil.toSafeHtml(
-                            SvgImage.OPEN, ICON_CLASS_NAME, OPEN_CLASS_NAME, HOVER_ICON_CLASS_NAME);
-                    sb.append(Templates.divWithTitle(
-                            "Open " + userRef.getType(CaseType.LOWER) + " " + cellPlainText + " in new tab",
+                            SvgImage.OPEN, ICON_CLASS_NAME, HOVER_ICON_CLASS_NAME);
+                    sb.append(RowActions.button(
+                            OPEN_CLASS_NAME,
+                            "Open " + userRef.getType(CaseType.LOWER) + " " + cellPlainText,
                             openSvg));
                 }
 

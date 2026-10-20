@@ -16,6 +16,8 @@
 
 package stroom.importexport.client.presenter;
 
+import stroom.widget.form.client.AccessibleName;
+
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -31,6 +33,8 @@ public class DependenciesInfoViewImpl extends ViewImpl implements DependenciesIn
         widget = new TextArea();
         widget.setReadOnly(true);
         widget.setStyleName("info-layout");
+        // Named for the dialog it fills, as nothing else names it
+        AccessibleName.set(widget, "Dependency Information");
     }
 
     @Override

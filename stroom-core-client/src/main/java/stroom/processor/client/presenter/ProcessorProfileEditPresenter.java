@@ -26,6 +26,7 @@ import stroom.node.shared.NodeGroup;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.query.api.UserTimeZone;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PathSafeNames;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -148,6 +149,11 @@ public class ProcessorProfileEditPresenter
             AlertEvent.fireError(
                     ProcessorProfileEditPresenter.this,
                     "You must provide a name for the processor profile.",
+                    event::reset);
+        } else if (PathSafeNames.validate(groupName) != null) {
+            AlertEvent.fireError(
+                    ProcessorProfileEditPresenter.this,
+                    PathSafeNames.validate(groupName),
                     event::reset);
         } else {
             processorProfileClient.fetchByName(getView().getName(), grp -> {

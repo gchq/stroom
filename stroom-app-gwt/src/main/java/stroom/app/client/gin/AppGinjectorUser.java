@@ -96,6 +96,7 @@ import stroom.planb.client.gin.PlanBModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.gin.QueryModule;
+import stroom.quickfilter.client.gin.QuickFilterModule;
 import stroom.receive.content.client.gin.ContentTemplateGinjector;
 import stroom.receive.content.client.gin.ContentTemplateModule;
 import stroom.receive.rules.client.gin.PolicyModule;
@@ -168,6 +169,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         PopupModule.class,
         UserPreferencesModule.class,
         QueryModule.class,
+        QuickFilterModule.class,
         ScriptModule.class,
         SecurityModule.class,
         ChangePasswordModule.class,

@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.presenter;
 
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.MyDataGrid;
@@ -28,11 +29,9 @@ import stroom.floormap.client.presenter.FloorMapGroupsPresenter.FloorMapGroupsVi
 import stroom.floormap.shared.FloorMapGroup;
 import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -107,9 +106,8 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
     private final ListDataProvider<FloorMapGroup> dataProvider = new ListDataProvider<>();
     private final SingleSelectionModel<FloorMapGroup> selectionModel = new SingleSelectionModel<>();
 
-    private final ButtonView newButton;
-    private final ButtonView editButton;
-    private final ButtonView deleteButton;
+    private final ToolbarButton editButton;
+    private final ToolbarButton deleteButton;
 
     /// The document's groups as last read or edited, in display order.
     private List<FloorMapGroup> groups = new ArrayList<>();
@@ -150,16 +148,13 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         initGridColumns();
         dataProvider.addDataDisplay(dataGrid);
 
-        final ButtonPanel buttonPanel = new ButtonPanel();
-        newButton = buttonPanel.addButton(SvgPresets.ADD);
-        newButton.setTitle("New Group");
-        editButton = buttonPanel.addButton(SvgPresets.EDIT);
-        editButton.setTitle("Edit Group (name, colour and members)");
+        final Toolbar toolbar = new Toolbar("Group actions");
+        toolbar.button(SvgImage.ADD, "New Group", this::onNewGroup);
+        editButton = toolbar.button(SvgImage.EDIT, "Edit Group (name, colour and members)", this::onEditGroup);
         editButton.setEnabled(false);
-        deleteButton = buttonPanel.addButton(SvgPresets.DELETE);
-        deleteButton.setTitle("Delete Group");
+        deleteButton = toolbar.button(SvgImage.DELETE, "Delete Group", this::onDeleteGroup);
         deleteButton.setEnabled(false);
-        view.setToolbar(buttonPanel);
+        view.setToolbar(toolbar);
     }
 
     @Override
@@ -172,23 +167,16 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
             editButton.setEnabled(hasSelection);
             deleteButton.setEnabled(hasSelection);
         }));
-
-        //noinspection unused e
-        registerHandler(newButton.addClickHandler(e -> onNewGroup()));
-        //noinspection unused e
-        registerHandler(editButton.addClickHandler(e -> onEditGroup()));
-        //noinspection unused e
-        registerHandler(deleteButton.addClickHandler(e -> onDeleteGroup()));
     }
 
     private void initGridColumns() {
         // Highlight toggle. A button cell, so clicking the eye flips the group's
         // highlight without also having to select the row.
-        final Column<FloorMapGroup, Preset> highlightColumn =
+        final Column<FloorMapGroup, CellIcon> highlightColumn =
                 new Column<>(new SvgCell()) {
                     @Override
-                    public Preset getValue(final FloorMapGroup group) {
-                        return highlightPreset(isShown(group));
+                    public CellIcon getValue(final FloorMapGroup group) {
+                        return highlightIcon(isShown(group));
                     }
                 };
         //noinspection unused index, val
@@ -237,8 +225,8 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
     }
 
     /// The eye icon for a row, worded for what a click will do next.
-    private static Preset highlightPreset(final boolean shown) {
-        return new Preset(
+    private static CellIcon highlightIcon(final boolean shown) {
+        return CellIcon.of(
                 shown
                         ? SvgImage.EYE
                         : SvgImage.EYE_OFF,

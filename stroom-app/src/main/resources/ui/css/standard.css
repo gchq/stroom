@@ -335,13 +335,6 @@ a, a:visited, a:hover {
   background: url(images/corner.png) no-repeat -5px -41px;
 }
 
-.gwt-PasswordTextBox {
-  padding: 2px;
-}
-.gwt-PasswordTextBox-readonly {
-  color: #888;
-}
-
 .gwt-PopupPanel {
   border: 3px solid #C3D9FF;
   padding: 3px;
@@ -781,20 +774,6 @@ a, a:visited, a:hover {
   color: #999999;
 }
 
-.gwt-TextArea {
-  padding: 2px;
-}
-.gwt-TextArea-readonly {
-  color: #888;
-}
-
-.gwt-TextBox {
-  padding: 2px;
-}
-.gwt-TextBox-readonly {
-  color: #888;
-}
-
 .gwt-ToggleButton-up,
 .gwt-ToggleButton-up-hovering,
 .gwt-ToggleButton-up-disabled,
@@ -1022,12 +1001,3 @@ td.datePickerYear {
   background: #92c1f0;
 }
 
-.gwt-SplitLayoutPanel-HDragger {
-  background: #d0e4f6 url(images/splitPanelThumb.png) center center no-repeat;
-  cursor: col-resize;
-}
-
-.gwt-SplitLayoutPanel-VDragger {
-  background: #d0e4f6 url(images/splitPanelThumb.png) center center no-repeat;
-  cursor: row-resize;
-}

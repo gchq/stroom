@@ -233,7 +233,7 @@ public class AdminServlets {
         private static void writeHtmlHeader(final StringBuilder stringBuilder) {
             stringBuilder.append("""
                     <!DOCTYPE html>
-                    <html>
+                    <html lang="en">
                       <head>
                         <title>Admin Servlets Menu</title>
                         <style>

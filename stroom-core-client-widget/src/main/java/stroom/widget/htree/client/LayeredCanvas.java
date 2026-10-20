@@ -61,6 +61,9 @@ public class LayeredCanvas extends FlowPanel {
             canvas.setCoordinateSpaceHeight(height);
 
             add(canvas);
+            if (isAttached()) {
+                hide(canvas);
+            }
         }
         return canvas;
     }
@@ -94,5 +97,21 @@ public class LayeredCanvas extends FlowPanel {
         for (final Canvas canvas : layerMap.values()) {
             canvas.getContext2d().clearRect(0, 0, width, height);
         }
+    }
+
+    // The layers are drawing only, so they are kept out of the tab order and hidden from assistive
+    // technology. This is done once they are attached (or when made, if after), as a canvas (a
+    // FocusWidget) makes itself a tab stop then.
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        for (final Canvas canvas : layerMap.values()) {
+            hide(canvas);
+        }
+    }
+
+    private static void hide(final Canvas canvas) {
+        canvas.getElement().setTabIndex(-1);
+        canvas.getElement().setAttribute("aria-hidden", "true");
     }
 }

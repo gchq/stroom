@@ -17,9 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.IconColour;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -42,7 +40,25 @@ public class IconMenuItem extends MenuItem {
                            final boolean enabled,
                            final Command command,
                            final boolean highlight) {
-        super(priority, text, tooltip, action, enabled, command);
+        this(priority, enabledIcon, disabledIcon, iconColour, text, tooltip, action, enabled, command,
+                highlight, false);
+    }
+
+    /// @param opensNewTab Whether choosing the item opens a page in a new browser tab (see
+    ///                    [MenuItem#isOpensNewTab]). The other parameters are as for the other
+    ///                    constructor.
+    protected IconMenuItem(final int priority,
+                           final SvgImage enabledIcon,
+                           final SvgImage disabledIcon,
+                           final IconColour iconColour,
+                           final SafeHtml text,
+                           final SafeHtml tooltip,
+                           final Action action,
+                           final boolean enabled,
+                           final Command command,
+                           final boolean highlight,
+                           final boolean opensNewTab) {
+        super(priority, text, tooltip, action, enabled, command, opensNewTab);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
         this.iconColour = iconColour;
@@ -73,18 +89,8 @@ public class IconMenuItem extends MenuItem {
         protected IconColour iconColour;
         protected boolean highlight;
 
-        public B icon(final Preset svgPreset) {
-            this.enabledIcon = NullSafe.get(svgPreset, Preset::getSvgImage);
-            return self();
-        }
-
         public B icon(final SvgImage icon) {
             this.enabledIcon = icon;
-            return self();
-        }
-
-        public B disabledIcon(final Preset svgPreset) {
-            this.disabledIcon = NullSafe.get(svgPreset, Preset::getSvgImage);
             return self();
         }
 
@@ -130,7 +136,8 @@ public class IconMenuItem extends MenuItem {
                     action,
                     enabled,
                     command,
-                    highlight);
+                    highlight,
+                    opensNewTab);
         }
     }
 }

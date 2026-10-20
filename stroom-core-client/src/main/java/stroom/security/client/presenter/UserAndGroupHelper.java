@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.CellIcon;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.ApiKeysPlugin;
 import stroom.security.client.AppPermissionsPlugin;
@@ -35,8 +36,7 @@ import stroom.security.shared.HasUserRef;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -83,16 +83,16 @@ public class UserAndGroupHelper {
 
     public static SafeHtml buildSingleIconHeader(final boolean isGroup) {
         final String iconClassName = "svgCell-icon";
-        final Preset preset = isGroup
-                ? SvgPresets.USER_GROUP.title("")
-                : SvgPresets.USER.title("");
+        final SvgImage icon = isGroup
+                ? SvgImage.USERS
+                : SvgImage.USER;
 
         return HtmlBuilder.builder()
                 .div(
                         divBuilder -> {
                             divBuilder.append(SvgImageUtil.toSafeHtml(
-                                    preset.getTitle(),
-                                    preset.getSvgImage(),
+                                    "",
+                                    icon,
                                     iconClassName));
                         },
                         Attribute.className("single-icon-column-header"))
@@ -101,41 +101,38 @@ public class UserAndGroupHelper {
 
     public static SafeHtml buildUserAndGroupIconHeader() {
         final String iconClassName = "svgCell-icon";
-        final Preset userPreset = SvgPresets.USER.title("");
-        final Preset groupPreset = SvgPresets.USER_GROUP.title("");
         return HtmlBuilder.builder()
                 .div(
                         divBuilder -> {
                             divBuilder.append(SvgImageUtil.toSafeHtml(
-                                    userPreset.getTitle(),
-                                    userPreset.getSvgImage(),
+                                    "",
+                                    SvgImage.USER,
                                     iconClassName));
                             divBuilder.append("/");
                             divBuilder.append(SvgImageUtil.toSafeHtml(
-                                    groupPreset.getTitle(),
-                                    groupPreset.getSvgImage(),
+                                    "",
+                                    SvgImage.USERS,
                                     iconClassName));
                         },
                         Attribute.className("two-icon-column-header"))
                 .toSafeHtml();
     }
 
-    public static Preset mapUserRefTypeToIcon(final UserRef userRef) {
+    public static CellIcon mapUserRefTypeToIcon(final UserRef userRef) {
         return NullSafe.get(userRef,
                 userRef2 -> mapUserTypeToIcon(userRef2.isGroup(), userRef.isEnabled()));
     }
 
-    public static Preset mapUserTypeToIcon(final User user) {
+    public static CellIcon mapUserTypeToIcon(final User user) {
         return NullSafe.get(user,
                 usr -> mapUserTypeToIcon(usr.isGroup(), usr.isEnabled()));
     }
 
-    public static Preset mapUserTypeToIcon(final boolean isGroup,
+    public static CellIcon mapUserTypeToIcon(final boolean isGroup,
                                            final boolean isEnabled) {
-        final Preset preset = isGroup
-                ? SvgPresets.USER_GROUP
-                : SvgPresets.USER;
-        return preset.enabled(isEnabled);
+        return isGroup
+                ? CellIcon.of(SvgImage.USERS, "User Group", isEnabled)
+                : CellIcon.of(SvgImage.USER, "User", isEnabled);
     }
 
     public static void onDelete(final UserListPresenter userListPresenter,
@@ -262,53 +259,50 @@ public class UserAndGroupHelper {
         if (userRef == null) {
             return Collections.emptyList();
         } else {
-            final MenuBuilder builder = MenuBuilder.builder()
-                    .withSimpleMenuItem(itemBuilder ->
-                            itemBuilder.text(buildActionsForMsg(userRef) + ":")
-                                    .build())
-                    .withSeparator();
+            // The menu is named by buildActionsForMsg, so has no heading item
+            final MenuBuilder builder = MenuBuilder.builder();
             if (screens.contains(UserScreen.USER)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(userRef.isGroup()
                                 ? UserTabPlugin.GROUP_ICON
                                 : UserTabPlugin.USER_ICON)
-                        .text("Open " + userRef.getType(CaseType.LOWER)
-                              + " '" + userRef.toDisplayString() + "'")
+                        // The menu name gives the user/group name
+                        .text("Open " + userRef.getType(CaseType.SENTENCE))
                         .command(() ->
                                 OpenUserEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && screens.contains(UserScreen.USERS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(UsersPlugin.ICON)
-                        .text(buildMenuItemText(userRef, UsersPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(UsersPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenUsersScreenEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && !isExternalIdp && screens.contains(UserScreen.ACCOUNTS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(AccountsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, AccountsPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(AccountsPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenAccountEvent.fire(hasHandlers, userRef.getSubjectId())));
             }
             if (screens.contains(UserScreen.USER_GROUPS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(UsersAndGroupsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, UsersAndGroupsPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(UsersAndGroupsPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenUsersAndGroupsScreenEvent.fire(hasHandlers, userRef)));
             }
             if (screens.contains(UserScreen.APP_PERMISSIONS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(AppPermissionsPlugin.ICON)
-                        .text(buildMenuItemText(userRef, AppPermissionsPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(AppPermissionsPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenAppPermissionsScreenEvent.fire(hasHandlers, userRef)));
             }
             if (userRef.isUser() && screens.contains(UserScreen.API_KEYS)) {
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(ApiKeysPlugin.ICON)
-                        .text(buildMenuItemText(userRef, ApiKeysPlugin.SCREEN_NAME))
+                        .text(buildMenuItemText(ApiKeysPlugin.SCREEN_NAME))
                         .command(() ->
                                 OpenApiKeysScreenEvent.fire(hasHandlers, userRef)));
             }
@@ -317,7 +311,7 @@ public class UserAndGroupHelper {
 
                 builder.withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(UserTabPlugin.USER_ICON)
-                        .text("Copy user groups and permissions from...")
+                        .text("Copy User Groups and Permissions from...")
                         .command(() -> {
                             copyPermissionsPopupFunction.apply(userRef).show("Select User");
                         }));
@@ -327,8 +321,9 @@ public class UserAndGroupHelper {
         }
     }
 
-    private static String buildMenuItemText(final UserRef userRef, final String screenName) {
-        return "Show " + userRef.getType(CaseType.LOWER) + " on the " + screenName + " screen";
+    private static String buildMenuItemText(final String screenName) {
+        // The menu name gives the user/group, so only the screen is needed
+        return "Show in " + screenName;
     }
 
     public static String buildActionsForMsg(final User user) {
@@ -353,10 +348,17 @@ public class UserAndGroupHelper {
         if (userRef == null) {
             return "";
         } else if (userRef.getDisplayName() != null) {
-            return UserFields.FIELD_DISPLAY_NAME + ":" + userRef.getDisplayName();
+            // Quoted, as a display name may contain spaces
+            return UserFields.FIELD_DISPLAY_NAME + ":" + quoteFilterValue(userRef.getDisplayName());
         } else {
             return "";
         }
+    }
+
+    // Quotes a quick filter value so that it is read as one value, whatever it contains, escaping
+    // any backslashes and double quotes, as QuickFilterPrinter does.
+    private static String quoteFilterValue(final String value) {
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 
 }

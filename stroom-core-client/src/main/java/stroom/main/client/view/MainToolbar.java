@@ -17,9 +17,8 @@
 package stroom.main.client.view;
 
 import stroom.main.client.presenter.MainUiHandlers;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -37,23 +36,21 @@ public class MainToolbar extends Composite {
     @UiField
     Spinner spinner;
     @UiField
-    InlineSvgButton menu;
+    ToolbarButton menu;
     @UiField
-    InlineSvgToggleButton showAi;
+    ToolbarToggleButton showAi;
 
     private MainUiHandlers mainUiHandlers;
 
     public MainToolbar() {
         initWidget(BINDER.createAndBindUi(this));
-        menu.setSvg(SvgImage.ELLIPSES_VERTICAL);
-        showAi.setSvg(SvgImage.AI);
     }
 
     public Spinner getSpinner() {
         return spinner;
     }
 
-    public InlineSvgToggleButton getShowAi() {
+    public ToolbarToggleButton getShowAi() {
         return showAi;
     }
 

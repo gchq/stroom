@@ -19,8 +19,6 @@ package stroom.pipeline.structure.client.view;
 import stroom.data.grid.client.MouseHelper;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
-import stroom.util.shared.Severity;
-import stroom.widget.htree.client.ArrowConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
 import stroom.widget.htree.client.TreeRenderer;
@@ -33,22 +31,32 @@ import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultConfiguration;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
+import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
-    private static final double HORIZONTAL_SEPARATION = 20;
+    // Room between columns for the connectors' dots and curves
+    private static final double HORIZONTAL_SEPARATION = 40;
     private static final double VERTICAL_SEPARATION = 10;
+    private static final String FADED_LAYER = "faded";
     private final FlowPanel panel;
     private LayeredCanvas canvas;
     private FlowPanel boxPanel;
+    // The faded elements' boxes and their connectors (those into them, drawn on their own canvas
+    // layer), faded as one by its opacity, so that nothing in it shows through anything else in it
+    // (e.g. a line through a dot). It is in the box panel, under the other boxes (so that a faded
+    // line doesn't cover the dot it starts from), and positions nothing itself: what is in it is
+    // where it would otherwise be.
+    private FlowPanel fadedGroup;
+    private Predicate<PipelineElement> faded = element -> false;
     private final PendingOperation pendingOperation = new PendingOperation();
     private TreeRenderer2<PipelineElement> renderer;
     private TreeLayout<PipelineElement> treeLayout;
@@ -58,7 +66,8 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
     public PipelineTreePanel() {
         panel = new FlowPanel();
-        panel.setStyleName("treePanel-panel");
+        // The BEM block pipeline-tree (see pipeline-tree.css)
+        panel.setStyleName("pipeline-tree");
         initWidget(panel);
     }
 
@@ -111,18 +120,30 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
         clear();
 
         boxPanel = new FlowPanel();
-        boxPanel.setStyleName("treePanel-boxPanel");
+        boxPanel.setStyleName("pipeline-tree__items");
+        // The boxes are the tree's items (PipelineElementRenderer), for assistive technology
+        boxPanel.getElement().setAttribute("role", "tree");
+        boxPanel.getElement().setAttribute("aria-label", "Pipeline structure");
+        fadedGroup = new FlowPanel();
+        fadedGroup.setStyleName("pipeline-tree__faded");
+        // Not a group of the tree's: its boxes are items of the tree as the others are
+        fadedGroup.getElement().setAttribute("role", "none");
+        boxPanel.add(fadedGroup);
 
         // setup the tree layout configuration.
         canvas = LayeredCanvas.createIfSupported();
         if (canvas != null) {
             final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
+            // The faded layer is sized and cleared with the others, but drawn in the faded group
+            final Canvas fadedLayer = canvas.getLayer(FADED_LAYER);
+            fadedGroup.getElement().appendChild(fadedLayer.getElement());
 
             final PipelineElementBoxFactory pipelineElementBoxFactory = new PipelineElementBoxFactory(pipelineModel);
-            cellRenderer = new PipelineElementRenderer(boxPanel, pipelineElementBoxFactory);
+            cellRenderer = new PipelineElementRenderer(
+                    boxPanel, fadedGroup, this::isFaded, pipelineElementBoxFactory);
             cellRenderer.setSelectionModel(selectionModel);
-            final ConnectorRenderer<PipelineElement> connectorRenderer = new ArrowConnectorRenderer<>(
-                    arrowContext);
+            final ConnectorRenderer<PipelineElement> connectorRenderer = new PipelineConnectorRenderer(
+                    arrowContext, fadedLayer.getContext2d(), this::isFaded, pipelineModel);
 
             // Setup the tree layout configuration
             final DefaultConfiguration<PipelineElement> layoutConfig = new DefaultConfiguration<>(
@@ -134,7 +155,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
-            canvas.setStyleName("treePanel-canvas");
+            canvas.setStyleName("pipeline-tree__canvas");
             panel.add(canvas);
         }
 
@@ -161,20 +182,75 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     @Override
     public void refresh(final RefreshCallback callback) {
         if (renderer != null) {
-            boxPanel.clear();
+            // Drawing replaces the boxes, so the focus is put back on the same element's box (or
+            // keys pressed before the redraw below would be lost)
+            final PipelineElement focused = getFocusedItem();
+            clearBoxes();
             cellRenderer.clear();
             renderer.draw();
+            focus(focused);
             pendingOperation.scheduleOperation(() -> {
-                boxPanel.clear();
+                final PipelineElement stillFocused = getFocusedItem();
+                clearBoxes();
                 if (renderer != null) {
                     cellRenderer.clear();
                     renderer.draw();
+                    focus(stillFocused);
 
                     if (callback != null) {
                         callback.onRefresh();
                     }
+                    fireAfterRefresh();
                 }
             });
+        }
+    }
+
+    // Removes the boxes, keeping the faded group (and its canvas layer), emptied, under those to come
+    private void clearBoxes() {
+        boxPanel.clear();
+        // Not clear(), which would remove the canvas layer too (it removes all of its children)
+        while (fadedGroup.getWidgetCount() > 0) {
+            fadedGroup.remove(0);
+        }
+        boxPanel.add(fadedGroup);
+    }
+
+    /// Sets which elements are faded, as one, with the connectors into them, e.g. those detached
+    /// to be attached to another parent. They are faded when the tree is next drawn.
+    ///
+    /// @param faded Whether an element is faded.
+    public void setFaded(final Predicate<PipelineElement> faded) {
+        this.faded = faded;
+    }
+
+    private boolean isFaded(final PipelineElement element) {
+        return faded.test(element);
+    }
+
+    // The element whose box has the focus, if any
+    private PipelineElement getFocusedItem() {
+        final com.google.gwt.dom.client.Element active = getActiveElement();
+        if (active != null) {
+            for (final PipelineElementBox box : cellRenderer.getBoxes()) {
+                if (box.getElement().isOrHasChild(active)) {
+                    return box.getItem();
+                }
+            }
+        }
+        return null;
+    }
+
+    private static native com.google.gwt.dom.client.Element getActiveElement() /*-{
+        return $doc.activeElement;
+    }-*/;
+
+    private void focus(final PipelineElement item) {
+        if (item != null) {
+            final Box<PipelineElement> box = getBox(item);
+            if (box != null) {
+                box.getElement().focus();
+            }
         }
     }
 
@@ -186,6 +262,9 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     @Override
     public void setTree(final DefaultTreeForTreeLayout<PipelineElement> tree) {
         this.tree = tree;
+        if (cellRenderer != null) {
+            cellRenderer.setTree(tree);
+        }
         if (treeLayout != null) {
             treeLayout.setTree(tree);
         }
@@ -204,25 +283,6 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             cellRenderer.getBoxes().stream()
                     .filter(b -> disabledElements.contains(b.getItem()))
                     .forEach(b -> b.setDisabled(true));
-        }
-    }
-
-    public void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
-        if (renderer != null) {
-            if (elementIdToSeveritiesMap == null || elementIdToSeveritiesMap.isEmpty()) {
-                cellRenderer.getBoxes().forEach(pipelineElementBox -> {
-                    if (pipelineElementBox != null) {
-                        pipelineElementBox.setSeverity(null);
-                    }
-                });
-            } else {
-                cellRenderer.getBoxes().forEach(pipelineElementBox -> {
-                    if (pipelineElementBox != null) {
-                        pipelineElementBox.setSeverity(
-                                elementIdToSeveritiesMap.get(pipelineElementBox.getItem().getElementId().getId()));
-                    }
-                });
-            }
         }
     }
 }

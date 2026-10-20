@@ -23,9 +23,10 @@ import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.presenter.QueryToolbarUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -42,7 +43,7 @@ public class QueryToolbarViewImpl
     private final Widget widget;
 
     @UiField
-    InlineSvgButton errors;
+    ToolbarButton errors;
     @UiField
     QueryButtons queryButtons;
     @UiField
@@ -73,7 +74,11 @@ public class QueryToolbarViewImpl
 
     @Override
     public void setErrorsVisible(final boolean show) {
-        errors.getElement().getStyle().setOpacity(show ? 1 : 0);
+        // Hidden rather than removed, so the toolbar doesn't shift; visibility (not opacity) also
+        // takes it out of the tab order and away from screen readers
+        errors.getElement().getStyle().setVisibility(show
+                ? Visibility.VISIBLE
+                : Visibility.HIDDEN);
     }
 
     @Override
@@ -83,7 +88,7 @@ public class QueryToolbarViewImpl
             errors.setTitle("Show Errors");
         } else if (Severity.WARNING.equals(severity)) {
             errors.setSvg(SvgImage.ALERT);
-            errors.setTitle("Show Warning");
+            errors.setTitle("Show Warnings");
         } else if (Severity.INFO.equals(severity)) {
             errors.setSvg(SvgImage.INFO);
             errors.setTitle("Show Messages");

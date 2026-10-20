@@ -28,7 +28,7 @@ import stroom.query.api.DestroyReason;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -73,16 +73,14 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
-        terminateButton = view.addButton(SvgPresets.STOP);
-        terminateButton.setTitle("Terminate Search");
+        view.getToolbar().setName("Result store actions");
+        terminateButton = view.getToolbar().button(SvgImage.STOP, "Terminate Search", this::onTerminate);
         terminateButton.setEnabled(false);
 
-        deleteButton = view.addButton(SvgPresets.DELETE);
-        deleteButton.setTitle("Delete Store");
+        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Result Store", this::onDelete);
         deleteButton.setEnabled(false);
 
-        settingsButton = view.addButton(SvgPresets.SETTINGS_BLUE);
-        settingsButton.setTitle("Store Settings");
+        settingsButton = view.getToolbar().button(SvgImage.SETTINGS, "Edit Result Store Settings", this::edit);
         settingsButton.setEnabled(false);
 
         // User Id
@@ -146,53 +144,52 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         dataProvider.addDataDisplay(dataGrid);
     }
 
+    private void onTerminate() {
+        final ResultStoreInfo selected = getSelectionModel().getSelected();
+        if (selected != null) {
+            ConfirmEvent.fire(this, "Are you sure you want to terminate this search?", ok -> {
+                if (ok) {
+                    resultStoreModel.terminate(selected.getNodeName(), selected.getQueryKey(), (done) -> {
+                        if (done) {
+                            AlertEvent.fireInfo(this, "Terminated", null);
+                        } else {
+                            AlertEvent.fireWarn(this, "Failed to terminate", null);
+                        }
+                        refresh();
+                    }, getView());
+                }
+            });
+        }
+    }
+
+    private void onDelete() {
+        final ResultStoreInfo selected = getSelectionModel().getSelected();
+        if (selected != null) {
+            ConfirmEvent.fire(this, "Are you sure you want to delete this result store?", ok -> {
+                if (ok) {
+                    resultStoreModel.destroy(
+                            selected.getNodeName(),
+                            selected.getQueryKey(),
+                            DestroyReason.MANUAL,
+                            (done) -> {
+                                if (done) {
+                                    AlertEvent.fireInfo(this, "Destroyed store", null);
+                                } else {
+                                    AlertEvent.fireWarn(this, "Failed to destroy store", null);
+                                }
+                                refresh();
+                            }, getView());
+                }
+            });
+        }
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(terminateButton.addClickHandler(event -> {
-            final ResultStoreInfo selected = getSelectionModel().getSelected();
-            if (selected != null) {
-                ConfirmEvent.fire(this, "Are you sure you want to terminate this search?", ok -> {
-                    if (ok) {
-                        resultStoreModel.terminate(selected.getNodeName(), selected.getQueryKey(), (done) -> {
-                            if (done) {
-                                AlertEvent.fireInfo(this, "Terminated", null);
-                            } else {
-                                AlertEvent.fireWarn(this, "Failed to terminate", null);
-                            }
-                            refresh();
-                        }, getView());
-                    }
-                });
-            }
-        }));
 
-        registerHandler(deleteButton.addClickHandler(event -> {
-            final ResultStoreInfo selected = getSelectionModel().getSelected();
-            if (selected != null) {
-                ConfirmEvent.fire(this, "Are you sure you want to delete this result store?", ok -> {
-                    if (ok) {
-                        resultStoreModel.destroy(
-                                selected.getNodeName(),
-                                selected.getQueryKey(),
-                                DestroyReason.MANUAL,
-                                (done) -> {
-                                    if (done) {
-                                        AlertEvent.fireInfo(this, "Destroyed store", null);
-                                    } else {
-                                        AlertEvent.fireWarn(this, "Failed to destroy store", null);
-                                    }
-                                    refresh();
-                                }, getView());
-                    }
-                });
-            }
-        }));
 
-        registerHandler(settingsButton.addClickHandler(event -> {
-            edit();
-        }));
 
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
             final ResultStoreInfo selected = getSelectionModel().getSelected();

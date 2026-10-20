@@ -19,6 +19,7 @@ package stroom.widget.datepicker.client;
 import stroom.item.client.EventBinder;
 import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -37,6 +38,7 @@ public class DateTimeBox
 
     private Provider<DateTimePopup> popupProvider;
     private final TextBox textBox;
+    private boolean readOnly;
     private final SvgIconBox svgIconBox;
     private String stringValue;
     private Long longValue;
@@ -95,7 +97,7 @@ public class DateTimeBox
     }
 
     private void showPopup() {
-        if (!isEnabled()) {
+        if (readOnly || !isEnabled()) {
             return;
         }
         final DateTimePopup popup = getPopup();
@@ -129,8 +131,20 @@ public class DateTimeBox
 
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
-        svgIconBox.setReadonly(!enabled);
+        // So the calendar icon can't open the dialog either
+        svgIconBox.setReadonly(!enabled || readOnly);
         updateInvalidState();
+    }
+
+    /// Makes the value read only: it can be read, selected and copied, and stays in the tab
+    /// order, but can't be changed, and its dialog doesn't open. It looks like the normal field
+    /// with its value greyed.
+    ///
+    /// @param readOnly Whether the value is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        textBox.setReadOnly(readOnly);
+        svgIconBox.setReadonly(!textBox.isEnabled() || readOnly);
     }
 
     public boolean isEnabled() {
@@ -162,7 +176,7 @@ public class DateTimeBox
             this.stringValue = null;
         }
         textBox.setValue(stringValue);
-        textBox.getElement().removeClassName("invalid");
+        FieldValidity.setInvalid(textBox.getElement(), false);
         if (fireEvents) {
             ValueChangeEvent.fire(this, null);
         }
@@ -184,7 +198,7 @@ public class DateTimeBox
     }
 
     private void onFocus() {
-        textBox.getElement().removeClassName("invalid");
+        FieldValidity.setInvalid(textBox.getElement(), false);
     }
 
     private void onBlur() {
@@ -196,9 +210,9 @@ public class DateTimeBox
             || !isEnabled()
             || isValid()
         ) {
-            textBox.getElement().removeClassName("invalid");
+            FieldValidity.setInvalid(textBox.getElement(), false);
         } else {
-            textBox.getElement().addClassName("invalid");
+            FieldValidity.setInvalid(textBox.getElement(), true);
         }
     }
 

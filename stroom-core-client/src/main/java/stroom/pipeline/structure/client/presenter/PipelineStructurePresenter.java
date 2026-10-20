@@ -166,11 +166,19 @@ public class PipelineStructurePresenter
 
                     enableButtons();
                 }));
+        // The Delete key removes the selected element (which has the focus), as Remove does
+        pipelineTreePresenter.setRemoveHandler(element -> {
+            if (isRemoveEnabled()) {
+                onRemove(null);
+            }
+        });
         registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
                 if (NullSafe.hasItems(menuItems)) {
-                    showMenu(menuItems, event.getPopupPosition());
+                    showMenu("Actions for element '" + selectedElement.getDisplayName() + "'",
+                            menuItems,
+                            event.getPopupPosition());
                 }
             }
         }));
@@ -178,9 +186,12 @@ public class PipelineStructurePresenter
 
     @Override
     protected void onRead(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
-        pipelinePresenter.setEnabled(!readOnly);
+        pipelinePresenter.setReadOnly(readOnly);
         propertyListPresenter.setReadOnly(readOnly);
         pipelineReferenceListPresenter.setReadOnly(readOnly);
+        // Dragging rearranges the pipeline, so it is only allowed in advanced mode on a document
+        // that can be changed
+        pipelineTreePresenter.setAllowDragging(advancedMode && !readOnly);
         propertyListPresenter.setTableName(
                 "Pipeline '" + docRef.getName() + "' Properties");
         pipelineReferenceListPresenter.setTableName(
@@ -260,14 +271,14 @@ public class PipelineStructurePresenter
     @Override
     public void onAdd(final ClickEvent event) {
         if (addMenuItems != null && !addMenuItems.isEmpty()) {
-            showMenu(event, addMenuItems);
+            showMenu(event, "Add Pipeline Element", addMenuItems);
         }
     }
 
     @Override
     public void onRestore(final ClickEvent event) {
         if (restoreMenuItems != null && !restoreMenuItems.isEmpty()) {
-            showMenu(event, restoreMenuItems);
+            showMenu(event, "Restore Pipeline Element", restoreMenuItems);
         }
     }
 
@@ -380,6 +391,32 @@ public class PipelineStructurePresenter
                 .enabled(restoreMenuItems != null && !restoreMenuItems.isEmpty())
                 .children(restoreMenuItems)
                 .build());
+        // Moving an element (and those after it) to another parent, as dragging it does, and as
+        // Ctrl+X and Ctrl+V do in the tree
+        final PipelineElement detached = pipelineTreePresenter.getDetached();
+        if (detached == null) {
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(4)
+                    .icon(SvgImage.MOVE)
+                    .text("Detach")
+                    .enabled(isRemoveEnabled())
+                    .command(() -> pipelineTreePresenter.detach(selectedElement))
+                    .build());
+        } else {
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(4)
+                    .icon(SvgImage.MOVE)
+                    .text("Attach '" + detached.getDisplayName() + "' here")
+                    .enabled(pipelineTreePresenter.canAttach(selectedElement))
+                    .command(() -> pipelineTreePresenter.attach(selectedElement))
+                    .build());
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(5)
+                    .icon(SvgImage.UNDO)
+                    .text("Put '" + detached.getDisplayName() + "' back")
+                    .command(pipelineTreePresenter::cancelDetach)
+                    .build());
+        }
         return menuItems;
     }
 
@@ -487,18 +524,20 @@ public class PipelineStructurePresenter
         return menuItems;
     }
 
-    private void showMenu(final ClickEvent event, final List<Item> menuItems) {
+    private void showMenu(final ClickEvent event, final String name, final List<Item> menuItems) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
         Rect relativeRect = new Rect(target);
         relativeRect = relativeRect.grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
-        showMenu(menuItems, popupPosition);
+        showMenu(name, menuItems, popupPosition);
     }
 
-    private void showMenu(final List<Item> menuItems,
+    private void showMenu(final String name,
+                          final List<Item> menuItems,
                           final PopupPosition popupPosition) {
         ShowMenuEvent
                 .builder()
+                .name(name)
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);
@@ -520,7 +559,8 @@ public class PipelineStructurePresenter
     @Override
     public void setAdvancedMode(final boolean advancedMode) {
         this.advancedMode = advancedMode;
-        pipelineTreePresenter.setAllowDragging(advancedMode);
+        // Dragging rearranges the pipeline, so a read-only document can't be dragged
+        pipelineTreePresenter.setAllowDragging(advancedMode && !isReadOnly());
         if (advancedMode) {
             pipelineTreePresenter.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
         } else {

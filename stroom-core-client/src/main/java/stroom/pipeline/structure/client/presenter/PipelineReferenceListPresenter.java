@@ -34,7 +34,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.planb.shared.PlanBDoc;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
@@ -42,12 +42,10 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -73,6 +71,11 @@ public class PipelineReferenceListPresenter
     private static final String ADDED = "pipelineStructureViewImpl-property-added";
     private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
     private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
+    private static final String NEW_TITLE = "New Pipeline Reference";
+    private static final String EDIT_TITLE = "Edit Selected Pipeline Reference";
+    private static final String REMOVE_TITLE = "Remove Selected Pipeline Reference";
+    private static final String RESTORE_TITLE = "Restore Selected Pipeline Reference";
+    private static final String READ_ONLY_SUFFIX = " (read only)";
 
     private final MyDataGrid<PipelineReference> dataGrid;
     private final MultiSelectionModelImpl<PipelineReference> selectionModel;
@@ -110,9 +113,12 @@ public class PipelineReferenceListPresenter
         this.restFactory = restFactory;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
-        addButton = view.addButton(SvgPresets.NEW_ITEM);
-        editButton = view.addButton(SvgPresets.EDIT);
-        removeButton = view.addButton(SvgPresets.REMOVE);
+        addButton = view.getToolbar().button(SvgImage.ADD, NEW_TITLE, this::onAdd);
+        view.getToolbar().setName("Reference actions");
+        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE, () -> onEdit(selectionModel.getSelected()));
+        editButton.setEnabled(false);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, REMOVE_TITLE, this::onRemove);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
@@ -124,21 +130,6 @@ public class PipelineReferenceListPresenter
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onEdit(selectionModel.getSelected());
-            }
-        }));
-        registerHandler(addButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAdd(event);
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onEdit(selectionModel.getSelected());
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onRemove();
             }
         }));
     }
@@ -305,7 +296,7 @@ public class PipelineReferenceListPresenter
         });
     }
 
-    private void onAdd(final ClickEvent event) {
+    private void onAdd() {
         if (currentElement != null) {
             final PipelineReference pipelineReference = new PipelineReference(currentElement.getId(),
                     propertyType.getName(), null, null, StreamTypeNames.REFERENCE);
@@ -529,15 +520,16 @@ public class PipelineReferenceListPresenter
         editButton.setEnabled(!readOnly && State.ADDED.equals(state));
         removeButton.setEnabled(!readOnly && selected != null);
 
-        if (readOnly) {
-            addButton.setTitle("New reference disabled as pipeline is read only");
-            editButton.setTitle("Edit reference disabled as pipeline is read only");
-            removeButton.setTitle("Remove reference disabled as pipeline is read only");
-        } else {
-            addButton.setTitle("New Reference");
-            editButton.setTitle("Edit Reference");
-            removeButton.setTitle("Remove Reference");
-        }
+        final String readOnlySuffix = readOnly
+                ? READ_ONLY_SUFFIX
+                : "";
+        addButton.setTitle(NEW_TITLE + readOnlySuffix);
+        editButton.setTitle(EDIT_TITLE + readOnlySuffix);
+        // Pressing it on a reference that is already removed restores it, so say so
+        final String removeTitle = State.REMOVED.equals(state)
+                ? RESTORE_TITLE
+                : REMOVE_TITLE;
+        removeButton.setTitle(removeTitle + readOnlySuffix);
     }
 
     private enum State {

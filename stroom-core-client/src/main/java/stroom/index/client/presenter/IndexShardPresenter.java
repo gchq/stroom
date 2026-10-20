@@ -41,7 +41,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -50,11 +50,11 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.TableBuilder;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
@@ -70,6 +70,8 @@ public class IndexShardPresenter
         implements Refreshable {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
+    private static final String FLUSH_TITLE = "Flush Selected Index Shards";
+    private static final String DELETE_TITLE = "Delete Selected Index Shards";
 
     private final MyDataGrid<IndexShard> dataGrid;
     private final TooltipPresenter tooltipPresenter;
@@ -110,8 +112,11 @@ public class IndexShardPresenter
         this.dateTimeFormatter = dateTimeFormatter;
 
         if (securityContext.hasAppPermission(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION)) {
-            buttonFlush = view.addButton(SvgPresets.SHARD_FLUSH);
-            buttonDelete = view.addButton(SvgPresets.DELETE);
+            view.getToolbar().setName("Shard actions");
+            buttonFlush = view.getToolbar().button(SvgImage.SHARD_FLUSH, FLUSH_TITLE, this::flush);
+            buttonFlush.setEnabled(false);
+            buttonDelete = view.getToolbar().button(SvgImage.DELETE, DELETE_TITLE, this::delete);
+            buttonDelete.setEnabled(false);
         }
 
         addColumns();
@@ -121,40 +126,26 @@ public class IndexShardPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        if (buttonFlush != null) {
-            registerHandler(buttonFlush.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    flush();
-                }
-            }));
-        }
-        if (buttonDelete != null) {
-            registerHandler(buttonDelete.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    delete();
-                }
-            }));
-        }
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void enableButtons() {
         final boolean enabled = !readOnly && !selectionCriteria.getIndexShardIdSet().isMatchNothing();
         if (buttonFlush != null) {
-            if (readOnly) {
-                buttonFlush.setTitle("Flush is not available as index is read only");
-            } else {
-                buttonFlush.setTitle("Flush Selected Shards");
-            }
+            // The name stays, with why the button is disabled for a read-only index
+            buttonFlush.setTitle(readOnly
+                    ? FLUSH_TITLE + " (index is read only)"
+                    : FLUSH_TITLE);
             buttonFlush.setEnabled(enabled);
         }
         if (buttonDelete != null) {
+            // The name stays, with why the button is disabled
             if (readOnly) {
-                buttonDelete.setTitle("Delete is not available as index is read only");
+                buttonDelete.setTitle(DELETE_TITLE + " (index is read only)");
             } else if (!allowDelete) {
-                buttonDelete.setTitle("You do not have delete permissions on this index");
+                buttonDelete.setTitle(DELETE_TITLE + " (no delete permission)");
             } else {
-                buttonDelete.setTitle("Delete Selected Shards");
+                buttonDelete.setTitle(DELETE_TITLE);
             }
             buttonDelete.setEnabled(allowDelete && enabled);
         }
@@ -237,7 +228,9 @@ public class IndexShardPresenter
         // Info column.
         final InfoColumn<IndexShard> infoColumn = new InfoColumn<IndexShard>() {
             @Override
-            protected void showInfo(final IndexShard indexShard, final PopupPosition popupPosition) {
+            protected void showInfo(final IndexShard indexShard,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 final TableBuilder tb = new TableBuilder();
 
                 if (index != null) {
@@ -270,7 +263,7 @@ public class IndexShardPresenter
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 htmlBuilder.div(tb::write, Attribute.className("infoTable"));
 
-                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

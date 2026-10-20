@@ -446,7 +446,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
         @Override
         public String toString() {
             return LogUtil.message("""
-                    ## {}
+                    ## `{}`
 
                     {}
                     """, funcName, shortCode);

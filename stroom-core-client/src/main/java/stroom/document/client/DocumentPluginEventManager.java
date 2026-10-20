@@ -438,9 +438,9 @@ public class DocumentPluginEventManager extends Plugin {
                         .create(EXPLORER_RESOURCE)
                         .method(res -> res.fetchDeleteConfirmation(
                                 new DeleteConfirmationRequest(event.getDocRefs())))
-                        .onSuccess(info -> confirmDelete(event.getDocRefs(), info, action))
+                        .onSuccess(info -> confirmDelete(event.getDocRefs(), info, action, event.getCallback()))
                         .onFailure(err -> confirmDeleteAfterLookupError(
-                                event.getDocRefs(), err.getMessage(), action))
+                                event.getDocRefs(), err.getMessage(), action, event.getCallback()))
                         .taskMonitorFactory(explorerListener)
                         .exec();
             } else {
@@ -493,7 +493,7 @@ public class DocumentPluginEventManager extends Plugin {
                                 .builder()
                                 .items(children)
                                 .popupPosition(event.getPopupPosition())
-                                .addAutoHidePartner(event.getElement())
+                                .opener(event.getElement())
                                 .fire(this));
             }
         }));
@@ -563,6 +563,7 @@ public class DocumentPluginEventManager extends Plugin {
 
             ShowMenuEvent
                     .builder()
+                    .name("Actions for tab '" + event.getTabData().getLabel() + "'")
                     .items(menuItems)
                     .popupPosition(event.getPopupPosition())
                     .fire(this);
@@ -588,11 +589,26 @@ public class DocumentPluginEventManager extends Plugin {
 
                     ShowMenuEvent
                             .builder()
+                            .name(getItemContextMenuName(selectedItems, primarySelection))
                             .items(menuItems)
                             .popupPosition(event.getPopupPosition())
                             .allowCloseOnMoveLeft() // Right arrow opens menu, left closes it
                             .fire(this);
                 }, explorerListener), explorerListener);
+    }
+
+    // The explorer context menu's accessible name, saying what it acts on, e.g.
+    // "Actions for Feed 'MY_FEED'" or "Actions for 3 selected items"
+    private static String getItemContextMenuName(final List<ExplorerNode> selectedItems,
+                                                 final ExplorerNode primarySelection) {
+        if (selectedItems.size() != 1 || primarySelection == null) {
+            return "Actions for " + selectedItems.size() + " selected items";
+        }
+        final DocumentType documentType = DocumentTypeRegistry.get(primarySelection.getType());
+        final String type = documentType != null
+                ? documentType.getDisplayType()
+                : primarySelection.getType();
+        return "Actions for " + type + " '" + primarySelection.getDisplayValue() + "'";
     }
 
     private void renameItems(final List<ExplorerNode> explorerNodeList) {
@@ -786,13 +802,10 @@ public class DocumentPluginEventManager extends Plugin {
      */
     private void confirmDelete(final List<DocRef> docRefs,
                                final DeleteConfirmation info,
-                               final Runnable action) {
+                               final Runnable action,
+                               final ResultCallback resultCallback) {
         final int cnt = NullSafe.size(docRefs);
-        final ConfirmCallback callback = ok -> {
-            if (ok) {
-                action.run();
-            }
-        };
+        final ConfirmCallback callback = createDeleteConfirmCallback(action, resultCallback);
 
         if (info == null || info.isEmpty()) {
             final String msg = cnt > 1
@@ -942,7 +955,8 @@ public class DocumentPluginEventManager extends Plugin {
      */
     private void confirmDeleteAfterLookupError(final List<DocRef> docRefs,
                                                final String errorMessage,
-                                               final Runnable action) {
+                                               final Runnable action,
+                                               final ResultCallback resultCallback) {
         final int cnt = NullSafe.size(docRefs);
         final String msg = cnt > 1
                 ? "Unable to check what would be affected by deleting these " + cnt + " items. Are you "
@@ -959,11 +973,20 @@ public class DocumentPluginEventManager extends Plugin {
                 DocumentPluginEventManager.this,
                 SafeHtmlUtil.getSafeHtml(msg),
                 detail.toSafeHtml(),
-                ok -> {
-                    if (ok) {
-                        action.run();
-                    }
-                });
+                createDeleteConfirmCallback(action, resultCallback));
+    }
+
+    /// Runs the delete if the user agrees. If they cancel, the caller's callback (if any) is told the
+    /// delete didn't happen, so anything waiting on the result isn't left waiting.
+    private ConfirmCallback createDeleteConfirmCallback(final Runnable action,
+                                                        final ResultCallback resultCallback) {
+        return ok -> {
+            if (ok) {
+                action.run();
+            } else if (resultCallback != null) {
+                resultCallback.onResult(false);
+            }
+        };
     }
 
     private void setAsFavourite(final DocRef docRef,
@@ -1433,7 +1456,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close Others")
+                .text("Close Other Tabs")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseOtherTabsEvent.fire(DocumentPluginEventManager.this, selectedTab))
                 .build();
@@ -1444,7 +1467,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close Saved")
+                .text("Close Saved Tabs")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this))
                 .build();
@@ -1455,7 +1478,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .priority(priority)
                 .icon(SvgImage.CLOSE)
                 .iconColour(IconColour.RED)
-                .text("Close All")
+                .text("Close All Tabs")
                 .action(Action.ITEM_CLOSE_ALL)
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseAllTabsEvent.fire(DocumentPluginEventManager.this))
@@ -1500,7 +1523,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.STEP_BACKWARD)
-                .text("Move First")
+                .text("Move Tab to Start")
                 .enabled(isTabItemSelected(selectedTab) && !isFirstTab)
                 .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, 0))
                 .build();
@@ -1512,7 +1535,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.STEP_FORWARD)
-                .text("Move Last")
+                .text("Move Tab to End")
                 .enabled(isTabItemSelected(selectedTab) && !isLastTab)
                 .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, tabs.size() - 1))
                 .build();
@@ -1549,7 +1572,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SAVE)
-                .text("Save All")
+                .text("Save All Tabs")
                 .action(Action.ITEM_SAVE_ALL)
                 .enabled(hasSaveRegistry.isDirty())
                 .command(hasSaveRegistry::save)
@@ -1631,7 +1654,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.INFO)
-                .text("Info")
+                .text("Show Info")
                 .enabled(enabled && explorerNode != null)
                 .command(command)
                 .build();
@@ -1692,7 +1715,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.SHARE)
-                .text("Copy Link to Clipboard")
+                .text("Link")
                 .command(() -> ClipboardUtil.copy(docUrl))
                 .build();
     }
@@ -1706,7 +1729,8 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy")
+                // Opens a dialog to choose the folder to copy to
+                .text("Copy To...")
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -1720,7 +1744,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconParentMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.COPY)
-                .text("Copy As")
+                .text("Copy to Clipboard")
                 .children(children)
                 .enabled(true)
                 .build();
@@ -1739,7 +1763,7 @@ public class DocumentPluginEventManager extends Plugin {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Name to Clipboard")
+                    .text("Name")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, "\n"))
                     .build());
@@ -1748,7 +1772,7 @@ public class DocumentPluginEventManager extends Plugin {
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUID to Clipboard")
+                        .text("UUID")
                         .enabled(true)
                         .command(() -> copyAs(allNodes, ExplorerNode::getUuid, "\n"))
                         .build());
@@ -1758,14 +1782,14 @@ public class DocumentPluginEventManager extends Plugin {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Names to Clipboard (lines)")
+                    .text("Names (One per Line)")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, "\n"))
                     .build());
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
-                    .text("Copy Names to Clipboard (comma delimited)")
+                    .text("Names (Comma Separated)")
                     .enabled(true)
                     .command(() -> copyAs(allNodes, ExplorerNode::getName, ","))
                     .build());
@@ -1774,14 +1798,14 @@ public class DocumentPluginEventManager extends Plugin {
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUIDs to Clipboard (lines)")
+                        .text("UUIDs (One per Line)")
                         .enabled(true)
                         .command(() -> copyAs(readableNodes, ExplorerNode::getUuid, "\n"))
                         .build());
                 childMenuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.COPY)
-                        .text("Copy UUIDs to Clipboard (comma delimited)")
+                        .text("UUIDs (Comma Separated)")
                         .enabled(true)
                         .command(() -> copyAs(readableNodes, ExplorerNode::getUuid, ","))
                         .build());
@@ -1868,7 +1892,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.LOCKED)
-                .text("Permissions")
+                .text("Edit Permissions")
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -1878,7 +1902,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.UPLOAD)
-                .text("Import")
+                .text("Import Content")
                 .command(() -> ImportConfigEvent.fire(DocumentPluginEventManager.this))
                 .build();
     }
@@ -1897,7 +1921,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
-                .text("Dependants")
+                .text("Show Dependants")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
                         docRef,
@@ -1909,7 +1933,7 @@ public class DocumentPluginEventManager extends Plugin {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
-                .text("Dependencies")
+                .text("Show Dependencies")
                 .command(() -> ShowDocRefDependenciesEvent.fire(
                         DocumentPluginEventManager.this,
                         docRef,

@@ -56,7 +56,7 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
         getView().setSuppressDuplicateNotifications(duplicateNotificationConfig.isSuppressDuplicateNotifications());
         getView().setChooseColumns(duplicateNotificationConfig.isChooseColumns());
         getView().setColumns(String.join(", ", duplicateNotificationConfig.getColumnNames()));
-        duplicateManagementListPresenter.read(docRef);
+        duplicateManagementListPresenter.read(docRef, readOnly);
     }
 
     protected DuplicateNotificationConfig writeDuplicateNotificationConfig() {

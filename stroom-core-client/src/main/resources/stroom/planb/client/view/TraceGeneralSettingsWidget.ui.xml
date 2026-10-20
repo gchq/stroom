@@ -4,7 +4,8 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="form-group">
         <form:FormGroup label="Max Spans Per Trace"
-                        helpText="How many spans will be stored for a single trace, e.g. 100k. Spans beyond the limit are dropped and the trace is flagged as truncated. Set to 0 for no limit.">
+                        helpText="The most spans stored for a single trace, e.g. 100k. Extra spans are dropped and the trace is marked as truncated. Enter 0 for no limit. Default is 100,000."
+                        screenReaderText="Number, e.g. 100k. 0 means no limit. Default is 100,000.">
             <g:TextBox ui:field="maxSpansPerTrace" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>

@@ -19,6 +19,7 @@ package stroom.main.client.view;
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.main.client.presenter.MainPresenter;
+import stroom.widget.layout.client.SplitPane;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.Scheduler;
@@ -34,7 +35,6 @@ import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.ResizeFlowPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -66,7 +66,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     // Layout state — the single source of truth for how the layout should look.
     private final LayoutState state = new LayoutState();
 
-    private ThinSplitLayoutPanel outerSplitPanel;
+    private SplitPane outerSplitPanel;
 
     private String currentBanner;
 
@@ -209,10 +209,18 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
             // Ensure the split position isn't too small.
             final int splitWidth = Math.max(state.explorerWidth, 10);
 
-            final ThinSplitLayoutPanel splitPanel = new ThinSplitLayoutPanel();
+            // The explorer beside the content, its splitter in the navigation colours; the
+            // explorer's width is kept whenever the user changes it, so a rebuild (e.g. docking
+            // the AI panel) keeps it too
+            final SplitPane splitPanel = new SplitPane();
+            splitPanel.setThin(true);
+            splitPanel.addStyleName("split-pane--navigation");
             splitPanel.addStyleName("mainViewImpl-splitPanel");
+            splitPanel.setSizes(splitWidth + "px, *");
+            splitPanel.setNames("Explorer, Content");
+            splitPanel.setOnResized(this::captureSplitPos);
             if (westWidget != null) {
-                splitPanel.addWest(westWidget, splitWidth);
+                splitPanel.add(westWidget);
             }
             if (centerWidget != null) {
                 splitPanel.add(centerWidget);
@@ -222,54 +230,39 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
 
         // ── Step 4: Wrap with dock panel if AI is docked ──
         if (state.docked && state.dockedWidget != null) {
-            outerSplitPanel = new ThinSplitLayoutPanel() {
-                @Override
-                public void onResize() {
-                    super.onResize();
-                    scheduleDockResizeCheck();
-                }
-            };
-            outerSplitPanel.addStyleName("mainViewImpl-outerSplitPanel");
-
-            // Add the docked widget on the appropriate edge.
-            switch (state.dockLocation) {
-                case RIGHT:
-                    outerSplitPanel.addEast(state.dockedWidget, state.dockSize);
-                    break;
-                case LEFT:
-                    outerSplitPanel.addWest(state.dockedWidget, state.dockSize);
-                    break;
-                case TOP:
-                    outerSplitPanel.addNorth(state.dockedWidget, state.dockSize);
-                    break;
-                case BOTTOM:
-                    outerSplitPanel.addSouth(state.dockedWidget, state.dockSize);
-                    break;
-            }
-
-            // Use ResizeFlowPanel to maintain the GWT resize chain so that
-            // innerContent receives onResize() notifications from the
-            // outerSplitPanel (DockLayoutPanel).
+            // The docked panel on its edge of the content (and the main toolbar), at the size it
+            // was given; a size the user drags it to is reported
             final ResizeFlowPanel contentWrapper = new ResizeFlowPanel();
             contentWrapper.addStyleName("mainViewImpl-contentWrapper");
             innerContent.setSize("100%", "100%");
-            contentWrapper.add(innerContent);
+            // The toolbar first, so that the Tab key reaches it before the content it is shown over
             contentWrapper.add(mainToolbar);
+            contentWrapper.add(innerContent);
 
-            outerSplitPanel.add(contentWrapper);
+            final String dockSize = Math.round(state.dockSize) + "px";
+            final boolean dockedFirst = state.dockLocation == DockLocation.LEFT
+                                        || state.dockLocation == DockLocation.TOP;
+            outerSplitPanel = new SplitPane();
+            outerSplitPanel.setThin(true);
+            outerSplitPanel.setVertical(state.dockLocation == DockLocation.TOP
+                                        || state.dockLocation == DockLocation.BOTTOM);
+            outerSplitPanel.addStyleName("mainViewImpl-outerSplitPanel");
+            outerSplitPanel.setOnResized(this::scheduleDockResizeCheck);
+            if (dockedFirst) {
+                outerSplitPanel.setSizes(dockSize + ", *");
+                outerSplitPanel.setNames("Ask Stroom AI, Content");
+                outerSplitPanel.add(state.dockedWidget);
+                outerSplitPanel.add(contentWrapper);
+            } else {
+                outerSplitPanel.setSizes("*, " + dockSize);
+                outerSplitPanel.setNames("Content, Ask Stroom AI");
+                outerSplitPanel.add(contentWrapper);
+                outerSplitPanel.add(state.dockedWidget);
+            }
             contentPanel.setWidget(outerSplitPanel);
-
-            // Force a deferred layout to fix initial positioning —
-            // DockLayoutPanel computes absolute positions from parent dimensions,
-            // which may not be final until after the browser completes its layout pass.
-            Scheduler.get().scheduleDeferred(() -> {
-                if (outerSplitPanel != null) {
-                    outerSplitPanel.forceLayout();
-                }
-            });
         } else {
-            // No dock — toolbar goes back to the main FlowPanel.
-            main.add(mainToolbar);
+            // No dock — toolbar goes back to the main FlowPanel, before the content.
+            main.insert(mainToolbar, 0);
             contentPanel.setWidget(innerContent);
         }
     }
@@ -311,7 +304,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     }
 
     /**
-     * Checks if the dock panel size has changed (via splitter drag)
+     * Checks if the dock panel size has changed (the user moved its splitter)
      * and fires a DockResizeEvent when it does.
      */
     private void scheduleDockResizeCheck() {
@@ -355,7 +348,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     @Override
     public void setSelectedTabColour(final String colour) {
         if (colour != null && !colour.isBlank()) {
-            DynamicStyles.put(SafeHtmlUtils.fromTrustedString(".curveTab-selected"),
+            DynamicStyles.put(SafeHtmlUtils.fromTrustedString(".tab-bar--curved .tab-bar__tab[aria-selected=\"true\"]"),
                     SafeStylesUtils.fromTrustedNameAndValue("border-bottom-color", colour));
         }
     }

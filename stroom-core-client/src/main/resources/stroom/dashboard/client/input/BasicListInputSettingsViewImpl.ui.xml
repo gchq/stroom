@@ -4,23 +4,30 @@
              xmlns:v="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="basicListInputSettingsId" label="Id">
+        <form:FormGroup identity="basicListInputSettingsId" label="Id"
+                        helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. list-input-AB1C2). It cannot be changed.">
             <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicListInputSettingsName" label="Name">
+        <form:FormGroup identity="basicListInputSettingsName" label="Name"
+                        helpText="Name of this component, shown in its tab on the dashboard.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicListInputSettingsName" label="Key">
+        <form:FormGroup identity="basicListInputSettingsKey" label="Key"
+                        helpText="Parameter name that the selected value is given. Use it in queries and expressions as ${{key}, e.g. a key of user is used as ${{user}."
+                        screenReaderText="Parameter name, used in queries as ${{key}.">
             <g:TextBox ui:field="key" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicListInputSettingsName" label="Values">
+        <form:FormGroup identity="basicListInputSettingsValues" label="Values"
+                        helpText="Values offered in the list, one value per line. Ignored when Use Dictionary is ticked."
+                        screenReaderText="One value per line.">
             <g:TextArea ui:field="values" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
             <v:CustomCheckBox ui:field="useDictionary" identity="basicListInputSettingsExtractValues"
                               label="Use Dictionary"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicListInputSettingsDictionary" label="Dictionary">
+        <form:FormGroup identity="basicListInputSettingsDictionary" label="Dictionary"
+                        helpText="Dictionary whose words are offered in the list when Use Dictionary is ticked. You need Use permission on the dictionary.">
             <g:SimplePanel ui:field="dictionary" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>

@@ -1,0 +1,490 @@
+{
+  "app-ai-askaichatpanel--attachment-ready": [
+    "button-name"
+  ],
+  "app-ai-askaichatpanel--stop-while-working": [
+    "button-name",
+    "nested-interactive"
+  ],
+  "app-ai-askstroomaidialog--default": [
+    "button-name"
+  ],
+  "app-ai-askstroomaidialog--download-chat": [
+    "button-name"
+  ],
+  "app-ai-askstroomaidialog--view-attachment-data": [
+    "button-name"
+  ],
+  "app-dashboard-queryresultvis--pause-button-reports-up": [
+    "frame-title"
+  ],
+  "app-editors-analyticruleeditor--default": [
+    "target-size"
+  ],
+  "app-editors-analyticruleeditor--new-rule-hides-type-tabs": [
+    "target-size"
+  ],
+  "app-editors-analyticruleeditor--table-preferences-persist-on-the-doc": [
+    "target-size"
+  ],
+  "app-editors-dashboardeditor--splitter-above-visualisation": [
+    "frame-title"
+  ],
+  "app-editors-dashboardeditor--table-conditional-formatting-custom-colour": [
+    "color-contrast"
+  ],
+  "app-editors-dashboardeditor--vis-dynamic-controls": [
+    "frame-title"
+  ],
+  "app-editors-dashboardeditor--vis-linked-to-table": [
+    "frame-title"
+  ],
+  "app-editors-dashboardeditor--vis-refetches-on-column-filter": [
+    "frame-title"
+  ],
+  "app-editors-documentationeditor--default": [
+    "frame-title"
+  ],
+  "app-editors-documentationeditor--edit-mode-toggle": [
+    "frame-title"
+  ],
+  "app-editors-documentationeditor--read-only": [
+    "frame-title"
+  ],
+  "app-editors-floormapforms--icon-picker": [
+    "color-contrast"
+  ],
+  "app-editors-floormapforms--icon-picker-rows": [
+    "color-contrast"
+  ],
+  "app-editors-floormapforms--layer-style": [
+    "color-contrast"
+  ],
+  "app-editors-queryeditor--column-filter-menu": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--column-menu": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--column-values-filter-menu": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--conditional-formatting-menu": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--create-report": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--create-rule": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--create-rule-group-by": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--create-rule-without-defaults": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--data-stroom-tab": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--default": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--format-menu": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--groups": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--hyperlinks": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--hyperlinks-by-keyboard": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--null-completion": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--query-help": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--query-help-paging": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--query-info-popup": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--read-only": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--run-query": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--search-request-carries-date-time-settings": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--source-preview": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--stepping-hyperlink": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--time-range-rerun": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--visualisation": [
+    "target-size"
+  ],
+  "app-editors-queryeditor--visualisation-data-latch": [
+    "frame-title"
+  ],
+  "app-editors-reporteditor--default": [
+    "target-size"
+  ],
+  "app-editors-reporteditor--table-preferences-persist-on-the-doc": [
+    "target-size"
+  ],
+  "app-editors-visualisationeditor--assets": [
+    "aria-required-parent",
+    "image-alt"
+  ],
+  "app-editors-visualisationeditor--assets-editable": [
+    "aria-required-parent",
+    "image-alt"
+  ],
+  "app-editors-visualisationeditor--assets-read-only": [
+    "aria-required-parent",
+    "image-alt"
+  ],
+  "app-idp-authenticationerror--with-config-message": [
+    "link-in-text-block"
+  ],
+  "app-main-appshell--activity-chooser": [
+    "button-name"
+  ],
+  "app-main-appshell--ai-docked-beside-content": [
+    "button-name"
+  ],
+  "app-main-appshell--banner": [
+    "button-name"
+  ],
+  "app-main-appshell--change-keyboard-shortcut": [
+    "button-name"
+  ],
+  "app-main-appshell--character-key-shortcuts-off": [
+    "button-name"
+  ],
+  "app-main-appshell--context-menu": [
+    "button-name"
+  ],
+  "app-main-appshell--context-menu-on-favourites-root": [
+    "button-name"
+  ],
+  "app-main-appshell--context-menu-on-system-root": [
+    "button-name"
+  ],
+  "app-main-appshell--context-menu-permissions": [
+    "button-name"
+  ],
+  "app-main-appshell--copy-document": [
+    "button-name"
+  ],
+  "app-main-appshell--create-document": [
+    "button-name"
+  ],
+  "app-main-appshell--deep-link": [
+    "button-name"
+  ],
+  "app-main-appshell--default": [
+    "button-name"
+  ],
+  "app-main-appshell--delete-after-failed-lookup-still-proceeds": [
+    "button-name"
+  ],
+  "app-main-appshell--delete-document": [
+    "button-name"
+  ],
+  "app-main-appshell--delete-with-dependants-warns": [
+    "button-name",
+    "scrollable-region-focusable"
+  ],
+  "app-main-appshell--dictionary-lifecycle": [
+    "button-name"
+  ],
+  "app-main-appshell--editor-theme-preferences": [
+    "button-name"
+  ],
+  "app-main-appshell--explorer-toggle-alerts": [
+    "button-name"
+  ],
+  "app-main-appshell--explorer-type-filter": [
+    "button-name"
+  ],
+  "app-main-appshell--export-document": [
+    "button-name"
+  ],
+  "app-main-appshell--find-shortcut": [
+    "button-name"
+  ],
+  "app-main-appshell--goto-shortcut": [
+    "button-name"
+  ],
+  "app-main-appshell--help-menu": [
+    "button-name"
+  ],
+  "app-main-appshell--help-not-configured": [
+    "button-name"
+  ],
+  "app-main-appshell--info-dialog": [
+    "button-name"
+  ],
+  "app-main-appshell--keyboard-shortcut-preferences": [
+    "button-name"
+  ],
+  "app-main-appshell--live-explorer": [
+    "button-name"
+  ],
+  "app-main-appshell--locate-only-for-explorer-tabs": [
+    "button-name"
+  ],
+  "app-main-appshell--main-menu": [
+    "button-name"
+  ],
+  "app-main-appshell--main-menu-no-empty-group": [
+    "button-name"
+  ],
+  "app-main-appshell--main-toolbar-tab-order": [
+    "button-name"
+  ],
+  "app-main-appshell--move-document": [
+    "button-name"
+  ],
+  "app-main-appshell--multi-delete": [
+    "button-name"
+  ],
+  "app-main-appshell--opened-document-takes-focus": [
+    "button-name"
+  ],
+  "app-main-appshell--opened-screen-takes-focus": [
+    "button-name"
+  ],
+  "app-main-appshell--opens-document": [
+    "button-name"
+  ],
+  "app-main-appshell--opens-feed": [
+    "button-name"
+  ],
+  "app-main-appshell--record-clashing-shortcut": [
+    "button-name"
+  ],
+  "app-main-appshell--rename-document": [
+    "button-name"
+  ],
+  "app-main-appshell--rename-to-blank-warns": [
+    "button-name"
+  ],
+  "app-main-appshell--save-as-document": [
+    "button-name"
+  ],
+  "app-main-appshell--security-menu-both-for-administrator": [
+    "button-name"
+  ],
+  "app-main-appshell--security-menu-user-access-only": [
+    "button-name"
+  ],
+  "app-main-appshell--sign-out-other-sessions": [
+    "button-name"
+  ],
+  "app-main-appshell--tab-context-menu": [
+    "button-name"
+  ],
+  "app-main-appshell--tab-keyboard": [
+    "button-name"
+  ],
+  "app-main-appshell--toolbar-delete": [
+    "button-name"
+  ],
+  "app-main-appshell--toolbar-tab-stops": [
+    "button-name"
+  ],
+  "app-main-contentstorescreen--content-store": [
+    "image-alt"
+  ],
+  "app-main-contentstorescreen--install": [
+    "image-alt"
+  ],
+  "app-main-contentstorescreen--links": [
+    "image-alt"
+  ],
+  "app-main-contentstorescreen--upgrade-check-promotes-row": [
+    "image-alt"
+  ],
+  "app-main-datareceiptrulesscreen--obfuscation-warning": [
+    "scrollable-region-focusable"
+  ],
+  "app-main-dataretentionscreen--expression-panel": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-filter": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-nested": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-sorting": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-summary": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--retention": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--row-action-menu": [
+    "target-size"
+  ],
+  "app-main-executionschedulesscreen--batch-edit": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--batch-no-change": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--batch-schedule-disabled": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--default-sort-is-name-descending": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--edit": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--filter": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--invalid-filter-keeps-dialog-usable": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--run-now": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--run-now-filtered-skips-disabled": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--schedules": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--set-default-hidden-without-permission": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--set-default-node-writes-the-property": [
+    "aria-command-name"
+  ],
+  "app-main-executionschedulesscreen--unknown-node-is-marked": [
+    "aria-command-name"
+  ],
+  "app-main-manageactivitydialog--validation-blocks-save": [
+    "scrollable-region-focusable"
+  ],
+  "app-main-resultstoresdialog--settings": [
+    "scrollable-region-focusable"
+  ],
+  "app-main-resultstoresdialog--stores": [
+    "scrollable-region-focusable"
+  ],
+  "app-main-topbar--focus-rings": [
+    "button-name"
+  ],
+  "app-main-topbar--keyboard": [
+    "button-name"
+  ],
+  "app-main-visualisationassets--upload-deduplicates-name": [
+    "aria-required-parent",
+    "image-alt"
+  ],
+  "app-main-visualisationassets--upload-file": [
+    "aria-required-parent",
+    "image-alt"
+  ],
+  "app-query-queryresultstable--column-filter-row": [
+    "target-size"
+  ],
+  "app-query-queryresultstable--url-link-named-by-host-and-path": [
+    "target-size"
+  ],
+  "widgets-date-time-calendargrid--basic": [
+    "aria-allowed-attr"
+  ],
+  "widgets-date-time-calendargrid--no-selection": [
+    "aria-allowed-attr"
+  ],
+  "widgets-date-time-calendargrid--past-date": [
+    "aria-allowed-attr"
+  ],
+  "widgets-date-time-datetimepicker--basic": [
+    "label"
+  ],
+  "widgets-date-time-datetimepicker--calendar-toolbars-in-the-dialog": [
+    "aria-allowed-attr",
+    "label"
+  ],
+  "widgets-date-time-datetimepicker--disabled": [
+    "label"
+  ],
+  "widgets-date-time-datetimepicker--empty": [
+    "label"
+  ],
+  "widgets-date-time-timepicker--basic": [
+    "label"
+  ],
+  "widgets-date-time-timepicker--hour-minute": [
+    "label"
+  ],
+  "widgets-display-htmlpresenter--rich-content": [
+    "link-in-text-block"
+  ],
+  "widgets-display-logo--clickable": [
+    "button-name"
+  ],
+  "widgets-display-logo--default": [
+    "button-name"
+  ],
+  "widgets-editors-viewers-aceeditorfeatures--autocomplete": [
+    "aria-hidden-focus"
+  ],
+  "widgets-editors-viewers-aceeditorfeatures--search-box": [
+    "color-contrast"
+  ],
+  "widgets-editors-viewers-markdowneditor--blank-writable": [
+    "frame-title"
+  ],
+  "widgets-editors-viewers-markdowneditor--edit-preview-split": [
+    "frame-title"
+  ],
+  "widgets-editors-viewers-markdowneditor--help-not-configured": [
+    "frame-title"
+  ],
+  "widgets-editors-viewers-markdowneditor--read-only-preview": [
+    "frame-title"
+  ],
+  "widgets-selectors-selectionbox--basic": [
+    "label"
+  ],
+  "widgets-selectors-selectionbox--disabled": [
+    "label"
+  ],
+  "widgets-selectors-selectionbox--disabled-while-open": [
+    "label"
+  ],
+  "widgets-selectors-selectionbox--escape-closes-only-the-list": [
+    "label"
+  ],
+  "widgets-selectors-selectionbox--long-list": [
+    "label"
+  ],
+  "widgets-selectors-selectionbox--popup-uses-gwt-markup": [
+    "label"
+  ],
+  "widgets-selectors-selectionbox--short-list-has-no-pager": [
+    "label"
+  ]
+}

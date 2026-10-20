@@ -26,7 +26,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.ExpressionOperator;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
@@ -35,17 +35,16 @@ import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
 import stroom.security.shared.PermissionShowLevel;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
-import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.string.CaseType;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -82,6 +81,7 @@ public class AppUserPermissionsListPresenter
     private final MultiSelectionModelImpl<AppUserPermissions> selectionModel;
     private boolean isExternalIdp = false;
     private boolean resetSelection = false;
+    private String lastQuickFilter;
 
     @Inject
     public AppUserPermissionsListPresenter(final EventBus eventBus,
@@ -89,8 +89,10 @@ public class AppUserPermissionsListPresenter
                                            final PagerView pagerView,
                                            final RestFactory restFactory,
                                            final UiConfigCache uiConfigCache,
-                                           final ClientSecurityContext securityContext) {
+                                           final ClientSecurityContext securityContext,
+                                           final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
+        getView().setAccessibleName("Filter users");
         this.restFactory = restFactory;
         this.pagerView = pagerView;
         this.uiConfigCache = uiConfigCache;
@@ -120,6 +122,8 @@ public class AppUserPermissionsListPresenter
 
         view.setDataView(pagerView);
         view.setUiHandlers(this);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                UserFields.QUICK_FILTER_CONTEXT, this, this));
 
         setupColumns();
     }
@@ -139,12 +143,11 @@ public class AppUserPermissionsListPresenter
             }
         }
 
-        final ExpressionOperator existingExpr = requestBuilder.getExpression();
-        final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(text, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
-        if (!Objects.equals(existingExpr, expression)) {
+        // The filter text goes to the server verbatim - see FindUserCriteria.
+        if (!Objects.equals(lastQuickFilter, text)) {
+            lastQuickFilter = text;
             resetSelection = true;
-            requestBuilder.expression(expression);
+            requestBuilder.quickFilter(text);
             refresh();
         }
     }
@@ -187,7 +190,11 @@ public class AppUserPermissionsListPresenter
                         restFactory
                                 .create(APP_PERMISSION_RESOURCE)
                                 .method(res -> res.fetchAppUserPermissions(requestBuilder.build()))
-                                .onSuccess(dataConsumer)
+                                .onSuccess(resultPage -> {
+                                    getView().setFilterError(NullSafe.get(
+                                            resultPage.getFilterError(), TokenError::getText));
+                                    dataConsumer.accept(resultPage);
+                                })
                                 .onFailure(errorHandler)
                                 .taskMonitorFactory(pagerView)
                                 .exec();
@@ -215,7 +222,7 @@ public class AppUserPermissionsListPresenter
 
         // Icon
         dataGrid.addColumn(
-                DataGridUtil.svgPresetColumnBuilder(false, (AppUserPermissions row) ->
+                DataGridUtil.cellIconColumnBuilder(false, (AppUserPermissions row) ->
                                 UserAndGroupHelper.mapUserRefTypeToIcon(row.getUserRef()))
                         .withSorting(UserFields.FIELD_IS_GROUP)
                         .centerAligned()
@@ -272,6 +279,9 @@ public class AppUserPermissionsListPresenter
                                                 UserScreen.allExcept(UserScreen.APP_PERMISSIONS),
                                                 this,
                                                 null),
+                                null,
+                                (AppUserPermissions appUsrPerms) ->
+                                        UserAndGroupHelper.buildActionsForMsg(appUsrPerms.getUserRef()),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();
@@ -332,12 +342,11 @@ public class AppUserPermissionsListPresenter
         };
     }
 
-    public ButtonView addButton(final Preset preset) {
-        return pagerView.addButton(preset);
-    }
-
-    public void addButton(final ButtonView buttonView) {
-        pagerView.addButton(buttonView);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return pagerView.getToolbar();
     }
 
     public PagerView getPagerView() {

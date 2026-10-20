@@ -105,7 +105,7 @@ public class ChangeAssignedToPresenter
         assignedToPresenter.resolve(assignedTo, userRef -> {
             currentAssignedTo = userRef;
             getView().setAssignedTo(userRef);
-            getView().setAssignYourselfVisible(!Objects.equals(userRef, clientSecurityContext.getUserRef()));
+            getView().setAssignYourselfEnabled(!Objects.equals(userRef, clientSecurityContext.getUserRef()));
             assignedToPresenter.setSelected(currentAssignedTo);
         });
     }
@@ -125,6 +125,10 @@ public class ChangeAssignedToPresenter
 
         void setAssignedTo(UserRef assignedTo);
 
-        void setAssignYourselfVisible(boolean visible);
+        /// Enables 'Assign Yourself', or disables it, saying why, when the annotation is already
+        /// assigned to the current user.
+        ///
+        /// @param enabled Whether it is enabled.
+        void setAssignYourselfEnabled(boolean enabled);
     }
 }

@@ -17,31 +17,42 @@
 package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter.StepLocationLinkView;
+import stroom.widget.button.client.LinkButton;
+import stroom.widget.util.client.DisabledState;
 
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class StepLocationLinkViewImpl extends ViewImpl implements StepLocationLinkView {
 
-    private final Label label;
+    // A button showing the location, which opens the dialog that sets it
+    private final LinkButton button;
 
     @Inject
     public StepLocationLinkViewImpl() {
-        label = new Label();
-        label.addStyleName("stepLocationLink");
+        button = new LinkButton();
+        button.addStyleName("stepLocationLink");
+        button.setTitle("Set Location");
+        button.setOpensDialog(true);
     }
 
     @Override
     public Widget asWidget() {
-        return label;
+        return button;
     }
 
     @Override
-    public Label getLabel() {
-        return label;
+    public LinkButton getButton() {
+        return button;
+    }
+
+    @Override
+    public void setEnabled(final boolean enabled) {
+        button.setStyleName("stepLocationLink--disabled", !enabled);
+        // Disabled, it stays focusable so its name can still be found, and pressing it does nothing
+        DisabledState.set(button.getElement(), !enabled);
     }
 
     public interface Binder extends UiBinder<Widget, StepLocationLinkViewImpl> {

@@ -49,8 +49,7 @@
 
 .svgCell-disabled {
 	cursor: default;
-	color: #000;
-	opacity: 0.3;
+	opacity: var(--disabled-opacity);
 }
 
 .stroom-theme-dark .dataGridSelectedRowCell .svgCell-icon svg {

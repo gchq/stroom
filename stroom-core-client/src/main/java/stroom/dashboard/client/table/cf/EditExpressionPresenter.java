@@ -25,16 +25,14 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.FieldSelectionListModel;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -78,12 +76,16 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
             }
         });
 
-        addTermButton = view.addButton(SvgPresets.ADD);
-        addTermButton.setTitle("Add Term");
-        addOperatorButton = view.addButton(SvgPresets.OPERATOR);
-        copyButton = view.addButton(SvgPresets.COPY.enabled(false));
-        disableItemButton = view.addButton(SvgPresets.DISABLE);
-        deleteItemButton = view.addButton(SvgPresets.DELETE);
+        addTermButton = view.getToolbar().button(SvgImage.ADD, "Add Term", this::addTerm);
+        addOperatorButton = view.getToolbar().button(SvgImage.OPERATOR, "Add Operator", this::addOperator);
+        copyButton = view.getToolbar().button(SvgImage.COPY, "Duplicate Selected Expression Item", this::copy);
+        copyButton.setEnabled(false);
+        disableItemButton = view.getToolbar().button(SvgImage.DISABLE, "Disable Selected Expression Item",
+                this::disable);
+        disableItemButton.setEnabled(false);
+        deleteItemButton = view.getToolbar().button(SvgImage.DELETE, "Delete Selected Expression Item",
+                this::delete);
+        deleteItemButton.setEnabled(false);
     }
 
     @Override
@@ -95,31 +97,6 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
             final List<Item> menuItems = addExpressionActionsToMenu();
             if (NullSafe.hasItems(menuItems)) {
                 showMenu(menuItems, event.getPopupPosition());
-            }
-        }));
-        registerHandler(addTermButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                addTerm();
-            }
-        }));
-        registerHandler(addOperatorButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                addOperator();
-            }
-        }));
-        registerHandler(copyButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                copy();
-            }
-        }));
-        registerHandler(disableItemButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                disable();
-            }
-        }));
-        registerHandler(deleteItemButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                delete();
             }
         }));
     }
@@ -139,18 +116,17 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
-            disableItemButton.setTitle("");
+            // The title is the button's name, so it stays when the button is disabled
+            disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
 
             deleteItemButton.setEnabled(false);
-            deleteItemButton.setTitle("");
 
             copyButton.setEnabled(false);
         } else {
             disableItemButton.setEnabled(true);
-            disableItemButton.setTitle(getEnableDisableText());
+            disableItemButton.setTitle(getEnableDisableText() + " Selected Expression Item");
 
             deleteItemButton.setEnabled(true);
-            deleteItemButton.setTitle("Delete");
 
             copyButton.setEnabled(true);
         }
@@ -216,6 +192,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                 .enabled(hasSelection)
                 .command(this::delete)
                 .build());
+        menuItems.addAll(expressionPresenter.getMoveMenuItems(5));
 
         return menuItems;
     }
@@ -239,9 +216,21 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                           final PopupPosition popupPosition) {
         ShowMenuEvent
                 .builder()
+                .name(getMenuName())
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);
+    }
+
+    // The context menu's accessible name, saying which term or operator it acts on
+    private String getMenuName() {
+        final stroom.query.client.Item selectedItem = getSelectedItem();
+        final String text = selectedItem != null
+                ? selectedItem.toString().trim()
+                : "";
+        return text.isEmpty()
+                ? "Expression Actions"
+                : "Actions for expression item '" + text + "'";
     }
 
     private void onChange() {
@@ -264,7 +253,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
     public interface EditExpressionView extends View {
 
-        ButtonView addButton(Preset preset);
+        /// The toolbar for the view's buttons, e.g. `getToolbar().button(SvgImage.ADD, "Add", this::add)`.
+        ///
+        /// @return The toolbar.
+        Toolbar getToolbar();
 
         void setExpressionView(View view);
     }

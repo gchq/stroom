@@ -1,0 +1,19 @@
+{
+  "name": "stroom-gwt-suite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Full-app regression suite for the Stroom GWT UI: records a live Stroom once, then replays it against a simulated backend. See README.md.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "serve": "node serve.mjs",
+    "test": "node run.mjs",
+    "test:self": "node --test lib/"
+  },
+  "devDependencies": {
+    "playwright": "1.61.1"
+  }
+}

@@ -157,11 +157,6 @@ public class MultiChooserPresenter<T>
         }
     }
 
-    @Override
-    public void onClearSelection() {
-        selectionModel.clear();
-    }
-
     public void setDataSupplier(final DataSupplier<T> dataSupplier) {
         this.dataSupplier = dataSupplier;
     }

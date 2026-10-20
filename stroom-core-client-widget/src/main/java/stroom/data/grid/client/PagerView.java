@@ -17,10 +17,8 @@
 package stroom.data.grid.client;
 
 import stroom.data.pager.client.RefreshButton;
-import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ToggleButtonView;
+import stroom.widget.button.client.Toolbar;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.HTML;
@@ -28,16 +26,16 @@ import com.gwtplatform.mvp.client.View;
 
 public interface PagerView extends View, TaskMonitorFactory {
 
-    ButtonView addButton(Preset preset);
-
-    void addButton(ButtonView buttonView);
+    /// The toolbar beside the pager, for the list's own buttons, e.g.
+    /// `getToolbar().button(SvgImage.ADD, "Add", this::add)`. Name it after the list with
+    /// [Toolbar#setName(String)].
+    ///
+    /// @return The toolbar.
+    Toolbar getToolbar();
 
     void addInfoLabel(HTML label);
 
     HTML getInfoLabel(int index);
-
-    ToggleButtonView addToggleButton(Preset primaryPreset,
-                                     Preset secondaryPreset);
 
     RefreshButton getRefreshButton();
 

@@ -103,6 +103,7 @@ public class CreateDocumentPresenter
     @Override
     protected void revealInParent() {
         getView().setName(name);
+        getView().setNameValid();
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
         final PopupSize popupSize = PopupSize.resizable(400, 600, 380, 480);
@@ -136,11 +137,11 @@ public class CreateDocumentPresenter
                 }
 
                 if (docName == null || docName.length() == 0) {
-                    AlertEvent.fireWarn(
-                            CreateDocumentPresenter.this,
-                            "You must provide a name for the new " + docType.toLowerCase(),
-                            e::reset);
+                    // Said under the field, which is focused, so a screen reader reads it
+                    getView().setNameInvalid("You must provide a name for the new " + docType.toLowerCase());
+                    e.reset();
                 } else {
+                    getView().setNameValid();
                     CreateDocumentEvent.fire(
                             CreateDocumentPresenter.this,
                             e,
@@ -174,6 +175,14 @@ public class CreateDocumentPresenter
         String getName();
 
         void setName(String name);
+
+        /// Shows why the name is invalid, under the name field, and focuses the field.
+        ///
+        /// @param message What is wrong with the name.
+        void setNameInvalid(String message);
+
+        /// Clears any message about the name being invalid.
+        void setNameValid();
 
         void setFolderView(View view);
 

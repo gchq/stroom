@@ -1,0 +1,211 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * An item of a query expression tree (ExpressionItemBox), a term or an operator, named BEM style:
+ * its row (__row), which its looks are drawn on, is its label (__label) or the row of its editor's
+ * fields (TermEditor.css), with the "not allowed" icon at its start while it refuses what is moved
+ * to it (__refused-icon).
+ * Its states come from its ARIA attributes where it has them (aria-selected, which only the items
+ * of a tree that can be changed have, and the focus), and from modifiers: --disabled for an item
+ * left out of the expression (which can still be selected and edited, so it isn't aria-disabled;
+ * its name says so), and those of moving items (--target, --refused, --detached).
+ */
+
+.expression-item {
+	/* Placed by the tree */
+	position: absolute;
+	left: -100000px;
+	top: -100000px;
+	/* Scrolled into view with room for its focus ring */
+	scroll-margin: 8px;
+	outline: none;
+}
+
+.expression-item__row {
+	border-radius: 5px;
+}
+
+/* Its text, as tall as its editor's fields, and at least as wide as an operator's */
+.expression-item__label {
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	min-width: 50px;
+	height: 23px;
+	padding: 0 5px;
+	white-space: nowrap;
+}
+
+/* In a tree that can be changed, its items can be selected */
+.expression-item[aria-selected] .expression-item__row {
+	cursor: pointer;
+}
+
+.expression-item[aria-selected]:hover .expression-item__row {
+	background-color: var(--row__background-color--hovered);
+}
+
+/* A disabled item looks disabled in a read-only tree too: its text grey and struck through, so
+   that it isn't told by colour alone (with no fill, so that it draws the eye less than the items
+   that count) */
+.expression-item--disabled .expression-item__label {
+	text-decoration: line-through;
+}
+
+.expression-item--disabled * {
+	color: var(--expression-item__text-color--disabled);
+}
+
+/* Selected, hovered or not, disabled or not: the selected row's colours */
+.expression-item[aria-selected="true"] .expression-item__row,
+.expression-item[aria-selected="true"]:hover .expression-item__row {
+	background-color: var(--row__background-color--selected--focussed);
+}
+
+.expression-item[aria-selected="true"] * {
+	color: var(--row__text-color--selected);
+}
+
+/* Keyboard focus on an item (not a field of its editor): the focus border and ring used elsewhere
+   (as the pipeline tree's), round its row, over the items next to it */
+.expression-item:focus-visible {
+	z-index: 1;
+}
+
+.expression-item:focus-visible .expression-item__row {
+	box-shadow: 0 0 0 1px var(--focus-border), 0 0 0 5px var(--focus-ring__color);
+}
+
+/* A tree with the read-only look (expression-tree.css): its items greyed, as a read-only field's
+   value is (a disabled item keeps its own look) */
+.expression-tree-view--read-only .expression-item__label {
+	color: var(--control__text-color--readonly);
+}
+
+.expression-tree-view--read-only .expression-item--disabled .expression-item__label {
+	color: var(--expression-item__text-color--disabled);
+}
+
+/* Moving an item (dragging it, or detaching it with the keyboard or the context menu): the item
+   under the pointer (or focused) has a green border if it would take it, or a red one if not (a term
+   can't have items), with the "not allowed" icon at the start of its row (ExpressionItemBox
+   .showRefused), so that that isn't told by colour alone. Outlines, so that its size doesn't change
+   and forced colours keep them, just outside the row, against the page (on the selected or disabled
+   row's colour, which a focused one has when moving with the keyboard, they would be under 3:1),
+   over the items next to it. A focused one keeps its border, with a gap of the page's colour, the
+   focus border and the focus ring outside it */
+.expression-item--target,
+.expression-item--refused {
+	z-index: 1;
+}
+
+.expression-item--target .expression-item__row {
+	outline: 2px solid var(--expression-item__drop-target);
+}
+
+.expression-item--refused .expression-item__row {
+	outline: 2px solid var(--expression-item__drop-refused);
+	cursor: not-allowed;
+}
+
+.expression-item--target:focus-visible .expression-item__row,
+.expression-item--refused:focus-visible .expression-item__row {
+	box-shadow: 0 0 0 3px var(--page__background-color), 0 0 0 4px var(--focus-border),
+		0 0 0 8px var(--focus-ring__color);
+}
+
+.expression-item__refused-icon {
+	flex-shrink: 0;
+	/* Its drawing's size (svg-icon.css), as well as its own, so that the drawing is centred in the
+	   row */
+	--icon-width: 14px;
+	--icon-height: 14px;
+	width: 14px;
+	height: 14px;
+	margin-right: 5px;
+}
+
+/* Detached (with the items in it) to be attached to another operator, until it is attached or put
+   back: a dashed border, and faded (as are the brackets to its items), to 75%, as the pipeline
+   tree's are, at which its text is still at least 4.5:1; a disabled one isn't faded, as its text
+   would be under that */
+.expression-item--detached:not(.expression-item--disabled) {
+	opacity: .75;
+}
+
+.expression-item--detached .expression-item__row {
+	outline: 1px dashed currentColor;
+	outline-offset: -1px;
+}
+
+/* Forced colours (e.g. Windows High Contrast), which would drop the colours the rows are drawn
+   with. A label keeps its own colours there (forced-color-adjust, which the "not allowed" icon in it
+   inherits), all of them the user's system colours, as the pipeline tree's: hovered a Highlight
+   border; selected Highlight with HighlightText; disabled GrayText; focus a Highlight ring, apart
+   from a selected row's Highlight. The borders of moving items are CanvasText (there's no green or
+   red), and detached items aren't faded, as fading lowers the contrast the user has chosen (their
+   dashed borders say they are detached). An editor's fields keep the system's colours, its row a
+   Highlight outline when selected (and a wider one when focused) */
+@media (forced-colors: active) {
+	.expression-item {
+		--row__background-color--hovered: Canvas;
+		--row__background-color--selected--focussed: Highlight;
+		--row__text-color--selected: HighlightText;
+		--expression-item__text-color--disabled: GrayText;
+		--control__text-color--readonly: CanvasText;
+		--expression-item__drop-target: CanvasText;
+		--expression-item__drop-refused: CanvasText;
+	}
+
+	.expression-item__label {
+		forced-color-adjust: none;
+	}
+
+	/* An editor's row: its fields' own colours (not the selected row's, against which the fields
+	   would be unreadable), and a Highlight outline while selected */
+	.expression-item__row:not(.expression-item__label) {
+		--row__background-color--selected--focussed: Canvas;
+		--row__text-color--selected: FieldText;
+	}
+
+	.expression-item[aria-selected="true"] .expression-item__row:not(.expression-item__label) {
+		outline: 1px solid Highlight;
+	}
+
+	.expression-item[aria-selected]:hover:not(.expression-item--target):not(.expression-item--refused):not(.expression-item--detached) .expression-item__label {
+		outline: 1px solid Highlight;
+		outline-offset: -1px;
+	}
+
+	.expression-item:focus-visible .expression-item__label {
+		box-shadow: 0 0 0 2px Canvas, 0 0 0 4px Highlight;
+	}
+
+	.expression-item--target:focus-visible .expression-item__label,
+	.expression-item--refused:focus-visible .expression-item__label {
+		box-shadow: 0 0 0 4px Canvas, 0 0 0 6px Highlight;
+	}
+
+	.expression-item:focus-visible .expression-item__row:not(.expression-item__label) {
+		outline: 2px solid Highlight;
+		outline-offset: 2px;
+	}
+
+	.expression-item--detached:not(.expression-item--disabled) {
+		opacity: 1;
+	}
+}

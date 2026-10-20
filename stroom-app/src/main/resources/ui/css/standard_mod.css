@@ -99,7 +99,7 @@ body,table td,select {
 
 .gwt-CheckBox-disabled {
 	vertical-align: top;
-	color: #888;
+	color: var(--text-color--disabled);
 }
 
 .gwt-DialogBox .Caption {
@@ -321,7 +321,7 @@ body,table td,select {
 }
 
 /* INPUT CONTROLS */
-.gwt-TextBox,.gwt-PasswordTextBox,.gwt-ListBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree {
+.gwt-ListBox,.gwt-DateBox,.stroom-DropDownTree {
 	width: 200px;
 	margin: 0px;
 	padding: 1px;
@@ -339,11 +339,6 @@ body,table td,select {
 	padding: 0px;
 }
 
-.gwt-TextArea {
-	resize: none;
-	height: 80px;
-	overflow-y: auto;
-}
 textarea {
 	resize: none;
 	height: 80px;
@@ -410,33 +405,6 @@ td.datePickerYear {
 .gwt-ValueSpinner .textBox {
 	text-align: right;
 	border: 1px solid var(--control__border-color);
-}
-
-.gwt-SplitLayoutPanel-Dragger-Outer {
-    overflow: visible !important;
-    background-color: var(--splitter__background-color);
-    z-index: 10;
-}
-
-.gwt-SplitLayoutPanel-Dragger {
-    position: absolute;
-    background: none;
-    width: 100%;
-    height: 100%;
-    border: none;
-    inset: initial !important;
-}
-
-.gwt-SplitLayoutPanel-HDragger {
-	width: var(--split__size) !important;
-	height: 100% !important;
-	cursor: col-resize;
-}
-
-.gwt-SplitLayoutPanel-VDragger {
-	width: 100% !important;
-	height: var(--split__size) !important;
-    cursor: row-resize;
 }
 
 .gwt-SuggestBox {
@@ -531,6 +499,3 @@ background: none;
   overflow: hidden;
 }
 
-.form-label {
-	color: var(--form-group__label-color);
-}

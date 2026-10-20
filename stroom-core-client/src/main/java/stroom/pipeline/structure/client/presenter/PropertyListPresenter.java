@@ -34,7 +34,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
@@ -45,7 +45,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -79,6 +78,7 @@ public class PropertyListPresenter
     private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
     private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
     private static final String DEFAULT = "pipelineStructureViewImpl-property-default";
+    private static final String EDIT_TITLE = "Edit Selected Property";
 
     private final MyDataGrid<PipelineProperty> dataGrid;
     private final MultiSelectionModelImpl<PipelineProperty> selectionModel;
@@ -111,7 +111,10 @@ public class PropertyListPresenter
         this.restFactory = restFactory;
         this.documentPluginRegistry = documentPluginRegistry;
 
-        editButton = view.addButton(SvgPresets.EDIT);
+        view.getToolbar().setName("Property actions");
+        editButton = view.getToolbar().button(SvgImage.EDIT, EDIT_TITLE,
+                () -> onEdit(selectionModel.getSelected(), readOnly));
+        editButton.setEnabled(false);
 
         addColumns();
         enableButtons();
@@ -122,11 +125,6 @@ public class PropertyListPresenter
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                onEdit(selectionModel.getSelected(), readOnly);
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
                 onEdit(selectionModel.getSelected(), readOnly);
             }
         }));
@@ -411,7 +409,7 @@ public class PropertyListPresenter
                                 final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docType,
                                         Document.class);
 
-                                createEmbeddedDocument(documentPlugin, embeddedPropertyName, parentDocRef,
+                                createEmbeddedDocument(documentPlugin, embeddedPropertyName, parentDocRef, e,
                                         document -> {
                                             final PipelineProperty embeddedProperty = PipelineProperty.builder(editing)
                                                     .value(new PipelinePropertyValue(document.asDocRef(), true))
@@ -459,11 +457,13 @@ public class PropertyListPresenter
     private void createEmbeddedDocument(final DocumentPlugin<Document> documentPlugin,
                                         final String documentName,
                                         final DocRef parentDocRef,
+                                        final HidePopupRequestEvent event,
                                         final Consumer<Document> callback) {
+        // If it can't be created or saved, say why and let the user try again or cancel
         final RestErrorHandler errorHandler = throwable -> AlertEvent.fireError(
                 this,
                 "Unable to create embedded document",
-                throwable.getMessage(), null);
+                throwable.getMessage(), event::reset);
 
         documentPlugin.create(documentName, document -> {
             if (document instanceof final Embeddable embeddable) {
@@ -549,9 +549,9 @@ public class PropertyListPresenter
         editButton.setEnabled(!readOnly && selected != null);
 
         if (readOnly) {
-            editButton.setTitle("Edit disabled as this pipeline is read only");
+            editButton.setTitle(EDIT_TITLE + " (read only)");
         } else {
-            editButton.setTitle("Edit Property");
+            editButton.setTitle(EDIT_TITLE);
         }
     }
 

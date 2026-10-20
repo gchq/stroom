@@ -18,11 +18,11 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.pager.client.RefreshButton;
-import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Count;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.HasCharacterData.NavigationMode;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.LinkButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -30,7 +30,6 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -42,20 +41,22 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
     private static final String LINES_TITLE = "Lines";
     private static final String CHARACTERS_TITLE = "Chars";
+    // What pressing a range button does, which it is named for as well as the range it shows
+    private static final String SET_RANGE = "Set Source Range";
     private static final String UNKNOWN_VALUE = "?";
     private static final int ZERO_TO_ONE_BASE_INCREMENT = 1;
     private static final NumberFormat numberFormatter = NumberFormat.getFormat("#,###");
 
     @UiField
-    Label lblLines;
+    LinkButton lblLines;
     @UiField
-    Label lblCharacters;
-    @UiField(provided = true)
-    SvgButton showHeadCharactersBtn;
-    @UiField(provided = true)
-    SvgButton advanceCharactersForwardBtn;
-    @UiField(provided = true)
-    SvgButton advanceCharactersBackwardBtn;
+    LinkButton lblCharacters;
+    @UiField
+    ToolbarButton showHeadCharactersBtn;
+    @UiField
+    ToolbarButton advanceCharactersForwardBtn;
+    @UiField
+    ToolbarButton advanceCharactersBackwardBtn;
 
     @UiField
     RefreshButton refresh;
@@ -69,20 +70,18 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     @Inject
     public CharacterNavigatorViewImpl(final EventBus eventBus,
                                       final Binder binder) {
-        initButtons();
         widget = binder.createAndBindUi(this);
+        // Both open the dialog that sets the range of the source shown
+        for (final LinkButton rangeButton : new LinkButton[]{lblLines, lblCharacters}) {
+            rangeButton.setOpensDialog(true);
+            rangeButton.setTitle(SET_RANGE);
+        }
+        initButtons();
         refresh.setEnabled(false);
     }
 
     private void initButtons() {
         // Char buttons
-        showHeadCharactersBtn = SvgButton.create(
-                SvgPresets.FAST_BACKWARD_BLUE.title("Show Beginning"));
-        advanceCharactersBackwardBtn = SvgButton.create(
-                SvgPresets.STEP_BACKWARD_BLUE.title("Advance Range Backwards"));
-        advanceCharactersForwardBtn = SvgButton.create(
-                SvgPresets.STEP_FORWARD_BLUE.title("Advance Range Forwards"));
-
         setupButton(showHeadCharactersBtn, true, false);
         setupButton(advanceCharactersBackwardBtn, true, false);
         setupButton(advanceCharactersForwardBtn, true, false);
@@ -92,7 +91,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
         return display;
     }
 
-    private void setupButton(final SvgButton button,
+    private void setupButton(final ToolbarButton button,
                              final boolean isEnabled,
                              final boolean isVisible) {
         button.setEnabled(isEnabled);
@@ -117,7 +116,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                             + " to "
                             + getIntValueForLabel(display.getLineTo());
                 }
-                lblLines.setText(linesLbl);
+                setRangeText(lblLines, linesLbl);
 
                 final String charactersLbl = CHARACTERS_TITLE
                         + " "
@@ -127,7 +126,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                         + " of "
                         + getLongValueForLabel(display.getTotalChars());
 
-                lblCharacters.setText(charactersLbl);
+                setRangeText(lblCharacters, charactersLbl);
 
                 final long charFrom = display.getCharOffsetFrom().get();
                 final long charTo = display.getCharOffsetTo().get();
@@ -147,7 +146,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                     && display.getByteOffsetTo().isPresent()) {
                 // Hex dump data
 
-                lblLines.setText("");
+                setRangeText(lblLines, "");
                 final long byteFrom = display.getByteOffsetFrom().get();
                 final long byteTo = display.getByteOffsetTo().get();
 
@@ -161,8 +160,8 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
                 refresh.setEnabled(true);
             } else {
                 // No char range, must be an error
-                lblLines.setText(LINES_TITLE + " 0 to 0");
-                lblCharacters.setText(CHARACTERS_TITLE
+                setRangeText(lblLines, LINES_TITLE + " 0 to 0");
+                setRangeText(lblCharacters, CHARACTERS_TITLE
                         + " 0 to 0 of "
                         + getLongValueForLabel(display.getTotalChars()));
                 showHeadCharactersBtn.setEnabled(false);
@@ -178,14 +177,22 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
 
     private void setCharactersControlVisibility(final boolean isVisible) {
         final boolean showCharLabels = NavigationMode.CHARS.equals(getDisplay().getNavigationMode());
-        lblLines.setVisible(isVisible && showCharLabels);
-        lblCharacters.setVisible(isVisible && showCharLabels);
+        // A range with no text (no line numbers) isn't shown, rather than being an empty button
+        lblLines.setVisible(isVisible && showCharLabels && !lblLines.getText().isEmpty());
+        lblCharacters.setVisible(isVisible && showCharLabels && !lblCharacters.getText().isEmpty());
 
         showHeadCharactersBtn.setVisible(isVisible);
         advanceCharactersBackwardBtn.setVisible(isVisible);
         advanceCharactersForwardBtn.setVisible(isVisible);
     }
 
+
+    private static void setRangeText(final LinkButton rangeButton, final String text) {
+        rangeButton.setText(text);
+        rangeButton.setAriaLabel(text.isEmpty()
+                ? null
+                : SET_RANGE + " (" + text + ")");
+    }
 
     private String getLongValueForLabel(final Optional<Long> value) {
         return getLongValueForLabel(value, 0);

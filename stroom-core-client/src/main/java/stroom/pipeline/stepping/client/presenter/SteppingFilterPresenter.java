@@ -16,6 +16,7 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
+import stroom.cell.info.client.CellIcon;
 import stroom.data.table.client.MyCellTable;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.SearchType;
@@ -24,8 +25,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
@@ -85,12 +85,14 @@ public class SteppingFilterPresenter extends
         this.xPathListPresenter = xPathListPresenter;
         this.xPathFilterPresenter = xPathFilterProvider;
 
-        addXPath = xPathListPresenter.addButton(SvgPresets.ADD);
-        addXPath.setTitle("Add XPath Filter");
-        editXPath = xPathListPresenter.addButton(SvgPresets.EDIT);
-        editXPath.setTitle("Edit XPath Filter");
-        removeXPath = xPathListPresenter.addButton(SvgPresets.REMOVE);
-        removeXPath.setTitle("Delete XPath Filter");
+        xPathListPresenter.getToolbar().setName("XPath actions");
+        addXPath = xPathListPresenter.getToolbar().button(SvgImage.ADD, "New XPath Filter", this::addXPathFilter);
+        editXPath = xPathListPresenter.getToolbar().button(SvgImage.EDIT, "Edit Selected XPath Filter",
+                this::editXPathFilter);
+        editXPath.setEnabled(false);
+        removeXPath = xPathListPresenter.getToolbar().button(SvgImage.REMOVE, "Delete Selected XPath Filters",
+                this::removeXPathFilter);
+        removeXPath.setEnabled(false);
         editXPath.setEnabled(false);
         removeXPath.setEnabled(false);
 
@@ -99,12 +101,12 @@ public class SteppingFilterPresenter extends
 
         pipelineElementTypesFactory.get(this, elementTypes -> {
             // Pipe element icon column
-            final Column<PipelineElement, Preset> iconColumn = DataGridUtil.svgPresetColumnBuilder(false,
+            final Column<PipelineElement, CellIcon> iconColumn = DataGridUtil.cellIconColumnBuilder(false,
                             (final PipelineElement pipelineElement) -> {
                                 final PipelineElementType pipelineElementType =
                                         elementTypes.getElementType(pipelineElement);
                                 if (pipelineElementType != null && pipelineElementType.getIcon() != null) {
-                                    return new Preset(
+                                    return CellIcon.of(
                                             pipelineElementType.getIcon(),
                                             pipelineElementType.getType(),
                                             true);
@@ -131,10 +133,10 @@ public class SteppingFilterPresenter extends
             elementChooser.addColumn(textColumn);
 
             // Pipe element has active filter icon column (only visible if active filter)
-            final Column<PipelineElement, Preset> filterIconColumn = DataGridUtil.svgPresetColumnBuilder(
+            final Column<PipelineElement, CellIcon> filterIconColumn = DataGridUtil.cellIconColumnBuilder(
                             false,
                             (PipelineElement pipelineElement) ->
-                                    SvgPresets.FILTER.title("Has active filter(s)"))
+                                    CellIcon.of(SvgImage.FILTER, "Has active filter(s)"))
                     .withStyleName(BASE_CLASS + "-filterIconCell svgIcon icon-colour__green")
                     .withConditionalStyleName(filterActiveStyleFunc)
                     .centerAligned()
@@ -165,9 +167,6 @@ public class SteppingFilterPresenter extends
                 }
             }
         }));
-        registerHandler(addXPath.addClickHandler(e -> addXPathFilter()));
-        registerHandler(editXPath.addClickHandler(e -> editXPathFilter()));
-        registerHandler(removeXPath.addClickHandler(e -> removeXPathFilter()));
         registerHandler(elementSelectionModel.addSelectionChangeHandler(e ->
                 update(elementSelectionModel.getSelectedObject())));
         getView().setSkipToErrorsChangeHandler(severity ->

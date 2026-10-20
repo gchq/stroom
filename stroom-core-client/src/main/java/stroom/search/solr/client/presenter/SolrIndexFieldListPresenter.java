@@ -29,10 +29,9 @@ import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.search.solr.shared.SolrSynchState;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -88,39 +87,41 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         pagerView.setDataWidget(dataGrid);
 
         view.setDataGridView(pagerView);
-        newButton = pagerView.addButton(SvgPresets.NEW_ITEM);
-        editButton = pagerView.addButton(SvgPresets.EDIT);
-        removeButton = pagerView.addButton(SvgPresets.DELETE);
+        pagerView.getToolbar().setName("Field actions");
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New Index Field", this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit Selected Index Field",
+                this::onEditClicked);
+        editButton.setEnabled(false);
+        removeButton = pagerView.getToolbar().button(SvgImage.REMOVE, "Remove Selected Index Fields",
+                this::onRemoveClicked);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
+    }
+
+    private void onNew() {
+        if (!isReadOnly()) {
+            onAdd();
+        }
+    }
+
+    private void onEditClicked() {
+        if (!isReadOnly()) {
+            onEdit();
+        }
+    }
+
+    private void onRemoveClicked() {
+        if (!isReadOnly()) {
+            onRemove();
+        }
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(event -> {
-            if (!isReadOnly()) {
-                if (MouseUtil.isPrimary(event)) {
-                    onAdd();
-                }
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (!isReadOnly()) {
-                if (MouseUtil.isPrimary(event)) {
-                    onEdit();
-                }
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (!isReadOnly()) {
-                if (MouseUtil.isPrimary(event)) {
-                    onRemove();
-                }
-            }
-        }));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             if (!isReadOnly()) {
                 enableButtons();
@@ -143,15 +144,12 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
             removeButton.setEnabled(false);
         }
 
-        if (isReadOnly()) {
-            newButton.setTitle("New field disabled as index is read only");
-            editButton.setTitle("Edit field disabled as index is read only");
-            removeButton.setTitle("Remove field disabled as index is read only");
-        } else {
-            newButton.setTitle("New Field");
-            editButton.setTitle("Edit Field");
-            removeButton.setTitle("Remove Field");
-        }
+        final String reason = isReadOnly()
+                ? " (index is read only)"
+                : "";
+        newButton.setTitle("New Index Field" + reason);
+        editButton.setTitle("Edit Selected Index Field" + reason);
+        removeButton.setTitle("Remove Selected Index Fields" + reason);
     }
 
     private void addColumns() {
@@ -287,9 +285,9 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         final List<SolrIndexField> list = selectionModel.getSelectedItems();
         //noinspection SizeReplaceableByIsEmpty
         if (list != null && list.size() > 0) {
-            String message = "Are you sure you want to delete the selected field?";
+            String message = "Are you sure you want to remove the selected field?";
             if (list.size() > 1) {
-                message = "Are you sure you want to delete the selected fields?";
+                message = "Are you sure you want to remove the selected fields?";
             }
 
             ConfirmEvent.fire(this, message, result -> {

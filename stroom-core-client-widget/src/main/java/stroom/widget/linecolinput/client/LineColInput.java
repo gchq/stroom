@@ -18,6 +18,7 @@ package stroom.widget.linecolinput.client;
 
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
+import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -29,7 +30,14 @@ import com.google.gwt.user.client.ui.TextBox;
 
 import java.util.Optional;
 
+/// A text box for a position in a stream: a line number, optionally with a column number after a
+/// colon, e.g. `12` or `12:5`. Only digits and a colon can be typed; anything else that makes it
+/// no such position marks it invalid (`aria-invalid`, as `FieldValidity` does).
+///
+/// BEM block `line-col-input` (`linecolinput.css`), its text box `line-col-input__field`.
 public class LineColInput extends Composite {
+
+    private static final String BLOCK = "line-col-input";
 
     private final TextBox valueBox = new TextBox();
     private final RegExp regExp;
@@ -38,10 +46,10 @@ public class LineColInput extends Composite {
 
         valueBox.addKeyPressHandler(LineColInput::onKeyPress);
         valueBox.addKeyUpHandler(this::validateEntry);
-        valueBox.addStyleName("allow-focus");
+        valueBox.addStyleName(BLOCK + "__field allow-focus");
 
         final FlowPanel layout = new FlowPanel();
-        layout.setStylePrimaryName("lineColInput");
+        layout.setStylePrimaryName(BLOCK);
         layout.add(valueBox);
 
         initWidget(layout);
@@ -65,11 +73,7 @@ public class LineColInput extends Composite {
 
         final String value = ((TextBox) keyUpEvent.getSource()).getValue();
 
-        if (value != null && !value.isEmpty() && !regExp.test(value)) {
-            valueBox.addStyleName("highlight");
-        } else {
-            valueBox.removeStyleName("highlight");
-        }
+        FieldValidity.setInvalid(valueBox.getElement(), value != null && !value.isEmpty() && !regExp.test(value));
     }
 
     /**
@@ -93,6 +97,14 @@ public class LineColInput extends Composite {
      */
     public void setEnabled(final boolean enabled) {
         valueBox.setEnabled(enabled);
+    }
+
+    /// Makes the value read only: it can be read, selected and copied, and stays in the tab
+    /// order, but can't be changed. It looks like the normal field with its value greyed.
+    ///
+    /// @param readOnly Whether the value is read only.
+    public void setReadOnly(final boolean readOnly) {
+        valueBox.setReadOnly(readOnly);
     }
 
     public void setValue(final Integer lineNo, final Integer colNo) {

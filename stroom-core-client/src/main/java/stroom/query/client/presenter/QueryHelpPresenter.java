@@ -192,8 +192,12 @@ public class QueryHelpPresenter
         // This glues the editor code completion to the QueryHelpPresenter's completion provider
         // Need to do this via addAttachHandler so the editor is fully loaded
         // else it moans about the id not being a thing on the AceEditor
-        editorPresenter.getWidget().addAttachHandler(event ->
-                editorPresenter.registerCompletionProviders(getKeyedAceCompletionProvider()));
+        editorPresenter.getWidget().addAttachHandler(event -> {
+            // On attach only (it once also registered on every detach)
+            if (event.isAttached()) {
+                editorPresenter.registerCompletionProviders(getKeyedAceCompletionProvider());
+            }
+        });
     }
 
     public void setDataSourceRef(final DocRef dataSourceRef) {

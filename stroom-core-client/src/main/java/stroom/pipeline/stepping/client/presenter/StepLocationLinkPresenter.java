@@ -20,10 +20,10 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 import stroom.pipeline.stepping.client.presenter.StepLocationLinkPresenter.StepLocationLinkView;
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -35,6 +35,7 @@ public class StepLocationLinkPresenter
 
     private final StepLocationPresenter stepLocationPresenter;
     private StepLocation stepLocation;
+    private boolean enabled = true;
 
     @Inject
     public StepLocationLinkPresenter(final EventBus eventBus,
@@ -48,7 +49,10 @@ public class StepLocationLinkPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        getView().getLabel().addClickHandler(event -> {
+        getView().getButton().addClickHandler(event -> {
+            if (!enabled) {
+                return;
+            }
             stepLocationPresenter.setStepLocation(stepLocation);
             ShowPopupEvent.builder(stepLocationPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -66,20 +70,36 @@ public class StepLocationLinkPresenter
         });
     }
 
+    /// Sets whether the location can be clicked to set a new one. It is enabled once a stream has
+    /// been chosen to step through.
+    ///
+    /// @param enabled True to let the location be set.
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
+        getView().setEnabled(enabled);
+    }
+
     public void setStepLocation(final StepLocation stepLocation) {
         this.stepLocation = stepLocation;
         updateLabel(stepLocation);
     }
 
     private void updateLabel(final StepLocation stepLocation) {
+        final LinkButton button = getView().getButton();
         if (stepLocation.getMetaId() == 0 && stepLocation.getPartIndex() == 0 && stepLocation.getRecordIndex() == 0) {
-            getView().getLabel().getElement().setInnerHTML("[??:??:??]");
+            button.setText("[??:??:??]");
+            // The text is a code, so the name says what it is and what pressing it does
+            button.setAriaLabel("Set Location ([??:??:??], none chosen)");
         } else {
-            getView().getLabel().getElement().setInnerHTML("[" +
-                                                           stepLocation.getMetaId() + ":" +
-                                                           (stepLocation.getPartIndex() + 1) + ":" +
-                                                           (stepLocation.getRecordIndex() + 1) +
-                                                           "]");
+            final String text = "[" +
+                                stepLocation.getMetaId() + ":" +
+                                (stepLocation.getPartIndex() + 1) + ":" +
+                                (stepLocation.getRecordIndex() + 1) +
+                                "]";
+            button.setText(text);
+            button.setAriaLabel("Set Location (" + text + ", stream " + stepLocation.getMetaId()
+                                + ", part " + (stepLocation.getPartIndex() + 1)
+                                + ", record " + (stepLocation.getRecordIndex() + 1) + ")");
         }
     }
 
@@ -89,6 +109,12 @@ public class StepLocationLinkPresenter
 
     public interface StepLocationLinkView extends View {
 
-        Label getLabel();
+        /// @return The button showing the location, which opens the dialog that sets it.
+        LinkButton getButton();
+
+        /// Shows whether the location can be clicked to set a new one.
+        ///
+        /// @param enabled True if the location can be set.
+        void setEnabled(boolean enabled);
     }
 }

@@ -17,6 +17,7 @@
 package stroom.importexport.client.presenter;
 
 import stroom.cell.info.client.ActionCell;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
@@ -38,20 +39,19 @@ import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyTy
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -82,16 +82,15 @@ public class DependenciesPresenter
     private final RestFactory restFactory;
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
+    private Consumer<String> filterErrorConsumer;
     private final MyDataGrid<Dependency> dataGrid;
-    private final MenuPresenter menuPresenter;
 
     private Set<String> openableTypes = new HashSet<>();
 
     @Inject
     public DependenciesPresenter(final EventBus eventBus,
                                  final PagerView view,
-                                 final RestFactory restFactory,
-                                 final MenuPresenter menuPresenter) {
+                                 final RestFactory restFactory) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this, 100);
@@ -113,14 +112,22 @@ public class DependenciesPresenter
                 restFactory
                         .create(CONTENT_RESOURCE)
                         .method(res -> res.fetchDependencies(criteria))
-                        .onSuccess(dataConsumer)
+                        .onSuccess(resultPage -> {
+                            // The diagnostic rides back on the successful response rather than as
+                            // an error, because the filter re-queries on a debounce and a
+                            // half-typed term must not interrupt the user.
+                            if (filterErrorConsumer != null) {
+                                filterErrorConsumer.accept(
+                                        NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                            }
+                            dataConsumer.accept(resultPage);
+                        })
                         .onFailure(errorHandler)
                         .taskMonitorFactory(view)
                         .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);
-        this.menuPresenter = menuPresenter;
         initColumns();
     }
 
@@ -132,7 +139,7 @@ public class DependenciesPresenter
     private void initColumns() {
 
         // From (Icon)
-        dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
+        dataGrid.addColumn(DataGridUtil.cellIconColumnBuilder(false, (Dependency row) ->
                                 getDocTypeIcon(row.getFrom()))
                         .build(),
                 "<br/>",
@@ -161,7 +168,7 @@ public class DependenciesPresenter
         addActionButtonColumn(Dependency::getFrom, "", 40);
 
         // To (Icon)
-        dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
+        dataGrid.addColumn(DataGridUtil.cellIconColumnBuilder(false, (Dependency row) ->
                                 getDocTypeIcon(row.getTo()))
                         .build(),
                 "<br/>",
@@ -208,14 +215,24 @@ public class DependenciesPresenter
         dataGrid.addColumn(actionColumn, name, width);
     }
 
+    // Shown as Stroom's other menus are, so that it is named and takes the focus
     private void showActionMenu(final DocRef docRef, final NativeEvent event) {
-
         final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
-        menuPresenter.setData(buildActionMenu(docRef));
-        ShowPopupEvent.builder(menuPresenter)
-                .popupType(PopupType.POPUP)
+        final Element opener = Element.is(event.getEventTarget())
+                ? Element.as(event.getEventTarget())
+                : null;
+        ShowMenuEvent.builder()
+                .name("Actions for " + getDisplayType(docRef) + " '" + docRef.getName() + "'")
+                .items(buildActionMenu(docRef))
                 .popupPosition(popupPosition)
-                .fire();
+                .opener(opener)
+                .fire(this);
+    }
+
+    // A document type as users see it, e.g. 'XSLT Translation'
+    private static String getDisplayType(final DocRef docRef) {
+        final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+        return NullSafe.getOrElse(documentType, DocumentType::getDisplayType, docRef.getType());
     }
 
     private List<Item> buildActionMenu(final DocRef docRef) {
@@ -223,7 +240,7 @@ public class DependenciesPresenter
         return MenuBuilder.builder()
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.INFO)
-                        .text("Properties")
+                        .text("Show Info")
                         .command(() -> onDocInfo(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DELETE)
@@ -235,11 +252,11 @@ public class DependenciesPresenter
                         .command(() -> onLocateDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DEPENDENCIES)
-                        .text("Show dependencies")
+                        .text("Show Dependencies")
                         .command(() -> onShowDependencies(docRef, DependencyType.DEPENDENCY)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DEPENDENCIES)
-                        .text("Show dependants")
+                        .text("Show Dependants")
                         .command(() -> onShowDependencies(docRef, DependencyType.DEPENDANT)))
                 .build();
     }
@@ -323,16 +340,16 @@ public class DependenciesPresenter
         }
     }
 
-    private Preset getDocTypeIcon(final DocRef docRef) {
+    private CellIcon getDocTypeIcon(final DocRef docRef) {
         if (docRef != null && docRef.getType() != null && !docRef.getType().isEmpty()) {
             final SvgImage icon = DocumentTypeRegistry.getIcon(docRef.getType());
             if (icon != null) {
-                return new Preset(icon, docRef.getType(), true);
+                return CellIcon.of(icon, docRef.getType(), true);
             } else {
-                return SvgPresets.ALERT.title("Unknown Document Type");
+                return CellIcon.of(SvgImage.ALERT, "Unknown Document Type");
             }
         } else {
-            return SvgPresets.ALERT.title("Unknown Document Type");
+            return CellIcon.of(SvgImage.ALERT, "Unknown Document Type");
         }
     }
 
@@ -342,24 +359,28 @@ public class DependenciesPresenter
         final String commonStyles = "font-weight:bold";
         if (row.isOk()) {
             value = "OK";
-            builder.appendHtmlConstant("<span style=\"color:var(--icon-colour__green);" + commonStyles + "\">");
+            builder.appendHtmlConstant("<span style=\"color:var(--text-color--green);" + commonStyles + "\">");
         } else {
             value = "Missing";
-            builder.appendHtmlConstant("<span style=\"color:var(--icon-colour__red);" + commonStyles + "\">");
+            builder.appendHtmlConstant("<span style=\"color:var(--text-color--red);" + commonStyles + "\">");
         }
         builder.appendEscaped(value);
         builder.appendHtmlConstant("</span>");
         return builder.toSafeHtml();
     }
 
+    void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+        this.filterErrorConsumer = filterErrorConsumer;
+    }
+
     void setFilterInput(final String filterInput) {
-        this.criteria.setPartialName(filterInput);
+        this.criteria.setQuickFilter(filterInput);
         // Changing the filter means any existing offset is wrong, so we need to reset to the initial state
         resetRange();
     }
 
     void clearFilterInput() {
-        this.criteria.setPartialName(null);
+        this.criteria.setQuickFilter(null);
         // Changing the filter means any existing offset is wrong, so we need to reset to the initial state
         resetRange();
     }

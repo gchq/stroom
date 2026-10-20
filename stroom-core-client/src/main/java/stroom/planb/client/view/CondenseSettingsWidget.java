@@ -44,8 +44,6 @@ public class CondenseSettingsWidget extends AbstractSettingsWidget implements Co
     @UiField
     SelectionBox<TimeUnit> condenseTimeUnit;
 
-    private boolean readOnly;
-
     @Inject
     public CondenseSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -96,22 +94,16 @@ public class CondenseSettingsWidget extends AbstractSettingsWidget implements Co
     }
 
     private void setCondenseEnabled(final boolean enabled) {
-        if (!readOnly) {
-            if (enabled) {
-                condenseAgePanel.getElement().getStyle().setOpacity(1);
-            } else {
-                condenseAgePanel.getElement().getStyle().setOpacity(0.5);
-            }
-            condenseAge.setEnabled(enabled);
-            condenseTimeUnit.setEnabled(enabled);
-        }
+        // Whether the condense age applies is independent of read only
+        condenseAgePanel.setStyleName("section--disabled", !enabled);
+        condenseAge.setEnabled(enabled);
+        condenseTimeUnit.setEnabled(enabled);
     }
 
     public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        condenseEnabled.setEnabled(!readOnly);
-        condenseAge.setEnabled(!readOnly);
-        condenseTimeUnit.setEnabled(!readOnly);
+        condenseEnabled.setReadOnly(readOnly);
+        condenseAge.setReadOnly(readOnly);
+        condenseTimeUnit.setReadOnly(readOnly);
     }
 
     @UiHandler("condenseEnabled")

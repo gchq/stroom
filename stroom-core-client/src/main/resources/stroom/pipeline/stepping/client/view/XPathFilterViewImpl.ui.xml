@@ -5,16 +5,24 @@
              xmlns:v="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="XPathFilterViewImpl max form">
-        <form:FormGroup identity="searchLocation" label="Search type">
+        <form:FormGroup identity="searchLocation" label="Search type"
+                        helpText="Where to look in the output. All text tests every element. XPath tests only the nodes selected by an XPath expression. Default is All text."
+                        screenReaderText="All text tests every element; XPath tests selected nodes. Default is All text.">
             <l:SelectionBox ui:field="searchType"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="xPathContainer" identity="xPathFilterPath" label="XPath">
+        <form:FormGroup ui:field="xPathContainer" identity="xPathFilterPath" label="XPath"
+                        helpText="An XPath expression that selects the nodes to test, e.g. //Event/EventDetail/User/Id. Elements in the output's default namespace need no prefix."
+                        screenReaderText="For example //Event/EventDetail/User/Id.">
             <g:TextBox ui:field="xPath" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="xPathFilterCondition" label="Condition">
+        <form:FormGroup identity="xPathFilterCondition" label="Condition"
+                        helpText="How the selected nodes are tested: Exists, Does not exist, Contains, Does not contain, Equals or Not equals. Unique values stops at each record with a value not seen before. Default is Exists."
+                        screenReaderText="Default is Exists.">
             <l:SelectionBox ui:field="matchType"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="valueContainer" identity="xPathFilterValue" label="Value">
+        <form:FormGroup ui:field="valueContainer" identity="xPathFilterValue" label="Value"
+                        helpText="The text to compare with the selected nodes. For Equals and Not equals, numeric and boolean XPath results are compared as values rather than text."
+                        screenReaderText="Text to compare with the selected nodes.">
             <g:TextBox ui:field="value" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="ignoreCaseContainer">

@@ -93,7 +93,8 @@ table {
 	border-spacing: 0px;
 }
 
-textarea {
+/* A text area that isn't a text field (text-field.css styles those) */
+textarea:where(:not(.text-field)) {
 	display: block;
 	margin: 0px;
 	_margin-top: -1px;
@@ -271,7 +272,9 @@ td {
 .classification {
 	font-weight: 500;
 	text-align: center;
-	background-color: #888888;
+	/* As .classificationLabel: the configured colour, with black or white text to suit it */
+	background-color: var(--classification-label__background-color, #888888);
+	color: lab(from var(--classification-label__background-color, #888888) clamp(0, (49.4 - l) * 1000, 100) 0 0);
 	overflow: hidden;
 }
 
@@ -558,25 +561,24 @@ td {
 	table-layout: fixed;
 }
 
-/* INPUT CONTROLS */
-.gwt-TextBox,.gwt-PasswordTextBox,.gwt-ListBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree {
+/* INPUT CONTROLS. Text fields (every text box, text area and password box) are styled by
+   text-field.css alone: the bare input and textarea rules here are for inputs with no block of their
+   own yet, and leave text fields out (:where() keeps their specificity as it was) */
+.gwt-ListBox,.gwt-DateBox,.stroom-DropDownTree {
 	width: 200px;
 	margin: 0px;
 	padding: 3px 5px;
 	outline: none !important;
 }
 
-.gwt-TextArea,
-.gwt-TextBox,
-.gwt-PasswordTextBox,
 .gwt-ListBox,
 .gwt-DateBox,
 .stroom-DropDownTree,
 .stroom-control,
 select,
-textarea,
-input,
-input[type="text"],
+textarea:where(:not(.text-field)),
+input:where(:not(.text-field)),
+input[type="text"]:where(:not(.text-field)),
 input[type="checkbox"],
 input[type="file"] {
 	border: solid 1px var(--control__border-color);
@@ -587,10 +589,10 @@ input[type="file"] {
 }
 
 /* Fix auto fill colours */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
+input:where(:not(.text-field)):-webkit-autofill,
+input:where(:not(.text-field)):-webkit-autofill:hover,
+input:where(:not(.text-field)):-webkit-autofill:focus,
+input:where(:not(.text-field)):-webkit-autofill:active {
 	font-family: var(--regular-font-family);
 	font-size: var(--font-size-13);
 	font-weight: 400;
@@ -608,18 +610,15 @@ input:-webkit-autofill:active {
 }
 
 
-.gwt-TextArea:disabled,
-.gwt-TextBox:disabled,
-.gwt-PasswordTextBox:disabled,
 .gwt-ListBox:disabled,
 .gwt-DateBox:disabled,
 .stroom-DropDownTree:disabled,
 .stroom-control:disabled,
 .stroom-control.disabled,
 select:disabled,
-textarea:disabled,
-input:disabled,
-input[type="text"]:disabled,
+textarea:where(:not(.text-field)):disabled,
+input:where(:not(.text-field)):disabled,
+input[type="text"]:where(:not(.text-field)):disabled,
 input[type="checkbox"]:disabled,
 input[type="file"]:disabled {
 	border: solid 1px var(--control__border-color--disabled);
@@ -658,24 +657,30 @@ select option:disabled {
   color: var(--control__text-color);
 }
 
-.gwt-TextArea {
-	resize: none;
-	height: 80px;
+/*
+The one read-only look for every control: the normal field (its border and background) with its
+value greyed. Disabled controls use the --control__*--disabled look above instead: a filled field
+with no border. (input[readonly] also beats input[type="text"], which once kept read-only text boxes
+looking editable.)
+*/
+input:where(:not(.text-field))[readonly],
+textarea:where(:not(.text-field))[readonly],
+.stroom-control.readonly {
+  color: var(--control__text-color--readonly);
 }
 
-.gwt-TextArea-readonly {
-  color: var(--text-color--disabled);
-  /* background-color: rgba(255, 255, 255, 0.5); */
+/* A read-only or disabled control's icons are greyed with its value */
+.stroom-control.readonly svg,
+.stroom-control.disabled svg {
+  opacity: var(--disabled-opacity);
 }
 
-.gwt-TextBox-readonly {
-  color: var(--text-color--disabled);
-  /* background-color: rgba(255, 255, 255, 0.5); */
-}
-
-.gwt-PasswordTextBox-readonly {
-  color: var(--text-color--disabled);
-  /* background-color: rgba(255, 255, 255, 0.5); */
+/* Placeholders in the muted text colour, which is 4.5:1 on inputs (the browser's and Bootstrap's
+   greys aren't); Firefox also fades them, which opacity: 1 stops */
+:where(:not(.text-field))::placeholder,
+.form-control::placeholder {
+  color: var(--text-color--muted);
+  opacity: 1;
 }
 
 .gwt-Label-disabled {
@@ -853,6 +858,20 @@ select option:disabled {
     overflow: hidden;
 }
 
+/* A box that clips (e.g. a form, which scrolls) has room inside for the focus ring round a control
+   at its edge, and reaches as far outside to keep its contents where they were */
+.focus-ring-room,
+.form:not(.form-padding) {
+    padding: var(--focus-ring__room);
+    margin: calc(-1 * var(--focus-ring__room));
+}
+
+.focus-ring-room.max,
+.form.max:not(.form-padding) {
+    width: calc(100% + 2 * var(--focus-ring__room));
+    height: calc(100% + 2 * var(--focus-ring__room));
+}
+
 .clickableLabel.enabled {
     cursor: pointer;
 }
@@ -862,7 +881,7 @@ select option:disabled {
 }
 
 .clickableLabel.disabled {
-    color: #8f8f8f;
+    color: var(--text-color--disabled);
     cursor: default;
 }
 textarea.clipboardCopy {
@@ -894,17 +913,42 @@ textarea.clipboardCopy {
     text-transform: uppercase;
 }
 
-/* TODO AT - not sure if these need to be done here or somewhere else */
+/* Keyboard focus on a field that isn't a text field (text-field.css has those) */
 select:focus-visible,
-input:focus-visible {
+input:where(:not(.text-field)):focus-visible,
+textarea:where(:not(.text-field)):focus-visible {
   border: thin solid var(--focus-border) !important;
   box-shadow: var(--focus-shadow);
 }
-select.invalid:focus-visible,
-input.invalid:focus-visible {
+select[aria-invalid="true"]:focus-visible,
+input:where(:not(.text-field))[aria-invalid="true"]:focus-visible,
+textarea:where(:not(.text-field))[aria-invalid="true"]:focus-visible {
   box-shadow: var(--focus-shadow--invalid);
 }
-select.invalid,
-input.invalid {
+/* A rejected value (aria-invalid, as FieldValidity sets it) */
+select[aria-invalid="true"],
+input:where(:not(.text-field))[aria-invalid="true"],
+textarea:where(:not(.text-field))[aria-invalid="true"] {
   border: thin solid var(--focus-border--invalid) !important;
+}
+
+/* Radio buttons are styled by radio-button.css */
+
+/* Query data view (Data tab on PlanB, SQL Temporal Store and Lucene index docs). These live here
+   rather than in QueryDataViewImpl.ui.xml because GWT's ui:style parser cannot read var(). */
+.queryDataView-errorContainer {
+    margin: 0px 8px 8px 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--error);
+    border-radius: 4px;
+    background-color: rgba(var(--bootstrap-error-rgb), 0.15);
+    height: 100px;
+    overflow-y: auto;
+}
+
+.queryDataView-errorLabel {
+    color: var(--error);
+    font-weight: 500;
+    white-space: pre-wrap;
+    word-break: break-word;
 }

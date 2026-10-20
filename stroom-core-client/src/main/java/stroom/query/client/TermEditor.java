@@ -37,8 +37,10 @@ import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -54,6 +56,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class TermEditor extends Composite {
 
@@ -63,6 +67,8 @@ public class TermEditor extends Composite {
     private static final String NARROW_CLASS_NAME = "narrow";
 
     private final FlowPanel layout;
+    // The row of its fields
+    private final FlowPanel inner;
     private final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox;
     private final SelectionBox<Condition> conditionListBox;
     private final Label andLabel;
@@ -87,6 +93,9 @@ public class TermEditor extends Composite {
 
     private final AsyncSuggestOracle suggestOracle;
     private FieldSelectionListModel fieldSelectionListModel;
+    // Narrows what the condition list offers beyond the field's own ConditionSet. The quick
+    // filter's Advanced Query dialog uses it to offer only conditions its syntax can write back.
+    private Predicate<Condition> conditionFilter = condition -> true;
 
     public TermEditor(final Provider<DocSelectionBoxPresenter> docRefProvider,
                       final Provider<UserRefSelectionBoxPresenter> userRefProvider,
@@ -119,23 +128,24 @@ public class TermEditor extends Composite {
         andLabel = createLabel(" and ");
         andLabel.setVisible(false);
 
-        value = createTextBox(WIDE_CLASS_NAME);
+        // A term's parts have no labels, so each is named for what it is
+        value = createTextBox(WIDE_CLASS_NAME, "Value");
         value.setVisible(false);
-        valueFrom = createTextBox(NARROW_CLASS_NAME);
+        valueFrom = createTextBox(NARROW_CLASS_NAME, "From");
         valueFrom.setVisible(false);
-        valueTo = createTextBox(NARROW_CLASS_NAME);
+        valueTo = createTextBox(NARROW_CLASS_NAME, "To");
         valueTo.setVisible(false);
 
-        date = createDateBox(NARROW_CLASS_NAME);
+        date = createDateBox(NARROW_CLASS_NAME, "Date");
         date.setVisible(false);
-        dateFrom = createDateBox(NARROW_CLASS_NAME);
+        dateFrom = createDateBox(NARROW_CLASS_NAME, "From");
         dateFrom.setVisible(false);
-        dateTo = createDateBox(NARROW_CLASS_NAME);
+        dateTo = createDateBox(NARROW_CLASS_NAME, "To");
         dateTo.setVisible(false);
 
         fieldTypeLabel = createFieldTypeLabel();
 
-        final FlowPanel inner = new FlowPanel();
+        inner = new FlowPanel();
         inner.setStyleName("termEditor-inner");
         inner.add(fieldListBox);
         inner.add(conditionListBox);
@@ -174,6 +184,10 @@ public class TermEditor extends Composite {
         fieldListBox.setModel(fieldSelectionListModel);
     }
 
+    public void setConditionFilter(final Predicate<Condition> conditionFilter) {
+        this.conditionFilter = Objects.requireNonNullElse(conditionFilter, condition -> true);
+    }
+
     public void startEdit(final Term term) {
         if (!editing) {
             this.term = term;
@@ -184,6 +198,27 @@ public class TermEditor extends Composite {
             });
             editing = true;
         }
+    }
+
+    /// @return Whether a field's own popup is open: a value's suggestions or a date's calendar
+    /// (whose keys, e.g. Escape to close it, are the field's).
+    public boolean isPopupShowing() {
+        return value.isSuggestionListShowing()
+               || valueFrom.isSuggestionListShowing()
+               || valueTo.isSuggestionListShowing()
+               || date.isDatePickerShowing()
+               || dateFrom.isDatePickerShowing()
+               || dateTo.isDatePickerShowing();
+    }
+
+    /// Closes the fields' own popups (see [#isPopupShowing]).
+    public void hidePopups() {
+        value.hideSuggestionList();
+        valueFrom.hideSuggestionList();
+        valueTo.hideSuggestionList();
+        date.hideDatePicker();
+        dateFrom.hideDatePicker();
+        dateTo.hideDatePicker();
     }
 
     public void endEdit() {
@@ -332,7 +367,10 @@ public class TermEditor extends Composite {
                     return ConditionSet.getUiDefaultConditions(fieldType);
                 }
         );
-        return conditions.getConditionList();
+        return conditions.getConditionList()
+                .stream()
+                .filter(conditionFilter)
+                .collect(Collectors.toList());
     }
 
     private void changeCondition(final QueryField field,
@@ -563,6 +601,7 @@ public class TermEditor extends Composite {
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
         fieldListBox.addStyleName("termEditor-item");
+        AccessibleName.set(fieldListBox, "Field");
         uiConfigCache.get(uiConfig ->
                 NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
                         fieldListBox.registerPopupTextProvider(() ->
@@ -575,11 +614,13 @@ public class TermEditor extends Composite {
         conditionListBox.addStyleName(ITEM_CLASS_NAME);
         conditionListBox.addStyleName(DROPDOWN_CLASS_NAME);
         conditionListBox.addStyleName("condition");
+        AccessibleName.set(conditionListBox, "Condition");
         return conditionListBox;
     }
 
-    private SuggestBox createTextBox(final String widthClassName) {
+    private SuggestBox createTextBox(final String widthClassName, final String name) {
         final SuggestBox textBox = new SuggestBox(suggestOracle);
+        AccessibleName.set(textBox, name);
         textBox.addDomHandler(e -> {
             if (!textBox.isSuggestionListShowing()) {
                 textBox.showSuggestionList();
@@ -591,8 +632,9 @@ public class TermEditor extends Composite {
         return textBox;
     }
 
-    private MyDateBox createDateBox(final String widthClassName) {
+    private MyDateBox createDateBox(final String widthClassName, final String name) {
         final MyDateBox dateBox = new MyDateBox();
+        AccessibleName.set(dateBox, name);
         dateBox.addStyleName(ITEM_CLASS_NAME);
         dateBox.addStyleName(widthClassName);
         return dateBox;
@@ -619,6 +661,12 @@ public class TermEditor extends Composite {
                 uiHandlers.onChange();
             }
         }
+    }
+
+    /// @return The row of its fields, on which the item it edits draws its looks (e.g. being
+    /// selected).
+    public Element getRow() {
+        return inner.getElement();
     }
 
     public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {

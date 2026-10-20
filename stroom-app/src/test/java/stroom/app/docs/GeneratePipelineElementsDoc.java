@@ -31,6 +31,7 @@ import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
@@ -149,11 +150,13 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
                 .stream()
                 .sorted(Entry.comparingByKey())
                 .map(GeneratePipelineElementsDoc::mapCategoryGroup)
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining("\n\n\n"));
 
         final Path file = StroomDocsUtil.resolveStroomDocsFile(ELEMENENT_REFERENCE_SUB_PATH);
 
-        final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(file, generatedContent);
+        final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(
+                file,
+                "\n\n" + generatedContent);
 
         if (didReplace) {
             LOGGER.info("Replaced generated content in file: {}", file);
@@ -180,7 +183,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
                 .filter(Objects::nonNull)
                 .filter(elementInfo ->
                         !Category.INTERNAL.equals(elementInfo.category)
-                                || SourceElement.class.equals(elementInfo.clazz))
+                        || SourceElement.class.equals(elementInfo.clazz))
                 .sequential()
                 .sorted(Comparator.comparing(ElementInfo::type))
                 .map(elementInfo -> {
@@ -206,8 +209,9 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
         final Category category = entry.getKey();
         final List<ElementInfo> elementInfoList = entry.getValue();
 
-        final String elementsText = convertElementsToText(elementInfoList);
+        final String elementsText = convertElementsToText(elementInfoList).trim();
         final String categoryDescription = Optional.ofNullable(category.getDescription())
+                .map(String::trim)
                 .orElse(MISSING_CATEGORY_DESCRIPTION);
 
         return LogUtil.message("""
@@ -215,9 +219,9 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
 
                         {}
 
-                        {}
-                        """,
-                category.getDisplayValue(),
+
+                        {}""",
+                category.getDisplayValue().trim(),
                 categoryDescription,
                 elementsText);
     }
@@ -228,7 +232,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
                 .map(elementInfo -> {
 
                     final String descriptionText = elementInfo.description != null
-                            ? elementInfo.description
+                            ? elementInfo.description.trim()
                             : "> TODO - Add description";
 
                     // Add the &nbsp; at the end so the markdown processor treats the line as a <p>
@@ -249,7 +253,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
 
                     final String propsText;
                     if (!elementInfo.propertyInfoList.isEmpty()) {
-                        propsText = "\n\n**Element properties:**\n\n" + AsciiTable.builder(elementInfo.propertyInfoList)
+                        propsText = "\n**Element properties:**\n\n" + AsciiTable.builder(elementInfo.propertyInfoList)
                                 .withColumn(Column.builder("Name", PropertyInfo::name)
                                         .build())
                                 .withColumn(Column.builder("Description", PropertyInfo::description)
@@ -274,9 +278,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
 
                             {}
 
-                            {}{}
-
-                            """;
+                            {}{}""";
 
                     return LogUtil.message(
                             template,
@@ -288,7 +290,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
                             propsText
                     );
                 })
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining("\n\n\n"));
         return elementsText;
     }
 
@@ -312,9 +314,9 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
     private static ElementInfo mapClassInfo(final ClassInfo elementClassInfo) {
         final Class<? extends Element> clazz = (Class<? extends Element>) elementClassInfo.loadClass();
         if (!clazz.isInterface()
-                && !Modifier.isAbstract(clazz.getModifiers())
-                && !clazz.getSimpleName().startsWith("Abstract")
-                && clazz.isAnnotationPresent(ConfigurableElement.class)) {
+            && !Modifier.isAbstract(clazz.getModifiers())
+            && !clazz.getSimpleName().startsWith("Abstract")
+            && clazz.isAnnotationPresent(ConfigurableElement.class)) {
 
             final ConfigurableElement elementAnno = clazz.getAnnotation(ConfigurableElement.class);
 
@@ -332,11 +334,9 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
     }
 
     private static String getStringValue(final String value) {
-        if (value == null || value.isEmpty() || value.isBlank()) {
-            return null;
-        } else {
-            return value;
-        }
+        return NullSafe.isBlankString(value)
+                ? null
+                : value;
     }
 
     private static List<PropertyInfo> getPropertyInfoList(final Class<?> clazz) {
@@ -351,9 +351,9 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
                     final String argTypeStr = Objects.requireNonNull(ARG_TYPE_TO_DISPLAY_NAME_MAP.get(argType),
                             () ->
                                     "No display name mapped for return type: "
-                                            + argType.getName()
-                                            + " on method: " + method.getName()
-                                            + " on class: " + clazz.getSimpleName());
+                                    + argType.getName()
+                                    + " on method: " + method.getName()
+                                    + " on class: " + clazz.getSimpleName());
 
                     final String name = makePropertyName(method.getName());
                     return new PropertyInfo(
@@ -394,13 +394,13 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
         @Override
         public String toString() {
             return "ElementInfo{" +
-                    "type='" + type + '\'' +
-                    ", iconFilename='" + iconFilename + '\'' +
-                    ", category=" + category +
-                    ", description='" + description + '\'' +
-                    ", roles=" + roles +
-                    ", propertyInfoList=" + propertyInfoList +
-                    '}';
+                   "type='" + type + '\'' +
+                   ", iconFilename='" + iconFilename + '\'' +
+                   ", category=" + category +
+                   ", description='" + description + '\'' +
+                   ", roles=" + roles +
+                   ", propertyInfoList=" + propertyInfoList +
+                   '}';
         }
     }
 
@@ -417,11 +417,11 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
         @Override
         public String toString() {
             return "PropertyInfo{" +
-                    "name='" + name + '\'' +
-                    ", description='" + description + '\'' +
-                    ", defaultValue='" + defaultValue + '\'' +
-                    ", returnTypeStr='" + argTypeStr + '\'' +
-                    '}';
+                   "name='" + name + '\'' +
+                   ", description='" + description + '\'' +
+                   ", defaultValue='" + defaultValue + '\'' +
+                   ", returnTypeStr='" + argTypeStr + '\'' +
+                   '}';
         }
     }
 }

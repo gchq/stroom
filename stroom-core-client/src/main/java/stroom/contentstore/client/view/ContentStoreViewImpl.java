@@ -45,6 +45,12 @@ public class ContentStoreViewImpl extends ViewImpl implements ContentStoreView {
     @Inject
     public ContentStoreViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
+        // The details scroll, so the keyboard must be able to reach them to scroll them, even
+        // when they hold nothing else the keyboard reaches (e.g. a pack with no links and both
+        // buttons disabled). A named region, so screen readers say what has the focus
+        contentPackDetails.getElement().setTabIndex(0);
+        contentPackDetails.getElement().setAttribute("role", "region");
+        contentPackDetails.getElement().setAttribute("aria-label", "Content pack details");
     }
 
     /**

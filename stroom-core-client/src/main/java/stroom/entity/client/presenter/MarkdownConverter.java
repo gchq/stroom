@@ -21,6 +21,7 @@ import stroom.ui.config.shared.ThemeType;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.NewTabLink;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -78,7 +79,7 @@ public class MarkdownConverter {
             final SafeHtml iFrameHtmlContent = new SafeHtmlBuilder()
                     .appendHtmlConstant("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
                     .appendHtmlConstant("<!DOCTYPE html>")
-                    .appendHtmlConstant("<html class=\"")
+                    .appendHtmlConstant("<html lang=\"en\" class=\"")
                     .append(SafeHtmlUtil.from(currentPreferenceClasses))
                     .appendHtmlConstant("\">")
                     .appendHtmlConstant("<head>")
@@ -106,7 +107,9 @@ public class MarkdownConverter {
      */
     public void appendMarkdownInDiv(final HtmlBuilder htmlBuilder, final String rawMarkdown) {
         if (htmlBuilder != null && !NullSafe.isBlankString(rawMarkdown)) {
-            final String markdownHtml = nativeConvertMarkdownToHtml(rawMarkdown);
+            // Showdown opens every link in a new tab (openLinksInNewWindow), so each one says so
+            final String markdownHtml = NewTabLink.addHintToNewTabLinks(
+                    nativeConvertMarkdownToHtml(rawMarkdown));
             final SafeHtml markdownSafeHtml = SafeHtmlUtils.fromTrustedString(markdownHtml);
             final String cssClasses = getMarkdownContainerClasses();
 
@@ -121,6 +124,7 @@ public class MarkdownConverter {
 
     private native JavaScriptObject initConverter() /*-{
         // See https://showdownjs.com/docs/available-options/
+        // openLinksInNewWindow gives each link target="_blank" and rel="noopener noreferrer"
         var converter = new $wnd.showdown.Converter({
             openLinksInNewWindow: true,
             strikethrough: true,
