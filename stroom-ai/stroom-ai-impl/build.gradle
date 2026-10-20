@@ -37,6 +37,8 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-node:stroom-node-api')
+    // For MarkerListCreator, which parses Error streams into markers as the data viewer does.
+    implementation project(':stroom-pipeline')
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')

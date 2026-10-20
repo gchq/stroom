@@ -32,7 +32,7 @@ import java.util.Objects;
 
 /// Describes a query expression in plain words, e.g. "Feed is 'ACME' and (Type is 'Raw Events' or Type is
 /// 'Events')", for people deciding whether to act on something that uses it, such as a processor filter.
-final class ExpressionDescriber {
+public final class ExpressionDescriber {
 
     private ExpressionDescriber() {
         // Static methods only.
@@ -40,7 +40,7 @@ final class ExpressionDescriber {
 
     /// @param expression An expression, or null.
     /// @return The expression in words, or null if it selects everything (it is null, or has no enabled terms).
-    static String describe(final ExpressionOperator expression) {
+    public static String describe(final ExpressionOperator expression) {
         return expression == null
                 ? null
                 : describeOperator(expression, false);

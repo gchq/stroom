@@ -262,6 +262,8 @@ public class AskStroomAiPresenter
     private static final int STREAMING_POLL_MS = 500;
     private static final long KEEP_POLLING_AFTER_ANSWER_MS = 15_000;
     private static final int BOTTOM_TOLERANCE_PX = 40;
+    // The furthest, in heights of the view, that following the conversation glides to new content.
+    private static final double MAX_GLIDE_VIEWS = 1.5;
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
@@ -2058,9 +2060,9 @@ public class AskStroomAiPresenter
     }
 
     /**
-     * Renders a form an MCP tool asked the user to fill in. While it waits: what the server said, as plain text,
-     * and its fields with Submit and Decline. Once answered, just the question (its first line, the whole of it
-     * on hover) and the answer, or what else became of it.
+     * Renders a form an MCP tool asked the user to fill in. While it waits: what the server said, as sanitised
+     * Markdown, and its fields with Submit and Decline. Once answered, just the question (its first line, the
+     * whole of it on hover) and the answer, or what else became of it.
      */
     private void appendElicitationCard(final HtmlBuilder hb,
                                        final AiChatMessage msg,
@@ -2087,7 +2089,10 @@ public class AskStroomAiPresenter
                 AiElicitationCard.appendQuestions(card, fields);
             } else if (pending) {
                 card.div(server + " needs your input", Attribute.className("ai-approval-title"));
-                card.div(message, Attribute.className("ai-elicitation-message"));
+                // As Markdown, sanitised as the chat's answers are.
+                card.div(content -> content.append(markdownConverter.convertUntrustedMarkdownToHtml(
+                                AiElicitationCard.messageMarkdown(message))),
+                        Attribute.className("ai-elicitation-message"));
                 if (yesNo != null) {
                     AiElicitationCard.appendYesNoQuestion(card, yesNo, message);
                 } else {
@@ -4014,7 +4019,8 @@ public class AskStroomAiPresenter
      */
     private void scrollToBottom() {
         if (followBottom) {
-            scrollToLatest();
+            // Something was added below, so it glides to it, for the user to follow the conversation as it grows.
+            scrollToLatest(true);
         } else {
             getView().setJumpToLatestVisible(true);
         }
@@ -4063,7 +4069,7 @@ public class AskStroomAiPresenter
         // behind the bottom of the view rather than pushing them up. And shown again (e.g. back from another
         // Stroom tab), the browser has put it back at the top: it goes straight to where the user left it.
         if (followBottom) {
-            scrollToLatest();
+            scrollToLatest(false);
         } else if (container.getScrollTop() != lastScrollTop) {
             scrollInstantly(container, lastScrollTop);
         }
@@ -4080,16 +4086,25 @@ public class AskStroomAiPresenter
         markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
     }
 
-    // Keeps the latest message in view, straight away rather than gliding there: the chat is following it, so a
-    // glide from wherever it was (e.g. the top, when loaded or shown again) would only be in the way.
-    private void scrollToLatest() {
+    // Keeps the latest message in view. Content added below is glided to, so the user can follow it, but only over
+    // a short way (at most MAX_GLIDE_VIEWS of the view's height): from further (e.g. the top, when the chat is loaded
+    // or shown again), or when the view changed size, a glide would only be in the way, so it goes straight there.
+    // The glide follows the conversation's CSS (smooth, unless the user prefers reduced motion), and its own
+    // scrolling isn't the user's, so it doesn't stop the conversation being followed.
+    private void scrollToLatest(final boolean glide) {
         if (getView().isUserScrolling()) {
             // Not from under the user: they are scrolling it themselves, which decides whether it is followed.
             return;
         }
         getView().setJumpToLatestVisible(false);
         final Element markdownContainer = getView().getMarkdownContainer().getElement();
-        scrollInstantly(markdownContainer, markdownContainer.getScrollHeight());
+        final int clientHeight = markdownContainer.getClientHeight();
+        final int distance = markdownContainer.getScrollHeight() - clientHeight - markdownContainer.getScrollTop();
+        if (glide && distance > 0 && distance <= clientHeight * MAX_GLIDE_VIEWS) {
+            markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+        } else {
+            scrollInstantly(markdownContainer, markdownContainer.getScrollHeight());
+        }
         lastScrollTop = markdownContainer.getScrollTop();
     }
 

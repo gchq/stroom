@@ -144,7 +144,14 @@ shrinks to the question's first line and the answer given. Stopping the run canc
 
 * forms expire after `elicitationTimeout` (default 10 minutes);
 * at most `maxElicitationsPerNode` (default 5) wait on a node at once, and more are declined;
-* only flat forms are shown (text, numbers, true/false, a choice of one or several); others are declined.
+* only flat forms are shown (text, numbers, true/false, a choice of one or several); others are refused.
+
+The server's message is shown as Markdown, sanitised as the chat's answers are. A form whose message is over 2,000
+characters, with more than 20 fields, or whose schema is over 16,000 characters is refused without being shown: a
+form is for a short question, and what the user reviews (e.g. an index template) belongs in the chat before it.
+The server is answered with an error (invalid params) saying why, not with a decline, as the user hasn't declined
+anything; a server may then ask in another way, e.g. the Stroom MCP server falls back to an id the user agrees to
+in the chat. The chat says it is a problem with the MCP server, and to ask an administrator to report it.
 
 
 ## Steps for the user (user actions)
@@ -327,7 +334,8 @@ What the agent can offer for the attached tab, all as buttons the user clicks, n
     dashboard has), and the dashboard file the agent reads lists each component's settings as they are.
 
   Changes are applied unsaved, on top of any unsaved changes the dashboard has (the agent proposed them
-  against the dashboard as the user has it), and all or none. _Undo apply_ puts back exactly what they
+  against the dashboard as the user has it), and all or none. They are made as each component's menus and
+  Settings dialog would make them: the dialog shows them, and saving the dashboard keeps them. _Undo apply_ puts back exactly what they
   changed (the table, the query's expression, and each component's name and settings) and removes any tables
   or Text widgets added, while the dashboard is open and hasn't been changed since; otherwise it is withdrawn,
   saying why.
@@ -403,6 +411,49 @@ the events themselves, e.g. for a value the table doesn't show:
   for the `table` tool to count or group.
 
 
+## Processing tasks (`processor_tasks`)
+
+The `processor_tasks` tool answers questions about processing across the cluster, e.g. "what's failing in
+processing today, and why?", "which tasks for pipeline X failed, on which nodes, for which streams?" or "how many
+tasks are queued per node?". It takes the same filters in every mode: pipelines (or analytic rules), feeds,
+nodes, processor filters (id or UUID), streams, statuses and a time window on the tasks' status time (`since`
+and `until`, as ISO dates and times, periods such as `P7D` or `-7d`, or date expressions such as `now()-1d`).
+
+* `failures` (the default, over the last 24 hours unless given a window) gives, in one call:
+  * the tasks in the window by status, and by pipeline, feed and node with failure rates, calling out a node
+    with most of the failures;
+  * the Failed tasks grouped by pipeline, feed and node, with their first and last times and example tasks.
+    Stroom doesn't record why a task failed (its run threw, and the reason went only to that node's
+    application log), and the tool doesn't look: it says to look in that node's log, in your log system,
+    around those times;
+  * tasks that look stuck: Assigned or Processing with a status time older than `stuck_after` (default an
+    hour; a running task's status time is renewed by its node), by node;
+  * the errors inside processing that completed: the Error streams written in the window, by pipeline and
+    feed, and the failure modes in a sample of them (`sample`, default 30, at most 100, spread across the
+    pipelines and feeds, up to 256 KiB of each). Each stream is parsed into markers as the data viewer does
+    (`MarkerListCreator`), and the markers are grouped by severity, pipeline element and message pattern
+    (numbers, quoted values, UUIDs, times, IP addresses, paths and ids replaced with placeholders), ranked by
+    severity then count, with the pipelines, feeds and nodes each was met in, and examples linked to their
+    Error stream and the stream it was processing. A coverage line says what was read of what was found.
+* `list` lists tasks, newest first (default 50, at most 500, or all of them to a CSV with `out`): id,
+  status, node, stream, feed, pipeline, filter, times and duration, and each task's Error streams with their
+  error counts.
+* `summary` counts tasks grouped by any of pipeline, feed, node, status and filter.
+
+To stay cheap on a large cluster, counts come from the database's task summaries (one query, plus one per
+node when grouping by node) rather than reading every task; Error streams are looked for per pipeline (the
+scoped ones, or the 20 that had the most failures and tasks in the window) with at most 200 per pipeline;
+each page of tasks has its Error streams found in one query; and error counts are read only for the streams
+shown or sampled, as they are meta values that age off (when they have, the result says the counts are
+unavailable). Every cap reached is said in the result.
+
+Permissions: tasks need the _Manage Processors_ permission, as the Active Tasks tab does; without it the tool
+says so and gives nothing else. Only tasks whose pipeline (or analytic rule) and feed the user can view are
+counted or shown, and nothing hints at others. Error streams are found as the user (only of feeds they can
+view, and only of pipelines they can view); their content is read only with _View Data_, as the data viewer
+needs, and each stream read is logged as a View event.
+
+
 ## Retention and limits
 
 The _AI Chat Retention_ job (hourly) removes:
@@ -464,6 +515,12 @@ kept at all. Turning off request detail stops it being kept for later answers, a
 * **A chat shows "Interrupted because the Stroom node running it stopped"**: the node running it went
   away. _Resume_ carries on from the last question.
 * **Nothing streams**: some OpenAI-compatible servers don't stream; the answer then arrives whole.
+* **A dashboard change applied from the chat seems to do nothing**: check the component's Settings dialog,
+  which shows the change once applied. Some settings only show their effect in the right conditions: a Text
+  widget shows, and steps through, the event of a selected row, so on a grouped table it stays empty until
+  the table's detail rows are on and one of them is selected; its stepping button also needs the Stepping
+  permission and data that isn't shown as HTML. If a change can't be applied, the reason is shown when
+  _Apply to dashboard_ is clicked.
 
 
 ## Roadmap

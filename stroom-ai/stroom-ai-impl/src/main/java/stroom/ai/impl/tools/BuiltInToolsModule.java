@@ -67,6 +67,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(ProposeQueryChangeTool.class)
                 .addBinding(ProposeCodeChangeTool.class)
                 .addBinding(StreamMetaTool.class)
+                .addBinding(ProcessorTasksTool.class)
                 .addBinding(DocumentLinksTool.class)
                 .addBinding(FindInContentTool.class)
                 .addBinding(XsltLookupsTool.class)

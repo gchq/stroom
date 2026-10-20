@@ -23,6 +23,7 @@ import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
+import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.pipeline.shared.PipelineDoc;
@@ -44,6 +45,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -57,7 +59,9 @@ import java.util.stream.Collectors;
 /// The graph's own permission filter lets a document through if checking it fails, so every document returned
 /// or passed through is checked for View again here, failing closed. A path through a document the user can't
 /// see isn't followed, and nothing hints that it exists. A processor filter isn't a document: it is shown, and
-/// followed, only if the user can view the pipeline it runs.
+/// followed, only if the user can view the pipeline it runs. What a filter selects is said only to a user with the
+/// Manage Processors permission, as the Processors tab shows it ([ProcessorFilterAccess]). Anyone else is told
+/// that, and given instead the feeds the graph links the filter to, each checked for View like everything else.
 class DocumentLinksTool extends AbstractWorkspaceTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentLinksTool.class);
@@ -86,16 +90,19 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
 
     private final Provider<DocDependencyService> docDependencyServiceProvider;
     private final DocumentAccess access;
+    private final ProcessorFilterAccess processorFilterAccess;
     private final AiAuditLog auditLog;
 
     @Inject
     DocumentLinksTool(final ChatWorkspace workspace,
                       final Provider<DocDependencyService> docDependencyServiceProvider,
                       final DocumentAccess access,
+                      final ProcessorFilterAccess processorFilterAccess,
                       final AiAuditLog auditLog) {
         super(workspace);
         this.docDependencyServiceProvider = docDependencyServiceProvider;
         this.access = access;
+        this.processorFilterAccess = processorFilterAccess;
         this.auditLog = auditLog;
     }
 
@@ -109,9 +116,12 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
                              + "filters that pick its streams → the pipeline each runs → the XSLTs and other "
                              + "parts that pipeline uses); 'dependencies' finds what each document uses. Returns "
                              + "each document reached with its type, name, UUID, folder, how many links away it "
-                             + "is and the chain of links that reached it. The graph only holds the links each "
-                             + "document names, e.g. a processor filter that picks streams by type alone has no "
-                             + "link to a feed, so if a link you expect is missing, read the filters and "
+                             + "is and the chain of links that reached it. Each processor filter reached is given "
+                             + "with what it selects (e.g. which feeds and stream types) and whether it is "
+                             + "enabled, so the dependants of a pipeline at depth 1 answer 'which feeds or "
+                             + "streams does this pipeline process?' in one call. The graph only holds the links "
+                             + "each document names, e.g. a processor filter that picks streams by type alone has "
+                             + "no link to a feed, so if a link you expect is missing, read the filters and "
                              + "pipelines rather than conclude there is none.")
                 .parameters(JsonObjectSchema.builder()
                         .addProperty(UUIDS_ARG, stringArraySchema("The documents to start from."))
@@ -168,9 +178,10 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
                         .thenComparing(node -> NullSafe.string(node.docRef().getName())))
                 .toList();
 
+        final boolean canManageProcessors = processorFilterAccess.canManageProcessors();
         final List<String> lines = new ArrayList<>();
         for (final Reached node : results) {
-            lines.add(line(node, walk));
+            lines.add(line(node, walk, canManageProcessors));
         }
         final List<Reached> shown = results.stream().limit(limit).toList();
         logSearch(chatId, starts, dependants, depth, shown);
@@ -218,10 +229,11 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
         throw new WorkspaceException("The direction must be " + DEPENDANTS + " or " + DEPENDENCIES + ".");
     }
 
-    private String line(final Reached node, final Walk walk) {
+    private String line(final Reached node, final Walk walk, final boolean canManageProcessors) {
         final DocRef docRef = node.docRef();
         final StringBuilder sb = new StringBuilder("- ");
-        if (ProcessorFilter.ENTITY_TYPE.equals(docRef.getType())) {
+        final boolean filter = ProcessorFilter.ENTITY_TYPE.equals(docRef.getType());
+        if (filter) {
             final DocRef pipeline = walk.pipelineOf(docRef).orElse(null);
             sb.append("Processor filter (").append(docRef.getUuid()).append(") of pipeline '")
                     .append(NullSafe.getOrElse(pipeline, DocRef::getName, "?")).append("' (")
@@ -231,7 +243,35 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
                     .append(access.path(docRef));
         }
         sb.append(": ").append(node.distance()).append(" link(s) away, via ").append(node.chain());
+        if (filter) {
+            sb.append(". ").append(filterDetails(docRef, walk, canManageProcessors)).append('.');
+        }
         return sb.toString();
+    }
+
+    // What a processor filter selects, for a user who may see it; for anyone else, or if it can't be read, the
+    // feeds the graph links it to that the user can view, and why its selection isn't given.
+    private String filterDetails(final DocRef filterRef, final Walk walk, final boolean canManageProcessors) {
+        if (canManageProcessors) {
+            ToolDeadline.check();
+            final Optional<ProcessorFilter> filter = processorFilterAccess.find(filterRef.getUuid());
+            if (filter.isPresent()) {
+                return "It selects " + ProcessorFilterAccess.selection(filter.get()) + "; "
+                       + (filter.get().isEnabled()
+                        ? "enabled"
+                        : "disabled");
+            }
+        }
+        final List<DocRef> feeds = walk.feedsOf(filterRef);
+        final String reason = canManageProcessors
+                ? "what it selects couldn't be read"
+                : ProcessorFilterAccess.NEEDS_MANAGE_PROCESSORS;
+        if (feeds.isEmpty()) {
+            return reason.substring(0, 1).toUpperCase(Locale.ROOT) + reason.substring(1);
+        }
+        return "It links to " + feeds.stream()
+                .map(DocumentLinksTool::describe)
+                .collect(Collectors.joining(", ")) + "; " + reason;
     }
 
     /// @param docRef A document, or a processor filter.
@@ -281,7 +321,7 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
 
         private final boolean dependants;
         private final Map<String, Boolean> visible = new HashMap<>();
-        private final Map<String, Optional<DocRef>> filterPipelines = new HashMap<>();
+        private final Map<String, List<DocRef>> filterLinks = new HashMap<>();
         private boolean truncated;
 
         private Walk(final boolean dependants) {
@@ -364,11 +404,28 @@ class DocumentLinksTool extends AbstractWorkspaceTool {
 
         /// @return The pipeline a processor filter runs, if the user can view it.
         private Optional<DocRef> pipelineOf(final DocRef filter) {
-            return filterPipelines.computeIfAbsent(filter.getUuid(), uuid ->
-                    edges(List.of(uuid), false).getOrDefault(uuid, List.of()).stream()
-                            .filter(docRef -> PipelineDoc.TYPE.equals(docRef.getType()))
-                            .filter(access::canView)
-                            .findFirst());
+            return linksOf(filter).stream()
+                    .filter(docRef -> PipelineDoc.TYPE.equals(docRef.getType()))
+                    // Not isVisible, as this is called while it works out a filter's visibility.
+                    .filter(access::canView)
+                    .findFirst();
+        }
+
+        /// @return The feeds the graph links a processor filter to that the user can view, by name.
+        private List<DocRef> feedsOf(final DocRef filter) {
+            return linksOf(filter).stream()
+                    .filter(docRef -> FeedDoc.TYPE.equals(docRef.getType()))
+                    .filter(docRef -> docRef.getUuid() != null)
+                    .filter(this::isVisible)
+                    .sorted(Comparator.comparing(docRef -> NullSafe.string(docRef.getName())))
+                    .toList();
+        }
+
+        /// @return What a processor filter links to in the graph: the pipeline it runs and the documents its
+        /// expression names. None of them is checked for View.
+        private List<DocRef> linksOf(final DocRef filter) {
+            return filterLinks.computeIfAbsent(filter.getUuid(), uuid ->
+                    edges(List.of(uuid), false).getOrDefault(uuid, List.of()));
         }
 
         /// @return For each document, the documents at the other end of its links in one direction.
