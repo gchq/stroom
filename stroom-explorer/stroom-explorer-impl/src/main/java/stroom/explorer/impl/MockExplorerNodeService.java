@@ -101,6 +101,11 @@ public class MockExplorerNodeService implements ExplorerNodeService {
     }
 
     @Override
+    public Optional<ExplorerNode> getNodeByUuid(final String uuid) {
+        return Optional.empty();
+    }
+
+    @Override
     public List<ExplorerNode> getPath(final DocRef docRef) {
         // Make sure returned list is mutable
         final ArrayList<ExplorerNode> path = new ArrayList<>(1);

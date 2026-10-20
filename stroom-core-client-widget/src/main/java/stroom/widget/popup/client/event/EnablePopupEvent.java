@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.widget.popup.client.view.DialogAction;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.gwtplatform.mvp.client.PresenterWidget;
@@ -24,9 +26,11 @@ public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenterWidget;
+    private final DialogAction action;
 
-    private EnablePopupEvent(final PresenterWidget<?> presenterWidget) {
+    private EnablePopupEvent(final PresenterWidget<?> presenterWidget, final DialogAction action) {
         this.presenterWidget = presenterWidget;
+        this.action = action;
     }
 
     public static Builder builder(final PresenterWidget<?> presenterWidget) {
@@ -54,6 +58,10 @@ public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
         return presenterWidget;
     }
 
+    public DialogAction getAction() {
+        return action;
+    }
+
     public interface Handler extends EventHandler {
 
         void onEnable(EnablePopupEvent event);
@@ -62,13 +70,19 @@ public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
     public static class Builder {
 
         private final PresenterWidget<?> presenterWidget;
+        private DialogAction action;
 
         public Builder(final PresenterWidget<?> presenterWidget) {
             this.presenterWidget = presenterWidget;
         }
 
+        public Builder action(final DialogAction action) {
+            this.action = action;
+            return this;
+        }
+
         public void fire() {
-            presenterWidget.fireEvent(new EnablePopupEvent(presenterWidget));
+            presenterWidget.fireEvent(new EnablePopupEvent(presenterWidget, action));
         }
     }
 }

@@ -78,6 +78,11 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     private Set<String> currentHighlights;
     private final Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
 
+    // Without a timeout every search is built with QuerySearchRequest's 1-second default. The
+    // floor map's baseline read is a whole-store scan that routinely exceeds that, which would
+    // mean late results and poll churn.
+    private Long timeout;
+
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
     private final List<TokenErrorListener> tokenErrorListeners = new ArrayList<>();
@@ -102,6 +107,21 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
     public void init(final DocRef queryDocRef) {
         this.queryDocRef = queryDocRef;
+    }
+
+    /**
+     * How long the server waits for a search before responding, in milliseconds.
+     *
+     * <p>Unset leaves {@code QuerySearchRequest}'s 1-second default. That is not a data-loss
+     * risk — a non-incremental search past its timeout returns {@code complete=false}, polling
+     * continues, and the rows arrive when the search finishes — but it costs a round trip per
+     * second per slow search, and {@code SearchResponseMapper} strips the timeout message, so the
+     * lateness is invisible. Raise it for a query known to be slow.</p>
+     *
+     * @param timeout milliseconds, or {@code null} for the request default
+     */
+    public void setTimeout(final Long timeout) {
+        this.timeout = timeout;
     }
 
     /**
@@ -172,7 +192,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .additionalQueryExpression(additionalQueryExpression)
                 .build();
 
-        currentSearch = QuerySearchRequest
+        final QuerySearchRequest.Builder searchBuilder = QuerySearchRequest
                 .builder()
                 .searchRequestSource(
                         SearchRequestSource
@@ -185,8 +205,14 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .query(query)
                 .queryContext(currentQueryContext)
                 .incremental(incremental)
-                .queryTablePreferences(queryTablePreferencesSupplier.get())
-                .build();
+                .queryTablePreferences(queryTablePreferencesSupplier.get());
+
+        // See the `timeout` field.
+        if (timeout != null) {
+            searchBuilder.timeout(timeout);
+        }
+
+        currentSearch = searchBuilder.build();
 //            }
 //        }
 //

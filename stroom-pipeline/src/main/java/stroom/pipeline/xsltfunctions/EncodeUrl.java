@@ -23,7 +23,28 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = EncodeUrl.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.URI,
+        commonDescription = """
+                URL-encodes a string.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The encoded string, or an empty sequence if encoding fails.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "url",
+                                        description = "The string to encode.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class EncodeUrl extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "encode-url";
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {

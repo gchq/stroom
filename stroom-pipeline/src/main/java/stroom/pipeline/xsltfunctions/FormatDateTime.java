@@ -36,6 +36,39 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@XsltFunctionDef(
+        name = FormatDateTime.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.DATE,
+        commonDescription = """
+                Formats an XPath date-time value using an optional output pattern and time zone. Without a pattern it
+                uses Stroom's standard date-time format; the default time zone is UTC.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The formatted date-time string, or an empty sequence if formatting fails.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "dateTime",
+                                        description = "The XPath date-time value to format.",
+                                        argType = XsltDataType.DATE_TIME
+                                ),
+                                @XsltFunctionArg(
+                                        name = "pattern",
+                                        description = "The output pattern. Omit for Stroom's standard date-time " +
+                                                "format.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                ),
+                                @XsltFunctionArg(
+                                        name = "timeZone",
+                                        description = "The output time zone; defaults to UTC.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                )
+                        }
+                )
+        })
 class FormatDateTime extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "format-dateTime";

@@ -33,6 +33,13 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
     private static final Binder binder = GWT.create(Binder.class);
     private final HideRequestUiHandlers uiHandlers;
 
+    /// Whether the presenter allows OK, as set by [#setEnabled(DialogAction, boolean)]. Kept apart
+    /// from the button's own state, which [#setEnabled(boolean)] toggles around every hide request.
+    private boolean okAllowed = true;
+
+    /// As [#okAllowed], for the Create button.
+    private boolean createAllowed = true;
+
     @UiField
     Button create;
     @UiField
@@ -52,6 +59,8 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
 
     public void setContent(final Widget widget) {
         content.setWidget(widget);
+        okAllowed = true;
+        createAllowed = true;
         ok.setEnabled(true);
         cancel.setEnabled(true);
     }
@@ -63,6 +72,11 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
 
     @Override
     public void onDialogAction(final DialogAction action) {
+        // Ctrl+Enter reaches here without going through the button, so a disabled OK has to be
+        // honoured here as well as on the button itself.
+        if ((action == DialogAction.OK && !okAllowed) || (action == DialogAction.CREATE && !createAllowed)) {
+            return;
+        }
         setEnabled(false);
         if (action == DialogAction.OK) {
             ok.setLoading(true);
@@ -93,8 +107,22 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
 
     @Override
     public void setEnabled(final boolean enabled) {
-        ok.setEnabled(enabled);
+        create.setEnabled(enabled && createAllowed);
+        ok.setEnabled(enabled && okAllowed);
         cancel.setEnabled(enabled);
+    }
+
+    @Override
+    public void setEnabled(final DialogAction action, final boolean enabled) {
+        if (DialogAction.CREATE.equals(action)) {
+            createAllowed = enabled;
+            create.setEnabled(enabled);
+        } else if (DialogAction.OK.equals(action)) {
+            okAllowed = enabled;
+            ok.setEnabled(enabled);
+        } else if (DialogAction.CANCEL.equals(action)) {
+            cancel.setEnabled(enabled);
+        }
     }
 
 

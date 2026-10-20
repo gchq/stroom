@@ -17,6 +17,7 @@
 package stroom.pathways.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.planb.shared.AbstractPlanBDoc;
@@ -30,6 +31,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@Description(
+        """
+        Defines a Plan B store used to hold trace logs, i.e. the spans that make up each trace as it \
+        passes between services.
+        Spans are grouped into their traces as they arrive, and the traces are kept so that they can be \
+        queried and analysed by a Pathways document.
+
+        Data is loaded into the store using the {{< pipe-elm "PlanBFilter" >}} pipeline element.
+        """)
 @JsonPropertyOrder({
         "type",
         "uuid",

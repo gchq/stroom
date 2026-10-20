@@ -38,6 +38,10 @@ public class AcceptRejectContent extends Composite implements DialogButtons {
 
     private final HideRequestUiHandlers uiHandlers;
 
+    /// Whether the presenter allows OK, as set by [#setEnabled(DialogAction, boolean)]. Kept apart
+    /// from the button's own state, which [#setEnabled(boolean)] toggles around every hide request.
+    private boolean okAllowed = true;
+
     @UiField
     Button accept;
     @UiField
@@ -54,6 +58,7 @@ public class AcceptRejectContent extends Composite implements DialogButtons {
 
     public void setContent(final Widget widget) {
         content.setWidget(widget);
+        okAllowed = true;
         accept.setEnabled(true);
         reject.setEnabled(true);
     }
@@ -65,6 +70,11 @@ public class AcceptRejectContent extends Composite implements DialogButtons {
 
     @Override
     public void onDialogAction(final DialogAction action) {
+        // Ctrl+Enter reaches here without going through the button, so a disabled OK has to be
+        // honoured here as well as on the button itself.
+        if (action == DialogAction.OK && !okAllowed) {
+            return;
+        }
         setEnabled(false);
         if (action == DialogAction.OK) {
             accept.setLoading(true);
@@ -90,7 +100,17 @@ public class AcceptRejectContent extends Composite implements DialogButtons {
 
     @Override
     public void setEnabled(final boolean enabled) {
-        accept.setEnabled(enabled);
+        accept.setEnabled(enabled && okAllowed);
         reject.setEnabled(enabled);
+    }
+
+    @Override
+    public void setEnabled(final DialogAction action, final boolean enabled) {
+        if (DialogAction.OK.equals(action)) {
+            okAllowed = enabled;
+            accept.setEnabled(enabled);
+        } else if (DialogAction.CANCEL.equals(action)) {
+            reject.setEnabled(enabled);
+        }
     }
 }

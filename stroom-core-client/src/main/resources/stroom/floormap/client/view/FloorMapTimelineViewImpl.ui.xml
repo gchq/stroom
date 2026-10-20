@@ -1,0 +1,72 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client">
+
+    <!-- Grid layout: columns are [left controls | bar | right controls]; the histogram and
+         date-label rows live in the middle column so they always stay in line with the bar,
+         however wide the flanking control groups are (e.g. when the help button is added). -->
+    <g:FlowPanel addStyleNames="stroom-floormap-timeline-container max">
+
+        <!-- Histogram canvas sits above the bar, in the same grid column -->
+        <g:SimplePanel ui:field="histogramContainer" addStyleNames="stroom-floormap-timeline-histogram-container" />
+
+        <!-- Left controls: step-back, play/pause, step-forward -->
+        <g:FlowPanel addStyleNames="stroom-floormap-timeline-left-controls">
+            <b:SvgButton ui:field="stepBackButton" addStyleNames="stroom-floormap-timeline-step-button" />
+            <b:SvgButton ui:field="playPauseButton" addStyleNames="stroom-floormap-timeline-play-button" />
+            <b:SvgButton ui:field="stepForwardButton" addStyleNames="stroom-floormap-timeline-step-button" />
+        </g:FlowPanel>
+
+        <!-- Centre section: the timeline scrubber bar -->
+        <g:FlowPanel addStyleNames="stroom-floormap-timeline-centre">
+            <g:FlowPanel ui:field="outerBar" addStyleNames="stroom-floormap-timeline-outer-bar">
+                <g:FlowPanel ui:field="innerBar" addStyleNames="stroom-floormap-timeline-inner-bar" />
+                <g:FlowPanel ui:field="handle" addStyleNames="stroom-floormap-timeline-handle" />
+                <g:Label ui:field="scrubTooltip" addStyleNames="stroom-floormap-timeline-scrub-tooltip" />
+            </g:FlowPanel>
+        </g:FlowPanel>
+
+        <!-- Right controls: speed badge (clickable — opens the speed menu), settings gear icon,
+             optional help button -->
+        <g:FlowPanel ui:field="rightControls" addStyleNames="stroom-floormap-timeline-right-controls">
+            <g:Label ui:field="speedBadge" addStyleNames="stroom-floormap-timeline-speed-badge" />
+            <b:SvgButton ui:field="settingsButton" addStyleNames="stroom-floormap-timeline-settings-button" />
+        </g:FlowPanel>
+
+        <!-- Date labels sit below the playback row, inset to align with the bar ends -->
+        <g:FlowPanel addStyleNames="stroom-floormap-timeline-date-labels-row">
+            <g:FlowPanel addStyleNames="stroom-floormap-timeline-date-labels-left">
+                <g:Label ui:field="outOfRangeLeftLabel" addStyleNames="stroom-floormap-timeline-out-of-range stroom-floormap-timeline-out-of-range--left" visible="false" />
+                <g:Label ui:field="startDateLabel" addStyleNames="stroom-floormap-timeline-date-label" />
+            </g:FlowPanel>
+            <g:FlowPanel addStyleNames="stroom-floormap-timeline-date-labels-right">
+                <g:Label ui:field="endDateLabel" addStyleNames="stroom-floormap-timeline-date-label stroom-floormap-timeline-date-label-end" />
+                <g:Label ui:field="outOfRangeRightLabel" addStyleNames="stroom-floormap-timeline-out-of-range stroom-floormap-timeline-out-of-range--right" visible="false" />
+            </g:FlowPanel>
+        </g:FlowPanel>
+
+        <!-- Announces the out-of-range state, which is otherwise conveyed only by a
+             pulsing orange chevron appearing. Absolutely positioned by the
+             visually-hidden class, so grid auto-placement does not apply to it and
+             it cannot disturb the layout above. -->
+        <g:Label ui:field="timelineStatus"
+                 addStyleNames="stroom-floormap-visually-hidden"/>
+    </g:FlowPanel>
+</ui:UiBinder>

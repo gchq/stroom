@@ -103,7 +103,11 @@ public class PopupManager implements DialogEvent.Handler {
         if (popupMap != null) {
             final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
             if (popupSupport != null) {
-                popupSupport.setEnabled(false);
+                if (event.getAction() != null) {
+                    popupSupport.setEnabled(event.getAction(), false);
+                } else {
+                    popupSupport.setEnabled(false);
+                }
             }
         }
     }
@@ -112,7 +116,11 @@ public class PopupManager implements DialogEvent.Handler {
         if (popupMap != null) {
             final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
             if (popupSupport != null) {
-                popupSupport.setEnabled(true);
+                if (event.getAction() != null) {
+                    popupSupport.setEnabled(event.getAction(), true);
+                } else {
+                    popupSupport.setEnabled(true);
+                }
             }
         }
     }

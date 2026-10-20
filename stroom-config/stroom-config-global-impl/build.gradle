@@ -22,6 +22,7 @@ dependencies {
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-contentstore:stroom-contentstore-impl')
+    implementation project(':stroom-aws:stroom-aws-client')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cluster:stroom-cluster-api')
@@ -34,7 +35,8 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-credentials:stroom-credentials-impl')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
-    implementation project(':stroom-dashboard:stroom-dashboard-impl-db')
+    implementation project(':stroom-document-asset:stroom-document-asset-impl')
+    implementation project(':stroom-document-asset:stroom-document-asset-impl-db')
     implementation project(':stroom-dashboard:stroom-storedquery-impl')
     implementation project(':stroom-data:stroom-data-retention-api')
     implementation project(':stroom-data:stroom-data-store-impl-fs')
@@ -73,6 +75,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-identity')
     implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-openid-api')
+    implementation project(':stroom-sqlstore:stroom-sqlstore-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl-sql')
     implementation project(':stroom-task:stroom-task-api')
@@ -85,6 +88,7 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
+    implementation libs.jackson.databind
     implementation libs.jakarta.validation.api
     implementation libs.jooq
     implementation libs.restygwt

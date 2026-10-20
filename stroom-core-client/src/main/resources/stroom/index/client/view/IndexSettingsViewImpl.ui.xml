@@ -29,5 +29,8 @@
         <form:FormGroup identity="indexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>
+        <form:FormGroup identity="indexSettingsResetData" label="Reset Data">
+            <g:Button ui:field="reset" text="Reset Data" styleName="Button" title="Deletes all index shards across all nodes in the cluster"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

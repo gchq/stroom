@@ -268,10 +268,7 @@ public class SearchRequestFactory {
             }
 
             final AbstractToken dataSourceToken = keywordGroup.getChildren().get(0);
-            if (!TokenType.isString(dataSourceToken)) {
-                throw new TokenException(dataSourceToken, "Expected a token of type string");
-            }
-            final String dataSourceName = dataSourceToken.getUnescapedText();
+            final String dataSourceName = resolveDataSourceName(dataSourceToken);
             final DocRef dataSourceDocRef = securityContext.useAsReadResult(() ->
                     dataSourceResolver.resolveDataSourceRef(dataSourceName));
 
@@ -597,6 +594,52 @@ public class SearchRequestFactory {
             return expression;
         }
 
+        // The `from` clause accepts param('key') as well as a string literal, so
+        // `from param('EventStore')` resolves here rather than throwing "Expected a token of type
+        // string". The alternative, substituting param() references into the query text on the
+        // client before sending it, is a blind String.replace: it rewrites matches inside quoted
+        // literals and comments, has to escape the value for the literal it lands in, and shifts
+        // every error offset the editor highlights. Resolving here avoids all of that: the value
+        // travels as an ordinary Param and never touches the query text.
+        //
+        // Known gap, deliberately not addressed here: QueryServiceImpl.validateQuery builds its
+        // request with no QueryContext, so paramMap is empty there and a query using param() in a
+        // `from` clause will fail validation while succeeding at search. Closing that means
+        // changing the validateQuery REST signature to carry params.
+
+        /**
+         * The data source name, resolving a {@code param('key')} reference if that is what was
+         * given.
+         *
+         * <p>A {@code ${key}} token is <b>not</b> resolved, and deliberately so: it reaches here as
+         * a {@link TokenType#PARAM} whose unescaped text is the key rather than its value, and
+         * nothing substitutes it on this path — so {@code from ${EventStore}} would look up a data
+         * source literally named {@code EventStore}. That is a pre-existing upstream behaviour and
+         * is left exactly as it was; this method only adds the {@code param('key')} form, which
+         * previously threw.</p>
+         *
+         * @param dataSourceToken the token following {@code from}
+         * @return the data source name; never null
+         */
+        private String resolveDataSourceName(final AbstractToken dataSourceToken) {
+            if (dataSourceToken instanceof final FunctionGroup functionGroup
+                && "param".equalsIgnoreCase(functionGroup.getName())) {
+                final String resolved = resolveParam(functionGroup);
+                if (resolved == null) {
+                    // Distinguished from "no such data source", which is what a null name would
+                    // otherwise present as several frames later.
+                    throw new TokenException(functionGroup,
+                            "No value supplied for the parameter used as the data source");
+                }
+                return resolved;
+            }
+
+            if (!TokenType.isString(dataSourceToken)) {
+                throw new TokenException(dataSourceToken, "Expected a token of type string");
+            }
+            return dataSourceToken.getUnescapedText();
+        }
+
         private String resolveParam(final FunctionGroup functionGroup) {
             if (functionGroup.getChildren().isEmpty()) {
                 throw new TokenException(functionGroup, "Expected param name");
@@ -604,7 +647,17 @@ public class SearchRequestFactory {
                 throw new TokenException(functionGroup.getChildren().get(1), "Unexpected token");
             } else {
                 final AbstractToken child = functionGroup.getChildren().getFirst();
-                if (!TokenType.STRING.equals(child.getTokenType())) {
+                // Quoted string tokens are accepted as well as a bare TokenType.STRING, because
+                // param('EventStore') — the quoted form every caller actually writes — would
+                // otherwise throw "Expected param name" in every position. A quoted token
+                // unescapes to the same key (QuotedStringToken.getUnescapedText), so accepting the
+                // quoted forms changes nothing but which spellings work. PARAM is deliberately not
+                // accepted: param(${x}) would read as a nested reference and resolve to the inner
+                // key rather than its value.
+                final TokenType childType = child.getTokenType();
+                if (!TokenType.STRING.equals(childType)
+                    && !TokenType.SINGLE_QUOTED_STRING.equals(childType)
+                    && !TokenType.DOUBLE_QUOTED_STRING.equals(childType)) {
                     throw new TokenException(child, "Expected param name");
                 }
                 return paramMap.get(child.getUnescapedText());

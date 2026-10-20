@@ -37,6 +37,7 @@ public class S3EventPollManager {
     private final TaskContextFactory taskContextFactory;
     private final S3EventService s3EventService;
     private final Provider<S3EventConfig> s3EventConfigProvider;
+    public static final String JOB_NAME = "S3 Event Notifications Poll";
 
     @Inject
     public S3EventPollManager(final TaskContextFactory taskContextFactory,
@@ -53,6 +54,11 @@ public class S3EventPollManager {
         final S3EventConfig s3EventConfig = s3EventConfigProvider.get();
         final TaskContext parentTaskContext = taskContextFactory.current();
 
+        // TODO We could do with a job type of 'Continuous' such that job will be started and
+        //  is assumed to keep running forever. If the job is disabled, a single would have to be
+        //  send out to the appropriate nodes to signal the job to stop. For the moment, just
+        //  keep polling until the rePollDuration is reached, then let a new job be started, accepting
+        //  the small delay.
         final Instant endTime = Instant.now().plus(s3EventConfig.getRePollDuration());
 
         // Create a child context to no-op the termination so we can stop at our own pace
@@ -67,7 +73,7 @@ public class S3EventPollManager {
                         // poll is processed in full.
                         s3EventService.poll(() ->
                                 shouldStopPolling(null, taskContext));
-                    } while (shouldStopPolling(endTime, taskContext));
+                    } while (!shouldStopPolling(endTime, taskContext));
                 });
 
         runnable.run();

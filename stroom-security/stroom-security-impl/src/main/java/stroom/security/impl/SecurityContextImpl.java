@@ -103,10 +103,31 @@ class SecurityContextImpl implements SecurityContext {
         if (userIdentity instanceof final HasUserRef hasUserRef) {
             return hasUserRef.getUserRef();
         } else {
+            // Establishing this involves the UserIdentityFactory, so don't let a failure there
+            // mask the real problem.
+            boolean isServiceUser;
+            try {
+                isServiceUser = isProcessingUser(userIdentity);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+                isServiceUser = false;
+            }
             throw new AuthenticationException(LogUtil.message(
-                    "Expecting a stroom user identity (i.e. {}), but got {}",
+                    """
+                            This operation requires a stroom user account, but the current identity \
+                            '{}' ({}) is not associated with one (it does not implement {}). {}""",
+                    userIdentity.getUserIdentityForAudit(),
+                    userIdentity.getClass().getSimpleName(),
                     HasUserRef.class.getSimpleName(),
-                    userIdentity.getClass().getSimpleName()));
+                    isServiceUser
+                            ? LogUtil.message("""
+                            This identity is the internal processing (service) user, which has no stroom \
+                            user account, so it cannot perform operations that record a user, e.g. \
+                            creating/updating/deleting a document. This usually means the calling code is \
+                            running inside {}.asProcessingUser(...)/asProcessingUserResult(...) when it \
+                            needs to run as a real user, or that the operation should not require a user \
+                            account.""", SecurityContext.class.getSimpleName())
+                            : "Only user accounts known to stroom can perform this operation."));
         }
     }
 

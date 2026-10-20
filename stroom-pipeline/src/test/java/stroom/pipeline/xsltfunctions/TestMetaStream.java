@@ -18,7 +18,6 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.shared.Meta;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -37,8 +36,6 @@ class TestMetaStream extends AbstractXsltFunctionTest<MetaStream> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetaStream.class);
 
     @Mock
-    private Meta mockMeta;
-    @Mock
     private AttributeMapFactory attributeMapFactory;
     @Mock
     private MetaHolder mockMetaHolder;
@@ -46,18 +43,21 @@ class TestMetaStream extends AbstractXsltFunctionTest<MetaStream> {
     private MetaStream metaStream;
 
     @Test
-    void call() throws Exception {
-        Mockito.when(getMockXPathContext().getConfiguration()).thenReturn(Configuration.newConfiguration());
+    void call_noArgs() throws Exception {
+        Mockito.when(getMockXPathContext().getConfiguration())
+                .thenReturn(Configuration.newConfiguration());
 
-        Mockito.when(mockMeta.getId()).thenReturn(1L);
-        Mockito.when(mockMetaHolder.getPartIndex()).thenReturn(0L);
-        Mockito.when(mockMetaHolder.getMeta()).thenReturn(mockMeta);
+        final long streamId = 123L;
+        final long partNo = 1L;
+        Mockito.when(mockMetaHolder.getPartNo()).thenReturn(partNo);
+        Mockito.when(mockMetaHolder.getMetaId()).thenReturn(streamId);
 
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("Feed", "myFeed");
         attributeMap.put("Action", "myAction");
 
-        Mockito.when(attributeMapFactory.getAttributeMapForPart(1L, 0L)).thenReturn(attributeMap);
+        Mockito.when(attributeMapFactory.getAttributeMapForPart(streamId, partNo))
+                .thenReturn(attributeMap);
 
         final Sequence sequence = callFunctionWithSimpleArgs();
         assertThat(sequence).isNotNull();
@@ -79,6 +79,6 @@ class TestMetaStream extends AbstractXsltFunctionTest<MetaStream> {
 
     @Override
     String getFunctionName() {
-        return MetaStream.FUNCTION_NAME_NO_ARGS;
+        return MetaStream.FUNCTION_NAME;
     }
 }

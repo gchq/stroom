@@ -37,6 +37,7 @@ import stroom.dashboard.shared.VisResultRequest;
 import stroom.data.pager.client.RefreshButton;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.asset.shared.DocumentAssetResource;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.query.api.ColumnRef;
@@ -54,7 +55,6 @@ import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
-import stroom.visualisation.shared.VisualisationAssetResource;
 import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
@@ -86,8 +86,8 @@ public class VisPresenter
     public static final String TAB_TYPE = "vis-component";
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
-    private static final VisualisationAssetResource VISUALISATION_ASSET_RESOURCE =
-            GWT.create(VisualisationAssetResource.class);
+    private static final DocumentAssetResource DOCUMENT_ASSET_RESOURCE =
+            GWT.create(DocumentAssetResource.class);
 
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation", ComponentUse.PANEL);
     private static final long UPDATE_INTERVAL = 2000;
@@ -469,7 +469,7 @@ public class VisPresenter
 
                         // Is there an asset named index.html? If so load it. Otherwise, use old mechanism.
                         restFactory
-                                .create(VISUALISATION_ASSET_RESOURCE)
+                                .create(DOCUMENT_ASSET_RESOURCE)
                                 .method(res -> res.indexAssetExists(visualisationDocRef.getUuid()))
                                 .onSuccess(indexAssetExists -> {
                                     if (indexAssetExists) {

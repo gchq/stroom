@@ -144,6 +144,18 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
+// *Creating* a document routes through
+// plugin.getInitialisationHandler().showInitialisationDialog(...) rather than calling
+// plugin.open(...) directly, so a document type can require configuration before it is first
+// opened. The sole call site is in fireShowCreateDocumentDialogEvent below, and it is what makes
+// DocumentPlugin.getInitialisationHandler() do anything at all; FloorMap uses it to prompt for
+// its Facts/Events stores. Calling open() directly there would silently disable the dialog for
+// every document type that relies on it.
+//
+// This applies to creating a document only, never to opening an existing one: the handler's
+// cancel path DELETES the document (see DocInitialisationHandler), so wiring this into the open
+// path would make cancelling the dialog destroy an existing document.
+@SuppressWarnings("SequencedCollectionMethodCanBeUsed")
 @Singleton
 public class DocumentPluginEventManager extends Plugin {
 
@@ -1286,7 +1298,17 @@ public class DocumentPluginEventManager extends Plugin {
             // Open the document in the content pane.
             final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(docRef.getType());
             if (plugin != null) {
-                plugin.open(docRef, true, false, new DefaultTaskMonitorFactory(this));
+                final TaskMonitorFactory tmf = new DefaultTaskMonitorFactory(this);
+                plugin.getInitialisationHandler().showInitialisationDialog(
+                        docRef,
+                        proceed -> {
+                            if (proceed) {
+                                plugin.open(docRef, true, false, tmf);
+                            }
+                            // If !proceed, the handler has already deleted the doc
+                            // and fired RefreshExplorerTreeEvent.
+                        },
+                        tmf);
             }
         };
 

@@ -36,6 +36,8 @@ import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -49,6 +51,7 @@ import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -232,7 +235,13 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     public final void deleteDocument(final DocRef docRef) {
         Objects.requireNonNull(docRef);
         // Authorisation is applied by AbstractDocumentStore, the service layer for this document type.
-        persistence.delete(docRef, securityContext.getUserRef());
+        // AbstractDocumentStore.deleteDocument calls
+        // checkDocumentPermission(docRef, DocumentPermission.DELETE) before delegating.
+        //
+        // The audit user comes from getAuditUserRef() rather than securityContext.getUserRef(),
+        // which throws for the processing user; see getAuditUserRef() for why and for when that
+        // can change.
+        persistence.delete(docRef, getAuditUserRef());
         EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE);
 
         removeDocDependencies(docRef);
@@ -398,7 +407,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             // Convert the document back into a data map.
             final ImportExportDocument finalData = serialiser.write(builtDoc);
             // Write the data — import always succeeds, no version check.
-            persistence.write(docRef, AuditAction.IMPORT, securityContext.getUserRef(),
+            persistence.write(docRef, AuditAction.IMPORT, getAuditUserRef(),
                     finalData, null, builtDoc.getVersion());
 
             // Fire an entity event to alert other services of the change.
@@ -582,7 +591,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         try {
             final DocRef docRef = createDocRef(document);
             final ImportExportDocument importExportDocument = serialiser.write(document);
-            persistence.write(docRef, AuditAction.CREATE, securityContext.getUserRef(),
+            persistence.write(docRef, AuditAction.CREATE, getAuditUserRef(),
                     importExportDocument, null, document.getVersion());
             EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
 
@@ -642,6 +651,70 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         throw new PermissionException(securityContext.getUserRef(), msg);
     }
 
+    // --------------------------------------------------------------------------------
+    // TODO Workaround: doc writes made as the processing user record a null audit user.
+    //  #5582 (audit trail) made every doc write record the acting user via
+    //  SecurityContext.getUserRef(). Running as a service user there is no stroom user to
+    //  return (neither InternalIdpProcessingUserIdentity nor ServiceUserIdentity implements
+    //  HasUserRef), so getUserRef() throws AuthenticationException and any doc create/update/
+    //  delete/import run inside SecurityContext.asProcessingUser*(...) fails.
+    //  doc_audit.user_uuid/user_name are nullable and DBPersistence already null-guards
+    //  them, so we record a null user rather than failing the write.
+    //
+    //  REMOVAL CONDITION - test this, do not infer it. Remove when getUserRef() no longer
+    //  throws for the processing user, i.e. when one of the service identities implements
+    //  HasUserRef. Verify by rewiring the call sites below back to
+    //  securityContext.getUserRef() and running TestStoreImplAuditUser, whose
+    //  create_asProcessingUser / delete_asProcessingUser cases exist to pin exactly this.
+    //
+    //  Do NOT infer the condition is met from a caller disappearing. The original motivating
+    //  example was auto-creation of the singleton Data Retention doc, which 500d
+    //  POST /api/meta/v1/find; that one has since been fixed specifically, by having
+    //  StreamAttributeMapRetentionRuleDecoratorFactory fetch the rules with
+    //  DataRetentionRulesProvider::get instead of getOrCreate, so nothing is written on read.
+    //  That removed a trigger, not the cause, and other processing-user doc writes remain -
+    //  e.g. TableBuilderAnalyticExecutor.processUntilAllComplete wraps its whole run in
+    //  asProcessingUser, and on a rule failure disableProcess() writes the analytic rule doc
+    //  to stop it failing repeatedly. Without this workaround that recovery write throws, so a
+    //  handled rule failure becomes an unhandled one and the rule stays enabled.
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @return The {@link UserRef} of the current user for recording in the audit trail, or null if
+     * the current identity is the internal processing (service) user, which has no associated
+     * stroom user.
+     * @throws AuthenticationException if there is no user, or the user is not the processing user
+     * and has no stroom user account - only the processing user is allowed to write unattributed.
+     */
+    private UserRef getAuditUserRef() {
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
+        if (userIdentity == null) {
+            // Having no user at all is still an error, so let SecurityContext raise it.
+            return securityContext.getUserRef();
+        }
+        try {
+            // Ask the SecurityContext rather than testing the identity for HasUserRef. That
+            // test was the original discriminator and it is too narrow: upstream's
+            // TestStoreImplPermissions supplies a context whose identity is not HasUserRef
+            // but whose getUserRef() resolves a real user perfectly well, and those writes
+            // must name that user. What actually matters is whether getUserRef() can answer,
+            // so ask it and handle the refusal.
+            return securityContext.getUserRef();
+        } catch (final AuthenticationException e) {
+            if (!securityContext.isProcessingUser()) {
+                // Any other identity that cannot be named is an authentication failure, and must
+                // not be turned into an unattributed write.
+                throw e;
+            }
+            LOGGER.debug(() -> LogUtil.message(
+                    "No stroom user account for processing user identity '{}' ({}), auditing doc "
+                    + "change with a null user",
+                    userIdentity.getUserIdentityForAudit(),
+                    userIdentity.getClass().getSimpleName()));
+            return null;
+        }
+    }
+
     private void checkType(final DocRef docRef) {
         try {
             Objects.requireNonNull(docRef);
@@ -688,7 +761,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             // Single atomic call — persistence layer handles version check.
             // For DB: UPDATE ... WHERE version = expectedVersion (optimistic lock).
             // For FS: StripedLockFactory in StoreImpl.readPersistence() serialises access.
-            persistence.write(docRef, AuditAction.UPDATE, securityContext.getUserRef(),
+            persistence.write(docRef, AuditAction.UPDATE, getAuditUserRef(),
                     newData, currentVersion, newVersion);
             EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);
 

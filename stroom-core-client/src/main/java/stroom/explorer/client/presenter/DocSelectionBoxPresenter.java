@@ -96,6 +96,21 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         this.itemType = itemType;
     }
 
+    /**
+     * Sets the caption of the chooser popup this box opens.
+     *
+     * <p>Defaults to {@code "Choose item"}, which says nothing about what is being chosen —
+     * unhelpful on a dialog with more than one box. Convention elsewhere is
+     * {@code "Choose <Thing>"} in title case.</p>
+     *
+     * @param caption the popup caption; a null leaves the default in place
+     */
+    public void setCaption(final String caption) {
+        if (caption != null) {
+            explorerPopupPresenter.setCaption(caption);
+        }
+    }
+
     public void setQuickFilter(final String filterInput) {
         explorerPopupPresenter.setInitialQuickFilter(filterInput);
     }

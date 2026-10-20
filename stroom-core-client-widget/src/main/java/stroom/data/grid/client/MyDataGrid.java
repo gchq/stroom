@@ -57,6 +57,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.CustomScrollPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HeaderPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -569,7 +570,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
      * @param sb The StringBuilder to append to.
      */
     private void addNewLine(final StringBuilder sb) {
-        // GWT does not allow isEmpty()
+        //noinspection SizeReplaceableByIsEmpty GWT does not allow isEmpty()
         if (sb.length() > 0) {
             sb.append("\n");
         }
@@ -858,14 +859,14 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     private ResizeHandle<R> getResizeHandle() {
         if (resizeHandle == null) {
-            resizeHandle = new ResizeHandle<R>(this, colSettings, RESOURCES);
+            resizeHandle = new ResizeHandle<>(this, colSettings, RESOURCES);
         }
         return resizeHandle;
     }
 
     private MoveHandle<R> getMoveHandle() {
         if (moveHandle == null) {
-            moveHandle = new MoveHandle<R>(this, colSettings, RESOURCES);
+            moveHandle = new MoveHandle<>(this, colSettings, RESOURCES);
         }
 
         return moveHandle;
@@ -1194,6 +1195,20 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             e.addClassName(ALLOW_HEADER_SELECTION);
         } else {
             e.removeClassName(ALLOW_HEADER_SELECTION);
+        }
+    }
+
+    /// Sets placeholder text to render in the empty-table area, e.g. "No members match the search
+    /// and filters".
+    ///
+    /// @param text the text to show when the table has no rows; null clears it
+    public void setEmptyText(final String text) {
+        if (text == null) {
+            emptyTableWidget.setWidget(null);
+        } else {
+            final Label label = new Label(text);
+            label.setStyleName("form-padding");
+            emptyTableWidget.setWidget(label);
         }
     }
 }

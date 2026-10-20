@@ -125,6 +125,7 @@ def clientProjects = [
         project(':stroom-core-shared'),
         project(':stroom-docref'),
         project(':stroom-query:stroom-query-api'),
+        project(':stroom-sqlstore:stroom-sqlstore-shared'),
         project(':stroom-util-shared'),
 ]
 

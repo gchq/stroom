@@ -144,6 +144,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         } else {
             builder.imports(imports);
             // Select first item
+            //noinspection SequencedCollectionMethodCanBeUsed
             docRefListPresenter.getSelectionModel().setSelected(imports.get(0));
         }
         return builder.build();

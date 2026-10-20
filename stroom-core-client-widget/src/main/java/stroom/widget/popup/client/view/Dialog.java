@@ -174,6 +174,25 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
         super.onBrowserEvent(event);
     }
 
+    // Recovers a drag whose mouse-up was never delivered, which otherwise leaves a full-viewport
+    // drag glass swallowing every click. See AbstractPopupPanel.abandonDrag.
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Also clears this dialog's own drag state and releases the mouse capture, so an abandoned
+     * drag cannot leave the dialog believing it is still being dragged — which would keep
+     * {@code onBrowserEvent} forwarding every mouse event in the document to it.</p>
+     */
+    @Override
+    protected void abandonDrag() {
+        if (dragging) {
+            dragging = false;
+            DOM.releaseCapture(getElement());
+        }
+        super.abandonDrag();
+    }
+
     /**
      * Called on mouse down in the caption area, begins the dragging loop by
      * turning on event capture.
@@ -201,6 +220,13 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
      * @see #endDragging
      */
     private void continueDragging(final MouseMoveEvent event) {
+        // The release may have happened where nothing could see it: the browser delivers no event
+        // at all for a mouse-up outside its own window. A move with no button held is the first
+        // evidence, and without acting on it the glass stays up for the life of the page.
+        if (dragging && !isButtonHeld(event.getNativeEvent())) {
+            abandonDrag();
+            return;
+        }
         if (dragging) {
             final int x = event.getClientX();
             final int y = event.getClientY();

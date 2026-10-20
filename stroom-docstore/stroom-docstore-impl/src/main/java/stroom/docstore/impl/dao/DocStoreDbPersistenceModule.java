@@ -19,7 +19,6 @@ package stroom.docstore.impl.dao;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.impl.DocStoreConfig;
 import stroom.docstore.impl.Persistence;
-import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.shared.scheduler.CronExpressions;

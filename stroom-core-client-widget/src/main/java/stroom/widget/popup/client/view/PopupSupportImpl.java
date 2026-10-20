@@ -145,6 +145,13 @@ public class PopupSupportImpl implements PopupSupport {
     }
 
     @Override
+    public void setEnabled(final DialogAction action, final boolean enabled) {
+        if (dialogButtons != null) {
+            dialogButtons.setEnabled(action, enabled);
+        }
+    }
+
+    @Override
     public void setIcon(final SvgImage icon) {
         this.icon = icon;
         if (popup != null) {
@@ -295,10 +302,10 @@ public class PopupSupportImpl implements PopupSupport {
             }
         }
 
-        if (icon != null) {
+        if (popup != null && icon != null) {
             popup.setIcon(icon);
         }
-        if (caption != null) {
+        if (popup != null && caption != null) {
             popup.setCaption(caption);
         }
 
