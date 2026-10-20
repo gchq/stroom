@@ -908,9 +908,10 @@ token that doesn't exist, and is fixed):
   `.timeline-header` spans; `app-main-tracesscreen--traces`);
 * a disabled form group's description (`.form-group__description`, faded to 80% and in the
   disabled colour; `widgets-inputs-formgroup--disabled`). WCAG exempts text that is part of a
-  disabled control, so this one may be acceptable.
+  disabled control, so this one may be acceptable. **Fixed**: a disabled description is no longer
+  faded as well as greyed (`form.css`); the story passes in both themes and is out of the baseline.
 
-They are in `test-runner/a11y-baseline.json` until they are fixed.
+They were in `test-runner/a11y-baseline.json`; neither story is now.
 
 ### Top bar focus rings cut off
 
@@ -1671,6 +1672,42 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   column flexbox) took the whole width, e.g. every Plan B setting. It is 200px again, as a text field
   is, at a class's weight so a screen's `w-100` or width still wins. Workbench:
   `App/Editors/PlanBEditor` `Metric`.
+* **The explorer's tag lists were GWT's own list boxes** (`ExplorerNodeEditTagsViewImpl`,
+  `ExplorerNodeRemoveTagsViewImpl`, `SelectionList`, `FormGroup`): Edit Tags' All known tags and
+  Document Tags, and Remove Tags' Existing Tags, were `ListBox`es (native multi-select `select`s),
+  unlike Stroom's lists in look and keys. They are now selection lists of several choices
+  (`SelectionList.setMultiSelect`, `aria-multiselectable`), drawn as fields and named by their labels
+  (a form group's label now names a `listbox`): moving only moves, Space chooses or unchooses,
+  Ctrl+click, Shift+click and Ctrl+A choose as a list box does, and Enter or a double click adds the
+  known tags chosen, or removes the document tags chosen, as Delete and Backspace do. Down in the
+  field goes to the known tags and Up from the first comes back, and filtering them drops the
+  choices it hides, so Add never adds a tag that can't be seen. Left and Right no longer move tags
+  between the lists. A long list scrolls within its border; it had squashed the field above it.
+  Workbench: `App/Main/EditTagsDialog` `KeysChooseAndAddTags`, `DeleteRemovesTags`,
+  `FilteringDropsHiddenChoices`, `ManyKnownTags`, `RemoveByKeyboard`; real input:
+  `selection-list.mjs`.
+* **A selection box's list wasn't BEM** (`SelectionList`): its classes (`selectionList`,
+  `selectionList-quickFilter`, `-links`, `-pathLink`, `-elementChooser`) were in `components.css`, and
+  its path's labels were styled through GWT's `gwt-Label`. They are now the block `selection-list` in
+  its own stylesheet (`selection-list.css`: `__filter`, `__path`, `__path-link`, `__path-current`,
+  `__path-separator`, `__options`), looking as they did. Workbench: `Widgets/Selectors/SelectionBox`
+  (every story's screenshot unchanged).
+* **The floor map's Value Schema grid had bare controls** (`FloorMapSettingsPresenter`,
+  `AccessibleSelectionCell`, `AccessibleTextInputCell`): each row's Role was a bare `<select>` and its
+  Path, Display Name and Default bare `<input>`s, styled only by `stroom.css`'s rules for bare inputs.
+  They are now Stroom's selection box and text fields as grid cells (`SelectionBoxCell`,
+  `TextFieldCell`, new), looking and working as the widgets do: the role's list opens on Enter, Space,
+  Down or a click (Down had moved the grid's row), choosing returns the focus to the row's box, and
+  a read-only map's controls can still be reached and read (they were disabled). Workbench:
+  `App/Editors/FloorMapSettings` `Schema`, `ChooseARole`, `EscapeKeepsTheRole`, `ReadOnly`; real
+  input: `selection-box.mjs`.
+* **Nine text fields weren't text fields** (`Pager`, `QueryDataViewImpl`, `AnnotationEditViewImpl`,
+  `IncludeExcludeFilterViewImpl`, `CreateMultipleUsersViewImpl`): their templates set `styleName`,
+  which replaced the `text-field` class, so they were styled by `stroom.css`'s rules for bare inputs.
+  They add their classes instead, so are text fields, looking as they did in both themes (measured:
+  size, border, padding, colours, focus), but for a text area's cursor, now the text cursor as on every
+  other text area. Workbench: `App/Main/AnnotationEditor`, `App/Editors/DashboardEditor`
+  `TableIncludeExcludeFilter`, `Widgets/Data Grid/DataGrid` `Pager`.
 
 ## Checked and not bugs
 

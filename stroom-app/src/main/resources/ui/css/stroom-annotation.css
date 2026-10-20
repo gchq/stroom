@@ -165,7 +165,9 @@
 .annotationHistory {
 }
 
+/* A text field as wide as the history above it */
 .annotationComment {
+    width: 100%;
     padding: 5px;
     min-height: 300px;
 }

@@ -22,8 +22,9 @@
    Its states come from the element itself: :disabled, [readonly], :focus-visible and, for a
    rejected value, [aria-invalid="true"] (FieldValidity, which also explains it in the form group's
    feedback). This is the only stylesheet for a text field: stroom.css's rules for bare input and
-   textarea elements (for inputs with no block of their own yet, e.g. hand-built forms and the
-   pager's page box) leave text fields out.
+   textarea elements (for inputs with no block of their own yet, e.g. hand-built forms) leave text
+   fields out. A field keeps this class when its template adds its own (addStyleNames, not
+   styleName, which would replace it).
 
    Each rule weighs what the rule it replaced did (states in :where() add nothing), so other
    stylesheets' rules for a particular field win or lose as they did.
@@ -96,6 +97,11 @@ input.text-field:where(:-webkit-autofill, :-webkit-autofill:hover, :-webkit-auto
     -webkit-box-shadow: 0 0 0 30px var(--control__background-color) inset;
     -webkit-text-fill-color: var(--control__text-color) !important;
     transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+}
+
+/* In a grid's cell (TextFieldCell): as wide as its column */
+.text-field--cell {
+    width: 100%;
 }
 
 /* A text area: several lines, scrolling when there are more, at a fixed height a screen can change */

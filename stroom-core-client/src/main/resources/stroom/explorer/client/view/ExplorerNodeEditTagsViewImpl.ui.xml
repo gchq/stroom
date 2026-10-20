@@ -2,6 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:sl="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="editNodeTags max form flex-column">
 
@@ -38,14 +39,13 @@
                             ui:field="allTagsFormGroup"
                             addStyleNames="editNodeTagsAllTagsFrmGrp dock-max max"
                             label="All known tags"
-                            screenReaderText="Enter or double-click adds the selected tags.">
+                            screenReaderText="Space selects tags. Enter or double-click adds the selected tags.">
                 <form:HelpHTML>
                     A list of all tags currently in use across all documents in Stroom.
                     The list also includes any suggested tags configured using the property
                     <code>stroom.explorer.suggestedTags</code>.
                 </form:HelpHTML>
-                <g:ListBox ui:field="allTagsListBox"
-                           addStyleNames="form-control dock-max max"/>
+                <sl:SelectionList ui:field="allTagsList" addStyleNames="selection-list--field dock-max"/>
             </form:FormGroup>
 
             <b:Toolbar ui:field="nodeTagsButtonPanel"
@@ -55,12 +55,12 @@
             <form:FormGroup identity="editNodeTagsNodeTags"
                             ui:field="nodeTagsFormGroup"
                             addStyleNames="editNodeTagsNodeTagsFrmGrp dock-max"
-                            label="">
+                            label=""
+                            screenReaderText="Space selects tags. Enter, double-click or Delete removes the selected tags.">
                 <form:HelpHTML>
                     A list of all tags currently assigned to this/these document(s).
                 </form:HelpHTML>
-                <g:ListBox ui:field="nodeTagsListBox"
-                           addStyleNames="form-control dock-max max"/>
+                <sl:SelectionList ui:field="nodeTagsList" addStyleNames="selection-list--field dock-max"/>
             </form:FormGroup>
         </g:FlowPanel>
 
