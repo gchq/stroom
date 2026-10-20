@@ -251,6 +251,24 @@ public final class AiChatTexts {
         return shown.startsWith(said.substring(0, Math.min(said.length(), PROGRESS_MATCH_CHARS)));
     }
 
+    /// What a copy button in the chat copies: the text without the line breaks at its end. A code block as shown
+    /// ends with one (the Markdown renderer adds a line break to every code block), as does the text of an answer
+    /// that ends with a code block, and a model's Markdown often ends with some.
+    ///
+    /// @param text The text of what is being copied, or null.
+    /// @return The text without trailing line breaks (spaces at the end of its last line are kept), or an empty
+    /// string for null.
+    public static String forClipboard(final String text) {
+        if (text == null) {
+            return "";
+        }
+        int end = text.length();
+        while (end > 0 && (text.charAt(end - 1) == '\n' || text.charAt(end - 1) == '\r')) {
+            end--;
+        }
+        return text.substring(0, end);
+    }
+
     private static String lettersAndDigits(final String text) {
         if (text == null) {
             return "";
