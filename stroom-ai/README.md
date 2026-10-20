@@ -632,6 +632,24 @@ Planned, not yet built.
   with the MCP server's functionality moved in. The built-in tools already run as the user, check Stroom's
   permissions and log access; what ties them to the chat is their plumbing. To do first, so the move is a move
   rather than a rewrite:
+  * Before any of it, tests that fix today's behaviour, so the groundwork can be checked to change nothing:
+    1. Reference files of what the model is shown: every built-in tool's name, description, schema and flags
+       per chat mode (as `expected.yaml` does for configuration), and the whole prompt `ContextAssembler`
+       builds for a fixed chat.
+    2. Scripted chat runs through `McpAgentChat` (a scripted model replaying tool calls), checking the exact
+       messages stored: large results saved to files, review results kept in full, proposals with buttons,
+       ask_user forms, approvals, refusals, memory changes after untrusted content.
+    3. Old chats: today's stored rows (tool calls and results, digests, compaction, user actions, forms) kept
+       as fixtures, checking what the model is given from them, so renames and record changes can't break
+       existing chats.
+    4. Exact output, in reference files, of the tools with the most involved results (processor_tasks,
+       config_properties, document_links, read_document, run_stroomql, current_results, the large-result
+       stub), including the links they make.
+    5. A permission matrix per tool (with and without the permission it needs, and that it stays listed), the
+       audit events each tool records, the consent decisions per tool and situation, and how MCP tools whose
+       names clash with built-in ones are handled.
+    6. Outside the build: a small set of real prompts run against the model before and after each step,
+       comparing the tools called and the outcome, to catch the agent getting worse at choosing tools.
   * A tool call context in place of the `int chatId` every tool takes: the session (a chat now, an MCP session
     later), the caller (Stroom AI chat or an external client), the workspace if there is one, asking the user,
     reporting progress and the time limit. `AiAuditLog` records the session and caller rather than a chat.
