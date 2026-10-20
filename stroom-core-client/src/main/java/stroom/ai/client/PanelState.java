@@ -17,11 +17,12 @@
 package stroom.ai.client;
 
 /// Remembers, in the browser's local storage, whether the Ask Stroom AI chat was open, so it opens again after a
-/// page refresh. Local storage may be missing or blocked (e.g. in a private window), in which case nothing is
-/// remembered.
+/// page refresh, and the size the user gave the docked chat panel. Local storage may be missing or blocked (e.g.
+/// in a private window), in which case nothing is remembered.
 public final class PanelState {
 
     private static final String OPEN_KEY = "stroom.askStroomAi.open";
+    private static final String DOCK_SIZE_KEY = "stroom.askStroomAi.dockSize";
 
     private PanelState() {
         // Static only.
@@ -40,6 +41,38 @@ public final class PanelState {
     static void setOpen(final boolean open) {
         setItem(OPEN_KEY, open);
     }
+
+    /// @return The width (docked left or right) or height (docked at the top or bottom) the user last gave the
+    /// docked chat panel, in pixels, or 0 if none is remembered.
+    static int dockSize() {
+        return getIntItem(DOCK_SIZE_KEY);
+    }
+
+    /// Records the width or height the user gave the docked chat panel.
+    ///
+    /// @param size The size in pixels.
+    static void setDockSize(final int size) {
+        setIntItem(DOCK_SIZE_KEY, size);
+    }
+
+    private static native int getIntItem(String key) /*-{
+        try {
+            var value = parseInt($wnd.localStorage.getItem(key), 10);
+            return isNaN(value) || value < 0
+                ? 0
+                : value;
+        } catch (e) {
+            return 0;
+        }
+    }-*/;
+
+    private static native void setIntItem(String key, int value) /*-{
+        try {
+            $wnd.localStorage.setItem(key, String(value));
+        } catch (e) {
+            // Nothing is remembered.
+        }
+    }-*/;
 
     private static native void setItem(String key, boolean open) /*-{
         try {

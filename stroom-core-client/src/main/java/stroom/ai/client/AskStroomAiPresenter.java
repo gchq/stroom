@@ -744,7 +744,7 @@ public class AskStroomAiPresenter
                     } else {
                         dimension = (int) newSize.getHeight();
                     }
-                    saveDockSizeToPrefs(dimension);
+                    PanelState.setDockSize(dimension);
                 });
             }
         });
@@ -5671,15 +5671,6 @@ public class AskStroomAiPresenter
         }, this);
     }
 
-    private void saveDockSizeToPrefs(final int size) {
-        askStroomAiClient.getConfig(currentConfig -> {
-            final AskStroomAiConfig newConfig = currentConfig.copy()
-                    .dockSize(size)
-                    .build();
-            askStroomAiClient.setConfig(newConfig, this);
-        }, this);
-    }
-
     private void getDockSize(final Consumer<Size> consumer) {
         askStroomAiClient.getConfig(currentConfig -> {
             getDockBehaviourFromPrefs(dockBehaviour -> {
@@ -5690,7 +5681,11 @@ public class AskStroomAiPresenter
                 } else {
                     defaultSize = DEFAULT_DOCK_HEIGHT;
                 }
-                final int size = NullSafe.getOrElse(currentConfig, AskStroomAiConfig::getDockSize, defaultSize);
+                // The size the user last gave the panel in this browser, or else the configured one.
+                final int remembered = PanelState.dockSize();
+                final int size = remembered > 0
+                        ? remembered
+                        : NullSafe.getOrElse(currentConfig, AskStroomAiConfig::getDockSize, defaultSize);
                 consumer.accept(new Size.Builder()
                         .width(size)
                         .height(size)

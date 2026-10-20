@@ -148,8 +148,9 @@ class TestElasticIndexTemplatesTool {
                 .contains("Index template that applies: `ecs-keycloak`")
                 .doesNotContain("Overlapping")
                 .contains("Nothing has been changed in Elasticsearch")
-                .contains("(such as `created_date_millis`), which it rejects in a PUT request: it can't be "
-                          + "applied as it is.")
+                .contains("Each body below is exactly as Elasticsearch returns it. "
+                          + ElasticIndexTemplatesTool.SHOW_VERBATIM)
+                .doesNotContain("created_date_millis")
                 .doesNotContain("PUT _")
                 .contains("""
                         ### Index template `ecs-keycloak`
@@ -199,6 +200,30 @@ class TestElasticIndexTemplatesTool {
                               "number_of_shards": 1
                             }
                           }
+                        }
+                        ```""");
+    }
+
+    @Test
+    void fieldsElasticsearchSetsItselfAreKept() {
+        viewable.add(INDEX.getUuid());
+        Mockito.when(elasticIndexTemplates.read(INDEX)).thenReturn(templates(
+                new IndexTemplate(Status.OK, "ecs-keycloak",
+                        "{\"index_patterns\":[\"ecs-keycloak-*\"],\"created_date_millis\":1792352992578,"
+                        + "\"modified_date_millis\":1792352992578}",
+                        List.of(), null),
+                List.of()));
+
+        assertThat(run("es-uuid"))
+                .contains("""
+                        ### Index template `ecs-keycloak`
+                        ```json
+                        {
+                          "index_patterns": [
+                            "ecs-keycloak-*"
+                          ],
+                          "created_date_millis": 1792352992578,
+                          "modified_date_millis": 1792352992578
                         }
                         ```""");
     }
