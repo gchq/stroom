@@ -36,113 +36,79 @@ import stroom.docref.HasDisplayValue;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
 import stroom.widget.form.client.AccessibleName;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 import java.util.Objects;
 
-/**
- * A simple {@link MonthSelector} used for the default date picker. It allows to select months and
- * years but the name is not changed for backward compatibility. Also not extensible as we wish to
- * evolve it freely over time.
- */
+/// The year and month rows above a [CustomDatePicker]'s days: in each, a selection box ("Year",
+/// "Month") and a toolbar of its Previous and Next buttons (also "Year" and "Month", one tab stop
+/// each). Left and Right in a box step it back and on.
+public final class DefaultMonthSelector extends Composite {
 
-public final class DefaultMonthSelector extends MonthSelector {
+    private static final String BLOCK = "calendar";
+    private static final String HEADER_CLASS_NAME = BLOCK + "__header";
+    private static final String ROW_CLASS_NAME = BLOCK + "__row";
+    // The number of years the year box lists, centred on the year shown
+    private static final int VISIBLE_YEAR_COUNT = 21;
 
-    // The year's and month's Previous and Next buttons, each pair a toolbar beside its select box
-    private Toolbar yearToolbar;
-    private Toolbar monthToolbar;
-    private ToolbarButton monthBackwards;
-    private ToolbarButton monthForwards;
-    private FlowPanel layout;
-    private ToolbarButton yearBackwards;
-    private ToolbarButton yearForwards;
-    private SelectionBox<IntItem> monthSelect;
-    private SelectionBox<IntItem> yearSelect;
-    private int monthColumn;
+    private final CustomDatePicker datePicker;
+    private final SelectionBox<IntItem> monthSelect;
+    private final SelectionBox<IntItem> yearSelect;
 
-    /**
-     * Returns the button for moving to the previous month.
-     */
-    public Element getBackwardButtonElement() {
-        return monthBackwards.getElement();
-    }
+    /// @param datePicker The calendar the rows belong to.
+    DefaultMonthSelector(final CustomDatePicker datePicker) {
+        this.datePicker = datePicker;
 
-    /**
-     * Returns the button for moving to the next month.
-     */
-    public Element getForwardButtonElement() {
-        return monthForwards.getElement();
-    }
+        final Toolbar yearToolbar = new Toolbar("Year");
+        yearToolbar.button(SvgImage.ARROW_LEFT, "Previous Year",
+                () -> datePicker.addMonths(-DateTimeModel.MONTHS_IN_YEAR));
+        yearToolbar.button(SvgImage.ARROW_RIGHT, "Next Year",
+                () -> datePicker.addMonths(DateTimeModel.MONTHS_IN_YEAR));
+        final Toolbar monthToolbar = new Toolbar("Month");
+        monthToolbar.button(SvgImage.ARROW_LEFT, "Previous Month", () -> datePicker.addMonths(-1));
+        monthToolbar.button(SvgImage.ARROW_RIGHT, "Next Month", () -> datePicker.addMonths(1));
 
-    /**
-     * Returns the button for moving to the previous year.
-     */
-    public Element getYearBackwardButtonElement() {
-        return yearBackwards.getElement();
-    }
-
-    /**
-     * Returns the button for moving to the next year.
-     */
-    public Element getYearForwardButtonElement() {
-        return yearForwards.getElement();
-    }
-
-    /**
-     * Returns the ListBox for selecting the month
-     */
-    public SelectionBox<IntItem> getMonthSelectListBox() {
-        return monthSelect;
-    }
-
-    /**
-     * Returns the ListBox for selecting the year
-     */
-    public SelectionBox<IntItem> getYearSelectListBox() {
-        return yearSelect;
-    }
-
-    @Override
-    protected void refresh() {
-        if (isDatePickerConfigChanged()) {
-            // if the config has changed since the last refresh, rebuild the grid
-            setupGrid();
-        }
-
-        setDate(getModel().getCurrentMonth());
-    }
-
-    @Override
-    protected void setup() {
-        // previous, next buttons
-        yearToolbar = new Toolbar("Year");
-        yearBackwards = yearToolbar.button(SvgImage.ARROW_LEFT, "Previous Year",
-                () -> addMonths(-DateTimeModel.MONTHS_IN_YEAR));
-        yearForwards = yearToolbar.button(SvgImage.ARROW_RIGHT, "Next Year",
-                () -> addMonths(DateTimeModel.MONTHS_IN_YEAR));
-        monthToolbar = new Toolbar("Month");
-        monthBackwards = monthToolbar.button(SvgImage.ARROW_LEFT, "Previous Month", () -> addMonths(-1));
-        monthForwards = monthToolbar.button(SvgImage.ARROW_RIGHT, "Next Month", () -> addMonths(1));
-
-        // month and year selector
         monthSelect = createMonthSelect();
         yearSelect = createYearSelect();
 
-        // Set up grid.
-        layout = new FlowPanel();
-        layout.setStyleName(css().monthSelector());
+        final FlowPanel year = new FlowPanel();
+        year.setStyleName(ROW_CLASS_NAME);
+        year.add(yearSelect);
+        year.add(yearToolbar);
 
-        setupGrid();
+        final FlowPanel month = new FlowPanel();
+        month.setStyleName(ROW_CLASS_NAME);
+        month.add(monthSelect);
+        month.add(monthToolbar);
 
+        final FlowPanel layout = new FlowPanel();
+        layout.setStyleName(HEADER_CLASS_NAME);
+        layout.add(year);
+        layout.add(month);
         initWidget(layout);
+    }
+
+    /// Shows the picker's month and year in the boxes.
+    void refresh() {
+        final UTCDate date = datePicker.getModel().getCurrentMonth();
+        final int month = date.getMonth();
+        monthSelect.setValue(new IntItem(datePicker.getModel().formatMonth(month), month));
+
+        yearSelect.clear();
+        final int year = date.getFullYear();
+        final int startYear = year - (VISIBLE_YEAR_COUNT - 1) / 2;
+        final int endYear = year + VISIBLE_YEAR_COUNT / 2;
+        for (int i = startYear; i <= endYear; i++) {
+            yearSelect.addItem(new IntItem(formatYear(i), i));
+        }
+        yearSelect.setValue(new IntItem(formatYear(year), year));
     }
 
     private SelectionBox<IntItem> createMonthSelect() {
@@ -150,20 +116,18 @@ public final class DefaultMonthSelector extends MonthSelector {
         AccessibleName.set(monthListBox, "Month");
 
         for (int i = 0; i < DateTimeModel.MONTHS_IN_YEAR; i++) {
-            monthListBox.addItem(new IntItem(getModel().formatMonth(i), i));
+            monthListBox.addItem(new IntItem(datePicker.getModel().formatMonth(i), i));
         }
 
         monthListBox.addValueChangeHandler(e -> {
-            final int previousMonth = getModel().getCurrentMonth().getMonth();
-            final int newMonth = monthListBox.getValue().getValue();
-            final int delta = newMonth - previousMonth;
-            addMonths(delta);
+            final int previousMonth = datePicker.getModel().getCurrentMonth().getMonth();
+            datePicker.addMonths(monthListBox.getValue().getValue() - previousMonth);
         });
         monthListBox.addDomHandler(e -> {
             if (KeyCodes.KEY_LEFT == e.getNativeKeyCode()) {
-                addMonths(-1);
+                datePicker.addMonths(-1);
             } else if (KeyCodes.KEY_RIGHT == e.getNativeKeyCode()) {
-                addMonths(1);
+                datePicker.addMonths(1);
             }
         }, KeyDownEvent.getType());
 
@@ -174,100 +138,38 @@ public final class DefaultMonthSelector extends MonthSelector {
         final SelectionBox<IntItem> yearListBox = new SelectionBox<>();
         AccessibleName.set(yearListBox, "Year");
         yearListBox.addValueChangeHandler(e -> {
-            final int previousYear = getModel().getCurrentMonth().getFullYear();
-            final int newYear = yearListBox.getValue().getValue();
-            final int delta = newYear - previousYear;
-            addMonths(delta * DateTimeModel.MONTHS_IN_YEAR);
+            final int previousYear = datePicker.getModel().getCurrentMonth().getFullYear();
+            final int delta = yearListBox.getValue().getValue() - previousYear;
+            datePicker.addMonths(delta * DateTimeModel.MONTHS_IN_YEAR);
         });
         yearListBox.addDomHandler(e -> {
             if (KeyCodes.KEY_LEFT == e.getNativeKeyCode()) {
-                addMonths(-DateTimeModel.MONTHS_IN_YEAR);
+                datePicker.addMonths(-DateTimeModel.MONTHS_IN_YEAR);
             } else if (KeyCodes.KEY_RIGHT == e.getNativeKeyCode()) {
-                addMonths(DateTimeModel.MONTHS_IN_YEAR);
+                datePicker.addMonths(DateTimeModel.MONTHS_IN_YEAR);
             }
         }, KeyDownEvent.getType());
 
         return yearListBox;
     }
 
-
-    private boolean isDatePickerConfigChanged() {
-        final boolean isMonthCurrentlySelectable = monthSelect.getParent() != null;
-        final boolean isYearNavigationCurrentlyEnabled = yearToolbar.getParent() != null;
-
-        return getDatePicker().isYearAndMonthDropdownVisible() != isMonthCurrentlySelectable ||
-                getDatePicker().isYearArrowsVisible() != isYearNavigationCurrentlyEnabled;
+    private static String formatYear(final int year) {
+        final FormatOptions yearFormat = FormatOptions.builder().year(Year.NUMERIC).timeZone("UTC").build();
+        return IntlDateTimeFormat.format(UTCDate.create(year, 0), IntlDateTimeFormat.DEFAULT_LOCALE, yearFormat);
     }
 
-    private void setDate(final UTCDate date) {
-        if (getDatePicker().isYearAndMonthDropdownVisible()) {
-            // setup months dropdown
-            final int month = date.getMonth();
-            monthSelect.setValue(new IntItem(getModel().formatMonth(month), month));
 
-            // setup years dropdown
-            yearSelect.clear();
+    // --------------------------------------------------------------------------------
 
-            final int year = date.getFullYear();
-            final int startYear = year - getNoOfYearsToDisplayBefore();
-            final int endYear = year + getNoOfYearsToDisplayAfter();
 
-            final UTCDate newDate = UTCDate.create();
-
-            for (int i = startYear; i <= endYear; i++) {
-                newDate.setFullYear(i);
-
-                yearSelect.addItem(new IntItem(formatYear(newDate), i));
-            }
-            yearSelect.setValue(new IntItem(formatYear(UTCDate.create(year, 0)), year));
-        } else {
-//            layout.getElement().setInnerHTML(getModel().formatCurrentMonthAndYear());
-        }
-    }
-
-    private String formatYear(final UTCDate newDate) {
-        final FormatOptions yearFormat = FormatOptions.builder().year(Year.NUMERIC).build();
-        return IntlDateTimeFormat.format(newDate, IntlDateTimeFormat.DEFAULT_LOCALE, yearFormat);
-    }
-
-    private int getNoOfYearsToDisplayBefore() {
-        return (getDatePicker().getVisibleYearCount() - 1) / 2;
-    }
-
-    private int getNoOfYearsToDisplayAfter() {
-        return getDatePicker().getVisibleYearCount() / 2;
-    }
-
-    private void setupGrid() {
-        layout.clear();
-
-        // Month/Year column
-        if (getDatePicker().isYearAndMonthDropdownVisible()) {
-            final FlowPanel year = new FlowPanel();
-            year.setStyleName(css().year());
-            year.add(yearSelect);
-            year.add(yearToolbar);
-
-            final FlowPanel month = new FlowPanel();
-            month.setStyleName(css().month());
-            month.add(monthSelect);
-            month.add(monthToolbar);
-
-//            if (getModel().isMonthBeforeYear()) {
-//                layout.add(month);
-//                layout.add(year);
-//            } else {
-            layout.add(year);
-            layout.add(month);
-//            }
-        }
-    }
-
+    /// A month or year in a box, by its number.
     public static class IntItem implements HasDisplayValue {
 
         private final String label;
         private final int value;
 
+        /// @param label The text shown.
+        /// @param value The month (0 for January) or year.
         public IntItem(final String label, final int value) {
             this.label = label;
             this.value = value;
@@ -278,6 +180,7 @@ public final class DefaultMonthSelector extends MonthSelector {
             return label;
         }
 
+        /// @return The month (0 for January) or year.
         public int getValue() {
             return value;
         }

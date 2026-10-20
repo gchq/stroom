@@ -16,6 +16,7 @@
 
 package stroom.widget.datepicker.client;
 
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -58,22 +59,22 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     @SuppressWarnings("unused")
     @UiField
-    Label today;
+    LinkButton today;
     @SuppressWarnings("unused")
     @UiField
-    Label yesterday;
+    LinkButton yesterday;
     @SuppressWarnings("unused")
     @UiField
-    Label weekStart;
+    LinkButton weekStart;
     @SuppressWarnings("unused")
     @UiField
-    Label now;
+    LinkButton now;
     @SuppressWarnings("unused")
     @UiField
-    Label midnight;
+    LinkButton midnight;
     @SuppressWarnings("unused")
     @UiField
-    Label midday;
+    LinkButton midday;
 
     private UTCDate value;
     private String currentDateString;
@@ -83,8 +84,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @Inject
     public DateTimeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        datePicker.setYearAndMonthDropdownVisible(true);
-        datePicker.setYearArrowsVisible(true);
 
         hour.setMin(0);
         hour.setMax(23);

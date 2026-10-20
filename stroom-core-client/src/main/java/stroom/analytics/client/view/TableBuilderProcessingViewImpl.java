@@ -24,7 +24,7 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.MouseUtil;
 
@@ -53,9 +53,9 @@ public class TableBuilderProcessingViewImpl
     @UiField
     SelectionBox<String> node;
     @UiField
-    MyDateBox minMetaCreateTimeMs;
+    DateTimeBox minMetaCreateTimeMs;
     @UiField
-    MyDateBox maxMetaCreateTimeMs;
+    DateTimeBox maxMetaCreateTimeMs;
     @UiField
     DurationPicker timeToWaitForData;
     @UiField
@@ -121,22 +121,22 @@ public class TableBuilderProcessingViewImpl
 
     @Override
     public Long getMinMetaCreateTimeMs() {
-        return minMetaCreateTimeMs.getMilliseconds();
+        return minMetaCreateTimeMs.getValue();
     }
 
     @Override
     public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
-        this.minMetaCreateTimeMs.setMilliseconds(minMetaCreateTimeMs);
+        this.minMetaCreateTimeMs.setValue(minMetaCreateTimeMs);
     }
 
     @Override
     public Long getMaxMetaCreateTimeMs() {
-        return maxMetaCreateTimeMs.getMilliseconds();
+        return maxMetaCreateTimeMs.getValue();
     }
 
     @Override
     public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
-        this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
+        this.maxMetaCreateTimeMs.setValue(maxMetaCreateTimeMs);
     }
 
     @Override

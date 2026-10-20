@@ -129,6 +129,9 @@
   "app-editors-queryeditor--stepping-hyperlink": [
     "target-size"
   ],
+  "app-editors-queryeditor--time-range-dialog-keys": [
+    "target-size"
+  ],
   "app-editors-queryeditor--time-range-rerun": [
     "target-size"
   ],
@@ -410,34 +413,6 @@
   ],
   "app-query-queryresultstable--url-link-named-by-host-and-path": [
     "target-size"
-  ],
-  "widgets-date-time-calendargrid--basic": [
-    "aria-allowed-attr"
-  ],
-  "widgets-date-time-calendargrid--no-selection": [
-    "aria-allowed-attr"
-  ],
-  "widgets-date-time-calendargrid--past-date": [
-    "aria-allowed-attr"
-  ],
-  "widgets-date-time-datetimepicker--basic": [
-    "label"
-  ],
-  "widgets-date-time-datetimepicker--calendar-toolbars-in-the-dialog": [
-    "aria-allowed-attr",
-    "label"
-  ],
-  "widgets-date-time-datetimepicker--disabled": [
-    "label"
-  ],
-  "widgets-date-time-datetimepicker--empty": [
-    "label"
-  ],
-  "widgets-date-time-timepicker--basic": [
-    "label"
-  ],
-  "widgets-date-time-timepicker--hour-minute": [
-    "label"
   ],
   "widgets-display-htmlpresenter--rich-content": [
     "link-in-text-block"

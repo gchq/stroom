@@ -22,7 +22,6 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
 import stroom.pipeline.structure.client.view.TreeKeyboard;
-import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.query.client.presenter.FieldSelectionListModel;
@@ -73,18 +72,15 @@ public class ExpressionTreeViewImpl
     @Inject
     public ExpressionTreeViewImpl(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                   final Provider<UserRefSelectionBoxPresenter> userRefProvider,
-                                  final UserPreferencesManager userPreferencesManager,
                                   final UiConfigCache uiConfigCache) {
         treePanel = new ExpressionTreePanel(
                 docRefProvider,
                 userRefProvider,
-                uiConfigCache,
-                userPreferencesManager.isUtc());
+                uiConfigCache);
         final ExpressionTreePanel subTreePanel = new ExpressionTreePanel(
                 docRefProvider,
                 userRefProvider,
-                uiConfigCache,
-                userPreferencesManager.isUtc());
+                uiConfigCache);
         // The copy of what is dragged, which is only to be seen
         subTreePanel.getElement().setAttribute("aria-hidden", "true");
         subTreePanel.getElement().setAttribute("inert", "");

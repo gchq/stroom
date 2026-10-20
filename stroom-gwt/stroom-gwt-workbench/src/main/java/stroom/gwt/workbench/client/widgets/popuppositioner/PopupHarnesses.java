@@ -28,7 +28,6 @@ import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
-import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
@@ -56,8 +55,6 @@ import java.util.List;
 /// The real Stroom widgets that the popup contract stories open, each rendered closed.
 final class PopupHarnesses {
 
-    /// The time the date box starts at, 2026-08-12T00:00:00.000Z.
-    private static final long DATE_MILLIS = 1786492800000L;
     // Where the portal cascade puts its panels (position: fixed, so viewport pixels)
     private static final int OUTER_LEFT = 400;
     private static final int INNER_LEFT = 640;
@@ -148,18 +145,6 @@ final class PopupHarnesses {
         selectionBox.addItems(new String[]{
                 "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda"});
         return selectionBox;
-    }
-
-    /// Stroom's `MyDateBox` (whose popup is `dateBoxPopup`).
-    ///
-    /// @param popups The story's popups.
-    /// @return The widget.
-    static Widget dateBox(final StoryPopups popups) {
-        final MyDateBox dateBox = new MyDateBox();
-        AccessibleName.set(dateBox, "Date");
-        dateBox.setUtc(true);
-        dateBox.setMilliseconds(DATE_MILLIS);
-        return dateBox;
     }
 
     /// A button showing a menu nested two levels deep, as Stroom's toolbar buttons show theirs

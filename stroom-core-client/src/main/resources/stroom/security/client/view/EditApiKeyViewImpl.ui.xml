@@ -1,6 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:c="urn:import:stroom.widget.customdatebox.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
@@ -89,7 +89,7 @@
                 <p>This is the expiry date of the key. After this date, the API Key will no longer be allowed to
                 authenticate and will be essentially useless.</p>
             </form:HelpHTML>
-            <c:MyDateBox ui:field="expiresOnDateBox" addStyleNames="w-100"/>
+            <datetimebox:DateTimeBox ui:field="expiresOnDateBox" optional="true" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -25,6 +25,7 @@ import stroom.alert.client.presenter.CommonAlertPresenter;
 import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
+import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.rest.FixtureDispatcher;
 import stroom.gwt.workbench.client.app.rest.FixtureUploads;
@@ -209,6 +210,9 @@ public final class ScreenHarness {
         eventBus.addHandler(ShowPopupEvent.getType(), event -> popups.onShow(event.getPresenterWidget()));
         eventBus.addHandler(HidePopupEvent.getType(), event -> popups.onHide(event.getPresenterWidget()));
         new PopupManager(eventBus);
+        // Widgets with no event bus of their own show their dialogs on Stroom's static one (e.g. a
+        // DateTimeBox not given a dialog provider), as in Stroom
+        new StaticEventBus(eventBus);
         // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's Menu does
         new Menu(eventBus, this::createMenuPresenter);
         // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's

@@ -1,0 +1,31 @@
+/*
+ * A field for a date and time (DateTimeBox), or a time of day (TimeBox, the date-time-box--time
+ * variant, which has no ARIA meaning), with its calendar or clock at the end (an svg-icon-box). Its
+ * field is a text field (text-field.css), date-time-box__input.
+ */
+
+/* Wide enough for a whole ISO 8601 time with an offset (2024-12-28T23:58:58.888+0530, 241px at the
+   medium font size) beside the calendar: 17 of the field's font size, so it fits at every font
+   size. A screen's width (w-100, or a class of its own) still wins */
+.date-time-box {
+    width: calc(var(--font-size-13) * 17);
+}
+
+/* A time of day (14:30:00) needs no more than a text field's width */
+.date-time-box--time {
+    width: 200px;
+}
+
+/* Where it sits: */
+
+/* In an expression term, as wide as elsewhere (a narrow term field is 175px), its field as wide as
+   that (svg-icon-box.css gives a field 200px at least). With .narrow, to outrank TermEditor.css's
+   width, which comes later */
+.termEditor-item.narrow.date-time-box {
+    width: calc(var(--font-size-13) * 17);
+    min-width: 0;
+}
+
+.termEditor-item.date-time-box .svg-icon-box__field {
+    min-width: 0;
+}

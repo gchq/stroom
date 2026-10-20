@@ -25,12 +25,13 @@
     position: relative;
 }
 
-/* The field, leaving room at its end for the icon. Under the block, to outrank the text field's
-   padding (text-field.css) */
+/* The field, leaving room at its end for the icon (26px) and 4px between its text and the icon, as
+   every field with something over its end does (see FieldEnd). Under the block, to outrank the text
+   field's padding (text-field.css) */
 .svg-icon-box .svg-icon-box__field {
     height: 100%;
     width: 100%;
-    padding-right: 26px;
+    padding-right: 30px;
     min-width: 200px;
 }
 

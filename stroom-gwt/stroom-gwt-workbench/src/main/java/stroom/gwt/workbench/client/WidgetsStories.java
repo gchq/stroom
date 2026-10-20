@@ -37,9 +37,9 @@ import stroom.gwt.workbench.client.widgets.cellrenderers.UserRefCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.ValueSpinnerCellStories;
 import stroom.gwt.workbench.client.widgets.datagrid.DataGridStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.CalendarGridStories;
-import stroom.gwt.workbench.client.widgets.dateandtime.CustomDateBoxStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DateTimePickerStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.DurationPickerStories;
+import stroom.gwt.workbench.client.widgets.dateandtime.ScheduleBoxStories;
 import stroom.gwt.workbench.client.widgets.dateandtime.TimePickerStories;
 import stroom.gwt.workbench.client.widgets.dialogs.AlertDialogStories;
 import stroom.gwt.workbench.client.widgets.dialogs.DialogStories;
@@ -68,6 +68,7 @@ import stroom.gwt.workbench.client.widgets.feedback.ProgressBarStories;
 import stroom.gwt.workbench.client.widgets.feedback.SpinnerStories;
 import stroom.gwt.workbench.client.widgets.feedback.TaskCounterStories;
 import stroom.gwt.workbench.client.widgets.formatdatetime.FormatDateTimeStories;
+import stroom.gwt.workbench.client.widgets.inputs.FieldEndStories;
 import stroom.gwt.workbench.client.widgets.inputs.FileChooserStories;
 import stroom.gwt.workbench.client.widgets.inputs.FormGroupStories;
 import stroom.gwt.workbench.client.widgets.inputs.LineColInputStories;
@@ -186,12 +187,12 @@ public final class WidgetsStories {
         ToolbarButtonStateStories.addTo(registry);
         // Widgets/Date & Time/CalendarGrid
         CalendarGridStories.addTo(registry);
-        // Widgets/Date & Time/CustomDateBox
-        CustomDateBoxStories.addTo(registry);
         // Widgets/Date & Time/DateTimePicker
         DateTimePickerStories.addTo(registry);
         // Widgets/Date & Time/DurationPicker
         DurationPickerStories.addTo(registry);
+        // Widgets/Date & Time/ScheduleBox
+        ScheduleBoxStories.addTo(registry);
         // Widgets/Date & Time/TimePicker
         TimePickerStories.addTo(registry);
         // Widgets/CellList
@@ -254,6 +255,8 @@ public final class WidgetsStories {
         EntityCheckTreeStories.addTo(registry);
         // Widgets/Query/ExpressionBuilder
         ExpressionBuilderStories.addTo(registry);
+        // Widgets/Inputs/FieldEnds
+        FieldEndStories.addTo(registry);
         // Widgets/Inputs/FileChooser
         FileChooserStories.addTo(registry);
         // Widgets/Inputs/FormGroup

@@ -20,6 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.util.client.FieldEnd;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -75,6 +76,8 @@ public class QuickFilter extends FlowPanel
     private final ToolbarButton clearButton;
     private final ToolbarButton dropDownButton;
     private final ToolbarButton helpButton;
+    // Keeps the text clear of the buttons, which come and go (Clear, while there is text)
+    private final FieldEnd fieldEnd;
     private final HandlerManager handlerManager = new HandlerManager(this);
     private Supplier<SafeHtml> popupTextSupplier;
     private String lastInput = "";
@@ -129,6 +132,7 @@ public class QuickFilter extends FlowPanel
 
         add(textBox);
         add(toolbar);
+        fieldEnd = new FieldEnd(textBox.getElement(), toolbar.getElement());
         add(description);
         add(errorMessage);
 
@@ -458,6 +462,18 @@ public class QuickFilter extends FlowPanel
     public void focus() {
         textBox.selectAll();
         textBox.setFocus(true);
+    }
+
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        fieldEnd.start();
+    }
+
+    @Override
+    protected void onUnload() {
+        fieldEnd.stop();
+        super.onUnload();
     }
 
     @Override

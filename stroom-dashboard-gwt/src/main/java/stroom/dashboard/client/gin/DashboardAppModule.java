@@ -72,6 +72,7 @@ import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
+import stroom.event.client.StaticEventBus;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
@@ -107,6 +108,9 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bind(EventBus.class).to(SimpleEventBus.class).in(Singleton.class);
         bind(TokenFormatter.class).to(ParameterTokenFormatter.class).in(Singleton.class);
         bind(RootPresenter.class).asEagerSingleton();
+        // For widgets with no event bus of their own (form help, date and time dialogs, the time
+        // range), as the app's AppModule does
+        bind(StaticEventBus.class).asEagerSingleton();
         bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
         bind(GlobalKeyHandler.class).to(GlobalKeyHandlerImpl.class).in(Singleton.class);
         bind(UrlParameters.class).in(Singleton.class);

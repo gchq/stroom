@@ -270,17 +270,17 @@ public final class ExecutionSchedulesScreenStories {
                     play.findByText("Hourly rollup");
                     play.click(play.getByTitle("Batch Edit Schedules"));
                     final Play dialog = dialog(screen, "Batch Change Selected Schedules");
-                    final Query schedule = dialog.querySelector(".ScheduleBox-textBox");
-                    final Query icon = dialog.querySelector(".ScheduleBox .svg-icon-box__icon");
+                    final Query schedule = dialog.querySelector(".schedule-box__input");
+                    final Query icon = dialog.querySelector(".schedule-box .svg-icon-box__icon");
                     play.expect(schedule).toBeDisabled();
-                    play.expect(dialog.querySelector(".ScheduleBox.svg-icon-box"))
+                    play.expect(dialog.querySelector(".schedule-box.svg-icon-box"))
                             .toHaveClass(SvgIconBox.ICON_BOX_READONLY_CLASS_NAME);
                     play.click(icon);
                     play.expect(screen.queryByText("Change Schedule", StroomDom.DIALOG_TITLE)).toBeNull();
                     // Ticking the schedule's check box (after Name, Enabled's two and Node) enables both
                     play.click(dialog.getAllByRole("checkbox").nth(4));
                     play.expect(schedule).toBeEnabled();
-                    play.expect(dialog.querySelector(".ScheduleBox.svg-icon-box"))
+                    play.expect(dialog.querySelector(".schedule-box.svg-icon-box"))
                             .not().toHaveClass(SvgIconBox.ICON_BOX_READONLY_CLASS_NAME);
                     expectNoErrors(play);
                 })
