@@ -614,3 +614,17 @@ Planned, not yet built.
   question when it starts, from what is attached and the prompt used, shown and overridable; and tools that
   hand a piece of work (e.g. writing code) to a specialist model. Open questions: one server or separate
   endpoints, and whether these override a user's own choice of model.
+* **Document settings in configuration answers.** `config_properties` covers system properties only, so an
+  answer about what affects behaviour (e.g. Elasticsearch query timeouts) can miss the settings of the
+  documents involved, such as an Elastic Cluster's connection and response timeouts. Planned: its search also
+  looks through the settings fields of every document type (found from each document class's serialised
+  fields, so new settings are picked up without a list to maintain), and gives the values of the documents
+  of that type the user can view, with secrets masked as properties are; `@JsonPropertyDescription` added to
+  the settings that matter (Elastic cluster and index, Solr, Lucene index, Stroom stats, Kafka config), as the
+  tool only sees field names otherwise; and the guidance saying behaviour can come from system properties or
+  document settings, to check both and say which applies.
+* **Elastic Cluster response timeout fix.** `ElasticClientFactory` sets both the response timeout and the
+  connection request timeout from `connectionTimeoutMillis` (since a943828b33), so `responseTimeoutMillis` is
+  ignored and every Elasticsearch request is limited to the connection timeout (3 seconds by default). The
+  connection timeout is also applied as the wait for a pooled connection, not the connect timeout. To be
+  fixed separately, with a regression test.
