@@ -453,8 +453,30 @@ for that directory), so no screen needed editing.
 Stories `Widgets/Inputs/TextInput` (`Basic`, `MultiLine`, `Invalid`, `DisabledAndReadonly`) and
 `Widgets/Inputs/LineColInput` (`InvalidValueIsMarked`).
 
-Not yet done: the bare element rules in `stroom.css` (to go once every input has a block); nine
-fields whose template replaces the class with `styleName` (so they get those rules instead); it
+A template adds a field's own classes with `addStyleNames`, never `styleName`, which would replace
+`text-field` and leave the field to `stroom.css`'s bare element rules. Nine fields did (the pager's
+page boxes, the query data box, the annotation editor's Title, Subject and comment, the include and
+exclude filter areas and Create Multiple Users' batch); they are text fields now, each looking as it
+did (a screen's own rules for one, e.g. `.annotationComment`, win as they did), with `w-100` where it
+filled its place (a text field is 200px wide unless the screen sizes it).
+
+`TextFieldCell` (`stroom.cell.textfield.client`) is a text field in a grid's cell: the same
+`text-field` input, filling its column (`text-field--cell`), each row's named for its column and
+row (e.g. "Path for $.type"), read only with `readonly` (not `disabled`, so it can still be reached
+and read). `SelectionBoxCell` (`stroom.item.client`) is the selection box in a cell: the same markup
+and classes as `BaseSelectionBox` (`selection-box--cell` fills the column), the same keys (Enter,
+Space, Down, Up and Alt+Down open the list, typing goes to it) and the same `SelectionPopup`;
+choosing gives the value to the column's field updater, and the focus comes back to the row's box
+once the grid has drawn it again. Every row's controls are tab stops, and while one has the focus
+the grid leaves its keys to it, as the cell is editing (the selection box cell takes focus and blur
+so that the grid knows before a key arrives). They replace the floor map's `AccessibleTextInputCell`
+and `AccessibleSelectionCell` (bare `input` and `select` elements). Stories
+`App/Editors/FloorMapSettings`; real input: `selection-box.mjs`. Not yet: the grid's own keyboard
+cell is still a stray tab stop between the controls, as in every grid (session 4); in a grid that
+uses Stroom's own selection handling (`MyDataGrid.addDefaultSelectionModel`) rather than GWT's, the
+grid doesn't yet ask whether a cell is editing, so would take the arrows (none does yet).
+
+Not yet done: the bare element rules in `stroom.css` (to go once every input has a block); it
 hasn't been tried with a screen reader.
 
 ## Tick box
@@ -626,14 +648,33 @@ A field with something drawn over its end (an icon box's icon, a password box's 
 
 `BaseSelectionBox` (`stroom.item.client`, styled by `selection-box.css`) is a WAI-ARIA combobox: its text box (`role="combobox"`, `aria-haspopup="listbox"`, `aria-expanded`, `aria-controls`) sits over a picture of its value (`selection-box__value`, `aria-hidden`), with an icon box's drop-down arrow at its end. Its list is a `SelectionPopup` (`selection-popup.css`) holding a `SelectionList`: a quick filter over 10 items, a pager over 100, and a list box whose rows are options. Opening the list moves the focus into it (to its quick filter if it has one, else to the chosen option), rather than keeping it in the box with `aria-activedescendant`.
 
-- **Keys on the box** (the list closed): Enter, Down, Up and Alt+Down open the list; in a box that can't be typed in (`selection-box--select-only`), Space does too, and typing a character opens the list and goes to it. Characters typed before the list has the focus are kept and passed on (`SelectionPopup.type`).
+- **Keys on the box** (the list closed): Enter, Down, Up and Alt+Down open the list; in a box that can't be typed in (`selection-box--select-only`), Space does too, Home and End open it at its first and last option, and typing a character opens the list and goes to it. Characters typed before the list has the focus are kept and passed on (`SelectionPopup.type`).
 - **Keys in the list**: Up and Down move between options (and Up from the first option to the quick filter), only highlighting, as a combobox's list does; Enter or Alt+Up chooses the option with the focus and closes the list; Escape closes it, and the focus goes back to the box. Tab closes it, leaving the value, and goes on to what follows the box (`TabOrder.focusNext`); Shift+Tab closes it and goes back to the box. (It once sent the focus to the page, leaving the list open.) Typing goes to what is typed (`SelectionList.typeAhead`): into the quick filter, applied at once, with the caret after it (`QuickFilter.type`), or, in a list with no quick filter, to the next option that starts with it, characters typed within half a second being taken together, and the same character again going on to the next option starting with it. The list hands keys on after the browser has handled them (as the data grid does), so a key can't be cancelled there.
 - **Value.** The picture of the value stays on one line and ends in an ellipsis, clear of the arrow (`padding-right: 26px`). It draws the box's border (`stroom-control`).
 - **States.** Disabled and read only are modifiers (`selection-box--disabled`, `selection-box--readonly`), as the box has no ARIA attribute for them; they follow the text box's `disabled` and `aria-readonly`. A box that can't be typed in shows a pointer over it while it can be changed.
 
 Stories `Widgets/Selectors/SelectionBox` (`SelectionBoxStories`): `KeysOpenTheList`, `AltUpChoosesTheOption`, `TypingJumpsToAnOption`, `TypingFiltersALongList` and `LongValue`, beside the earlier ones. Real input (`test-runner/lib/real-input/selection-box.mjs`): typing, Alt+Up, Space and Escape pressed for real, and typing into a long list's quick filter.
 
-Not yet done: it hasn't been tried with a screen reader; the list's own classes (`selectionList-*`, in `components.css`) aren't BEM; and Home and End in the closed box don't open the list at its ends (optional in the pattern).
+- **The list's names.** `SelectionList` is styled by `selection-list.css`: the block `selection-list`, its quick filter `selection-list__filter`, its path `selection-list__path` (a `nav` holding a `selection-list__path-link` button for each level above, `selection-list__path-separator`s hidden from screen readers, and the level shown, `selection-list__path-current`, `aria-current="page"`), and its options with their pager, `selection-list__options`. The rows are still the cell table's (`cellTable*`), which the grid session renames. The option with the focus has the focus border and ring every other control has (`--focus-border`, `--focus-ring__color`), drawn inside the row, as the list's scrolling box would cut off one drawn round it; a chosen one with the focus takes `--row__background-color--selected--focussed`, as the expression tree's and the explorer's rows do, so that the border is 3:1 against it in both themes (the row tokens' pale ring it had was 1.7:1, and 1.05:1 on a chosen row, in the light theme; the grids still use it). A chosen row looks the same under the mouse, as the expression tree's does; only an unchosen row shows the hover colour. Story `Widgets/Selectors/SelectionListStates` `RowStates` shows a row in each state (at rest, mouse over, mouse down, selected, selected and mouse over, focused, selected and focused), with the pseudo-classes copied into classes as `Widgets/Layout/SplitPaneStates` does.
+- **Several choices.** `setMultiSelect(true)` makes the list WAI-ARIA's list box with multiple selection (`aria-multiselectable`), for a list on a form rather than a selection box's: moving only moves the focus; Space adds the option with the focus to those chosen or takes it out (it is never typed into the quick filter), Shift+Down and Shift+Up move to the next option and do the same there, and Shift+Space chooses the run from the last one chosen; a click chooses only that option, Ctrl+click adds or takes it, Shift+click chooses the run from the last one chosen; Ctrl+A chooses every option; Enter or a double click acts on those chosen (first choosing only the option with the focus, if it isn't one), which the selection model announces as a double select. Alt+Up doesn't choose, and Left at the top level doesn't go back to the first page. The choices are kept when the list is refreshed or paged; a screen that changes the options keeps only the choices still shown (the explorer's `TagListModel.setTags`), so it never acts on a choice that can't be seen. Such a list on a form is drawn as a field (`selection-list--field`: a variant, so a modifier) and named by its form group's label, which names a `listbox` with `aria-labelledby` (its own text, every option's, isn't part of its name). `setMoveUpFromFirst` sends Up on the first option elsewhere, e.g. to a field above that filters the list. The explorer's Edit Tags and Remove Tags lists are such lists.
+
+Stories `App/Main/EditTagsDialog`: `KeysChooseAndAddTags`, `DeleteRemovesTags`, `FilteringDropsHiddenChoices`, `ManyKnownTags` and `RemoveByKeyboard`, beside the earlier ones. Real input (`test-runner/lib/real-input/selection-list.mjs`): Ctrl+click, Shift+click, Ctrl+A, Delete, Enter and a double click, done for real.
+
+Not yet done: it hasn't been tried with a screen reader; a key or click sent within a millisecond of a choice is lost, as the rows are redrawn and the cell table hands its events on in a deferred command (no person's hand is that quick, but a play must wait for the focus to come back between keys; the grid session's to change).
+
+## Code editor
+
+Stroom's code editor (`Editor`, in `EditorViewImpl` and `SingleLineEditorViewImpl`) is Ace, retrofitted rather than replaced: Ace's sources (`edu/ycp/cs/dh/acegwt`) change only with approval, so the editor uses what Ace 1.44 offers.
+
+- **Keyboard.** Ace's keyboard accessibility mode is on for every editor (`AceEditor.setKeyboardAccessibility`). An editor is one tab stop, its content (`role="group"`, `aria-roledescription` "editor"); Ace's text input isn't one. Enter on the content starts editing (the caret where it was, scrolled into view); while editing, Tab indents, as a code editor's should. Escape stops editing, back to the content, and Tab then moves on. A click goes straight into the text, as before. A read-only editor works the same way, Enter putting the caret in its text to move through it and select.
+- **The gutter.** The mode also makes the gutter a tab stop, with the arrow keys through its fold widgets and annotations; `Editor` puts it back as Ace makes it (no `tabindex`, `aria-hidden`), as agreed, so an editor is one tab stop and a thin splitter beside one keeps the room WCAG 2.5.8 asks for. Its errors and folds have Ace's keys while editing instead: Alt+E and Alt+Shift+E (F4 and Shift+F4 on a Mac) go to the next and previous annotation and show its message under its line; F2 folds or unfolds the line's element, Alt+L and Alt+Shift+L fold and unfold at the cursor.
+- **Escape.** The editor handles Escape first: Ace's popups (autocompletion, the search box) close on it, Vim keys leave insert or visual mode on it, and only then does it stop editing. Dialogs leave keys from Ace's text input to Ace (`AbstractPopupPanel` checks for `ace_text-input`), so in a dialog the first Escape stops editing and the next one, from the content, cancels the dialog, as Escape reaches an inner widget first everywhere else.
+- **Names.** Ace names the content ("Editor content, press Enter to start editing, press Escape to exit"), and labels its text input with the cursor's row, after Stroom's name for it ("Code editor, Cursor at row 3", through Ace's `textInputAriaLabel`). The text input is a `textbox`, `aria-readonly` when the editor is read only. Ace hides its drawn lines from screen readers (`aria-hidden`), which read the text through its input.
+- **Focus.** Ace's own ring (a box shadow in a fixed blue, on any focus) is replaced in `editor.css` by a 2px outline inside the content's edge, for keyboard focus only (`:focus-visible`), so it stays in forced colours. Its colour follows the editor's theme (`ace_dark`), not Stroom's, as a user can pair any editor theme with either Stroom theme: `--blue-800` on light editor themes (4.2:1 or more, measured on every theme's gutter), `--blue-300` on dark ones (4.9:1 or more).
+
+Stories `Widgets/Editors & Viewers/AceEditor` (`AceEditorStories`): `KeyboardWayOut` (the one tab stop, Enter, Tab indenting, Escape, Tab out and Shift+Tab back), `KeyboardErrorsAndFolds` (Alt+E and F2 while editing) and `KeyboardReadOnly`; `AceEditorFeatures` `VimKeys` (Escape out of insert mode, then out of editing); `App/Editors/QueryEditor` `ColumnFilterMenu` (Escape in a dialog's editor leaves the dialog open). Real input (`test-runner/lib/real-input/ace-editor.mjs`): real Tab, Enter and Escape through `KeyboardWayOut`, with the focus ring shown.
+
+Not yet done: it hasn't been tried with a screen reader; an annotation's message, shown by Alt+E inside the content, which Ace hides from screen readers, isn't read out (no worse than before, when the gutter couldn't be reached at all; a live region could say it); Ace's names are its own English strings; and Ace's search box, autocompletion popup and Stroom's editor context menu haven't been audited.
 
 ## Date and time
 

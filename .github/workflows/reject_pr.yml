@@ -1,0 +1,21 @@
+name: Reject non-contributor PRs
+on:
+  # Runs against the target of the PR
+  pull_request_target:
+
+permissions:
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Close PRs from non-collaborators
+        if: ${{ !contains(fromJSON('["COLLABORATOR","MEMBER","OWNER"]'), github.event.pull_request.author_association) }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr close "$PR" --repo "$GITHUB_REPOSITORY" \
+          --comment "This repository only accepts pull requests from organisation members or approved outside collaborators. This pull request has been closed automatically."

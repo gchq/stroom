@@ -97,6 +97,7 @@ import stroom.gwt.workbench.client.widgets.query.ExpressionBuilderStories;
 import stroom.gwt.workbench.client.widgets.selectors.DocSelectionBoxStories;
 import stroom.gwt.workbench.client.widgets.selectors.DropDownSelectorStories;
 import stroom.gwt.workbench.client.widgets.selectors.SelectionBoxStories;
+import stroom.gwt.workbench.client.widgets.selectors.SelectionListStateStories;
 import stroom.gwt.workbench.client.widgets.selectors.UserRefSelectionBoxStories;
 import stroom.gwt.workbench.client.widgets.tabs.CurveTabBarStories;
 import stroom.gwt.workbench.client.widgets.tabs.LinkTabPanelStories;
@@ -240,6 +241,7 @@ public final class WidgetsStories {
         DropDownSelectorStories.addTo(registry);
         // Widgets/Selectors/SelectionBox
         SelectionBoxStories.addTo(registry);
+        SelectionListStateStories.addTo(registry);
         // Widgets/Selectors/UserRefSelectionBox
         UserRefSelectionBoxStories.addTo(registry);
         // Widgets/Tree/EntityCheckList

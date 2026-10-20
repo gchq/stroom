@@ -123,7 +123,7 @@ public final class PopupContractStories {
                 .partners(".selection-box__control", ".selection-box__value", ".svg-icon-box__icon",
                         ".svg-icon-box__image")
                 .panel(".selection-popup")
-                .insideTarget(".selectionList")
+                .insideTarget(".selection-list")
                 // SelectionPopup positions itself with a shadow width of 4
                 // (PositionUtil.getPosition(4, ...)), which grows the anchor by 4px
                 .placement("input.selection-box__input", PopupLocation.BELOW, 4,

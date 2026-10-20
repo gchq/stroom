@@ -1321,7 +1321,7 @@ async function driveStep(step) {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
       // ON SCREEN: a popup is laid out off-viewport (−956,−938) before it is positioned, and another
       // SelectionList (the query help pane) may hold the same text; `offsetWidth > 0` passes both.
-      const row = [...document.querySelectorAll('.selectionList-elementChooser tr, .selectionList-elementChooser .dataGridRow')]
+      const row = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .dataGridRow')]
         .find((e) => e.offsetWidth > 0 && norm(e.textContent) === wanted && e.getBoundingClientRect().x >= 0 && e.getBoundingClientRect().y >= 0);
       if (!row) return null;
       const r = row.getBoundingClientRect();

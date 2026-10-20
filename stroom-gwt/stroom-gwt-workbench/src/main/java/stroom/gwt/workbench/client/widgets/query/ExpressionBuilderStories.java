@@ -585,15 +585,16 @@ public final class ExpressionBuilderStories {
                     play.click(selectTermFieldPicker(play, "UserId"));
                     play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
                     // Stroom hides the pager and the quick filter rather than omitting them
-                    play.expect(play.screen().querySelector(".selectionList .pager")).not().toBeVisible();
-                    play.expect(play.screen().querySelector(".selectionList-quickFilter")).not().toBeVisible();
+                    play.expect(play.screen().querySelector(".selection-list .pager")).not().toBeVisible();
+                    play.expect(play.screen().querySelector(".selection-list__filter")).not().toBeVisible();
                 })
                 // A field list served by a data source always offers its quick filter and pager
                 .story("DynamicFieldsAlwaysShowPickerChrome", context -> editor(context, populatedExpression(), true))
                 .withPlay(play -> {
                     play.click(selectTermFieldPicker(play, "UserId"));
-                    play.waitFor(() -> play.expect(play.screen().querySelector(".selectionList .pager")).toBeVisible());
-                    play.expect(play.screen().querySelector(".selectionList-quickFilter")).toBeVisible();
+                    play.waitFor(() -> play.expect(play.screen().querySelector(".selection-list .pager"))
+                            .toBeVisible());
+                    play.expect(play.screen().querySelector(".selection-list__filter")).toBeVisible();
                 })
                 // Clicking the drop-down arrow opens the picker, as clicking its label does
                 .story("ClickingTheDropdownArrowOpensThePicker",
@@ -668,7 +669,7 @@ public final class ExpressionBuilderStories {
         play.waitFor(() -> play.expect(play.screen().getByText("EventTime", ".selectionItemCell-text"))
                 .toBeInTheDocument());
         // A data source's list always has the quick filter
-        play.expect(play.screen().querySelector(".selectionList-quickFilter")).toBeVisible();
+        play.expect(play.screen().querySelector(".selection-list__filter")).toBeVisible();
     }
 
     /// Selects the term whose label contains the text, and returns its field picker (the part of

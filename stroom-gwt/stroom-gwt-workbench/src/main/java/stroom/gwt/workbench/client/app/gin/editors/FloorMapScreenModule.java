@@ -35,6 +35,8 @@ import stroom.floormap.client.presenter.FloorMapObjectEditPresenter;
 import stroom.floormap.client.presenter.FloorMapObjectEditPresenter.FloorMapObjectEditView;
 import stroom.floormap.client.presenter.FloorMapSetScalePresenter;
 import stroom.floormap.client.presenter.FloorMapSetScalePresenter.FloorMapSetScaleView;
+import stroom.floormap.client.presenter.FloorMapSettingsPresenter;
+import stroom.floormap.client.presenter.FloorMapSettingsPresenter.FloorMapSettingsView;
 import stroom.floormap.client.presenter.FloorMapTimeListPresenter;
 import stroom.floormap.client.presenter.FloorMapTimeListPresenter.FloorMapTimeListView;
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter;
@@ -49,6 +51,7 @@ import stroom.floormap.client.view.FloorMapLayerStyleViewImpl;
 import stroom.floormap.client.view.FloorMapLayersViewImpl;
 import stroom.floormap.client.view.FloorMapObjectEditViewImpl;
 import stroom.floormap.client.view.FloorMapSetScaleViewImpl;
+import stroom.floormap.client.view.FloorMapSettingsViewImpl;
 import stroom.floormap.client.view.FloorMapTimeListViewImpl;
 import stroom.floormap.client.view.FloorMapTimelineSettingsViewImpl;
 import stroom.floormap.client.view.FloorMapTimelineViewImpl;
@@ -57,7 +60,8 @@ import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 /// The presenter and view bindings of Stroom's `FloorMapModule`
 /// (`stroom/floormap/client/gin/FloorMapModule.java`) that a floor map's Editor tab
-/// ([FloorMapEditorPresenter]) needs, and the document asset chooser its asset boxes open
+/// ([FloorMapEditorPresenter]) and Settings tab ([FloorMapSettingsPresenter]) need, and the document
+/// asset chooser its asset boxes open
 /// (`stroom/document/asset/client/gin/DocumentAssetModule.java`), without their plugins and app
 /// services.
 public class FloorMapScreenModule extends AbstractPresenterModule {
@@ -98,6 +102,9 @@ public class FloorMapScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(FloorMapSetScalePresenter.class,
                 FloorMapSetScaleView.class,
                 FloorMapSetScaleViewImpl.class);
+        bindPresenterWidget(FloorMapSettingsPresenter.class,
+                FloorMapSettingsView.class,
+                FloorMapSettingsViewImpl.class);
         bindPresenterWidget(DocumentAssetChooserPresenter.class,
                 DocumentAssetChooserView.class,
                 DocumentAssetChooserViewImpl.class);

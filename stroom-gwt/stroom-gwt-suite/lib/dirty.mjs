@@ -298,7 +298,7 @@ export async function nudge(page, f) {
   await page.waitForTimeout(500);
   const item = await page.evaluate((current) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const rows = [...document.querySelectorAll('.selectionList-elementChooser tr, .selectionList-elementChooser .dataGridRow')]
+    const rows = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .dataGridRow')]
       .filter((e) => e.offsetWidth > 0 && e.getBoundingClientRect().x >= 0 && e.getBoundingClientRect().y >= 0);
     const other = rows.find((e) => norm(e.textContent) && norm(e.textContent) !== norm(current));
     if (!other) return null;
@@ -307,7 +307,7 @@ export async function nudge(page, f) {
   }, f.value ?? '');
   if (!item) {
     // Escape only if a list did open: with none, the Escape lands on the dialog and closes it.
-    const listOpen = await page.evaluate(() => [...document.querySelectorAll('.selectionList-elementChooser')]
+    const listOpen = await page.evaluate(() => [...document.querySelectorAll('.selection-list__options')]
       .some((e) => e.offsetWidth > 0)).catch(() => false);
     if (listOpen) await page.keyboard.press('Escape').catch(() => {});
     return null;
