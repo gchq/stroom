@@ -38,7 +38,6 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import event.logging.EventAction;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -230,8 +229,8 @@ final class ToolTestFixture {
                 .toList();
     }
 
-    static ToolExecutionRequest request(final String name, final String arguments) {
-        return ToolExecutionRequest.builder().id("1").name(name).arguments(arguments).build();
+    static ToolCall request(final String name, final String arguments) {
+        return ToolCalls.call(name, arguments);
     }
 
     static String read(final Path path) {

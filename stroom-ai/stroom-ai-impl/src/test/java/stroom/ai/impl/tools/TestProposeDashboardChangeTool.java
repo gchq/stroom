@@ -46,13 +46,13 @@ import stroom.query.impl.QueryService;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -84,6 +84,7 @@ class TestProposeDashboardChangeTool {
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final DashboardBuilder dashboardBuilder = Mockito.mock(DashboardBuilder.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
+    private final List<Map<String, Object>> offered = new ArrayList<>();
     private ProposeDashboardChangeTool tool;
 
     @BeforeEach
@@ -113,13 +114,13 @@ class TestProposeDashboardChangeTool {
                 .contains("- Group by 'UserId' (level 1)")
                 .contains("- Add column 'Count' with expression count(), formatted as Number, at the end")
                 .contains("never saved");
-        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action)
                 .containsEntry("action", UserActions.APPLY_DASHBOARD_CHANGE)
                 .containsEntry("component", "Events")
                 .containsEntry("component_id", "table-1")
                 .containsEntry("snapshot_hash", AiTabSnapshotPart.hashText(SETTINGS))
                 .containsEntry("summary", "Counts events per user."));
-        Mockito.verify(auditLog).documentViewed(Mockito.eq(CHAT), Mockito.eq(DASHBOARD),
+        Mockito.verify(auditLog).documentViewed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(DASHBOARD),
                 Mockito.contains("Proposed a change to table 'Events'"));
     }
 
@@ -139,7 +140,7 @@ class TestProposeDashboardChangeTool {
                 "where", "EventType = \"Logon\"\nor EventType = \"Logoff\"")));
 
         assertThat(result).contains("- Set the query to find: EventType is 'Logon' or EventType is 'Logoff'");
-        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action)
                 .extractingByKey("changes")
                 .asInstanceOf(InstanceOfAssertFactories.LIST)
                 .singleElement()
@@ -156,7 +157,7 @@ class TestProposeDashboardChangeTool {
         assertThat(run(List.of(Map.of("op", "set_expression", "where", "Nope = 1"))))
                 .startsWith("No change was proposed, as it isn't valid")
                 .contains("Change 1 (set_expression): The conditions aren't valid: unknown field 'Nope'");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
 
         assertThat(run(List.of(Map.of("op", "set_expression"))))
                 .startsWith("Error: Change 1: set_expression needs where");
@@ -177,7 +178,7 @@ class TestProposeDashboardChangeTool {
                 .contains("- Rename this table to 'Tweets'")
                 .contains("- Set run the query when the dashboard opens (queryOnOpen) of 'query' to on")
                 .contains("(pipeline) of 'Preview' to Display");
-        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action)
                 .extractingByKey("changes")
                 .asInstanceOf(InstanceOfAssertFactories.LIST)
                 .satisfiesExactly(
@@ -211,7 +212,7 @@ class TestProposeDashboardChangeTool {
                 .contains("Change 4 (set_setting): no pipeline you can view has the UUID 'nope'")
                 .contains("Change 5 (set_setting): the dashboard has no Query 'Events'.")
                 .contains("Change 6 (rename): the dashboard already has a component 'preview'.");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -223,7 +224,7 @@ class TestProposeDashboardChangeTool {
 
         assertThat(result).contains("- Set rows per page (pageSize) of 'Logons' to 20")
                 .contains("- Rename 'Logons' to 'Sign-ins'");
-        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action)
                 .extractingByKey("changes")
                 .asInstanceOf(InstanceOfAssertFactories.LIST)
                 .element(1)
@@ -242,7 +243,7 @@ class TestProposeDashboardChangeTool {
 
         assertThat(result).contains("- Add a Text widget 'Raw event' below this table")
                 .contains("(pipeline) of 'Raw event' to Display");
-        assertThat(context.takeUserActions("c1")).hasSize(1);
+        assertThat(takeUserActions()).hasSize(1);
 
         assertThat(run(List.of(Map.of("op", "add_text", "name", "preview"))))
                 .contains("Change 1 (add_text): the dashboard already has a component 'preview'");
@@ -284,7 +285,7 @@ class TestProposeDashboardChangeTool {
         assertThat(result)
                 .startsWith("No change was proposed, as it isn't valid")
                 .contains("the table has no column 'Nope'. Its columns are: UserId, EventType.");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -294,7 +295,7 @@ class TestProposeDashboardChangeTool {
         assertThat(run(List.of(Map.of("op", "edit_column", "column", "UserId", "expression",
                 "upperCase(${Usr})"))))
                 .contains("names a field 'Usr' that the dashboard's data source doesn't have");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -320,7 +321,7 @@ class TestProposeDashboardChangeTool {
         final String result = run(List.of(Map.of("op", "hide_column", "column", "UserId")));
 
         assertThat(result).isEqualTo(DocumentAccess.NO_PERMISSION).doesNotContain("Logons");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
         Mockito.verifyNoInteractions(auditLog);
     }
 
@@ -330,7 +331,7 @@ class TestProposeDashboardChangeTool {
 
         assertThat(run(List.of(Map.of("op", "hide_column", "column", "UserId"))))
                 .contains("aren't in the tab snapshot in full");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -376,7 +377,21 @@ class TestProposeDashboardChangeTool {
     private String run(final String component, final List<? extends Map<String, ?>> changes) {
         final String arguments = JsonUtil.writeValueAsString(Map.of("component", component, "changes", changes,
                 "summary", "Counts events per user."));
-        return context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1")
-                .name(ProposeDashboardChangeTool.NAME).arguments(arguments).build(), CHAT));
+        return call(arguments);
+    }
+
+    // Runs a call as part of the agent run, keeping the user actions its result offers for takeUserActions.
+    private String call(final String arguments) {
+        final ToolResult result = context.run(() -> tool.execute(
+                new ToolCall("c1", ProposeDashboardChangeTool.NAME, arguments), ToolCalls.inChat(CHAT, workspace)));
+        result.userActions().forEach(action -> offered.add(action.toMap()));
+        return result.text();
+    }
+
+    // The user actions offered by the calls since this was last called, as the chat shows them.
+    private List<Map<String, Object>> takeUserActions() {
+        final List<Map<String, Object>> taken = List.copyOf(offered);
+        offered.clear();
+        return taken;
     }
 }

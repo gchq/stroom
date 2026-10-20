@@ -16,21 +16,20 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -66,15 +65,25 @@ class DocumentInfoTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Describes a Stroom document (e.g. a feed, pipeline, XSLT, dictionary, index or "
-                             + "dashboard) given its UUID: its type, name, Explorer path, tags, who created and "
-                             + "last changed it and when, its version, and the documents it depends on and that "
-                             + "depend on it, each as a link. Use read_document for its content and "
-                             + "document_documentation for its documentation.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Describes a Stroom document (e.g. a feed, pipeline, XSLT, dictionary, index or "
+                                 + "dashboard) given its UUID: its type, name, Explorer path, tags, who created and "
+                                 + "last changed it and when, its version, and the documents it depends on and that "
+                                 + "depend on it, each as a link.")
+                        .chatOnly(" Use read_document for its content and document_documentation for its "
+                                  + "documentation.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(UUID_ARG, "The document's UUID.")
                         .required(UUID_ARG)
                         .build())
@@ -82,27 +91,23 @@ class DocumentInfoTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
-        return "Error: " + NAME + " can only be used in a chat.";
-    }
-
-    @Override
-    public String execute(final ToolExecutionRequest request, final int chatId) {
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
         final String uuid = stringArg(request, UUID_ARG);
         if (uuid == null) {
-            return "Error: give the document's uuid.";
+            return ToolResult.text("Error: give the document's uuid.");
         }
         final ExplorerNode node = documentAccess.find(uuid).orElse(null);
         if (node == null) {
-            return DocumentAccess.NO_PERMISSION;
+            return ToolResult.text(DocumentAccess.NO_PERMISSION);
         }
         final DocRef docRef = node.getDocRef();
-        documentAccess.logView(chatId, docRef, "Described by the " + NAME + " tool");
+        documentAccess.logView(context.session(), docRef, "Described by the " + NAME + " tool");
 
         final StringBuilder sb = new StringBuilder();
         sb.append(docRef.getType()).append(" '").append(docRef.getName()).append("'\n");
         sb.append("UUID: ").append(docRef.getUuid()).append('\n');
-        sb.append("Link: ").append(link(docRef)).append('\n');
+        final StroomLinks links = context.links();
+        sb.append("Link: ").append(links.document(docRef)).append('\n');
         sb.append("Path: ").append(documentAccess.path(docRef)).append('\n');
         if (NullSafe.hasItems(node.getTags())) {
             sb.append("Tags: ").append(String.join(", ", node.getTags().stream().sorted().toList())).append('\n');
@@ -112,13 +117,13 @@ class DocumentInfoTool extends AbstractBuiltInTool {
                 .map(AbstractDoc.class::cast)
                 .ifPresent(doc -> appendAudit(sb, doc));
 
-        appendLinks(sb, "Dependencies (documents it uses)",
+        appendLinks(sb, links, "Dependencies (documents it uses)",
                 DependencyCriteria.FIELD_DEF_FROM_UUID.getFilterQualifier(), docRef,
                 Dependency::getFrom, Dependency::getTo);
-        appendLinks(sb, "Dependants (documents that use it)",
+        appendLinks(sb, links, "Dependants (documents that use it)",
                 DependencyCriteria.FIELD_DEF_TO_UUID.getFilterQualifier(), docRef,
                 Dependency::getTo, Dependency::getFrom);
-        return sb.toString().stripTrailing();
+        return ToolResult.text(sb.toString().stripTrailing());
     }
 
     private static void appendAudit(final StringBuilder sb, final AbstractDoc doc) {
@@ -137,6 +142,7 @@ class DocumentInfoTool extends AbstractBuiltInTool {
 
     // Lists the documents at the other end of the document's dependency edges, as links, checking each for View.
     private void appendLinks(final StringBuilder sb,
+                             final StroomLinks links,
                              final String heading,
                              final String filterQualifier,
                              final DocRef docRef,
@@ -155,7 +161,7 @@ class DocumentInfoTool extends AbstractBuiltInTool {
                 : linked.size()).append('\n');
         linked.stream()
                 .limit(MAX_LINKS)
-                .forEach(other -> sb.append("- ").append(link(other)).append(" (").append(other.getType())
+                .forEach(other -> sb.append("- ").append(links.document(other)).append(" (").append(other.getType())
                         .append(")\n"));
         if (linked.size() > MAX_LINKS) {
             sb.append("- … and ").append(linked.size() - MAX_LINKS).append(" more\n");
@@ -187,14 +193,6 @@ class DocumentInfoTool extends AbstractBuiltInTool {
         sorted.sort(Comparator.comparing((DocRef other) -> NullSafe.string(other.getType()))
                 .thenComparing(other -> NullSafe.string(other.getName())));
         return sorted;
-    }
-
-    /// @return A link the user can click to open the document.
-    static String link(final DocRef docRef) {
-        final String name = NullSafe.nonBlankStringElse(docRef.getName(), docRef.getUuid())
-                .replace("[", "(")
-                .replace("]", ")");
-        return "[" + name + "](?action=open-doc&docType=" + docRef.getType() + "&docUuid=" + docRef.getUuid() + ")";
     }
 
     private static String when(final Long timeMs) {

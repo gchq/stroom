@@ -271,7 +271,8 @@ class TestXsltLookupsTool {
     private String run(final String arguments) {
         final XsltLookupsTool tool = new XsltLookupsTool(fixture.workspace, () -> fixture.dependencyService,
                 () -> docFinder, fixture.documentAccess(), fixture.auditLog(), tabSnapshots);
-        return tool.run(ToolTestFixture.request(XsltLookupsTool.NAME, arguments), 1);
+        return tool.run(ToolTestFixture.request(XsltLookupsTool.NAME, arguments), ToolCalls.inChat(1,
+                fixture.workspace)).text();
     }
 
     private DocRef xslt(final String uuid, final String name, final String text, final boolean canView) {

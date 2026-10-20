@@ -49,7 +49,6 @@ import stroom.util.shared.UserRef;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import event.logging.OtherObject;
 import event.logging.ViewEventAction;
 import jakarta.inject.Inject;
@@ -453,8 +452,8 @@ class TestEventTools {
         }
     }
 
-    private String run(final BuiltInTool tool, final String json) {
-        return tool.execute(ToolExecutionRequest.builder().id("x").name("t").arguments(json).build(), chatId);
+    private String run(final StroomTool tool, final String json) {
+        return tool.execute(new ToolCall("x", "t", json), ToolCalls.inChat(chatId, workspace)).text();
     }
 
     /// A segmented stream held in memory: reads the included segments, or all of them if none are.

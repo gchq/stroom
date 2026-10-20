@@ -111,7 +111,7 @@ class TestAgentInstructions {
 
     @Test
     void theNoteGivesTheTextOfThoseThatApplyCutAtTheMost() {
-        final String note = load().note(List.of("/Feeds"));
+        final String note = load().note(StroomLinks.CHAT, List.of("/Feeds"));
 
         assertThat(note)
                 .contains(AgentInstructions.FOLLOW)
@@ -119,10 +119,10 @@ class TestAgentInstructions {
                 .contains("in /Feeds (applies to /Feeds and below)")
                 .contains("Use Initiator.Id for the actioning user");
         assertThat(note.indexOf("in / (")).isLessThan(note.indexOf("in /Feeds ("));
-        assertThat(load().note(List.of())).isEmpty();
+        assertThat(load().note(StroomLinks.CHAT, List.of())).isEmpty();
 
         fixture.addInstructions("long-agents", "x".repeat(AgentInstructions.MAX_CHARS + 10), true, "Long");
-        assertThat(load().note(List.of("/Long")))
+        assertThat(load().note(StroomLinks.CHAT, List.of("/Long")))
                 .contains("[cut short; read the rest with read_document]");
     }
 
@@ -132,17 +132,18 @@ class TestAgentInstructions {
                 fixture.documentAccess());
 
         // With nothing given, those that apply everywhere.
-        assertThat(tool.execute(ToolTestFixture.request(GetInstructionsTool.NAME, "{}"), 1))
+        assertThat(tool.execute(ToolTestFixture.request(GetInstructionsTool.NAME, "{}"), ToolCalls.inChat(1,
+                fixture.workspace)).text())
                 .startsWith("1 AGENTS doc(s) apply.")
                 .contains("in / (applies to everything)")
                 .doesNotContain("Initiator.Id")
                 .contains("Other AGENTS docs, which don't apply there: in /Feeds.");
         assertThat(tool.execute(ToolTestFixture.request(GetInstructionsTool.NAME,
-                "{\"uuids\":[\"no-such-uuid\"]}"), 1))
+                "{\"uuids\":[\"no-such-uuid\"]}"), ToolCalls.inChat(1, fixture.workspace)).text())
                 .contains("Not found, or you don't have permission to view them: no-such-uuid.");
     }
 
     private Standing load() {
-        return fixture.agentInstructions().load(1, "test");
+        return fixture.agentInstructions().load(ToolSession.chat(1), "test");
     }
 }

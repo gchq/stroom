@@ -16,12 +16,11 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 /**
@@ -37,11 +36,15 @@ class WcTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Says how many lines and bytes a workspace file has.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Says how many lines and bytes a ")
+                        .chatOnly("workspace ")
+                        .general("file has.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(PATH_ARG, "The file.")
                         .required(PATH_ARG)
                         .build())
@@ -49,10 +52,11 @@ class WcTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
-        return path + ": " + workspace.lineCount(chatId, path) + " lines, " + workspace.size(chatId, path)
-               + " bytes";
+        return ToolResult.text(path + ": " + workspace.lineCount(path) + " lines, " + workspace.size(path)
+                               + " bytes");
     }
 
     @Override

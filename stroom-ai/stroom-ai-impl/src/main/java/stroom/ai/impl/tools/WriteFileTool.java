@@ -16,13 +16,12 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 /**
@@ -40,12 +39,20 @@ class WriteFileTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Writes a file in /outputs/, replacing any file already at that path.")
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(PATH_ARG, "The file, e.g. /outputs/summary.md.")
+                .description(ToolDescription.builder()
+                        .general("Writes a file")
+                        .chatOnly(" in /outputs/")
+                        .general(", replacing any file already at that path.")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(PATH_ARG, ToolDescription.builder()
+                                .general("The file")
+                                .chatOnly(", e.g. /outputs/summary.md")
+                                .general(".")
+                                .build())
                         .addStringProperty(CONTENT_ARG, "The content.")
                         .required(PATH_ARG, CONTENT_ARG)
                         .build())
@@ -53,14 +60,15 @@ class WriteFileTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final String content = rawArg(request, CONTENT_ARG);
         if (content == null) {
             throw new WorkspaceException("Give the content to write.");
         }
-        workspace.write(chatId, path, content, null);
-        return "Wrote " + path + " (" + content.lines().count() + " lines).";
+        workspace.write(path, content, null);
+        return ToolResult.text("Wrote " + path + " (" + content.lines().count() + " lines).");
     }
 
     @Override

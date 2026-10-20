@@ -127,8 +127,10 @@ class TestAgentEndToEnd {
         // No built-in tools: this is about the model and MCP server.
         final BuiltInTools builtInTools = Mockito.mock(BuiltInTools.class);
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of());
-        agentChat = new McpAgentChat(aiService, builtInTools, Mockito.mock(AiChatRunManager.class),
-                Mockito.mock(WorkspaceStore.class), Mockito.mock(ContextUsageTracker.class), toolConsent,
+        final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
+        agentChat = new McpAgentChat(aiService, builtInTools, runManager,
+                Mockito.mock(WorkspaceStore.class), Mockito.mock(ContextUsageTracker.class),
+                ConsentGates.chat(toolConsent, aiService, runManager),
                 Mockito.mock(AiAuditLog.class), new ModelStreamer(aiService), new ToolGroups.Activations(() -> aiDao),
                 AiConfig::new, aiDao, new UserActions(lookup));
     }

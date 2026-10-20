@@ -1,0 +1,79 @@
+=== Stub given to the model ===
+The result was too large to show in full (7092 characters, 601 lines), so it has been saved to the workspace file /outputs/turn-3/call-42.txt. It starts with these 30 line(s):
+
+[ {
+  "id" : 0,
+  "host" : "fw0"
+}, {
+  "id" : 1,
+  "host" : "fw1"
+}, {
+  "id" : 2,
+  "host" : "fw2"
+}, {
+  "id" : 3,
+  "host" : "fw3"
+}, {
+  "id" : 4,
+  "host" : "fw4"
+}, {
+  "id" : 5,
+  "host" : "fw5"
+}, {
+  "id" : 6,
+  "host" : "fw6"
+}, {
+  "id" : 7,
+  "host" : "fw0"
+}, {
+  "id" : 8,
+  "host" : "fw1"
+}, {
+  "id" : 9,
+  "host" : "fw2"
+
+It is a JSON array of 200 items. Pick out the parts you need with the jq tool, e.g. `.[0]`, or `length`.
+
+If you need more of it, read it from the workspace file with the workspace tools, if you have them.
+
+=== Saved to /outputs/turn-3/call-42.txt (7092 characters, 601 lines; the first 40) ===
+[ {
+  "id" : 0,
+  "host" : "fw0"
+}, {
+  "id" : 1,
+  "host" : "fw1"
+}, {
+  "id" : 2,
+  "host" : "fw2"
+}, {
+  "id" : 3,
+  "host" : "fw3"
+}, {
+  "id" : 4,
+  "host" : "fw4"
+}, {
+  "id" : 5,
+  "host" : "fw5"
+}, {
+  "id" : 6,
+  "host" : "fw6"
+}, {
+  "id" : 7,
+  "host" : "fw0"
+}, {
+  "id" : 8,
+  "host" : "fw1"
+}, {
+  "id" : 9,
+  "host" : "fw2"
+}, {
+  "id" : 10,
+  "host" : "fw3"
+}, {
+  "id" : 11,
+  "host" : "fw4"
+}, {
+  "id" : 12,
+  "host" : "fw5"
+}, {

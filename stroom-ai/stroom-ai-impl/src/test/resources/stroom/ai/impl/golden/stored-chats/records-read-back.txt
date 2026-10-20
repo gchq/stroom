@@ -1,0 +1,207 @@
+# How the server reads back the records of a 7.14 chat
+
+#4 THINKING
+    Reasoning: The error counts are in the Errors view.
+    Exported as:
+    The error counts are in the Errors view.
+#6 TOOL_CALL
+    ToolCallRecord[callId=call-1, tool=stroom__find_feeds, arguments={"name":"*"}, rationale=Checking the error counts.]
+    Exported as:
+    `stroom__find_feeds`
+    
+    ~~~~~~~~
+    {"name":"*"}
+    ~~~~~~~~
+#7 TOOL_RESULT
+    ToolResultRecord[callId=call-1, tool=stroom__find_feeds, error=false, text=Found 2 feeds: ACME, FW, path=null, chars=23, durationMs=15, userActions=null]
+    Exported as:
+    `stroom__find_feeds`
+    
+    ~~~~~~~~
+    Found 2 feeds: ACME, FW
+    ~~~~~~~~
+#8 TOOL_CALL
+    ToolCallRecord[callId=call-2, tool=run_stroomql, arguments={"query":"from Errors select Feed, Count"}, rationale=null]
+    Exported as:
+    `run_stroomql`
+    
+    ~~~~~~~~
+    {"query":"from Errors select Feed, Count"}
+    ~~~~~~~~
+#9 TOOL_RESULT
+    ToolResultRecord[callId=call-2, tool=run_stroomql, error=false, text=The result was too large to show in full (24024 characters, 3003 lines), so it has been saved to the workspace file /outputs/turn-2/call-8.txt. It starts with these 30 line(s):
+    
+    Feed,Count
+    ACME,40
+    FW,2
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    
+    If you need more of it, read it from the workspace file with the workspace tools, if you have them., path=/outputs/turn-2/call-8.txt, chars=24027, durationMs=1200, userActions=null]
+    Exported as:
+    `run_stroomql`
+    
+    The full result was saved to `/outputs/turn-2/call-8.txt`.
+    
+    ~~~~~~~~
+    The result was too large to show in full (24024 characters, 3003 lines), so it has been saved to the workspace file /outputs/turn-2/call-8.txt. It starts with these 30 line(s):
+    
+    Feed,Count
+    ACME,40
+    FW,2
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    OTHER,0
+    
+    If you need more of it, read it from the workspace file with the workspace tools, if you have them.
+    ~~~~~~~~
+#15 THINKING
+    Reasoning: A query of the ACME errors, as a button.
+    Exported as:
+    A query of the ACME errors, as a button.
+#16 TOOL_CALL
+    ToolCallRecord[callId=call-3, tool=propose_query, arguments={"name":"ACME errors","query":"from Errors where Feed = 'ACME' select Feed, Count"}, rationale=null]
+    Exported as:
+    `propose_query`
+    
+    ~~~~~~~~
+    {"name":"ACME errors","query":"from Errors where Feed = 'ACME' select Feed, Count"}
+    ~~~~~~~~
+#17 TOOL_RESULT
+    ToolResultRecord[callId=call-3, tool=propose_query, error=false, text=The user has been offered a 'Create query…' button for 'ACME errors', reading View 'Errors' (uuid errors-uuid)., path=null, chars=98, durationMs=40, userActions=[UserActionRecord[id=create-query-3, action=create_query, label=Create query 'ACME errors', reading View 'Errors', details=The ACME errors, warning=null, filterId=null, doc=DocRef{type='View', uuid='errors-uuid', name='Errors'}, request=from Errors
+    where Feed = 'ACME'
+    select Feed, Count, after=[], expiresMs=1767312000000, status=DONE, outcome=Created query 'ACME errors', name=ACME errors, codeChange=null, dashboardChange=null, newDashboard=null]]]
+    Exported as:
+    `propose_query`
+    
+    ~~~~~~~~
+    The user has been offered a 'Create query…' button for 'ACME errors', reading View 'Errors' (uuid errors-uuid).
+    ~~~~~~~~
+#22 TOOL_CALL
+    ToolCallRecord[callId=call-4, tool=memory, arguments={"command":"write","path":"/memories/role.md","content":"Looks after ACME.\n"}, rationale=null]
+    Exported as:
+    `memory`
+    
+    ~~~~~~~~
+    {"command":"write","path":"/memories/role.md","content":"Looks after ACME.\n"}
+    ~~~~~~~~
+#23 APPROVAL_REQUEST
+    MemoryChange[kind=MEMORY, operation=CREATE, path=/memories/role.md, baseVersion=null, before=null, after=Looks after ACME.
+    , status=APPROVED, reason=The agent had read tool output or data in this chat, which could have told it to make this change., undone=false]
+#24 TOOL_RESULT
+    ToolResultRecord[callId=call-4, tool=memory, error=false, text=The user has been asked to approve this change to /memories/role.md. It is not saved unless they approve it, so do not rely on it. Carry on with your work., path=null, chars=150, durationMs=5, userActions=null]
+    Exported as:
+    `memory`
+    
+    ~~~~~~~~
+    The user has been asked to approve this change to /memories/role.md. It is not saved unless they approve it, so do not rely on it. Carry on with your work.
+    ~~~~~~~~
+#25 MEMORY_UPDATE
+    MemoryChange[kind=MEMORY, operation=CREATE, path=/memories/role.md, baseVersion=null, before=null, after=Looks after ACME.
+    , status=null, reason=null, undone=false]
+    Exported as:
+    ~~~~~~~~
+    {"kind":"MEMORY","operation":"CREATE","path":"/memories/role.md","after":"Looks after ACME.\n","undone":false}
+    ~~~~~~~~
+#29 COMPACTION_SUMMARY
+    CompactionRecord[digestsUpToTurnId=21, summaryUpToTurnId=2, summary=The user asked which feeds had errors yesterday: ACME (40) and FW (2)., tokensBefore=52000, tokensAfter=9000, messageCount=27, manual=false, stale=false]
+#31 TOOL_CALL
+    ToolCallRecord[callId=call-5, tool=stroom__describe_filter, arguments={"feed":"ACME"}, rationale=null]
+    Exported as:
+    `stroom__describe_filter`
+    
+    ~~~~~~~~
+    {"feed":"ACME"}
+    ~~~~~~~~
+#32 ELICITATION
+    ElicitationRecord[kind=ELICITATION, status=ACCEPTED, server=stroom, tool=null, message=Which filter?, schema={type=object, properties={filter={type=string, enum=[31, 32]}}}, expiresMs=1767226200000, content={filter=31}]
+#33 TOOL_RESULT
+    ToolResultRecord[callId=call-5, tool=stroom__describe_filter, error=false, text=Filter 31 reads ACME, and is enabled., path=null, chars=36, durationMs=9000, userActions=null]
+    Exported as:
+    `stroom__describe_filter`
+    
+    ~~~~~~~~
+    Filter 31 reads ACME, and is enabled.
+    ~~~~~~~~
+#36 THINKING
+    Reasoning: Feed first, then its filter.
+    Exported as:
+    Feed first, then its filter.
+#38 TOOL_CALL
+    ToolCallRecord[callId=call-6, tool=create_feed, arguments={"name":"ACME-EVENTS"}, rationale=Creating the feed, then its filter.]
+    Exported as:
+    `create_feed`
+    
+    ~~~~~~~~
+    {"name":"ACME-EVENTS"}
+    ~~~~~~~~
+#39 TOOL_CALL
+    ToolCallRecord[callId=call-7, tool=create_filter, arguments={"feed":"ACME-EVENTS"}, rationale=Creating the feed, then its filter.]
+    Exported as:
+    `create_filter`
+    
+    ~~~~~~~~
+    {"feed":"ACME-EVENTS"}
+    ~~~~~~~~
+#40 TOOL_RESULT
+    ToolResultRecord[callId=call-6, tool=create_feed, error=false, text=Feed ACME-EVENTS created., path=null, chars=25, durationMs=300, userActions=null]
+    Exported as:
+    `create_feed`
+    
+    ~~~~~~~~
+    Feed ACME-EVENTS created.
+    ~~~~~~~~
+#41 APPROVAL_REQUEST
+    ToolApprovalRequest[kind=TOOL, status=ANSWERED, reason=null, calls=[PendingCall[callId=call-7, tool=create_filter, serverKey=other, serverTool=create_filter, arguments={"feed":"ACME-EVENTS"}, risks=[untrusted server, can modify], toolHash=tool-hash, serverHash=server-hash, decision=ALLOWED, note=null, description=Creates a processor filter.]], allowForChat=true, allowServerReadOnly=false]
+
+The latest task list (McpAgentChat.latestTaskList): null
+The pending tool approval (ToolApprovalService.pending): null

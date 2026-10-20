@@ -16,14 +16,13 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SafeXPath;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.util.json.JsonUtil;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import net.sf.saxon.s9api.XPathExecutable;
 import net.sf.saxon.s9api.XdmNode;
@@ -61,33 +60,40 @@ class XPathTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Runs an XPath 3.1 expression on an XML file in the workspace, e.g. "
-                             + "'//d:Event/d:EventSource/d:Device/d:HostName'. If the document is in a namespace, "
-                             + "it is bound to the prefix '" + DEFAULT_PREFIX + "' unless you give namespaces. "
-                             + "Each result is one line: its text, or its XML if asXml is true. Give out to "
-                             + "write the results to a file. Only the document can be read, and regular "
-                             + "expression functions are not available.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Runs an XPath 3.1 expression on an XML file")
+                        .chatOnly(" in the workspace")
+                        .general(", e.g. '//d:Event/d:EventSource/d:Device/d:HostName'. If the document is in a "
+                                 + "namespace, it is bound to the prefix '" + DEFAULT_PREFIX + "' unless you give "
+                                 + "namespaces. Each result is one line: its text, or its XML if asXml is true.")
+                        .chatOnly(" Give out to write the results to a file.")
+                        .general(" Only the document can be read, and regular expression functions are not "
+                                 + "available.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(PATH_ARG, "The XML file.")
                         .addStringProperty(EXPRESSION_ARG, "The XPath expression.")
-                        .addProperty(NAMESPACES_ARG, JsonObjectSchema.builder()
+                        .addProperty(NAMESPACES_ARG, ObjectSchema.builder()
                                 .description("Namespace prefixes to use, e.g. {\"e\": \"event-logging:3\"}.")
                                 .build())
                         .addBooleanProperty(AS_XML_ARG, "True to give element results as XML.")
-                        .addStringProperty(OUT_ARG, "A file in /outputs/ to write the results to.")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A file in /outputs/ to write the results to.")
+                                .build())
                         .required(PATH_ARG, EXPRESSION_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final WorkspacePath out = outArg(request);
-        final XdmNode document = SafeXPath.parse(workspace.localFile(chatId, path));
+        final XdmNode document = SafeXPath.parse(workspace.localFile(path));
         final Map<String, String> namespaces = namespaces(request);
         final String documentNamespace = documentNamespace(document);
         if (documentNamespace != null && !namespaces.containsValue(documentNamespace)) {
@@ -114,16 +120,16 @@ class XPathTool extends AbstractWorkspaceTool {
                     } catch (final IOException e) {
                         throw new UncheckedIOException(e);
                     }
-                } else if (results.size() < limits().getMaxLinesPerRead()) {
+                } else if (results.size() < limits(context).getMaxLinesPerRead()) {
                     results.add(line);
                 }
             });
             if (writer != null) {
                 writer.close();
-                workspace.write(chatId, out, temp, workspace.sourceDocUuid(chatId, path));
-                return "Wrote " + total[0] + " result(s) to " + out + ".";
+                workspace.write(out, temp, workspace.sourceDocUuid(path));
+                return ToolResult.text("Wrote " + total[0] + " result(s) to " + out + ".");
             }
-            return boundedLines(results, total[0]);
+            return ToolResult.text(boundedLines(context, results, total[0]));
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         } finally {
@@ -133,7 +139,7 @@ class XPathTool extends AbstractWorkspaceTool {
         }
     }
 
-    private Map<String, String> namespaces(final ToolExecutionRequest request) {
+    private Map<String, String> namespaces(final ToolCall request) {
         final Map<String, String> namespaces = new LinkedHashMap<>();
         try {
             final Map<?, ?> args = JsonUtil.readValue(request.arguments(), Map.class);

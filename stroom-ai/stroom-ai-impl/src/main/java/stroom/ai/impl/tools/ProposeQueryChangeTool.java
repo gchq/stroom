@@ -20,6 +20,7 @@ import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
 import stroom.ai.impl.UserActions;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.shared.AiTabSnapshotPart;
@@ -27,13 +28,11 @@ import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.query.impl.QueryService;
 import stroom.query.shared.QueryDoc;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.diff.LineDiff;
 import stroom.util.shared.diff.LineDiffResult;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -77,54 +76,71 @@ class ProposeQueryChangeTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("While the tab the user attached is a StroomQL Query, offers them an 'Apply to query' "
-                             + "button that puts a revised query in that tab's editor, unsaved; they can undo it. "
-                             + "Give the whole revised query. It is checked as propose_query's is, and laid out a "
-                             + "clause a line. Nothing changes until the user clicks the button. For a new Query, "
-                             + "use propose_query.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .chatOnly("While the tab the user attached is a StroomQL Query, offers them an 'Apply to "
+                                  + "query' button that puts a revised query in that tab's editor, unsaved; they can "
+                                  + "undo it. ")
+                        .general("Give the whole revised query. It is checked")
+                        .chatOnly(" as propose_query's is")
+                        .general(", and laid out a clause a line.")
+                        .chatOnly(" Nothing changes until the user clicks the button. For a new Query, use "
+                                  + "propose_query.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(QUERY_ARG, "The whole revised StroomQL.")
-                        .addStringProperty(SUMMARY_ARG, "A sentence saying what the change does and why, shown "
-                                                        + "with the button.")
+                        .addStringProperty(SUMMARY_ARG, ToolDescription.builder()
+                                .general("A sentence saying what the change does and why")
+                                .chatOnly(", shown with the button")
+                                .general(".")
+                                .build())
                         .required(QUERY_ARG, SUMMARY_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String given = rawArg(request, QUERY_ARG);
         final String summary = stringArg(request, SUMMARY_ARG);
         if (given == null || given.isBlank()) {
             throw new WorkspaceException("Give the whole revised StroomQL.");
         }
-        if (given.length() > limits().getMaxQueryLength()) {
-            throw new WorkspaceException("The query may be at most " + limits().getMaxQueryLength()
+        if (given.length() > limits(context).getMaxQueryLength()) {
+            throw new WorkspaceException("The query may be at most " + limits(context).getMaxQueryLength()
                                          + " characters.");
         }
         if (summary != null && summary.length() > MAX_SUMMARY_CHARS) {
             throw new WorkspaceException("The summary may be at most " + MAX_SUMMARY_CHARS + " characters.");
         }
-        final ToolRunContext context = ToolRunContext.current().orElse(null);
-        if (context == null) {
-            return "Error: a button can only be offered while answering a question in a chat.";
+        if (context.runContext().isEmpty()) {
+            return ToolResult.text("Error: a button can only be offered while answering a question in a chat.");
         }
 
+        // The tab the user attached to the chat.
+        final int chatId = context.session().requireChatId(NAME);
         final StoredTabSnapshot tab = tabSnapshots.forLatestQuestion(chatId).orElse(null);
         final DocRef queryDoc = NullSafe.get(tab, StoredTabSnapshot::docRef);
         if (queryDoc == null || !QueryDoc.TYPE.equals(queryDoc.getType())) {
-            return NOT_A_QUERY;
+            return ToolResult.text(NOT_A_QUERY);
         }
         if (!documentAccess.canView(queryDoc)) {
-            return DocumentAccess.NO_PERMISSION;
+            return ToolResult.text(DocumentAccess.NO_PERMISSION);
         }
         final UnsavedPart base = tabSnapshots.part(chatId, tab, AiTabSnapshotPart.QUERY).orElse(null);
         if (base == null || base.cut()) {
-            return "The tab's query isn't in its snapshot in full, so a change to it can't be proposed. Give the "
-                   + "query as a code block to copy.";
+            return ToolResult.text(
+                    "The tab's query isn't in its snapshot in full, so a change to it can't be proposed. Give the "
+                    + "query as a code block to copy.");
         }
 
         // Laid out as people write queries, ending as the editor's does, as it is what the editor will hold.
@@ -134,36 +150,39 @@ class ProposeQueryChangeTool extends AbstractWorkspaceTool {
                 .filter(dataSourceAccess::canUse)
                 .orElse(null);
         if (dataSource == null) {
-            return ValidateStroomQlTool.NO_DATA_SOURCE;
+            return ToolResult.text(ValidateStroomQlTool.NO_DATA_SOURCE);
         }
         final ValidateExpressionResult validation = queryService.validateQuery(query);
         if (validation == null || !validation.isOk()) {
-            return "The query is not valid, so no button was offered: "
-                   + NullSafe.nonBlankStringElse(NullSafe.get(validation, ValidateExpressionResult::getString),
-                    "the parser gave no reason") + "\nFix it and propose it again.";
+            return ToolResult.text(
+                    "The query is not valid, so no button was offered: "
+                    + NullSafe.nonBlankStringElse(NullSafe.get(validation, ValidateExpressionResult::getString),
+                     "the parser gave no reason") + "\nFix it and propose it again.");
         }
         final LineDiffResult diff = LineDiff.diff(base.text(), query);
         if (diff.isIdentical()) {
-            return "The revised query is the same as the tab's, so there is nothing to propose.";
+            return ToolResult.text("The revised query is the same as the tab's, so there is nothing to propose.");
         }
 
-        final Map<String, Object> action = new LinkedHashMap<>();
-        action.put("id", "apply-query-change-" + SEQUENCE.incrementAndGet());
-        action.put("action", UserActions.APPLY_QUERY_CHANGE);
-        action.put("doc", ProposeCodeChangeTool.docRefMap(queryDoc));
-        action.put("request", query);
-        action.put("base", base.text());
-        action.put("base_hash", ProposeCodeChangeTool.sha256(base.text()));
-        NullSafe.consume(tab.hash(), hash -> action.put("snapshot_hash", hash));
-        action.put("added", diff.getAddedLineCount());
-        action.put("removed", diff.getRemovedLineCount());
-        NullSafe.consume(summary, text -> action.put("summary", text));
-        context.offerUserAction(request.id(), action);
-        documentAccess.logView(chatId, queryDoc, "Proposed a change to its query with the " + NAME + " tool");
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("doc", ProposeCodeChangeTool.docRefMap(queryDoc));
+        arguments.put("request", query);
+        arguments.put("base", base.text());
+        arguments.put("base_hash", ProposeCodeChangeTool.sha256(base.text()));
+        NullSafe.consume(tab.hash(), hash -> arguments.put("snapshot_hash", hash));
+        arguments.put("added", diff.getAddedLineCount());
+        arguments.put("removed", diff.getRemovedLineCount());
+        NullSafe.consume(summary, text -> arguments.put("summary", text));
+        final ToolUserAction action = new ToolUserAction("apply-query-change-" + SEQUENCE.incrementAndGet(),
+                UserActions.APPLY_QUERY_CHANGE, arguments);
+        documentAccess.logView(context.session(), queryDoc,
+                "Proposed a change to its query with the " + NAME + " tool");
 
-        return "The user has been shown the revised query for Query '" + queryDoc.getName() + "', reading "
-               + DataSourceAccess.describe(dataSource) + ", with an 'Apply to query' button. Nothing changes until "
-               + "they click it, which puts it in the tab's editor, unsaved; they can undo it. Tell them about the "
-               + "button rather than saying the query was changed. The query as it will be applied:\n" + query;
+        return ToolResult.text(
+                "The user has been shown the revised query for Query '" + queryDoc.getName() + "', reading "
+                + DataSourceAccess.describe(dataSource) + ", with an 'Apply to query' button. Nothing changes until "
+                + "they click it, which puts it in the tab's editor, unsaved; they can undo it. Tell them about the "
+                + "button rather than saying the query was changed. The query as it will be applied:\n" + query)
+                .withUserAction(action);
     }
 }

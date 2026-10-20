@@ -19,8 +19,10 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.AgentInstructions.Ignored;
 import stroom.ai.impl.tools.AgentInstructions.Standing;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SafePattern;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -34,15 +36,13 @@ import stroom.docstore.api.ContentIndexable;
 import stroom.explorer.shared.DocContentMatch;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.StringMatch;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -124,16 +124,27 @@ class FindInContentTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Finds text in the content of Stroom documents (e.g. XSLTs, text converters, "
-                             + "dictionaries with their imports), returning each matching document's type, name, "
-                             + "UUID and folder with its matching lines. Give uuids to search just those documents "
-                             + "(quickest, e.g. those document_links found), or types to search every document of "
-                             + "those types you can view. Says how it searched and how many documents it read. "
-                             + "Documents in folders an AGENTS doc says to ignore (e.g. an Archive) are left out.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Finds text in the content of Stroom documents (e.g. XSLTs, text converters, "
+                                 + "dictionaries with their imports), returning each matching document's type, name, "
+                                 + "UUID and folder with its matching lines. Give uuids to search just those "
+                                 + "documents (quickest")
+                        .chatOnly(", e.g. those document_links found")
+                        .general("), or types to search every document of those types you can view. Says how it "
+                                 + "searched and how many documents it read. Documents in folders an AGENTS doc says "
+                                 + "to ignore (e.g. an Archive) are left out.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(PATTERN_ARG, "The text to find.")
                         .addBooleanProperty(REGEX_ARG, "True if pattern is a regular expression.")
                         .addBooleanProperty(MATCH_CASE_ARG, "True to match case (default false).")
@@ -145,14 +156,17 @@ class FindInContentTool extends AbstractWorkspaceTool {
                                                                  + "only when the user asks for them.")
                         .addIntegerProperty(LIMIT_ARG, "The most matching documents to return (default "
                                                        + DEFAULT_LIMIT + ", at most " + MAX_LIMIT + ").")
-                        .addStringProperty(OUT_ARG, "A file in /outputs/ to write all the matching lines to.")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A file in /outputs/ to write all the matching lines to.")
+                                .build())
                         .required(PATTERN_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final long startNanos = System.nanoTime();
         final WorkspacePath out = outArg(request);
         final String text = rawArg(request, PATTERN_ARG);
@@ -170,9 +184,9 @@ class FindInContentTool extends AbstractWorkspaceTool {
                 : Math.max(1, Math.min(limitArg, MAX_LIMIT));
         final Map<String, ContentIndexable> indexables = indexables();
         // Stop reading before the call's time limit, to return what was found.
-        final Standing standing = agentInstructions.load(chatId, "Standing instructions read by the " + NAME
+        final Standing standing = agentInstructions.load(context.session(), "Standing instructions read by the " + NAME
                                                                  + " tool");
-        final Search search = new Search(pattern, limit, indexables, startNanos + timeLimit().toNanos() * 3 / 4,
+        final Search search = new Search(pattern, limit, indexables, startNanos + timeLimit(context).toNanos() * 3 / 4,
                 booleanArg(request, INCLUDE_IGNORED_ARG, false)
                         ? null
                         : standing);
@@ -196,7 +210,7 @@ class FindInContentTool extends AbstractWorkspaceTool {
 
         final List<String> lines = new ArrayList<>();
         search.matches.forEach(match -> lines.addAll(match.lines(access)));
-        logSearch(chatId, text, uuids, types, how, search);
+        logSearch(context, text, uuids, types, how, search);
 
         final StringBuilder sb = new StringBuilder();
         sb.append(search.matches.size()).append(" document(s) matched '").append(text).append("'. It ")
@@ -223,13 +237,13 @@ class FindInContentTool extends AbstractWorkspaceTool {
                     .append('.');
         }
         if (out != null) {
-            workspace.write(chatId, out, String.join("\n", lines) + "\n", null);
+            workspace.write(out, String.join("\n", lines) + "\n", null);
             sb.append(" Wrote the matching lines to ").append(out).append('.');
         }
         if (!lines.isEmpty()) {
-            sb.append("\n\n").append(boundedLines(lines, lines.size()));
+            sb.append("\n\n").append(boundedLines(context, lines, lines.size()));
         }
-        return sb.toString();
+        return ToolResult.text(sb.toString());
     }
 
     private Map<String, ContentIndexable> indexables() {
@@ -334,7 +348,7 @@ class FindInContentTool extends AbstractWorkspaceTool {
         });
     }
 
-    private void logSearch(final int chatId,
+    private void logSearch(final ToolCallContext context,
                            final String text,
                            final List<String> uuids,
                            final List<String> types,
@@ -349,7 +363,7 @@ class FindInContentTool extends AbstractWorkspaceTool {
         final Map<String, String> data = new LinkedHashMap<>();
         data.put("DocumentsRead", String.valueOf(search.read));
         data.put("How", how);
-        auditLog.documentsSearched(chatId, "'" + text + "' in " + scope, found, data,
+        auditLog.documentsSearched(context.session(), "'" + text + "' in " + scope, found, data,
                 "Text found in the content of documents by the " + NAME + " tool");
     }
 

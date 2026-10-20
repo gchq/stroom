@@ -25,6 +25,7 @@ import stroom.ai.impl.ChatCompactor.CompactionMode;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.memory.MemoryPath;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspaceStore;
@@ -812,7 +813,8 @@ public class AskStroomAIService {
 
             if (responseText != null && !CANCELLED_MESSAGE.equals(responseText)) {
                 answeredUpTo = aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText).getId();
-                auditLog.answer(chatId, request.getMessage(), responseText, runManager.isUnattended(chatId));
+                auditLog.answer(ToolSession.chat(chatId), request.getMessage(), responseText,
+                        runManager.isUnattended(chatId));
                 chatCompactor.writeDigest(chatId);
                 final ChatModel model = getChatModel(getModelDoc(request.getConfig()));
                 // Keep the chat's name up to date with what it is about, now it has been answered.

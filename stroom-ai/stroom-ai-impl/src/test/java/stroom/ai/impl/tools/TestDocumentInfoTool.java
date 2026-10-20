@@ -31,7 +31,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -115,7 +114,8 @@ class TestDocumentInfoTool {
                           + "&docUuid=base-uuid) (Dictionary)")
                 .contains("Dependants (documents that use it): 1\n- [Firewall](?action=open-doc&docType=Pipeline"
                           + "&docUuid=pipe-uuid) (Pipeline)");
-        Mockito.verify(auditLog).documentViewed(Mockito.eq(1), Mockito.eq(DICTIONARY), Mockito.anyString());
+        Mockito.verify(auditLog).documentViewed(Mockito.eq(ToolSession.chat(1)), Mockito.eq(DICTIONARY),
+                Mockito.anyString());
         final ArgumentCaptor<DependencyCriteria> criteria = ArgumentCaptor.forClass(DependencyCriteria.class);
         Mockito.verify(docDependencyService, Mockito.times(2)).fetchDependencies(criteria.capture(),
                 Mockito.any());
@@ -128,7 +128,8 @@ class TestDocumentInfoTool {
         // It exists, but the user can't view it.
         assertThat(run()).isEqualTo(DocumentAccess.NO_PERMISSION);
         // It doesn't exist.
-        assertThat(tool.execute(request("{\"uuid\":\"no-such-uuid\"}"), 1)).isEqualTo(DocumentAccess.NO_PERMISSION);
+        assertThat(tool.execute(request("{\"uuid\":\"no-such-uuid\"}"),
+                ToolCalls.inChat(1)).text()).isEqualTo(DocumentAccess.NO_PERMISSION);
         Mockito.verifyNoInteractions(auditLog, docDependencyService);
     }
 
@@ -187,10 +188,10 @@ class TestDocumentInfoTool {
     }
 
     private String run() {
-        return tool.execute(request("{\"uuid\":\"dict-uuid\"}"), 1);
+        return tool.execute(request("{\"uuid\":\"dict-uuid\"}"), ToolCalls.inChat(1)).text();
     }
 
-    private static ToolExecutionRequest request(final String arguments) {
-        return ToolExecutionRequest.builder().name(DocumentInfoTool.NAME).arguments(arguments).build();
+    private static ToolCall request(final String arguments) {
+        return new ToolCall(null, DocumentInfoTool.NAME, arguments);
     }
 }

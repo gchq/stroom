@@ -1,0 +1,118 @@
+# The audit records the agent loop makes for one step of tool calls: a built-in tool that runs, one
+# whose result is an error, an MCP tool that runs, one that is not allowed, and a tool that doesn't
+# exist. The tools' own records (see tool-audit-events-per-tool.txt) are included in order.
+- audit: documentViewed(1, DocRef{type='XSLT', uuid='xslt-uuid', name='Test XSLT'}, "Described by the document_info tool")
+- audit: toolCall(1, "document_info", "{"uuid":"xslt-uuid"}", "Run", true, false)
+- audit: toolCall(1, "jq", "{"path":"/outputs/missing.json","query":"."}", "Failed", false, false)
+- audit: toolCall(1, "find_docs", "{"query":"feeds"}", "Run", true, false)
+- audit: toolCall(1, "update_doc", "{"uuid":"x"}", "Not allowed in this chat", false, false)
+- audit: toolCall(1, "made_up_tool", "{}", "No such tool", false, false)
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed XSLT 'Test XSLT' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Described by the document_info tool"
+      } ],
+      "id" : "xslt-uuid",
+      "name" : "Test XSLT",
+      "type" : "XSLT"
+    } ],
+    "outcome" : {
+      "description" : "Described by the document_info tool",
+      "success" : true
+    }
+  }
+- event: AskStroomAi.toolCall "Ask Stroom AI called tool document_info in chat 1"
+  ProcessEventAction {
+    "action" : "CALL",
+    "arguments" : "{\"uuid\":\"xslt-uuid\"}",
+    "command" : "document_info",
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Unattended",
+      "value" : "false"
+    } ],
+    "outcome" : {
+      "description" : "Run",
+      "success" : true
+    },
+    "type" : "APPLICATION"
+  }
+- event: AskStroomAi.toolCall "Ask Stroom AI called tool jq in chat 1"
+  ProcessEventAction {
+    "action" : "CALL",
+    "arguments" : "{\"path\":\"/outputs/missing.json\",\"query\":\".\"}",
+    "command" : "jq",
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Unattended",
+      "value" : "false"
+    } ],
+    "outcome" : {
+      "description" : "Failed",
+      "success" : false
+    },
+    "type" : "APPLICATION"
+  }
+- event: AskStroomAi.toolCall "Ask Stroom AI called tool find_docs in chat 1"
+  ProcessEventAction {
+    "action" : "CALL",
+    "arguments" : "{\"query\":\"feeds\"}",
+    "command" : "find_docs",
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Unattended",
+      "value" : "false"
+    } ],
+    "outcome" : {
+      "description" : "Run",
+      "success" : true
+    },
+    "type" : "APPLICATION"
+  }
+- event: AskStroomAi.toolCall "Ask Stroom AI called tool update_doc in chat 1"
+  ProcessEventAction {
+    "action" : "CALL",
+    "arguments" : "{\"uuid\":\"x\"}",
+    "command" : "update_doc",
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Unattended",
+      "value" : "false"
+    } ],
+    "outcome" : {
+      "description" : "Not allowed in this chat",
+      "success" : false
+    },
+    "type" : "APPLICATION"
+  }
+- event: AskStroomAi.toolCall "Ask Stroom AI called tool made_up_tool in chat 1"
+  ProcessEventAction {
+    "action" : "CALL",
+    "arguments" : "{}",
+    "command" : "made_up_tool",
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Unattended",
+      "value" : "false"
+    } ],
+    "outcome" : {
+      "description" : "No such tool",
+      "success" : false
+    },
+    "type" : "APPLICATION"
+  }

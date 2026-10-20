@@ -16,12 +16,10 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
+import stroom.ai.impl.tools.ToolSchema.StringSchema;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.util.json.JsonUtil;
-
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.model.chat.request.json.JsonArraySchema;
-import dev.langchain4j.model.chat.request.json.JsonStringSchema;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,14 +28,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Convenience base for {@link BuiltInTool}s that need to read their call arguments.
+ * Convenience base for {@link StroomTool}s that need to read their call arguments.
  */
-abstract class AbstractBuiltInTool implements BuiltInTool {
+abstract class AbstractBuiltInTool implements StroomTool {
 
     /**
      * @return the value of the named string argument, trimmed, or null if it was absent or blank.
      */
-    protected String stringArg(final ToolExecutionRequest request, final String name) {
+    protected String stringArg(final ToolCall request, final String name) {
         final String json = request.arguments();
         if (json == null || json.isBlank()) {
             return null;
@@ -62,7 +60,7 @@ abstract class AbstractBuiltInTool implements BuiltInTool {
     /**
      * @return the value of the named string argument exactly as given (not trimmed), or null if it was absent.
      */
-    protected String rawArg(final ToolExecutionRequest request, final String name) {
+    protected String rawArg(final ToolCall request, final String name) {
         final String json = request.arguments();
         if (json == null || json.isBlank()) {
             return null;
@@ -83,7 +81,7 @@ abstract class AbstractBuiltInTool implements BuiltInTool {
     /**
      * @return the value of the named whole-number argument, or null if it was absent or not a whole number.
      */
-    protected Integer intArg(final ToolExecutionRequest request, final String name) {
+    protected Integer intArg(final ToolCall request, final String name) {
         final String value = stringArg(request, name);
         if (value == null) {
             return null;
@@ -105,7 +103,7 @@ abstract class AbstractBuiltInTool implements BuiltInTool {
     /// @param name    The argument's name.
     /// @return The items, trimmed, without empty or repeated ones. Empty if the argument is absent.
     /// @throws WorkspaceException if the arguments are not valid JSON.
-    static List<String> stringListArg(final ToolExecutionRequest request, final String name) {
+    static List<String> stringListArg(final ToolCall request, final String name) {
         final Object value = argsMap(request).get(name);
         final List<String> items = new ArrayList<>();
         if (value instanceof final List<?> list) {
@@ -127,7 +125,7 @@ abstract class AbstractBuiltInTool implements BuiltInTool {
     /// @param request The model's call.
     /// @return Its arguments, or an empty map if it has none.
     /// @throws WorkspaceException if they are not valid JSON.
-    static Map<?, ?> argsMap(final ToolExecutionRequest request) {
+    static Map<?, ?> argsMap(final ToolCall request) {
         final String json = request.arguments();
         if (json == null || json.isBlank()) {
             return Collections.emptyMap();
@@ -142,11 +140,17 @@ abstract class AbstractBuiltInTool implements BuiltInTool {
         }
     }
 
+    /// @param toolName A tool that works on the chat itself, e.g. its history.
+    /// @return What the caller is told when the tool is called in a session that isn't a chat.
+    static String onlyInAChat(final String toolName) {
+        return "Error: " + toolName + " can only be used in a chat.";
+    }
+
     /// @param description What the list holds.
     /// @return The schema of a list of strings argument.
-    static JsonArraySchema stringArraySchema(final String description) {
-        return JsonArraySchema.builder()
-                .items(JsonStringSchema.builder().build())
+    static ArraySchema stringArraySchema(final String description) {
+        return ArraySchema.builder()
+                .items(StringSchema.builder().build())
                 .description(description)
                 .build();
     }

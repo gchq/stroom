@@ -18,7 +18,6 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.memory.AiMemoryService;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -33,36 +32,38 @@ class TestMemoryTool {
 
     @Test
     void testCommands() {
-        tool.execute(request("{\"command\":\"list\"}"), 3);
+        tool.execute(request("{\"command\":\"list\"}"), ToolCalls.inChat(3));
         Mockito.verify(memoryService).list(3);
 
-        tool.execute(request("{\"command\":\"read\",\"path\":\"/memories/a\"}"), 3);
+        tool.execute(request("{\"command\":\"read\",\"path\":\"/memories/a\"}"), ToolCalls.inChat(3));
         Mockito.verify(memoryService).read(3, "/memories/a");
 
         // Content is passed exactly as given, not trimmed.
         tool.execute(request("{\"command\":\"write\",\"path\":\"/memories/a\",\"content\":\" x \\n\","
-                             + "\"version\":2}"), 3);
+                             + "\"version\":2}"), ToolCalls.inChat(3));
         Mockito.verify(memoryService).write(3, "/memories/a", " x \n", 2);
 
-        tool.execute(request("{\"command\":\"append\",\"path\":\"/memories/a\",\"content\":\"y\"}"), 3);
+        tool.execute(request("{\"command\":\"append\",\"path\":\"/memories/a\",\"content\":\"y\"}"),
+                ToolCalls.inChat(3));
         Mockito.verify(memoryService).append(3, "/memories/a", "y");
 
         tool.execute(request("{\"command\":\"replace\",\"path\":\"/memories/a\",\"oldText\":\"y\","
-                             + "\"newText\":\"\"}"), 3);
+                             + "\"newText\":\"\"}"), ToolCalls.inChat(3));
         Mockito.verify(memoryService).replace(3, "/memories/a", "y", "");
 
-        tool.execute(request("{\"command\":\"delete\",\"path\":\"/memories/a\",\"version\":4}"), 3);
+        tool.execute(request("{\"command\":\"delete\",\"path\":\"/memories/a\",\"version\":4}"), ToolCalls.inChat(3));
         Mockito.verify(memoryService).delete(3, "/memories/a", 4);
 
-        assertThat(tool.execute(request("{\"command\":\"rm\"}"), 3)).startsWith("Error:");
-        assertThat(tool.execute(request("{}"), 3)).startsWith("Error:");
-        assertThat(tool.execute(request("{\"command\":\"list\"}"))).startsWith("Error:");
+        assertThat(tool.execute(request("{\"command\":\"rm\"}"), ToolCalls.inChat(3)).text()).startsWith("Error:");
+        assertThat(tool.execute(request("{}"), ToolCalls.inChat(3)).text()).startsWith("Error:");
+        assertThat(tool.execute(request("{\"command\":\"list\"}"), ToolCalls.outsideChat()).text())
+                .startsWith("Error:");
     }
 
     @Test
     void testTaint() {
         final BuiltInTools tools = new BuiltInTools(Set.of(tool, new GetCurrentDateTool(),
-                new ReadTurnTool(null)));
+                new ReadTurnTool(null)), ToolCalls.chatContexts());
 
         assertThat(tools.readsUntrustedContent(MemoryTool.NAME)).isFalse();
         assertThat(tools.readsUntrustedContent("get_current_date")).isFalse();
@@ -72,7 +73,7 @@ class TestMemoryTool {
         assertThat(tools.readsUntrustedContent("stroom__find_documents")).isTrue();
     }
 
-    private static ToolExecutionRequest request(final String arguments) {
-        return ToolExecutionRequest.builder().id("x").name(MemoryTool.NAME).arguments(arguments).build();
+    private static ToolCall request(final String arguments) {
+        return new ToolCall("x", MemoryTool.NAME, arguments);
     }
 }

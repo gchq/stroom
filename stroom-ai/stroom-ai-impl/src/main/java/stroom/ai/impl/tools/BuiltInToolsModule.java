@@ -21,14 +21,14 @@ import stroom.util.guice.GuiceUtil;
 import com.google.inject.AbstractModule;
 
 /**
- * Binds the built-in chat tools. Add a new {@link BuiltInTool} implementation and a single
+ * Binds the built-in chat tools. Add a new {@link StroomTool} implementation and a single
  * {@code .addBinding(...)} line here.
  */
 public class BuiltInToolsModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), BuiltInTool.class)
+        GuiceUtil.buildMultiBinder(binder(), StroomTool.class)
                 .addBinding(GetCurrentDateTool.class)
                 .addBinding(GetCurrentTimeTool.class)
                 .addBinding(GetCurrentDateTimeTool.class)
