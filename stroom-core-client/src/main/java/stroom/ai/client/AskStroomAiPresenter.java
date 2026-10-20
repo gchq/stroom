@@ -609,7 +609,7 @@ public class AskStroomAiPresenter
                                 ? ElementUtil.findChild(message, "ai-message-content")
                                 : null;
                         if (content != null) {
-                            ClipboardUtil.copy(content.getInnerText());
+                            ClipboardUtil.copy(AiChatTexts.forClipboard(content.getInnerText()));
                             flashCopied(button);
                         }
                         return;
@@ -654,7 +654,7 @@ public class AskStroomAiPresenter
                     // Capture copy click events.
                     final String data = button.getAttribute("data");
                     if (NullSafe.isNonBlankString(data)) {
-                        if (ClipboardUtil.copy(data)) {
+                        if (ClipboardUtil.copy(AiChatTexts.forClipboard(data))) {
                             flashCopied(button);
                         }
                     }
