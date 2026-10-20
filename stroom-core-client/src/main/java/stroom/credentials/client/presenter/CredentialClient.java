@@ -21,6 +21,7 @@ import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.credentials.shared.PutCredentialRequest;
+import stroom.credentials.shared.ReplaceSecretRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -107,6 +108,24 @@ public class CredentialClient {
         restFactory.create(CREDENTIALS_RESOURCE)
                 .method(res ->
                         res.storeCredential(request))
+                .onSuccess(consumer)
+                .onFailure(restErrorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Replaces the secret held by an existing credential.
+    ///
+    /// @param request            The credential UUID, new secret and expiry.
+    /// @param consumer           Receives the updated credential.
+    /// @param restErrorHandler   Handles any failure.
+    /// @param taskMonitorFactory Shows progress.
+    public void replaceSecret(final ReplaceSecretRequest request,
+                              final Consumer<Credential> consumer,
+                              final RestErrorHandler restErrorHandler,
+                              final TaskMonitorFactory taskMonitorFactory) {
+        restFactory.create(CREDENTIALS_RESOURCE)
+                .method(res -> res.replaceSecret(request))
                 .onSuccess(consumer)
                 .onFailure(restErrorHandler)
                 .taskMonitorFactory(taskMonitorFactory)

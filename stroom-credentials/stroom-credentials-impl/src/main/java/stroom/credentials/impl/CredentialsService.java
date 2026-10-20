@@ -20,12 +20,17 @@ import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.api.KeyStore;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
+import stroom.credentials.shared.AccessTokenSecret;
 import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.credentials.shared.KeyStoreSecret;
 import stroom.credentials.shared.PutCredentialRequest;
+import stroom.credentials.shared.ReplaceSecretRequest;
 import stroom.credentials.shared.Secret;
+import stroom.credentials.shared.SshKeySecret;
+import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.docref.DocRef;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.DocumentPermissionService;
@@ -36,6 +41,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
@@ -55,6 +61,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -161,75 +168,212 @@ public class CredentialsService implements StoredSecrets {
     /**
      * Stores the given credential to the database.
      * Permissions: App, Edit|Owner
+     * <p>
+     * A new credential is stored with its secret, which must be supplied. For an existing
+     * credential only its settings (name and expiry) are updated; its type and secret are kept
+     * and any secret in the request is ignored. Use {@link #replaceSecret} to change the secret.
      *
      * @param request The credentials to store in the database.
      */
     public void storeCredentials(final PutCredentialRequest request) {
         checkAppPermission();
         final Credential credential = request.getCredential();
-        final Secret secret = request.getSecret();
         final long now = System.currentTimeMillis();
         final String userName = securityContext.getUserIdentityForAudit();
-        byte[] keyStore = null;
 
-        if (secret instanceof final KeyStoreSecret keyStoreSecret) {
-            if (keyStoreSecret.getResourceKey() == null) {
-                throw new RuntimeException("No key store has been uploaded");
-            }
-            final Path path = resourceStoreProvider.get().getTempFile(keyStoreSecret.getResourceKey());
-            if (path == null) {
-                throw new RuntimeException("Temporary key store upload not found");
-            }
-
-            // Verify keystore can be read and that the password is valid
-            verifyKeystore(keyStoreSecret, path);
-
-            try {
-                keyStore = Files.readAllBytes(path);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
-
-        // Get existing secret.
         final String uuid = credential.getUuid();
         final Credential existing = credentialsDao.getCredentialByUuid(uuid);
-        final Credential updatedCredential;
         if (existing == null) {
-            // Store the new credential.
-            updatedCredential = new Credential(uuid,
+            final Secret secret = request.getSecret();
+            if (secret == null) {
+                throw new IllegalArgumentException("A new credential must have a secret");
+            }
+            checkSecretMatchesType(secret, credential.getCredentialType());
+            checkName(credential.getName(), uuid);
+
+            final Credential newCredential = new Credential(uuid,
                     credential.getName(),
                     now,
                     now,
                     userName,
                     userName,
                     credential.getCredentialType(),
-                    credential.getKeyStoreType(),
+                    getKeyStoreType(secret),
                     credential.getExpiryTimeMs());
-        } else {
-            // Check we are allowed to update this existing credential.
-            checkEditPermission(uuid);
+            credentialsDao.putStoredSecret(
+                    new StoredSecret(newCredential, secret, readKeyStore(secret)),
+                    false);
 
-            updatedCredential = new Credential(uuid,
-                    credential.getName(),
-                    existing.getCreateTimeMs(),
-                    now,
-                    existing.getCreateUser(),
-                    userName,
-                    credential.getCredentialType(),
-                    credential.getKeyStoreType(),
-                    credential.getExpiryTimeMs());
-        }
-
-        final StoredSecret storedSecret = new StoredSecret(updatedCredential, secret, keyStore);
-        credentialsDao.putStoredSecret(storedSecret, existing != null);
-
-        if (existing == null) {
             // Ensure newly created credentials are owned by the current user.
             permissionServiceProvider.get().setPermission(
                     credential.asDocRef(),
                     securityContext.getUserRef(),
                     DocumentPermission.OWNER);
+        } else {
+            // Check we are allowed to update this existing credential.
+            checkEditPermission(uuid);
+            if (credential.getCredentialType() != null
+                && credential.getCredentialType() != existing.getCredentialType()) {
+                throw new IllegalArgumentException("The type of an existing credential cannot be changed");
+            }
+            checkName(credential.getName(), uuid);
+
+            final boolean updated = credentialsDao.updateCredential(new Credential(uuid,
+                    credential.getName(),
+                    existing.getCreateTimeMs(),
+                    now,
+                    existing.getCreateUser(),
+                    userName,
+                    existing.getCredentialType(),
+                    existing.getKeyStoreType(),
+                    credential.getExpiryTimeMs()));
+            if (!updated) {
+                throw new IllegalArgumentException("Credentials not found");
+            }
+        }
+    }
+
+    /// Replaces the secret held by an existing credential, discarding the old one.
+    /// The credential keeps its UUID and name so everything that refers to it uses the new
+    /// secret straight away.
+    /// Permissions: App, Edit|Owner
+    ///
+    /// @param request The credential UUID, the new secret and its expiry.
+    /// @return The updated credential.
+    public Credential replaceSecret(final ReplaceSecretRequest request) {
+        checkAppPermission();
+        final String uuid = request.getUuid();
+        // Check permission before looking the credential up so that a user without permission
+        // can't tell whether a credential exists or not
+        checkEditPermission(uuid);
+        final StoredSecret existing = credentialsDao.getStoredSecretByUuid(uuid);
+        if (existing == null) {
+            throw new IllegalArgumentException("Credentials not found");
+        }
+
+        final Secret secret = request.getSecret();
+        if (secret == null) {
+            throw new IllegalArgumentException("A new secret must be supplied");
+        }
+        checkSecretMatchesType(secret, existing.credential().getCredentialType());
+
+        // Only the secret, its expiry and the update audit fields are written, so a rename made
+        // at the same time is not undone
+        final Credential secretFields = new Credential(uuid,
+                null,
+                null,
+                System.currentTimeMillis(),
+                null,
+                securityContext.getUserIdentityForAudit(),
+                null,
+                getKeyStoreType(secret),
+                request.getExpiryTimeMs());
+        final boolean updated = credentialsDao.updateSecret(
+                new StoredSecret(secretFields, secret, readKeyStore(secret)));
+        if (!updated) {
+            throw new IllegalArgumentException("Credentials not found");
+        }
+        deleteCachedKeyStore(existing.secret());
+
+        final Credential updatedCredential = credentialsDao.getCredentialByUuid(uuid);
+        LOGGER.info(() -> LogUtil.message("Secret replaced for credential '{}' ({})",
+                NullSafe.get(updatedCredential, Credential::getName),
+                uuid));
+        return updatedCredential;
+    }
+
+    /// Checks that a credential name is not blank and is not used by any other credential.
+    ///
+    /// @param name The name to check.
+    /// @param uuid The UUID of the credential that will have this name.
+    private void checkName(final String name, final String uuid) {
+        if (NullSafe.isBlankString(name)) {
+            throw new IllegalArgumentException("Credentials must have a name");
+        }
+        final Credential sameName = credentialsDao.getCredentialByName(name);
+        if (sameName != null && !Objects.equals(sameName.getUuid(), uuid)) {
+            throw new IllegalArgumentException("Credentials called '" + name + "' already exist");
+        }
+    }
+
+    /// Deletes the copy of a key store written to the key store cache by [#getKeyStore], so that
+    /// a replaced key store does not stay on disk.
+    ///
+    /// @param oldSecret The secret that has been replaced. Nothing is done unless it is a key store.
+    private void deleteCachedKeyStore(final Secret oldSecret) {
+        if (oldSecret instanceof final KeyStoreSecret keyStoreSecret) {
+            final Path keyStorePath = getCachedKeyStorePath(keyStoreSecret);
+            try {
+                synchronized (this) {
+                    Files.deleteIfExists(keyStorePath);
+                }
+            } catch (final IOException e) {
+                // The secret has been replaced, so don't fail the request over a stale file
+                LOGGER.error("Unable to delete replaced key store '{}'", keyStorePath, e);
+            }
+        }
+    }
+
+    private Path getKeyStoreCachePath() {
+        return pathCreator.toAppPath(NullSafe.getOrElse(
+                credentialsConfigProvider.get(),
+                CredentialsConfig::getKeyStoreCachePath,
+                CredentialsConfig.DEFAULT_KEY_STORE_CACHE_PATH));
+    }
+
+    private static KeyStoreType getCachedKeyStoreType(final KeyStoreSecret keyStoreSecret) {
+        return NullSafe.getOrElse(
+                keyStoreSecret,
+                KeyStoreSecret::getKeyStoreType,
+                KeyStoreType.JKS);
+    }
+
+    private Path getCachedKeyStorePath(final KeyStoreSecret keyStoreSecret) {
+        return getKeyStoreCachePath().resolve(keyStoreSecret.getUuid()
+                                              + "."
+                                              + getCachedKeyStoreType(keyStoreSecret).getFileExtension());
+    }
+
+    private static void checkSecretMatchesType(final Secret secret, final CredentialType credentialType) {
+        final CredentialType secretType = switch (secret) {
+            case final AccessTokenSecret ignored -> CredentialType.ACCESS_TOKEN;
+            case final KeyStoreSecret ignored -> CredentialType.KEY_STORE;
+            case final SshKeySecret ignored -> CredentialType.SSH_KEY;
+            case final UsernamePasswordSecret ignored -> CredentialType.USERNAME_PASSWORD;
+        };
+        if (secretType != credentialType) {
+            throw new IllegalArgumentException("The secret does not match the credential type");
+        }
+    }
+
+    private static KeyStoreType getKeyStoreType(final Secret secret) {
+        return secret instanceof final KeyStoreSecret keyStoreSecret
+                ? keyStoreSecret.getKeyStoreType()
+                : null;
+    }
+
+    /// Reads and verifies the uploaded key store for a key store secret.
+    ///
+    /// @return The key store bytes, or null if the secret is not a key store secret.
+    private byte[] readKeyStore(final Secret secret) {
+        if (!(secret instanceof final KeyStoreSecret keyStoreSecret)) {
+            return null;
+        }
+        if (keyStoreSecret.getResourceKey() == null) {
+            throw new RuntimeException("No key store has been uploaded");
+        }
+        final Path path = resourceStoreProvider.get().getTempFile(keyStoreSecret.getResourceKey());
+        if (path == null) {
+            throw new RuntimeException("Temporary key store upload not found");
+        }
+
+        // Verify keystore can be read and that the password is valid
+        verifyKeystore(keyStoreSecret, path);
+
+        try {
+            return Files.readAllBytes(path);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -370,17 +514,10 @@ public class CredentialsService implements StoredSecrets {
         }
 
         if (storedSecret.secret() instanceof final KeyStoreSecret keyStoreSecret) {
-            final Path path = pathCreator
-                    .toAppPath(NullSafe.getOrElse(
-                            credentialsConfigProvider.get(),
-                            CredentialsConfig::getKeyStoreCachePath,
-                            CredentialsConfig.DEFAULT_KEY_STORE_CACHE_PATH));
-            final KeyStoreType keyStoreType = NullSafe.getOrElse(
-                    keyStoreSecret,
-                    KeyStoreSecret::getKeyStoreType,
-                    KeyStoreType.JKS);
+            final Path path = getKeyStoreCachePath();
+            final KeyStoreType keyStoreType = getCachedKeyStoreType(keyStoreSecret);
             final String fileExtension = "." + keyStoreType.getFileExtension();
-            final Path keyStorePath = path.resolve(keyStoreSecret.getUuid() + fileExtension);
+            final Path keyStorePath = getCachedKeyStorePath(keyStoreSecret);
 
             // See if the key store file exists and if it is old.
             boolean exists = Files.exists(keyStorePath);

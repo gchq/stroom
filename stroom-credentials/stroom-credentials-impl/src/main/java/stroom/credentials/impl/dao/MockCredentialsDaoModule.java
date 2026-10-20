@@ -99,5 +99,51 @@ public class MockCredentialsDaoModule extends AbstractModule {
             uuidToCred.put(secret.credential().getUuid(), secret);
             nameToCred.put(secret.credential().getName(), secret);
         }
+
+        @Override
+        public StoredSecret getStoredSecretByUuid(final String uuid) {
+            return uuidToCred.get(uuid);
+        }
+
+        @Override
+        public boolean updateCredential(final Credential credential) {
+            final StoredSecret existing = uuidToCred.get(credential.getUuid());
+            if (existing == null) {
+                return false;
+            }
+            final Credential old = existing.credential();
+            final Credential updated = new Credential(old.getUuid(),
+                    credential.getName(),
+                    old.getCreateTimeMs(),
+                    credential.getUpdateTimeMs(),
+                    old.getCreateUser(),
+                    credential.getUpdateUser(),
+                    old.getCredentialType(),
+                    old.getKeyStoreType(),
+                    credential.getExpiryTimeMs());
+            putStoredSecret(new StoredSecret(updated, existing.secret(), existing.keyStore()), true);
+            return true;
+        }
+
+        @Override
+        public boolean updateSecret(final StoredSecret secret) {
+            final Credential credential = secret.credential();
+            final StoredSecret existing = uuidToCred.get(credential.getUuid());
+            if (existing == null) {
+                return false;
+            }
+            final Credential old = existing.credential();
+            final Credential updated = new Credential(old.getUuid(),
+                    old.getName(),
+                    old.getCreateTimeMs(),
+                    credential.getUpdateTimeMs(),
+                    old.getCreateUser(),
+                    credential.getUpdateUser(),
+                    old.getCredentialType(),
+                    credential.getKeyStoreType(),
+                    credential.getExpiryTimeMs());
+            putStoredSecret(new StoredSecret(updated, secret.secret(), secret.keyStore()), true);
+            return true;
+        }
     }
 }

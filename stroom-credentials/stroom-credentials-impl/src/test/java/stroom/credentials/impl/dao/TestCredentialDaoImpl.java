@@ -40,6 +40,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Basic sanity tests for the CredentialsDao.
@@ -123,6 +124,66 @@ public class TestCredentialDaoImpl {
         assertThat(listOfAT.size()).isEqualTo(0);
         final ResultPage<CredentialWithPerms> listOfPC = find(CredentialType.SSH_KEY);
         assertThat(listOfPC.size()).isEqualTo(0);
+    }
+
+    /// gh-5815: updating the settings of a credential must leave its secret as it is.
+    @Test
+    void testUpdateCredentialKeepsTheSecret() {
+        final Credential credential = createCred("dummy", "Test creds", 1_000L);
+        final Secret secret = new UsernamePasswordSecret("username", "password");
+        credentialsDao.putStoredSecret(new StoredSecret(credential, secret, null), false);
+
+        credentialsDao.updateCredential(createCred("dummy", "Renamed creds", 2_000L));
+
+        final StoredSecret stored = credentialsDao.getStoredSecretByName("Renamed creds");
+        assertThat(stored).isNotNull();
+        assertThat(stored.secret()).isEqualTo(secret);
+        assertThat(stored.credential().getExpiryTimeMs()).isEqualTo(2_000L);
+        assertThat(stored.credential().getCredentialType()).isEqualTo(CredentialType.USERNAME_PASSWORD);
+        assertThat(credentialsDao.getStoredSecretByName("Test creds")).isNull();
+        assertThat(credentialsDao.updateCredential(createCred("missing", "Missing creds", 2_000L))).isFalse();
+    }
+
+    /// Replacing a secret must not touch the name, so a rename made at the same time is kept.
+    @Test
+    void testUpdateSecretKeepsTheName() {
+        final Credential credential = createCred("dummy", "Test creds", 1_000L);
+        credentialsDao.putStoredSecret(
+                new StoredSecret(credential, new UsernamePasswordSecret("username", "password"), null),
+                false);
+        credentialsDao.updateCredential(createCred("dummy", "Renamed creds", 1_000L));
+
+        final Secret newSecret = new UsernamePasswordSecret("username", "new password");
+        final boolean updated = credentialsDao.updateSecret(
+                new StoredSecret(createCred("dummy", "Test creds", 3_000L), newSecret, null));
+
+        assertThat(updated).isTrue();
+        final StoredSecret stored = credentialsDao.getStoredSecretByUuid("dummy");
+        assertThat(stored.secret()).isEqualTo(newSecret);
+        assertThat(stored.credential().getName()).isEqualTo("Renamed creds");
+        assertThat(stored.credential().getExpiryTimeMs()).isEqualTo(3_000L);
+        assertThat(credentialsDao.updateSecret(
+                new StoredSecret(createCred("missing", "Missing creds", 3_000L), newSecret, null))).isFalse();
+    }
+
+    /// Inserting a credential with a name that is already taken must fail, not re-key the
+    /// existing credential to the new UUID.
+    @Test
+    void testInsertWithTakenNameDoesNotTakeOverTheExistingCredential() {
+        final Secret secret = new UsernamePasswordSecret("username", "password");
+        credentialsDao.putStoredSecret(
+                new StoredSecret(createCred("first", "Test creds", 1_000L), secret, null),
+                false);
+
+        assertThatThrownBy(() -> credentialsDao.putStoredSecret(
+                new StoredSecret(createCred("second", "Test creds", 1_000L),
+                        new UsernamePasswordSecret("other", "other"),
+                        null),
+                false))
+                .isInstanceOf(RuntimeException.class);
+
+        assertThat(credentialsDao.getStoredSecretByUuid("first").secret()).isEqualTo(secret);
+        assertThat(credentialsDao.getStoredSecretByUuid("second")).isNull();
     }
 
     /**
