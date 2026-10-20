@@ -3488,6 +3488,33 @@ paths:
       summary: Update an Elasticsearch cluster doc
       tags:
       - Elastic Clusters
+  /elasticIndex/v1/templates:
+    post:
+      description: "Resolves the doc's index name to the newest index or data stream\
+        \ it stands for, then reads the index template Elasticsearch would apply to\
+        \ it and each of that template's component templates, using the doc's cluster\
+        \ connection. Each part reports its own status (OK, NOT_FOUND, FORBIDDEN or\
+        \ ERROR), so a part that Elasticsearch refused does not fail the request.\
+        \ Requires READ on the doc."
+      operationId: fetchElasticIndexTemplates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ElasticIndexTemplatesRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ElasticIndexTemplatesResponse"
+          description: default response
+      summary: Read the index template and component templates that apply to an Elasticsearch
+        index
+      tags:
+      - Elastic Indices
   /elasticIndex/v1/testIndex:
     post:
       operationId: testElasticIndex
@@ -14976,6 +15003,23 @@ components:
           type: string
         ok:
           type: boolean
+    ElasticComponentTemplate:
+      type: object
+      properties:
+        body:
+          type: object
+          description: The component template as GET _component_template returns it
+        message:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - OK
+          - NOT_FOUND
+          - FORBIDDEN
+          - ERROR
     ElasticConnectionConfig:
       type: object
       properties:
@@ -15098,6 +15142,47 @@ components:
           type: boolean
         nativeType:
           type: string
+    ElasticIndexTemplate:
+      type: object
+      properties:
+        body:
+          type: object
+          description: The template as GET _index_template returns it
+        message:
+          type: string
+        name:
+          type: string
+        overlapping:
+          type: array
+          items:
+            $ref: "#/components/schemas/ElasticOverlappingIndexTemplate"
+        status:
+          type: string
+          enum:
+          - OK
+          - NOT_FOUND
+          - FORBIDDEN
+          - ERROR
+    ElasticIndexTemplatesRequest:
+      type: object
+      properties:
+        indexDocRef:
+          $ref: "#/components/schemas/DocRef"
+    ElasticIndexTemplatesResponse:
+      type: object
+      properties:
+        componentTemplates:
+          type: array
+          items:
+            $ref: "#/components/schemas/ElasticComponentTemplate"
+        indexName:
+          type: string
+        indexTemplate:
+          $ref: "#/components/schemas/ElasticIndexTemplate"
+        resolveMessage:
+          type: string
+        resolvedName:
+          type: string
     ElasticIndexTestResponse:
       type: object
       properties:
@@ -15105,6 +15190,18 @@ components:
           type: string
         ok:
           type: boolean
+    ElasticOverlappingIndexTemplate:
+      type: object
+      properties:
+        index_patterns:
+          type: array
+          items:
+            type: string
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int64
     ElementId:
       type: object
       properties:
