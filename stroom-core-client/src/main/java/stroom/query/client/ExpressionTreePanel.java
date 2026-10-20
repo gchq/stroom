@@ -88,7 +88,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
 
             cellRenderer = new ExpressionItemRenderer(boxPanel, operatorEditor, termEditor);
             final ConnectorRenderer<Item> connectorRenderer = new BracketConnectorRenderer<>(arrowContext,
-                    item -> faded.test(item));
+                    item -> faded.test(item), "--expression-tree__bracket");
 
             // setup the tree layout configuration
             final DefaultConfiguration<Item> layoutConfig = new DefaultConfiguration<>(HORIZONTAL_SEPARATION,

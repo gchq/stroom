@@ -138,7 +138,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         addOperatorButton.setEnabled(!readOnly);
         setButtonsEnabled();
         // The read-only look: the terms greyed, as a read-only field's value is
-        getWidget().setStyleName("editExpressionViewImpl-readonly", readOnly);
+        expressionPresenter.setReadOnlyLook(readOnly);
     }
 
     private void setButtonsEnabled() {

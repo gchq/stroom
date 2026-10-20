@@ -95,7 +95,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         layoutPanel.setWidth("100%");
         layoutPanel.setHeight("100%");
 
-        keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "pipeline-tree-status", "element", "elements") {
+        keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "element", "elements") {
             @Override
             protected String getName(final PipelineElement element) {
                 return element.getDisplayName();

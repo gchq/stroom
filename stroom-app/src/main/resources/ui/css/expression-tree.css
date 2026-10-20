@@ -17,9 +17,13 @@
 /*
  * A query expression's tree (ExpressionTreeViewImpl, a draggable tree, see draggable-tree.css),
  * named BEM style: the tree (ExpressionTreePanel, .expression-tree), its brackets (__canvas) and its
- * items (__items, the tree for assistive technology; see expression-item.css).
+ * items (__items, the tree for assistive technology; see expression-item.css). The view's live
+ * region is the draggable tree's (draggable-tree.css).
  */
 
 .expression-tree-view {
 	position: absolute;
 }
+
+/* --read-only: an expression the user can't change (EditExpressionPresenter.setReadOnly), whose
+   items are greyed (expression-item.css) */

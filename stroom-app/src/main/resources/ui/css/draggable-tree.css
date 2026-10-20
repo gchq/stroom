@@ -16,7 +16,9 @@
 
 /*
  * A tree whose items can be dragged (DraggableTreePanel, e.g. the pipeline structure and query
- * expression trees), named BEM style.
+ * expression trees), named BEM style. Its live region (__status, TreeKeyboard), which tells screen
+ * reader users what moving an item with the keyboard did, is only for them (sr-only), so it has no
+ * look of its own here.
  */
 
 /* Its background can be grabbed to pan it */

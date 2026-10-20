@@ -65,15 +65,14 @@ public abstract class TreeKeyboard<E> {
     // The item whose box to focus once the tree is redrawn
     private E focusAfterRedraw;
 
-    /// @param treePanel        The tree.
-    /// @param root             The draggable panel holding it, whose key presses are the tree's,
-    ///                         and which fires its context menu events.
-    /// @param statusClassName  The class of the live region (also `sr-only`, so it isn't seen).
-    /// @param itemName         What one of the tree's items is called, e.g. "element".
-    /// @param itemsName        What more than one are called, e.g. "elements".
+    /// @param treePanel The tree.
+    /// @param root      The draggable panel holding it, whose key presses are the tree's, which
+    ///                  fires its context menu events, and in which the live region is
+    ///                  (`draggable-tree__status`, also `sr-only`, so it isn't seen).
+    /// @param itemName  What one of the tree's items is called, e.g. "element".
+    /// @param itemsName What more than one are called, e.g. "elements".
     protected TreeKeyboard(final TreePanel<E> treePanel,
                            final DraggableTreePanel<E> root,
-                           final String statusClassName,
                            final String itemName,
                            final String itemsName) {
         this.treePanel = treePanel;
@@ -84,7 +83,7 @@ public abstract class TreeKeyboard<E> {
         treePanel.setAfterRefresh(this::afterRefresh);
 
         liveRegion = Document.get().createDivElement();
-        liveRegion.setClassName("sr-only " + statusClassName);
+        liveRegion.setClassName("sr-only draggable-tree__status");
         liveRegion.setAttribute("role", "status");
         liveRegion.setAttribute("aria-live", "polite");
         root.getElement().appendChild(liveRegion);
@@ -196,7 +195,9 @@ public abstract class TreeKeyboard<E> {
     }
 
     /// Attaches the item detached to another (or its own) parent, if that can take it, keeping
-    /// the focus on it; else says that it can't.
+    /// the focus on it; else says that it can't. Attached to its own parent, it is left where it
+    /// was, or moved to the parent's end where dragging it there does that (see
+    /// [DraggableTreePanel#setPutBackOnOwnParent]).
     ///
     /// @param target Its new parent.
     public void attach(final E target) {
@@ -212,10 +213,15 @@ public abstract class TreeKeyboard<E> {
         detached = null;
         redrawDetached();
         focusAfterRedraw = child;
-        if (target.equals(parent)) {
-            // Put back where it was
+        if (target.equals(parent) && root.isPutBackOnOwnParent()) {
+            // Put back where it was, as dragging it there does
             announce(getName(child) + " left under " + getName(target) + ".");
             selectionModel.setSelected(child, true);
+        } else if (target.equals(parent)) {
+            // Moved to its parent's end, as dragging it there does (reordering it)
+            move(target, child);
+            selectionModel.setSelected(child, true);
+            announce(getName(child) + " moved to the end of " + getName(target) + ".");
         } else {
             // Named as it was (e.g. "OR, 3 items"), before it takes it
             final String targetName = getName(target);

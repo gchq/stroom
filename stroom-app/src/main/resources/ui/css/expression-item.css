@@ -90,13 +90,13 @@
 	box-shadow: 0 0 0 1px var(--focus-border), 0 0 0 5px var(--focus-ring__color);
 }
 
-/* A read-only expression editor: its items greyed, as a read-only field's value is (a disabled
-   item keeps its own look) */
-.editExpressionViewImpl-readonly .expression-item__label {
+/* A tree with the read-only look (expression-tree.css): its items greyed, as a read-only field's
+   value is (a disabled item keeps its own look) */
+.expression-tree-view--read-only .expression-item__label {
 	color: var(--control__text-color--readonly);
 }
 
-.editExpressionViewImpl-readonly .expression-item--disabled .expression-item__label {
+.expression-tree-view--read-only .expression-item--disabled .expression-item__label {
 	color: var(--expression-item__text-color--disabled);
 }
 

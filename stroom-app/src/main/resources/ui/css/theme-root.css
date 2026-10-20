@@ -131,6 +131,8 @@
     --navigation-icon-button__background-color--hover: var(--icon-button__background-color--hover);
     --navigation-icon-button__border-color--hover: var(--icon-button__border-color--hover);
 
+    /* The brackets between an operator and its items: 3.9:1 on the page */
+    --expression-tree__bracket: #808080;
     /* 7.5:1 on the page */
     --expression-item__text-color--disabled: #555;
     --expression-item__drop-target: var(--icon-colour__dark-green);

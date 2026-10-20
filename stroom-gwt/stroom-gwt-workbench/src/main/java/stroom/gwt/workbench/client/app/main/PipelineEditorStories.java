@@ -375,7 +375,7 @@ public final class PipelineEditorStories {
                     openStructure(play);
                     play.findByText("rawWriter");
                     final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
-                    final Query status = play.querySelector(".pipeline-tree-status");
+                    final Query status = play.querySelector(".draggable-tree__status");
                     play.click(elementBox(tree, "rawWriter"));
                     play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
 
@@ -475,7 +475,7 @@ public final class PipelineEditorStories {
                     openStructure(play);
                     play.findByText("rawWriter");
                     final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
-                    final Query status = play.querySelector(".pipeline-tree-status");
+                    final Query status = play.querySelector(".draggable-tree__status");
                     play.click(elementBox(tree, "rawWriter"));
                     play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
 
@@ -523,7 +523,7 @@ public final class PipelineEditorStories {
                     openStructure(play);
                     play.findByText("rawWriter");
                     final Play tree = play.within(play.querySelector(".pipeline-tree__items"));
-                    final Query status = play.querySelector(".pipeline-tree-status");
+                    final Query status = play.querySelector(".draggable-tree__status");
                     play.click(elementBox(tree, "rawWriter"));
                     play.waitFor(() -> play.expect(elementBox(tree, "rawWriter")).toHaveFocus());
                     play.keyboard("{Control>}x{/Control}");

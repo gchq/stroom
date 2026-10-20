@@ -630,6 +630,12 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         this.putBackOnOwnParent = putBackOnOwnParent;
     }
 
+    /// @return Whether releasing what is dragged over where it came from puts it back where it was
+    /// (see [#setPutBackOnOwnParent]).
+    public boolean isPutBackOnOwnParent() {
+        return putBackOnOwnParent;
+    }
+
     @Override
     public HandlerRegistration addContextMenuHandler(final ContextMenuEvent.Handler handler) {
         return addHandler(handler, ContextMenuEvent.getType());

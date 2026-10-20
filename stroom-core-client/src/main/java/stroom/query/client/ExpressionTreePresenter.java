@@ -311,6 +311,14 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return getView().addContextMenuHandler(handler);
     }
 
+    /// Gives (or takes away) the tree the read-only look, its items greyed as a read-only field's
+    /// value is, e.g. for an expression the user can't change.
+    ///
+    /// @param readOnly Whether it has the look.
+    public void setReadOnlyLook(final boolean readOnly) {
+        getView().setReadOnlyLook(readOnly);
+    }
+
     /// Gets the context menu's items for moving the selected item (and the items in it) to another
     /// operator, as dragging it does, and as Ctrl+X and Ctrl+V do in the tree: Detach, and while an
     /// item is detached "Attach '…' here" (only where it would be taken) and "Put '…' back".
@@ -378,6 +386,11 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         ///
         /// @param item The item.
         void edit(Item item);
+
+        /// Gives (or takes away) the tree the read-only look, its items greyed.
+        ///
+        /// @param readOnly Whether it has the look.
+        void setReadOnlyLook(boolean readOnly);
 
         /// @return The item detached (to be attached to another operator), or null for none.
         Item getDetached();

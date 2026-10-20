@@ -134,7 +134,7 @@ public class ExpressionTreeViewImpl
         layoutPanel.setAllowDragging(true);
         layoutPanel.addStyleName("expression-tree-view");
 
-        keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "expression-tree-status", "item", "items") {
+        keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "item", "items") {
             @Override
             protected String getName(final Item item) {
                 return ExpressionItemRenderer.getName(treePanel.getTree(), item);
@@ -352,6 +352,11 @@ public class ExpressionTreeViewImpl
     public void edit(final Item item) {
         treePanel.setEditingItem(item);
         treePanel.refresh();
+    }
+
+    @Override
+    public void setReadOnlyLook(final boolean readOnly) {
+        layoutPanel.setStyleName("expression-tree-view--read-only", readOnly);
     }
 
     @Override

@@ -81,7 +81,7 @@ public final class ExpressionBuilderStories {
     private static final String DETACHED = "expression-item--detached";
     private static final String MARKED = "." + TARGET + ", ." + REFUSED + ", ." + DETACHED;
     // The tree's live region, which says what moving with the keyboard did
-    private static final String STATUS = ".expression-tree-status";
+    private static final String STATUS = ".draggable-tree__status";
     private static final String USER_ID = "UserId contains admin";
     private static final String EVENT_TIME = "EventTime between 2024-01-01T00:00:00.000Z,2024-02-01T00:00:00.000Z";
 
@@ -284,8 +284,19 @@ public final class ExpressionBuilderStories {
                     play.expect(play.querySelector(".expression-item__refused-icon")).toBeNull();
                     play.waitFor(() -> play.expect(play.spy(ON_CHANGE)).toHaveBeenCalled());
 
+                    // Ctrl+V on its own operator moves it to the end, as dropping it there does
+                    play.keyboard("{Home}");
+                    play.waitFor(() -> play.expect(item(play, EVENT_TIME)).toHaveFocus());
+                    play.keyboard("{Control>}x{/Control}{ArrowLeft}");
+                    play.waitFor(() -> play.expect(item(play, "OR, 4 items, can take " + EVENT_TIME)).toHaveFocus());
+                    play.keyboard("{Control>}v{/Control}");
+                    play.waitFor(() -> play.expect(status).toHaveTextContent(
+                            EVENT_TIME + " moved to the end of OR, 4 items."));
+                    play.waitFor(() -> play.expect(item(play, EVENT_TIME)).toHaveFocus());
+                    play.expect(item(play, EVENT_TIME)).toHaveAttribute("aria-posinset", "4");
+
                     // An operator is detached with its items, and Escape puts it back
-                    play.keyboard("{Home}{ArrowDown}");
+                    play.keyboard("{Home}");
                     // The inner AND (the root has 3 items now too)
                     final Query and = play.querySelector("[role='treeitem'][aria-level='3'][aria-label^='AND']");
                     play.waitFor(() -> play.expect(and).toHaveFocus());
