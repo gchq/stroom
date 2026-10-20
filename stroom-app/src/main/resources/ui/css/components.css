@@ -1048,10 +1048,6 @@
     scrollbar-gutter: stable;
 }
 
-.stepToolbar {
-    align-items: center;
-}
-
 .steppingFilterViewImpl {
 }
 
@@ -1074,16 +1070,6 @@
 
 .stepLocationLink--disabled:hover {
     text-decoration: none;
-}
-
-.stepLocationViewImpl-left {
-}
-
-.stepLocationViewImpl-right {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
 }
 
 .stepLocationViewImpl-layout {
@@ -1149,24 +1135,6 @@
     min-width: 400px;
     min-height: 400px;
 }
-
-/*
-.treePanel-panel {
-    position: relative;
-}
-
-.treePanel-boxPanel {
-    position: relative;
-    top: 0;
-    left: 0;
-}
-
-.treePanel-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-*/
 
 .focus-without-border {
     border: 1px solid transparent;
@@ -2164,10 +2132,6 @@
 
 .durationSetting {
     display: flex;
-}
-
-.ExpressionTreeViewImpl-layoutPanel {
-    position: absolute;
 }
 
 /* ==== Content store CSS ==== */

@@ -826,6 +826,7 @@ public class QueryPresenter
                 .enabled(hasSelection)
                 .command(this::delete)
                 .build());
+        menuItems.addAll(expressionPresenter.getMoveMenuItems(6));
 
         return menuItems;
     }

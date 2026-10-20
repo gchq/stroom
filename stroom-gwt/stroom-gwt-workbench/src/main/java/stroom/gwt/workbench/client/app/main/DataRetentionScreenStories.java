@@ -100,7 +100,7 @@ public final class DataRetentionScreenStories {
 
     // The expression panel has no class of its own; it is the expression tree's
     // view (ExpressionTreeViewImpl)
-    private static final String EXPRESSION_PANEL = ".ExpressionTreeViewImpl-layoutPanel";
+    private static final String EXPRESSION_PANEL = ".expression-tree-view";
 
     private DataRetentionScreenStories() {
         // Static utility
@@ -153,7 +153,7 @@ public final class DataRetentionScreenStories {
                     // Select the rule -> its expression shows, read only (labels, not editors)
                     play.click(play.getByText("Keep 30 days"));
                     play.waitFor(() -> play.expect(panel.getByText(TextMatch.regex("Feed\\s+contains\\s+TEST", "i")))
-                            .toHaveClass("expressionItemBox-label"));
+                            .toHaveClass("expression-item__label"));
                     play.expect(panel.queryByDisplayValue("TEST")).toBeNull();
                     // The synthetic retain-all rule has no expression -> the panel clears
                     play.click(play.getByText("Default Retain All Forever Rule"));

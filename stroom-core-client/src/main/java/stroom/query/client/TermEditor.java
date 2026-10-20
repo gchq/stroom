@@ -40,6 +40,7 @@ import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -66,6 +67,8 @@ public class TermEditor extends Composite {
     private static final String NARROW_CLASS_NAME = "narrow";
 
     private final FlowPanel layout;
+    // The row of its fields
+    private final FlowPanel inner;
     private final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox;
     private final SelectionBox<Condition> conditionListBox;
     private final Label andLabel;
@@ -142,7 +145,7 @@ public class TermEditor extends Composite {
 
         fieldTypeLabel = createFieldTypeLabel();
 
-        final FlowPanel inner = new FlowPanel();
+        inner = new FlowPanel();
         inner.setStyleName("termEditor-inner");
         inner.add(fieldListBox);
         inner.add(conditionListBox);
@@ -195,6 +198,27 @@ public class TermEditor extends Composite {
             });
             editing = true;
         }
+    }
+
+    /// @return Whether a field's own popup is open: a value's suggestions or a date's calendar
+    /// (whose keys, e.g. Escape to close it, are the field's).
+    public boolean isPopupShowing() {
+        return value.isSuggestionListShowing()
+               || valueFrom.isSuggestionListShowing()
+               || valueTo.isSuggestionListShowing()
+               || date.isDatePickerShowing()
+               || dateFrom.isDatePickerShowing()
+               || dateTo.isDatePickerShowing();
+    }
+
+    /// Closes the fields' own popups (see [#isPopupShowing]).
+    public void hidePopups() {
+        value.hideSuggestionList();
+        valueFrom.hideSuggestionList();
+        valueTo.hideSuggestionList();
+        date.hideDatePicker();
+        dateFrom.hideDatePicker();
+        dateTo.hideDatePicker();
     }
 
     public void endEdit() {
@@ -637,6 +661,12 @@ public class TermEditor extends Composite {
                 uiHandlers.onChange();
             }
         }
+    }
+
+    /// @return The row of its fields, on which the item it edits draws its looks (e.g. being
+    /// selected).
+    public Element getRow() {
+        return inner.getElement();
     }
 
     public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {

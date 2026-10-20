@@ -211,8 +211,8 @@ public class MyDateBox extends Composite implements DateBoxView {
     }
 
 
-    // Whether the shared calendar is open for this box
-    private boolean isDatePickerShowing() {
+    /// @return Whether the calendar is open for this box.
+    public boolean isDatePickerShowing() {
         return owner == this && sharedPopup != null && sharedPopup.isShowing();
     }
 

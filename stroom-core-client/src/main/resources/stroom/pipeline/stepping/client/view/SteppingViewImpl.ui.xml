@@ -1,17 +1,12 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:split="urn:import:stroom.widget.layout.client"
              xmlns:tab="urn:import:stroom.widget.tab.client.view">
-    <g:FlowPanel styleName="SteppingViewImpl max dock-container-vertical">
-        <g:FlowPanel styleName="dock-min dock-container-horizontal">
-            <g:FlowPanel ui:field="left" styleName="dock-min stepLocationViewImpl-left"/>
-            <g:FlowPanel ui:field="right" styleName="dock-max stepLocationViewImpl-right"/>
+    <g:FlowPanel styleName="stepping-screen max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min dock-container-horizontal stepping-screen__top">
+            <g:SimplePanel ui:field="treeContainer" styleName="stepping-screen__pipeline"/>
+            <g:FlowPanel ui:field="right" styleName="dock-min stepping-screen__controls"/>
         </g:FlowPanel>
-        <split:SplitPane ui:field="bottomLayout" vertical="true" thin="true" sizes="31px, *"
-                         names="Pipeline, Element" addStyleNames="dock-max">
-            <g:ScrollPanel ui:field="treeContainer" addStyleNames="max steppingViewImpl-treeContainer"/>
-            <tab:LayerContainerImpl ui:field="layerContainer" styleName="max"/>
-        </split:SplitPane>
+        <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max stepping-screen__panes"/>
     </g:FlowPanel>
 </ui:UiBinder>

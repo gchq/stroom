@@ -203,6 +203,16 @@ public class MenuPresenter
         getView().focus();
     }
 
+    /// Focuses an item of the menu, or its first if the item is null or not in the menu.
+    ///
+    /// @param item The item to focus. Can be null.
+    public void focusItem(final Item item) {
+        if (item != null) {
+            getView().ensureItemSelected(item);
+        }
+        getView().focus();
+    }
+
     public void focus(final boolean hideChildren) {
         hideChildren(hideChildren, false);
         getView().focus();

@@ -204,6 +204,11 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                                            final Consumer<DocRef> onDocRefDecoration,
                                            final Runnable onDocRefNotFound) {
         if (docRef != null && decorateDocRef) {
+            // Selected as given at once, so that it is the value until decorating it is done, and if
+            // that fails (rather than the value before, or none, which whatever reads the value,
+            // e.g. a query expression's term editor, would save in its place)
+            explorerPopupPresenter.setSelectedEntityReference(docRef);
+            setFieldValue(docRef, null);
             // The docRef may have come from the data within a Doc so the name may be out of date,
             // so decorate it to ensure we have the right name
             restFactory
@@ -212,6 +217,11 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                             resource.decorate(DecorateRequest.createWithPermCheck(
                                     docRef, getRequiredPermissions())))
                     .onSuccess(decoratedDocRef -> {
+                        if (!Objects.equals(value, docRef)) {
+                            // Another has been selected since, e.g. by a term editor moving on to
+                            // another term: this one's reply is too late
+                            return;
+                        }
                         if (decoratedDocRef != null) {
                             explorerPopupPresenter.setSelectedEntityReference(decoratedDocRef);
                             setFieldValue(decoratedDocRef, null);

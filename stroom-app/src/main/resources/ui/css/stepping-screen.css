@@ -1,0 +1,67 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The stepping screen's layout (SteppingViewImpl), named BEM style (block, block__element,
+   block--modifier): a top row of the pipeline bar (see pipeline-path.css) and the stepping
+   controls, above the selected element's panes.
+*/
+
+/* The top row */
+.stepping-screen__top {
+    align-items: center;
+}
+
+/* The pipeline bar takes the room the controls leave, and may shrink (collapsing its chevrons)
+   rather than push the controls off the screen */
+.stepping-screen__pipeline {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* The stepping controls: the step's progress, its location, the step buttons and Terminate */
+.stepping-screen__controls {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* The log pane toggle and the step's progress, in a slot of a fixed width so that the pipeline bar
+   beside it doesn't change width as they come and go */
+.stepping-screen__progress {
+    flex-shrink: 0;
+    align-items: center;
+    width: 14em;
+}
+
+/* The step's progress, cut short with an ellipsis if it is too long for its slot (its hover tip
+   has it in full) */
+.stepping-screen__progress-message {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The selected element's panes */
+.stepping-screen__panes {
+    position: relative;
+    min-height: 0;
+}

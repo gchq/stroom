@@ -36,11 +36,17 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import java.util.List;
 import java.util.Map;
 
+/// The pipeline structure editor's tree of elements.
+///
+/// It is a tree for assistive technology (`role="tree"`, see [PipelineElementRenderer]) and for
+/// the keyboard (see [TreeKeyboard]), whose elements can be dragged to another parent or moved with
+/// the keyboard where it may be changed.
 public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandlers> implements PipelineTreeView {
 
     private final PipelineTreePanel treePanel;
     private final PipelineTreePanel subTreePanel;
     private final DraggableTreePanel<PipelineElement> layoutPanel;
+    private final TreeKeyboard<PipelineElement> keyboard;
     private SelectionModel<PipelineElement> selectionModel;
     private boolean allowNullSelection = true;
     private PipelineModel pipelineModel;
@@ -49,24 +55,21 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     public PipelineTreeViewImpl() {
         treePanel = new PipelineTreePanel();
         subTreePanel = new PipelineTreePanel();
+        // The copy of what is dragged, which follows the pointer, is for sight only: not a second
+        // tree for assistive technology, nor focusable
+        subTreePanel.getElement().setAttribute("aria-hidden", "true");
+        subTreePanel.getElement().setAttribute("inert", "");
 
         layoutPanel = new DraggableTreePanel<>(treePanel, subTreePanel) {
             @Override
             protected boolean isValidTarget(final PipelineElement parent, final PipelineElement child) {
-                final PipelineElementType parentType = pipelineModel.getElementType(parent);
-                final PipelineElementType childType = pipelineModel.getElementType(child);
-                if (parentType == null || childType == null) {
-                    return false;
-                }
+                return canTake(parent, child);
+            }
 
-                int childCount = 0;
-
-                final List<PipelineElement> children = treePanel.getTree().getChildren(parent);
-                if (children != null) {
-                    childCount = children.size();
-                }
-
-                return StructureValidationUtil.isValidChildType(parentType, childType, childCount);
+            @Override
+            protected void startDragging(final PipelineElement parent, final PipelineElement child) {
+                // Dragging replaces moving with the keyboard
+                keyboard.cancelDetach();
             }
 
             @Override
@@ -78,18 +81,53 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
 
             @Override
             protected void setSelected(final PipelineElement item) {
-                if (allowNullSelection || item != null) {
-                    selectionModel.setSelected(item, true);
+                if (item != null) {
+                    // A clicked element has the focus too, so that the keyboard carries on from it
+                    keyboard.moveTo(item);
+                } else if (allowNullSelection) {
+                    selectionModel.setSelected(null, true);
                 }
             }
         };
+        // The order of an element's children doesn't matter (the model moves nothing), so dropping
+        // an element where it came from leaves it as it was
+        layoutPanel.setPutBackOnOwnParent(true);
         layoutPanel.setWidth("100%");
         layoutPanel.setHeight("100%");
+
+        keyboard = new TreeKeyboard<>(treePanel, layoutPanel, "element", "elements") {
+            @Override
+            protected String getName(final PipelineElement element) {
+                return element.getDisplayName();
+            }
+
+            @Override
+            protected boolean canTake(final PipelineElement parent, final PipelineElement child) {
+                return PipelineTreeViewImpl.this.canTake(parent, child);
+            }
+
+            @Override
+            protected void move(final PipelineElement parent, final PipelineElement child) {
+                if (getUiHandlers() != null) {
+                    getUiHandlers().onMove(parent, child);
+                }
+            }
+
+            @Override
+            protected void remove(final PipelineElement element) {
+                if (getUiHandlers() != null) {
+                    getUiHandlers().onRemove(element);
+                }
+            }
+        };
+        // A detached element and those after it are faded, with the connectors into them
+        treePanel.setFaded(keyboard::isDetached);
     }
 
     @Override
     public void setPipelineModel(final PipelineModel pipelineModel) {
         this.pipelineModel = pipelineModel;
+        keyboard.cancelDetach();
         treePanel.setPipelineModel(pipelineModel);
         subTreePanel.setPipelineModel(pipelineModel);
     }
@@ -103,6 +141,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     public void setSelectionModel(final SelectionModel<PipelineElement> selectionModel) {
         this.selectionModel = selectionModel;
         treePanel.setSelectionModel(selectionModel);
+        keyboard.setSelectionModel(selectionModel);
     }
 
     @Override
@@ -118,6 +157,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     @Override
     public void setAllowDragging(final boolean allowDragging) {
         layoutPanel.setAllowDragging(allowDragging);
+        keyboard.setAllowMoving(allowDragging);
     }
 
     @Override
@@ -147,6 +187,45 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
 
     @Override
     public void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
-        treePanel.setSeverities(elementIdToSeveritiesMap);
+        // The structure editor doesn't show problems (the stepping screen's pipeline bar does)
+    }
+
+    @Override
+    public PipelineElement getDetached() {
+        return keyboard.getDetached();
+    }
+
+    @Override
+    public void detach(final PipelineElement element) {
+        keyboard.detach(element);
+    }
+
+    @Override
+    public boolean canAttach(final PipelineElement target) {
+        return keyboard.canAttach(target);
+    }
+
+    @Override
+    public void attach(final PipelineElement target) {
+        keyboard.attach(target);
+    }
+
+    @Override
+    public void cancelDetach() {
+        keyboard.cancelDetach();
+    }
+
+    // Whether a parent can take a child, by their types and the parent's children
+    private boolean canTake(final PipelineElement parent, final PipelineElement child) {
+        final PipelineElementType parentType = pipelineModel.getElementType(parent);
+        final PipelineElementType childType = pipelineModel.getElementType(child);
+        if (parentType == null || childType == null) {
+            return false;
+        }
+        final List<PipelineElement> children = treePanel.getTree().getChildren(parent);
+        final int childCount = children == null
+                ? 0
+                : children.size();
+        return StructureValidationUtil.isValidChildType(parentType, childType, childCount);
     }
 }

@@ -191,8 +191,8 @@ public final class QuickFilterHistoryStories {
                     play.expect(screen.queryByText("Replace the filter text?")).toBeNull();
                     expectNoProblems(play);
                 })
-                // A filter the tree can't show opens an empty tree, saying so. OK then replaces
-                // the text, once the user confirms losing it
+                // A filter the tree can't show opens an empty tree, saying so (and that OK will
+                // replace the text). OK then replaces it, with no confirmation
                 .story("AdvancedQueryUnconvertible", context -> render(context, fixtures(RestReply.json("[]"))))
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -206,13 +206,12 @@ public final class QuickFilterHistoryStories {
                     play.expect(dialog.findByText(TextMatch.startingWith("The current filter could not be converted")))
                             .toBeInTheDocument();
                     play.expect(dialog.getByText(TextMatch.containing(REJECTION))).toBeInTheDocument();
+                    play.expect(dialog.getByText(TextMatch.containing("OK will replace the filter text")))
+                            .toBeInTheDocument();
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    final Play confirm = screen.within(
-                            screen.findByText("Replace the filter text?").closest(StroomDom.DIALOG));
-                    play.expect(confirm.getByText(TextMatch.containing(REJECTED_FILTER))).toBeInTheDocument();
-                    play.click(confirm.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Advanced Query", StroomDom.DIALOG_TITLE))
                             .toBeNull());
+                    play.expect(screen.queryByText("Replace the filter text?")).toBeNull();
                     play.expect(filter).toHaveValue("");
                     play.findByText("Alice Anderson");
                     expectNoProblems(play);

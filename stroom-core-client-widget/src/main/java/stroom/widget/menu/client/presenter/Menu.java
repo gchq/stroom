@@ -69,7 +69,7 @@ public class Menu {
                         if (currentItems == event.getItems()) {
                             MenuOpener.setExpanded(event.getOpener(), true);
                         }
-                        menuPresenter.focus();
+                        menuPresenter.focusItem(event.getFocusItem());
                     })
                     .onHide(e -> {
                         MenuOpener.setExpanded(event.getOpener(), false);
