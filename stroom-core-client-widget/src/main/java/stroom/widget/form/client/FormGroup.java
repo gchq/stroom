@@ -109,6 +109,9 @@ public class FormGroup extends Composite implements HasWidgets {
     private static final String ARIA_HAS_POPUP = "aria-haspopup";
     // A control that opens a dialog to choose a value (see isPicker)
     private static final String PICKER_SELECTOR = "[role=\"button\"][aria-haspopup]";
+    // A list of options to choose from that isn't a select element, e.g. a selection list
+    private static final String LIST_BOX_ROLE = "listbox";
+    private static final String LIST_BOX_SELECTOR = "[role=\"listbox\"]";
     // The key that shows a group's help (see handleKeyEvent)
     private static final String HELP_SHORTCUT = "F1";
     private static final Set<String> NON_LABELLED_INPUT_TYPES = Set.of(
@@ -220,7 +223,13 @@ public class FormGroup extends Composite implements HasWidgets {
         labelledControl = null;
         if (controls.size() == 1) {
             final Element target = controls.get(0);
-            if (!isLabelable(target)) {
+            if (isListBox(target)) {
+                // A label element can't be for it, so it is named by the label alone, as its own
+                // text is every option's
+                formLabel.setIdentity(id);
+                ariaLabelledControl = target;
+                ariaLabelledControl.setAttribute(ARIA_LABELLED_BY, formLabel.getElement().getId());
+            } else if (!isLabelable(target)) {
                 // A label element can't be for it, so it is named by the label then its own text
                 // (e.g. a picker's chosen document), e.g. 'Pipeline, My Pipeline, button'
                 formLabel.setIdentity(id);
@@ -412,7 +421,7 @@ public class FormGroup extends Composite implements HasWidgets {
         }
         final List<Element> controls = new ArrayList<>();
         final NodeList<Element> elements = querySelectorAll(root,
-                String.join(", ", FORM_CONTROL_TAGS) + ", " + PICKER_SELECTOR);
+                String.join(", ", FORM_CONTROL_TAGS) + ", " + PICKER_SELECTOR + ", " + LIST_BOX_SELECTOR);
         for (int i = 0; i < elements.getLength(); i++) {
             final Element element = elements.getItem(i);
             if (isFormControl(element) && !isHidden(element, root)) {
@@ -440,10 +449,10 @@ public class FormGroup extends Composite implements HasWidgets {
     }-*/;
 
     // Whether the element is a form control a label can name and that takes input: a form element
-    // (but not a hidden input, or a button, which is named by its own text), or a control that opens
-    // a dialog to choose a value (e.g. a document picker)
+    // (but not a hidden input, or a button, which is named by its own text), a control that opens
+    // a dialog to choose a value (e.g. a document picker), or a list box (e.g. a selection list)
     private static boolean isFormControl(final Element element) {
-        if (isPicker(element)) {
+        if (isPicker(element) || isListBox(element)) {
             return true;
         }
         final String tagName = element.getTagName().toLowerCase(Locale.ROOT);
@@ -464,6 +473,11 @@ public class FormGroup extends Composite implements HasWidgets {
     private static boolean isPicker(final Element element) {
         return BUTTON_ROLE.equals(element.getAttribute(ROLE))
                && !NullSafe.isBlankString(element.getAttribute(ARIA_HAS_POPUP));
+    }
+
+    // A list of options that isn't a select element, e.g. a selection list's (SelectionList)
+    private static boolean isListBox(final Element element) {
+        return LIST_BOX_ROLE.equals(element.getAttribute(ROLE));
     }
 
     public void setLabel(final String label) {

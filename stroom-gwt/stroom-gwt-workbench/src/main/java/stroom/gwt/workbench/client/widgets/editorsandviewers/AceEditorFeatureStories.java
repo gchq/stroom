@@ -308,6 +308,15 @@ public final class AceEditorFeatureStories {
                     final Value<List<String>> lines = play.querySelectorAll(".ace_line").textContents();
                     play.waitFor(() -> play.expect("the first line", () -> lines.get().get(0))
                             .toBe("irst line"));
+                    // Escape leaves insert mode first, and then, from normal mode, stops editing, so
+                    // Tab can leave the editor
+                    play.keyboard("i");
+                    play.waitFor(() -> play.expect(normalMode).not().toBeInTheDocument());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(normalMode).toBeInTheDocument());
+                    play.expect(play.querySelector(".ace_text-input")).toHaveFocus();
+                    play.keyboard("{Escape}");
+                    play.expect(play.querySelector(".ace_scroller")).toHaveFocus();
                 })
                 // Stroom's own syntax modes
                 .story("StroomQueryMode", context -> framed(editor(SAMPLE_QUERY,

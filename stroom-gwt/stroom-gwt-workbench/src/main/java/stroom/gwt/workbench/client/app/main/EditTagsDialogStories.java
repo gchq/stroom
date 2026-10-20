@@ -118,9 +118,11 @@ public final class EditTagsDialogStories {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(screen.getByText("Add Tags to 2 Documents")).toBeInTheDocument());
                     // Pick a known tag.
-                    // The known tags are a list box, whose selected tags are added with the arrow
-                    // button
-                    play.selectOptions(screen.getByTitle("All tags currently in use across all documents"), "x");
+                    // The known tags are a list box of several choices, whose chosen tags are added
+                    // with the arrow button
+                    play.click(screen.getByRole("option", "x"));
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "x"))
+                            .toHaveAttribute("aria-selected", "true"));
                     play.click(screen.getByTitle("Add Selected Tags from All Known Tags"));
                     play.click(okButton(screen));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -137,13 +139,197 @@ public final class EditTagsDialogStories {
                     play.waitFor(() -> play.expect(screen.getByText("Remove Tags from 2 Documents"))
                             .toBeInTheDocument());
                     play.waitFor(() -> play.expect(screen.getByText("drop")).toBeInTheDocument());
-                    // The tags are options of a multi-select list box, not
+                    // The tags are options of a list box of several choices, not
                     // labelled check boxes, so 'drop' is selected rather than ticked
-                    play.selectOptions(screen.getByRole("listbox"), "drop");
+                    play.click(screen.getByRole("option", "drop"));
                     play.click(okButton(screen));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.delete(REMOVE_TAGS_PATH)
                                     .withJsonBodyContaining("{\"tags\": [\"drop\"]}")
+                                    .toSpyMatcher()));
+                    expectNoProblems(play);
+                })
+                // The tag lists are list boxes of several choices, named by their labels. From the
+                // field, Down goes to the known tags; Space chooses, moving only moves, and Enter
+                // adds those chosen, going back to the field
+                .story("KeysChooseAndAddTags",
+                        context -> renderEdit(context, SINGLE, "[\"alpha\"]", "[\"alpha\", \"beta\", \"gamma\"]"))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(knownTags(screen).textContents())
+                            .toEqual(Arrays.asList("beta", "gamma")));
+                    final Query known = screen.getByRole("listbox", "All known tags");
+                    play.expect(known).toHaveAttribute("aria-multiselectable", "true");
+                    play.expect(screen.getByRole("listbox", "Document Tags"))
+                            .toHaveAttribute("aria-multiselectable", "true");
+                    final Query field = screen.getByTitle("Enter tags manually or filter 'All Known Tags'");
+                    play.waitFor(() -> play.expect(field).toHaveFocus());
+
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "beta")).toHaveFocus());
+                    // Up from the first known tag goes back to the field, and Down returns
+                    play.keyboard("{ArrowUp}");
+                    play.waitFor(() -> play.expect(field).toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "beta")).toHaveFocus());
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "beta"))
+                            .toHaveAttribute("aria-selected", "true"));
+                    // Each choice redraws the rows, so each key waits for the focus to come back
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "beta")).toHaveFocus());
+                    // Moving doesn't choose
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "gamma")).toHaveFocus());
+                    play.expect(screen.getByRole("option", "gamma")).toHaveAttribute("aria-selected", "false");
+                    play.expect(screen.getByRole("option", "beta")).toHaveAttribute("aria-selected", "true");
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "gamma"))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "gamma")).toHaveFocus());
+
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(nodeTags(screen).textContents())
+                            .toEqual(Arrays.asList("alpha", "beta", "gamma")));
+                    play.expect(knownTags(screen)).toHaveLength(0);
+                    play.waitFor(() -> play.expect(field).toHaveFocus());
+                    expectNoProblems(play);
+                })
+                // Delete removes the document tags chosen, which go back to the known tags; Space
+                // takes a tag back out of those chosen
+                .story("DeleteRemovesTags",
+                        context -> renderEdit(context, SINGLE, "[\"alpha\", \"beta\"]", "[\"alpha\", \"beta\"]"))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(nodeTags(screen).textContents())
+                            .toEqual(Arrays.asList("alpha", "beta")));
+                    // A toolbar button stays focusable when disabled, so is only aria-disabled
+                    final Query remove = screen.getByTitle("Remove Selected Tags");
+                    play.expect(remove).toHaveAttribute("aria-disabled", "true");
+
+                    play.click(screen.getByRole("option", "alpha"));
+                    play.waitFor(() -> play.expect(remove).not().toHaveAttribute("aria-disabled"));
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "alpha")).toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "beta")).toHaveFocus());
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "beta"))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "beta")).toHaveFocus());
+                    // Space again takes it back out
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "beta"))
+                            .toHaveAttribute("aria-selected", "false"));
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "beta")).toHaveFocus());
+
+                    play.keyboard("{Delete}");
+                    play.waitFor(() -> play.expect(nodeTags(screen).textContents())
+                            .toEqual(Arrays.asList("beta")));
+                    play.expect(knownTags(screen).textContents()).toEqual(Arrays.asList("alpha"));
+                    // The list keeps the focus, with nothing chosen
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "beta")).toHaveFocus());
+                    play.expect(remove).toHaveAttribute("aria-disabled", "true");
+
+                    play.click(okButton(screen));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(UPDATE_TAGS_PATH)
+                                    .withBody("tags are beta alone", body -> body != null
+                                            && body.contains("\"beta\"") && !body.contains("\"alpha\""))
+                                    .toSpyMatcher()));
+                    expectNoProblems(play);
+                })
+                // Filtering the known tags drops the chosen ones it hides, so that only tags that can
+                // be seen are added
+                .story("FilteringDropsHiddenChoices",
+                        context -> renderEdit(context, SINGLE, "[]", "[\"beta\", \"gamma\"]"))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(knownTags(screen).textContents())
+                            .toEqual(Arrays.asList("beta", "gamma")));
+                    final Query add = screen.getByTitle("Add Selected Tags from All Known Tags");
+                    play.click(screen.getByRole("option", "beta"));
+                    play.waitFor(() -> play.expect(add).not().toHaveAttribute("aria-disabled"));
+
+                    play.type(screen.getByTitle("Enter tags manually or filter 'All Known Tags'"), "gam");
+                    play.waitFor(() -> play.expect(knownTags(screen).textContents())
+                            .toEqual(Arrays.asList("gamma")));
+                    play.expect(screen.getByText("All known tags (filtered)")).toBeInTheDocument();
+                    play.expect(add).toHaveAttribute("aria-disabled", "true");
+                    expectNoProblems(play);
+                })
+                // Over a hundred known tags: the list pages them, and its options scroll within its
+                // border
+                .story("ManyKnownTags", context -> renderEdit(context, SINGLE, "[]", manyTags(150)))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "tag-000")).toBeInTheDocument());
+                    play.expect(knownTags(screen)).toHaveLength(100);
+                    play.expect(screen.getByRole("listbox", "All known tags")).toBeVisible();
+                    expectNoProblems(play);
+                })
+                // Shift+Down moves to the next tag and chooses it (Shift+Up the one before), and
+                // Shift+Space chooses the run from the last tag chosen to the one with the focus,
+                // keeping the others
+                .story("ShiftKeysChooseARun",
+                        context -> renderRemove(context, MULTIPLE, "[\"a1\", \"a2\", \"a3\", \"a4\", \"a5\"]"))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "a1")).toHaveFocus());
+                    play.keyboard("{Shift>}{ArrowDown}{/Shift}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "a2"))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "a2")).toHaveFocus());
+                    play.expect(screen.getByRole("option", "a1")).toHaveAttribute("aria-selected", "false");
+                    // Down twice, moving only, then Shift+Space: a2 to a4
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "a3")).toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "a4")).toHaveFocus());
+                    play.keyboard("{Shift>} {/Shift}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "a3"))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.expect(screen.getByRole("option", "a4")).toHaveAttribute("aria-selected", "true");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "a4")).toHaveFocus());
+                    // Shift+Up back onto a3 takes it out again
+                    play.keyboard("{Shift>}{ArrowUp}{/Shift}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "a3"))
+                            .toHaveAttribute("aria-selected", "false"));
+                    play.click(okButton(screen));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.delete(REMOVE_TAGS_PATH)
+                                    .withBody("tags are a2 and a4", body -> body != null
+                                            && body.contains("\"a2\"") && body.contains("\"a4\"")
+                                            && !body.contains("\"a1\"") && !body.contains("\"a3\"")
+                                            && !body.contains("\"a5\""))
+                                    .toSpyMatcher()));
+                    expectNoProblems(play);
+                })
+                // Remove's list has the focus when the dialog opens; Space chooses each tag to remove
+                .story("RemoveByKeyboard",
+                        context -> renderRemove(context, MULTIPLE, "[\"keep\", \"drop\", \"old\"]"))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query list = screen.getByRole("listbox", "Existing Tags");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "drop")).toHaveFocus());
+                    play.expect(list).toHaveAttribute("aria-multiselectable", "true");
+                    // Each choice redraws the rows, so each key waits for the focus to come back
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "drop"))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "drop")).toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "keep")).toHaveFocus());
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "old")).toHaveFocus());
+                    play.keyboard(" ");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "old"))
+                            .toHaveAttribute("aria-selected", "true"));
+                    play.expect(screen.getByRole("option", "keep")).toHaveAttribute("aria-selected", "false");
+                    play.click(okButton(screen));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.delete(REMOVE_TAGS_PATH)
+                                    .withBody("tags are drop and old", body -> body != null
+                                            && body.contains("\"drop\"") && body.contains("\"old\"")
+                                            && !body.contains("\"keep\""))
                                     .toSpyMatcher()));
                     expectNoProblems(play);
                 });
@@ -155,7 +341,26 @@ public final class EditTagsDialogStories {
 
     // The options of the document tags list box (the last list box in the dialog)
     private static Query nodeTags(final Play screen) {
-        return screen.querySelectorAll(".editNodeTagsNodeTagsFrmGrp option");
+        return screen.querySelectorAll(".editNodeTagsNodeTagsFrmGrp [role=\"option\"]");
+    }
+
+    // The options of the known tags list box
+    private static Query knownTags(final Play screen) {
+        return screen.querySelectorAll(".editNodeTagsAllTagsFrmGrp [role=\"option\"]");
+    }
+
+    // A JSON array of that many tags, 'tag-000' onwards
+    private static String manyTags(final int count) {
+        final StringBuilder json = new StringBuilder("[");
+        for (int i = 0; i < count; i++) {
+            if (i > 0) {
+                json.append(", ");
+            }
+            // Three digits, so that the tags sort in number order
+            final String number = String.valueOf(i);
+            json.append("\"tag-").append("000".substring(number.length())).append(number).append("\"");
+        }
+        return json.append("]").toString();
     }
 
     private static void expectNoProblems(final Play play) {

@@ -67,8 +67,67 @@ export const CHECKS = {
     const box = page.getByRole('combobox');
     await box.focus();
     await page.keyboard.type('42');
-    const filter = page.locator('.selectionList-quickFilter .quick-filter__input');
+    const filter = page.locator('.selection-list__filter .quick-filter__input');
     await waitFor(page, async () => (await filter.count()) > 0 && (await filter.inputValue()) === '42',
       'what is typed is the quick filter');
+  },
+  // Home and End, pressed for real in the closed box, open the list at its first and last option
+  'widgets-selectors-selectionbox--home-and-end-open-at-the-ends': async (page) => {
+    const box = page.getByRole('combobox');
+    await box.focus();
+    await page.keyboard.press('End');
+    await waitFor(page, async () => (await focusedText(page)) === 'Echo', 'End opens the list at its last option');
+    await page.keyboard.press('Escape');
+    await waitFor(page, async () => !(await popupOpen(page)), 'Escape closes the list');
+    await page.keyboard.press('Home');
+    await waitFor(page, async () => (await focusedText(page)) === 'Alpha', 'Home opens the list at its first option');
+    await page.keyboard.press('Escape');
+    await waitFor(page, async () => !(await popupOpen(page)), 'Escape closes the list');
+  },
+  // The selection box and text field as grid cells (SelectionBoxCell, TextFieldCell), in the floor
+  // map settings' Value Schema grid: Down opens a row's list (the grid doesn't take it as a row
+  // move), Escape closes it with the focus back on the box, a real click chooses and the focus comes
+  // back to the box the grid draws again; the arrows in a text field stay in it, and Tab goes on
+  // from one row's controls to the next row's
+  'app-editors-floormapsettings--schema': async (page) => {
+    const box = () => page.getByRole('combobox', { name: 'Role for $.temp' });
+    const hasFocus = (locator) => locator.evaluate((element) => element === document.activeElement);
+    await box().focus();
+    await page.keyboard.press('ArrowDown');
+    await waitFor(page, () => popupOpen(page), 'Down opens the row\'s list');
+    await page.keyboard.press('Escape');
+    await waitFor(page, async () => !(await popupOpen(page)), 'Escape closes the list');
+    await waitFor(page, () => hasFocus(box()), 'the focus is back on the box');
+
+    await page.keyboard.press('Enter');
+    await waitFor(page, () => popupOpen(page), 'Enter opens the row\'s list');
+    await page.locator(`${POPUP} [role="option"]`, { hasText: 'STATUS' }).click();
+    await waitFor(page, async () => (await box().inputValue()) === 'STATUS', 'a click chooses the role');
+    await waitFor(page, () => hasFocus(box()), 'the focus comes back to the row\'s box');
+
+    const path = page.getByRole('textbox', { name: 'Path for $.type' });
+    await path.focus();
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowDown');
+    await page.waitForTimeout(200);
+    assert.ok(await hasFocus(path), 'the arrows in a text field stay in it');
+
+    const defaultField = page.getByRole('textbox', { name: 'Default for $.type' });
+    await defaultField.focus();
+    // As a person would before pressing Tab: the grid handles the focus a moment later, in a deferred
+    // command, and a Tab sent in that moment can find the focus on the page (see selection-list.mjs)
+    await page.waitForTimeout(150);
+    const nextRole = page.getByRole('combobox', { name: 'Role for $.label' });
+    let reached = false;
+    const visited = [];
+    // The grid's own keyboard cell may take a Tab on the way (a stray tab stop of every grid)
+    for (let i = 0; i < 3 && !reached; i++) {
+      await page.keyboard.press('Tab');
+      await page.waitForTimeout(100);
+      reached = await hasFocus(nextRole);
+      visited.push(await page.evaluate(() => document.activeElement.getAttribute('aria-label')
+          || `${document.activeElement.tagName} "${document.activeElement.textContent.trim().slice(0, 12)}"`));
+    }
+    assert.ok(reached, `Tab goes on from one row's controls to the next row's (went to ${visited.join(', ')})`);
   },
 };

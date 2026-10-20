@@ -224,6 +224,29 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 	}-*/;
 
     /**
+     * Set whether Ace's keyboard accessibility mode is on: the editor's content and gutter are
+     * tab stops, Enter on the content starts editing and Escape stops, so Tab can leave the
+     * editor rather than indenting.
+     *
+     * @param enabled true to turn the mode on, false to turn it off
+     */
+    public native void setKeyboardAccessibility(boolean enabled) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.setOption("enableKeyboardAccessibility", enabled);
+	}-*/;
+
+    /**
+     * Set the name Ace puts before the cursor's row in its text input's label, which Ace sets
+     * when the input gets the focus in keyboard accessibility mode.
+     *
+     * @param label the name, e.g. "Code editor"
+     */
+    public native void setTextInputAriaLabel(String label) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.setOption("textInputAriaLabel", label);
+	}-*/;
+
+    /**
      * Replace the selected text with the passed text
      *
      * @param text text to use in place of the selected text
