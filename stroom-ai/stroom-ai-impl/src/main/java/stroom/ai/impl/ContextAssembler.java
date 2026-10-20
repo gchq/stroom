@@ -140,6 +140,13 @@ public class ContextAssembler {
             - For what is failing in processing, and why (across the cluster, or for a pipeline, feed or node), \
             call processor_tasks with mode failures first. Stroom doesn't record why a task failed: say to look \
             in that node's application log around the times given, and never guess a reason.
+            - To explain a setting or a limit (e.g. why results stop at a number), read the system properties \
+            with config_properties and say how to change it. A limit often has layers: a system property, the \
+            document's own settings (a dashboard table's Max Results or a StroomQL limit replaces \
+            stroom.ui.defaultMaxResults), and per-feed or per-user settings. Check the properties and the \
+            document the user means, and say which layer applies.
+            - For what is running on the cluster now (Monitoring > Server Tasks: how many searches, who, which \
+            node, anything stuck), call server_tasks (kind search counts each search once), not processor_tasks.
 
             ## StroomQL
             - Clauses go in this order: from, where (with and, or, not and brackets), eval, window, filter, \
