@@ -187,4 +187,17 @@ class TestAiChatTexts {
         assertThat(AiChatTexts.trustExplanation(false)).startsWith("Untrusted server.\n").contains("asks before");
     }
 
+    @Test
+    void copyButtonsCopyNoLineBreakAtTheEnd() {
+        // A code block's text as shown: the Markdown renderer (showdown) ends every code block with a line break.
+        assertThat(AiChatTexts.forClipboard("from Events\nselect UserId\n")).isEqualTo("from Events\nselect UserId");
+        // An answer that ends with a code block, as text, and Markdown ending with blank lines.
+        assertThat(AiChatTexts.forClipboard("Run this:\n\nSELECT 1\n\n")).isEqualTo("Run this:\n\nSELECT 1");
+        assertThat(AiChatTexts.forClipboard("Done.\r\n")).isEqualTo("Done.");
+        // Line breaks within, at the start, and spaces at the end of the last line are kept.
+        assertThat(AiChatTexts.forClipboard("\nfirst\n\nsecond  ")).isEqualTo("\nfirst\n\nsecond  ");
+        assertThat(AiChatTexts.forClipboard("no line break")).isEqualTo("no line break");
+        assertThat(AiChatTexts.forClipboard("\n\n")).isEmpty();
+        assertThat(AiChatTexts.forClipboard(null)).isEmpty();
+    }
 }
