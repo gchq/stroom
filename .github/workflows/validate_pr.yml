@@ -1,17 +1,19 @@
-name: Reject non-contributor PRs
+name: Validate Pull Requests
 on:
-  # Runs against the target of the PR
+  # WARNGING!!: Make sure you understand the implications of 'pull_request_target'.
+  # This runs with secrets and write perms against the trusted base branch, not the fork.
+  # See https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target
   pull_request_target:
 
 permissions:
   # We need to do the following:
-  # - Check if the author is a member of the "Stroom Administrators" org level team
-  # - Check if the PR contains changes to CI related files
+  # - Read the files that are in the PR
+  # - Close the PR (with a comment) if the author is not a collaborator, member or owner
   pull-requests: write
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
+  check_pr_job:
+    runs-on: ubuntu-slim
     steps:
 
       - name: Close PRs from non-collaborators
@@ -26,23 +28,60 @@ jobs:
           echo "PR: ${PR}, author: ${AUTHOR}, author_association: ${AUTHOR_ASSOCIATION}"
           gh pr close "$PR" --repo "$GITHUB_REPOSITORY" \
           --comment "This repository only accepts pull requests from organisation members or approved outside collaborators. This pull request has been closed automatically."
+          
+          echo "::error::PR closed as author is not a collaborator."
+          exit 1
+
 
       - name: Check if author is a member of the "Stroom Administrators" org level team
-        id: team
+        id: check_team
         env:
           GH_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
           AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          # See if 
-          if gh api "orgs/gchq/teams/stroom-administrators/memberships/$AUTHOR" --silent 2>/dev/null; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+
+          response_file="$(mktemp)"
+          error_file="$(mktemp)"
+          trap 'rm -f "$response_file" "$error_file"' EXIT
+
+          if gh api --include --silent \
+              "orgs/gchq/teams/stroom-administrators/memberships/${AUTHOR}" \
+              >"${response_file}" 2>"${error_file}"; then
+            api_exit_code=0
           else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
+            api_exit_code=$?
           fi
+
+          http_status_code="$(
+            awk '$1 ~ /^HTTP\// { status = $2 } END { print status }' \
+              "${response_file}"
+          )"
+          
+          echo "api_exit_code: ${api_exit_code}, http_status_code: ${http_status_code}"
+
+          case "${http_status_code}" in
+            2*)
+              # The author is a member of "Stroom Administrators" team, so skip next step
+              echo "skip=true" >> "${GITHUB_OUTPUT}"
+              ;;
+            404)
+              # The author is not a team member, so continue with next step
+              echo "skip=false" >> "${GITHUB_OUTPUT}"
+              ;;
+            *)
+              # Something went wrong
+              echo "::error::Unable to determine team membership."
+              echo "gh exited with status ${api_exit_code}"
+              cat "${error_file}"
+              exit 1
+              ;;
+          esac
+
 
       - name: Look for changes to CI related files
         # Don't run if we are a member of "Stroom Administrators" team
-        if: steps.team.outputs.skip != 'true'
+        if: steps.check_team.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
