@@ -29,6 +29,7 @@ import stroom.util.shared.time.Time;
 import stroom.widget.datepicker.client.TimeBox;
 import stroom.widget.datepicker.client.TimePopup;
 import stroom.widget.datepicker.client.TimeViewImpl;
+import stroom.widget.form.client.AccessibleName;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Label;
@@ -74,6 +75,8 @@ public final class TimePickerStories {
     private static Widget timePicker(final StoryContext context, final Time time, final boolean showSecond) {
         final ScreenHarness harness = DateTimeWidgets.popupHarness(context);
         final TimeBox box = new TimeBox();
+        // Named, as a form group's label names it on Stroom's screens
+        AccessibleName.set(box, "Time");
         // As Stroom's presenters give it the dialog, e.g. ProfilePeriodEditPresenter
         box.setPopupProvider(() -> new TimePopup(harness.getEventBus(),
                 new TimeViewImpl(GWT.create(TimeViewImpl.Binder.class))));

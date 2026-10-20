@@ -108,9 +108,10 @@ isn't clear whether a typed 0 is clamped when saved.
 * Elastic and Lucene dense vector Minimum rerank score: invalid text becomes 0.8.
 * Plan B Max Store Size: an invalid entry becomes 10 GiB.
 * Plan B Max Spans Per Trace: an invalid entry becomes 100,000.
-* Date boxes (`MyDateBox`): text that can't be parsed is saved as no date, as `getMilliseconds()`
-  (line 107) returns what `ClientDateUtil.fromISOString` gives, `null` for such text; nothing marks
-  the box as wrong (`CustomDateBox`'s `dateBoxFormatError` style is never used by Stroom's views).
+* Date boxes: text that can't be parsed is saved as no date, as `DateTimeBox.getValue()` gives
+  `null` for it. In part fixed (October 2026): the box is now marked invalid (`aria-invalid`) when
+  it is left (`MyDateBox`, which these boxes were, marked nothing), but the screens don't check
+  `isValid()` before saving, so OK still saves no date.
 
 ### Thread count spinners wrap round
 
@@ -331,7 +332,9 @@ it takes it over, and it lets go of the box when it closes). Measured with the s
 (heap 6.0 → 2.9 MB), analytic rule 6,387 → 3,612, pipeline 4,934 → 3,254, view 2,783 → 1,106,
 query 1,878 → 1,290; what is shown is unchanged. Still built but not shown: about 630 time zone
 items per document (`TimeZoneWidget` adds every zone to each of its selection boxes), and most of a
-dashboard's remaining 3,750 hidden nodes (not yet broken down).
+dashboard's remaining 3,750 hidden nodes (not yet broken down). `MyDateBox` is gone since
+(October 2026): its boxes are `DateTimeBox`es, each of which builds its dialog only when first
+opened.
 
 **Fixed (October 2026): closing a document now releases it.** A `PresenterScope`
 (`stroom.widget.util.client`) records every `MyPresenterWidget` made while a document opens, and
@@ -801,6 +804,13 @@ Identification):
   input is now `type="search"` (a `searchbox`), with the browser's own clear button hidden as it
   has its own (`QuickFilter`, `quick-filter.css`; the workbench's `Widgets/Inputs/QuickFilter`
   `FiltersAList`).
+
+### An expression term being edited is under 24px high
+
+**Reported.** While a term is edited, its tree row (the `treeitem`) is 23px high (`TermEditor.css`,
+`.termEditor-inner`), under WCAG 2.5.8's 24px, which axe reports as `target-size` for a story that
+ends with a term open (found with `Widgets/Query/ExpressionBuilder` `DateTermBoxes`, which now
+leaves the term with Escape before it ends). For the expression tree's own work (session 5).
 
 ### Keyboard trap in the code editor
 
@@ -1671,6 +1681,48 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   column flexbox) took the whole width, e.g. every Plan B setting. It is 200px again, as a text field
   is, at a class's weight so a screen's `w-100` or width still wins. Workbench:
   `App/Editors/PlanBEditor` `Metric`.
+* **Two calendars, one of them out of the keyboard's reach** (`MyDateBox`, GWT's `DatePicker`,
+  `CustomDatePicker`, `DateTimeBox`): 17 date boxes (the expression term editor, the query time range,
+  processor and reprocess filters, the table builder, import, data upload, API key expiry and a
+  visualisation's date settings) showed GWT's own calendar, which opened whenever the field got the
+  focus and could only be used with the mouse; the other date fields showed Stroom's calendar in the
+  Set Date And Time dialog, whose days were one tab stop on the table with the focus drawn by a class.
+  None of these values is only a date: every box holds a time (or an expression), so they are all
+  `DateTimeBox`es now, and `MyDateBox`, GWT's calendar and its rules in `standard.css`,
+  `standard_mod.css` and `stroom.css` (`gwt-DateBox`, `datePicker*`, `dateBoxPopup`) are deleted. The
+  box opens its dialog on Enter, Alt+Down or a click on its icon, never on focus, and says it opens a
+  dialog (`aria-haspopup`). A box that allows expressions (`setExpressionsAllowed`: the term editor,
+  the time range and the vis setting, where `now()-1d` is valid) leaves Enter to its screen (the term
+  editor runs the query) and opens on Alt+Down. The calendar's days are a WAI-ARIA grid
+  (`CalendarGrid`, `calendar.css`): named for its month, each day a `gridcell` named by its full
+  date, the chosen one `aria-selected` and today `aria-current="date"`; one tab stop on a day, with
+  the arrows, Home, End, Page Up and Page Down (Shift for a year) moving it across months, and Enter
+  or Space choosing. The dialogs' shortcuts (Today, Yesterday, Week Start, Now, Midnight, Midday) and
+  Reset links were text that only the mouse could press; they are buttons ("Reset hour" and so on),
+  24px high. `DateTimeBox` and `TimeBox` no longer borrow the schedule box's classes
+  (`date-time-box.css`), and the calendar's unused copies of GWT's API (highlighting, per-day styles,
+  show-range events) are gone. Workbench: `Widgets/Date & Time/CalendarGrid`
+  (`GridRolesAndNames`, `OneTabStop`, `ArrowKeysMoveTheFocus`, `ArrowsCrossIntoTheNextMonth`,
+  `PageKeysMoveAMonthOrAYear`, `SpaceChooses`, `ClickingAnOutsideDayShowsItsMonth`,
+  `ToolbarsChangeTheMonth`), `Widgets/Date & Time/DateTimePicker` (`AltDownOpensTheDialog`,
+  `ChooseADayWithTheKeys`, `ShortcutsAreButtons`, `InvalidTextIsMarked`, `ExpressionsAllowed`),
+  `Widgets/Query/ExpressionBuilder` `DateTermBoxes`; real input: `date-time.mjs`.
+* **Text ran under what is drawn over a field's end** (`PasswordBox`, `QuickFilter`, `SvgIconBox`,
+  `BaseSelectionBox`): a password box's text ran 7px under its show/hide button, and a quick filter's
+  ran under Clear (which appears once there is text; 22px of padding for 57px of buttons) and under
+  the recent filters' button; an icon box's and a selection box's text stopped 1px short of the
+  icon, so a long value touched it. Each field's text now stops 4px before what is over its end:
+  `FieldEnd` (`ResizeObserver`) sets the padding where what is over the end changes width, and the
+  stylesheets where it doesn't. Measured on every such field on `Widgets/Inputs/ViewStates`
+  `AllControls`; workbench: `Widgets/Inputs/FieldEnds` `TextStaysClearOfTheEnd`.
+* **A calendar day's number sat above the middle of its fill and focus ring** (`calendar.css`):
+  `stroom.css` puts a table cell's content at its top; the days are centred.
+* **A date-time box was too narrow for its value**: an ISO time (`2024-01-15T09:50:00.000Z`) needs
+  209px, with an offset 241px, in a 200px box, so it scrolled; it is now 17 of its font size.
+* **The calendar's day numbers and weekday names were a day out west of UTC** (`DateTimeConstants`):
+  they were found by formatting midnight UTC on sample days in the browser's own time zone, so in
+  the Americas the 1st was named "31" and Monday "Sunday" (found reading the code). They are
+  formatted in UTC; checked in a browser set to New York's time zone.
 
 ## Checked and not bugs
 

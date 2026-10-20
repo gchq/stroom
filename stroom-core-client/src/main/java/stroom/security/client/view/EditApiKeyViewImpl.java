@@ -17,7 +17,6 @@
 package stroom.security.client.view;
 
 import stroom.item.client.SelectionBox;
-import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
@@ -25,7 +24,7 @@ import stroom.security.shared.HashAlgorithm;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -61,7 +60,7 @@ public class EditApiKeyViewImpl
     @UiField
     TextArea commentsTextArea;
     @UiField
-    MyDateBox expiresOnDateBox;
+    DateTimeBox expiresOnDateBox;
     @UiField
     SelectionBox<HashAlgorithm> hashAlgorithmSelectionBox;
     @UiField
@@ -85,8 +84,7 @@ public class EditApiKeyViewImpl
     private UserRefSelectionBoxPresenter ownerSelectionView = null;
 
     @Inject
-    public EditApiKeyViewImpl(final Binder binder,
-                              final UserPreferencesManager userPreferencesManager) {
+    public EditApiKeyViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         widget.addAttachHandler(event -> focus());
 //        this.uiConfigCache = uiConfigCache;
@@ -99,7 +97,6 @@ public class EditApiKeyViewImpl
 
         apiKeyTextArea.setEnabled(false);
         prefixTextBox.setEnabled(false);
-        expiresOnDateBox.setUtc(userPreferencesManager.isUtc());
         // When the copy btn is clicked show a label to give feedback to user, but then remove it after a time
         apiKeyButtonPanel.button(SvgImage.COPY, "Copy API Key to Clipboard", () -> {
             ClipboardUtil.copy(apiKeyTextArea.getText());
@@ -202,12 +199,12 @@ public class EditApiKeyViewImpl
 
     @Override
     public void setExpiresOn(final Long expiresOn) {
-        expiresOnDateBox.setMilliseconds(expiresOn);
+        expiresOnDateBox.setValue(expiresOn);
     }
 
     @Override
     public Long getExpiresOnMs() {
-        return expiresOnDateBox.getMilliseconds();
+        return expiresOnDateBox.getValue();
     }
 
     @Override
@@ -231,7 +228,7 @@ public class EditApiKeyViewImpl
     public void reset(final Long milliseconds) {
         nameTextBox.setText("");
         commentsTextArea.setText("");
-        expiresOnDateBox.setMilliseconds(milliseconds);
+        expiresOnDateBox.setValue(milliseconds);
         enabledCheckBox.setValue(true);
         prefixTextBox.setText("");
         apiKeyTextArea.setText("");

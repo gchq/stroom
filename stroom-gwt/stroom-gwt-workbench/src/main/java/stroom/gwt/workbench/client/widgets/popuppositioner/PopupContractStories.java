@@ -128,17 +128,6 @@ public final class PopupContractStories {
                 // (PositionUtil.getPosition(4, ...)), which grows the anchor by 4px
                 .placement("input.selection-box__input", PopupLocation.BELOW, 4,
                         "SelectionPopup.show — new PopupPosition(new Rect(relativeElement), BELOW)"));
-        cases.add(PopupCase.of("CustomDateBox", PopupHarnesses::dateBox)
-                .opener("input")
-                .partners("input")
-                .panel(".dateBoxPopup")
-                // GWT's DatePicker's days grid is `datePickerDays`
-                .insideTarget(".dateBoxPopup .datePickerDays")
-                // MyDateBox.showDatePicker() is guarded by `if (!popup.isShowing())`, and the box
-                // handles Escape itself (DateBoxHandler.onKeyDown)
-                .storyCases(false, false)
-                .triggerToggles(false)
-                .placement("input", PopupLocation.BELOW, 0, "MyDateBox — popup.showRelativeTo(this)"));
         cases.add(PopupCase.of("MenuPanel", PopupHarnesses::menu)
                 .opener(".menu-harness-trigger")
                 .partners(".menu-harness-trigger")
@@ -558,8 +547,9 @@ public final class PopupContractStories {
                 placed.add(c);
             }
         }
-        // Guard against the list silently emptying
-        play.expect("no case declares an expected placement", placed::size).toBeGreaterThanOrEqual(5);
+        // Guard against the list silently emptying (four: the date box's calendar drop-down, the fifth,
+        // is gone, as the date box opens a dialog)
+        play.expect("no case declares an expected placement", placed::size).toBeGreaterThanOrEqual(4);
 
         for (final PopupCase c : placed) {
             final PopupCase.Placement pl = c.getPlacement();

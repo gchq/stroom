@@ -31,11 +31,14 @@
     align-items: center;
 }
 
-/* The search field: as wide as the filter, leaving room at its end for Clear and the help */
+/* The search field: as wide as the filter, leaving room at its end for its buttons, and 4px between
+   its text and them: --field__end-space, which FieldEnd sets from the buttons' width, as Clear comes
+   and goes. The fallbacks are for before the filter is shown */
 .quick-filter .quick-filter__input {
     width: 100%;
     margin: 0;
-    padding: var(--input__padding--vertical) 22px var(--input__padding--vertical) var(--input__padding--horizontal);
+    padding: var(--input__padding--vertical) var(--field__end-space, 32px)
+             var(--input__padding--vertical) var(--input__padding--horizontal);
     cursor: text;
     -webkit-appearance: none;
     appearance: none;
@@ -43,7 +46,7 @@
 
 /* ... and for the recent filters' button as well: [text][clear][recent][help] */
 .quick-filter--recent .quick-filter__input {
-    padding-right: 56px;
+    padding-right: var(--field__end-space, 84px);
 }
 
 /* The browser's own search clear button and decoration: the filter has its own Clear button */

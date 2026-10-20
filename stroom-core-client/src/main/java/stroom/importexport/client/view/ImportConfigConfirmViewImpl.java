@@ -17,8 +17,7 @@
 package stroom.importexport.client.view;
 
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
-import stroom.preferences.client.UserPreferencesManager;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -42,7 +41,7 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     @UiField
     CustomCheckBox enableFilters;
     @UiField
-    MyDateBox enableFrom;
+    DateTimeBox enableFrom;
     @UiField
     CustomCheckBox useImportNames;
     @UiField
@@ -54,10 +53,8 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     private Consumer<Boolean> useImportFoldersConsumer;
 
     @Inject
-    public ImportConfigConfirmViewImpl(final Binder binder,
-                                       final UserPreferencesManager userPreferencesManager) {
+    public ImportConfigConfirmViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        enableFrom.setUtc(userPreferencesManager.isUtc());
     }
 
     @Override
@@ -82,12 +79,12 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
 
     @Override
     public Long getEnableFromDate() {
-        return enableFrom.getMilliseconds();
+        return enableFrom.getValue();
     }
 
     @Override
     public void setEnableFromDate(final Long date) {
-        enableFrom.setMilliseconds(date);
+        enableFrom.setValue(date);
     }
 
     @Override

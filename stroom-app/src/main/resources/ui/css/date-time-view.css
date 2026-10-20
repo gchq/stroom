@@ -1,0 +1,50 @@
+/*
+ * The Set Date And Time dialog (DateTimeViewImpl) and the time dialog (TimeViewImpl): a date column
+ * (a heading, the date, its shortcuts and the calendar) beside a time column (a heading, the time,
+ * its shortcuts and a spinner for each part, each with its Reset button). The shortcuts and Reset
+ * are LinkButtons, drawn in the link colour.
+ */
+
+.date-time-view__column--time {
+    padding-left: 1rem;
+}
+
+.date-time-view__heading {
+    color: var(--heading-color);
+    font-weight: bold;
+    font-size: 125%;
+    padding-bottom: 0.3em;
+}
+
+.date-time-view__value {
+    padding: 5px 0 10px 0;
+}
+
+.date-time-view__shortcuts {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.4rem;
+    min-width: 8rem;
+}
+
+/* At least 24px high, the smallest target WCAG 2.5.8 allows */
+.date-time-view__shortcut {
+    min-height: 24px;
+    color: var(--link__text-color);
+}
+
+/* A spinner and its Reset button */
+.date-time-view__field {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-bottom: 4px;
+    width: 176px;
+}
+
+/* The spinner fills the field beside its button */
+.date-time-view__field .value-spinner {
+    flex: 1 1 auto;
+    min-width: 0;
+}

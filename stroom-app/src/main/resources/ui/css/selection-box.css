@@ -39,7 +39,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    padding-right: 26px;
+    /* The arrow's 26px, and 4px between the text and it */
+    padding-right: 30px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -74,18 +75,6 @@
 }
 
 /* Where it sits: */
-
-/* In the date picker's month and year, sharing the row with the year's arrows */
-.customDatePickerMonth .selection-box,
-.customDatePickerYear .selection-box {
-    flex-grow: 1;
-    width: 5px;
-}
-
-.customDatePickerMonth .selection-box input,
-.customDatePickerYear .selection-box input {
-    min-width: 5px;
-}
 
 /* In a Git repo's settings, beside the credentials' button */
 .gitrepo-settings-form #credentials-group .selection-box {

@@ -19,7 +19,7 @@ package stroom.query.client.view;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
 import stroom.widget.button.client.LinkButton;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -43,9 +43,9 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
     @UiField
     SimplePanel quickSettings;
     @UiField
-    MyDateBox timeFrom;
+    DateTimeBox timeFrom;
     @UiField
-    MyDateBox timeTo;
+    DateTimeBox timeTo;
 
     public TimeRangePopup() {
         final Binder binder = GWT.create(Binder.class);
@@ -84,15 +84,10 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
         timeFrom.focus();
     }
 
-    public void setUtc(final boolean utc) {
-        timeFrom.setUtc(utc);
-        timeTo.setUtc(utc);
-    }
-
     @Override
     public TimeRange getValue() {
-        final String from = normalise(timeFrom.getValue());
-        final String to = normalise(timeTo.getValue());
+        final String from = normalise(timeFrom.getText());
+        final String to = normalise(timeTo.getText());
 
         final TimeRange range = new TimeRange(null, Condition.BETWEEN, from, to);
         // See if this is a quick select range.
@@ -111,8 +106,8 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
 
     @Override
     public void setValue(final TimeRange value, final boolean fireEvents) {
-        timeFrom.setValue(value.getFrom());
-        timeTo.setValue(value.getTo());
+        timeFrom.setText(value.getFrom());
+        timeTo.setText(value.getTo());
         if (fireEvents) {
             ValueChangeEvent.fire(this, value);
         }

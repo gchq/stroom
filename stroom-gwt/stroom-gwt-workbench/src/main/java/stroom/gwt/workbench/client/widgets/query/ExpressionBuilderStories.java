@@ -513,6 +513,34 @@ public final class ExpressionBuilderStories {
                         play.waitFor(() -> play.expect(item(play, name)).toBeInTheDocument());
                     }
                 })
+                // A date term's From and To are date-time boxes that allow expressions: they keep
+                // their text, Enter (which runs the query) doesn't open the Set Date And Time dialog,
+                // Alt+Down does, and OK puts the time chosen in the term
+                .story("DateTermBoxes", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.getByText(TextMatch.startingWith("EventTime between"), ".expression-item__label"));
+                    play.waitFor(() -> play.expect(play.querySelector(FIELD_PICKER)).not().toBeNull());
+                    final Query from = screen.getByRole("textbox", "From");
+                    play.expect(from).toHaveValue("2024-01-01T00:00:00.000Z");
+                    play.expect(screen.getByRole("textbox", "To")).toHaveValue("2024-02-01T00:00:00.000Z");
+                    play.expect(from).toHaveAttribute("aria-haspopup", "dialog");
+                    play.run("focus From", () -> from.element().get().focus());
+                    play.keyboard("{Enter}");
+                    play.sleep(100);
+                    play.expect(screen.queryByText("Set Date And Time")).toBeNull();
+                    play.keyboard("{Alt>}{ArrowDown}{/Alt}");
+                    screen.findByText("Set Date And Time");
+                    play.click(screen.getByRole("button", "Midday"));
+                    play.click(screen.getByRole("button", "OK"));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Date And Time")).toBeNull());
+                    play.expect(from).toHaveValue("2024-01-01T12:00:00.000Z");
+                    // Escape leaves the term, keeping the time chosen
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(item(play,
+                            "EventTime between 2024-01-01T12:00:00.000Z,2024-02-01T00:00:00.000Z"))
+                            .toBeInTheDocument());
+                })
                 // A term's document is kept if checking it fails (e.g. the server can't be reached),
                 // as it is if the document doesn't exist
                 .story("DocumentKeptIfCheckingItFails", context -> editor(context, complexExpression(), false,
@@ -918,7 +946,6 @@ public final class ExpressionBuilderStories {
         final ExpressionTreeViewImpl view = new ExpressionTreeViewImpl(
                 SelectorWidgets.docSelectionBoxProvider(harness),
                 SelectorWidgets.userRefSelectionBoxProvider(harness),
-                harness.getUserPreferencesManager(),
                 harness.getUiConfigCache());
         return new ExpressionTreePresenter(harness.getEventBus(), view);
     }

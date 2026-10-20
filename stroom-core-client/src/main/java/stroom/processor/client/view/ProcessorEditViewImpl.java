@@ -17,7 +17,6 @@
 package stroom.processor.client.view;
 
 import stroom.item.client.SelectionBox;
-import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorEditUiHandlers;
 import stroom.processor.shared.ProcessorFilter;
@@ -25,7 +24,7 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -54,9 +53,9 @@ public class ProcessorEditViewImpl
     @UiField
     SimplePanel expression;
     @UiField
-    MyDateBox minMetaCreateTimeMs;
+    DateTimeBox minMetaCreateTimeMs;
     @UiField
-    MyDateBox maxMetaCreateTimeMs;
+    DateTimeBox maxMetaCreateTimeMs;
     @UiField
     ValueSpinner maxProcessingTasks;
     @UiField
@@ -73,11 +72,8 @@ public class ProcessorEditViewImpl
     Button editFeedDependencies;
 
     @Inject
-    public ProcessorEditViewImpl(final ProcessorEditViewImpl.Binder binder,
-                                 final UserPreferencesManager userPreferencesManager) {
+    public ProcessorEditViewImpl(final ProcessorEditViewImpl.Binder binder) {
         widget = binder.createAndBindUi(this);
-        minMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
-        maxMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
         // Zero means unlimited so must remain reachable.
         maxProcessingTasks.setMin(ProcessorFilter.MIN_MAX_PROCESSING_TASKS);
         maxProcessingTasks.setMax(ProcessorFilter.MAX_MAX_PROCESSING_TASKS);
@@ -98,22 +94,22 @@ public class ProcessorEditViewImpl
 
     @Override
     public Long getMinMetaCreateTimeMs() {
-        return minMetaCreateTimeMs.getMilliseconds();
+        return minMetaCreateTimeMs.getValue();
     }
 
     @Override
     public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
-        this.minMetaCreateTimeMs.setMilliseconds(minMetaCreateTimeMs);
+        this.minMetaCreateTimeMs.setValue(minMetaCreateTimeMs);
     }
 
     @Override
     public Long getMaxMetaCreateTimeMs() {
-        return maxMetaCreateTimeMs.getMilliseconds();
+        return maxMetaCreateTimeMs.getValue();
     }
 
     @Override
     public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
-        this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
+        this.maxMetaCreateTimeMs.setValue(maxMetaCreateTimeMs);
     }
 
     @Override

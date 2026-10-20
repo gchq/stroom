@@ -136,10 +136,6 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
         label.getElement().focus();
     }
 
-    public void setUtc(final boolean utc) {
-        timeRangePopup.setUtc(utc);
-    }
-
     @Override
     public TimeRange getValue() {
         return value;
