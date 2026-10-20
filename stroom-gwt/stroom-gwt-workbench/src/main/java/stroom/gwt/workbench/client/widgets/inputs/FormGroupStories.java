@@ -113,7 +113,7 @@ public final class FormGroupStories {
                     play.tab();
                     play.waitFor(() -> play.expect(username).not().toHaveAttribute("aria-invalid"));
                     play.expect(username).not().toHaveAttribute("aria-describedby");
-                    play.expect(username).not().toHaveClass("invalid");
+                    play.expect(username).not().toHaveAttribute("aria-invalid");
                     // Ends invalid, so the screenshot shows how an invalid field looks
                     play.clear(username);
                     play.type(username, "ab");
@@ -121,7 +121,8 @@ public final class FormGroupStories {
                     play.waitFor(() -> play.expect(play.getByText("Must be at least 3 characters."))
                             .toBeInTheDocument());
                     play.expect(username).toHaveAttribute("aria-invalid", "true");
-                    play.expect(username).toHaveClass("invalid");
+                    // Shown by aria-invalid alone, not a class as well
+                    play.expect(username).not().toHaveClass("invalid");
                 })
                 // Disabled state - greys out the label and description
                 .story("Disabled", context -> {

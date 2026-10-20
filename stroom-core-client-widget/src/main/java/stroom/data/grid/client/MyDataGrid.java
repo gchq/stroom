@@ -160,6 +160,19 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         this.tableName = tableName;
     }
 
+    /// @param element An element, e.g. a key event's target.
+    /// @return Whether it is in the grid's rows (not, e.g., in its column headers).
+    public boolean isInRows(final Element element) {
+        return getTableBodyElement().isOrHasChild(element);
+    }
+
+    /// Names the grid's rows for screen readers (the table holding them), e.g. `Users and groups`.
+    ///
+    /// @param name The name.
+    public void setAccessibleName(final String name) {
+        getTableBodyElement().getParentElement().setAttribute("aria-label", name);
+    }
+
     public MultiSelectionModelImpl<R> addDefaultSelectionModel(final boolean allowMultiSelect) {
         final MultiSelectionModelImpl<R> selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<R> selectionEventManager =

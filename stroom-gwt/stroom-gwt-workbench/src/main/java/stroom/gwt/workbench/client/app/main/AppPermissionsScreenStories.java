@@ -130,7 +130,7 @@ public final class AppPermissionsScreenStories {
                 .withPlay(play -> {
                     play.click(play.findByText("Alice Anderson"));
                     final Query box = tickBox(play, "Manage Cache");
-                    play.waitFor(() -> play.expect(box).toHaveClass("tickBox-noBorder"));
+                    play.waitFor(() -> play.expect(box).toHaveAttribute("aria-readonly", "true"));
                     play.click(box);
                     play.sleep(50);
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
@@ -148,7 +148,7 @@ public final class AppPermissionsScreenStories {
 
     /// @return The 'Granted' tick box (a `TickBoxCell` div) of a permission's row, once it is shown.
     private static Query tickBox(final Play play, final String permission) {
-        return play.within(play.findByText(permission).closest("tr")).querySelector(".tickBox");
+        return play.within(play.findByText(permission).closest("tr")).querySelector(".tick-box");
     }
 
     private static String page(final String rows) {

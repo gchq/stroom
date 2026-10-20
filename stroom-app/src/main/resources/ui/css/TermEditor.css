@@ -51,8 +51,7 @@
 	outline-offset: -2px;
 }
 
-.termEditor-inner input,
-.termEditor-inner .selection-box__value {
+.termEditor-inner input {
     border: none !important;
     border-radius: 0 !important;
     background: none !important;

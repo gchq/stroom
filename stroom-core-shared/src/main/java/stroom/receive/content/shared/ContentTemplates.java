@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@NotDocumented
+@NotDocumented(reason = "Users are not aware content templates are a doc")
 @Description("")
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)

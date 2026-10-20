@@ -31,6 +31,7 @@ import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.ValueFormat;
+import stroom.item.client.SelectionBox;
 import stroom.security.shared.DocumentPermission;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.svg.shared.SvgImage;
@@ -44,7 +45,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.SingleSelectionModel;
@@ -91,7 +91,7 @@ public class FloorMapSettingsPresenter
     private final DocSelectionBoxPresenter factsStoreRefPresenter;
 
     // Value Format
-    private final ListBox valueFormatListBox;
+    private final SelectionBox<ValueFormat> valueFormatListBox;
 
     // Value Schema grid
     private final MyDataGrid<FloorMapFieldMapping> schemaGrid;
@@ -139,12 +139,10 @@ public class FloorMapSettingsPresenter
         view.setFactsStoreRefView(this.factsStoreRefPresenter.getView());
 
         // Value Format dropdown
-        valueFormatListBox = new ListBox();
-        for (final ValueFormat vf : ValueFormat.values()) {
-            valueFormatListBox.addItem(vf.name());
-        }
+        valueFormatListBox = new SelectionBox<>();
+        valueFormatListBox.addItems(ValueFormat.values());
         //noinspection unused e
-        valueFormatListBox.addChangeHandler(e -> onChange());
+        valueFormatListBox.addValueChangeHandler(e -> onChange());
         view.setValueFormatWidget(valueFormatListBox);
 
         // Value Schema grid
@@ -512,13 +510,7 @@ public class FloorMapSettingsPresenter
                 : floorMapDoc.getExtentQuery());
 
         // Value Format
-        final ValueFormat vf = floorMapDoc.getValueFormat();
-        for (int i = 0; i < valueFormatListBox.getItemCount(); i++) {
-            if (valueFormatListBox.getItemText(i).equals(vf.name())) {
-                valueFormatListBox.setSelectedIndex(i);
-                break;
-            }
-        }
+        valueFormatListBox.setValue(floorMapDoc.getValueFormat());
         valueFormatListBox.setEnabled(!readOnly);
 
         // Value Schema
@@ -594,13 +586,9 @@ public class FloorMapSettingsPresenter
     @Override
     protected FloorMapDoc onWrite(final FloorMapDoc doc) {
         // Read value format from dropdown
-        final String selectedFormat = valueFormatListBox.getSelectedValue();
-        ValueFormat vf = ValueFormat.JSON;
-        try {
-            vf = ValueFormat.valueOf(selectedFormat);
-        } catch (final IllegalArgumentException ignored) {
-            // Fall back to JSON
-        }
+        final ValueFormat vf = valueFormatListBox.getValue() != null
+                ? valueFormatListBox.getValue()
+                : ValueFormat.JSON;
 
         // Note: typeStyles is intentionally NOT written here — it is owned by
         // the Layers panel (persisted via the Editor tab). copy() preserves the
@@ -653,7 +641,7 @@ public class FloorMapSettingsPresenter
 
         /// Sets the widget used for the Value Format dropdown.
         ///
-        /// @param widget the [ListBox] (or equivalent) widget
+        /// @param widget the selection box
         void setValueFormatWidget(Widget widget);
 
         /// Sets the toolbar widget (add/remove buttons) above the schema grid.

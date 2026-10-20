@@ -1006,13 +1006,6 @@
     opacity: 0.45;
 }
 
-/* Shape | Image mode radios, side by side */
-.floormap-layer-style-modes {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-
 /* Asset picker + Upload button on one line, picker taking the slack */
 .floormap-layer-style-image {
     display: flex;
@@ -1054,7 +1047,7 @@
  * the leftover space rather than a fixed 200px, so longer asset paths stay
  * readable.
  */
-.floormap-layer-style-image .dropDownView-container {
+.floormap-layer-style-image .drop-down {
     width: 100%;
     min-width: 0;
 }
@@ -1066,7 +1059,7 @@
  * to sit inside — the `overflow: hidden` it already carries never gets to bite.
  * (The dialog's overall width is capped by the definite width above, not here.)
  */
-.floormap-layer-style-image .dropDownView-label {
+.floormap-layer-style-image .drop-down__value {
     flex: 1 1 0;
     min-width: 0;
     /*
@@ -1111,59 +1104,6 @@
     font-size: 0.85em;
     color: var(--text-color--low-emphasis);
     white-space: nowrap;
-}
-
-/*
- * Built-in icon grid. Wider than the 260px the dialog gives its single-control
- * rows — five columns is what lets every icon's name sit under it unabbreviated,
- * and a grid of unlabelled pictograms would make the user guess which is which.
- * Its width comes from --floormap-style-control-width above.
- */
-.floormap-icon-picker {
-    display: grid;
-    grid-template-columns: repeat(5, 76px);
-    gap: 2px;
-    max-height: 340px;
-    overflow-y: auto;
-}
-
-.floormap-icon-picker--disabled {
-    pointer-events: none;
-}
-
-.floormap-icon-picker__cell {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    padding: 6px 3px 5px;
-    border: 1px solid transparent;
-    border-radius: 3px;
-    cursor: pointer;
-}
-
-.floormap-icon-picker__cell:hover {
-    background-color: rgba(128, 128, 128, 0.14);
-}
-
-.floormap-icon-picker__cell--selected {
-    border-color: var(--focus-border);
-    background-color: rgba(128, 128, 128, 0.2);
-}
-
-.floormap-icon-picker__glyph {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 30px;
-}
-
-.floormap-icon-picker__label {
-    font-size: 0.72rem;
-    line-height: 1.15;
-    text-align: center;
-    white-space: normal;
-    color: var(--text-color--low-emphasis);
 }
 
 /* Discovered-but-unsaved type: muted + italic, with an add button */
@@ -1322,32 +1262,19 @@
     background-color: rgba(128, 128, 128, 0.12);
 }
 
-/* GWT renders a CheckBox as <span><input><label>, and those two align on the
-   text baseline rather than on their centres — so the label reads a couple of
-   pixels high against the box, which Stroom's global input rules make taller
-   still by giving it a border and vertical padding. Centre them with flex
-   instead of leaning on baseline alignment. */
-.floormap-group-edit-member .gwt-CheckBox {
+/* A member's tick box (tick-box.css) takes the row's slack, leaving its type at the end */
+.floormap-group-edit-member .tick-box {
     flex: 1 1 auto;
     min-width: 0;
-    display: inline-flex;
-    align-items: center;
-}
-
-.floormap-group-edit-member .gwt-CheckBox input[type="checkbox"] {
-    flex: 0 0 auto;
-    /* Breathing room between the box and the name it labels. */
-    margin: 0 6px 0 0;
 }
 
 /* min-width:0 is what lets a long name ellipsise inside the flex line rather
    than pushing the type label out of the row. */
-.floormap-group-edit-member .gwt-CheckBox label {
+.floormap-group-edit-member .tick-box__label {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    cursor: pointer;
 }
 
 .floormap-group-edit-member-detail {

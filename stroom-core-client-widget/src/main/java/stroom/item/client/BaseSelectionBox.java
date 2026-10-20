@@ -18,6 +18,7 @@ package stroom.item.client;
 
 import stroom.svg.client.SvgIconBox;
 import stroom.widget.util.client.SelectionType;
+import stroom.widget.util.client.TypedKey;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -141,11 +142,11 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             event.preventDefault();
             openPopup(null);
         } else if (!allowTextEntry) {
-            final String key = SelectionList.keyOf(event);
+            final String key = TypedKey.keyOf(event);
             if (keyCode == KeyCodes.KEY_SPACE) {
                 event.preventDefault();
                 openPopup(null);
-            } else if (SelectionList.isTypedCharacter(event, key)) {
+            } else if (TypedKey.isTypedCharacter(event, key)) {
                 event.preventDefault();
                 if (popup != null) {
                     // Typed before the list took the focus

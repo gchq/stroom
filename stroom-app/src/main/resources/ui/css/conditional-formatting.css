@@ -484,11 +484,6 @@
 
 
 
-/* Styles for the drop down selection box */
-.conditionalFormatStyleSelection .selection-box__value {
-    padding: 0;
-}
-
 .conditionalFormatStyleSelection .cf-colour-swatch {
     border: none;
     width: 100%;

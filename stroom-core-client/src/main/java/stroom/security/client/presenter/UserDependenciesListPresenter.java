@@ -73,6 +73,7 @@ public class UserDependenciesListPresenter
                                          final UiConfigCache uiConfigCache,
                                          final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, dependenciesListView);
+        getView().setAccessibleName("Filter dependencies");
         this.restFactory = restFactory;
         this.pagerView = pagerView;
 

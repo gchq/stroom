@@ -3,6 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:t="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="elasticClusterSettingsConnectionURLs" label="Connection URLs"
@@ -32,12 +33,12 @@
         <form:FormGroup identity="elasticClusterSettingsConnectionTimeout" label="Connection timeout (ms)"
                         helpText="Time in milliseconds to wait for a connection to Elasticsearch. Default is 3000 (3 seconds)."
                         screenReaderText="Milliseconds. Default is 3000.">
-            <g:IntegerBox ui:field="connectionTimeoutMillis" width="50px"/>
+            <v:ValueSpinner ui:field="connectionTimeoutMillis" width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticClusterSettingsResponseTimeout" label="Response timeout (ms)"
                         helpText="Time in milliseconds to wait for a response from Elasticsearch once a request has been sent. 0 means no limit. Default is 0."
                         screenReaderText="Milliseconds. 0 means no limit. Default is 0.">
-            <g:IntegerBox ui:field="responseTimeoutMillis" width="50px"/>
+            <v:ValueSpinner ui:field="responseTimeoutMillis" width="200px"/>
         </form:FormGroup>
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>

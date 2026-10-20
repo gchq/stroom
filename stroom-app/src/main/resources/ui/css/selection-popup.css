@@ -24,11 +24,6 @@
     z-index: 100;
 }
 
-/* Space between the list's quick filter and its rows */
-.selection-popup .quickFilter {
-    margin-bottom: 4px;
-}
-
 .selection-popup .selectionList {
     width: auto;
     height: auto;

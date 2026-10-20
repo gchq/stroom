@@ -103,6 +103,7 @@ public class ApiKeysListPresenter
                                 final UiConfigCache uiConfigCache,
                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, listView);
+        getView().setAccessibleName("Filter API keys");
         this.restFactory = restFactory;
         this.expiryFormatter = expiryFormatter;
         this.securityContext = securityContext;

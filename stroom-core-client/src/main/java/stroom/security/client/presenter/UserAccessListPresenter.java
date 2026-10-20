@@ -73,6 +73,7 @@ public class UserAccessListPresenter
                                    final RestFactory restFactory,
                                    final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, listView);
+        getView().setAccessibleName("Filter users");
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.pagerView = pagerView;

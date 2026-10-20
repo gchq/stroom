@@ -57,6 +57,7 @@ public class QuickFilter extends FlowPanel
 
     private static final int DEBOUNCE_DELAY_MS = 400;
     private static final String ARIA_LABEL = "aria-label";
+    private static final String BLOCK = "quick-filter";
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
             .bold("Quick Filter")
             .br()
@@ -81,6 +82,8 @@ public class QuickFilter extends FlowPanel
     private HelpPopup helpPopup = null;
     private String filterError = null;
     private QuickFilterContextHandler contextHandler = null;
+    // What Down in the filter does, e.g. moves into the list below it
+    private Runnable moveDown;
     private final QuickFilterHistoryTracker historyTracker = new QuickFilterHistoryTracker(text -> {
         if (contextHandler != null) {
             contextHandler.recordUse(text);
@@ -95,21 +98,25 @@ public class QuickFilter extends FlowPanel
     };
 
     public QuickFilter() {
-        setStyleName("quickFilter");
-        textBox.addStyleName("quickFilter-textBox");
+        // BEM block quick-filter (quick-filter.css)
+        setStyleName(BLOCK);
+        textBox.addStyleName(BLOCK + "__input");
         textBox.addStyleName("allow-focus");
+        // A search field, to assistive technology (role searchbox); the browser's own clear button
+        // is hidden, as the filter has its own
+        textBox.getElement().setAttribute("type", "search");
         textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
         // The filter's buttons, at the end of its box
         final Toolbar toolbar = new Toolbar("Quick filter");
-        toolbar.addStyleName("quickFilter-toolbar");
+        toolbar.addStyleName(BLOCK + "__toolbar");
         // A plain cross, so that Clear and the drop-down, which both act on the text, look alike, and
         // only help, which doesn't, has a ring
         clearButton = toolbar.button(SvgImage.TAB_CLOSE, "Clear Filter", this::onClear);
         // Between clear and help: clear and the drop-down both act on the text, like a combo
         // box, and help stays outermost as it is on every screen. Hidden until a handler is set.
         dropDownButton = toolbar.button(SvgImage.ARROW_DOWN, "Show Recent Filters", this::showRecentFilters);
-        dropDownButton.addStyleName("quickFilter-recentFilters");
+        dropDownButton.addStyleName(BLOCK + "__recent");
         dropDownButton.setVisible(false);
         helpButton = toolbar.button(SvgImage.HELP_OUTLINE, "Quick Filter Syntax Help", this::showHelpPopup);
 
@@ -245,11 +252,8 @@ public class QuickFilter extends FlowPanel
         this.contextHandler = contextHandler;
         final boolean hasContext = contextHandler != null;
         dropDownButton.setVisible(hasContext);
-        if (hasContext) {
-            addStyleName("hasDropDown");
-        } else {
-            removeStyleName("hasDropDown");
-        }
+        // Leaves room in the box for the recent filters' button as well
+        setStyleName(BLOCK + "--recent", hasContext);
     }
 
     private void showRecentFilters() {
@@ -324,7 +328,20 @@ public class QuickFilter extends FlowPanel
             // Combo-box convention for opening the list from the keyboard.
             event.preventDefault();
             showRecentFilters();
+        } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN && moveDown != null
+                   && !event.isControlKeyDown() && !event.isShiftKeyDown() && !event.isMetaKeyDown()) {
+            // Into the list below the filter
+            event.preventDefault();
+            moveDown.run();
         }
+    }
+
+    /// Sets what Down in the filter does, e.g. moves the focus into the list it filters. Alt+Down
+    /// still shows the recent filters.
+    ///
+    /// @param moveDown What to do, or null for nothing.
+    public void setMoveDown(final Runnable moveDown) {
+        this.moveDown = moveDown;
     }
 
     /// Enables or disables the filter's text. Its syntax help stays available.
@@ -332,7 +349,6 @@ public class QuickFilter extends FlowPanel
     /// @param enabled Whether the filter can be typed in.
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
-        setStyleName("disabled", !enabled);
         enableButtons();
     }
 
@@ -406,9 +422,27 @@ public class QuickFilter extends FlowPanel
         return textBox.addDomHandler(handler, KeyDownEvent.getType());
     }
 
+    /// Puts the focus in the filter, trying again for a moment (e.g. while the popup it is in
+    /// settles), but not once it has had the focus and it has moved on (e.g. the user has gone into
+    /// the list below with Down), which would pull it back.
     public void forceFocus() {
-        FocusUtil.forceFocus(this::focus);
+        final boolean[] hadFocus = {false};
+        FocusUtil.forceFocus(() -> {
+            if (!hadFocus[0] && !hasFocus()) {
+                focus();
+            }
+            // Once it has the focus, the later tries leave it wherever it goes
+            hadFocus[0] = hadFocus[0] || hasFocus();
+        });
     }
+
+    private boolean hasFocus() {
+        return isFocused(textBox.getElement());
+    }
+
+    private static native boolean isFocused(Element element) /*-{
+        return element.ownerDocument.activeElement === element;
+    }-*/;
 
     /// Adds typed text to the end of the filter, applies it at once, and puts the focus in the filter
     /// with the caret after it, so typing carries on there (e.g. a selection box passes on what was

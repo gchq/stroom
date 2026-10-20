@@ -114,6 +114,8 @@ public class PopupUtil {
         if (DIALOG_ROLE.equals(role) || ALERT_DIALOG_ROLE.equals(role)) {
             if (isModal) {
                 element.setAttribute(ARIA_MODAL, "true");
+                // And keeps the focus in it, as the rest of the page can't be used
+                DialogFocusTrap.install(element);
             } else {
                 element.removeAttribute(ARIA_MODAL);
             }

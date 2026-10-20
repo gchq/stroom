@@ -82,7 +82,7 @@ public final class DocumentCreatePermissionsGridStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Pipeline")).toBeInTheDocument());
                     // GWT's grid tick is a TickBoxCell div, not a checkbox
-                    play.click(play.within(play.getByText("Pipeline").closest("tr")).querySelector(".tickBox"));
+                    play.click(play.within(play.getByText("Pipeline").closest("tr")).querySelector(".tick-box"));
                     final Spy onChange = play.spy(ON_CHANGE);
                     play.waitFor(() -> play.expect("the working set", () -> lastSet(onChange))
                             .toContain("Pipeline"));
@@ -93,7 +93,7 @@ public final class DocumentCreatePermissionsGridStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Dictionary")).toBeInTheDocument());
                     // The header's tick box is the grid's first
-                    play.click(play.querySelector(".tickBox"));
+                    play.click(play.querySelector(".tick-box"));
                     final Spy onChange = play.spy(ON_CHANGE);
                     play.waitFor(() -> play.expect("the working set", () -> lastSet(onChange))
                             .toContain(ExplorerConstants.ALL_CREATE_PERMISSIONS));

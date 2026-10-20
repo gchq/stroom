@@ -114,7 +114,7 @@
     align-items: center;
 }
 
-.batchExecutionScheduleEdit-row > .SimpleTickBox {
+.batchExecutionScheduleEdit-row > .tick-box {
     flex: 0 0 50px;
 }
 
@@ -189,65 +189,6 @@
 }
 */
 
-.dropDownView-container {
-    position: relative;
-    width: 200px;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	/*padding: 3px 5px;
-	border-radius: 2px;
-	background-color: var(--control__background-color);
-	color: var(--control__text-color);*/
-    cursor: pointer;
-}
-
-.dropDownView-label {
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-.dropDownView-button {
-    position: absolute;
-    display: flex;
-    bottom: 0;
-    right: 4px;
-	width: 15px;
-	height: 15px;
-    cursor: pointer;
-}
-
-/* Holds the warning button, which is placed in the drop down, so takes no room of its own */
-.dropDownView-warningToolbar {
-    margin: 0;
-}
-
-.dropDownView-warning {
-    position: absolute;
-    display: flex;
-    bottom: 8px;
-    right: 3px;
-	width: 17px;
-	width: 17px;
-    cursor: pointer;
-}
-
-.dropDownView-warning svg {
-    width: 17px;
-    height: 17px;
-}
-
-.dropDownView-warning::before {
-    /* Because the icon is inside the drop down text box, we need to alter its hover background
-       so it doesn't spill over the border of the text box. */
-    height: 88%;
-    margin-top: 2px;
-}
-
-.dropDownView-button svg {
-	width: 15px;
-	height: 15px;
-}
 
 .tabBarContainer {
     display: flex;
@@ -867,13 +808,6 @@
 }
 
 .columnFunctionEditorViewImpl-completionLabel {
-}
-
-.columnFunctionEditorViewImpl .quickFilter-textBox,
-.QueryHelpViewImpl .quickFilter-textBox {
-    border-color: transparent;
-    border-bottom-color: var(--control__border-color);
-    border-radius: 0;
 }
 
 .QueryEditViewImpl {
@@ -2288,9 +2222,6 @@
 .gitrepo-settings-form #credentials-group {
     width: 400px;
 }
-.gitrepo-settings-form #credentials-group .selection-box {
-    width: 280px;
-}
 .gitrepo-settings-form button.credentials-button {
     width: 120px;
 }
@@ -2329,7 +2260,7 @@
     vertical-align: middle;
 }
 
-.multiChooser .tickBox {
+.multiChooser .tick-box {
     cursor: pointer;
 }
 
@@ -2415,12 +2346,6 @@
 .ColumnValuesFilterViewImpl .cellTableOddRow:hover,
 .ColumnValuesFilterViewImpl .cellTableEvenRow:hover {
     background-color: var(--row__background-color--hovered);
-}
-
-.customFileUpload {
-    display: flex;
-    align-items: center;
-    gap: var(--control__gap--horizontal);
 }
 
 .dataGridWidget .dashboard-table-filter-cell {

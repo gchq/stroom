@@ -96,7 +96,7 @@ public final class NodeGroupMembersDialogStories {
                     play.expect(screen.within(row(screen, "node1")).getByText("http://node1:8080/stroom"))
                             .toBeInTheDocument();
                     // The row's tick is a TickBoxCell div, not a checkbox input
-                    play.click(screen.within(row(screen, "node1")).querySelector(".tickBox"));
+                    play.click(screen.within(row(screen, "node1")).querySelector(".tick-box"));
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(UPDATE_PATH)

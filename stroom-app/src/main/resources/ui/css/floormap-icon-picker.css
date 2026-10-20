@@ -1,0 +1,103 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The floor map's icon picker (stroom.floormap.client.view.FloorMapIconPicker), the BEM block
+   floormap-icon-picker: a radio group (role="radiogroup") of its icons (floormap-icon-picker__cell, a
+   label), each holding an unseen native radio button (__input), its picture (__glyph) and its name
+   (__label). The chosen and focused looks are drawn from the radio button's state.
+*/
+
+/*
+ * Built-in icon grid. Wider than the 260px the dialog gives its single-control
+ * rows — five columns is what lets every icon's name sit under it unabbreviated,
+ * and a grid of unlabelled pictograms would make the user guess which is which.
+ * Its width comes from --floormap-style-control-width (stroom-floormap.css).
+ */
+.floormap-icon-picker {
+    display: grid;
+    grid-template-columns: repeat(5, 76px);
+    gap: 2px;
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+/* An icon: a label holding its radio button (unseen), its picture and its name */
+.floormap-icon-picker__cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    margin: 0;
+    padding: 6px 3px 5px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+/* The radio button, unseen but focusable: the cell shows its state. Under the cell, to outrank
+   radio-button.css's rules for every radio input */
+.floormap-icon-picker__cell > .floormap-icon-picker__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.floormap-icon-picker__cell:hover {
+    background-color: rgba(128, 128, 128, 0.14);
+}
+
+/* The chosen icon */
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:checked) {
+    border-color: var(--blue-500);
+    background-color: rgba(128, 128, 128, 0.2);
+}
+
+/* The focused icon (from the keyboard), as every control's focus is shown */
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:focus-visible) {
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+/* Disabled (its graphic isn't an icon): legible, but not chosen from */
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled) {
+    cursor: default;
+}
+
+.floormap-icon-picker__cell:has(.floormap-icon-picker__input:disabled):hover {
+    background-color: transparent;
+}
+
+.floormap-icon-picker__glyph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+}
+
+.floormap-icon-picker__label {
+    display: block;
+    font-size: 0.72rem;
+    line-height: 1.15;
+    text-align: center;
+    white-space: normal;
+    color: var(--text-color--low-emphasis);
+}

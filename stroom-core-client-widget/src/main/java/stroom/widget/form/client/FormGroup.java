@@ -131,6 +131,9 @@ public class FormGroup extends Composite implements HasWidgets {
     private Element requiredControl;
     // What is wrong with the control's value, or null if nothing is
     private String feedback;
+    // The full form of the feedback, the tooltip and what screen readers read, or null if the shown
+    // feedback says it all
+    private String fullFeedback;
     // The control (or group) marked invalid and described by the feedback, or null for none
     private Element invalidControl;
     // The names of the controls in a group of several, in the order they are shown
@@ -142,6 +145,8 @@ public class FormGroup extends Composite implements HasWidgets {
     private Element ariaLabelledControl;
     // The child, when it holds several form controls, marked as a group labelled by the label
     private Element groupElement;
+    // Whether the group's role is ours to remove (a radio group's is its own)
+    private boolean groupRoleAdded;
     // The control (or group) that has the description and F1 as its shortcut, or null for none
     private Element describedControl;
 
@@ -163,6 +168,8 @@ public class FormGroup extends Composite implements HasWidgets {
         helpDescription.getElement().setId(DOM.createUniqueId());
         // So that a group of several controls can be labelled by it
         formLabel.getElement().setId(DOM.createUniqueId());
+        // Read by screen readers as the control's description, but not seen
+        helpDescription.setStyleName("form-group__help-text");
         helpDescription.setVisible(false);
         formGroupPanel.addStyleName("form-group");
         labelPanel.addStyleName("form-group__label-row");
@@ -236,7 +243,11 @@ public class FormGroup extends Composite implements HasWidgets {
                 // One label can't be for several controls, so the child is a group that the label
                 // names, and each control is named by controlNames, e.g. 'Retain For, group, Unit'
                 groupElement = childWidget.getElement();
-                groupElement.setAttribute(ROLE, GROUP_ROLE);
+                // A group of a kind of its own (a radio group) keeps its role
+                groupRoleAdded = !groupElement.hasAttribute(ROLE);
+                if (groupRoleAdded) {
+                    groupElement.setAttribute(ROLE, GROUP_ROLE);
+                }
                 groupElement.setAttribute(ARIA_LABELLED_BY, formLabel.getElement().getId());
             }
         }
@@ -255,7 +266,8 @@ public class FormGroup extends Composite implements HasWidgets {
             requiredControl.removeAttribute(ARIA_REQUIRED);
             requiredControl = null;
         }
-        if (required && labelledControl != null) {
+        // Only a form element can be required (a picker's button can't, as ARIA doesn't allow it)
+        if (required && labelledControl != null && isLabelable(labelledControl)) {
             requiredControl = labelledControl;
             requiredControl.setAttribute(ARIA_REQUIRED, "true");
         }
@@ -269,7 +281,7 @@ public class FormGroup extends Composite implements HasWidgets {
             FieldValidity.removeDescribedBy(invalidControl, feedbackLabel.getElement().getId());
             invalidControl = null;
         }
-        feedbackLabel.setText(NullSafe.string(feedback));
+        showFeedbackText();
         final Element target = labelledControl != null
                 ? labelledControl
                 : groupElement;
@@ -278,6 +290,39 @@ public class FormGroup extends Composite implements HasWidgets {
             FieldValidity.setInvalid(invalidControl, true);
             // The message is read first, before any help the control also has
             FieldValidity.addDescribedBy(invalidControl, ensureId(feedbackLabel.getElement()), true);
+        }
+    }
+
+    // The feedback as shown: its short form, and, when there is a fuller one, that as its tooltip and
+    // (in place of the short form, which is hidden from them) for screen readers
+    private void showFeedbackText() {
+        // In the group only while there is feedback to show
+        if (feedback == null) {
+            feedbackLabel.removeFromParent();
+        } else if (feedbackLabel.getParent() != formGroupPanel) {
+            // Before the hidden help text, which is last (once the group has been laid out)
+            final int helpIndex = formGroupPanel.getWidgetIndex(helpDescription);
+            if (helpIndex >= 0) {
+                formGroupPanel.insert(feedbackLabel, helpIndex);
+            } else {
+                formGroupPanel.add(feedbackLabel);
+            }
+        }
+        final Element element = feedbackLabel.getElement();
+        if (feedback != null && fullFeedback != null) {
+            element.setInnerText("");
+            final Element shown = DOM.createSpan();
+            shown.setInnerText(feedback);
+            shown.setAttribute("aria-hidden", "true");
+            final Element full = DOM.createSpan();
+            full.setClassName("sr-only");
+            full.setInnerText(fullFeedback);
+            element.appendChild(shown);
+            element.appendChild(full);
+            element.setTitle(fullFeedback);
+        } else {
+            feedbackLabel.setText(NullSafe.string(feedback));
+            element.removeAttribute("title");
         }
     }
 
@@ -297,7 +342,9 @@ public class FormGroup extends Composite implements HasWidgets {
 
     private void clearGroup() {
         if (groupElement != null) {
-            groupElement.removeAttribute(ROLE);
+            if (groupRoleAdded) {
+                groupElement.removeAttribute(ROLE);
+            }
             groupElement.removeAttribute(ARIA_LABELLED_BY);
             groupElement = null;
         }
@@ -315,7 +362,9 @@ public class FormGroup extends Composite implements HasWidgets {
             describedControl.removeAttribute(ARIA_KEY_SHORTCUTS);
             describedControl = null;
         }
-        final String description = getDescription();
+        final String description = isRequiredButton()
+                ? joinSentences("Required.", getDescription())
+                : getDescription();
         helpDescription.setText(description);
         final Element target = labelledControl != null
                 ? labelledControl
@@ -330,6 +379,18 @@ public class FormGroup extends Composite implements HasWidgets {
                 FieldValidity.addDescribedBy(describedControl, helpDescriptionId, false);
             }
         }
+    }
+
+    // Whether the control is required but can't say so itself (a picker's button can't be
+    // aria-required), so its description says it is
+    private boolean isRequiredButton() {
+        return required && labelledControl != null && !isLabelable(labelledControl);
+    }
+
+    private static String joinSentences(final String first, final String second) {
+        return second.isEmpty()
+                ? first
+                : first + " " + second;
     }
 
     // The screen reader text, or else the plain help text, or else nothing
@@ -463,6 +524,7 @@ public class FormGroup extends Composite implements HasWidgets {
     public void setRequired(final boolean required) {
         this.required = required;
         updateRequired();
+        updateHelpDescription();
     }
 
     /// Shows what is wrong with the control's value, under the control. The control is marked invalid
@@ -473,9 +535,23 @@ public class FormGroup extends Composite implements HasWidgets {
     /// @param feedback What is wrong with the value, e.g. `You must provide a name`, or null or blank
     ///                 to clear it (see [#clearFeedback()]).
     public void setFeedback(final String feedback) {
+        setFeedback(feedback, null);
+    }
+
+    /// Shows what is wrong with the control's value, as [#setFeedback(String)] does, in a short form
+    /// under the control, with a full form (e.g. with what to do about it) as its tooltip and as what
+    /// a screen reader reads.
+    ///
+    /// @param feedback     What is wrong with the value, briefly, or null or blank to clear it.
+    /// @param fullFeedback The full message, or null or blank if the short one says it all.
+    public void setFeedback(final String feedback, final String fullFeedback) {
         this.feedback = NullSafe.isBlankString(feedback)
                 ? null
                 : feedback;
+        this.fullFeedback = this.feedback == null || NullSafe.isBlankString(fullFeedback)
+                            || fullFeedback.equals(feedback)
+                ? null
+                : fullFeedback;
         updateFeedback();
     }
 
@@ -690,7 +766,9 @@ public class FormGroup extends Composite implements HasWidgets {
         if (childWidget != null) {
             formGroupPanel.add(childWidget);
         }
-        formGroupPanel.add(feedbackLabel);
+        if (feedback != null) {
+            formGroupPanel.add(feedbackLabel);
+        }
         formGroupPanel.add(helpDescription);
         updateHelpTitle();
         updateInlineTick();

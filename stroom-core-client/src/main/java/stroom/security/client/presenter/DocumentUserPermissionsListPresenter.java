@@ -99,6 +99,7 @@ public class DocumentUserPermissionsListPresenter
                                                 final QuickFilterContextHandlerFactory
                                                         quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
+        getView().setAccessibleName("Filter users");
         this.restFactory = restFactory;
         this.pagerView = pagerView;
         this.securityContext = securityContext;

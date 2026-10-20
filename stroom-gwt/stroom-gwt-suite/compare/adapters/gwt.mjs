@@ -132,10 +132,10 @@ export const gwt = {
     }
   },
 
-  /** Type into the explorer Quick Filter (`.quickFilter-textBox`). GWT filters on real keystrokes,
+  /** Type into the explorer Quick Filter (`.quick-filter__input`). GWT filters on real keystrokes,
    * so type char-by-char (a programmatic value-set doesn't fire its handler). */
   async filterExplorer(page, term) {
-    const box = page.locator('input.quickFilter-textBox');
+    const box = page.locator('input.quick-filter__input');
     await box.waitFor({ state: 'visible', timeout: 15_000 });
     await box.click();
     await box.pressSequentially(term, { delay: 40 });

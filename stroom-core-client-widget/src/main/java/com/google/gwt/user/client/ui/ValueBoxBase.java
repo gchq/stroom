@@ -300,13 +300,9 @@ public class ValueBoxBase<T> extends FocusWidget implements
      *                 <code>false</code> the widget becomes editable
      */
     public void setReadOnly(final boolean readOnly) {
+        // Stroom: only the readonly attribute, which text-field.css styles ([readonly]), not GWT's
+        // <primary>-readonly class as well
         getElement().setPropertyBoolean("readOnly", readOnly);
-        final String readOnlyStyle = "readonly";
-        if (readOnly) {
-            addStyleDependentName(readOnlyStyle);
-        } else {
-            removeStyleDependentName(readOnlyStyle);
-        }
     }
 
     /**

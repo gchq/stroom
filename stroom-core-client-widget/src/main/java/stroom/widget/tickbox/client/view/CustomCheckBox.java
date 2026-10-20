@@ -33,7 +33,6 @@
 package stroom.widget.tickbox.client.view;
 
 import stroom.util.shared.NullSafe;
-import stroom.widget.form.client.FormLabel;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -67,14 +66,13 @@ import com.google.gwt.user.client.ui.HasWordWrap;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * A standard check box widget.
+ * A tick box: a check box with Stroom's drawn box and its label beside it.
  * <p>
- * This class also serves as a base class for
- * {@link com.google.gwt.user.client.ui.RadioButton}.
- *
- * <p>
- * <img class='gallery' src='doc-files/CheckBox.png'/>
- * </p>
+ * It is the BEM block {@code tick-box} ({@code tick-box.css}): a {@code label} element holding a
+ * native check box ({@code tick-box__input}, unseen, over the box, so it has the focus, the clicks and
+ * the state), the box drawn for it ({@code tick-box__mark}) and its text ({@code tick-box__label}).
+ * Clicking anywhere on it ticks it, as the label wraps the check box. Its states are the check box's:
+ * checked, disabled and {@code aria-readonly}.
  *
  * <p>
  * <h3>Built-in Bidi Text Support</h3>
@@ -103,43 +101,46 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
 
     private static final String CHECK = "<svg aria-hidden=\"true\" focusable=\"false\" data-prefix=\"fas\" data-icon=\"check\" class=\"svg-inline--fa fa-check fa-w-16 fa-lg \" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path fill=\"currentColor\" d=\"M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z\"></path></svg>";
 
+    /// The tick drawn in the box, white on blue (also drawn by the grid's `TickBoxCell`).
+    public static final String TICK_SVG = CHECK;
+
+    private static final String BLOCK = "tick-box";
+
     public static final DirectionEstimator DEFAULT_DIRECTION_ESTIMATOR =
             DirectionalTextHelper.DEFAULT_DIRECTION_ESTIMATOR;
 
     final DirectionalTextHelper directionalTextHelper;
     final InputElement inputElem;
     final SpanElement checkmarkElem;
-    final FormLabel label = new FormLabel();
+    private final SpanElement labelElem;
     private LeafValueEditor<Boolean> editor;
     private boolean valueChangeHandlerInitialized;
     private boolean readOnly;
 
     public CustomCheckBox() {
-        super(DOM.createDiv());
-        setStyleName("SimpleTickBox");
+        // A label element wrapping the check box, so its text names the tick box and clicking
+        // anywhere on it toggles the tick
+        super(DOM.createLabel());
+        setStyleName(BLOCK);
 
-        final Element checkboxContainer = DOM.createDiv();
-        checkboxContainer.setClassName("checkbox-container");
         inputElem = InputElement.as(DOM.createInputCheck());
+        inputElem.setClassName(BLOCK + "__input");
         checkmarkElem = Document.get().createSpanElement();
+        checkmarkElem.setClassName(BLOCK + "__mark");
         checkmarkElem.setInnerHTML(CHECK);
+        labelElem = Document.get().createSpanElement();
+        labelElem.setClassName(BLOCK + "__label");
 
-        inputElem.setClassName("checkbox");
-        checkmarkElem.setClassName("checkmark");
+        getElement().appendChild(inputElem);
+        getElement().appendChild(checkmarkElem);
+        getElement().appendChild(labelElem);
 
-        checkboxContainer.appendChild(inputElem);
-        checkboxContainer.appendChild(checkmarkElem);
-        getElement().appendChild(checkboxContainer);
+        // An id of its own, until setIdentity gives it one (e.g. for a form group's label)
+        inputElem.setId(DOM.createUniqueId());
 
-        getElement().appendChild(label.getElement());
-
-        // The label is for the input, so that it names the tick box and clicking it toggles the tick,
-        // until setIdentity gives them an id of their own
-        final String uid = DOM.createUniqueId();
-        inputElem.setId(uid);
-        label.setIdentity(uid);
-
-        directionalTextHelper = new DirectionalTextHelper(checkmarkElem, true);
+        // setText and setHTML (GWT's text methods) set the label's text, as setLabel does, rather than
+        // replacing the drawn box's tick
+        directionalTextHelper = new DirectionalTextHelper(labelElem, true);
 
         // Accessibility: setting tab index to be 0 by default, ensuring element
         // appears in tab sequence. FocusWidget's setElement method already
@@ -159,11 +160,10 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     /// @param readOnly Whether the tick is read only.
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
+        // The look follows aria-readonly (tick-box.css)
         if (readOnly) {
-            addStyleDependentName("readonly");
             inputElem.setAttribute("aria-readonly", "true");
         } else {
-            removeStyleDependentName("readonly");
             inputElem.removeAttribute("aria-readonly");
         }
     }
@@ -226,13 +226,14 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
         return inputElem.getValue();
     }
 
+    /// @param label The text beside the tick box, which names it, or null or blank for none.
     public void setLabel(final String label) {
-        this.label.setLabel(label);
+        labelElem.setInnerText(NullSafe.string(label));
     }
 
     /// @return The label beside the tick box, or null or blank if it has none.
     public String getLabel() {
-        return label.getLabel();
+        return labelElem.getInnerText();
     }
 
     /// Names the tick box for screen readers when it has no label of its own, e.g. a tick box that
@@ -248,8 +249,8 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
         }
     }
 
+    /// @param identity The check box's id, e.g. for a form group's label to point at.
     public void setIdentity(final String identity) {
-        this.label.setIdentity(identity);
         this.inputElem.setId(identity);
     }
 
@@ -362,12 +363,8 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
 
     @Override
     public void setEnabled(final boolean enabled) {
+        // The look follows the check box's disabled state (tick-box.css)
         inputElem.setDisabled(!enabled);
-        if (enabled) {
-            removeStyleDependentName("disabled");
-        } else {
-            addStyleDependentName("disabled");
-        }
     }
 
     @Override

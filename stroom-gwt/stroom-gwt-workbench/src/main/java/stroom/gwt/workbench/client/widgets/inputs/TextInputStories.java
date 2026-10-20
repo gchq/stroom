@@ -72,7 +72,7 @@ public final class TextInputStories {
                     play.expect(area).toHaveClass("text-field--multiline");
                     play.expect(area).not().toHaveClass("gwt-TextArea");
                 })
-                // Invalid state - sets aria-invalid and the invalid class
+                // Invalid state: aria-invalid, which also draws its red border (not a class as well)
                 .story("Invalid", context -> {
                     final TextBox textBox = InputWidgets.textBox(context, "not-an-email", "Email");
                     // As Stroom's views (e.g. LoginViewImpl) mark an invalid field
@@ -81,7 +81,7 @@ public final class TextInputStories {
                 })
                 .withPlay(play -> {
                     play.expect(play.getByRole("textbox")).toHaveAttribute("aria-invalid", "true");
-                    play.expect(play.getByRole("textbox")).toHaveClass("invalid");
+                    play.expect(play.getByRole("textbox")).not().toHaveClass("invalid");
                 })
                 // Disabled and read-only variants
                 .story("DisabledAndReadonly", context -> {
@@ -92,6 +92,13 @@ public final class TextInputStories {
                     AccessibleName.set(readOnly, "Read only");
                     readOnly.setReadOnly(true);
                     return minWidth(StoryPanels.column(10, disabled, readOnly));
+                })
+                .withPlay(play -> {
+                    final Query readOnly = play.getByRole("textbox", "Read only");
+                    play.expect(readOnly).toHaveAttribute("readonly");
+                    // The readonly attribute alone, not GWT's <primary>-readonly class as well
+                    play.expect(readOnly).not().toHaveClass("text-field-readonly");
+                    play.expect(play.getByRole("textbox", "Disabled")).toBeDisabled();
                 });
     }
 

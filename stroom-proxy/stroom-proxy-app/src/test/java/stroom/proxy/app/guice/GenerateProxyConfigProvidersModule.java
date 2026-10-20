@@ -135,7 +135,7 @@ public class GenerateProxyConfigProvidersModule {
                 .map(ClassInfo::load)
                 .filter(clazz -> clazz.isAnnotationPresent(NotInjectableConfig.class))
                 .filter(AbstractConfig.class::isAssignableFrom)
-                .filter(clazz -> IsProxyConfig.class.isAssignableFrom(clazz))
+                .filter(IsProxyConfig.class::isAssignableFrom)
                 .sorted(Comparator.comparing(Class::getName))
                 .map(clazz ->
                         buildThrowingMethod(simpleNames, simpleNameToFullNamesMap,

@@ -16,7 +16,6 @@
 
 package stroom.aws.common.shared;
 
-import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @NotInjectableConfig
 @JsonInclude(Include.NON_NULL)
-public final class AwsAnonymousCredentials extends AbstractConfig implements AwsCredentials {
+public final class AwsAnonymousCredentials implements AwsCredentials {
 
     public AwsAnonymousCredentials() {
     }

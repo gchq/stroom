@@ -24,13 +24,11 @@ import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Shows whether a form field's value is valid, both to the eye (the `invalid` class) and to
-/// assistive technology (`aria-invalid`, and `aria-describedby` linking the field to the feedback
-/// that says what is wrong).
+/// Shows whether a form field's value is valid, with `aria-invalid`, which both tells assistive
+/// technology and draws the field's invalid look (`text-field.css`, and `stroom.css` for an input
+/// with no block of its own), and `aria-describedby` linking the field to the feedback that says
+/// what is wrong.
 public final class FieldValidity {
-
-    /// The class that shows a field is invalid.
-    public static final String INVALID_CLASS = "invalid";
 
     private static final String ARIA_INVALID = "aria-invalid";
     private static final String ARIA_DESCRIBED_BY = "aria-describedby";
@@ -113,10 +111,8 @@ public final class FieldValidity {
     /// @param invalid Whether the field is invalid.
     public static void setInvalid(final Element field, final boolean invalid) {
         if (invalid) {
-            field.addClassName(INVALID_CLASS);
             field.setAttribute(ARIA_INVALID, "true");
         } else {
-            field.removeClassName(INVALID_CLASS);
             field.removeAttribute(ARIA_INVALID);
         }
     }

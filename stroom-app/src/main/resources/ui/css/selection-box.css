@@ -23,6 +23,13 @@
    they follow its text box's disabled and aria-readonly.
 */
 
+/* As wide as a text field, unless a screen sizes it (e.g. w-100 or dock-max), at a class's weight so
+   that it can (it was lost when SelectionBox.css became this, so a box in a form group, a column
+   flexbox, stretched across the screen) */
+.selection-box {
+    width: 200px;
+}
+
 /* The value as it is drawn (the text box, which holds it as text, sits over it, unseen unless the box
    can be typed in). It draws the box's border (stroom-control); the box's field shows through it, and
    its text stays on one line, ending in an ellipsis clear of the drop-down arrow */
@@ -64,4 +71,37 @@
 /* Read only: the normal field with its value greyed */
 .selection-box--readonly .selection-box__value {
     color: var(--control__text-color--readonly);
+}
+
+/* Where it sits: */
+
+/* In the date picker's month and year, sharing the row with the year's arrows */
+.customDatePickerMonth .selection-box,
+.customDatePickerYear .selection-box {
+    flex-grow: 1;
+    width: 5px;
+}
+
+.customDatePickerMonth .selection-box input,
+.customDatePickerYear .selection-box input {
+    min-width: 5px;
+}
+
+/* In a Git repo's settings, beside the credentials' button */
+.gitrepo-settings-form #credentials-group .selection-box {
+    width: 280px;
+}
+
+/* In a conditional formatting rule's style, a colour swatch filling the box */
+.conditionalFormatStyleSelection .selection-box__value {
+    padding: 0;
+}
+
+/* In an expression's term, as flat as the term's other fields (TermEditor.css) */
+.termEditor-inner .selection-box__value {
+    border: none !important;
+    border-radius: 0 !important;
+    background: none !important;
+    padding: 3px 5px;
+    min-width: auto;
 }

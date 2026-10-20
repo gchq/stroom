@@ -159,7 +159,7 @@ export async function pickDocRef(page, label, name) {
   if (!(await box.count())) return false;
   await box.click();
   await page.waitForTimeout(800);
-  const filter = page.locator('input.quickFilter-textBox:visible').last();
+  const filter = page.locator('input.quick-filter__input:visible').last();
   if (await filter.count()) {
     await filter.pressSequentially(name, { delay: 30 });
     await page.waitForTimeout(1000);
