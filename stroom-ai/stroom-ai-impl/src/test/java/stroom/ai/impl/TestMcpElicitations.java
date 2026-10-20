@@ -24,9 +24,11 @@ import stroom.ai.shared.AiMessageType;
 import stroom.util.json.JsonUtil;
 import stroom.util.time.StroomDuration;
 
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult.Action;
+import io.modelcontextprotocol.spec.McpSchema.ErrorCodes;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -209,22 +211,50 @@ class TestMcpElicitations {
     }
 
     @Test
-    void formsPastTheLimitAndUnsupportedFormsAreDeclined() {
+    void formsPastTheLimitAreDeclined() {
         final McpElicitations full = elicitations(StroomDuration.ofMinutes(1), 0);
         assertThat(full.handle(CHAT_ID, "fastmcp", new ElicitFormRequest("Which feed?", FORM, null)).action())
                 .isEqualTo(Action.DECLINE);
 
-        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
-        assertThat(elicitations.handle(CHAT_ID, "fastmcp", new ElicitFormRequest("Nested?",
-                Map.of("type", "object", "properties", Map.of("x", Map.of("type", "object"))), null)).action())
-                .isEqualTo(Action.DECLINE);
+        assertThat(messages.values()).extracting(AiChatMessage::getMessage)
+                .singleElement()
+                .satisfies(text -> assertThat(text).contains("too many forms").contains("maxElicitationsPerNode")
+                        .containsIgnoringCase("didn't decline"));
+    }
 
-        // The user is told, with no form shown.
+    @Test
+    void aServersFormThatCanNeverBeShownIsAnsweredWithAnErrorNotADecline() {
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+
+        // Too long to show, or unsupported: the server's problem, so it is told of an error, not that the user
+        // declined, which they didn't.
+        assertThatThrownBy(() -> elicitations.handle(CHAT_ID, "fastmcp", new ElicitFormRequest(
+                "x".repeat(ElicitationSchema.MAX_MESSAGE_CHARS + 1), FORM, null)))
+                .isInstanceOfSatisfying(McpError.class, e -> {
+                    assertThat(e.getJsonRpcError().code()).isEqualTo(ErrorCodes.INVALID_PARAMS);
+                    assertThat(e.getMessage()).contains("message is too long").contains("has not answered");
+                });
+        assertThatThrownBy(() -> elicitations.handle(CHAT_ID, "fastmcp", new ElicitFormRequest("Nested?",
+                Map.of("type", "object", "properties", Map.of("x", Map.of("type", "object"))), null)))
+                .isInstanceOf(McpError.class)
+                .hasMessageContaining("unsupported type");
+
+        // The user is told, with no form shown, and what they can do.
         assertThat(messages.values()).extracting(AiChatMessage::getMessageType)
                 .containsOnly(AiMessageType.WARNING);
         assertThat(messages.values()).extracting(AiChatMessage::getMessage)
-                .anySatisfy(text -> assertThat(text).contains("too many forms"))
-                .anySatisfy(text -> assertThat(text).contains("unsupported type"));
+                .hasSize(2)
+                .allSatisfy(text -> assertThat(text).contains("a problem with the MCP server")
+                        .contains("rather than that you declined").contains("administrator"));
+    }
+
+    @Test
+    void askUsersOwnFormThatCanNeverBeShownIsDeclined() {
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+
+        assertThat(elicitations.askUser(CHAT_ID, "ask_user", "x".repeat(ElicitationSchema.MAX_MESSAGE_CHARS + 1),
+                FORM).action())
+                .isEqualTo(Action.DECLINE);
     }
 
     private McpElicitations elicitations(final StroomDuration timeout, final int maxPerNode) {

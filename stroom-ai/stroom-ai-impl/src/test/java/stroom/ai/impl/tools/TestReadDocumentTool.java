@@ -31,7 +31,17 @@ import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.meta.shared.MetaFields;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -58,6 +68,8 @@ class TestReadDocumentTool {
     private static final DocRef MIDDLE = new DocRef(DictionaryDoc.TYPE, "middle-uuid", "Known bad");
     private static final DocRef BOTTOM = new DocRef(DictionaryDoc.TYPE, "bottom-uuid", "Botnets");
     private static final DocRef SECRET = new DocRef(DictionaryDoc.TYPE, "secret-uuid", "Secret IPs");
+    private static final DocRef PIPELINE = new DocRef(PipelineDoc.TYPE, "pipe-uuid", "Firewall pipeline");
+    private static final DocRef FEED = new DocRef("Feed", "feed-uuid", "FIREWALL-EVENTS");
 
     private final ExplorerNodeService explorerNodeService = Mockito.mock(ExplorerNodeService.class);
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
@@ -65,6 +77,7 @@ class TestReadDocumentTool {
     private final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
     private final WordListProvider wordListProvider = Mockito.mock(WordListProvider.class);
     private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
+    private final ProcessorFilterService processorFilterService = Mockito.mock(ProcessorFilterService.class);
     @SuppressWarnings("rawtypes")
     private final Map<DocumentTypeName, DocumentActionHandler> handlers = new HashMap<>();
     private final Map<String, DictionaryDoc> dictionaries = new HashMap<>();
@@ -76,7 +89,10 @@ class TestReadDocumentTool {
     void setUp() {
         final DocumentAccess documentAccess = new DocumentAccess(() -> explorerNodeService, securityContext,
                 () -> handlers, auditLog);
-        tool = new ReadDocumentTool(workspace, documentAccess, () -> wordListProvider, tabSnapshots);
+        final ProcessorFilterAccess processorFilterAccess = new ProcessorFilterAccess(securityContext,
+                () -> processorFilterService, documentAccess);
+        tool = new ReadDocumentTool(workspace, documentAccess, processorFilterAccess, () -> wordListProvider,
+                tabSnapshots);
         Mockito.when(tabSnapshots.unsavedPart(Mockito.anyInt(), Mockito.any(), Mockito.any()))
                 .thenReturn(Optional.empty());
         Mockito.when(tabSnapshots.forLatestQuestion(Mockito.anyInt())).thenReturn(Optional.empty());
@@ -119,7 +135,75 @@ class TestReadDocumentTool {
     void aDocumentTheUserCantViewIsRefusedWithoutSayingIfItExists() {
         xsltContent("<xsl:stylesheet/>");
 
-        assertThat(run("{\"uuid\":\"xslt-uuid\"}")).isEqualTo(DocumentAccess.NO_PERMISSION);
+        assertThat(run("{\"uuid\":\"xslt-uuid\"}")).startsWith(DocumentAccess.NO_PERMISSION);
+        assertThat(run("{\"uuid\":\"no-such-uuid\"}")).startsWith(DocumentAccess.NO_PERMISSION);
+        Mockito.verifyNoInteractions(auditLog);
+    }
+
+    @Test
+    void aProcessorFilterIsReadWithWhatItSelectsAndIsLogged() {
+        canManageProcessors();
+        viewable.add(PIPELINE.getUuid());
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, FEED)
+                .build();
+        Mockito.when(processorFilterService.fetchByUuid("filter-uuid")).thenReturn(Optional.of(filter()
+                .enabled(true)
+                .priority(10)
+                .maxProcessingTasks(5)
+                .queryData(QueryData.builder().expression(expression).build())
+                .minMetaCreateTimeMs(0L)
+                .processorFilterTracker(ProcessorFilterTracker.builder()
+                        .status(ProcessorFilterTrackerStatus.COMPLETE)
+                        .metaCount(3L)
+                        .build())
+                .build()));
+
+        final String result = run("{\"uuid\":\"filter-uuid\"}");
+
+        assertThat(result)
+                .isEqualTo("Processor filter 7 (uuid filter-uuid) of Pipeline [Firewall pipeline]"
+                           + "(?action=open-doc&docType=Pipeline&docUuid=pipe-uuid) (uuid pipe-uuid, in /).\n"
+                           + "Selects: streams where Feed is 'FIREWALL-EVENTS', created on or after "
+                           + "1970-01-01T00:00:00.000Z.\n"
+                           + "State: enabled, priority 10, Complete, 3 stream(s).\n"
+                           + "At most 5 task(s) at a time.");
+        final ArgumentCaptor<DocRef> logged = ArgumentCaptor.forClass(DocRef.class);
+        Mockito.verify(auditLog).documentViewed(Mockito.eq(1), logged.capture(), Mockito.anyString());
+        assertThat(logged.getValue().getType()).isEqualTo(ProcessorFilter.ENTITY_TYPE);
+        assertThat(logged.getValue().getUuid()).isEqualTo("filter-uuid");
+    }
+
+    @Test
+    void aProcessorFilterThatSelectsEverythingSaysSo() {
+        canManageProcessors();
+        viewable.add(PIPELINE.getUuid());
+        Mockito.when(processorFilterService.fetchByUuid("filter-uuid")).thenReturn(Optional.of(filter().build()));
+
+        assertThat(run("{\"uuid\":\"filter-uuid\"}"))
+                .contains("Selects: all streams.\n")
+                .contains("State: disabled, priority");
+    }
+
+    @Test
+    void aProcessorFilterNeedsManageProcessors() {
+        viewable.add(PIPELINE.getUuid());
+        Mockito.when(processorFilterService.fetchByUuid("filter-uuid")).thenReturn(Optional.of(filter().build()));
+
+        assertThat(run("{\"uuid\":\"filter-uuid\"}"))
+                .isEqualTo(DocumentAccess.NO_PERMISSION + " If it is a processor filter, reading one needs the "
+                           + "Manage Processors permission, as the Processors tab does.");
+        Mockito.verifyNoInteractions(processorFilterService, auditLog);
+    }
+
+    @Test
+    void aProcessorFilterOfAPipelineTheUserCantViewIsRefusedWithoutSayingIfItExists() {
+        canManageProcessors();
+        Mockito.when(processorFilterService.fetchByUuid("filter-uuid")).thenReturn(Optional.of(filter().build()));
+        Mockito.when(processorFilterService.fetchByUuid("failing-uuid")).thenThrow(new IllegalStateException("no"));
+
+        assertThat(run("{\"uuid\":\"filter-uuid\"}")).isEqualTo(DocumentAccess.NO_PERMISSION);
+        assertThat(run("{\"uuid\":\"failing-uuid\"}")).isEqualTo(DocumentAccess.NO_PERMISSION);
         assertThat(run("{\"uuid\":\"no-such-uuid\"}")).isEqualTo(DocumentAccess.NO_PERMISSION);
         Mockito.verifyNoInteractions(auditLog);
     }
@@ -320,6 +404,18 @@ class TestReadDocumentTool {
                 .contains("It has 3001 word(s) in all")
                 .contains("/documents/top-uuid/words.md")
                 .contains("table tool");
+    }
+
+    private void canManageProcessors() {
+        Mockito.when(securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)).thenReturn(true);
+    }
+
+    private static ProcessorFilter.Builder filter() {
+        return ProcessorFilter.builder()
+                .id(7)
+                .uuid("filter-uuid")
+                .pipelineUuid(PIPELINE.getUuid())
+                .pipelineName(PIPELINE.getName());
     }
 
     private String run(final String arguments) {

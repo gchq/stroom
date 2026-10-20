@@ -32,6 +32,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.processor.api.ProcessorFilterService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
@@ -147,6 +148,19 @@ final class ToolTestFixture {
     /// @return The tools' access checks, over this world, logging to its audit log.
     DocumentAccess documentAccess() {
         return new DocumentAccess(() -> explorerNodeService, securityContext, () -> handlers, auditLog());
+    }
+
+    /// @param processorFilterService The processor filters of this world.
+    /// @return The tools' processor filter checks, over this world.
+    ProcessorFilterAccess processorFilterAccess(final ProcessorFilterService processorFilterService) {
+        return new ProcessorFilterAccess(securityContext, () -> processorFilterService, documentAccess());
+    }
+
+    /// @return The tools' feed checks by name, over this world: a feed is found by name only if the user can view
+    /// it.
+    FeedAccess feedAccess() {
+        Mockito.doCallRealMethod().when(docFinder).findByName(Mockito.anyString(), Mockito.anyString());
+        return new FeedAccess(() -> docFinder, documentAccess());
     }
 
     /// @return The AGENTS docs of this world, read through its access checks.

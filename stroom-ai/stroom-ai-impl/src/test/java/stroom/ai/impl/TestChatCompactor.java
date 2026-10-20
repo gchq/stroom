@@ -85,7 +85,7 @@ class TestChatCompactor {
 
         // A window the turns fill past the threshold, with room for the system prompt's tool guidance, so only the
         // older turns are digested rather than summarised too.
-        final List<ChatMessage> messages = compactor.assemble(request(), 1, Map.of(), model(12_000), null,
+        final List<ChatMessage> messages = compactor.assemble(request(), 1, Map.of(), model(12_500), null,
                 CompactionMode.AUTO, null);
 
         final CompactionRecord stored = storedCompaction();
