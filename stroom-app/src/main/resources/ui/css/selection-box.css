@@ -73,6 +73,16 @@
     color: var(--control__text-color--readonly);
 }
 
+/* In a grid's cell (SelectionBoxCell): as wide as its column, however narrow (a box's field is
+   otherwise at least 200px, svg-icon-box.css) */
+.selection-box.selection-box--cell {
+    width: 100%;
+}
+
+.selection-box--cell.svg-icon-box .svg-icon-box__field {
+    min-width: 0;
+}
+
 /* Where it sits: */
 
 /* In the date picker's month and year, sharing the row with the year's arrows */

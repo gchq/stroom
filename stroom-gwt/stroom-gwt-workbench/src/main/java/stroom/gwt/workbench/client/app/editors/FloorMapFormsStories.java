@@ -25,10 +25,12 @@ import stroom.floormap.client.view.FloorMapSetScaleViewImpl;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -92,6 +94,30 @@ public final class FloorMapFormsStories {
                     play.click(play.getByRole("radio", "Shape"));
                     play.expect(second).toBeDisabled();
                 })
+                // Up and Down choose the icon above or below in the grid as it is laid out (Left and
+                // Right the one before or after); at the top row Up keeps the choice
+                .story("IconPickerRows", context -> {
+                    final FloorMapLayerStyleViewImpl view = new FloorMapLayerStyleViewImpl();
+                    view.setMode(GraphicMode.ICON);
+                    return view.asWidget();
+                })
+                .withPlay(play -> {
+                    final Query icons = play.getByRole("radiogroup", "Icon");
+                    play.click(play.getByRole("radio", "Icon"));
+                    play.tab();
+                    final Query first = play.within(icons).getByRole("radio", FloorMapIcon.values()[0].getLabel());
+                    play.expect(first).toHaveFocus();
+                    play.keyboard("{ArrowDown}");
+                    // The icon chosen, with the focus, is in the same column, in the next row
+                    play.expect(Value.of("the icon below the first is chosen, with the focus",
+                            () -> isBelow(focusedElement(), first.element().get()))).toBe(true);
+                    play.keyboard("{ArrowUp}");
+                    play.expect(first).toBeChecked();
+                    play.expect(first).toHaveFocus();
+                    play.keyboard("{ArrowUp}");
+                    play.expect(first).toBeChecked();
+                    play.expect(first).toHaveFocus();
+                })
                 // The set scale dialog: the distance's unit is a selection box of the metric units,
                 // named for what it is
                 .story("SetScale", context -> {
@@ -147,4 +173,19 @@ public final class FloorMapFormsStories {
                     play.expect(play.querySelectorAll(".gwt-CheckBox")).toHaveLength(0);
                 });
     }
+
+    private static native Element focusedElement() /*-{
+        return $doc.activeElement;
+    }-*/;
+
+    // Whether a radio button is checked and its icon's cell is directly below another's: in the same
+    // column (the same left edge), in a lower row
+    private static native boolean isBelow(Element radio, Element above) /*-{
+        if (!radio || !radio.checked) {
+            return false;
+        }
+        var cell = radio.closest('label').getBoundingClientRect();
+        var upper = above.closest('label').getBoundingClientRect();
+        return Math.abs(cell.left - upper.left) < 1 && cell.top > upper.top;
+    }-*/;
 }

@@ -54,6 +54,9 @@
   "app-editors-floormapforms--icon-picker": [
     "color-contrast"
   ],
+  "app-editors-floormapforms--icon-picker-rows": [
+    "color-contrast"
+  ],
   "app-editors-floormapforms--layer-style": [
     "color-contrast"
   ],

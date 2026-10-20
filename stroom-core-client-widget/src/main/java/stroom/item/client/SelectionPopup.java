@@ -49,6 +49,9 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     private final SelectionList<T, I> selectionList;
     // What was typed to open the list, which it goes to once shown, or null if nothing was
     private String typed;
+    // Whether the list opens with the focus on its last option (true) or its first (false), as End or
+    // Home opens it, or null to open it at its chosen option
+    private Boolean openAtLast;
     // Whether the list has been shown and has the focus
     private boolean shown;
 
@@ -144,9 +147,20 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     /// @param typed           What was typed to open the list, or null if nothing was.
     public void show(final Element relativeElement, final String typed) {
         this.typed = typed;
+        this.openAtLast = null;
         final Rect relativeRect = new Rect(relativeElement);
         final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.BELOW);
         show(position);
+    }
+
+    /// Shows the list below an element with the focus on its first or last option, as Home or End
+    /// opens a selection box's list (WAI-ARIA combobox).
+    ///
+    /// @param relativeElement The element to show the list below, e.g. the box that opened it.
+    /// @param last            Whether to go to the last option rather than the first.
+    public void showAtFirstOrLast(final Element relativeElement, final boolean last) {
+        show(relativeElement, null);
+        this.openAtLast = last;
     }
 
     private void show(final PopupPosition popupPosition) {
@@ -184,7 +198,10 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     private void afterShow() {
         Scheduler.get().scheduleDeferred(() -> {
             shown = true;
-            if (typed == null) {
+            if (openAtLast != null) {
+                selectionList.focusFirstOrLast(openAtLast);
+                openAtLast = null;
+            } else if (typed == null) {
                 selectionList.focus();
             } else {
                 selectionList.typeAhead(typed);
