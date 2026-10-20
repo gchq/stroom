@@ -610,4 +610,13 @@ class TestContextAssembler {
                           + "they can run themselves (propose_query)")
                 .contains("in the same ask_user call");
     }
+
+    @Test
+    void theModelIsToldThatQuestionsBelongInItsAnswerNotInFoldedAwayActivity() {
+        // A question written in reasoning or alongside tool calls is folded away in the chat, so goes unseen.
+        assertThat(ContextAssembler.TOOL_GUIDANCE)
+                .contains("are folded away in the chat")
+                .contains("in your answer at the end of the turn, or ask it with ask_user")
+                .contains("Never ask a question and carry on calling tools in the same turn");
+    }
 }

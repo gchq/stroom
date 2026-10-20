@@ -27,9 +27,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult.Action;
+import io.modelcontextprotocol.spec.McpSchema.ErrorCodes;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -78,9 +80,23 @@ public class McpElicitations {
     /// @param chatId  The chat whose tool call the server is working on.
     /// @param server  The server's name.
     /// @param request The form.
-    /// @return The user's answer, or a decline or cancel if the form can't be shown, the user does not answer in
+    /// @return The user's answer, or a decline or cancel if too many forms are waiting, the user does not answer in
     /// time, or the run is stopped.
+    /// @throws McpError If the form can never be shown (e.g. its message is too long), so that the server is told
+    ///                  of an error rather than that the user declined, which they didn't.
     ElicitResult handle(final int chatId, final String server, final ElicitFormRequest request) {
+        final String problem = ElicitationSchema.check(request.message(), request.requestedSchema());
+        if (problem != null) {
+            warn(chatId, "MCP tool server '" + server + "' sent a form that Stroom can't show, as " + problem
+                         + ". This is a problem with the MCP server, not something you did. Stroom has told the "
+                         + "server so, rather than that you declined. Ask an administrator to report it to whoever "
+                         + "looks after the server.");
+            throw McpError.builder(ErrorCodes.INVALID_PARAMS)
+                    .message("The form can't be shown to the user, as " + problem + " (at most "
+                             + ElicitationSchema.MAX_MESSAGE_CHARS + " characters of message, "
+                             + ElicitationSchema.MAX_FIELDS + " fields). The user has not answered it.")
+                    .build();
+        }
         return handle(chatId, server, null, request);
     }
 
@@ -106,14 +122,19 @@ public class McpElicitations {
                                 final ElicitFormRequest request) {
         final String problem = ElicitationSchema.check(request.message(), request.requestedSchema());
         if (problem != null) {
-            warn(chatId, "A form from MCP tool server '" + server + "' was declined, as " + problem + ".");
+            // Only Stroom AI's own ask_user gets here (MCP servers' forms are checked first): declined, as the
+            // form can never be shown as it is, and asking again would fail the same way.
+            warn(chatId, "A form from " + server + " was declined, as " + problem + ".");
             return new ElicitResult(Action.DECLINE, null);
         }
         final AiConfig config = aiConfigProvider.get();
         if (waiting.incrementAndGet() > config.getMaxElicitationsPerNode()) {
             waiting.decrementAndGet();
-            warn(chatId, "A form from MCP tool server '" + server + "' was declined, as too many forms are "
-                         + "waiting for answers. Try again later.");
+            warn(chatId, "A form from MCP tool server '" + server + "' could not be shown, as too many forms "
+                         + "are waiting for answers on this Stroom node. You didn't decline it, but Stroom had to "
+                         + "answer the server with a decline, so the tool may report that you did not agree. Ask "
+                         + "the agent to try again in a few minutes. If this keeps happening, ask an administrator "
+                         + "to raise maxElicitationsPerNode.");
             return new ElicitResult(Action.DECLINE, null);
         }
         try {
