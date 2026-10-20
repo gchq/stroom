@@ -27,6 +27,7 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandler;
 import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandlerImpl;
+import stroom.search.elastic.template.ElasticIndexTemplatesResourceImpl;
 import stroom.suggestions.api.SuggestionsServiceBinder;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -72,7 +73,8 @@ public class ElasticSearchModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(ElasticIndexResourceImpl.class)
-                .bind(ElasticIndexQueryResourceImpl.class);
+                .bind(ElasticIndexQueryResourceImpl.class)
+                .bind(ElasticIndexTemplatesResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(ElasticSearchProvider.class);
