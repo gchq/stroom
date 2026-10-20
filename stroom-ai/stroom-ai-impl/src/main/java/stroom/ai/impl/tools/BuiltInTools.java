@@ -44,6 +44,7 @@ public class BuiltInTools {
     private final Set<String> trustedToolNames;
     private final Set<String> boundedToolNames;
     private final Map<String, ToolPermissions> permissions;
+    private final Map<String, StroomTool> toolsByName;
 
     /// @param tools    The tools, as bound in [BuiltInToolsModule].
     /// @param contexts Makes the context of a call in a chat.
@@ -54,6 +55,7 @@ public class BuiltInTools {
         final Set<String> trusted = new HashSet<>();
         final Set<String> bounded = new HashSet<>();
         final Map<String, ToolPermissions> permissionsByName = new HashMap<>();
+        final Map<String, StroomTool> byName = new HashMap<>();
         for (final StroomTool tool : tools) {
             final ToolSpecification specification = LangChain4jTools.specification(tool.definition());
             if (tool.isReadOnly()) {
@@ -66,6 +68,7 @@ public class BuiltInTools {
                 bounded.add(specification.name());
             }
             permissionsByName.put(specification.name(), tool.permissions());
+            byName.put(specification.name(), tool);
             // langchain4j gives the executor the chat's id as its memory id.
             map.put(specification, LangChain4jTools.executor(tool, contexts::forMemoryId));
         }
@@ -74,6 +77,7 @@ public class BuiltInTools {
         trustedToolNames = Set.copyOf(trusted);
         boundedToolNames = Set.copyOf(bounded);
         permissions = Map.copyOf(permissionsByName);
+        toolsByName = Map.copyOf(byName);
         LOGGER.debug(() -> "Registered " + toolMap.size() + " built-in tool(s): "
                            + toolMap.keySet().stream().map(ToolSpecification::name).sorted().toList());
     }
@@ -92,6 +96,15 @@ public class BuiltInTools {
      */
     public boolean isReadOnly(final String toolName) {
         return readOnlyToolNames.contains(toolName);
+    }
+
+    /// @param toolName  A tool name.
+    /// @param arguments The call's arguments as JSON, or null if not known.
+    /// @return True if it is a built-in tool and this call of it cannot change anything (see
+    /// [StroomTool#isReadOnly(ToolCall)]). False for anything else.
+    public boolean isReadOnlyCall(final String toolName, final String arguments) {
+        final StroomTool tool = toolsByName.get(toolName);
+        return tool != null && tool.isReadOnly(new ToolCall(null, toolName, arguments));
     }
 
     /**

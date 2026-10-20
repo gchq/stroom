@@ -1,10 +1,10 @@
 # The built-in tools the model is shown
 
-Built-in tools: 45
+Built-in tools: 46
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (45 tool(s))
+### AGENT (46 tool(s))
 ask_user
 config_properties
 current_results
@@ -13,6 +13,7 @@ describe_data_source
 document_documentation
 document_info
 document_links
+elastic_index_templates
 fetch_events
 find_in_content
 folder_contents
@@ -51,7 +52,7 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (41 tool(s))
+### ASK (42 tool(s))
 ask_user
 config_properties
 current_results
@@ -59,6 +60,7 @@ describe_data_source
 document_documentation
 document_info
 document_links
+elastic_index_templates
 fetch_events
 find_in_content
 folder_contents
@@ -94,7 +96,7 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (41 tool(s))
+### PLAN (42 tool(s))
 ask_user
 config_properties
 current_results
@@ -102,6 +104,7 @@ describe_data_source
 document_documentation
 document_info
 document_links
+elastic_index_templates
 fetch_events
 find_in_content
 folder_contents
@@ -464,6 +467,33 @@ Follows the links between Stroom documents, as the Dependencies screen shows the
     }
   },
   "required" : [ "uuids" ],
+  "type" : "object"
+}
+
+================================================================================
+## elastic_index_templates
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: false
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+For administrators reviewing or reproducing the Elasticsearch templates of an Elastic Index document's index. Given the document's UUID, reads from its Elasticsearch cluster the index template that applies to the index (the matching template of highest priority, with any lower-priority templates that also match, which don't apply), and each component template it is composed of. Each is given by name with its JSON body as Elasticsearch returns it, for review: the body may include fields Elasticsearch sets itself (such as created_date_millis), which it rejects in a PUT request, so it can't be applied as it is. It only reads, and changes nothing in Elasticsearch. Needs View on the document. A part the cluster's credentials may not read is reported with Elasticsearch's own reason, which names the missing privilege. If only the document's name is known, find its UUID with folder_contents.
+
+### Parameters
+
+{
+  "properties" : {
+    "uuid" : {
+      "description" : "The Elastic Index document's UUID.",
+      "type" : "string"
+    }
+  },
+  "required" : [ "uuid" ],
   "type" : "object"
 }
 

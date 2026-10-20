@@ -42,16 +42,20 @@ public interface ToolConsentGate {
     /// safe without them may go ahead, and they can't be asked anything now.
     boolean isUserAway(ToolSession session);
 
-    /// Decides whether a tool call the model or client asks for may go ahead.
+    /// Decides whether a tool call the model or client asks for may go ahead, from its arguments too: while the
+    /// user is away, a call of a built-in tool that only reads (e.g. memory's `read`) runs, where one that changes
+    /// something waits.
     ///
     /// @param session      The session the call is made in.
     /// @param toolName     The tool, as the model or client named it.
+    /// @param arguments    The call's arguments as JSON.
     /// @param builtInTools Stroom's own tools.
     /// @param toolset      The MCP tools offered in the session.
     /// @param userAway     True if the user is away (see [#isUserAway(ToolSession)]), as found once for the call.
     /// @return Whether to run it, ask the user first, or not run it, and why.
     ToolConsent.Verdict checkCall(ToolSession session,
                                   String toolName,
+                                  String arguments,
                                   BuiltInTools builtInTools,
                                   McpToolset toolset,
                                   boolean userAway);

@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.CodeChangeStepper;
+import stroom.ai.api.ElasticIndexTemplates;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.tools.BuiltInTools;
@@ -106,6 +107,7 @@ final class BuiltInToolsTestWiring {
                 bind(NodeService.class).toInstance(Mockito.mock(NodeService.class));
                 bind(ResultStoreManager.class).toInstance(Mockito.mock(ResultStoreManager.class));
                 bind(CodeChangeStepper.class).toInstance(Mockito.mock(CodeChangeStepper.class));
+                bind(ElasticIndexTemplates.class).toInstance(Mockito.mock(ElasticIndexTemplates.class));
                 bind(AttributeMapFactory.class).toInstance(Mockito.mock(AttributeMapFactory.class));
                 bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
                 bind(ContentIndex.class).toInstance(Mockito.mock(ContentIndex.class));

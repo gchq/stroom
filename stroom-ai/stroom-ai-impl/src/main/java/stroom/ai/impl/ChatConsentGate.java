@@ -80,6 +80,7 @@ public class ChatConsentGate implements ToolConsentGate {
     ///
     /// @param session      A chat's session.
     /// @param toolName     The tool, as the model named it.
+    /// @param arguments    The call's arguments as JSON.
     /// @param builtInTools Stroom's own tools.
     /// @param toolset      The MCP tools offered in the chat.
     /// @param userAway     True if the user is away.
@@ -87,10 +88,12 @@ public class ChatConsentGate implements ToolConsentGate {
     @Override
     public ToolConsent.Verdict checkCall(final ToolSession session,
                                          final String toolName,
+                                         final String arguments,
                                          final BuiltInTools builtInTools,
                                          final McpToolset toolset,
                                          final boolean userAway) {
-        return toolConsentProvider.get().decide(chatId(session), toolName, builtInTools, toolset, userAway);
+        return toolConsentProvider.get().decide(chatId(session), toolName, arguments, builtInTools, toolset,
+                userAway);
     }
 
     /// Puts the calls on an approval card in the chat (an APPROVAL_REQUEST message), for the user to answer

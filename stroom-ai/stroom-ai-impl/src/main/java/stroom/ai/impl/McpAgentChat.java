@@ -420,8 +420,8 @@ class McpAgentChat {
                 final ToolConsent.Verdict verdict = ToolGroups.isActivationTool(toolRequest.name())
                                                     && toolGroups.isGrouped()
                         ? ToolConsent.Verdict.RUN
-                        : consentGate.checkCall(ToolSession.chat(chatId), toolRequest.name(), builtInTools,
-                                toolset, unattended);
+                        : consentGate.checkCall(ToolSession.chat(chatId), toolRequest.name(),
+                                toolRequest.arguments(), builtInTools, toolset, unattended);
                 // The user has asked for their message to be read now, so the step's other calls wait for it.
                 if (verdict.kind() == ToolConsent.Kind.RUN
                     && aiService.hasMessageOfType(chatId, AiMessageType.SEND_NOW_STEER_MESSAGE)) {
