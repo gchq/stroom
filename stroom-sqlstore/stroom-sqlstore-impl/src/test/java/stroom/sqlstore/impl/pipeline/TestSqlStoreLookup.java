@@ -27,7 +27,9 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.sqlstore.api.UpdatableTemporalStore;
 import stroom.sqlstore.impl.UpdatableTemporalStoreProvider;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.shared.TemporalEntry;
 
 import org.junit.jupiter.api.Test;
@@ -156,5 +158,59 @@ class TestSqlStoreLookup {
         // inside find - a cached DocRef is a cached identity, not cached authorisation.
         Mockito.verify(updatableTemporalStore, Mockito.times(25))
                 .find(Mockito.any(DocRef.class), Mockito.any(ExpressionCriteria.class));
+    }
+
+    /**
+     * Regression test: every exception was swallowed, so a store the pipeline could not see was
+     * indistinguishable from "key not found", with nothing logged anywhere.
+     */
+    @Test
+    void testAnUnresolvableStoreIsReportedNotSwallowed() {
+        Mockito.when(lookupIdentifier.getPrimaryMapName()).thenReturn("my-map");
+        Mockito.when(lookupIdentifier.getKey()).thenReturn("k1");
+        Mockito.when(lookupIdentifier.getEventTime()).thenReturn(1000L);
+        Mockito.when(storeProvider.get("my-map")).thenReturn(updatableTemporalStore);
+        Mockito.when(updatableTemporalStore.resolveStoreByName("my-map"))
+                .thenThrow(new PermissionException(null, "No temporal store named 'my-map' is available."));
+
+        new SqlStoreLookupImpl(storeProvider).lookup(lookupIdentifier, referenceDataResult);
+
+        final ArgumentCaptor<Object[]> argsCaptor = ArgumentCaptor.forClass(Object[].class);
+        Mockito.verify(referenceDataResult).logSimpleTemplate(
+                Mockito.eq(Severity.ERROR),
+                Mockito.anyString(),
+                argsCaptor.capture());
+        // Mockito 5 captures the varargs as a single array.
+        assertThat(argsCaptor.getValue())
+                .containsExactly("my-map", "k1", "No temporal store named 'my-map' is available.");
+        Mockito.verify(referenceDataResult, Mockito.never()).addRefDataValueProxy(Mockito.any());
+    }
+
+    /** A database failure is reported too, but without its detail, which goes to the server log. */
+    @Test
+    void testADatabaseFailureIsReportedWithoutItsDetail() {
+        Mockito.when(lookupIdentifier.getPrimaryMapName()).thenReturn("my-map");
+        Mockito.when(lookupIdentifier.getKey()).thenReturn("k1");
+        Mockito.when(lookupIdentifier.getEventTime()).thenReturn(1000L);
+        Mockito.when(storeProvider.get("my-map")).thenReturn(updatableTemporalStore);
+        Mockito.when(updatableTemporalStore.resolveStoreByName("my-map"))
+                .thenReturn(new DocRef(SqlTemporalStoreDoc.TYPE, "store-uuid", "my-map"));
+        Mockito.when(updatableTemporalStore.find(
+                        Mockito.any(DocRef.class), Mockito.any(ExpressionCriteria.class)))
+                .thenThrow(new RuntimeException("SQL [select ...]; Communications link failure"));
+
+        new SqlStoreLookupImpl(storeProvider).lookup(lookupIdentifier, referenceDataResult);
+
+        final ArgumentCaptor<String> templateCaptor = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<Object[]> argsCaptor = ArgumentCaptor.forClass(Object[].class);
+        Mockito.verify(referenceDataResult).logSimpleTemplate(
+                Mockito.eq(Severity.ERROR),
+                templateCaptor.capture(),
+                argsCaptor.capture());
+        assertThat(templateCaptor.getValue())
+                .doesNotContain("select")
+                .doesNotContain("Communications link failure");
+        assertThat(argsCaptor.getValue())
+                .containsExactly("my-map", "k1");
     }
 }

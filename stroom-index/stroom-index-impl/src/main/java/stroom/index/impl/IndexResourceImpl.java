@@ -33,10 +33,13 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.IndexField;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -66,6 +69,7 @@ class IndexResourceImpl implements IndexResource {
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<WebTargetFactory> webTargetFactoryProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     IndexResourceImpl(final Provider<IndexStore> indexStoreProvider,
@@ -74,7 +78,8 @@ class IndexResourceImpl implements IndexResource {
                       final Provider<IndexFieldService> indexFieldServiceProvider,
                       final Provider<NodeService> nodeServiceProvider,
                       final Provider<NodeInfo> nodeInfoProvider,
-                      final Provider<WebTargetFactory> webTargetFactoryProvider) {
+                      final Provider<WebTargetFactory> webTargetFactoryProvider,
+                      final Provider<SecurityContext> securityContextProvider) {
         this.indexStoreProvider = indexStoreProvider;
         this.indexShardServiceProvider = indexShardServiceProvider;
         this.indexShardManagerProvider = indexShardManagerProvider;
@@ -82,6 +87,7 @@ class IndexResourceImpl implements IndexResource {
         this.nodeServiceProvider = nodeServiceProvider;
         this.nodeInfoProvider = nodeInfoProvider;
         this.webTargetFactoryProvider = webTargetFactoryProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
@@ -183,8 +189,23 @@ class IndexResourceImpl implements IndexResource {
         return indexFieldServiceProvider.get().deleteField(deleteField);
     }
 
+    /// Deletes every shard of the index, on every node that holds one.
+    ///
+    /// Requires DELETE on the index document, since it destroys all of the index's data. Logged as
+    /// a delete: from the method name alone the auto-logger could only record it as UNKNOWN.
+    ///
+    /// @return the number of shards marked for deletion, which is zero if the index had none
+    @AutoLogged(value = OperationType.DELETE, verb = "Resetting index, deleting all its shards")
     @Override
-    public Boolean reset(final String uuid) {
+    public Long reset(final String uuid) {
+        RestUtil.requireNonNull(uuid, "uuid not supplied");
+        final DocRef docRef = getDocRef(uuid);
+        final SecurityContext securityContext = securityContextProvider.get();
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to reset this index");
+        }
+
         final FindIndexShardCriteria criteria = FindIndexShardCriteria.builder()
                 .indexUuidSet(new Selection<>(false, Collections.singleton(uuid)))
                 .build();
@@ -193,9 +214,13 @@ class IndexResourceImpl implements IndexResource {
                 .map(IndexShard::getNodeName)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+        long deletedCount = 0;
         for (final String nodeName : nodeNames) {
-            deleteIndexShards(nodeName, criteria);
+            final Long nodeCount = deleteIndexShards(nodeName, criteria);
+            if (nodeCount != null) {
+                deletedCount += nodeCount;
+            }
         }
-        return Boolean.TRUE;
+        return deletedCount;
     }
 }

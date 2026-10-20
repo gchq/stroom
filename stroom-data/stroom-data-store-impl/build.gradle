@@ -51,6 +51,7 @@ dependencies {
     implementation libs.slf4j.api
     implementation libs.ws.rs.api
 
+    testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation libs.vavr
 
     testImplementation libs.bundles.common.test.implementation

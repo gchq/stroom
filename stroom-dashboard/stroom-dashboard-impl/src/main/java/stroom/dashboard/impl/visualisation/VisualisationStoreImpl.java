@@ -39,11 +39,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
-// Part of "Make the Visualisation Asset system generic" - upstream's VisualisationAsset*
-// classes were generalised into the shared stroom.document.asset subsystem so FloorMap can
-// carry assets too. Upstream still has the visualisation-specific version, so a merge will
-// try to reinstate it; keep this side and re-point any new upstream code at document.asset.
 @Singleton
 class VisualisationStoreImpl
         extends AbstractDocumentStore<VisualisationDoc>
@@ -77,7 +72,7 @@ class VisualisationStoreImpl
         checkDocumentPermission(docRef, DocumentPermission.VIEW);
         final DocRef copyDocRef = getStore().copyDocument(docRef.getUuid(), newName);
         try {
-            documentAssetService.copyAssetsToDoc(docRef, copyDocRef);
+            documentAssetService.copyAssetsToNewDoc(docRef, copyDocRef);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -107,6 +102,13 @@ class VisualisationStoreImpl
                                  final ImportSettings importSettings) {
 
         final DocRef storeDocRef = getStore().importDocument(docRef, importExportDocument, importState, importSettings);
+
+        // Only when the store actually wrote the document. An import preview (CREATE_CONFIRMATION)
+        // or an item the user did not tick must leave the live assets alone: setAssetsFromImport
+        // deletes everything under the owner before inserting.
+        if (!ImportSettings.ok(importSettings, importState)) {
+            return storeDocRef;
+        }
 
         // Import the path assets
         try {

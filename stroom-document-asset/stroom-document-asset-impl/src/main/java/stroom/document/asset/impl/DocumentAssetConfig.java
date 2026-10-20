@@ -193,7 +193,6 @@ public class DocumentAssetConfig extends AbstractConfig {
         }
     }
 
-    @RequiresRestart(RestartScope.SYSTEM)
     @JsonPropertyDescription("The largest asset upload accepted, e.g. \"50MiB\". Enforced before the "
                              + "data is streamed into the database. Note this is separate from the "
                              + "512KiB limit on editing an asset's content in the UI.")
@@ -202,6 +201,7 @@ public class DocumentAssetConfig extends AbstractConfig {
         return maxUploadSize;
     }
 
+    @RequiresRestart(RestartScope.SYSTEM)
     @JsonPropertyDescription("The mimetypes map from extension to mimetype for the asset manager")
     @JsonProperty("mimetypes")
     public Map<String, String> getMimetypes() {

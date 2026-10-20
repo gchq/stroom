@@ -174,10 +174,8 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
         super.onBrowserEvent(event);
     }
 
-    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
     // Recovers a drag whose mouse-up was never delivered, which otherwise leaves a full-viewport
-    // drag glass swallowing every click. See AbstractPopupPanel.abandonDrag and
-    // docs/task-popup-drag-glass-orphaned.md.
+    // drag glass swallowing every click. See AbstractPopupPanel.abandonDrag.
 
     /**
      * {@inheritDoc}

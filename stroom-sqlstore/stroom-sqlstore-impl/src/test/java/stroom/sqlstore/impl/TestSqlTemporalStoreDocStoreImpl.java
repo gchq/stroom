@@ -33,6 +33,7 @@ import org.mockito.quality.Strictness;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -71,6 +72,8 @@ class TestSqlTemporalStoreDocStoreImpl {
     private StoreFactory mockStoreFactory;
     @Mock
     private SecurityContext mockSecurityContext;
+    @Mock
+    private UpdatableTemporalStoreDao mockDao;
 
     /**
      * The point of the whole change: no operation may enumerate every document in the system.
@@ -124,6 +127,31 @@ class TestSqlTemporalStoreDocStoreImpl {
         verify(mockSecurityContext).hasDocumentPermission(source, DocumentPermission.VIEW);
     }
 
+    /**
+     * Regression test: deleting the document left its entries in the table, and re-importing a
+     * document with the same UUID brought them all back.
+     */
+    @Test
+    void testDeleteDocumentClearsItsEntries() {
+        final DocRef doc = docRef("uuid-doomed", "doomed");
+        when(mockSecurityContext.hasDocumentPermission(any(), any())).thenReturn(true);
+
+        getStore().deleteDocument(doc);
+
+        verify(mockStore).deleteDocument(doc);
+        verify(mockDao).clear("uuid-doomed");
+    }
+
+    @Test
+    void testDeleteDocumentWithoutPermissionLeavesTheEntries() {
+        final DocRef doc = docRef("uuid-kept", "kept");
+        when(mockSecurityContext.hasDocumentPermission(any(), any())).thenReturn(false);
+
+        assertThatThrownBy(() -> getStore().deleteDocument(doc));
+
+        verify(mockDao, never()).clear(any());
+    }
+
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
@@ -133,7 +161,7 @@ class TestSqlTemporalStoreDocStoreImpl {
                 any(), eq(SqlTemporalStoreDoc.TYPE), any(), any(), any()))
                 .thenReturn(mockStore);
         return new SqlTemporalStoreDocStoreImpl(
-                mockStoreFactory, mockSecurityContext, mockSerialiser);
+                mockStoreFactory, mockSecurityContext, mockSerialiser, () -> mockDao);
     }
 
     private static DocRef docRef(final String uuid, final String name) {

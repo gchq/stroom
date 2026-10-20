@@ -118,8 +118,7 @@ class TestSearchRequestFactoryDataSourceParam {
      *
      * <p>This test exists so the behaviour is recorded rather than rediscovered. If it starts
      * failing, {@code ${…}} has been made to resolve properly and this test should be rewritten to
-     * assert the value — not deleted. See
-     * {@code docs/task-query-dollar-param-in-from-clause-resolves-key.md}.</p>
+     * assert the value — not deleted.</p>
      */
     @Test
     void dollarBraceParamStillResolvesToTheKeyNameNotItsValue() {

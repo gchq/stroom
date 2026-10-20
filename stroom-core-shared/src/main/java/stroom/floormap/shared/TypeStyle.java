@@ -196,8 +196,9 @@ public class TypeStyle {
     public static String colourForType(final String type, final List<TypeStyle> styles) {
         if (type != null && styles != null) {
             for (final TypeStyle style : styles) {
+                // An invalid colour is treated as no colour, so the default applies.
                 if (style != null && type.equals(style.getType())
-                        && NullSafe.isNonEmptyString(style.getColour())) {
+                        && isValidColour(style.getColour())) {
                     return style.getColour();
                 }
             }
@@ -205,6 +206,36 @@ public class TypeStyle {
         return FloorMapJsonKeys.PERSON.equalsIgnoreCase(type)
                 ? DEFAULT_PERSON_COLOUR
                 : DEFAULT_COLOUR;
+    }
+
+    /// True if `colour` is a hex colour literal: `#` followed by 3 to 8 hex digits.
+    ///
+    /// Colours come from document and fact data that can be hand-edited, and are written into SVG
+    /// on the canvas and into trusted swatch markup. Accepting only a hex literal keeps out anything
+    /// else a paint value can carry, such as a `url(...)` reference, as well as markup.
+    ///
+    /// @param colour the colour to check; may be `null`
+    /// @return `true` only for a hex colour literal
+    public static boolean isValidColour(final String colour) {
+        // Checked by hand rather than with a regex: this runs for every layer row and area on
+        // every redraw, and GWT does not emulate java.util.regex.Pattern, so a precompiled
+        // pattern is not an option here — String.matches would build a fresh JS RegExp each call.
+        if (colour == null || colour.length() < 4 || colour.length() > 9) {
+            return false;
+        }
+        if (colour.charAt(0) != '#') {
+            return false;
+        }
+        for (int i = 1; i < colour.length(); i++) {
+            final char c = colour.charAt(i);
+            final boolean hex = (c >= '0' && c <= '9')
+                                || (c >= 'a' && c <= 'f')
+                                || (c >= 'A' && c <= 'F');
+            if (!hex) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// Merges the set of discovered type names into an existing ordered list of

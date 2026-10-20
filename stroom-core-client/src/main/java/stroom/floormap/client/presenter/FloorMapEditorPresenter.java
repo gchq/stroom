@@ -57,6 +57,8 @@ import stroom.sqlstore.shared.SqlTemporalStoreResource;
 import stroom.sqlstore.shared.TemporalStoreTimeRange;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.Console;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.TemporalEntry;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.InlineSvgToggleButton;
@@ -139,6 +141,11 @@ public class FloorMapEditorPresenter
 
     /// One day in ms
     private static final long ONE_DAY_MS = 24L * 60L * 60L * 1000L;
+
+    /// Entries read per request when Discover scans the whole facts store. The server refuses an
+    /// unpaged read of more than a fixed number of rows, and a store with a long history can hold
+    /// more than that, so the scan is paged.
+    private static final int DISCOVER_PAGE_SIZE = 10_000;
 
     // -----------------------------------------------------------------------
     // View slots
@@ -578,8 +585,17 @@ public class FloorMapEditorPresenter
                         .field("Map").condition(Condition.EQUALS).value(store.getName())
                         .build())
                 .build();
-        final ExpressionCriteria criteria = new ExpressionCriteria(expression);
-        final List<FloorMapFieldMapping> schema = valueSchema();
+        discoverTypesFromPage(expression, valueSchema(), discovered, 0);
+    }
+
+    /// Reads one page of the facts store for [#onDiscoverTypes], adds the types it finds, and
+    /// either requests the next page or, after the last one, hands the result to the Layers panel.
+    private void discoverTypesFromPage(final ExpressionOperator expression,
+                                       final List<FloorMapFieldMapping> schema,
+                                       final Set<String> discovered,
+                                       final int offset) {
+        final ExpressionCriteria criteria = new ExpressionCriteria(
+                new PageRequest(offset, DISCOVER_PAGE_SIZE), null, expression);
         restFactory.create(SQL_TEMPORAL_STORE_RESOURCE)
                 .method(res -> res.find(criteria))
                 .onSuccess(result -> {
@@ -593,9 +609,23 @@ public class FloorMapEditorPresenter
                             discovered.add(fact.getType());
                         }
                     }
-                    floorMapLayersPresenter.mergeDiscovered(discovered);
+                    if (hasMorePages(result)) {
+                        discoverTypesFromPage(expression, schema, discovered, offset + entries.size());
+                    } else {
+                        floorMapLayersPresenter.mergeDiscovered(discovered);
+                    }
                 })
                 .exec();
+    }
+
+    /// Whether a page of results says more follow it. The server reads one row past the page to
+    /// find out, and reports it as an inexact page response.
+    private static boolean hasMorePages(final ResultPage<TemporalEntry> result) {
+        return result != null
+               && result.getValues() != null
+               && !result.getValues().isEmpty()
+               && result.getPageResponse() != null
+               && !result.getPageResponse().isExact();
     }
 
     // -----------------------------------------------------------------------
@@ -2056,9 +2086,9 @@ public class FloorMapEditorPresenter
     /// suffix is tried until a unique key is found (up to a safety limit of
     /// 1000 attempts).
     ///
-    /// The prefix must not start with
-    /// [FloorMapJsonKeys#SVG_GROUP_PREFIX] as that would make the object
-    /// unselectable on the canvas.
+    /// Any prefix is safe: object keys are namespaced on the canvas by
+    /// [FloorMapJsonKeys#objectDomId], so no key can be mistaken for a canvas
+    /// element of another kind.
     ///
     /// @param prefix a human-readable prefix (e.g. `"new"`, `"gate-1-copy"`)
     /// @return a key string suitable for use as a temporal-store fact key

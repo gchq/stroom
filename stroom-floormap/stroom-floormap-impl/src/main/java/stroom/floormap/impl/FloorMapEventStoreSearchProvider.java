@@ -97,7 +97,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 ///
 /// This replaces a mechanism that inferred the mode from whether a time term happened to be
 /// `<` rather than `>`, inside shared Plan B code, for every temporal state store in the
-/// system. See `docs/temporal-store-parity-report.md`.
+/// system.
 ///
 /// ## Expiry comes from the store, not from the caller
 ///

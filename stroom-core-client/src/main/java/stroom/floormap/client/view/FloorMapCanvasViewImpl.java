@@ -64,10 +64,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -211,7 +209,7 @@ public class FloorMapCanvasViewImpl
     /// because [#appendScaledImage] needs it to scale SVGs that cannot scale
     /// themselves. A present entry of `{0, 0}` records "loaded but the browser
     /// would not report a usable size", which stops the image being probed forever.
-    private final Map<String, double[]> imageNaturalSizeCache = new HashMap<>();
+    private final FloorMapImageSizeCache imageNaturalSizeCache = new FloorMapImageSizeCache();
     private final Set<String> loadingImages = new HashSet<>();
     /// Keys of facts already reported as unplaceable, so the warning is not repeated every frame.
     private final Set<String> unplaceableFactsReported = new HashSet<>();
@@ -1258,18 +1256,22 @@ public class FloorMapCanvasViewImpl
                     new Attribute("stroke-width", "10"),
                     new Attribute("vector-effect", "non-scaling-stroke"),
                     new Attribute("pointer-events", "all"),
-                    new Attribute("id", fact.getKey()));
+                    new Attribute("id", FloorMapJsonKeys.objectDomId(fact.getKey())));
         }, SafeHtmlUtil.from("g"),
                 new Attribute("transform", fact.getWorldToMap().toSvgMatrix()),
-                new Attribute("id", FloorMapJsonKeys.SVG_GROUP_PREFIX + fact.getKey()));
+                new Attribute("id", FloorMapJsonKeys.SVG_GROUP_PREFIX
+                                    + FloorMapJsonKeys.objectDomId(fact.getKey())));
     }
 
-    /// An area's colour: its own stored fill if set, else the colour configured
-    /// for its type (which is `"area"` for areas created by the editor, but
+    /// An area's colour: its own stored fill if set and a valid hex colour, else the colour
+    /// configured for its type (which is `"area"` for areas created by the editor, but
     /// users may retype areas — e.g. `"restricted"` — and expect that
     /// type's Settings colour).
+    ///
+    /// The fill comes from fact data, so it is validated as swatch colours are: anything but a hex
+    /// literal is ignored rather than written into the SVG.
     private static String areaColour(final Fact fact, final List<TypeStyle> typeStyles) {
-        return fact.getFill() != null && !fact.getFill().isEmpty()
+        return TypeStyle.isValidColour(fact.getFill())
                 ? fact.getFill()
                 : TypeStyle.colourForType(fact.getType(), typeStyles);
     }
@@ -1744,7 +1746,7 @@ public class FloorMapCanvasViewImpl
         parent.elem(imgGroup -> {
             // Drawn via appendScaledImage so an SVG icon that cannot scale itself
             // still fills the box rather than rendering as a speck.
-            appendScaledImage(imgGroup, fact.getImage(), fact.getKey(), natural,
+            appendScaledImage(imgGroup, fact.getImage(), FloorMapJsonKeys.objectDomId(fact.getKey()), natural,
                     0, 0, IMAGE_DISPLAY_WIDTH, imgHeight, "none");
 
             if (isSelected) {
@@ -1788,7 +1790,7 @@ public class FloorMapCanvasViewImpl
         final double mapX = w2m.getA() * worldX + w2m.getC() * worldY + w2m.getE();
         final double mapY = w2m.getB() * worldX + w2m.getD() * worldY + w2m.getF();
 
-        appendStyledGlyph(parent, fact.getKey(), fact.getType(), mapX, mapY,
+        appendStyledGlyph(parent, FloorMapJsonKeys.objectDomId(fact.getKey()), fact.getType(), mapX, mapY,
                 isSelected, highlightColour, typeStyles, scale);
         collectCaption(fact.getKey(),
                 FloorMapEntityList.captionFor(
@@ -1826,7 +1828,7 @@ public class FloorMapCanvasViewImpl
         } else {
             // The trail above stays in map space so it scales with the map;
             // the glyph itself is fixed screen size.
-            appendStyledGlyph(parent, obj.getId(), obj.getType(), obj.getX(), obj.getY(),
+            appendStyledGlyph(parent, FloorMapJsonKeys.objectDomId(obj.getId()), obj.getType(), obj.getX(), obj.getY(),
                     isSelected, highlightColour, typeStyles, scale);
             collectCaption(obj.getId(),
                     FloorMapEntityList.captionFor(obj.getId(), null, entityNameResolver),

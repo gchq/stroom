@@ -45,14 +45,12 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
         return dragGlass;
     }
 
-    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
-    // Upstream shows the drag glass in beginDragging and hides it ONLY in endDragging, i.e. only
-    // on a mouse-up the popup actually receives. Any drag whose release is never delivered - the
-    // button let go outside the browser window, focus lost mid-drag, or the dialog closed while
-    // the button is still down - leaves a full-viewport glass attached to the body. It swallows
+    // The drag glass is shown in beginDragging and hidden in endDragging, i.e. on a mouse-up the
+    // popup actually receives. Any drag whose release is never delivered - the button let go
+    // outside the browser window, focus lost mid-drag, or the dialog closed while the button is
+    // still down - would otherwise leave a full-viewport glass attached to the body. It swallows
     // every click, so the whole UI is dead: no CPU, nothing in the console, the server healthy,
-    // and DevTools the only way back. Diagnosed 2026-09-04; see
-    // docs/task-popup-drag-glass-orphaned.md. Dropping these hunks reinstates that.
+    // and DevTools the only way back. abandonDrag below exists to recover from that.
 
     /**
      * Abandons any drag in progress and removes the drag glass.

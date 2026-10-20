@@ -135,9 +135,13 @@ public class IndexSettingsPresenter
                             restFactory
                                     .create(INDEX_RESOURCE)
                                     .method(res -> res.reset(getEntity().getUuid()))
-                                    .onSuccess(r -> AlertEvent.fireInfo(
+                                    .onSuccess(count -> AlertEvent.fireInfo(
                                             IndexSettingsPresenter.this,
-                                            "Index reset successfully. Shards are marked for deletion.",
+                                            count == null || count == 0
+                                                    ? "Index reset. It had no shards to delete."
+                                                    : "Index reset. " + count + " shard"
+                                                      + (count == 1 ? " is" : "s are")
+                                                      + " marked for deletion.",
                                             null))
                                     .onFailure(throwable -> AlertEvent.fireError(
                                             IndexSettingsPresenter.this,

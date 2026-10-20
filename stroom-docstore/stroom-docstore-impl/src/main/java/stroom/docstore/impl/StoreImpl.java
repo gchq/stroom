@@ -235,16 +235,12 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     public final void deleteDocument(final DocRef docRef) {
         Objects.requireNonNull(docRef);
         // Authorisation is applied by AbstractDocumentStore, the service layer for this document type.
-        // Upstream removed the permission check that used to sit here; verified redundant -
         // AbstractDocumentStore.deleteDocument calls
         // checkDocumentPermission(docRef, DocumentPermission.DELETE) before delegating.
         //
-        // STROOMWORKS-LOCAL: see getAuditUserRef(), prefer upstream on merge. NOT yet, though:
-        // that marker's condition is "when a proper upstream fix arrives (e.g. giving the
-        // service user a UserRef)", and as of this merge neither InternalIdpProcessingUserIdentity
-        // nor ServiceUserIdentity implements HasUserRef, so securityContext.getUserRef() would
-        // still throw for the processing user. Taking upstream's line here would reinstate the
-        // 500 on POST /api/meta/v1/find that the workaround exists to prevent.
+        // The audit user comes from getAuditUserRef() rather than securityContext.getUserRef(),
+        // which throws for the processing user; see getAuditUserRef() for why and for when that
+        // can change.
         persistence.delete(docRef, getAuditUserRef());
         EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE);
 
@@ -411,7 +407,6 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             // Convert the document back into a data map.
             final ImportExportDocument finalData = serialiser.write(builtDoc);
             // Write the data — import always succeeds, no version check.
-            // STROOMWORKS-LOCAL: see getAuditUserRef(), prefer upstream on merge.
             persistence.write(docRef, AuditAction.IMPORT, getAuditUserRef(),
                     finalData, null, builtDoc.getVersion());
 
@@ -596,7 +591,6 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         try {
             final DocRef docRef = createDocRef(document);
             final ImportExportDocument importExportDocument = serialiser.write(document);
-            // STROOMWORKS-LOCAL: see getAuditUserRef(), prefer upstream on merge.
             persistence.write(docRef, AuditAction.CREATE, getAuditUserRef(),
                     importExportDocument, null, document.getVersion());
             EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
@@ -658,7 +652,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     // --------------------------------------------------------------------------------
-    // TODO STROOMWORKS-LOCAL WORKAROUND - PREFER UPSTREAM ON MERGE FROM master.
+    // TODO Workaround: doc writes made as the processing user record a null audit user.
     //  #5582 (audit trail) made every doc write record the acting user via
     //  SecurityContext.getUserRef(). Running as a service user there is no stroom user to
     //  return (neither InternalIdpProcessingUserIdentity nor ServiceUserIdentity implements
@@ -675,7 +669,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     //
     //  Do NOT infer the condition is met from a caller disappearing. The original motivating
     //  example was auto-creation of the singleton Data Retention doc, which 500d
-    //  POST /api/meta/v1/find; upstream has since fixed that one specifically, by having
+    //  POST /api/meta/v1/find; that one has since been fixed specifically, by having
     //  StreamAttributeMapRetentionRuleDecoratorFactory fetch the rules with
     //  DataRetentionRulesProvider::get instead of getOrCreate, so nothing is written on read.
     //  That removed a trigger, not the cause, and other processing-user doc writes remain -
@@ -683,13 +677,14 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     //  asProcessingUser, and on a rule failure disableProcess() writes the analytic rule doc
     //  to stop it failing repeatedly. Without this workaround that recovery write throws, so a
     //  handled rule failure becomes an unhandled one and the rule stays enabled.
-    //  (Checked again after the merge from master on 2026-08-26: condition still not met.)
     // --------------------------------------------------------------------------------
 
     /**
      * @return The {@link UserRef} of the current user for recording in the audit trail, or null if
-     * the current identity has no associated stroom user, as is the case for the internal
-     * processing (service) user.
+     * the current identity is the internal processing (service) user, which has no associated
+     * stroom user.
+     * @throws AuthenticationException if there is no user, or the user is not the processing user
+     * and has no stroom user account - only the processing user is allowed to write unattributed.
      */
     private UserRef getAuditUserRef() {
         final UserIdentity userIdentity = securityContext.getUserIdentity();
@@ -706,8 +701,14 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             // so ask it and handle the refusal.
             return securityContext.getUserRef();
         } catch (final AuthenticationException e) {
+            if (!securityContext.isProcessingUser()) {
+                // Any other identity that cannot be named is an authentication failure, and must
+                // not be turned into an unattributed write.
+                throw e;
+            }
             LOGGER.debug(() -> LogUtil.message(
-                    "No stroom user account for identity '{}' ({}), auditing doc change with a null user",
+                    "No stroom user account for processing user identity '{}' ({}), auditing doc "
+                    + "change with a null user",
                     userIdentity.getUserIdentityForAudit(),
                     userIdentity.getClass().getSimpleName()));
             return null;
@@ -760,7 +761,6 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             // Single atomic call — persistence layer handles version check.
             // For DB: UPDATE ... WHERE version = expectedVersion (optimistic lock).
             // For FS: StripedLockFactory in StoreImpl.readPersistence() serialises access.
-            // STROOMWORKS-LOCAL: see getAuditUserRef(), prefer upstream on merge.
             persistence.write(docRef, AuditAction.UPDATE, getAuditUserRef(),
                     newData, currentVersion, newVersion);
             EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);

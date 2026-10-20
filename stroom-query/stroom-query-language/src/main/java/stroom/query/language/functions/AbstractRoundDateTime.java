@@ -51,17 +51,11 @@ abstract class AbstractRoundDateTime extends AbstractDateTimeFunction {
         }
     }
 
-    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. constantString below, and the three
-    // parseDuration methods in FloorTime/CeilingTime/RoundTime that call it, are this fork's.
-    // origin/master reads the duration argument with a bare param.toString(), which renders a
-    // *function* as its own source text - so floorTime(x, param('w')) parses "param('w')" as a
-    // Duration, throws, and yields ValErr for every row. That fails silently: a ValErr cell is not a
-    // search error, so nothing is reported and the caller just sees no data. An incoming version
-    // restores that behaviour without failing to compile, which is why this is marked rather than
-    // left to be noticed.
-    //
-    // Raised with the Plan B maintainer via docs/planb-explicit-read-mode-proposal.md; drop this if
-    // it is fixed upstream.
+    // The three parseDuration methods in FloorTime/CeilingTime/RoundTime read the duration
+    // argument via constantString below rather than a bare param.toString(). toString() renders a
+    // *function* as its own source text - so floorTime(x, param('w')) would parse "param('w')" as
+    // a Duration, throw, and yield ValErr for every row. That fails silently: a ValErr cell is not
+    // a search error, so nothing is reported and the caller just sees no data.
 
     /**
      * The value of a parameter that is constant, however it was written.
