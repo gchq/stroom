@@ -628,3 +628,27 @@ Planned, not yet built.
   ignored and every Elasticsearch request is limited to the connection timeout (3 seconds by default). The
   connection timeout is also applied as the wait for a pooled connection, not the connect timeout. To be
   fixed separately, with a regression test.
+* **Folding the Stroom MCP server into Stroom.** Stroom serving its own tools to external agents over MCP,
+  with the MCP server's functionality moved in. The built-in tools already run as the user, check Stroom's
+  permissions and log access; what ties them to the chat is their plumbing. To do first, so the move is a move
+  rather than a rewrite:
+  * A tool call context in place of the `int chatId` every tool takes: the session (a chat now, an MCP session
+    later), the caller (Stroom AI chat or an external client), the workspace if there is one, asking the user,
+    reporting progress and the time limit. `AiAuditLog` records the session and caller rather than a chat.
+  * A Stroom-owned tool contract (name, JSON schema, `execute(args, context)`, and flags that map to MCP's tool
+    annotations: read only, destructive, reads untrusted content), with adapters to langchain4j and MCP, rather
+    than tools building langchain4j types themselves.
+  * Typed results: text, optional structured content, resources (workspace files as resource links), and user
+    actions as a part an external client gets as a description instead of a button; links to Stroom objects
+    made in one place, so external clients get real URLs.
+  * Tool descriptions that don't depend on other tools existing (e.g. jq or read_file).
+  * One inventory of tool names, owners, behaviour and permissions shared with the MCP server, aligning the
+    tools both have (instructions, AGENTS docs, build docs, document reads) with Stroom as the source of truth.
+  * One consent model: a short form where the client supports elicitation, else an approval id the user
+    confirms, as the MCP server does; approval rules kept with each tool.
+  * Each tool's required permission declared as metadata, so an MCP endpoint can list tools per user; rate and
+    time limits per session.
+
+  Later: the MCP endpoint (streamable HTTP in Dropwizard; the MCP Java SDK Stroom uses as a client has server
+  classes), OAuth for external clients with Stroom's identity provider, moving the MCP server's tools in, and
+  progress and cancellation for long-running tools.
