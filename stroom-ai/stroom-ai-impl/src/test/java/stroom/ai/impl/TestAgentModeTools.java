@@ -28,6 +28,7 @@ import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.config.global.api.GlobalConfigReader;
 import stroom.dashboard.impl.DashboardService;
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.Store;
@@ -41,6 +42,7 @@ import stroom.docstore.api.DocumentTypeName;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.meta.api.MetaService;
+import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
@@ -49,7 +51,11 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.impl.QueryService;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.shared.TaskResource;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -129,11 +135,13 @@ class TestAgentModeTools {
             Map.entry("propose_code_change", false),
             Map.entry("stream_meta", false),
             Map.entry("processor_tasks", false),
+            Map.entry("server_tasks", false),
             Map.entry("document_links", false),
             Map.entry("find_in_content", false),
             Map.entry("xslt_lookups", false),
             // Only offers the user a button: the user applies the change to the dashboard, unsaved.
-            Map.entry("propose_dashboard_change", false)));
+            Map.entry("propose_dashboard_change", false),
+            Map.entry("config_properties", false)));
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
@@ -165,6 +173,8 @@ class TestAgentModeTools {
             bind(MetaService.class).toInstance(Mockito.mock(MetaService.class));
             bind(ProcessorFilterService.class).toInstance(Mockito.mock(ProcessorFilterService.class));
             bind(ProcessorTaskService.class).toInstance(Mockito.mock(ProcessorTaskService.class));
+            bind(TaskResource.class).toInstance(Mockito.mock(TaskResource.class));
+            bind(TaskContextFactory.class).toInstance(new SimpleTaskContextFactory());
             bind(NodeService.class).toInstance(Mockito.mock(NodeService.class));
             bind(ResultStoreManager.class).toInstance(Mockito.mock(ResultStoreManager.class));
             bind(CodeChangeStepper.class).toInstance(Mockito.mock(CodeChangeStepper.class));
@@ -172,6 +182,9 @@ class TestAgentModeTools {
             bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
             bind(ContentIndex.class).toInstance(Mockito.mock(ContentIndex.class));
             bind(StroomEventLoggingService.class).toInstance(Mockito.mock(StroomEventLoggingService.class));
+            bind(GlobalConfigReader.class).toInstance(Mockito.mock(GlobalConfigReader.class));
+            bind(NodeInfo.class).toInstance(Mockito.mock(NodeInfo.class));
+            bind(ExecutorProvider.class).toInstance(Mockito.mock(ExecutorProvider.class));
             Multibinder.newSetBinder(binder(), ContentIndexable.class);
         }
     }).getInstance(BuiltInTools.class);

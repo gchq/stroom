@@ -17,6 +17,7 @@
 package stroom.config.global.impl;
 
 import stroom.config.global.api.GlobalConfig;
+import stroom.config.global.api.GlobalConfigReader;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.ui.config.shared.UserPreferencesService;
 import stroom.util.RunnableWrapper;
@@ -36,6 +37,7 @@ public class GlobalConfigModule extends AbstractModule {
 
         bind(AppConfigMonitor.class).asEagerSingleton();
         bind(GlobalConfig.class).to(GlobalConfigService.class);
+        bind(GlobalConfigReader.class).to(GlobalConfigReaderImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(AppConfigMonitor.class);
