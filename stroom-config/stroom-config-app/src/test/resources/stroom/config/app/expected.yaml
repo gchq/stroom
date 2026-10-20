@@ -267,6 +267,9 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     keyStoreCachePath: "${stroom.home}/keystores"
+    keyStoreFiles: []
+    keyStoreFilesOwnerSubjectId: "Administrators"
+    keyStoreFilesOwnerType: "GROUP"
   crossModule:
     db:
       connection:

@@ -138,6 +138,8 @@ public class ConfigMapper {
 
     private static final String DOCREF_PREFIX = "docRef";
     private static final Pattern DOCREF_PATTERN = Pattern.compile("^" + DOCREF_PREFIX + "\\([^)]+\\)$");
+    private static final String PASSWORD_MASK = "********";
+
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
     public static final String MAP_EXAMPLE = "|:key1:value1|:key2:value2|:key3:value3";
     public static final String DOCREF_EXAMPLE =
@@ -716,9 +718,9 @@ public class ConfigMapper {
         final SourceType sourceAfter = configProperty.getSource();
 
         LOGGER.trace(() -> LogUtil.message("effectiveValueBefore: [{}] ({}), effectiveValueAfter [{}] ({})",
-                effectiveValueBefore,
+                toLoggableValue(configProperty, effectiveValueBefore),
                 sourceBefore,
-                effectiveValueAfter,
+                toLoggableValue(configProperty, effectiveValueAfter),
                 sourceAfter));
 
         if (!Objects.equals(effectiveValueBefore, effectiveValueAfter)) {
@@ -729,9 +731,9 @@ public class ConfigMapper {
                 LOGGER.info(
                         "Effective value of {} has changed on this node from [{}] ({}) to [{}] ({})",
                         fullPath,
-                        effectiveValueBefore.orElse(""),
+                        toLoggableValue(configProperty, effectiveValueBefore),
                         sourceBefore,
-                        effectiveValueAfter.orElse(""),
+                        toLoggableValue(configProperty, effectiveValueAfter),
                         sourceAfter);
             }
 //            }
@@ -739,6 +741,17 @@ public class ConfigMapper {
         } else {
             LOGGER.trace("Values are equal for {}", fullPath);
             return false;
+        }
+    }
+
+    // The value of a password property must never be logged
+    private static String toLoggableValue(final ConfigProperty configProperty, final Optional<String> value) {
+        if (value.isEmpty()) {
+            return "";
+        } else if (configProperty.isPassword()) {
+            return PASSWORD_MASK;
+        } else {
+            return value.get();
         }
     }
 
@@ -943,6 +956,12 @@ public class ConfigMapper {
     private static <T> T deserialiseFromJson(final Class<T> clazz, final String json) {
         // Use Jackson v3 as this is our own (de)serialisation of a value
         return OBJECT_READER.forType(clazz)
+                .readValue(json);
+    }
+
+    private static <T> List<T> deserialiseListFromJson(final Class<T> itemClass, final String json) {
+        // Use Jackson v3 as this is our own (de)serialisation of a value
+        return OBJECT_READER.forType(OBJECT_READER.typeFactory().constructCollectionType(List.class, itemClass))
                 .readValue(json);
     }
 
@@ -1303,6 +1322,10 @@ public class ConfigMapper {
             final Class<T> type) {
         if (serialisedForm == null || serialisedForm.isEmpty()) {
             return Collections.emptyList();
+        } else if (IsAtomicConfigValue.class.isAssignableFrom(type)) {
+            // listToString serialises a list of atomic values as a JSON array rather than
+            // in the delimited form
+            return deserialiseListFromJson(type, serialisedForm);
         } else {
             final String delimiter = String.valueOf(serialisedForm.charAt(0));
             validateDelimiter(

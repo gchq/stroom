@@ -58,7 +58,7 @@ class TestKeyStoreFilePathChecker {
         allowedDir = Files.createDirectories(tempDir.resolve("certs"));
         allowedDirs = List.of(allowedDir.toString());
         checker = new KeyStoreFilePathChecker(pathCreator,
-                () -> new CredentialsConfig(null, null, allowedDirs));
+                () -> new CredentialsConfig(null, null, allowedDirs, null, null, null));
     }
 
     @Test

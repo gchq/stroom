@@ -631,7 +631,7 @@ class TestCredentialsService {
     /// Creates a key store in an allowed dir and allows that dir in the config.
     private Path createAllowedKeyStoreFile(final Path tempDir, final String password) throws Exception {
         final Path allowedDir = Files.createDirectories(tempDir.resolve("certs"));
-        credentialsConfig = new CredentialsConfig(null, null, List.of(allowedDir.toString()));
+        credentialsConfig = new CredentialsConfig(null, null, List.of(allowedDir.toString()), null, null, null);
         // Lenient as not every test gets as far as checking the allowed dirs
         lenient().when(pathCreator.toAppPath(allowedDir.toString())).thenReturn(allowedDir);
         lenient().when(credentialsDao.findCredentials(any(), any()))
