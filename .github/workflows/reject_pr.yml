@@ -12,7 +12,8 @@ jobs:
     steps:
 
       - name: Close PRs from non-collaborators
-        if: ${{ !contains(fromJSON('["COLLABORATOR","MEMBER","OWNER"]'), github.event.pull_request.author_association) }}
+#        if: ${{ !contains(fromJSON('["COLLABORATOR","MEMBER","OWNER"]'), github.event.pull_request.author_association) }}
+        if: ${{ !contains(fromJSON('["MEMBER","OWNER"]'), github.event.pull_request.author_association) }}
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
