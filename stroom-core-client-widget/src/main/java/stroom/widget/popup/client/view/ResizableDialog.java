@@ -19,6 +19,8 @@ package stroom.widget.popup.client.view;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.spinner.client.SpinnerLarge;
@@ -31,6 +33,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
@@ -43,6 +46,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -77,6 +81,17 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     SimplePanel resizeSW;
     @UiField
     SpinnerLarge spinner;
+    @UiField
+    FlowPanel titleBar;
+    @UiField
+    Label hint;
+    @UiField
+    Toolbar windowToolbar;
+    @UiField
+    ToolbarButton windowButton;
+
+    // Moves and resizes the dialog without dragging it, from its window options button
+    private final DialogWindow window;
 
     private final PopupSize popupSize;
     private boolean dragging;
@@ -135,9 +150,18 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         super(dialogEventHandler, autoHide, modal);
         this.popupSize = popupSize;
 
-        setStyleName("resizableDialog-popup");
+        setStyleName("dialog");
+        addStyleName("dialog--resizable");
         setWidget(binder.createAndBindUi(this));
         PopupUtil.setDialogRole(getElement(), titleText.getElement());
+        window = new DialogWindow(this, popupSize, windowButton, hint.getElement());
+        // A double click on the title bar maximises the dialog, or restores it
+        titleBar.addDomHandler(event -> {
+            final EventTarget target = event.getNativeEvent().getEventTarget();
+            if (!Element.is(target) || !windowToolbar.getElement().isOrHasChild(Element.as(target))) {
+                window.toggleMaximise();
+            }
+        }, DoubleClickEvent.getType());
 
         initialWindowWidth = Window.getClientWidth();
         initialWindowHeight = Window.getClientHeight();
@@ -147,8 +171,8 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         addDomHandler(mouseHandler, MouseUpEvent.getType());
         addDomHandler(mouseHandler, MouseMoveEvent.getType());
 
-        setResizeEnabled((popupSize != null && popupSize.getWidth() != null && popupSize.getWidth().isResizable()) ||
-                         (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
+        setResizeEnabled(popupSize != null && popupSize.getWidth() != null && popupSize.getWidth().isResizable(),
+                popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable());
 
         SvgImageUtil.setSvgAsInnerHtml(resizeSE, SvgImage.RESIZE_HANDLE);
     }
@@ -261,6 +285,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
      * @see #continueDragging
      */
     private void beginDragging(final MouseDownEvent event) {
+        window.beforeMouseChange();
         getDragGlass().show();
 
         dragging = true;
@@ -356,6 +381,8 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                     }
                     // Add window based size constraint.
                     constrainedWidth = Math.min(initialWindowWidth, constrainedWidth);
+                    // The edge being dragged stops at the window's edge
+                    constrainedWidth = Math.min(maxWidthInWindow(moveX), constrainedWidth);
 
                     // If we were constrained then reduce the move distance.
                     final double constraintDiff = newWidth - constrainedWidth;
@@ -378,6 +405,8 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                     }
                     // Add window based size constraint.
                     constrainedHeight = Math.min(initialWindowHeight, constrainedHeight);
+                    // The edge being dragged stops at the window's edge
+                    constrainedHeight = Math.min(maxHeightInWindow(moveY), constrainedHeight);
 
                     // If we were constrained then reduce the move distance.
                     final double constraintDiff = newHeight - constrainedHeight;
@@ -391,6 +420,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                     final RequiresResize requiresResize = (RequiresResize) widget;
                     requiresResize.onResize();
                 }
+                window.afterMouseChange();
             }
 
             if (moveX || moveY) {
@@ -413,6 +443,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                 }
 
                 setPopupPosition((int) left, (int) top);
+                window.afterMouseChange();
             }
         }
     }
@@ -451,8 +482,8 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     private boolean isCaptionEvent(final NativeEvent event) {
         // Lazy init content elements.
         if (dialogContent == null) {
-            dialogContent = ElementUtil.findChild(content.getElement(), "dialog-content");
-            dialogButtons = ElementUtil.findChild(content.getElement(), "dialog-buttons");
+            dialogContent = ElementUtil.findChild(content.getElement(), "dialog__content");
+            dialogButtons = ElementUtil.findChild(content.getElement(), "dialog__buttons");
         }
 
         final EventTarget target = event.getEventTarget();
@@ -460,6 +491,10 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
             final Element element = Element.as(target);
             // Check the event targets the dialog.
             if (getElement().isOrHasChild(element)) {
+                // The window options button is pressed, not dragged
+                if (windowToolbar.getElement().isOrHasChild(element)) {
+                    return false;
+                }
                 // If the target is dialog content then ensure the event does not target child elements.
                 if (dialogContent != null && dialogContent.isOrHasChild(element)) {
                     return dialogContent.equals(element);
@@ -490,15 +525,41 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         return false;
     }
 
-    private void setResizeEnabled(final boolean enabled) {
-        resizeN.setVisible(enabled);
-        resizeE.setVisible(enabled);
-        resizeS.setVisible(enabled);
-        resizeW.setVisible(enabled);
-        resizeNE.setVisible(enabled);
-        resizeNW.setVisible(enabled);
-        resizeSE.setVisible(enabled);
-        resizeSW.setVisible(enabled);
+    // The widest the dialog can be made by dragging an edge without that edge going past the window's
+    // (the left edge if `fromLeft`, else the right). A dialog can be moved partly off the window, but
+    // not resized off it: growing past the window shows nothing more, and puts the handle needed to
+    // shrink it again out of reach. A dialog already wider than that isn't made smaller by it.
+    private double maxWidthInWindow(final boolean fromLeft) {
+        final double windowLeft = Window.getScrollLeft();
+        final double room = fromLeft
+                ? dragStartWindow.getRight() - windowLeft
+                : windowLeft + Window.getClientWidth() - dragStartWindow.getLeft();
+        return Math.max(dragStartWindow.getWidth(), room);
+    }
+
+    // The tallest the dialog can be made by dragging an edge without that edge going past the window's
+    // (the top edge if `fromTop`, else the bottom); see maxWidthInWindow
+    private double maxHeightInWindow(final boolean fromTop) {
+        final double windowTop = Window.getScrollTop();
+        final double room = fromTop
+                ? dragStartWindow.getBottom() - windowTop
+                : windowTop + Window.getClientHeight() - dragStartWindow.getTop();
+        return Math.max(dragStartWindow.getHeight(), room);
+    }
+
+    // Only the handles for the ways the dialog can be resized are there, so none offers a resize it
+    // can't do (a top edge on a dialog that only widens once moved it up and down instead)
+    private void setResizeEnabled(final boolean width, final boolean height) {
+        resizeE.setVisible(width);
+        resizeW.setVisible(width);
+        resizeN.setVisible(height);
+        resizeS.setVisible(height);
+        // A corner resizes both ways, so is there only if both can be
+        final boolean both = width && height;
+        resizeNE.setVisible(both);
+        resizeNW.setVisible(both);
+        resizeSE.setVisible(both);
+        resizeSW.setVisible(both);
     }
 
     @Override

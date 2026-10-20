@@ -82,6 +82,7 @@ public class FloorMapSetScalePresenter extends MyPresenterWidget<FloorMapSetScal
         //noinspection unused e
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .caption("Set Scale")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {

@@ -601,15 +601,21 @@ public class ContentTemplateTabPresenter
                         if (isTemplateValid(rule)) {
                             final ContentTemplate contentTemplate = editRulePresenter.write();
                             final int index = contentTemplates.indexOf(existingRule);
-                            contentTemplates.set(index, contentTemplate);
+                            if (index < 0) {
+                                // Deleted behind the dialog, which isn't modal
+                                AlertEvent.fireWarn(this, "The template was deleted while it was being "
+                                                          + "edited, so the changes can't be kept.", null);
+                            } else {
+                                contentTemplates.set(index, contentTemplate);
 
-                            update();
-                            // Only mark the policies as dirty if the rule was actually changed.
-                            if (!existingRule.equals(contentTemplate)) {
-                                setDirty(true);
+                                update();
+                                // Only mark the policies as dirty if the rule was actually changed.
+                                if (!existingRule.equals(contentTemplate)) {
+                                    setDirty(true);
+                                }
+
+                                setSelected(contentTemplates.get(index));
                             }
-
-                            setSelected(contentTemplates.get(index));
                             e.hide();
                         } else {
                             e.reset();

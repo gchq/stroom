@@ -103,47 +103,19 @@
 }
 
 /*
-   Not BEM yet: the quick filter's syntax help popup (also the help manager's tooltip) and its
-   Advanced Query dialog, which are popups and dialogs, so are done with them (session 3).
+   The quick filter's syntax help is the shared help popup (help-popup.css).
+
+   The Advanced Query dialog's content (AdvancedQuickFilterViewImpl): the block advanced-query,
+   a message saying why the filter couldn't be made a tree (describing the dialog), and the tree.
 */
 
-/* quickFilter-tooltip is also used by the HelpManager so bear that in mind.
-   Probably ought to be moved to a common css */
-.quickFilter-tooltip {
-	background-color: var(--tooltip__background-color);
-	color: var(--tooltip__text-color);
-	padding: 1px 3px;
-	-moz-user-focus: initial;
-	-moz-user-input: initial;
-	-webkit-user-focus: initial;
-	-webkit-user-input: initial;
-	user-focus: initial;
-	user-input: initial;
-
-  	-webkit-user-select: text;
-  	-moz-user-select: text;
-  	user-select: text;
-
-  	/* All the above was copied form Tooltip.css */
-  	box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-
-  	/* ensure it is above the glass used on some modals, e.g. EntityTreeViewImpl */
-  	z-index: 1000
-}
-
-/* Style any tables in the tooltip */
-.quickFilter-tooltip th, .quickFilter-tooltip td {
-    padding-right: 1em;
-}
-
-/* Advanced Query dialog */
-.advancedQuickFilter-message {
+.advanced-query__message {
 	padding: var(--control__padding--vertical) var(--control__padding--horizontal);
 	margin-bottom: var(--control__padding--vertical);
 	color: var(--warning);
 	white-space: pre-wrap;
 }
 
-.advancedQuickFilter-expression {
+.advanced-query__expression {
 	min-height: 200px;
 }

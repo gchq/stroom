@@ -211,6 +211,7 @@ public class FloorMapInitPresenter
         //noinspection unused e
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption("Initialise New Floor Map")
                 .onShow(e -> {

@@ -82,6 +82,7 @@ public class BatchProcessorFilterEditPresenter
                 .build();
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .onShow(e -> getView().focus())
                 .caption("Batch Change All Filtered Processors")

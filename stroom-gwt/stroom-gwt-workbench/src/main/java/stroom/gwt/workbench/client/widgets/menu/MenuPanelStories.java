@@ -51,9 +51,9 @@ import java.util.function.Function;
 public final class MenuPanelStories {
 
     // Stroom's menu is a cell table with this class and `role="menu"`.
-    static final String MENU = ".menuCellTable";
+    static final String MENU = ".menu";
     // The highlighted row is the cell table's keyboard-selected row.
-    private static final String ACTIVE_ROW = ".menuCellTable tr[class*='KeyboardSelectedRow']";
+    private static final String ACTIVE_ROW = ".menu tr[class*='KeyboardSelectedRow']";
     private static final String NO_ACTION = "(no action yet)";
     private static final String ON_CHOSEN = "onChosen";
     private static final String OPTIONS_ID = "menuPanelStories-options";
@@ -122,6 +122,11 @@ public final class MenuPanelStories {
                             .toHaveAttribute("aria-haspopup", "menu");
                     play.expect(play.within(menu).getByRole("menuitem", TextMatch.containing("New")))
                             .not().toHaveAttribute("aria-haspopup");
+                    // and whether its sub menu is open
+                    final Query exportAs = play.within(menu).getByRole("menuitem", TextMatch.containing("Export as"));
+                    play.expect(exportAs).toHaveAttribute("aria-expanded", "false");
+                    play.expect(play.within(menu).getByRole("menuitem", TextMatch.containing("New")))
+                            .not().toHaveAttribute("aria-expanded");
 
                     // A sub menu is named by its parent item's text, without its arrow
                     play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", TextMatch.containing("New")))
@@ -133,8 +138,19 @@ public final class MenuPanelStories {
                     play.keyboard("{ArrowRight}");
                     final Query subMenu = play.screen().findByRole("menu", "Export as…");
                     play.expect(subMenu).toHaveAttribute("aria-label", "Export as…");
+                    play.expect(play.within(play.screen().getAllByRole("menu").first())
+                            .getByRole("menuitem", TextMatch.containing("Export as")))
+                            .toHaveAttribute("aria-expanded", "true");
                     play.expect(subMenu).not().toHaveAttribute("aria-labelledby");
                     play.expect(play.within(subMenu).getByRole("menuitem", "CSV")).toBeInTheDocument();
+                    // Escape closes the sub menu and puts the focus back on its parent item, which
+                    // says it is closed; a second Escape closes the menu
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(play.screen().getAllByRole("menu")).toHaveLength(1));
+                    final Query parent = play.within(play.screen().getByRole("menu"))
+                            .getByRole("menuitem", TextMatch.containing("Export as"));
+                    play.waitFor(() -> play.expect(parent).toHaveFocus());
+                    play.expect(parent).toHaveAttribute("aria-expanded", "false");
                     play.keyboard("{Escape}");
                     play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
                 })
@@ -199,6 +215,13 @@ public final class MenuPanelStories {
                     play.keyboard("{End}");
                     play.waitFor(() -> play.expect(play.screen().querySelector(ACTIVE_ROW))
                             .toHaveTextContent(TextMatch.containing("Close")));
+                    // Page Up and Page Down go a page at a time, here to the first and last items
+                    play.keyboard("{PageUp}");
+                    play.waitFor(() -> play.expect(play.screen().querySelector(ACTIVE_ROW))
+                            .toHaveTextContent(TextMatch.containing("Open")));
+                    play.keyboard("{PageDown}");
+                    play.waitFor(() -> play.expect(play.screen().querySelector(ACTIVE_ROW))
+                            .toHaveTextContent(TextMatch.containing("Close")));
                     play.keyboard("{ArrowUp}");
                     play.waitFor(() -> play.expect(play.screen().querySelector(ACTIVE_ROW))
                             .toHaveTextContent(TextMatch.containing("Print")));
@@ -213,6 +236,31 @@ public final class MenuPanelStories {
                     // Activate the highlighted "Open"
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.getByText("Open", "strong")).toBeInTheDocument());
+                })
+                // An item is chosen when the mouse button is let go over it, so a press is taken back by
+                // moving off it first (WCAG 2.5.2, Pointer Cancellation)
+                .story("PressMovedOffIsCancelled", context -> demo(context, "Open Menu",
+                        "Press an item, move off it and let go: nothing is chosen",
+                        true,
+                        result -> Arrays.asList(
+                                MenuWidgets.icon("Open", SvgImage.OPEN, () -> result.accept("Open")).build(),
+                                MenuWidgets.icon("Reload", SvgImage.REFRESH, () -> result.accept("Reload"))
+                                        .build())))
+                .withPlay(play -> {
+                    play.click(play.getByRole("button", TextMatch.containingIgnoreCase("open menu")));
+                    final Query menu = play.screen().findByRole("menu");
+                    final Query open = play.within(menu).getByText("Open", ".menu__text");
+                    final Query reload = play.within(menu).getByText("Reload", ".menu__text");
+                    // Pressed on Open, let go on Reload: neither is chosen, and the menu stays open
+                    play.fireEvent().mouseDown(open);
+                    play.fireEvent().mouseUp(reload);
+                    play.expect(menu).toBeVisible();
+                    play.expect(play.getByText(NO_ACTION, "strong")).toBeInTheDocument();
+                    // Pressed and let go on Reload: chosen
+                    play.fireEvent().mouseDown(reload);
+                    play.fireEvent().mouseUp(reload);
+                    play.waitFor(() -> play.expect(play.getByText("Reload", "strong")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.screen().queryByRole("menu")).toBeNull());
                 })
                 // A toolbar button marked as opening a menu says so, and whether its menu is open
                 // (the ARIA menu button pattern); a plain opener says neither

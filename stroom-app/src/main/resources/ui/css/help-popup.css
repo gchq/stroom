@@ -1,0 +1,66 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   The help popup (stroom.widget.help.client.HelpPopup): a form group's help (HelpManager) and a
+   quick filter's syntax help, shown beside the button that opens it. Named BEM style (block,
+   block__element, block--modifier). `--markdown` is a block modifier with no ARIA attribute: help
+   written in markdown, whose content is also the shared `markdown` block.
+*/
+
+.help-popup {
+    max-width: 700px;
+    padding: 1px 3px;
+    border: 2px solid var(--heading-color);
+    border-radius: 6px;
+    background-color: var(--tooltip__background-color);
+    color: var(--tooltip__text-color);
+    box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
+    /* Above dialogs and the glass of modal ones, as help is often opened from a dialog */
+    z-index: 1000;
+}
+
+.help-popup__content {
+    margin: 5px;
+    font-weight: 400;
+}
+
+/* A quick filter's syntax help is laid out in tables */
+.help-popup__content th,
+.help-popup__content td {
+    padding-right: 1em;
+}
+
+.help-popup--markdown .help-popup__content div,
+.help-popup--markdown .help-popup__content span,
+.help-popup--markdown .help-popup__content p,
+.help-popup--markdown .help-popup__content b,
+.help-popup--markdown .help-popup__content i {
+    font-weight: 400;
+    /* Make it a wee bit smaller than normal text in stroom which is size-13 */
+    font-size: var(--font-size-12);
+    line-height: 1.3em;
+}
+
+.help-popup--markdown .help-popup__content h4 {
+    font-weight: 500;
+    /* Make it a wee bit smaller than normal text in stroom which is size-13 */
+    font-size: var(--font-size-13);
+    line-height: 1.6em;
+}

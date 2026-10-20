@@ -100,7 +100,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
 
         rowStyles = new ColumnValueRowStyles(userPreferencesManager);
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
-        cellTable.getElement().setClassName("menuCellTable");
+        cellTable.getElement().setClassName("menu");
         cellTable.setRowStyles(rowStyles);
 
         // Sink events.
@@ -173,6 +173,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)
+                .caption("Filter Values")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(autoHidePartner)
                 .onShow(e -> getView().focus())
@@ -339,8 +340,9 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         }
 
         @Override
-        protected void onClose(final CellPreviewEvent<ColumnValue> e) {
+        protected boolean onClose(final CellPreviewEvent<ColumnValue> e) {
             hideSelf();
+            return true;
         }
 
         @Override

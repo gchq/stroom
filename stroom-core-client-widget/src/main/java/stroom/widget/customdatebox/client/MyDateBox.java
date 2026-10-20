@@ -292,11 +292,18 @@ public class MyDateBox extends Composite implements DateBoxView {
 
         public void onKeyDown(final KeyDownEvent event) {
             switch (event.getNativeKeyCode()) {
+                case KeyCodes.KEY_ESCAPE:
+                    // Escape closes the picker; with none open it goes on (e.g. to a dialog,
+                    // which closes)
+                    if (isDatePickerShowing()) {
+                        event.preventDefault();
+                        hideDatePicker();
+                    }
+                    break;
                 case KeyCodes.KEY_ENTER:
                 case KeyCodes.KEY_TAB:
 //                    updateDateFromTextBox();
                     // Deliberate fall through
-                case KeyCodes.KEY_ESCAPE:
                 case KeyCodes.KEY_UP:
                     hideDatePicker();
                     break;

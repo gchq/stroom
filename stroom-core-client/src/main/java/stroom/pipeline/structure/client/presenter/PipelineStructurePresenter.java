@@ -595,6 +595,7 @@ public class PipelineStructurePresenter
                         jsonEditor.setText(text, true);
                         ShowPopupEvent.builder(jsonEditor)
                                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                                .modal()
                                 .popupSize(popupSize)
                                 .caption("Pipeline Source")
                                 .onShow(e -> jsonEditor.focus())

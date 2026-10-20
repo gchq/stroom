@@ -147,7 +147,7 @@ public final class DocumentPermissionsTabStories {
                     play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
                     play.click(edit);
                     // Stroom's dialogs have no role="dialog"; each is the closest
-                    // '.dialog-container' of its caption
+                    // '.dialog__container' of its caption
                     final Play parent = screen.within(screen.findByText("Set Permissions").closest(StroomDom.DIALOG));
                     // The parent dialog holds no create grid, only the button that raises it
                     play.expect(parent.queryByText("Document Type")).toBeNull();

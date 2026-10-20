@@ -524,8 +524,8 @@ let markdownDirty = false;
  * underneath every one of them. But there is exactly one of each in the application, so the gesture
  * itself identifies the class:
  *
- *   a drag that moved a `.dialog-popup`          -> Dialog's down + move + up
- *   a drag or resize of a `.resizableDialog-popup` -> ResizableDialog's down + move + up
+ *   a drag that moved a `.dialog`          -> Dialog's down + move + up
+ *   a drag or resize of a `.dialog--resizable` -> ResizableDialog's down + move + up
  *   a spinner arrow gesture that passed          -> Spinner's handler FOR THAT EVENT
  *
  * Only the event that actually fired is credited: a hover does not pay for a press. The two
@@ -838,7 +838,7 @@ const EXERCISABLE_NOW = new Set(['click', 'command', 'ok', 'cancel', 'hide', 'se
  *
  *   MenubarItem  `probe-mouse.mjs` finds no `.menuItem > .background` anywhere in the application.
  *                Its ui.xml builds `.menuItem > .background + .text`, which is a different DOM from
- *                the popup menu's `.menuItem-outer > .menuItem-text`; the application's menu is a
+ *                the popup menu's `.menu__item > .menu__text`; the application's menu is a
  *                popup, and this GWTP view is only ever built by injection. 4 handlers.
  */
 const NOT_IN_APP = new Map([['MenubarItem', 'no .menuItem > .background exists in the application (probe-mouse.mjs)'],

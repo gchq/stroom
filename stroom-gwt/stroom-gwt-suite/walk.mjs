@@ -264,7 +264,7 @@ await gwt.signInFully(page, creds);
 await mkdir(OUT, { recursive: true });
 if (DEPTH !== 'reach') await mkdir(join(OUT, 'evidence'), { recursive: true });
 
-const menuIsOpen = () => page.evaluate(() => [...document.querySelectorAll('.menuItem-outer')]
+const menuIsOpen = () => page.evaluate(() => [...document.querySelectorAll('.menu__item')]
   .some((e) => e.offsetWidth > 0 && e.offsetHeight > 0)).catch(() => false);
 // ── The page can DIE under us, and a dead page does not fail: it WAITS ───────
 // docs7c's renderer reached 5.1 GB in the Pipeline editor and the kernel OOM-killed it at 21:51:58.
@@ -388,7 +388,7 @@ async function clickAffordance(label, timeout = 3000) {
   if (CHROME.has(label)) {
     const box = await page.evaluate((wanted) => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       // A toolbar button (ToolbarButton) disables with aria-disabled and stays focusable.
       const el = [...scope.querySelectorAll('button, [role=button], .Button')].find((b) => b.offsetWidth > 0 && !b.disabled
@@ -405,7 +405,7 @@ async function clickAffordance(label, timeout = 3000) {
   // The TOPMOST dialog first. Dialogs stack — a component's Settings holds `Add New Rule`, and both
   // have an OK — and `.first()` over the whole page is the one BEHIND, whose click the front dialog
   // intercepts: every nested dialog's OK and Cancel read as `did not accept a click within 3s`.
-  const popups = page.locator('.dialog-popup, .resizableDialog-popup').filter({ visible: true });
+  const popups = page.locator('.dialog').filter({ visible: true });
   const top = (await popups.count().catch(() => 0)) ? popups.last() : null;
   const within = (root) => [
     ...(isColumnHeader(label)
@@ -500,7 +500,7 @@ async function tabBarOf(tab) {
 /** Identical to crawl.mjs's survey, on purpose: the signature must mean the same thing. */
 async function survey() {
   const scope = await page.evaluate(() => {
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')]
+    const popups = [...document.querySelectorAll('.dialog')]
       .filter((e) => e.offsetWidth > 0);
     if (!popups.length) return 'body';
     popups[popups.length - 1].setAttribute('data-crawl-scope', '1');
@@ -674,7 +674,7 @@ async function reloadAndSignIn() {
 async function readSubTabs({ inDialog = false } = {}) {
   return page.evaluate((inDialog) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const top = popups[popups.length - 1];
     return [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .filter((e) => e.offsetWidth > 0 && e.offsetHeight > 0)
@@ -754,9 +754,9 @@ async function closeAllContentTabs() {
     console.log(`      (readDialogs sees: ${typeof seen === 'string' ? seen : JSON.stringify(seen.map((d) => ({ caption: d.caption, h: d.heightPx, buttons: d.buttons.map((b) => b.label) })))})`);
     const raw = await page.evaluate(() => {
       const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-      return [...document.querySelectorAll('.dialog-titleText')].map((t) => {
+      return [...document.querySelectorAll('.dialog__title')].map((t) => {
         const r = t.getBoundingClientRect(); const st = getComputedStyle(t);
-        const root = t.closest('[role=dialog]') || t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent') || t.parentElement;
+        const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
         return { caption: norm(t.textContent), w: Math.round(r.width), h: Math.round(r.height), vis: st.visibility, op: st.opacity, disp: st.display,
           root: root.className.toString().slice(0, 60),
           buttons: [...root.querySelectorAll('button, [role=button], .Button')].map((b) => `${norm(b.textContent || b.getAttribute('title'))}${b.offsetWidth ? '' : '(hidden)'}`) };
@@ -795,10 +795,10 @@ async function discardIfAsked({ wait = 2_000 } = {}) {
     // Say what it asked, once per distinct text, so the cause is named rather than inferred.
     const body = await page.evaluate(`(() => {
       const norm = (t) => String(t ?? '').replace(/\\s+/g, ' ').trim();
-      const t = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0 && /^confirm$/i.test(norm(e.textContent))).pop();
+      const t = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0 && /^confirm$/i.test(norm(e.textContent))).pop();
       if (!t) return '';
-      const root = t.closest('[role=dialog]') || t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent') || t.parentElement;
-      const c = root.cloneNode(true); c.querySelectorAll('svg, style, .dialog-titleText, button, .Button').forEach((x) => x.remove());
+      const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
+      const c = root.cloneNode(true); c.querySelectorAll('svg, style, .dialog__title, button, .Button').forEach((x) => x.remove());
       return norm(c.textContent).slice(0, 160);
     })()`).catch(() => '');
     if (!confirmTexts.has(body)) { confirmTexts.add(body); console.log(`      (answered Confirm: "${body}")`); }
@@ -860,10 +860,10 @@ async function clickDialogButton(captionRe, labelRe) {
     const lab = new RegExp(labSrc, 'i');
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const undouble = (s) => { const t = norm(s); const h = t.slice(0, t.length / 2); if (t.length % 2 === 0 && h === t.slice(t.length / 2)) return h.trim(); const m = t.match(/^(.+) \1$/); return m ? m[1] : t; };
-    const titles = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0 && cap.test(norm(e.textContent)));
+    const titles = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0 && cap.test(norm(e.textContent)));
     const t = titles[titles.length - 1];
     if (!t) return null;
-    const root = t.closest('[role=dialog]') || t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent') || t.parentElement;
+    const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
     const btn = [...root.querySelectorAll('button, [role=button], .Button')]
       .filter((b) => b.offsetWidth > 0 && b.offsetHeight > 0)
       .find((b) => lab.test(undouble(b.textContent || b.getAttribute('title') || '')));
@@ -884,7 +884,7 @@ async function whereAmI() {
     const tabs = [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')].filter((t) => t.offsetWidth > 0)
       .map((t) => `${norm((t.querySelector('.tab-bar__label') || t).textContent)}${t.getAttribute('aria-selected') === 'true' ? '*' : ''}`);
     const sub = [...document.querySelectorAll('.tab-bar--link .tab-bar__label')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
-    const dialogs = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
+    const dialogs = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
     return `tabs [${tabs.join(' | ')}] sub-tabs [${sub.join(', ')}] dialogs [${dialogs.join(', ')}]`;
   }).catch(() => '(unknown)');
 }
@@ -1048,10 +1048,10 @@ async function closeTop(childKind) {
     await page.evaluate(`(() => {
       const norm = (t) => String(t ?? '').replace(/\\s+/g, ' ').trim();
       const undouble = (s) => { const t = norm(s); const h = t.slice(0, t.length / 2); return t.length % 2 === 0 && h === t.slice(t.length / 2) ? h.trim() : t; };
-      const titles = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0);
+      const titles = [...document.querySelectorAll('.dialog__title')].filter((e) => e.offsetWidth > 0);
       const t = titles[titles.length - 1];
       if (!t) return;
-      const root = t.closest('[role=dialog]') || t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent') || t.parentElement;
+      const root = t.closest('[role=dialog]') || t.closest('.dialog__layout, .dialog, .popupContent') || t.parentElement;
       const btn = [...root.querySelectorAll('button, [role=button], .Button')]
         .find((b) => /^(cancel|close)$/i.test(undouble(b.textContent || b.getAttribute('title') || '')));
       if (btn) btn.click();
@@ -1185,7 +1185,7 @@ async function driveStep(step) {
     // paints its grid when the last answers, so a read taken as the dialog opens sees the empty
     // placeholder row. Poll briefly for a row that has text before giving up.
     const findCell = () => page.evaluate(([match, text]) => {
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const wanted = text ? new RegExp(text) : null;
       for (const g of scope.querySelectorAll('.dataGridWidget, [role=grid]')) {
@@ -1230,7 +1230,7 @@ async function driveStep(step) {
     // The first row's TICK BOX (`TickBoxCell` renders `div.tick-box--cell`), a real click — the batch
     // selection, which enables the batch buttons without selecting the row for the preview.
     const box = await page.evaluate(() => {
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const tick = [...scope.querySelectorAll('.dataGridWidget tbody tr .tick-box--cell, [role=grid] [role=row] .tick-box--cell')].find((e) => e.offsetWidth > 0);
       if (!tick) return null;
@@ -1247,7 +1247,7 @@ async function driveStep(step) {
     // a per-row menu (Dependencies: Open / Properties / Delete / Locate; Users: Open user…). Not a
     // button the survey offers, so it is a seed.
     const box = await page.evaluate((nth) => {
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const rows = [...scope.querySelectorAll('.dataGridWidget tbody tr, [role=grid] [role=row]:not([aria-rowindex="1"])')].filter((r) => r.offsetHeight > 0 && r.textContent.trim());
       const row = rows[nth ?? 0];
@@ -1265,7 +1265,7 @@ async function driveStep(step) {
     // rows (`selector`), and `match` names what the wanted row must contain — the Pipeline icon,
     // because a chooser lists the folders above its documents too.
     const box = await page.evaluate(([selector, match]) => {
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const item = [...scope.querySelectorAll(selector)].find((e) => e.offsetWidth > 0 && e.textContent.trim()
         && (!match || e.querySelector(match)));
@@ -1281,7 +1281,7 @@ async function driveStep(step) {
     // folders until a filter expands it to the matching documents. `empty: true` picks the first
     // EMPTY visible text box in the topmost dialog instead of a selector — a create dialog's name.
     const box = await page.evaluate(([selector, empty]) => {
-      const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+      const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
       const scope = popups.length ? popups[popups.length - 1] : document.body;
       const sel = empty ? 'input[type="text"], input:not([type]), .text-field, textarea' : selector;
       const el = [...scope.querySelectorAll(sel)].find((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly
@@ -1355,10 +1355,10 @@ async function driveStep(step) {
     await page.mouse.down();
     await page.waitForTimeout(60);
     await page.mouse.up();
-    // What opens is a SIMPLE popup (`simplePopup-popup`), not a captioned dialog, so the dialog
+    // What opens is a SIMPLE popup (`popup--floating`), not a captioned dialog, so the dialog
     // reader cannot name it; the seed names it, and this is the evidence the seed's claim rests on.
     const popup = await waitUntil(page, () => page.evaluate(() =>
-      [...document.querySelectorAll('.simplePopup-popup')].some((e) => e.offsetWidth > 0) || null),
+      [...document.querySelectorAll('.popup--floating')].some((e) => e.offsetWidth > 0) || null),
     { budget: 2_000, label: 'click-in-header', kind: 'dialog-appear' });
     if (!popup.ok) throw new Error(`no popup after clicking ${step.child} in header "${step.column}"`);
   } else if (step.via === 'set-ace') {
@@ -2324,7 +2324,7 @@ async function probeMouse(node, id) {
     const v = contextVerdict(ev);
     affordances.push({ node: id, label: `right-click ${t.what}`, kind: 'context',
       outcome: v.verdict === 'pass' ? 'menu' : 'nothing',
-      detail: 'a context handler that runs puts a .menuItem-outer menu on screen',
+      detail: 'a context handler that runs puts a .menu__item menu on screen',
       rows: [], blocked: [], clickMs: Date.now() - tc, backMs: 0, check: { kind: 'context', ...v, evidence: ev } });
     if (v.verdict === 'fail') checkFails += 1;
     if (v.verdict !== 'unchecked') console.log(`      ⊿ right-click ${t.what} → ${v.why.slice(0, 100)}  {context ${v.verdict}}`);
@@ -2868,7 +2868,7 @@ async function walk(node, state, arrivedAt) {
     if (node.kind === 'dialog' && label === 'OK' && result.outcome === 'alert' && said?.class === 'validation'
       && !blocked.length && !explorerCreate && !/after OK \(/.test(node.path.at(-1) ?? '')) {
       const hasEmpty = await page.evaluate(() => {
-        const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+        const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
         // The alert is the topmost popup; the form is the one beneath it.
         const form = popups[popups.length - 2];
         return !!form && [...form.querySelectorAll('input[type="text"], input:not([type]), .text-field, textarea')]
@@ -3071,13 +3071,13 @@ async function walk(node, state, arrivedAt) {
         route: [...node.route, { via: 'right-click', what: t.what, opens: 'menu' }] };
       const childId = idOf(child);
       if (seen.has(childId)) continue;
-      const beforeMenu = await page.evaluate(() => document.querySelectorAll('.menuItem-outer').length).catch(() => 0);
+      const beforeMenu = await page.evaluate(() => document.querySelectorAll('.menu__item').length).catch(() => 0);
       const t0 = Date.now();
       try {
         await driveStep(child.route.at(-1));
         const after = await settledSurvey();
         const items = (await readVisibleMenuItems(page).catch(() => [])).map((m) => (typeof m === 'string' ? m : m?.label)).filter(Boolean);
-        const grew = (await page.evaluate(() => document.querySelectorAll('.menuItem-outer').length).catch(() => 0)) > beforeMenu;
+        const grew = (await page.evaluate(() => document.querySelectorAll('.menu__item').length).catch(() => 0)) > beforeMenu;
         if (!grew || !items.length) {
           // Say so rather than continuing in silence: a right-click that opens nothing here, when the
           // checker a moment earlier saw a menu, means the page moved under us — and a silent skip

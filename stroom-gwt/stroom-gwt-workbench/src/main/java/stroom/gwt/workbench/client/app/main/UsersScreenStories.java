@@ -100,7 +100,7 @@ public final class UsersScreenStories {
                     play.expect(play.getByText("alice")).toBeInTheDocument();
                     // Create User: the dialog, the unique user id, OK.
                     // Stroom's dialogs have no role="dialog"; the dialog is the caption's closest
-                    // '.dialog-container'
+                    // '.dialog__container'
                     play.click(play.getByTitle("Create User"));
                     final Play dialog = screen.within(
                             screen.findByText("Add External User(s)").closest(StroomDom.DIALOG));

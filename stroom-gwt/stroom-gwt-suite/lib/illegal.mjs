@@ -40,10 +40,10 @@
 export function readFields(page) {
   return page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
+    const popups = [...document.querySelectorAll('.dialog')].filter((e) => e.offsetWidth > 0);
     const form = [...popups].reverse().find((p) => !p.querySelector('.alert-message'));
     if (!form) return null;
-    const caption = norm(form.querySelector('.dialog-titleText')?.textContent);
+    const caption = norm(form.querySelector('.dialog__title')?.textContent);
     const boxes = [...form.querySelectorAll('input[type="text"], input[type="number"], input:not([type]), .text-field, textarea')]
       .filter((e) => e.offsetWidth > 0 && e.offsetHeight > 0 && !e.disabled && !e.readOnly
         && !e.classList.contains('quick-filter__input')

@@ -104,6 +104,7 @@ public class DocumentUserPermissionsEditPresenter
         getView().setPermission(report.getExplicitPermission());
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(PopupSize.builder().build())
                 .onShow(e -> getView().focus())
                 .caption("Set Permissions")

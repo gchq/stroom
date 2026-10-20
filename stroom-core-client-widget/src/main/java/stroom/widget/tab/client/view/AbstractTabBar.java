@@ -911,6 +911,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         ShowMenuEvent
                 .builder()
                 .name("All Tabs")
+                .opener(element)
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)

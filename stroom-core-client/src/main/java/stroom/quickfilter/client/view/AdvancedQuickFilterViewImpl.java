@@ -17,6 +17,7 @@
 package stroom.quickfilter.client.view;
 
 import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter.AdvancedQuickFilterView;
+import stroom.widget.popup.client.view.PopupUtil;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -41,6 +42,15 @@ public class AdvancedQuickFilterViewImpl extends ViewImpl implements AdvancedQui
     public AdvancedQuickFilterViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         message.setVisible(false);
+        // The dialog is described by the message, if there is one, so that it is read as the
+        // dialog opens (the focus goes to the expression)
+        widget.addAttachHandler(event -> {
+            if (event.isAttached()) {
+                PopupUtil.setDialogDescription(widget.getElement(), message.isVisible()
+                        ? message.getElement()
+                        : null);
+            }
+        });
     }
 
     @Override

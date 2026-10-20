@@ -168,7 +168,6 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizable(800, 600))
                 .caption("Advanced Query")
-                .modal(true)
                 .onShow(e -> editExpressionPresenter.focus())
                 .onHideRequest(e -> {
                     if (!e.isOk()) {

@@ -58,6 +58,7 @@ public class ItemSelectionPresenter extends MyPresenterWidget<ItemSelectionView>
         read();
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .caption("Select " + display.getName())
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {

@@ -85,6 +85,16 @@ public final class TextBoxPopupDialogStories {
                     final Play screen = play.screen();
                     play.click(play.getByRole("button", StroomDom.button("Open popup")));
                     final Query name = screen.findByRole("textbox", "Name");
+                    // It can only get wider: a handle on each side, none on the top, bottom or
+                    // corners (a top edge once moved it up and down instead)
+                    final Query dialog = screen.getByRole("dialog", "Rename");
+                    for (final String handle : new String[]{"e", "w"}) {
+                        play.expect(play.within(dialog).querySelector(".dialog__resize--" + handle)).toBeVisible();
+                    }
+                    for (final String handle : new String[]{"n", "s", "ne", "nw", "se", "sw"}) {
+                        play.expect(play.within(dialog).querySelector(".dialog__resize--" + handle))
+                                .not().toBeVisible();
+                    }
                     // OK with no name says why under the field, and keeps the popup open
                     play.clear(name);
                     play.click(screen.getByRole("button", StroomDom.button("OK")));

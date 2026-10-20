@@ -97,12 +97,16 @@ public final class DocSelectionBoxStories {
                     play.keyboard("{ArrowDown}");
                     play.waitFor(() -> play.expect(screen.querySelector(":focus")).toHaveTextContent("Normalise"));
                     play.waitFor(() -> play.expect(screen.getByText("Normalise chosen")).toBeInTheDocument());
-                    // Tab from Cancel goes back to the filter, and Shift+Tab from the filter to Cancel
+                    // Tab from Cancel goes back to the first tab stop (the title bar's window options) and
+                    // on to the filter; Shift+Tab from the window options goes to Cancel
                     play.tab();
                     play.tab();
                     play.expect(screen.getByRole("button", StroomDom.button("Cancel"))).toHaveFocus();
                     play.tab();
+                    play.expect(screen.getByRole("button", "Window Options")).toHaveFocus();
+                    play.tab();
                     play.expect(screen.getByRole("searchbox", "Filter documents")).toHaveFocus();
+                    play.tab(true);
                     play.tab(true);
                     play.expect(screen.getByRole("button", StroomDom.button("Cancel"))).toHaveFocus();
                     play.keyboard("{Escape}");

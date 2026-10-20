@@ -78,6 +78,7 @@ public class QueryInfoPresenter
                         final PopupSize popupSize = PopupSize.resizable(640, 480);
                         ShowPopupEvent.builder(this)
                                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                                .modal()
                                 .popupSize(popupSize)
                                 .caption(queryInfoPopupTitle)
                                 .onShow(e -> getView().focus())

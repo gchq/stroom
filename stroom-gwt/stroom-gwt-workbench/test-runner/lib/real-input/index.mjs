@@ -29,13 +29,14 @@
 
 import { CHECKS as ACE_EDITOR } from './ace-editor.mjs';
 import { CHECKS as BUTTONS } from './buttons.mjs';
+import { CHECKS as MENU } from './menu.mjs';
 import { CHECKS as SELECTION_BOX } from './selection-box.mjs';
 import { CHECKS as SPLIT_PANE } from './split-pane.mjs';
 import { CHECKS as TABS } from './tabs.mjs';
 import { CHECKS as TOP_BAR } from './top-bar.mjs';
 import { CHECKS as VALUE_SPINNER } from './value-spinner.mjs';
 
-const FILES = { 'ace-editor.mjs': ACE_EDITOR, 'buttons.mjs': BUTTONS, 'selection-box.mjs': SELECTION_BOX,
+const FILES = { 'ace-editor.mjs': ACE_EDITOR, 'buttons.mjs': BUTTONS, 'menu.mjs': MENU, 'selection-box.mjs': SELECTION_BOX,
   'split-pane.mjs': SPLIT_PANE, 'tabs.mjs': TABS, 'top-bar.mjs': TOP_BAR,
   'value-spinner.mjs': VALUE_SPINNER };
 

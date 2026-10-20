@@ -83,7 +83,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         super(eventBus, view);
 
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
-        cellTable.getElement().setClassName("menuCellTable");
+        cellTable.getElement().setClassName("menu");
 
         // Sink events.
         final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
@@ -115,6 +115,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)
+                .caption("Filter Types")
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> selectFirstItem())
@@ -289,8 +290,9 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         }
 
         @Override
-        protected void onClose(final CellPreviewEvent<DocumentType> e) {
+        protected boolean onClose(final CellPreviewEvent<DocumentType> e) {
             escape();
+            return true;
         }
 
         @Override

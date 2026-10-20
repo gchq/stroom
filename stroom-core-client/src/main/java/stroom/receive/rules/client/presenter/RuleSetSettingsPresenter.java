@@ -306,6 +306,12 @@ public class RuleSetSettingsPresenter
         showRulePresenter(editRulePresenter, () -> {
             final ReceiveDataRule rule = editRulePresenter.write();
             final int index = rules.indexOf(existingRule);
+            if (index < 0) {
+                // Deleted behind the dialog, which isn't modal
+                AlertEvent.fireWarn(this, "The rule was deleted while it was being edited, "
+                                          + "so the changes can't be kept.", null);
+                return;
+            }
             rules.remove(index);
             rules.add(index, rule);
 

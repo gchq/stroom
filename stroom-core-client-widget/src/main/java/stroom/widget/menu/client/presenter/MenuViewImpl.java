@@ -20,6 +20,8 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.util.client.AbstractSelectionEventManager;
+import stroom.widget.util.client.InputModality;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.dom.client.BrowserEvents;
@@ -27,6 +29,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
@@ -49,6 +54,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private static final String ROLE_NONE = "none";
     private static final String ARIA_CHECKED = "aria-checked";
     private static final String ARIA_DISABLED = "aria-disabled";
+    private static final String ARIA_EXPANDED = "aria-expanded";
     private static final String ARIA_HAS_POPUP = "aria-haspopup";
     private static final String ARIA_LABEL = "aria-label";
     private static final String ARIA_LABELLED_BY = "aria-labelledby";
@@ -60,26 +66,39 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     private final MySingleSelectionModel<Item> selectionModel = new MySingleSelectionModel<>();
     private int mouseOverRow = -1;
+    // The item the primary button was pressed on, chosen if it is let go over it too
+    private Item pressedItem;
     private Timer subMenuShowTimer;
     // The item that has a delayed sub menu scheduled
     private Item timerItem = null;
     private boolean allowCloseOnMoveLeft = false;
+    // The item whose sub menu is open, or null for none
+    private Item openItem;
 
     public MenuViewImpl() {
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
-        cellTable.getElement().setClassName("menuCellTable");
+        cellTable.getElement().setClassName("menu");
         // The table is a menu, and each time it is drawn its rows are given the roles of menu items
         cellTable.getElement().setAttribute(ROLE, "menu");
         cellTable.addRedrawHandler(this::updateAria);
+        // The focus ring shows only while the keyboard is in use (menu--keyboard): the menu moves the
+        // focus itself, as the mouse moves too, so the browser's :focus-visible can't tell
+        cellTable.addAttachHandler(event -> setKeyboard(InputModality.isKeyboard()));
+        cellTable.addDomHandler(event -> setKeyboard(true), KeyDownEvent.getType());
+        cellTable.addDomHandler(event -> setKeyboard(false), MouseMoveEvent.getType());
+        cellTable.addDomHandler(event -> setKeyboard(false), MouseDownEvent.getType());
 
         // Sink events.
         final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
-        cellTable.sinkEvents(mouseMove);
+        final int mouseUp = Event.getTypeInt(BrowserEvents.MOUSEUP);
+        cellTable.sinkEvents(mouseMove | mouseUp);
 
         cellTable.getElement().getStyle().setProperty("minWidth", 50 + "px");
         cellTable.getElement().getStyle().setProperty("maxWidth", 600 + "px");
 
         scrollPanel = new ScrollPanel(cellTable);
+        // Its padding is room for an item's focus ring, which the scrolling would otherwise clip
+        scrollPanel.setStyleName("menu__viewport");
         scrollPanel.getElement().getStyle().setProperty("minWidth", 50 + "px");
         scrollPanel.getElement().getStyle().setProperty("maxWidth", 400 + "px");
         scrollPanel.getElement().getStyle().setProperty("maxHeight", 500 + "px");
@@ -131,13 +150,13 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                 td.setAttribute(ROLE, ROLE_NONE);
                 final Element focusable = td.getFirstChildElement();
                 if (focusable != null) {
-                    setItemAria(focusable, items.get(row));
+                    setItemAria(focusable, items.get(row), openItem);
                 }
             }
         }
     }
 
-    private static void setItemAria(final Element element, final Item item) {
+    private static void setItemAria(final Element element, final Item item, final Item openItem) {
         if (item instanceof final MenuItem menuItem) {
             if (item instanceof final CheckMenuItem checkMenuItem) {
                 // A setting that is on or off, read as a ticked or unticked check box
@@ -154,8 +173,10 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             }
             if (item instanceof HasChildren) {
                 element.setAttribute(ARIA_HAS_POPUP, "menu");
+                element.setAttribute(ARIA_EXPANDED, String.valueOf(Objects.equals(item, openItem)));
             } else {
                 element.removeAttribute(ARIA_HAS_POPUP);
+                element.removeAttribute(ARIA_EXPANDED);
             }
         } else if (item instanceof Separator) {
             element.setAttribute(ROLE, "separator");
@@ -281,7 +302,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         cellTable.getElement().getStyle().setProperty("width", "100%");
         cellTable.getElement().getStyle().setProperty("maxWidth", "none");
         // Lays the table out to that width, so that long items are cut short rather than widen it
-        cellTable.getElement().addClassName("menuCellTable--fixedWidth");
+        cellTable.getElement().addClassName("menu--fixed-width");
     }
 
     @Override
@@ -305,6 +326,19 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             menu.removeAttribute(ARIA_LABELLED_BY);
         } else {
             menu.setAttribute(ARIA_LABELLED_BY, id);
+        }
+    }
+
+    // Whether the keyboard is in use in the menu, which shows its focus ring
+    private void setKeyboard(final boolean keyboard) {
+        cellTable.setStyleName("menu--keyboard", keyboard);
+    }
+
+    @Override
+    public void setOpenItem(final Item item) {
+        if (!Objects.equals(openItem, item)) {
+            openItem = item;
+            updateAria();
         }
     }
 
@@ -403,8 +437,9 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         }
 
         @Override
-        protected void onClose(final CellPreviewEvent<Item> e) {
+        protected boolean onClose(final CellPreviewEvent<Item> e) {
             escape();
+            return true;
         }
 
         @Override
@@ -424,16 +459,34 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         @Override
         protected void onMouseDown(final CellPreviewEvent<Item> e) {
             final Item item = e.getValue();
+            pressedItem = null;
             if (isActionable(item)) {
                 final int row = cellTable.getVisibleItems().indexOf(item);
                 selectRow(row, true);
 
                 if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
-                    execute((MenuItem) item);
+                    // Chosen when the button is let go over it, so that a press can be taken back
+                    // by moving off it first (WCAG 2.5.2)
+                    if (MouseUtil.isPrimary(e.getNativeEvent())) {
+                        pressedItem = item;
+                    }
                 } else {
                     // A click on the item of an open sub menu closes it
                     toggleSubMenu(item);
                 }
+            }
+        }
+
+        @Override
+        protected void onMouseUp(final CellPreviewEvent<Item> e) {
+            final Item item = e.getValue();
+            final boolean chosen = item != null
+                                   && Objects.equals(item, pressedItem)
+                                   && MouseUtil.isPrimary(e.getNativeEvent())
+                                   && isActionable(item);
+            pressedItem = null;
+            if (chosen) {
+                execute((MenuItem) item);
             }
         }
 

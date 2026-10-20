@@ -135,6 +135,7 @@ public class AnnotationTagEditPresenter
         final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(presenter)
                 .popupType(PopupType.CLOSE_DIALOG)
+                .modal()
                 .popupSize(popupSize)
                 .caption("Change Permissions")
                 .onShow(e -> getView().focus())

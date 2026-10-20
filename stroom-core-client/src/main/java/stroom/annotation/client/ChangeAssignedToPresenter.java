@@ -69,6 +69,7 @@ public class ChangeAssignedToPresenter
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .popupSize(PopupSize.resizableX(500))
                 .caption("Change Assigned To")
                 .onShow(e -> getView().focus())

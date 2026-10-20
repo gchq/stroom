@@ -83,7 +83,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         @Override
         public void render(final MenuItemCell cell, final Context context, final Separator value,
                            final SafeHtmlBuilder sb) {
-            sb.append(Templates.div("menuItem-separator"));
+            sb.append(Templates.div("menu__separator"));
         }
     }
 
@@ -99,7 +99,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         @Override
         public void render(final MenuItemCell cell, final Context context, final GroupHeading value,
                            final SafeHtmlBuilder sb) {
-            sb.append(Templates.div("menuItem-groupHeading",
+            sb.append(Templates.div("menu__group-heading",
                     SafeHtmlUtils.fromTrustedString(value.getGroupName())));
         }
     }
@@ -141,7 +141,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                 if (value.getIconColour() != null) {
                     iconColour = value.getIconColour();
                 }
-                final String iconClassName = "menuItem-icon" + " " + iconColour.getClassName();
+                final String iconClassName = "menu__icon" + " " + iconColour.getClassName();
 
                 if (value.isEnabled()) {
                     if (enabledIcon != null) {
@@ -161,13 +161,13 @@ public class MenuItemCell extends AbstractCell<Item> {
 
 
                 inner.append(
-                        TEMPLATE.inner("menuItem-text", value.getText()));
+                        TEMPLATE.inner("menu__text", value.getText()));
                 appendNewTabHint(value, inner);
 
                 if (value.getAction() != null) {
                     final String shortcut = KeyBinding.getShortcut(value.getAction());
                     if (shortcut != null) {
-                        inner.append(TEMPLATE.inner("menuItem-shortcut",
+                        inner.append(TEMPLATE.inner("menu__shortcut",
                                 SafeHtmlUtils.fromString(shortcut)));
                     }
                 }
@@ -175,16 +175,13 @@ public class MenuItemCell extends AbstractCell<Item> {
                 // If this is a parent menu item, render an arrow to the right-hand side
                 if ((value instanceof IconParentMenuItem || value instanceof KeyedParentMenuItem)
                     && value.isEnabled()) {
-                    inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menuItem-expandArrow"));
+                    inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menu__arrow"));
                 }
 
-                String className = "menuItem-outer";
+                String className = "menu__item";
                 className += value.isHighlight()
-                        ? " menuItem-highlight"
+                        ? " menu__item--highlight"
                         : "";
-                className += value.isEnabled()
-                        ? ""
-                        : " menuItem-disabled";
                 final SafeHtml tooltip = NullSafe.getOrElse(value, MenuItem::getTooltip, value.getText());
                 sb.append(TEMPLATE.outer(className, tooltip.asString(), inner.toSafeHtml()));
             }
@@ -225,28 +222,25 @@ public class MenuItemCell extends AbstractCell<Item> {
 
                 inner.append(
                         TEMPLATE.inner(
-                                "menuItem-simpleText",
+                                "menu__text",
                                 value.getText()));
                 appendNewTabHint(value, inner);
 
                 if (value.getAction() != null) {
                     final String shortcut = KeyBinding.getShortcut(value.getAction());
                     if (shortcut != null) {
-                        inner.append(TEMPLATE.inner("menuItem-shortcut",
+                        inner.append(TEMPLATE.inner("menu__shortcut",
                                 SafeHtmlUtils.fromString(shortcut)));
                     }
                 }
 
                 // If this is a parent menu item, render an arrow to the right-hand side
                 if ((value instanceof SimpleParentMenuItem) && value.isEnabled()) {
-                    inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menuItem-expandArrow"));
+                    inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menu__arrow"));
                 }
 
-                String className = "menuItem-outer";
-                className += value.isEnabled()
-                        ? ""
-                        : " menuItem-disabled";
-                sb.append(TEMPLATE.outer(className, inner.toSafeHtml()));
+                // A disabled item looks so from its aria-disabled (MenuViewImpl)
+                sb.append(TEMPLATE.outer("menu__item", inner.toSafeHtml()));
             }
         }
 
@@ -284,11 +278,11 @@ public class MenuItemCell extends AbstractCell<Item> {
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
 
                 inner.append(TEMPLATE.inner(
-                        "menuItem-simpleText",
+                        "menu__text",
                         value.getText()));
 
                 sb.append(TEMPLATE.outer(
-                        "menuItem-outer infoMenuItem",
+                        "menu__item menu__item--info",
                         inner.toSafeHtml()));
             }
         }

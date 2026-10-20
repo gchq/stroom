@@ -19,6 +19,8 @@ package stroom.widget.popup.client.view;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
@@ -40,6 +42,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -56,6 +59,17 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
     SimplePanel content;
     @UiField
     SpinnerLarge spinner;
+    @UiField
+    FlowPanel titleBar;
+    @UiField
+    Label hint;
+    @UiField
+    Toolbar windowToolbar;
+    @UiField
+    ToolbarButton windowButton;
+
+    // Moves the dialog without dragging it, from its window options button
+    private final DialogWindow window;
 
     private boolean dragging;
     private int dragStartX;
@@ -102,9 +116,10 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
                   final boolean modal) {
         super(dialogEventHandler, autoHide, modal);
 
-        setStyleName("dialog-popup");
+        setStyleName("dialog");
         setWidget(binder.createAndBindUi(this));
         PopupUtil.setDialogRole(getElement(), titleText.getElement());
+        window = new DialogWindow(this, null, windowButton, hint.getElement());
 
         final MouseHandler mouseHandler = new MouseHandler();
         addDomHandler(mouseHandler, MouseDownEvent.getType());
@@ -205,6 +220,7 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
      * @see #continueDragging
      */
     private void beginDragging(final MouseDownEvent event) {
+        window.beforeMouseChange();
         getDragGlass().show();
 
         dragging = true;
@@ -246,6 +262,7 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
             top = Math.max(0, Math.min(Window.getClientHeight() - 22, top));
 
             setPopupPosition((int) left, (int) top);
+            window.afterMouseChange();
         }
     }
 
@@ -282,8 +299,8 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
     private boolean isCaptionEvent(final NativeEvent event) {
         // Lazy init content elements.
         if (dialogContent == null) {
-            dialogContent = ElementUtil.findChild(content.getElement(), "dialog-content");
-            dialogButtons = ElementUtil.findChild(content.getElement(), "dialog-buttons");
+            dialogContent = ElementUtil.findChild(content.getElement(), "dialog__content");
+            dialogButtons = ElementUtil.findChild(content.getElement(), "dialog__buttons");
         }
 
         final EventTarget target = event.getEventTarget();
@@ -291,6 +308,10 @@ public class Dialog extends AbstractPopupPanel implements TaskMonitorFactory {
             final Element element = Element.as(target);
             // Check the event targets the dialog.
             if (getElement().isOrHasChild(element)) {
+                // The window options button is pressed, not dragged
+                if (windowToolbar.getElement().isOrHasChild(element)) {
+                    return false;
+                }
                 // If the target is dialog content then ensure the event does not target child elements.
                 if (dialogContent != null && dialogContent.isOrHasChild(element)) {
                     return dialogContent.equals(element);

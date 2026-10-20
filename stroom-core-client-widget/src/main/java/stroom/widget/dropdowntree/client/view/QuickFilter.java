@@ -20,9 +20,11 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.help.client.HelpPopup;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.HtmlBuilder;
-import stroom.widget.util.client.KeyBinding;
-import stroom.widget.util.client.KeyBinding.Action;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -37,15 +39,11 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
-import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
 import java.util.Objects;
@@ -58,6 +56,7 @@ public class QuickFilter extends FlowPanel
     private static final int DEBOUNCE_DELAY_MS = 400;
     private static final String ARIA_LABEL = "aria-label";
     private static final String BLOCK = "quick-filter";
+    private static final String HELP_NAME = "Quick Filter Syntax Help";
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
             .bold("Quick Filter")
             .br()
@@ -117,8 +116,10 @@ public class QuickFilter extends FlowPanel
         // box, and help stays outermost as it is on every screen. Hidden until a handler is set.
         dropDownButton = toolbar.button(SvgImage.ARROW_DOWN, "Show Recent Filters", this::showRecentFilters);
         dropDownButton.addStyleName(BLOCK + "__recent");
+        dropDownButton.setOpensMenu(true);
         dropDownButton.setVisible(false);
-        helpButton = toolbar.button(SvgImage.HELP_OUTLINE, "Quick Filter Syntax Help", this::showHelpPopup);
+        helpButton = toolbar.button(SvgImage.HELP_OUTLINE, HELP_NAME, this::showHelpPopup);
+        HelpPopup.markOpener(helpButton.getElement());
 
         description.setVisible(false);
         description.getElement().setId(DOM.createUniqueId());
@@ -155,11 +156,10 @@ public class QuickFilter extends FlowPanel
                     .filter(safeHtml -> !safeHtml.asString().isEmpty())
                     .orElse(DEFAULT_POPUP_TEXT);
 
-            final HelpPopup popup = new HelpPopup(withFilterError(syntaxHelp));
-            popup.setStyleName("quickFilter-tooltip");
+            final HelpPopup popup = HelpPopup.html(withFilterError(syntaxHelp), HELP_NAME);
             // A mousedown on the help button mustn't auto-hide the popup, so that its click can
             // toggle it shut
-            popup.addAutoHidePartner(helpButton.getElement());
+            popup.setOpener(helpButton.getElement());
             // Forget the popup however it is hidden (e.g. auto-hidden by a click elsewhere, or by
             // Escape), so that the next click on the help button shows it again
             popup.addCloseHandler(event -> {
@@ -167,13 +167,8 @@ public class QuickFilter extends FlowPanel
                     helpPopup = null;
                 }
             });
-            popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
-
-                // Position it below the filter, clear of the buttons in it whatever its height
-                popup.setPopupPosition(
-                        getAbsoluteLeft() + 4,
-                        getAbsoluteTop() + getOffsetHeight());
-            });
+            // Below the filter, clear of the buttons in it whatever its height
+            popup.show(new PopupPosition(new Rect(getElement()), PopupLocation.BELOW));
             this.helpPopup = popup;
         }
     }
@@ -318,9 +313,13 @@ public class QuickFilter extends FlowPanel
     }
 
     protected void onKeyDown(final KeyDownEvent event) {
-        // Clear the text box if ESC is pressed
+        // Escape clears the text box; an empty one leaves it to what holds the filter (e.g. a dialog,
+        // which closes)
         if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
-            clear();
+            if (!textBox.getText().isEmpty()) {
+                event.preventDefault();
+                clear();
+            }
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             onChange(true);
             commit();
@@ -460,41 +459,16 @@ public class QuickFilter extends FlowPanel
         textBox.setFocus(true);
     }
 
+    /// Gets the button that opens the recent filters' menu, for the menu's opener, which says
+    /// whether the menu is open.
+    ///
+    /// @return The button's element.
+    public Element getRecentFiltersButton() {
+        return dropDownButton.getElement();
+    }
+
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         handlerManager.fireEvent(event);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class HelpPopup extends PopupPanel {
-
-        public HelpPopup(final SafeHtml content) {
-//        public HelpPopup(final Supplier<String> popupTextSupplier) {
-            // PopupPanel's constructor takes 'auto-hide' as its boolean parameter.
-            // If this is set, the panel closes itself automatically when the user
-            // clicks outside of it.
-            super(true);
-
-//            setWidget(new Label(popupTextSupplier.get(), true));
-            setWidget(new HTMLPanel(content));
-            // A dialog (not modal) for screen readers, named after the button that opens it
-            getElement().setAttribute("role", "dialog");
-            getElement().setAttribute("aria-label", "Quick Filter Syntax Help");
-//            setWidget(new HTMLPanel(SafeHtmlUtils.fromTrustedString("<b>hello</b>")));
-        }
-
-        @Override
-        protected void onPreviewNativeEvent(final NativePreviewEvent event) {
-            super.onPreviewNativeEvent(event);
-            // Escape closes it, as it does Stroom's other popups
-            if (event.getTypeInt() == Event.ONKEYDOWN
-                && KeyBinding.test(event.getNativeEvent()) == Action.CLOSE) {
-                event.cancel();
-                hide();
-            }
-        }
     }
 }

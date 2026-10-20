@@ -186,7 +186,7 @@ await page.waitForTimeout(500);
 if (!(await clickMenuItem(page, 'Tools'))) throw new Error('no Tools menu');
 await page.waitForTimeout(600);
 if (!(await clickMenuItem(page, 'Import'))) throw new Error('no Import item');
-const d = page.locator('.resizableDialog-popup, .dialog-popup').last();
+const d = page.locator('.dialog').last();
 await d.waitFor({ state: 'visible', timeout: 20_000 });
 await page.waitForTimeout(1000);
 
@@ -197,7 +197,7 @@ await page.screenshot({ path: `${SUITE}/out/seed/import-step1.png` }).catch(() =
 
 // Step one uploads the file; step two is "Confirm Import", a grid of what the zip contains.
 await d.getByText('OK', { exact: true }).first().click();
-const confirm = page.locator('.resizableDialog-popup, .dialog-popup').last();
+const confirm = page.locator('.dialog').last();
 await confirm.getByText('Confirm Import', { exact: true }).first().waitFor({ state: 'visible', timeout: 30_000 });
 await page.waitForTimeout(1500);
 

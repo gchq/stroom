@@ -175,6 +175,7 @@ public class SchedulePopup
     public void show(final Consumer<Schedule> consumer) {
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .modal()
                 .caption("Change Schedule")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {

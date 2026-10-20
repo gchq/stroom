@@ -16,8 +16,14 @@
 
 package stroom.gwt.workbench.client.widgets.dialogs;
 
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.ContentPresenter;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
+import stroom.gwt.workbench.framework.client.play.EventInit;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -26,6 +32,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -74,6 +81,36 @@ public final class DialogStories {
                             .size(600, 400)
                             .text("A resizable dialog with OK and Cancel buttons.",
                                     "Mirrors GWT ResizableOkCancelContent.")))
+                // Resizable both ways: a handle on each side and corner
+                .withPlay(play -> {
+                    play.click(play.getByRole("button", StroomDom.button("Open resizable OK/Cancel dialog")));
+                    final Query dialog = play.screen().findByRole("dialog", "Edit Settings");
+                    for (final String handle : new String[]{"n", "e", "s", "w", "ne", "nw", "se", "sw"}) {
+                        play.expect(play.within(dialog).querySelector(".dialog__resize--" + handle)).toBeVisible();
+                    }
+                    // An edge dragged far past the window stops at the window's edge (a dialog can be
+                    // moved partly off the window, but not resized off it)
+                    final Value<Double> widthBefore = play.capture("width before",
+                            () -> play.within(dialog).querySelector(".dialog__container").width().get());
+                    dragEdge(play, play.within(dialog).querySelector(".dialog__resize--se"), 5000, 5000);
+                    play.expect("the dialog grew",
+                            () -> play.within(dialog).querySelector(".dialog__container").width().get()
+                                  > widthBefore.get()).toBe(true);
+                    play.expect("right edge within the window",
+                            () -> play.within(dialog).querySelector(".dialog__container").right().get()
+                                  <= Window.getClientWidth() + 1).toBe(true);
+                    play.expect("bottom edge within the window",
+                            () -> play.within(dialog).querySelector(".dialog__container").bottom().get()
+                                  <= Window.getClientHeight() + 1).toBe(true);
+                    dragEdge(play, play.within(dialog).querySelector(".dialog__resize--nw"), -5000, -5000);
+                    play.expect("left edge within the window",
+                            () -> play.within(dialog).querySelector(".dialog__container").left().get() >= -1)
+                            .toBe(true);
+                    play.expect("top edge within the window",
+                            () -> play.within(dialog).querySelector(".dialog__container").top().get() >= -1)
+                            .toBe(true);
+                    play.keyboard("{Escape}");
+                })
                 // Resizable Dialog — Accept / Reject (green Accept)
                 .story("AcceptReject", "Resizable Dialog — Accept / Reject",
                         context -> trigger(context, "Open Accept/Reject dialog", dialog(
@@ -137,16 +174,92 @@ public final class DialogStories {
                             .size(650, 450)
                             .modal()
                             .text("A resizable modal dialog with OK and Cancel buttons.",
-                                    "Use for complex editing forms that need flexible sizing.")));
+                                    "Use for complex editing forms that need flexible sizing.")))
+                // Moved and resized without dragging (WCAG 2.1.1, 2.5.7): the title bar's window
+                // options, Move and Resize from the keyboard, Maximise (and a double click on the title
+                // bar) and Restore Size
+                .story("WindowOptions", "Window options — move and resize without dragging",
+                        context -> trigger(context, "Open dialog", dialog(
+                            PopupType.OK_CANCEL_DIALOG, "Window Test")
+                            .size(600, 400)
+                            .text("Use the window options button in the title bar.")))
+                .withPlay(DialogStories::playWindowOptions);
+    }
+
+    private static void playWindowOptions(final Play play) {
+        final Play screen = play.screen();
+        play.click(play.getByRole("button", StroomDom.button("Open dialog")));
+        final Query dialog = screen.findByRole("dialog", "Window Test");
+        final Query container = play.within(dialog).querySelector(".dialog__container");
+        final Query options = play.within(dialog).getByRole("button", "Window Options");
+        play.expect(options).toHaveAttribute("aria-haspopup", "menu");
+        final Value<Double> width = play.capture("width", () -> container.width().get());
+        final Value<Double> height = play.capture("height", () -> container.height().get());
+        final Value<Double> left = play.capture("left", () -> container.left().get());
+
+        // The menu: Move, Resize and Maximise; Restore Size only once it has been changed
+        play.click(options);
+        final Query menu = screen.findByRole("menu", "Window options");
+        play.expect(play.within(menu).getByRole("menuitem", "Move")).toBeInTheDocument();
+        play.expect(play.within(menu).getByRole("menuitem", "Maximise")).toBeInTheDocument();
+        play.expect(play.within(menu).queryByRole("menuitem", "Restore Size")).toBeNull();
+
+        // Resize: Right grows it 10px, Shift+Down 1px; Enter keeps it
+        play.click(play.within(menu).getByRole("menuitem", "Resize"));
+        play.waitFor(() -> play.expect(dialog).toHaveClass("dialog--resizing"));
+        play.waitFor(() -> play.expect(options).toHaveFocus());
+        play.expect(play.within(dialog).querySelector(".dialog__hint"))
+                .toHaveTextContent(TextMatch.containing("Resizing "));
+        play.keyboard("{ArrowRight}");
+        play.keyboard("{Shift>}{ArrowDown}{/Shift}");
+        play.keyboard("{Enter}");
+        play.expect(dialog).not().toHaveClass("dialog--resizing");
+        play.expect("10px wider", () -> container.width().get() - width.get()).toBe(10.0);
+        play.expect("1px taller", () -> container.height().get() - height.get()).toBe(1.0);
+
+        // Move: Left 3 times, then Escape puts it back, and leaves the dialog open
+        play.click(options);
+        play.click(screen.findByRole("menuitem", "Move"));
+        play.waitFor(() -> play.expect(dialog).toHaveClass("dialog--moving"));
+        play.waitFor(() -> play.expect(options).toHaveFocus());
+        play.keyboard("{ArrowLeft}{ArrowLeft}{ArrowLeft}");
+        play.expect("moved 30px left", () -> left.get() - container.left().get()).toBe(30.0);
+        play.keyboard("{Escape}");
+        play.expect(dialog).not().toHaveClass("dialog--moving");
+        play.expect("put back", () -> container.left().get() - left.get()).toBe(0.0);
+        play.expect(dialog).toBeVisible();
+
+        // Restore Size puts back the size it opened with
+        play.click(options);
+        play.click(screen.findByRole("menuitem", "Restore Size"));
+        play.waitFor(() -> play.expect("its width again", () -> container.width().get() - width.get())
+                .toBe(0.0));
+
+        // A double click on the title bar maximises it, and another restores it
+        final Query titleBar = play.within(dialog).querySelector(".dialog__title");
+        play.dblClick(titleBar);
+        play.expect("maximised", () -> container.width().get() > width.get() + 100).toBe(true);
+        play.dblClick(titleBar);
+        play.expect("restored", () -> container.width().get() - width.get()).toBe(0.0);
+        play.keyboard("{Escape}");
     }
 
     private static DialogSpec dialog(final PopupType popupType, final String caption) {
         return new DialogSpec(popupType, caption);
     }
 
+    // Drags a resize handle with the mouse to a point (which may be outside the window), the button
+    // held throughout, as the dialog captures the mouse while it is dragged
+    private static void dragEdge(final Play play, final Query handle, final double x, final double y) {
+        play.fireEvent().mouseDown(handle, EventInit.create().atCentreOf(handle).button(0).buttons(1));
+        play.fireEvent().mouseMove(handle, EventInit.create().at(x, y).buttons(1));
+        play.fireEvent().mouseUp(handle, EventInit.create().at(x, y).button(0).buttons(0));
+    }
+
     /// A primary button that opens the dialog.
     private static Widget trigger(final StoryContext context, final String label, final DialogSpec spec) {
-        final StoryPopups popups = StoryPopups.create(context);
+        // With menus, for the dialog's window options
+        final StoryPopups popups = StoryPopups.create(context).withMenuRequests();
         final FlowPanel panel = new FlowPanel();
         panel.add(DialogWidgets.button(label, DialogWidgets.PRIMARY, event -> spec.show(popups)));
         return panel;
