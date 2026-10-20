@@ -1,6 +1,10 @@
 ext.moduleName = 'stroom.config.global.api'
 
 dependencies {
+    // For ConfigProperty and OverrideValue, which GlobalConfigReader returns.
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-util-shared')
+
+    implementation libs.jackson.annotations
 }

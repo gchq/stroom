@@ -58,8 +58,11 @@ public class AiAuditLog {
     static final String SEARCH_TYPE_ID = "AskStroomAi.search";
     static final String PROCESS_TYPE_ID = "AskStroomAi.process";
     static final String DATA_VIEW_TYPE_ID = "AskStroomAi.viewData";
+    static final String PROPERTY_VIEW_TYPE_ID = "AskStroomAi.viewProperties";
     /// The type of the objects named in events for streams.
     static final String STREAM_TYPE = "Stream";
+    /// The type of the objects named in events for system properties, as the Properties screen's events name them.
+    static final String CONFIG_PROPERTY_TYPE = "ConfigProperty";
     /// The most documents named in one View event.
     static final int MAX_LOGGED_DOCUMENTS = 100;
     static final int MAX_TEXT = 1_000;
@@ -324,6 +327,80 @@ public class AiAuditLog {
         }
         NullSafe.map(data).forEach((name, value) -> builder.addData(data(name, value)));
         log(SEARCH_TYPE_ID, "Ask Stroom AI searched in chat " + chatId + ": " + purpose, builder.build());
+    }
+
+    /// Records that the agent searched or listed Stroom's system properties for the chat, as a Search event naming
+    /// the properties found (up to [#MAX_LOGGED_DOCUMENTS]), as the Properties screen logs its list.
+    ///
+    /// @param chatId  The chat.
+    /// @param query   The search, in words, e.g. "max results under stroom.search".
+    /// @param paths   The paths of the properties found and given to the agent.
+    /// @param purpose Why, e.g. "Search by the config_properties tool".
+    public void propertiesSearched(final int chatId,
+                                   final String query,
+                                   final List<String> paths,
+                                   final String purpose) {
+        final List<BaseObject> objects = NullSafe.list(paths).stream()
+                .limit(MAX_LOGGED_DOCUMENTS)
+                .map(path -> (BaseObject) propertyObject(path))
+                .toList();
+        searchedObjects(chatId, query, objects, NullSafe.list(paths).size(), Map.of(), purpose);
+    }
+
+    /// Records that the agent read Stroom's system properties in full for the chat, as one View event naming each
+    /// (up to [#MAX_LOGGED_DOCUMENTS]), as the Properties screen logs opening a property.
+    ///
+    /// @param chatId  The chat.
+    /// @param paths   The paths of the properties read.
+    /// @param purpose Why, e.g. "Read by the config_properties tool".
+    public void propertiesViewed(final int chatId, final List<String> paths, final String purpose) {
+        if (paths == null || paths.isEmpty()) {
+            return;
+        }
+        final ViewEventAction.Builder<Void> builder = ViewEventAction.builder();
+        paths.stream()
+                .limit(MAX_LOGGED_DOCUMENTS)
+                .forEach(path -> builder.addObject(propertyObject(path)));
+        log(PROPERTY_VIEW_TYPE_ID, "Ask Stroom AI viewed " + paths.size() + " system propert"
+                                   + (paths.size() == 1
+                ? "y"
+                : "ies") + " in chat " + chatId,
+                builder.withOutcome(Outcome.builder()
+                                .withSuccess(true)
+                                .withDescription(purpose + more(paths.size()))
+                                .build())
+                        .addData(data("ChatId", String.valueOf(chatId)))
+                        .addData(data("Purpose", purpose))
+                        .build());
+    }
+
+    /// Records that the agent was refused Stroom's system properties for the chat, e.g. as the user doesn't have
+    /// the Manage Properties permission, as a failed Search event.
+    ///
+    /// @param chatId  The chat.
+    /// @param query   What was asked for, in words.
+    /// @param reason  Why it was refused.
+    /// @param purpose Why it was asked for, e.g. "Search by the config_properties tool".
+    public void propertiesRefused(final int chatId, final String query, final String reason, final String purpose) {
+        log(SEARCH_TYPE_ID, "Ask Stroom AI was refused system properties in chat " + chatId + ": " + purpose,
+                SearchEventAction.builder()
+                        .withQuery(Query.builder().withRaw(shorten(query)).build())
+                        .withOutcome(Outcome.builder()
+                                .withSuccess(false)
+                                .withPermitted(false)
+                                .withDescription(shorten(reason))
+                                .build())
+                        .addData(data("ChatId", String.valueOf(chatId)))
+                        .addData(data("Purpose", purpose))
+                        .build());
+    }
+
+    private static OtherObject propertyObject(final String path) {
+        return OtherObject.builder()
+                .withType(CONFIG_PROPERTY_TYPE)
+                .withId(path)
+                .withName(path)
+                .build();
     }
 
     private static OtherObject streamObject(final long streamId) {
