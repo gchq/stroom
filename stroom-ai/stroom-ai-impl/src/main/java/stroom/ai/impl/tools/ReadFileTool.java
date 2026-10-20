@@ -16,12 +16,11 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.util.List;
@@ -45,15 +44,24 @@ class ReadFileTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Reads lines of a workspace file, numbered from 1, each in full. Give startLine to "
-                             + "start part way through, or a negative startLine to read from the end (-20 reads "
-                             + "the last 20 lines). Read large files a part at a time, or use grep to find what "
-                             + "you need.")
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(PATH_ARG, "The file, e.g. /outputs/result.csv.")
+                .description(ToolDescription.builder()
+                        .general("Reads lines of a ")
+                        .chatOnly("workspace ")
+                        .general("file, numbered from 1, each in full. Give startLine to start part way through, or "
+                                 + "a negative startLine to read from the end (-20 reads the last 20 lines). Read "
+                                 + "large files a part at a time")
+                        .chatOnly(", or use grep to find what you need")
+                        .general(".")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(PATH_ARG, ToolDescription.builder()
+                                .general("The file")
+                                .chatOnly(", e.g. /outputs/result.csv")
+                                .general(".")
+                                .build())
                         .addIntegerProperty(START_ARG, "The first line to read (default 1), or negative to count "
                                                        + "back from the end.")
                         .addIntegerProperty(COUNT_ARG, "How many lines to read (default " + DEFAULT_LINES + ").")
@@ -63,23 +71,25 @@ class ReadFileTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
-        final long total = workspace.lineCount(chatId, path);
+        final long total = workspace.lineCount(path);
         final int start = Objects.requireNonNullElse(intArg(request, START_ARG), 1);
-        final int maxLines = limits().getMaxLinesPerRead();
+        final int maxLines = limits(context).getMaxLinesPerRead();
         final int count = Math.clamp(Objects.requireNonNullElse(intArg(request, COUNT_ARG), DEFAULT_LINES),
                 1, maxLines);
         final long from = start < 0
                 ? Math.max(0, total + start)
                 : Math.max(0, start - 1L);
         if (from >= total) {
-            return path + " has " + total + " lines, so there is nothing from line " + (from + 1) + ".";
+            return ToolResult.text(
+                    path + " has " + total + " lines, so there is nothing from line " + (from + 1) + ".");
         }
-        final List<String> lines = workspace.readLines(chatId, path, from, count);
+        final List<String> lines = workspace.readLines(path, from, count);
         // Lines are shown in full, however long, so code can be copied exactly; only a line too long for a whole
         // read is cut short.
-        final int maxChars = limits().getMaxCharsPerRead();
+        final int maxChars = limits(context).getMaxCharsPerRead();
         final int lineLimit = Math.max(LINE_NUMBER_ROOM, maxChars - LINE_NUMBER_ROOM);
         final StringBuilder sb = new StringBuilder();
         long lineNo = from + 1;
@@ -98,6 +108,6 @@ class ReadFileTool extends AbstractWorkspaceTool {
         final String footer = last < total
                 ? "\n(" + (total - last) + " more lines; read on from line " + (last + 1) + ")"
                 : "";
-        return header + sb.toString().stripTrailing() + footer;
+        return ToolResult.text(header + sb.toString().stripTrailing() + footer);
     }
 }

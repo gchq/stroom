@@ -104,11 +104,11 @@ public class DataSourceDocumentation {
 
     /// Gathers a data source's documentation, and records in the audit log the documents read for it.
     ///
-    /// @param chatId     The chat.
+    /// @param session    The session, e.g. the chat.
     /// @param dataSource A data source the user can use.
     /// @param purpose    Why, e.g. "Documentation read by the describe_data_source tool".
     /// @return Each piece of documentation, in the order above, with what it documents. Empty if there is none.
-    public List<Documented> find(final int chatId, final DocRef dataSource, final String purpose) {
+    public List<Documented> find(final ToolSession session, final DocRef dataSource, final String purpose) {
         final Map<String, Documented> found = new LinkedHashMap<>();
         // The data source's own Documentation tab, which Use is enough to see, as the query editor shows it.
         dataSourceAccess.documentation(dataSource).ifPresent(text ->
@@ -162,7 +162,7 @@ public class DataSourceDocumentation {
                 .distinct()
                 .toList();
         if (!read.isEmpty()) {
-            documentAccess.logViews(chatId, read, purpose);
+            documentAccess.logViews(session, read, purpose);
         }
         return docs;
     }
@@ -176,9 +176,10 @@ public class DataSourceDocumentation {
         return COMMENT.matcher(text).replaceAll("").replaceAll("\\n{3,}", "\n\n").strip();
     }
 
-    /// @param docs The data source's documentation, as [#find(int, DocRef, String)] gave it.
+    /// @param links How to link to the documents, for the caller.
+    /// @param docs  The data source's documentation, as [#find(int, DocRef, String)] gave it.
     /// @return It, for the agent, at most [#MAX_CHARS] in all; empty if there is none.
-    public static String note(final List<Documented> docs) {
+    public static String note(final StroomLinks links, final List<Documented> docs) {
         if (docs.isEmpty()) {
             return "";
         }
@@ -186,7 +187,7 @@ public class DataSourceDocumentation {
                                                    + "mapping from the source's fields; use it to pick fields):");
         int used = 0;
         for (final Documented doc : docs) {
-            sb.append("\n\n### ").append(DocumentInfoTool.link(doc.from())).append(" (")
+            sb.append("\n\n### ").append(links.document(doc.from())).append(" (")
                     .append(doc.from().getType()).append("): ").append(doc.what());
             if (!doc.from().equals(doc.of())) {
                 sb.append(" of ").append(doc.of().getType()).append(" '").append(doc.of().getName()).append('\'');

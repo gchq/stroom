@@ -1,0 +1,20 @@
+Arguments: {"mode":"get","paths":["stroom.statistics.sql.search.maxResults"],"nodes":["node1","node2","node3"]}
+
+=== Output ===
+## stroom.statistics.sql.search.maxResults
+Description: The maximum number of records that can be returned from the statistics DB in a single query prior to aggregation
+Type: Integer. A whole number.
+Default: `100000`
+Database value: `50000` (last set by admin at 2026-10-01T09:30:00Z; first set by alice at 2026-09-01T08:00:00Z)
+YAML value on this node (node1): not set
+Effective value on this node: `50000`, from the database value (set on the Properties screen).
+Editable on the Properties screen: yes
+A change takes effect: without a restart
+YAML value on each node (asked of each node, as the Properties screen does):
+- node1: not set; effective there `50000` (Database)
+- node2: `2000`; effective there `2000` (YAML)
+- node3: couldn't be reached (Unable to connect to http://admin:********************@node3:8080)
+
+How a property's value is set (as Stroom works it out: YAML, then database, then default): on each node, the effective value is that node's YAML value if its config.yml sets the property to something other than the default; otherwise the database value, if one is set; otherwise the default. So on a node whose YAML sets a property, a database value for it has no effect.
+- Database value: set on the Properties screen (Administration > Properties, open the property and set its Database Value). It needs the Manage Properties permission, and only editable properties can be set there. It applies to every node (each picks it up within about a minute), without a restart unless the property needs one (a restart of every node, or of the nodes serving the UI).
+- YAML value: set in a node's config.yml under appConfig, by the path without its leading 'stroom' (e.g. stroom.ui.defaultMaxResults is appConfig: ui: defaultMaxResults). It applies only to that node, and it is the only way to set a property that isn't editable. Stroom notices changes to the file and applies them, but a property that needs a restart takes effect only once the node restarts.

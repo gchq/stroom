@@ -16,6 +16,8 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.tools.ToolCaller;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 
@@ -58,7 +60,8 @@ class TestAiAuditLog {
 
     @Test
     void testToolCall() {
-        auditLog.toolCall(7, "stroom__create_feed", "{\"name\":\"X\"}", "Denied by the user", false, true);
+        auditLog.toolCall(ToolSession.chat(7), "stroom__create_feed", "{\"name\":\"X\"}", "Denied by the user", false,
+                true);
 
         final ArgumentCaptor<ProcessEventAction> action = ArgumentCaptor.forClass(ProcessEventAction.class);
         Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.TOOL_CALL_TYPE_ID), Mockito.contains("chat 7"),
@@ -78,8 +81,35 @@ class TestAiAuditLog {
     }
 
     @Test
+    void testToolCallInAChatNamesTheChatAsBefore() {
+        auditLog.toolCall(ToolSession.chat(7), "t", "{}", "Run", true, false);
+
+        final ArgumentCaptor<ProcessEventAction> action = ArgumentCaptor.forClass(ProcessEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.TOOL_CALL_TYPE_ID),
+                Mockito.eq("Ask Stroom AI called tool t in chat 7"), action.capture());
+        assertThat(action.getValue().getData())
+                .extracting(data -> data.getName() + "=" + data.getValue())
+                .containsExactly("ChatId=7", "Unattended=false");
+    }
+
+    @Test
+    void testToolCallInAnotherSessionNamesTheSessionAndCaller() {
+        final ToolSession session = new ToolSession(ToolSession.Kind.MCP, "s1",
+                new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "Claude Desktop"));
+
+        auditLog.toolCall(session, "t", "{}", "Run", true, false);
+
+        final ArgumentCaptor<ProcessEventAction> action = ArgumentCaptor.forClass(ProcessEventAction.class);
+        Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.TOOL_CALL_TYPE_ID),
+                Mockito.eq("Ask Stroom AI called tool t in MCP session s1 of Claude Desktop"), action.capture());
+        assertThat(action.getValue().getData())
+                .extracting(data -> data.getName() + "=" + data.getValue())
+                .containsExactly("Session=MCP s1 of Claude Desktop", "Unattended=false");
+    }
+
+    @Test
     void testAnswerIsShortened() {
-        auditLog.answer(7, "q", "a".repeat(5_000), false);
+        auditLog.answer(ToolSession.chat(7), "q", "a".repeat(5_000), false);
 
         final ArgumentCaptor<ProcessEventAction> action = ArgumentCaptor.forClass(ProcessEventAction.class);
         Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.ANSWER_TYPE_ID), Mockito.anyString(),
@@ -92,9 +122,9 @@ class TestAiAuditLog {
     @Test
     void testEventsAreValid() {
         // The schema needs the process's type, which the audit log once left out, so every event was invalid.
-        auditLog.toolCall(7, "stroom__create_pipeline", "{\"name\":\"X\"}", "Run", true, false);
-        auditLog.answer(7, "q", "a", false);
-        auditLog.userAction(7, "enable_processor_filter", "Enable", "Enabled", true);
+        auditLog.toolCall(ToolSession.chat(7), "stroom__create_pipeline", "{\"name\":\"X\"}", "Run", true, false);
+        auditLog.answer(ToolSession.chat(7), "q", "a", false);
+        auditLog.userAction(ToolSession.chat(7), "enable_processor_filter", "Enable", "Enabled", true);
 
         final ArgumentCaptor<ProcessEventAction> actions = ArgumentCaptor.forClass(ProcessEventAction.class);
         Mockito.verify(eventLoggingService, Mockito.times(3)).log(Mockito.anyString(), Mockito.anyString(),
@@ -110,7 +140,7 @@ class TestAiAuditLog {
 
     @Test
     void testDocumentViewedNamesTheDocument() {
-        auditLog.documentViewed(7, new DocRef("Dictionary", "dict-uuid", "Malicious IPs"),
+        auditLog.documentViewed(ToolSession.chat(7), new DocRef("Dictionary", "dict-uuid", "Malicious IPs"),
                 "Read by the read_document tool");
 
         final ArgumentCaptor<ViewEventAction> action = ArgumentCaptor.forClass(ViewEventAction.class);
@@ -132,7 +162,7 @@ class TestAiAuditLog {
 
     @Test
     void testDocumentsViewedNamesEachDocument() {
-        auditLog.documentsViewed(7, List.of(new DocRef("View", "v1", "Windows events"),
+        auditLog.documentsViewed(ToolSession.chat(7), List.of(new DocRef("View", "v1", "Windows events"),
                 new DocRef("Index", "i1", "Linux events")), "Listed by the list_data_sources tool");
 
         final ArgumentCaptor<ViewEventAction> action = ArgumentCaptor.forClass(ViewEventAction.class);
@@ -144,7 +174,8 @@ class TestAiAuditLog {
 
     @Test
     void testSearchedNamesTheDataSource() {
-        auditLog.searched(7, new DocRef("View", "v1", "Windows events"), "from \"Windows events\" select User",
+        auditLog.searched(ToolSession.chat(7), new DocRef("View", "v1", "Windows events"),
+                "from \"Windows events\" select User",
                 100L, "Snapshot taken by the current_results tool");
 
         final ArgumentCaptor<SearchEventAction> action = ArgumentCaptor.forClass(SearchEventAction.class);
@@ -157,7 +188,8 @@ class TestAiAuditLog {
 
     @Test
     void testProcessedNamesTheDocumentAndOutcome() {
-        auditLog.processed(7, new DocRef("View", "v1", "Windows events"), "validate_stroomql", "from x", "OK",
+        auditLog.processed(ToolSession.chat(7), new DocRef("View", "v1", "Windows events"), "validate_stroomql",
+                "from x", "OK",
                 true);
 
         final ArgumentCaptor<ProcessEventAction> action = ArgumentCaptor.forClass(ProcessEventAction.class);
@@ -180,7 +212,7 @@ class TestAiAuditLog {
         Mockito.doThrow(new RuntimeException("down")).when(eventLoggingService)
                 .log(Mockito.anyString(), Mockito.anyString(), Mockito.any(ProcessEventAction.class));
 
-        auditLog.toolCall(7, "t", "{}", "Run", true, false);
+        auditLog.toolCall(ToolSession.chat(7), "t", "{}", "Run", true, false);
     }
 
     // An event as Stroom logs it, with the least the schema needs around the action.
@@ -214,7 +246,7 @@ class TestAiAuditLog {
     void streamsViewedAreNamedUpToALimit() {
         final List<Long> streams = LongStream.rangeClosed(1, AiAuditLog.MAX_LOGGED_DOCUMENTS + 5).boxed().toList();
 
-        auditLog.streamsViewed(7, streams, "Read 9 event(s) with the fetch_events tool");
+        auditLog.streamsViewed(ToolSession.chat(7), streams, "Read 9 event(s) with the fetch_events tool");
 
         final ArgumentCaptor<ViewEventAction> action = ArgumentCaptor.forClass(ViewEventAction.class);
         Mockito.verify(eventLoggingService).log(Mockito.eq(AiAuditLog.DATA_VIEW_TYPE_ID),
@@ -230,14 +262,14 @@ class TestAiAuditLog {
 
     @Test
     void noStreamsViewedLogsNothing() {
-        auditLog.streamsViewed(7, List.of(), "Nothing");
+        auditLog.streamsViewed(ToolSession.chat(7), List.of(), "Nothing");
 
         Mockito.verifyNoInteractions(eventLoggingService);
     }
 
     @Test
     void documentsSearchedNameTheQueryAndWhatWasFound() {
-        auditLog.documentsSearched(7, "'X' in documents of type XSLT",
+        auditLog.documentsSearched(ToolSession.chat(7), "'X' in documents of type XSLT",
                 List.of(new DocRef("XSLT", "a", "A"), new DocRef("XSLT", "b", "B")),
                 Map.of("DocumentsRead", "12"), "Text found by the find_in_content tool");
 
@@ -257,7 +289,7 @@ class TestAiAuditLog {
 
     @Test
     void streamsSearchedNameTheStreamsFound() {
-        auditLog.streamsSearched(7, "feed is X", List.of(11L, 12L), Map.of("StreamStoreReads", "1"),
+        auditLog.streamsSearched(ToolSession.chat(7), "feed is X", List.of(11L, 12L), Map.of("StreamStoreReads", "1"),
                 "Stream meta found by the stream_meta tool");
 
         final ArgumentCaptor<SearchEventAction> action = ArgumentCaptor.forClass(SearchEventAction.class);

@@ -17,16 +17,15 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.UserActions;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.query.impl.QueryService;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -62,27 +61,44 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.USE)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Offers the user a 'Create query…' button for a new StroomQL Query document. It "
-                             + "creates nothing itself: the button opens Stroom's New Query dialog with the name "
-                             + "you suggest, and once the user creates it there, the query is saved with your "
-                             + "StroomQL and opened. Validate the query first. If more than one data source could "
-                             + "hold what the user asked for, ask them which to use with ask_user first. To change "
-                             + "the query open in the tab the user attached, use propose_query_change instead.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Offers the user a 'Create query…' button for a new StroomQL Query document. It "
+                                 + "creates nothing itself")
+                        .chatOnly(": the button opens Stroom's New Query dialog with the name you suggest, and "
+                                  + "once the user creates it there, the query is saved with your StroomQL and "
+                                  + "opened")
+                        .general(". Validate the query first. If more than one data source could hold what the "
+                                 + "user asked for, ask them which to use")
+                        .chatOnly(" with ask_user")
+                        .general(" first.")
+                        .chatOnly(" To change the query open in the tab the user attached, use propose_query_change "
+                                  + "instead.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "The name to suggest for the new query.")
                         .addStringProperty(QUERY_ARG, "The StroomQL.")
-                        .addStringProperty(DESCRIPTION_ARG, "Optional. A sentence saying what the query finds, "
-                                                            + "shown with the button.")
+                        .addStringProperty(DESCRIPTION_ARG, ToolDescription.builder()
+                                .general("Optional. A sentence saying what the query finds")
+                                .chatOnly(", shown with the button")
+                                .general(".")
+                                .build())
                         .required(NAME_ARG, QUERY_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String name = stringArg(request, NAME_ARG);
         // Laid out as people write queries, as it is what the new Query document will hold.
         final String query = StroomQlFormatter.format(rawArg(request, QUERY_ARG));
@@ -93,39 +109,39 @@ class ProposeQueryTool extends AbstractWorkspaceTool {
         if (query == null || query.isBlank()) {
             throw new WorkspaceException("Give the query's StroomQL.");
         }
-        if (query.length() > limits().getMaxQueryLength()) {
-            throw new WorkspaceException("The query may be at most " + limits().getMaxQueryLength()
+        if (query.length() > limits(context).getMaxQueryLength()) {
+            throw new WorkspaceException("The query may be at most " + limits(context).getMaxQueryLength()
                                          + " characters.");
         }
-        final ToolRunContext context = ToolRunContext.current().orElse(null);
-        if (context == null) {
-            return "Error: a button can only be offered while answering a question in a chat.";
+        if (context.runContext().isEmpty()) {
+            return ToolResult.text("Error: a button can only be offered while answering a question in a chat.");
         }
         final QueryService queryService = queryServiceProvider.get();
         final DocRef dataSource = queryService.getReferencedDataSource(query)
                 .filter(dataSourceAccess::canUse)
                 .orElse(null);
         if (dataSource == null) {
-            return ValidateStroomQlTool.NO_DATA_SOURCE;
+            return ToolResult.text(ValidateStroomQlTool.NO_DATA_SOURCE);
         }
         final ValidateExpressionResult validation = queryService.validateQuery(query);
         if (validation == null || !validation.isOk()) {
-            return "The query is not valid, so no button was offered: "
-                   + NullSafe.nonBlankStringElse(NullSafe.get(validation, ValidateExpressionResult::getString),
-                    "the parser gave no reason") + "\nFix it and propose it again.";
+            return ToolResult.text(
+                    "The query is not valid, so no button was offered: "
+                    + NullSafe.nonBlankStringElse(NullSafe.get(validation, ValidateExpressionResult::getString),
+                     "the parser gave no reason") + "\nFix it and propose it again.");
         }
-        final Map<String, Object> action = new LinkedHashMap<>();
-        action.put("id", "create-query-" + SEQUENCE.incrementAndGet());
-        action.put("action", UserActions.CREATE_QUERY);
-        action.put("name", name);
-        action.put("query", query.strip());
-        NullSafe.consume(stringArg(request, DESCRIPTION_ARG), description -> action.put("description", description));
-        context.offerUserAction(request.id(), action);
-        return "The user has been offered a 'Create query…' button for '" + name + "', reading "
-               + DataSourceAccess.describe(dataSource) + ". Nothing is created until they click it and confirm "
-               + "Stroom's New Query dialog, which lets them choose the folder; then the query opens in a new tab and "
-               + "is attached to the chat, so they can ask you to refine it (propose_query_change). Tell them about "
-               + "the button rather than saying the query was created.";
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("name", name);
+        arguments.put("query", query.strip());
+        NullSafe.consume(stringArg(request, DESCRIPTION_ARG), description -> arguments.put("description", description));
+        final ToolUserAction action = new ToolUserAction("create-query-" + SEQUENCE.incrementAndGet(),
+                UserActions.CREATE_QUERY, arguments);
+        return ToolResult.text(
+                "The user has been offered a 'Create query…' button for '" + name + "', reading "
+                + DataSourceAccess.describe(dataSource) + ". Nothing is created until they click it and confirm "
+                + "Stroom's New Query dialog, which lets them choose the folder; then the query opens in a new tab and "
+                + "is attached to the chat, so they can ask you to refine it (propose_query_change). Tell them about "
+                + "the button rather than saying the query was created.").withUserAction(action);
     }
 
     @Override

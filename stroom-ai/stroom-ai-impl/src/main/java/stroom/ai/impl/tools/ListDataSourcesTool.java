@@ -19,13 +19,12 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.AgentInstructions.Ignored;
 import stroom.ai.impl.tools.AgentInstructions.Standing;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.docref.DocRef;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
@@ -74,18 +73,28 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Lists the data sources the user can run StroomQL queries on (views, indexes, "
-                             + "Elastic and Solr indexes and so on): name, type and uuid, with a line of their "
-                             + "documentation for a short list. Use describe_data_source for a data source's "
-                             + "fields before writing a query. If more than one could hold what the user asked "
-                             + "for, ask them which to use with ask_user rather than choosing one yourself. Data "
-                             + "sources in folders an AGENTS doc says to ignore (e.g. an Archive) are left out, "
-                             + "and the AGENTS docs that apply to those listed are given, e.g. which fields to "
-                             + "query for what.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Lists the data sources the user can run StroomQL queries on (views, indexes, "
+                                 + "Elastic and Solr indexes and so on): name, type and uuid, with a line of their "
+                                 + "documentation for a short list.")
+                        .chatOnly(" Use describe_data_source for a data source's fields before writing a query.")
+                        .general(" If more than one could hold what the user asked for, ask them which to use")
+                        .chatOnly(" with ask_user")
+                        .general(" rather than choosing one yourself. Data sources in folders an AGENTS doc says to "
+                                 + "ignore (e.g. an Archive) are left out, and the AGENTS docs that apply to those "
+                                 + "listed are given, e.g. which fields to query for what.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(FILTER_ARG, "Optional. Only data sources whose name or type contains "
                                                        + "this, ignoring case.")
                         .addBooleanProperty(INCLUDE_IGNORED_ARG, "Optional. True to list data sources in ignored "
@@ -95,7 +104,7 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String filter = NullSafe.get(stringArg(request, FILTER_ARG), text -> text.toLowerCase(Locale.ROOT));
         final boolean includeIgnored = booleanArg(request, INCLUDE_IGNORED_ARG, false);
         final List<DocRef> found = dataSourceAccess.listUsable().stream()
@@ -103,7 +112,7 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
                                   || NullSafe.string(docRef.getName()).toLowerCase(Locale.ROOT).contains(filter)
                                   || NullSafe.string(docRef.getType()).toLowerCase(Locale.ROOT).contains(filter))
                 .toList();
-        final Standing standing = agentInstructions.load(chatId, "Standing instructions read by the " + NAME
+        final Standing standing = agentInstructions.load(context.session(), "Standing instructions read by the " + NAME
                                                                  + " tool");
         final List<DocRef> matching = new ArrayList<>();
         final Set<String> ignoredBy = new LinkedHashSet<>();
@@ -125,12 +134,12 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
                   + "ignore were left out: " + String.join(", ", ignoredBy) + ". Pass " + INCLUDE_IGNORED_ARG
                   + " only if the user asks for those.";
         if (matching.isEmpty()) {
-            return (filter == null
+            return ToolResult.text((filter == null
                     ? "There are no data sources you can use."
-                    : "There are no data sources you can use matching '" + filter + "'.") + ignoredNote;
+                    : "There are no data sources you can use matching '" + filter + "'.") + ignoredNote);
         }
         final List<DocRef> listed = matching.subList(0, Math.min(matching.size(), MAX_LISTED));
-        auditLog.documentsViewed(chatId, listed, "Listed by the " + NAME + " tool");
+        auditLog.documentsViewed(context.session(), listed, "Listed by the " + NAME + " tool");
         final boolean withDocumentation = listed.size() <= MAX_WITH_DOCUMENTATION;
         final StringBuilder sb = new StringBuilder("Data sources you can use (")
                 .append(matching.size()).append("):\n");
@@ -153,8 +162,9 @@ class ListDataSourcesTool extends AbstractWorkspaceTool {
         if (matching.size() > 1) {
             sb.append(CHOOSE_NOTE).append('\n');
         }
-        sb.append(standing.note(listed.stream().map(agentInstructions::folderOf).collect(Collectors.toSet())));
-        return sb.toString().stripTrailing();
+        sb.append(standing.note(context.links(),
+                listed.stream().map(agentInstructions::folderOf).collect(Collectors.toSet())));
+        return ToolResult.text(sb.toString().stripTrailing());
     }
 
     /// @return The first line of a data source's documentation that has text, cut short if long.

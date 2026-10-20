@@ -20,8 +20,10 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TableDownloader;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.MarkdownTables;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
@@ -45,6 +47,7 @@ import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -52,9 +55,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -148,21 +148,34 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.USE)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Takes a snapshot of the rows of a table of results shown in the tab the user attached "
-                             + "(a query's results, or a table on a dashboard) as a workspace table, and gives its "
-                             + "path, a profile, and its state: ok, stale (the tab's query, expression, parameters "
-                             + "or time range have changed since) or incomplete (the search hadn't finished, the "
-                             + "row limit cut it, or it holds fewer rows than asked for while more exist). Asking "
-                             + "again reuses the snapshot. Never pass refresh unless the user has said yes: it runs "
-                             + "the search again, which can be slow. Give withEventIds for the events behind the "
-                             + "rows (e.g. for fetch_events and search_events): each row then has its event's "
-                             + "StreamId and EventId, and a grouped dashboard table is taken ungrouped, one row per "
-                             + "event, by running its search again separately (so with refresh, only with the "
-                             + "user's yes). It can also be the first step of a pipeline.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Takes a snapshot of the rows of a table of results shown")
+                        .chatOnly(" in the tab the user attached")
+                        .general(" (a query's results, or a table on a dashboard)")
+                        .chatOnly(" as a workspace table")
+                        .general(", and gives its path, a profile, and its state: ok, stale (the tab's query, "
+                                 + "expression, parameters or time range have changed since) or incomplete (the "
+                                 + "search hadn't finished, the row limit cut it, or it holds fewer rows than asked "
+                                 + "for while more exist). Asking again reuses the snapshot. Never pass refresh "
+                                 + "unless the user has said yes: it runs the search again, which can be slow. Give "
+                                 + "withEventIds for the events behind the rows")
+                        .chatOnly(" (e.g. for fetch_events and search_events)")
+                        .general(": each row then has its event's StreamId and EventId, and a grouped dashboard "
+                                 + "table is taken ungrouped, one row per event, by running its search again "
+                                 + "separately (so with refresh, only with the user's yes).")
+                        .chatOnly(" It can also be the first step of a pipeline.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(TABLE_ARG, "Optional. The table's name as the user sees it, for a "
                                                       + "dashboard with several tables.")
                         .addIntegerProperty(ROWS_ARG, "Optional. Only the first n rows, when the user asks about "
@@ -177,24 +190,25 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    protected Duration timeLimit() {
-        return limits().getQueryTimeLimit().getDuration();
+    protected Duration timeLimit(final ToolCallContext context) {
+        return limits(context).getQueryTimeLimit().getDuration();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
-        return outcome(request, chatId).text();
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        return ToolResult.text(outcome(request, context).text());
     }
 
     /// Takes a snapshot of a table's rows, or reuses the one already taken, as the tool does.
     ///
     /// @param request The model's call, or a pipeline step's.
-    /// @param chatId  The chat.
+    /// @param context The call's context.
     /// @return What the model is told, and the snapshot's workspace file, which is null if no snapshot could be
     /// used (the text then says why).
     /// @throws WorkspaceException for arguments the model can correct.
-    Outcome outcome(final ToolExecutionRequest request, final int chatId) {
-        final StoredTabSnapshot tab = tabSnapshots.forLatestQuestion(chatId).orElse(null);
+    Outcome outcome(final ToolCall request, final ToolCallContext context) {
+        final StoredTabSnapshot tab = tabSnapshots.forLatestQuestion(context.session().requireChatId(NAME))
+                .orElse(null);
         if (tab == null || NullSafe.isEmptyCollection(tab.searches())) {
             return Outcome.problem(tab == null
                     ? NO_TAB
@@ -223,18 +237,19 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         final boolean refresh = booleanArg(request, REFRESH_ARG, false);
         final boolean withEventIds = booleanArg(request, WITH_EVENT_IDS_ARG, false);
         if (withEventIds && needsEventSearch(search)) {
-            return eventsOutcome(chatId, tab, search, rows, limit, refresh);
+            return eventsOutcome(context, tab, search, rows, limit, refresh);
         }
 
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final String base = basePath(tab.docRef(), search);
-        final ResultsMeta existing = readMeta(chatId, base).orElse(null);
+        final ResultsMeta existing = readMeta(workspace, base).orElse(null);
         final String tabQueryKey = NullSafe.get(ResultsRequests.queryKey(search.getResults()), QueryKey::getUuid);
         final boolean take = refresh
                              || existing == null
                              || !Objects.equals(existing.tabQueryKey(), tabQueryKey);
         final ResultsMeta meta;
         if (take) {
-            final Taken taken = take(chatId, tab, search, base, rows, limit, refresh, tabQueryKey, false);
+            final Taken taken = take(context, tab, search, base, rows, limit, refresh, tabQueryKey, false);
             if (taken.problem() != null) {
                 return Outcome.problem(taken.problem());
             }
@@ -245,12 +260,12 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         final String liveHash = ResultsRequests.hash(search.getLive());
         final Assessment assessment = assess(meta, rows, liveHash, limit);
         final String path = rows != null && rows < meta.rowsHeld()
-                ? scopedCopy(chatId, tab.docRef(), base, meta, rows)
+                ? scopedCopy(context, tab.docRef(), base, meta, rows)
                 : meta.path();
         final String text = describe(meta, assessment, path, rows, take, ResultsRequests.changes(meta.request(),
-                search.getLive()), readProfile(chatId, path));
+                search.getLive()), readProfile(workspace, path));
         return new Outcome(withEventIds
-                ? text + "\n" + eventIdsNote(chatId, path)
+                ? text + "\n" + eventIdsNote(context, path)
                 : text, path);
     }
 
@@ -270,8 +285,8 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     }
 
     // Says whether a snapshot's rows have the ids of their events, for fetch_events.
-    private String eventIdsNote(final int chatId, final String path) {
-        final List<String> header = header(chatId, path);
+    private String eventIdsNote(final ToolCallContext context, final String path) {
+        final List<String> header = header(context, path);
         final boolean hasIds = EVENT_ID_FIELDS.stream().allMatch(id -> header.stream()
                 .anyMatch(column -> column.equalsIgnoreCase(id)));
         return hasIds
@@ -281,7 +296,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     }
 
     // A snapshot of the events behind a dashboard table: its search run again, ungrouped, with each event's ids.
-    private Outcome eventsOutcome(final int chatId,
+    private Outcome eventsOutcome(final ToolCallContext context,
                                   final StoredTabSnapshot tab,
                                   final AiTabSearch search,
                                   final Integer rows,
@@ -306,8 +321,9 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                                    + "dashboard's extraction pipeline or a query on an indexed field, as text to "
                                    + "copy.");
         }
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final String base = basePath(tab.docRef(), search) + EVENTS_SUFFIX;
-        final ResultsMeta existing = readMeta(chatId, base).orElse(null);
+        final ResultsMeta existing = readMeta(workspace, base).orElse(null);
         final boolean grouped = ResultsRequests.isGrouped(request);
         if (existing == null && !refresh) {
             return Outcome.problem("Getting the events behind '" + name(search) + "' means running its search "
@@ -319,7 +335,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         }
         final ResultsMeta meta;
         if (refresh) {
-            final Taken taken = take(chatId, tab, search, base, rows, limit, true, null, true);
+            final Taken taken = take(context, tab, search, base, rows, limit, true, null, true);
             if (taken.problem() != null) {
                 return Outcome.problem(taken.problem());
             }
@@ -329,10 +345,10 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         }
         final Assessment assessment = assess(meta, rows, ResultsRequests.hash(search.getLive()), limit);
         final String path = rows != null && rows < meta.rowsHeld()
-                ? scopedCopy(chatId, tab.docRef(), base, meta, rows)
+                ? scopedCopy(context, tab.docRef(), base, meta, rows)
                 : meta.path();
         final StringBuilder sb = new StringBuilder(describe(meta, assessment, path, rows, refresh,
-                ResultsRequests.changes(meta.request(), search.getLive()), readProfile(chatId, path)));
+                ResultsRequests.changes(meta.request(), search.getLive()), readProfile(workspace, path)));
         final long events = Objects.requireNonNullElse(meta.totalRows(), meta.rowsHeld());
         sb.append("\nThis is the table's search run again separately, ungrouped: one row per event, with each "
                   + "event's StreamId and EventId, for fetch_events");
@@ -361,9 +377,10 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     }
 
     // The column names of a snapshot's Markdown table.
-    private List<String> header(final int chatId, final String path) {
-        try (final BufferedReader reader = Files.newBufferedReader(workspace.localFile(chatId,
-                WorkspacePath.parse(path)), StandardCharsets.UTF_8)) {
+    private List<String> header(final ToolCallContext context, final String path) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
+        try (final BufferedReader reader = Files.newBufferedReader(workspace.localFile(WorkspacePath.parse(path)),
+                StandardCharsets.UTF_8)) {
             final String line = reader.readLine();
             return line == null
                     ? List.of()
@@ -375,7 +392,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     }
 
     // Takes a snapshot of a table's rows: those the tab shows, or, with refresh, those of the search run again.
-    private Taken take(final int chatId,
+    private Taken take(final ToolCallContext context,
                        final StoredTabSnapshot tab,
                        final AiTabSearch search,
                        final String base,
@@ -384,6 +401,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                        final boolean refresh,
                        final String tabQueryKey,
                        final boolean events) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         AskStroomAiContext source = refresh
                 ? search.getLive()
                 : search.getResults();
@@ -403,7 +421,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         }
         final SearchStatus status;
         if (refresh) {
-            final Ran ran = runAgain(source);
+            final Ran ran = runAgain(source, context);
             if (ran.error() != null) {
                 return Taken.problem("The search failed when run again: " + ran.error());
             }
@@ -434,7 +452,7 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                 }
             }
             final String sourceUuid = dataSource.getUuid();
-            workspace.writeTabFile(chatId, WorkspacePath.parse(base + ".md"), temp, sourceUuid);
+            workspace.writeTabFile(WorkspacePath.parse(base + ".md"), temp, sourceUuid);
         } finally {
             ChatWorkspace.deleteQuietly(temp);
         }
@@ -445,10 +463,10 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                 tabQueryKey, source, events && ResultsRequests.isGrouped(search.getLive())
                 ? search.getVisibleRows()
                 : null);
-        writeProfile(chatId, meta.path(), describe(tab, search), dataSource.getUuid());
-        workspace.writeTabFile(chatId, WorkspacePath.parse(base + ".json"), JsonUtil.writeValueAsString(meta),
+        writeProfile(context, meta.path(), describe(tab, search), dataSource.getUuid());
+        workspace.writeTabFile(WorkspacePath.parse(base + ".json"), JsonUtil.writeValueAsString(meta),
                 dataSource.getUuid());
-        auditLog.searched(chatId, dataSource, ResultsRequests.queryText(source), downloaded.rows(),
+        auditLog.searched(context.session(), dataSource, ResultsRequests.queryText(source), downloaded.rows(),
                 (events
                         ? "Search run again ungrouped, and a snapshot taken of the events behind its rows"
                         : (refresh
@@ -461,13 +479,11 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     /// Says how much of a table's search a snapshot of its rows covers, for the tools that work on its rows (e.g.
     /// fetch_events), so they can say an answer is "of the first N of M".
     ///
-    /// @param workspace The chat's workspace.
-    /// @param chatId    The chat.
+    /// @param workspace The session's workspace.
     /// @param table     A table file, which may be a snapshot this tool took (or the first rows of one).
     /// @param rowsUsed  How many of its rows were used.
     /// @return What it covers, as a sentence for the model, if the file is a snapshot whose record can be read.
-    static Optional<String> coverage(final ChatWorkspace workspace,
-                                     final int chatId,
+    static Optional<String> coverage(final SessionWorkspace workspace,
                                      final WorkspacePath table,
                                      final long rowsUsed) {
         final Matcher matcher = SNAPSHOT_FILE.matcher(table.path());
@@ -476,10 +492,10 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         }
         final WorkspacePath metaPath = WorkspacePath.parse(matcher.group(1) + ".json");
         try {
-            if (workspace.find(chatId, metaPath).isEmpty()) {
+            if (workspace.find(metaPath).isEmpty()) {
                 return Optional.empty();
             }
-            final ResultsMeta meta = JsonUtil.readValue(Files.readString(workspace.localFile(chatId, metaPath),
+            final ResultsMeta meta = JsonUtil.readValue(Files.readString(workspace.localFile(metaPath),
                     StandardCharsets.UTF_8), ResultsMeta.class);
             return Optional.of(coverage(meta, rowsUsed));
         } catch (final IOException | RuntimeException e) {
@@ -692,9 +708,9 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     }
 
     // Runs a search again, as the tab now stands, waiting for it to finish for most of the time limit.
-    private Ran runAgain(final AskStroomAiContext live) {
+    private Ran runAgain(final AskStroomAiContext live, final ToolCallContext context) {
         final long waitUntilNanos = System.nanoTime()
-                                    + (long) (timeLimit().toNanos() * SEARCH_TIME_SHARE);
+                                    + (long) (timeLimit(context).toNanos() * SEARCH_TIME_SHARE);
         DashboardSearchResponse response = search(live, null);
         try {
             while (response != null
@@ -798,13 +814,13 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         }
     }
 
-    private Optional<ResultsMeta> readMeta(final int chatId, final String base) {
+    private Optional<ResultsMeta> readMeta(final SessionWorkspace workspace, final String base) {
         final WorkspacePath path = WorkspacePath.parse(base + ".json");
-        if (workspace.find(chatId, path).isEmpty()) {
+        if (workspace.find(path).isEmpty()) {
             return Optional.empty();
         }
         try {
-            return Optional.of(JsonUtil.readValue(Files.readString(workspace.localFile(chatId, path),
+            return Optional.of(JsonUtil.readValue(Files.readString(workspace.localFile(path),
                     StandardCharsets.UTF_8), ResultsMeta.class));
         } catch (final IOException | RuntimeException e) {
             // Gone (e.g. its retention ended), or the user can no longer use what it came from.
@@ -813,11 +829,12 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         }
     }
 
-    private void writeProfile(final int chatId, final String tablePath, final String description,
+    private void writeProfile(final ToolCallContext context, final String tablePath, final String description,
                               final String sourceUuid) {
-        try (final Reader reader = Files.newBufferedReader(workspace.localFile(chatId,
-                WorkspacePath.parse(tablePath)), StandardCharsets.UTF_8)) {
-            workspace.writeTabFile(chatId, WorkspacePath.parse(profilePath(tablePath)),
+        final SessionWorkspace workspace = sessionWorkspace(context);
+        try (final Reader reader = Files.newBufferedReader(workspace.localFile(WorkspacePath.parse(tablePath)),
+                StandardCharsets.UTF_8)) {
+            workspace.writeTabFile(WorkspacePath.parse(profilePath(tablePath)),
                     TableProfiler.profile(reader, description), sourceUuid);
         } catch (final IOException | RuntimeException e) {
             // The table is still usable without its profile.
@@ -825,11 +842,11 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
         }
     }
 
-    private String readProfile(final int chatId, final String tablePath) {
+    private String readProfile(final SessionWorkspace workspace, final String tablePath) {
         final WorkspacePath path = WorkspacePath.parse(profilePath(tablePath));
         try {
-            return workspace.find(chatId, path).isPresent()
-                    ? Files.readString(workspace.localFile(chatId, path), StandardCharsets.UTF_8).strip()
+            return workspace.find(path).isPresent()
+                    ? Files.readString(workspace.localFile(path), StandardCharsets.UTF_8).strip()
                     : null;
         } catch (final IOException | RuntimeException e) {
             LOGGER.debug(() -> "Unable to read " + path, e);
@@ -838,15 +855,16 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
     }
 
     // A copy of the first rows of a snapshot, for a scope the user asked for, with its own profile.
-    private String scopedCopy(final int chatId,
+    private String scopedCopy(final ToolCallContext context,
                               final DocRef tab,
                               final String base,
                               final ResultsMeta meta,
                               final int rows) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final String path = base + "-first-" + rows + ".md";
         final Path temp = workspace.tempFile();
         try {
-            try (final BufferedReader reader = Files.newBufferedReader(workspace.localFile(chatId,
+            try (final BufferedReader reader = Files.newBufferedReader(workspace.localFile(
                     WorkspacePath.parse(meta.path())), StandardCharsets.UTF_8);
                     final BufferedWriter writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
                 String line;
@@ -857,9 +875,9 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                     lines++;
                 }
             }
-            final String sourceUuid = workspace.sourceDocUuid(chatId, WorkspacePath.parse(meta.path()));
-            workspace.writeTabFile(chatId, WorkspacePath.parse(path), temp, sourceUuid);
-            writeProfile(chatId, path, "The first " + rows + " rows of " + meta.tableName() + " in "
+            final String sourceUuid = workspace.sourceDocUuid(WorkspacePath.parse(meta.path()));
+            workspace.writeTabFile(WorkspacePath.parse(path), temp, sourceUuid);
+            writeProfile(context, path, "The first " + rows + " rows of " + meta.tableName() + " in "
                                        + ReadDocumentTool.describe(tab), sourceUuid);
             return path;
         } catch (final IOException e) {

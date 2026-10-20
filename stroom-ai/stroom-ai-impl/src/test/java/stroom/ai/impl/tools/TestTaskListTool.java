@@ -19,7 +19,6 @@ package stroom.ai.impl.tools;
 import stroom.ai.api.AiService;
 import stroom.ai.shared.AiMessageType;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -63,6 +62,6 @@ class TestTaskListTool {
     }
 
     private String run(final String json) {
-        return tool.execute(ToolExecutionRequest.builder().id("x").name("t").arguments(json).build(), 7);
+        return tool.execute(new ToolCall("x", "t", json), ToolCalls.inChat(7)).text();
     }
 }

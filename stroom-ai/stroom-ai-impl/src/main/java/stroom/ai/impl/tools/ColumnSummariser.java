@@ -21,6 +21,7 @@ import stroom.ai.api.TableSummariser;
 import stroom.ai.api.TableSummaryRequest;
 import stroom.ai.api.TableSummaryResult;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.TableEngine;
 import stroom.ai.impl.workspace.TableEngine.Format;
 import stroom.ai.impl.workspace.TableEngine.Order;
@@ -54,50 +55,52 @@ class ColumnSummariser {
 
     static final String SUMMARIES_DIR = "/outputs/summaries/";
 
-    private final ChatWorkspace workspace;
     private final TableSummariser tableSummariser;
     private final Provider<AskStroomAiConfig> configProvider;
 
     @Inject
-    ColumnSummariser(final ChatWorkspace workspace,
-                     final TableSummariser tableSummariser,
+    ColumnSummariser(final TableSummariser tableSummariser,
                      final Provider<AskStroomAiConfig> configProvider) {
-        this.workspace = workspace;
         this.tableSummariser = tableSummariser;
         this.configProvider = configProvider;
     }
 
     /**
-     * @param chatId The chat.
-     * @param path   The table.
-     * @param column The column.
-     * @param focus  What to look for, or null.
+     * @param workspace The workspace of the call's session.
+     * @param context   The call's context, for the model of the agent run it is part of.
+     * @param path      The table.
+     * @param column    The column.
+     * @param focus     What to look for, or null.
      * @return The column's patterns, or a summary of them, for the model.
      */
-    String summarise(final int chatId, final WorkspacePath path, final String column, final String focus) {
+    String summarise(final SessionWorkspace workspace,
+                     final ToolCallContext context,
+                     final WorkspacePath path,
+                     final String column,
+                     final String focus) {
         if (column == null || column.isBlank()) {
             throw new WorkspaceException("Give the column to summarise.");
         }
         final WorkspacePath summaryPath = summaryPath(path, column);
-        if (focus == null && workspace.find(chatId, summaryPath).isPresent()) {
+        if (focus == null && workspace.find(summaryPath).isPresent()) {
             return "This column was summarised before (" + summaryPath + "):\n\n"
-                   + String.join("\n", workspace.readLines(chatId, summaryPath, 0,
-                    workspace.limits().getMaxLinesPerRead()));
+                   + String.join("\n", workspace.readLines(summaryPath, 0,
+                    context.limits().workspace().getMaxLinesPerRead()));
         }
 
-        final Result patterns = TableEngine.run(workspace.localFile(chatId, path), Format.forPath(path),
+        final Result patterns = TableEngine.run(workspace.localFile(path), Format.forPath(path),
                 new Query(List.of(column), List.of(), List.of(), List.of(), true, true,
                         List.of(new Order("count", true)), null));
         final String table = markdown(patterns);
         final String header = "Column '" + column + "' of " + path + ": " + patterns.rowsMatched() + " rows reduce "
                               + "to " + patterns.rows().size() + " distinct patterns (numbers, IPs, dates and IDs "
                               + "masked), most common first.";
-        if (table.length() <= workspace.limits().getMaxCharsPerRead()) {
+        if (table.length() <= context.limits().workspace().getMaxCharsPerRead()) {
             return header + "\n\n" + table;
         }
 
         // Too many patterns to give the model, so have it summarise them in batches.
-        final ToolRunContext context = ToolRunContext.current()
+        final ToolRunContext runContext = context.runContext()
                 .orElseThrow(() -> new WorkspaceException("Summarising needs a model, so can only be done in a "
                                                           + "chat."));
         final Path temp = workspace.tempFile();
@@ -106,20 +109,20 @@ class ColumnSummariser {
             final TableSummaryResult result = tableSummariser.summarise(TableSummaryRequest.builder()
                     .source(new TableSource("Patterns of column '" + column + "' of " + path, temp, false))
                     // The run's model, already built (a request takes a model or a model ref, not both).
-                    .chatModel(context.getChatModel())
-                    .contextWindowTokens(NullSafe.getOrElse(context.getModelDoc(),
+                    .chatModel(runContext.getChatModel())
+                    .contextWindowTokens(NullSafe.getOrElse(runContext.getModelDoc(),
                             OpenAIModelDoc::getMaxContextWindowTokens, 0))
                     .config(tableAnalysisConfig())
                     .query(NullSafe.nonBlankStringElse(focus, "Summarise the kinds of value in this column, how "
                                                               + "common each is, and anything unusual. Keep "
                                                               + "counts exact."))
-                    .cancelled(context.getCancelled())
+                    .cancelled(runContext.getCancelled())
                     .build());
             if (!result.summarised()) {
                 return header + " They could not be summarised (" + result.text() + "). Query them with the "
                        + "table tool instead.";
             }
-            workspace.write(chatId, summaryPath, result.text(), workspace.sourceDocUuid(chatId, path));
+            workspace.write(summaryPath, result.text(), workspace.sourceDocUuid(path));
             return header + " There are too many to show, so they have been summarised (saved to " + summaryPath
                    + "):\n\n" + result.text();
         } catch (final IOException e) {

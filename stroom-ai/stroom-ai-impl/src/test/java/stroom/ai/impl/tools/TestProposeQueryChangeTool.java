@@ -29,12 +29,12 @@ import stroom.docref.DocRef;
 import stroom.query.impl.QueryService;
 import stroom.util.json.JsonUtil;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,6 +55,7 @@ class TestProposeQueryChangeTool {
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
+    private final List<Map<String, Object>> offered = new ArrayList<>();
     private ProposeQueryChangeTool tool;
 
     @BeforeEach
@@ -82,7 +83,7 @@ class TestProposeQueryChangeTool {
                 .contains("'Apply to query' button")
                 .contains("reading ElasticIndex 'TWITTER-ECS-v1'")
                 .endsWith(expected.stripTrailing() + "\n");
-        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action)
                 .containsEntry("action", UserActions.APPLY_QUERY_CHANGE)
                 .containsEntry("request", expected)
                 .containsEntry("base", BASE)
@@ -93,7 +94,8 @@ class TestProposeQueryChangeTool {
                 .containsEntry("summary", "Only tweets."));
         // It is the formatted query that is checked.
         Mockito.verify(queryService).validateQuery(expected);
-        Mockito.verify(documentAccess).logView(Mockito.eq(CHAT), Mockito.eq(QUERY), Mockito.contains("query"));
+        Mockito.verify(documentAccess).logView(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(QUERY),
+                Mockito.contains("query"));
     }
 
     @Test
@@ -107,7 +109,7 @@ class TestProposeQueryChangeTool {
         tab(QUERY, BASE);
         Mockito.when(documentAccess.canView(QUERY)).thenReturn(false);
         assertThat(run("from v select a")).isEqualTo(DocumentAccess.NO_PERMISSION);
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -123,7 +125,7 @@ class TestProposeQueryChangeTool {
 
         Mockito.when(dataSourceAccess.canUse(INDEX)).thenReturn(false);
         assertThat(run("from \"TWITTER-ECS-v1\" select a")).isEqualTo(ValidateStroomQlTool.NO_DATA_SOURCE);
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     private void tab(final DocRef docRef, final String query) {
@@ -137,7 +139,21 @@ class TestProposeQueryChangeTool {
 
     private String run(final String query) {
         final String arguments = JsonUtil.writeValueAsString(Map.of("query", query, "summary", "Only tweets."));
-        return context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1")
-                .name(ProposeQueryChangeTool.NAME).arguments(arguments).build(), CHAT));
+        return call(arguments);
+    }
+
+    // Runs a call as part of the agent run, keeping the user actions its result offers for takeUserActions.
+    private String call(final String arguments) {
+        final ToolResult result = context.run(() -> tool.execute(
+                new ToolCall("c1", ProposeQueryChangeTool.NAME, arguments), ToolCalls.inChat(CHAT, workspace)));
+        result.userActions().forEach(action -> offered.add(action.toMap()));
+        return result.text();
+    }
+
+    // The user actions offered by the calls since this was last called, as the chat shows them.
+    private List<Map<String, Object>> takeUserActions() {
+        final List<Map<String, Object>> taken = List.copyOf(offered);
+        offered.clear();
+        return taken;
     }
 }

@@ -16,18 +16,18 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.util.Map;
@@ -55,13 +55,23 @@ class DocumentDocumentationTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Reads the documentation of a Stroom document given its UUID: the Markdown on its "
-                             + "Documentation tab, or 'none' if it has none. Use read_document for the document's "
-                             + "content (including a Documentation document's text).")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Reads the documentation of a Stroom document given its UUID: the Markdown on its "
+                                 + "Documentation tab, or 'none' if it has none.")
+                        .chatOnly(" Use read_document for the document's content (including a Documentation "
+                                  + "document's text).")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(UUID_ARG, "The document's UUID.")
                         .required(UUID_ARG)
                         .build())
@@ -69,33 +79,36 @@ class DocumentDocumentationTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final String uuid = stringArg(request, UUID_ARG);
         if (uuid == null) {
             throw new WorkspaceException("Give the document's uuid.");
         }
         final ExplorerNode node = documentAccess.find(uuid).orElse(null);
         if (node == null) {
-            return DocumentAccess.NO_PERMISSION;
+            return ToolResult.text(DocumentAccess.NO_PERMISSION);
         }
         final DocRef docRef = node.getDocRef();
-        documentAccess.logView(chatId, docRef, "Documentation read by the " + NAME + " tool");
+        documentAccess.logView(context.session(), docRef, "Documentation read by the " + NAME + " tool");
         final Optional<Object> doc = documentAccess.read(docRef);
         if (doc.isEmpty()) {
-            return "Error: " + ReadDocumentTool.describe(docRef) + " couldn't be read.";
+            return ToolResult.text("Error: " + ReadDocumentTool.describe(docRef) + " couldn't be read.");
         }
         final String documentation = description(doc.get()).orElse(null);
         if (documentation == null || documentation.isBlank()) {
-            return "none";
+            return ToolResult.text("none");
         }
-        if (documentation.length() <= limits().getMaxCharsPerRead()) {
-            return "Documentation of " + ReadDocumentTool.describe(docRef) + ":\n\n" + documentation.strip();
+        if (documentation.length() <= limits(context).getMaxCharsPerRead()) {
+            return ToolResult.text(
+                    "Documentation of " + ReadDocumentTool.describe(docRef) + ":\n\n" + documentation.strip());
         }
         final WorkspacePath path = ReadDocumentTool.documentPath(docRef, "documentation.md");
-        workspace.writeDocument(chatId, path, documentation, docRef.getUuid());
-        return "The documentation of " + ReadDocumentTool.describe(docRef) + " is too large to show in full ("
-               + size(documentation.length()) + "), so it has been saved to " + path + ".\n\n"
-               + ReadDocumentTool.previewNote(documentation);
+        workspace.writeDocument(path, documentation, docRef.getUuid());
+        return ToolResult.text(
+                "The documentation of " + ReadDocumentTool.describe(docRef) + " is too large to show in full ("
+                + size(documentation.length()) + "), so it has been saved to " + path + ".\n\n"
+                + ReadDocumentTool.previewNote(documentation));
     }
 
     /// @param doc A document, as its handler read it.

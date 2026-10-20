@@ -24,6 +24,8 @@ import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
 import stroom.ai.impl.UserActions;
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SafeXPath;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -31,16 +33,13 @@ import stroom.ai.shared.AiSteppingContext;
 import stroom.ai.shared.AiSteppingElement;
 import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.docref.DocRef;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.diff.LineDiff;
 import stroom.util.shared.diff.LineDiffResult;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonArraySchema;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.xml.sax.InputSource;
@@ -124,20 +123,27 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    protected Duration timeLimit() {
+    protected Duration timeLimit(final ToolCallContext context) {
         // Trying the change steps the record twice, which can take longer than a workspace step.
-        return limits().getQueryTimeLimit().getDuration();
+        return limits(context).getQueryTimeLimit().getDuration();
     }
 
     @Override
-    public ToolSpecification specification() {
-        final JsonObjectSchema edit = JsonObjectSchema.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        final ObjectSchema edit = ObjectSchema.builder()
                 .addStringProperty(OLD_TEXT_ARG, "Text to replace, exactly as it is in the code, and appearing "
                                                  + "only once in it. A short unique part of a line is enough.")
                 .addStringProperty(NEW_TEXT_ARG, "The text to replace it with.")
                 .required(OLD_TEXT_ARG, NEW_TEXT_ARG)
                 .build();
-        return ToolSpecification.builder()
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description("While the user is stepping a pipeline, proposes a change to the code (XSLT or "
                              + "text converter) of the element selected in their stepping screen. The user is "
@@ -151,12 +157,15 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
                              + "the current code doesn't (e.g. its output fails the pipeline's schema validation) "
                              + "is refused with them, so fix it and propose it again. The output it gave is "
                              + "returned, so show that rather than what you expect.")
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(ELEMENT_ARG, "The element's id, as named in the pipeline (see the "
-                                                        + "tab's structure file).")
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(ELEMENT_ARG, ToolDescription.builder()
+                                .general("The element's id, as named in the pipeline")
+                                .chatOnly(" (see the tab's structure file)")
+                                .general(".")
+                                .build())
                         .addStringProperty(CODE_ARG, "The whole proposed code. Give this or " + EDITS_ARG
                                                      + ", not both.")
-                        .addProperty(EDITS_ARG, JsonArraySchema.builder()
+                        .addProperty(EDITS_ARG, ArraySchema.builder()
                                 .items(edit)
                                 .description("Replacements made to the element's current code, in order. Give "
                                              + "this or " + CODE_ARG + ", not both.")
@@ -225,7 +234,7 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String elementId = stringArg(request, ELEMENT_ARG);
         final String given = rawArg(request, CODE_ARG);
         final Object edits = argsMap(request).get(EDITS_ARG);
@@ -244,42 +253,48 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
         if (summary != null && summary.length() > MAX_SUMMARY_CHARS) {
             throw new WorkspaceException("The summary may be at most " + MAX_SUMMARY_CHARS + " characters.");
         }
-        final ToolRunContext context = ToolRunContext.current().orElse(null);
-        if (context == null) {
-            return "Error: a button can only be offered while answering a question in a chat.";
+        if (context.runContext().isEmpty()) {
+            return ToolResult.text("Error: a button can only be offered while answering a question in a chat.");
         }
 
+        // The tab the user attached to the chat.
+        final int chatId = context.session().requireChatId(NAME);
         final StoredTabSnapshot tab = tabSnapshots.forLatestQuestion(chatId).orElse(null);
         final AiSteppingContext stepping = NullSafe.get(tab, StoredTabSnapshot::stepping);
         if (tab == null || stepping == null || tab.docRef() == null) {
-            return NOT_STEPPING;
+            return ToolResult.text(NOT_STEPPING);
         }
         final AiSteppingElement element = stepping.findElement(elementId);
         if (element == null) {
-            return "The pipeline has no element '" + elementId + "'. Its elements are: "
-                   + String.join(", ", stepping.getElements().stream().map(AiSteppingElement::getId).toList())
-                   + ".";
+            return ToolResult.text(
+                    "The pipeline has no element '" + elementId + "'. Its elements are: "
+                    + String.join(", ", stepping.getElements().stream().map(AiSteppingElement::getId).toList())
+                    + ".");
         }
         if (!elementId.equals(stepping.getSelectedElementId())) {
-            return "Element '" + elementId + "' isn't selected in the user's stepping screen, so its code isn't "
-                   + "shared. Ask the user to select it, then ask again.";
+            return ToolResult.text(
+                    "Element '" + elementId + "' isn't selected in the user's stepping screen, so its code isn't "
+                    + "shared. Ask the user to select it, then ask again.");
         }
         final DocRef docRef = element.getDocRef();
         if (docRef == null || !documentAccess.canView(docRef)) {
-            return DocumentAccess.NO_PERMISSION;
+            return ToolResult.text(DocumentAccess.NO_PERMISSION);
         }
         if (!CODE_TYPES.contains(docRef.getType())) {
-            return "Only an XSLT's or a text converter's code can be proposed, and element '" + elementId
-                   + "' uses a " + docRef.getType() + ". Give the change as a code block to copy.";
+            return ToolResult.text(
+                    "Only an XSLT's or a text converter's code can be proposed, and element '" + elementId
+                    + "' uses a " + docRef.getType() + ". Give the change as a code block to copy.");
         }
         final UnsavedPart base = tabSnapshots.part(chatId, tab, AiTabSnapshotPart.STEP_CODE).orElse(null);
         if (base == null) {
-            return "The element's code isn't in the tab snapshot (it may still be loading). Ask the user to wait "
-                   + "for it to load, then ask again.";
+            return ToolResult.text(
+                    "The element's code isn't in the tab snapshot (it may still be loading). Ask the user to wait "
+                    + "for it to load, then ask again.");
         }
         if (base.cut()) {
-            return "The element's code is too large to have been shared in full, so a change to it can't be "
-                   + "proposed. Give the change as a code block to copy.";
+            return ToolResult.text(
+                    "The element's code is too large to have been shared in full, so a change to it can't be "
+                    + "proposed. Give the change as a code block to copy.");
         }
 
         // The model often drops or adds a final line break, which would show as a change of its own.
@@ -291,47 +306,49 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
         }
         final String problem = xmlProblem(code);
         if (problem != null) {
-            return "The proposed code isn't well formed XML, so no change was proposed: " + problem
-                   + "\nFix it and propose it again.";
+            return ToolResult.text("The proposed code isn't well formed XML, so no change was proposed: " + problem
+                                   + "\nFix it and propose it again.");
         }
         final LineDiffResult diff = LineDiff.diff(base.text(), code);
         if (diff.isIdentical()) {
-            return "The proposed code is the same as the element's current code, so there is nothing to propose.";
+            return ToolResult.text(
+                    "The proposed code is the same as the element's current code, so there is nothing to propose.");
         }
-        final Trial trial = tryChange(tab, stepping, elementId, base.text(), code);
+        final Trial trial = tryChange(tab, stepping, elementId, base.text(), code, context);
         if (!trial.introduced().isEmpty() && !booleanArg(request, ALLOW_ERRORS_ARG, false)) {
-            return "The change was tried by stepping " + trial.where() + " with it, and gives errors the current "
-                   + "code doesn't, so it wasn't proposed:\n" + describe(trial.introduced())
-                   + "\nFix them (check the elements you write against the schema the pipeline validates with) "
-                   + "and propose it again. Only if the user says to offer it anyway, pass " + ALLOW_ERRORS_ARG
-                   + "." + trial.outputNote();
+            return ToolResult.text(
+                    "The change was tried by stepping " + trial.where() + " with it, and gives errors the current "
+                    + "code doesn't, so it wasn't proposed:\n" + describe(trial.introduced())
+                    + "\nFix them (check the elements you write against the schema the pipeline validates with) "
+                    + "and propose it again. Only if the user says to offer it anyway, pass " + ALLOW_ERRORS_ARG
+                    + "." + trial.outputNote());
         }
 
-        final Map<String, Object> action = new LinkedHashMap<>();
-        action.put("id", "apply-code-change-" + SEQUENCE.incrementAndGet());
-        action.put("action", UserActions.APPLY_CODE_CHANGE);
-        action.put("doc", docRefMap(docRef));
-        action.put("pipeline", docRefMap(tab.docRef()));
-        action.put("element", elementId);
-        action.put("request", code);
-        action.put("base", base.text());
-        action.put("base_hash", sha256(base.text()));
-        NullSafe.consume(tab.hash(), hash -> action.put("snapshot_hash", hash));
-        action.put("added", diff.getAddedLineCount());
-        action.put("removed", diff.getRemovedLineCount());
-        NullSafe.consume(summary, text -> action.put("summary", text));
-        context.offerUserAction(request.id(), action);
-        documentAccess.logView(chatId, docRef, "Proposed a change to its code, in element '" + elementId
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("doc", docRefMap(docRef));
+        arguments.put("pipeline", docRefMap(tab.docRef()));
+        arguments.put("element", elementId);
+        arguments.put("request", code);
+        arguments.put("base", base.text());
+        arguments.put("base_hash", sha256(base.text()));
+        NullSafe.consume(tab.hash(), hash -> arguments.put("snapshot_hash", hash));
+        arguments.put("added", diff.getAddedLineCount());
+        arguments.put("removed", diff.getRemovedLineCount());
+        NullSafe.consume(summary, text -> arguments.put("summary", text));
+        final ToolUserAction action = new ToolUserAction("apply-code-change-" + SEQUENCE.incrementAndGet(),
+                UserActions.APPLY_CODE_CHANGE, arguments);
+        documentAccess.logView(context.session(), docRef, "Proposed a change to its code, in element '" + elementId
                                                + "' while stepping, with the " + NAME + " tool");
 
         final String lines = "+" + diff.getAddedLineCount() + " −" + diff.getRemovedLineCount() + " lines";
-        return "The user has been shown the change to " + docRef.getType() + " '" + docRef.getName()
-               + "' in element '" + elementId + "' (" + lines + ", in " + diff.getChangedBlocks().size()
-               + " place(s)) as a diff, with a 'Review and apply' button. Nothing changes until they apply it to "
-               + "the element's editor, and it is never saved; they can undo it. Tell them about the button "
-               + "rather than saying the code was changed, and show the output you expect once they apply it "
-               + "and step.\nThe diff:\n" + diff.toUnifiedDiff(LineDiffResult.DEFAULT_CONTEXT_LINES)
-               + trial.note() + instructionsNote(chatId, docRef, tab.docRef());
+        return ToolResult.text(
+                "The user has been shown the change to " + docRef.getType() + " '" + docRef.getName()
+                + "' in element '" + elementId + "' (" + lines + ", in " + diff.getChangedBlocks().size()
+                + " place(s)) as a diff, with a 'Review and apply' button. Nothing changes until they apply it to "
+                + "the element's editor, and it is never saved; they can undo it. Tell them about the button "
+                + "rather than saying the code was changed, and show the output you expect once they apply it "
+                + "and step.\nThe diff:\n" + diff.toUnifiedDiff(LineDiffResult.DEFAULT_CONTEXT_LINES)
+                + trial.note() + instructionsNote(context, docRef, tab.docRef())).withUserAction(action);
     }
 
     /// Steps the stepping screen's record with the element's current code, then with the proposed code, and finds
@@ -340,7 +357,8 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
                             final AiSteppingContext stepping,
                             final String elementId,
                             final String current,
-                            final String proposed) {
+                            final String proposed,
+                            final ToolCallContext context) {
         if (stepping.getMetaId() == null) {
             return Trial.notTried("the stepping screen's stream isn't known");
         }
@@ -353,7 +371,7 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
             final List<StepOutcome> outcomes = codeChangeStepperProvider.get().step(new StepTrial(tab.docRef(),
                     stepping.getMetaId(), stepping.getChildStreamType(), part, record,
                     List.of(Map.of(elementId, current), Map.of(elementId, proposed)),
-                    timeLimit().multipliedBy(3).dividedBy(4)));
+                    timeLimit(context).multipliedBy(3).dividedBy(4)));
             final StepOutcome before = outcomes.get(0);
             final StepOutcome after = outcomes.get(1);
             if (!after.foundRecord()) {
@@ -414,9 +432,10 @@ class ProposeCodeChangeTool extends AbstractWorkspaceTool {
 
     // The AGENTS docs that apply where the code and its pipeline are, e.g. XSLT style and how fields are mapped,
     // for the agent to check the change follows them.
-    private String instructionsNote(final int chatId, final DocRef code, final DocRef pipeline) {
-        final String note = agentInstructions.load(chatId, "Standing instructions read by the " + NAME + " tool")
-                .note(List.of(agentInstructions.folderOf(code), agentInstructions.folderOf(pipeline)));
+    private String instructionsNote(final ToolCallContext context, final DocRef code, final DocRef pipeline) {
+        final String note = agentInstructions.load(context.session(),
+                "Standing instructions read by the " + NAME + " tool")
+                .note(context.links(), List.of(agentInstructions.folderOf(code), agentInstructions.folderOf(pipeline)));
         return note.isEmpty()
                 ? ""
                 : note + "\n\nCheck the change follows these. If it doesn't, propose it again, fixed, and tell the "

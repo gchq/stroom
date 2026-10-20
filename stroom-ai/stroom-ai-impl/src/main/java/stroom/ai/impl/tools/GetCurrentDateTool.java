@@ -16,8 +16,6 @@
 
 package stroom.ai.impl.tools;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
 import jakarta.inject.Inject;
 
 import java.time.LocalDate;
@@ -26,15 +24,15 @@ import java.time.ZoneOffset;
 /**
  * {@code get_current_date} - the current date, in UTC.
  */
-class GetCurrentDateTool implements BuiltInTool {
+class GetCurrentDateTool implements StroomTool {
 
     @Inject
     GetCurrentDateTool() {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name("get_current_date")
                 .description("Returns the current date in UTC as an ISO-8601 string (YYYY-MM-DD). "
                              + "Call this whenever you need to know today's date; do not guess it.")
@@ -42,8 +40,8 @@ class GetCurrentDateTool implements BuiltInTool {
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
-        return LocalDate.now(ZoneOffset.UTC).toString();
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
+        return ToolResult.text(LocalDate.now(ZoneOffset.UTC).toString());
     }
 
     @Override

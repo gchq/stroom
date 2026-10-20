@@ -485,7 +485,8 @@ class TestConfigPropertiesTool {
     /// @return What the tool gives, without the note on how values are set that ends each result (which names a
     /// property as an example).
     private String run(final String arguments) {
-        final String result = tool.execute(ToolTestFixture.request(ConfigPropertiesTool.NAME, arguments), 1);
+        final String result = tool.execute(ToolTestFixture.request(ConfigPropertiesTool.NAME, arguments),
+                ToolCalls.inChat(1, fixture.workspace)).text();
         if (result.endsWith(ConfigPropertiesTool.HOW_TO_CHANGE)) {
             return result.substring(0, result.length() - ConfigPropertiesTool.HOW_TO_CHANGE.length()) + FOOTER;
         }

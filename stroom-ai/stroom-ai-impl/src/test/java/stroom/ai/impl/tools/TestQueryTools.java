@@ -41,15 +41,16 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -76,6 +77,7 @@ class TestQueryTools {
     private final AgentInstructions agentInstructions = new AgentInstructions(() -> docFinder, documentAccess);
     private final DocDependencyService dependencyService = Mockito.mock(DocDependencyService.class);
     private final Set<String> usable = new HashSet<>();
+    private final List<Map<String, Object>> offered = new ArrayList<>();
     private DataSourceAccess dataSourceAccess;
 
     @BeforeEach
@@ -112,7 +114,7 @@ class TestQueryTools {
                 .endsWith(ListDataSourcesTool.CHOOSE_NOTE)
                 .doesNotContain("Secret");
         final ArgumentCaptor<List<DocRef>> logged = listCaptor();
-        Mockito.verify(auditLog).documentsViewed(Mockito.eq(CHAT), logged.capture(),
+        Mockito.verify(auditLog).documentsViewed(Mockito.eq(ToolSession.chat(CHAT)), logged.capture(),
                 Mockito.contains(ListDataSourcesTool.NAME));
         assertThat(logged.getValue()).containsExactly(LINUX, WINDOWS);
     }
@@ -143,7 +145,7 @@ class TestQueryTools {
                 .contains("- User (")
                 .contains("- Raw (")
                 .contains("not queryable");
-        Mockito.verify(auditLog).documentViewed(Mockito.eq(CHAT), Mockito.eq(WINDOWS),
+        Mockito.verify(auditLog).documentViewed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(WINDOWS),
                 Mockito.contains(DescribeDataSourceTool.NAME));
     }
 
@@ -200,7 +202,7 @@ class TestQueryTools {
                 .doesNotContain("Hidden indexing")
                 .contains("Use Initiator.Id for the actioning user.");
         // The documentation read is logged.
-        Mockito.verify(documentAccess).logViews(Mockito.eq(CHAT), Mockito.eq(List.of(pipelineDoc)),
+        Mockito.verify(documentAccess).logViews(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(List.of(pipelineDoc)),
                 Mockito.contains(DescribeDataSourceTool.NAME));
     }
 
@@ -305,7 +307,8 @@ class TestQueryTools {
 
         assertThat(run(validateTool(), "{\"query\":\"" + QUERY.replace("\"", "\\\"") + "\"}"))
                 .startsWith("OK. The query is valid and reads View 'Windows events'");
-        Mockito.verify(auditLog).processed(CHAT, WINDOWS, ValidateStroomQlTool.NAME, QUERY, "OK", true);
+        Mockito.verify(auditLog).processed(ToolSession.chat(CHAT), WINDOWS, ValidateStroomQlTool.NAME, QUERY, "OK",
+                true);
     }
 
     @Test
@@ -327,7 +330,8 @@ class TestQueryTools {
         assertThat(run(validateTool(), "{\"query\":\"" + secret.replace("\"", "\\\"") + "\"}"))
                 .isEqualTo(ValidateStroomQlTool.NO_DATA_SOURCE);
         Mockito.verify(queryService, Mockito.never()).validateQuery(Mockito.anyString());
-        Mockito.verify(auditLog).processed(Mockito.eq(CHAT), Mockito.isNull(), Mockito.eq(ValidateStroomQlTool.NAME),
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.isNull(),
+                Mockito.eq(ValidateStroomQlTool.NAME),
                 Mockito.eq(secret), Mockito.anyString(), Mockito.eq(false));
     }
 
@@ -346,14 +350,14 @@ class TestQueryTools {
 
         assertThat(result).contains("offered a 'Create query…' button for 'Windows users'")
                 .contains("Nothing is created until they click it");
-        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> {
+        assertThat(takeUserActions()).singleElement().satisfies(action -> {
             assertThat(action).containsEntry("action", UserActions.CREATE_QUERY)
                     .containsEntry("name", "Windows users")
                     .containsEntry("query", formatted)
                     .containsEntry("description", "Who logged on");
         });
         // Taken once only.
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -372,7 +376,7 @@ class TestQueryTools {
         assertThat(context.run(() -> run(proposeTool(), "{\"name\":\"n\",\"query\":\""
                                                          + secret.replace("\"", "\\\"") + "\"}")))
                 .isEqualTo(ValidateStroomQlTool.NO_DATA_SOURCE);
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     private ListDataSourcesTool listTool() {
@@ -393,9 +397,19 @@ class TestQueryTools {
         return new ProposeQueryTool(workspace, dataSourceAccess, () -> queryService);
     }
 
-    private static String run(final BuiltInTool tool, final String arguments) {
-        return tool.execute(ToolExecutionRequest.builder().id("c1").name(tool.specification().name())
-                .arguments(arguments).build(), CHAT);
+    // Runs a call, keeping the user actions its result offers for takeUserActions.
+    private String run(final StroomTool tool, final String arguments) {
+        final ToolResult result = tool.execute(new ToolCall("c1", tool.definition().name(), arguments),
+                ToolCalls.inChat(CHAT, workspace));
+        result.userActions().forEach(action -> offered.add(action.toMap()));
+        return result.text();
+    }
+
+    // The user actions offered by the calls since this was last called, as the chat shows them.
+    private List<Map<String, Object>> takeUserActions() {
+        final List<Map<String, Object>> taken = List.copyOf(offered);
+        offered.clear();
+        return taken;
     }
 
     @SuppressWarnings("unchecked")

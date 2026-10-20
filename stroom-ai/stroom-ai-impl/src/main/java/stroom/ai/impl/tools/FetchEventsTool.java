@@ -17,8 +17,10 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.EventsFile;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.TableEngine;
 import stroom.ai.impl.workspace.TableEngine.Format;
 import stroom.ai.impl.workspace.TableEngine.Query;
@@ -36,9 +38,6 @@ import stroom.security.shared.AppPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -89,34 +88,53 @@ class FetchEventsTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .requires(AppPermission.VIEW_DATA_PERMISSION)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Fetches the source events behind the rows of a table with StreamId and EventId "
-                             + "columns (an attached dashboard or StroomQL table that isn't grouped, or a CSV made "
-                             + "from one with the table tool's out, to pick the rows) into one XML file: each "
-                             + "event in a <stroom-event streamId=\"..\" eventId=\"..\"> element. Then use "
-                             + "search_events to get values from each event by XPath, or find text in them, as a "
-                             + "table. Only events the user may see are fetched, up to a limit an administrator "
-                             + "sets; the result says if any were left out.")
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(PATH_ARG, "The table, e.g. /attachments/12.md.")
+                .description(ToolDescription.builder()
+                        .general("Fetches the source events behind the rows of a table with StreamId and EventId "
+                                 + "columns")
+                        .chatOnly(" (an attached dashboard or StroomQL table that isn't grouped, or a CSV made "
+                                  + "from one with the table tool's out, to pick the rows)")
+                        .general(" into one XML file: each event in a <stroom-event streamId=\"..\" "
+                                 + "eventId=\"..\"> element.")
+                        .chatOnly(" Then use search_events to get values from each event by XPath, or find text "
+                                  + "in them, as a table.")
+                        .general(" Only events the user may see are fetched, up to a limit an administrator sets; "
+                                 + "the result says if any were left out.")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(PATH_ARG, ToolDescription.builder()
+                                .general("The table")
+                                .chatOnly(", e.g. /attachments/12.md")
+                                .general(".")
+                                .build())
                         .addIntegerProperty(LIMIT_ARG, "The most events to fetch, from the first rows.")
-                        .addStringProperty(OUT_ARG, "The file in /outputs/ to write the events to (default "
-                                                    + DEFAULT_OUT + ").")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("The file in /outputs/ to write the events to (default " + DEFAULT_OUT
+                                          + ").")
+                                .build())
                         .required(PATH_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    protected Duration timeLimit() {
+    protected Duration timeLimit(final ToolCallContext context) {
         // Reading many streams can take longer than a workspace step.
-        return limits().getQueryTimeLimit().getDuration();
+        return limits(context).getQueryTimeLimit().getDuration();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final WorkspacePath requestedOut = outArg(request);
         final WorkspacePath out = requestedOut != null
@@ -126,12 +144,12 @@ class FetchEventsTool extends AbstractWorkspaceTool {
         if (!canViewData()) {
             throw new WorkspaceException("You don't have permission to view data, so events can't be fetched.");
         }
-        final int maxEvents = limits().getMaxEventsPerFetch();
+        final int maxEvents = limits(context).getMaxEventsPerFetch();
         final Integer limitArg = intArg(request, LIMIT_ARG);
         final int limit = limitArg == null
                 ? maxEvents
                 : Math.max(1, Math.min(limitArg, maxEvents));
-        final Ids ids = readIds(workspace.localFile(chatId, path), Format.forPath(path), limit);
+        final Ids ids = readIds(workspace.localFile(path), Format.forPath(path), limit);
 
         final Counts counts = new Counts();
         final Path temp = workspace.tempFile();
@@ -139,30 +157,30 @@ class FetchEventsTool extends AbstractWorkspaceTool {
             try (final Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
                 writer.write(EventsFile.start());
                 for (final Map.Entry<Long, List<Long>> stream : ids.byStream().entrySet()) {
-                    writeStream(writer, stream.getKey(), stream.getValue(), counts);
+                    writeStream(writer, stream.getKey(), stream.getValue(), counts, context);
                 }
                 writer.write(EventsFile.end());
             }
             if (counts.written > 0) {
-                workspace.write(chatId, out, temp, workspace.sourceDocUuid(chatId, path));
+                workspace.write(out, temp, workspace.sourceDocUuid(path));
             }
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         } finally {
-            workspace.deleteQuietly(temp);
-            logView(chatId, counts);
+            ChatWorkspace.deleteQuietly(temp);
+            logView(context, counts);
         }
-        final String coverage = CurrentResultsTool.coverage(workspace, chatId, path, ids.count() + ids.skipped())
+        final String coverage = CurrentResultsTool.coverage(workspace, path, ids.count() + ids.skipped())
                 .orElse(null);
-        return summary(out, ids, counts, coverage);
+        return ToolResult.text(summary(out, ids, counts, coverage));
     }
 
     /// Records in the audit log the streams events were read from.
-    private void logView(final int chatId, final Counts counts) {
+    private void logView(final ToolCallContext context, final Counts counts) {
         if (counts.streams.isEmpty()) {
             return;
         }
-        auditLog.streamsViewed(chatId, counts.streams, "Read " + counts.written + " event(s) from "
+        auditLog.streamsViewed(context.session(), counts.streams, "Read " + counts.written + " event(s) from "
                                                      + counts.streams.size() + " stream(s) with the " + NAME
                                                      + " tool");
     }
@@ -171,8 +189,9 @@ class FetchEventsTool extends AbstractWorkspaceTool {
     private void writeStream(final Writer writer,
                              final long streamId,
                              final List<Long> eventIds,
-                             final Counts counts) throws IOException {
-        final int maxBytes = limits().getMaxEventBytes();
+                             final Counts counts,
+                             final ToolCallContext context) throws IOException {
+        final int maxBytes = limits(context).getMaxEventBytes();
         try (final Source source = storeProvider.get().openSource(streamId);
                 final InputStreamProvider provider = source.get(0)) {
             final long segments = segmentCount(provider);

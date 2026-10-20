@@ -205,7 +205,8 @@ class TestFindInContentTool {
         final FindInContentTool tool = new FindInContentTool(fixture.workspace, () -> contentIndex,
                 () -> Set.of(xslts, dictionaries), () -> wordListProvider, fixture.documentAccess(),
                 fixture.agentInstructions(), fixture.auditLog());
-        return tool.run(ToolTestFixture.request(FindInContentTool.NAME, arguments), 1);
+        return tool.run(ToolTestFixture.request(FindInContentTool.NAME, arguments), ToolCalls.inChat(1,
+                fixture.workspace)).text();
     }
 
     private DocRef xslt(final String uuid, final String name, final String text, final boolean canView) {

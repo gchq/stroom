@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatAttachment;
@@ -87,8 +88,9 @@ class TestDocumentReferences {
                 "XSLT 'Event translation'", null, false);
         Mockito.verify(aiService).storeMessage(1, AiMessageType.ATTACHMENT, 100, "Dictionary 'Malicious IPs'");
         Mockito.verify(aiService).storeMessage(1, AiMessageType.ATTACHMENT, 101, "XSLT 'Event translation'");
-        Mockito.verify(documentAccess).logView(Mockito.eq(1), Mockito.eq(DICTIONARY), Mockito.anyString());
-        Mockito.verify(documentAccess).logView(Mockito.eq(1), Mockito.eq(XSLT), Mockito.anyString());
+        Mockito.verify(documentAccess).logView(Mockito.eq(ToolSession.chat(1)), Mockito.eq(DICTIONARY),
+                Mockito.anyString());
+        Mockito.verify(documentAccess).logView(Mockito.eq(ToolSession.chat(1)), Mockito.eq(XSLT), Mockito.anyString());
     }
 
     @Test
@@ -103,7 +105,7 @@ class TestDocumentReferences {
         Mockito.verify(aiService, Mockito.times(1)).createAttachment(Mockito.anyInt(), Mockito.any(),
                 Mockito.anyString());
         Mockito.verify(documentAccess, Mockito.never()).node(SECRET);
-        Mockito.verify(documentAccess, Mockito.never()).logView(Mockito.anyInt(), Mockito.eq(SECRET),
+        Mockito.verify(documentAccess, Mockito.never()).logView(Mockito.any(), Mockito.eq(SECRET),
                 Mockito.anyString());
     }
 

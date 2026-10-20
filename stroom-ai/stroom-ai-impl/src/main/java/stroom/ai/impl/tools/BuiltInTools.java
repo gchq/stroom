@@ -18,21 +18,21 @@ package stroom.ai.impl.tools;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.NullSafe;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.service.tool.ToolExecutor;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * The registry of {@link BuiltInTool}s available to the chat agent. New tools are picked up
- * automatically once bound in {@code AiModule}.
+ * The registry of {@link StroomTool}s available to the chat agent, as langchain4j tools (see
+ * {@link LangChain4jTools}). New tools are picked up automatically once bound in {@link BuiltInToolsModule}.
  */
 @Singleton
 public class BuiltInTools {
@@ -43,15 +43,19 @@ public class BuiltInTools {
     private final Set<String> readOnlyToolNames;
     private final Set<String> trustedToolNames;
     private final Set<String> boundedToolNames;
+    private final Map<String, ToolPermissions> permissions;
 
+    /// @param tools    The tools, as bound in [BuiltInToolsModule].
+    /// @param contexts Makes the context of a call in a chat.
     @Inject
-    BuiltInTools(final Set<BuiltInTool> tools) {
+    BuiltInTools(final Set<StroomTool> tools, final ChatToolCallContexts contexts) {
         final Map<ToolSpecification, ToolExecutor> map = new LinkedHashMap<>();
         final Set<String> readOnly = new HashSet<>();
         final Set<String> trusted = new HashSet<>();
         final Set<String> bounded = new HashSet<>();
-        for (final BuiltInTool tool : tools) {
-            final ToolSpecification specification = tool.specification();
+        final Map<String, ToolPermissions> permissionsByName = new HashMap<>();
+        for (final StroomTool tool : tools) {
+            final ToolSpecification specification = LangChain4jTools.specification(tool.definition());
             if (tool.isReadOnly()) {
                 readOnly.add(specification.name());
             }
@@ -61,22 +65,15 @@ public class BuiltInTools {
             if (tool.boundsItsOutput()) {
                 bounded.add(specification.name());
             }
-            map.put(specification, (request, memoryId) -> {
-                try {
-                    return NullSafe.string(memoryId instanceof final Integer chatId
-                            ? tool.execute(request, chatId)
-                            : tool.execute(request));
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(() -> "Built-in tool '" + specification.name() + "' failed", e);
-                    return "Error running built-in tool '" + specification.name() + "': "
-                           + NullSafe.nonBlankStringElse(e.getMessage(), e.toString());
-                }
-            });
+            permissionsByName.put(specification.name(), tool.permissions());
+            // langchain4j gives the executor the chat's id as its memory id.
+            map.put(specification, LangChain4jTools.executor(tool, contexts::forMemoryId));
         }
         toolMap = Map.copyOf(map);
         readOnlyToolNames = Set.copyOf(readOnly);
         trustedToolNames = Set.copyOf(trusted);
         boundedToolNames = Set.copyOf(bounded);
+        permissions = Map.copyOf(permissionsByName);
         LOGGER.debug(() -> "Registered " + toolMap.size() + " built-in tool(s): "
                            + toolMap.keySet().stream().map(ToolSpecification::name).sorted().toList());
     }
@@ -112,6 +109,13 @@ public class BuiltInTools {
      */
     public boolean boundsItsOutput(final String toolName) {
         return boundedToolNames.contains(toolName);
+    }
+
+    /// @param toolName A tool name.
+    /// @return The permissions the built-in tool needs, as it declares them (see [StroomTool#permissions()]), or
+    /// [ToolPermissions#NONE] if it is not a built-in tool.
+    public ToolPermissions permissions(final String toolName) {
+        return permissions.getOrDefault(toolName, ToolPermissions.NONE);
     }
 
     public boolean isEmpty() {

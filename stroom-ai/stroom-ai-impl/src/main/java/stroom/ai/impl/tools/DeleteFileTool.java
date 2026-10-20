@@ -16,12 +16,11 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 /**
@@ -37,11 +36,15 @@ class DeleteFileTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Deletes a file in /outputs/ that is no longer needed.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Deletes a file")
+                        .chatOnly(" in /outputs/")
+                        .general(" that is no longer needed.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(PATH_ARG, "The file.")
                         .required(PATH_ARG)
                         .build())
@@ -49,10 +52,11 @@ class DeleteFileTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
-        workspace.delete(chatId, path);
-        return "Deleted " + path + ".";
+        workspace.delete(path);
+        return ToolResult.text("Deleted " + path + ".");
     }
 
     @Override

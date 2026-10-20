@@ -397,8 +397,8 @@ class TestServerTasksTool {
     @Test
     void isReadOnly() {
         assertThat(tool().isReadOnly()).isTrue();
-        assertThat(tool().specification().name()).isEqualTo("server_tasks");
-        assertThat(tool().specification().description()).contains("Monitoring > Server Tasks")
+        assertThat(tool().definition().name()).isEqualTo("server_tasks");
+        assertThat(tool().definition().description()).contains("Monitoring > Server Tasks")
                 .contains("processor_tasks");
     }
 
@@ -434,7 +434,8 @@ class TestServerTasksTool {
 
     private String run(final String arguments) {
         try {
-            return tool().run(ToolTestFixture.request(ServerTasksTool.NAME, arguments), 1);
+            return tool().run(ToolTestFixture.request(ServerTasksTool.NAME, arguments), ToolCalls.inChat(1,
+                    fixture.workspace)).text();
         } catch (final WorkspaceException e) {
             // As the tool's call returns it.
             return "Error: " + e.getMessage();

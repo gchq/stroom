@@ -47,7 +47,6 @@ import stroom.query.shared.QueryContext;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -157,7 +156,8 @@ class TestCurrentResultsTool {
         final ArgumentCaptor<AskStroomAiContext> downloaded = ArgumentCaptor.forClass(AskStroomAiContext.class);
         Mockito.verify(tableDownloader).download(downloaded.capture(), Mockito.eq(50_000L), Mockito.any());
         assertThat(ResultsRequests.queryKey(downloaded.getValue())).isEqualTo(TAB_KEY);
-        Mockito.verify(auditLog).searched(Mockito.eq(CHAT), Mockito.eq(VIEW), Mockito.eq(RAN), Mockito.eq(100L),
+        Mockito.verify(auditLog).searched(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(VIEW), Mockito.eq(RAN),
+                Mockito.eq(100L),
                 Mockito.contains("current_results"));
     }
 
@@ -306,7 +306,7 @@ class TestCurrentResultsTool {
 
         assertThat(run("{}")).contains("You can't use the data source these results come from");
         Mockito.verifyNoInteractions(tableDownloader);
-        Mockito.verify(auditLog, Mockito.never()).searched(Mockito.anyInt(), Mockito.any(), Mockito.any(),
+        Mockito.verify(auditLog, Mockito.never()).searched(Mockito.any(), Mockito.any(), Mockito.any(),
                 Mockito.any(), Mockito.any());
     }
 
@@ -383,7 +383,8 @@ class TestCurrentResultsTool {
         assertThat(result)
                 .contains("/tabs/results/dash-uuid/table-1-events.md")
                 .contains("the " + available + " event(s) behind the table's 7 group(s)");
-        Mockito.verify(auditLog).searched(Mockito.eq(CHAT), Mockito.eq(VIEW), Mockito.any(), Mockito.anyLong(),
+        Mockito.verify(auditLog).searched(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(VIEW), Mockito.any(),
+                Mockito.anyLong(),
                 Mockito.contains("ungrouped"));
     }
 
@@ -415,8 +416,8 @@ class TestCurrentResultsTool {
     }
 
     private String run(final String arguments) {
-        return tool.execute(ToolExecutionRequest.builder().id("c1").name(CurrentResultsTool.NAME)
-                .arguments(arguments).build(), CHAT);
+        return tool.execute(new ToolCall("c1", CurrentResultsTool.NAME, arguments),
+                ToolCalls.inChat(CHAT, files.workspace())).text();
     }
 
     // The latest question's tab: a query whose results came from one query, and whose editor holds another.

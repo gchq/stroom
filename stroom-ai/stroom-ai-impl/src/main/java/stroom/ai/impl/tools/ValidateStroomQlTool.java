@@ -17,16 +17,15 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.query.impl.QueryService;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -59,12 +58,19 @@ class ValidateStroomQlTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.USE)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description("Checks a StroomQL query without running it: OK (and whether it groups rows), or "
                              + "the parser's error. Validate a query before you show or propose it.")
-                .parameters(JsonObjectSchema.builder()
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(QUERY_ARG, "The StroomQL query.")
                         .required(QUERY_ARG)
                         .build())
@@ -72,36 +78,37 @@ class ValidateStroomQlTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String query = rawArg(request, QUERY_ARG);
         if (query == null || query.isBlank()) {
             throw new WorkspaceException("Give a StroomQL query.");
         }
-        final int maxQueryLength = limits().getMaxQueryLength();
+        final int maxQueryLength = limits(context).getMaxQueryLength();
         if (query.length() > maxQueryLength) {
             throw new WorkspaceException("The query may be at most " + maxQueryLength + " characters.");
         }
         final QueryService queryService = queryServiceProvider.get();
         final DocRef dataSource = usableDataSource(queryService, query).orElse(null);
         if (dataSource == null) {
-            auditLog.processed(chatId, null, NAME, query, "Not validated: no data source the user can use", false);
-            return NO_DATA_SOURCE;
+            auditLog.processed(context.session(), null, NAME, query, "Not validated: no data source the user can use",
+                    false);
+            return ToolResult.text(NO_DATA_SOURCE);
         }
         final ValidateExpressionResult result = queryService.validateQuery(query);
         final boolean ok = result != null && result.isOk();
         final String outcome = ok
                 ? "OK"
                 : "Invalid: " + NullSafe.get(result, ValidateExpressionResult::getString);
-        auditLog.processed(chatId, dataSource, NAME, query, outcome, true);
+        auditLog.processed(context.session(), dataSource, NAME, query, outcome, true);
         if (ok) {
-            return "OK. The query is valid and reads " + DataSourceAccess.describe(dataSource)
-                   + (result.isGroupBy()
-                    ? ". It groups rows."
-                    : ".");
+            return ToolResult.text("OK. The query is valid and reads " + DataSourceAccess.describe(dataSource)
+                                   + (result.isGroupBy()
+                                    ? ". It groups rows."
+                                    : "."));
         }
-        return "The query is not valid: "
-               + NullSafe.nonBlankStringElse(NullSafe.get(result, ValidateExpressionResult::getString),
-                "the parser gave no reason") + "\nFix it and validate it again.";
+        return ToolResult.text("The query is not valid: "
+                               + NullSafe.nonBlankStringElse(NullSafe.get(result, ValidateExpressionResult::getString),
+                                "the parser gave no reason") + "\nFix it and validate it again.");
     }
 
     // The data source the query reads, if it names one the user can use.

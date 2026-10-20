@@ -1,0 +1,7 @@
+Arguments: {"uuids":["pipeline"],"depth":1}
+
+=== Output ===
+Followed the dependants of Pipeline 'Windows pipeline', up to 1 link(s): 2 document(s) found.
+
+- Processor filter (filter) of pipeline 'Windows pipeline' (pipeline): 1 link(s) away, via Pipeline 'Windows pipeline' → used by Processor filter. It selects streams where Feed is 'WINDOWS-EVENTS' and Type is 'Raw Events'; enabled.
+- Processor filter (other-filter) of pipeline 'Windows pipeline' (pipeline): 1 link(s) away, via Pipeline 'Windows pipeline' → used by Processor filter. It selects all streams; disabled.

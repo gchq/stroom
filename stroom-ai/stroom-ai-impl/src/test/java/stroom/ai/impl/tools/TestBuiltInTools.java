@@ -73,7 +73,7 @@ class TestBuiltInTools {
                 new GetCurrentDateTool(),
                 new GetCurrentTimeTool(),
                 new GetCurrentDateTimeTool(),
-                new GetUtcTimeOffsetTool()));
+                new GetUtcTimeOffsetTool()), ToolCalls.chatContexts());
 
         assertThat(registry.toolMap().keySet().stream().map(ToolSpecification::name))
                 .containsExactlyInAnyOrder("get_current_date", "get_current_time",
@@ -83,29 +83,29 @@ class TestBuiltInTools {
     @Test
     void registryReportsAToolFailureAsTextRatherThanPropagating() {
         final ToolSpecification spec = ToolSpecification.builder().name("boom").build();
-        final BuiltInTools registry = new BuiltInTools(Set.of(new BuiltInTool() {
+        final BuiltInTools registry = new BuiltInTools(Set.of(new StroomTool() {
             @Override
-            public ToolSpecification specification() {
-                return spec;
+            public ToolDefinition definition() {
+                return ToolDefinition.builder().name("boom").build();
             }
 
             @Override
-            public String execute(final ToolExecutionRequest request) {
+            public ToolResult execute(final ToolCall request, final ToolCallContext context) {
                 throw new IllegalStateException("kaboom");
             }
-        }));
+        }), ToolCalls.chatContexts());
 
         final ToolExecutor executor = registry.toolMap().get(spec);
-        assertThat(executor.execute(request("{}"), null))
+        assertThat(executor.execute(ToolExecutionRequest.builder().id("1").name("t").arguments("{}").build(), 1))
                 .contains("Error running built-in tool 'boom'")
                 .contains("kaboom");
     }
 
-    private static String run(final BuiltInTool tool, final String argsJson) {
-        return tool.execute(request(argsJson));
+    private static String run(final StroomTool tool, final String argsJson) {
+        return tool.execute(request(argsJson), ToolCalls.outsideChat()).text();
     }
 
-    private static ToolExecutionRequest request(final String argsJson) {
-        return ToolExecutionRequest.builder().id("1").name("t").arguments(argsJson).build();
+    private static ToolCall request(final String argsJson) {
+        return new ToolCall("1", "t", argsJson);
     }
 }

@@ -30,6 +30,9 @@ import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
 import stroom.ai.impl.UserActions;
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
+import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.TableExpression;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -42,16 +45,13 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonArraySchema;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -118,8 +118,15 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        final JsonObjectSchema change = JsonObjectSchema.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        final ObjectSchema change = ObjectSchema.builder()
                 .addEnumProperty("op", DashboardChanges.OPERATIONS, "What to do.")
                 .addStringProperty("column", "The column, by its name as the user sees it (not for add_column, "
                                              + "add_table or set_expression).")
@@ -132,8 +139,8 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                            + "the new name.")
                 .addBooleanProperty("copy", "For add_table: true to start with the component's columns, false "
                                             + "(the default) for none.")
-                .addProperty("conditions", JsonArraySchema.builder()
-                        .items(JsonObjectSchema.builder()
+                .addProperty("conditions", ArraySchema.builder()
+                        .items(ObjectSchema.builder()
                                 .addStringProperty("column", "The column, by its name as the user sees it.")
                                 .addEnumProperty("condition", List.copyOf(DashboardChanges.RULE_CONDITIONS.keySet()),
                                         "The condition.")
@@ -164,12 +171,14 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                                  + "Stroom's expression language, e.g. count() or "
                                                  + "${EventTime}.")
                 .addEnumProperty("format", DashboardChanges.FORMATS, "For add_column or edit_column: the format.")
-                .addIntegerProperty("position", "For add_column: where to add it, from 1 (default the end). For "
-                                                + "move_column: where to move it, from 1. For add_format_rule: "
-                                                + "where to add the rule among the table's rules, from 1 (default "
-                                                + "the end; the first rule a row matches applies). For "
-                                                + "remove_format_rule: the rule's number, as the dashboard file "
-                                                + "lists them.")
+                .addProperty("position", new IntegerSchema(ToolDescription.builder()
+                        .general("For add_column: where to add it, from 1 (default the end). For move_column: where "
+                                 + "to move it, from 1. For add_format_rule: where to add the rule among the table's "
+                                 + "rules, from 1 (default the end; the first rule a row matches applies). For "
+                                 + "remove_format_rule: the rule's number")
+                        .chatOnly(", as the dashboard file lists them")
+                        .general(".")
+                        .build()))
                 .addEnumProperty("direction", List.of(DashboardChanges.ASCENDING, DashboardChanges.DESCENDING,
                         DashboardChanges.NONE), "For sort: the direction, or none to stop sorting by it.")
                 .addIntegerProperty("priority", "For sort: its priority, from 1 (sorted by first). By default "
@@ -183,31 +192,34 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
                                             + "expression.")
                 .required("op")
                 .build();
-        return ToolSpecification.builder()
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("While the tab the user attached is a dashboard, proposes a change to one of its tables: "
-                             + "group or ungroup, add_column, edit_column, move_column, hide_column, show_column, "
-                             + "sort, or filter, applied in order; set_expression, which replaces the expression "
-                             + "of the classic query that feeds the table (give its conditions in where, and show "
-                             + "the user the expression, never StroomQL); add_table, which adds a table as a "
-                             + "tab beside it, fed by the same query, that the changes after it set up by naming "
-                             + "it as their table (e.g. a tab per event category: add_table, its columns, and a "
-                             + "filter on the category column); add_text, which adds a Text widget below the "
-                             + "table (or a table added before it, named as its table) showing the event of the "
-                             + "selected row, that later set_setting changes can set up by naming it as their "
-                             + "target; add_format_rule or remove_format_rule, for the table's conditional "
-                             + "formatting (rows matching conditions on its columns coloured, bold, italic or "
-                             + "hidden); rename, which renames any component and its tab; "
-                             + "or set_setting, which changes a setting of any table, query or text component, as "
-                             + "its Settings dialog has it. The user is shown the changes with an 'Apply to "
-                             + "dashboard' button; nothing changes until they click it, and it is never saved. "
-                             + "Columns and the table are named as the user sees them. Expressions are checked "
-                             + "first; an invalid change is refused with the reason.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .chatOnly("While the tab the user attached is a dashboard, ")
+                        .general("proposes a change to one of its tables: group or ungroup, add_column, edit_column, "
+                                 + "move_column, hide_column, show_column, sort, or filter, applied in order; "
+                                 + "set_expression, which replaces the expression of the classic query that feeds "
+                                 + "the table (give its conditions in where, and show the user the expression, never "
+                                 + "StroomQL); add_table, which adds a table as a tab beside it, fed by the same "
+                                 + "query, that the changes after it set up by naming it as their table (e.g. a tab "
+                                 + "per event category: add_table, its columns, and a filter on the category "
+                                 + "column); add_text, which adds a Text widget below the table (or a table added "
+                                 + "before it, named as its table) showing the event of the selected row, that later "
+                                 + "set_setting changes can set up by naming it as their target; add_format_rule or "
+                                 + "remove_format_rule, for the table's conditional formatting (rows matching "
+                                 + "conditions on its columns coloured, bold, italic or hidden); rename, which "
+                                 + "renames any component and its tab; or set_setting, which changes a setting of "
+                                 + "any table, query or text component, as its Settings dialog has it. The user is "
+                                 + "shown the changes with an 'Apply to dashboard' button; nothing changes until "
+                                 + "they click it, and it is never saved. Columns and the table are named as the "
+                                 + "user sees them. Expressions are checked first; an invalid change is refused with "
+                                 + "the reason.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(COMPONENT_ARG, "The table the changes are for, by its name as the user "
                                                           + "sees it. Changes to other components name them as "
                                                           + "their target.")
-                        .addProperty(CHANGES_ARG, JsonArraySchema.builder()
+                        .addProperty(CHANGES_ARG, ArraySchema.builder()
                                 .items(change)
                                 .description("The changes, applied in order.")
                                 .build())
@@ -219,7 +231,7 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String component = stringArg(request, COMPONENT_ARG);
         final String summary = stringArg(request, SUMMARY_ARG);
         if (component == null) {
@@ -234,32 +246,35 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         } catch (final IllegalArgumentException e) {
             throw new WorkspaceException(e.getMessage());
         }
-        final ToolRunContext context = ToolRunContext.current().orElse(null);
-        if (context == null) {
-            return "Error: a button can only be offered while answering a question in a chat.";
+        if (context.runContext().isEmpty()) {
+            return ToolResult.text("Error: a button can only be offered while answering a question in a chat.");
         }
 
+        // The tab the user attached to the chat.
+        final int chatId = context.session().requireChatId(NAME);
         final StoredTabSnapshot tab = tabSnapshots.forLatestQuestion(chatId).orElse(null);
         final DocRef dashboard = NullSafe.get(tab, StoredTabSnapshot::docRef);
         if (dashboard == null || !DashboardDoc.TYPE.equals(dashboard.getType())) {
-            return NOT_DASHBOARD;
+            return ToolResult.text(NOT_DASHBOARD);
         }
         if (!documentAccess.canView(dashboard)) {
-            return DocumentAccess.NO_PERMISSION;
+            return ToolResult.text(DocumentAccess.NO_PERMISSION);
         }
         final AiTabSearch table = CurrentResultsTool.chooseTable(NullSafe.list(tab.searches()), component);
         if (table == null) {
-            return "The dashboard has no table '" + component + "'. Its tables are: "
-                   + String.join(", ", NullSafe.list(tab.searches()).stream()
-                    .map(search -> "'" + NullSafe.nonBlankStringElse(search.getName(), search.getComponentId())
-                                   + "'")
-                    .toList()) + ".";
+            return ToolResult.text(
+                    "The dashboard has no table '" + component + "'. Its tables are: "
+                    + String.join(", ", NullSafe.list(tab.searches()).stream()
+                     .map(search -> "'" + NullSafe.nonBlankStringElse(search.getName(), search.getComponentId())
+                                    + "'")
+                     .toList()) + ".");
         }
         final UnsavedPart settings = tabSnapshots.part(chatId, tab, AiTabSnapshotPart.DASHBOARD).orElse(null);
         if (settings == null || settings.cut() || NullSafe.isBlankString(table.getComponentId())) {
-            return "The dashboard's settings aren't in the tab snapshot in full (it may be too large, or still "
-                   + "loading), so a change can't be proposed. Give the steps for the user to make it from the "
-                   + "column menus instead.";
+            return ToolResult.text(
+                    "The dashboard's settings aren't in the tab snapshot in full (it may be too large, or still "
+                    + "loading), so a change can't be proposed. Give the steps for the user to make it from the "
+                    + "column menus instead.");
         }
 
         final String tableName = NullSafe.nonBlankStringElse(table.getName(), table.getComponentId());
@@ -272,31 +287,31 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         final List<Change> built = withComponents(withQueryExpressions(checked.changes(), table, problems),
                 settings.text(), tableName, problems);
         if (!problems.isEmpty()) {
-            return "No change was proposed, as it isn't valid:\n- " + String.join("\n- ", problems)
-                   + "\nCorrect it and propose it again.";
+            return ToolResult.text("No change was proposed, as it isn't valid:\n- " + String.join("\n- ", problems)
+                                   + "\nCorrect it and propose it again.");
         }
 
-        final Map<String, Object> action = new LinkedHashMap<>();
-        action.put("id", "apply-dashboard-change-" + SEQUENCE.incrementAndGet());
-        action.put("action", UserActions.APPLY_DASHBOARD_CHANGE);
-        action.put("doc", Map.of("type", dashboard.getType(), "uuid", dashboard.getUuid()));
-        action.put("component", tableName);
-        action.put("component_id", table.getComponentId());
-        action.put("changes", built.stream().map(Change::toMap).toList());
-        action.put("snapshot_hash", AiTabSnapshotPart.hashText(settings.text()));
-        NullSafe.consume(summary, text -> action.put("summary", text));
-        context.offerUserAction(request.id(), action);
-        auditLog.documentViewed(chatId, dashboard, "Proposed a change to table '" + tableName + "' with the "
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("doc", Map.of("type", dashboard.getType(), "uuid", dashboard.getUuid()));
+        arguments.put("component", tableName);
+        arguments.put("component_id", table.getComponentId());
+        arguments.put("changes", built.stream().map(Change::toMap).toList());
+        arguments.put("snapshot_hash", AiTabSnapshotPart.hashText(settings.text()));
+        NullSafe.consume(summary, text -> arguments.put("summary", text));
+        final ToolUserAction action = new ToolUserAction("apply-dashboard-change-" + SEQUENCE.incrementAndGet(),
+                UserActions.APPLY_DASHBOARD_CHANGE, arguments);
+        auditLog.documentViewed(context.session(), dashboard, "Proposed a change to table '" + tableName + "' with the "
                                                    + NAME + " tool: "
                                                    + String.join("; ", DashboardChanges.describe(built)));
 
-        return "The user has been shown the change to table '" + tableName + "' on dashboard '"
-               + dashboard.getName() + "' with an 'Apply to dashboard' button:\n- "
-               + String.join("\n- ", DashboardChanges.describe(built))
-               + "\nNothing changes until they click it, and it is never saved: it is applied to the open "
-                 + "dashboard as an unsaved change, on top of any unsaved changes it has, which they can save, or "
-                 + "undo with Undo apply. Tell them about the button rather than saying the dashboard was changed."
-                 + eventNote(built, table, tableName);
+        return ToolResult.text(
+                "The user has been shown the change to table '" + tableName + "' on dashboard '"
+                + dashboard.getName() + "' with an 'Apply to dashboard' button:\n- "
+                + String.join("\n- ", DashboardChanges.describe(built))
+                + "\nNothing changes until they click it, and it is never saved: it is applied to the open "
+                  + "dashboard as an unsaved change, on top of any unsaved changes it has, which they can save, or "
+                  + "undo with Undo apply. Tell them about the button rather than saying the dashboard was changed."
+                  + eventNote(built, table, tableName)).withUserAction(action);
     }
 
     // Resolves the component each rename and set_setting changes, by name (or a table these changes add), and checks

@@ -1,0 +1,6 @@
+Arguments: {"mode":"summary"}
+
+=== Output ===
+Processing tasks, counted by pipeline, status:
+- Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid): 1 Queued, 1 Processing, 2 Complete, 3 Failed (7 in all)
+- Pipeline [DNS pipeline](?action=open-doc&docType=Pipeline&docUuid=other-pipe-uuid): 1 Complete, 1 Failed (2 in all)

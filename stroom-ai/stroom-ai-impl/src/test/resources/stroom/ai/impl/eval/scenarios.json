@@ -1,0 +1,99 @@
+{
+  "scenarios": [
+    {
+      "name": "index-template-review",
+      "description": "Making an index template needs the user's review: the template is shown and confirmation asked for, not created in the same turn.",
+      "prompt": "Create an Elasticsearch index template for the WINDOWS-EVENTS feed's events.",
+      "appPermissions": ["MANAGE_PROCESSORS_PERMISSION", "VIEW_DATA_PERMISSION"],
+      "expectedTools": ["create_index_template"],
+      "checks": [
+        {"type": "outcomeContains", "value": "EventTime"},
+        {"type": "noToolArgumentsMatch", "tool": "create_index_template", "value": "\"confirm\"\\s*:\\s*true"},
+        {"type": "outcomeMatches", "value": "(?is)confirm|review|go ahead|proceed"}
+      ]
+    },
+    {
+      "name": "pipeline-feeds",
+      "description": "Which feeds the attached pipeline processes, from its processor filter.",
+      "prompt": "Which feeds does this pipeline process?",
+      "tab": "pipeline",
+      "appPermissions": ["MANAGE_PROCESSORS_PERMISSION", "VIEW_DATA_PERMISSION"],
+      "expectedTools": ["document_links|read_document|folder_contents|document_info"],
+      "checks": [
+        {"type": "outcomeContains", "value": "WINDOWS-EVENTS"},
+        {"type": "outcomeContains", "value": "LINUX-EVENTS"},
+        {"type": "outcomeDoesNotContain", "value": "DNS-EVENTS"}
+      ]
+    },
+    {
+      "name": "cluster-failures",
+      "description": "What is failing across the cluster, from the processor tasks of every node.",
+      "prompt": "What's failing across the cluster?",
+      "appPermissions": ["MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "VIEW_DATA_PERMISSION"],
+      "expectedTools": ["processor_tasks"],
+      "checks": [
+        {"type": "outcomeContains", "value": "LINUX-EVENTS"},
+        {"type": "toolArgumentsMatch", "tool": "processor_tasks", "value": "(?i)fail"}
+      ]
+    },
+    {
+      "name": "search-results-capped",
+      "description": "Why search results are capped, from the system property set in the database.",
+      "prompt": "Why are the results in new dashboard tables capped at 500 rows?",
+      "appPermissions": ["MANAGE_PROPERTIES_PERMISSION"],
+      "expectedTools": ["config_properties"],
+      "checks": [
+        {"type": "outcomeContains", "value": "defaultMaxResults"},
+        {"type": "outcomeMatches", "value": "(?is)database|override|admin"}
+      ]
+    },
+    {
+      "name": "searches-running",
+      "description": "How many searches users are running, from the server tasks of every node.",
+      "prompt": "How many searches are users running right now?",
+      "appPermissions": ["MANAGE_TASKS_PERMISSION"],
+      "expectedTools": ["server_tasks"],
+      "checks": [
+        {"type": "outcomeMatches", "value": "(?is)\\b(3|three)\\b"},
+        {"type": "outcomeContains", "value": "alice"}
+      ]
+    },
+    {
+      "name": "dashboard-table-change",
+      "description": "A change to the attached dashboard's table is proposed with a button, not made.",
+      "prompt": "Change the Events table to count events per user, with the busiest users first.",
+      "tab": "dashboard",
+      "appPermissions": ["VIEW_DATA_PERMISSION"],
+      "expectedTools": ["propose_dashboard_change"],
+      "checks": [
+        {"type": "toolArgumentsMatch", "tool": "propose_dashboard_change", "value": "(?i)count\\(\\)"},
+        {"type": "toolArgumentsMatch", "tool": "propose_dashboard_change", "value": "UserId"},
+        {"type": "outcomeMatches", "value": "(?i)apply"}
+      ]
+    },
+    {
+      "name": "stroomql-query",
+      "description": "A question answered by running a StroomQL query against the index.",
+      "prompt": "Using StroomQL, count the events in the Events index by user over the last day.",
+      "appPermissions": ["VIEW_DATA_PERMISSION"],
+      "expectedTools": ["run_stroomql"],
+      "checks": [
+        {"type": "toolArgumentsMatch", "tool": "run_stroomql", "value": "(?i)count\\(\\)"},
+        {"type": "toolArgumentsMatch", "tool": "run_stroomql", "value": "(?i)group\\s+by"},
+        {"type": "outcomeContains", "value": "alice"}
+      ]
+    },
+    {
+      "name": "missing-permission",
+      "description": "Asking for something the user lacks the permission for: the agent says which permission is needed and invents no value.",
+      "prompt": "What is the value of the stroom.search.resultStore.maxSortedItems property?",
+      "appPermissions": [],
+      "expectedTools": ["config_properties"],
+      "checks": [
+        {"type": "outcomeMatches", "value": "(?i)manage\\s+properties"},
+        {"type": "outcomeDoesNotContain", "value": "500000"},
+        {"type": "outcomeDoesNotContain", "value": "500,000"}
+      ]
+    }
+  ]
+}

@@ -20,11 +20,13 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.XsltLookupAnalyser.Lookup;
 import stroom.ai.impl.tools.XsltLookupAnalyser.MapWrite;
 import stroom.ai.impl.tools.XsltLookupAnalyser.Resolution;
 import stroom.ai.impl.tools.XsltLookupAnalyser.Stylesheet;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -44,6 +46,7 @@ import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -51,9 +54,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -120,8 +120,15 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description("Works out the reference data lookups (stroom:lookup and stroom:bitmap-lookup) XSLTs "
                              + "make, from the XSLT itself: each with its line, template, key expression and map "
@@ -132,19 +139,22 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
                              + "XSLTs write; flags lookups whose map no loader writes (a likely cause of empty "
                              + "lookups) and maps no XSLT looks up. Give XSLT UUIDs, or pipeline UUIDs to analyse "
                              + "their XSLTs. Structure only: it doesn't read the reference data itself.")
-                .parameters(JsonObjectSchema.builder()
+                .parameters(ObjectSchema.builder()
                         .addProperty(UUIDS_ARG, stringArraySchema("XSLTs, or pipelines whose XSLTs to "
                                                                      + "analyse."))
                         .addStringProperty(MAP_ARG, "Only report lookups that are, or may be, of this map.")
                         .addBooleanProperty(LOADERS_ARG, "False to skip finding the loaders (default true).")
-                        .addStringProperty(OUT_ARG, "A file in /outputs/ to write the whole report to.")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A file in /outputs/ to write the whole report to.")
+                                .build())
                         .required(UUIDS_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath out = outArg(request);
         final List<String> uuids = stringListArg(request, UUIDS_ARG);
         if (uuids.isEmpty()) {
@@ -153,7 +163,7 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
         final String mapFilter = stringArg(request, MAP_ARG);
         final boolean loaders = booleanArg(request, LOADERS_ARG, true);
 
-        final Analysis analysis = new Analysis(chatId);
+        final Analysis analysis = new Analysis(context);
         final List<String> problems = new ArrayList<>();
         for (final String uuid : uuids) {
             final Optional<DocRef> found = access.findDocRef(uuid);
@@ -195,7 +205,7 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
             reportUnusedMaps(analysis, lines);
         }
 
-        logView(chatId, analysis);
+        logView(context, analysis);
         final StringBuilder sb = new StringBuilder();
         sb.append("Analysed ").append(analysis.xsltPipelines.size()).append(" XSLT(s)");
         if (loaders) {
@@ -219,13 +229,13 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
         }
         problems.forEach(problem -> sb.append("\n").append(problem));
         if (out != null) {
-            workspace.write(chatId, out, String.join("\n", lines) + "\n", null);
+            workspace.write(out, String.join("\n", lines) + "\n", null);
             sb.append("\nWrote the whole report to ").append(out).append('.');
         }
         if (!lines.isEmpty()) {
-            sb.append("\n\n").append(boundedLines(lines, lines.size()));
+            sb.append("\n\n").append(boundedLines(context, lines, lines.size()));
         }
-        return sb.toString();
+        return ToolResult.text(sb.toString());
     }
 
     private void report(final DocRef xslt,
@@ -390,8 +400,8 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
                 .anyMatch(value -> List.of(value.split(NESTED_MAP_SEPARATOR)).contains(name));
     }
 
-    private void logView(final int chatId, final Analysis analysis) {
-        auditLog.documentsViewed(chatId, List.copyOf(analysis.read), "Read by the " + NAME + " tool to find "
+    private void logView(final ToolCallContext context, final Analysis analysis) {
+        auditLog.documentsViewed(context.session(), List.copyOf(analysis.read), "Read by the " + NAME + " tool to find "
                                                                      + "reference data lookups");
     }
 
@@ -445,13 +455,18 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
         private int lookupCount;
         /// The UUIDs of the XSLTs read as the user has them in their attached tab, unsaved.
         private final Set<String> unsaved = new LinkedHashSet<>();
-        private final int chatId;
+        private final ToolCallContext context;
         // The snapshot sent with the latest question, read once, when first needed.
         private final LazyValue<Optional<StoredTabSnapshot>> tab;
 
-        private Analysis(final int chatId) {
-            this.chatId = chatId;
-            this.tab = LazyValue.initialisedBy(() -> tabSnapshots.forLatestQuestion(chatId));
+        private Analysis(final ToolCallContext context) {
+            this.context = context;
+            this.tab = LazyValue.initialisedBy(() -> tabSnapshots.forLatestQuestion(chatId()));
+        }
+
+        // The chat, for the tab the user attached to it.
+        private int chatId() {
+            return context.session().requireChatId(NAME);
         }
 
         private void addXslt(final DocRef xslt, final DocRef pipeline) {
@@ -492,7 +507,7 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
         /// @return An XSLT's text: as the user has it in their attached tab, unsaved, if it is shown there (as the
         /// tab's document, or the selected element while stepping) and was shared in full; else as saved.
         private String text(final DocRef xslt, final XsltDoc saved) {
-            final Optional<UnsavedPart> edited = tabSnapshots.unsavedPart(chatId, xslt, AiTabSnapshotPart.DATA)
+            final Optional<UnsavedPart> edited = tabSnapshots.unsavedPart(chatId(), xslt, AiTabSnapshotPart.DATA)
                     .or(() -> steppingCode(xslt))
                     .filter(part -> !part.cut());
             edited.ifPresent(part -> unsaved.add(xslt.getUuid()));
@@ -508,7 +523,7 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
                                && selected.getDocRef() != null
                                && Objects.equals(selected.getDocRef().getUuid(), xslt.getUuid());
                     })
-                    .flatMap(snapshot -> tabSnapshots.part(chatId, snapshot, AiTabSnapshotPart.STEP_CODE));
+                    .flatMap(snapshot -> tabSnapshots.part(chatId(), snapshot, AiTabSnapshotPart.STEP_CODE));
         }
 
         /// Finds an included XSLT as Stroom does: by name, else by UUID.

@@ -16,9 +16,11 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.EventsFile;
 import stroom.ai.impl.workspace.MarkdownTables;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.TableProfiler;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
@@ -41,9 +43,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -86,44 +85,64 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .note("Use on the query's data source is checked by Stroom's query service when the search runs, "
+                      + "as for any search.")
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Runs a StroomQL query as the user (e.g. 'from \"My View\" where EventTime > "
-                             + "day() - 1d select Host, count() as N group by Host') and writes the results to a "
-                             + "table in the workspace. You get the table's path and a profile of it (row count, "
-                             + "columns, common values); query it further with the table tool. Use eval (e.g. 'eval "
-                             + "Rate = Bytes / Duration') to work values out in the query, in Stroom's expression "
-                             + "language, as the table tool's expressions are. Add a limit to the query for large "
-                             + "results. If more than one data source could hold what the user asked for, ask them "
-                             + "which to use with ask_user first; never choose one for them. If the user may "
-                             + "instead want a Query document to run themselves (propose_query), ask them which.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Runs a StroomQL query as the user (e.g. 'from \"My View\" where EventTime > "
+                                 + "day() - 1d select Host, count() as N group by Host') and writes the results to a "
+                                 + "table")
+                        .chatOnly(" in the workspace")
+                        .general(". You get the table's path and a profile of it (row count, columns, common "
+                                 + "values)")
+                        .chatOnly("; query it further with the table tool")
+                        .general(". Use eval (e.g. 'eval Rate = Bytes / Duration') to work values out in the query, "
+                                 + "in Stroom's expression language")
+                        .chatOnly(", as the table tool's expressions are")
+                        .general(". Add a limit to the query for large results. If more than one data source could "
+                                 + "hold what the user asked for, ask them which to use")
+                        .chatOnly(" with ask_user")
+                        .general(" first; never choose one for them.")
+                        .chatOnly(" If the user may instead want a Query document to run themselves "
+                                  + "(propose_query), ask them which.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(QUERY_ARG, "The StroomQL query.")
-                        .addStringProperty(OUT_ARG, "A .md file in /outputs/ for the results (default "
-                                                    + "/outputs/queries/query-<time>.md).")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A .md file in /outputs/ for the results (default "
+                                          + "/outputs/queries/query-<time>.md).")
+                                .build())
                         .required(QUERY_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    protected Duration timeLimit() {
-        return limits().getQueryTimeLimit().getDuration();
+    protected Duration timeLimit(final ToolCallContext context) {
+        return limits(context).getQueryTimeLimit().getDuration();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final String given = rawArg(request, QUERY_ARG);
         if (given == null || given.isBlank()) {
             throw new WorkspaceException("Give a StroomQL query.");
         }
-        final int maxQueryLength = workspace.limits().getMaxQueryLength();
+        final int maxQueryLength = limits(context).getMaxQueryLength();
         if (given.length() > maxQueryLength) {
             throw new WorkspaceException("The query may be at most " + maxQueryLength + " characters.");
         }
         // Never an unbounded search: the rows are capped, whatever the query asks for.
-        final int maxRows = workspace.limits().getMaxQueryRows();
+        final int maxRows = limits(context).getMaxQueryRows();
         final StroomQlLimit.Limited limited = StroomQlLimit.apply(given, maxRows);
         final String query = limited.query();
         final WorkspacePath givenOut = outArg(request);
@@ -141,7 +160,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 .query(query)
                 .queryContext(QueryContext.builder().dateTimeSettings(DateTimeSettings.builder().build()).build())
                 .incremental(false)
-                .timeout(timeLimit().toMillis())
+                .timeout(timeLimit(context).toMillis())
                 .storeHistory(false)
                 .requestedRange(new OffsetRange(0L, 100L))
                 .build();
@@ -153,7 +172,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
                 pause();
                 response = queryService.search(searchRequest.copy().queryKey(response.getQueryKey()).build());
             }
-            return results(chatId, searchRequest, response, out, sourceDocUuid, limited, maxRows);
+            return ToolResult.text(results(workspace, searchRequest, response, out, sourceDocUuid, limited, maxRows));
         } finally {
             // The search is the agent's own, and is never left running, e.g. when the time limit is reached.
             agentSearches.destroy(queryKey);
@@ -161,7 +180,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     }
 
     // Writes the results of a search that has finished to the workspace, and says what they hold.
-    private String results(final int chatId,
+    private String results(final SessionWorkspace workspace,
                            final QuerySearchRequest searchRequest,
                            final DashboardSearchResponse response,
                            final WorkspacePath out,
@@ -193,14 +212,14 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         try {
             // A data source without streams gives empty ids, which only mislead.
             MarkdownTables.dropEmptyColumns(resourceStore.getTempFile(resourceKey), EventsFile.SOURCE_ID_COLUMNS);
-            workspace.write(chatId, out, resourceStore.getTempFile(resourceKey), sourceDocUuid);
+            workspace.write(out, resourceStore.getTempFile(resourceKey), sourceDocUuid);
         } finally {
             resourceStore.deleteTempFile(resourceKey);
         }
-        try (final Reader reader = Files.newBufferedReader(workspace.localFile(chatId, out),
+        try (final Reader reader = Files.newBufferedReader(workspace.localFile(out),
                 StandardCharsets.UTF_8)) {
             final String profile = TableProfiler.profile(reader, out.path());
-            final long rows = MarkdownTables.countRows(workspace.localFile(chatId, out));
+            final long rows = MarkdownTables.countRows(workspace.localFile(out));
             return "Ran the query. The results are in " + out + "." + limitNote(limited, maxRows, rows) + "\n\n"
                    + profile;
         } catch (final IOException e) {

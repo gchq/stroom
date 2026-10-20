@@ -17,19 +17,18 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.docref.DocRef;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -68,8 +67,15 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description("Gives a data source's fields: each field's type, the conditions it supports and "
                              + "whether it can be queried, and the data source's time field. Use it to check the "
@@ -78,32 +84,35 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
                              + "field mapping of the pipeline that feeds it): use it to choose a data source and "
                              + "its fields. The AGENTS docs that apply where the data source is are given too: "
                              + "follow what they say about its fields, e.g. which field holds the acting user.")
-                .parameters(JsonObjectSchema.builder()
-                        .addStringProperty(DATA_SOURCE_ARG, "The data source's name or uuid, as list_data_sources "
-                                                            + "gives it.")
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(DATA_SOURCE_ARG, ToolDescription.builder()
+                                .general("The data source's name or uuid")
+                                .chatOnly(", as list_data_sources gives it")
+                                .general(".")
+                                .build())
                         .required(DATA_SOURCE_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String given = stringArg(request, DATA_SOURCE_ARG);
         if (given == null) {
             throw new WorkspaceException("Give the data source's name or uuid.");
         }
         final List<DocRef> found = dataSourceAccess.find(given);
         if (found.isEmpty()) {
-            return DataSourceAccess.NOT_FOUND;
+            return ToolResult.text(DataSourceAccess.NOT_FOUND);
         }
         if (found.size() > 1) {
             final StringBuilder sb = new StringBuilder("Several data sources you can use are called '")
                     .append(given).append("'. Give the uuid of the one you mean:\n");
             found.forEach(docRef -> sb.append("- ").append(DataSourceAccess.describe(docRef)).append('\n'));
-            return sb.toString().stripTrailing();
+            return ToolResult.text(sb.toString().stripTrailing());
         }
         final DocRef dataSource = found.getFirst();
-        auditLog.documentViewed(chatId, dataSource, "Fields described by the " + NAME + " tool");
+        auditLog.documentViewed(context.session(), dataSource, "Fields described by the " + NAME + " tool");
         final ResultPage<QueryField> fields = queryServiceProvider.get().findFields(new FindFieldCriteria(
                 new PageRequest(0, MAX_FIELDS), FindFieldCriteria.DEFAULT_SORT_LIST, dataSource, null, null));
         final List<QueryField> values = NullSafe.list(NullSafe.get(fields, ResultPage::getValues));
@@ -112,7 +121,7 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
                 .ifPresent(field -> sb.append("Time field: ").append(field.getFldName()).append('\n'));
         if (values.isEmpty()) {
             sb.append("It has no fields you can see.");
-            return sb.append(context(chatId, dataSource)).toString();
+            return ToolResult.text(sb.append(contextNote(context, dataSource)).toString());
         }
         sb.append("Fields (").append(values.size()).append("):\n");
         for (final QueryField field : values) {
@@ -132,18 +141,18 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
         if (values.size() >= MAX_FIELDS) {
             sb.append("(Only the first ").append(MAX_FIELDS).append(" fields are given.)\n");
         }
-        sb.append(context(chatId, dataSource));
-        return sb.toString().stripTrailing();
+        sb.append(contextNote(context, dataSource));
+        return ToolResult.text(sb.toString().stripTrailing());
     }
 
     // What the people and builds that look after the data source say about it: its documentation (e.g. that
     // document.description is a tweet's text, from the pipeline that feeds it) and its AGENTS docs (e.g. which field
     // holds the acting user). Given even when its fields can't be listed.
-    private String context(final int chatId, final DocRef dataSource) {
-        return DataSourceDocumentation.note(dataSourceDocumentation.find(chatId, dataSource,
-                       "Documentation read by the " + NAME + " tool"))
-               + agentInstructions.load(chatId, "Standing instructions read by the " + NAME + " tool")
-                       .note(List.of(agentInstructions.folderOf(dataSource)));
+    private String contextNote(final ToolCallContext context, final DocRef dataSource) {
+        return DataSourceDocumentation.note(context.links(), dataSourceDocumentation.find(context.session(),
+                       dataSource, "Documentation read by the " + NAME + " tool"))
+               + agentInstructions.load(context.session(), "Standing instructions read by the " + NAME + " tool")
+                       .note(context.links(), List.of(agentInstructions.folderOf(dataSource)));
     }
 
     @Override

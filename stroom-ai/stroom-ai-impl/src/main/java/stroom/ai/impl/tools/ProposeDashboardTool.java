@@ -19,16 +19,15 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.DashboardBuilder;
 import stroom.ai.impl.DashboardBuilder.Built;
 import stroom.ai.impl.UserActions;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.query.impl.QueryService;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -71,22 +70,33 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.USE)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Offers the user a 'Create dashboard…' button for a new Dashboard built from your "
-                             + "StroomQL: a query, a table of the columns your select gives (with any grouping, "
-                             + "sorting and limit), and optionally a data preview (a Text widget showing the "
-                             + "event of the selected row). It creates nothing itself: the button opens Stroom's "
-                             + "New Dashboard dialog with the name you suggest. Before using it, ask the user with "
-                             + "one ask_user call: whether the query should be StroomQL or Expression Language "
-                             + "(classic); which fields the table should show, unless their request says (offer "
-                             + "sets of fields from describe_data_source as options); whether they want a data "
-                             + "preview; and which data source, if more than one could hold what they asked for. "
-                             + "Write the query in StroomQL either way: for classic, Stroom turns its where "
-                             + "clause into the query's expression and its select into the table's columns. "
-                             + "Validate it first.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Offers the user a 'Create dashboard…' button for a new Dashboard built from your "
+                                 + "StroomQL: a query, a table of the columns your select gives (with any grouping, "
+                                 + "sorting and limit), and optionally a data preview (a Text widget showing the "
+                                 + "event of the selected row). It creates nothing itself")
+                        .chatOnly(": the button opens Stroom's New Dashboard dialog with the name you suggest")
+                        .general(". Before using it, ask the user")
+                        .chatOnly(" with one ask_user call")
+                        .general(": whether the query should be StroomQL or Expression Language (classic); which "
+                                 + "fields the table should show, unless their request says")
+                        .chatOnly(" (offer sets of fields from describe_data_source as options)")
+                        .general("; whether they want a data preview; and which data source, if more than one "
+                                 + "could hold what they asked for. Write the query in StroomQL either way: for "
+                                 + "classic, Stroom turns its where clause into the query's expression and its "
+                                 + "select into the table's columns. Validate it first.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "The name to suggest for the new dashboard.")
                         .addStringProperty(QUERY_ARG, "The StroomQL, with a select clause giving the table's "
                                                       + "columns.")
@@ -98,15 +108,18 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
                         .addBooleanProperty(PREVIEW_ARG, "Whether the user wants a data preview below the table, "
                                                          + "as they answered when asked. It needs ungrouped "
                                                          + "rows: if the query groups, say so when you ask.")
-                        .addStringProperty(DESCRIPTION_ARG, "Optional. A sentence saying what the dashboard "
-                                                            + "shows, shown with the button.")
+                        .addStringProperty(DESCRIPTION_ARG, ToolDescription.builder()
+                                .general("Optional. A sentence saying what the dashboard shows")
+                                .chatOnly(", shown with the button")
+                                .general(".")
+                                .build())
                         .required(NAME_ARG, QUERY_ARG, QUERY_TYPE_ARG, PREVIEW_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String name = stringArg(request, NAME_ARG);
         // Laid out as people write queries, as it is what an Embedded Query will hold.
         final String query = StroomQlFormatter.format(rawArg(request, QUERY_ARG));
@@ -118,56 +131,56 @@ class ProposeDashboardTool extends AbstractWorkspaceTool {
         if (query == null || query.isBlank()) {
             throw new WorkspaceException("Give the query's StroomQL.");
         }
-        if (query.length() > limits().getMaxQueryLength()) {
-            throw new WorkspaceException("The query may be at most " + limits().getMaxQueryLength()
+        if (query.length() > limits(context).getMaxQueryLength()) {
+            throw new WorkspaceException("The query may be at most " + limits(context).getMaxQueryLength()
                                          + " characters.");
         }
         if (!(argsMap(request).get(PREVIEW_ARG) instanceof final Boolean preview)) {
             throw new WorkspaceException("Say whether the user wants a data preview (true or false). If they "
                                          + "haven't said, ask them with ask_user.");
         }
-        final ToolRunContext context = ToolRunContext.current().orElse(null);
-        if (context == null) {
-            return "Error: a button can only be offered while answering a question in a chat.";
+        if (context.runContext().isEmpty()) {
+            return ToolResult.text("Error: a button can only be offered while answering a question in a chat.");
         }
         final QueryService queryService = queryServiceProvider.get();
         final DocRef dataSource = queryService.getReferencedDataSource(query)
                 .filter(dataSourceAccess::canUse)
                 .orElse(null);
         if (dataSource == null) {
-            return ValidateStroomQlTool.NO_DATA_SOURCE;
+            return ToolResult.text(ValidateStroomQlTool.NO_DATA_SOURCE);
         }
         final ValidateExpressionResult validation = queryService.validateQuery(query);
         if (validation == null || !validation.isOk()) {
-            return "The query is not valid, so no button was offered: "
-                   + NullSafe.nonBlankStringElse(NullSafe.get(validation, ValidateExpressionResult::getString),
-                    "the parser gave no reason") + "\nFix it and propose it again.";
+            return ToolResult.text(
+                    "The query is not valid, so no button was offered: "
+                    + NullSafe.nonBlankStringElse(NullSafe.get(validation, ValidateExpressionResult::getString),
+                     "the parser gave no reason") + "\nFix it and propose it again.");
         }
         final Built built;
         try {
             built = dashboardBuilder.build(name, query, queryType, preview);
         } catch (final IllegalArgumentException e) {
-            return "No button was offered: " + e.getMessage();
+            return ToolResult.text("No button was offered: " + e.getMessage());
         }
 
-        final Map<String, Object> action = new LinkedHashMap<>();
-        action.put("id", "create-dashboard-" + SEQUENCE.incrementAndGet());
-        action.put("action", UserActions.CREATE_DASHBOARD);
-        action.put("name", name);
-        action.put("query", query.strip());
-        action.put("query_type", built.queryType());
-        action.put("preview", preview);
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("name", name);
+        arguments.put("query", query.strip());
+        arguments.put("query_type", built.queryType());
+        arguments.put("preview", preview);
         if (!built.outline().isEmpty()) {
-            action.put("outline", built.outline());
+            arguments.put("outline", built.outline());
         }
-        NullSafe.consume(stringArg(request, DESCRIPTION_ARG), description -> action.put("description", description));
-        context.offerUserAction(request.id(), action);
-        return "The user has been offered a 'Create dashboard…' button for '" + name + "', reading "
-               + DataSourceAccess.describe(dataSource) + ": " + built.describe() + ". Nothing is created until "
-               + "they click it and confirm Stroom's New Dashboard dialog, which lets them choose the folder; then "
-               + "the dashboard opens in a new tab, ready to run, and is attached to the chat, so they can ask you to "
-               + "refine it (propose_dashboard_change). Tell them about the button rather than saying the dashboard "
-               + "was created.";
+        NullSafe.consume(stringArg(request, DESCRIPTION_ARG), description -> arguments.put("description", description));
+        final ToolUserAction action = new ToolUserAction("create-dashboard-" + SEQUENCE.incrementAndGet(),
+                UserActions.CREATE_DASHBOARD, arguments);
+        return ToolResult.text(
+                "The user has been offered a 'Create dashboard…' button for '" + name + "', reading "
+                + DataSourceAccess.describe(dataSource) + ": " + built.describe() + ". Nothing is created until "
+                + "they click it and confirm Stroom's New Dashboard dialog, which lets them choose the folder; then "
+                + "the dashboard opens in a new tab, ready to run, and is attached to the chat, so they can ask you to "
+                + "refine it (propose_dashboard_change). Tell them about the button rather than saying the dashboard "
+                + "was created.").withUserAction(action);
     }
 
     @Override

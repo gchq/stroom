@@ -18,8 +18,8 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.McpElicitations;
+import stroom.ai.impl.workspace.ChatWorkspace;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult.Action;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ class TestAskUserTool {
 
     private final McpElicitations elicitations = Mockito.mock(McpElicitations.class);
     private final AiChatRunManager runManager = Mockito.mock(AiChatRunManager.class);
-    private final AskUserTool tool = new AskUserTool(() -> elicitations, () -> runManager);
+    private final AskUserTool tool = new AskUserTool();
 
     @Test
     void theQuestionsAreAskedAsAFormAndTheAnswersGoToTheModel() {
@@ -160,7 +160,8 @@ class TestAskUserTool {
     }
 
     private String run(final String arguments) {
-        return tool.execute(ToolExecutionRequest.builder().id("1").name("ask_user").arguments(arguments).build(),
-                CHAT_ID);
+        return tool.execute(new ToolCall("1", "ask_user", arguments),
+                new ChatToolCallContexts(Mockito.mock(ChatWorkspace.class), () -> elicitations,
+                        () -> runManager).forChat(CHAT_ID)).text();
     }
 }

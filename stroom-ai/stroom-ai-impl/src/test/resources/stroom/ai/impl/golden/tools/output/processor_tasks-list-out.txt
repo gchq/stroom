@@ -1,0 +1,26 @@
+Arguments: {"mode":"list","statuses":["failed","complete"],"out":"/outputs/tasks.csv"}
+
+=== Output ===
+Processing tasks (status is Failed or Complete), newest first: 7
+Wrote 7 row(s) to /outputs/tasks.csv; use the table tool on it to filter, group or sort. The first rows:
+
+| Task Id | Status | Node | Stream Id | Feed | Pipeline | Pipeline UUID | Filter Id | Create Time | Start Time | End Time | Status Time | Duration Ms | Error Stream Ids | Fatal Errors | Errors | Warnings |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 8 | Complete | node2 | 107 | FIREWALL-EVENTS | Firewall pipeline | pipe-uuid | 8 | 2026-10-01T10:59:00.000Z | 2026-10-01T10:59:30.000Z | 2026-10-01T11:00:00.000Z | 2026-10-01T11:00:00.000Z | 30000 | 901 | 1 | 1 | 0 |
+| 7 | Complete | node1 | 106 | FIREWALL-EVENTS | Firewall pipeline | pipe-uuid | 7 | 2026-10-01T10:59:00.000Z | 2026-10-01T10:59:30.000Z | 2026-10-01T11:00:00.000Z | 2026-10-01T11:00:00.000Z | 30000 | 900 | 0 | 2 | 0 |
+| 5 | Complete | node2 | 104 | DNS-EVENTS | DNS pipeline | other-pipe-uuid | 5 | 2026-10-01T10:59:00.000Z | 2026-10-01T10:59:30.000Z | 2026-10-01T11:00:00.000Z | 2026-10-01T11:00:00.000Z | 30000 | 903 902 | 0 | 1 | 0 |
+| 4 | Failed | node2 | 103 | DNS-EVENTS | DNS pipeline | other-pipe-uuid | 4 | 2026-10-01T10:59:00.000Z | 2026-10-01T10:59:30.000Z | 2026-10-01T11:00:00.000Z | 2026-10-01T11:00:00.000Z | 30000 |  |  |  |  |
+| 3 | Failed | node1 | 102 | FIREWALL-EVENTS | Firewall pipeline | pipe-uuid | 3 | 2026-10-01T10:59:00.000Z | 2026-10-01T10:59:30.000Z | 2026-10-01T11:00:00.000Z | 2026-10-01T11:00:00.000Z | 30000 |  |  |  |  |
+| 2 | Failed | node1 | 101 | FIREWALL-EVENTS | Firewall pipeline | pipe-uuid | 2 | 2026-10-01T09:59:00.000Z | 2026-10-01T09:59:30.000Z | 2026-10-01T10:00:00.000Z | 2026-10-01T10:00:00.000Z | 30000 |  |  |  |  |
+| 1 | Failed | node1 | 100 | FIREWALL-EVENTS | Firewall pipeline | pipe-uuid | 1 | 2026-10-01T08:59:00.000Z | 2026-10-01T08:59:30.000Z | 2026-10-01T09:00:00.000Z | 2026-10-01T09:00:00.000Z | 30000 |  |  |  |  |
+
+=== Workspace file /outputs/tasks.csv ===
+Task Id,Status,Node,Stream Id,Feed,Pipeline,Pipeline UUID,Filter Id,Create Time,Start Time,End Time,Status Time,Duration Ms,Error Stream Ids,Fatal Errors,Errors,Warnings
+8,Complete,node2,107,FIREWALL-EVENTS,Firewall pipeline,pipe-uuid,8,2026-10-01T10:59:00.000Z,2026-10-01T10:59:30.000Z,2026-10-01T11:00:00.000Z,2026-10-01T11:00:00.000Z,30000,901,1,1,0
+7,Complete,node1,106,FIREWALL-EVENTS,Firewall pipeline,pipe-uuid,7,2026-10-01T10:59:00.000Z,2026-10-01T10:59:30.000Z,2026-10-01T11:00:00.000Z,2026-10-01T11:00:00.000Z,30000,900,0,2,0
+5,Complete,node2,104,DNS-EVENTS,DNS pipeline,other-pipe-uuid,5,2026-10-01T10:59:00.000Z,2026-10-01T10:59:30.000Z,2026-10-01T11:00:00.000Z,2026-10-01T11:00:00.000Z,30000,903 902,0,1,0
+4,Failed,node2,103,DNS-EVENTS,DNS pipeline,other-pipe-uuid,4,2026-10-01T10:59:00.000Z,2026-10-01T10:59:30.000Z,2026-10-01T11:00:00.000Z,2026-10-01T11:00:00.000Z,30000,,,,
+3,Failed,node1,102,FIREWALL-EVENTS,Firewall pipeline,pipe-uuid,3,2026-10-01T10:59:00.000Z,2026-10-01T10:59:30.000Z,2026-10-01T11:00:00.000Z,2026-10-01T11:00:00.000Z,30000,,,,
+2,Failed,node1,101,FIREWALL-EVENTS,Firewall pipeline,pipe-uuid,2,2026-10-01T09:59:00.000Z,2026-10-01T09:59:30.000Z,2026-10-01T10:00:00.000Z,2026-10-01T10:00:00.000Z,30000,,,,
+1,Failed,node1,100,FIREWALL-EVENTS,Firewall pipeline,pipe-uuid,1,2026-10-01T08:59:00.000Z,2026-10-01T08:59:30.000Z,2026-10-01T09:00:00.000Z,2026-10-01T09:00:00.000Z,30000,,,,
+

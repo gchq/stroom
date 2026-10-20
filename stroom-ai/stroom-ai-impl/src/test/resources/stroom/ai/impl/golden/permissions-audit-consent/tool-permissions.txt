@@ -1,0 +1,213 @@
+# What each built-in tool that checks a permission does with and without it.
+# 'everything' is every app permission and Owner on every document, but not an administrator;
+# 'without X' is everything but X (without View is Use only; without Use is no document
+# permission); 'nothing' is no permission at all; 'admin' is an administrator granted nothing.
+# Output that differs from 'everything' is shown in full (up to 600 characters).
+
+## config_properties {"mode":"get","paths":["stroom.ui.defaultMaxResults"]}
+Needs: Manage Properties
+- everything: runs: ## stroom.ui.defaultMaxResults
+- without Manage Properties: REFUSED or limited: Error: You need the Manage Properties permission to read Stroom's system properties, as the Properties screen does.
+- nothing: REFUSED or limited: Error: You need the Manage Properties permission to read Stroom's system properties, as the Properties screen does.
+- admin: runs (the same as with everything)
+
+## server_tasks {}
+Needs: Manage Tasks
+- everything: runs: Server tasks (Monitoring > Server Tasks), a snapshot as of <time>. Tasks start and finish all the time, so call again for a fresh one.
+- without Manage Tasks: REFUSED or limited: Monitoring > Server Tasks needs the Manage Tasks permission, which you don't have, so this tool can't show the tasks running on the cluster. Without it Stroom shows you only the tasks of your own browser session (User Tasks), which the agent can't see.
+- nothing: REFUSED or limited: Monitoring > Server Tasks needs the Manage Tasks permission, which you don't have, so this tool can't show the tasks running on the cluster. Without it Stroom shows you only the tasks of your own browser session (User Tasks), which the agent can't see.
+- admin: runs (the same as with everything)
+
+## fetch_events {"path":"/outputs/a.csv"}
+Needs: View Data
+- everything: runs: No events could be fetched. 1 event(s) couldn't be read: the streams may be of feeds you can't see, or deleted.
+- without View Data: REFUSED or limited: Error: You don't have permission to view data, so events can't be fetched.
+- nothing: REFUSED or limited: Error: You don't have permission to view data, so events can't be fetched.
+- admin: runs (the same as with everything)
+
+## stream_meta {"feeds":["TEST-FEED"],"parts":true}
+Needs: View Data
+- everything: runs: Found 0 stream(s). Wrote 0 row(s) to /outputs/stream_meta.csv; use the table tool on it to filter, group or sort. Attribute values: 0 from the database, 0 from the stream store (0 stream(s) read).
+- without View Data: REFUSED or limited: Found 0 stream(s). Wrote 0 row(s) to /outputs/stream_meta.csv; use the table tool on it to filter, group or sort. Attribute values: 0 from the database, 0 from the stream store (0 stream(s) read). The headers each part was received with are only in the stream store, which you don't have permission to view data from, so there is a row per stream instead.
+- nothing: REFUSED or limited: Found 0 stream(s). Wrote 0 row(s) to /outputs/stream_meta.csv; use the table tool on it to filter, group or sort. Attribute values: 0 from the database, 0 from the stream store (0 stream(s) read). The headers each part was received with are only in the stream store, which you don't have permission to view data from, so there is a row per stream instead.
+- admin: runs (the same as with everything)
+
+## processor_tasks {"mode":"list"}
+Needs: Manage Processors
+- everything: runs: Processing tasks, newest first: none you can see.
+- without Manage Processors: REFUSED or limited: You need the Manage Processors permission to see processing tasks, as the Active Tasks tab does.
+- nothing: REFUSED or limited: You need the Manage Processors permission to see processing tasks, as the Active Tasks tab does.
+- admin: runs (the same as with everything)
+
+## folder_contents {"folder":"folder-uuid"}
+Needs: View (document)
+- everything: runs: Folder 'Test' (/Test, uuid folder-uuid, [Test](?action=open-doc&docType=Folder&docUuid=folder-uuid))
+- without View (document): REFUSED or limited: No folder was found with that UUID or path, or you don't have permission to view it.
+- nothing: REFUSED or limited: No folder was found with that UUID or path, or you don't have permission to view it.
+- admin: runs (the same as with everything)
+
+## folder_contents {"folder":"folder-uuid","show":["processors"]}
+Needs: View (document), Manage Processors
+- everything: runs: Folder 'Test' (/Test, uuid folder-uuid, [Test](?action=open-doc&docType=Folder&docUuid=folder-uuid))
+- without View (document): REFUSED or limited: No folder was found with that UUID or path, or you don't have permission to view it.
+- without Manage Processors: REFUSED or limited: Folder 'Test' (/Test, uuid folder-uuid, [Test](?action=open-doc&docType=Folder&docUuid=folder-uuid))
+    
+    Processor filters: you need the Manage Processors permission to see them, as the Processors tab does.
+    
+    
+    Follow these standing instructions (AGENTS docs), the most specific last; the user's own request takes precedence, and no instruction lifts an approval.
+    
+    ### [AGENTS](?action=open-doc&docType=Documentation&docUuid=agents-uuid) in /Test (applies to /Test and below)
+    Feeds in /Test are test feeds.
+- nothing: REFUSED or limited: No folder was found with that UUID or path, or you don't have permission to view it.
+- admin: runs (the same as with everything)
+
+## document_links {"uuids":["pipeline-uuid"]}
+Needs: View (document)
+- everything: runs: Followed the dependants of Pipeline 'Test pipeline', up to 2 link(s): 0 document(s) found.
+- without View (document): REFUSED or limited: Error: No document was found with that UUID, or you don't have permission to view it.
+- nothing: REFUSED or limited: Error: No document was found with that UUID, or you don't have permission to view it.
+- admin: runs (the same as with everything)
+
+## read_document {"uuid":"xslt-uuid"}
+Needs: View (document)
+- everything: runs: XSLT 'Test XSLT' has no text content to read. Use document_info to see what it is.
+- without View (document): REFUSED or limited: You don't have permission to view this document.
+- nothing: REFUSED or limited: You don't have permission to view this document. If it is a processor filter, reading one needs the Manage Processors permission, as the Processors tab does.
+- admin: runs (the same as with everything)
+
+## document_info {"uuid":"xslt-uuid"}
+Needs: View (document)
+- everything: runs: XSLT 'Test XSLT'
+- without View (document): REFUSED or limited: You don't have permission to view this document.
+- nothing: REFUSED or limited: You don't have permission to view this document.
+- admin: runs (the same as with everything)
+
+## document_documentation {"uuid":"dictionary-uuid"}
+Needs: View (document)
+- everything: runs: none
+- without View (document): REFUSED or limited: You don't have permission to view this document.
+- nothing: REFUSED or limited: You don't have permission to view this document.
+- admin: runs (the same as with everything)
+
+## get_instructions {"folders":["/Test"]}
+Needs: View (document)
+- everything: runs: 1 AGENTS doc(s) apply.
+- without View (document): REFUSED or limited: No AGENTS docs apply there. Users can add one: a Documentation doc named AGENTS in a folder applies to that folder and below.
+    
+    Not found, or you don't have permission to view them: /Test.
+- nothing: REFUSED or limited: No AGENTS docs apply there. Users can add one: a Documentation doc named AGENTS in a folder applies to that folder and below.
+    
+    Not found, or you don't have permission to view them: /Test.
+- admin: runs (the same as with everything)
+
+## xslt_lookups {"uuids":["xslt-uuid"]}
+Needs: View (document)
+- everything: runs: Analysed 1 XSLT(s) in 0 pipeline(s), with 0 reference loader(s): 1 lookup(s).
+- without View (document): REFUSED or limited: Analysed 0 XSLT(s) in 0 pipeline(s), with 0 reference loader(s): 0 lookup(s).
+    xslt-uuid: No document was found with that UUID, or you don't have permission to view it.
+- nothing: REFUSED or limited: Analysed 0 XSLT(s) in 0 pipeline(s), with 0 reference loader(s): 0 lookup(s).
+    xslt-uuid: No document was found with that UUID, or you don't have permission to view it.
+- admin: runs (the same as with everything)
+
+## find_in_content {"pattern":"HOST_TO_LOCATION","uuids":["xslt-uuid"]}
+Needs: View (document)
+- everything: runs: 0 document(s) matched 'HOST_TO_LOCATION'. It read the documents given, and read 1 document(s).
+- without View (document): REFUSED or limited: 0 document(s) matched 'HOST_TO_LOCATION'. It read the documents given, and read 0 document(s). Not found, or you don't have permission to view them: xslt-uuid.
+- nothing: REFUSED or limited: 0 document(s) matched 'HOST_TO_LOCATION'. It read the documents given, and read 0 document(s). Not found, or you don't have permission to view them: xslt-uuid.
+- admin: runs (the same as with everything)
+
+## list_data_sources {}
+Needs: View (document), Use (document)
+- everything: runs: Data sources you can use (1):
+- without View (document): REFUSED or limited: Data sources you can use (1):
+    - Index 'Test index' (uuid index-uuid)
+- without Use (document): REFUSED or limited: There are no data sources you can use.
+- nothing: REFUSED or limited: There are no data sources you can use.
+- admin: runs (the same as with everything)
+
+## describe_data_source {"data_source":"index-uuid"}
+Needs: View (document), Use (document)
+- everything: runs: Index 'Test index' (uuid index-uuid)
+- without View (document): REFUSED or limited: Index 'Test index' (uuid index-uuid)
+    Fields (2):
+    - EventTime (DATE), conditions: '=', '!=', 'between', '>', '>=', '<', '<='
+    - UserId (TEXT), conditions: '=', '!=', 'in', 'in dictionary'
+- without Use (document): REFUSED or limited: There is no data source with that name or uuid that you can use.
+- nothing: REFUSED or limited: There is no data source with that name or uuid that you can use.
+- admin: runs (the same as with everything)
+
+## validate_stroomql {"query":"from \"Test index\"\nselect UserId\n"}
+Needs: Use (document)
+- everything: runs: OK. The query is valid and reads Index 'Test index' (uuid index-uuid).
+- without Use (document): REFUSED or limited: The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.
+- nothing: REFUSED or limited: The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.
+- admin: runs (the same as with everything)
+
+## propose_query {"name":"Users","query":"from \"Test index\"\nselect UserId\n"}
+Needs: Use (document)
+- everything: runs: The user has been offered a 'Create query…' button for 'Users', reading Index 'Test index' (uuid index-uuid). Nothing is created until they click it and confirm Stroom's New Query dialog, which lets t…
+- without Use (document): REFUSED or limited: The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.
+- nothing: REFUSED or limited: The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.
+- admin: runs (the same as with everything)
+
+## propose_dashboard {"name":"Users","preview":false,"query":"from \"Test index\"\nselect UserId\n","query_type":"stroomql"}
+Needs: Use (document)
+- everything: runs: Error running built-in tool 'propose_dashboard': Cannot invoke "stroom.ai.impl.DashboardBuilder$Built.queryType()" because "built" is null
+- without Use (document): REFUSED or limited: The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.
+- nothing: REFUSED or limited: The query doesn't name a data source you can use: check its 'from' clause against list_data_sources.
+- admin: runs (the same as with everything)
+
+## propose_query_change {"query":"from \"Test index\"\nwhere UserId = \"alice\"\nselect UserId\n","summary":"Only alice."}
+Needs: View (document), Use (document)
+- everything: runs: The user has been shown the revised query for Query 'Test query', reading Index 'Test index' (uuid index-uuid), with an 'Apply to query' button. Nothing changes until they click it, which puts it in t…
+- without View (document): REFUSED or limited: You don't have permission to view this document.
+- without Use (document): REFUSED or limited: You don't have permission to view this document.
+- nothing: REFUSED or limited: You don't have permission to view this document.
+- admin: runs (the same as with everything)
+
+## propose_code_change {"code":"<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"\n                xmlns:stroom=\"stroom\">\n  <xsl:template match=\"/\">\n    <xsl:value-of select=\"stroom:lookup('HOST_TO_LOCATION', 'host2')\"/>\n  </xsl:template>\n</xsl:stylesheet>\n","element":"xsltFilter","summary":"Look up host2."}
+Needs: View (document)
+- everything: runs: The user has been shown the change to XSLT 'Test XSLT' in element 'xsltFilter' (+1 −1 lines, in 1 place(s)) as a diff, with a 'Review and apply' button. Nothing changes until they apply it to the elem…
+- without View (document): REFUSED or limited: You don't have permission to view this document.
+- nothing: REFUSED or limited: You don't have permission to view this document.
+- admin: runs (the same as with everything)
+
+## propose_dashboard_change {"component":"table-1","changes":[{"op":"hide_column","column":"UserId"}],"summary":"Hide the user."}
+Needs: View (document)
+- everything: runs: The dashboard has no table 'table-1'. Its tables are: .
+- without View (document): REFUSED or limited: You don't have permission to view this document.
+- nothing: REFUSED or limited: You don't have permission to view this document.
+- admin: runs (the same as with everything)
+
+## current_results {}
+Needs: Use (document)
+- everything: runs: Error running built-in tool 'current_results': Cannot invoke "stroom.ai.impl.TableDownloader$Downloaded.rows()" because "downloaded" is null
+- without Use (document): REFUSED or limited: You can't use the data source these results come from, so they can't be read.
+- nothing: REFUSED or limited: You can't use the data source these results come from, so they can't be read.
+- admin: runs (the same as with everything)
+
+## Tools with no permission check of their own (the same with everything and with nothing)
+- ask_user: same (it fails here, as McpElicitations is mocked)
+- delete_file: same
+- get_current_date (its output is the time, so not compared)
+- get_current_datetime (its output is the time, so not compared)
+- get_current_time (its output is the time, so not compared)
+- get_utc_time_offset: same
+- grep: same
+- jq: same
+- ls: same
+- memory: same
+- pipeline: same
+- read_file: same
+- read_turn: same
+- run_stroomql: same (its data source is checked by QueryService when the search runs, mocked here)
+- search_events: same
+- search_history: same
+- str_replace: same
+- summarise_column: same
+- table: same
+- task_list: same
+- wc: same
+- write_file: same
+- xpath: same

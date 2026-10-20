@@ -374,7 +374,8 @@ class TestFolderContentsTool {
     }
 
     private String run(final String arguments) {
-        return tool().execute(ToolTestFixture.request(FolderContentsTool.NAME, arguments), 1);
+        return tool().execute(ToolTestFixture.request(FolderContentsTool.NAME, arguments), ToolCalls.inChat(1,
+                fixture.workspace)).text();
     }
 
     private FolderContentsTool tool() {

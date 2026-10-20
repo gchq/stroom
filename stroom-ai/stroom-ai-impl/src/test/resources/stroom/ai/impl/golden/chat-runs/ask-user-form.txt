@@ -1,0 +1,123 @@
+# ask-user-form
+
+ask_user shows its questions as a form (an ELICITATION card), waits for the user's answers and gives them to the model.
+
+== What happened ==
+The user asks: Find the failed logons.
+Run 1: answered: Searching Production for the last 3 days.
+
+== Stored messages ==
+#1 USER_MESSAGE (turn 1)
+    Find the failed logons.
+#2 INTERIM_RESPONSE (turn 1)
+    A couple of questions first.
+#3 TOOL_CALL (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "ask_user",
+      "arguments" : "{\"intro\":\"Before I search\",\"questions\":[{\"question\":\"Which environment?\",\"options\":[\"Production\",\"Test\"],\"recommended\":\"Production\"},{\"question\":\"How far back?\",\"options\":[\"24 hours\",\"7 days\"]}]}",
+      "rationale" : "A couple of questions first."
+    }
+#4 ELICITATION (turn 1)
+    {
+      "kind" : "ELICITATION",
+      "status" : "ACCEPTED",
+      "server" : "Stroom AI",
+      "tool" : "ask_user",
+      "message" : "Before I search",
+      "schema" : {
+        "type" : "object",
+        "properties" : {
+          "q1" : {
+            "type" : "string",
+            "title" : "Which environment?",
+            "examples" : [ "Production", "Test" ],
+            "default" : "Production",
+            "maxLength" : 2000
+          },
+          "q2" : {
+            "type" : "string",
+            "title" : "How far back?",
+            "examples" : [ "24 hours", "7 days" ],
+            "maxLength" : 2000
+          }
+        },
+        "required" : [ "q1", "q2" ]
+      },
+      "expiresMs" : "<time>",
+      "content" : {
+        "q1" : "Production",
+        "q2" : "the last 3 days"
+      }
+    }
+  First stored as ELICITATION:
+    {
+      "kind" : "ELICITATION",
+      "status" : "PENDING",
+      "server" : "Stroom AI",
+      "tool" : "ask_user",
+      "message" : "Before I search",
+      "schema" : {
+        "type" : "object",
+        "properties" : {
+          "q1" : {
+            "type" : "string",
+            "title" : "Which environment?",
+            "examples" : [ "Production", "Test" ],
+            "default" : "Production",
+            "maxLength" : 2000
+          },
+          "q2" : {
+            "type" : "string",
+            "title" : "How far back?",
+            "examples" : [ "24 hours", "7 days" ],
+            "maxLength" : 2000
+          }
+        },
+        "required" : [ "q1", "q2" ]
+      },
+      "expiresMs" : "<time>"
+    }
+#5 TOOL_RESULT (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "ask_user",
+      "error" : false,
+      "text" : "The user answered:\n- Which environment?\n  Production\n- How far back?\n  the last 3 days (in their own words)",
+      "chars" : 107,
+      "durationMs" : "<time>"
+    }
+
+== Workspace files made ==
+(none)
+
+== Run flags ==
+Read content that could hold planted instructions: false
+Read an untrusted MCP server's output: false
+
+== MCP tools offered ==
+(none)
+
+== Requests to the model ==
+(Built-in tools are listed by name in name order; their definitions have their own reference file.)
+--- Request 1 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Find the failed logons.
+--- Request 2 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Find the failed logons.
+[2] AI
+    A couple of questions first.
+    Calls ask_user as call-1 with {"intro":"Before I search","questions":[{"question":"Which environment?","options":["Production","Test"],"recommended":"Production"},{"question":"How far back?","options":["24 hours","7 days"]}]}
+[3] TOOL RESULT for call-1 (ask_user)
+    The user answered:
+    - Which environment?
+      Production
+    - How far back?
+      the last 3 days (in their own words)

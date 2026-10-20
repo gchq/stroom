@@ -268,19 +268,19 @@ public class DocumentAccess {
 
     /// Records in the audit log that the user viewed a document for the chat.
     ///
-    /// @param chatId  The chat.
+    /// @param session The session, e.g. the chat.
     /// @param docRef  The document.
     /// @param purpose Why, e.g. "Read by the read_document tool".
-    public void logView(final int chatId, final DocRef docRef, final String purpose) {
-        auditLog.documentViewed(chatId, docRef, purpose);
+    public void logView(final ToolSession session, final DocRef docRef, final String purpose) {
+        auditLog.documentViewed(session, docRef, purpose);
     }
 
     /// Records in the audit log that the user viewed several documents for the chat, as one event.
     ///
-    /// @param chatId  The chat.
+    /// @param session The session, e.g. the chat.
     /// @param docRefs The documents.
     /// @param purpose Why, e.g. "Standing instructions read by the list_data_sources tool".
-    public void logViews(final int chatId, final List<DocRef> docRefs, final String purpose) {
-        auditLog.documentsViewed(chatId, docRefs, purpose);
+    public void logViews(final ToolSession session, final List<DocRef> docRefs, final String purpose) {
+        auditLog.documentsViewed(session, docRefs, purpose);
     }
 }

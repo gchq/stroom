@@ -281,7 +281,8 @@ class TestStreamMetaTool {
     }
 
     private String run(final String arguments) {
-        return tool().run(ToolTestFixture.request(StreamMetaTool.NAME, arguments), 1);
+        return tool().run(ToolTestFixture.request(StreamMetaTool.NAME, arguments), ToolCalls.inChat(1,
+                fixture.workspace)).text();
     }
 
     private String message(final String arguments) {

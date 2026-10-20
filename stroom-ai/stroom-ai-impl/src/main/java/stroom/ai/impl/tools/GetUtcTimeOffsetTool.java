@@ -16,9 +16,8 @@
 
 package stroom.ai.impl.tools;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+
 import jakarta.inject.Inject;
 
 import java.time.DateTimeException;
@@ -39,14 +38,14 @@ class GetUtcTimeOffsetTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name("get_utc_time_offset")
                 .description("Returns the current offset from UTC (e.g. '-05:00') for a time zone, so a "
                              + "local time in that zone can be converted to or from UTC. Daylight saving "
                              + "is taken into account. If no time zone is given, the Stroom server's "
                              + "default time zone is used.")
-                .parameters(JsonObjectSchema.builder()
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(ARG_TIME_ZONE,
                                 "An IANA time zone ID such as 'Europe/London' or 'America/New_York', "
                                 + "or a fixed offset such as '+02:00'. Optional.")
@@ -55,7 +54,7 @@ class GetUtcTimeOffsetTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
         final String requested = stringArg(request, ARG_TIME_ZONE);
 
         final ZoneId zone;
@@ -64,15 +63,15 @@ class GetUtcTimeOffsetTool extends AbstractBuiltInTool {
                     ? ZoneId.systemDefault()
                     : ZoneId.of(requested);
         } catch (final DateTimeException e) {
-            return "Unknown time zone '" + requested + "'. Use an IANA zone ID like 'Europe/London' "
-                   + "or a fixed offset like '+02:00'.";
+            return ToolResult.text("Unknown time zone '" + requested + "'. Use an IANA zone ID like 'Europe/London' "
+                                   + "or a fixed offset like '+02:00'.");
         }
 
         final ZoneOffset offset = zone.getRules().getOffset(Instant.now());
         final String offsetText = ZoneOffset.UTC.equals(offset)
                 ? "+00:00"
                 : offset.getId();
-        return zone.getId() + " is currently " + offsetText + " from UTC.";
+        return ToolResult.text(zone.getId() + " is currently " + offsetText + " from UTC.");
     }
 
     @Override

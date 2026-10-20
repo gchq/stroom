@@ -1,0 +1,600 @@
+# The audit records each built-in tool makes, run on its fixed input as a user with every
+# permission. 'audit' lines are calls to AiAuditLog; 'event' lines are what it logs.
+
+## ask_user {"intro":"Which feed?","questions":[{"id":"feed","question":"Feed?","type":"text"}]}
+(nothing recorded)
+
+## config_properties {"mode":"get","paths":["stroom.ui.defaultMaxResults"]}
+- audit: propertiesViewed(1, ["stroom.ui.defaultMaxResults"], "Read by the config_properties tool")
+- event: AskStroomAi.viewProperties "Ask Stroom AI viewed 1 system property in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Read by the config_properties tool"
+    } ],
+    "objects" : [ {
+      "id" : "stroom.ui.defaultMaxResults",
+      "name" : "stroom.ui.defaultMaxResults",
+      "type" : "ConfigProperty"
+    } ],
+    "outcome" : {
+      "description" : "Read by the config_properties tool",
+      "success" : true
+    }
+  }
+
+## current_results {}
+(nothing recorded)
+
+## delete_file {"path":"/outputs/a.txt"}
+(nothing recorded)
+
+## describe_data_source {"data_source":"index-uuid"}
+- audit: documentViewed(1, DocRef{type='Index', uuid='index-uuid', name='Test index'}, "Fields described by the describe_data_source tool")
+- audit: documentsViewed(1, [DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}], "Standing instructions read by the describe_data_source tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed Index 'Test index' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Fields described by the describe_data_source tool"
+      } ],
+      "id" : "index-uuid",
+      "name" : "Test index",
+      "type" : "Index"
+    } ],
+    "outcome" : {
+      "description" : "Fields described by the describe_data_source tool",
+      "success" : true
+    }
+  }
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Standing instructions read by the describe_data_source tool"
+    } ],
+    "objects" : [ {
+      "id" : "agents-uuid",
+      "name" : "AGENTS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Standing instructions read by the describe_data_source tool",
+      "success" : true
+    }
+  }
+
+## document_documentation {"uuid":"dictionary-uuid"}
+- audit: documentViewed(1, DocRef{type='Dictionary', uuid='dictionary-uuid', name='Test words'}, "Documentation read by the document_documentation tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed Dictionary 'Test words' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Documentation read by the document_documentation tool"
+      } ],
+      "id" : "dictionary-uuid",
+      "name" : "Test words",
+      "type" : "Dictionary"
+    } ],
+    "outcome" : {
+      "description" : "Documentation read by the document_documentation tool",
+      "success" : true
+    }
+  }
+
+## document_info {"uuid":"xslt-uuid"}
+- audit: documentViewed(1, DocRef{type='XSLT', uuid='xslt-uuid', name='Test XSLT'}, "Described by the document_info tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed XSLT 'Test XSLT' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Described by the document_info tool"
+      } ],
+      "id" : "xslt-uuid",
+      "name" : "Test XSLT",
+      "type" : "XSLT"
+    } ],
+    "outcome" : {
+      "description" : "Described by the document_info tool",
+      "success" : true
+    }
+  }
+
+## document_links {"uuids":["pipeline-uuid"]}
+- audit: documentsSearched(1, "dependants of Pipeline 'Test pipeline' (pipeline-uuid), depth 2", [], {}, "Document links followed by the document_links tool")
+- event: AskStroomAi.search "Ask Stroom AI searched in chat 1: Document links followed by the document_links tool"
+  SearchEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Document links followed by the document_links tool"
+    } ],
+    "query" : {
+      "raw" : "dependants of Pipeline 'Test pipeline' (pipeline-uuid), depth 2"
+    },
+    "totalResults" : 0
+  }
+
+## fetch_events {"path":"/outputs/a.csv"}
+(nothing recorded)
+
+## find_in_content {"pattern":"HOST_TO_LOCATION","uuids":["xslt-uuid"]}
+- audit: documentsViewed(1, [DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}], "Standing instructions read by the find_in_content tool")
+- audit: documentsSearched(1, "'HOST_TO_LOCATION' in 1 document(s) given", [], {"DocumentsRead"="1", "How"="read the documents given"}, "Text found in the content of documents by the find_in_content tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Standing instructions read by the find_in_content tool"
+    } ],
+    "objects" : [ {
+      "id" : "agents-uuid",
+      "name" : "AGENTS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Standing instructions read by the find_in_content tool",
+      "success" : true
+    }
+  }
+- event: AskStroomAi.search "Ask Stroom AI searched in chat 1: Text found in the content of documents by the find_in_content tool"
+  SearchEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Text found in the content of documents by the find_in_content tool"
+    }, {
+      "name" : "DocumentsRead",
+      "value" : "1"
+    }, {
+      "name" : "How",
+      "value" : "read the documents given"
+    } ],
+    "query" : {
+      "raw" : "'HOST_TO_LOCATION' in 1 document(s) given"
+    },
+    "totalResults" : 0
+  }
+
+## folder_contents {"folder":"folder-uuid"}
+- audit: documentsViewed(1, [DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}], "Standing instructions read by the folder_contents tool")
+- audit: documentsSearched(1, "contents of Folder '/Test', showing documents, depth 1", [DocRef{type='Dashboard', uuid='dashboard-uuid', name='Test dashboard'}, DocRef{type='Dictionary', uuid='dictionary-uuid', name='Test words'}, DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}, DocRef{type='Feed', uuid='feed-uuid', name='TEST-FEED'}, DocRef{type='Index', uuid='index-uuid', name='Test index'}, DocRef{type='Pipeline', uuid='pipeline-uuid', name='Test pipeline'}, DocRef{type='Query', uuid='query-uuid', name='Test query'}, DocRef{type='XSLT', uuid='xslt-uuid', name='Test XSLT'}], {"Shown"="documents", "Documents"="8", "ProcessorFilters"="0"}, "Folder contents listed by the folder_contents tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Standing instructions read by the folder_contents tool"
+    } ],
+    "objects" : [ {
+      "id" : "agents-uuid",
+      "name" : "AGENTS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Standing instructions read by the folder_contents tool",
+      "success" : true
+    }
+  }
+- event: AskStroomAi.search "Ask Stroom AI searched in chat 1: Folder contents listed by the folder_contents tool"
+  SearchEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Folder contents listed by the folder_contents tool"
+    }, {
+      "name" : "Shown",
+      "value" : "documents"
+    }, {
+      "name" : "Documents",
+      "value" : "8"
+    }, {
+      "name" : "ProcessorFilters",
+      "value" : "0"
+    } ],
+    "query" : {
+      "raw" : "contents of Folder '/Test', showing documents, depth 1"
+    },
+    "results" : {
+      "objects" : [ {
+        "id" : "dashboard-uuid",
+        "name" : "Test dashboard",
+        "type" : "Dashboard"
+      }, {
+        "id" : "dictionary-uuid",
+        "name" : "Test words",
+        "type" : "Dictionary"
+      }, {
+        "id" : "agents-uuid",
+        "name" : "AGENTS",
+        "type" : "Documentation"
+      }, {
+        "id" : "feed-uuid",
+        "name" : "TEST-FEED",
+        "type" : "Feed"
+      }, {
+        "id" : "index-uuid",
+        "name" : "Test index",
+        "type" : "Index"
+      }, {
+        "id" : "pipeline-uuid",
+        "name" : "Test pipeline",
+        "type" : "Pipeline"
+      }, {
+        "id" : "query-uuid",
+        "name" : "Test query",
+        "type" : "Query"
+      }, {
+        "id" : "xslt-uuid",
+        "name" : "Test XSLT",
+        "type" : "XSLT"
+      } ]
+    },
+    "totalResults" : 8
+  }
+
+## get_current_date {}
+(nothing recorded)
+
+## get_current_datetime {}
+(nothing recorded)
+
+## get_current_time {}
+(nothing recorded)
+
+## get_instructions {"folders":["/Test"]}
+- audit: documentsViewed(1, [DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}], "Standing instructions read by the get_instructions tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Standing instructions read by the get_instructions tool"
+    } ],
+    "objects" : [ {
+      "id" : "agents-uuid",
+      "name" : "AGENTS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Standing instructions read by the get_instructions tool",
+      "success" : true
+    }
+  }
+
+## get_utc_time_offset {"timeZone":"UTC"}
+(nothing recorded)
+
+## grep {"pattern":"a","path":"/outputs"}
+(nothing recorded)
+
+## jq {"path":"/outputs/a.json","query":".a"}
+(nothing recorded)
+
+## list_data_sources {}
+- audit: documentsViewed(1, [DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}], "Standing instructions read by the list_data_sources tool")
+- audit: documentsViewed(1, [DocRef{type='Index', uuid='index-uuid', name='Test index'}], "Listed by the list_data_sources tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Standing instructions read by the list_data_sources tool"
+    } ],
+    "objects" : [ {
+      "id" : "agents-uuid",
+      "name" : "AGENTS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Standing instructions read by the list_data_sources tool",
+      "success" : true
+    }
+  }
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Listed by the list_data_sources tool"
+    } ],
+    "objects" : [ {
+      "id" : "index-uuid",
+      "name" : "Test index",
+      "type" : "Index"
+    } ],
+    "outcome" : {
+      "description" : "Listed by the list_data_sources tool",
+      "success" : true
+    }
+  }
+
+## ls {"path":"/"}
+(nothing recorded)
+
+## memory {"command":"list"}
+(nothing recorded)
+
+## pipeline {"steps":[]}
+(nothing recorded)
+
+## processor_tasks {"mode":"list"}
+- audit: documentsSearched(1, "processing tasks", [], {"Mode"="list", "Tasks"="0"}, "Processing tasks read by the processor_tasks tool (list)")
+- event: AskStroomAi.search "Ask Stroom AI searched in chat 1: Processing tasks read by the processor_tasks tool (list)"
+  SearchEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Processing tasks read by the processor_tasks tool (list)"
+    }, {
+      "name" : "Mode",
+      "value" : "list"
+    }, {
+      "name" : "Tasks",
+      "value" : "0"
+    } ],
+    "query" : {
+      "raw" : "processing tasks"
+    },
+    "totalResults" : 0
+  }
+
+## propose_code_change {"code":"<xsl:stylesheet version=\"2.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"\n                xmlns:stroom=\"stroom\">\n  <xsl:template match=\"/\">\n    <xsl:value-of select=\"stroom:lookup('HOST_TO_LOCATION', 'host2')\"/>\n  </xsl:template>\n</xsl:stylesheet>\n","element":"xsltFilter","summary":"Look up host2."}
+- audit: documentViewed(1, DocRef{type='XSLT', uuid='xslt-uuid', name='Test XSLT'}, "Proposed a change to its code, in element 'xsltFilter' while stepping, with the propose_code_change tool")
+- audit: documentsViewed(1, [DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}], "Standing instructions read by the propose_code_change tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed XSLT 'Test XSLT' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Proposed a change to its code, in element 'xsltFilter' while stepping, with the propose_code_change tool"
+      } ],
+      "id" : "xslt-uuid",
+      "name" : "Test XSLT",
+      "type" : "XSLT"
+    } ],
+    "outcome" : {
+      "description" : "Proposed a change to its code, in element 'xsltFilter' while stepping, with the propose_code_change tool",
+      "success" : true
+    }
+  }
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Standing instructions read by the propose_code_change tool"
+    } ],
+    "objects" : [ {
+      "id" : "agents-uuid",
+      "name" : "AGENTS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Standing instructions read by the propose_code_change tool",
+      "success" : true
+    }
+  }
+
+## propose_dashboard {"name":"Users","preview":false,"query":"from \"Test index\"\nselect UserId\n","query_type":"stroomql"}
+(nothing recorded)
+
+## propose_dashboard_change {"component":"table-1","changes":[{"op":"hide_column","column":"UserId"}],"summary":"Hide the user."}
+(nothing recorded)
+
+## propose_query {"name":"Users","query":"from \"Test index\"\nselect UserId\n"}
+(nothing recorded)
+
+## propose_query_change {"query":"from \"Test index\"\nwhere UserId = \"alice\"\nselect UserId\n","summary":"Only alice."}
+- audit: documentViewed(1, DocRef{type='Query', uuid='query-uuid', name='Test query'}, "Proposed a change to its query with the propose_query_change tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed Query 'Test query' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Proposed a change to its query with the propose_query_change tool"
+      } ],
+      "id" : "query-uuid",
+      "name" : "Test query",
+      "type" : "Query"
+    } ],
+    "outcome" : {
+      "description" : "Proposed a change to its query with the propose_query_change tool",
+      "success" : true
+    }
+  }
+
+## read_document {"uuid":"xslt-uuid"}
+- audit: documentViewed(1, DocRef{type='XSLT', uuid='xslt-uuid', name='Test XSLT'}, "Read by the read_document tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed XSLT 'Test XSLT' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Read by the read_document tool"
+      } ],
+      "id" : "xslt-uuid",
+      "name" : "Test XSLT",
+      "type" : "XSLT"
+    } ],
+    "outcome" : {
+      "description" : "Read by the read_document tool",
+      "success" : true
+    }
+  }
+
+## read_file {"path":"/outputs/a.txt"}
+(nothing recorded)
+
+## read_turn {"turnId":1}
+(nothing recorded)
+
+## run_stroomql {"query":"from \"Test index\"\nselect UserId\n"}
+(nothing recorded)
+
+## search_events {"path":"/outputs/a.xml","text":"a"}
+(nothing recorded)
+
+## search_history {"text":"feed"}
+(nothing recorded)
+
+## server_tasks {}
+- audit: searched(1, DocRef{type='TaskManager', uuid='TaskManager', name='Task Manager'}, "server tasks", 0, "Server tasks read by the server_tasks tool (summary)")
+- event: AskStroomAi.search "Ask Stroom AI read search results in chat 1: Server tasks read by the server_tasks tool (summary)"
+  SearchEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Server tasks read by the server_tasks tool (summary)"
+    }, {
+      "name" : "DataSourceUuid",
+      "value" : "TaskManager"
+    } ],
+    "dataSources" : {
+      "dataSource" : [ "TaskManager 'Task Manager'" ]
+    },
+    "query" : {
+      "raw" : "server tasks"
+    },
+    "totalResults" : 0
+  }
+
+## str_replace {"path":"/outputs/a.txt","oldText":"a","newText":"b"}
+(nothing recorded)
+
+## stream_meta {"feeds":["TEST-FEED"]}
+- audit: streamsSearched(1, "feed is TEST-FEED, status is Unlocked", [], {"StreamStoreReads"="0"}, "Stream meta found by the stream_meta tool")
+- event: AskStroomAi.search "Ask Stroom AI searched in chat 1: Stream meta found by the stream_meta tool"
+  SearchEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Stream meta found by the stream_meta tool"
+    }, {
+      "name" : "StreamStoreReads",
+      "value" : "0"
+    } ],
+    "query" : {
+      "raw" : "feed is TEST-FEED, status is Unlocked"
+    },
+    "totalResults" : 0
+  }
+
+## summarise_column {"path":"/outputs/a.csv","column":"UserId"}
+(nothing recorded)
+
+## table {"help":true}
+(nothing recorded)
+
+## task_list {"tasks":[{"title":"Look","status":"not_started"}]}
+(nothing recorded)
+
+## validate_stroomql {"query":"from \"Test index\"\nselect UserId\n"}
+- audit: processed(1, DocRef{type='Index', uuid='index-uuid', name='Test index'}, "validate_stroomql", "from "Test index"\nselect UserId\n", "OK", true)
+- event: AskStroomAi.process "Ask Stroom AI ran validate_stroomql in chat 1"
+  ProcessEventAction {
+    "action" : "EXECUTE",
+    "arguments" : "from \"Test index\"\nselect UserId\n",
+    "command" : "validate_stroomql",
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "DocumentType",
+      "value" : "Index"
+    }, {
+      "name" : "DocumentUuid",
+      "value" : "index-uuid"
+    }, {
+      "name" : "DocumentName",
+      "value" : "Test index"
+    } ],
+    "outcome" : {
+      "description" : "OK",
+      "success" : true
+    },
+    "type" : "APPLICATION"
+  }
+
+## wc {"path":"/outputs/a.txt"}
+(nothing recorded)
+
+## write_file {"path":"/outputs/a.txt","content":"a"}
+(nothing recorded)
+
+## xpath {"path":"/outputs/a.xml","expression":"/"}
+(nothing recorded)
+
+## xslt_lookups {"uuids":["xslt-uuid"]}
+- audit: documentsViewed(1, [DocRef{type='XSLT', uuid='xslt-uuid', name='Test XSLT'}], "Read by the xslt_lookups tool to find reference data lookups")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Read by the xslt_lookups tool to find reference data lookups"
+    } ],
+    "objects" : [ {
+      "id" : "xslt-uuid",
+      "name" : "Test XSLT",
+      "type" : "XSLT"
+    } ],
+    "outcome" : {
+      "description" : "Read by the xslt_lookups tool to find reference data lookups",
+      "success" : true
+    }
+  }

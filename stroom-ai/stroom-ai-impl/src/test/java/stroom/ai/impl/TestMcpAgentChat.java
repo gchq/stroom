@@ -18,7 +18,16 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.tools.LangChain4jTools;
+import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.tools.TaskListReminder;
+import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolCalls;
+import stroom.ai.impl.tools.ToolDefinition;
+import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.ToolUserAction;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
@@ -77,7 +86,7 @@ class TestMcpAgentChat {
     private final UserActionLookup userActionLookup = Mockito.mock(UserActionLookup.class);
     private final UserActions userActions = new UserActions(userActionLookup);
     private final McpAgentChat agentChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
-            usageTracker, toolConsent, auditLog, new ModelStreamer(aiService),
+            usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog, new ModelStreamer(aiService),
             new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions);
 
     {
@@ -467,7 +476,8 @@ class TestMcpAgentChat {
         final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, 3);
         final McpAgentChat cappedChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
-                usageTracker, toolConsent, auditLog, new ModelStreamer(aiService),
+                usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog,
+                new ModelStreamer(aiService),
                 new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions);
         final AiMessage toolCall = AiMessage.from(List.of(ToolExecutionRequest.builder()
                 .id("1")
@@ -532,7 +542,8 @@ class TestMcpAgentChat {
         final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, 2,
                 null, null, null, null, null, null);
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
-                usageTracker, toolConsent, auditLog, new ModelStreamer(aiService),
+                usageTracker, ConsentGates.chat(toolConsent, aiService, runManager), auditLog,
+                new ModelStreamer(aiService),
                 new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
@@ -597,7 +608,8 @@ class TestMcpAgentChat {
         final AiConfig config = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, 2,
                 null, null, null, null, null, null);
         final McpAgentChat groupingChat = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
-                Mockito.mock(ContextUsageTracker.class), toolConsent, auditLog, new ModelStreamer(aiService),
+                Mockito.mock(ContextUsageTracker.class), ConsentGates.chat(toolConsent, aiService, runManager),
+                auditLog, new ModelStreamer(aiService),
                 new ToolGroups.Activations(() -> aiDao), () -> config, aiDao, userActions);
         final StubToolCallingModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
@@ -678,7 +690,31 @@ class TestMcpAgentChat {
         assertThat(approval.calls()).extracting(ToolApprovalRequest.PendingCall::callId).containsExactly("2", "3");
         assertThat(approval.calls().getFirst().arguments()).isEqualTo("{\"q\":2}");
         assertThat(approval.allowForChat()).isTrue();
-        Mockito.verify(auditLog).toolCall(7, "search", "{\"q\":1}", "Run", true, false);
+        Mockito.verify(auditLog).toolCall(ToolSession.chat(7), "search", "{\"q\":1}", "Run", true, false);
+    }
+
+    @Test
+    void theLoopOnlyWaitsForApprovalsAskedOnTheChatsCard() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        final McpToolset toolset = toolset(client, searchTool());
+        // A gate that answers at once, as an MCP session's form could: the chat's loop never has one.
+        final ToolConsentGate gate = Mockito.mock(ToolConsentGate.class);
+        Mockito.when(gate.checkCall(Mockito.eq(ToolSession.chat(7)), Mockito.eq("search"), Mockito.any(),
+                        Mockito.any(), Mockito.anyBoolean()))
+                .thenReturn(new ToolConsent.Verdict(ToolConsent.Kind.ASK, "Not trusted.", "Not trusted.", true,
+                        false, List.of("untrusted server")));
+        Mockito.when(gate.requestCallApproval(Mockito.eq(ToolSession.chat(7)), Mockito.any()))
+                .thenReturn(new ApprovalOutcome(ApprovalOutcome.Status.ALLOWED, null, null));
+        final McpAgentChat answeredAtOnce = new McpAgentChat(aiService, builtInTools, runManager, workspaceStore,
+                usageTracker, gate, auditLog, new ModelStreamer(aiService),
+                new ToolGroups.Activations(() -> aiDao), AiConfig::new, aiDao, userActions);
+        final ChatModel model = new StubToolCallingModel(AiMessage.from(List.of(
+                ToolExecutionRequest.builder().id("1").name("search").arguments("{\"q\":1}").build())));
+
+        assertThatThrownBy(() -> answeredAtOnce.chat(model, null, 7, messages, toolset, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN))
+                .isInstanceOf(IllegalStateException.class);
+        Mockito.verify(client, Mockito.never()).callTool(Mockito.any());
     }
 
     @Test
@@ -735,7 +771,7 @@ class TestMcpAgentChat {
                 .map(m -> ((ToolExecutionResultMessage) m).text())
                 .toList())
                 .containsExactly("created", "Not run: the user did not allow this call. They said: not now");
-        Mockito.verify(auditLog).toolCall(7, "search", "{}", "Denied by the user", false, false);
+        Mockito.verify(auditLog).toolCall(ToolSession.chat(7), "search", "{}", "Denied by the user", false, false);
     }
 
     @Test
@@ -917,13 +953,21 @@ class TestMcpAgentChat {
                 .name("propose_query")
                 .description("built in")
                 .build();
-        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(propose, (request, memoryId) -> {
-            // As propose_query offers its button, through the run's context.
-            stroom.ai.impl.tools.ToolRunContext.current().orElseThrow().offerUserAction(request.id(), Map.of(
-                    "id", "create-query-1", "action", UserActions.CREATE_QUERY, "name", "Windows users",
-                    "query", query));
-            return "offered";
-        }));
+        final StroomTool proposeTool = new StroomTool() {
+            @Override
+            public ToolDefinition definition() {
+                return ToolDefinition.builder().name("propose_query").description("built in").build();
+            }
+
+            @Override
+            public ToolResult execute(final ToolCall call, final ToolCallContext context) {
+                // As propose_query offers its button, with its result.
+                return ToolResult.text("offered").withUserAction(new ToolUserAction("create-query-1",
+                        UserActions.CREATE_QUERY, Map.of("name", "Windows users", "query", query)));
+            }
+        };
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(propose,
+                LangChain4jTools.executor(proposeTool, ToolCalls.chatContexts()::forMemoryId)));
         final ChatModel model = new StubToolCallingModel(
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")

@@ -19,6 +19,7 @@ package stroom.ai.impl;
 import stroom.ai.api.AiService;
 import stroom.ai.impl.AiWorkspaceDao.FileInfo;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.WorkspaceFileUnavailableException;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -580,7 +581,7 @@ public class TabSnapshots {
     }
 
     private void logViewed(final int chatId, final DocRef docRef, final boolean dirty) {
-        documentAccess.logView(chatId, docRef, dirty
+        documentAccess.logView(ToolSession.chat(chatId), docRef, dirty
                 ? "Shared with a question as the tab attached to the chat, with unsaved changes"
                 : "Shared with a question as the tab attached to the chat");
     }

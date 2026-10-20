@@ -1,0 +1,81 @@
+Arguments: {"mode":"get","paths":["stroom.analytics.smtp.password","stroom.security.authentication.openId.clientSecret","stroom.ui.helpUrl","stroom.ui.extraHeaders","stroom.kafka.skeletonConfigContent"],"nodes":["node1","node2"]}
+
+=== Output ===
+## stroom.analytics.smtp.password
+Description: The SMTP password.
+Type: String. Text.
+Default: ******************** (masked)
+Database value: ******************** (masked)
+YAML value on this node (node1): ******************** (masked)
+Effective value on this node: ******************** (masked), from this node's YAML (which takes precedence over the database value). The database value is not used on this node, as its YAML sets the property.
+Editable on the Properties screen: yes
+A change takes effect: without a restart
+YAML value on each node (asked of each node, as the Properties screen does):
+- node1: not set; effective there ******************** (masked) (Database)
+- node2: ******************** (masked); effective there ******************** (masked) (YAML)
+
+## stroom.security.authentication.openId.clientSecret
+Description: The client secret of the identity provider.
+Type: String. Text.
+Default: (no value)
+Database value: not set
+YAML value on this node (node1): ******************** (masked)
+Effective value on this node: ******************** (masked), from this node's YAML (which takes precedence over the database value).
+Editable on the Properties screen: yes
+A change takes effect: without a restart
+YAML value on each node (asked of each node, as the Properties screen does):
+- node1: not set; effective there (no value) (Default)
+- node2: not set; effective there (no value) (Default)
+
+## stroom.ui.helpUrl
+Description: The URL of the help pages.
+Type: String. Text.
+Default: `https://bob:********************@docs.example.com/help`
+Database value: not set
+YAML value on this node (node1): not set
+Effective value on this node: `https://bob:********************@docs.example.com/help`, from the default.
+Editable on the Properties screen: yes
+A change takes effect: without a restart
+YAML value on each node (asked of each node, as the Properties screen does):
+- node1: not set; effective there `https://bob:********************@docs.example.com/help` (Default)
+- node2: not set; effective there `https://bob:********************@docs.example.com/help` (Default)
+Siblings under stroom.ui: defaultMaxResults, extraHeaders, htmlTitle, process.*
+
+## stroom.ui.extraHeaders
+Description: Extra headers.
+Type: Map of String, String. A map, written with the entry separator first, then the key-value separator, then the entries, e.g. |=a=1|b=2; empty for none.
+Default: `|=user=bob|password=********************|host=mail`
+Database value: not set
+YAML value on this node (node1): not set
+Effective value on this node: `|=user=bob|password=********************|host=mail`, from the default.
+Editable on the Properties screen: yes
+A change takes effect: without a restart
+YAML value on each node (asked of each node, as the Properties screen does):
+- node1: not set; effective there `|=user=bob|password=********************|host=mail` (Default)
+- node2: not set; effective there `|=user=bob|password=********************|host=mail` (Default)
+Siblings under stroom.ui: defaultMaxResults, helpUrl, htmlTitle, process.*
+
+## stroom.kafka.skeletonConfigContent
+Description: The skeleton Kafka config.
+Type: String. Text.
+Default: `bootstrap.servers=kafka:9092
+ssl.key.password=********************
+`
+Database value: not set
+YAML value on this node (node1): not set
+Effective value on this node: `bootstrap.servers=kafka:9092
+ssl.key.password=********************
+`, from the default.
+Editable on the Properties screen: yes
+A change takes effect: without a restart
+YAML value on each node (asked of each node, as the Properties screen does):
+- node1: not set; effective there `bootstrap.servers=kafka:9092
+ssl.key.password=********************
+` (Default)
+- node2: not set; effective there `bootstrap.servers=kafka:9092
+ssl.key.password=********************
+` (Default)
+
+How a property's value is set (as Stroom works it out: YAML, then database, then default): on each node, the effective value is that node's YAML value if its config.yml sets the property to something other than the default; otherwise the database value, if one is set; otherwise the default. So on a node whose YAML sets a property, a database value for it has no effect.
+- Database value: set on the Properties screen (Administration > Properties, open the property and set its Database Value). It needs the Manage Properties permission, and only editable properties can be set there. It applies to every node (each picks it up within about a minute), without a restart unless the property needs one (a restart of every node, or of the nodes serving the UI).
+- YAML value: set in a node's config.yml under appConfig, by the path without its leading 'stroom' (e.g. stroom.ui.defaultMaxResults is appConfig: ui: defaultMaxResults). It applies only to that node, and it is the only way to set a property that isn't editable. Stroom notices changes to the file and applies them, but a property that needs a restart takes effect only once the node restarts.
