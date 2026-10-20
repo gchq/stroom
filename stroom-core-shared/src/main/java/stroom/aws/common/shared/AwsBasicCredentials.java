@@ -16,7 +16,6 @@
 
 package stroom.aws.common.shared;
 
-import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,7 +27,7 @@ import java.util.Objects;
 
 @NotInjectableConfig
 @JsonInclude(Include.NON_NULL)
-public final class AwsBasicCredentials extends AbstractConfig implements AwsCredentials {
+public final class AwsBasicCredentials implements AwsCredentials {
 
     @JsonProperty
     private final String accessKeyId;
@@ -76,11 +75,12 @@ public final class AwsBasicCredentials extends AbstractConfig implements AwsCred
         return Objects.hash(accessKeyId, secretAccessKey);
     }
 
+    // Don't log credentials
     @Override
     public String toString() {
         return "AwsBasicCredentials{" +
-               "accessKeyId='" + accessKeyId + '\'' +
-               ", secretAccessKey='" + secretAccessKey + '\'' +
+               "accessKeyId='***'" +
+               ", secretAccessKey='***'" +
                '}';
     }
 
