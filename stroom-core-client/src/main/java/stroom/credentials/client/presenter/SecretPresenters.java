@@ -35,6 +35,7 @@ public class SecretPresenters {
     private final Provider<AccessTokenSecretPresenter> accessTokenSecretPresenterProvider;
     private final Provider<SshKeySecretPresenter> sshKeySecretPresenterProvider;
     private final Provider<KeyStoreSecretPresenter> keyStoreSecretPresenterProvider;
+    private final Provider<KeyStoreFileSecretPresenter> keyStoreFileSecretPresenterProvider;
     private final Provider<UsernamePasswordSecretPresenter> usernamePasswordSecretPresenterProvider;
 
     private final Map<CredentialType, SecretPresenter<?>> presenters = new HashMap<>();
@@ -44,10 +45,12 @@ public class SecretPresenters {
             final Provider<AccessTokenSecretPresenter> accessTokenSecretPresenterProvider,
             final Provider<SshKeySecretPresenter> sshKeySecretPresenterProvider,
             final Provider<KeyStoreSecretPresenter> keyStoreSecretPresenterProvider,
+            final Provider<KeyStoreFileSecretPresenter> keyStoreFileSecretPresenterProvider,
             final Provider<UsernamePasswordSecretPresenter> usernamePasswordSecretPresenterProvider) {
         this.accessTokenSecretPresenterProvider = accessTokenSecretPresenterProvider;
         this.sshKeySecretPresenterProvider = sshKeySecretPresenterProvider;
         this.keyStoreSecretPresenterProvider = keyStoreSecretPresenterProvider;
+        this.keyStoreFileSecretPresenterProvider = keyStoreFileSecretPresenterProvider;
         this.usernamePasswordSecretPresenterProvider = usernamePasswordSecretPresenterProvider;
     }
 
@@ -71,6 +74,12 @@ public class SecretPresenters {
                 final KeyStoreSecretPresenter keyStoreSecretPresenter = keyStoreSecretPresenterProvider.get();
                 keyStoreSecretPresenter.setType(KeyStoreType.PKCS12);
                 yield keyStoreSecretPresenter;
+            }
+            case KEY_STORE_FILE -> {
+                final KeyStoreFileSecretPresenter keyStoreFileSecretPresenter =
+                        keyStoreFileSecretPresenterProvider.get();
+                keyStoreFileSecretPresenter.setType(KeyStoreType.PKCS12);
+                yield keyStoreFileSecretPresenter;
             }
             case SSH_KEY -> sshKeySecretPresenterProvider.get();
             case USERNAME_PASSWORD -> usernamePasswordSecretPresenterProvider.get();

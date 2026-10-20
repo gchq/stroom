@@ -16,12 +16,14 @@
 
 package stroom.credentials.impl.dao;
 
+import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.impl.CredentialsDao;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
+import stroom.credentials.shared.KeyStoreFileSecret;
 import stroom.credentials.shared.Secret;
 import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.util.logging.LambdaLogger;
@@ -142,6 +144,62 @@ public class TestCredentialDaoImpl {
         assertThat(stored.credential().getCredentialType()).isEqualTo(CredentialType.USERNAME_PASSWORD);
         assertThat(credentialsDao.getStoredSecretByName("Test creds")).isNull();
         assertThat(credentialsDao.updateCredential(createCred("missing", "Missing creds", 2_000L))).isFalse();
+    }
+
+    /// gh-5796: the path of a key store file credential is stored where it can be shown, and is
+    /// kept when the settings are updated.
+    @Test
+    void testKeyStorePath() {
+        final Credential credential = new Credential("file",
+                "File creds",
+                1_000L,
+                1_000L,
+                "admin",
+                "admin",
+                CredentialType.KEY_STORE_FILE,
+                KeyStoreType.PKCS12,
+                "/etc/certs/client.p12",
+                null);
+        final Secret secret = new KeyStoreFileSecret(KeyStoreType.PKCS12, "/etc/certs/client.p12", "changeit");
+        credentialsDao.putStoredSecret(new StoredSecret(credential, secret, null), false);
+
+        assertThat(credentialsDao.getCredentialByUuid("file").getKeyStorePath())
+                .isEqualTo("/etc/certs/client.p12");
+        assertThat(credentialsDao.getStoredSecretByName("File creds").secret())
+                .isEqualTo(secret);
+
+        credentialsDao.updateCredential(new Credential("file",
+                "Renamed file creds",
+                1_000L,
+                2_000L,
+                "admin",
+                "admin",
+                CredentialType.KEY_STORE_FILE,
+                null,
+                null,
+                null));
+        assertThat(credentialsDao.getCredentialByUuid("file").getKeyStorePath())
+                .isEqualTo("/etc/certs/client.p12");
+
+        credentialsDao.updateSecret(new StoredSecret(new Credential("file",
+                null,
+                null,
+                3_000L,
+                null,
+                "admin",
+                null,
+                KeyStoreType.JKS,
+                "/etc/certs/new.jks",
+                null),
+                new KeyStoreFileSecret(KeyStoreType.JKS, "/etc/certs/new.jks", "changeit"),
+                null));
+        final Credential updated = credentialsDao.getCredentialByUuid("file");
+        assertThat(updated.getKeyStorePath())
+                .isEqualTo("/etc/certs/new.jks");
+        assertThat(updated.getKeyStoreType())
+                .isEqualTo(KeyStoreType.JKS);
+        assertThat(updated.getName())
+                .isEqualTo("Renamed file creds");
     }
 
     /// Replacing a secret must not touch the name, so a rename made at the same time is kept.

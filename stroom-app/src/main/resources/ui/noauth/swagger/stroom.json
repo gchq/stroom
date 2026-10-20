@@ -2945,6 +2945,34 @@
         "tags" : [ "Credentials" ]
       }
     },
+    "/credentials/replaceSecret" : {
+      "post" : {
+        "operationId" : "replaceCredentialSecret",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReplaceSecretRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Credential"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Replaces the secret held by an existing credential",
+        "tags" : [ "Credentials" ]
+      }
+    },
     "/credentials/store" : {
       "post" : {
         "operationId" : "storeCredential",
@@ -5671,6 +5699,69 @@
         },
         "summary" : "Send Plan B part",
         "tags" : [ "File Transfer" ]
+      }
+    },
+    "/floorMapEventStore/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchFloorMapEventStore",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FloorMapEventStoreDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a floor map event store by its UUID",
+        "tags" : [ "FloorMap Event Store" ]
+      },
+      "put" : {
+        "operationId" : "updateFloorMapEventStore",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FloorMapEventStoreDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FloorMapEventStoreDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update a floor map event store",
+        "tags" : [ "FloorMap Event Store" ]
       }
     },
     "/floormap/v1/{uuid}" : {
@@ -17637,11 +17728,14 @@
           },
           "credentialType" : {
             "type" : "string",
-            "enum" : [ "USERNAME_PASSWORD", "ACCESS_TOKEN", "SSH_KEY", "KEY_STORE" ]
+            "enum" : [ "USERNAME_PASSWORD", "ACCESS_TOKEN", "SSH_KEY", "KEY_STORE", "KEY_STORE_FILE" ]
           },
           "expiryTimeMs" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "keyStorePath" : {
+            "type" : "string"
           },
           "keyStoreType" : {
             "type" : "string",
@@ -18671,7 +18765,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DATA_GEN", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FLOOR_MAP", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_SQL_TEMPORAL_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_IMAGE", "FILE_RAW", "FILE_SCRIPT", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOCKED_DEFAULT_COLOUR", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UNLOCKED_DEFAULT_COLOUR", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DATA_GEN", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FLOOR_MAP", "DOCUMENT_FLOOR_MAP_EVENT_STORE", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_SQL_TEMPORAL_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_IMAGE", "FILE_RAW", "FILE_SCRIPT", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOCKED_DEFAULT_COLOUR", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UNLOCKED_DEFAULT_COLOUR", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
           },
           "type" : {
             "type" : "string"
@@ -19280,11 +19374,12 @@
       "Entry" : {
         "type" : "object",
         "properties" : {
-          "key" : {
+          "column" : {
             "type" : "string"
           },
-          "value" : {
-            "type" : "string"
+          "role" : {
+            "type" : "string",
+            "enum" : [ "ENTITY_ID", "LOCATION", "LOCATION_REF", "TYPE" ]
           }
         }
       },
@@ -20465,7 +20560,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "USERNAME_PASSWORD", "ACCESS_TOKEN", "SSH_KEY", "KEY_STORE" ]
+              "enum" : [ "USERNAME_PASSWORD", "ACCESS_TOKEN", "SSH_KEY", "KEY_STORE", "KEY_STORE_FILE" ]
             },
             "uniqueItems" : true
           },
@@ -21142,8 +21237,8 @@
           "description" : {
             "type" : "string"
           },
-          "entityIdColumn" : {
-            "type" : "string"
+          "eventColumns" : {
+            "$ref" : "#/components/schemas/FloorMapEventColumns"
           },
           "eventsQuery" : {
             "type" : "string"
@@ -21157,6 +21252,9 @@
           "eventsStoreRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
+          "extentQuery" : {
+            "type" : "string"
+          },
           "factsStoreRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -21166,7 +21264,7 @@
               "$ref" : "#/components/schemas/FloorMapGroup"
             }
           },
-          "locationIdColumn" : {
+          "histogramQuery" : {
             "type" : "string"
           },
           "matrix" : {
@@ -21215,6 +21313,61 @@
           }
         }
       },
+      "FloorMapEventColumns" : {
+        "type" : "object",
+        "properties" : {
+          "entries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Entry"
+            }
+          }
+        }
+      },
+      "FloorMapEventStoreDoc" : {
+        "type" : "object",
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "eventExpiry" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "settings" : {
+            "$ref" : "#/components/schemas/AbstractPlanBSettings"
+          },
+          "stateType" : {
+            "type" : "string",
+            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC", "TRACE" ]
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
       "FloorMapFieldMapping" : {
         "type" : "object",
         "properties" : {
@@ -21229,7 +21382,7 @@
           },
           "role" : {
             "type" : "string",
-            "enum" : [ "TYPE", "LABEL", "POSITION", "IMAGE", "WORLD_TO_MAP", "MAP_TO_SCREEN", "GEOMETRY", "FILL", "OPACITY", "CUSTOM" ]
+            "enum" : [ "TYPE", "LABEL", "POSITION", "IMAGE", "WORLD_TO_MAP", "MAP_TO_SCREEN", "GEOMETRY", "FILL", "OPACITY", "STATUS", "CUSTOM" ]
           }
         }
       },
@@ -21913,7 +22066,7 @@
           },
           "keyType" : {
             "type" : "string",
-            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE", "TAGS" ]
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE", "TAGS", "TERMINATED_STRING" ]
           },
           "temporalResolution" : {
             "type" : "string",
@@ -22749,6 +22902,26 @@
           }
         }
       },
+      "KeyStoreFileSecret" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Secret"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "keyStorePassword" : {
+              "type" : "string"
+            },
+            "keyStorePath" : {
+              "type" : "string"
+            },
+            "keyStoreType" : {
+              "type" : "string",
+              "enum" : [ "JCEKS", "JKS", "PKCS12" ]
+            }
+          }
+        } ]
+      },
       "KeyStoreSecret" : {
         "type" : "object",
         "allOf" : [ {
@@ -23283,7 +23456,7 @@
           },
           "keyType" : {
             "type" : "string",
-            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE", "TAGS" ]
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE", "TAGS", "TERMINATED_STRING" ]
           },
           "temporalResolution" : {
             "type" : "string",
@@ -24179,7 +24352,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DATA_GEN", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FLOOR_MAP", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_SQL_TEMPORAL_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_IMAGE", "FILE_RAW", "FILE_SCRIPT", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOCKED_DEFAULT_COLOUR", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UNLOCKED_DEFAULT_COLOUR", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DATA_GEN", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FLOOR_MAP", "DOCUMENT_FLOOR_MAP_EVENT_STORE", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_SQL_TEMPORAL_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_IMAGE", "FILE_RAW", "FILE_SCRIPT", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOCKED_DEFAULT_COLOUR", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UNLOCKED_DEFAULT_COLOUR", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
           },
           "roles" : {
             "type" : "array",
@@ -25952,6 +26125,21 @@
           }
         } ]
       },
+      "ReplaceSecretRequest" : {
+        "type" : "object",
+        "properties" : {
+          "expiryTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "secret" : {
+            "$ref" : "#/components/schemas/Secret"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "ReportDoc" : {
         "type" : "object",
         "properties" : {
@@ -27438,6 +27626,7 @@
           "mapping" : {
             "accessToken" : "#/components/schemas/AccessTokenSecret",
             "keyStore" : "#/components/schemas/KeyStoreSecret",
+            "keyStoreFile" : "#/components/schemas/KeyStoreFileSecret",
             "sshKey" : "#/components/schemas/SshKeySecret",
             "usernamePassword" : "#/components/schemas/UsernamePasswordSecret"
           },
@@ -27667,7 +27856,7 @@
           },
           "keyType" : {
             "type" : "string",
-            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE", "TAGS" ]
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE", "TAGS", "TERMINATED_STRING" ]
           },
           "temporalPrecision" : {
             "type" : "string",
@@ -28566,7 +28755,7 @@
           },
           "keyType" : {
             "type" : "string",
-            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE", "TAGS" ]
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE", "TAGS", "TERMINATED_STRING" ]
           }
         }
       },
@@ -29703,7 +29892,7 @@
           },
           "keyType" : {
             "type" : "string",
-            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE", "TAGS" ]
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE", "TAGS", "TERMINATED_STRING" ]
           },
           "temporalPrecision" : {
             "type" : "string",
@@ -30244,6 +30433,9 @@
             "type" : "string"
           },
           "graphic" : {
+            "type" : "string"
+          },
+          "icon" : {
             "type" : "string"
           },
           "shape" : {

@@ -25,6 +25,8 @@ import stroom.credentials.client.presenter.CredentialSettingsPresenter.Credentia
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter.CredentialsView;
+import stroom.credentials.client.presenter.KeyStoreFileSecretPresenter;
+import stroom.credentials.client.presenter.KeyStoreFileSecretPresenter.KeyStoreFileSecretView;
 import stroom.credentials.client.presenter.KeyStoreSecretPresenter;
 import stroom.credentials.client.presenter.KeyStoreSecretPresenter.KeyStoreSecretView;
 import stroom.credentials.client.presenter.ReplaceSecretPresenter;
@@ -37,6 +39,7 @@ import stroom.credentials.client.view.AccessTokenSecretViewImpl;
 import stroom.credentials.client.view.CredentialSettingsViewImpl;
 import stroom.credentials.client.view.CredentialsManagerViewImpl;
 import stroom.credentials.client.view.CredentialsViewImpl;
+import stroom.credentials.client.view.KeyStoreFileSecretViewImpl;
 import stroom.credentials.client.view.KeyStoreSecretViewImpl;
 import stroom.credentials.client.view.ReplaceSecretViewImpl;
 import stroom.credentials.client.view.SshKeySecretViewImpl;
@@ -78,6 +81,9 @@ public class CredentialsModule extends PluginModule {
         bindPresenterWidget(KeyStoreSecretPresenter.class,
                 KeyStoreSecretView.class,
                 KeyStoreSecretViewImpl.class);
+        bindPresenterWidget(KeyStoreFileSecretPresenter.class,
+                KeyStoreFileSecretView.class,
+                KeyStoreFileSecretViewImpl.class);
         bindPresenterWidget(UsernamePasswordSecretPresenter.class,
                 UsernamePasswordSecretView.class,
                 UsernamePasswordSecretViewImpl.class);

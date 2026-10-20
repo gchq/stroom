@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 
 public sealed interface SecretPresenter<V extends View>
         permits AccessTokenSecretPresenter,
+        KeyStoreFileSecretPresenter,
         KeyStoreSecretPresenter,
         SshKeySecretPresenter,
         UsernamePasswordSecretPresenter {

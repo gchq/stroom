@@ -87,6 +87,7 @@ public class CredentialSettingsPresenter
         // Existing secrets are never sent to the browser so can't be shown or edited here.
         // They can only be replaced, using the separate Replace Secret dialog.
         getView().setExistingCredential(existingCredential != null);
+        getView().setKeyStorePath(NullSafe.get(existingCredential, Credential::getKeyStorePath));
         if (cwp == null) {
             getView().setName("");
             getView().setCredExpire(false);
@@ -148,13 +149,8 @@ public class CredentialSettingsPresenter
         final Secret secret = existingCredential == null
                 ? getSecret()
                 : null;
-        final KeyStoreType keyStoreType;
-        if (secret instanceof final KeyStoreSecret keyStoreSecret) {
-            keyStoreType = keyStoreSecret.getKeyStoreType();
-        } else {
-            keyStoreType = null;
-        }
 
+        // The key store type and path are not sent as the server takes them from the secret
         final Credential credential = new Credential(
                 docRef.getUuid(),
                 getView().getName(),
@@ -163,7 +159,8 @@ public class CredentialSettingsPresenter
                 null,
                 null,
                 getView().getCredentialType(),
-                keyStoreType,
+                null,
+                null,
                 getView().isCredExpire()
                         ? getView().getExpiryTime().getValue()
                         : null);
@@ -201,5 +198,10 @@ public class CredentialSettingsPresenter
         ///
         /// @param existing True if editing existing credentials, false if creating new ones.
         void setExistingCredential(boolean existing);
+
+        /// Shows the path of the key store file of existing key store file credentials.
+        ///
+        /// @param keyStorePath The path, or null to hide it.
+        void setKeyStorePath(String keyStorePath);
     }
 }

@@ -21,6 +21,7 @@ import stroom.credentials.api.StoredSecret;
 import stroom.credentials.shared.AccessTokenSecret;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
+import stroom.credentials.shared.KeyStoreFileSecret;
 import stroom.credentials.shared.KeyStoreSecret;
 import stroom.credentials.shared.PutCredentialRequest;
 import stroom.credentials.shared.ReplaceSecretRequest;
@@ -34,7 +35,9 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,12 +52,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import javax.crypto.spec.SecretKeySpec;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -76,17 +82,21 @@ class TestCredentialsService {
     private PathCreator pathCreator;
 
     private CredentialsService credentialsService;
+    private CredentialsConfig credentialsConfig = new CredentialsConfig();
 
     @BeforeEach
     void setUp() {
+        final Provider<CredentialsConfig> credentialsConfigProvider = () -> credentialsConfig;
         credentialsService = new CredentialsService(
                 credentialsDao,
                 securityContext,
                 () -> documentPermissionService,
                 () -> resourceStore,
                 pathCreator,
-                CredentialsConfig::new);
-        when(securityContext.hasAppPermission(AppPermission.CREDENTIALS)).thenReturn(true);
+                credentialsConfigProvider,
+                new KeyStoreFilePathChecker(pathCreator, credentialsConfigProvider));
+        // Lenient as getKeyStore() is used internally so doesn't check the app permission
+        lenient().when(securityContext.hasAppPermission(AppPermission.CREDENTIALS)).thenReturn(true);
     }
 
     @Test
@@ -365,10 +375,10 @@ class TestCredentialsService {
         // The old key store, as cached by getKeyStore()
         final KeyStoreSecret oldSecret = new KeyStoreSecret("old-uuid", KeyStoreType.PKCS12, password, null);
         final Path oldCachedFile = cacheDir.resolve("old-uuid.p12");
-        writeEmptyKeyStore(oldCachedFile, password);
+        writeKeyStore(oldCachedFile, password);
         // An unrelated cached key store that must be left alone
         final Path otherCachedFile = cacheDir.resolve("other-uuid.p12");
-        writeEmptyKeyStore(otherCachedFile, password);
+        writeKeyStore(otherCachedFile, password);
 
         when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(new StoredSecret(
                 createStoredCredential(CredentialType.KEY_STORE, KeyStoreType.PKCS12),
@@ -379,7 +389,7 @@ class TestCredentialsService {
         // The new key store, as uploaded
         final ResourceKey resourceKey = new ResourceKey("upload-key", "new.p12");
         final Path upload = tempDir.resolve("upload.p12");
-        writeEmptyKeyStore(upload, password);
+        writeKeyStore(upload, password);
         when(resourceStore.getTempFile(resourceKey)).thenReturn(upload);
 
         credentialsService.replaceSecret(new ReplaceSecretRequest(UUID,
@@ -396,12 +406,264 @@ class TestCredentialsService {
                 .isEqualTo(KeyStoreType.PKCS12);
     }
 
-    private static void writeEmptyKeyStore(final Path path, final String password) throws Exception {
+    /// gh-5796: a key store file credential stores only the path and password, and the path
+    /// is kept where it can be shown.
+    @Test
+    void testCreatingAKeyStoreFileCredential(@TempDir final Path tempDir) throws Exception {
+        final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
+        when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
+
+        credentialsService.storeCredentials(new PutCredentialRequest(
+                createCredential("file creds", CredentialType.KEY_STORE_FILE, null),
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit")));
+
+        final ArgumentCaptor<StoredSecret> stored = ArgumentCaptor.forClass(StoredSecret.class);
+        verify(credentialsDao).putStoredSecret(stored.capture(), eq(false));
+        assertThat(stored.getValue().keyStore())
+                .isNull();
+        assertThat(stored.getValue().credential().getKeyStorePath())
+                .isEqualTo(keyStoreFile.toString());
+        assertThat(stored.getValue().credential().getKeyStoreType())
+                .isEqualTo(KeyStoreType.PKCS12);
+    }
+
+    @Test
+    void testCreatingAKeyStoreFileCredentialWithTheWrongPasswordIsRejected(@TempDir final Path tempDir)
+            throws Exception {
+        final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
+        when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
+
+        assertThatThrownBy(() -> credentialsService.storeCredentials(new PutCredentialRequest(
+                createCredential("file creds", CredentialType.KEY_STORE_FILE, null),
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "wrong"))))
+                .isInstanceOf(RuntimeException.class);
+
+        verify(credentialsDao, never()).putStoredSecret(any(), anyBoolean());
+    }
+
+    @Test
+    void testCreatingAKeyStoreFileCredentialOutsideTheAllowedDirsIsRejected(@TempDir final Path tempDir)
+            throws Exception {
+        createAllowedKeyStoreFile(tempDir, "changeit");
+        final Path outside = tempDir.resolve("server.p12");
+        writeKeyStore(outside, "changeit");
+        when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
+
+        assertThatThrownBy(() -> credentialsService.storeCredentials(new PutCredentialRequest(
+                createCredential("file creds", CredentialType.KEY_STORE_FILE, null),
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, outside.toString(), "changeit"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("not in a directory allowed");
+
+        verify(credentialsDao, never()).putStoredSecret(any(), anyBoolean());
+    }
+
+    @Test
+    void testCreatingAKeyStoreFileCredentialWhenNotEnabledIsRejected() {
+        when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
+
+        assertThatThrownBy(() -> credentialsService.storeCredentials(new PutCredentialRequest(
+                createCredential("file creds", CredentialType.KEY_STORE_FILE, null),
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, "/etc/certs/client.p12", "changeit"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("not enabled");
+
+        verify(credentialsDao, never()).putStoredSecret(any(), anyBoolean());
+    }
+
+    @Test
+    void testReplacingTheSecretOfAKeyStoreFileCredentialChangesThePath(@TempDir final Path tempDir)
+            throws Exception {
+        final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
+        final Path newKeyStoreFile = keyStoreFile.resolveSibling("new.p12");
+        writeKeyStore(newKeyStoreFile, "changeit2");
+        allowEdit();
+        when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(new StoredSecret(
+                createStoredCredential(CredentialType.KEY_STORE_FILE, KeyStoreType.PKCS12),
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit"),
+                null));
+        when(credentialsDao.updateSecret(any())).thenReturn(true);
+
+        credentialsService.replaceSecret(new ReplaceSecretRequest(UUID,
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, newKeyStoreFile.toString(), "changeit2"),
+                null));
+
+        final ArgumentCaptor<StoredSecret> stored = ArgumentCaptor.forClass(StoredSecret.class);
+        verify(credentialsDao).updateSecret(stored.capture());
+        assertThat(stored.getValue().credential().getKeyStorePath())
+                .isEqualTo(newKeyStoreFile.toString());
+        // Nothing was cached for a file, but the file itself must never be deleted
+        assertThat(keyStoreFile).exists();
+    }
+
+    /// A PKCS12 file loads without a password, skipping its encrypted parts, so the check must
+    /// also read what is in it or the credentials would save and then fail on every handshake.
+    @Test
+    void testCreatingAKeyStoreFileCredentialWithoutTheNeededPasswordIsRejected(@TempDir final Path tempDir)
+            throws Exception {
+        final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
+        when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
+
+        assertThatThrownBy(() -> credentialsService.storeCredentials(new PutCredentialRequest(
+                createCredential("file creds", CredentialType.KEY_STORE_FILE, null),
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), null))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("pass phrase");
+
+        verify(credentialsDao, never()).putStoredSecret(any(), anyBoolean());
+    }
+
+    @Test
+    void testCreatingAKeyStoreFileCredentialForAnEmptyKeyStoreIsRejected(@TempDir final Path tempDir)
+            throws Exception {
+        final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
+        final java.security.KeyStore empty = java.security.KeyStore.getInstance("PKCS12");
+        empty.load(null, "changeit".toCharArray());
+        try (final OutputStream outputStream = Files.newOutputStream(keyStoreFile)) {
+            empty.store(outputStream, "changeit".toCharArray());
+        }
+        when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
+
+        assertThatThrownBy(() -> credentialsService.storeCredentials(new PutCredentialRequest(
+                createCredential("file creds", CredentialType.KEY_STORE_FILE, null),
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("no keys or certificates");
+    }
+
+    /// Otherwise anyone able to create credentials could make their own for the file, getting
+    /// around the permissions on the existing credentials. The other credentials, which the user
+    /// may not be able to see, must not be named.
+    @Test
+    void testCreatingAKeyStoreFileCredentialForAFileAlreadyUsedIsRejected(@TempDir final Path tempDir)
+            throws Exception {
+        final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
+        // The other credentials refer to the same file through a link
+        final Path link = Files.createSymbolicLink(keyStoreFile.resolveSibling("link.p12"), keyStoreFile);
+        when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
+        when(credentialsDao.findCredentials(any(), any())).thenReturn(ResultPage.createUnboundedList(List.of(
+                createOtherKeyStoreFileCredential("secret team creds", link.toString()))));
+
+        assertThatThrownBy(() -> credentialsService.storeCredentials(new PutCredentialRequest(
+                createCredential("file creds", CredentialType.KEY_STORE_FILE, null),
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already used by other credentials")
+                .hasMessageNotContaining("secret team creds");
+
+        verify(credentialsDao, never()).putStoredSecret(any(), anyBoolean());
+    }
+
+    @Test
+    void testReplacingTheSecretOfAKeyStoreFileCredentialWithTheSameFileIsAllowed(@TempDir final Path tempDir)
+            throws Exception {
+        final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
+        allowEdit();
+        final Credential existing = createStoredCredential(CredentialType.KEY_STORE_FILE, KeyStoreType.PKCS12);
+        when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(new StoredSecret(
+                existing,
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "old"),
+                null));
+        // The file is already used, but by these credentials
+        when(credentialsDao.findCredentials(any(), any())).thenReturn(ResultPage.createUnboundedList(List.of(
+                new Credential(UUID,
+                        existing.getName(),
+                        null,
+                        null,
+                        null,
+                        null,
+                        CredentialType.KEY_STORE_FILE,
+                        KeyStoreType.PKCS12,
+                        keyStoreFile.toString(),
+                        null))));
+        when(credentialsDao.updateSecret(any())).thenReturn(true);
+
+        credentialsService.replaceSecret(new ReplaceSecretRequest(UUID,
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit"),
+                null));
+
+        verify(credentialsDao).updateSecret(any());
+    }
+
+    /// The file is used where it is, so a key store replaced on disk (e.g. by cert-manager) is
+    /// picked up without changing the credential.
+    @Test
+    void testGetKeyStoreOfAKeyStoreFileCredentialUsesTheFileWhereItIs(@TempDir final Path tempDir)
+            throws Exception {
+        final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
+        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.VIEW)))
+                .thenReturn(true);
+        when(credentialsDao.getStoredSecretByName("file creds")).thenReturn(new StoredSecret(
+                createStoredCredential(CredentialType.KEY_STORE_FILE, KeyStoreType.PKCS12),
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit"),
+                null));
+
+        final stroom.credentials.api.KeyStore keyStore = credentialsService.getKeyStore("file creds");
+
+        // The real path is given, so what gets opened is the file that was checked
+        assertThat(keyStore.keyStorePath())
+                .isEqualTo(keyStoreFile.toRealPath().toString());
+        assertThat(keyStore.keyStorePassword())
+                .isEqualTo("changeit");
+        assertThat(keyStore.keyStoreType())
+                .isEqualTo("PKCS12");
+    }
+
+    /// The allowed dirs are checked on use too, as they may have changed since the credential
+    /// was saved.
+    @Test
+    void testGetKeyStoreOfAKeyStoreFileCredentialNoLongerAllowedIsRejected(@TempDir final Path tempDir)
+            throws Exception {
+        final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
+        credentialsConfig = new CredentialsConfig();
+        when(securityContext.hasDocumentPermission(any(DocRef.class), eq(DocumentPermission.VIEW)))
+                .thenReturn(true);
+        when(credentialsDao.getStoredSecretByName("file creds")).thenReturn(new StoredSecret(
+                createStoredCredential(CredentialType.KEY_STORE_FILE, KeyStoreType.PKCS12),
+                new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit"),
+                null));
+
+        assertThatThrownBy(() -> credentialsService.getKeyStore("file creds"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("not enabled");
+    }
+
+    /// Creates a key store in an allowed dir and allows that dir in the config.
+    private Path createAllowedKeyStoreFile(final Path tempDir, final String password) throws Exception {
+        final Path allowedDir = Files.createDirectories(tempDir.resolve("certs"));
+        credentialsConfig = new CredentialsConfig(null, null, List.of(allowedDir.toString()));
+        // Lenient as not every test gets as far as checking the allowed dirs
+        lenient().when(pathCreator.toAppPath(allowedDir.toString())).thenReturn(allowedDir);
+        lenient().when(credentialsDao.findCredentials(any(), any()))
+                .thenReturn(ResultPage.createUnboundedList(List.of()));
+        final Path keyStoreFile = allowedDir.resolve("client.p12");
+        writeKeyStore(keyStoreFile, password);
+        return keyStoreFile;
+    }
+
+    /// Writes a PKCS12 key store holding one key, so there is something that needs the password.
+    private static void writeKeyStore(final Path path, final String password) throws Exception {
         final java.security.KeyStore keyStore = java.security.KeyStore.getInstance("PKCS12");
         keyStore.load(null, password.toCharArray());
+        keyStore.setEntry("key",
+                new java.security.KeyStore.SecretKeyEntry(new SecretKeySpec(new byte[16], "AES")),
+                new java.security.KeyStore.PasswordProtection(password.toCharArray()));
         try (final OutputStream outputStream = Files.newOutputStream(path)) {
             keyStore.store(outputStream, password.toCharArray());
         }
+    }
+
+    private Credential createOtherKeyStoreFileCredential(final String name, final String keyStorePath) {
+        return new Credential("another-uuid",
+                name,
+                1_000L,
+                1_000L,
+                "someone else",
+                "someone else",
+                CredentialType.KEY_STORE_FILE,
+                KeyStoreType.PKCS12,
+                keyStorePath,
+                null);
     }
 
     private void allowEdit() {

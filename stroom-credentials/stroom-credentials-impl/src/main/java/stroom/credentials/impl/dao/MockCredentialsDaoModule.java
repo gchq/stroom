@@ -120,6 +120,7 @@ public class MockCredentialsDaoModule extends AbstractModule {
                     credential.getUpdateUser(),
                     old.getCredentialType(),
                     old.getKeyStoreType(),
+                    old.getKeyStorePath(),
                     credential.getExpiryTimeMs());
             putStoredSecret(new StoredSecret(updated, existing.secret(), existing.keyStore()), true);
             return true;
@@ -141,6 +142,7 @@ public class MockCredentialsDaoModule extends AbstractModule {
                     credential.getUpdateUser(),
                     old.getCredentialType(),
                     credential.getKeyStoreType(),
+                    credential.getKeyStorePath(),
                     credential.getExpiryTimeMs());
             putStoredSecret(new StoredSecret(updated, secret.secret(), secret.keyStore()), true);
             return true;
