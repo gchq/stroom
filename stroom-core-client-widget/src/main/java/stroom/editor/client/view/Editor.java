@@ -22,6 +22,7 @@ import stroom.util.shared.Location;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasKeyUpHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -45,6 +46,8 @@ public class Editor extends Composite implements
         HasValueChangeHandlers<String>,
         HasKeyDownHandlers,
         HasKeyUpHandlers {
+
+    private static final String ACCESSIBLE_NAME = "Code editor";
 
     private final AceEditor editor;
     private String text = "";
@@ -116,8 +119,17 @@ public class Editor extends Composite implements
                     editor.setUseSoftTabs(true);
                     editor.setTabSize(2);
                     // Ace's text input had no name; a FormGroup or screen can't label it, so it has
-                    // a generic one
-                    editor.getTextInputElement().setAttribute("aria-label", "Code editor");
+                    // a generic one, which Ace puts before the cursor's row ("Code editor, Cursor
+                    // at row 3")
+                    editor.setTextInputAriaLabel(ACCESSIBLE_NAME);
+                    // Tab indents while editing, so without a way out the editor is a keyboard
+                    // trap (WCAG 2.1.2). Ace's mode makes its content the tab stop: Enter starts
+                    // editing, Escape stops, and Tab then moves on. Dialogs leave keys from Ace's
+                    // text input to Ace, so Escape stops editing before a second one cancels.
+                    editor.setKeyboardAccessibility(true);
+                    // The mode makes the gutter a tab stop too; it is taken out again, so an editor
+                    // is one tab stop (folds and errors have keys while editing, e.g. Alt+L, Alt+E)
+                    removeGutterTabStop(editor.getElement());
                     started = true;
 
                     DOM.setEventListener(editor.getTextInputElement(), e -> {
@@ -156,6 +168,24 @@ public class Editor extends Composite implements
 
         editor.getElement().setClassName("code-editor__ace");
         initWidget(editor);
+    }
+
+    // Puts Ace's gutter back as Ace makes it, before the keyboard accessibility mode: not
+    // focusable (no tabindex), and hidden from screen readers, which hear the cursor's row from the
+    // text input
+    private static void removeGutterTabStop(final Element container) {
+        Element child = container.getFirstChildElement();
+        while (child != null) {
+            if (child.hasClassName("ace_gutter")) {
+                child.removeAttribute("tabindex");
+                child.setAttribute("aria-hidden", "true");
+                child.removeAttribute("role");
+                child.removeAttribute("aria-roledescription");
+                child.removeAttribute("aria-label");
+                child.removeClassName("ace_keyboard-focus");
+            }
+            child = child.getNextSiblingElement();
+        }
     }
 
     /// Destroys the Ace editor for good, removing what it added to the page (e.g. its listener on

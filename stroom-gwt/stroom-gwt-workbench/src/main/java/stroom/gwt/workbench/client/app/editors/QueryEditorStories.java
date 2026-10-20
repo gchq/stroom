@@ -515,6 +515,11 @@ public final class QueryEditorStories {
                     play.keyboard("foo");
                     play.waitFor(() -> play.expect(dialog.querySelector(".ace_content").textContent())
                             .toMatch(TextMatch.containing("foo")));
+                    // Escape stops editing, leaving the dialog open, with the editor's content
+                    // focused so Tab can leave it (a second Escape would cancel the dialog)
+                    play.keyboard("{Escape}");
+                    play.expect(dialog.querySelector(".ace_scroller")).toHaveFocus();
+                    play.expect(screen.queryByRole("dialog", "Filter 'Count'")).toBeInTheDocument();
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
                                            + "[{}, {\"name\": \"Count\", \"columnFilter\": {\"filter\": \"foo\"}}, "
