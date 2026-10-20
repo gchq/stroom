@@ -454,6 +454,73 @@ view, and only of pipelines they can view); their content is read only with _Vie
 needs, and each stream read is logged as a View event.
 
 
+## Server tasks (`server_tasks`)
+
+The `server_tasks` tool is the live view of _Monitoring > Server Tasks_: the tasks running on the cluster right
+now, for questions such as "how many searches are users running?", "who is running the longest searches?",
+"what is node-2 busy with?" or "is anything stuck?". It is read only and never stops a task. (For stream
+processing, use `processor_tasks`.) Every mode takes the same filters: task name contains, user, node, minimum
+age (`min_age`, e.g. `10m` or `PT1H`), `top_level_only`, and `kind` `search`.
+
+* `summary` (the default) counts the tasks by task name, user and node, top-level tasks apart from sub-tasks,
+  how many have run for over an hour, and the oldest.
+* With `kind` `search`, users' searches are counted once each, by their top-level task (`FederatedSearchTask`
+  for Lucene index, analytic store and event searches, `Elasticsearch Cluster Search`, `SolrSearchTask`,
+  `Sql Statistic Search`, and the `<data source> Search` or `Search '<key>'` tasks of Plan B state stores and
+  Stroom's own data sources), not by the sub-tasks each runs on every node (`Search node: …`,
+  `Cluster Search`, `Search Index Shard` and so on), which are counted by node instead. A search that has
+  finished but is holding its results for the UI ("staying alive for UI requests") is said to be. A
+  `Dashboard Search` task is a poll for results, not a search.
+* `list` lists the tasks (id, name, shortened info, user, node, thread, age, parent and sub-task count),
+  oldest or newest first, 50 by default and at most 500, or all of them to a `.csv` or `.txt` file with `out`.
+* `tree` shows one task (`id`) with its sub-tasks, as the screen's tree does, and the tasks it is under.
+
+Each result is a snapshot as of a time, and says which nodes answered, which didn't (their tasks are missing)
+and which are disabled (not asked). The tasks are read through the same `TaskResource` calls as the screen,
+from every enabled node at once, waiting at most 15 seconds.
+
+Permissions: as the screen, the tool needs the _Manage Tasks_ permission, and each node checks it again; with
+it, every user's tasks and their info are given (shortened). Without it Stroom only shows a user the tasks of
+their own browser session (_User Tasks_), which the agent isn't in, so the tool says so and gives nothing.
+Each call is logged as a Search of the Task Manager.
+
+
+## System properties (`config_properties`)
+
+The `config_properties` tool reads Stroom's system properties, as _Administration > Properties_ shows them, so the
+agent can explain the configuration, e.g. "why are my users' search results capped at 1,000,000, and how do I
+change that?". It is read only and never changes a property.
+
+* `search` finds properties by words in their path and description (never their values), e.g. `max results`,
+  ranked with words in the property's own name first, optionally under a `prefix` (e.g. `stroom.search`), or only
+  those `overridden` (a database or YAML value) or `differs_from_default`. Each is given with its effective value,
+  its source (default, database or YAML) and the start of its description; 20 by default, at most 100.
+* `get` gives up to 10 properties in full: description, type and how its values are written (e.g. `PT30S` or
+  `30s` for a duration, `10MiB` for a size, lists and maps with their separator first), default, database value
+  with who set it and when, this node's YAML value, the effective value and where it comes from, whether it is
+  editable and whether a change needs a restart or a UI restart, and its siblings. With `nodes` or `all_nodes`
+  (enabled nodes), each node is asked for its YAML value, as the Properties screen does, as the user; at most 20
+  nodes and 60 lookups a call, all within 10 seconds, and a node that doesn't answer is named.
+* `list` lists the properties and branches directly under a path, e.g. `stroom.ui`.
+
+Every result says how a value is changed, as the code works it out (`ConfigMapper`: YAML, then database, then
+default): a database value is set on the Properties screen (editable properties only) and reaches every node
+within about a minute; a YAML value is set in that node's `config.yml` under `appConfig`, applies to that node
+only, and wins over the database value there (a YAML value equal to the default counts as not set). A property
+marked as needing a restart takes effect only once the node (or the UI nodes) restart. The agent is told that a
+limit often has layers, e.g. a dashboard table's _Max Results_ or a StroomQL `limit` replaces
+`stroom.ui.defaultMaxResults` rather than being capped by it, and sorted results are also cut at
+`stroom.search.resultStore.maxSortedItems`, so it checks the document the user means as well.
+
+Permissions: the tool needs the _Manage Properties_ permission, as the Properties screen does (a failed check
+counts as not having it); without it the tool says so and gives nothing else. Values are masked: every value of a
+password property (default, database, YAML, effective and each node's), every value of a property whose name
+suggests a secret (e.g. `clientSecret`) unless its type can't hold one, and credentials in any other value (a
+URL's `user:password@`, the value of a key named like a password, secret, token or API key in `key=value`,
+JSON, XML or a map value, and `Bearer`/`Basic` credentials). Each search or listing is logged as a Search event
+naming the properties given, each `get` as a View event of them, and a refusal as a failed Search event.
+
+
 ## Retention and limits
 
 The _AI Chat Retention_ job (hourly) removes:
