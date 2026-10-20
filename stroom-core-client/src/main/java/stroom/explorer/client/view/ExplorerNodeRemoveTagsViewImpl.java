@@ -18,76 +18,45 @@ package stroom.explorer.client.view;
 
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
+import stroom.item.client.SelectionList;
+import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/// Picks tags to remove from several documents: those chosen in a selection list of several
+/// choices ([SelectionList#setMultiSelect]) of the tags they have.
 public class ExplorerNodeRemoveTagsViewImpl
         extends ViewWithUiHandlers<HideRequestUiHandlers>
         implements ExplorerNodeRemoveTagsView {
 
     private final Widget widget;
-    private Set<String> nodeTags = new HashSet<>();
-    private String selectedValue = null;
+    private final TagListModel nodeTagsModel = new TagListModel();
 
     @UiField
-    ListBox nodeTagsListBox;
-    private List<DocRef> docRefs;
+    SelectionList<String, SimpleSelectionItemWrapper<String>> nodeTagsList;
 
     @Inject
     public ExplorerNodeRemoveTagsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         widget.addAttachHandler(event -> focus());
-        nodeTagsListBox.setMultipleSelect(true);
-
-        nodeTagsListBox.addKeyDownHandler(this::handleKeyDownEvent);
-    }
-
-    private void handleKeyDownEvent(final KeyDownEvent event) {
-        final int keyCode = event.getNativeEvent().getKeyCode();
-        if (KeyCodes.KEY_J == keyCode) {
-            final int selectedIndex = nodeTagsListBox.getSelectedIndex();
-            final int lastIdx = nodeTagsListBox.getItemCount() - 1;
-            final int newIdx;
-            if (selectedIndex == -1) {
-                newIdx = 0;
-            } else if (selectedIndex == lastIdx) {
-                newIdx = selectedIndex;
-            } else {
-                newIdx = selectedIndex + 1;
-            }
-            nodeTagsListBox.setSelectedIndex(newIdx);
-        } else if (KeyCodes.KEY_K == keyCode) {
-            final int selectedIndex = nodeTagsListBox.getSelectedIndex();
-            final int newIdx;
-            if (selectedIndex == -1) {
-                newIdx = 0;
-            } else if (selectedIndex == 0) {
-                newIdx = selectedIndex;
-            } else {
-                newIdx = selectedIndex - 1;
-            }
-            nodeTagsListBox.setSelectedIndex(newIdx);
-        }
+        nodeTagsList.setMultiSelect(true);
+        nodeTagsList.init(nodeTagsModel);
     }
 
     @Override
     public void focus() {
-        nodeTagsListBox.setFocus(true);
+        nodeTagsList.focus();
     }
 
     @Override
@@ -97,46 +66,20 @@ public class ExplorerNodeRemoveTagsViewImpl
 
     @Override
     public Set<String> getRemoveTags() {
-
-        if (nodeTagsListBox.getItemCount() > 0
-                && nodeTagsListBox.getSelectedValue() != null) {
-            if (nodeTagsListBox.isMultipleSelect()) {
-                final Set<String> removeTags = new HashSet<>(nodeTagsListBox.getItemCount());
-                for (int i = 0; i < nodeTagsListBox.getItemCount(); i++) {
-                    if (nodeTagsListBox.isItemSelected(i)) {
-                        removeTags.add(nodeTagsListBox.getValue(i));
-                    }
-                }
-                return removeTags;
-            } else {
-                return Collections.singleton(nodeTagsListBox.getSelectedValue());
-            }
-        } else {
-            return Collections.emptySet();
-        }
-    }
-
-    private void updateNodeTagsListBoxContents() {
-        //noinspection SimplifyStreamApiCallChains
-        final List<String> tagsList = NullSafe.stream(nodeTags)
-                .sorted()
-                .collect(Collectors.toList());
-
-        nodeTagsListBox.clear();
-        for (final String string : tagsList) {
-            nodeTagsListBox.addItem(string);
-        }
+        return new HashSet<>(TagListModel.getSelectedTags(nodeTagsList));
     }
 
     @Override
     public void setData(final List<DocRef> nodeDocRefs,
                         final Set<String> nodeTags) {
-
-        this.nodeTags.clear();
-        this.docRefs = nodeDocRefs;
-        this.nodeTags.addAll(NullSafe.set(nodeTags));
-        updateNodeTagsListBoxContents();
+        final List<String> tagsList = NullSafe.stream(nodeTags)
+                .sorted()
+                .collect(Collectors.toList());
+        // A new set of tags starts with none chosen
+        nodeTagsList.getSelectionModel().clear();
+        nodeTagsModel.setTags(nodeTagsList, tagsList);
     }
+
 
     // --------------------------------------------------------------------------------
 

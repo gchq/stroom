@@ -954,7 +954,7 @@ export async function chooseInSelectionBox(page, label, item, settle) {
   await settle(600);
   const at = await page.evaluate((wanted) => {
     const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const row = [...document.querySelectorAll('.selectionList-elementChooser tr, .selectionList-elementChooser .dataGridRow')]
+    const row = [...document.querySelectorAll('.selection-list__options tr, .selection-list__options .dataGridRow')]
       .find((e) => e.offsetWidth > 0 && n(e.textContent) === wanted);
     if (!row) return null;
     const r = row.getBoundingClientRect();

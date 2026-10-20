@@ -23,6 +23,7 @@ import stroom.widget.form.client.FieldValidity;
 import stroom.widget.help.client.HelpPopup;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.util.client.FieldEnd;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.Rect;
 
@@ -74,6 +75,8 @@ public class QuickFilter extends FlowPanel
     private final ToolbarButton clearButton;
     private final ToolbarButton dropDownButton;
     private final ToolbarButton helpButton;
+    // Keeps the text clear of the buttons, which come and go (Clear, while there is text)
+    private final FieldEnd fieldEnd;
     private final HandlerManager handlerManager = new HandlerManager(this);
     private Supplier<SafeHtml> popupTextSupplier;
     private String lastInput = "";
@@ -130,6 +133,7 @@ public class QuickFilter extends FlowPanel
 
         add(textBox);
         add(toolbar);
+        fieldEnd = new FieldEnd(textBox.getElement(), toolbar.getElement());
         add(description);
         add(errorMessage);
 
@@ -465,6 +469,18 @@ public class QuickFilter extends FlowPanel
     /// @return The button's element.
     public Element getRecentFiltersButton() {
         return dropDownButton.getElement();
+    }
+
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        fieldEnd.start();
+    }
+
+    @Override
+    protected void onUnload() {
+        fieldEnd.stop();
+        super.onUnload();
     }
 
     @Override

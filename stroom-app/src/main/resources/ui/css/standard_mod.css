@@ -291,7 +291,7 @@ body,table td,select {
 }
 
 /* INPUT CONTROLS */
-.gwt-ListBox,.gwt-DateBox,.stroom-DropDownTree {
+.gwt-ListBox,.stroom-DropDownTree {
 	width: 200px;
 	margin: 0px;
 	padding: 1px;
@@ -314,50 +314,9 @@ textarea {
 	height: 80px;
 }
 
-/* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree { */
+/* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.stroom-DropDownTree { */
 /* 	padding: 1px; */
 /* } */
-
-.gwt-DatePicker {
-	position: absolute;
-    box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-	cursor: default;
-}
-.dateBoxPopup {
-    padding: 1px;
-	z-index: 100;
-}
-.datePickerDay,.datePickerWeekdayLabel,.datePickerWeekendLabel {
-	font-size: var(--font-size-13);
-	text-align: center;
-	padding: 4px;
-	outline: none;
-}
-td.datePickerMonth {
-	text-align: center;
-	vertical-align: center;
-	white-space: nowrap;
-	font-weight: 500;
-}
-td.datePickerMonth,
-td.datePickerYear {
-  text-align: center;
-  vertical-align: middle;
-  white-space: nowrap;
-  font-size: var(--font-size-13);
-  font-weight: 500;
-}
-.datePickerPreviousButton,
-.datePickerNextButton,
-.datePickerPreviousYearButton,
-.datePickerNextYearButton {
-  font-size: var(--font-size-13);
-  line-height: 1em;
-  cursor: hand;
-  cursor: pointer;
-  padding: 0px 4px;
-}
-
 
 .gwt-ValueSpinner .arrows {
 	width: 1px;

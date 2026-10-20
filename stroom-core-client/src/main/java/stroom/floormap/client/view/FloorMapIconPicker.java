@@ -25,11 +25,15 @@ import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /// Grid of the built-in [FloorMapIcon]s, one of which can be selected.
@@ -45,8 +49,9 @@ import java.util.Map;
 ///
 /// A radio group (`role="radiogroup"`, named by its row's label): each cell is a label holding a
 /// native radio button, unseen, which its text names, so the grid is one tab stop with the arrow
-/// keys choosing between the icons, as any radio group's do. The chosen icon and the focused one
-/// are drawn from the radio button's state (`stroom-floormap.css`).
+/// keys choosing between the icons, as any radio group's do: Left and Right the one before or after
+/// (the browser's own), and Up and Down the one above or below in the grid as it is laid out. The
+/// chosen icon and the focused one are drawn from the radio button's state (`stroom-floormap.css`).
 public class FloorMapIconPicker extends Composite {
 
     /// Size of each cell's icon in pixels.
@@ -79,6 +84,7 @@ public class FloorMapIconPicker extends Composite {
                 fireChange();
             }
         }, ChangeEvent.getType());
+        grid.addDomHandler(this::onKeyDown, KeyDownEvent.getType());
         initWidget(grid);
     }
 
@@ -107,6 +113,53 @@ public class FloorMapIconPicker extends Composite {
         inputs.put(icon, input);
         swatches.put(icon, swatch);
         return cell;
+    }
+
+    // Up and Down choose the icon above or below the one with the focus, in the grid as it is laid
+    // out (the browser's own radio group keys would go to the one before or after, as Left and
+    // Right do). At the top or bottom row the choice stays
+    private void onKeyDown(final KeyDownEvent event) {
+        final int keyCode = event.getNativeKeyCode();
+        if ((keyCode != KeyCodes.KEY_UP && keyCode != KeyCodes.KEY_DOWN)
+            || event.isAnyModifierKeyDown()) {
+            return;
+        }
+        event.preventDefault();
+        final List<InputElement> order = new ArrayList<>(inputs.values());
+        final int index = order.indexOf(Element.as(event.getNativeEvent().getEventTarget()));
+        if (index < 0) {
+            return;
+        }
+        final int columns = columns();
+        final int next = keyCode == KeyCodes.KEY_DOWN
+                ? index + columns
+                : index - columns;
+        if (next >= 0 && next < order.size()) {
+            final InputElement input = order.get(next);
+            input.setChecked(true);
+            input.focus();
+            final FloorMapIcon icon = chosenIcon();
+            if (icon != null && icon != selected) {
+                selected = icon;
+                fireChange();
+            }
+        }
+    }
+
+    // How many icons there are in a row of the grid as it is laid out: those level with the first
+    private int columns() {
+        final Element first = grid.getElement().getFirstChildElement();
+        if (first == null) {
+            return 1;
+        }
+        int columns = 0;
+        for (Element cell = first; cell != null; cell = cell.getNextSiblingElement()) {
+            if (cell.getOffsetTop() != first.getOffsetTop()) {
+                break;
+            }
+            columns++;
+        }
+        return Math.max(columns, 1);
     }
 
     // The icon whose radio button is checked, or null for none

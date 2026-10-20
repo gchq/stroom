@@ -19,6 +19,7 @@ package stroom.widget.form.client;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.util.client.FieldEnd;
 
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasKeyUpHandlers;
@@ -58,6 +59,8 @@ public class PasswordBox extends Composite
     private final FlowPanel end = new FlowPanel();
     private final ToolbarButton revealButton;
     private final Label status = new Label();
+    // Keeps the text clear of the button and any badge, whose width depends on its text
+    private final FieldEnd fieldEnd;
     // What the box holds, as its button and announcements name it, e.g. "password" or "pass phrase"
     private String secretName = "password";
     private boolean shown;
@@ -82,8 +85,21 @@ public class PasswordBox extends Composite
         panel.add(end);
         panel.add(status);
         initWidget(panel);
+        fieldEnd = new FieldEnd(input.getElement(), end.getElement());
 
         update();
+    }
+
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        fieldEnd.start();
+    }
+
+    @Override
+    protected void onUnload() {
+        fieldEnd.stop();
+        super.onUnload();
     }
 
     /// @return The input, e.g. to mark it invalid or focus it with [FieldValidity].

@@ -61,7 +61,48 @@ async function hoverMarker(page, cellClass) {
   }
 }
 
+// What has the focus: Ace's text input, its content or gutter, or a field's name
+async function focused(page) {
+  return page.evaluate(() => {
+    const element = document.activeElement;
+    if (element.classList.contains('ace_text-input')) {
+      return 'text';
+    }
+    if (element.classList.contains('ace_scroller')) {
+      return 'content';
+    }
+    if (element.classList.contains('ace_gutter')) {
+      return 'gutter';
+    }
+    return element.getAttribute('aria-label');
+  });
+}
+
 export const CHECKS = {
+  // Real Tab, Enter and Escape: the way out of an editable editor, with Tab indenting while editing
+  // and the focus ring shown on the content for keyboard focus
+  'widgets-editors-viewers-aceeditor--keyboard-way-out': async (page) => {
+    await page.getByRole('textbox', { name: 'Before' }).focus();
+    await page.keyboard.press('Tab');
+    assert.equal(await focused(page), 'content', 'Tab from the field before goes to the content (the gutter is no tab stop)');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => document.activeElement.classList.contains('ace_text-input'));
+    const text = () => page.evaluate(() => [...document.querySelectorAll('.ace_line')]
+      .map((line) => line.textContent).join('\n'));
+    const textBefore = await text();
+    await page.keyboard.press('Tab');
+    assert.equal(await focused(page), 'text', 'Tab while editing keeps the focus');
+    await page.waitForFunction((length) => [...document.querySelectorAll('.ace_line')]
+      .map((line) => line.textContent).join('\n').length > length, textBefore.length);
+    assert.equal((await text()).length, textBefore.length + 2, 'Tab while editing inserts an indent');
+    await page.keyboard.press('Escape');
+    assert.equal(await focused(page), 'content', 'Escape stops editing');
+    const outline = await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle);
+    assert.equal(outline, 'solid', 'the content shows its focus ring');
+    await page.keyboard.press('Tab');
+    assert.equal(await focused(page), 'After', 'Tab then leaves the editor');
+  },
+
   // Hovering each of Stroom's annotation markers shows its message (Stroom's markers are Ace's
   // info, warning and error annotations, with Stroom's classes)
   'widgets-editors-viewers-aceeditorfeatures--all-annotation-types': async (page) => {

@@ -513,6 +513,34 @@ public final class ExpressionBuilderStories {
                         play.waitFor(() -> play.expect(item(play, name)).toBeInTheDocument());
                     }
                 })
+                // A date term's From and To are date-time boxes that allow expressions: they keep
+                // their text, Enter (which runs the query) doesn't open the Set Date And Time dialog,
+                // Alt+Down does, and OK puts the time chosen in the term
+                .story("DateTermBoxes", context -> editor(context, complexExpression(), false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.getByText(TextMatch.startingWith("EventTime between"), ".expression-item__label"));
+                    play.waitFor(() -> play.expect(play.querySelector(FIELD_PICKER)).not().toBeNull());
+                    final Query from = screen.getByRole("textbox", "From");
+                    play.expect(from).toHaveValue("2024-01-01T00:00:00.000Z");
+                    play.expect(screen.getByRole("textbox", "To")).toHaveValue("2024-02-01T00:00:00.000Z");
+                    play.expect(from).toHaveAttribute("aria-haspopup", "dialog");
+                    play.run("focus From", () -> from.element().get().focus());
+                    play.keyboard("{Enter}");
+                    play.sleep(100);
+                    play.expect(screen.queryByText("Set Date And Time")).toBeNull();
+                    play.keyboard("{Alt>}{ArrowDown}{/Alt}");
+                    screen.findByText("Set Date And Time");
+                    play.click(screen.getByRole("button", "Midday"));
+                    play.click(screen.getByRole("button", "OK"));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Date And Time")).toBeNull());
+                    play.expect(from).toHaveValue("2024-01-01T12:00:00.000Z");
+                    // Escape leaves the term, keeping the time chosen
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(item(play,
+                            "EventTime between 2024-01-01T12:00:00.000Z,2024-02-01T00:00:00.000Z"))
+                            .toBeInTheDocument());
+                })
                 // A term's document is kept if checking it fails (e.g. the server can't be reached),
                 // as it is if the document doesn't exist
                 .story("DocumentKeptIfCheckingItFails", context -> editor(context, complexExpression(), false,
@@ -557,15 +585,16 @@ public final class ExpressionBuilderStories {
                     play.click(selectTermFieldPicker(play, "UserId"));
                     play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
                     // Stroom hides the pager and the quick filter rather than omitting them
-                    play.expect(play.screen().querySelector(".selectionList .pager")).not().toBeVisible();
-                    play.expect(play.screen().querySelector(".selectionList-quickFilter")).not().toBeVisible();
+                    play.expect(play.screen().querySelector(".selection-list .pager")).not().toBeVisible();
+                    play.expect(play.screen().querySelector(".selection-list__filter")).not().toBeVisible();
                 })
                 // A field list served by a data source always offers its quick filter and pager
                 .story("DynamicFieldsAlwaysShowPickerChrome", context -> editor(context, populatedExpression(), true))
                 .withPlay(play -> {
                     play.click(selectTermFieldPicker(play, "UserId"));
-                    play.waitFor(() -> play.expect(play.screen().querySelector(".selectionList .pager")).toBeVisible());
-                    play.expect(play.screen().querySelector(".selectionList-quickFilter")).toBeVisible();
+                    play.waitFor(() -> play.expect(play.screen().querySelector(".selection-list .pager"))
+                            .toBeVisible());
+                    play.expect(play.screen().querySelector(".selection-list__filter")).toBeVisible();
                 })
                 // Clicking the drop-down arrow opens the picker, as clicking its label does
                 .story("ClickingTheDropdownArrowOpensThePicker",
@@ -640,7 +669,7 @@ public final class ExpressionBuilderStories {
         play.waitFor(() -> play.expect(play.screen().getByText("EventTime", ".selectionItemCell-text"))
                 .toBeInTheDocument());
         // A data source's list always has the quick filter
-        play.expect(play.screen().querySelector(".selectionList-quickFilter")).toBeVisible();
+        play.expect(play.screen().querySelector(".selection-list__filter")).toBeVisible();
     }
 
     /// Selects the term whose label contains the text, and returns its field picker (the part of
@@ -918,7 +947,6 @@ public final class ExpressionBuilderStories {
         final ExpressionTreeViewImpl view = new ExpressionTreeViewImpl(
                 SelectorWidgets.docSelectionBoxProvider(harness),
                 SelectorWidgets.userRefSelectionBoxProvider(harness),
-                harness.getUserPreferencesManager(),
                 harness.getUiConfigCache());
         return new ExpressionTreePresenter(harness.getEventBus(), view);
     }

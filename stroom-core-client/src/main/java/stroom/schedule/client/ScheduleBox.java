@@ -38,6 +38,13 @@ import com.google.inject.Provider;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+/// A text field for a schedule's expression (a frequency such as `10m`, or a cron expression), with a
+/// clock icon at its end. Enter or Alt+Down in the field, or a click on the icon, opens the Change
+/// Schedule dialog ([SchedulePopup]), where the schedule's type can be changed too. The field says
+/// it opens a dialog (`aria-haspopup="dialog"`); the icon is a picture, hidden from screen readers.
+/// An expression the server rejects marks the field invalid when it is left.
+///
+/// The BEM block is `schedule-box` (`schedule-box.css`); its field is a text field.
 public class ScheduleBox
         extends Composite
         implements Focus, HasValueChangeHandlers<Schedule> {
@@ -62,8 +69,11 @@ public class ScheduleBox
         protected void onBind() {
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(event -> {
+                // As a date-time box: Enter or Alt+Down opens the dialog
                 final int keyCode = event.getNativeKeyCode();
-                if (KeyCodes.KEY_ENTER == keyCode) {
+                if ((KeyCodes.KEY_ENTER == keyCode && !event.isAnyModifierKeyDown())
+                    || (KeyCodes.KEY_DOWN == keyCode && event.isAltKeyDown())) {
+                    event.preventDefault();
                     showPopup();
                 }
             }));
@@ -82,7 +92,9 @@ public class ScheduleBox
         final Schedule schedule = value.copy().expression(textBox.getValue()).build();
         final SchedulePopup popup = getSchedulePresenter();
         if (popup != null) {
-            schedulePresenterProvider.get().validate(schedule, scheduleRestriction, scheduledTimes -> {
+            // The box's own dialog checks it (it once made a new dialog for every check, e.g. each
+            // time the box was left)
+            popup.validate(schedule, scheduleRestriction, scheduledTimes -> {
                 if (isEnabled() && !isInstant() && (scheduledTimes == null || scheduledTimes.isError())) {
                     FieldValidity.setInvalid(textBox.getElement(), true);
                 } else {
@@ -103,10 +115,11 @@ public class ScheduleBox
 
     public ScheduleBox() {
         textBox = new TextBox();
-        textBox.addStyleName("ScheduleBox-textBox stroom-control allow-focus");
+        textBox.addStyleName("schedule-box__input stroom-control allow-focus");
+        textBox.getElement().setAttribute("aria-haspopup", "dialog");
 
         svgIconBox = new SvgIconBox();
-        svgIconBox.addStyleName("ScheduleBox");
+        svgIconBox.addStyleName("schedule-box");
         svgIconBox.setWidget(textBox, SvgImage.HISTORY);
 
         initWidget(svgIconBox);

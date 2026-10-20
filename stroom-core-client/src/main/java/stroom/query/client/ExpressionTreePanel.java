@@ -67,12 +67,10 @@ public class ExpressionTreePanel extends TreePanel<Item> {
 
     public ExpressionTreePanel(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                final Provider<UserRefSelectionBoxPresenter> userRefProvider,
-                               final UiConfigCache uiConfigCache,
-                               final boolean utc) {
+                               final UiConfigCache uiConfigCache) {
 
         operatorEditor = new OperatorEditor();
         termEditor = new TermEditor(docRefProvider, userRefProvider, uiConfigCache);
-        termEditor.setUtc(utc);
 
         final FlowPanel panel = new FlowPanel();
         panel.setStyleName("expression-tree");

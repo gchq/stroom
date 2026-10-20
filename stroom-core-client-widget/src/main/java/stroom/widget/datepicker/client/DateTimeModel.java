@@ -64,6 +64,7 @@ public class DateTimeModel {
     private static final int MAX_DAYS_IN_MONTH = 31;
 
     private final String[] dayOfWeekNames = DATE_TIME_CONSTANTS.getDayOfWeekNames();
+    private final String[] longDayOfWeekNames = DATE_TIME_CONSTANTS.getLongDayOfWeekNames();
     private final String[] dayOfMonthNames = DATE_TIME_CONSTANTS.getDayOfMonthNames();
     private final String[] monthOfYearNames = DATE_TIME_CONSTANTS.getMonthNames();
     private final UTCDate currentMonth;
@@ -104,6 +105,14 @@ public class DateTimeModel {
      */
     public String formatDayOfWeek(final int dayInWeek) {
         return dayOfWeekNames[dayInWeek];
+    }
+
+    /// Formats a day of the week in full, e.g. "Monday".
+    ///
+    /// @param dayInWeek The day of the week, from 0 (Sunday) to 6 (Saturday).
+    /// @return The day's full name.
+    public String formatDayOfWeekLong(final int dayInWeek) {
+        return longDayOfWeekNames[dayInWeek];
     }
 
     /**

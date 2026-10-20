@@ -16,7 +16,6 @@
 
 package stroom.query.client.view;
 
-import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
@@ -50,10 +49,8 @@ public class QueryToolbarViewImpl
     TimeRangeSelector timeRangeSelector;
 
     @Inject
-    public QueryToolbarViewImpl(final Binder binder,
-                                final UserPreferencesManager userPreferencesManager) {
+    public QueryToolbarViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        timeRangeSelector.setUtc(userPreferencesManager.isUtc());
         errors.setSvg(SvgImage.ERROR);
     }
 

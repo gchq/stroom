@@ -686,7 +686,7 @@ async function clickInertPoint(page) {
  *
  * This exists because A5c's first full run captured zero dialogs from `New Field` and `Edit Field`
  * (now `New Index Field` and `Edit Selected Index Field`) on GWT, having captured both a run earlier. Nothing had regressed: the sweep clicks the tab's
- * quick-filter help immediately before them, and GWT's help tooltip (`.quickFilter-tooltip >
+ * quick-filter help immediately before them, and GWT's help tooltip (`.help-popup >
  * .popupContent`) takes neither Escape nor `closeDialogs` nor `dismissMenus` — the last only acts
  * when a `.menu__item` is visible. The tooltip simply stayed up, physically over the next
  * button, and `elementFromPoint` at the resolved centre returned the tooltip.
@@ -698,7 +698,7 @@ export async function dismissPopups(page, { toggle } = {}) {
   const stillUp = async () =>
     page.evaluate(`(() => {
       ${HELPERS}
-      return [...document.querySelectorAll('.popupContent, .quickFilter-tooltip, .tooltip-popup, [class*=tooltip] .popupContent')]
+      return [...document.querySelectorAll('.popupContent, .help-popup, .tooltip-popup, [class*=tooltip] .popupContent')]
         .filter(visible)
         .filter((el) => !el.closest('.dialog'))
         .length;

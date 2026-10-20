@@ -108,9 +108,10 @@ isn't clear whether a typed 0 is clamped when saved.
 * Elastic and Lucene dense vector Minimum rerank score: invalid text becomes 0.8.
 * Plan B Max Store Size: an invalid entry becomes 10 GiB.
 * Plan B Max Spans Per Trace: an invalid entry becomes 100,000.
-* Date boxes (`MyDateBox`): text that can't be parsed is saved as no date, as `getMilliseconds()`
-  (line 107) returns what `ClientDateUtil.fromISOString` gives, `null` for such text; nothing marks
-  the box as wrong (`CustomDateBox`'s `dateBoxFormatError` style is never used by Stroom's views).
+* Date boxes: text that can't be parsed is saved as no date, as `DateTimeBox.getValue()` gives
+  `null` for it. In part fixed (October 2026): the box is now marked invalid (`aria-invalid`) when
+  it is left (`MyDateBox`, which these boxes were, marked nothing), but the screens don't check
+  `isValid()` before saving, so OK still saves no date.
 
 ### Thread count spinners wrap round
 
@@ -331,7 +332,9 @@ it takes it over, and it lets go of the box when it closes). Measured with the s
 (heap 6.0 → 2.9 MB), analytic rule 6,387 → 3,612, pipeline 4,934 → 3,254, view 2,783 → 1,106,
 query 1,878 → 1,290; what is shown is unchanged. Still built but not shown: about 630 time zone
 items per document (`TimeZoneWidget` adds every zone to each of its selection boxes), and most of a
-dashboard's remaining 3,750 hidden nodes (not yet broken down).
+dashboard's remaining 3,750 hidden nodes (not yet broken down). `MyDateBox` is gone since
+(October 2026): its boxes are `DateTimeBox`es, each of which builds its dialog only when first
+opened.
 
 **Fixed (October 2026): closing a document now releases it.** A `PresenterScope`
 (`stroom.widget.util.client`) records every `MyPresenterWidget` made while a document opens, and
@@ -802,12 +805,31 @@ Identification):
   has its own (`QuickFilter`, `quick-filter.css`; the workbench's `Widgets/Inputs/QuickFilter`
   `FiltersAList`).
 
+### An expression term being edited is under 24px high
+
+**Reported.** While a term is edited, its tree row (the `treeitem`) is 23px high (`TermEditor.css`,
+`.termEditor-inner`), under WCAG 2.5.8's 24px, which axe reports as `target-size` for a story that
+ends with a term open (found with `Widgets/Query/ExpressionBuilder` `DateTermBoxes`, which now
+leaves the term with Escape before it ends). For the expression tree's own work (session 5).
+
 ### Keyboard trap in the code editor
 
-Tab in an editable code editor inserts an indent, so keyboard users can't leave it (WCAG 2.1.2).
-Stroom's Ace (1.5.0) predates Ace's own way out. Either Stroom adds a key binding of its own, e.g.
-Ctrl+M to switch Tab between indenting and moving focus, or Escape then Tab, or Ace is upgraded (see
-below).
+**Fixed (session 6).** Tab in an editable code editor inserted an indent, so keyboard users couldn't
+leave it (WCAG 2.1.2). Every editor now has Ace 1.44's keyboard accessibility mode on
+(`enableKeyboardAccessibility`, set by `Editor` through `AceEditor.setKeyboardAccessibility`, one of
+two setters added to `AceEditor` with approval): Tab reaches the editor's content, its one tab stop
+(Ace's text input is no longer one, and the gutter, which the mode also makes one, is put back as it
+was, its errors and folds having Ace's keys while editing: Alt+E, F2); Enter on the content starts editing, where Tab still
+indents; Escape stops editing, back to the content, and Tab then moves on. Chosen over a Stroom key
+of its own (Ctrl+M, or Escape then Tab) as it is Ace's own, documented pattern, named for screen
+readers. Dialogs already leave keys from Ace's text input to Ace (`AbstractPopupPanel`), so in a
+dialog the first Escape stops editing and the second cancels. With Vim keys, Escape leaves insert
+mode, and a second leaves editing. Ace's focus ring (a fixed blue for any focus) is replaced by
+Stroom's, for keyboard focus only, in a colour that follows the editor's theme. The text input's
+name ("Code editor"), which Ace now rewrites on focus, goes in through Ace's `textInputAriaLabel`
+(`AceEditor.setTextInputAriaLabel`). Stories: `Widgets/Editors & Viewers/AceEditor`
+`KeyboardWayOut`, `KeyboardErrorsAndFolds` and `KeyboardReadOnly`, `AceEditorFeatures` `VimKeys`, and `App/Editors/QueryEditor`
+`ColumnFilterMenu` (Escape in a dialog); real input `ace-editor.mjs`.
 
 ### XML schema text tab handlers
 
@@ -818,7 +840,7 @@ and component settings (they aren't saved).
 
 ### Upgrading the Ace editor
 
-**Upgraded; the keyboard trap remains.** Stroom now ships Ace 1.44.0 (the non-minified `src` of npm
+**Upgraded.** Stroom now ships Ace 1.44.0 (the non-minified `src` of npm
 `ace-builds`), from its one tracked copy (`edu/ycp/cs/dh/acegwt/public/ace`; the copies in
 `stroom-app/src/main/resources/ui` are build outputs). `ace.js` is no longer patched: Stroom's
 annotation types go in as each annotation's `className`, and `AceEditor` labels their gutter
@@ -828,7 +850,7 @@ snippets, every annotation type (in the gutter, with its tooltip, and the overvi
 and the query editor's markers, the context menu, formatting, Vim keys, Stroom's modes and the
 editor themes, including the 10 that 1.44 added, which the user preferences now offer. Ace 1.44 has
 `enableKeyboardAccessibility`, which fixes the trap (Tab moves past the editor, Enter starts editing
-and Escape stops), but Stroom doesn't turn it on yet.
+and Escape stops), now turned on (see Keyboard trap in the code editor).
 
 ### Expression terms and tables
 
@@ -909,9 +931,10 @@ token that doesn't exist, and is fixed):
   `.timeline-header` spans; `app-main-tracesscreen--traces`);
 * a disabled form group's description (`.form-group__description`, faded to 80% and in the
   disabled colour; `widgets-inputs-formgroup--disabled`). WCAG exempts text that is part of a
-  disabled control, so this one may be acceptable.
+  disabled control, so this one may be acceptable. **Fixed**: a disabled description is no longer
+  faded as well as greyed (`form.css`); the story passes in both themes and is out of the baseline.
 
-They are in `test-runner/a11y-baseline.json` until they are fixed.
+They were in `test-runner/a11y-baseline.json`; neither story is now.
 
 ### Top bar focus rings cut off
 
@@ -1699,6 +1722,115 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   column flexbox) took the whole width, e.g. every Plan B setting. It is 200px again, as a text field
   is, at a class's weight so a screen's `w-100` or width still wins. Workbench:
   `App/Editors/PlanBEditor` `Metric`.
+* **Two calendars, one of them out of the keyboard's reach** (`MyDateBox`, GWT's `DatePicker`,
+  `CustomDatePicker`, `DateTimeBox`): 17 date boxes (the expression term editor, the query time range,
+  processor and reprocess filters, the table builder, import, data upload, API key expiry and a
+  visualisation's date settings) showed GWT's own calendar, which opened whenever the field got the
+  focus and could only be used with the mouse; the other date fields showed Stroom's calendar in the
+  Set Date And Time dialog, whose days were one tab stop on the table with the focus drawn by a class.
+  None of these values is only a date: every box holds a time (or an expression), so they are all
+  `DateTimeBox`es now, and `MyDateBox`, GWT's calendar and its rules in `standard.css`,
+  `standard_mod.css` and `stroom.css` (`gwt-DateBox`, `datePicker*`, `dateBoxPopup`) are deleted. The
+  box opens its dialog on Enter, Alt+Down or a click on its icon, never on focus, and says it opens a
+  dialog (`aria-haspopup`). A box that allows expressions (`setExpressionsAllowed`: the term editor,
+  the time range and the vis setting, where `now()-1d` is valid) leaves Enter to its screen (the term
+  editor runs the query) and opens on Alt+Down. The calendar's days are a WAI-ARIA grid
+  (`CalendarGrid`, `calendar.css`): named for its month, each day a `gridcell` named by its full
+  date, the chosen one `aria-selected` and today `aria-current="date"`; one tab stop on a day, with
+  the arrows, Home, End, Page Up and Page Down (Shift for a year) moving it across months, and Enter
+  or Space choosing. The dialogs' shortcuts (Today, Yesterday, Week Start, Now, Midnight, Midday) and
+  Reset links were text that only the mouse could press; they are buttons ("Reset hour" and so on),
+  24px high. `DateTimeBox` and `TimeBox` no longer borrow the schedule box's classes
+  (`date-time-box.css`), and the calendar's unused copies of GWT's API (highlighting, per-day styles,
+  show-range events) are gone. Workbench: `Widgets/Date & Time/CalendarGrid`
+  (`GridRolesAndNames`, `OneTabStop`, `ArrowKeysMoveTheFocus`, `ArrowsCrossIntoTheNextMonth`,
+  `PageKeysMoveAMonthOrAYear`, `SpaceChooses`, `ClickingAnOutsideDayShowsItsMonth`,
+  `ToolbarsChangeTheMonth`), `Widgets/Date & Time/DateTimePicker` (`AltDownOpensTheDialog`,
+  `ChooseADayWithTheKeys`, `ShortcutsAreButtons`, `InvalidTextIsMarked`, `ExpressionsAllowed`),
+  `Widgets/Query/ExpressionBuilder` `DateTermBoxes`; real input: `date-time.mjs`.
+* **Text ran under what is drawn over a field's end** (`PasswordBox`, `QuickFilter`, `SvgIconBox`,
+  `BaseSelectionBox`): a password box's text ran 7px under its show/hide button, and a quick filter's
+  ran under Clear (which appears once there is text; 22px of padding for 57px of buttons) and under
+  the recent filters' button; an icon box's and a selection box's text stopped 1px short of the
+  icon, so a long value touched it. Each field's text now stops 4px before what is over its end:
+  `FieldEnd` (`ResizeObserver`) sets the padding where what is over the end changes width, and the
+  stylesheets where it doesn't. Measured on every such field on `Widgets/Inputs/ViewStates`
+  `AllControls`; workbench: `Widgets/Inputs/FieldEnds` `TextStaysClearOfTheEnd`.
+* **A duration's amount couldn't be seen** (`DurationPicker`): the picker was 200px, as wide as its
+  unit's selection box alone (200px since the selection box's width was restored), so its amount's
+  spinner was squeezed to 62px, all of it its arrows, hiding the value on every duration field (13,
+  e.g. HTTP client timeouts, processing delays, Retain For), and the unit's arrow and focus ring were
+  cut off. Each part is now as wide as its longest value needs (`duration-picker.css`). Its
+  `setValue(value, fireEvents)` never fired and threw on null; it does as `setValue(value)`, then
+  fires. Workbench: `Widgets/Date & Time/DurationPicker` `LargestValuesFit`, `SetValueFiresWhenAsked`,
+  `InAFormGroup`, `KeysChangeTheAmount`.
+* **The time range's dialog was a bare popup** (`TimeRangeSelector`): the range was a `Label` made to
+  act as a button, opening a GWT `PopupPanel` with no role or name, which Escape didn't close; the focus
+  neither moved into it nor came back when it closed. The range is now a real button named "Time
+  range: " and its range, opening a modal Stroom dialog named "Time Range" below it (the focus in
+  After Time and kept in the dialog, Escape cancelling, the focus put back on the button); BEM
+  (`time-range-selector.css`; the `timeRange-*` rules are gone). Workbench: `App/Editors/QueryEditor`
+  `TimeRangeDialogKeys`, `TimeRangeRerun`.
+* **The standalone dashboard never set up the static event bus** (`DashboardAppModule`): widgets
+  with no event bus of their own show their popups on it (a form group's help, and now a date-time
+  box's dialog and the time range's), and `StaticEventBus.getEventBus()` throws when it hasn't been
+  set up, as `AppModule` does in the main app. It is bound there too (found reading the code; the
+  standalone dashboard has no workbench story).
+* **Every check of a schedule made a new schedule dialog** (`ScheduleBox.validate`): it asked its
+  provider for a new `SchedulePopup` each time, though it already had one, so leaving the box, and
+  each change of its value or enabled state, made a whole dialog (presenter and view) to check the
+  expression with: three times leaving it made five. It uses its own dialog. Workbench:
+  `Widgets/Date & Time/ScheduleBox` `CheckingReusesTheDialog`.
+* **The schedule box only opened its dialog on Enter or a click, and its quick settings borrowed the
+  time range's classes** (`ScheduleBox`, `ScheduleViewImpl`, `TimeRangePopup`): Alt+Down opens it
+  too, the field says it opens a dialog, and its classes are BEM (`schedule-box`; `ScheduleBox.css`
+  is gone). The schedule and time range dialogs' presets are a shared `QuickSettings` (`quick-settings.css`;
+  the `timeRange-quick*` rules in `components.css` are gone), each 24px high. Workbench:
+  `Widgets/Date & Time/ScheduleBox` `KeysOpenTheDialog`, `QuickSettingsAreGroupedButtons`.
+* **A calendar day's number sat above the middle of its fill and focus ring** (`calendar.css`):
+  `stroom.css` puts a table cell's content at its top; the days are centred.
+* **A date-time box was too narrow for its value**: an ISO time (`2024-01-15T09:50:00.000Z`) needs
+  209px, with an offset 241px, in a 200px box, so it scrolled; it is now 17 of its font size.
+* **The calendar's day numbers and weekday names were a day out west of UTC** (`DateTimeConstants`):
+  they were found by formatting midnight UTC on sample days in the browser's own time zone, so in
+  the Americas the 1st was named "31" and Monday "Sunday" (found reading the code). They are
+  formatted in UTC; checked in a browser set to New York's time zone.
+* **The explorer's tag lists were GWT's own list boxes** (`ExplorerNodeEditTagsViewImpl`,
+  `ExplorerNodeRemoveTagsViewImpl`, `SelectionList`, `FormGroup`): Edit Tags' All known tags and
+  Document Tags, and Remove Tags' Existing Tags, were `ListBox`es (native multi-select `select`s),
+  unlike Stroom's lists in look and keys. They are now selection lists of several choices
+  (`SelectionList.setMultiSelect`, `aria-multiselectable`), drawn as fields and named by their labels
+  (a form group's label now names a `listbox`): moving only moves, Space chooses or unchooses,
+  Ctrl+click, Shift+click and Ctrl+A choose as a list box does, and Enter or a double click adds the
+  known tags chosen, or removes the document tags chosen, as Delete and Backspace do. Down in the
+  field goes to the known tags and Up from the first comes back, and filtering them drops the
+  choices it hides, so Add never adds a tag that can't be seen. Left and Right no longer move tags
+  between the lists. A long list scrolls within its border; it had squashed the field above it.
+  Workbench: `App/Main/EditTagsDialog` `KeysChooseAndAddTags`, `DeleteRemovesTags`,
+  `FilteringDropsHiddenChoices`, `ManyKnownTags`, `RemoveByKeyboard`; real input:
+  `selection-list.mjs`.
+* **A selection box's list wasn't BEM** (`SelectionList`): its classes (`selectionList`,
+  `selectionList-quickFilter`, `-links`, `-pathLink`, `-elementChooser`) were in `components.css`, and
+  its path's labels were styled through GWT's `gwt-Label`. They are now the block `selection-list` in
+  its own stylesheet (`selection-list.css`: `__filter`, `__path`, `__path-link`, `__path-current`,
+  `__path-separator`, `__options`), looking as they did. Workbench: `Widgets/Selectors/SelectionBox`
+  (every story's screenshot unchanged).
+* **The floor map's Value Schema grid had bare controls** (`FloorMapSettingsPresenter`,
+  `AccessibleSelectionCell`, `AccessibleTextInputCell`): each row's Role was a bare `<select>` and its
+  Path, Display Name and Default bare `<input>`s, styled only by `stroom.css`'s rules for bare inputs.
+  They are now Stroom's selection box and text fields as grid cells (`SelectionBoxCell`,
+  `TextFieldCell`, new), looking and working as the widgets do: the role's list opens on Enter, Space,
+  Down or a click (Down had moved the grid's row), choosing returns the focus to the row's box, and
+  a read-only map's controls can still be reached and read (they were disabled). Workbench:
+  `App/Editors/FloorMapSettings` `Schema`, `ChooseARole`, `EscapeKeepsTheRole`, `ReadOnly`; real
+  input: `selection-box.mjs`.
+* **Nine text fields weren't text fields** (`Pager`, `QueryDataViewImpl`, `AnnotationEditViewImpl`,
+  `IncludeExcludeFilterViewImpl`, `CreateMultipleUsersViewImpl`): their templates set `styleName`,
+  which replaced the `text-field` class, so they were styled by `stroom.css`'s rules for bare inputs.
+  They add their classes instead, so are text fields, looking as they did in both themes (measured:
+  size, border, padding, colours, focus), but for a text area's cursor, now the text cursor as on every
+  other text area. Workbench: `App/Main/AnnotationEditor`, `App/Editors/DashboardEditor`
+  `TableIncludeExcludeFilter`, `Widgets/Data Grid/DataGrid` `Pager`.
 
 ## Checked and not bugs
 

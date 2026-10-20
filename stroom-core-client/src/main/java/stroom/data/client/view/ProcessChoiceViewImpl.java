@@ -17,8 +17,7 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.ProcessChoicePresenter;
-import stroom.preferences.client.UserPreferencesManager;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -41,18 +40,15 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     @UiField
     CustomCheckBox enabled;
     @UiField
-    MyDateBox minMetaCreateTimeMs;
+    DateTimeBox minMetaCreateTimeMs;
     @UiField
-    MyDateBox maxMetaCreateTimeMs;
+    DateTimeBox maxMetaCreateTimeMs;
 
     private final Widget widget;
 
     @Inject
-    public ProcessChoiceViewImpl(final Binder binder,
-                                 final UserPreferencesManager userPreferencesManager) {
+    public ProcessChoiceViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        minMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
-        maxMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
 
         priority.setMax(100);
         priority.setMin(1);
@@ -95,22 +91,22 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
 
     @Override
     public Long getMinMetaCreateTimeMs() {
-        return minMetaCreateTimeMs.getMilliseconds();
+        return minMetaCreateTimeMs.getValue();
     }
 
     @Override
     public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
-        this.minMetaCreateTimeMs.setMilliseconds(minMetaCreateTimeMs);
+        this.minMetaCreateTimeMs.setValue(minMetaCreateTimeMs);
     }
 
     @Override
     public Long getMaxMetaCreateTimeMs() {
-        return maxMetaCreateTimeMs.getMilliseconds();
+        return maxMetaCreateTimeMs.getValue();
     }
 
     @Override
     public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
-        this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
+        this.maxMetaCreateTimeMs.setValue(maxMetaCreateTimeMs);
     }
 
     @UiHandler("reprocess")

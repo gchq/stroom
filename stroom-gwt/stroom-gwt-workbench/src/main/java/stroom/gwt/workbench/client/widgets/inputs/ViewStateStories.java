@@ -50,7 +50,6 @@ import stroom.widget.button.client.Button;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimeModel;
 import stroom.widget.datepicker.client.DateTimePopup;
@@ -167,8 +166,6 @@ public final class ViewStateStories {
                         w -> ((DateTimeBox) w).setEnabled(false)),
                 new Row("Time", ViewStateStories::timeBox, w -> ((TimeBox) w).setReadOnly(true),
                         w -> ((TimeBox) w).setEnabled(false)),
-                new Row("Date (text)", ViewStateStories::dateBox, w -> ((MyDateBox) w).setReadOnly(true),
-                        w -> ((MyDateBox) w).setEnabled(false)),
                 new Row("Duration", ViewStateStories::duration, w -> ((DurationPicker) w).setReadOnly(true),
                         w -> ((DurationPicker) w).setEnabled(false)),
                 new Row("Schedule", ViewStateStories::schedule, w -> ((ScheduleBox) w).setReadOnly(true),
@@ -491,13 +488,6 @@ public final class ViewStateStories {
     private static Widget timeBox() {
         final TimeBox box = new TimeBox();
         box.setValue(new Time(14, 30, 0));
-        return box;
-    }
-
-    private static Widget dateBox() {
-        final MyDateBox box = new MyDateBox();
-        box.setUtc(true);
-        box.setValue("2023-11-14T22:13:20.000Z");
         return box;
     }
 

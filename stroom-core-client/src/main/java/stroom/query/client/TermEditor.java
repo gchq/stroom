@@ -35,7 +35,7 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.form.client.AccessibleName;
 
@@ -75,9 +75,9 @@ public class TermEditor extends Composite {
     private final SuggestBox value;
     private final SuggestBox valueFrom;
     private final SuggestBox valueTo;
-    private final MyDateBox date;
-    private final MyDateBox dateFrom;
-    private final MyDateBox dateTo;
+    private final DateTimeBox date;
+    private final DateTimeBox dateFrom;
+    private final DateTimeBox dateTo;
     private final Widget docRefWidget;
     private final Widget userRefWidget;
     private final Label fieldTypeLabel;
@@ -168,12 +168,6 @@ public class TermEditor extends Composite {
         initWidget(layout);
     }
 
-    public void setUtc(final boolean utc) {
-        date.setUtc(utc);
-        dateFrom.setUtc(utc);
-        dateTo.setUtc(utc);
-    }
-
     public void init(final RestFactory restFactory,
                      final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
@@ -200,15 +194,12 @@ public class TermEditor extends Composite {
         }
     }
 
-    /// @return Whether a field's own popup is open: a value's suggestions or a date's calendar
-    /// (whose keys, e.g. Escape to close it, are the field's).
+    /// @return Whether a field's own popup is open: a value's suggestions (whose keys, e.g. Escape
+    /// to close it, are the field's). A date's dialog is modal, so takes the keys itself.
     public boolean isPopupShowing() {
         return value.isSuggestionListShowing()
                || valueFrom.isSuggestionListShowing()
-               || valueTo.isSuggestionListShowing()
-               || date.isDatePickerShowing()
-               || dateFrom.isDatePickerShowing()
-               || dateTo.isDatePickerShowing();
+               || valueTo.isSuggestionListShowing();
     }
 
     /// Closes the fields' own popups (see [#isPopupShowing]).
@@ -216,9 +207,6 @@ public class TermEditor extends Composite {
         value.hideSuggestionList();
         valueFrom.hideSuggestionList();
         valueTo.hideSuggestionList();
-        date.hideDatePicker();
-        dateFrom.hideDatePicker();
-        dateTo.hideDatePicker();
     }
 
     public void endEdit() {
@@ -275,8 +263,8 @@ public class TermEditor extends Composite {
                 if (widget instanceof SuggestBox) {
                     sb.append(((SuggestBox) widget).getText());
                     sb.append(",");
-                } else if (widget instanceof MyDateBox) {
-                    sb.append(((MyDateBox) widget).getValue());
+                } else if (widget instanceof DateTimeBox) {
+                    sb.append(((DateTimeBox) widget).getText());
                     sb.append(",");
                 } else if (widget.equals(docRefWidget)) {
                     if (docSelectionBoxPresenter != null) {
@@ -519,15 +507,15 @@ public class TermEditor extends Composite {
             final String[] vals = term.getValue().split(",");
             if (vals.length > 0) {
                 if (date != null) {
-                    date.setValue(vals[0]);
+                    date.setText(vals[0]);
                 }
                 if (dateFrom != null) {
-                    dateFrom.setValue(vals[0]);
+                    dateFrom.setText(vals[0]);
                 }
             }
             if (vals.length > 1) {
                 if (dateTo != null) {
-                    dateTo.setValue(vals[1]);
+                    dateTo.setText(vals[1]);
                 }
             }
         }
@@ -632,8 +620,10 @@ public class TermEditor extends Composite {
         return textBox;
     }
 
-    private MyDateBox createDateBox(final String widthClassName, final String name) {
-        final MyDateBox dateBox = new MyDateBox();
+    private DateTimeBox createDateBox(final String widthClassName, final String name) {
+        // A time or an expression such as day(); Enter runs the query, Alt+Down opens the dialog
+        final DateTimeBox dateBox = new DateTimeBox();
+        dateBox.setExpressionsAllowed(true);
         AccessibleName.set(dateBox, name);
         dateBox.addStyleName(ITEM_CLASS_NAME);
         dateBox.addStyleName(widthClassName);

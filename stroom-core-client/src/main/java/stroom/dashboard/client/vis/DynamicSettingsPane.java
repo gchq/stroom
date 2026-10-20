@@ -19,7 +19,7 @@ package stroom.dashboard.client.vis;
 import stroom.entity.client.presenter.HasReadAndWrite;
 import stroom.item.client.SelectionBox;
 import stroom.util.client.JSONUtil;
-import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -40,14 +40,12 @@ import java.util.List;
 
 public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject>, Focus {
 
-    private final boolean utc;
     private final FlowPanel outer;
     private final List<SelectionBox<String>> fieldControls = new ArrayList<>();
     private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<>();
 //    private double opacity;
 
-    public DynamicSettingsPane(final boolean utc) {
-        this.utc = utc;
+    public DynamicSettingsPane() {
         outer = new FlowPanel();
         outer.setStyleName("max form");
         initWidget(outer);
@@ -111,11 +109,11 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
                 ctrl.setText(defaultValue);
             }
         } else if ("date".equals(type)) {
-            final MyDateBox ctrl = createDateBox(id);
+            final DateTimeBox ctrl = createDateBox(id);
             widget = ctrl;
 
             if (defaultValue != null) {
-                ctrl.setValue(defaultValue);
+                ctrl.setText(defaultValue);
             }
         } else if ("number".equals(type)) {
             final ValueSpinner ctrl = createNumberBox(id);
@@ -222,9 +220,10 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         return ctrl;
     }
 
-    private MyDateBox createDateBox(final String id) {
-        final MyDateBox ctrl = new MyDateBox();
-        ctrl.setUtc(utc);
+    private DateTimeBox createDateBox(final String id) {
+        // The text is the vis's to read, so any is allowed; the dialog puts an ISO time in it
+        final DateTimeBox ctrl = new DateTimeBox();
+        ctrl.setExpressionsAllowed(true);
         ctrl.addStyleName("w-100");
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
@@ -235,12 +234,12 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
             @Override
             public void read(final JSONObject settings) {
-                ctrl.setValue(JSONUtil.getString(settings.get(id)));
+                ctrl.setText(JSONUtil.getString(settings.get(id)));
             }
 
             @Override
             public void write(final JSONObject settings) {
-                final String val = ctrl.getValue();
+                final String val = ctrl.getText();
                 if (val != null) {
                     settings.put(id, new JSONString(val.trim()));
                 }
