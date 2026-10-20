@@ -612,6 +612,12 @@ Not yet done: it hasn't been tried with a screen reader, and VoiceOver on iOS ma
 
 Stories `Widgets/Date & Time/ScheduleBox` (`ScheduleBoxStories`): `KeysOpenTheDialog`, `QuickSettingsAreGroupedButtons`, `CheckingReusesTheDialog`.
 
+## Time range selector
+
+`TimeRangeSelector` (`stroom.query.client.view`, styled by `time-range-selector.css`) shows the time range a query or dashboard applies, as a `LinkButton` whose text is the range ("Today", "After now()-1d"), named "Time range: " and its text, and `aria-haspopup="dialog"`. It opens the Time Range dialog (`TimeRangeDialog`, its content `TimeRangePopup`): quick settings (`QuickSettings`) and the After and Before times (date-time boxes that allow expressions), as a modal OK/Cancel dialog below the selector, made on the app's event bus (`StaticEventBus`), as the selector has none of its own. As a modal Stroom dialog, it is a `dialog` named by its title, the focus starts in After Time and is kept in it, Escape cancels it and the focus goes back to the selector. Disabled and read only are both `aria-disabled` (a button can't be read only), so it stays focusable and doesn't open; read only, greyed less, is the `time-range-selector--readonly` modifier.
+
+Stories `App/Editors/QueryEditor` `TimeRangeRerun` (a quick setting chosen with the keys reruns the query) and `TimeRangeDialogKeys` (the dialog's role, name, focus and Escape).
+
 ## Field ends
 
 A field with something drawn over its end (an icon box's icon, a password box's button and badge, a quick filter's buttons, a spinner's arrows) keeps its text 4px (`FieldEnd.GAP`) clear of it: its text never runs under what is over its end. Where that never changes width (an icon box's 26px icon, a selection box's arrow), the stylesheet pads the field's end by its width and 4px. Where it does (a quick filter's Clear comes and goes, a password badge's width depends on its text), `FieldEnd` (`stroom.widget.util.client`) watches it (`ResizeObserver`) while the widget is attached and sets the field's `--field__end-space`, which the stylesheet uses as its end padding, with a fallback for before it is shown. Story `Widgets/Inputs/FieldEnds` `TextStaysClearOfTheEnd` gives each such field a value too long for it and measures the space.

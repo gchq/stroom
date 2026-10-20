@@ -28,12 +28,13 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public class TimeRangePopup implements HasValue<TimeRange>, Focus {
+/// The content of the Time Range dialog ([TimeRangeDialog]): quick settings for common ranges, and
+/// the After and Before times, each a date-time box that also takes expressions such as `now()-1d`.
+public class TimeRangePopup extends ViewImpl implements TimeRangeDialog.TimeRangeView {
 
     private final Widget widget;
 
@@ -114,6 +115,7 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
         }
     }
 
+    @Override
     public Widget asWidget() {
         return widget;
     }

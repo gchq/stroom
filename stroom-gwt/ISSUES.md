@@ -1715,6 +1715,18 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   `FieldEnd` (`ResizeObserver`) sets the padding where what is over the end changes width, and the
   stylesheets where it doesn't. Measured on every such field on `Widgets/Inputs/ViewStates`
   `AllControls`; workbench: `Widgets/Inputs/FieldEnds` `TextStaysClearOfTheEnd`.
+* **The time range's dialog was a bare popup** (`TimeRangeSelector`): the range was a `Label` made to
+  act as a button, opening a GWT `PopupPanel` with no role or name, which Escape didn't close; the focus
+  neither moved into it nor came back when it closed. The range is now a real button named "Time
+  range: " and its range, opening a modal Stroom dialog named "Time Range" below it (the focus in
+  After Time and kept in the dialog, Escape cancelling, the focus put back on the button); BEM
+  (`time-range-selector.css`; the `timeRange-*` rules are gone). Workbench: `App/Editors/QueryEditor`
+  `TimeRangeDialogKeys`, `TimeRangeRerun`.
+* **The standalone dashboard never set up the static event bus** (`DashboardAppModule`): widgets
+  with no event bus of their own show their popups on it (a form group's help, and now a date-time
+  box's dialog and the time range's), and `StaticEventBus.getEventBus()` throws when it hasn't been
+  set up, as `AppModule` does in the main app. It is bound there too (found reading the code; the
+  standalone dashboard has no workbench story).
 * **Every check of a schedule made a new schedule dialog** (`ScheduleBox.validate`): it asked its
   provider for a new `SchedulePopup` each time, though it already had one, so leaving the box, and
   each change of its value or enabled state, made a whole dialog (presenter and view) to check the

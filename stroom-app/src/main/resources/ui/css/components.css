@@ -1368,34 +1368,6 @@
 }
 */
 
-.timeRange-selector {
-    color: var(--link__text-color);
-    cursor: pointer;
-    font-size: var(--font-size-14);
-    padding-right: 5px;
-}
-
-.timeRange-selector:hover {
-    text-decoration: underline;
-}
-
-/* Read only: the value greyed; disabled: greyed too, and neither opens the dialog */
-.timeRange-selector.readonly,
-.timeRange-selector.disabled {
-    color: var(--control__text-color--readonly);
-    cursor: default;
-    text-decoration: none;
-}
-
-.timeRange-selector.disabled {
-    color: var(--control__text-color--disabled);
-}
-
-.timeRange-popup {
-    z-index: 10;
-    /*padding: 0.6rem 0.6rem 0.4rem 0.6rem;*/
-}
-
 .infoTable {
     white-space: nowrap;
     user-select: text;

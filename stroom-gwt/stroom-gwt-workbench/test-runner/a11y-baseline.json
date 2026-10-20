@@ -126,6 +126,9 @@
   "app-editors-queryeditor--stepping-hyperlink": [
     "target-size"
   ],
+  "app-editors-queryeditor--time-range-dialog-keys": [
+    "target-size"
+  ],
   "app-editors-queryeditor--time-range-rerun": [
     "target-size"
   ],

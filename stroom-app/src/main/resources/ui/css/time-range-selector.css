@@ -1,0 +1,26 @@
+/*
+ * A query's time range (TimeRangeSelector): a LinkButton showing the range, e.g. "Today", that
+ * opens the Time Range dialog. Disabled and read only are both [aria-disabled="true"] (a button
+ * can't be read only); read only, which greys it less, is the time-range-selector--readonly
+ * modifier, as no ARIA attribute tells the two apart.
+ */
+
+.time-range-selector {
+    color: var(--link__text-color);
+    font-size: var(--font-size-14);
+    padding-right: 5px;
+    /* At least 24px high, the smallest target WCAG 2.5.8 allows */
+    min-height: 24px;
+}
+
+/* Disabled: greyed, and it doesn't open the dialog */
+.time-range-selector[aria-disabled="true"] {
+    color: var(--control__text-color--disabled);
+    cursor: default;
+    text-decoration: none;
+}
+
+/* Read only: the value greyed, as a read-only field's is */
+.time-range-selector--readonly[aria-disabled="true"] {
+    color: var(--control__text-color--readonly);
+}
