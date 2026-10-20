@@ -184,3 +184,35 @@
     width: 10px;
     height: 10px;
 }
+
+/* Forced colours (e.g. Windows high contrast) replace the item's fill, draw its transparent border in
+   the text colour and drop its focus ring (a box shadow). So the border takes the menu's own colour,
+   the highlighted item the system's Highlight and HighlightText (kept, rather than forced), and the
+   keyboard focus an outline, 2px out so it stands apart from the Highlight fill */
+@media (forced-colors: active) {
+    .menu__item {
+        border-color: Canvas;
+    }
+
+    .menu__viewport .cellTableSelectedRow .menu__item,
+    .menu__viewport .cellTableSelectedRow [role]:not([aria-disabled="true"]) > .menu__item:active {
+        forced-color-adjust: none;
+        background-color: Highlight;
+        border-color: Highlight;
+        color: HighlightText;
+    }
+
+    .menu__viewport .cellTableSelectedRow .menu__item * {
+        color: HighlightText;
+    }
+
+    .menu__viewport .menu--keyboard [role]:focus > .menu__item {
+        box-shadow: none;
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
+
+    .menu__separator {
+        border-top-color: CanvasText;
+    }
+}
