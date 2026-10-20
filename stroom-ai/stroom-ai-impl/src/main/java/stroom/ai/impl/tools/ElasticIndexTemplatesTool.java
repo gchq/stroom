@@ -65,11 +65,16 @@ class ElasticIndexTemplatesTool extends AbstractBuiltInTool {
     /// Why the document was viewed, as the audit log records it.
     static final String PURPOSE = "Elasticsearch index and component templates read by the " + NAME + " tool";
 
+    // How the model is to give the templates to the user. Without it, a model has edited the bodies (taking
+    // out fields Elasticsearch sets itself) and told the user the result could be applied as it was.
+    static final String SHOW_VERBATIM = "Show each template to the user verbatim, with its name just above its "
+                                        + "code block: don't add, remove or change anything in it, and don't "
+                                        + "say whether or how it can be applied to Elasticsearch.";
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexTemplatesTool.class);
 
     // Bodies are read as they are, numbers and all, and indented as Kibana's Dev Tools console shows them.
-    // They are not given as Dev Tools requests, as Elasticsearch adds fields of its own to them (such as
-    // created_date_millis) that it rejects in a PUT request.
+    // Nothing is added to or taken from them.
     private static final ObjectMapper MAPPER = JsonMapper.builder()
             .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
             .enable(DeserializationFeature.USE_BIG_INTEGER_FOR_INTS)
@@ -113,10 +118,8 @@ class ElasticIndexTemplatesTool extends AbstractBuiltInTool {
                                  + "Elasticsearch cluster the index template that applies to the index (the "
                                  + "matching template of highest priority, with any lower-priority templates that "
                                  + "also match, which don't apply), and each component template it is composed "
-                                 + "of. Each is given by name with its JSON body as Elasticsearch returns it, "
-                                 + "for review: the body may include fields Elasticsearch sets itself (such as "
-                                 + "created_date_millis), which it rejects in a PUT request, so it can't be "
-                                 + "applied as it is. "
+                                 + "of. Each is given by name with its JSON body exactly as Elasticsearch "
+                                 + "returns it. " + SHOW_VERBATIM + " "
                                  + "It only reads, and changes nothing in Elasticsearch. Needs View on the "
                                  + "document. A part the cluster's credentials may not read is reported with "
                                  + "Elasticsearch's own reason, which names the missing privilege.")
@@ -184,10 +187,8 @@ class ElasticIndexTemplatesTool extends AbstractBuiltInTool {
         appendIndexTemplateSummary(sb, indexTemplate);
 
         if (indexTemplate.status() == Status.OK) {
-            sb.append("\nThe templates below are for review. Nothing has been changed in Elasticsearch. Each "
-                      + "body is as Elasticsearch returns it, so it may include fields Elasticsearch sets itself "
-                      + "(such as `created_date_millis`), which it rejects in a PUT request: it can't be applied "
-                      + "as it is.\n");
+            sb.append("\nNothing has been changed in Elasticsearch. Each body below is exactly as Elasticsearch "
+                      + "returns it. ").append(SHOW_VERBATIM).append('\n');
             sb.append("\n### Index template `").append(indexTemplate.name()).append("`\n");
             appendBody(sb, indexTemplate.body());
             for (final ComponentTemplate componentTemplate : templates.componentTemplates()) {

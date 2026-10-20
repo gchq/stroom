@@ -129,9 +129,8 @@ services directly as the user, and those listed here only read.
   creates a verification dashboard in its workspace folder after a confirmation.
 * **`elastic_index_templates` and `check_index_template`, `propose_index_template`**: MCP reads no templates from
   Elasticsearch: it asks the user for the index template and its component templates (Dev Tools requests or GET
-  output). The built-in reads them from the Elastic Index document's cluster, each by name with its body as
-  Elasticsearch returns it, for review. That body may hold fields Elasticsearch sets itself (such as
-  `created_date_millis`), which it rejects in a PUT request, so it can't be applied as it is.
+  output). The built-in reads them from the Elastic Index document's cluster, each by name with its body exactly
+  as Elasticsearch returns it, which the model is told to show verbatim.
 * **`ask_user`**: MCP has no general question tool. Each tool asks within itself, for a confirmation or approval
   (`confirmation_id`, `approval_id`, `reviewed`) or a choice (e.g. a feed name it couldn't find).
 

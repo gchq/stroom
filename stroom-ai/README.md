@@ -532,9 +532,9 @@ Elasticsearch.
 The result names the document (as a link), its index name and the newest index or data stream it resolves to (or
 why it couldn't be resolved), the index template that applies and any overlapping lower-priority templates (name,
 index patterns and priority, which don't apply), and then each template under a heading with its name, and its
-body indented, in a `json` code block. The bodies are for review, not Dev Tools requests: they are as Elasticsearch
-returns them, so they may hold fields Elasticsearch sets itself (such as `created_date_millis`), which it rejects in
-a PUT request. A
+body indented, in a `json` code block, exactly as Elasticsearch returns it (nothing added or taken out). The model
+is told to show each template verbatim with its name just above its code block, and not to say whether or how it
+can be applied to Elasticsearch. A
 part Elasticsearch didn't give is shown with its status (`NOT_FOUND`, `FORBIDDEN` with Elasticsearch's own message
 naming the missing privilege, or `ERROR`), and a cluster that can't be reached is said so, with the reason.
 
