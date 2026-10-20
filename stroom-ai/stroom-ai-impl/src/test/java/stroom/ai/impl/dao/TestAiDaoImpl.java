@@ -51,7 +51,9 @@ import org.mockito.Mockito;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -239,6 +241,22 @@ class TestAiDaoImpl {
     }
 
     @Test
+    void aNewChatIsTheLastOpened() {
+        final AiChat earlier = aiDao.createChat(UserRef.builder().uuid("user1").build());
+        final AiChatMessage answer = aiDao.storeMessage(earlier.getId(), AiMessageType.AI_RESPONSE, "a");
+        aiDao.markRead(earlier.getId(), answer.getId());
+
+        // Nothing has been read in the new chat yet, but it is open, so a page refresh shows it again.
+        final AiChat created = aiDao.createChat(UserRef.builder().uuid("user1").build());
+
+        final Map<Integer, Long> lastOpened = aiDao.getChatStatuses("user1", 10).stream()
+                .collect(Collectors.toMap(AiChatStatus::getChatId, AiChatStatus::getLastOpenedMs));
+        assertThat(lastOpened.get(created.getId()))
+                .isPositive()
+                .isGreaterThanOrEqualTo(lastOpened.get(earlier.getId()));
+    }
+
+    @Test
     void agentModeIsKeptAndChangesTheStatusVersion() {
         final AiChat chat = aiDao.createChat(UserRef.builder().uuid("user1").build());
         assertThat(aiDao.getAgentMode(chat.getId())).isEqualTo(AiAgentMode.AGENT);
@@ -266,12 +284,16 @@ class TestAiDaoImpl {
         }
         assertThat(aiDao.getChatStatuses("user1", 10)).allMatch(AiChatStatus::isUnread);
         final long version = aiDao.getStatusVersion("user1");
+        final List<Long> lastOpened = aiDao.getChatStatuses("user1", 10).stream()
+                .map(AiChatStatus::getLastOpenedMs)
+                .toList();
 
         assertThat(aiDao.markAllRead("user1")).isEqualTo(2);
 
         assertThat(aiDao.getChatStatuses("user1", 10)).noneMatch(AiChatStatus::isUnread);
         // When each was last opened is left alone.
-        assertThat(aiDao.getChatStatuses("user1", 10)).allMatch(status -> status.getLastOpenedMs() == 0);
+        assertThat(aiDao.getChatStatuses("user1", 10)).extracting(AiChatStatus::getLastOpenedMs)
+                .containsExactlyElementsOf(lastOpened);
         assertThat(aiDao.getStatusVersion("user1")).isNotEqualTo(version);
         assertThat(aiDao.getChatStatuses("user2", 10)).singleElement().matches(AiChatStatus::isUnread);
         // Nothing left to mark.
