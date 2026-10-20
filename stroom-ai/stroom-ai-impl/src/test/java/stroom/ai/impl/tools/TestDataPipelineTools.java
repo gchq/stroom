@@ -57,13 +57,13 @@ import stroom.util.time.StroomDuration;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.model.chat.ChatModel;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
 import java.nio.file.Files;
@@ -171,26 +171,29 @@ class TestDataPipelineTools {
         final PipelineTool pipeline = pipeline();
         final Duration toolLimit = workspace.limits().getToolTimeLimit().getDuration();
         final Duration queryLimit = workspace.limits().getQueryTimeLimit().getDuration();
-        Mockito.when(currentResultsTool.timeLimit()).thenReturn(queryLimit);
+        Mockito.when(currentResultsTool.timeLimit(Mockito.any())).thenReturn(queryLimit);
+        final ToolCallContext context = ToolCalls.inChat(chatId, workspace);
 
         assertThat(pipeline.timeLimit(request("{\"steps\":["
                                               + "{\"tool\":\"grep\",\"args\":{\"pattern\":\"x\"}},"
-                                              + "{\"tool\":\"table\",\"args\":{}}]}")))
+                                              + "{\"tool\":\"table\",\"args\":{}}]}"), context))
                 .isEqualTo(toolLimit);
         assertThat(pipeline.timeLimit(request("{\"steps\":["
                                               + "{\"tool\":\"fetch_events\",\"args\":{}},"
-                                              + "{\"tool\":\"table\",\"args\":{}}]}")))
+                                              + "{\"tool\":\"table\",\"args\":{}}]}"), context))
                 .isEqualTo(queryLimit);
-        assertThat(pipeline.timeLimit(request("{\"steps\":[{\"tool\":\"current_results\",\"args\":{}}]}")))
+        assertThat(pipeline.timeLimit(request("{\"steps\":[{\"tool\":\"current_results\",\"args\":{}}]}"),
+                context))
                 .isEqualTo(queryLimit);
         // Steps that can't be read get a workspace step's limit, and are refused when run.
-        assertThat(pipeline.timeLimit(request("{\"steps\":\"nonsense\"}"))).isEqualTo(toolLimit);
+        assertThat(pipeline.timeLimit(request("{\"steps\":\"nonsense\"}"), context))
+                .isEqualTo(toolLimit);
     }
 
     @Test
     void testPipelineStartsFromASnapshotOfTheTabsResults() {
-        Mockito.when(currentResultsTool.timeLimit()).thenReturn(Duration.ofMinutes(1));
-        Mockito.when(currentResultsTool.outcome(Mockito.any(), Mockito.eq(chatId))).thenReturn(
+        Mockito.when(currentResultsTool.timeLimit(Mockito.any())).thenReturn(Duration.ofMinutes(1));
+        Mockito.when(currentResultsTool.outcome(Mockito.any(), Mockito.argThat(inChat(chatId)))).thenReturn(
                 new CurrentResultsTool.Outcome("Took a snapshot of Logons: 1 row(s).\nState: ok", "/attachments/7.md"));
 
         final String result = run(pipeline(), "{\"steps\":["
@@ -200,15 +203,15 @@ class TestDataPipelineTools {
         assertThat(result)
                 .startsWith("Step 1 (current_results): Took a snapshot of Logons: 1 row(s).")
                 .contains("fw1");
-        final ArgumentCaptor<ToolExecutionRequest> step = ArgumentCaptor.forClass(ToolExecutionRequest.class);
-        Mockito.verify(currentResultsTool).outcome(step.capture(), Mockito.eq(chatId));
+        final ArgumentCaptor<ToolCall> step = ArgumentCaptor.forClass(ToolCall.class);
+        Mockito.verify(currentResultsTool).outcome(step.capture(), Mockito.argThat(inChat(chatId)));
         assertThat(step.getValue().arguments()).contains("\"withEventIds\":true");
     }
 
     @Test
     void testPipelineStopsWhenNoSnapshotCanBeTaken() {
-        Mockito.when(currentResultsTool.timeLimit()).thenReturn(Duration.ofMinutes(1));
-        Mockito.when(currentResultsTool.outcome(Mockito.any(), Mockito.eq(chatId))).thenReturn(
+        Mockito.when(currentResultsTool.timeLimit(Mockito.any())).thenReturn(Duration.ofMinutes(1));
+        Mockito.when(currentResultsTool.outcome(Mockito.any(), Mockito.argThat(inChat(chatId)))).thenReturn(
                 CurrentResultsTool.Outcome.problem("Getting the events means running its search again."));
 
         assertThat(run(pipeline(), "{\"steps\":["
@@ -224,7 +227,7 @@ class TestDataPipelineTools {
                                    + "\"pattern\":\"ERROR\"}},"
                                    + "{\"tool\":\"current_results\",\"args\":{}}]}"))
                 .contains("current_results can only be the first step");
-        Mockito.verify(currentResultsTool, Mockito.never()).outcome(Mockito.any(), Mockito.anyInt());
+        Mockito.verify(currentResultsTool, Mockito.never()).outcome(Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -461,8 +464,13 @@ class TestDataPipelineTools {
         return new SummariseColumnTool(workspace, columnSummariser());
     }
 
+    // Matches the context of a call in the chat.
+    private static ArgumentMatcher<ToolCallContext> inChat(final int chatId) {
+        return context -> context.session().equals(ToolSession.chat(chatId));
+    }
+
     private ColumnSummariser columnSummariser() {
-        return new ColumnSummariser(workspace, tableSummariser, () -> null);
+        return new ColumnSummariser(tableSummariser, () -> null);
     }
 
     private static DashboardSearchResponse response(final QueryKey queryKey,
@@ -471,11 +479,11 @@ class TestDataPipelineTools {
         return new DashboardSearchResponse(null, queryKey, null, errors, null, complete, null, null);
     }
 
-    private String run(final BuiltInTool tool, final String arguments) {
-        return tool.execute(request(arguments), chatId);
+    private String run(final StroomTool tool, final String arguments) {
+        return tool.execute(request(arguments), ToolCalls.inChat(chatId, workspace)).text();
     }
 
-    private static ToolExecutionRequest request(final String arguments) {
-        return ToolExecutionRequest.builder().id("x").name("t").arguments(arguments).build();
+    private static ToolCall request(final String arguments) {
+        return new ToolCall("x", "t", arguments);
     }
 }

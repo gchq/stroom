@@ -17,7 +17,9 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -38,6 +40,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.security.shared.AppPermission;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -45,9 +48,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -156,22 +156,32 @@ class StreamMetaTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .unlockedBy(AppPermission.VIEW_DATA_PERMISSION)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Finds streams (the data Stroom has received or produced) and writes a table of "
-                             + "their meta to the workspace, for the table tool. Give feeds and/or a pipeline "
-                             + "(the streams it produced), or a folder (the streams of the feeds in it and "
-                             + "produced by its pipelines), and optionally type, from/to (create time) and "
-                             + "status. Each row is a stream, with the attributes asked for (e.g. 'Raw Size', "
-                             + "'Read Count', or a header the data arrived with such as 'RemoteHost'); give "
-                             + "parts for a row per part with the headers each part was received with. Give "
-                             + "groupBy (day, hour, feed, type, pipeline) with aggregates (e.g. ['count', "
-                             + "'sum(Raw Size)', 'max(Raw Size)']) for totals, e.g. how much a feed received each "
-                             + "day. Values come from the database while it keeps them, else from the stream "
-                             + "store (only for a limited number of streams per call); the result says how many "
-                             + "came from each and how many weren't read.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Finds streams (the data Stroom has received or produced) and writes a table of "
+                                 + "their meta")
+                        .chatOnly(" to the workspace, for the table tool")
+                        .general(". Give feeds and/or a pipeline (the streams it produced), or a folder (the streams "
+                                 + "of the feeds in it and produced by its pipelines), and optionally type, from/to "
+                                 + "(create time) and status. Each row is a stream, with the attributes asked for "
+                                 + "(e.g. 'Raw Size', 'Read Count', or a header the data arrived with such as "
+                                 + "'RemoteHost'); give parts for a row per part with the headers each part was "
+                                 + "received with. Give groupBy (day, hour, feed, type, pipeline) with aggregates "
+                                 + "(e.g. ['count', 'sum(Raw Size)', 'max(Raw Size)']) for totals, e.g. how much a "
+                                 + "feed received each day. Values come from the database while it keeps them, else "
+                                 + "from the stream store (only for a limited number of streams per call); the "
+                                 + "result says how many came from each and how many weren't read.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addProperty(FEEDS_ARG, stringArraySchema("Feed names or UUIDs."))
                         .addStringProperty(PIPELINE_ARG, "A pipeline's UUID: the streams it produced.")
                         .addStringProperty(FOLDER_ARG, "A folder's UUID or Explorer path, e.g. "
@@ -197,20 +207,23 @@ class StreamMetaTool extends AbstractWorkspaceTool {
                                                                           + "attribute, e.g. 'sum(Raw Size)'."))
                         .addIntegerProperty(LIMIT_ARG, "The most streams to find (default " + DEFAULT_LIMIT
                                                        + ", at most " + MAX_LIMIT + ").")
-                        .addStringProperty(OUT_ARG, "A .csv file in /outputs/ to write the table to (default "
-                                                    + DEFAULT_OUT + ").")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A .csv file in /outputs/ to write the table to (default " + DEFAULT_OUT
+                                          + ").")
+                                .build())
                         .build())
                 .build();
     }
 
     @Override
-    protected Duration timeLimit() {
+    protected Duration timeLimit(final ToolCallContext context) {
         // Reading the stream store can take longer than a workspace step.
-        return limits().getQueryTimeLimit().getDuration();
+        return limits(context).getQueryTimeLimit().getDuration();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final long startNanos = System.nanoTime();
         final WorkspacePath requestedOut = outArg(request);
         final WorkspacePath out = requestedOut != null
@@ -237,8 +250,8 @@ class StreamMetaTool extends AbstractWorkspaceTool {
 
         final List<String> attributes = attributes(request, metaRows, aggregates);
         // Only with View Data, checked once, failing closed.
-        final Reader reader = new Reader(documentAccess.canViewData(), limits().getMaxStreamStoreReads(), startNanos,
-                timeLimit().toNanos() / 2);
+        final Reader reader = new Reader(documentAccess.canViewData(), limits(context).getMaxStreamStoreReads(),
+                startNanos, timeLimit(context).toNanos() / 2);
         final List<Map<String, String>> records = new ArrayList<>();
         for (final MetaRow metaRow : metaRows) {
             ToolDeadline.check();
@@ -266,13 +279,13 @@ class StreamMetaTool extends AbstractWorkspaceTool {
                     .map(record -> columns.stream().map(column -> record.getOrDefault(column, "")).toList())
                     .toList();
         }
-        ToolTables.writeCsv(workspace, chatId, out, columns, rows, criteria.sourceDocUuid());
-        logSearch(chatId, criteria, metaRows, reader);
-        return summary(out, metaRows.size(), more, rows, columns, reader, parts);
+        ToolTables.writeCsv(workspace, out, columns, rows, criteria.sourceDocUuid());
+        logSearch(context, criteria, metaRows, reader);
+        return ToolResult.text(summary(out, metaRows.size(), more, rows, columns, reader, parts));
     }
 
     /// @return The search, from the arguments.
-    private Criteria criteria(final ToolExecutionRequest request) {
+    private Criteria criteria(final ToolCall request) {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.AND);
         final List<String> description = new ArrayList<>();
         String sourceDocUuid = null;
@@ -392,7 +405,7 @@ class StreamMetaTool extends AbstractWorkspaceTool {
         throw new WorkspaceException("The status must be Unlocked, Locked or Deleted.");
     }
 
-    private static List<String> groupBy(final ToolExecutionRequest request) {
+    private static List<String> groupBy(final ToolCall request) {
         final List<String> groupBy = new ArrayList<>();
         for (final String group : stringListArg(request, GROUP_BY_ARG)) {
             final String lower = group.toLowerCase(Locale.ROOT);
@@ -406,7 +419,7 @@ class StreamMetaTool extends AbstractWorkspaceTool {
     }
 
     /// @return The aggregates asked for, or just a count if the rows are grouped and none were.
-    static List<Aggregate> aggregates(final ToolExecutionRequest request, final List<String> groupBy) {
+    static List<Aggregate> aggregates(final ToolCall request, final List<String> groupBy) {
         final List<Aggregate> aggregates = new ArrayList<>();
         for (final String item : stringListArg(request, AGGREGATES_ARG)) {
             final Matcher matcher = AGGREGATE_PATTERN.matcher(item);
@@ -434,7 +447,7 @@ class StreamMetaTool extends AbstractWorkspaceTool {
 
     /// @return The attributes to read: those asked for, else those the database holds for the streams found,
     /// with any the aggregates need.
-    private static List<String> attributes(final ToolExecutionRequest request,
+    private static List<String> attributes(final ToolCall request,
                                            final List<MetaRow> metaRows,
                                            final List<Aggregate> aggregates) {
         final Set<String> attributes = new LinkedHashSet<>(stringListArg(request, ATTRIBUTES_ARG));
@@ -572,14 +585,14 @@ class StreamMetaTool extends AbstractWorkspaceTool {
         }
     }
 
-    private void logSearch(final int chatId,
+    private void logSearch(final ToolCallContext context,
                            final Criteria criteria,
                            final List<MetaRow> metaRows,
                            final Reader reader) {
         final List<Long> streams = metaRows.stream()
                 .map(metaRow -> metaRow.getMeta().getId())
                 .toList();
-        auditLog.streamsSearched(chatId,
+        auditLog.streamsSearched(context.session(),
                 criteria.description(),
                 streams,
                 Map.of("StreamStoreReads", String.valueOf(reader.reads)),

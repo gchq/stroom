@@ -1,0 +1,43 @@
+Arguments: {}
+
+=== Output ===
+Server tasks (Monitoring > Server Tasks), a snapshot as of <time of the call>. Tasks start and finish all the time, so call again for a fresh one.
+Nodes that answered: node1, node2. Didn't answer: node3 (node3 is not responding), so their tasks are missing.
+
+12 task(s) running: 6 top-level, 6 sub-task(s).
+
+By task name (tasks, of which top-level):
+- Cluster Search: 2 (0 top-level)
+- FederatedSearchTask: 2 (2 top-level)
+- Dashboard Search: 1 (1 top-level)
+- Data Processor: 1 (1 top-level)
+- Elasticsearch Cluster Search: 1 (1 top-level)
+- Index Shard Manager: 1 (1 top-level)
+- Pipeline Step: 1 (0 top-level)
+- Search Index Shard: 1 (0 top-level)
+- Search node: node1: 1 (0 top-level)
+- Search node: node2: 1 (0 top-level)
+
+By user (tasks, of which top-level):
+- alice: 8 (3 top-level)
+- processor: 2 (1 top-level)
+- admin: 1 (1 top-level)
+- bob: 1 (1 top-level)
+
+By node (tasks, of which top-level):
+- node1: 6 (3 top-level)
+- node2: 6 (3 top-level)
+
+Running for over 1h: 2 task(s).
+
+Oldest:
+- j1 'Index Shard Manager' by admin on node2 (thread thread-j1), running 2h; info: Flushing
+- s3 'FederatedSearchTask' by alice on node1 (thread thread-s3), running 1h 1m; info: Search 'ghi' - staying alive for UI requests
+- s2 'Elasticsearch Cluster Search' by bob on node2 (thread thread-s2), running 20m; info: Search 'def'
+- p2 'Data Processor' by processor on node2 (thread thread-p2), running 10m, 1 sub-task(s)
+- p3 'Pipeline Step' by processor on node2 (thread thread-p3), running 9m, parent p2
+- s1 'FederatedSearchTask' by alice on node1 (thread thread-s1), running 3m, 2 sub-task(s); info: Search 'abc'
+- s1a 'Search node: node1' by alice on node1 (thread thread-s1a), running 3m, parent s1, 1 sub-task(s)
+- s1b 'Search node: node2' by alice on node1 (thread thread-s1b), running 3m, parent s1, 1 sub-task(s)
+- s1c 'Cluster Search' by alice on node1 (thread thread-s1c), running 3m, parent s1a
+- s1d 'Cluster Search' by alice on node2 (thread thread-s1d), running 2m, parent s1b, 1 sub-task(s)

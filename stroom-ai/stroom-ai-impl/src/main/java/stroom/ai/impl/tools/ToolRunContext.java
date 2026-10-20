@@ -20,17 +20,20 @@ import stroom.openai.shared.OpenAIModelDoc;
 
 import dev.langchain4j.model.chat.ChatModel;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 /// What the built-in tools may need to know about the agent run they are called in, beyond the chat: the model
 /// (for tools that ask it to summarise), whether the run has been stopped, and how many times each kind of
-/// query has failed (for automatic fallbacks). Held per thread for the length of the run.
+/// query has failed (for automatic fallbacks). Tools reach it through their call's context
+/// ([ToolCallContext#runContext()]).
+///
+/// It is also held per thread for the length of the run, for the agent loop itself (`McpAgentChat`), which reads
+/// it to stop streaming the model's reply when the run is stopped, and for [ChatToolCallContexts], as langchain4j
+/// gives a tool executor only the chat's id. (The user actions a tool offers come back with its [ToolResult].)
 public final class ToolRunContext {
 
     private static final ThreadLocal<ToolRunContext> CURRENT = new ThreadLocal<>();
@@ -39,7 +42,6 @@ public final class ToolRunContext {
     private final OpenAIModelDoc modelDoc;
     private final BooleanSupplier cancelled;
     private final Map<String, Integer> failures = new ConcurrentHashMap<>();
-    private final Map<String, List<Map<String, Object>>> userActions = new ConcurrentHashMap<>();
 
     /// @param chatModel The model the run uses.
     /// @param modelDoc  Its document, or null.
@@ -88,29 +90,5 @@ public final class ToolRunContext {
     /// @return How many times it has now failed in this run.
     public int recordFailure(final String key) {
         return failures.merge(key, 1, Integer::sum);
-    }
-
-    /// Offers the user a button for a step that is theirs, on the card of the tool call's result, e.g. to create a
-    /// query. It is checked (see `UserActions`) before it is shown, as an MCP tool's are.
-    ///
-    /// @param callId The model's id for the tool call, or null.
-    /// @param action The action, as an MCP tool would give it: its `id`, `action` and arguments.
-    public void offerUserAction(final String callId, final Map<String, Object> action) {
-        userActions.computeIfAbsent(key(callId), k -> new CopyOnWriteArrayList<>()).add(action);
-    }
-
-    /// @param callId The model's id for a tool call, or null.
-    /// @return The actions the call's tool offered, which are forgotten once taken. Empty if it offered none.
-    public List<Map<String, Object>> takeUserActions(final String callId) {
-        final List<Map<String, Object>> actions = userActions.remove(key(callId));
-        return actions == null
-                ? List.of()
-                : List.copyOf(actions);
-    }
-
-    private static String key(final String callId) {
-        return callId == null
-                ? ""
-                : callId;
     }
 }

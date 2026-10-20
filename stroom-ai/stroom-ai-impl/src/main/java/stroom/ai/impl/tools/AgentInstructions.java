@@ -79,10 +79,10 @@ public class AgentInstructions {
 
     /// Reads every AGENTS doc the user can view, and records in the audit log that they were viewed.
     ///
-    /// @param chatId  The chat.
+    /// @param session The session, e.g. the chat.
     /// @param purpose Why, e.g. "Standing instructions read by the list_data_sources tool".
     /// @return The docs, most general first. Empty if there are none, or they can't be found.
-    public Standing load(final int chatId, final String purpose) {
+    public Standing load(final ToolSession session, final String purpose) {
         final List<InstructionDoc> docs = new ArrayList<>();
         final List<DocRef> found;
         try {
@@ -107,7 +107,7 @@ public class AgentInstructions {
         docs.sort(Comparator.comparingInt((InstructionDoc doc) -> depth(doc.folder()))
                 .thenComparing(InstructionDoc::folder));
         if (!docs.isEmpty()) {
-            documentAccess.logViews(chatId, docs.stream().map(InstructionDoc::docRef).toList(), purpose);
+            documentAccess.logViews(session, docs.stream().map(InstructionDoc::docRef).toList(), purpose);
         }
         return new Standing(List.copyOf(docs));
     }
@@ -259,10 +259,11 @@ public class AgentInstructions {
             return docs.stream().anyMatch(doc -> !doc.ignoredFolders().isEmpty());
         }
 
+        /// @param links How to link to the docs, for the caller.
         /// @param paths Explorer paths the work touches.
         /// @return The text of the docs that apply there, most general first and at most [#MAX_CHARS] in all, to
         /// add to a tool's result; empty if none apply.
-        public String note(final Collection<String> paths) {
+        public String note(final StroomLinks links, final Collection<String> paths) {
             final List<InstructionDoc> applying = applyingTo(paths);
             if (applying.isEmpty()) {
                 return "";
@@ -270,7 +271,7 @@ public class AgentInstructions {
             final StringBuilder sb = new StringBuilder("\n\n").append(FOLLOW);
             int used = 0;
             for (final InstructionDoc doc : applying) {
-                sb.append("\n\n### ").append(DocumentInfoTool.link(doc.docRef())).append(" in ").append(doc.folder())
+                sb.append("\n\n### ").append(links.document(doc.docRef())).append(" in ").append(doc.folder())
                         .append(" (applies to ").append("/".equals(doc.folder())
                                 ? "everything"
                                 : doc.folder() + " and below").append(")\n");

@@ -18,13 +18,12 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.memory.MemoryPath;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 /**
  * {@code memory} - lists, reads and changes the agent's memory: the user's own memory, loaded into every chat,
@@ -48,8 +47,8 @@ class MemoryTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description("Lists, reads and changes your memory. " + MemoryPath.USER_PREFIX + "<name> is the "
                              + "user's memory, loaded into every chat (keep it short; the user sees, and may need "
@@ -58,7 +57,7 @@ class MemoryTool extends AbstractBuiltInTool {
                              + "Commands: list; read (path); write (path, content, and the version you read if "
                              + "it exists) to create or replace; append (path, content); replace (path, oldText, "
                              + "newText) where oldText appears exactly once; delete (path, version).")
-                .parameters(JsonObjectSchema.builder()
+                .parameters(ObjectSchema.builder()
                         .addEnumProperty(COMMAND_ARG,
                                 List.of("list", "read", "write", "append", "replace", "delete"),
                                 "What to do.")
@@ -75,27 +74,28 @@ class MemoryTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
-        return "Error: " + NAME + " can only be used in a chat.";
-    }
-
-    @Override
-    public String execute(final ToolExecutionRequest request, final int chatId) {
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
+        // Memories are held for the chat and its user.
+        final OptionalInt chatId = context.session().chatId();
+        if (chatId.isEmpty()) {
+            return ToolResult.text(onlyInAChat(NAME));
+        }
         final String command = stringArg(request, COMMAND_ARG);
         final String path = stringArg(request, PATH_ARG);
-        return switch (command == null
+        final String text = switch (command == null
                 ? ""
                 : command) {
-            case "list" -> memoryService.list(chatId);
-            case "read" -> memoryService.read(chatId, path);
-            case "write" -> memoryService.write(chatId, path, rawArg(request, CONTENT_ARG),
+            case "list" -> memoryService.list(chatId.getAsInt());
+            case "read" -> memoryService.read(chatId.getAsInt(), path);
+            case "write" -> memoryService.write(chatId.getAsInt(), path, rawArg(request, CONTENT_ARG),
                     intArg(request, VERSION_ARG));
-            case "append" -> memoryService.append(chatId, path, rawArg(request, CONTENT_ARG));
-            case "replace" -> memoryService.replace(chatId, path, rawArg(request, OLD_TEXT_ARG),
+            case "append" -> memoryService.append(chatId.getAsInt(), path, rawArg(request, CONTENT_ARG));
+            case "replace" -> memoryService.replace(chatId.getAsInt(), path, rawArg(request, OLD_TEXT_ARG),
                     rawArg(request, NEW_TEXT_ARG));
-            case "delete" -> memoryService.delete(chatId, path, intArg(request, VERSION_ARG));
+            case "delete" -> memoryService.delete(chatId.getAsInt(), path, intArg(request, VERSION_ARG));
             default -> "Error: the command must be one of list, read, write, append, replace or delete.";
         };
+        return ToolResult.text(text);
     }
 
     @Override

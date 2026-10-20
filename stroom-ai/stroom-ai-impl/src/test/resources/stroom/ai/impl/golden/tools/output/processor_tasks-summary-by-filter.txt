@@ -1,0 +1,13 @@
+Arguments: {"mode":"summary","group_by":["filter"]}
+
+=== Output ===
+Processing tasks, counted by filter:
+- filter 1: 1 task(s)
+- filter 10: 1 task(s)
+- filter 2: 1 task(s)
+- filter 3: 1 task(s)
+- filter 4: 1 task(s)
+- filter 5: 1 task(s)
+- filter 7: 1 task(s)
+- filter 8: 1 task(s)
+- filter 9: 1 task(s)

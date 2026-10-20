@@ -37,13 +37,13 @@ import stroom.docstore.api.DocFinder;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.util.json.JsonUtil;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -81,6 +81,7 @@ class TestProposeCodeChangeTool {
     private final DocFinder docFinder = Mockito.mock(DocFinder.class);
     private final CodeChangeStepper stepper = Mockito.mock(CodeChangeStepper.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
+    private final List<Map<String, Object>> offered = new ArrayList<>();
     private ProposeCodeChangeTool tool;
 
     @BeforeEach
@@ -116,7 +117,7 @@ class TestProposeCodeChangeTool {
                 .doesNotContain("An old warning")
                 .contains("pass allowErrors")
                 .contains("The element's output with the proposed code, for this record:\n<Events/>");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
         // The stepping screen's record, with the current code and then the proposed code.
         final ArgumentCaptor<StepTrial> trial = ArgumentCaptor.forClass(StepTrial.class);
         Mockito.verify(stepper).step(trial.capture());
@@ -135,13 +136,12 @@ class TestProposeCodeChangeTool {
 
         final String arguments = JsonUtil.writeValueAsString(Map.of("element", "xsltFilter", "code", PROPOSED,
                 "summary", "s", "allowErrors", true));
-        final String result = context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1")
-                .name(ProposeCodeChangeTool.NAME).arguments(arguments).build(), CHAT));
+        final String result = call(arguments);
 
         assertThat(result)
                 .contains("Review and apply")
                 .contains("it gives new errors, which the user accepted:\n- ERROR in schemaFilter: Invalid content");
-        assertThat(context.takeUserActions("c1")).hasSize(1);
+        assertThat(takeUserActions()).hasSize(1);
     }
 
     @Test
@@ -164,7 +164,7 @@ class TestProposeCodeChangeTool {
         assertThat(run("xsltFilter", PROPOSED, "s"))
                 .contains("Review and apply")
                 .contains("The change couldn't be tried by stepping (Stepping did not finish in time.)");
-        assertThat(context.takeUserActions("c1")).hasSize(1);
+        assertThat(takeUserActions()).hasSize(1);
     }
 
     @Test
@@ -178,7 +178,7 @@ class TestProposeCodeChangeTool {
                 .contains("Nothing changes until they apply it")
                 .contains("-    <Name><xsl:value-of select=\".\"/></Name>")
                 .contains("+    <Name><xsl:value-of select=\"lower-case(substring-before(., '@'))\"/></Name>");
-        final List<Map<String, Object>> actions = context.takeUserActions("c1");
+        final List<Map<String, Object>> actions = takeUserActions();
         assertThat(actions).singleElement().satisfies(action -> assertThat(action)
                 .containsEntry("action", UserActions.APPLY_CODE_CHANGE)
                 .containsEntry("element", "xsltFilter")
@@ -189,7 +189,7 @@ class TestProposeCodeChangeTool {
                 .containsEntry("added", 1)
                 .containsEntry("removed", 1)
                 .containsEntry("summary", "Keeps the user name, lower-cased."));
-        Mockito.verify(documentAccess).logView(Mockito.eq(CHAT), Mockito.eq(XSLT),
+        Mockito.verify(documentAccess).logView(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(XSLT),
                 Mockito.contains("Proposed a change"));
 
         // Stroom's own check of the action keeps it, with the code it was proposed against.
@@ -232,8 +232,8 @@ class TestProposeCodeChangeTool {
                                      + "  <Name>\n</xsl:stylesheet>", "Broken."))
                 .contains("isn't well formed XML")
                 .contains("line 3");
-        assertThat(context.takeUserActions("c1")).isEmpty();
-        Mockito.verify(documentAccess, Mockito.never()).logView(Mockito.anyInt(), Mockito.any(), Mockito.any());
+        assertThat(takeUserActions()).isEmpty();
+        Mockito.verify(documentAccess, Mockito.never()).logView(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -243,7 +243,7 @@ class TestProposeCodeChangeTool {
 
         assertThat(run("xsltFilter", withEntity, "Reads a file.")).contains("isn't well formed XML")
                 .containsIgnoringCase("DOCTYPE");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -253,7 +253,7 @@ class TestProposeCodeChangeTool {
 
         assertThat(run("xsltFilter", PROPOSED, "Keeps the user name, lower-cased."))
                 .contains("(+1 −1 lines, in 1 place(s))");
-        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action ->
+        assertThat(takeUserActions()).singleElement().satisfies(action ->
                 assertThat(action).containsEntry("request", PROPOSED + "\n"));
 
         assertThat(ProposeCodeChangeTool.withLineEndingOf("a\r\n", "b")).isEqualTo("b\r\n");
@@ -270,7 +270,7 @@ class TestProposeCodeChangeTool {
                 "newText", "select=\"lower-case(substring-before(., '@'))\"")));
 
         assertThat(result).contains("Review and apply").contains("(+1 −1 lines, in 1 place(s))");
-        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action ->
+        assertThat(takeUserActions()).singleElement().satisfies(action ->
                 assertThat(action).containsEntry("request", PROPOSED));
     }
 
@@ -291,7 +291,7 @@ class TestProposeCodeChangeTool {
                 .contains("Edit 1 has no text to replace");
         assertThat(runEdits("xsltFilter", List.of("not an edit"))).contains("Edit 1 needs oldText and newText");
         assertThat(runEdits("xsltFilter", List.of())).contains("Give edits as a list of objects");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -302,11 +302,10 @@ class TestProposeCodeChangeTool {
                 "edits", List.of(Map.of("oldText", "User", "newText", "Person")), "summary", "s"));
         final String neither = JsonUtil.writeValueAsString(Map.of("element", "xsltFilter", "summary", "s"));
         for (final String arguments : List.of(both, neither)) {
-            assertThat(context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1")
-                    .name(ProposeCodeChangeTool.NAME).arguments(arguments).build(), CHAT)))
+            assertThat(call(arguments))
                     .contains("Give either edits or the whole proposed code, but not both.");
         }
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -316,7 +315,7 @@ class TestProposeCodeChangeTool {
         // Line endings aside, it is the same.
         assertThat(run("xsltFilter", BASE.replace("\n", "\r\n"), "Nothing."))
                 .contains("the same as the element's current code");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -325,8 +324,8 @@ class TestProposeCodeChangeTool {
         Mockito.when(documentAccess.canView(XSLT)).thenReturn(false);
 
         assertThat(run("xsltFilter", PROPOSED, "Change.")).isEqualTo(DocumentAccess.NO_PERMISSION);
-        assertThat(context.takeUserActions("c1")).isEmpty();
-        Mockito.verify(documentAccess, Mockito.never()).logView(Mockito.anyInt(), Mockito.any(), Mockito.any());
+        assertThat(takeUserActions()).isEmpty();
+        Mockito.verify(documentAccess, Mockito.never()).logView(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -337,7 +336,7 @@ class TestProposeCodeChangeTool {
                 .contains("xsltFilter, writer");
         assertThat(run("writer", PROPOSED, "Change.")).contains("isn't selected")
                 .contains("Ask the user to select it");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -345,7 +344,7 @@ class TestProposeCodeChangeTool {
         Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.empty());
 
         assertThat(run("xsltFilter", PROPOSED, "Change.")).isEqualTo(ProposeCodeChangeTool.NOT_STEPPING);
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -353,7 +352,7 @@ class TestProposeCodeChangeTool {
         stepping("xsltFilter", BASE, true);
 
         assertThat(run("xsltFilter", PROPOSED, "Change.")).contains("too large to have been shared in full");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -387,15 +386,13 @@ class TestProposeCodeChangeTool {
     private String run(final String element, final String code, final String summary) {
         final String arguments = JsonUtil.writeValueAsString(Map.of("element", element, "code", code,
                 "summary", summary));
-        return context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1").name(ProposeCodeChangeTool.NAME)
-                .arguments(arguments).build(), CHAT));
+        return call(arguments);
     }
 
     private String runEdits(final String element, final List<?> edits) {
         final String arguments = JsonUtil.writeValueAsString(Map.of("element", element, "edits", edits,
                 "summary", "Change."));
-        return context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1").name(ProposeCodeChangeTool.NAME)
-                .arguments(arguments).build(), CHAT));
+        return call(arguments);
     }
 
     // Stepping the record gives these problems with the current code and with the proposed code.
@@ -403,5 +400,20 @@ class TestProposeCodeChangeTool {
         Mockito.when(stepper.step(Mockito.any())).thenReturn(List.of(
                 new StepOutcome(true, before, Map.of("xsltFilter", "<Events/>")),
                 new StepOutcome(true, after, Map.of("xsltFilter", "<Events/>"))));
+    }
+
+    // Runs a call as part of the agent run, keeping the user actions its result offers for takeUserActions.
+    private String call(final String arguments) {
+        final ToolResult result = context.run(() -> tool.execute(
+                new ToolCall("c1", ProposeCodeChangeTool.NAME, arguments), ToolCalls.inChat(CHAT, workspace)));
+        result.userActions().forEach(action -> offered.add(action.toMap()));
+        return result.text();
+    }
+
+    // The user actions offered by the calls since this was last called, as the chat shows them.
+    private List<Map<String, Object>> takeUserActions() {
+        final List<Map<String, Object>> taken = List.copyOf(offered);
+        offered.clear();
+        return taken;
     }
 }

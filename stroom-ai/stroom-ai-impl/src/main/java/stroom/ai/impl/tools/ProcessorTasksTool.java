@@ -17,7 +17,9 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -50,6 +52,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.security.shared.AppPermission;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -58,9 +61,6 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.StoredError;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -219,25 +219,36 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .requires(AppPermission.MANAGE_PROCESSORS_PERMISSION)
+                .unlockedBy(AppPermission.VIEW_DATA_PERMISSION)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("The tool for processing across the cluster: what is failing and why, backlogs and "
-                             + "throughput, and individual processing tasks. mode 'failures' (the default) is the "
-                             + "one-call answer to 'what's failing in processing (today), and why?': tasks in a "
-                             + "window (default the last 24 hours) by status, pipeline and node with failure "
-                             + "rates; FAILED tasks grouped by pipeline, feed and node, with first and last times "
-                             + "(Stroom keeps no reason for these: look in that node's application log in the "
-                             + "user's log system); tasks that look stuck; and the "
-                             + "errors inside processing that completed, read from the Error streams the "
-                             + "pipelines wrote and grouped into failure modes (pattern, severity, element, "
-                             + "counts, pipelines, feeds, nodes, examples with stream links), with what was "
-                             + "sampled. mode 'list' lists tasks (id, status, node, stream, feed, pipeline, "
-                             + "filter, times), newest first; give out for a CSV. mode 'summary' counts tasks "
-                             + "grouped by any of pipeline, feed, node, status, filter, e.g. 'how many tasks are "
-                             + "queued per node?'. All modes take the same filters. Needs the Manage Processors "
-                             + "permission.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("The tool for processing across the cluster: what is failing and why, backlogs and "
+                                 + "throughput, and individual processing tasks. mode 'failures' (the default) is "
+                                 + "the one-call answer to 'what's failing in processing (today), and why?': tasks "
+                                 + "in a window (default the last 24 hours) by status, pipeline and node with "
+                                 + "failure rates; FAILED tasks grouped by pipeline, feed and node, with first and "
+                                 + "last times (Stroom keeps no reason for these: look in that node's application "
+                                 + "log in the user's log system); tasks that look stuck; and the errors inside "
+                                 + "processing that completed, read from the Error streams the pipelines wrote and "
+                                 + "grouped into failure modes (pattern, severity, element, counts, pipelines, "
+                                 + "feeds, nodes, examples with stream links), with what was sampled. mode 'list' "
+                                 + "lists tasks (id, status, node, stream, feed, pipeline, "
+                                 + "filter, times), newest first")
+                        .chatOnly("; give out for a CSV")
+                        .general(". mode 'summary' counts tasks grouped by any of pipeline, feed, node, status, "
+                                 + "filter, e.g. 'how many tasks are queued per node?'. All modes take the same "
+                                 + "filters. Needs the Manage Processors permission.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addEnumProperty(MODE_ARG, MODES, "failures (default), list or summary.")
                         .addProperty(PIPELINES_ARG, stringArraySchema("Pipeline (or analytic rule) UUIDs."))
                         .addProperty(FEEDS_ARG, stringArraySchema("Feed names or UUIDs."))
@@ -266,36 +277,38 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
                                                         + "most " + MAX_SAMPLE + ").")
                         .addIntegerProperty(LIMIT_ARG, "For list: the most tasks (default " + DEFAULT_LIST_LIMIT
                                                        + ", at most " + MAX_LIST_LIMIT + ").")
-                        .addStringProperty(OUT_ARG, "For list: a .csv file in /outputs/ to write the tasks to, "
-                                                    + "e.g. " + DEFAULT_OUT + ".")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("For list: a .csv file in /outputs/ to write the tasks to, e.g. "
+                                          + DEFAULT_OUT + ".")
+                                .build())
                         .build())
                 .build();
     }
 
     @Override
-    protected Duration timeLimit() {
+    protected Duration timeLimit(final ToolCallContext context) {
         // Reading Error streams can take longer than a workspace step.
-        return limits().getQueryTimeLimit().getDuration();
+        return limits(context).getQueryTimeLimit().getDuration();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
         if (!processorFilterAccess.canManageProcessors()) {
-            return NEEDS_MANAGE_PROCESSORS;
+            return ToolResult.text(NEEDS_MANAGE_PROCESSORS);
         }
         final String mode = mode(request);
-        final Scope scope = scope(request, mode);
+        final Scope scope = scope(request, mode, context.links());
         final Visibility visibility = new Visibility();
         final String result = switch (mode) {
-            case LIST -> list(request, chatId, scope, visibility);
+            case LIST -> list(request, context, scope, visibility);
             case SUMMARY -> summary(request, scope, visibility);
-            default -> failures(request, chatId, scope, visibility);
+            default -> failures(request, context, scope, visibility);
         };
-        logSearch(chatId, mode, scope, visibility);
-        return result;
+        logSearch(context, mode, scope, visibility);
+        return ToolResult.text(result);
     }
 
-    private static String mode(final ToolExecutionRequest request) {
+    private static String mode(final ToolCall request) {
         final Object value = argsMap(request).get(MODE_ARG);
         if (value == null || String.valueOf(value).isBlank()) {
             return FAILURES;
@@ -311,9 +324,10 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     // The filters.
     // --------------------------------------------------------------------------------
 
+    /// @param links How to link to Stroom objects for the caller.
     /// @return The tasks asked about, from the arguments.
     /// @throws WorkspaceException for an argument that can't be used.
-    private Scope scope(final ToolExecutionRequest request, final String mode) {
+    private Scope scope(final ToolCall request, final String mode, final StroomLinks links) {
         final List<String> description = new ArrayList<>();
         final List<DocRef> pipelines = new ArrayList<>();
         for (final String uuid : stringListArg(request, PIPELINES_ARG)) {
@@ -394,7 +408,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
             description.add("status changed before " + DateUtil.createNormalDateTimeString(untilMs));
         }
         return new Scope(pipelines, feeds, nodes, filters, streams, statuses, sinceMs, untilMs, nowMs,
-                String.join(", ", description));
+                String.join(", ", description), links);
     }
 
     /// @return The name of a feed given by name or UUID, if the user can view it.
@@ -713,7 +727,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     // summary
     // --------------------------------------------------------------------------------
 
-    private String summary(final ToolExecutionRequest request, final Scope scope, final Visibility visibility) {
+    private String summary(final ToolCall request, final Scope scope, final Visibility visibility) {
         final List<String> groupBy = groupBy(request);
         final ExpressionOperator expression = expression(scope, null, true);
         final Counts counts = groupBy.contains(FILTER)
@@ -731,7 +745,8 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
         final boolean byStatus = groupBy.contains(STATUS);
         final Map<List<String>, Map<TaskStatus, Long>> groups = new LinkedHashMap<>();
         for (final Count count : counts.counts) {
-            final List<String> key = dimensions.stream().map(dimension -> label(dimension, count)).toList();
+            final List<String> key = dimensions.stream().map(dimension -> label(dimension, count, scope.links()))
+                    .toList();
             groups.computeIfAbsent(key, k -> new EnumMap<>(TaskStatus.class))
                     .merge(count.status(), count.count(), Long::sum);
         }
@@ -760,7 +775,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
         return sb.toString().stripTrailing();
     }
 
-    private static List<String> groupBy(final ToolExecutionRequest request) {
+    private static List<String> groupBy(final ToolCall request) {
         final List<String> groupBy = new ArrayList<>();
         for (final String group : stringListArg(request, GROUP_BY_ARG)) {
             final String lower = group.toLowerCase(Locale.ROOT);
@@ -777,9 +792,9 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
                 : groupBy;
     }
 
-    private static String label(final String dimension, final Count count) {
+    private static String label(final String dimension, final Count count, final StroomLinks links) {
         return switch (dimension) {
-            case PIPELINE -> count.pipeline().getType() + " " + DocumentInfoTool.link(count.pipeline());
+            case PIPELINE -> count.pipeline().getType() + " " + links.document(count.pipeline());
             case FEED -> "feed " + NullSafe.nonBlankStringElse(count.feed(), "?");
             case NODE -> count.node() == null
                     ? "no node yet"
@@ -806,10 +821,11 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     // list
     // --------------------------------------------------------------------------------
 
-    private String list(final ToolExecutionRequest request,
-                        final int chatId,
+    private String list(final ToolCall request,
+                        final ToolCallContext context,
                         final Scope scope,
                         final Visibility visibility) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath out = outArg(request);
         final Integer limitArg = intArg(request, LIMIT_ARG);
         final int limit = limitArg == null
@@ -844,7 +860,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
             final List<List<String>> rows = tasks.visible().stream()
                     .map(task -> row(task, errorStreams.of(task)))
                     .toList();
-            ToolTables.writeCsv(workspace, chatId, out, TASK_COLUMNS, rows, scope.pipelines().size() == 1
+            ToolTables.writeCsv(workspace, out, TASK_COLUMNS, rows, scope.pipelines().size() == 1
                     ? scope.pipelines().getFirst().getUuid()
                     : null);
             sb.append("Wrote ").append(rows.size()).append(" row(s) to ").append(out)
@@ -854,7 +870,8 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
         }
         final List<ProcessorTask> shown = tasks.visible().subList(0, Math.min(tasks.visible().size(),
                 MAX_INLINE_TASKS));
-        shown.forEach(task -> sb.append("- ").append(describe(task)).append("; ").append(errorStreams.describe(task))
+        shown.forEach(task -> sb.append("- ").append(describe(task, scope.links())).append("; ")
+                .append(errorStreams.describe(task, scope.links()))
                 .append('\n'));
         if (tasks.visible().size() > shown.size()) {
             sb.append("(").append(tasks.visible().size() - shown.size()).append(" more not shown; give out to write "
@@ -865,17 +882,17 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
 
     /// @return A task in words, e.g. `Task 12: Failed on node node1, stream 34 of feed F, Pipeline P, filter 5;
     /// created …, started …, ended … (took 2.5s)`.
-    private static String describe(final ProcessorTask task) {
+    private static String describe(final ProcessorTask task, final StroomLinks links) {
         final ProcessorFilter filter = task.getProcessorFilter();
         final StringBuilder sb = new StringBuilder("Task ").append(task.getId()).append(": ")
                 .append(NullSafe.getOrElse(task.getStatus(), TaskStatus::getDisplayValue, "Unknown"));
         if (NullSafe.isNonBlankString(task.getNodeName())) {
             sb.append(" on node ").append(task.getNodeName());
         }
-        sb.append(", ").append(streamLink(task.getMetaId())).append(" of feed ")
+        sb.append(", ").append(links.stream(task.getMetaId())).append(" of feed ")
                 .append(NullSafe.nonBlankStringElse(task.getFeedName(), "?"));
         final DocRef pipeline = ProcessorFilterAccess.pipelineOf(filter);
-        sb.append(", ").append(pipeline.getType()).append(' ').append(DocumentInfoTool.link(pipeline))
+        sb.append(", ").append(pipeline.getType()).append(' ').append(links.document(pipeline))
                 .append(", filter ").append(filter.getId());
         sb.append("; created ").append(time(task.getCreateTimeMs()));
         if (task.getStartTimeMs() != null) {
@@ -934,8 +951,8 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     // failures
     // --------------------------------------------------------------------------------
 
-    private String failures(final ToolExecutionRequest request,
-                            final int chatId,
+    private String failures(final ToolCall request,
+                            final ToolCallContext context,
                             final Scope scope,
                             final Visibility visibility) {
         final long startNanos = System.nanoTime();
@@ -955,7 +972,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
         final Counts overview = appendOverview(sb, scope, visibility);
         appendFailedTasks(sb, scope, visibility);
         appendStuckTasks(sb, scope, stuckAfter, visibility);
-        appendErrorStreams(sb, chatId, scope, overview, sample, startNanos, visibility);
+        appendErrorStreams(sb, context, scope, overview, sample, startNanos, visibility);
         return sb.toString().stripTrailing();
     }
 
@@ -975,7 +992,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
 
         sb.append("\nBy pipeline (most failures first):\n");
         appendRates(sb, rates(counts, count -> count.pipeline().getType() + " "
-                                               + DocumentInfoTool.link(count.pipeline())), failed, false);
+                                               + scope.links().document(count.pipeline())), failed, false);
         final Map<String, long[]> feedRates = rates(counts, count -> NullSafe.nonBlankStringElse(count.feed(), "?"));
         if (failed > 0) {
             sb.append("\nBy feed (most failures first):\n");
@@ -1056,7 +1073,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
         final Map<String, List<ProcessorTask>> groups = new LinkedHashMap<>();
         for (final ProcessorTask task : tasks.visible()) {
             final DocRef pipeline = ProcessorFilterAccess.pipelineOf(task.getProcessorFilter());
-            final String key = pipeline.getType() + " " + DocumentInfoTool.link(pipeline) + ", feed "
+            final String key = pipeline.getType() + " " + scope.links().document(pipeline) + ", feed "
                                + NullSafe.nonBlankStringElse(task.getFeedName(), "?") + ", node "
                                + NullSafe.nonBlankStringElse(task.getNodeName(), "?");
             groups.computeIfAbsent(key, k -> new ArrayList<>()).add(task);
@@ -1085,12 +1102,12 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
             final List<String> examples = new ArrayList<>();
             for (final ProcessorTask task : group.subList(0, Math.min(group.size(), MAX_EXAMPLE_TASKS))) {
                 final StringBuilder example = new StringBuilder("task ").append(task.getId()).append(" (")
-                        .append(streamLink(task.getMetaId()));
+                        .append(scope.links().stream(task.getMetaId()));
                 if (task.getStartTimeMs() != null) {
                     example.append(", started ").append(time(task.getStartTimeMs()));
                 }
                 example.append(", ended ").append(time(when(task))).append("; ")
-                        .append(errorStreams.describe(task)).append(')');
+                        .append(errorStreams.describe(task, scope.links())).append(')');
                 examples.add(example.toString());
             }
             sb.append(String.join("; ", examples)).append(".\n");
@@ -1152,8 +1169,8 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
                             .limit(MAX_EXAMPLE_TASKS)
                             .map(task -> {
                                 final DocRef pipeline = ProcessorFilterAccess.pipelineOf(task.getProcessorFilter());
-                                return "task " + task.getId() + " (" + streamLink(task.getMetaId()) + ", "
-                                       + pipeline.getType() + " " + DocumentInfoTool.link(pipeline) + ", "
+                                return "task " + task.getId() + " (" + scope.links().stream(task.getMetaId())
+                                       + ", " + pipeline.getType() + " " + scope.links().document(pipeline) + ", "
                                        + NullSafe.getOrElse(task.getStatus(), TaskStatus::getDisplayValue, "?")
                                        + ")";
                             })
@@ -1164,7 +1181,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     // The errors inside processing: the Error streams written in the window by the pipelines asked about, or else
     // by those that had tasks in the window, and the failure modes read from a sample of them.
     private void appendErrorStreams(final StringBuilder sb,
-                                    final int chatId,
+                                    final ToolCallContext context,
                                     final Scope scope,
                                     final Counts overview,
                                     final int sample,
@@ -1214,7 +1231,8 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
                 : "").append(", by pipeline and feed (newest first; the counts are from the meta of the streams "
                              + "sampled):\n");
         for (final ErrorGroup group : sorted.subList(0, Math.min(sorted.size(), MAX_GROUP_LINES))) {
-            sb.append("- ").append(group.pipeline.getType()).append(' ').append(DocumentInfoTool.link(group.pipeline))
+            sb.append("- ").append(group.pipeline.getType()).append(' ')
+                    .append(scope.links().document(group.pipeline))
                     .append(", feed ").append(group.feed).append(": ").append(group.streams.size())
                     .append(" stream(s)");
             final List<Map<String, String>> groupCounts = group.streams.stream()
@@ -1240,7 +1258,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
         if (sorted.size() > MAX_GROUP_LINES) {
             sb.append("(").append(sorted.size() - MAX_GROUP_LINES).append(" more, with fewer streams.)\n");
         }
-        appendFailureModes(sb, chatId, sampled, streams.size(), sample, nodes, startNanos, visibility);
+        appendFailureModes(sb, context, sampled, streams.size(), sample, nodes, startNanos, visibility);
         appendSearchCoverage(sb, coverage);
     }
 
@@ -1403,7 +1421,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
 
     // Reads the sampled Error streams and groups their markers into failure modes.
     private void appendFailureModes(final StringBuilder sb,
-                                    final int chatId,
+                                    final ToolCallContext context,
                                     final List<ErrorStream> sampled,
                                     final int found,
                                     final int sample,
@@ -1420,7 +1438,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
         final Map<Long, Long> sources = visibleParents(sampled);
         final FailureModes modes = new FailureModes();
         final Coverage coverage = new Coverage();
-        final long budgetNanos = timeLimit().toNanos() / 2;
+        final long budgetNanos = timeLimit(context).toNanos() / 2;
         for (final ErrorStream stream : sampled) {
             if (System.nanoTime() - startNanos > budgetNanos) {
                 coverage.outOfTime = true;
@@ -1434,7 +1452,8 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
                 continue;
             }
             coverage.read++;
-            auditLog.streamsViewed(chatId, List.of(meta.getId()), "Read the markers of Error stream " + meta.getId()
+            auditLog.streamsViewed(context.session(), List.of(meta.getId()),
+                    "Read the markers of Error stream " + meta.getId()
                                                                   + " with the " + NAME + " tool");
             visibility.read.add(meta.getId());
             if (text.truncated()) {
@@ -1455,7 +1474,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
         int number = 0;
         for (final FailureModes.Mode mode : ranked.subList(0, Math.min(ranked.size(), MAX_MODES))) {
             number++;
-            appendMode(sb, number, mode);
+            appendMode(sb, number, mode, context.links());
         }
         if (ranked.size() > MAX_MODES) {
             sb.append("(").append(ranked.size() - MAX_MODES).append(" more mode(s), less severe or met less often.)\n");
@@ -1483,7 +1502,10 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
                   + "the data viewer: open its Error stream.\n");
     }
 
-    private static void appendMode(final StringBuilder sb, final int number, final FailureModes.Mode mode) {
+    private static void appendMode(final StringBuilder sb,
+                                   final int number,
+                                   final FailureModes.Mode mode,
+                                   final StroomLinks links) {
         sb.append(number).append(". ").append(mode.key().severity().getDisplayValue());
         if (!mode.key().element().isEmpty()) {
             sb.append(" in element '").append(mode.key().element()).append('\'');
@@ -1491,7 +1513,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
         sb.append(": `").append(mode.key().pattern().replace("`", "'")).append("` — ").append(mode.count())
                 .append(" marker(s) in ").append(mode.streams().size()).append(" stream(s); ")
                 .append(String.join(", ", mode.pipelines().stream()
-                        .map(pipeline -> pipeline.getType() + " " + DocumentInfoTool.link(pipeline))
+                        .map(pipeline -> pipeline.getType() + " " + links.document(pipeline))
                         .toList()))
                 .append("; feed(s) ").append(String.join(", ", mode.feeds()));
         if (!mode.nodes().isEmpty()) {
@@ -1501,9 +1523,9 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
                 .append('\n');
         for (final FailureModes.Example example : mode.examples()) {
             sb.append("   e.g. \"").append(shortenLine(example.message(), 500)).append("\" (")
-                    .append(streamLink(example.source().errorStreamId(), "Error stream"));
+                    .append(links.stream(example.source().errorStreamId(), "Error stream"));
             if (example.source().sourceStreamId() != null) {
-                sb.append(", in ").append(streamLink(example.source().sourceStreamId()));
+                sb.append(", in ").append(links.stream(example.source().sourceStreamId()));
             }
             if (!example.location().isEmpty()) {
                 sb.append(" at ").append(example.location());
@@ -1607,18 +1629,20 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     // Helpers.
     // --------------------------------------------------------------------------------
 
-    private void logSearch(final int chatId, final String mode, final Scope scope, final Visibility visibility) {
+    private void logSearch(final ToolCallContext context, final String mode, final Scope scope,
+            final Visibility visibility) {
         final Map<String, String> data = new LinkedHashMap<>();
         data.put("Mode", mode);
         data.put("Tasks", String.valueOf(visibility.tasksSeen));
-        auditLog.documentsSearched(chatId, "processing tasks" + (scope.description().isEmpty()
+        auditLog.documentsSearched(context.session(), "processing tasks" + (scope.description().isEmpty()
                         ? ""
                         : " where " + scope.description()), List.copyOf(visibility.pipelines.values()), data,
                 "Processing tasks read by the " + NAME + " tool (" + mode + ")");
         if (!visibility.streams.isEmpty() || !visibility.errorStreams.isEmpty()) {
             final List<Long> streams = new ArrayList<>(visibility.streams);
             streams.addAll(visibility.errorStreams);
-            auditLog.streamsSearched(chatId, "streams of processing tasks, and Error streams written in processing",
+            auditLog.streamsSearched(context.session(),
+                    "streams of processing tasks, and Error streams written in processing",
                     streams, Map.of("ErrorStreamsRead", String.valueOf(visibility.read.size())),
                     "Streams found by the " + NAME + " tool (" + mode + ")");
         }
@@ -1646,17 +1670,6 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
         return whole == 0
                 ? "0%"
                 : String.format(Locale.ROOT, "%.1f%%", 100.0 * part / whole);
-    }
-
-    /// @return A link that opens the stream, e.g. `[stream 12](?action=open-stream&id=12)`.
-    static String streamLink(final Long id) {
-        return streamLink(id, "stream");
-    }
-
-    private static String streamLink(final Long id, final String label) {
-        return id == null
-                ? label + " ?"
-                : "[" + label + " " + id + "](?action=open-stream&id=" + id + ")";
     }
 
     private static String time(final Long ms) {
@@ -1687,6 +1700,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
     /// @param untilMs     The end of the window, or null for now.
     /// @param nowMs       When the call was made.
     /// @param description The filters, in words, for the result and the audit log.
+    /// @param links       How to link to Stroom objects in the result, for the caller.
     private record Scope(List<DocRef> pipelines,
                          List<String> feeds,
                          List<String> nodes,
@@ -1696,7 +1710,8 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
                          Long sinceMs,
                          Long untilMs,
                          long nowMs,
-                         String description) {
+                         String description,
+                         StroomLinks links) {
 
     }
 

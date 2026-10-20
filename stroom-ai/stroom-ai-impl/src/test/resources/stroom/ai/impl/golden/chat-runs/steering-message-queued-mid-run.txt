@@ -1,0 +1,71 @@
+# steering-message-queued-mid-run
+
+A message the user sends while a tool works is queued, then picked up at the next step (made a STEER_MESSAGE) and given to the model.
+
+== What happened ==
+The user asks: How many errors today?
+Run 1: answered: 3 firewall errors today.
+
+== Stored messages ==
+#1 USER_MESSAGE (turn 1)
+    How many errors today?
+#2 TOOL_CALL (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "search",
+      "arguments" : "{\"query\":\"errors today\"}"
+    }
+#3 STEER_MESSAGE (turn 1)
+    Only count firewall errors.
+  First stored as QUEUED_STEER_MESSAGE:
+    Only count firewall errors.
+#4 TOOL_RESULT (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "search",
+      "error" : false,
+      "text" : "42 errors, 3 of them from the firewall.",
+      "chars" : 39,
+      "durationMs" : "<time>"
+    }
+
+== Workspace files made ==
+(none)
+
+== Run flags ==
+Read content that could hold planted instructions: true
+Read an untrusted MCP server's output: false
+
+== MCP tools offered ==
+search
+    Description: Does search.
+    Parameters: {
+      "type" : "object",
+      "properties" : {
+        "query" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ ]
+    }
+
+== Requests to the model ==
+(Built-in tools are listed by name in name order; their definitions have their own reference file.)
+--- Request 1 ---
+Tools offered: ask_user, memory, propose_query, read_turn, search
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    How many errors today?
+--- Request 2 ---
+Tools offered: ask_user, memory, propose_query, read_turn, search
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    How many errors today?
+[2] AI
+    Calls search as call-1 with {"query":"errors today"}
+[3] TOOL RESULT for call-1 (search)
+    42 errors, 3 of them from the firewall.
+[4] USER
+    [Sent by the user while you were working] Only count firewall errors.

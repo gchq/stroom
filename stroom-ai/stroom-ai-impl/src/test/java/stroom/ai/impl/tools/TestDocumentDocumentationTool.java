@@ -29,7 +29,6 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -75,7 +74,8 @@ class TestDocumentDocumentationTool {
 
         assertThat(run()).isEqualTo("Documentation of Dictionary 'Malicious IPs':\n\n"
                                     + "# Malicious IPs\nKept up to date by the SOC.");
-        Mockito.verify(auditLog).documentViewed(Mockito.eq(1), Mockito.eq(DICTIONARY), Mockito.anyString());
+        Mockito.verify(auditLog).documentViewed(Mockito.eq(ToolSession.chat(1)), Mockito.eq(DICTIONARY),
+                Mockito.anyString());
     }
 
     @Test
@@ -127,9 +127,7 @@ class TestDocumentDocumentationTool {
     }
 
     private String run() {
-        return tool.execute(ToolExecutionRequest.builder()
-                .name(DocumentDocumentationTool.NAME)
-                .arguments("{\"uuid\":\"dict-uuid\"}")
-                .build(), 1);
+        return tool.execute(new ToolCall(null, DocumentDocumentationTool.NAME, "{\"uuid\":\"dict-uuid\"}"),
+                ToolCalls.inChat(1, workspace)).text();
     }
 }

@@ -1,0 +1,28 @@
+Arguments: {"kind":"search"}
+
+=== Output ===
+Server tasks (Monitoring > Server Tasks), a snapshot as of <time of the call>. Tasks start and finish all the time, so call again for a fresh one.
+Nodes that answered: node1, node2. Didn't answer: node3 (node3 is not responding), so their tasks are missing.
+Filters: users' searches.
+
+3 search(es) running, each counted once by its top-level task; their 5 sub-task(s) on the nodes aren't counted as searches.
+Of these, 1 have finished searching and are holding their results for the UI to read (info says 'staying alive for UI requests'); 2 are still searching.
+
+By user (tasks, of which top-level):
+- alice: 2 (2 top-level)
+- bob: 1 (1 top-level)
+
+By type (tasks, of which top-level):
+- Lucene index, analytic store or event search (FederatedSearchTask): 2 (2 top-level)
+- Elasticsearch (Elasticsearch Cluster Search): 1 (1 top-level)
+
+By the node running the top-level task (tasks, of which top-level):
+- node1: 2 (2 top-level)
+- node2: 1 (1 top-level)
+
+Their sub-tasks by node: node1 3, node2 2.
+
+Longest running:
+- Search s3 (FederatedSearchTask) by alice on node1, running 1h 1m, no sub-tasks (finished, holding results for the UI); info: Search 'ghi' - staying alive for UI requests
+- Search s2 (Elasticsearch Cluster Search) by bob on node2, running 20m, no sub-tasks; info: Search 'def'
+- Search s1 (FederatedSearchTask) by alice on node1, running 3m, sub-tasks: node1 3, node2 2; info: Search 'abc'

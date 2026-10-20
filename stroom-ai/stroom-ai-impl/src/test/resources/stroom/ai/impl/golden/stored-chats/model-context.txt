@@ -1,0 +1,96 @@
+# What the model is given from a 7.14 chat
+
+The chat's latest compaction:
+    CompactionRecord[digestsUpToTurnId=21, summaryUpToTurnId=2, summary=The user asked which feeds had errors yesterday: ACME (40) and FW (2)., tokensBefore=52000, tokensAfter=9000, messageCount=27, manual=false, stale=false]
+
+== The messages for the model (ContextAssembler.assemble, with tools) ==
+[0] SYSTEM
+    (The system prompt, which has its own reference file.)
+[1] USER
+    Earlier turns of this conversation have been compacted to save space: each is shown below as a short digest (or, for the oldest, a summary). Everything is still stored. If you need exact detail from an earlier turn, read it again with read_turn, or find it with search_history. Never guess a figure from an earlier turn; read it again or re-run the query. If a workspace file a digest refers to has gone, re-run the query or ask the user to attach the data again.
+    
+    Summary of the turns up to turn 2:
+    The user asked which feeds had errors yesterday: ACME (40) and FW (2).
+    
+    Turn 14:
+    - Question: Write a query of the ACME errors.
+    - The user added while you worked: [I created the query 'ACME errors' with the button.]
+    - Tool propose_query({"name":"ACME errors","query":"from Errors where Feed = 'ACME' select Feed, Count"}) -> result:
+        The user has been offered a 'Create query…' button for 'ACME errors', reading View 'Errors' (uuid errors-uuid).
+    - Answer (start): Click Create query… to save it.
+    
+    Turn 21:
+    - Question: Remember that I look after ACME.
+    - Tool memory({"command":"write","path":"/memories/role.md","content":"Looks after ACME.\n"}) -> result:
+        The user has been asked to approve this change to /memories/role.md. It is not saved unless they approve it, so do not rely on it. Carry on with your work.
+    - Answer (start): Noted: you look after ACME.
+[2] AI
+    Understood. I'll read earlier turns again if I need exact detail.
+[3] USER
+    [The attached table 'Firewall events' is no longer available (it reached its retention age). Do not guess what it held; if you need it, ask the user to attach it again.]
+[4] USER
+    Check the ACME pipeline's filter.
+    
+    [Tools you used to answer this:
+    - stroom__describe_filter({"feed":"ACME"}) -> Filter 31 reads ACME, and is enabled.]
+[5] AI
+    Filter 31 reads ACME and is enabled.
+[6] USER
+    Create the ACME-EVENTS feed and a filter for it.
+[7] AI
+    Creating the feed, then its filter.
+    Calls create_feed as call-6 with {"name":"ACME-EVENTS"}
+[8] TOOL RESULT for call-6 (create_feed)
+    Feed ACME-EVENTS created.
+[9] USER
+    [Sent by the user while you were working] Leave the filter disabled.
+
+== The current turn, rebuilt to carry on (ContextAssembler.currentTurn) ==
+[0] AI
+    Creating the feed, then its filter.
+    Calls create_feed as call-6 with {"name":"ACME-EVENTS"}
+[1] TOOL RESULT for call-6 (create_feed)
+    Feed ACME-EVENTS created.
+[2] USER
+    [Sent by the user while you were working] Leave the filter disabled.
+
+== The digest of each turn (TurnDigests.digests: stored, or built) ==
+Turn 0:
+    Turn 0:
+    - Question: 
+    - No answer was given (the run did not finish).
+Turn 2:
+    Turn 2:
+    - Question: Which feeds had errors yesterday?
+    - Tool stroom__find_feeds({"name":"*"}) -> result:
+        Found 2 feeds: ACME, FW
+    - Tool run_stroomql({"query":"from Errors select Feed, Count"}) -> full result (24027 characters) saved to /outputs/turn-2/call-8.txt
+    - Workspace files created: /outputs/turn-2/call-8.txt
+    - Answer (start): ACME and FW had errors yesterday: ACME 40, FW 2.
+Turn 14:
+    Turn 14:
+    - Question: Write a query of the ACME errors.
+    - The user added while you worked: [I created the query 'ACME errors' with the button.]
+    - Tool propose_query({"name":"ACME errors","query":"from Errors where Feed = 'ACME' select Feed, Count"}) -> result:
+        The user has been offered a 'Create query…' button for 'ACME errors', reading View 'Errors' (uuid errors-uuid).
+    - Answer (start): Click Create query… to save it.
+Turn 21:
+    Turn 21:
+    - Question: Remember that I look after ACME.
+    - Tool memory({"command":"write","path":"/memories/role.md","content":"Looks after ACME.\n"}) -> result:
+        The user has been asked to approve this change to /memories/role.md. It is not saved unless they approve it, so do not rely on it. Carry on with your work.
+    - Answer (start): Noted: you look after ACME.
+Turn 30:
+    Turn 30:
+    - Question: Check the ACME pipeline's filter.
+    - Tool stroom__describe_filter({"feed":"ACME"}) -> result:
+        Filter 31 reads ACME, and is enabled.
+    - Answer (start): Filter 31 reads ACME and is enabled.
+Turn 35:
+    Turn 35:
+    - Question: Create the ACME-EVENTS feed and a filter for it.
+    - The user added while you worked: Leave the filter disabled.
+    - Tool create_feed({"name":"ACME-EVENTS"}) -> result:
+        Feed ACME-EVENTS created.
+    - Tool create_filter({"feed":"ACME-EVENTS"}) -> no result
+    - No answer was given (the run did not finish).

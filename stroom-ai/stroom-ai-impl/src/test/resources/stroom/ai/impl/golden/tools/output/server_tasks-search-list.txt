@@ -1,0 +1,11 @@
+Arguments: {"kind":"search","mode":"list"}
+
+=== Output ===
+Server tasks (Monitoring > Server Tasks), a snapshot as of <time of the call>. Tasks start and finish all the time, so call again for a fresh one.
+Nodes that answered: node1, node2. Didn't answer: node3 (node3 is not responding), so their tasks are missing.
+Filters: users' searches.
+
+Searches (each by its top-level task), oldest first: 3
+- Search s3 (FederatedSearchTask) by alice on node1, running 1h 1m, no sub-tasks (finished, holding results for the UI); info: Search 'ghi' - staying alive for UI requests
+- Search s2 (Elasticsearch Cluster Search) by bob on node2, running 20m, no sub-tasks; info: Search 'def'
+- Search s1 (FederatedSearchTask) by alice on node1, running 3m, sub-tasks: node1 3, node2 2; info: Search 'abc'

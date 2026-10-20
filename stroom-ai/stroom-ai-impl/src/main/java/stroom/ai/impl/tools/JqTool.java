@@ -16,8 +16,10 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SafeJq;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -26,9 +28,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import net.thisptr.jackson.jq.JsonQuery;
 
@@ -58,30 +57,39 @@ class JqTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Runs a jq query on a JSON file in the workspace (one JSON value, or one per line), "
-                             + "e.g. '.events[] | select(.severity == \"high\") | .host'. Each result is one line "
-                             + "of JSON. Give out to write the results to a file. Regular expression functions "
-                             + "(test, match, sub...) are not available; use grep or table for those.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Runs a jq query on a JSON file")
+                        .chatOnly(" in the workspace")
+                        .general(" (one JSON value, or one per line), e.g. '.events[] | select(.severity == "
+                                 + "\"high\") | .host'. Each result is one line of JSON.")
+                        .chatOnly(" Give out to write the results to a file.")
+                        .general(" Regular expression functions (test, match, sub...) are not available")
+                        .chatOnly("; use grep or table for those")
+                        .general(".")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(PATH_ARG, "The JSON file.")
                         .addStringProperty(QUERY_ARG, "The jq query.")
                         .addBooleanProperty(RAW_ARG, "True to give string results without quotes.")
-                        .addStringProperty(OUT_ARG, "A file in /outputs/ to write the results to.")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A file in /outputs/ to write the results to.")
+                                .build())
                         .required(PATH_ARG, QUERY_ARG)
                         .build())
                 .build();
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final WorkspacePath path = pathArg(request, PATH_ARG);
         final JsonQuery query = SafeJq.compile(rawArg(request, QUERY_ARG));
         final boolean raw = booleanArg(request, RAW_ARG, false);
         final WorkspacePath out = outArg(request);
-        final Path file = workspace.localFile(chatId, path);
+        final Path file = workspace.localFile(path);
 
         final List<String> results = new ArrayList<>();
         final long[] total = {0};
@@ -102,17 +110,17 @@ class JqTool extends AbstractWorkspaceTool {
                             : value.toString();
                     if (writer != null) {
                         write(writer, line);
-                    } else if (results.size() < limits().getMaxLinesPerRead()) {
+                    } else if (results.size() < limits(context).getMaxLinesPerRead()) {
                         results.add(line);
                     }
                 });
             }
             if (writer != null) {
                 writer.close();
-                workspace.write(chatId, out, temp, workspace.sourceDocUuid(chatId, path));
-                return "Wrote " + total[0] + " result(s) to " + out + ".";
+                workspace.write(out, temp, workspace.sourceDocUuid(path));
+                return ToolResult.text("Wrote " + total[0] + " result(s) to " + out + ".");
             }
-            return boundedLines(results, total[0]);
+            return ToolResult.text(boundedLines(context, results, total[0]));
         } catch (final JsonProcessingException e) {
             throw new WorkspaceException(path + " is not JSON that can be read: " + e.getOriginalMessage());
         } catch (final IOException e) {

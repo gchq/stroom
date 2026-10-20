@@ -19,6 +19,7 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.AgentInstructions.Ignored;
 import stroom.ai.impl.tools.AgentInstructions.Standing;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
@@ -42,6 +43,8 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.query.api.ExpressionOperator;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -49,9 +52,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -133,21 +133,32 @@ class FolderContentsTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .unlockedBy(AppPermission.MANAGE_PROCESSORS_PERMISSION)
+                .checksDocuments(DocumentPermission.VIEW)
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Lists what is in an Explorer folder, as its tabs show it, e.g. for 'what's in this "
-                             + "folder?'. Give show with any of: 'documents' (the default: the documents and "
-                             + "folders in it, each as a link; give depth to look in the folders below too), "
-                             + "'streams' (how many streams its feeds received and its pipelines produced, and "
-                             + "the most recent; use stream_meta with folder for more), 'processors' (the "
-                             + "processor filters of its pipelines and analytic rules: what streams each "
-                             + "selects, enabled, priority, progress) and 'tasks' (counts of their processing "
-                             + "tasks by status). Ask for the "
-                             + "streams, processors or tasks when the user mentions data, processing or tasks. "
-                             + "Folders an AGENTS doc says to ignore (e.g. an Archive) are shown but not looked "
-                             + "in, and the AGENTS docs that apply to the folder are given.")
-                .parameters(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Lists what is in an Explorer folder, as its tabs show it, e.g. for 'what's in this "
+                                 + "folder?'. Give show with any of: 'documents' (the default: the documents and "
+                                 + "folders in it, each as a link; give depth to look in the folders below too), "
+                                 + "'streams' (how many streams its feeds received and its pipelines produced, and "
+                                 + "the most recent")
+                        .chatOnly("; use stream_meta with folder for more")
+                        .general("), 'processors' (the processor filters of its pipelines and analytic rules: what "
+                                 + "streams each selects, enabled, priority, progress) and 'tasks' (counts of their "
+                                 + "processing tasks by status). Ask for the streams, processors or tasks when the "
+                                 + "user mentions data, processing or tasks. Folders an AGENTS doc says to ignore "
+                                 + "(e.g. an Archive) are shown but not looked in, and the AGENTS docs that apply to "
+                                 + "the folder are given.")
+                        .build())
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(FOLDER_ARG, "The folder's UUID, or its Explorer path, e.g. "
                                                        + "'/Security/Lookups'. Omit, or give '/', for the top of "
                                                        + "the tree.")
@@ -167,15 +178,11 @@ class FolderContentsTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
-        return "Error: " + NAME + " can only be used in a chat.";
-    }
-
-    @Override
-    public String execute(final ToolExecutionRequest request, final int chatId) {
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
         final DocRef folder = documentAccess.findFolder(stringArg(request, FOLDER_ARG)).orElse(null);
         if (folder == null) {
-            return "No folder was found with that UUID or path, or you don't have permission to view it.";
+            return ToolResult.text(
+                    "No folder was found with that UUID or path, or you don't have permission to view it.");
         }
         final List<String> show;
         final Set<String> types;
@@ -183,7 +190,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
             show = show(request);
             types = Set.copyOf(stringListArg(request, TYPES_ARG));
         } catch (final IllegalArgumentException e) {
-            return "Error: " + e.getMessage();
+            return ToolResult.text("Error: " + e.getMessage());
         }
         final Integer depthArg = intArg(request, DEPTH_ARG);
         final int depth = depthArg == null
@@ -195,52 +202,54 @@ class FolderContentsTool extends AbstractBuiltInTool {
                 ? "/"
                 : joinPath(documentAccess.path(folder), folder.getName());
         final Listing listing = new Listing();
-        final Standing standing = agentInstructions.load(chatId, "Standing instructions read by the " + NAME
+        final Standing standing = agentInstructions.load(context.session(), "Standing instructions read by the " + NAME
                                                                  + " tool");
         final Optional<Ignored> folderIgnored = standing.ignored(path);
         // A folder the user asks about is listed in full, even if an AGENTS doc says to ignore it.
         final Scan scan = new Scan(standing, "true".equalsIgnoreCase(stringArg(request, INCLUDE_IGNORED_ARG))
                                              || folderIgnored.isPresent());
+        final StroomLinks links = context.links();
         final StringBuilder sb = new StringBuilder();
         sb.append(root
                 ? "The top of the Explorer tree (/)"
                 : "Folder '" + folder.getName() + "' (" + path + ", uuid " + folder.getUuid() + ", "
-                  + DocumentInfoTool.link(folder) + ")").append('\n');
+                  + links.document(folder) + ")").append('\n');
         folderIgnored.ifPresent(ignored -> sb.append("It is in ").append(ignored.describe())
                 .append(", so searches leave it out; it is listed as it was asked for.\n"));
         if (show.contains(DOCUMENTS)) {
-            appendDocuments(sb, folder, path, depth, types, scan, listing);
+            appendDocuments(sb, links, folder, path, depth, types, scan, listing);
         }
         if (show.contains(STREAMS)) {
-            appendStreams(sb, folder, root, listing);
+            appendStreams(sb, links, folder, root, listing);
         }
         if (show.contains(PROCESSORS)) {
-            appendProcessors(sb, folder, root, listing);
+            appendProcessors(sb, links, folder, root, listing);
         }
         if (show.contains(TASKS)) {
-            appendTasks(sb, folder, root, listing);
+            appendTasks(sb, links, folder, root, listing);
         }
 
         final Map<String, String> data = new LinkedHashMap<>();
         data.put("Shown", String.join(", ", show));
         data.put("Documents", String.valueOf(listing.documents.size()));
         data.put("ProcessorFilters", String.valueOf(listing.filters));
-        auditLog.documentsSearched(chatId, "contents of " + (root
+        auditLog.documentsSearched(context.session(), "contents of " + (root
                         ? "the top of the Explorer tree"
                         : "Folder '" + path + "'") + ", showing " + String.join(", ", show)
                                           + (show.contains(DOCUMENTS)
                         ? ", depth " + depth
                         : ""),
                 listing.documents, data, "Folder contents listed by the " + NAME + " tool");
-        sb.append(standing.note(List.of(path)));
+        sb.append(standing.note(links, List.of(path)));
         if (!listing.streams.isEmpty()) {
-            auditLog.streamsSearched(chatId, "streams of the feeds and pipelines in " + path, listing.streams,
+            auditLog.streamsSearched(context.session(), "streams of the feeds and pipelines in " + path,
+                    listing.streams,
                     Map.of(), "Folder streams listed by the " + NAME + " tool");
         }
-        return sb.toString().stripTrailing();
+        return ToolResult.text(sb.toString().stripTrailing());
     }
 
-    private static List<String> show(final ToolExecutionRequest request) {
+    private static List<String> show(final ToolCall request) {
         final List<String> show = new ArrayList<>();
         for (final String item : stringListArg(request, SHOW_ARG)) {
             final String lower = item.toLowerCase(Locale.ROOT);
@@ -260,6 +269,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
 
     // Lists the documents in the folder, and in the folders below it to the depth asked for, each as a link.
     private void appendDocuments(final StringBuilder sb,
+                                 final StroomLinks links,
                                  final DocRef folder,
                                  final String path,
                                  final int depth,
@@ -295,7 +305,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
         for (final Entry entry : entries) {
             final ExplorerNode node = entry.node();
             final DocRef docRef = node.getDocRef();
-            sb.append("  ".repeat(entry.level() - 1)).append("- ").append(DocumentInfoTool.link(docRef))
+            sb.append("  ".repeat(entry.level() - 1)).append("- ").append(links.document(docRef))
                     .append(" (").append(docRef.getType()).append(", uuid ").append(docRef.getUuid()).append(')');
             if (NullSafe.hasItems(node.getTags())) {
                 sb.append(" tags: ").append(String.join(", ", node.getTags().stream().sorted().toList()));
@@ -369,6 +379,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
 
     // Counts the streams of the folder's feeds and pipelines, and lists the most recent, as its Data tab does.
     private void appendStreams(final StringBuilder sb,
+                               final StroomLinks links,
                                final DocRef folder,
                                final boolean root,
                                final Listing listing) {
@@ -412,9 +423,8 @@ class FolderContentsTool extends AbstractBuiltInTool {
                 sb.append("The most recent ").append(rows.size()).append(":\n");
                 for (final MetaRow row : rows) {
                     final Meta meta = row.getMeta();
-                    sb.append("- [stream ").append(meta.getId()).append("](?action=open-stream&id=")
-                            .append(meta.getId()).append(") ").append(meta.getFeedName()).append(", ")
-                            .append(meta.getTypeName()).append(", created ")
+                    sb.append("- ").append(links.stream(meta.getId())).append(' ').append(meta.getFeedName())
+                            .append(", ").append(meta.getTypeName()).append(", created ")
                             .append(DateUtil.createNormalDateTimeString(meta.getCreateMs()));
                     final String pipeline = NullSafe.get(row.getPipeline(), DocRef::getName);
                     if (NullSafe.isNonBlankString(pipeline)) {
@@ -432,6 +442,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
 
     // Lists the processor filters of the folder's pipelines and analytic rules, as its Processors tab does.
     private void appendProcessors(final StringBuilder sb,
+                                  final StroomLinks links,
                                   final DocRef folder,
                                   final boolean root,
                                   final Listing listing) {
@@ -472,7 +483,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
         for (final ProcessorFilter filter : filters.subList(0, Math.min(filters.size(), MAX_FILTERS))) {
             final DocRef pipeline = ProcessorFilterAccess.pipelineOf(filter);
             sb.append("- Filter ").append(filter.getId()).append(" (uuid ").append(filter.getUuid()).append(") of ")
-                    .append(pipeline.getType()).append(' ').append(DocumentInfoTool.link(pipeline))
+                    .append(pipeline.getType()).append(' ').append(links.document(pipeline))
                     .append(": selects ").append(ProcessorFilterAccess.selection(filter))
                     .append("; ").append(ProcessorFilterAccess.status(filter)).append('\n');
             listing.documents.add(new DocRef(ProcessorFilter.ENTITY_TYPE, filter.getUuid()));
@@ -482,6 +493,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
 
     // Counts the processing tasks of the folder's pipelines and feeds by status, as its Active Tasks tab does.
     private void appendTasks(final StringBuilder sb,
+                             final StroomLinks links,
                              final DocRef folder,
                              final boolean root,
                              final Listing listing) {
@@ -521,7 +533,7 @@ class FolderContentsTool extends AbstractBuiltInTool {
         final Map<String, Map<String, Long>> byPipelineAndFeed = new TreeMap<>();
         for (final ProcessorTaskSummary summary : summaries) {
             final String key = summary.getPipeline().getType() + " "
-                               + DocumentInfoTool.link(summary.getPipeline()) + ", feed "
+                               + links.document(summary.getPipeline()) + ", feed "
                                + NullSafe.nonBlankStringElse(summary.getFeed(), "?");
             byPipelineAndFeed.computeIfAbsent(key, k -> new TreeMap<>())
                     .merge(summary.getStatus() == null

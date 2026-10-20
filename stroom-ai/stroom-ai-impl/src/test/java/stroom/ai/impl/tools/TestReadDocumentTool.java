@@ -44,7 +44,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -126,7 +125,7 @@ class TestReadDocumentTool {
         assertThat(result)
                 .contains("XSLT 'Event translation', /.")
                 .contains("## Part 'xsl'\n<xsl:stylesheet/>");
-        Mockito.verify(auditLog).documentViewed(Mockito.eq(1), Mockito.eq(XSLT), Mockito.anyString());
+        Mockito.verify(auditLog).documentViewed(Mockito.eq(ToolSession.chat(1)), Mockito.eq(XSLT), Mockito.anyString());
         Mockito.verify(workspace, Mockito.never()).writeDocument(Mockito.anyInt(), Mockito.any(), Mockito.any(),
                 Mockito.any());
     }
@@ -169,7 +168,7 @@ class TestReadDocumentTool {
                            + "State: enabled, priority 10, Complete, 3 stream(s).\n"
                            + "At most 5 task(s) at a time.");
         final ArgumentCaptor<DocRef> logged = ArgumentCaptor.forClass(DocRef.class);
-        Mockito.verify(auditLog).documentViewed(Mockito.eq(1), logged.capture(), Mockito.anyString());
+        Mockito.verify(auditLog).documentViewed(Mockito.eq(ToolSession.chat(1)), logged.capture(), Mockito.anyString());
         assertThat(logged.getValue().getType()).isEqualTo(ProcessorFilter.ENTITY_TYPE);
         assertThat(logged.getValue().getUuid()).isEqualTo("filter-uuid");
     }
@@ -274,9 +273,11 @@ class TestReadDocumentTool {
                 .contains("2.2.2.2  (from Dictionary 'Known bad')")
                 .doesNotContain("incomplete");
         // The imports whose words are given are logged as viewed, as well as the dictionary asked for.
-        Mockito.verify(auditLog).documentViewed(Mockito.eq(1), Mockito.eq(TOP), Mockito.anyString());
-        Mockito.verify(auditLog).documentViewed(Mockito.eq(1), Mockito.eq(MIDDLE), Mockito.contains("as an import"));
-        Mockito.verify(auditLog).documentViewed(Mockito.eq(1), Mockito.eq(BOTTOM), Mockito.contains("as an import"));
+        Mockito.verify(auditLog).documentViewed(Mockito.eq(ToolSession.chat(1)), Mockito.eq(TOP), Mockito.anyString());
+        Mockito.verify(auditLog).documentViewed(Mockito.eq(ToolSession.chat(1)), Mockito.eq(MIDDLE),
+                Mockito.contains("as an import"));
+        Mockito.verify(auditLog).documentViewed(Mockito.eq(ToolSession.chat(1)), Mockito.eq(BOTTOM),
+                Mockito.contains("as an import"));
     }
 
     @Test
@@ -375,7 +376,7 @@ class TestReadDocumentTool {
                 .contains("The list is incomplete: 1 import(s) couldn't be included")
                 .doesNotContain("6.6.6.6");
         // Nothing is logged as viewed for an import that wasn't read.
-        Mockito.verify(auditLog, Mockito.never()).documentViewed(Mockito.anyInt(), Mockito.eq(SECRET),
+        Mockito.verify(auditLog, Mockito.never()).documentViewed(Mockito.any(), Mockito.eq(SECRET),
                 Mockito.anyString());
     }
 
@@ -419,10 +420,8 @@ class TestReadDocumentTool {
     }
 
     private String run(final String arguments) {
-        return tool.execute(ToolExecutionRequest.builder()
-                .name(ReadDocumentTool.NAME)
-                .arguments(arguments)
-                .build(), 1);
+        return tool.execute(new ToolCall(null, ReadDocumentTool.NAME, arguments), ToolCalls.inChat(1, workspace))
+                .text();
     }
 
     private void xsltContent(final String code) {

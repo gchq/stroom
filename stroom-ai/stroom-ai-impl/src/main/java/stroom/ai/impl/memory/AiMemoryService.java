@@ -17,11 +17,13 @@
 package stroom.ai.impl.memory;
 
 import stroom.ai.api.AiService;
-import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.AiMemoryDao;
+import stroom.ai.impl.ApprovalOutcome;
+import stroom.ai.impl.ToolConsentGate;
 import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.memory.MemoryChange.Operation;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMemory;
@@ -80,19 +82,19 @@ public class AiMemoryService {
 
     private final AiMemoryDao memoryDao;
     private final AiService aiService;
-    private final AiChatRunManager runManager;
+    private final ToolConsentGate consentGate;
     private final SecurityContext securityContext;
     private final AiDao aiDao;
 
     @Inject
     AiMemoryService(final AiMemoryDao memoryDao,
                     final AiService aiService,
-                    final AiChatRunManager runManager,
+                    final ToolConsentGate consentGate,
                     final SecurityContext securityContext,
                     final AiDao aiDao) {
         this.memoryDao = memoryDao;
         this.aiService = aiService;
-        this.runManager = runManager;
+        this.consentGate = consentGate;
         this.securityContext = securityContext;
         this.aiDao = aiDao;
     }
@@ -232,18 +234,26 @@ public class AiMemoryService {
                 null,
                 null);
 
-        if (path.scope() == AiMemoryScope.USER && needsApproval(chatId)) {
-            final String reason = runManager.isUnattended(chatId)
-                    ? "You were away when the agent made this change."
-                    : "The agent had read tool output or data in this chat, which could have told it to make "
-                      + "this change.";
-            aiService.storeMessage(chatId, AiMessageType.APPROVAL_REQUEST,
-                    JsonUtil.writeValueAsString(new MemoryChange(change.kind(), change.operation(), change.path(),
-                            change.baseVersion(), change.before(), change.after(), ApprovalStatus.PENDING,
-                            reason), false));
-            LOGGER.info(() -> "Change to " + path.path() + " in chatId=" + chatId + " needs the user's approval");
-            return "The user has been asked to approve this change to " + path.path() + ". It is not saved unless "
-                   + "they approve it, so do not rely on it. Carry on with your work.";
+        // Whether a change to the user's memory needs their approval, and how they are asked, is the session's
+        // to say (S7).
+        final ToolSession session = ToolSession.chat(chatId);
+        final Optional<String> reason = path.scope() == AiMemoryScope.USER
+                ? consentGate.lastingChangeApprovalReason(session)
+                : Optional.empty();
+        if (reason.isPresent()) {
+            final ApprovalOutcome outcome = consentGate.requestChangeApproval(session, new MemoryChange(
+                    change.kind(), change.operation(), change.path(), change.baseVersion(), change.before(),
+                    change.after(), ApprovalStatus.PENDING, reason.get()));
+            if (outcome.isPending()) {
+                LOGGER.info(() -> "Change to " + path.path() + " in chatId=" + chatId
+                                  + " needs the user's approval");
+                return "The user has been asked to approve this change to " + path.path() + ". It is not saved "
+                       + "unless they approve it, so do not rely on it. Carry on with your work.";
+            }
+            if (outcome.status() == ApprovalOutcome.Status.DENIED) {
+                return "The user did not approve this change to " + path.path() + ", so it has not been made.";
+            }
+            // Approved as soon as asked: made as if it had needed no approval.
         }
         if (!apply(chatId, change)) {
             return changedError(path, "changing it");
@@ -495,10 +505,6 @@ public class AiMemoryService {
         } catch (final RuntimeException e) {
             return Optional.empty();
         }
-    }
-
-    private boolean needsApproval(final int chatId) {
-        return runManager.isTainted(chatId) || runManager.isUnattended(chatId);
     }
 
     private String checkLimits(final int chatId,

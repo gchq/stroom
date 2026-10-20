@@ -16,19 +16,14 @@
 
 package stroom.ai.impl.tools;
 
-import stroom.ai.impl.AiChatRunManager;
-import stroom.ai.impl.McpElicitations;
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolSchema.StringSchema;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonArraySchema;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
-import dev.langchain4j.model.chat.request.json.JsonStringSchema;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -61,22 +56,16 @@ class AskUserTool extends AbstractBuiltInTool {
     private static final int MAX_ANSWER_CHARS = 2_000;
     private static final String DEFAULT_INTRO = "Some questions before I carry on";
 
-    private final Provider<McpElicitations> elicitationsProvider;
-    private final Provider<AiChatRunManager> runManagerProvider;
-
     @Inject
-    AskUserTool(final Provider<McpElicitations> elicitationsProvider,
-                final Provider<AiChatRunManager> runManagerProvider) {
-        this.elicitationsProvider = elicitationsProvider;
-        this.runManagerProvider = runManagerProvider;
+    AskUserTool() {
     }
 
     @Override
-    public ToolSpecification specification() {
-        final JsonObjectSchema question = JsonObjectSchema.builder()
+    public ToolDefinition definition() {
+        final ObjectSchema question = ObjectSchema.builder()
                 .addStringProperty(QUESTION, "The question, on its own, e.g. 'Which environment is it?'.")
-                .addProperty(OPTIONS, JsonArraySchema.builder()
-                        .items(JsonStringSchema.builder().build())
+                .addProperty(OPTIONS, ArraySchema.builder()
+                        .items(StringSchema.builder().build())
                         .description("Sensible answers to choose from (2 to " + MAX_OPTIONS + "), each short, "
                                      + "the best first.")
                         .build())
@@ -85,17 +74,17 @@ class AskUserTool extends AbstractBuiltInTool {
                                                   + "false if only the options make sense.")
                 .required(QUESTION, OPTIONS)
                 .build();
-        return ToolSpecification.builder()
+        return ToolDefinition.builder()
                 .name(NAME)
                 .description("Asks the user the questions you need answered before you carry on, and waits for "
                              + "the answers. The user sees them one at a time, with your options to click and "
                              + "a box for their own answer. Use it rather than listing questions in your answer "
                              + "whenever you need decisions to continue. Ask only what you can't sensibly decide "
                              + "yourself, at most " + MAX_QUESTIONS + " at a time.")
-                .parameters(JsonObjectSchema.builder()
+                .parameters(ObjectSchema.builder()
                         .addStringProperty(INTRO_ARG, "What the questions are for, in a line, e.g. 'A few "
                                                       + "decisions before I save the translation'.")
-                        .addProperty(QUESTIONS_ARG, JsonArraySchema.builder().items(question)
+                        .addProperty(QUESTIONS_ARG, ArraySchema.builder().items(question)
                                 .description("The questions, in the order to ask them.").build())
                         .required(QUESTIONS_ARG)
                         .build())
@@ -103,26 +92,22 @@ class AskUserTool extends AbstractBuiltInTool {
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
-        return "Error: " + NAME + " can only be used in a chat.";
-    }
-
-    @Override
-    public String execute(final ToolExecutionRequest request, final int chatId) {
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
         final List<Question> questions;
         try {
             questions = questions(request.arguments());
         } catch (final IllegalArgumentException e) {
-            return "Error: " + e.getMessage();
+            return ToolResult.text("Error: " + e.getMessage());
         }
-        if (runManagerProvider.get().isUnattended(chatId)) {
-            return "Not asked: the user isn't watching this chat. Put the questions in your answer instead, with "
-                   + "what you recommend.";
+        if (!context.userQuestions().canAsk()) {
+            return ToolResult.text(
+                    "Not asked: the user isn't watching this chat. Put the questions in your answer instead, with "
+                    + "what you recommend.");
         }
         final String intro = NullSafe.nonBlankStringElse(NullSafe.trim(stringArg(request, INTRO_ARG)),
                 DEFAULT_INTRO);
-        final ElicitResult result = elicitationsProvider.get().askUser(chatId, NAME, intro, form(questions));
-        return switch (result.action()) {
+        final ElicitResult result = context.userQuestions().ask(NAME, intro, form(questions));
+        final String text = switch (result.action()) {
             case ACCEPT -> answers(questions, NullSafe.map(result.content()));
             case DECLINE -> "The user chose not to answer these questions. Don't ask them again now: carry on with "
                             + "what you recommended if you can, saying what you assumed, or stop and say what "
@@ -131,6 +116,7 @@ class AskUserTool extends AbstractBuiltInTool {
                            + "follows if so, or didn't answer in time). "
                            + "Don't carry on as if they had.";
         };
+        return ToolResult.text(text);
     }
 
     @Override

@@ -523,7 +523,8 @@ class TestProcessorTasksTool {
                 fixture.feedAccess(), () -> taskService, () -> metaService, () -> store, () -> nodeService,
                 fixture.auditLog());
         try {
-            return tool.run(ToolTestFixture.request(ProcessorTasksTool.NAME, arguments), 1);
+            return tool.run(ToolTestFixture.request(ProcessorTasksTool.NAME, arguments), ToolCalls.inChat(1,
+                    fixture.workspace)).text();
         } catch (final WorkspaceException e) {
             // As the tool's call returns it.
             return "Error: " + e.getMessage();

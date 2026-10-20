@@ -16,17 +16,16 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonArraySchema;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jakarta.inject.Inject;
 
 import java.time.Duration;
@@ -75,32 +74,40 @@ class PipelineTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name(NAME)
-                .description("Runs data tool steps one after another, each on the file the step before wrote, so "
-                             + "intermediate results stay out of the conversation. Each step is {\"tool\": one of "
-                             + "grep, jq, xpath, table, fetch_events, search_events or current_results, \"args\": "
-                             + "the tool's arguments}, e.g. current_results with withEventIds (only as the first "
-                             + "step, with no path), then fetch_events, then search_events by XPath, then table to "
-                             + "count the distinct values. Steps after the first "
-                             + "work on the previous step's output unless their args give a path; leave out "
-                             + "\"out\" in steps. Give out to write the final result to a file.")
-                .parameters(JsonObjectSchema.builder()
-                        .addProperty(STEPS_ARG, JsonArraySchema.builder()
-                                .items(JsonObjectSchema.builder()
+                .description(ToolDescription.builder()
+                        .general("Runs data tool steps one after another, each on the file the step before wrote, "
+                                 + "so intermediate results stay out of the conversation.")
+                        .chatOnly(" Each step is {\"tool\": one of grep, jq, xpath, table, fetch_events, "
+                                  + "search_events or current_results, \"args\": the tool's arguments}, e.g. "
+                                  + "current_results with withEventIds (only as the first step, with no path), then "
+                                  + "fetch_events, then search_events by XPath, then table to count the distinct "
+                                  + "values.")
+                        .general(" Steps after the first work on the previous step's output unless their args give "
+                                 + "a path")
+                        .chatOnly("; leave out \"out\" in steps")
+                        .general(".")
+                        .chatOnly(" Give out to write the final result to a file.")
+                        .build())
+                .parameters(ObjectSchema.builder()
+                        .addProperty(STEPS_ARG, ArraySchema.builder()
+                                .items(ObjectSchema.builder()
                                         .addEnumProperty("tool", List.of(GrepTool.NAME, JqTool.NAME, XPathTool.NAME,
                                                 TableTool.NAME, FetchEventsTool.NAME, SearchEventsTool.NAME,
                                                 CurrentResultsTool.NAME),
                                                 "The tool.")
-                                        .addProperty("args", JsonObjectSchema.builder()
+                                        .addProperty("args", ObjectSchema.builder()
                                                 .description("The tool's arguments.")
                                                 .build())
                                         .required("tool", "args")
                                         .build())
                                 .description("The steps, at most " + MAX_STEPS + ".")
                                 .build())
-                        .addStringProperty(OUT_ARG, "A file in /outputs/ to write the final result to.")
+                        .addStringProperty(OUT_ARG, ToolDescription.builder()
+                                .chatOnly("A file in /outputs/ to write the final result to.")
+                                .build())
                         .required(STEPS_ARG)
                         .build())
                 .build();
@@ -109,11 +116,11 @@ class PipelineTool extends AbstractWorkspaceTool {
     /// A pipeline of workspace steps has the time of one workspace tool call, as before; one with a step that may
     /// take longer (taking a snapshot of results, or fetching events) has the longest of its steps' limits.
     @Override
-    protected Duration timeLimit(final ToolExecutionRequest request) {
-        Duration limit = timeLimit();
+    protected Duration timeLimit(final ToolCall request, final ToolCallContext context) {
+        Duration limit = timeLimit(context);
         try {
             for (final Step step : steps(request)) {
-                final Duration stepLimit = step.toolImpl().timeLimit();
+                final Duration stepLimit = step.toolImpl().timeLimit(context);
                 if (stepLimit != null && stepLimit.compareTo(limit) > 0) {
                     limit = stepLimit;
                 }
@@ -126,7 +133,8 @@ class PipelineTool extends AbstractWorkspaceTool {
     }
 
     @Override
-    String run(final ToolExecutionRequest request, final int chatId) {
+    ToolResult run(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final List<Step> steps = steps(request);
         final WorkspacePath out = outArg(request);
         final String runDir = "/outputs/pipeline/" + UUID.randomUUID().toString().substring(0, 8) + "/";
@@ -142,10 +150,10 @@ class PipelineTool extends AbstractWorkspaceTool {
                         throw new WorkspaceException("current_results can only be the first step.");
                     }
                     final CurrentResultsTool.Outcome outcome = currentResultsTool.outcome(stepRequest(request,
-                            step, step.args()), chatId);
+                            step, step.args()), context);
                     if (outcome.path() == null || last) {
                         // A snapshot that couldn't be taken stops the pipeline, saying why.
-                        return log.append(outcome.text()).toString();
+                        return ToolResult.text(log.append(outcome.text()).toString());
                     }
                     // The snapshot is a tab file, kept with the chat, not an intermediate file.
                     previous = outcome.path();
@@ -172,41 +180,37 @@ class PipelineTool extends AbstractWorkspaceTool {
                     intermediate.add(stepOut);
                     previous = stepOut.path();
                 }
-                final ToolExecutionRequest stepRequest = stepRequest(request, step, args);
-                final String result;
+                final ToolCall stepRequest = stepRequest(request, step, args);
+                final ToolResult result;
                 try {
-                    result = step.toolImpl().run(stepRequest, chatId);
+                    result = step.toolImpl().run(stepRequest, context);
                 } catch (final WorkspaceException e) {
                     throw new WorkspaceException("Step " + (i + 1) + " (" + step.tool() + ") failed: "
                                                  + e.getMessage());
                 }
                 if (last) {
-                    return log.append(result).toString();
+                    return ToolResult.text(log.append(result.text()).toString());
                 }
                 log.append("Step ").append(i + 1).append(" (").append(step.tool()).append("): ")
-                        .append(result.lines().findFirst().orElse("")).append('\n');
+                        .append(result.text().lines().findFirst().orElse("")).append('\n');
             }
-            return log.toString().strip();
+            return ToolResult.text(log.toString().strip());
         } finally {
             for (final WorkspacePath path : intermediate) {
-                if (workspace.find(chatId, path).isPresent()) {
-                    workspace.delete(chatId, path);
+                if (workspace.find(path).isPresent()) {
+                    workspace.delete(path);
                 }
             }
         }
     }
 
-    private static ToolExecutionRequest stepRequest(final ToolExecutionRequest request,
+    private static ToolCall stepRequest(final ToolCall request,
                                                     final Step step,
                                                     final Map<String, Object> args) {
-        return ToolExecutionRequest.builder()
-                .id(request.id())
-                .name(step.tool())
-                .arguments(JsonUtil.writeValueAsString(args, false))
-                .build();
+        return new ToolCall(request.id(), step.tool(), JsonUtil.writeValueAsString(args, false));
     }
 
-    private List<Step> steps(final ToolExecutionRequest request) {
+    private List<Step> steps(final ToolCall request) {
         final Map<?, ?> args;
         try {
             args = JsonUtil.readValue(request.arguments(), Map.class);

@@ -26,12 +26,12 @@ import stroom.docref.DocRef;
 import stroom.query.impl.QueryService;
 import stroom.util.json.JsonUtil;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +51,7 @@ class TestProposeDashboardTool {
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final DashboardBuilder dashboardBuilder = Mockito.mock(DashboardBuilder.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
+    private final List<Map<String, Object>> offered = new ArrayList<>();
     private ProposeDashboardTool tool;
 
     @BeforeEach
@@ -82,7 +83,7 @@ class TestProposeDashboardTool {
                 .contains("2 columns (EventTime, User)")
                 .contains("attached to the chat, so they can ask you to refine it (propose_dashboard_change)")
                 .contains("Tell them about the button");
-        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action)
                 .containsEntry("action", UserActions.CREATE_DASHBOARD)
                 .containsEntry("name", "Logons")
                 .containsEntry("query", QUERY)
@@ -100,7 +101,7 @@ class TestProposeDashboardTool {
     void aStroomQlDashboardHasNoOutline() {
         run(args("from \"Windows events\" select EventTime, User", "stroomql", false));
 
-        assertThat(context.takeUserActions("c1")).singleElement().satisfies(action -> assertThat(action)
+        assertThat(takeUserActions()).singleElement().satisfies(action -> assertThat(action)
                 .containsEntry("query_type", "stroomql")
                 .doesNotContainKey("outline"));
     }
@@ -111,7 +112,7 @@ class TestProposeDashboardTool {
         args.remove(ProposeDashboardTool.PREVIEW_ARG);
 
         assertThat(run(args)).contains("data preview").contains("ask_user");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -126,7 +127,7 @@ class TestProposeDashboardTool {
         Mockito.when(dataSourceAccess.canUse(VIEW)).thenReturn(false);
         assertThat(run(args("from \"Windows events\" select User", "stroomql", false)))
                 .isEqualTo(ValidateStroomQlTool.NO_DATA_SOURCE);
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test
@@ -136,7 +137,7 @@ class TestProposeDashboardTool {
 
         assertThat(run(args("from \"Windows events\" select User", "classic", false)))
                 .isEqualTo("No button was offered: A classic dashboard can't hold a having clause.");
-        assertThat(context.takeUserActions("c1")).isEmpty();
+        assertThat(takeUserActions()).isEmpty();
     }
 
     private static Map<String, Object> args(final String query, final String queryType, final boolean preview) {
@@ -151,7 +152,21 @@ class TestProposeDashboardTool {
 
     private String run(final Map<String, Object> args) {
         final String arguments = JsonUtil.writeValueAsString(args);
-        return context.run(() -> tool.execute(ToolExecutionRequest.builder().id("c1")
-                .name(ProposeDashboardTool.NAME).arguments(arguments).build(), CHAT));
+        return call(arguments);
+    }
+
+    // Runs a call as part of the agent run, keeping the user actions its result offers for takeUserActions.
+    private String call(final String arguments) {
+        final ToolResult result = context.run(() -> tool.execute(
+                new ToolCall("c1", ProposeDashboardTool.NAME, arguments), ToolCalls.inChat(CHAT, workspace)));
+        result.userActions().forEach(action -> offered.add(action.toMap()));
+        return result.text();
+    }
+
+    // The user actions offered by the calls since this was last called, as the chat shows them.
+    private List<Map<String, Object>> takeUserActions() {
+        final List<Map<String, Object>> taken = List.copyOf(offered);
+        offered.clear();
+        return taken;
     }
 }

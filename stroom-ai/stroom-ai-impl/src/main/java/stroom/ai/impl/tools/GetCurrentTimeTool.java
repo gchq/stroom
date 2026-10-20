@@ -16,8 +16,6 @@
 
 package stroom.ai.impl.tools;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.agent.tool.ToolSpecification;
 import jakarta.inject.Inject;
 
 import java.time.OffsetTime;
@@ -28,15 +26,15 @@ import java.time.temporal.ChronoUnit;
 /**
  * {@code get_current_time} - the current time of day, in UTC.
  */
-class GetCurrentTimeTool implements BuiltInTool {
+class GetCurrentTimeTool implements StroomTool {
 
     @Inject
     GetCurrentTimeTool() {
     }
 
     @Override
-    public ToolSpecification specification() {
-        return ToolSpecification.builder()
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
                 .name("get_current_time")
                 .description("Returns the current time of day in UTC as an ISO-8601 string "
                              + "(HH:MM:SSZ, 24-hour). Call this whenever you need to know the current "
@@ -45,10 +43,10 @@ class GetCurrentTimeTool implements BuiltInTool {
     }
 
     @Override
-    public String execute(final ToolExecutionRequest request) {
-        return OffsetTime.now(ZoneOffset.UTC)
-                .truncatedTo(ChronoUnit.SECONDS)
-                .format(DateTimeFormatter.ISO_OFFSET_TIME);
+    public ToolResult execute(final ToolCall request, final ToolCallContext context) {
+        return ToolResult.text(OffsetTime.now(ZoneOffset.UTC)
+                                .truncatedTo(ChronoUnit.SECONDS)
+                                .format(DateTimeFormatter.ISO_OFFSET_TIME));
     }
 
     @Override
